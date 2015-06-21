@@ -1,0 +1,9 @@
+[package]
+
+name = "gir"
+version = "0.0.1"
+authors = ["Gleb Kozyrev <gleb@gkoz.com>"]
+
+[dependencies]
+docopt = "*"
+xml-rs = "*"
