@@ -1,11 +1,11 @@
 extern crate docopt;
 extern crate xml;
 
-mod library;
-mod parser;
-
 use docopt::Docopt;
 use library::*;
+
+mod library;
+mod parser;
 
 static USAGE: &'static str = "
 Usage: spore -d <dir> <lib>
