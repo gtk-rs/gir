@@ -7,3 +7,4 @@ authors = ["Gleb Kozyrev <gleb@gkoz.com>"]
 [dependencies]
 docopt = "*"
 xml-rs = "*"
+toml = "*"

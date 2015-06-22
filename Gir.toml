@@ -1,0 +1,13 @@
+[options]
+girs_dir = "../gir-files"
+library = "Gtk-3.0"
+
+[[object]]
+name = "GtkWidget"
+type = "widget"
+status = "manual"
+
+[[object]]
+name = "GtkContainer"
+type = "widget"
+status = "generate"
