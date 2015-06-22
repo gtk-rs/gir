@@ -7,6 +7,7 @@ use std::io::prelude::*;
 use docopt::Docopt;
 use library::*;
 
+mod gobjects;
 mod library;
 mod parser;
 
@@ -36,6 +37,9 @@ fn main() {
                 .as_str().unwrap(),
         a => a
     };
+
+    let objects = gobjects::parse_toml(toml.lookup("object").unwrap());
+    for object in objects.values() { println!("Objects: {:?}", object); }
 
     let mut library = Library::new();
     library.read_file(girs_dir, library_name);
