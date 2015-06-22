@@ -34,7 +34,7 @@ fn show(library: &Library) {
                 Type::Record(ref x) => println!("\trecord {}", x.name),
                 Type::Union(ref x) => println!("\tunion {}", x.name),
                 Type::Interface(ref x) => println!("\tinterface {}", x.name),
-                Type::Callback(ref x) => println!("\trecord {}", x.name),
+                Type::Callback(ref x) => println!("\tcallback {}", x.name),
                 Type::Bitfield(ref x) => println!("\tbitfield {}", x.name),
                 Type::Enumeration(ref x) => println!("\tenumeration {}", x.name),
                 _ => println!("\t{} ???", name),
