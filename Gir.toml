@@ -1,0 +1,3 @@
+[options]
+girs_dir = "../gir-files"
+library = "Gtk-3.0"
