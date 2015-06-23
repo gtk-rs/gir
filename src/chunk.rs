@@ -21,12 +21,12 @@ impl ToString for Chunk {
 #[inline]
 #[cfg(unix)]
 fn end_line_string() -> String {
-    "\n".to_string()
+    "\n".into()
 }
 #[inline]
 #[cfg(windows)]
 fn end_line_string() -> String {
-    "\r\n".to_string()
+    "\r\n".into()
 }
 
 pub trait IntoChunk {

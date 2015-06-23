@@ -43,8 +43,8 @@ impl Config {
         let objects = gobjects::parse_toml(toml.lookup("object").unwrap());
 
         Config {
-            girs_dir: girs_dir.to_string(),
-            library_name: library_name.to_string(),
+            girs_dir: girs_dir.into(),
+            library_name: library_name.into(),
             objects: objects,
         }
     }
