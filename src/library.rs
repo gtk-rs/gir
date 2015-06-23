@@ -153,6 +153,8 @@ pub struct Interface {
 pub struct Class {
     pub name: String,
     pub functions: Vec<Function>,
+    pub parent: Option<TypeId>,
+    pub implements: Vec<TypeId>,
 }
 
 pub enum Type {

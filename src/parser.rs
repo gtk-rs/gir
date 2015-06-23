@@ -141,18 +141,20 @@ impl Library {
     fn read_class(&mut self, parser: &mut Reader,
                   ns_id: u16, attrs: &Attributes) -> Result<(), Error> {
         let name = try!(attrs.get("name").ok_or_else(|| error!("Missing class name", parser)));
-        let type_name = attrs.get("type-name").unwrap_or(name);
         let mut fns = Vec::new();
+        let mut impls = Vec::new();
         loop {
             let event = parser.next();
             match event {
                 StartElement { name, attributes, .. } => {
                     match name.local_name.as_ref() {
                         "constructor" | "function" | "method" => {
-                            fns.push(try!(
-                                self.read_function(parser, ns_id, &attributes)));
+                            fns.push(try!(self.read_function(parser, ns_id, &attributes)));
                         }
-                        "field" | "property" | "implements"
+                        "implements" => {
+                            impls.push(try!(self.read_type(parser, ns_id, &name, &attributes)));
+                        }
+                        "field" | "property"
                             | "signal" | "virtual-method" => try!(ignore_element(parser)),
                         "doc" | "doc-deprecated" => try!(ignore_element(parser)),
                         x => return Err(error!(format!("Unexpected element <{}>", x), parser)),
@@ -163,10 +165,14 @@ impl Library {
             }
         }
 
+        let type_name = attrs.get("type-name").unwrap_or(name);
+        let parent = attrs.get("parent").map(|s| self.get_type(ns_id, s));
         let typ = Type::Class(
             Class {
                 name: type_name.into(),
                 functions: fns,
+                parent: parent,
+                implements: impls,
             });
         self.add_type(ns_id, name, typ);
         Ok(())
