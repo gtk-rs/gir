@@ -34,16 +34,12 @@ impl<I: Iterator<Item=Chunk>> SaveToFile for I {
     }
 }
 
-/// Create .bak file, only if one not present
+/// Create .bak file
 pub fn create_backup<P: AsRef<Path>>(path: P) -> Result<bool> {
     match fs::metadata(&path) {
         Err(_) => return Ok(false),
         Ok(_) => (),
     }
     let new_path = path.as_ref().with_extension("bak");
-    match fs::metadata(&new_path) {
-        Err(_) => (),
-        Ok(_) => return Ok(false),
-    }
     fs::rename(path, new_path).map(|_| true)
 }
