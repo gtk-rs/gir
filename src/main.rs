@@ -5,8 +5,13 @@ extern crate toml;
 use std::fs::File;
 use std::io::prelude::*;
 use docopt::Docopt;
+
+use chunk::*;
+use file_saver::*;
 use library::*;
 
+mod chunk;
+mod file_saver;
 mod gobjects;
 mod library;
 mod parser;
@@ -40,6 +45,10 @@ fn main() {
 
     let objects = gobjects::parse_toml(toml.lookup("object").unwrap());
     for object in objects.values() { println!("Objects: {:?}", object); }
+
+    let v = vec!["ф1\n", "t2\n", "тестs3\n"];
+    let mut c = v.iter().into_chunk_iter();
+    let tmp =  c.save_to_file("a.txt");
 
     let mut library = Library::new();
     library.read_file(girs_dir, library_name);
