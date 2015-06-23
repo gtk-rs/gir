@@ -1,6 +1,4 @@
-use std::cell::RefCell;
-use std::collections::{BTreeMap, HashSet};
-use std::rc::Rc;
+use std::collections::{HashMap, HashSet};
 
 pub enum Transfer {
     None,
@@ -20,8 +18,9 @@ impl Transfer {
     }
 }
 
-#[derive(Debug)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Fundamental {
+    None,
     Boolean,
     Int8,
     UInt8,
@@ -47,56 +46,55 @@ pub enum Fundamental {
     Utf8,
     Filename,
     Type,
-    None,
     Unsupported,
 }
 
-impl Fundamental {
-    pub fn by_name(name: &str) -> Option<Fundamental> {
-        use self::Fundamental::*;
-        match name {
-            "gboolean" => Some(Boolean),
-            "gint8" => Some(Int8),
-            "guint8" => Some(UInt8),
-            "gint16" => Some(Int16),
-            "guint16" => Some(UInt16),
-            "gint32" => Some(Int32),
-            "guint32" => Some(UInt32),
-            "gint64" => Some(Int64),
-            "guint64" => Some(UInt64),
-            "gchar" => Some(Char),
-            "guchar" => Some(UChar),
-            "gint" => Some(Int),
-            "guint" => Some(UInt),
-            "glong" => Some(Long),
-            "gulong" => Some(ULong),
-            "gsize" => Some(Size),
-            "gssize" => Some(SSize),
-            "gfloat" => Some(Float),
-            "gdouble" => Some(Double),
-            "long double" => Some(Unsupported),
-            "gunichar" => Some(UniChar),
-            "gpointer" => Some(Pointer),
-            "va_list" => Some(Unsupported),
-            "varargs" => Some(VarArgs),
-            "utf8" => Some(Utf8),
-            "filename" => Some(Filename),
-            "GType" => Some(Type),
-            "none" => Some(None),
-            _ => Option::None,
-        }
-    }
+pub const FUNDAMENTAL: [(&'static str, Fundamental); 28] = [
+    ("none", Fundamental::None),
+    ("gboolean", Fundamental::Boolean),
+    ("gint8", Fundamental::Int8),
+    ("guint8", Fundamental::UInt8),
+    ("gint16", Fundamental::Int16),
+    ("guint16", Fundamental::UInt16),
+    ("gint32", Fundamental::Int32),
+    ("guint32", Fundamental::UInt32),
+    ("gint64", Fundamental::Int64),
+    ("guint64", Fundamental::UInt64),
+    ("gchar", Fundamental::Char),
+    ("guchar", Fundamental::UChar),
+    ("gint", Fundamental::Int),
+    ("guint", Fundamental::UInt),
+    ("glong", Fundamental::Long),
+    ("gulong", Fundamental::ULong),
+    ("gsize", Fundamental::Size),
+    ("gssize", Fundamental::SSize),
+    ("gfloat", Fundamental::Float),
+    ("gdouble", Fundamental::Double),
+    ("long double", Fundamental::Unsupported),
+    ("gunichar", Fundamental::UniChar),
+    ("gpointer", Fundamental::Pointer),
+    ("va_list", Fundamental::Unsupported),
+    ("varargs", Fundamental::VarArgs),
+    ("utf8", Fundamental::Utf8),
+    ("filename", Fundamental::Filename),
+    ("GType", Fundamental::Type),
+];
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct TypeId {
+    ns_id: u16,
+    id: u32,
 }
 
 pub struct Alias {
     pub name: String,
     pub c_identifier: String,
-    pub typ: TypeRef,
+    pub typ: TypeId,
 }
 
 pub struct Constant {
     pub name: String,
-    pub typ: TypeRef,
+    pub typ: TypeId,
     pub value: String,
 }
 
@@ -108,35 +106,39 @@ pub struct Member {
 
 pub struct Enumeration {
     pub name: String,
+    pub glib_name: String,
     pub members: Vec<Member>,
     pub functions: Vec<Function>,
 }
 
 pub struct Bitfield {
     pub name: String,
+    pub glib_name: String,
     pub members: Vec<Member>,
     pub functions: Vec<Function>,
 }
 
 pub struct Record {
     pub name: String,
+    pub glib_name: String,
     pub functions: Vec<Function>,
 }
 
 pub struct Field {
     pub name: String,
-    pub typ: TypeRef,
+    pub typ: TypeId,
 }
 
 pub struct Union {
     pub name: String,
+    pub glib_name: String,
     pub fields: Vec<Field>,
     pub functions: Vec<Function>,
 }
 
 pub struct Parameter {
     pub name: String,
-    pub typ: TypeRef,
+    pub typ: TypeId,
     pub transfer: Transfer,
 }
 
@@ -149,18 +151,19 @@ pub struct Function {
 
 pub struct Interface {
     pub name: String,
+    pub glib_name: String,
     pub functions: Vec<Function>,
 }
 
 pub struct Class {
     pub name: String,
+    pub glib_name: String,
     pub functions: Vec<Function>,
+    pub parent: Option<TypeId>,
+    pub implements: Vec<TypeId>,
 }
 
-pub type TypeRef = Rc<RefCell<Type>>;
-
 pub enum Type {
-    Unresolved,
     Fundamental(Fundamental),
     Alias(Alias),
     Enumeration(Enumeration),
@@ -170,35 +173,43 @@ pub enum Type {
     Callback(Function),
     Interface(Interface),
     Class(Class),
-    Array(TypeRef),
-    HashTable(TypeRef, TypeRef),
-    List(TypeRef),
-    SList(TypeRef),
+    Array(TypeId),
+    HashTable(TypeId, TypeId),
+    List(TypeId),
+    SList(TypeId),
 }
 
 impl Type {
-    pub fn new(typ: Type) -> TypeRef {
-        Rc::new(RefCell::new(typ))
-    }
-
-    pub fn container(name: &str, mut inner: Vec<TypeRef>) -> Option<TypeRef> {
+    pub fn container(library: &mut Library, name: &str, mut inner: Vec<TypeId>) -> Option<TypeId> {
         match (name, inner.len()) {
-            ("array", 1) => Some(Type::new(Type::Array(inner.remove(0)))),
-            ("GLib.HashTable", 2) => Some(Type::new(
-                                    Type::HashTable(inner.remove(0), inner.remove(0)))),
-            ("GLib.List", 1) => Some(Type::new(Type::List(inner.remove(0)))),
-            ("GLib.SList", 1) => Some(Type::new(Type::SList(inner.remove(0)))),
+            ("array", 1) => {
+                let tid = inner.remove(0);
+                Some((format!("array(#{:?})", tid), Type::Array(tid)))
+            }
+            ("GLib.HashTable", 2) => {
+                let k_tid = inner.remove(0);
+                let v_tid = inner.remove(0);
+                Some((format!("HashTable(#{:?}, #{:?})", k_tid, v_tid), Type::HashTable(k_tid, v_tid)))
+            }
+            ("GLib.List", 1) => {
+                let tid = inner.remove(0);
+                Some((format!("List(#{:?})", tid), Type::List(tid)))
+            }
+            ("GLib.SList", 1) => {
+                let tid = inner.remove(0);
+                Some((format!("SList(#{:?})", tid), Type::SList(tid)))
+            }
             _ => None,
-        }
+        }.map(|(name, typ)| library.add_type(INTERNAL_NAMESPACE, &name, typ))
     }
 }
 
 pub trait AsArg {
-    fn as_arg(&self) -> String;
+    fn as_arg(&self, library: &Library) -> String;
 }
 
 impl AsArg for Fundamental {
-    fn as_arg(&self) -> String {
+    fn as_arg(&self, _: &Library) -> String {
         use self::Fundamental::*;
         match *self {
             Boolean => "gboolean",
@@ -228,98 +239,164 @@ impl AsArg for Fundamental {
             Type => "GType",
             None => "c_void",
             Unsupported => panic!("unsupported type"),
-        }.to_string()
+        }.into()
     }
 }
 
 impl AsArg for Type {
-    fn as_arg(&self) -> String {
+    fn as_arg(&self, library: &Library) -> String {
         use self::Type::*;
         match *self {
-            Unresolved => panic!("Unresolved type"),
-            Fundamental(ref x) => x.as_arg(),
-            Alias(ref x) => x.typ.borrow().as_arg(),
+            Fundamental(ref x) => x.as_arg(library),
+            Alias(ref x) => library.type_by_id(x.typ).unwrap().as_arg(library),
             Enumeration(ref x) => x.name.clone(),
             Bitfield(ref x) => x.name.clone(),
             Record(ref x) => format!("*mut {}", &x.name),
             Union(ref x) => format!("*mut {}", &x.name),
-            Callback(_) => "TODO".to_string(),
+            Callback(_) => "TODO".into(),
             Interface(ref x) => format!("*mut {}", &x.name),
             Class(ref x) => format!("*mut {}", &x.name),
-            Array(ref x) => format!("*mut {}", x.borrow().as_arg()),
-            HashTable(_, _)  => "*mut GHashTable".to_string(),
-            List(_)  => "*mut GList".to_string(),
-            SList(_)  => "*mut GSList".to_string(),
+            Array(x) => format!("*mut {}", library.type_by_id(x).unwrap().as_arg(library)),
+            HashTable(_, _)  => "*mut GHashTable".into(),
+            List(_)  => "*mut GList".into(),
+            SList(_)  => "*mut GSList".into(),
         }
     }
 }
 
+pub struct Namespace {
+    pub name: String,
+    pub types: Vec<Option<Type>>,
+    pub index: HashMap<String, u32>,
+    pub constants: Vec<Constant>,
+    pub functions: Vec<Function>,
+}
+
+impl Namespace {
+    fn new() -> Namespace {
+        Namespace {
+            name: "".into(),
+            types: Vec::new(),
+            index: HashMap::new(),
+            constants: Vec::new(),
+            functions: Vec::new(),
+        }
+    }
+
+    fn type_by_id(&self, id: u32) -> Option<&Type> {
+        self.types[id as usize].as_ref()
+    }
+
+    fn add_type(&mut self, name: &str, typ: Type) -> u32 {
+        let id = self.get_type(name);
+        self.types[id as usize] = Some(typ);
+        id
+    }
+
+    fn find_type(&self, name: &str) -> Option<u32> {
+        self.index.get(name).cloned()
+    }
+
+    fn get_type(&mut self, name: &str) -> u32 {
+        self.index.get(name).cloned().unwrap_or_else(|| {
+            let id = self.types.len() as u32;
+            self.types.push(None);
+            self.index.insert(name.into(), id);
+            id
+        })
+    }
+
+    fn unresolved(&self) -> Vec<&str> {
+        self.index.iter().filter_map(|(name, &id)| {
+            if self.types[id as usize].is_none() {
+                Some(&name[..])
+            } else {
+                None
+            }
+        }).collect()
+    }
+}
+
+pub const INTERNAL_NAMESPACE_NAME: &'static str = "*";
+pub const INTERNAL_NAMESPACE: u16 = 0;
+
 pub struct Library {
-    pub types: BTreeMap<String, TypeRef>,
-    pub constants: BTreeMap<String, Constant>,
-    pub functions: BTreeMap<String, Function>,
-    pub namespaces: HashSet<String>,
+    pub namespaces: Vec<Namespace>,
+    pub index: HashMap<String, u16>,
 }
 
 impl Library {
     pub fn new() -> Library {
-        Library { types: BTreeMap::new(), namespaces: HashSet::new(),
-                  constants: BTreeMap::new(), functions: BTreeMap:: new() }
+        let mut library = Library {
+            namespaces: Vec::new(),
+            index: HashMap::new(),
+        };
+        assert!(library.get_namespace(INTERNAL_NAMESPACE_NAME) == INTERNAL_NAMESPACE);
+        library.namespace_mut(INTERNAL_NAMESPACE).name = INTERNAL_NAMESPACE_NAME.into();
+        for &(name, t) in &FUNDAMENTAL {
+            library.add_type(INTERNAL_NAMESPACE, name, Type::Fundamental(t));
+        }
+        library
     }
 
-    pub fn get_type(&mut self, namespace: &str, name: &str) -> TypeRef {
-        if let Some(typ) = self.types.get(name) {
-            return typ.clone();
-        }
+    pub fn namespace(&self, ns_id: u16) -> &Namespace {
+        &self.namespaces[ns_id as usize]
+    }
 
-        if name.contains('.') {
-            let name = name.to_string();
-            let typ = Type::new(Type::Unresolved);
-            self.types.insert(name, typ.clone());
-            return typ;
+    pub fn namespace_mut(&mut self, ns_id: u16) -> &mut Namespace {
+        &mut self.namespaces[ns_id as usize]
+    }
+
+    pub fn has_namespace(&self, name: &str) -> bool {
+        self.index.get(name).is_some()
+    }
+
+    pub fn get_namespace(&mut self, name: &str) -> u16 {
+        if let Some(&id) = self.index.get(name) {
+            id
         }
         else {
-            if let Some(typ) = Fundamental::by_name(name) {
-                let name = name.to_string();
-                let typ = Type::new(Type::Fundamental(typ));
-                self.types.insert(name.clone(), typ.clone());
-                return typ;
-            }
-
-            let name = format!("{}.{}", namespace, name);
-
-            if let Some(typ) = self.types.get(&name) {
-                return typ.clone();
-            }
-
-            let typ = Type::new(Type::Unresolved);
-            self.types.insert(name, typ.clone());
-            typ
+            let id = self.namespaces.len() as u16;
+            self.namespaces.push(Namespace::new());
+            self.index.insert(name.into(), id);
+            id
         }
     }
 
-    pub fn forget_type(&mut self, namespace: &str, name: &str) {
-        if name.contains('.') {
-            self.types.remove(name);
+    pub fn add_type(&mut self, ns_id: u16, name: &str, typ: Type) -> TypeId {
+        TypeId { ns_id: ns_id, id: self.namespace_mut(ns_id).add_type(name, typ) }
+    }
+
+    pub fn get_type(&mut self, current_ns_id: u16, name: &str) -> TypeId {
+        let mut parts = name.split('.');
+        let name = parts.next_back().unwrap();
+        let ns = parts.next_back();
+        assert!(ns.is_none() || parts.next().is_none());
+
+        if let Some(ns) = ns {
+            let ns_id = self.get_namespace(ns);
+            return TypeId { ns_id: ns_id, id: self.namespace_mut(ns_id).get_type(name) };
         }
-        else {
-            let name = format!("{}.{}", namespace, name);
-            self.types.remove(&name);
+
+        if let Some(id) = self.namespace(INTERNAL_NAMESPACE).find_type(name) {
+            return TypeId { ns_id: INTERNAL_NAMESPACE, id: id };
         }
+
+        TypeId { ns_id: current_ns_id, id: self.namespace_mut(current_ns_id).get_type(name) }
+    }
+
+    pub fn type_by_id(&self, tid: TypeId) -> Option<&Type> {
+        self.namespaces[tid.ns_id as usize].type_by_id(tid.id)
     }
 
     pub fn check_resolved(&self) {
-        let mut err = Vec::new();
-        for (ref name, ref typ) in &self.types {
-            if let Type::Unresolved = *typ.borrow() {
-                err.push(*name);
-            }
-        }
-        if !err.is_empty() {
-            panic!("Incomplete library, unresolved: {:?}", err);
+        let list: Vec<_> = self.index.iter().flat_map(|(name, &id)| {
+            let name = name.clone();
+            self.namespace(id).unresolved().into_iter().map(move |s| format!("{}.{}", name, s))
+        }).collect();
+
+        if !list.is_empty() {
+            panic!("Incomplete library, unresolved: {:?}", list);
         }
     }
-
-
 }
-

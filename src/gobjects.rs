@@ -17,7 +17,7 @@ impl FromStr for GType {
             "enum" => Ok(GType::Enum),
             "interface" => Ok(GType::Interface),
             "widget" => Ok(GType::Widget),
-            _ => Err("Wrong object type".to_string())
+            _ => Err("Wrong object type".into())
         }
     }
 }
@@ -38,7 +38,7 @@ impl FromStr for GStatus {
             "generate" => Ok(GStatus::Generate),
             "comment" => Ok(GStatus::Comment),
             "ignore" => Ok(GStatus::Ignore),
-            _ => Err("Wrong object status".to_string())
+            _ => Err("Wrong object status".into())
         }
     }
 }
@@ -64,7 +64,7 @@ pub fn parse_toml(toml_objects: &Value) -> GObjects {
 
 fn parse_object(toml_object: &Value) -> GObject {
     let name = toml_object.lookup("name").unwrap_or_else(|| panic!("Object name not defined"))
-        .as_str().unwrap().to_string();
+        .as_str().unwrap().into();
 
     let gtype = match toml_object.lookup("type") {
         Some(value) => GType::from_str(value.as_str().unwrap()).unwrap_or(GType::Widget),

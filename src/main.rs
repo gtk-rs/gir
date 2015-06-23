@@ -28,34 +28,30 @@ fn main() {
 
 #[allow(dead_code)]
 fn show(library: &Library) {
-    for namespace in &library.namespaces {
-        println!("Namespace: {}", namespace);
-        let prefix = format!("{}.", namespace);
-        for (ref name, ref typ) in &library.types {
-            if !name.starts_with(&prefix) {
-                continue;
-            }
-            match *typ.borrow() {
-                Type::Class(ref x) => println!("\tclass {}", x.name),
-                Type::Record(ref x) => println!("\trecord {}", x.name),
-                Type::Union(ref x) => println!("\tunion {}", x.name),
-                Type::Interface(ref x) => println!("\tinterface {}", x.name),
-                Type::Callback(ref x) => println!("\tcallback {}", x.name),
-                Type::Bitfield(ref x) => println!("\tbitfield {}", x.name),
-                Type::Enumeration(ref x) => println!("\tenumeration {}", x.name),
-                _ => println!("\t{} ???", name),
+    for ns in &library.namespaces {
+        println!("Namespace: {}", ns.name);
+        print!("\tNames: ");
+        for name in ns.index.keys() {
+            print!("{}, ", name);
+        }
+        println!("");
+
+        for typ in &ns.types {
+            match *typ {
+                Some(Type::Class(ref x)) => println!("\tclass {}", x.name),
+                Some(Type::Record(ref x)) => println!("\trecord {}", x.name),
+                Some(Type::Union(ref x)) => println!("\tunion {}", x.name),
+                Some(Type::Interface(ref x)) => println!("\tinterface {}", x.name),
+                Some(Type::Callback(ref x)) => println!("\tcallback {}", x.name),
+                Some(Type::Bitfield(ref x)) => println!("\tbitfield {}", x.name),
+                Some(Type::Enumeration(ref x)) => println!("\tenumeration {}", x.name),
+                _ => (),
             }
         }
-        for (ref name, ref c) in &library.constants {
-            if !name.starts_with(&prefix) {
-                continue;
-            }
+        for c in &ns.constants {
             println!("\tconst {} = {}", c.name, c.value);
         }
-        for (ref name, ref f) in &library.functions {
-            if !name.starts_with(&prefix) {
-                continue;
-            }
+        for f in &ns.functions {
             println!("\tfunction {}", f.name);
         }
     }
