@@ -65,7 +65,7 @@ impl Library {
                         "include" => {
                             if let (Some(lib), Some(ver)) =
                                 (attributes.get("name"), attributes.get("version")) {
-                                if !self.namespaces.contains(lib) {
+                                if !self.has_namespace(lib) {
                                     let lib = format!("{}-{}", lib, ver);
                                     self.read_file(dir, &lib);
                                 }
@@ -84,8 +84,9 @@ impl Library {
 
     fn read_namespace(&mut self, parser: &mut Reader,
                       attrs: &Attributes) -> Result<(), Error> {
-        let namespace = try!(attrs.get("name").ok_or_else(|| error!("Missing namespace name", parser)));
-        self.namespaces.insert(namespace.to_string());
+        let name = try!(attrs.get("name").ok_or_else(|| error!("Missing namespace name", parser)));
+        let ns_id = self.get_namespace(name);
+        self.namespace_mut(ns_id).name = name.into();
         //println!("Reading {}-{}", namespace, attrs.get("version").unwrap());
         loop {
             let event = parser.next();
@@ -95,34 +96,34 @@ impl Library {
                     match name.local_name.as_ref() {
                         "class" => {
                             //println!("class {}", attributes.get("name").unwrap());
-                            try!(self.read_class(parser, namespace, &attributes));
+                            try!(self.read_class(parser, ns_id, &attributes));
                         }
                         "record" => {
-                            try!(self.read_record(parser, namespace, &attributes));
+                            try!(self.read_record(parser, ns_id, &attributes));
                         }
                         "union" => {
-                            try!(self.read_union(parser, namespace, &attributes));
+                            try!(self.read_union(parser, ns_id, &attributes));
                         }
                         "interface" => {
-                            try!(self.read_interface(parser, namespace, &attributes));
+                            try!(self.read_interface(parser, ns_id, &attributes));
                         }
                         "callback" => {
-                            try!(self.read_callback(parser, namespace, &attributes));
+                            try!(self.read_callback(parser, ns_id, &attributes));
                         }
                         "bitfield" => {
-                            try!(self.read_bitfield(parser, namespace, &attributes));
+                            try!(self.read_bitfield(parser, ns_id, &attributes));
                         }
                         "enumeration" => {
-                            try!(self.read_enumeration(parser, namespace, &attributes));
+                            try!(self.read_enumeration(parser, ns_id, &attributes));
                         }
                         "function" => {
-                            try!(self.read_global_function(parser, namespace, &attributes));
+                            try!(self.read_global_function(parser, ns_id, &attributes));
                         }
                         "constant" => {
-                            try!(self.read_constant(parser, namespace, &attributes));
+                            try!(self.read_constant(parser, ns_id, &attributes));
                         }
                         "alias" => {
-                            try!(self.read_alias(parser, namespace, &attributes));
+                            try!(self.read_alias(parser, ns_id, &attributes));
                         }
                         _ => {
                             println!("<{} name={:?}>", name.local_name, attributes.get("name"));
@@ -138,10 +139,9 @@ impl Library {
     }
 
     fn read_class(&mut self, parser: &mut Reader,
-                  namespace: &str, attrs: &Attributes) -> Result<(), Error> {
+                  ns_id: u16, attrs: &Attributes) -> Result<(), Error> {
         let name = try!(attrs.get("name").ok_or_else(|| error!("Missing class name", parser)));
         let type_name = attrs.get("type-name").unwrap_or(name);
-        let typ = self.get_type(namespace, name);
         let mut fns = Vec::new();
         loop {
             let event = parser.next();
@@ -150,7 +150,7 @@ impl Library {
                     match name.local_name.as_ref() {
                         "constructor" | "function" | "method" => {
                             fns.push(try!(
-                                self.read_function(parser, namespace, &attributes)));
+                                self.read_function(parser, ns_id, &attributes)));
                         }
                         "field" | "property" | "implements"
                             | "signal" | "virtual-method" => try!(ignore_element(parser)),
@@ -163,19 +163,19 @@ impl Library {
             }
         }
 
-        *typ.borrow_mut() = Type::Class(
+        let typ = Type::Class(
             Class {
                 name: type_name.to_string(),
                 functions: fns,
             });
+        self.add_type(ns_id, name, typ);
         Ok(())
     }
 
     fn read_record(&mut self, parser: &mut Reader,
-                  namespace: &str, attrs: &Attributes) -> Result<(), Error> {
+                  ns_id: u16, attrs: &Attributes) -> Result<(), Error> {
         let name = try!(attrs.get("name").ok_or_else(|| error!("Missing record name", parser)));
         let type_name = attrs.get("type-name").unwrap_or(name);
-        let typ = self.get_type(namespace, name);
         let mut fns = Vec::new();
         loop {
             let event = parser.next();
@@ -184,7 +184,7 @@ impl Library {
                     match name.local_name.as_ref() {
                         "constructor" | "function" | "method" => {
                             fns.push(try!(
-                                self.read_function(parser, namespace, &attributes)));
+                                self.read_function(parser, ns_id, &attributes)));
                         }
                         "field" | "union" => try!(ignore_element(parser)),
                         "doc" | "doc-deprecated" => try!(ignore_element(parser)),
@@ -197,23 +197,22 @@ impl Library {
         }
 
         if attrs.get("is-gtype-struct").is_some() {
-            self.forget_type(namespace, name);
             return Ok(());
         }
 
-        *typ.borrow_mut() = Type::Record(
+        let typ = Type::Record(
             Record {
                 name: type_name.to_string(),
                 functions: fns,
             });
+        self.add_type(ns_id, name, typ);
         Ok(())
     }
 
     fn read_union(&mut self, parser: &mut Reader,
-                  namespace: &str, attrs: &Attributes) -> Result<(), Error> {
+                  ns_id: u16, attrs: &Attributes) -> Result<(), Error> {
         let name = try!(attrs.get("name").ok_or_else(|| error!("Missing union name", parser)));
         let type_name = attrs.get("type-name").unwrap_or(name);
-        let typ = self.get_type(namespace, name);
         let mut fields = Vec::new();
         let mut fns = Vec::new();
         loop {
@@ -223,11 +222,11 @@ impl Library {
                     match name.local_name.as_ref() {
                         "field" => {
                             fields.push(try!(
-                                self.read_field(parser, namespace, &attributes)));
+                                self.read_field(parser, ns_id, &attributes)));
                         }
                         "constructor" | "function" | "method" => {
                             fns.push(try!(
-                                self.read_function(parser, namespace, &attributes)));
+                                self.read_function(parser, ns_id, &attributes)));
                         }
                         "record" => try!(ignore_element(parser)),
                         "doc" | "doc-deprecated" => try!(ignore_element(parser)),
@@ -239,16 +238,17 @@ impl Library {
             }
         }
 
-        *typ.borrow_mut() = Type::Union(
+        let typ = Type::Union(
             Union {
                 name: type_name.to_string(),
                 fields: fields,
                 functions: fns,
             });
+        self.add_type(ns_id, name, typ);
         Ok(())
     }
 
-    fn read_field(&mut self, parser: &mut Reader, namespace: &str,
+    fn read_field(&mut self, parser: &mut Reader, ns_id: u16,
                   attrs: &Attributes) -> Result<Field, Error> {
         let name = try!(attrs.get("name").ok_or_else(|| error!("Missing field name", parser)));
         let mut typ = None;
@@ -262,7 +262,7 @@ impl Library {
                                 return Err(error!("Too many <type> elements", parser));
                             }
                             typ = Some(try!(
-                                self.read_type(parser, namespace, &name, &attributes)));
+                                self.read_type(parser, ns_id, &name, &attributes)));
                         }
                         "doc" | "doc-deprecated" => try!(ignore_element(parser)),
                         x => return Err(error!(format!("Unexpected element <{}>", x), parser)),
@@ -283,20 +283,19 @@ impl Library {
         }
     }
 
-    fn read_callback(&mut self, parser: &mut Reader, namespace: &str,
+    fn read_callback(&mut self, parser: &mut Reader, ns_id: u16,
                      attrs: &Attributes) -> Result<(), Error> {
         let name = try!(attrs.get("name").ok_or_else(|| error!("Missing callback name", parser)));
-        let func = try!(self.read_function(parser, namespace, attrs));
-        let callback = self.get_type(namespace, name);
-        *callback.borrow_mut() = Type::Callback(func);
+        let func = try!(self.read_function(parser, ns_id, attrs));
+        let cb = Type::Callback(func);
+        self.add_type(ns_id, name, cb);
         Ok(())
     }
 
     fn read_interface(&mut self, parser: &mut Reader,
-                      namespace: &str, attrs: &Attributes) -> Result<(), Error> {
+                      ns_id: u16, attrs: &Attributes) -> Result<(), Error> {
         let name = try!(attrs.get("name").ok_or_else(|| error!("Missing interface name", parser)));
         let type_name = attrs.get("type-name").unwrap_or(name);
-        let typ = self.get_type(namespace, name);
         let mut fns = Vec::new();
         loop {
             let event = parser.next();
@@ -304,7 +303,7 @@ impl Library {
                 StartElement { name, attributes, .. } => {
                     match name.local_name.as_ref() {
                         "constructor" | "function" | "method" =>
-                            fns.push(try!( self.read_function(parser, namespace, &attributes))),
+                            fns.push(try!( self.read_function(parser, ns_id, &attributes))),
                         "doc" | "doc-deprecated" => try!(ignore_element(parser)),
                         _ => try!(ignore_element(parser)),
                     }
@@ -314,19 +313,19 @@ impl Library {
             }
         }
 
-        *typ.borrow_mut() = Type::Interface(
+        let typ = Type::Interface(
             Interface {
                 name: type_name.to_string(),
                 functions: fns,
             });
+        self.add_type(ns_id, name, typ);
         Ok(())
     }
 
-    fn read_bitfield(&mut self, parser: &mut Reader, namespace: &str,
+    fn read_bitfield(&mut self, parser: &mut Reader, ns_id: u16,
                      attrs: &Attributes) -> Result<(), Error> {
         let name = try!(attrs.get("name").ok_or_else(|| error!("Missing bitfield name", parser)));
         let type_name = attrs.get("type-name").unwrap_or(name);
-        let typ = self.get_type(namespace, name);
         let mut members = Vec::new();
         let mut fns = Vec::new();
         loop {
@@ -340,7 +339,7 @@ impl Library {
                         }
                         "constructor" | "function" | "method" => {
                             fns.push(try!(
-                                self.read_function(parser, namespace, &attributes)));
+                                self.read_function(parser, ns_id, &attributes)));
                         }
                         "doc" | "doc-deprecated" => try!(ignore_element(parser)),
                         x => return Err(error!(format!("Unexpected element <{}>", x), parser)),
@@ -351,19 +350,20 @@ impl Library {
             }
         }
 
-        *typ.borrow_mut() = Type::Bitfield(Bitfield {
-            name: type_name.to_string(),
-            members: members,
-            functions: fns,
-        });
+        let typ = Type::Bitfield(
+            Bitfield {
+                name: type_name.to_string(),
+                members: members,
+                functions: fns,
+            });
+        self.add_type(ns_id, name, typ);
         Ok(())
     }
 
-    fn read_enumeration(&mut self, parser: &mut Reader, namespace: &str,
+    fn read_enumeration(&mut self, parser: &mut Reader, ns_id: u16,
                         attrs: &Attributes) -> Result<(), Error> {
         let name = try!(attrs.get("name").ok_or_else(|| error!("Missing enumeration name", parser)));
         let type_name = attrs.get("type-name").unwrap_or(name);
-        let typ = self.get_type(namespace, name);
         let mut members = Vec::new();
         let mut fns = Vec::new();
         loop {
@@ -377,7 +377,7 @@ impl Library {
                         }
                         "constructor" | "function" | "method" => {
                             fns.push(try!(
-                                self.read_function(parser, namespace, &attributes)));
+                                self.read_function(parser, ns_id, &attributes)));
                         }
                         "doc" | "doc-deprecated" => try!(ignore_element(parser)),
                         x => return Err(error!(format!("Unexpected element <{}>", x), parser)),
@@ -388,23 +388,24 @@ impl Library {
             }
         }
 
-        *typ.borrow_mut() = Type::Enumeration(Enumeration {
-            name: type_name.to_string(),
-            members: members,
-            functions: fns,
-        });
+        let typ = Type::Enumeration(
+            Enumeration {
+                name: type_name.to_string(),
+                members: members,
+                functions: fns,
+            });
+        self.add_type(ns_id, name, typ);
         Ok(())
     }
 
-    fn read_global_function(&mut self, parser: &mut Reader, namespace: &str,
+    fn read_global_function(&mut self, parser: &mut Reader, ns_id: u16,
                             attrs: &Attributes) -> Result<(), Error> {
-        let name = try!(attrs.get("name").ok_or_else(|| error!("Missing function name", parser)));
-        let func = try!(self.read_function(parser, namespace, attrs));
-        self.functions.insert(format!("{}.{}", namespace, name), func);
+        let func = try!(self.read_function(parser, ns_id, attrs));
+        self.namespace_mut(ns_id).functions.push(func);
         Ok(())
     }
 
-    fn read_constant(&mut self, parser: &mut Reader, namespace: &str,
+    fn read_constant(&mut self, parser: &mut Reader, ns_id: u16,
                      attrs: &Attributes) -> Result<(), Error> {
         let name = try!(attrs.get("name").ok_or_else(|| error!("Missing constant name", parser)));
         let value = try!(attrs.get("value").ok_or_else(|| error!("Missing constant value", parser)));
@@ -419,7 +420,7 @@ impl Library {
                                 return Err(error!("Too many <type> elements", parser));
                             }
                             typ = Some(try!(
-                                self.read_type(parser, namespace, &name, &attributes)));
+                                self.read_type(parser, ns_id, &name, &attributes)));
                         }
                         "doc" | "doc-deprecated" => try!(ignore_element(parser)),
                         x => return Err(error!(format!("Unexpected element <{}>", x), parser)),
@@ -430,11 +431,12 @@ impl Library {
             }
         }
         if let Some(typ) = typ {
-            self.constants.insert(format!("{}.{}", namespace, name), Constant {
-                name: name.to_string(),
-                typ: typ,
-                value: value.to_string(),
-            });
+            self.namespace_mut(ns_id).constants.push(
+                Constant {
+                    name: name.into(),
+                    typ: typ,
+                    value: value.into(),
+                });
             Ok(())
         }
         else {
@@ -442,11 +444,10 @@ impl Library {
         }
     }
 
-    fn read_alias(&mut self, parser: &mut Reader, namespace: &str,
+    fn read_alias(&mut self, parser: &mut Reader, ns_id: u16,
                      attrs: &Attributes) -> Result<(), Error> {
         let name = try!(attrs.get("name").ok_or_else(|| error!("Missing constant name", parser)));
         let c_identifier = attrs.get("type").unwrap_or(name);
-        let typ = self.get_type(namespace, name);
         let mut inner = None;
         loop {
             let event = parser.next();
@@ -458,7 +459,7 @@ impl Library {
                                 return Err(error!("Too many <type> elements", parser));
                             }
                             inner = Some(try!(
-                                self.read_type(parser, namespace, &name, &attributes)));
+                                self.read_type(parser, ns_id, &name, &attributes)));
                         }
                         "doc" | "doc-deprecated" => try!(ignore_element(parser)),
                         x => return Err(error!(format!("Unexpected element <{}>", x), parser)),
@@ -469,11 +470,13 @@ impl Library {
             }
         }
         if let Some(inner) = inner {
-            *typ.borrow_mut() = Type::Alias(Alias {
-                name: name.to_string(),
-                c_identifier: c_identifier.to_string(),
-                typ: inner,
-            });
+            let typ = Type::Alias(
+                Alias {
+                    name: name.to_string(),
+                    c_identifier: c_identifier.to_string(),
+                    typ: inner,
+                });
+            self.add_type(ns_id, name, typ);
             Ok(())
         }
         else {
@@ -512,7 +515,7 @@ impl Library {
         })
     }
 
-    fn read_function(&mut self, parser: &mut Reader, namespace: &str,
+    fn read_function(&mut self, parser: &mut Reader, ns_id: u16,
                      attrs: &Attributes) -> Result<Function, Error> {
         let name = try!(attrs.get("name").ok_or_else(|| error!("Missing function name", parser)));
         let c_identifier = attrs.get("identifier").unwrap_or(name);
@@ -524,8 +527,8 @@ impl Library {
                 StartElement { name, attributes, .. } => {
                     match name.local_name.as_ref() {
                         "parameters" => {
-                            //params.append(&mut try!(self.read_parameters(parser, namespace)));
-                            try!(self.read_parameters(parser, namespace)).into_iter()
+                            //params.append(&mut try!(self.read_parameters(parser, ns_id)));
+                            try!(self.read_parameters(parser, ns_id)).into_iter()
                                 .map(|p| params.push(p)).count();
                         }
                         "return-value" => {
@@ -533,7 +536,7 @@ impl Library {
                                 return Err(error!("Too many <return-value> elements", parser));
                             }
                             ret = Some(try!(
-                                self.read_parameter(parser, namespace, &attributes)));
+                                self.read_parameter(parser, ns_id, &attributes)));
                         }
                         "doc" | "doc-deprecated" => try!(ignore_element(parser)),
                         x => return Err(error!(format!("Unexpected element <{}>", x), parser)),
@@ -556,7 +559,7 @@ impl Library {
         }
     }
 
-    fn read_parameters(&mut self, parser: &mut Reader, namespace: &str)
+    fn read_parameters(&mut self, parser: &mut Reader, ns_id: u16)
                     -> Result<Vec<Parameter>, Error> {
         let mut params = Vec::new();
         loop {
@@ -566,7 +569,7 @@ impl Library {
                     match name.local_name.as_ref() {
                         "parameter" | "instance-parameter"  => {
                             let param = try!(
-                                self.read_parameter(parser, namespace, &attributes));
+                                self.read_parameter(parser, ns_id, &attributes));
                             params.push(param);
                         }
                         x => return Err(error!(format!("Unexpected element <{}>", x), parser)),
@@ -579,7 +582,7 @@ impl Library {
         Ok(params)
     }
 
-    fn read_parameter(&mut self, parser: &mut Reader, namespace: &str,
+    fn read_parameter(&mut self, parser: &mut Reader, ns_id: u16,
                       attrs: &Attributes) -> Result<Parameter, Error> {
         let name = attrs.get("name").unwrap_or("");
         let transfer = try!(
@@ -597,7 +600,7 @@ impl Library {
                                 return Err(error!("Too many <type> elements", parser));
                             }
                             typ = Some(try!(
-                                self.read_type(parser, namespace, &name, &attributes)));
+                                self.read_type(parser, ns_id, &name, &attributes)));
                         }
                         "varargs" => {
                             varargs = true;
@@ -621,7 +624,7 @@ impl Library {
         else if varargs {
             Ok(Parameter {
                 name: "".to_string(),
-                typ: self.get_type("", "varargs"),
+                typ: self.get_type(INTERNAL_NAMESPACE, "varargs"),
                 transfer: Transfer::None,
             })
         }
@@ -630,8 +633,8 @@ impl Library {
         }
     }
 
-    fn read_type(&mut self, parser: &mut Reader, namespace: &str,
-                 name: &OwnedName, attrs: &Attributes) -> Result<TypeRef, Error> {
+    fn read_type(&mut self, parser: &mut Reader, ns_id: u16,
+                 name: &OwnedName, attrs: &Attributes) -> Result<TypeId, Error> {
         let start_pos = parser.position();
         let name =
             if name.local_name == "array" {
@@ -648,7 +651,7 @@ impl Library {
                     match name.local_name.as_ref() {
                         "type" | "array" => {
                             inner.push(try!(
-                                self.read_type(parser, namespace, &name, &attributes)));
+                                self.read_type(parser, ns_id, &name, &attributes)));
                         }
                         x => return Err(error!(format!("Unexpected element <{}>", x), parser)),
                     }
@@ -658,10 +661,10 @@ impl Library {
             }
         }
         if !inner.is_empty() {
-            Ok(try!(Type::container(name, inner).ok_or_else(|| error!("Unknown container type", &start_pos))))
+            Ok(try!(Type::container(self, name, inner).ok_or_else(|| error!("Unknown container type", &start_pos))))
         }
         else {
-            Ok(self.get_type(namespace, name))
+            Ok(self.get_type(ns_id, name))
         }
     }
 }
