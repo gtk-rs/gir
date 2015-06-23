@@ -245,7 +245,7 @@ impl AsArg for Type {
             Bitfield(ref x) => x.name.clone(),
             Record(ref x) => format!("*mut {}", &x.name),
             Union(ref x) => format!("*mut {}", &x.name),
-            Callback(_) => "TODO".to_string(),
+            Callback(_) => "TODO".into(),
             Interface(ref x) => format!("*mut {}", &x.name),
             Class(ref x) => format!("*mut {}", &x.name),
             Array(x) => format!("*mut {}", library.type_by_id(x).unwrap().as_arg(library)),
@@ -383,9 +383,8 @@ impl Library {
 
     pub fn check_resolved(&self) {
         let list: Vec<_> = self.index.iter().flat_map(|(name, &id)| {
-            let name = name.to_string();
-            self.namespace(id).unresolved().into_iter()
-                .map(move |s| format!("{}.{}", name, s))
+            let name = name.clone();
+            self.namespace(id).unresolved().into_iter().map(move |s| format!("{}.{}", name, s))
         }).collect();
 
         if !list.is_empty() {

@@ -165,7 +165,7 @@ impl Library {
 
         let typ = Type::Class(
             Class {
-                name: type_name.to_string(),
+                name: type_name.into(),
                 functions: fns,
             });
         self.add_type(ns_id, name, typ);
@@ -202,7 +202,7 @@ impl Library {
 
         let typ = Type::Record(
             Record {
-                name: type_name.to_string(),
+                name: type_name.into(),
                 functions: fns,
             });
         self.add_type(ns_id, name, typ);
@@ -240,7 +240,7 @@ impl Library {
 
         let typ = Type::Union(
             Union {
-                name: type_name.to_string(),
+                name: type_name.into(),
                 fields: fields,
                 functions: fns,
             });
@@ -274,7 +274,7 @@ impl Library {
         }
         if let Some(typ) = typ {
             Ok(Field {
-                name: name.to_string(),
+                name: name.into(),
                 typ: typ,
             })
         }
@@ -315,7 +315,7 @@ impl Library {
 
         let typ = Type::Interface(
             Interface {
-                name: type_name.to_string(),
+                name: type_name.into(),
                 functions: fns,
             });
         self.add_type(ns_id, name, typ);
@@ -352,7 +352,7 @@ impl Library {
 
         let typ = Type::Bitfield(
             Bitfield {
-                name: type_name.to_string(),
+                name: type_name.into(),
                 members: members,
                 functions: fns,
             });
@@ -390,7 +390,7 @@ impl Library {
 
         let typ = Type::Enumeration(
             Enumeration {
-                name: type_name.to_string(),
+                name: type_name.into(),
                 members: members,
                 functions: fns,
             });
@@ -472,8 +472,8 @@ impl Library {
         if let Some(inner) = inner {
             let typ = Type::Alias(
                 Alias {
-                    name: name.to_string(),
-                    c_identifier: c_identifier.to_string(),
+                    name: name.into(),
+                    c_identifier: c_identifier.into(),
                     typ: inner,
                 });
             self.add_type(ns_id, name, typ);
@@ -487,7 +487,7 @@ impl Library {
     fn read_member(&self, parser: &mut Reader, attrs: &Attributes) -> Result<Member, Error> {
         let name = try!(attrs.get("name").ok_or_else(|| error!("Missing member name", parser)));
         let value = try!(attrs.get("value").ok_or_else(|| error!("Missing member value", parser)));
-        let c_identifier = attrs.get("identifier").map(|x| x.to_string());
+        let c_identifier = attrs.get("identifier").map(|x| x.into());
         loop {
             let event = parser.next();
             match event {
@@ -497,7 +497,7 @@ impl Library {
                         ("attribute", Some("c:identifier")) => {
                             let value = try!(attributes.get("value")
                                 .ok_or_else(|| error!("Missing attribute value", parser)));
-                            c_identifier = Some(value.to_string());
+                            c_identifier = Some(value.into());
                         }
                         */
                         ("doc", _) | ("doc-deprecated", _) => try!(ignore_element(parser)),
@@ -509,9 +509,9 @@ impl Library {
             }
         }
         Ok(Member {
-            name: name.to_string(),
-            value: value.to_string(),
-            c_identifier: c_identifier.unwrap_or_else(|| name.to_string()),
+            name: name.into(),
+            value: value.into(),
+            c_identifier: c_identifier.unwrap_or_else(|| name.into()),
         })
     }
 
@@ -548,8 +548,8 @@ impl Library {
         }
         if let Some(ret) = ret {
             Ok(Function {
-                name: name.to_string(),
-                c_identifier: c_identifier.to_string(),
+                name: name.into(),
+                c_identifier: c_identifier.into(),
                 parameters: params,
                 ret: ret,
             })
@@ -616,14 +616,14 @@ impl Library {
         }
         if let Some(typ) = typ {
             Ok(Parameter {
-                name: name.to_string(),
+                name: name.into(),
                 typ: typ,
                 transfer: transfer,
             })
         }
         else if varargs {
             Ok(Parameter {
-                name: "".to_string(),
+                name: "".into(),
                 typ: self.get_type(INTERNAL_NAMESPACE, "varargs"),
                 transfer: Transfer::None,
             })
