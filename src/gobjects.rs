@@ -46,9 +46,9 @@ impl FromStr for GStatus {
 /// Info about GObject descendant
 #[derive(Debug)]
 pub struct GObject {
-    name: String,
-    gtype: GType,
-    status: GStatus,
+    pub name: String,
+    pub gtype: GType,
+    pub status: GStatus,
 }
 
 pub type GObjects =  HashMap<String, GObject>;

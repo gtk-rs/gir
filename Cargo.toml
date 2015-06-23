@@ -8,3 +8,4 @@ authors = ["Gleb Kozyrev <gleb@gkoz.com>"]
 docopt = "*"
 xml-rs = "*"
 toml = "*"
+case = "*"

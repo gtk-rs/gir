@@ -2,6 +2,7 @@
 name = "gir"
 version = "0.0.1"
 dependencies = [
+ "case 0.0.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "docopt 0.6.67 (registry+https://github.com/rust-lang/crates.io-index)",
  "toml 0.1.20 (registry+https://github.com/rust-lang/crates.io-index)",
  "xml-rs 0.1.25 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -18,6 +19,11 @@ dependencies = [
 [[package]]
 name = "bitflags"
 version = "0.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+
+[[package]]
+name = "case"
+version = "0.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
