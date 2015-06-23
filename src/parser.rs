@@ -165,11 +165,12 @@ impl Library {
             }
         }
 
-        let type_name = attrs.get("type-name").unwrap_or(name);
+        let glib_name = attrs.get("type-name").unwrap_or(name);
         let parent = attrs.get("parent").map(|s| self.get_type(ns_id, s));
         let typ = Type::Class(
             Class {
-                name: type_name.into(),
+                name: name.into(),
+                glib_name: glib_name.into(),
                 functions: fns,
                 parent: parent,
                 implements: impls,
@@ -181,7 +182,6 @@ impl Library {
     fn read_record(&mut self, parser: &mut Reader,
                   ns_id: u16, attrs: &Attributes) -> Result<(), Error> {
         let name = try!(attrs.get("name").ok_or_else(|| error!("Missing record name", parser)));
-        let type_name = attrs.get("type-name").unwrap_or(name);
         let mut fns = Vec::new();
         loop {
             let event = parser.next();
@@ -206,9 +206,11 @@ impl Library {
             return Ok(());
         }
 
+        let glib_name = attrs.get("type-name").unwrap_or(name);
         let typ = Type::Record(
             Record {
-                name: type_name.into(),
+                name: name.into(),
+                glib_name: glib_name.into(),
                 functions: fns,
             });
         self.add_type(ns_id, name, typ);
@@ -218,7 +220,6 @@ impl Library {
     fn read_union(&mut self, parser: &mut Reader,
                   ns_id: u16, attrs: &Attributes) -> Result<(), Error> {
         let name = try!(attrs.get("name").ok_or_else(|| error!("Missing union name", parser)));
-        let type_name = attrs.get("type-name").unwrap_or(name);
         let mut fields = Vec::new();
         let mut fns = Vec::new();
         loop {
@@ -244,9 +245,11 @@ impl Library {
             }
         }
 
+        let glib_name = attrs.get("type-name").unwrap_or(name);
         let typ = Type::Union(
             Union {
-                name: type_name.into(),
+                name: name.into(),
+                glib_name: glib_name.into(),
                 fields: fields,
                 functions: fns,
             });
@@ -301,7 +304,6 @@ impl Library {
     fn read_interface(&mut self, parser: &mut Reader,
                       ns_id: u16, attrs: &Attributes) -> Result<(), Error> {
         let name = try!(attrs.get("name").ok_or_else(|| error!("Missing interface name", parser)));
-        let type_name = attrs.get("type-name").unwrap_or(name);
         let mut fns = Vec::new();
         loop {
             let event = parser.next();
@@ -319,9 +321,11 @@ impl Library {
             }
         }
 
+        let glib_name = attrs.get("type-name").unwrap_or(name);
         let typ = Type::Interface(
             Interface {
-                name: type_name.into(),
+                name: name.into(),
+                glib_name: glib_name.into(),
                 functions: fns,
             });
         self.add_type(ns_id, name, typ);
@@ -331,7 +335,6 @@ impl Library {
     fn read_bitfield(&mut self, parser: &mut Reader, ns_id: u16,
                      attrs: &Attributes) -> Result<(), Error> {
         let name = try!(attrs.get("name").ok_or_else(|| error!("Missing bitfield name", parser)));
-        let type_name = attrs.get("type-name").unwrap_or(name);
         let mut members = Vec::new();
         let mut fns = Vec::new();
         loop {
@@ -356,9 +359,11 @@ impl Library {
             }
         }
 
+        let glib_name = attrs.get("type-name").unwrap_or(name);
         let typ = Type::Bitfield(
             Bitfield {
-                name: type_name.into(),
+                name: name.into(),
+                glib_name: glib_name.into(),
                 members: members,
                 functions: fns,
             });
@@ -369,7 +374,6 @@ impl Library {
     fn read_enumeration(&mut self, parser: &mut Reader, ns_id: u16,
                         attrs: &Attributes) -> Result<(), Error> {
         let name = try!(attrs.get("name").ok_or_else(|| error!("Missing enumeration name", parser)));
-        let type_name = attrs.get("type-name").unwrap_or(name);
         let mut members = Vec::new();
         let mut fns = Vec::new();
         loop {
@@ -394,9 +398,11 @@ impl Library {
             }
         }
 
+        let glib_name = attrs.get("type-name").unwrap_or(name);
         let typ = Type::Enumeration(
             Enumeration {
-                name: type_name.into(),
+                name: name.into(),
+                glib_name: glib_name.into(),
                 members: members,
                 functions: fns,
             });
