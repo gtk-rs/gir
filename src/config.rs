@@ -6,16 +6,18 @@ use toml;
 use gobjects;
 
 static USAGE: &'static str = "
-Usage: gir [-d <girs_dir>] [<library>]
+Usage: gir [-d <girs_dir>] [-o <target_path>] [<library>]
 
 Options:
-    -d PATH            Directory for girs
+    -d PATH             Directory for girs
+    -o PATH             Target root path
 ";
 
 #[derive(Debug)]
 pub struct Config {
     pub girs_dir: String,
     pub library_name: String,
+    pub target_path: String,
     pub objects: gobjects::GObjects,
 }
 
@@ -40,11 +42,19 @@ impl Config {
             a => a
         };
 
+        let target_path = match args.get_str("-o") {
+            "" => toml.lookup("options.target_path")
+                    .unwrap_or_else(|| panic!("No options.target_path in config"))
+                    .as_str().unwrap(),
+            a => a
+        };
+
         let objects = gobjects::parse_toml(toml.lookup("object").unwrap());
 
         Config {
             girs_dir: girs_dir.into(),
             library_name: library_name.into(),
+            target_path: target_path.into(),
             objects: objects,
         }
     }

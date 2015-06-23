@@ -1,29 +1,31 @@
+extern crate case;
 extern crate docopt;
 extern crate xml;
 extern crate toml;
 
-use chunk::*;
-use file_saver::*;
+use env::Env;
 use library::*;
 
 mod chunk;
+mod codegen;
 mod config;
+mod env;
 mod file_saver;
 mod gobjects;
 mod library;
+mod nameutil;
 mod parser;
 
 fn main() {
     let cfg = config::Config::new();
 
-    let v = vec!["ф1", "t2", "тестs3"];
-    let c = v.into_chunks();
-    let tmp =  c.into_iter().save_to_file("a.txt");
-
     let mut library = Library::new();
     library.read_file(&cfg.girs_dir, &cfg.library_name);
     library.check_resolved();
     show(&library);
+
+    let env = Env{ library: library, config: cfg };
+    codegen::generate(&env);
 }
 
 #[allow(dead_code)]
