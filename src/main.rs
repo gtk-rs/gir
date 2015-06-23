@@ -46,9 +46,9 @@ fn main() {
     let objects = gobjects::parse_toml(toml.lookup("object").unwrap());
     for object in objects.values() { println!("Objects: {:?}", object); }
 
-    let v = vec!["ф1\n", "t2\n", "тестs3\n"];
-    let mut c = v.iter().into_chunk_iter();
-    let tmp =  c.save_to_file("a.txt");
+    let v = vec!["ф1", "t2", "тестs3"];
+    let c = v.into_chunks();
+    let tmp =  c.into_iter().save_to_file("a.txt");
 
     let mut library = Library::new();
     library.read_file(girs_dir, library_name);

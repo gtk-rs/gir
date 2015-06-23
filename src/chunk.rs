@@ -5,6 +5,7 @@ use std::fmt::Debug;
 #[derive(Debug)]
 pub enum Chunk {
     Text(String),
+    EndLine,
 }
 
 impl ToString for Chunk {
@@ -12,8 +13,20 @@ impl ToString for Chunk {
     fn to_string(&self) -> String {
         match self {
             &Chunk::Text(ref str) => str.clone(),
+            &Chunk::EndLine => end_line_string(),
         }
     }
+}
+
+#[inline]
+#[cfg(unix)]
+fn end_line_string() -> String {
+    "\n".to_string()
+}
+#[inline]
+#[cfg(windows)]
+fn end_line_string() -> String {
+    "\r\n".to_string()
 }
 
 pub trait IntoChunk {
@@ -34,36 +47,51 @@ impl<'a> IntoChunk for &'a str {
     }
 }
 
-// for slice 'str
-impl<'a, T: IntoChunk> IntoChunk for &'a T {
+pub trait IntoChunks {
+    fn into_chunks(&self) -> Vec<Chunk>;
+}
+
+impl IntoChunks for String {
     #[inline]
-    fn into_chunk(&self) -> Chunk {
-        (*self).into_chunk()
+    fn into_chunks<'a>(&self) -> Vec<Chunk> {
+        vec![Chunk::Text(self.clone()), Chunk::EndLine]
     }
 }
 
-#[derive(Clone)]
-pub struct IntoChunkIter<I> {
-    iter: I
-}
-
-impl<I: Iterator> Iterator for IntoChunkIter<I> where
-    I::Item: IntoChunk {
-    type Item = Chunk;
-
+impl<'a> IntoChunks for &'a str {
     #[inline]
-    fn next(&mut self) -> Option<Chunk> {
-        self.iter.next().map(|a| a.into_chunk())
+    fn into_chunks(&self) -> Vec<Chunk> {
+        vec![Chunk::Text(self.to_string()), Chunk::EndLine]
     }
 }
 
-pub trait IntoChunkIterator {
-    fn into_chunk_iter(self) -> IntoChunkIter<Self> where Self: Sized {
-        IntoChunkIter{iter: self}
+impl IntoChunks for Vec<String> {
+    fn into_chunks(&self) -> Vec<Chunk> {
+        let mut vec: Vec<Chunk> = Vec::new();
+        for s in self {
+            let inner_vec = s.into_chunks();
+            vec.reserve(inner_vec.len());
+            for c in inner_vec {
+                vec.push(c);
+            }
+        }
+        vec
     }
 }
 
-impl<T, I: IntoIterator<Item=T>> IntoChunkIterator for I { }
+impl<'a> IntoChunks for Vec<&'a str> {
+    fn into_chunks(&self) -> Vec<Chunk> {
+        let mut vec: Vec<Chunk> = Vec::new();
+        for s in self {
+            let inner_vec = s.into_chunks();
+            vec.reserve(inner_vec.len());
+            for c in inner_vec {
+                vec.push(c);
+            }
+        }
+        vec
+    }
+}
 
 //For debug prints
 //Use: let tmp: IteratorPrinter = iter.collect();
