@@ -1,4 +1,4 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 
 pub enum Transfer {
     None,
@@ -295,10 +295,6 @@ impl Namespace {
         self.types[id as usize].as_ref().unwrap()
     }
 
-    fn type_mut(&mut self, id: u32) -> &mut Type {
-        self.types[id as usize].as_mut().unwrap()
-    }
-
     fn add_type(&mut self, name: &str, typ: Option<Type>) -> u32 {
         if let Some(id) = self.find_type(name) {
             self.types[id as usize] = typ;
@@ -424,10 +420,6 @@ impl Library {
 
     pub fn type_(&self, tid: TypeId) -> &Type {
         self.namespace(tid.ns_id).type_(tid.id)
-    }
-
-    pub fn type_mut(&mut self, tid: TypeId) -> &Type {
-        self.namespace_mut(tid.ns_id).type_mut(tid.id)
     }
 
     pub fn check_resolved(&self) {
