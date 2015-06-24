@@ -4,7 +4,7 @@ use std::path::PathBuf;
 use env::Env;
 use file_saver::*;
 use gobjects::*;
-use library::*;
+//use library::*;
 use nameutil::*;
 
 pub fn generate(env: &Env) {
@@ -33,12 +33,10 @@ fn inner<W: Write>(w: &mut W, env: &Env, obj: &GObject) -> Result<()>{
     }
 
     println!("{:?}", obj);
-    let class_id = env.library.find_type(0, &obj.name).unwrap();
-    println!("Class ID: {:?}", class_id);
-    let class_info = match env.library.type_(class_id) {
-        &Type::Class(ref info) => info,
-        _ => panic!("Is not class {}", &obj.name),
-    };
+    let class_id = env.library.find_type(0, &obj.name)
+        .unwrap_or_else(|| panic!("Class {} not found.", obj.name));
+    let class_info = env.library.type_(class_id).as_class()
+        .unwrap_or_else(|| panic!("{} is not a class.", obj.name));
     println!("Class name: {:?}", class_info.glib_name);
 
     Ok(())
