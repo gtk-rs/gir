@@ -180,6 +180,10 @@ pub enum Type {
 }
 
 impl Type {
+    pub fn as_class(&self) -> Option<&Class> {
+        if let &Type::Class(ref x) = self { Some(x) } else { None }
+    }
+
     pub fn container(library: &mut Library, name: &str, mut inner: Vec<TypeId>) -> Option<TypeId> {
         match (name, inner.len()) {
             ("array", 1) => {
