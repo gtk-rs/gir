@@ -442,7 +442,7 @@ impl Library {
     }
 }
 
-fn split_ns_name(name: &str) -> (Option<String>, String) {
+fn split_ns_name(name: &str) -> (Option<&str>, &str) {
     let mut parts = name.split('.');
     let name = parts.next_back().unwrap();
     let ns = parts.next_back();
