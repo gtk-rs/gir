@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use nameutil::split_namespace_name;
 
 pub enum Transfer {
     None,
@@ -386,7 +387,7 @@ impl Library {
     }
 
     pub fn find_type(&self, current_ns_id: u16, name: &str) -> Option<TypeId> {
-        let (ns, name) = split_ns_name(name);
+        let (ns, name) = split_namespace_name(name);
 
         if let Some(ns) = ns {
             self.find_namespace(ns).and_then(|ns_id| {
@@ -409,7 +410,7 @@ impl Library {
             return tid;
         }
 
-        let (ns, name) = split_ns_name(name);
+        let (ns, name) = split_namespace_name(name);
 
         if let Some(ns) = ns {
             let ns_id = self.find_namespace(ns).unwrap_or_else(|| self.add_namespace(ns));
@@ -436,12 +437,4 @@ impl Library {
             panic!("Incomplete library, unresolved: {:?}", list);
         }
     }
-}
-
-fn split_ns_name(name: &str) -> (Option<&str>, &str) {
-    let mut parts = name.split('.');
-    let name = parts.next_back().unwrap();
-    let ns = parts.next_back();
-    assert!(ns.is_none() || parts.next().is_none());
-    (ns, name)
 }
