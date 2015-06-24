@@ -65,7 +65,7 @@ impl Library {
                         "include" => {
                             if let (Some(lib), Some(ver)) =
                                 (attributes.get("name"), attributes.get("version")) {
-                                if !self.has_namespace(lib) {
+                                if self.find_namespace(lib).is_none() {
                                     let lib = format!("{}-{}", lib, ver);
                                     self.read_file(dir, &lib);
                                 }
@@ -85,8 +85,7 @@ impl Library {
     fn read_namespace(&mut self, parser: &mut Reader,
                       attrs: &Attributes) -> Result<(), Error> {
         let name = try!(attrs.get("name").ok_or_else(|| error!("Missing namespace name", parser)));
-        let ns_id = self.get_namespace(name);
-        self.namespace_mut(ns_id).name = name.into();
+        let ns_id = self.add_namespace(name);
         //println!("Reading {}-{}", namespace, attrs.get("version").unwrap());
         loop {
             let event = parser.next();
@@ -166,7 +165,7 @@ impl Library {
         }
 
         let glib_name = attrs.get("type-name").unwrap_or(name);
-        let parent = attrs.get("parent").map(|s| self.get_type(ns_id, s));
+        let parent = attrs.get("parent").map(|s| self.find_or_stub_type(ns_id, s));
         let typ = Type::Class(
             Class {
                 name: name.into(),
@@ -413,7 +412,7 @@ impl Library {
     fn read_global_function(&mut self, parser: &mut Reader, ns_id: u16,
                             attrs: &Attributes) -> Result<(), Error> {
         let func = try!(self.read_function(parser, ns_id, attrs));
-        self.namespace_mut(ns_id).functions.push(func);
+        self.add_function(ns_id, func);
         Ok(())
     }
 
@@ -443,7 +442,7 @@ impl Library {
             }
         }
         if let Some(typ) = typ {
-            self.namespace_mut(ns_id).constants.push(
+            self.add_constant(ns_id,
                 Constant {
                     name: name.into(),
                     typ: typ,
@@ -636,7 +635,7 @@ impl Library {
         else if varargs {
             Ok(Parameter {
                 name: "".into(),
-                typ: self.get_type(INTERNAL_NAMESPACE, "varargs"),
+                typ: self.find_type(INTERNAL_NAMESPACE, "varargs").unwrap(),
                 transfer: Transfer::None,
             })
         }
@@ -676,7 +675,7 @@ impl Library {
             Ok(try!(Type::container(self, name, inner).ok_or_else(|| error!("Unknown container type", &start_pos))))
         }
         else {
-            Ok(self.get_type(ns_id, name))
+            Ok(self.find_or_stub_type(ns_id, name))
         }
     }
 }

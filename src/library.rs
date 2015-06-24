@@ -248,7 +248,7 @@ impl AsArg for Type {
         use self::Type::*;
         match *self {
             Fundamental(ref x) => x.as_arg(library),
-            Alias(ref x) => library.type_by_id(x.typ).unwrap().as_arg(library),
+            Alias(ref x) => library.type_(x.typ).as_arg(library),
             Enumeration(ref x) => x.name.clone(),
             Bitfield(ref x) => x.name.clone(),
             Record(ref x) => format!("*mut {}", &x.name),
@@ -256,7 +256,7 @@ impl AsArg for Type {
             Callback(_) => "TODO".into(),
             Interface(ref x) => format!("*mut {}", &x.name),
             Class(ref x) => format!("*mut {}", &x.name),
-            Array(x) => format!("*mut {}", library.type_by_id(x).unwrap().as_arg(library)),
+            Array(x) => format!("*mut {}", library.type_(x).as_arg(library)),
             HashTable(_, _)  => "*mut GHashTable".into(),
             List(_)  => "*mut GList".into(),
             SList(_)  => "*mut GSList".into(),
@@ -273,9 +273,9 @@ pub struct Namespace {
 }
 
 impl Namespace {
-    fn new() -> Namespace {
+    fn new(name: &str) -> Namespace {
         Namespace {
-            name: "".into(),
+            name: name.into(),
             types: Vec::new(),
             index: HashMap::new(),
             constants: Vec::new(),
@@ -283,27 +283,37 @@ impl Namespace {
         }
     }
 
-    fn type_by_id(&self, id: u32) -> Option<&Type> {
-        self.types[id as usize].as_ref()
+    fn add_constant(&mut self, c: Constant) {
+        self.constants.push(c);
     }
 
-    fn add_type(&mut self, name: &str, typ: Type) -> u32 {
-        let id = self.get_type(name);
-        self.types[id as usize] = Some(typ);
-        id
+    fn add_function(&mut self, f: Function) {
+        self.functions.push(f);
+    }
+
+    fn type_(&self, id: u32) -> &Type {
+        self.types[id as usize].as_ref().unwrap()
+    }
+
+    fn type_mut(&mut self, id: u32) -> &mut Type {
+        self.types[id as usize].as_mut().unwrap()
+    }
+
+    fn add_type(&mut self, name: &str, typ: Option<Type>) -> u32 {
+        if let Some(id) = self.find_type(name) {
+            self.types[id as usize] = typ;
+            id
+        }
+        else {
+            let id = self.types.len() as u32;
+            self.types.push(typ);
+            self.index.insert(name.into(), id);
+            id
+        }
     }
 
     fn find_type(&self, name: &str) -> Option<u32> {
         self.index.get(name).cloned()
-    }
-
-    fn get_type(&mut self, name: &str) -> u32 {
-        self.index.get(name).cloned().unwrap_or_else(|| {
-            let id = self.types.len() as u32;
-            self.types.push(None);
-            self.index.insert(name.into(), id);
-            id
-        })
     }
 
     fn unresolved(&self) -> Vec<&str> {
@@ -331,7 +341,7 @@ impl Library {
             namespaces: Vec::new(),
             index: HashMap::new(),
         };
-        assert!(library.get_namespace(INTERNAL_NAMESPACE_NAME) == INTERNAL_NAMESPACE);
+        assert!(library.add_namespace(INTERNAL_NAMESPACE_NAME) == INTERNAL_NAMESPACE);
         library.namespace_mut(INTERNAL_NAMESPACE).name = INTERNAL_NAMESPACE_NAME.into();
         for &(name, t) in &FUNDAMENTAL {
             library.add_type(INTERNAL_NAMESPACE, name, Type::Fundamental(t));
@@ -347,46 +357,77 @@ impl Library {
         &mut self.namespaces[ns_id as usize]
     }
 
-    pub fn has_namespace(&self, name: &str) -> bool {
-        self.index.get(name).is_some()
+    pub fn find_namespace(&self, name: &str) -> Option<u16> {
+        self.index.get(name).cloned()
     }
 
-    pub fn get_namespace(&mut self, name: &str) -> u16 {
+    pub fn add_namespace(&mut self, name: &str) -> u16 {
         if let Some(&id) = self.index.get(name) {
             id
         }
         else {
             let id = self.namespaces.len() as u16;
-            self.namespaces.push(Namespace::new());
+            self.namespaces.push(Namespace::new(name));
             self.index.insert(name.into(), id);
             id
         }
     }
 
-    pub fn add_type(&mut self, ns_id: u16, name: &str, typ: Type) -> TypeId {
-        TypeId { ns_id: ns_id, id: self.namespace_mut(ns_id).add_type(name, typ) }
+    pub fn add_constant(&mut self, ns_id: u16, c: Constant) {
+        self.namespace_mut(ns_id).add_constant(c);
     }
 
-    pub fn get_type(&mut self, current_ns_id: u16, name: &str) -> TypeId {
-        let mut parts = name.split('.');
-        let name = parts.next_back().unwrap();
-        let ns = parts.next_back();
-        assert!(ns.is_none() || parts.next().is_none());
+    pub fn add_function(&mut self, ns_id: u16, f: Function) {
+        self.namespace_mut(ns_id).add_function(f);
+    }
+
+    pub fn add_type(&mut self, ns_id: u16, name: &str, typ: Type) -> TypeId {
+        TypeId { ns_id: ns_id, id: self.namespace_mut(ns_id).add_type(name, Some(typ)) }
+    }
+
+    pub fn find_type(&self, current_ns_id: u16, name: &str) -> Option<TypeId> {
+        let (ns, name) = split_ns_name(name);
 
         if let Some(ns) = ns {
-            let ns_id = self.get_namespace(ns);
-            return TypeId { ns_id: ns_id, id: self.namespace_mut(ns_id).get_type(name) };
+            self.find_namespace(ns).and_then(|ns_id| {
+                self.namespace(ns_id).find_type(name).map(|id| TypeId { ns_id: ns_id, id: id })
+            })
         }
-
-        if let Some(id) = self.namespace(INTERNAL_NAMESPACE).find_type(name) {
-            return TypeId { ns_id: INTERNAL_NAMESPACE, id: id };
+        else if let Some(id) = self.namespace(current_ns_id).find_type(name) {
+            Some(TypeId { ns_id: current_ns_id, id: id })
         }
-
-        TypeId { ns_id: current_ns_id, id: self.namespace_mut(current_ns_id).get_type(name) }
+        else if let Some(id) = self.namespace(INTERNAL_NAMESPACE).find_type(name) {
+            Some(TypeId { ns_id: INTERNAL_NAMESPACE, id: id })
+        }
+        else {
+            None
+        }
     }
 
-    pub fn type_by_id(&self, tid: TypeId) -> Option<&Type> {
-        self.namespaces[tid.ns_id as usize].type_by_id(tid.id)
+    pub fn find_or_stub_type(&mut self, current_ns_id: u16, name: &str) -> TypeId {
+        if let Some(tid) = self.find_type(current_ns_id, name) {
+            return tid;
+        }
+
+        let (ns, name) = split_ns_name(name);
+
+        if let Some(ns) = ns {
+            let ns_id = self.find_namespace(ns).unwrap_or_else(|| self.add_namespace(ns));
+            let ns = self.namespace_mut(ns_id);
+            let id = ns.find_type(name).unwrap_or_else(|| ns.add_type(name, None));
+            return TypeId { ns_id: ns_id, id: id };
+        }
+
+        let id = self.namespace_mut(current_ns_id).add_type(name, None);
+        TypeId { ns_id: current_ns_id, id: id }
+    }
+
+    pub fn type_(&self, tid: TypeId) -> &Type {
+        self.namespace(tid.ns_id).type_(tid.id)
+    }
+
+    pub fn type_mut(&mut self, tid: TypeId) -> &Type {
+        self.namespace_mut(tid.ns_id).type_mut(tid.id)
     }
 
     pub fn check_resolved(&self) {
@@ -399,4 +440,12 @@ impl Library {
             panic!("Incomplete library, unresolved: {:?}", list);
         }
     }
+}
+
+fn split_ns_name(name: &str) -> (Option<String>, String) {
+    let mut parts = name.split('.');
+    let name = parts.next_back().unwrap();
+    let ns = parts.next_back();
+    assert!(ns.is_none() || parts.next().is_none());
+    (ns, name)
 }
