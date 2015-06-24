@@ -15,6 +15,7 @@ mod library;
 mod nameutil;
 mod parser;
 
+#[cfg_attr(test, allow(dead_code))]
 fn main() {
     let cfg = config::Config::new();
 
