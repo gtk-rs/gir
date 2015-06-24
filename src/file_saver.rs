@@ -1,37 +1,16 @@
-use std::error::Error;
 use std::fs;
 use std::fs::File;
-use std::io::{Result, Write};
+use std::io::Result;
 use std::path::Path;
 
-use chunk::*;
-
-pub trait SaveToFile {
-    fn save_to_file<P: AsRef<Path>>(&mut self, path: P) -> Result<()>;
-}
-
-impl<I: Iterator<Item=Chunk>> SaveToFile for I {
-    fn save_to_file<P: AsRef<Path>>(&mut self, path: P) -> Result<()> {
-        match create_backup(&path) {
-            Err(why) => panic!("couldn't create backup for {:?}: {}", path.as_ref(),
-                            Error::description(&why)),
-            Ok(_) => (),
-        }
-        let mut file = match File::create(&path) {
-            Err(why) => panic!("couldn't create {:?}: {}", path.as_ref(),
-                            Error::description(&why)),
-            Ok(file) => file,
-        };
-        for ch in self {
-            match file.write_all(&ch.to_string().into_bytes()) {
-                Err(why) => panic!("couldn't write to {:?}: {}", path.as_ref(),
-                                Error::description(&why)),
-                Ok(_) => (),
-            }
-        }
-
-        Ok(())
-    }
+pub fn save_to_file<P, F>(path: P, closure: &mut F) where
+    P: AsRef<Path>, F: FnMut(&mut File) -> Result<()> {
+    let _backuped = create_backup(&path)
+        .unwrap_or_else(|why| panic!("couldn't create backup for {:?}: {:?}", path.as_ref(), why));
+    let mut file = File::create(&path)
+        .unwrap_or_else(|why| panic!("couldn't create {:?}: {}", path.as_ref(), why));
+    closure(&mut file)
+        .unwrap_or_else(|why| panic!("couldn't write to {:?}: {:?}", path.as_ref(), why));
 }
 
 /// Create .bak file
