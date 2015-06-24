@@ -1,9 +1,10 @@
-use std::path::*;
+use std::io::{Result, Write};
+use std::path::PathBuf;
 
-use chunk::*;
 use env::Env;
 use file_saver::*;
 use gobjects::*;
+use library::*;
 use nameutil::*;
 
 pub fn generate(env: &Env) {
@@ -16,12 +17,29 @@ pub fn generate(env: &Env) {
         let path = root_path.join(file_name(&obj.name));
         println!("Generating file {:?}", path);
 
-        //TODO: do normal generation
-        let v = vec![
-            "// Copyright 2013-2015, The Rust-GNOME Project Developers.",
-            "// See the COPYRIGHT file at the top-level directory of this distribution.",
-            "// Licensed under the MIT license, see the LICENSE file or <http://opensource.org/licenses/MIT>"
-        ];
-        let _ =  v.into_chunks().into_iter().save_to_file(path);
+        save_to_file(path, &mut |w| inner(w, env, obj));
     }
+}
+
+fn inner<W: Write>(w: &mut W, env: &Env, obj: &GObject) -> Result<()>{
+    //TODO: do normal generation
+    let v = vec![
+        "// Copyright 2013-2015, The Rust-GNOME Project Developers.",
+        "// See the COPYRIGHT file at the top-level directory of this distribution.",
+        "// Licensed under the MIT license, see the LICENSE file or <http://opensource.org/licenses/MIT>"
+    ];
+    for s in v {
+        try!(writeln!(w, "{}", s));
+    }
+
+    println!("{:?}", obj);
+    let class_id = env.library.find_type(0, &obj.name).unwrap();
+    println!("Class ID: {:?}", class_id);
+    let class_info = match env.library.type_(class_id) {
+        &Type::Class(ref info) => info,
+        _ => panic!("Is not class {}", &obj.name),
+    };
+    println!("Class name: {:?}", class_info.glib_name);
+
+    Ok(())
 }
