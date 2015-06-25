@@ -87,6 +87,14 @@ pub struct TypeId {
     id: u32,
 }
 
+impl TypeId {
+    pub fn full_name(&self, library: &Library) -> String{
+        let ns_name = &library.namespace(self.ns_id).name;
+        let type_ = &library.type_(*self);
+        format!("{}.{}", ns_name, &type_.get_name()).into()
+    }
+}
+
 pub struct Alias {
     pub name: String,
     pub c_identifier: String,
