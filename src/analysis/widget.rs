@@ -2,11 +2,13 @@ use env::Env;
 use gobjects::*;
 use library;
 use nameutil::*;
+use super::general;
 
 pub struct Info {
     pub full_name: String,
     pub class_id: library::TypeId,
     pub name: String,
+    pub parents: Vec<general::StatusedTypeId>,
 }
 
 impl Info {
@@ -25,9 +27,12 @@ pub fn new(env: &Env, obj: &GObject) -> Info {
 
     let name = split_namespace_name(&full_name).1.into();
 
+    let parents = general::analyze_parents(env, class_id);
+
     Info {
         full_name: full_name,
         class_id: class_id,
         name: name,
+        parents: parents,
     }
 }

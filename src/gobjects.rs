@@ -2,11 +2,12 @@ use std::collections::HashMap;
 use std::str::FromStr;
 use toml::Value;
 
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum GType {
     Enum,
     Interface,
     Widget,
+    Unknown,
     //TODO: Object, InitiallyUnowned,
 }
 
@@ -22,7 +23,7 @@ impl FromStr for GType {
     }
 }
 
-#[derive(Clone, Debug, Eq,  PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum GStatus {
     Manual,     //already generated
     Generate,
@@ -50,6 +51,16 @@ pub struct GObject {
     pub gtype: GType,
     pub status: GStatus,
     pub last_parent: bool,
+}
+
+//TODO: make it const
+pub fn default_object() -> GObject {
+    GObject {
+        name: "Default".into(),
+        gtype: GType::Unknown,
+        status: GStatus::Ignore,
+        last_parent: false,
+    }
 }
 
 pub type GObjects =  HashMap<String, GObject>;

@@ -13,3 +13,8 @@ last_parent = true
 name = "Gtk.Container"
 type = "widget"
 status = "generate"
+
+[[object]]
+name = "Gtk.Bin"
+type = "widget"
+status = "generate"
