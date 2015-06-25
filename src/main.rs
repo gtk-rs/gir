@@ -6,6 +6,7 @@ extern crate toml;
 use env::Env;
 use library::*;
 
+mod analysis;
 mod codegen;
 mod config;
 mod env;
