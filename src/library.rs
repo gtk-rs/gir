@@ -406,7 +406,7 @@ impl Library {
         }
     }
 
-    pub fn find_type_unwraped(&self, current_ns_id: u16, name: &str, kind: &str) -> TypeId {
+    pub fn find_type_unwrapped(&self, current_ns_id: u16, name: &str, kind: &str) -> TypeId {
         self.find_type(current_ns_id, name)
             .unwrap_or_else(|| panic!("{} {} not found.", kind, name))
     }
