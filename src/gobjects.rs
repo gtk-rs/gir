@@ -2,11 +2,12 @@ use std::collections::HashMap;
 use std::str::FromStr;
 use toml::Value;
 
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum GType {
     Enum,
     Interface,
     Widget,
+    Unknown,
     //TODO: Object, InitiallyUnowned,
 }
 
@@ -22,7 +23,7 @@ impl FromStr for GType {
     }
 }
 
-#[derive(Clone, Debug, Eq,  PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum GStatus {
     Manual,     //already generated
     Generate,
@@ -49,6 +50,17 @@ pub struct GObject {
     pub name: String,
     pub gtype: GType,
     pub status: GStatus,
+    pub last_parent: bool,
+}
+
+//TODO: make it const
+pub fn default_object() -> GObject {
+    GObject {
+        name: "Default".into(),
+        gtype: GType::Unknown,
+        status: GStatus::Ignore,
+        last_parent: false,
+    }
 }
 
 pub type GObjects =  HashMap<String, GObject>;
@@ -74,5 +86,9 @@ fn parse_object(toml_object: &Value) -> GObject {
         Some(value) => GStatus::from_str(value.as_str().unwrap()).unwrap_or(GStatus::Ignore),
         None => GStatus::Ignore,
     };
-    GObject { name: name, gtype: gtype, status: status }
+    let last_parent = match toml_object.lookup("last_parent") {
+        Some(&Value::Boolean(b)) => b,
+        _ => false,
+    };
+    GObject { name: name, gtype: gtype, status: status, last_parent: last_parent }
 }

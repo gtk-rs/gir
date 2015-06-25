@@ -87,6 +87,14 @@ pub struct TypeId {
     id: u32,
 }
 
+impl TypeId {
+    pub fn full_name(&self, library: &Library) -> String{
+        let ns_name = &library.namespace(self.ns_id).name;
+        let type_ = &library.type_(*self);
+        format!("{}.{}", ns_name, &type_.get_name()).into()
+    }
+}
+
 pub struct Alias {
     pub name: String,
     pub c_identifier: String,
@@ -184,6 +192,28 @@ pub enum Type {
 impl Type {
     pub fn as_class(&self) -> Option<&Class> {
         if let &Type::Class(ref x) = self { Some(x) } else { None }
+    }
+    pub fn to_class(&self) -> &Class {
+        self.as_class()
+            .unwrap_or_else(|| panic!("{} is not a class.", self.get_name()))
+    }
+
+    pub fn get_name(&self) -> String {
+        match self {
+            &Type::Fundamental(fund) => format!("{:?}", fund).into(),
+            &Type::Alias(ref alias) => alias.name.clone(),
+            &Type::Enumeration(ref enum_) => enum_.name.clone(),
+            &Type::Bitfield(ref bit_field) => bit_field.name.clone(),
+            &Type::Record(ref rec) => rec.name.clone(),
+            &Type::Union(ref union) => union.name.clone(),
+            &Type::Callback(ref func) => func.name.clone(),
+            &Type::Interface(ref interface) => interface.name.clone(),
+            &Type::Class(ref class) => class.name.clone(),
+            &Type::Array(type_id) => format!("Array {:?}", type_id),
+            &Type::HashTable(key_type_id, value_type_id) => format!("HashTable {:?}/{:?}", key_type_id, value_type_id),
+            &Type::List(type_id) => format!("List {:?}", type_id),
+            &Type::SList(type_id) => format!("SList {:?}", type_id),
+        }
     }
 
     pub fn container(library: &mut Library, name: &str, mut inner: Vec<TypeId>) -> Option<TypeId> {

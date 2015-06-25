@@ -1,5 +1,7 @@
 use std::io::{Result, Write};
 
+use analysis::general::StatusedTypeId;
+
 pub fn start_comments<W: Write>(w: &mut W) -> Result<()>{
     let v = vec![
         "// Copyright 2013-2015, The Rust-GNOME Project Developers.",
@@ -16,6 +18,16 @@ pub fn start_comments<W: Write>(w: &mut W) -> Result<()>{
 pub fn objects_child_type<W: Write>(w: &mut W, type_name: &str, glib_name: &str) -> Result<()>{
     try!(writeln!(w, ""));
     try!(writeln!(w, "pub type {} = Object<ffi::{}>;", type_name, glib_name));
+
+    Ok(())
+}
+
+pub fn impl_parents<W: Write>(w: &mut W, type_name: &str, parents: &Vec<StatusedTypeId>) -> Result<()>{
+    try!(writeln!(w, ""));
+    for stid in parents {
+        //TODO: don't generate for parents without traits
+        try!(writeln!(w, "unsafe impl Upcast<{}> for {} {{ }}", stid.name, type_name));
+    }
 
     Ok(())
 }

@@ -10,7 +10,7 @@ pub fn generate<W: Write>(w: &mut W, env: &Env, class_analysis: &analysis::widge
     try!(general::start_comments(w));
     //TODO: uses
     try!(general::objects_child_type(w, &class_analysis.name, &class_type.glib_type_name));
-    //TODO: impl parents
+    try!(general::impl_parents(w, &class_analysis.name, &class_analysis.parents));
     //TODO: impl interfaces
     //TODO: impl type
     try!(general::impl_static_type(w, &class_analysis.name, &class_type.glib_get_type));
