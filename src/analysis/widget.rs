@@ -6,7 +6,7 @@ use nameutil::*;
 pub struct Info {
     pub full_name: String,
     pub class_id: library::TypeId,
-    pub type_name: String,
+    pub name: String,
 }
 
 impl Info {
@@ -23,11 +23,11 @@ pub fn new(env: &Env, obj: &GObject) -> Info {
 
     let class_id = env.library.find_type_unwrapped(0, &full_name, "Class");
 
-    let type_name = split_namespace_name(&full_name).1.into();
+    let name = split_namespace_name(&full_name).1.into();
 
     Info {
         full_name: full_name,
         class_id: class_id,
-        type_name: type_name,
+        name: name,
     }
 }
