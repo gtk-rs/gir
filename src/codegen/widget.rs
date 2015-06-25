@@ -13,7 +13,7 @@ pub fn generate<W: Write>(w: &mut W, env: &Env, class_analysis: &analysis::widge
     //TODO: impl parents
     //TODO: impl interfaces
     //TODO: impl type
-    //TODO: impl static_type
+    try!(general::impl_static_type(w, &class_analysis.type_name, &class_type.get_type_func_name));
     //TODO: ext trait
     //TODO: impl trait
 
