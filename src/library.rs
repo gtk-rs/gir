@@ -164,6 +164,7 @@ pub struct Interface {
     pub functions: Vec<Function>,
 }
 
+#[derive(Default)]
 pub struct Class {
     pub name: String,
     pub glib_type_name: String,
