@@ -7,6 +7,7 @@ target_path = "../gtk"
 name = "Gtk.Widget"
 type = "widget"
 status = "manual"
+last_parent = true
 
 [[object]]
 name = "Gtk.Container"

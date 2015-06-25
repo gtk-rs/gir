@@ -49,6 +49,7 @@ pub struct GObject {
     pub name: String,
     pub gtype: GType,
     pub status: GStatus,
+    pub last_parent: bool,
 }
 
 pub type GObjects =  HashMap<String, GObject>;
@@ -74,5 +75,9 @@ fn parse_object(toml_object: &Value) -> GObject {
         Some(value) => GStatus::from_str(value.as_str().unwrap()).unwrap_or(GStatus::Ignore),
         None => GStatus::Ignore,
     };
-    GObject { name: name, gtype: gtype, status: status }
+    let last_parent = match toml_object.lookup("last_parent") {
+        Some(&Value::Boolean(b)) => b,
+        _ => false,
+    };
+    GObject { name: name, gtype: gtype, status: status, last_parent: last_parent }
 }
