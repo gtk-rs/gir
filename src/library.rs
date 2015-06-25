@@ -518,3 +518,49 @@ impl Library {
         }
     }
 }
+
+mod tests {
+    use super::*;
+
+    fn make_library() -> Library {
+        let mut lib = Library::new();
+        let glib_ns_id = lib.add_namespace("GLib");
+        let gtk_ns_id = lib.add_namespace("Gtk");
+        let object_tid = lib.add_type(glib_ns_id, "Object".into(), Type::Class(
+            Class {
+                name: "Object".into(),
+                glib_type_name: "GObject".into(),
+                glib_get_type: "g_object_get_type".into(),
+                .. Class::default()
+            }));
+        let ioobject_tid = lib.add_type(glib_ns_id, "InitiallyUnowned".into(), Type::Class(
+            Class {
+                name: "InitiallyUnowned".into(),
+                glib_type_name: "GInitiallyUnowned".into(),
+                glib_get_type: "g_initially_unowned_get_type".into(),
+                parent: Some(object_tid),
+                .. Class::default()
+            }));
+        lib.add_type(gtk_ns_id, "Widget".into(), Type::Class(
+            Class {
+                name: "Widget".into(),
+                glib_type_name: "GtkWidget".into(),
+                glib_get_type: "gtk_widget_get_type".into(),
+                parent: Some(ioobject_tid),
+                .. Class::default()
+            }));
+        lib
+    }
+
+    #[test]
+    fn fill_class_parents() {
+        let mut lib = make_library();
+        lib.fill_in();
+        let object_tid = lib.find_type(0, "GLib.Object").unwrap();
+        let ioobject_tid = lib.find_type(0, "GLib.InitiallyUnowned").unwrap();
+        let widget_tid = lib.find_type(0, "Gtk.Widget").unwrap();
+        assert_eq!(lib.type_(object_tid).to_class().parents, &[]);
+        assert_eq!(lib.type_(ioobject_tid).to_class().parents, &[object_tid]);
+        assert_eq!(lib.type_(widget_tid).to_class().parents, &[ioobject_tid, object_tid]);
+    }
+}
