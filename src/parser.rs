@@ -175,6 +175,7 @@ impl Library {
                 glib_get_type : get_type.into(),
                 functions: fns,
                 parent: parent,
+                parents: Vec::new(),
                 implements: impls,
             });
         self.add_type(ns_id, name, typ);

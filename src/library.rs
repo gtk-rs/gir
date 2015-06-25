@@ -170,6 +170,7 @@ pub struct Class {
     pub glib_get_type: String,
     pub functions: Vec<Function>,
     pub parent: Option<TypeId>,
+    pub parents: Vec<TypeId>,
     pub implements: Vec<TypeId>,
 }
 
@@ -331,6 +332,10 @@ impl Namespace {
         self.types[id as usize].as_ref().unwrap()
     }
 
+    fn type_mut(&mut self, id: u32) -> &mut Type {
+        self.types[id as usize].as_mut().unwrap()
+    }
+
     fn add_type(&mut self, name: &str, typ: Option<Type>) -> u32 {
         if let Some(id) = self.find_type(name) {
             self.types[id as usize] = typ;
@@ -463,6 +468,10 @@ impl Library {
         self.namespace(tid.ns_id).type_(tid.id)
     }
 
+    pub fn type_mut(&mut self, tid: TypeId) -> &mut Type {
+        self.namespace_mut(tid.ns_id).type_mut(tid.id)
+    }
+
     pub fn check_resolved(&self) {
         let list: Vec<_> = self.index.iter().flat_map(|(name, &id)| {
             let name = name.clone();
@@ -471,6 +480,38 @@ impl Library {
 
         if !list.is_empty() {
             panic!("Incomplete library, unresolved: {:?}", list);
+        }
+    }
+
+    pub fn fill_in(&mut self) {
+        self.check_resolved();
+        self.fill_class_parents();
+    }
+
+    fn fill_class_parents(&mut self) {
+        let mut tids = Vec::with_capacity(
+            self.namespaces.iter().fold(0, |sum, ns| sum + ns.types.len()));
+        for (ns_id, ns) in self.namespaces.iter().enumerate() {
+            for id in 0..ns.types.len() {
+                tids.push(TypeId { ns_id: ns_id as u16, id: id as u32 });
+            }
+        }
+
+        let mut parents = Vec::with_capacity(10);
+        for tid in tids {
+            parents.clear();
+
+            if let Type::Class(ref klass) = *self.type_(tid) {
+                let mut parent = klass.parent;
+                while let Some(parent_tid) = parent {
+                    parents.push(parent_tid);
+                    parent = self.type_(parent_tid).to_class().parent;
+                }
+            }
+
+            if let Type::Class(ref mut klass) = *self.type_mut(tid) {
+                parents.iter().map(|&tid| klass.parents.push(tid)).count();
+            }
         }
     }
 }

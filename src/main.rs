@@ -22,8 +22,8 @@ fn main() {
 
     let mut library = Library::new();
     library.read_file(&cfg.girs_dir, &cfg.library_name);
-    library.check_resolved();
-    show(&library);
+    library.fill_in();
+    //show(&library);
 
     let env = Env{ library: library, config: cfg };
     codegen::generate(&env);
