@@ -405,6 +405,11 @@ impl Library {
         }
     }
 
+    pub fn find_type_unwraped(&self, current_ns_id: u16, name: &str, kind: &str) -> TypeId {
+        self.find_type(current_ns_id, name)
+            .unwrap_or_else(|| panic!("{} {} not found.", kind, name))
+    }
+
     pub fn find_or_stub_type(&mut self, current_ns_id: u16, name: &str) -> TypeId {
         if let Some(tid) = self.find_type(current_ns_id, name) {
             return tid;

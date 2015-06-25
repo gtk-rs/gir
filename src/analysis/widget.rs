@@ -21,8 +21,7 @@ impl Info {
 pub fn new(env: &Env, obj: &GObject) -> Info {
     let full_name = obj.name.clone();
 
-    let class_id = env.library.find_type(0, &full_name)
-        .unwrap_or_else(|| panic!("Class {} not found.", full_name));
+    let class_id = env.library.find_type_unwraped(0, &full_name, "Class");
 
     let type_name = split_namespace_name(&full_name).1.into();
 
