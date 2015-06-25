@@ -33,7 +33,9 @@ mod tests {
 
     #[test]
     fn split_full_name() {
-        assert_eq!(split_namespace_name("Gtk.StatusIcon").1, "StatusIcon");
+        let (ns, name) = split_namespace_name("Gtk.StatusIcon");
+        assert_eq!(ns, "Gtk");
+        assert_eq!(name, "StatusIcon");
     }
 
     #[test]
