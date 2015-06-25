@@ -9,6 +9,7 @@ pub struct Info {
     pub class_id: library::TypeId,
     pub name: String,
     pub parents: Vec<general::StatusedTypeId>,
+    pub has_ignored_parents: bool,
 }
 
 impl Info {
@@ -27,12 +28,13 @@ pub fn new(env: &Env, obj: &GObject) -> Info {
 
     let name = split_namespace_name(&full_name).1.into();
 
-    let parents = general::analyze_parents(env, class_id);
+    let (parents, has_ignored_parents) = general::analyze_parents(env, class_id);
 
     Info {
         full_name: full_name,
         class_id: class_id,
         name: name,
         parents: parents,
+        has_ignored_parents: has_ignored_parents,
     }
 }

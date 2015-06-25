@@ -10,8 +10,9 @@ pub struct StatusedTypeId{
     pub status: GStatus,
 }
 
-pub fn analyze_parents(env: &Env, type_id: library::TypeId) -> Vec<StatusedTypeId> {
+pub fn analyze_parents(env: &Env, type_id: library::TypeId) -> (Vec<StatusedTypeId>, bool) {
     let mut parents = Vec::new();
+    let mut has_ignored_parents = false;
     let mut type_ = env.library.type_(type_id).to_class();
     while type_.parent.is_some() {
         let parent_id = type_.parent.unwrap();
@@ -27,10 +28,12 @@ pub fn analyze_parents(env: &Env, type_id: library::TypeId) -> Vec<StatusedTypeI
             status: gobject.status,
         });
 
+        if gobject.status == GStatus::Ignore { has_ignored_parents = true; }
+
         if gobject.last_parent { break }
 
         type_ = parent_type;
     }
 
-    parents
+    (parents, has_ignored_parents)
 }

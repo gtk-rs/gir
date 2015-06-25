@@ -18,3 +18,8 @@ status = "generate"
 name = "Gtk.Bin"
 type = "widget"
 status = "generate"
+
+[[object]]
+name = "Gtk.RadioButton"
+type = "widget"
+status = "generate"
