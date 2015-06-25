@@ -19,3 +19,15 @@ pub fn objects_child_type<W: Write>(w: &mut W, type_name: &str, glib_name: &str)
 
     Ok(())
 }
+
+pub fn impl_static_type<W: Write>(w: &mut W, type_name: &str, glib_func_name: &str) -> Result<()>{
+    try!(writeln!(w, ""));
+    try!(writeln!(w, "impl types::StaticType for {} {{", type_name));
+    try!(writeln!(w, "    #[inline]"));
+    try!(writeln!(w, "    fn static_type() -> types::Type {{"));
+    try!(writeln!(w, "        unsafe {{ from_glib(ffi::{}()) }}", glib_func_name));
+    try!(writeln!(w, "    }}"));
+    try!(writeln!(w, "}}"));
+
+    Ok(())
+}

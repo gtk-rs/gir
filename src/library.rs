@@ -159,6 +159,7 @@ pub struct Interface {
 pub struct Class {
     pub name: String,
     pub glib_name: String,
+    pub get_type_func_name: String,
     pub functions: Vec<Function>,
     pub parent: Option<TypeId>,
     pub implements: Vec<TypeId>,

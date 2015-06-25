@@ -140,6 +140,8 @@ impl Library {
     fn read_class(&mut self, parser: &mut Reader,
                   ns_id: u16, attrs: &Attributes) -> Result<(), Error> {
         let name = try!(attrs.get("name").ok_or_else(|| error!("Missing class name", parser)));
+        let get_type_func_name = try!(attrs.get("get-type")
+            .ok_or_else(|| error!("Missing get-type attribute", parser)));
         let mut fns = Vec::new();
         let mut impls = Vec::new();
         loop {
@@ -170,6 +172,7 @@ impl Library {
             Class {
                 name: name.into(),
                 glib_name: glib_name.into(),
+                get_type_func_name: get_type_func_name.into(),
                 functions: fns,
                 parent: parent,
                 implements: impls,
