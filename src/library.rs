@@ -490,16 +490,18 @@ impl Library {
     }
 
     fn fill_class_parents(&mut self) {
-        let mut tids = Vec::with_capacity(
-            self.namespaces.iter().fold(0, |sum, ns| sum + ns.types.len()));
+        let mut classes = Vec::new();
         for (ns_id, ns) in self.namespaces.iter().enumerate() {
             for id in 0..ns.types.len() {
-                tids.push(TypeId { ns_id: ns_id as u16, id: id as u32 });
+                let tid = TypeId { ns_id: ns_id as u16, id: id as u32 };
+                if let Type::Class(_) = *self.type_(tid) {
+                    classes.push(tid);
+                }
             }
         }
 
         let mut parents = Vec::with_capacity(10);
-        for tid in tids {
+        for tid in classes {
             parents.clear();
 
             if let Type::Class(ref klass) = *self.type_(tid) {
