@@ -9,11 +9,11 @@ pub fn generate<W: Write>(w: &mut W, env: &Env, class_analysis: &analysis::widge
 
     try!(general::start_comments(w));
     //TODO: uses
-    try!(general::objects_child_type(w, &class_analysis.type_name, &class_type.glib_name));
+    try!(general::objects_child_type(w, &class_analysis.type_name, &class_type.glib_type_name));
     //TODO: impl parents
     //TODO: impl interfaces
     //TODO: impl type
-    try!(general::impl_static_type(w, &class_analysis.type_name, &class_type.get_type_func_name));
+    try!(general::impl_static_type(w, &class_analysis.type_name, &class_type.glib_get_type));
     //TODO: ext trait
     //TODO: impl trait
 

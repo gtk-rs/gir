@@ -140,7 +140,7 @@ impl Library {
     fn read_class(&mut self, parser: &mut Reader,
                   ns_id: u16, attrs: &Attributes) -> Result<(), Error> {
         let name = try!(attrs.get("name").ok_or_else(|| error!("Missing class name", parser)));
-        let get_type_func_name = try!(attrs.get("get-type")
+        let get_type = try!(attrs.get("get-type")
             .ok_or_else(|| error!("Missing get-type attribute", parser)));
         let mut fns = Vec::new();
         let mut impls = Vec::new();
@@ -166,13 +166,13 @@ impl Library {
             }
         }
 
-        let glib_name = attrs.get("type-name").unwrap_or(name);
+        let type_name = attrs.get("type-name").unwrap_or(name);
         let parent = attrs.get("parent").map(|s| self.find_or_stub_type(ns_id, s));
         let typ = Type::Class(
             Class {
                 name: name.into(),
-                glib_name: glib_name.into(),
-                get_type_func_name: get_type_func_name.into(),
+                glib_type_name: type_name.into(),
+                glib_get_type : get_type.into(),
                 functions: fns,
                 parent: parent,
                 implements: impls,
@@ -208,11 +208,11 @@ impl Library {
             return Ok(());
         }
 
-        let glib_name = attrs.get("type-name").unwrap_or(name);
+        let type_name = attrs.get("type-name").unwrap_or(name);
         let typ = Type::Record(
             Record {
                 name: name.into(),
-                glib_name: glib_name.into(),
+                glib_type_name: type_name.into(),
                 functions: fns,
             });
         self.add_type(ns_id, name, typ);
@@ -247,11 +247,11 @@ impl Library {
             }
         }
 
-        let glib_name = attrs.get("type-name").unwrap_or(name);
+        let type_name = attrs.get("type-name").unwrap_or(name);
         let typ = Type::Union(
             Union {
                 name: name.into(),
-                glib_name: glib_name.into(),
+                glib_type_name: type_name.into(),
                 fields: fields,
                 functions: fns,
             });
@@ -323,11 +323,11 @@ impl Library {
             }
         }
 
-        let glib_name = attrs.get("type-name").unwrap_or(name);
+        let type_name = attrs.get("type-name").unwrap_or(name);
         let typ = Type::Interface(
             Interface {
                 name: name.into(),
-                glib_name: glib_name.into(),
+                glib_type_name: type_name.into(),
                 functions: fns,
             });
         self.add_type(ns_id, name, typ);
@@ -361,11 +361,11 @@ impl Library {
             }
         }
 
-        let glib_name = attrs.get("type-name").unwrap_or(name);
+        let type_name = attrs.get("type-name").unwrap_or(name);
         let typ = Type::Bitfield(
             Bitfield {
                 name: name.into(),
-                glib_name: glib_name.into(),
+                glib_type_name: type_name.into(),
                 members: members,
                 functions: fns,
             });
@@ -400,11 +400,11 @@ impl Library {
             }
         }
 
-        let glib_name = attrs.get("type-name").unwrap_or(name);
+        let type_name = attrs.get("type-name").unwrap_or(name);
         let typ = Type::Enumeration(
             Enumeration {
                 name: name.into(),
-                glib_name: glib_name.into(),
+                glib_type_name: type_name.into(),
                 members: members,
                 functions: fns,
             });

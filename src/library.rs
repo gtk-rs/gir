@@ -107,21 +107,21 @@ pub struct Member {
 
 pub struct Enumeration {
     pub name: String,
-    pub glib_name: String,
+    pub glib_type_name: String,
     pub members: Vec<Member>,
     pub functions: Vec<Function>,
 }
 
 pub struct Bitfield {
     pub name: String,
-    pub glib_name: String,
+    pub glib_type_name: String,
     pub members: Vec<Member>,
     pub functions: Vec<Function>,
 }
 
 pub struct Record {
     pub name: String,
-    pub glib_name: String,
+    pub glib_type_name: String,
     pub functions: Vec<Function>,
 }
 
@@ -132,7 +132,7 @@ pub struct Field {
 
 pub struct Union {
     pub name: String,
-    pub glib_name: String,
+    pub glib_type_name: String,
     pub fields: Vec<Field>,
     pub functions: Vec<Function>,
 }
@@ -152,14 +152,14 @@ pub struct Function {
 
 pub struct Interface {
     pub name: String,
-    pub glib_name: String,
+    pub glib_type_name: String,
     pub functions: Vec<Function>,
 }
 
 pub struct Class {
     pub name: String,
-    pub glib_name: String,
-    pub get_type_func_name: String,
+    pub glib_type_name: String,
+    pub glib_get_type: String,
     pub functions: Vec<Function>,
     pub parent: Option<TypeId>,
     pub implements: Vec<TypeId>,
