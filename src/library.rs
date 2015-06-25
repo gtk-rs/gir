@@ -519,6 +519,7 @@ impl Library {
     }
 }
 
+#[cfg(test)]
 mod tests {
     use super::*;
 
