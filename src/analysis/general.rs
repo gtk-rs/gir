@@ -1,37 +1,43 @@
-use std::vec::Vec;
-
-use env::Env;
 use gobjects::*;
-use library;
+use library::*;
 
 pub struct StatusedTypeId{
-    pub type_id: library::TypeId,
+    pub type_id: TypeId,
     pub name: String,
     pub status: GStatus,
 }
 
-pub fn analyze_parents(env: &Env, type_id: library::TypeId) -> (Vec<StatusedTypeId>, bool) {
-    let mut parents = Vec::new();
-    let mut has_ignored_parents = false;
-    let type_ = env.library.type_(type_id).to_class();
+pub fn widget_tid(library: &Library) -> TypeId {
+    library.find_type(0, "Gtk.Widget").unwrap_or_else(|| unreachable!())
+}
 
-    for &parent_tid in &type_.parents {
-        let parent_type = env.library.type_(parent_tid).to_class();
+pub trait IsWidget {
+    fn is_widget(&self, library: &Library) -> bool;
+}
 
-        let default_object: GObject = Default::default();
-        let gobject = env.config.objects.get(&parent_tid.full_name(&env.library))
-            .unwrap_or(&default_object);
-
-        parents.push(StatusedTypeId{
-            type_id: parent_tid,
-            name: parent_type.name.clone(),
-            status: gobject.status,
-        });
-
-        if gobject.status == GStatus::Ignore { has_ignored_parents = true; }
-
-        if gobject.last_parent { break }
+impl IsWidget for Class {
+    fn is_widget(&self, library: &Library) -> bool {
+        self.glib_type_name == "GtkWidget" || self.parents.contains(&widget_tid(&library))
     }
+}
 
-    (parents, has_ignored_parents)
+impl IsWidget for Type {
+    fn is_widget(&self, library: &Library) -> bool {
+        match self {
+            &Type::Class(ref klass) => klass.is_widget(&library),
+            _ => false,
+        }
+    }
+}
+
+impl IsWidget for TypeId {
+    fn is_widget(&self, library: &Library) -> bool {
+        library.type_(*self).is_widget(&library)
+    }
+}
+
+impl IsWidget for String {
+    fn is_widget(&self, library: &Library) -> bool {
+        library.find_type(0, self).unwrap().is_widget(library)
+    }
 }

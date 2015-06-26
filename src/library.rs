@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 use nameutil::split_namespace_name;
 
+#[derive(Debug)]
 pub enum Transfer {
     None,
     Container,
@@ -81,7 +82,8 @@ pub const FUNDAMENTAL: [(&'static str, Fundamental); 28] = [
     ("GType", Fundamental::Type),
 ];
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+//default = "*.None"
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct TypeId {
     ns_id: u16,
     id: u32,
