@@ -45,7 +45,7 @@ impl FromStr for GStatus {
 }
 
 /// Info about GObject descendant
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct GObject {
     pub name: String,
     pub gtype: GType,
@@ -53,13 +53,14 @@ pub struct GObject {
     pub last_parent: bool,
 }
 
-//TODO: make it const
-pub fn default_object() -> GObject {
-    GObject {
-        name: "Default".into(),
-        gtype: GType::Unknown,
-        status: GStatus::Ignore,
-        last_parent: false,
+impl Default for GObject {
+    fn default() -> GObject {
+        GObject {
+            name: "Default".into(),
+            gtype: GType::Unknown,
+            status: GStatus::Ignore,
+            last_parent: false,
+        }
     }
 }
 
