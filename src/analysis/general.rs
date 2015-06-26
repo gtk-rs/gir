@@ -18,7 +18,7 @@ pub fn analyze_parents(env: &Env, type_id: library::TypeId) -> (Vec<StatusedType
         let parent_id = type_.parent.unwrap();
         let parent_type = env.library.type_(parent_id).to_class();
 
-        let default_object = default_object();
+        let default_object: GObject = Default::default();
         let gobject = env.config.objects.get(&parent_id.full_name(&env.library))
             .unwrap_or(&default_object);
 
