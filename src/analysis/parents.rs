@@ -5,10 +5,9 @@ use super::general::StatusedTypeId;
 use gobjects::*;
 use library;
 
-pub fn analyze(env: &Env, type_id: library::TypeId) -> (Vec<StatusedTypeId>, bool) {
+pub fn analyze(env: &Env, type_: &library::Class) -> (Vec<StatusedTypeId>, bool) {
     let mut parents = Vec::new();
     let mut has_ignored_parents = false;
-    let type_ = env.library.type_(type_id).to_class();
 
     for &parent_tid in &type_.parents {
         let parent_type = env.library.type_(parent_tid).to_class();

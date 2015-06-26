@@ -5,26 +5,25 @@ target_path = "./gtk"
 
 [[object]]
 name = "Gtk.Widget"
-type = "widget"
 status = "manual"
 last_parent = true
 
 [[object]]
 name = "Gtk.Container"
-type = "widget"
 status = "generate"
 
 [[object]]
 name = "Gtk.Bin"
-type = "widget"
 status = "generate"
 
 [[object]]
 name = "Gtk.DrawingArea"
-type = "widget"
 status = "generate"
 
 [[object]]
 name = "Gtk.RadioButton"
-type = "widget"
 status = "generate"
+
+[[object]]
+name = "Gtk.Buildable"
+status = "manual"
