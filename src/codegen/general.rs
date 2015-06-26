@@ -35,11 +35,17 @@ pub fn impl_parents<W: Write>(w: &mut W, type_name: &str, parents: &Vec<Statused
 pub fn impl_static_type<W: Write>(w: &mut W, type_name: &str, glib_func_name: &str) -> Result<()>{
     try!(writeln!(w, ""));
     try!(writeln!(w, "impl types::StaticType for {} {{", type_name));
-    try!(writeln!(w, "    #[inline]"));
-    try!(writeln!(w, "    fn static_type() -> types::Type {{"));
-    try!(writeln!(w, "        unsafe {{ from_glib(ffi::{}()) }}", glib_func_name));
-    try!(writeln!(w, "    }}"));
+    try!(writeln!(w, "{}#[inline]", tabs(1)));
+    try!(writeln!(w, "{}fn static_type() -> types::Type {{", tabs(1)));
+    try!(writeln!(w, "{}unsafe {{ from_glib(ffi::{}()) }}", tabs(2), glib_func_name));
+    try!(writeln!(w, "{}}}", tabs(1)));
     try!(writeln!(w, "}}"));
 
     Ok(())
+}
+
+//TODO: convert to macro with usage
+//format!(indent!(5, "format:{}"), 6)
+pub fn tabs(num: i32) -> String {
+    (0..num).map(|_| "    ").collect::<String>()
 }
