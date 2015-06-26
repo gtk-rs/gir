@@ -20,6 +20,11 @@ type = "widget"
 status = "generate"
 
 [[object]]
+name = "Gtk.DrawingArea"
+type = "widget"
+status = "generate"
+
+[[object]]
 name = "Gtk.RadioButton"
 type = "widget"
 status = "generate"
