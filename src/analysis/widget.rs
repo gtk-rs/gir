@@ -2,7 +2,7 @@ use env::Env;
 use gobjects::*;
 use library;
 use nameutil::*;
-use super::general;
+use super::*;
 
 pub struct Info {
     pub full_name: String,
@@ -28,7 +28,7 @@ pub fn new(env: &Env, obj: &GObject) -> Info {
 
     let name = split_namespace_name(&full_name).1.into();
 
-    let (parents, has_ignored_parents) = general::analyze_parents(env, class_tid);
+    let (parents, has_ignored_parents) = parents::analyze(env, class_tid);
 
     Info {
         full_name: full_name,
