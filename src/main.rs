@@ -1,5 +1,8 @@
 extern crate case;
 extern crate docopt;
+extern crate env_logger;
+#[macro_use]
+extern crate log;
 extern crate xml;
 extern crate toml;
 
@@ -18,6 +21,8 @@ mod parser;
 
 #[cfg_attr(test, allow(dead_code))]
 fn main() {
+    env_logger::init().unwrap_or_else(|e| panic!("{}", e));
+
     let cfg = config::Config::new();
 
     let mut library = Library::new();
