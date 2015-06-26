@@ -86,15 +86,15 @@ impl Library {
                       attrs: &Attributes) -> Result<(), Error> {
         let name = try!(attrs.get("name").ok_or_else(|| error!("Missing namespace name", parser)));
         let ns_id = self.add_namespace(name);
-        //println!("Reading {}-{}", namespace, attrs.get("version").unwrap());
+        trace!("Reading {}-{}", name, attrs.get("version").unwrap());
         loop {
             let event = parser.next();
             match event {
                 StartElement { name, attributes, .. } => {
-                    //println!("<{} name={:?}>", name.local_name, attributes.get("name"));
+                    trace!("<{} name={:?}>", name.local_name, attributes.get("name"));
                     match name.local_name.as_ref() {
                         "class" => {
-                            //println!("class {}", attributes.get("name").unwrap());
+                            trace!("class {}", attributes.get("name").unwrap());
                             try!(self.read_class(parser, ns_id, &attributes));
                         }
                         "record" => {
@@ -125,7 +125,7 @@ impl Library {
                             try!(self.read_alias(parser, ns_id, &attributes));
                         }
                         _ => {
-                            println!("<{} name={:?}>", name.local_name, attributes.get("name"));
+                            warn!("<{} name={:?}>", name.local_name, attributes.get("name"));
                             try!(ignore_element(parser));
                         }
                     }
