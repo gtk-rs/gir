@@ -10,6 +10,10 @@ pub enum GStatus {
     Ignore,
 }
 
+impl Default for GStatus {
+    fn default() -> GStatus { GStatus::Ignore }
+}
+
 impl FromStr for GStatus {
     type Err = String;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
@@ -34,7 +38,7 @@ impl Default for GObject {
     fn default() -> GObject {
         GObject {
             name: "Default".into(),
-            status: GStatus::Ignore,
+            status: Default::default(),
         }
     }
 }
@@ -56,8 +60,8 @@ fn parse_object(toml_object: &Value) -> GObject {
         .as_str().unwrap().into();
 
     let status = match toml_object.lookup("status") {
-        Some(value) => GStatus::from_str(value.as_str().unwrap()).unwrap_or(GStatus::Ignore),
-        None => GStatus::Ignore,
+        Some(value) => GStatus::from_str(value.as_str().unwrap()).unwrap_or(Default::default()),
+        None => Default::default(),
     };
     GObject { name: name, status: status }
 }
