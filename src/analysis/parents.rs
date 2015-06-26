@@ -24,7 +24,7 @@ pub fn analyze(env: &Env, type_: &library::Class) -> (Vec<StatusedTypeId>, bool)
 
         if gobject.status == GStatus::Ignore { has_ignored_parents = true; }
 
-        if gobject.last_parent { break }
+        if parent_type.glib_type_name == "GtkWidget" { break }
     }
 
     (parents, has_ignored_parents)

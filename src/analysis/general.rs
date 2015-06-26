@@ -17,7 +17,7 @@ pub trait IsWidget {
 
 impl IsWidget for Class {
     fn is_widget(&self, library: &Library) -> bool {
-        self.parents.contains(&widget_tid(&library))
+        self.glib_type_name == "GtkWidget" || self.parents.contains(&widget_tid(&library))
     }
 }
 

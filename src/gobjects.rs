@@ -28,7 +28,6 @@ impl FromStr for GStatus {
 pub struct GObject {
     pub name: String,
     pub status: GStatus,
-    pub last_parent: bool,
 }
 
 impl Default for GObject {
@@ -36,11 +35,11 @@ impl Default for GObject {
         GObject {
             name: "Default".into(),
             status: GStatus::Ignore,
-            last_parent: false,
         }
     }
 }
 
+//TODO: ?change to HashMap<String, GStatus>
 pub type GObjects =  HashMap<String, GObject>;
 
 pub fn parse_toml(toml_objects: &Value) -> GObjects {
@@ -60,9 +59,5 @@ fn parse_object(toml_object: &Value) -> GObject {
         Some(value) => GStatus::from_str(value.as_str().unwrap()).unwrap_or(GStatus::Ignore),
         None => GStatus::Ignore,
     };
-    let last_parent = match toml_object.lookup("last_parent") {
-        Some(&Value::Boolean(b)) => b,
-        _ => false,
-    };
-    GObject { name: name, status: status, last_parent: last_parent }
+    GObject { name: name, status: status }
 }
