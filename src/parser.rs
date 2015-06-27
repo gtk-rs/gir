@@ -553,7 +553,7 @@ impl Library {
                                 return Err(error!("Too many <return-value> elements", parser));
                             }
                             ret = Some(try!(
-                                self.read_parameter(parser, ns_id, &attributes)));
+                                self.read_parameter(parser, ns_id, "return-value", &attributes)));
                         }
                         "doc" | "doc-deprecated" => try!(ignore_element(parser)),
                         x => return Err(error!(format!("Unexpected element <{}>", x), parser)),
@@ -585,9 +585,9 @@ impl Library {
             match event {
                 StartElement { name, attributes, .. } => {
                     match name.local_name.as_ref() {
-                        "parameter" | "instance-parameter"  => {
+                        kind @ "parameter" | kind @ "instance-parameter"  => {
                             let param = try!(
-                                self.read_parameter(parser, ns_id, &attributes));
+                                self.read_parameter(parser, ns_id, kind, &attributes));
                             params.push(param);
                         }
                         x => return Err(error!(format!("Unexpected element <{}>", x), parser)),
@@ -601,8 +601,9 @@ impl Library {
     }
 
     fn read_parameter(&mut self, parser: &mut Reader, ns_id: u16,
-                      attrs: &Attributes) -> Result<Parameter, Error> {
+                      kind_str: &str, attrs: &Attributes) -> Result<Parameter, Error> {
         let name = attrs.get("name").unwrap_or("");
+        let instance_parameter = kind_str == "instance-parameter";
         let transfer = try!(
             Transfer::from_str(attrs.get("transfer-ownership").unwrap_or("none"))
                 .map_err(|why| error!(why, parser)));
@@ -636,6 +637,7 @@ impl Library {
             Ok(Parameter {
                 name: name.into(),
                 typ: typ,
+                instance_parameter: instance_parameter,
                 transfer: transfer,
             })
         }
@@ -643,6 +645,7 @@ impl Library {
             Ok(Parameter {
                 name: "".into(),
                 typ: self.find_type(INTERNAL_NAMESPACE, "varargs").unwrap(),
+                instance_parameter: instance_parameter,
                 transfer: Transfer::None,
             })
         }

@@ -176,6 +176,7 @@ pub struct Union {
 pub struct Parameter {
     pub name: String,
     pub typ: TypeId,
+    pub instance_parameter: bool,
     pub transfer: Transfer,
 }
 
