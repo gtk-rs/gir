@@ -11,9 +11,11 @@ pub struct Info {
     pub kind: type_kind::TypeKind,
     pub name: String,
     pub parents: Vec<general::StatusedTypeId>,
+    pub has_children: bool,
     pub has_ignored_parents: bool,
     pub functions: Vec<functions::Info>,
     pub has_constructors: bool,
+    pub has_methods: bool,
 }
 
 impl Info {
@@ -28,6 +30,12 @@ impl Info {
     pub fn constructors(&self) -> Vec<&functions::Info> {
         self.functions.iter()
             .filter(|f| f.kind == library::FunctionKind::Constructor)
+            .collect()
+    }
+
+    pub fn methods(&self) -> Vec<&functions::Info> {
+        self.functions.iter()
+            .filter(|f| f.kind == library::FunctionKind::Method)
             .collect()
     }
 }
@@ -46,9 +54,12 @@ pub fn new(env: &Env, obj: &GObject) -> Info {
     let klass = type_.to_class();
     let (parents, has_ignored_parents) = parents::analyze(env, klass);
 
+    let has_children = klass.has_children;
+
     let functions = functions::analyze(env, klass, class_tid);
 
     let has_constructors = functions.iter().find(|f| f.kind == library::FunctionKind::Constructor).is_some();
+    let has_methods = functions.iter().find(|f| f.kind == library::FunctionKind::Method).is_some();
 
     Info {
         full_name: full_name,
@@ -56,8 +67,10 @@ pub fn new(env: &Env, obj: &GObject) -> Info {
         kind: kind,
         name: name,
         parents: parents,
+        has_children: has_children,
         has_ignored_parents: has_ignored_parents,
         functions: functions,
         has_constructors: has_constructors,
+        has_methods: has_methods,
     }
 }
