@@ -204,6 +204,7 @@ pub struct Class {
     pub functions: Vec<Function>,
     pub parent: Option<TypeId>,
     pub parents: Vec<TypeId>,
+    pub has_children: bool,
     pub implements: Vec<TypeId>,
 }
 
@@ -518,10 +519,10 @@ impl Library {
 
     pub fn fill_in(&mut self) {
         self.check_resolved();
-        self.fill_class_parents();
+        self.fill_class_relationships();
     }
 
-    fn fill_class_parents(&mut self) {
+    fn fill_class_relationships(&mut self) {
         let mut classes = Vec::new();
         for (ns_id, ns) in self.namespaces.iter().enumerate() {
             for id in 0..ns.types.len() {
@@ -536,8 +537,12 @@ impl Library {
         for tid in classes {
             parents.clear();
 
+            let mut first_parent_tid: Option<TypeId> = None;
             if let Type::Class(ref klass) = *self.type_(tid) {
                 let mut parent = klass.parent;
+                if let Some(parent_tid) = parent {
+                    first_parent_tid = Some(parent_tid);
+                }
                 while let Some(parent_tid) = parent {
                     parents.push(parent_tid);
                     parent = self.type_(parent_tid).to_class().parent;
@@ -546,6 +551,12 @@ impl Library {
 
             if let Type::Class(ref mut klass) = *self.type_mut(tid) {
                 parents.iter().map(|&tid| klass.parents.push(tid)).count();
+            }
+
+            if let Some(parent_tid) = first_parent_tid {
+                if let Type::Class(ref mut klass) = *self.type_mut(parent_tid) {
+                    klass.has_children = true;
+                }
             }
         }
     }
