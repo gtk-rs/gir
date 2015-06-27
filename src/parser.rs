@@ -1,6 +1,7 @@
 use std::io::BufReader;
 use std::fs::File;
 use std::path::PathBuf;
+use std::str::FromStr;
 use xml::attribute::OwnedAttribute;
 use xml::common::{Error, Position};
 use xml::name::OwnedName;
@@ -601,8 +602,8 @@ impl Library {
                       attrs: &Attributes) -> Result<Parameter, Error> {
         let name = attrs.get("name").unwrap_or("");
         let transfer = try!(
-            Transfer::by_name(attrs.get("transfer-ownership").unwrap_or("none"))
-                .ok_or_else(|| error!("Unknown ownership transfer mode", parser)));
+            Transfer::from_str(attrs.get("transfer-ownership").unwrap_or("none"))
+                .map_err(|why| error!(why, parser)));
         let mut typ = None;
         let mut varargs = false;
         loop {

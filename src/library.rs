@@ -1,21 +1,23 @@
 use std::collections::HashMap;
+use std::str::FromStr;
 use nameutil::split_namespace_name;
 
-#[derive(Debug)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum Transfer {
     None,
     Container,
     Full,
 }
 
-impl Transfer {
-    pub fn by_name(name: &str) -> Option<Transfer> {
+impl FromStr for Transfer {
+    type Err = String;
+    fn from_str(name: &str) -> Result<Transfer, String> {
         use self::Transfer::*;
         match name {
-            "none" => Some(None),
-            "container" => Some(Container),
-            "full" => Some(Full),
-            _ => Option::None,
+            "none" => Ok(None),
+            "container" => Ok(Container),
+            "full" => Ok(Full),
+            _ => Err("Unknown ownership transfer mode".into()),
         }
     }
 }
