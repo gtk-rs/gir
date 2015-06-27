@@ -13,7 +13,7 @@ use library::*;
 type Reader = EventReader<BufReader<File>>;
 type Attributes = Vec<OwnedAttribute>;
 
-macro_rules! error {
+macro_rules! mk_error {
     ($msg:expr, $obj:expr) => (
         Error::new($obj, format!("{}:{} {}", file!(), line!(), $msg))
     )
@@ -23,7 +23,7 @@ macro_rules! xml_try {
     ($event:expr, $pos:expr) => (
         match $event {
             XmlEvent::Error(e) => return Err(e),
-            EndDocument => return Err(error!("Unexpected end of document", $pos)),
+            EndDocument => return Err(mk_error!("Unexpected end of document", $pos)),
             _ => (),
         }
     )
@@ -85,7 +85,7 @@ impl Library {
 
     fn read_namespace(&mut self, parser: &mut Reader,
                       attrs: &Attributes) -> Result<(), Error> {
-        let name = try!(attrs.get("name").ok_or_else(|| error!("Missing namespace name", parser)));
+        let name = try!(attrs.get("name").ok_or_else(|| mk_error!("Missing namespace name", parser)));
         let ns_id = self.add_namespace(name);
         trace!("Reading {}-{}", name, attrs.get("version").unwrap());
         loop {
@@ -140,9 +140,9 @@ impl Library {
 
     fn read_class(&mut self, parser: &mut Reader,
                   ns_id: u16, attrs: &Attributes) -> Result<(), Error> {
-        let name = try!(attrs.get("name").ok_or_else(|| error!("Missing class name", parser)));
+        let name = try!(attrs.get("name").ok_or_else(|| mk_error!("Missing class name", parser)));
         let get_type = try!(attrs.get("get-type")
-            .ok_or_else(|| error!("Missing get-type attribute", parser)));
+            .ok_or_else(|| mk_error!("Missing get-type attribute", parser)));
         let mut fns = Vec::new();
         let mut impls = Vec::new();
         loop {
@@ -159,7 +159,7 @@ impl Library {
                         "field" | "property"
                             | "signal" | "virtual-method" => try!(ignore_element(parser)),
                         "doc" | "doc-deprecated" => try!(ignore_element(parser)),
-                        x => return Err(error!(format!("Unexpected element <{}>", x), parser)),
+                        x => return Err(mk_error!(format!("Unexpected element <{}>", x), parser)),
                     }
                 }
                 EndElement { .. } => break,
@@ -185,7 +185,7 @@ impl Library {
 
     fn read_record(&mut self, parser: &mut Reader,
                   ns_id: u16, attrs: &Attributes) -> Result<(), Error> {
-        let name = try!(attrs.get("name").ok_or_else(|| error!("Missing record name", parser)));
+        let name = try!(attrs.get("name").ok_or_else(|| mk_error!("Missing record name", parser)));
         let mut fns = Vec::new();
         loop {
             let event = parser.next();
@@ -198,7 +198,7 @@ impl Library {
                         }
                         "field" | "union" => try!(ignore_element(parser)),
                         "doc" | "doc-deprecated" => try!(ignore_element(parser)),
-                        x => return Err(error!(format!("Unexpected element <{}>", x), parser)),
+                        x => return Err(mk_error!(format!("Unexpected element <{}>", x), parser)),
                     }
                 }
                 EndElement { .. } => break,
@@ -223,7 +223,7 @@ impl Library {
 
     fn read_union(&mut self, parser: &mut Reader,
                   ns_id: u16, attrs: &Attributes) -> Result<(), Error> {
-        let name = try!(attrs.get("name").ok_or_else(|| error!("Missing union name", parser)));
+        let name = try!(attrs.get("name").ok_or_else(|| mk_error!("Missing union name", parser)));
         let mut fields = Vec::new();
         let mut fns = Vec::new();
         loop {
@@ -241,7 +241,7 @@ impl Library {
                         }
                         "record" => try!(ignore_element(parser)),
                         "doc" | "doc-deprecated" => try!(ignore_element(parser)),
-                        x => return Err(error!(format!("Unexpected element <{}>", x), parser)),
+                        x => return Err(mk_error!(format!("Unexpected element <{}>", x), parser)),
                     }
                 }
                 EndElement { .. } => break,
@@ -263,7 +263,7 @@ impl Library {
 
     fn read_field(&mut self, parser: &mut Reader, ns_id: u16,
                   attrs: &Attributes) -> Result<Field, Error> {
-        let name = try!(attrs.get("name").ok_or_else(|| error!("Missing field name", parser)));
+        let name = try!(attrs.get("name").ok_or_else(|| mk_error!("Missing field name", parser)));
         let mut typ = None;
         loop {
             let event = parser.next();
@@ -272,13 +272,13 @@ impl Library {
                     match name.local_name.as_ref() {
                         "type" | "array" => {
                             if typ.is_some() {
-                                return Err(error!("Too many <type> elements", parser));
+                                return Err(mk_error!("Too many <type> elements", parser));
                             }
                             typ = Some(try!(
                                 self.read_type(parser, ns_id, &name, &attributes)));
                         }
                         "doc" | "doc-deprecated" => try!(ignore_element(parser)),
-                        x => return Err(error!(format!("Unexpected element <{}>", x), parser)),
+                        x => return Err(mk_error!(format!("Unexpected element <{}>", x), parser)),
                     }
                 }
                 EndElement { .. } => break,
@@ -292,13 +292,13 @@ impl Library {
             })
         }
         else {
-            Err(error!("Missing <type> element", parser))
+            Err(mk_error!("Missing <type> element", parser))
         }
     }
 
     fn read_callback(&mut self, parser: &mut Reader, ns_id: u16,
                      attrs: &Attributes) -> Result<(), Error> {
-        let name = try!(attrs.get("name").ok_or_else(|| error!("Missing callback name", parser)));
+        let name = try!(attrs.get("name").ok_or_else(|| mk_error!("Missing callback name", parser)));
         let func = try!(self.read_function(parser, ns_id, "callback", attrs));
         let cb = Type::Callback(func);
         self.add_type(ns_id, name, cb);
@@ -307,7 +307,7 @@ impl Library {
 
     fn read_interface(&mut self, parser: &mut Reader,
                       ns_id: u16, attrs: &Attributes) -> Result<(), Error> {
-        let name = try!(attrs.get("name").ok_or_else(|| error!("Missing interface name", parser)));
+        let name = try!(attrs.get("name").ok_or_else(|| mk_error!("Missing interface name", parser)));
         let mut fns = Vec::new();
         loop {
             let event = parser.next();
@@ -338,7 +338,7 @@ impl Library {
 
     fn read_bitfield(&mut self, parser: &mut Reader, ns_id: u16,
                      attrs: &Attributes) -> Result<(), Error> {
-        let name = try!(attrs.get("name").ok_or_else(|| error!("Missing bitfield name", parser)));
+        let name = try!(attrs.get("name").ok_or_else(|| mk_error!("Missing bitfield name", parser)));
         let mut members = Vec::new();
         let mut fns = Vec::new();
         loop {
@@ -355,7 +355,7 @@ impl Library {
                                 self.read_function(parser, ns_id, kind, &attributes)));
                         }
                         "doc" | "doc-deprecated" => try!(ignore_element(parser)),
-                        x => return Err(error!(format!("Unexpected element <{}>", x), parser)),
+                        x => return Err(mk_error!(format!("Unexpected element <{}>", x), parser)),
                     }
                 }
                 EndElement { .. } => break,
@@ -377,7 +377,7 @@ impl Library {
 
     fn read_enumeration(&mut self, parser: &mut Reader, ns_id: u16,
                         attrs: &Attributes) -> Result<(), Error> {
-        let name = try!(attrs.get("name").ok_or_else(|| error!("Missing enumeration name", parser)));
+        let name = try!(attrs.get("name").ok_or_else(|| mk_error!("Missing enumeration name", parser)));
         let mut members = Vec::new();
         let mut fns = Vec::new();
         loop {
@@ -394,7 +394,7 @@ impl Library {
                                 self.read_function(parser, ns_id, kind, &attributes)));
                         }
                         "doc" | "doc-deprecated" => try!(ignore_element(parser)),
-                        x => return Err(error!(format!("Unexpected element <{}>", x), parser)),
+                        x => return Err(mk_error!(format!("Unexpected element <{}>", x), parser)),
                     }
                 }
                 EndElement { .. } => break,
@@ -423,8 +423,8 @@ impl Library {
 
     fn read_constant(&mut self, parser: &mut Reader, ns_id: u16,
                      attrs: &Attributes) -> Result<(), Error> {
-        let name = try!(attrs.get("name").ok_or_else(|| error!("Missing constant name", parser)));
-        let value = try!(attrs.get("value").ok_or_else(|| error!("Missing constant value", parser)));
+        let name = try!(attrs.get("name").ok_or_else(|| mk_error!("Missing constant name", parser)));
+        let value = try!(attrs.get("value").ok_or_else(|| mk_error!("Missing constant value", parser)));
         let mut typ = None;
         loop {
             let event = parser.next();
@@ -433,13 +433,13 @@ impl Library {
                     match name.local_name.as_ref() {
                         "type" | "array" => {
                             if typ.is_some() {
-                                return Err(error!("Too many <type> elements", parser));
+                                return Err(mk_error!("Too many <type> elements", parser));
                             }
                             typ = Some(try!(
                                 self.read_type(parser, ns_id, &name, &attributes)));
                         }
                         "doc" | "doc-deprecated" => try!(ignore_element(parser)),
-                        x => return Err(error!(format!("Unexpected element <{}>", x), parser)),
+                        x => return Err(mk_error!(format!("Unexpected element <{}>", x), parser)),
                     }
                 }
                 EndElement { .. } => break,
@@ -456,13 +456,13 @@ impl Library {
             Ok(())
         }
         else {
-            Err(error!("Missing <type> element", parser))
+            Err(mk_error!("Missing <type> element", parser))
         }
     }
 
     fn read_alias(&mut self, parser: &mut Reader, ns_id: u16,
                      attrs: &Attributes) -> Result<(), Error> {
-        let name = try!(attrs.get("name").ok_or_else(|| error!("Missing constant name", parser)));
+        let name = try!(attrs.get("name").ok_or_else(|| mk_error!("Missing constant name", parser)));
         let c_identifier = attrs.get("type").unwrap_or(name);
         let mut inner = None;
         loop {
@@ -472,13 +472,13 @@ impl Library {
                     match name.local_name.as_ref() {
                         "type" | "array" => {
                             if inner.is_some() {
-                                return Err(error!("Too many <type> elements", parser));
+                                return Err(mk_error!("Too many <type> elements", parser));
                             }
                             inner = Some(try!(
                                 self.read_type(parser, ns_id, &name, &attributes)));
                         }
                         "doc" | "doc-deprecated" => try!(ignore_element(parser)),
-                        x => return Err(error!(format!("Unexpected element <{}>", x), parser)),
+                        x => return Err(mk_error!(format!("Unexpected element <{}>", x), parser)),
                     }
                 }
                 EndElement { .. } => break,
@@ -496,13 +496,13 @@ impl Library {
             Ok(())
         }
         else {
-            Err(error!("Missing <type> element", parser))
+            Err(mk_error!("Missing <type> element", parser))
         }
     }
 
     fn read_member(&self, parser: &mut Reader, attrs: &Attributes) -> Result<Member, Error> {
-        let name = try!(attrs.get("name").ok_or_else(|| error!("Missing member name", parser)));
-        let value = try!(attrs.get("value").ok_or_else(|| error!("Missing member value", parser)));
+        let name = try!(attrs.get("name").ok_or_else(|| mk_error!("Missing member name", parser)));
+        let value = try!(attrs.get("value").ok_or_else(|| mk_error!("Missing member value", parser)));
         let c_identifier = attrs.get("identifier").map(|x| x.into());
         loop {
             let event = parser.next();
@@ -512,12 +512,12 @@ impl Library {
                         /*
                         ("attribute", Some("c:identifier")) => {
                             let value = try!(attributes.get("value")
-                                .ok_or_else(|| error!("Missing attribute value", parser)));
+                                .ok_or_else(|| mk_error!("Missing attribute value", parser)));
                             c_identifier = Some(value.into());
                         }
                         */
                         ("doc", _) | ("doc-deprecated", _) => try!(ignore_element(parser)),
-                        (x, _) => return Err(error!(format!("Unexpected element <{}>", x), parser)),
+                        (x, _) => return Err(mk_error!(format!("Unexpected element <{}>", x), parser)),
                     }
                 }
                 EndElement { .. } => break,
@@ -533,8 +533,8 @@ impl Library {
 
     fn read_function(&mut self, parser: &mut Reader, ns_id: u16,
                      kind_str: &str, attrs: &Attributes) -> Result<Function, Error> {
-        let name = try!(attrs.get("name").ok_or_else(|| error!("Missing function name", parser)));
-        let kind = try!(FunctionKind::from_str(kind_str).map_err(|why| error!(why, parser)));
+        let name = try!(attrs.get("name").ok_or_else(|| mk_error!("Missing function name", parser)));
+        let kind = try!(FunctionKind::from_str(kind_str).map_err(|why| mk_error!(why, parser)));
         let c_identifier = attrs.get("identifier").unwrap_or(name);
         let mut params = Vec::new();
         let mut ret = None;
@@ -550,13 +550,13 @@ impl Library {
                         }
                         "return-value" => {
                             if ret.is_some() {
-                                return Err(error!("Too many <return-value> elements", parser));
+                                return Err(mk_error!("Too many <return-value> elements", parser));
                             }
                             ret = Some(try!(
                                 self.read_parameter(parser, ns_id, "return-value", &attributes)));
                         }
                         "doc" | "doc-deprecated" => try!(ignore_element(parser)),
-                        x => return Err(error!(format!("Unexpected element <{}>", x), parser)),
+                        x => return Err(mk_error!(format!("Unexpected element <{}>", x), parser)),
                     }
                 }
                 EndElement { .. } => break,
@@ -573,7 +573,7 @@ impl Library {
             })
         }
         else {
-            Err(error!("Missing <return-value> element", parser))
+            Err(mk_error!("Missing <return-value> element", parser))
         }
     }
 
@@ -590,7 +590,7 @@ impl Library {
                                 self.read_parameter(parser, ns_id, kind, &attributes));
                             params.push(param);
                         }
-                        x => return Err(error!(format!("Unexpected element <{}>", x), parser)),
+                        x => return Err(mk_error!(format!("Unexpected element <{}>", x), parser)),
                     }
                 }
                 EndElement { .. } => break,
@@ -606,7 +606,7 @@ impl Library {
         let instance_parameter = kind_str == "instance-parameter";
         let transfer = try!(
             Transfer::from_str(attrs.get("transfer-ownership").unwrap_or("none"))
-                .map_err(|why| error!(why, parser)));
+                .map_err(|why| mk_error!(why, parser)));
         let nullable = to_bool(attrs.get("nullable").unwrap_or("none"));
         let allow_none = to_bool(attrs.get("allow-none").unwrap_or("none"));
         let mut typ = None;
@@ -618,7 +618,7 @@ impl Library {
                     match name.local_name.as_ref() {
                         "type" | "array" => {
                             if typ.is_some() {
-                                return Err(error!("Too many <type> elements", parser));
+                                return Err(mk_error!("Too many <type> elements", parser));
                             }
                             typ = Some(try!(
                                 self.read_type(parser, ns_id, &name, &attributes)));
@@ -628,7 +628,7 @@ impl Library {
                             try!(ignore_element(parser));
                         }
                         "doc" => try!(ignore_element(parser)),
-                        x => return Err(error!(format!("Unexpected element <{}>", x), parser)),
+                        x => return Err(mk_error!(format!("Unexpected element <{}>", x), parser)),
                     }
                 }
                 EndElement { .. } => break,
@@ -656,7 +656,7 @@ impl Library {
             })
         }
         else {
-            Err(error!("Missing <type> element", parser))
+            Err(mk_error!("Missing <type> element", parser))
         }
     }
 
@@ -668,7 +668,7 @@ impl Library {
                 "array"
             }
             else {
-                try!(attrs.get("name").ok_or_else(|| error!("Missing type name", &start_pos)))
+                try!(attrs.get("name").ok_or_else(|| mk_error!("Missing type name", &start_pos)))
             };
         let mut inner = Vec::new();
         loop {
@@ -680,7 +680,7 @@ impl Library {
                             inner.push(try!(
                                 self.read_type(parser, ns_id, &name, &attributes)));
                         }
-                        x => return Err(error!(format!("Unexpected element <{}>", x), parser)),
+                        x => return Err(mk_error!(format!("Unexpected element <{}>", x), parser)),
                     }
                 }
                 EndElement { .. } => break,
@@ -688,7 +688,7 @@ impl Library {
             }
         }
         if !inner.is_empty() {
-            Ok(try!(Type::container(self, name, inner).ok_or_else(|| error!("Unknown container type", &start_pos))))
+            Ok(try!(Type::container(self, name, inner).ok_or_else(|| mk_error!("Unknown container type", &start_pos))))
         }
         else {
             Ok(self.find_or_stub_type(ns_id, name))
