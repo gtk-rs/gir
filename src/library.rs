@@ -22,6 +22,30 @@ impl FromStr for Transfer {
     }
 }
 
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum FunctionKind {
+    Constructor,
+    Function,
+    Method,
+    Callback,
+    Global,
+}
+
+impl FromStr for FunctionKind {
+    type Err = String;
+    fn from_str(name: &str) -> Result<FunctionKind, String> {
+        use self::FunctionKind::*;
+        match name {
+            "constructor" => Ok(Constructor),
+            "function" => Ok(Function),
+            "method" => Ok(Method),
+            "callback" => Ok(Callback),
+            "global" => Ok(Global),
+            _ => Err("Unknown function kind".into()),
+        }
+    }
+}
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Fundamental {
     None,
@@ -158,6 +182,7 @@ pub struct Parameter {
 pub struct Function {
     pub name: String,
     pub c_identifier: String,
+    pub kind: FunctionKind,
     pub parameters: Vec<Parameter>,
     pub ret: Parameter,
 }

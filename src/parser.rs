@@ -150,8 +150,8 @@ impl Library {
             match event {
                 StartElement { name, attributes, .. } => {
                     match name.local_name.as_ref() {
-                        "constructor" | "function" | "method" => {
-                            fns.push(try!(self.read_function(parser, ns_id, &attributes)));
+                        kind @ "constructor" | kind @ "function" | kind @ "method" => {
+                            fns.push(try!(self.read_function(parser, ns_id, kind, &attributes)));
                         }
                         "implements" => {
                             impls.push(try!(self.read_type(parser, ns_id, &name, &attributes)));
@@ -192,9 +192,9 @@ impl Library {
             match event {
                 StartElement { name, attributes, .. } => {
                     match name.local_name.as_ref() {
-                        "constructor" | "function" | "method" => {
+                        kind @ "constructor" | kind @ "function" | kind @ "method" => {
                             fns.push(try!(
-                                self.read_function(parser, ns_id, &attributes)));
+                                self.read_function(parser, ns_id, kind, &attributes)));
                         }
                         "field" | "union" => try!(ignore_element(parser)),
                         "doc" | "doc-deprecated" => try!(ignore_element(parser)),
@@ -235,9 +235,9 @@ impl Library {
                             fields.push(try!(
                                 self.read_field(parser, ns_id, &attributes)));
                         }
-                        "constructor" | "function" | "method" => {
+                        kind @ "constructor" | kind @ "function" | kind @ "method" => {
                             fns.push(try!(
-                                self.read_function(parser, ns_id, &attributes)));
+                                self.read_function(parser, ns_id, kind, &attributes)));
                         }
                         "record" => try!(ignore_element(parser)),
                         "doc" | "doc-deprecated" => try!(ignore_element(parser)),
@@ -299,7 +299,7 @@ impl Library {
     fn read_callback(&mut self, parser: &mut Reader, ns_id: u16,
                      attrs: &Attributes) -> Result<(), Error> {
         let name = try!(attrs.get("name").ok_or_else(|| error!("Missing callback name", parser)));
-        let func = try!(self.read_function(parser, ns_id, attrs));
+        let func = try!(self.read_function(parser, ns_id, "callback", attrs));
         let cb = Type::Callback(func);
         self.add_type(ns_id, name, cb);
         Ok(())
@@ -314,8 +314,8 @@ impl Library {
             match event {
                 StartElement { name, attributes, .. } => {
                     match name.local_name.as_ref() {
-                        "constructor" | "function" | "method" =>
-                            fns.push(try!( self.read_function(parser, ns_id, &attributes))),
+                        kind @ "constructor" | kind @ "function" | kind @ "method" =>
+                            fns.push(try!( self.read_function(parser, ns_id, kind, &attributes))),
                         "doc" | "doc-deprecated" => try!(ignore_element(parser)),
                         _ => try!(ignore_element(parser)),
                     }
@@ -350,9 +350,9 @@ impl Library {
                             members.push(try!(
                                 self.read_member(parser, &attributes)));
                         }
-                        "constructor" | "function" | "method" => {
+                        kind @ "constructor" | kind @ "function" | kind @ "method" => {
                             fns.push(try!(
-                                self.read_function(parser, ns_id, &attributes)));
+                                self.read_function(parser, ns_id, kind, &attributes)));
                         }
                         "doc" | "doc-deprecated" => try!(ignore_element(parser)),
                         x => return Err(error!(format!("Unexpected element <{}>", x), parser)),
@@ -389,9 +389,9 @@ impl Library {
                             members.push(try!(
                                 self.read_member(parser, &attributes)));
                         }
-                        "constructor" | "function" | "method" => {
+                        kind @ "constructor" | kind @ "function" | kind @ "method" => {
                             fns.push(try!(
-                                self.read_function(parser, ns_id, &attributes)));
+                                self.read_function(parser, ns_id, kind, &attributes)));
                         }
                         "doc" | "doc-deprecated" => try!(ignore_element(parser)),
                         x => return Err(error!(format!("Unexpected element <{}>", x), parser)),
@@ -416,7 +416,7 @@ impl Library {
 
     fn read_global_function(&mut self, parser: &mut Reader, ns_id: u16,
                             attrs: &Attributes) -> Result<(), Error> {
-        let func = try!(self.read_function(parser, ns_id, attrs));
+        let func = try!(self.read_function(parser, ns_id, "global", attrs));
         self.add_function(ns_id, func);
         Ok(())
     }
@@ -532,8 +532,9 @@ impl Library {
     }
 
     fn read_function(&mut self, parser: &mut Reader, ns_id: u16,
-                     attrs: &Attributes) -> Result<Function, Error> {
+                     kind_str: &str, attrs: &Attributes) -> Result<Function, Error> {
         let name = try!(attrs.get("name").ok_or_else(|| error!("Missing function name", parser)));
+        let kind = try!(FunctionKind::from_str(kind_str).map_err(|why| error!(why, parser)));
         let c_identifier = attrs.get("identifier").unwrap_or(name);
         let mut params = Vec::new();
         let mut ret = None;
@@ -566,6 +567,7 @@ impl Library {
             Ok(Function {
                 name: name.into(),
                 c_identifier: c_identifier.into(),
+                kind: kind,
                 parameters: params,
                 ret: ret,
             })
