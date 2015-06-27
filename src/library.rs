@@ -178,6 +178,8 @@ pub struct Parameter {
     pub typ: TypeId,
     pub instance_parameter: bool,
     pub transfer: Transfer,
+    pub nullable: bool,
+    pub allow_none: bool,
 }
 
 pub struct Function {

@@ -607,6 +607,8 @@ impl Library {
         let transfer = try!(
             Transfer::from_str(attrs.get("transfer-ownership").unwrap_or("none"))
                 .map_err(|why| error!(why, parser)));
+        let nullable = to_bool(attrs.get("nullable").unwrap_or("none"));
+        let allow_none = to_bool(attrs.get("allow-none").unwrap_or("none"));
         let mut typ = None;
         let mut varargs = false;
         loop {
@@ -639,6 +641,8 @@ impl Library {
                 typ: typ,
                 instance_parameter: instance_parameter,
                 transfer: transfer,
+                nullable: nullable,
+                allow_none: allow_none,
             })
         }
         else if varargs {
@@ -647,6 +651,8 @@ impl Library {
                 typ: self.find_type(INTERNAL_NAMESPACE, "varargs").unwrap(),
                 instance_parameter: instance_parameter,
                 transfer: Transfer::None,
+                nullable: nullable,
+                allow_none: allow_none,
             })
         }
         else {
@@ -721,4 +727,8 @@ fn make_file_name(dir: &str, name: &str) -> PathBuf {
     let name = format!("{}.gir", name);
     path.push(name);
     path
+}
+
+fn to_bool(s: &str) -> bool {
+    s == "1"
 }
