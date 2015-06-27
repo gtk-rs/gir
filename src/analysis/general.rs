@@ -38,6 +38,6 @@ impl IsWidget for TypeId {
 
 impl IsWidget for String {
     fn is_widget(&self, library: &Library) -> bool {
-        library.find_type(0, self).unwrap().is_widget(library)
+        library.find_type_unwrapped(0, self, "Type").is_widget(library)
     }
 }
