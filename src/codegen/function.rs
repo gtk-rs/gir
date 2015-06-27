@@ -5,10 +5,10 @@ use library;
 use super::general::tabs;
 
 pub fn generate<W: Write>(w: &mut W, analysis: &analysis::functions::Info,
-    is_pub: bool, only_declaration: bool, indent: i32) -> Result<()> {
+    in_trait: bool, only_declaration: bool, indent: i32) -> Result<()> {
 
     let comment_prefix = if analysis.comented { "//" } else { "" };
-    let pub_prefix = if is_pub { "pub " } else { "" };
+    let pub_prefix = if in_trait { "" } else { "pub " };
     let declaration = declaration(analysis);
     let suffix = if only_declaration { ";" } else { " {" };
 

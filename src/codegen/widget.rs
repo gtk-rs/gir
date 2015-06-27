@@ -24,12 +24,12 @@ pub fn generate<W: Write>(w: &mut W, env: &Env, analysis: &analysis::widget::Inf
         try!(writeln!(w, ""));
         try!(writeln!(w, "impl {} {{", analysis.name));
         for func_analysis in &analysis.constructors() {
-            try!(function::generate(w, func_analysis, true, false, 1));
+            try!(function::generate(w, func_analysis, false, false, 1));
         }
 
         if !analysis.has_children {
             for func_analysis in &analysis.methods() {
-                try!(function::generate(w, func_analysis, true, false, 1));
+                try!(function::generate(w, func_analysis, false, false, 1));
             }
         }
         try!(writeln!(w, "}}"));
@@ -40,14 +40,14 @@ pub fn generate<W: Write>(w: &mut W, env: &Env, analysis: &analysis::widget::Inf
         try!(writeln!(w, ""));
         try!(writeln!(w, "pub trait {}Ext {{", analysis.name));
         for func_analysis in &analysis.methods() {
-            try!(function::generate(w, func_analysis, false, true, 1));
+            try!(function::generate(w, func_analysis, true, true, 1));
         }
         try!(writeln!(w, "}}"));
 
         try!(writeln!(w, ""));
         try!(writeln!(w, "impl<O: Upcast<{}>> {}Ext for O {{", analysis.name, analysis.name));
         for func_analysis in &analysis.methods() {
-            try!(function::generate(w, func_analysis, false, false, 1));
+            try!(function::generate(w, func_analysis, true, false, 1));
         }
         try!(writeln!(w, "}}"));
     }
