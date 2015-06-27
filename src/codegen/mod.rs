@@ -1,5 +1,6 @@
 use env::Env;
 
+mod function;
 mod general;
 mod widget;
 mod widgets;

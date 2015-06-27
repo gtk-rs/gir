@@ -2,18 +2,26 @@ use std::io::{Result, Write};
 
 use analysis;
 use env::Env;
-use super::general;
+use super::{function, general};
 
-pub fn generate<W: Write>(w: &mut W, env: &Env, class_analysis: &analysis::widget::Info) -> Result<()>{
-    let class_type = class_analysis.type_(&env.library);
+pub fn generate<W: Write>(w: &mut W, env: &Env, analysis: &analysis::widget::Info) -> Result<()>{
+    let type_ = analysis.type_(&env.library);
 
     try!(general::start_comments(w));
     //TODO: uses
-    try!(general::objects_child_type(w, &class_analysis.name, &class_type.glib_type_name));
-    try!(general::impl_parents(w, &class_analysis.name, &class_analysis.parents));
+    try!(general::objects_child_type(w, &analysis.name, &type_.glib_type_name));
+    try!(general::impl_parents(w, &analysis.name, &analysis.parents));
     //TODO: impl interfaces
-    //TODO: impl type
-    try!(general::impl_static_type(w, &class_analysis.name, &class_type.glib_get_type));
+    if analysis.has_constructors {
+        try!(writeln!(w, ""));
+        try!(writeln!(w, "impl {} {{", analysis.name));
+        for func_analysis in &analysis.constructors() {
+            try!(function::generate(w, func_analysis, true, false, 1));
+        }
+        //TODO: methods for unchildless
+        try!(writeln!(w, "}}"));
+    }
+    try!(general::impl_static_type(w, &analysis.name, &type_.glib_get_type));
     //TODO: ext trait
     //TODO: impl trait
 

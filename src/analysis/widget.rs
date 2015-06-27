@@ -12,6 +12,8 @@ pub struct Info {
     pub name: String,
     pub parents: Vec<general::StatusedTypeId>,
     pub has_ignored_parents: bool,
+    pub functions: Vec<functions::Info>,
+    pub has_constructors: bool,
 }
 
 impl Info {
@@ -20,6 +22,13 @@ impl Info {
         let type_ = library.type_(self.class_tid).as_class()
             .unwrap_or_else(|| panic!("{} is not a class.", self.full_name));
         type_
+    }
+
+    ///TODO: return iterator
+    pub fn constructors(&self) -> Vec<&functions::Info> {
+        self.functions.iter()
+            .filter(|f| f.kind == library::FunctionKind::Constructor)
+            .collect()
     }
 }
 
@@ -37,6 +46,10 @@ pub fn new(env: &Env, obj: &GObject) -> Info {
     let klass = type_.to_class();
     let (parents, has_ignored_parents) = parents::analyze(env, klass);
 
+    let functions = functions::analyze(env, klass, class_tid);
+
+    let has_constructors = functions.iter().find(|f| f.kind == library::FunctionKind::Constructor).is_some();
+
     Info {
         full_name: full_name,
         class_tid: class_tid,
@@ -44,5 +57,7 @@ pub fn new(env: &Env, obj: &GObject) -> Info {
         name: name,
         parents: parents,
         has_ignored_parents: has_ignored_parents,
+        functions: functions,
+        has_constructors: has_constructors,
     }
 }
