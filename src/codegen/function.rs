@@ -1,4 +1,5 @@
 use std::io::{Result, Write};
+use std::fmt;
 
 use analysis;
 use library;
@@ -37,12 +38,17 @@ pub fn declaration(analysis: &analysis::functions::Info) -> String {
     format!("fn {}(TODO: Params){}", analysis.name, return_str)
 }
 
+macro_rules! write_to_vec(
+    ($dst:expr, $($arg:tt)*) => (
+        $dst.push(fmt::format(format_args!($($arg)*)))
+    )
+);
+
 pub fn body(analysis: &analysis::functions::Info) -> Vec<String> {
     let mut v: Vec<String> = Vec::new();
     //TODO: real generation
-    //TODO: use trait Write
-    v.push("unsafe {".into());
-    v.push(format!("{}TODO: call ffi:{}()", tabs(1), analysis.glib_name).into());
-    v.push("}".into());
+    write_to_vec!(v, "unsafe {{");
+    write_to_vec!(v, "{}TODO: call ffi:{}()", tabs(1), analysis.glib_name);
+    write_to_vec!(v, "}}");
     v
 }
