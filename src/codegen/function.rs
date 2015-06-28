@@ -16,9 +16,10 @@ pub fn generate<W: Write>(w: &mut W, analysis: &analysis::functions::Info,
         comment_prefix, pub_prefix, declaration, suffix));
 
     if !only_declaration {
-        try!(writeln!(w, "{}unsafe {{", tabs(indent + 1)));
-        try!(writeln!(w, "{}TODO: Body", tabs(indent + 2)));
-        try!(writeln!(w, "{}}}", tabs(indent + 1)));
+        let body = body(analysis);
+        for s in body {
+            try!(writeln!(w, "{}{}", tabs(indent + 1), s));
+        }
         try!(writeln!(w, "{}}}", tabs(indent)));
     }
 
@@ -34,4 +35,14 @@ pub fn declaration(analysis: &analysis::functions::Info) -> String {
         "TODO"
     };
     format!("fn {}(TODO: Params){}", analysis.name, return_str)
+}
+
+pub fn body(analysis: &analysis::functions::Info) -> Vec<String> {
+    let mut v: Vec<String> = Vec::new();
+    //TODO: real generation
+    //TODO: use trait Write
+    v.push("unsafe {".into());
+    v.push(format!("{}TODO: call ffi:{}()", tabs(1), analysis.glib_name).into());
+    v.push("}".into());
+    v
 }
