@@ -5,6 +5,7 @@ use nameutil::*;
 use super::*;
 use super::type_kind::*;
 
+#[derive(Default)]
 pub struct Info {
     pub full_name: String,
     pub class_tid: library::TypeId,
@@ -58,13 +59,10 @@ pub fn new(env: &Env, obj: &GObject) -> Info {
 
     let functions = functions::analyze(env, klass, class_tid);
 
-    let has_constructors = functions.iter().find(|f| f.kind == library::FunctionKind::Constructor).is_some();
-    let has_methods = functions.iter().find(|f| f.kind == library::FunctionKind::Method).is_some();
-
     let has_functions = functions.iter().find(|f| f.kind == library::FunctionKind::Function).is_some();
     assert!(!has_functions, "Widget {} has functions, to do functions code generation", full_name);
 
-    Info {
+    let mut info = Info {
         full_name: full_name,
         class_tid: class_tid,
         kind: kind,
@@ -73,7 +71,13 @@ pub fn new(env: &Env, obj: &GObject) -> Info {
         has_children: has_children,
         has_ignored_parents: has_ignored_parents,
         functions: functions,
-        has_constructors: has_constructors,
-        has_methods: has_methods,
-    }
+        .. Default::default()
+    };
+
+    let has_constructors = !info.constructors().is_empty();
+    let has_methods = !info.methods().is_empty();
+
+    info.has_constructors = has_constructors;
+    info.has_methods = has_methods;
+    info
 }
