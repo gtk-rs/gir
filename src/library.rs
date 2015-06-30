@@ -1,21 +1,47 @@
 use std::collections::HashMap;
+use std::str::FromStr;
 use nameutil::split_namespace_name;
 
-#[derive(Debug)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum Transfer {
     None,
     Container,
     Full,
 }
 
-impl Transfer {
-    pub fn by_name(name: &str) -> Option<Transfer> {
+impl FromStr for Transfer {
+    type Err = String;
+    fn from_str(name: &str) -> Result<Transfer, String> {
         use self::Transfer::*;
         match name {
-            "none" => Some(None),
-            "container" => Some(Container),
-            "full" => Some(Full),
-            _ => Option::None,
+            "none" => Ok(None),
+            "container" => Ok(Container),
+            "full" => Ok(Full),
+            _ => Err("Unknown ownership transfer mode".into()),
+        }
+    }
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum FunctionKind {
+    Constructor,
+    Function,
+    Method,
+    Callback,
+    Global,
+}
+
+impl FromStr for FunctionKind {
+    type Err = String;
+    fn from_str(name: &str) -> Result<FunctionKind, String> {
+        use self::FunctionKind::*;
+        match name {
+            "constructor" => Ok(Constructor),
+            "function" => Ok(Function),
+            "method" => Ok(Method),
+            "callback" => Ok(Callback),
+            "global" => Ok(Global),
+            _ => Err("Unknown function kind".into()),
         }
     }
 }
@@ -150,12 +176,16 @@ pub struct Union {
 pub struct Parameter {
     pub name: String,
     pub typ: TypeId,
+    pub instance_parameter: bool,
     pub transfer: Transfer,
+    pub nullable: bool,
+    pub allow_none: bool,
 }
 
 pub struct Function {
     pub name: String,
     pub c_identifier: String,
+    pub kind: FunctionKind,
     pub parameters: Vec<Parameter>,
     pub ret: Parameter,
 }
@@ -174,6 +204,7 @@ pub struct Class {
     pub functions: Vec<Function>,
     pub parent: Option<TypeId>,
     pub parents: Vec<TypeId>,
+    pub has_children: bool,
     pub implements: Vec<TypeId>,
 }
 
@@ -488,10 +519,10 @@ impl Library {
 
     pub fn fill_in(&mut self) {
         self.check_resolved();
-        self.fill_class_parents();
+        self.fill_class_relationships();
     }
 
-    fn fill_class_parents(&mut self) {
+    fn fill_class_relationships(&mut self) {
         let mut classes = Vec::new();
         for (ns_id, ns) in self.namespaces.iter().enumerate() {
             for id in 0..ns.types.len() {
@@ -506,8 +537,12 @@ impl Library {
         for tid in classes {
             parents.clear();
 
+            let mut first_parent_tid: Option<TypeId> = None;
             if let Type::Class(ref klass) = *self.type_(tid) {
                 let mut parent = klass.parent;
+                if let Some(parent_tid) = parent {
+                    first_parent_tid = Some(parent_tid);
+                }
                 while let Some(parent_tid) = parent {
                     parents.push(parent_tid);
                     parent = self.type_(parent_tid).to_class().parent;
@@ -516,6 +551,12 @@ impl Library {
 
             if let Type::Class(ref mut klass) = *self.type_mut(tid) {
                 parents.iter().map(|&tid| klass.parents.push(tid)).count();
+            }
+
+            if let Some(parent_tid) = first_parent_tid {
+                if let Type::Class(ref mut klass) = *self.type_mut(parent_tid) {
+                    klass.has_children = true;
+                }
             }
         }
     }

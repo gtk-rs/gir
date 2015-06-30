@@ -5,13 +5,18 @@ use nameutil::*;
 use super::*;
 use super::type_kind::*;
 
+#[derive(Default)]
 pub struct Info {
     pub full_name: String,
     pub class_tid: library::TypeId,
     pub kind: type_kind::TypeKind,
     pub name: String,
     pub parents: Vec<general::StatusedTypeId>,
+    pub has_children: bool,
     pub has_ignored_parents: bool,
+    pub functions: Vec<functions::Info>,
+    pub has_constructors: bool,
+    pub has_methods: bool,
 }
 
 impl Info {
@@ -20,6 +25,19 @@ impl Info {
         let type_ = library.type_(self.class_tid).as_class()
             .unwrap_or_else(|| panic!("{} is not a class.", self.full_name));
         type_
+    }
+
+    ///TODO: return iterator
+    pub fn constructors(&self) -> Vec<&functions::Info> {
+        self.functions.iter()
+            .filter(|f| f.kind == library::FunctionKind::Constructor)
+            .collect()
+    }
+
+    pub fn methods(&self) -> Vec<&functions::Info> {
+        self.functions.iter()
+            .filter(|f| f.kind == library::FunctionKind::Method)
+            .collect()
     }
 }
 
@@ -37,12 +55,29 @@ pub fn new(env: &Env, obj: &GObject) -> Info {
     let klass = type_.to_class();
     let (parents, has_ignored_parents) = parents::analyze(env, klass);
 
-    Info {
+    let has_children = klass.has_children;
+
+    let functions = functions::analyze(env, klass, class_tid);
+
+    let has_functions = functions.iter().find(|f| f.kind == library::FunctionKind::Function).is_some();
+    assert!(!has_functions, "Widget {} has functions, to do functions code generation", full_name);
+
+    let mut info = Info {
         full_name: full_name,
         class_tid: class_tid,
         kind: kind,
         name: name,
         parents: parents,
+        has_children: has_children,
         has_ignored_parents: has_ignored_parents,
-    }
+        functions: functions,
+        .. Default::default()
+    };
+
+    let has_constructors = !info.constructors().is_empty();
+    let has_methods = !info.methods().is_empty();
+
+    info.has_constructors = has_constructors;
+    info.has_methods = has_methods;
+    info
 }
