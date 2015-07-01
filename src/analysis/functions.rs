@@ -1,6 +1,7 @@
 use std::vec::Vec;
 
 use analysis::rust_type::ToRustType;
+use analysis::type_kind::{TypeKind, ToTypeKind};
 use env::Env;
 use library;
 
@@ -28,11 +29,19 @@ pub fn analyze(env: &Env, type_: &library::Class, class_tid: library::TypeId) ->
 fn analyze_function(env: &Env, type_: &library::Function, class_tid: library::TypeId) -> Info {
     let klass = env.library.type_(class_tid);
 
+    let mut commented = false;
+    {
+        let type_ret = env.library.type_(type_.ret.typ);
+        if type_ret.to_type_kind(&env.library) == TypeKind::Unknown {
+            commented = true;
+        }
+    }
+
     Info {
         name: type_.name.clone(),
         glib_name: type_.c_identifier.clone(),
         kind: type_.kind,
-        comented: false,
+        comented: commented,
         class_name: klass.to_rust_type(),
         ret: type_.ret.clone(),
     }

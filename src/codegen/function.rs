@@ -19,11 +19,18 @@ pub fn generate<W: Write>(w: &mut W, env: &Env, analysis: &analysis::functions::
         comment_prefix, pub_prefix, declaration, suffix));
 
     if !only_declaration {
-        let body = body(analysis);
-        for s in body {
-            try!(writeln!(w, "{}{}", tabs(indent + 1), s));
+        if analysis.comented {
+            try!(writeln!(w, "{}//{}unsafe {{ TODO: call ffi:{}() }}",
+                tabs(indent), tabs(1), analysis.glib_name));
+            try!(writeln!(w, "{}//}}", tabs(indent)));
         }
-        try!(writeln!(w, "{}}}", tabs(indent)));
+        else {
+            let body = body(analysis);
+            for s in body {
+                try!(writeln!(w, "{}{}", tabs(indent + 1), s));
+            }
+            try!(writeln!(w, "{}}}", tabs(indent)));
+        }
     }
 
     Ok(())
@@ -31,6 +38,7 @@ pub fn generate<W: Write>(w: &mut W, env: &Env, analysis: &analysis::functions::
 
 pub fn declaration(library: &library::Library, analysis: &analysis::functions::Info) -> String {
     let return_str = analysis.ret.to_return_value(library, analysis);
+    //TODO: Trait constraints
     format!("fn {}(TODO: Params){}", analysis.name, return_str)
 }
 
