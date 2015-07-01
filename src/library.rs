@@ -173,6 +173,7 @@ pub struct Union {
     pub functions: Vec<Function>,
 }
 
+#[derive(Clone)]
 pub struct Parameter {
     pub name: String,
     pub typ: TypeId,
@@ -233,21 +234,23 @@ impl Type {
             .unwrap_or_else(|| panic!("{} is not a class.", self.get_name()))
     }
 
+    //others that Library and Parser must use analysis::rust_type::ToRustType
     pub fn get_name(&self) -> String {
+        use self::Type::*;
         match self {
-            &Type::Fundamental(fund) => format!("{:?}", fund).into(),
-            &Type::Alias(ref alias) => alias.name.clone(),
-            &Type::Enumeration(ref enum_) => enum_.name.clone(),
-            &Type::Bitfield(ref bit_field) => bit_field.name.clone(),
-            &Type::Record(ref rec) => rec.name.clone(),
-            &Type::Union(ref union) => union.name.clone(),
-            &Type::Callback(ref func) => func.name.clone(),
-            &Type::Interface(ref interface) => interface.name.clone(),
-            &Type::Class(ref class) => class.name.clone(),
-            &Type::Array(type_id) => format!("Array {:?}", type_id),
-            &Type::HashTable(key_type_id, value_type_id) => format!("HashTable {:?}/{:?}", key_type_id, value_type_id),
-            &Type::List(type_id) => format!("List {:?}", type_id),
-            &Type::SList(type_id) => format!("SList {:?}", type_id),
+            &Fundamental(fund) => format!("{:?}", fund).into(),
+            &Alias(ref alias) => alias.name.clone(),
+            &Enumeration(ref enum_) => enum_.name.clone(),
+            &Bitfield(ref bit_field) => bit_field.name.clone(),
+            &Record(ref rec) => rec.name.clone(),
+            &Union(ref union) => union.name.clone(),
+            &Callback(ref func) => func.name.clone(),
+            &Interface(ref interface) => interface.name.clone(),
+            &Class(ref class) => class.name.clone(),
+            &Array(type_id) => format!("Array {:?}", type_id),
+            &HashTable(key_type_id, value_type_id) => format!("HashTable {:?}/{:?}", key_type_id, value_type_id),
+            &List(type_id) => format!("List {:?}", type_id),
+            &SList(type_id) => format!("SList {:?}", type_id),
         }
     }
 
