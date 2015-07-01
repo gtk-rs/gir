@@ -2,15 +2,17 @@ use std::io::{Result, Write};
 use std::fmt;
 
 use analysis;
+use env::Env;
 use library;
+use super::return_value::ToReturnValue;
 use super::general::tabs;
 
-pub fn generate<W: Write>(w: &mut W, analysis: &analysis::functions::Info,
+pub fn generate<W: Write>(w: &mut W, env: &Env, analysis: &analysis::functions::Info,
     in_trait: bool, only_declaration: bool, indent: i32) -> Result<()> {
 
     let comment_prefix = if analysis.comented { "//" } else { "" };
     let pub_prefix = if in_trait { "" } else { "pub " };
-    let declaration = declaration(analysis);
+    let declaration = declaration(&env.library, analysis);
     let suffix = if only_declaration { ";" } else { " {" };
 
     try!(writeln!(w, "{}{}{}{}{}", tabs(indent),
@@ -27,14 +29,8 @@ pub fn generate<W: Write>(w: &mut W, analysis: &analysis::functions::Info,
     Ok(())
 }
 
-pub fn declaration(analysis: &analysis::functions::Info) -> String {
-    //TODO: Optional constructors if any
-    //TODO: return values
-    let return_str = if analysis.kind == library::FunctionKind::Constructor {
-        " -> Self"  //TODO: actual type
-    } else {
-        "TODO"
-    };
+pub fn declaration(library: &library::Library, analysis: &analysis::functions::Info) -> String {
+    let return_str = analysis.ret.to_return_value(library, analysis);
     format!("fn {}(TODO: Params){}", analysis.name, return_str)
 }
 
