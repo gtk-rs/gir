@@ -1,5 +1,5 @@
 use env::Env;
-use gobjects::GObject;
+use gobjects::{GObject, GStatus};
 use library;
 use nameutil::*;
 use super::*;
@@ -54,7 +54,18 @@ pub fn new(env: &Env, obj: &GObject) -> Info {
     let klass = type_.to_class();
     let (parents, has_ignored_parents) = parents::analyze(env, klass);
 
-    let has_children = klass.has_children;
+    let mut has_children = false;
+
+    for child_tid in &klass.children {
+        let child_name = child_tid.full_name(&env.library);
+        let status = env.config.objects.get(&child_name)
+            .map(|o| o.status)
+            .unwrap_or(Default::default());
+        if status == GStatus::Manual || status == GStatus::Generate {
+            has_children = true;
+            break;
+        }
+    }
 
     let functions = functions::analyze(env, klass, class_tid);
 
