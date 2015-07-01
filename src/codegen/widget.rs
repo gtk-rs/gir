@@ -4,7 +4,7 @@ use analysis;
 use env::Env;
 use super::{function, general};
 
-pub fn generate<W: Write>(w: &mut W, env: &Env, analysis: &analysis::widget::Info) -> Result<()>{
+pub fn generate<W: Write>(w: &mut W, env: &Env, analysis: &analysis::object::Info) -> Result<()>{
     let type_ = analysis.type_(&env.library);
 
     let mut generate_impl = false;
