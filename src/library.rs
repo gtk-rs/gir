@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::str::FromStr;
 use nameutil::split_namespace_name;
 
@@ -109,7 +109,7 @@ pub const FUNDAMENTAL: [(&'static str, Fundamental); 28] = [
 ];
 
 //default = "*.None"
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq)]
 pub struct TypeId {
     ns_id: u16,
     id: u32,
@@ -205,7 +205,7 @@ pub struct Class {
     pub functions: Vec<Function>,
     pub parent: Option<TypeId>,
     pub parents: Vec<TypeId>,
-    pub has_children: bool,
+    pub children: HashSet<TypeId>,
     pub implements: Vec<TypeId>,
 }
 
@@ -558,7 +558,7 @@ impl Library {
 
             if let Some(parent_tid) = first_parent_tid {
                 if let Type::Class(ref mut klass) = *self.type_mut(parent_tid) {
-                    klass.has_children = true;
+                    klass.children.insert(tid);
                 }
             }
         }
