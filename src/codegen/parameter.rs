@@ -11,7 +11,8 @@ impl ToParameter for library::Parameter {
         if self.instance_parameter {
             "&self".into()
         } else {
-            //TODO: Out parameters. Ex. gtk_range_get_range_rect
+            //TODO: Rework out (without inout) parameters as return type, with checking that it last
+            //  Ex. gtk_range_get_range_rect, gtk_scale_get_layout_offsets
             //TODO: change Utf8 to &str for inputs
             let type_ = library.type_(self.typ);
             let type_name = type_.to_rust_type();
@@ -19,9 +20,16 @@ impl ToParameter for library::Parameter {
             let mut type_str = match kind {
                 TypeKind::Unknown => format!("/*Unknown kind*/{}", type_name),
                 TypeKind::Simple |
-                    TypeKind::Enumeration => type_name,
+                    TypeKind::Enumeration => if self.direction.is_out() {
+                        format!("&mut {}", type_name)
+                    } else { type_name },
 
-                _ => format!("&{}", type_name),
+                _ => if self.direction.is_out() {
+                        panic!("Out parameter '{}' for TypeKind::{:?} ", self.name, kind)
+                        //format!("&mut {}", type_name)
+                    } else {
+                        format!("&{}", type_name)
+                    },
             };
             if self.nullable {
                 type_str = format!("Option<{}>", type_str);

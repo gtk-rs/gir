@@ -30,6 +30,12 @@ pub enum ParameterDirection {
     Return,
 }
 
+impl ParameterDirection {
+    pub fn is_out(&self) -> bool {
+        self == &ParameterDirection::Out || self == &ParameterDirection::InOut
+    }
+}
+
 impl FromStr for ParameterDirection {
     type Err = String;
     fn from_str(name: &str) -> Result<ParameterDirection, String> {
