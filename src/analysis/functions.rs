@@ -1,6 +1,6 @@
 use std::vec::Vec;
 
-use analysis::rust_type::ToRustType;
+use analysis::rust_type::{Result, ToRustType};
 use analysis::type_kind::{TypeKind, ToTypeKind};
 use env::Env;
 use library;
@@ -10,7 +10,7 @@ pub struct Info {
     pub glib_name: String,
     pub kind: library::FunctionKind,
     pub comented: bool,
-    pub class_name: String,
+    pub class_name: Result,
     pub parameters: Vec<library::Parameter>,
     pub ret: library::Parameter,
 }
