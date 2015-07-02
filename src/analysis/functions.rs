@@ -11,7 +11,7 @@ pub struct Info {
     pub comented: bool,
     pub class_name: Result,
     pub parameters: Vec<library::Parameter>,
-    pub ret: library::Parameter,
+    pub ret: Option<library::Parameter>,
 }
 
 pub fn analyze(env: &Env, type_: &library::Class, class_tid: library::TypeId) -> Vec<Info> {
@@ -29,9 +29,12 @@ fn analyze_function(env: &Env, type_: &library::Function, class_tid: library::Ty
     let klass = env.library.type_(class_tid);
 
     let mut commented = false;
-    {
-        let type_ret = env.library.type_(type_.ret.typ);
-        let rust_type = type_ret.to_parameter_rust_type(type_.ret.direction);
+
+    let ret = if type_.ret.typ == Default::default() { None } else { Some(type_.ret.clone()) };
+
+    if let Some(ref ret_) = ret {
+        let type_ret = env.library.type_(ret_.typ);
+        let rust_type = type_ret.to_parameter_rust_type(ret_.direction);
         if rust_type.is_err() { commented = true; }
     }
 
@@ -50,6 +53,6 @@ fn analyze_function(env: &Env, type_: &library::Function, class_tid: library::Ty
         comented: commented,
         class_name: klass.to_rust_type(),
         parameters: type_.parameters.clone(),
-        ret: type_.ret.clone(),
+        ret: ret,
     }
 }

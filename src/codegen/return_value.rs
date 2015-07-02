@@ -18,13 +18,21 @@ impl ToReturnValue for library::Parameter {
             let kind = type_.to_type_kind(library);
             match kind {
                 TypeKind::Unknown => format_return(&format!("/*Unknown kind*/{}", name)),
-                TypeKind::None => String::new(),
                 //TODO: records as in gtk_container_get_path_for_child
                 TypeKind::Simple |
                     TypeKind::Enumeration => format_return(&name),
 
                 _ => format_return(&format!("Option<{}>", name)),
             }
+        }
+    }
+}
+
+impl ToReturnValue for Option<library::Parameter> {
+    fn to_return_value(&self, library: &library::Library, func: &analysis::functions::Info) -> String {
+        match self {
+            &Some(ref par) => par.to_return_value(library, func),
+            &None => String::new(),
         }
     }
 }
