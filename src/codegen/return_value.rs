@@ -20,7 +20,7 @@ impl ToReturnValue for library::Parameter {
                 TypeKind::None => String::new(),
                 //TODO: records as in gtk_container_get_path_for_child
                 TypeKind::Simple |
-                    TypeKind::Enumeration => format_return(&type_.to_rust_type()),
+                    TypeKind::Enumeration => format_return(&name),
 
                 _ => format_return(&format!("Option<{}>", name)),
             }

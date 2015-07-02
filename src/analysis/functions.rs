@@ -11,7 +11,7 @@ pub struct Info {
     pub kind: library::FunctionKind,
     pub comented: bool,
     pub class_name: String,
-    //TODO: parameters
+    pub parameters: Vec<library::Parameter>,
     pub ret: library::Parameter,
 }
 
@@ -37,12 +37,23 @@ fn analyze_function(env: &Env, type_: &library::Function, class_tid: library::Ty
         }
     }
 
+    //TODO: Check for bad parameters
+    for (pos, par) in type_.parameters.iter().enumerate() {
+        assert!(!par.instance_parameter || pos == 0,
+            "Wrong instance parameter in {}", type_.c_identifier);
+        let type_par = env.library.type_(par.typ);
+        if type_par.to_type_kind(&env.library) == TypeKind::Unknown {
+            commented = true;
+        }
+    }
+
     Info {
         name: type_.name.clone(),
         glib_name: type_.c_identifier.clone(),
         kind: type_.kind,
         comented: commented,
         class_name: klass.to_rust_type(),
+        parameters: type_.parameters.clone(),
         ret: type_.ret.clone(),
     }
 }
