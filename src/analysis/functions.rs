@@ -1,7 +1,6 @@
 use std::vec::Vec;
 
-use analysis::rust_type::{Result, ToRustType};
-use analysis::type_kind::{TypeKind, ToTypeKind};
+use analysis::rust_type::{Result, ToParameterRustType, ToRustType};
 use env::Env;
 use library;
 
@@ -32,19 +31,16 @@ fn analyze_function(env: &Env, type_: &library::Function, class_tid: library::Ty
     let mut commented = false;
     {
         let type_ret = env.library.type_(type_.ret.typ);
-        if type_ret.to_type_kind(&env.library) == TypeKind::Unknown {
-            commented = true;
-        }
+        let rust_type = type_ret.to_parameter_rust_type(type_.ret.direction);
+        if rust_type.is_err() { commented = true; }
     }
 
-    //TODO: Check for bad parameters
     for (pos, par) in type_.parameters.iter().enumerate() {
         assert!(!par.instance_parameter || pos == 0,
             "Wrong instance parameter in {}", type_.c_identifier);
         let type_par = env.library.type_(par.typ);
-        if type_par.to_type_kind(&env.library) == TypeKind::Unknown {
-            commented = true;
-        }
+        let rust_type = type_par.to_parameter_rust_type(par.direction);
+        if rust_type.is_err() { commented = true; }
     }
 
     Info {

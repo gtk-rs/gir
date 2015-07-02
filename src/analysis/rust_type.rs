@@ -25,6 +25,7 @@ impl ToRustType for library::Fundamental {
         let ok = |s: &str| Ok(s.into());
         let err = |s: &str| Err(s.into());
         match self {
+            &None => ok("()"),
             &Boolean => ok("bool"),
             &Int8 => ok("i8"),
             &UInt8 => ok("u8"),
