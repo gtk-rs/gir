@@ -609,6 +609,14 @@ impl Library {
                 .map_err(|why| mk_error!(why, parser)));
         let nullable = to_bool(attrs.get("nullable").unwrap_or("none"));
         let allow_none = to_bool(attrs.get("allow-none").unwrap_or("none"));
+        let direction = try!(
+            if kind_str == "return-value" {
+                Ok(ParameterDirection::Return)
+            } else {
+                ParameterDirection::from_str(attrs.get("direction").unwrap_or("in"))
+                    .map_err(|why| mk_error!(why, parser))
+            });
+
         let mut typ = None;
         let mut varargs = false;
         loop {
@@ -640,6 +648,7 @@ impl Library {
                 name: name.into(),
                 typ: typ,
                 instance_parameter: instance_parameter,
+                direction: direction,
                 transfer: transfer,
                 nullable: nullable,
                 allow_none: allow_none,
@@ -650,6 +659,7 @@ impl Library {
                 name: "".into(),
                 typ: self.find_type(INTERNAL_NAMESPACE, "varargs").unwrap(),
                 instance_parameter: instance_parameter,
+                direction: Default::default(),
                 transfer: Transfer::None,
                 nullable: nullable,
                 allow_none: allow_none,
