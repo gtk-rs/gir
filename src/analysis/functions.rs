@@ -26,23 +26,21 @@ pub fn analyze(env: &Env, type_: &library::Class, class_tid: library::TypeId) ->
 }
 
 fn analyze_function(env: &Env, type_: &library::Function, class_tid: library::TypeId) -> Info {
-    let klass = env.library.type_(class_tid);
+    let klass = env.type_(class_tid);
 
     let mut commented = false;
 
     let ret = if type_.ret.typ == Default::default() { None } else { Some(type_.ret.clone()) };
 
     if let Some(ref ret_) = ret {
-        let type_ret = env.library.type_(ret_.typ);
-        let rust_type = type_ret.to_parameter_rust_type(ret_.direction);
+        let rust_type = env.type_(ret_.typ).to_parameter_rust_type(ret_.direction);
         if rust_type.is_err() { commented = true; }
     }
 
     for (pos, par) in type_.parameters.iter().enumerate() {
         assert!(!par.instance_parameter || pos == 0,
             "Wrong instance parameter in {}", type_.c_identifier);
-        let type_par = env.library.type_(par.typ);
-        let rust_type = type_par.to_parameter_rust_type(par.direction);
+        let rust_type = env.type_(par.typ).to_parameter_rust_type(par.direction);
         if rust_type.is_err() { commented = true; }
     }
 
