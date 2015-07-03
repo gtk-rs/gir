@@ -21,6 +21,11 @@ impl ToRustType for library::Fundamental {
             &Int => "i32".into(),      //maybe dependent on target system
             &UInt => "i32".into(),     //maybe dependent on target system
 
+            &Float => "f32".into(),
+            &Double => "f64".into(),
+
+            &Utf8 => "String".into(),
+
             &Type => "Type".into(),
             &Unsupported => "Unsupported".into(),
             _ => format!("Fundamental: {:?}", self),

@@ -5,6 +5,7 @@ use analysis;
 use env::Env;
 use library;
 use super::return_value::ToReturnValue;
+use super::parameter::ToParameter;
 use super::general::tabs;
 
 pub fn generate<W: Write>(w: &mut W, env: &Env, analysis: &analysis::functions::Info,
@@ -38,8 +39,15 @@ pub fn generate<W: Write>(w: &mut W, env: &Env, analysis: &analysis::functions::
 
 pub fn declaration(library: &library::Library, analysis: &analysis::functions::Info) -> String {
     let return_str = analysis.ret.to_return_value(library, analysis);
+    let mut param_str = String::with_capacity(100);
+
+    for (pos, par) in analysis.parameters.iter().enumerate() {
+        if pos > 0 { param_str.push_str(", ") }
+        let s = par.to_parameter(library);
+        param_str.push_str(&s);
+    }
     //TODO: Trait constraints
-    format!("fn {}(TODO: Params){}", analysis.name, return_str)
+    format!("fn {}({}){}", analysis.name, param_str, return_str)
 }
 
 macro_rules! write_to_vec(

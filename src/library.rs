@@ -23,6 +23,39 @@ impl FromStr for Transfer {
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum ParameterDirection {
+    In,
+    Out,
+    InOut,
+    Return,
+}
+
+impl ParameterDirection {
+    pub fn is_out(&self) -> bool {
+        self == &ParameterDirection::Out || self == &ParameterDirection::InOut
+    }
+}
+
+impl FromStr for ParameterDirection {
+    type Err = String;
+    fn from_str(name: &str) -> Result<ParameterDirection, String> {
+        use self::ParameterDirection::*;
+        match name {
+            "in" => Ok(In),
+            "out" => Ok(Out),
+            "inout" => Ok(InOut),
+            _ => Err("Unknown parameter direction".into()),
+        }
+    }
+}
+
+impl Default for ParameterDirection {
+    fn default() -> ParameterDirection {
+        ParameterDirection::In
+    }
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum FunctionKind {
     Constructor,
     Function,
@@ -178,6 +211,7 @@ pub struct Parameter {
     pub name: String,
     pub typ: TypeId,
     pub instance_parameter: bool,
+    pub direction: ParameterDirection,
     pub transfer: Transfer,
     pub nullable: bool,
     pub allow_none: bool,
