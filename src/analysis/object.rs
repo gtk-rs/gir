@@ -46,7 +46,7 @@ pub fn new(env: &Env, obj: &GObject) -> Info {
 
     let class_tid = env.library.find_type_unwrapped(0, &full_name, "Class");
 
-    let type_ = env.library.type_(class_tid);
+    let type_ = env.type_(class_tid);
     let kind = type_.to_type_kind(&env.library);
 
     let name = split_namespace_name(&full_name).1.into();
