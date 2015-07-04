@@ -5,6 +5,7 @@ mod function_body;
 mod general;
 mod parameter;
 mod return_value;
+mod translate_from_glib;
 mod widget;
 mod widgets;
 

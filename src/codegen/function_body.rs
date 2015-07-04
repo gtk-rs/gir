@@ -11,6 +11,8 @@ macro_rules! write_to_vec(
 #[derive(Default, Debug)]
 pub struct Builder {
     glib_name: String,
+    from_glib_prefix: String,
+    from_glib_suffix: String,
 }
 
 impl Builder {
@@ -21,12 +23,21 @@ impl Builder {
         self.glib_name = name.into();
         self
     }
+    pub fn from_glib(&mut self, prefix_suffix: (String, String)) -> &mut Builder {
+        self.from_glib_prefix = prefix_suffix.0;
+        self.from_glib_suffix = prefix_suffix.1;
+        self
+    }
     pub fn generate(&self) -> Vec<String> {
         let mut v: Vec<String> = Vec::new();
-        //TODO: real generation
+        let unsafed = self.generate_unsafed();
         write_to_vec!(v, "unsafe {{");
-        write_to_vec!(v, "{}TODO: call ffi:{}()", tabs(1), self.glib_name);
+        write_to_vec!(v, "{}{}", tabs(1), unsafed);
         write_to_vec!(v, "}}");
         v
+    }
+    fn generate_unsafed(&self) -> String {
+        format!("{}ffi::{}(TODO:params){}", self.from_glib_prefix,
+            self.glib_name, self.from_glib_suffix)
     }
 }
