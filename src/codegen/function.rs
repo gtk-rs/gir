@@ -1,12 +1,12 @@
 use std::io::{Result, Write};
-use std::fmt;
 
 use analysis;
 use env::Env;
 use library;
-use super::return_value::ToReturnValue;
-use super::parameter::ToParameter;
+use super::function_body::Builder;
 use super::general::tabs;
+use super::parameter::ToParameter;
+use super::return_value::ToReturnValue;
 
 pub fn generate<W: Write>(w: &mut W, env: &Env, analysis: &analysis::functions::Info,
     in_trait: bool, only_declaration: bool, indent: i32) -> Result<()> {
@@ -50,17 +50,9 @@ pub fn declaration(library: &library::Library, analysis: &analysis::functions::I
     format!("fn {}({}){}", analysis.name, param_str, return_str)
 }
 
-macro_rules! write_to_vec(
-    ($dst:expr, $($arg:tt)*) => (
-        $dst.push(fmt::format(format_args!($($arg)*)))
-    )
-);
-
 pub fn body(analysis: &analysis::functions::Info) -> Vec<String> {
-    let mut v: Vec<String> = Vec::new();
-    //TODO: real generation
-    write_to_vec!(v, "unsafe {{");
-    write_to_vec!(v, "{}TODO: call ffi:{}()", tabs(1), analysis.glib_name);
-    write_to_vec!(v, "}}");
-    v
+    let mut builder = Builder::new();
+    builder.glib_name(&analysis.glib_name);
+
+    builder.generate()
 }
