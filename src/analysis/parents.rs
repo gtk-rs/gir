@@ -26,6 +26,7 @@ pub fn analyze(env: &Env, type_: &library::Class) -> (Vec<StatusedTypeId>, bool)
 
         if parent_type.glib_type_name == "GtkWidget" { break }
     }
+    parents.reverse();
 
     (parents, has_ignored_parents)
 }

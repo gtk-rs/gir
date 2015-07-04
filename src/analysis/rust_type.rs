@@ -37,7 +37,7 @@ impl ToRustType for library::Fundamental {
             &UInt64 => ok("u64"),
 
             &Int => ok("i32"),      //maybe dependent on target system
-            &UInt => ok("i32"),     //maybe dependent on target system
+            &UInt => ok("u32"),     //maybe dependent on target system
 
             &Float => ok("f32"),
             &Double => ok("f64"),
