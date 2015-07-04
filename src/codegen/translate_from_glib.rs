@@ -19,8 +19,9 @@ impl TranslateFromGlib for library::Parameter {
             }
         } else {
             match kind {
-                TypeKind::Simple => ("from_glib(".into(), ")".into()),
-                TypeKind::Enumeration => (String::new(), String::new()),
+                TypeKind::Converted => ("from_glib(".into(), ")".into()),
+                TypeKind::Direct |
+                    TypeKind::Enumeration => (String::new(), String::new()),
                 TypeKind::Object |
                     TypeKind::Widget => from_glib_xxx(self.transfer),
                 _ => ("TODO:".into(), String::new()),

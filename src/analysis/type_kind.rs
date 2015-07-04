@@ -3,10 +3,11 @@ use super::general::IsWidget;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum TypeKind {
-    Simple,     //coded with from_glib
+    Direct,     //coded without conversion
+    Converted,  //coded with from_glib
     Pointer,    //coded with from_glib_xxx
-    Object,
-    Interface,
+    Object,     //coded with from_glib_xxx
+    Interface,  //coded with from_glib_xxx
     Widget,     //coded with Widget::from_glib_xxx
     Enumeration,//coded without conversion
     Unknown,
@@ -24,25 +25,25 @@ impl ToTypeKind for Fundamental {
     fn to_type_kind(&self, _library: &Library) -> TypeKind {
         use library::Fundamental::*;
         match self {
-            &Boolean => TypeKind::Simple,
-            &Int8 => TypeKind::Simple,
-            &UInt8 => TypeKind::Simple,
-            &Int16 => TypeKind::Simple,
-            &UInt16 => TypeKind::Simple,
-            &Int32 => TypeKind::Simple,
-            &UInt32 => TypeKind::Simple,
-            &Int64 => TypeKind::Simple,
-            &UInt64 => TypeKind::Simple,
-            &Char => TypeKind::Simple,
-            &UChar => TypeKind::Simple,
-            &Int => TypeKind::Simple,
-            &UInt => TypeKind::Simple,
-            &Long => TypeKind::Simple,
-            &ULong => TypeKind::Simple,
-            &Size => TypeKind::Simple,
-            &SSize => TypeKind::Simple,
-            &Float => TypeKind::Simple,
-            &Double => TypeKind::Simple,
+            &Boolean => TypeKind::Converted,
+            &Int8 => TypeKind::Direct,
+            &UInt8 => TypeKind::Direct,
+            &Int16 => TypeKind::Direct,
+            &UInt16 => TypeKind::Direct,
+            &Int32 => TypeKind::Direct,
+            &UInt32 => TypeKind::Direct,
+            &Int64 => TypeKind::Direct,
+            &UInt64 => TypeKind::Direct,
+            &Char => TypeKind::Converted,
+            &UChar => TypeKind::Converted,
+            &Int => TypeKind::Direct,
+            &UInt => TypeKind::Direct,
+            &Long => TypeKind::Direct,
+            &ULong => TypeKind::Direct,
+            &Size => TypeKind::Direct,
+            &SSize => TypeKind::Direct,
+            &Float => TypeKind::Direct,
+            &Double => TypeKind::Direct,
             &UniChar => TypeKind::Unknown,
             &Pointer => TypeKind::Pointer,
             &VarArgs => TypeKind::Unknown,

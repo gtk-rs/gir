@@ -19,7 +19,8 @@ impl ToReturnValue for library::Parameter {
             match kind {
                 TypeKind::Unknown => format_return(&format!("/*Unknown kind*/{}", name)),
                 //TODO: records as in gtk_container_get_path_for_child
-                TypeKind::Simple |
+                TypeKind::Direct |
+                    TypeKind::Converted |
                     TypeKind::Enumeration => format_return(&name),
 
                 _ => format_return(&format!("Option<{}>", name)),
