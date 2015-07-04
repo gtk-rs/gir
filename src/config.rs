@@ -6,7 +6,7 @@ use toml;
 use gobjects;
 
 static USAGE: &'static str = "
-Usage: gir [-d <girs_dir>] [-o <target_path>] [<library>]
+Usage: gir [-d <girs_dir>] [-o <target_path>] [<library> <version>]
 
 Options:
     -d PATH             Directory for girs
@@ -17,6 +17,7 @@ Options:
 pub struct Config {
     pub girs_dir: String,
     pub library_name: String,
+    pub library_version: String,
     pub target_path: String,
     pub objects: gobjects::GObjects,
 }
@@ -42,6 +43,13 @@ impl Config {
             a => a
         };
 
+        let library_version = match args.get_str("<version>") {
+            "" => toml.lookup("options.version")
+                    .unwrap_or_else(|| panic!("No options.version in config"))
+                    .as_str().unwrap(),
+            a => a
+        };
+
         let target_path = match args.get_str("-o") {
             "" => toml.lookup("options.target_path")
                     .unwrap_or_else(|| panic!("No options.target_path in config"))
@@ -54,9 +62,14 @@ impl Config {
         Config {
             girs_dir: girs_dir.into(),
             library_name: library_name.into(),
+            library_version: library_version.into(),
             target_path: target_path.into(),
             objects: objects,
         }
+    }
+
+    pub fn library_full_name(&self) -> String {
+        format!("{}-{}", self.library_name, self.library_version)
     }
 }
 
