@@ -6,6 +6,7 @@ mod general;
 mod parameter;
 mod return_value;
 mod translate_from_glib;
+mod translate_to_glib;
 mod widget;
 mod widgets;
 

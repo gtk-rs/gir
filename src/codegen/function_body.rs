@@ -13,6 +13,7 @@ pub struct Builder {
     glib_name: String,
     from_glib_prefix: String,
     from_glib_suffix: String,
+    parameters: Vec<String>,
 }
 
 impl Builder {
@@ -28,6 +29,10 @@ impl Builder {
         self.from_glib_suffix = prefix_suffix.1;
         self
     }
+    pub fn parameter(&mut self, parameter: String) -> &mut Builder {
+        self.parameters.push(parameter);
+        self
+    }
     pub fn generate(&self) -> Vec<String> {
         let mut v: Vec<String> = Vec::new();
         let unsafed = self.generate_unsafed();
@@ -37,7 +42,8 @@ impl Builder {
         v
     }
     fn generate_unsafed(&self) -> String {
-        format!("{}ffi::{}(TODO:params){}", self.from_glib_prefix,
-            self.glib_name, self.from_glib_suffix)
+        let param_str = self.parameters.connect(", ");
+        format!("{}ffi::{}({}){}", self.from_glib_prefix,
+            self.glib_name, param_str, self.from_glib_suffix)
     }
 }

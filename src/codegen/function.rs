@@ -8,6 +8,7 @@ use super::general::tabs;
 use super::parameter::ToParameter;
 use super::return_value::ToReturnValue;
 use super::translate_from_glib::TranslateFromGlib;
+use super::translate_to_glib::TranslateToGlib;
 
 pub fn generate<W: Write>(w: &mut W, env: &Env, analysis: &analysis::functions::Info,
     in_trait: bool, only_declaration: bool, indent: i32) -> Result<()> {
@@ -27,7 +28,7 @@ pub fn generate<W: Write>(w: &mut W, env: &Env, analysis: &analysis::functions::
             try!(writeln!(w, "{}//}}", tabs(indent)));
         }
         else {
-            let body = body(&env.library, analysis);
+            let body = body(&env.library, analysis, in_trait);
             for s in body {
                 try!(writeln!(w, "{}{}", tabs(indent + 1), s));
             }
@@ -51,10 +52,17 @@ pub fn declaration(library: &library::Library, analysis: &analysis::functions::I
     format!("fn {}({}){}", analysis.name, param_str, return_str)
 }
 
-pub fn body(library: &library::Library, analysis: &analysis::functions::Info) -> Vec<String> {
+pub fn body(library: &library::Library, analysis: &analysis::functions::Info,
+    in_trait: bool) -> Vec<String> {
     let mut builder = Builder::new();
     builder.glib_name(&analysis.glib_name)
         .from_glib(analysis.ret.translate_from_glib_as_function(&library, &analysis));
+
+    //TODO: change to map on parameters with pass Vec<String> to builder
+    for par in &analysis.parameters {
+        let s = par.translate_to_glib(library, in_trait);
+        builder.parameter(s);
+    }
 
     builder.generate()
 }
