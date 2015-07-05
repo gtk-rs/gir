@@ -39,3 +39,7 @@ status = "generate"
 [[object]]
 name = "Gtk.Buildable"
 status = "manual"
+
+[[object]]
+name = "Gtk.Alignment"
+status = "generate"
