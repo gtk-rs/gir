@@ -1,4 +1,4 @@
-use analysis::type_kind::{TypeKind, ToTypeKind};
+use analysis::type_kind::TypeKind;
 use library;
 
 pub trait TranslateToGlib {
@@ -11,14 +11,14 @@ impl TranslateToGlib for library::Parameter {
             let upcast_str = if in_trait { ".upcast()" } else { "" };
             format!("self{}.to_glib_none().0", upcast_str)
         } else {
-            let kind = library.type_(self.typ).to_type_kind(library);
+            let kind = TypeKind::of(library, self.typ);
             match kind {
                 TypeKind::Converted => format_parameter(&self.name, "to_glib()"),
                 TypeKind::Pointer => format_parameter(&self.name, "to_glib_none().0"),
                 TypeKind::Direct |
                     TypeKind::Enumeration => self.name.clone(),
                 TypeKind::Object |
-                    TypeKind::Widget => to_glib_xxx(&self.name, self.transfer),
+                    TypeKind::SpecialType => to_glib_xxx(&self.name, self.transfer),
                 _ => format!("TODO:{}", self.name)
             }
         }

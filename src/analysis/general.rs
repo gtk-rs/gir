@@ -7,37 +7,19 @@ pub struct StatusedTypeId{
     pub status: GStatus,
 }
 
-pub fn widget_tid(library: &Library) -> TypeId {
-    library.find_type(0, "Gtk.Widget").unwrap_or_else(|| unreachable!())
+pub trait IsSpecialType {
+    fn is_special_type(&self) -> bool;
 }
 
-pub trait IsWidget {
-    fn is_widget(&self, library: &Library) -> bool;
-}
-
-impl IsWidget for Class {
-    fn is_widget(&self, library: &Library) -> bool {
-        self.glib_type_name == "GtkWidget" || self.parents.contains(&widget_tid(&library))
+impl IsSpecialType for Class {
+    fn is_special_type(&self) -> bool {
+        self.glib_type_name == "GtkWidget" || self.parents.contains(&SPECIAL_TYPE_ID)
     }
 }
 
-impl IsWidget for Type {
-    fn is_widget(&self, library: &Library) -> bool {
-        match self {
-            &Type::Class(ref klass) => klass.is_widget(&library),
-            _ => false,
-        }
-    }
-}
-
-impl IsWidget for TypeId {
-    fn is_widget(&self, library: &Library) -> bool {
-        library.type_(*self).is_widget(&library)
-    }
-}
-
-impl IsWidget for String {
-    fn is_widget(&self, library: &Library) -> bool {
-        library.find_type_unwrapped(0, self, "Type").is_widget(library)
+pub fn is_special_type(name: &str, library: &Library) -> bool {
+    match library.type_(library.find_type_unwrapped(0, name, "Type")) {
+        &Type::Class(ref klass) => klass.is_special_type(),
+        _ => false,
     }
 }

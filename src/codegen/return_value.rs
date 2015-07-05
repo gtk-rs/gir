@@ -1,6 +1,6 @@
 use analysis;
 use library;
-use analysis::type_kind::{TypeKind, ToTypeKind};
+use analysis::type_kind::TypeKind;
 use analysis::rust_type::{AsStr, parameter_rust_type};
 
 pub trait ToReturnValue {
@@ -12,10 +12,9 @@ impl ToReturnValue for library::Parameter {
         if func.kind == library::FunctionKind::Constructor {
             format_return(&func.class_name.as_str())
         } else {
-            let type_ = library.type_(self.typ);
             let rust_type = parameter_rust_type(library, self.typ, self.direction);
             let name = rust_type.as_str();
-            let kind = type_.to_type_kind(library);
+            let kind = TypeKind::of(library, self.typ);
             match kind {
                 TypeKind::Unknown => format_return(&format!("/*Unknown kind*/{}", name)),
                 //TODO: records as in gtk_container_get_path_for_child
