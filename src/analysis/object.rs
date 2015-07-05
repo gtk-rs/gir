@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 use env::Env;
 use gobjects::{GObject, GStatus};
 use library;
@@ -17,6 +19,7 @@ pub struct Info {
     pub functions: Vec<functions::Info>,
     pub has_constructors: bool,
     pub has_methods: bool,
+    pub used_types: HashSet<String>,
 }
 
 impl Info {
@@ -42,6 +45,7 @@ impl Info {
 }
 
 pub fn new(env: &Env, obj: &GObject) -> Info {
+    let mut used_types: HashSet<String> = HashSet::with_capacity(20);
     let full_name = obj.name.clone();
 
     let class_tid = env.library.find_type_unwrapped(0, &full_name, "Class");
@@ -52,7 +56,7 @@ pub fn new(env: &Env, obj: &GObject) -> Info {
     let name = split_namespace_name(&full_name).1.into();
 
     let klass = type_.to_class();
-    let (parents, has_ignored_parents) = parents::analyze(env, klass);
+    let (parents, has_ignored_parents) = parents::analyze(env, klass, &mut used_types);
 
     let mut has_children = false;
 
@@ -78,6 +82,7 @@ pub fn new(env: &Env, obj: &GObject) -> Info {
         has_children: has_children,
         has_ignored_parents: has_ignored_parents,
         functions: functions,
+        used_types: used_types,
         .. Default::default()
     };
 

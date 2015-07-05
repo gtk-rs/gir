@@ -1,3 +1,4 @@
+use std::collections::HashSet;
 use std::io::{Result, Write};
 
 use analysis::general::StatusedTypeId;
@@ -15,7 +16,7 @@ pub fn start_comments<W: Write>(w: &mut W) -> Result<()>{
     Ok(())
 }
 
-pub fn uses<W: Write>(w: &mut W) -> Result<()>{
+pub fn uses<W: Write>(w: &mut W, used_types: &HashSet<String>) -> Result<()>{
     let v = vec![
         "",
         "use glib::translate::*;",
@@ -28,7 +29,13 @@ pub fn uses<W: Write>(w: &mut W) -> Result<()>{
         try!(writeln!(w, "{}", s));
     }
 
-    //TODO: dynamic uses
+    let mut used_types: Vec<String> = used_types.iter()
+        .map(|s| s.clone()).collect();
+    used_types.sort_by(|a, b| a.cmp(b));
+
+    for name in used_types {
+        try!(writeln!(w, "use {};", name));
+    }
 
     Ok(())
 }
