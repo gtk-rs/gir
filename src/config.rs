@@ -6,7 +6,7 @@ use toml;
 use gobjects;
 
 static USAGE: &'static str = "
-Usage: gir [-d <girs_dir>] [-o <target_path>] [<library> <version>]
+Usage: gir [options] [<library> <version>]
 
 Options:
     -d PATH             Directory for girs
@@ -24,8 +24,9 @@ pub struct Config {
 
 impl Config {
     pub fn new() -> Config {
-        let args = Docopt::new(USAGE).unwrap()
-            .parse().unwrap_or_else(|e| e.exit());
+        let args = Docopt::new(USAGE)
+            .and_then(|dopt| dopt.parse())
+            .unwrap_or_else(|e| e.exit());
 
         let toml = read_toml("Gir.toml");
 
@@ -36,18 +37,18 @@ impl Config {
             a => a
         };
 
-        let library_name = match args.get_str("<library>") {
-            "" => toml.lookup("options.library")
+        let (library_name, library_version) =
+            match (args.get_str("<library>"), args.get_str("<version>")) {
+            ("", "") => (
+                toml.lookup("options.library")
                     .unwrap_or_else(|| panic!("No options.library in config"))
                     .as_str().unwrap(),
-            a => a
-        };
-
-        let library_version = match args.get_str("<version>") {
-            "" => toml.lookup("options.version")
+                toml.lookup("options.version")
                     .unwrap_or_else(|| panic!("No options.version in config"))
-                    .as_str().unwrap(),
-            a => a
+                    .as_str().unwrap()
+            ),
+            ("", _) | (_, "") => panic!("Library and version can not be specified separately"),
+            (a, b) => (a, b)
         };
 
         let target_path = match args.get_str("-o") {
