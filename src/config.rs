@@ -6,7 +6,7 @@ use toml;
 use gobjects;
 
 static USAGE: &'static str = "
-Usage: gir [-d <girs_dir>] [-o <target_path>] [<library>]
+Usage: gir [options] [<library> <version>]
 
 Options:
     -d PATH             Directory for girs
@@ -17,14 +17,16 @@ Options:
 pub struct Config {
     pub girs_dir: String,
     pub library_name: String,
+    pub library_version: String,
     pub target_path: String,
     pub objects: gobjects::GObjects,
 }
 
 impl Config {
     pub fn new() -> Config {
-        let args = Docopt::new(USAGE).unwrap()
-            .parse().unwrap_or_else(|e| e.exit());
+        let args = Docopt::new(USAGE)
+            .and_then(|dopt| dopt.parse())
+            .unwrap_or_else(|e| e.exit());
 
         let toml = read_toml("Gir.toml");
 
@@ -35,11 +37,18 @@ impl Config {
             a => a
         };
 
-        let library_name = match args.get_str("<library>") {
-            "" => toml.lookup("options.library")
+        let (library_name, library_version) =
+            match (args.get_str("<library>"), args.get_str("<version>")) {
+            ("", "") => (
+                toml.lookup("options.library")
                     .unwrap_or_else(|| panic!("No options.library in config"))
                     .as_str().unwrap(),
-            a => a
+                toml.lookup("options.version")
+                    .unwrap_or_else(|| panic!("No options.version in config"))
+                    .as_str().unwrap()
+            ),
+            ("", _) | (_, "") => panic!("Library and version can not be specified separately"),
+            (a, b) => (a, b)
         };
 
         let target_path = match args.get_str("-o") {
@@ -54,9 +63,14 @@ impl Config {
         Config {
             girs_dir: girs_dir.into(),
             library_name: library_name.into(),
+            library_version: library_version.into(),
             target_path: target_path.into(),
             objects: objects,
         }
+    }
+
+    pub fn library_full_name(&self) -> String {
+        format!("{}-{}", self.library_name, self.library_version)
     }
 }
 

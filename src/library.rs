@@ -144,8 +144,8 @@ pub const FUNDAMENTAL: [(&'static str, Fundamental); 28] = [
 //default = "*.None"
 #[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq)]
 pub struct TypeId {
-    ns_id: u16,
-    id: u32,
+    pub ns_id: u16,
+    pub id: u32,
 }
 
 impl TypeId {
@@ -437,6 +437,7 @@ impl Namespace {
 
 pub const INTERNAL_NAMESPACE_NAME: &'static str = "*";
 pub const INTERNAL_NAMESPACE: u16 = 0;
+pub const MAIN_NAMESPACE: u16 = 1;
 
 pub struct Library {
     pub namespaces: Vec<Namespace>,
@@ -444,16 +445,16 @@ pub struct Library {
 }
 
 impl Library {
-    pub fn new() -> Library {
+    pub fn new(main_namespace_name: &str) -> Library {
         let mut library = Library {
             namespaces: Vec::new(),
             index: HashMap::new(),
         };
         assert!(library.add_namespace(INTERNAL_NAMESPACE_NAME) == INTERNAL_NAMESPACE);
-        library.namespace_mut(INTERNAL_NAMESPACE).name = INTERNAL_NAMESPACE_NAME.into();
         for &(name, t) in &FUNDAMENTAL {
             library.add_type(INTERNAL_NAMESPACE, name, Type::Fundamental(t));
         }
+        assert!(library.add_namespace(main_namespace_name) == MAIN_NAMESPACE);
         library
     }
 
@@ -604,7 +605,7 @@ mod tests {
     use super::*;
 
     fn make_library() -> Library {
-        let mut lib = Library::new();
+        let mut lib = Library::new("Gtk");
         let glib_ns_id = lib.add_namespace("GLib");
         let gtk_ns_id = lib.add_namespace("Gtk");
         let object_tid = lib.add_type(glib_ns_id, "Object".into(), Type::Class(
