@@ -1,7 +1,7 @@
 use std::collections::HashSet;
 use std::vec::Vec;
 
-use analysis::rust_type::rust_type;
+use analysis::rust_type::used_rust_type;
 use env::Env;
 use super::general::StatusedTypeId;
 use gobjects::*;
@@ -24,7 +24,7 @@ pub fn analyze(env: &Env, type_: &library::Class, used_types: &mut HashSet<Strin
             name: parent_type.name.clone(),
             status: gobject.status,
         });
-        rust_type(&env.library, parent_tid).ok().map(|s| used_types.insert(s));
+        used_rust_type(&env.library, parent_tid).ok().map(|s| used_types.insert(s));
 
         if gobject.status == GStatus::Ignore { has_ignored_parents = true; }
 

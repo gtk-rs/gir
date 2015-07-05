@@ -58,6 +58,29 @@ pub fn rust_type(library: &library::Library, type_id: library::TypeId) -> Result
     }
 }
 
+pub fn used_rust_type(library: &library::Library, type_id: library::TypeId) -> Result {
+    use library::Type::*;
+    use library::Fundamental::*;
+    let rust_type = match library.type_(type_id) {
+        &Fundamental(fund) => {
+            match fund {
+                Type => Ok("Type".into()),
+                _ => Err("Don't need use".into()),
+            }
+        },
+        &Enumeration(ref enum_) => Ok(enum_.name.clone()),
+        &Interface(ref interface) => Ok(interface.name.clone()),
+        &Class(ref klass) => Ok(klass.name.clone()),
+        _ => Err("Don't need use".into()),
+    };
+    if type_id.ns_id == library::MAIN_NAMESPACE || type_id.ns_id == library::INTERNAL_NAMESPACE {
+        rust_type
+    } else {
+        rust_type.map(|s| format!("{}::{}",
+            module_name(&library.namespace(type_id.ns_id).name), s))
+    }
+}
+
 pub fn parameter_rust_type(library: &library::Library, type_id:library::TypeId, direction: library::ParameterDirection) -> Result {
     use library::Type::*;
     let type_ = library.type_(type_id);

@@ -71,7 +71,10 @@ pub fn new(env: &Env, obj: &GObject) -> Info {
         }
     }
 
-    let functions = functions::analyze(env, klass, class_tid);
+    let functions = functions::analyze(env, klass, class_tid, &mut used_types);
+
+    //don't `use` yourself
+    used_types.remove(&name);
 
     let mut info = Info {
         full_name: full_name,
