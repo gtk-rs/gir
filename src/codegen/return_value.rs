@@ -1,7 +1,7 @@
 use analysis;
 use library;
 use analysis::type_kind::{TypeKind, ToTypeKind};
-use analysis::rust_type::{AsStr, ToParameterRustType};
+use analysis::rust_type::{AsStr, parameter_rust_type};
 
 pub trait ToReturnValue {
     fn to_return_value(&self, library: &library::Library, func: &analysis::functions::Info) -> String;
@@ -13,7 +13,7 @@ impl ToReturnValue for library::Parameter {
             format_return(&func.class_name.as_str())
         } else {
             let type_ = library.type_(self.typ);
-            let rust_type = type_.to_parameter_rust_type(self.direction);
+            let rust_type = parameter_rust_type(library, self.typ, self.direction);
             let name = rust_type.as_str();
             let kind = type_.to_type_kind(library);
             match kind {
