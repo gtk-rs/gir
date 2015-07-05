@@ -5,7 +5,7 @@ use gobjects::{GObject, GStatus};
 use library;
 use nameutil::*;
 use super::*;
-use super::type_kind::ToTypeKind;
+use super::type_kind::TypeKind;
 
 #[derive(Default)]
 pub struct Info {
@@ -52,7 +52,7 @@ pub fn new(env: &Env, obj: &GObject) -> Info {
     let class_tid = env.library.find_type_unwrapped(0, &full_name, "Class");
 
     let type_ = env.type_(class_tid);
-    let kind = type_.to_type_kind(&env.library);
+    let kind = TypeKind::of(&env.library, class_tid);
 
     let name = split_namespace_name(&full_name).1.into();
 

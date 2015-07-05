@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 
 use analysis;
-use analysis::general::IsWidget;
+use analysis::general::is_widget;
 use env::Env;
 use file_saver::*;
 use gobjects::*;
@@ -11,7 +11,7 @@ pub fn generate(env: &Env) {
     let root_path = PathBuf::from(&env.config.target_path).join("src/widgets");
 
     for obj in env.config.objects.values() {
-        if obj.status != GStatus::Generate || !obj.name.is_widget(&env.library){
+        if obj.status != GStatus::Generate || !is_widget(&obj.name, &env.library){
             continue;
         }
 
