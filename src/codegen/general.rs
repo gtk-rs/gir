@@ -15,6 +15,24 @@ pub fn start_comments<W: Write>(w: &mut W) -> Result<()>{
     Ok(())
 }
 
+pub fn uses<W: Write>(w: &mut W) -> Result<()>{
+    let v = vec![
+        "",
+        "use glib::translate::*;",
+        "use glib::types;",
+        "use ffi;",
+        "",
+        "use object::*;",
+    ];
+    for s in v {
+        try!(writeln!(w, "{}", s));
+    }
+
+    //TODO: dynamic uses
+
+    Ok(())
+}
+
 pub fn objects_child_type<W: Write>(w: &mut W, type_name: &str, glib_name: &str) -> Result<()>{
     try!(writeln!(w, ""));
     try!(writeln!(w, "pub type {} = Object<ffi::{}>;", type_name, glib_name));
