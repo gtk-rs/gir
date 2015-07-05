@@ -44,7 +44,7 @@ pub fn rust_type(library: &library::Library, type_id: library::TypeId) -> Result
 
                 Utf8 => ok("String"),
 
-                Type => ok("Type"),
+                Type => ok("types::Type"),
                 Unsupported => err("Unsupported"),
                 _ => err(&format!("Fundamental: {:?}", fund)),
             }
@@ -60,14 +60,7 @@ pub fn rust_type(library: &library::Library, type_id: library::TypeId) -> Result
 
 pub fn used_rust_type(library: &library::Library, type_id: library::TypeId) -> Result {
     use library::Type::*;
-    use library::Fundamental::*;
     let rust_type = match library.type_(type_id) {
-        &Fundamental(fund) => {
-            match fund {
-                Type => Ok("Type".into()),
-                _ => Err("Don't need use".into()),
-            }
-        },
         &Enumeration(ref enum_) => Ok(enum_.name.clone()),
         &Interface(ref interface) => Ok(interface.name.clone()),
         &Class(ref klass) => Ok(klass.name.clone()),
