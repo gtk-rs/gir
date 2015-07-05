@@ -1,6 +1,6 @@
 use analysis;
 use analysis::rust_type::{AsStr, rust_type};
-use analysis::type_kind::{TypeKind, ToTypeKind};
+use analysis::type_kind::TypeKind;
 use library;
 
 pub trait TranslateFromGlib {
@@ -11,7 +11,7 @@ pub trait TranslateFromGlib {
 impl TranslateFromGlib for library::Parameter {
     fn translate_from_glib_as_function(&self,
         library: &library::Library, func: &analysis::functions::Info) -> (String, String) {
-        let kind = library.type_(self.typ).to_type_kind(library);
+        let kind = TypeKind::of(library, self.typ);
         if func.kind == library::FunctionKind::Constructor {
             let rust_type = rust_type(library, self.typ);
             if rust_type.as_str() != func.class_name.as_str() {
