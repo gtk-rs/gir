@@ -8,8 +8,7 @@ pub enum TypeKind {
     Pointer,    //coded with from_glib_xxx
     Object,     //coded with from_glib_xxx
     Interface,  //coded with from_glib_xxx
-    //TODO: dehardcode TranslateFromGlib
-    SpecialType,//coded with Widget::from_glib_xxx
+    SpecialType,//coded with <SpecialTypeRustName>::from_glib_xxx
     Enumeration,//coded without conversion
     Unknown,
 }

@@ -1,4 +1,5 @@
 use analysis;
+use analysis::rust_type::{AsStr, rust_type};
 use analysis::type_kind::TypeKind;
 use library;
 
@@ -13,8 +14,11 @@ impl TranslateFromGlib for library::Parameter {
         let kind = TypeKind::of(library, self.typ);
         if func.kind == library::FunctionKind::Constructor {
             match kind {
-                TypeKind::SpecialType => ("Widget::from_glib_none(".into(),
-                    ").downcast_unchecked()".into()),
+                TypeKind::SpecialType => (
+                    format!("{}::from_glib_none(",
+                        rust_type(library, library::SPECIAL_TYPE_ID).as_str()),
+                    ").downcast_unchecked()".into()
+                ),
                 _ => ("TODO:constructors_body ".into(), String::new())
             }
         } else {
