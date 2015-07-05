@@ -11,6 +11,7 @@ Usage: gir [options] [<library> <version>]
 Options:
     -d PATH             Directory for girs
     -o PATH             Target root path
+    -s NAME             Special type name without prefix
 ";
 
 #[derive(Debug)]
@@ -19,6 +20,7 @@ pub struct Config {
     pub library_name: String,
     pub library_version: String,
     pub target_path: String,
+    pub special_type: String,
     pub objects: gobjects::GObjects,
 }
 
@@ -58,6 +60,13 @@ impl Config {
             a => a
         };
 
+        let special_type = match args.get_str("-s") {
+            "" => toml.lookup("options.special_type")
+                    .unwrap_or_else(|| panic!("No options.special_type in config"))
+                    .as_str().unwrap(),
+            a => a
+        };
+
         let objects = gobjects::parse_toml(toml.lookup("object").unwrap());
 
         Config {
@@ -65,6 +74,7 @@ impl Config {
             library_name: library_name.into(),
             library_version: library_version.into(),
             target_path: target_path.into(),
+            special_type: special_type.into(),
             objects: objects,
         }
     }
