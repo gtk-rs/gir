@@ -15,10 +15,10 @@ pub fn generate<W: Write>(w: &mut W, env: &Env, analysis: &analysis::object::Inf
     if analysis.has_children { generate_trait |= true } else { generate_impl |= true };
 
     try!(general::start_comments(w));
-    //TODO: uses
+    try!(general::uses(w, &analysis.used_types));
     try!(general::objects_child_type(w, &analysis.name, &type_.glib_type_name));
     try!(general::impl_parents(w, &analysis.name, &analysis.parents));
-    //TODO: impl interfaces
+    try!(general::impl_interfaces(w, &analysis.name, &analysis.implements));
 
     if generate_impl {
         try!(writeln!(w, ""));

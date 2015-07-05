@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 use env::Env;
 use gobjects::{GObject, GStatus};
 use library;
@@ -12,11 +14,13 @@ pub struct Info {
     pub kind: type_kind::TypeKind,
     pub name: String,
     pub parents: Vec<general::StatusedTypeId>,
+    pub implements: Vec<general::StatusedTypeId>,
     pub has_children: bool,
     pub has_ignored_parents: bool,
     pub functions: Vec<functions::Info>,
     pub has_constructors: bool,
     pub has_methods: bool,
+    pub used_types: HashSet<String>,
 }
 
 impl Info {
@@ -42,6 +46,7 @@ impl Info {
 }
 
 pub fn new(env: &Env, obj: &GObject) -> Info {
+    let mut used_types: HashSet<String> = HashSet::with_capacity(20);
     let full_name = obj.name.clone();
 
     let class_tid = env.library.find_type_unwrapped(0, &full_name, "Class");
@@ -52,7 +57,8 @@ pub fn new(env: &Env, obj: &GObject) -> Info {
     let name = split_namespace_name(&full_name).1.into();
 
     let klass = type_.to_class();
-    let (parents, has_ignored_parents) = parents::analyze(env, klass);
+    let (parents, has_ignored_parents) = parents::analyze(env, klass, &mut used_types);
+    let implements = implements::analyze(env, klass, &mut used_types);
 
     let mut has_children = false;
 
@@ -67,7 +73,10 @@ pub fn new(env: &Env, obj: &GObject) -> Info {
         }
     }
 
-    let functions = functions::analyze(env, klass, class_tid);
+    let functions = functions::analyze(env, klass, class_tid, &mut used_types);
+
+    //don't `use` yourself
+    used_types.remove(&name);
 
     let mut info = Info {
         full_name: full_name,
@@ -75,9 +84,11 @@ pub fn new(env: &Env, obj: &GObject) -> Info {
         kind: kind,
         name: name,
         parents: parents,
+        implements: implements,
         has_children: has_children,
         has_ignored_parents: has_ignored_parents,
         functions: functions,
+        used_types: used_types,
         .. Default::default()
     };
 

@@ -1,3 +1,4 @@
+use std::collections::HashSet;
 use std::io::{Result, Write};
 
 use analysis::general::StatusedTypeId;
@@ -15,6 +16,30 @@ pub fn start_comments<W: Write>(w: &mut W) -> Result<()>{
     Ok(())
 }
 
+pub fn uses<W: Write>(w: &mut W, used_types: &HashSet<String>) -> Result<()>{
+    let v = vec![
+        "",
+        "use glib::translate::*;",
+        "use glib::types;",
+        "use ffi;",
+        "",
+        "use object::*;",
+    ];
+    for s in v {
+        try!(writeln!(w, "{}", s));
+    }
+
+    let mut used_types: Vec<String> = used_types.iter()
+        .map(|s| s.clone()).collect();
+    used_types.sort_by(|a, b| a.cmp(b));
+
+    for name in used_types {
+        try!(writeln!(w, "use {};", name));
+    }
+
+    Ok(())
+}
+
 pub fn objects_child_type<W: Write>(w: &mut W, type_name: &str, glib_name: &str) -> Result<()>{
     try!(writeln!(w, ""));
     try!(writeln!(w, "pub type {} = Object<ffi::{}>;", type_name, glib_name));
@@ -26,6 +51,15 @@ pub fn impl_parents<W: Write>(w: &mut W, type_name: &str, parents: &Vec<Statused
     try!(writeln!(w, ""));
     for stid in parents {
         //TODO: don't generate for parents without traits
+        try!(writeln!(w, "unsafe impl Upcast<{}> for {} {{ }}", stid.name, type_name));
+    }
+
+    Ok(())
+}
+
+pub fn impl_interfaces<W: Write>(w: &mut W, type_name: &str, implements: &Vec<StatusedTypeId>) -> Result<()>{
+    try!(writeln!(w, ""));
+    for stid in implements {
         try!(writeln!(w, "unsafe impl Upcast<{}> for {} {{ }}", stid.name, type_name));
     }
 
