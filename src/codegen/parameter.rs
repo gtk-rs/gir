@@ -1,6 +1,6 @@
 use library;
 use analysis::type_kind::{TypeKind, ToTypeKind};
-use analysis::rust_type::{AsStr, ToParameterRustType};
+use analysis::rust_type::{AsStr, parameter_rust_type};
 
 pub trait ToParameter {
     fn to_parameter(&self, library: &library::Library) -> String;
@@ -14,7 +14,7 @@ impl ToParameter for library::Parameter {
             //TODO: Rework out (without inout) parameters as return type, with checking that it last
             //  Ex. gtk_range_get_range_rect, gtk_scale_get_layout_offsets
             let type_ = library.type_(self.typ);
-            let rust_type = type_.to_parameter_rust_type(self.direction);
+            let rust_type = parameter_rust_type(library, self.typ, self.direction);
             let type_name = rust_type.as_str();
             let kind = type_.to_type_kind(library);
             let mut type_str = match kind {
