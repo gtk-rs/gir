@@ -17,8 +17,7 @@ impl TranslateToGlib for library::Parameter {
                 TypeKind::Pointer => format_parameter(&self.name, "to_glib_none().0"),
                 TypeKind::Direct |
                     TypeKind::Enumeration => self.name.clone(),
-                TypeKind::Object |
-                    TypeKind::Widget => to_glib_xxx(&self.name, self.transfer),
+                TypeKind::Object => to_glib_xxx(&self.name, self.transfer),
                 _ => format!("TODO:{}", self.name)
             }
         }

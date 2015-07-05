@@ -1,5 +1,4 @@
 use library::*;
-use super::general::IsWidget;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum TypeKind {
@@ -8,7 +7,6 @@ pub enum TypeKind {
     Pointer,    //coded with from_glib_xxx
     Object,     //coded with from_glib_xxx
     Interface,  //coded with from_glib_xxx
-    Widget,     //coded with Widget::from_glib_xxx
     Enumeration,//coded without conversion
     Unknown,
 }
@@ -62,9 +60,7 @@ impl ToTypeKind for Type {
             &Type::Fundamental(fund) => fund.to_type_kind(library),
             &Type::Enumeration(_) => TypeKind::Enumeration,
             &Type::Interface(_) => TypeKind::Interface,
-            &Type::Class(ref klass) => {
-                if klass.is_widget(&library) { TypeKind::Widget } else { TypeKind::Object }
-            },
+            &Type::Class(_) => TypeKind::Object,
             _ => TypeKind::Unknown,
         }
     }
