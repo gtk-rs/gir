@@ -7,19 +7,19 @@ pub struct StatusedTypeId{
     pub status: GStatus,
 }
 
-pub trait IsSpecialType {
-    fn is_special_type(&self) -> bool;
+pub trait IsChildOfSpecialType {
+    fn is_child_of_special_type(&self) -> bool;
 }
 
-impl IsSpecialType for Class {
-    fn is_special_type(&self) -> bool {
-        self.glib_type_name == "GtkWidget" || self.parents.contains(&SPECIAL_TYPE_ID)
+impl IsChildOfSpecialType for Class {
+    fn is_child_of_special_type(&self) -> bool {
+        self.parents.contains(&SPECIAL_TYPE_ID)
     }
 }
 
-pub fn is_special_type(name: &str, library: &Library) -> bool {
+pub fn is_child_of_special_type(name: &str, library: &Library) -> bool {
     match library.type_(library.find_type_unwrapped(0, name, "Type")) {
-        &Type::Class(ref klass) => klass.is_special_type(),
+        &Type::Class(ref klass) => klass.is_child_of_special_type(),
         _ => false,
     }
 }

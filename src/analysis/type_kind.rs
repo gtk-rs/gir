@@ -1,5 +1,5 @@
 use library::*;
-use super::general::IsSpecialType;
+use super::general::IsChildOfSpecialType;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum TypeKind {
@@ -8,7 +8,7 @@ pub enum TypeKind {
     Pointer,    //coded with from_glib_xxx
     Object,     //coded with from_glib_xxx
     Interface,  //coded with from_glib_xxx
-    //TODO: dehardcode TranslateFromGlib and IsSpecialType
+    //TODO: dehardcode TranslateFromGlib
     SpecialType,//coded with Widget::from_glib_xxx
     Enumeration,//coded without conversion
     Unknown,
@@ -22,6 +22,7 @@ impl TypeKind {
     pub fn of(library: &Library, type_id: TypeId) -> TypeKind {
         use library::Type::*;
         use library::Fundamental::*;
+        if type_id == SPECIAL_TYPE_ID { return TypeKind::SpecialType };
         match library.type_(type_id) {
             &Fundamental(fund) => match fund {
                 Boolean => TypeKind::Converted,
@@ -55,7 +56,7 @@ impl TypeKind {
             &Enumeration(_) => TypeKind::Enumeration,
             &Interface(_) => TypeKind::Interface,
             &Class(ref klass) => {
-                if klass.is_special_type() { TypeKind::SpecialType } else { TypeKind::Object }
+                if klass.is_child_of_special_type() { TypeKind::SpecialType } else { TypeKind::Object }
             },
             _ => TypeKind::Unknown,
         }
