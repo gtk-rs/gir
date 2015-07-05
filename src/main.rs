@@ -25,7 +25,7 @@ fn main() {
 
     let cfg = config::Config::new();
 
-    let mut library = Library::new(&cfg.library_name);
+    let mut library = Library::new(&cfg.library_name, &cfg.special_type);
     library.read_file(&cfg.girs_dir, &cfg.library_full_name());
     library.fill_in();
     //show(&library);

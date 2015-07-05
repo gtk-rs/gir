@@ -438,6 +438,7 @@ impl Namespace {
 pub const INTERNAL_NAMESPACE_NAME: &'static str = "*";
 pub const INTERNAL_NAMESPACE: u16 = 0;
 pub const MAIN_NAMESPACE: u16 = 1;
+pub const SPECIAL_TYPE_ID: TypeId = TypeId { ns_id: MAIN_NAMESPACE, id: 0 };
 
 pub struct Library {
     pub namespaces: Vec<Namespace>,
@@ -445,7 +446,7 @@ pub struct Library {
 }
 
 impl Library {
-    pub fn new(main_namespace_name: &str) -> Library {
+    pub fn new(main_namespace_name: &str, special_type: &str) -> Library {
         let mut library = Library {
             namespaces: Vec::new(),
             index: HashMap::new(),
@@ -455,6 +456,7 @@ impl Library {
             library.add_type(INTERNAL_NAMESPACE, name, Type::Fundamental(t));
         }
         assert!(library.add_namespace(main_namespace_name) == MAIN_NAMESPACE);
+        assert!(library.namespace_mut(MAIN_NAMESPACE).add_type(special_type, None) == SPECIAL_TYPE_ID.id);
         library
     }
 
@@ -605,7 +607,7 @@ mod tests {
     use super::*;
 
     fn make_library() -> Library {
-        let mut lib = Library::new("Gtk");
+        let mut lib = Library::new("Gtk", "Widget");
         let glib_ns_id = lib.add_namespace("GLib");
         let gtk_ns_id = lib.add_namespace("Gtk");
         let object_tid = lib.add_type(glib_ns_id, "Object".into(), Type::Class(

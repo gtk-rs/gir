@@ -1,5 +1,6 @@
 use analysis;
-use analysis::type_kind::{TypeKind, ToTypeKind};
+use analysis::rust_type::{AsStr, rust_type};
+use analysis::type_kind::TypeKind;
 use library;
 
 pub trait TranslateFromGlib {
@@ -10,11 +11,14 @@ pub trait TranslateFromGlib {
 impl TranslateFromGlib for library::Parameter {
     fn translate_from_glib_as_function(&self,
         library: &library::Library, func: &analysis::functions::Info) -> (String, String) {
-        let kind = library.type_(self.typ).to_type_kind(library);
+        let kind = TypeKind::of(library, self.typ);
         if func.kind == library::FunctionKind::Constructor {
             match kind {
-                TypeKind::Widget => ("Widget::from_glib_none(".into(),
-                    ").downcast_unchecked()".into()),
+                TypeKind::SpecialType => (
+                    format!("{}::from_glib_none(",
+                        rust_type(library, library::SPECIAL_TYPE_ID).as_str()),
+                    ").downcast_unchecked()".into()
+                ),
                 _ => ("TODO:constructors_body ".into(), String::new())
             }
         } else {
@@ -23,7 +27,7 @@ impl TranslateFromGlib for library::Parameter {
                 TypeKind::Direct |
                     TypeKind::Enumeration => (String::new(), String::new()),
                 TypeKind::Object |
-                    TypeKind::Widget => from_glib_xxx(self.transfer),
+                    TypeKind::SpecialType => from_glib_xxx(self.transfer),
                 _ => ("TODO:".into(), String::new()),
             }
         }
