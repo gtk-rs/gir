@@ -267,6 +267,13 @@ impl Type {
         self.as_class()
             .unwrap_or_else(|| panic!("{} is not a class.", self.get_name()))
     }
+    pub fn as_interface(&self) -> Option<&Interface> {
+        if let &Type::Interface(ref x) = self { Some(x) } else { None }
+    }
+    pub fn to_interface(&self) -> &Interface {
+        self.as_interface()
+            .unwrap_or_else(|| panic!("{} is not a interface.", self.get_name()))
+    }
 
     //others that Library and Parser must use analysis::rust_type::ToRustType
     pub fn get_name(&self) -> String {

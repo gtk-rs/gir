@@ -57,6 +57,15 @@ pub fn impl_parents<W: Write>(w: &mut W, type_name: &str, parents: &Vec<Statused
     Ok(())
 }
 
+pub fn impl_interfaces<W: Write>(w: &mut W, type_name: &str, implements: &Vec<StatusedTypeId>) -> Result<()>{
+    try!(writeln!(w, ""));
+    for stid in implements {
+        try!(writeln!(w, "unsafe impl Upcast<{}> for {} {{ }}", stid.name, type_name));
+    }
+
+    Ok(())
+}
+
 pub fn impl_static_type<W: Write>(w: &mut W, type_name: &str, glib_func_name: &str) -> Result<()>{
     try!(writeln!(w, ""));
     try!(writeln!(w, "impl types::StaticType for {} {{", type_name));

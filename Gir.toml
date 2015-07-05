@@ -37,7 +37,19 @@ name = "Gtk.RadioButton"
 status = "generate"
 
 [[object]]
+name = "Gtk.Actionable"
+status = "manual"
+
+[[object]]
+name = "Gtk.Activatable"
+status = "ignore"
+
+[[object]]
 name = "Gtk.Buildable"
+status = "manual"
+
+[[object]]
+name = "Gtk.Orientable"
 status = "manual"
 
 [[object]]

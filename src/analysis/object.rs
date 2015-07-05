@@ -14,6 +14,7 @@ pub struct Info {
     pub kind: type_kind::TypeKind,
     pub name: String,
     pub parents: Vec<general::StatusedTypeId>,
+    pub implements: Vec<general::StatusedTypeId>,
     pub has_children: bool,
     pub has_ignored_parents: bool,
     pub functions: Vec<functions::Info>,
@@ -57,6 +58,7 @@ pub fn new(env: &Env, obj: &GObject) -> Info {
 
     let klass = type_.to_class();
     let (parents, has_ignored_parents) = parents::analyze(env, klass, &mut used_types);
+    let implements = implements::analyze(env, klass, &mut used_types);
 
     let mut has_children = false;
 
@@ -82,6 +84,7 @@ pub fn new(env: &Env, obj: &GObject) -> Info {
         kind: kind,
         name: name,
         parents: parents,
+        implements: implements,
         has_children: has_children,
         has_ignored_parents: has_ignored_parents,
         functions: functions,
