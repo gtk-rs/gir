@@ -144,8 +144,8 @@ pub const FUNDAMENTAL: [(&'static str, Fundamental); 28] = [
 //default = "*.None"
 #[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq)]
 pub struct TypeId {
-    ns_id: u16,
-    id: u32,
+    pub ns_id: u16,
+    pub id: u32,
 }
 
 impl TypeId {

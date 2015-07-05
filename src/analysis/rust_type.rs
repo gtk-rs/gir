@@ -1,6 +1,7 @@
 use std::result;
 
 use library;
+use nameutil::module_name;
 
 pub type Result = result::Result<String, String>;
 
@@ -60,7 +61,13 @@ pub fn rust_type(library: &library::Library, type_id: library::TypeId) -> Result
 pub fn parameter_rust_type(library: &library::Library, type_id:library::TypeId, direction: library::ParameterDirection) -> Result {
     use library::Type::*;
     let type_ = library.type_(type_id);
-    let rust_type = rust_type(library, type_id);
+    let rust_type = if type_id.ns_id == library::MAIN_NAMESPACE ||
+        type_id.ns_id == library::INTERNAL_NAMESPACE {
+        rust_type(library, type_id)
+    } else {
+        rust_type(library, type_id).map(|s| format!("{}::{}",
+            module_name(&library.namespace(type_id.ns_id).name), s))
+    };
     match type_ {
         &Fundamental(fund) => {
             if fund == library::Fundamental::Utf8 {

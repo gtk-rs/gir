@@ -14,10 +14,14 @@ pub fn split_namespace_name(name: &str) -> (Option<&str>, &str) {
 
 pub fn file_name(full_name: &str) -> String {
     let (_, class_name) = split_namespace_name(full_name);
-    let mut name = PathBuf::from(class_name.to_snake());
+    let mut name = PathBuf::from(module_name(class_name));
     let added = name.set_extension("rs");
     assert!(added);
     name.to_str().unwrap().into()
+}
+
+pub fn module_name(name: &str) -> String {
+    name.to_snake()
 }
 
 #[cfg(test)]
