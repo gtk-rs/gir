@@ -22,7 +22,7 @@ pub fn analyze(env: &Env, type_: &library::Class, used_types: &mut HashSet<Strin
             name: parent_type.name.clone(),
             status: status,
         });
-        used_rust_type(&env.library, parent_tid).ok().map(|s| used_types.insert(s));
+        used_rust_type(env, parent_tid).ok().map(|s| used_types.insert(s));
 
         if status == GStatus::Ignore { has_ignored_parents = true; }
 

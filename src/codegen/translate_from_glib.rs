@@ -1,19 +1,20 @@
 use analysis;
 use analysis::rust_type::{AsStr, rust_type};
 use analysis::type_kind::TypeKind;
+use env::Env;
 use library;
 
 pub trait TranslateFromGlib {
-    fn translate_from_glib_as_function(&self,
-        library: &library::Library, func: &analysis::functions::Info) -> (String, String);
+    fn translate_from_glib_as_function(&self, env: &Env,
+        func: &analysis::functions::Info) -> (String, String);
 }
 
 impl TranslateFromGlib for library::Parameter {
     fn translate_from_glib_as_function(&self,
-        library: &library::Library, func: &analysis::functions::Info) -> (String, String) {
-        let kind = TypeKind::of(library, self.typ);
+        env: &Env, func: &analysis::functions::Info) -> (String, String) {
+        let kind = TypeKind::of(&env.library, self.typ);
         if func.kind == library::FunctionKind::Constructor {
-            let rust_type = rust_type(library, self.typ);
+            let rust_type = rust_type(env, self.typ);
             if rust_type.as_str() != func.class_name.as_str() {
                 let from_glib_xxx = from_glib_xxx(self.transfer);
                 (
@@ -37,10 +38,10 @@ impl TranslateFromGlib for library::Parameter {
 }
 
 impl TranslateFromGlib for Option<library::Parameter> {
-    fn translate_from_glib_as_function(&self,
-        library: &library::Library, func: &analysis::functions::Info) -> (String, String) {
+    fn translate_from_glib_as_function(&self, env: &Env,
+        func: &analysis::functions::Info) -> (String, String) {
         match self {
-            &Some(ref par) => par.translate_from_glib_as_function(library, func),
+            &Some(ref par) => par.translate_from_glib_as_function(env, func),
             &None => (String::new(), ";".into())
         }
     }

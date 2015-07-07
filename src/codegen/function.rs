@@ -3,7 +3,6 @@ use std::io::{Result, Write};
 use analysis;
 use analysis::upcasts::Upcasts;
 use env::Env;
-use library;
 use super::function_body::Builder;
 use super::general::tabs;
 use super::parameter::ToParameter;
@@ -16,7 +15,7 @@ pub fn generate<W: Write>(w: &mut W, env: &Env, analysis: &analysis::functions::
 
     let comment_prefix = if analysis.comented { "//" } else { "" };
     let pub_prefix = if in_trait { "" } else { "pub " };
-    let declaration = declaration(&env.library, analysis);
+    let declaration = declaration(env, analysis);
     let suffix = if only_declaration { ";" } else { " {" };
 
     try!(writeln!(w, "{}{}{}{}{}", tabs(indent),
@@ -29,7 +28,7 @@ pub fn generate<W: Write>(w: &mut W, env: &Env, analysis: &analysis::functions::
             try!(writeln!(w, "{}//}}", tabs(indent)));
         }
         else {
-            let body = body(&env.library, analysis, in_trait);
+            let body = body(env, analysis, in_trait);
             for s in body {
                 try!(writeln!(w, "{}{}", tabs(indent + 1), s));
             }
@@ -40,15 +39,15 @@ pub fn generate<W: Write>(w: &mut W, env: &Env, analysis: &analysis::functions::
     Ok(())
 }
 
-pub fn declaration(library: &library::Library, analysis: &analysis::functions::Info) -> String {
-    let return_str = analysis.ret.to_return_value(library, analysis);
+pub fn declaration(env: &Env, analysis: &analysis::functions::Info) -> String {
+    let return_str = analysis.ret.to_return_value(env, analysis);
     let mut param_str = String::with_capacity(100);
 
     let upcasts = upcasts(&analysis.upcasts);
 
     for (pos, par) in analysis.parameters.iter().enumerate() {
         if pos > 0 { param_str.push_str(", ") }
-        let s = par.to_parameter(library, &analysis.upcasts);
+        let s = par.to_parameter(env, &analysis.upcasts);
         param_str.push_str(&s);
     }
 
@@ -63,15 +62,15 @@ fn upcasts(upcasts: &Upcasts) -> String {
     format!("<{}>", strs.connect(", "))
 }
 
-pub fn body(library: &library::Library, analysis: &analysis::functions::Info,
+pub fn body(env: &Env, analysis: &analysis::functions::Info,
     in_trait: bool) -> Vec<String> {
     let mut builder = Builder::new();
     builder.glib_name(&analysis.glib_name)
-        .from_glib(analysis.ret.translate_from_glib_as_function(&library, &analysis));
+        .from_glib(analysis.ret.translate_from_glib_as_function(env, &analysis));
 
     //TODO: change to map on parameters with pass Vec<String> to builder
     for par in &analysis.parameters {
-        let s = par.translate_to_glib(library, in_trait);
+        let s = par.translate_to_glib(&env.library, in_trait);
         builder.parameter(s);
     }
 

@@ -23,7 +23,7 @@ pub fn analyze(env: &Env, type_: &library::Class, used_types: &mut HashSet<Strin
             name: interface_type.name.clone(),
             status: status,
         });
-        let _ = used_rust_type(&env.library, interface_tid)
+        let _ = used_rust_type(env, interface_tid)
             .map(|s| used_types.insert(s));
     }
     implements

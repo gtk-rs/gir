@@ -1,5 +1,7 @@
 use std::result;
 
+use env::Env;
+use gobjects::GStatus;
 use library;
 use nameutil::module_name;
 
@@ -16,10 +18,10 @@ impl AsStr for Result {
     }
 }
 
-pub fn rust_type(library: &library::Library, type_id: library::TypeId) -> Result {
+pub fn rust_type(env: &Env, type_id: library::TypeId) -> Result {
     use library::Type::*;
     use library::Fundamental::*;
-    let type_ = library.type_(type_id);
+    let type_ = env.library.type_(type_id);
     let rust_type = match type_ {
         &Fundamental(fund) => {
             let ok = |s: &str| Ok(s.into());
@@ -59,25 +61,30 @@ pub fn rust_type(library: &library::Library, type_id: library::TypeId) -> Result
     if type_id.ns_id == library::MAIN_NAMESPACE || type_id.ns_id == library::INTERNAL_NAMESPACE {
         rust_type
     } else {
-        rust_type.map(|s| format!("{}::{}",
-            module_name(&library.namespace(type_id.ns_id).name), s))
+        let rust_type_with_prefix = rust_type.map(|s| format!("{}::{}",
+            module_name(&env.library.namespace(type_id.ns_id).name), s));
+        if env.type_status(&type_id.full_name(&env.library)) == GStatus::Ignore {
+            Err(rust_type_with_prefix.as_str().into())
+        } else {
+            rust_type_with_prefix
+        }
     }
 }
 
-pub fn used_rust_type(library: &library::Library, type_id: library::TypeId) -> Result {
+pub fn used_rust_type(env: &Env, type_id: library::TypeId) -> Result {
     use library::Type::*;
-    match library.type_(type_id) {
+    match env.library.type_(type_id) {
         &Enumeration(_) |
             &Interface(_) |
-            &Class(_) => rust_type(library, type_id),
+            &Class(_) => rust_type(env, type_id),
         _ => Err("Don't need use".into()),
     }
 }
 
-pub fn parameter_rust_type(library: &library::Library, type_id:library::TypeId, direction: library::ParameterDirection) -> Result {
+pub fn parameter_rust_type(env: &Env, type_id:library::TypeId, direction: library::ParameterDirection) -> Result {
     use library::Type::*;
-    let type_ = library.type_(type_id);
-    let rust_type = rust_type(library, type_id);
+    let type_ = env.library.type_(type_id);
+    let rust_type = rust_type(env, type_id);
     match type_ {
         &Fundamental(fund) => {
             if fund == library::Fundamental::Utf8 {
