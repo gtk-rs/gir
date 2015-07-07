@@ -15,18 +15,16 @@ pub fn analyze(env: &Env, type_: &library::Class, used_types: &mut HashSet<Strin
     for &parent_tid in &type_.parents {
         let parent_type = env.type_(parent_tid).to_class();
 
-        let default_object: GObject = Default::default();
-        let gobject = env.config.objects.get(&parent_tid.full_name(&env.library))
-            .unwrap_or(&default_object);
+        let status = env.type_status(&parent_tid.full_name(&env.library));
 
         parents.push(StatusedTypeId{
             type_id: parent_tid,
             name: parent_type.name.clone(),
-            status: gobject.status,
+            status: status,
         });
-        used_rust_type(&env.library, parent_tid).ok().map(|s| used_types.insert(s));
+        used_rust_type(env, parent_tid).ok().map(|s| used_types.insert(s));
 
-        if gobject.status == GStatus::Ignore { has_ignored_parents = true; }
+        if status == GStatus::Ignore { has_ignored_parents = true; }
 
         if parent_type.glib_type_name == "GtkWidget" { break }
     }

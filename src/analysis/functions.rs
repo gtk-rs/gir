@@ -36,26 +36,26 @@ fn analyze_function(env: &Env, type_: &library::Function, class_tid: library::Ty
     let mut upcasts: Upcasts = Default::default();
 
     let ret = if type_.ret.typ == Default::default() { None } else {
-        used_rust_type(&env.library, type_.ret.typ).ok().map(|s| used_types.insert(s));
+        used_rust_type(env, type_.ret.typ).ok().map(|s| used_types.insert(s));
         Some(type_.ret.clone())
     };
 
     if let Some(ref ret_) = ret {
-        if parameter_rust_type(&env.library, ret_.typ, ret_.direction)
+        if parameter_rust_type(env, ret_.typ, ret_.direction)
             .is_err() { commented = true; }
     }
 
     for (pos, par) in type_.parameters.iter().enumerate() {
         assert!(!par.instance_parameter || pos == 0,
             "Wrong instance parameter in {}", type_.c_identifier);
-        used_rust_type(&env.library, par.typ).ok().map(|s| used_types.insert(s));
+        used_rust_type(env, par.typ).ok().map(|s| used_types.insert(s));
         if !par.instance_parameter && needed_upcast(&env.library, par.typ) {
-            let type_name = rust_type(&env.library, par.typ);
+            let type_name = rust_type(env, par.typ);
             if !upcasts.add_parameter(&par.name, type_name.as_str()) {
                 panic!("Too many parameters upcasts for {}", type_.c_identifier)
             }
         }
-        if parameter_rust_type(&env.library, par.typ, par.direction)
+        if parameter_rust_type(env, par.typ, par.direction)
             .is_err() { commented = true; }
     }
 
@@ -64,7 +64,7 @@ fn analyze_function(env: &Env, type_: &library::Function, class_tid: library::Ty
         glib_name: type_.c_identifier.clone(),
         kind: type_.kind,
         comented: commented,
-        class_name: rust_type(&env.library, class_tid),
+        class_name: rust_type(env, class_tid),
         parameters: type_.parameters.clone(),
         ret: ret,
         upcasts: upcasts,

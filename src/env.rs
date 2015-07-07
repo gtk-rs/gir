@@ -1,4 +1,5 @@
 use config::Config;
+use gobjects::GStatus;
 use library::*;
 
 pub struct Env {
@@ -10,5 +11,9 @@ impl Env {
     #[inline]
     pub fn type_(&self, tid: TypeId) -> &Type {
         self.library.type_(tid)
+    }
+    pub fn type_status(&self, name: &str) -> GStatus {
+        self.config.objects.get(name).map(|o| o.status)
+            .unwrap_or(Default::default())
     }
 }
