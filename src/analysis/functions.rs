@@ -1,7 +1,9 @@
 use std::collections::HashSet;
 use std::vec::Vec;
 
+use analysis::needed_upcast::needed_upcast;
 use analysis::rust_type::*;
+use analysis::upcasts::Upcasts;
 use env::Env;
 use library;
 
@@ -13,6 +15,7 @@ pub struct Info {
     pub class_name: Result,
     pub parameters: Vec<library::Parameter>,
     pub ret: Option<library::Parameter>,
+    pub upcasts: Upcasts,
 }
 
 pub fn analyze(env: &Env, type_: &library::Class, class_tid: library::TypeId,
@@ -30,6 +33,7 @@ pub fn analyze(env: &Env, type_: &library::Class, class_tid: library::TypeId,
 fn analyze_function(env: &Env, type_: &library::Function, class_tid: library::TypeId,
     used_types: &mut HashSet<String>) -> Info {
     let mut commented = false;
+    let mut upcasts: Upcasts = Default::default();
 
     let ret = if type_.ret.typ == Default::default() { None } else {
         used_rust_type(&env.library, type_.ret.typ).ok().map(|s| used_types.insert(s));
@@ -45,6 +49,12 @@ fn analyze_function(env: &Env, type_: &library::Function, class_tid: library::Ty
         assert!(!par.instance_parameter || pos == 0,
             "Wrong instance parameter in {}", type_.c_identifier);
         used_rust_type(&env.library, par.typ).ok().map(|s| used_types.insert(s));
+        if !par.instance_parameter && needed_upcast(&env.library, par.typ) {
+            let type_name = rust_type(&env.library, par.typ);
+            if !upcasts.add_parameter(&par.name, type_name.as_str()) {
+                panic!("Too many parameters upcasts for {}", type_.c_identifier)
+            }
+        }
         if parameter_rust_type(&env.library, par.typ, par.direction)
             .is_err() { commented = true; }
     }
@@ -57,5 +67,6 @@ fn analyze_function(env: &Env, type_: &library::Function, class_tid: library::Ty
         class_name: rust_type(&env.library, class_tid),
         parameters: type_.parameters.clone(),
         ret: ret,
+        upcasts: upcasts,
     }
 }

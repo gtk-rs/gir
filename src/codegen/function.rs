@@ -1,6 +1,7 @@
 use std::io::{Result, Write};
 
 use analysis;
+use analysis::upcasts::Upcasts;
 use env::Env;
 use library;
 use super::function_body::Builder;
@@ -43,13 +44,23 @@ pub fn declaration(library: &library::Library, analysis: &analysis::functions::I
     let return_str = analysis.ret.to_return_value(library, analysis);
     let mut param_str = String::with_capacity(100);
 
+    let upcasts = upcasts(&analysis.upcasts);
+
     for (pos, par) in analysis.parameters.iter().enumerate() {
         if pos > 0 { param_str.push_str(", ") }
-        let s = par.to_parameter(library);
+        let s = par.to_parameter(library, &analysis.upcasts);
         param_str.push_str(&s);
     }
-    //TODO: Trait constraints
-    format!("fn {}({}){}", analysis.name, param_str, return_str)
+
+    format!("fn {}{}({}){}", analysis.name, upcasts, param_str, return_str)
+}
+
+fn upcasts(upcasts: &Upcasts) -> String {
+    if upcasts.is_empty() { return String::new() }
+    let strs: Vec<String> = upcasts.iter()
+        .map(|upcast| { format!("{}: Upcast<{}>", upcast.1, upcast.2)})
+        .collect();
+    format!("<{}>", strs.connect(", "))
 }
 
 pub fn body(library: &library::Library, analysis: &analysis::functions::Info,
