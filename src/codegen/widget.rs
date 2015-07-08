@@ -14,7 +14,7 @@ pub fn generate<W: Write>(w: &mut W, env: &Env, analysis: &analysis::object::Inf
 
     if analysis.has_children { generate_trait |= true } else { generate_impl |= true };
 
-    try!(general::start_comments(&env.config, w));
+    try!(general::start_comments(w, &env.config));
     try!(general::uses(w, &analysis.used_types));
     try!(general::objects_child_type(w, &analysis.name, &type_.glib_type_name));
     try!(general::impl_parents(w, &analysis.name, &analysis.parents));
