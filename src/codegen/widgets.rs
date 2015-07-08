@@ -8,7 +8,7 @@ use gobjects::*;
 use nameutil::*;
 
 pub fn generate(env: &Env) {
-    let root_path = PathBuf::from(&env.config.target_path).join("src/widgets");
+    let root_path = PathBuf::from(&env.config.target_path).join("src").join("widgets");
 
     for obj in env.config.objects.values() {
         if obj.status != GStatus::Generate || !is_widget(&obj.name, &env.library){

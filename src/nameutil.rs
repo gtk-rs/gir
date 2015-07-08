@@ -20,12 +20,21 @@ pub fn file_name(full_name: &str) -> String {
     name.to_str().unwrap().into()
 }
 
+pub fn file_name_sys(library_name: &str, name: &str) -> String {
+    let mut path = PathBuf::from(format!("{}-sys", module_name(library_name)))
+        .join("src").join(name);
+    let added = path.set_extension("rs");
+    assert!(added);
+    path.to_str().unwrap().into()
+}
+
 pub fn module_name(name: &str) -> String {
     name.to_snake()
 }
 
 #[cfg(test)]
 mod tests {
+    use std::path::*;
     use super::*;
 
     #[test]
@@ -45,5 +54,12 @@ mod tests {
     #[test]
     fn file_name_works() {
         assert_eq!(file_name("Gtk.StatusIcon"), "status_icon.rs");
+    }
+
+    #[test]
+    fn file_name_sys_works() {
+        let expected: String = PathBuf::from("gtk-sys").join("src").join("funcs.rs")
+            .to_str().unwrap().into();
+        assert_eq!(file_name_sys("Gtk", "funcs"), expected);
     }
 }
