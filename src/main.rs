@@ -1,6 +1,7 @@
 extern crate case;
 extern crate docopt;
 extern crate env_logger;
+extern crate git2;
 #[macro_use]
 extern crate log;
 extern crate xml;
@@ -14,6 +15,7 @@ mod codegen;
 mod config;
 mod env;
 mod file_saver;
+mod git;
 mod gobjects;
 mod library;
 mod nameutil;
