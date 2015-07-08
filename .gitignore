@@ -1,2 +1,3 @@
 target
 /gtk
+/src/version.rs

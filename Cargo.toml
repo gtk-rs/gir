@@ -5,6 +5,7 @@ authors = [
 	"Evgenii Pashkin <eapashkin@gmail.com>",
 	"Gleb Kozyrev <gleb@gkoz.com>",
 ]
+build = "build.rs"
 
 [dependencies]
 docopt = "*"
@@ -14,3 +15,6 @@ case = "*"
 env_logger = "*"
 git2 = "*"
 log = "*"
+
+[build-dependencies]
+git2 = "*"

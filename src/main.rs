@@ -20,6 +20,7 @@ mod gobjects;
 mod library;
 mod nameutil;
 mod parser;
+mod version;
 
 #[cfg_attr(test, allow(dead_code))]
 fn main() {
