@@ -1,4 +1,5 @@
 [options]
+work_mode = "normal"
 girs_dir = "../gir-files"
 library = "Gtk"
 version = "3.0"
