@@ -51,7 +51,7 @@ fn fix_external_name(env: &Env, type_id: library::TypeId, name: &str) -> Result 
         Ok(name.into())
     } else {
         let name_with_prefix = format!("{}_ffi::{}",
-            module_name(&env.library.namespace(type_id.ns_id).name), name);
+            fix_namespace(env, type_id), name);
         if env.type_status(&type_id.full_name(&env.library)) == GStatus::Ignore {
             Err(name_with_prefix.into())
         } else {
@@ -65,4 +65,16 @@ fn to_mut_ptr(res: Result) -> Result {
         Ok(s) => Ok(format!("*mut {}", s)),
         Err(s) => Err(format!("*mut {}", s)),
     }
+}
+
+//TODO: check if need to use in non sys codegen
+fn fix_namespace(env: &Env, type_id: library::TypeId) -> String {
+    let mut name: &str = &module_name(&env.library.namespace(type_id.ns_id).name);
+    name = match name {
+        "gdk_pixbuf" => "gdk",
+        "gio" => "glib",
+        "gobject" => "glib",
+        _ => name,
+    };
+    name.into()
 }
