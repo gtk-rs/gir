@@ -15,20 +15,20 @@ pub fn ffi_type(env: &Env, type_id: library::TypeId) -> Result {
             match fund {
                 None => err("()"),
                 Boolean => ok("gboolean"),
-                Int8 => ok("gint8"),
-                UInt8 => ok("guint8"),
-                Int16 => ok("gint16"),
-                UInt16 => ok("guint16"),
-                Int32 => ok("gint32"),
-                UInt32 => ok("guint32"),
-                Int64 => ok("gint64"),
-                UInt64 => ok("guint64"),
+                Int8 => ok("i8"),
+                UInt8 => ok("u8"),
+                Int16 => ok("i16"),
+                UInt16 => ok("u16"),
+                Int32 => ok("i32"),
+                UInt32 => ok("u32"),
+                Int64 => ok("i64"),
+                UInt64 => ok("u64"),
 
-                Int => ok("gint"),      //maybe dependent on target system
-                UInt => ok("guint"),     //maybe dependent on target system
+                Int => ok("c_int"),      //maybe dependent on target system
+                UInt => ok("c_uint"),     //maybe dependent on target system
 
-                Float => ok("gfloat"),
-                Double => ok("gdouble"),
+                Float => ok("c_float"),
+                Double => ok("c_double"),
 
                 Utf8 => ok("*const c_char"),
 
