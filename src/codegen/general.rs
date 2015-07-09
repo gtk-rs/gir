@@ -81,3 +81,17 @@ pub fn impl_static_type<W: Write>(w: &mut W, type_name: &str, glib_func_name: &s
 pub fn tabs(num: i32) -> String {
     (0..num).map(|_| "    ").collect::<String>()
 }
+
+//TODO: use in non sys codegen
+pub fn fix_parameter_name(name: &str) -> String{
+    let bad_names = vec![
+        "self",
+        "type",
+        "box",
+    ];
+    if bad_names.contains(&name) {
+        format!("{}_", name)
+    } else {
+        name.into()
+    }
+}

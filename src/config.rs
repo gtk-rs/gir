@@ -1,20 +1,44 @@
 use std::io::prelude::*;
 use std::fs::File;
+use std::str::FromStr;
 use docopt::Docopt;
 use toml;
 
 use gobjects;
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum WorkMode {
+    Normal,     //generate widgets etc.
+    Sys,        //generate -sys with ffi
+}
+
+impl Default for WorkMode {
+    fn default() -> WorkMode { WorkMode::Normal }
+}
+
+impl FromStr for WorkMode {
+    type Err = String;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "normal" => Ok(WorkMode::Normal),
+            "sys" => Ok(WorkMode::Sys),
+            _ => Err("Wrong work mode".into())
+        }
+    }
+}
 
 static USAGE: &'static str = "
 Usage: gir [options] [<library> <version>]
 
 Options:
     -d PATH             Directory for girs
+    -m MODE             Work mode: normal or sys
     -o PATH             Target root path
 ";
 
 #[derive(Debug)]
 pub struct Config {
+    pub work_mode: WorkMode,
     pub girs_dir: String,
     pub library_name: String,
     pub library_version: String,
@@ -29,6 +53,15 @@ impl Config {
             .unwrap_or_else(|e| e.exit());
 
         let toml = read_toml("Gir.toml");
+
+        let work_mode_str = match args.get_str("-m") {
+            "" => toml.lookup("options.work_mode")
+                    .unwrap_or_else(|| panic!("No options.work_mode in config"))
+                    .as_str().unwrap(),
+            a => a,
+        };
+        let work_mode = WorkMode::from_str(work_mode_str)
+            .unwrap_or_else(|_| panic!("Wrong work mode"));
 
         let girs_dir = match args.get_str("-d") {
             "" => toml.lookup("options.girs_dir")
@@ -61,6 +94,7 @@ impl Config {
         let objects = gobjects::parse_toml(toml.lookup("object").unwrap());
 
         Config {
+            work_mode: work_mode,
             girs_dir: girs_dir.into(),
             library_name: library_name.into(),
             library_version: library_version.into(),
