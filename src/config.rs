@@ -29,9 +29,11 @@ impl FromStr for WorkMode {
 
 static USAGE: &'static str = "
 Usage: gir [options] [<library> <version>]
+       gir --help
 
 Options:
-    -d PATH             Directory for girs
+    -h, --help          Show this message.
+    -d GIRSPATH         Directory for girs
     -m MODE             Work mode: normal or sys
     -o PATH             Target root path
 ";
