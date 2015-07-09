@@ -94,5 +94,5 @@ fn function_return_value(env: &Env, func: &library::Function) -> (bool, String) 
 fn function_parameter(env: &Env, par: &library::Parameter) -> (bool, String) {
     let ffi_type = ffi_type(env, par.typ);
     let commented = ffi_type.is_err();
-    (commented, format!("{}: {}", par.name, ffi_type.as_str()))
+    (commented, format!("{}: {}", general::fix_parameter_name(&par.name), ffi_type.as_str()))
 }
