@@ -22,15 +22,18 @@ pub fn generate(env: &Env) {
 
 fn generate_funcs<W: Write>(w: &mut W, env: &Env) -> Result<()>{
     try!(general::start_comments(w, &env.config));
-
-    try!(statics::generate(w));
+    try!(statics::begin(w));
 
     let ns_id = library::MAIN_NAMESPACE;
     let classes = prepare_classes(env, ns_id);
 
+    try!(generate_classes_structs(w, &classes));
+
+    try!(statics::before_func(w));
+
     try!(writeln!(w, ""));
     try!(writeln!(w, "extern \"C\" {{"));
-    try!(generate_classes_funcs(w, env, classes));
+    try!(generate_classes_funcs(w, env, &classes));
 
     //TODO: other functions
     try!(writeln!(w, "\n}}"));
@@ -51,7 +54,16 @@ fn prepare_classes(env: &Env, ns_id: u16) -> Vec<&library::Class> {
     vec
 }
 
-fn generate_classes_funcs<W: Write>(w: &mut W, env: &Env, classes: Vec<&library::Class>) -> Result<()> {
+fn generate_classes_structs<W: Write>(w: &mut W, classes: &Vec<&library::Class>) -> Result<()> {
+    try!(writeln!(w, ""));
+    for klass in classes {
+        try!(writeln!(w, "#[repr(C)]\npub struct {};", klass.glib_type_name));
+    }
+
+    Ok(())
+}
+
+fn generate_classes_funcs<W: Write>(w: &mut W, env: &Env, classes: &Vec<&library::Class>) -> Result<()> {
     for klass in classes {
         try!(generate_class_funcs(w, env, klass));
     }
