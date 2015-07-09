@@ -1,4 +1,5 @@
 use std::collections::HashSet;
+use std::fmt::Display;
 use std::io::{Result, Write};
 
 use analysis::general::StatusedTypeId;
@@ -23,9 +24,7 @@ pub fn uses<W: Write>(w: &mut W, used_types: &HashSet<String>) -> Result<()>{
         "",
         "use object::*;",
     ];
-    for s in v {
-        try!(writeln!(w, "{}", s));
-    }
+    try!(write_vec(w, &v));
 
     let mut used_types: Vec<String> = used_types.iter()
         .map(|s| s.clone()).collect();
@@ -94,4 +93,11 @@ pub fn fix_parameter_name(name: &str) -> String{
     } else {
         name.into()
     }
+}
+
+pub fn write_vec<W: Write, T: Display>(w: &mut W, v: &Vec<T>) -> Result<()> {
+    for s in v {
+        try!(writeln!(w, "{}", s));
+    }
+    Ok(())
 }
