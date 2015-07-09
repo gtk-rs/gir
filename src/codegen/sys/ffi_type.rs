@@ -38,7 +38,7 @@ pub fn ffi_type(env: &Env, type_id: library::TypeId) -> Result {
             }
         },
 
-        &Enumeration(ref enum_) => Ok(enum_.glib_type_name.clone()),
+        &Enumeration(ref enum_) => Ok(format!("enums::{}", enum_.name)),
         &Interface(ref interface) => to_mut_ptr(fix_external_name(env, type_id, &interface.glib_type_name)),
         &Class(ref klass) => to_mut_ptr(fix_external_name(env, type_id, &klass.glib_type_name)),
         _ => Err(format!("Unknown rust type: {:?}", type_.get_name() )),

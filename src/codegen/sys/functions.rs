@@ -70,10 +70,18 @@ fn generate_class_funcs<W: Write>(w: &mut W, env: &Env, klass: &library::Class) 
 }
 
 fn function_declaration(env: &Env, func: &library::Function) -> String {
-    let (commented, ret_str) = function_return_value(env, func);
+    let (mut commented, ret_str) = function_return_value(env, func);
+
+    let mut parameter_strs: Vec<String> = Vec::new();
+    for par in &func.parameters {
+        let (c, par_str) = function_parameter(env, par);
+        parameter_strs.push(par_str);
+        if c { commented = true; }
+    }
 
     let commented_str = if commented { "//" } else { "" };
-    format!("{}pub fn {:<36}(){};", commented_str, func.c_identifier, ret_str)
+    format!("{}pub fn {:<36}({}){};", commented_str, func.c_identifier,
+        parameter_strs.connect(", "), ret_str)
 }
 
 fn function_return_value(env: &Env, func: &library::Function) -> (bool, String) {
@@ -81,4 +89,10 @@ fn function_return_value(env: &Env, func: &library::Function) -> (bool, String) 
     let ffi_type = ffi_type(env, func.ret.typ);
     let commented = ffi_type.is_err();
     (commented, format!(" -> {}", ffi_type.as_str()))
+}
+
+fn function_parameter(env: &Env, par: &library::Parameter) -> (bool, String) {
+    let ffi_type = ffi_type(env, par.typ);
+    let commented = ffi_type.is_err();
+    (commented, format!("{}: {}", par.name, ffi_type.as_str()))
 }
