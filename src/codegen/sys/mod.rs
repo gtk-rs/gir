@@ -1,5 +1,6 @@
 use env::Env;
 
+mod ffi_type;
 mod functions;
 mod statics;
 

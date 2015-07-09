@@ -1,10 +1,12 @@
 use std::path::*;
 use std::io::{Result, Write};
 
+use analysis::rust_type::AsStr;
 use env::Env;
 use file_saver::*;
 use library;
 use nameutil::*;
+use super::ffi_type::*;
 use super::statics;
 use super::super::general;
 
@@ -46,18 +48,35 @@ fn generate_classes_funcs<W: Write>(w: &mut W, env: &Env, ns_id: u16, ns:&librar
     vec.sort_by(|&(_, klass1), &(_, klass2)| klass1.glib_type_name.cmp(&klass2.glib_type_name));
 
     for (_, ref klass) in vec {
-        try!(generate_class_funcs(w, klass));
+        try!(generate_class_funcs(w, env, klass));
     }
 
     Ok(())
 }
 
-fn generate_class_funcs<W: Write>(w: &mut W, klass: &library::Class) -> Result<()> {
+fn generate_class_funcs<W: Write>(w: &mut W, env: &Env, klass: &library::Class) -> Result<()> {
     try!(writeln!(w, ""));
     try!(writeln!(w, "    //========================================================================="));
     try!(writeln!(w, "    // {}", klass.glib_type_name));
     try!(writeln!(w, "    //========================================================================="));
     try!(writeln!(w, "    pub fn {:<36}() -> GType;", klass.glib_get_type));
 
+    for func in &klass.functions {
+        let decl = function_declaration(env, func);
+        try!(writeln!(w, "    {}", decl));
+    }
+
     Ok(())
+}
+
+fn function_declaration(env: &Env, func: &library::Function) -> String {
+    let ret_str = function_return_value(env, func);
+
+    format!("pub fn {:<36}(){};", func.c_identifier, ret_str)
+}
+
+fn function_return_value(env: &Env, func: &library::Function) -> String {
+    if func.ret.typ == Default::default() { return String::new(); }
+    let ffi_type = ffi_type(env, func.ret.typ);
+    format!(" -> {}", ffi_type.as_str())
 }
