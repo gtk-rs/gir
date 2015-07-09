@@ -1,3 +1,4 @@
+use std::ascii::AsciiExt;
 use std::path::*;
 use std::string::String;
 
@@ -10,6 +11,19 @@ pub fn split_namespace_name(name: &str) -> (Option<&str>, &str) {
     let ns = parts.next_back();
     assert!(ns.is_none() || parts.next().is_none());
     (ns, name)
+}
+
+pub fn strip_prefix<'a>(prefix: &str, name: &'a str) -> &'a str {
+    let mut skip = 0;
+    let mut prefix_upper = prefix.to_ascii_uppercase();
+    prefix_upper.push('_');
+    if name.starts_with(&prefix_upper) {
+        skip = prefix_upper.len();
+    }
+    else if name.starts_with(prefix) {
+        skip = prefix.len();
+    }
+    &name[skip..]
 }
 
 pub fn file_name(full_name: &str) -> String {
@@ -49,6 +63,18 @@ mod tests {
         let (ns, name) = split_namespace_name("Gtk.StatusIcon");
         assert_eq!(ns, Some("Gtk"));
         assert_eq!(name, "StatusIcon");
+    }
+
+    #[test]
+    fn strip_prefix_g() {
+        assert_eq!(strip_prefix("G", "GBusType"), "BusType");
+        assert_eq!(strip_prefix("G", "G_BUS_TYPE_NONE"), "BUS_TYPE_NONE");
+    }
+
+    #[test]
+    fn strip_prefix_gtk() {
+        assert_eq!(strip_prefix("Gtk", "GtkAlign"), "Align");
+        assert_eq!(strip_prefix("Gtk", "GTK_ALIGN_FILL"), "ALIGN_FILL");
     }
 
     #[test]
