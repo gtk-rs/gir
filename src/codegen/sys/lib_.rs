@@ -23,12 +23,11 @@ fn generate_lib<W: Write>(w: &mut W, env: &Env) -> Result<()>{
     try!(general::start_comments(w, &env.config));
     try!(statics::begin(w));
 
-    let ns_id = library::MAIN_NAMESPACE;
-    let classes = prepare_classes(env, ns_id);
-    let interfaces = prepare_interfaces(env, ns_id);
+    let ns = env.library.namespace(library::MAIN_NAMESPACE);
+    let classes = prepare_classes(ns);
 
     try!(generate_classes_structs(w, &classes));
-    try!(generate_interfaces_structs(w, &interfaces));
+    try!(generate_interfaces_structs(w, &prepare_interfaces(ns)));
 
     try!(statics::before_func(w));
 
@@ -42,12 +41,10 @@ fn generate_lib<W: Write>(w: &mut W, env: &Env) -> Result<()>{
     Ok(())
 }
 
-fn prepare_classes(env: &Env, ns_id: u16) -> Vec<&library::Class> {
-    let ns = env.library.namespace(ns_id);
+fn prepare_classes(ns: &library::Namespace) -> Vec<&library::Class> {
     let mut vec: Vec<&library::Class> = Vec::with_capacity(ns.types.len());
-    for id in 0..ns.types.len() {
-        let tid = library::TypeId { ns_id: ns_id, id: id as u32 };
-        if let &library::Type::Class(ref klass) = env.library.type_(tid) {
+    for typ in &ns.types {
+        if let &Some(library::Type::Class(ref klass)) = typ {
             vec.push(klass);
         }
     }
@@ -64,12 +61,10 @@ fn generate_classes_structs<W: Write>(w: &mut W, classes: &Vec<&library::Class>)
     Ok(())
 }
 
-fn prepare_interfaces(env: &Env, ns_id: u16) -> Vec<&library::Interface> {
-    let ns = env.library.namespace(ns_id);
+fn prepare_interfaces(ns: &library::Namespace) -> Vec<&library::Interface> {
     let mut vec: Vec<&library::Interface> = Vec::with_capacity(ns.types.len());
-    for id in 0..ns.types.len() {
-        let tid = library::TypeId { ns_id: ns_id, id: id as u32 };
-        if let &library::Type::Interface(ref interface) = env.library.type_(tid) {
+    for typ in &ns.types {
+        if let &Some(library::Type::Interface(ref interface)) = typ {
             vec.push(interface);
         }
     }
