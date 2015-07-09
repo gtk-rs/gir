@@ -58,16 +58,16 @@ impl Config {
 
         let work_mode_str = match args.get_str("-m") {
             "" => toml.lookup("options.work_mode")
-                    .unwrap_or_else(|| panic!("No options.work_mode in config"))
+                    .expect("No options.work_mode in config")
                     .as_str().unwrap(),
             a => a,
         };
         let work_mode = WorkMode::from_str(work_mode_str)
-            .unwrap_or_else(|_| panic!("Wrong work mode"));
+            .unwrap_or_else(|e| panic!(e));
 
         let girs_dir = match args.get_str("-d") {
             "" => toml.lookup("options.girs_dir")
-                      .unwrap_or_else(|| panic!("No options.girs_dir in config"))
+                      .expect("No options.girs_dir in config")
                       .as_str().unwrap(),
             a => a
         };
@@ -76,10 +76,10 @@ impl Config {
             match (args.get_str("<library>"), args.get_str("<version>")) {
             ("", "") => (
                 toml.lookup("options.library")
-                    .unwrap_or_else(|| panic!("No options.library in config"))
+                    .expect("No options.library in config")
                     .as_str().unwrap(),
                 toml.lookup("options.version")
-                    .unwrap_or_else(|| panic!("No options.version in config"))
+                    .expect("No options.version in config")
                     .as_str().unwrap()
             ),
             ("", _) | (_, "") => panic!("Library and version can not be specified separately"),
@@ -88,7 +88,7 @@ impl Config {
 
         let target_path = match args.get_str("-o") {
             "" => toml.lookup("options.target_path")
-                    .unwrap_or_else(|| panic!("No options.target_path in config"))
+                    .expect("No options.target_path in config")
                     .as_str().unwrap(),
             a => a
         };
