@@ -26,8 +26,10 @@ fn generate_funcs<W: Write>(w: &mut W, env: &Env) -> Result<()>{
 
     let ns_id = library::MAIN_NAMESPACE;
     let classes = prepare_classes(env, ns_id);
+    let interfaces = prepare_interfaces(env, ns_id);
 
     try!(generate_classes_structs(w, &classes));
+    try!(generate_interfaces_structs(w, &interfaces));
 
     try!(statics::before_func(w));
 
@@ -58,6 +60,28 @@ fn generate_classes_structs<W: Write>(w: &mut W, classes: &Vec<&library::Class>)
     try!(writeln!(w, ""));
     for klass in classes {
         try!(writeln!(w, "#[repr(C)]\npub struct {};", klass.glib_type_name));
+    }
+
+    Ok(())
+}
+
+fn prepare_interfaces(env: &Env, ns_id: u16) -> Vec<&library::Interface> {
+    let ns = env.library.namespace(ns_id);
+    let mut vec: Vec<&library::Interface> = Vec::with_capacity(ns.types.len());
+    for id in 0..ns.types.len() {
+        let tid = library::TypeId { ns_id: ns_id, id: id as u32 };
+        if let &library::Type::Interface(ref interface) = env.library.type_(tid) {
+            vec.push(interface);
+        }
+    }
+    vec.sort_by(|ref interface1, ref interface2| interface1.glib_type_name.cmp(&interface2.glib_type_name));
+    vec
+}
+
+fn generate_interfaces_structs<W: Write>(w: &mut W, interfaces: &Vec<&library::Interface>) -> Result<()> {
+    try!(writeln!(w, ""));
+    for interface in interfaces {
+        try!(writeln!(w, "#[repr(C)]\npub struct {};", interface.glib_type_name));
     }
 
     Ok(())
