@@ -56,7 +56,7 @@ pub fn parse_toml(toml_objects: &Value) -> GObjects {
 }
 
 fn parse_object(toml_object: &Value) -> GObject {
-    let name = toml_object.lookup("name").unwrap_or_else(|| panic!("Object name not defined"))
+    let name = toml_object.lookup("name").expect("Object name not defined")
         .as_str().unwrap().into();
 
     let status = match toml_object.lookup("status") {
