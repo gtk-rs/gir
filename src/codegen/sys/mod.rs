@@ -2,8 +2,9 @@ use env::Env;
 
 mod ffi_type;
 mod functions;
+mod lib_;
 mod statics;
 
 pub fn generate(env: &Env) {
-    functions::generate(env);
+    lib_::generate(env);
 }
