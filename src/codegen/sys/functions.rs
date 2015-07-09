@@ -70,13 +70,15 @@ fn generate_class_funcs<W: Write>(w: &mut W, env: &Env, klass: &library::Class) 
 }
 
 fn function_declaration(env: &Env, func: &library::Function) -> String {
-    let ret_str = function_return_value(env, func);
+    let (commented, ret_str) = function_return_value(env, func);
 
-    format!("pub fn {:<36}(){};", func.c_identifier, ret_str)
+    let commented_str = if commented { "//" } else { "" };
+    format!("{}pub fn {:<36}(){};", commented_str, func.c_identifier, ret_str)
 }
 
-fn function_return_value(env: &Env, func: &library::Function) -> String {
-    if func.ret.typ == Default::default() { return String::new(); }
+fn function_return_value(env: &Env, func: &library::Function) -> (bool, String) {
+    if func.ret.typ == Default::default() { return (false, String::new()) }
     let ffi_type = ffi_type(env, func.ret.typ);
-    format!(" -> {}", ffi_type.as_str())
+    let commented = ffi_type.is_err();
+    (commented, format!(" -> {}", ffi_type.as_str()))
 }
