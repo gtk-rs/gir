@@ -26,28 +26,33 @@ fn generate_funcs<W: Write>(w: &mut W, env: &Env) -> Result<()>{
     try!(statics::generate(w));
 
     let ns_id = library::MAIN_NAMESPACE;
-    let ns = env.library.namespace(ns_id);
+    let classes = prepare_classes(env, ns_id);
 
     try!(writeln!(w, ""));
     try!(writeln!(w, "extern \"C\" {{"));
-    try!(generate_classes_funcs(w, env, ns_id, ns));
+    try!(generate_classes_funcs(w, env, classes));
 
     //TODO: other functions
     try!(writeln!(w, "\n}}"));
 
     Ok(())
 }
-fn generate_classes_funcs<W: Write>(w: &mut W, env: &Env, ns_id: u16, ns:&library::Namespace) -> Result<()> {
-    let mut vec: Vec<(library::TypeId, &library::Class)> = Vec::with_capacity(ns.types.len());
+
+fn prepare_classes(env: &Env, ns_id: u16) -> Vec<&library::Class> {
+    let ns = env.library.namespace(ns_id);
+    let mut vec: Vec<&library::Class> = Vec::with_capacity(ns.types.len());
     for id in 0..ns.types.len() {
         let tid = library::TypeId { ns_id: ns_id, id: id as u32 };
         if let &library::Type::Class(ref klass) = env.library.type_(tid) {
-            vec.push((tid, klass));
+            vec.push(klass);
         }
     }
-    vec.sort_by(|&(_, klass1), &(_, klass2)| klass1.glib_type_name.cmp(&klass2.glib_type_name));
+    vec.sort_by(|ref klass1, ref klass2| klass1.glib_type_name.cmp(&klass2.glib_type_name));
+    vec
+}
 
-    for (_, ref klass) in vec {
+fn generate_classes_funcs<W: Write>(w: &mut W, env: &Env, classes: Vec<&library::Class>) -> Result<()> {
+    for klass in classes {
         try!(generate_class_funcs(w, env, klass));
     }
 
