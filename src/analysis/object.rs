@@ -2,7 +2,7 @@ use std::collections::HashSet;
 
 use env::Env;
 use gobjects::{GObject, GStatus};
-use library;
+use library::{self, MaybeRef};
 use nameutil::*;
 use super::*;
 use super::type_kind::TypeKind;
@@ -26,7 +26,7 @@ pub struct Info {
 impl Info {
     //TODO: add test in tests/ for panic
     pub fn type_<'a>(&self, library: &'a library::Library) -> &'a library::Class {
-        let type_ = library.type_(self.class_tid).as_class()
+        let type_ = library.type_(self.class_tid).maybe_ref()
             .unwrap_or_else(|| panic!("{} is not a class.", self.full_name));
         type_
     }
@@ -56,7 +56,7 @@ pub fn new(env: &Env, obj: &GObject) -> Info {
 
     let name = split_namespace_name(&full_name).1.into();
 
-    let klass = type_.to_class();
+    let klass = type_.to_ref();
     let (parents, has_ignored_parents) = parents::analyze(env, klass, &mut used_types);
     let implements = implements::analyze(env, klass, &mut used_types);
 

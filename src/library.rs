@@ -295,21 +295,6 @@ pub enum Type {
 }
 
 impl Type {
-    pub fn as_class(&self) -> Option<&Class> {
-        if let &Type::Class(ref x) = self { Some(x) } else { None }
-    }
-    pub fn to_class(&self) -> &Class {
-        self.as_class()
-            .unwrap_or_else(|| panic!("{} is not a class.", self.get_name()))
-    }
-    pub fn as_interface(&self) -> Option<&Interface> {
-        if let &Type::Interface(ref x) = self { Some(x) } else { None }
-    }
-    pub fn to_interface(&self) -> &Interface {
-        self.as_interface()
-            .unwrap_or_else(|| panic!("{} is not a interface.", self.get_name()))
-    }
-
     //others that Library and Parser must use analysis::rust_type::ToRustType
     pub fn get_name(&self) -> String {
         use self::Type::*;
@@ -671,7 +656,7 @@ impl Library {
                 }
                 while let Some(parent_tid) = parent {
                     parents.push(parent_tid);
-                    parent = self.type_(parent_tid).to_class().parent;
+                    parent = self.type_(parent_tid).to_ref_as::<Class>().parent;
                 }
             }
 
@@ -729,8 +714,8 @@ mod tests {
         let object_tid = lib.find_type(0, "GLib.Object").unwrap();
         let ioobject_tid = lib.find_type(0, "GLib.InitiallyUnowned").unwrap();
         let widget_tid = lib.find_type(0, "Gtk.Widget").unwrap();
-        assert_eq!(lib.type_(object_tid).to_class().parents, &[]);
-        assert_eq!(lib.type_(ioobject_tid).to_class().parents, &[object_tid]);
-        assert_eq!(lib.type_(widget_tid).to_class().parents, &[ioobject_tid, object_tid]);
+        assert_eq!(lib.type_(object_tid).to_ref_as::<Class>().parents, &[]);
+        assert_eq!(lib.type_(ioobject_tid).to_ref_as::<Class>().parents, &[object_tid]);
+        assert_eq!(lib.type_(widget_tid).to_ref_as::<Class>().parents, &[ioobject_tid, object_tid]);
     }
 }
