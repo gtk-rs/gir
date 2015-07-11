@@ -9,6 +9,7 @@ pub fn begin<W: Write>(w: &mut W) -> Result<()>{
 "#![allow(dead_code)]",
 "",
 "extern crate libc;",
+"#[macro_use] extern crate bitflags;",
 "extern crate glib_sys as glib_ffi;",
 "extern crate gdk_sys as gdk_ffi;",
 "extern crate pango_sys as pango_ffi;",

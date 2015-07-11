@@ -1,5 +1,6 @@
 use std::path::*;
 use std::io::{Result, Write};
+use case::CaseExt;
 
 use env::Env;
 use file_saver::*;
@@ -7,7 +8,7 @@ use library::{self, MaybeRef};
 use nameutil::*;
 use super::functions;
 use super::statics;
-use super::super::general;
+use super::super::general::{self, tabs};
 
 pub fn generate(env: &Env) {
     println!("generating sys for {}", env.config.library_name);
@@ -26,6 +27,8 @@ fn generate_lib<W: Write>(w: &mut W, env: &Env) -> Result<()>{
     let ns = env.library.namespace(library::MAIN_NAMESPACE);
     let classes = prepare(ns);
 
+    try!(generate_enums(w, &ns.name, &prepare(ns)));
+    try!(generate_bitfields(w, &ns.name, &prepare(ns)));
     try!(generate_classes_structs(w, &classes));
     try!(generate_interfaces_structs(w, &prepare(ns)));
 
@@ -51,6 +54,43 @@ where library::Type: MaybeRef<T> {
     }
     vec.sort();
     vec
+}
+
+fn generate_bitfields<W: Write>(w: &mut W, ns_name: &str, items: &Vec<&library::Bitfield>)
+        -> Result<()> {
+    try!(writeln!(w, ""));
+    for item in items {
+        try!(writeln!(w, "bitflags! {{\n{}#[repr(C)]\n{0}flags {}: i32 {{", tabs(1), item.name));
+        for member in &item.members {
+            try!(writeln!(w, "{}const {} = {},",
+                          tabs(2), strip_prefix(ns_name, &member.c_identifier), member.value));
+        }
+        try!(writeln!(w, "{}}}\n}}\n", tabs(1)));
+    }
+
+    Ok(())
+}
+
+fn generate_enums<W: Write>(w: &mut W, ns_name: &str, items: &Vec<&library::Enumeration>)
+        -> Result<()> {
+    try!(writeln!(w, ""));
+    for item in items {
+        try!(writeln!(w, "#[derive(Clone, Copy, Debug, Eq, PartialEq)]\n#[repr(C)]"));
+        try!(writeln!(w, "pub enum {} {{", item.name));
+        for member in &item.members {
+            try!(writeln!(w, "{}{} = {},",
+                          tabs(1), member.name.to_camel(), member.value));
+        }
+        try!(writeln!(w, "}}"));
+        for member in &item.members {
+            try!(writeln!(w, "pub const {}: {} = {1}::{};",
+                          strip_prefix(ns_name, &member.c_identifier),
+                          item.name, member.name.to_camel()));
+        }
+        try!(writeln!(w, ""));
+    }
+
+    Ok(())
 }
 
 fn generate_classes_structs<W: Write>(w: &mut W, classes: &Vec<&library::Class>) -> Result<()> {
