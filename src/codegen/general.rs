@@ -87,6 +87,7 @@ pub fn fix_parameter_name(name: &str) -> String{
         "self",
         "type",
         "box",
+        "where",
     ];
     if bad_names.contains(&name) {
         format!("{}_", name)
