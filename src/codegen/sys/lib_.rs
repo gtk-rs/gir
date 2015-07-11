@@ -48,7 +48,7 @@ fn prepare_classes(ns: &library::Namespace) -> Vec<&library::Class> {
             vec.push(klass);
         }
     }
-    vec.sort_by(|ref klass1, ref klass2| klass1.glib_type_name.cmp(&klass2.glib_type_name));
+    vec.sort();
     vec
 }
 
@@ -68,7 +68,7 @@ fn prepare_interfaces(ns: &library::Namespace) -> Vec<&library::Interface> {
             vec.push(interface);
         }
     }
-    vec.sort_by(|ref interface1, ref interface2| interface1.glib_type_name.cmp(&interface2.glib_type_name));
+    vec.sort();
     vec
 }
 

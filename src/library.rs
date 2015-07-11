@@ -1,3 +1,4 @@
+use std::cmp::{Ord, Ordering, PartialOrd};
 use std::collections::{HashMap, HashSet};
 use std::str::FromStr;
 use nameutil::split_namespace_name;
@@ -242,6 +243,40 @@ pub struct Class {
     pub children: HashSet<TypeId>,
     pub implements: Vec<TypeId>,
 }
+
+macro_rules! impl_lexical_ord {
+    () => ();
+    ($name:ident, $($more:ident,)*) => (
+        impl_lexical_ord!($($more,)*);
+
+        impl PartialEq for $name {
+            fn eq(&self, other: &$name) -> bool {
+                self.glib_type_name.eq(&other.glib_type_name)
+            }
+        }
+
+        impl Eq for $name { }
+
+        impl PartialOrd for $name {
+            fn partial_cmp(&self, other: &$name) -> Option<Ordering> {
+                self.glib_type_name.partial_cmp(&other.glib_type_name)
+            }
+        }
+
+        impl Ord for $name {
+            fn cmp(&self, other: &$name) -> Ordering {
+                self.glib_type_name.cmp(&other.glib_type_name)
+            }
+        }
+    );
+}
+
+impl_lexical_ord!(
+    Bitfield,
+    Class,
+    Enumeration,
+    Interface,
+);
 
 pub enum Type {
     Fundamental(Fundamental),
