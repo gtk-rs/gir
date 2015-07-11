@@ -16,11 +16,11 @@ pub fn analyze(env: &Env, type_: &library::Class, used_types: &mut HashSet<Strin
 
         if status == GStatus::Ignore { continue }
 
-        let interface_type = env.type_(interface_tid).to_interface();
+        let name = env.type_(interface_tid).get_name();
 
         implements.push(StatusedTypeId{
             type_id: interface_tid,
-            name: interface_type.name.clone(),
+            name: name,
             status: status,
         });
         let _ = used_rust_type(env, interface_tid)
