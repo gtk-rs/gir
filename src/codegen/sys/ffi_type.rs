@@ -2,51 +2,74 @@ use analysis::rust_type::Result;
 use env::Env;
 use gobjects::GStatus;
 use library;
+use library::*;
 use nameutil::module_name;
 
-pub fn ffi_type(env: &Env, type_id: library::TypeId) -> Result {
-    use library::Type::*;
-    use library::Fundamental::*;
-    let type_ = env.library.type_(type_id);
-    let res = match type_ {
-        &Fundamental(fund) => {
-            let ok = |s: &str| Ok(s.into());
-            let err = |s: &str| Err(s.into());
-            match fund {
-                None => err("()"),
-                Boolean => ok("gboolean"),
-                Int8 => ok("i8"),
-                UInt8 => ok("u8"),
-                Int16 => ok("i16"),
-                UInt16 => ok("u16"),
-                Int32 => ok("i32"),
-                UInt32 => ok("u32"),
-                Int64 => ok("i64"),
-                UInt64 => ok("u64"),
+// FIXME: This module needs redundant allocations audit
+// TODO: ffi_type computations should be cached
 
-                Int => ok("c_int"),      //maybe dependent on target system
-                UInt => ok("c_uint"),     //maybe dependent on target system
-
-                Float => ok("c_float"),
-                Double => ok("c_double"),
-
-                Utf8 => ok("*const c_char"),
-
-                Type => ok("GType"),
-                Unsupported => err("Unsupported"),
-                _ => err(&format!("Fundamental: {:?}", fund)),
+pub fn ffi_type(env: &Env, tid: library::TypeId, c_type: &str) -> Result {
+    let (ptr, mut inner) = rustify_pointers(c_type);
+    match *env.library.type_(tid) {
+        Type::Fundamental(fund) => {
+            use library::Fundamental::*;
+            inner = match fund {
+                None => "c_void",
+                Boolean => "gboolean",
+                Int8 => "i8",
+                UInt8 => "u8",
+                Int16 => "i16",
+                UInt16 => "u16",
+                Int32 => "i32",
+                UInt32 => "u32",
+                Int64 => "i64",
+                UInt64 => "u64",
+                Char => "c_char",
+                UChar => "c_char",
+                Int => "c_int",
+                UInt => "c_uint",
+                Long => "c_long",
+                ULong => "c_ulong",
+                Size => "size_t",
+                SSize => "ssize_t",
+                Float => "c_float",
+                Double => "c_double",
+                UniChar => "u32",
+                Utf8 => "c_char",
+                Filename => "c_char",
+                Type => "GType",
+                Pointer => &*inner,
+                Unsupported => return Err(format!("Unsupported type {}", c_type)),
+                VarArgs => panic!("Should not reach here"),
+            }.into();
+        }
+        Type::Record(..)
+            | Type::Alias(..)
+            | Type::Callback(..) => return Err(format!("Not yet supported type {}", c_type)),
+        // TODO: need to recurse into it
+        Type::Array(..) => return Err(format!("Not yet supported type {}", c_type)),
+        Type::List(..) | Type::SList(..) => (),
+        _ => {
+            if let Some(glib_name) = env.library.type_(tid).get_glib_name() {
+                if inner != glib_name {
+                    let msg = format!("c:type mismatch {} != {} of {}", inner, glib_name,
+                      env.library.type_(tid).get_name());
+                warn!("{}", msg);
+                return Err(msg);
+                }
             }
-        },
-
-        &Bitfield(ref bitfield) => fix_external_name(env, type_id, &bitfield.name),
-        &Enumeration(ref enum_) => fix_external_name(env, type_id, &enum_.name),
-        &Interface(ref interface) => to_mut_ptr(fix_external_name(env, type_id, &interface.glib_type_name)),
-        &Class(ref klass) => to_mut_ptr(fix_external_name(env, type_id, &klass.glib_type_name)),
-        _ => Err(format!("Unknown rust type: {:?}", type_.get_name() )),
-        //TODO: check usage library::Type::get_name() when no _ in this
-    };
-    trace!("ffi_type({:?}) -> {:?}", type_id, res);
-    res
+            else {
+                warn!("Missing glib_name of {}, can't match != {}",
+                      env.library.type_(tid).get_name(), inner);
+                return Err(format!("Missing glib_name of {}, can't match != {}",
+                                    env.library.type_(tid).get_name(), inner));
+            }
+            inner = try!(fix_external_name(env, tid, &inner));
+        }
+    }
+    let res = if ptr.is_empty() { inner } else { [ptr, inner].connect(" ") };
+    trace!("ffi_type({:?}, {}) -> {}", tid, c_type, res);
+    Ok(res)
 }
 
 fn fix_external_name(env: &Env, type_id: library::TypeId, name: &str) -> Result {
@@ -63,13 +86,6 @@ fn fix_external_name(env: &Env, type_id: library::TypeId, name: &str) -> Result 
     }
 }
 
-fn to_mut_ptr(res: Result) -> Result {
-    match res {
-        Ok(s) => Ok(format!("*mut {}", s)),
-        Err(s) => Err(format!("*mut {}", s)),
-    }
-}
-
 //TODO: check if need to use in non sys codegen
 fn fix_namespace(env: &Env, type_id: library::TypeId) -> String {
     let mut name: &str = &module_name(&env.library.namespace(type_id.ns_id).name);
@@ -80,4 +96,51 @@ fn fix_namespace(env: &Env, type_id: library::TypeId) -> String {
         _ => name,
     };
     name.into()
+}
+
+fn rustify_pointers(c_type: &str) -> (String, String) {
+    let mut input = c_type.trim();
+    let leading_const = input.starts_with("const ");
+    if leading_const {
+        input = &input[6..];
+    }
+    let end = [
+        input.find(" const"),
+        input.find("*const"),
+        input.find("*"),
+        Some(input.len()),
+    ].iter().filter_map(|&x| x).min().unwrap();
+    let inner = input[..end].trim().into();
+
+    let mut ptrs: Vec<_> = input[end..].rsplit('*').skip(1)
+        .map(|s| if s.contains("const") { "*const" } else { "*mut" }).collect();
+    if let (true, Some(p)) = (leading_const, ptrs.last_mut()) {
+        *p = "*const";
+    }
+
+    (ptrs.connect(" "), inner)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::rustify_pointers as rustify_ptr;
+
+    fn s(x: &str, y: &str) -> (String, String) {
+        (x.into(), y.into())
+    }
+
+    #[test]
+    fn rustify_pointers() {
+        assert_eq!(rustify_ptr("char"), s("", "char"));
+        assert_eq!(rustify_ptr("char*"), s("*mut", "char"));
+        assert_eq!(rustify_ptr("const char*"), s("*const", "char"));
+        assert_eq!(rustify_ptr("char const*"), s("*const", "char"));
+        assert_eq!(rustify_ptr("char const *"), s("*const", "char"));
+        assert_eq!(rustify_ptr(" char * * "), s("*mut *mut", "char"));
+        assert_eq!(rustify_ptr("const char**"), s("*mut *const", "char"));
+        assert_eq!(rustify_ptr("char const**"), s("*mut *const", "char"));
+        assert_eq!(rustify_ptr("const char* const*"), s("*const *const", "char"));
+        assert_eq!(rustify_ptr("char const * const *"), s("*const *const", "char"));
+        assert_eq!(rustify_ptr("char* const*"), s("*const *mut", "char"));
+    }
 }

@@ -317,6 +317,21 @@ impl Type {
         }
     }
 
+    pub fn get_glib_name(&self) -> Option<&str> {
+        use self::Type::*;
+        match self {
+            &Alias(ref alias) => Some(&alias.c_identifier),
+            &Enumeration(ref enum_) => Some(&enum_.glib_type_name),
+            &Bitfield(ref bit_field) => Some(&bit_field.glib_type_name),
+            &Record(ref rec) => Some(&rec.glib_type_name),
+            &Union(ref union) => Some(&union.glib_type_name),
+            &Callback(ref func) => Some(&func.c_identifier),
+            &Interface(ref interface) => Some(&interface.glib_type_name),
+            &Class(ref class) => Some(&class.glib_type_name),
+            _ => None,
+        }
+    }
+
     pub fn container(library: &mut Library, name: &str, mut inner: Vec<TypeId>) -> Option<TypeId> {
         match (name, inner.len()) {
             ("array", 1) => {
