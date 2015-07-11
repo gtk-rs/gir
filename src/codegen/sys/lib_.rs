@@ -3,7 +3,7 @@ use std::io::{Result, Write};
 
 use env::Env;
 use file_saver::*;
-use library;
+use library::{self, MaybeRef};
 use nameutil::*;
 use super::functions;
 use super::statics;
@@ -24,10 +24,10 @@ fn generate_lib<W: Write>(w: &mut W, env: &Env) -> Result<()>{
     try!(statics::begin(w));
 
     let ns = env.library.namespace(library::MAIN_NAMESPACE);
-    let classes = prepare_classes(ns);
+    let classes = prepare(ns);
 
     try!(generate_classes_structs(w, &classes));
-    try!(generate_interfaces_structs(w, &prepare_interfaces(ns)));
+    try!(generate_interfaces_structs(w, &prepare(ns)));
 
     try!(statics::before_func(w));
 
@@ -41,11 +41,12 @@ fn generate_lib<W: Write>(w: &mut W, env: &Env) -> Result<()>{
     Ok(())
 }
 
-fn prepare_classes(ns: &library::Namespace) -> Vec<&library::Class> {
-    let mut vec: Vec<&library::Class> = Vec::with_capacity(ns.types.len());
-    for typ in &ns.types {
-        if let &Some(library::Type::Class(ref klass)) = typ {
-            vec.push(klass);
+fn prepare<T: Ord>(ns: &library::Namespace) -> Vec<&T>
+where library::Type: MaybeRef<T> {
+    let mut vec: Vec<&T> = Vec::with_capacity(ns.types.len());
+    for typ in ns.types.iter().filter_map(|t| t.as_ref()) {
+        if let Some(ref x) = typ.maybe_ref() {
+            vec.push(x);
         }
     }
     vec.sort();
@@ -59,17 +60,6 @@ fn generate_classes_structs<W: Write>(w: &mut W, classes: &Vec<&library::Class>)
     }
 
     Ok(())
-}
-
-fn prepare_interfaces(ns: &library::Namespace) -> Vec<&library::Interface> {
-    let mut vec: Vec<&library::Interface> = Vec::with_capacity(ns.types.len());
-    for typ in &ns.types {
-        if let &Some(library::Type::Interface(ref interface)) = typ {
-            vec.push(interface);
-        }
-    }
-    vec.sort();
-    vec
 }
 
 fn generate_interfaces_structs<W: Write>(w: &mut W, interfaces: &Vec<&library::Interface>) -> Result<()> {
