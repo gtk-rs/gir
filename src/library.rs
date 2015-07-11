@@ -414,6 +414,52 @@ impl AsArg for Type {
     }
 }
 
+pub trait MaybeRef<T> {
+    fn maybe_ref(&self) -> Option<&T>;
+    fn to_ref(&self) -> &T;
+}
+
+macro_rules! impl_maybe_ref {
+    () => ();
+    ($name:ident, $($more:ident,)*) => (
+        impl_maybe_ref!($($more,)*);
+
+        impl MaybeRef<$name> for Type {
+            fn maybe_ref(&self) -> Option<&$name> {
+                if let &Type::$name(ref x) = self { Some(x) } else { None }
+            }
+
+            fn to_ref(&self) -> &$name {
+                self.maybe_ref().unwrap_or_else(|| {
+                    panic!("{} is not a {}", self.get_name(), stringify!($name))
+                })
+            }
+        }
+    );
+}
+
+impl_maybe_ref!(
+    Bitfield,
+    Class,
+    Enumeration,
+    Interface,
+);
+
+pub trait MaybeRefAs {
+    fn maybe_ref_as<T>(&self) -> Option<&T> where Self: MaybeRef<T>;
+    fn to_ref_as<T>(&self) -> &T where Self: MaybeRef<T>;
+}
+
+impl<U> MaybeRefAs for U {
+    fn maybe_ref_as<T>(&self) -> Option<&T> where Self: MaybeRef<T> {
+        self.maybe_ref()
+    }
+
+    fn to_ref_as<T>(&self) -> &T where Self: MaybeRef<T> {
+        self.to_ref()
+    }
+}
+
 pub struct Namespace {
     pub name: String,
     pub types: Vec<Option<Type>>,
