@@ -154,7 +154,7 @@ impl Library {
                             fns.push(try!(self.read_function(parser, ns_id, kind, &attributes)));
                         }
                         "implements" => {
-                            impls.push(try!(self.read_type(parser, ns_id, &name, &attributes)));
+                            impls.push(try!(self.read_type(parser, ns_id, &name, &attributes)).0);
                         }
                         "field" | "property"
                             | "signal" | "virtual-method" => try!(ignore_element(parser)),
@@ -271,11 +271,14 @@ impl Library {
                 StartElement { name, attributes, .. } => {
                     match name.local_name.as_ref() {
                         "type" | "array" => {
+                            let pos = parser.position();
                             if typ.is_some() {
-                                return Err(mk_error!("Too many <type> elements", parser));
+                                return Err(mk_error!("Too many <type> elements", &pos));
                             }
-                            typ = Some(try!(
-                                self.read_type(parser, ns_id, &name, &attributes)));
+                            typ = Some(try!(self.read_type(parser, ns_id, &name, &attributes)));
+                            if typ.as_ref().unwrap().1.is_none() {
+                                return Err(mk_error!("Missing c:type attribute", &pos));
+                            }
                         }
                         "doc" | "doc-deprecated" => try!(ignore_element(parser)),
                         x => return Err(mk_error!(format!("Unexpected element <{}>", x), parser)),
@@ -285,10 +288,11 @@ impl Library {
                 _ => xml_try!(event, parser),
             }
         }
-        if let Some(typ) = typ {
+        if let Some((tid, c_type)) = typ {
             Ok(Field {
                 name: name.into(),
-                typ: typ,
+                typ: tid,
+                c_type: c_type.unwrap(),
             })
         }
         else {
@@ -435,8 +439,7 @@ impl Library {
                             if typ.is_some() {
                                 return Err(mk_error!("Too many <type> elements", parser));
                             }
-                            typ = Some(try!(
-                                self.read_type(parser, ns_id, &name, &attributes)));
+                            typ = Some(try!(self.read_type(parser, ns_id, &name, &attributes)).0);
                         }
                         "doc" | "doc-deprecated" => try!(ignore_element(parser)),
                         x => return Err(mk_error!(format!("Unexpected element <{}>", x), parser)),
@@ -474,8 +477,7 @@ impl Library {
                             if inner.is_some() {
                                 return Err(mk_error!("Too many <type> elements", parser));
                             }
-                            inner = Some(try!(
-                                self.read_type(parser, ns_id, &name, &attributes)));
+                            inner = Some(try!(self.read_type(parser, ns_id, &name, &attributes)).0);
                         }
                         "doc" | "doc-deprecated" => try!(ignore_element(parser)),
                         x => return Err(mk_error!(format!("Unexpected element <{}>", x), parser)),
@@ -625,11 +627,14 @@ impl Library {
                 StartElement { name, attributes, .. } => {
                     match name.local_name.as_ref() {
                         "type" | "array" => {
+                            let pos = parser.position();
                             if typ.is_some() {
-                                return Err(mk_error!("Too many <type> elements", parser));
+                                return Err(mk_error!("Too many <type> elements", &pos));
                             }
-                            typ = Some(try!(
-                                self.read_type(parser, ns_id, &name, &attributes)));
+                            typ = Some(try!(self.read_type(parser, ns_id, &name, &attributes)));
+                            if typ.as_ref().unwrap().1.is_none() {
+                                return Err(mk_error!("Missing c:type attribute", &pos));
+                            }
                         }
                         "varargs" => {
                             varargs = true;
@@ -643,10 +648,11 @@ impl Library {
                 _ => xml_try!(event, parser),
             }
         }
-        if let Some(typ) = typ {
+        if let Some((tid, c_type)) = typ {
             Ok(Parameter {
                 name: name.into(),
-                typ: typ,
+                typ: tid,
+                c_type: c_type.unwrap(),
                 instance_parameter: instance_parameter,
                 direction: direction,
                 transfer: transfer,
@@ -658,6 +664,7 @@ impl Library {
             Ok(Parameter {
                 name: "".into(),
                 typ: self.find_type(INTERNAL_NAMESPACE, "varargs").unwrap(),
+                c_type: "".into(),
                 instance_parameter: instance_parameter,
                 direction: Default::default(),
                 transfer: Transfer::None,
@@ -671,7 +678,7 @@ impl Library {
     }
 
     fn read_type(&mut self, parser: &mut Reader, ns_id: u16,
-                 name: &OwnedName, attrs: &Attributes) -> Result<TypeId, Error> {
+                 name: &OwnedName, attrs: &Attributes) -> Result<(TypeId, Option<String>), Error> {
         let start_pos = parser.position();
         let name =
             if name.local_name == "array" {
@@ -680,6 +687,7 @@ impl Library {
             else {
                 try!(attrs.get("name").ok_or_else(|| mk_error!("Missing type name", &start_pos)))
             };
+        let c_type = attrs.get("type").map(|s| s.into());
         let mut inner = Vec::new();
         loop {
             let event = parser.next();
@@ -687,8 +695,7 @@ impl Library {
                 StartElement { name, attributes, .. } => {
                     match name.local_name.as_ref() {
                         "type" | "array" => {
-                            inner.push(try!(
-                                self.read_type(parser, ns_id, &name, &attributes)));
+                            inner.push(try!(self.read_type(parser, ns_id, &name, &attributes)).0);
                         }
                         x => return Err(mk_error!(format!("Unexpected element <{}>", x), parser)),
                     }
@@ -698,10 +705,12 @@ impl Library {
             }
         }
         if !inner.is_empty() {
-            Ok(try!(Type::container(self, name, inner).ok_or_else(|| mk_error!("Unknown container type", &start_pos))))
+            let tid = try!(Type::container(self, name, inner)
+                           .ok_or_else(|| mk_error!("Unknown container type", &start_pos)));
+            Ok((tid, c_type))
         }
         else {
-            Ok(self.find_or_stub_type(ns_id, name))
+            Ok((self.find_or_stub_type(ns_id, name), c_type))
         }
     }
 }
