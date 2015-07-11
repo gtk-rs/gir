@@ -186,6 +186,8 @@ impl Library {
     fn read_record(&mut self, parser: &mut Reader,
                   ns_id: u16, attrs: &Attributes) -> Result<(), Error> {
         let name = try!(attrs.get("name").ok_or_else(|| mk_error!("Missing record name", parser)));
+        let type_name = try!(attrs.get("type").or_else(|| attrs.get("type-name"))
+            .ok_or_else(|| mk_error!("Missing glib:type-name/c:type attributes", parser)));
         let mut fns = Vec::new();
         loop {
             let event = parser.next();
@@ -210,7 +212,6 @@ impl Library {
             return Ok(());
         }
 
-        let type_name = attrs.get("type-name").unwrap_or(name);
         let typ = Type::Record(
             Record {
                 name: name.into(),
@@ -537,7 +538,8 @@ impl Library {
                      kind_str: &str, attrs: &Attributes) -> Result<Function, Error> {
         let name = try!(attrs.get("name").ok_or_else(|| mk_error!("Missing function name", parser)));
         let kind = try!(FunctionKind::from_str(kind_str).map_err(|why| mk_error!(why, parser)));
-        let c_identifier = attrs.get("identifier").unwrap_or(name);
+        let c_identifier = try!(attrs.get("identifier").or_else(|| attrs.get("type"))
+            .ok_or_else(|| mk_error!("Missing c:identifier/c:type attributes", parser)));
         let mut params = Vec::new();
         let mut ret = None;
         loop {
