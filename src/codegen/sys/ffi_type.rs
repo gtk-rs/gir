@@ -8,7 +8,7 @@ pub fn ffi_type(env: &Env, type_id: library::TypeId) -> Result {
     use library::Type::*;
     use library::Fundamental::*;
     let type_ = env.library.type_(type_id);
-    match type_ {
+    let res = match type_ {
         &Fundamental(fund) => {
             let ok = |s: &str| Ok(s.into());
             let err = |s: &str| Err(s.into());
@@ -38,12 +38,15 @@ pub fn ffi_type(env: &Env, type_id: library::TypeId) -> Result {
             }
         },
 
-        &Enumeration(ref enum_) => Ok(format!("enums::{}", enum_.name)),
+        &Bitfield(ref bitfield) => fix_external_name(env, type_id, &bitfield.name),
+        &Enumeration(ref enum_) => fix_external_name(env, type_id, &enum_.name),
         &Interface(ref interface) => to_mut_ptr(fix_external_name(env, type_id, &interface.glib_type_name)),
         &Class(ref klass) => to_mut_ptr(fix_external_name(env, type_id, &klass.glib_type_name)),
         _ => Err(format!("Unknown rust type: {:?}", type_.get_name() )),
         //TODO: check usage library::Type::get_name() when no _ in this
-    }
+    };
+    trace!("ffi_type({:?}) -> {:?}", type_id, res);
+    res
 }
 
 fn fix_external_name(env: &Env, type_id: library::TypeId, name: &str) -> Result {
