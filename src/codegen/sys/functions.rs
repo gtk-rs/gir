@@ -52,6 +52,9 @@ fn function_return_value(env: &Env, func: &library::Function) -> (bool, String) 
 }
 
 fn function_parameter(env: &Env, par: &library::Parameter) -> (bool, String) {
+    if let &library::Type::Fundamental(library::Fundamental::VarArgs) = env.library.type_(par.typ) {
+        return (false, "...".into());
+    }
     let ffi_type = ffi_type(env, par.typ);
     let commented = ffi_type.is_err();
     (commented, format!("{}: {}", general::fix_parameter_name(&par.name), ffi_type.as_str()))
