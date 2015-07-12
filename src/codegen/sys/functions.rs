@@ -6,7 +6,7 @@ use library;
 use super::ffi_type::*;
 use super::super::general;
 
-pub fn generate_classes_funcs<W: Write>(w: &mut W, env: &Env, classes: &Vec<&library::Class>) -> Result<()> {
+pub fn generate_classes_funcs<W: Write>(w: &mut W, env: &Env, classes: &[&library::Class]) -> Result<()> {
     for klass in classes {
         try!(generate_class_funcs(w, env, klass));
     }
@@ -30,7 +30,7 @@ fn generate_class_funcs<W: Write>(w: &mut W, env: &Env, klass: &library::Class) 
     Ok(())
 }
 
-pub fn generate_callbacks<W: Write>(w: &mut W, env: &Env, callbacks: &Vec<&library::Function>) -> Result<()> {
+pub fn generate_callbacks<W: Write>(w: &mut W, env: &Env, callbacks: &[&library::Function]) -> Result<()> {
     for func in callbacks {
         let (commented, sig) = function_signature(env, func, true);
         let comment = if commented { "//" } else { "" };

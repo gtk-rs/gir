@@ -57,7 +57,7 @@ where library::Type: MaybeRef<T> {
     vec
 }
 
-fn generate_bitfields<W: Write>(w: &mut W, ns_name: &str, items: &Vec<&library::Bitfield>)
+fn generate_bitfields<W: Write>(w: &mut W, ns_name: &str, items: &[&library::Bitfield])
         -> Result<()> {
     try!(writeln!(w, ""));
     for item in items {
@@ -74,7 +74,7 @@ fn generate_bitfields<W: Write>(w: &mut W, ns_name: &str, items: &Vec<&library::
     Ok(())
 }
 
-fn generate_enums<W: Write>(w: &mut W, ns_name: &str, items: &Vec<&library::Enumeration>)
+fn generate_enums<W: Write>(w: &mut W, ns_name: &str, items: &[&library::Enumeration])
         -> Result<()> {
     try!(writeln!(w, ""));
     for item in items {
@@ -97,7 +97,7 @@ fn generate_enums<W: Write>(w: &mut W, ns_name: &str, items: &Vec<&library::Enum
     Ok(())
 }
 
-fn generate_classes_structs<W: Write>(w: &mut W, classes: &Vec<&library::Class>) -> Result<()> {
+fn generate_classes_structs<W: Write>(w: &mut W, classes: &[&library::Class]) -> Result<()> {
     try!(writeln!(w, ""));
     for klass in classes {
         try!(writeln!(w, "#[repr(C)]\npub struct {};", klass.glib_type_name));
@@ -106,7 +106,7 @@ fn generate_classes_structs<W: Write>(w: &mut W, classes: &Vec<&library::Class>)
     Ok(())
 }
 
-fn generate_interfaces_structs<W: Write>(w: &mut W, interfaces: &Vec<&library::Interface>) -> Result<()> {
+fn generate_interfaces_structs<W: Write>(w: &mut W, interfaces: &[&library::Interface]) -> Result<()> {
     try!(writeln!(w, ""));
     for interface in interfaces {
         try!(writeln!(w, "#[repr(C)]\npub struct {};", interface.glib_type_name));

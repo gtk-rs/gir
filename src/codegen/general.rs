@@ -44,7 +44,7 @@ pub fn objects_child_type<W: Write>(w: &mut W, type_name: &str, glib_name: &str)
     Ok(())
 }
 
-pub fn impl_parents<W: Write>(w: &mut W, type_name: &str, parents: &Vec<StatusedTypeId>) -> Result<()>{
+pub fn impl_parents<W: Write>(w: &mut W, type_name: &str, parents: &[StatusedTypeId]) -> Result<()>{
     try!(writeln!(w, ""));
     for stid in parents {
         //TODO: don't generate for parents without traits
@@ -54,7 +54,7 @@ pub fn impl_parents<W: Write>(w: &mut W, type_name: &str, parents: &Vec<Statused
     Ok(())
 }
 
-pub fn impl_interfaces<W: Write>(w: &mut W, type_name: &str, implements: &Vec<StatusedTypeId>) -> Result<()>{
+pub fn impl_interfaces<W: Write>(w: &mut W, type_name: &str, implements: &[StatusedTypeId]) -> Result<()>{
     try!(writeln!(w, ""));
     for stid in implements {
         try!(writeln!(w, "unsafe impl Upcast<{}> for {} {{ }}", stid.name, type_name));
@@ -96,7 +96,7 @@ pub fn fix_parameter_name(name: &str) -> String{
     }
 }
 
-pub fn write_vec<W: Write, T: Display>(w: &mut W, v: &Vec<T>) -> Result<()> {
+pub fn write_vec<W: Write, T: Display>(w: &mut W, v: &[T]) -> Result<()> {
     for s in v {
         try!(writeln!(w, "{}", s));
     }
