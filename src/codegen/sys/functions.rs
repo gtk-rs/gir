@@ -22,26 +22,36 @@ fn generate_class_funcs<W: Write>(w: &mut W, env: &Env, klass: &library::Class) 
     try!(writeln!(w, "    pub fn {:<36}() -> GType;", klass.glib_get_type));
 
     for func in &klass.functions {
-        let decl = function_declaration(env, func);
-        try!(writeln!(w, "    {}", decl));
+        let (commented, sig) = function_signature(env, func, false);
+        let comment = if commented { "//" } else { "" };
+        try!(writeln!(w, "    {}pub fn {:<36}{};", comment, func.c_identifier, sig));
     }
 
     Ok(())
 }
 
-fn function_declaration(env: &Env, func: &library::Function) -> String {
+pub fn generate_callbacks<W: Write>(w: &mut W, env: &Env, callbacks: &Vec<&library::Function>) -> Result<()> {
+    for func in callbacks {
+        let (commented, sig) = function_signature(env, func, true);
+        let comment = if commented { "//" } else { "" };
+        try!(writeln!(w, "{}pub type {} = unsafe extern \"C\" fn{};",
+                      comment, func.c_identifier, sig));
+    }
+
+    Ok(())
+}
+
+fn function_signature(env: &Env, func: &library::Function, bare: bool) -> (bool, String) {
     let (mut commented, ret_str) = function_return_value(env, func);
 
     let mut parameter_strs: Vec<String> = Vec::new();
     for par in &func.parameters {
-        let (c, par_str) = function_parameter(env, par);
+        let (c, par_str) = function_parameter(env, par, bare);
         parameter_strs.push(par_str);
         if c { commented = true; }
     }
 
-    let commented_str = if commented { "//" } else { "" };
-    format!("{}pub fn {:<36}({}){};", commented_str, func.c_identifier,
-        parameter_strs.connect(", "), ret_str)
+    (commented, format!("({}){}", parameter_strs.connect(", "), ret_str))
 }
 
 fn function_return_value(env: &Env, func: &library::Function) -> (bool, String) {
@@ -51,11 +61,17 @@ fn function_return_value(env: &Env, func: &library::Function) -> (bool, String) 
     (commented, format!(" -> {}", ffi_type.as_str()))
 }
 
-fn function_parameter(env: &Env, par: &library::Parameter) -> (bool, String) {
+fn function_parameter(env: &Env, par: &library::Parameter, bare: bool) -> (bool, String) {
     if let &library::Type::Fundamental(library::Fundamental::VarArgs) = env.library.type_(par.typ) {
         return (false, "...".into());
     }
     let ffi_type = ffi_type(env, par.typ, &par.c_type);
     let commented = ffi_type.is_err();
-    (commented, format!("{}: {}", general::fix_parameter_name(&par.name), ffi_type.as_str()))
+    let res = if bare {
+        ffi_type.as_str().into()
+    }
+    else {
+        format!("{}: {}", general::fix_parameter_name(&par.name), ffi_type.as_str())
+    };
+    (commented, res)
 }

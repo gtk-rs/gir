@@ -29,6 +29,7 @@ fn generate_lib<W: Write>(w: &mut W, env: &Env) -> Result<()>{
 
     try!(generate_enums(w, &ns.name, &prepare(ns)));
     try!(generate_bitfields(w, &ns.name, &prepare(ns)));
+    try!(functions::generate_callbacks(w, env, &prepare(ns)));
     try!(generate_classes_structs(w, &classes));
     try!(generate_interfaces_structs(w, &prepare(ns)));
 
