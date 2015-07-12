@@ -368,66 +368,6 @@ impl Type {
     }
 }
 
-pub trait AsArg {
-    fn as_arg(&self, library: &Library) -> String;
-}
-
-impl AsArg for Fundamental {
-    fn as_arg(&self, _: &Library) -> String {
-        use self::Fundamental::*;
-        match *self {
-            Boolean => "gboolean",
-            Int8 => "gint8",
-            UInt8 => "guint8",
-            Int16 => "gint16",
-            UInt16 => "guint16",
-            Int32 => "gint32",
-            UInt32 => "guint32",
-            Int64 => "gint64",
-            UInt64 => "guint64",
-            Char => "gchar",
-            UChar => "guchar",
-            Int => "gint",
-            UInt => "guint",
-            Long => "glong",
-            ULong => "gulong",
-            Size => "gsize",
-            SSize => "gssize",
-            Float => "gfloat",
-            Double => "gdouble",
-            UniChar => "gunichar",
-            Pointer => "gpointer",
-            VarArgs => "...",
-            Utf8 => "*const c_char",
-            Filename => "*const c_char",
-            Type => "GType",
-            None => "c_void",
-            Unsupported => panic!("unsupported type"),
-        }.into()
-    }
-}
-
-impl AsArg for Type {
-    fn as_arg(&self, library: &Library) -> String {
-        use self::Type::*;
-        match *self {
-            Fundamental(ref x) => x.as_arg(library),
-            Alias(ref x) => library.type_(x.typ).as_arg(library),
-            Enumeration(ref x) => x.name.clone(),
-            Bitfield(ref x) => x.name.clone(),
-            Record(ref x) => format!("*mut {}", &x.name),
-            Union(ref x) => format!("*mut {}", &x.name),
-            Function(_) => "TODO".into(),
-            Interface(ref x) => format!("*mut {}", &x.name),
-            Class(ref x) => format!("*mut {}", &x.name),
-            Array(x) => format!("*mut {}", library.type_(x).as_arg(library)),
-            HashTable(_, _)  => "*mut GHashTable".into(),
-            List(_)  => "*mut GList".into(),
-            SList(_)  => "*mut GSList".into(),
-        }
-    }
-}
-
 pub trait MaybeRef<T> {
     fn maybe_ref(&self) -> Option<&T>;
     fn to_ref(&self) -> &T;
