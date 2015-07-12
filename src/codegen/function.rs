@@ -72,6 +72,7 @@ fn upcasts(upcasts: &Upcasts) -> String {
 
 pub fn body(env: &Env, analysis: &analysis::functions::Info,
     in_trait: bool) -> Vec<String> {
+    let outs_as_return = !analysis.outs.is_empty();
     let mut builder = Builder::new();
     builder.glib_name(&analysis.glib_name)
         .from_glib(analysis.ret.translate_from_glib_as_function(env, &analysis));
@@ -79,7 +80,7 @@ pub fn body(env: &Env, analysis: &analysis::functions::Info,
     //TODO: change to map on parameters with pass Vec<String> to builder
     for par in &analysis.parameters {
         let s = par.translate_to_glib(&env.library, in_trait);
-        builder.parameter(s);
+        builder.parameter(s, outs_as_return && par.direction.can_as_return());
     }
 
     builder.generate()

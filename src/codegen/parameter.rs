@@ -13,8 +13,6 @@ impl ToParameter for library::Parameter {
         if self.instance_parameter {
             "&self".into()
         } else {
-            //TODO: Rework out (without inout) parameters as return type, with checking that it last
-            //  Ex. gtk_range_get_range_rect, gtk_scale_get_layout_offsets
             let mut type_str: String;
             match upcasts.get_parameter_type_alias(&self.name) {
                 Some(t) => type_str = format!("&{}", t),
