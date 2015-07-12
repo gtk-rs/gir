@@ -96,6 +96,8 @@ pub enum Fundamental {
     UInt64,
     Char,
     UChar,
+    Short,
+    UShort,
     Int,
     UInt,
     Long,
@@ -113,7 +115,7 @@ pub enum Fundamental {
     Unsupported,
 }
 
-pub const FUNDAMENTAL: [(&'static str, Fundamental); 28] = [
+pub const FUNDAMENTAL: [(&'static str, Fundamental); 30] = [
     ("none", Fundamental::None),
     ("gboolean", Fundamental::Boolean),
     ("gint8", Fundamental::Int8),
@@ -126,6 +128,8 @@ pub const FUNDAMENTAL: [(&'static str, Fundamental); 28] = [
     ("guint64", Fundamental::UInt64),
     ("gchar", Fundamental::Char),
     ("guchar", Fundamental::UChar),
+    ("gshort", Fundamental::Short),
+    ("gushort", Fundamental::UShort),
     ("gint", Fundamental::Int),
     ("guint", Fundamental::UInt),
     ("glong", Fundamental::Long),

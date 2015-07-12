@@ -27,6 +27,8 @@ pub fn ffi_type(env: &Env, tid: library::TypeId, c_type: &str) -> Result {
                 UInt64 => "u64".into(),
                 Char => "c_char".into(),
                 UChar => "c_char".into(),
+                Short => "c_short".into(),
+                UShort => "c_ushort".into(),
                 Int => "c_int".into(),
                 UInt => "c_uint".into(),
                 Long => "c_long".into(),

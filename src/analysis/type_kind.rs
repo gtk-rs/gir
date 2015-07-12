@@ -32,6 +32,8 @@ impl TypeKind {
                 UInt64 => TypeKind::Direct,
                 Char => TypeKind::Converted,
                 UChar => TypeKind::Converted,
+                Short => TypeKind::Direct,
+                UShort => TypeKind::Direct,
                 Int => TypeKind::Direct,
                 UInt => TypeKind::Direct,
                 Long => TypeKind::Direct,
