@@ -10,66 +10,81 @@ use nameutil::module_name;
 
 pub fn ffi_type(env: &Env, tid: library::TypeId, c_type: &str) -> Result {
     let (ptr, mut inner) = rustify_pointers(c_type);
+    let mut ok = true;
     match *env.library.type_(tid) {
         Type::Fundamental(fund) => {
             use library::Fundamental::*;
             inner = match fund {
-                None => "c_void",
-                Boolean => "gboolean",
-                Int8 => "i8",
-                UInt8 => "u8",
-                Int16 => "i16",
-                UInt16 => "u16",
-                Int32 => "i32",
-                UInt32 => "u32",
-                Int64 => "i64",
-                UInt64 => "u64",
-                Char => "c_char",
-                UChar => "c_char",
-                Int => "c_int",
-                UInt => "c_uint",
-                Long => "c_long",
-                ULong => "c_ulong",
-                Size => "size_t",
-                SSize => "ssize_t",
-                Float => "c_float",
-                Double => "c_double",
-                UniChar => "u32",
-                Utf8 => "c_char",
-                Filename => "c_char",
-                Type => "GType",
-                Pointer => &*inner,
-                Unsupported => return Err(format!("Unsupported type {}", c_type)),
+                None => "c_void".into(),
+                Boolean => "gboolean".into(),
+                Int8 => "i8".into(),
+                UInt8 => "u8".into(),
+                Int16 => "i16".into(),
+                UInt16 => "u16".into(),
+                Int32 => "i32".into(),
+                UInt32 => "u32".into(),
+                Int64 => "i64".into(),
+                UInt64 => "u64".into(),
+                Char => "c_char".into(),
+                UChar => "c_char".into(),
+                Int => "c_int".into(),
+                UInt => "c_uint".into(),
+                Long => "c_long".into(),
+                ULong => "c_ulong".into(),
+                Size => "size_t".into(),
+                SSize => "ssize_t".into(),
+                Float => "c_float".into(),
+                Double => "c_double".into(),
+                UniChar => "u32".into(),
+                Utf8 => "c_char".into(),
+                Filename => "c_char".into(),
+                Type => "GType".into(),
+                Pointer => inner,
+                Unsupported => {
+                    ok = false;
+                    format!("[Unsupported type {}]", c_type)
+                }
                 VarArgs => panic!("Should not reach here"),
-            }.into();
+            };
         }
         Type::Record(..)
             | Type::Alias(..)
-            | Type::Callback(..) => return Err(format!("Not yet supported type {}", c_type)),
+            | Type::Callback(..) => {
+                inner = format!("[Not yet supported type {}]", c_type);
+                ok = false;
+            }
         // TODO: need to recurse into it
-        Type::Array(..) => return Err(format!("Not yet supported type {}", c_type)),
+        Type::Array(..) => {
+            inner = format!("[Not yet supported type {}]", c_type);
+            ok = false;
+        }
         Type::List(..) | Type::SList(..) => (),
         _ => {
             if let Some(glib_name) = env.library.type_(tid).get_glib_name() {
                 if inner != glib_name {
-                    let msg = format!("c:type mismatch {} != {} of {}", inner, glib_name,
+                    inner = format!("[c:type mismatch {} != {} of {}]", inner, glib_name,
                       env.library.type_(tid).get_name());
-                warn!("{}", msg);
-                return Err(msg);
+                    warn!("{}", inner);
+                    ok = false;
                 }
             }
             else {
-                warn!("Missing glib_name of {}, can't match != {}",
-                      env.library.type_(tid).get_name(), inner);
-                return Err(format!("Missing glib_name of {}, can't match != {}",
-                                    env.library.type_(tid).get_name(), inner));
+                inner = format!("[Missing glib_name of {}, can't match != {}]",
+                                  env.library.type_(tid).get_name(), inner);
+                warn!("{}", inner);
+                ok = false;
             }
-            inner = try!(fix_external_name(env, tid, &inner));
+
+            if ok {
+                let fixed = fix_external_name(env, tid, &inner);
+                ok = fixed.is_ok();
+                inner = fixed.unwrap_or_else(|s| s);
+            }
         }
     }
     let res = if ptr.is_empty() { inner } else { [ptr, inner].connect(" ") };
     trace!("ffi_type({:?}, {}) -> {}", tid, c_type, res);
-    Ok(res)
+    if ok { Ok(res) } else { Err(res) }
 }
 
 fn fix_external_name(env: &Env, type_id: library::TypeId, name: &str) -> Result {
@@ -118,7 +133,9 @@ fn rustify_pointers(c_type: &str) -> (String, String) {
         *p = "*const";
     }
 
-    (ptrs.connect(" "), inner)
+    let res = (ptrs.connect(" "), inner);
+    trace!("rustify `{}` -> `{}` `{}`", c_type, res.0, res.1);
+    res
 }
 
 #[cfg(test)]
