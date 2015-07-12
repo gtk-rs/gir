@@ -50,12 +50,12 @@ fn analyze_function(env: &Env, type_: &library::Function, class_tid: library::Ty
 
     for (pos, par) in type_.parameters.iter().enumerate() {
         assert!(!par.instance_parameter || pos == 0,
-            "Wrong instance parameter in {}", type_.c_identifier);
+            "Wrong instance parameter in {}", type_.c_identifier.as_ref().unwrap());
         used_rust_type(env, par.typ).ok().map(|s| used_types.insert(s));
         if !par.instance_parameter && needed_upcast(&env.library, par.typ) {
             let type_name = rust_type(env, par.typ);
             if !upcasts.add_parameter(&par.name, type_name.as_str()) {
-                panic!("Too many parameters upcasts for {}", type_.c_identifier)
+                panic!("Too many parameters upcasts for {}", type_.c_identifier.as_ref().unwrap())
             }
         }
         if parameter_rust_type(env, par.typ, par.direction)
@@ -66,7 +66,7 @@ fn analyze_function(env: &Env, type_: &library::Function, class_tid: library::Ty
 
     Info {
         name: type_.name.clone(),
-        glib_name: type_.c_identifier.clone(),
+        glib_name: type_.c_identifier.as_ref().unwrap().clone(),
         kind: type_.kind,
         comented: commented,
         class_name: rust_type(env, class_tid),

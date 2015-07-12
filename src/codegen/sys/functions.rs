@@ -24,7 +24,8 @@ fn generate_class_funcs<W: Write>(w: &mut W, env: &Env, klass: &library::Class) 
     for func in &klass.functions {
         let (commented, sig) = function_signature(env, func, false);
         let comment = if commented { "//" } else { "" };
-        try!(writeln!(w, "    {}pub fn {:<36}{};", comment, func.c_identifier, sig));
+        try!(writeln!(w, "    {}pub fn {:<36}{};",
+                      comment, func.c_identifier.as_ref().unwrap(), sig));
     }
 
     Ok(())
@@ -35,7 +36,7 @@ pub fn generate_callbacks<W: Write>(w: &mut W, env: &Env, callbacks: &Vec<&libra
         let (commented, sig) = function_signature(env, func, true);
         let comment = if commented { "//" } else { "" };
         try!(writeln!(w, "{}pub type {} = unsafe extern \"C\" fn{};",
-                      comment, func.c_identifier, sig));
+                      comment, func.c_identifier.as_ref().unwrap(), sig));
     }
 
     Ok(())

@@ -108,7 +108,7 @@ impl Library {
                             try!(self.read_interface(parser, ns_id, &attributes));
                         }
                         "callback" => {
-                            try!(self.read_callback(parser, ns_id, &attributes));
+                            try!(self.read_named_callback(parser, ns_id, &attributes));
                         }
                         "bitfield" => {
                             try!(self.read_bitfield(parser, ns_id, &attributes));
@@ -151,7 +151,12 @@ impl Library {
                 StartElement { name, attributes, .. } => {
                     match name.local_name.as_ref() {
                         kind @ "constructor" | kind @ "function" | kind @ "method" => {
-                            fns.push(try!(self.read_function(parser, ns_id, kind, &attributes)));
+                            let pos = parser.position();
+                            let f = try!(self.read_function(parser, ns_id, kind, &attributes));
+                            if f.c_identifier.is_none() {
+                                return Err(mk_error!("Missing c:identifier attribute", &pos));
+                            }
+                            fns.push(f);
                         }
                         "implements" => {
                             impls.push(try!(self.read_type(parser, ns_id, &name, &attributes)).0);
@@ -195,8 +200,12 @@ impl Library {
                 StartElement { name, attributes, .. } => {
                     match name.local_name.as_ref() {
                         kind @ "constructor" | kind @ "function" | kind @ "method" => {
-                            fns.push(try!(
-                                self.read_function(parser, ns_id, kind, &attributes)));
+                            let pos = parser.position();
+                            let f = try!(self.read_function(parser, ns_id, kind, &attributes));
+                            if f.c_identifier.is_none() {
+                                return Err(mk_error!("Missing c:identifier attribute", &pos));
+                            }
+                            fns.push(f);
                         }
                         "field" | "union" => try!(ignore_element(parser)),
                         "doc" | "doc-deprecated" => try!(ignore_element(parser)),
@@ -237,8 +246,12 @@ impl Library {
                                 self.read_field(parser, ns_id, &attributes)));
                         }
                         kind @ "constructor" | kind @ "function" | kind @ "method" => {
-                            fns.push(try!(
-                                self.read_function(parser, ns_id, kind, &attributes)));
+                            let pos = parser.position();
+                            let f = try!(self.read_function(parser, ns_id, kind, &attributes));
+                            if f.c_identifier.is_none() {
+                                return Err(mk_error!("Missing c:identifier attribute", &pos));
+                            }
+                            fns.push(f);
                         }
                         "record" => try!(ignore_element(parser)),
                         "doc" | "doc-deprecated" => try!(ignore_element(parser)),
@@ -301,12 +314,15 @@ impl Library {
         }
     }
 
-    fn read_callback(&mut self, parser: &mut Reader, ns_id: u16,
+    fn read_named_callback(&mut self, parser: &mut Reader, ns_id: u16,
                      attrs: &Attributes) -> Result<(), Error> {
-        let name = try!(attrs.get("name").ok_or_else(|| mk_error!("Missing callback name", parser)));
+        let pos = parser.position();
         let func = try!(self.read_function(parser, ns_id, "callback", attrs));
-        let cb = Type::Function(func);
-        self.add_type(ns_id, name, cb);
+        let name = func.name.clone();
+        if func.c_identifier.is_none() {
+            return Err(mk_error!("Missing c:type attribute", &pos));
+        }
+        self.add_type(ns_id, &name, Type::Function(func));
         Ok(())
     }
 
@@ -319,8 +335,14 @@ impl Library {
             match event {
                 StartElement { name, attributes, .. } => {
                     match name.local_name.as_ref() {
-                        kind @ "constructor" | kind @ "function" | kind @ "method" =>
-                            fns.push(try!( self.read_function(parser, ns_id, kind, &attributes))),
+                        kind @ "constructor" | kind @ "function" | kind @ "method" => {
+                            let pos = parser.position();
+                            let f = try!(self.read_function(parser, ns_id, kind, &attributes));
+                            if f.c_identifier.is_none() {
+                                return Err(mk_error!("Missing c:identifier attribute", &pos));
+                            }
+                            fns.push(f);
+                        }
                         "doc" | "doc-deprecated" => try!(ignore_element(parser)),
                         _ => try!(ignore_element(parser)),
                     }
@@ -356,8 +378,12 @@ impl Library {
                                 self.read_member(parser, &attributes)));
                         }
                         kind @ "constructor" | kind @ "function" | kind @ "method" => {
-                            fns.push(try!(
-                                self.read_function(parser, ns_id, kind, &attributes)));
+                            let pos = parser.position();
+                            let f = try!(self.read_function(parser, ns_id, kind, &attributes));
+                            if f.c_identifier.is_none() {
+                                return Err(mk_error!("Missing c:identifier attribute", &pos));
+                            }
+                            fns.push(f);
                         }
                         "doc" | "doc-deprecated" => try!(ignore_element(parser)),
                         x => return Err(mk_error!(format!("Unexpected element <{}>", x), parser)),
@@ -395,8 +421,12 @@ impl Library {
                                 self.read_member(parser, &attributes)));
                         }
                         kind @ "constructor" | kind @ "function" | kind @ "method" => {
-                            fns.push(try!(
-                                self.read_function(parser, ns_id, kind, &attributes)));
+                            let pos = parser.position();
+                            let f = try!(self.read_function(parser, ns_id, kind, &attributes));
+                            if f.c_identifier.is_none() {
+                                return Err(mk_error!("Missing c:identifier attribute", &pos));
+                            }
+                            fns.push(f);
                         }
                         "doc" | "doc-deprecated" => try!(ignore_element(parser)),
                         x => return Err(mk_error!(format!("Unexpected element <{}>", x), parser)),
@@ -421,7 +451,11 @@ impl Library {
 
     fn read_global_function(&mut self, parser: &mut Reader, ns_id: u16,
                             attrs: &Attributes) -> Result<(), Error> {
+        let pos = parser.position();
         let func = try!(self.read_function(parser, ns_id, "global", attrs));
+        if func.c_identifier.is_none() {
+            return Err(mk_error!("Missing c:identifier attribute", &pos));
+        }
         self.add_function(ns_id, func);
         Ok(())
     }
@@ -537,9 +571,8 @@ impl Library {
     fn read_function(&mut self, parser: &mut Reader, ns_id: u16,
                      kind_str: &str, attrs: &Attributes) -> Result<Function, Error> {
         let name = try!(attrs.get("name").ok_or_else(|| mk_error!("Missing function name", parser)));
+        let c_identifier = attrs.get("identifier").or_else(|| attrs.get("type"));
         let kind = try!(FunctionKind::from_str(kind_str).map_err(|why| mk_error!(why, parser)));
-        let c_identifier = try!(attrs.get("identifier").or_else(|| attrs.get("type"))
-            .ok_or_else(|| mk_error!("Missing c:identifier/c:type attributes", parser)));
         let mut params = Vec::new();
         let mut ret = None;
         loop {
@@ -570,7 +603,7 @@ impl Library {
         if let Some(ret) = ret {
             Ok(Function {
                 name: name.into(),
-                c_identifier: c_identifier.into(),
+                c_identifier: c_identifier.map(|s| s.into()),
                 kind: kind,
                 parameters: params,
                 ret: ret,

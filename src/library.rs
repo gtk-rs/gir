@@ -224,7 +224,7 @@ pub struct Parameter {
 
 pub struct Function {
     pub name: String,
-    pub c_identifier: String,
+    pub c_identifier: Option<String>,
     pub kind: FunctionKind,
     pub parameters: Vec<Parameter>,
     pub ret: Parameter,
@@ -328,7 +328,7 @@ impl Type {
             &Bitfield(ref bit_field) => Some(&bit_field.glib_type_name),
             &Record(ref rec) => Some(&rec.glib_type_name),
             &Union(ref union) => Some(&union.glib_type_name),
-            &Function(ref func) => Some(&func.c_identifier),
+            &Function(ref func) => func.c_identifier.as_ref().map(|s| &s[..]),
             &Interface(ref interface) => Some(&interface.glib_type_name),
             &Class(ref class) => Some(&class.glib_type_name),
             _ => None,
