@@ -26,18 +26,20 @@ fn generate_lib<W: Write>(w: &mut W, env: &Env) -> Result<()>{
 
     let ns = env.library.namespace(library::MAIN_NAMESPACE);
     let classes = prepare(ns);
+    let interfaces = prepare(ns);
 
     try!(generate_enums(w, &ns.name, &prepare(ns)));
     try!(generate_bitfields(w, &ns.name, &prepare(ns)));
     try!(functions::generate_callbacks(w, env, &prepare(ns)));
     try!(generate_classes_structs(w, &classes));
-    try!(generate_interfaces_structs(w, &prepare(ns)));
+    try!(generate_interfaces_structs(w, &interfaces));
 
     try!(statics::before_func(w));
 
     try!(writeln!(w, ""));
     try!(writeln!(w, "extern \"C\" {{"));
     try!(functions::generate_classes_funcs(w, env, &classes));
+    try!(functions::generate_interfaces_funcs(w, env, &interfaces));
 
     //TODO: other functions
     try!(writeln!(w, "\n}}"));

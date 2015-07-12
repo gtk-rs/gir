@@ -313,6 +313,8 @@ impl Library {
     fn read_interface(&mut self, parser: &mut Reader,
                       ns_id: u16, attrs: &Attributes) -> Result<(), Error> {
         let name = try!(attrs.get("name").ok_or_else(|| mk_error!("Missing interface name", parser)));
+        let get_type = try!(attrs.get("get-type")
+            .ok_or_else(|| mk_error!("Missing get-type attribute", parser)));
         let mut fns = Vec::new();
         loop {
             let event = parser.next();
@@ -335,6 +337,7 @@ impl Library {
             Interface {
                 name: name.into(),
                 glib_type_name: type_name.into(),
+                glib_get_type : get_type.into(),
                 functions: fns,
             });
         self.add_type(ns_id, name, typ);

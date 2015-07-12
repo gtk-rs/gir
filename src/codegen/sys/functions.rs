@@ -30,6 +30,30 @@ fn generate_class_funcs<W: Write>(w: &mut W, env: &Env, klass: &library::Class) 
     Ok(())
 }
 
+pub fn generate_interfaces_funcs<W: Write>(w: &mut W, env: &Env, interfaces: &[&library::Interface]) -> Result<()> {
+    for interface in interfaces {
+        try!(generate_interface_funcs(w, env, interface));
+    }
+
+    Ok(())
+}
+
+fn generate_interface_funcs<W: Write>(w: &mut W, env: &Env, interface: &library::Interface) -> Result<()> {
+    try!(writeln!(w, ""));
+    try!(writeln!(w, "    //========================================================================="));
+    try!(writeln!(w, "    // {}", interface.glib_type_name));
+    try!(writeln!(w, "    //========================================================================="));
+    try!(writeln!(w, "    pub fn {:<36}() -> GType;", interface.glib_get_type));
+
+    for func in &interface.functions {
+        let (commented, sig) = function_signature(env, func, false);
+        let comment = if commented { "//" } else { "" };
+        try!(writeln!(w, "    {}pub fn {:<36}{};", comment, func.c_identifier, sig));
+    }
+
+    Ok(())
+}
+
 pub fn generate_callbacks<W: Write>(w: &mut W, env: &Env, callbacks: &[&library::Function]) -> Result<()> {
     for func in callbacks {
         let (commented, sig) = function_signature(env, func, true);
