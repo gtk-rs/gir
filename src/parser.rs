@@ -305,6 +305,15 @@ impl Library {
                             }
                             typ = Some(try!(self.read_type(parser, ns_id, &name, &attributes)));
                         }
+                        "callback" => {
+                            let pos = parser.position();
+                            if typ.is_some() {
+                                return Err(mk_error!("Too many <type> elements", &pos));
+                            }
+                            let f =
+                                try!(self.read_function(parser, ns_id, "callback", &attributes));
+                            typ = Some((Type::function(self, f), None));
+                        }
                         "doc" | "doc-deprecated" => try!(ignore_element(parser)),
                         x => return Err(mk_error!(format!("Unexpected element <{}>", x), parser)),
                     }
