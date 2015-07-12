@@ -2,11 +2,13 @@ use std::collections::HashSet;
 use std::vec::Vec;
 
 use analysis::needed_upcast::needed_upcast;
+use analysis::out_parameters;
 use analysis::rust_type::*;
 use analysis::upcasts::Upcasts;
 use env::Env;
 use library;
 
+//TODO: change use Parameter to reference?
 pub struct Info {
     pub name: String,
     pub glib_name: String,
@@ -16,6 +18,7 @@ pub struct Info {
     pub parameters: Vec<library::Parameter>,
     pub ret: Option<library::Parameter>,
     pub upcasts: Upcasts,
+    pub outs: out_parameters::Info,
 }
 
 pub fn analyze(env: &Env, type_: &library::Class, class_tid: library::TypeId,
@@ -59,6 +62,8 @@ fn analyze_function(env: &Env, type_: &library::Function, class_tid: library::Ty
             .is_err() { commented = true; }
     }
 
+    let outs = out_parameters::analyze(type_);
+
     Info {
         name: type_.name.clone(),
         glib_name: type_.c_identifier.clone(),
@@ -68,5 +73,6 @@ fn analyze_function(env: &Env, type_: &library::Function, class_tid: library::Ty
         parameters: type_.parameters.clone(),
         ret: ret,
         upcasts: upcasts,
+        outs: outs,
     }
 }
