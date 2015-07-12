@@ -233,6 +233,7 @@ pub struct Function {
 pub struct Interface {
     pub name: String,
     pub glib_type_name: String,
+    pub glib_get_type: String,
     pub functions: Vec<Function>,
 }
 

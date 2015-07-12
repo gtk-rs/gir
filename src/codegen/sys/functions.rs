@@ -6,22 +6,33 @@ use library;
 use super::ffi_type::*;
 use super::super::general;
 
-pub fn generate_classes_funcs<W: Write>(w: &mut W, env: &Env, classes: &Vec<&library::Class>) -> Result<()> {
+pub fn generate_classes_funcs<W: Write>(w: &mut W, env: &Env, classes: &[&library::Class]) -> Result<()> {
     for klass in classes {
-        try!(generate_class_funcs(w, env, klass));
+        try!(generate_object_funcs(w, env, &klass.glib_type_name,
+            &klass.glib_get_type, &klass.functions));
     }
 
     Ok(())
 }
 
-fn generate_class_funcs<W: Write>(w: &mut W, env: &Env, klass: &library::Class) -> Result<()> {
+pub fn generate_interfaces_funcs<W: Write>(w: &mut W, env: &Env, interfaces: &[&library::Interface]) -> Result<()> {
+    for interface in interfaces {
+        try!(generate_object_funcs(w, env,  &interface.glib_type_name,
+            &interface.glib_get_type, &interface.functions));
+    }
+
+    Ok(())
+}
+
+fn generate_object_funcs<W: Write>(w: &mut W, env: &Env, glib_type_name: &str,
+    glib_get_type: &str, functions: &[library::Function]) -> Result<()> {
     try!(writeln!(w, ""));
     try!(writeln!(w, "    //========================================================================="));
-    try!(writeln!(w, "    // {}", klass.glib_type_name));
+    try!(writeln!(w, "    // {}", glib_type_name));
     try!(writeln!(w, "    //========================================================================="));
-    try!(writeln!(w, "    pub fn {:<36}() -> GType;", klass.glib_get_type));
+    try!(writeln!(w, "    pub fn {:<36}() -> GType;", glib_get_type));
 
-    for func in &klass.functions {
+    for func in functions {
         let (commented, sig) = function_signature(env, func, false);
         let comment = if commented { "//" } else { "" };
         try!(writeln!(w, "    {}pub fn {:<36}{};",
@@ -31,7 +42,7 @@ fn generate_class_funcs<W: Write>(w: &mut W, env: &Env, klass: &library::Class) 
     Ok(())
 }
 
-pub fn generate_callbacks<W: Write>(w: &mut W, env: &Env, callbacks: &Vec<&library::Function>) -> Result<()> {
+pub fn generate_callbacks<W: Write>(w: &mut W, env: &Env, callbacks: &[&library::Function]) -> Result<()> {
     for func in callbacks {
         let (commented, sig) = function_signature(env, func, true);
         let comment = if commented { "//" } else { "" };

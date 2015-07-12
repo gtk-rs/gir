@@ -26,18 +26,20 @@ fn generate_lib<W: Write>(w: &mut W, env: &Env) -> Result<()>{
 
     let ns = env.library.namespace(library::MAIN_NAMESPACE);
     let classes = prepare(ns);
+    let interfaces = prepare(ns);
 
     try!(generate_enums(w, &ns.name, &prepare(ns)));
     try!(generate_bitfields(w, &ns.name, &prepare(ns)));
     try!(functions::generate_callbacks(w, env, &prepare(ns)));
     try!(generate_classes_structs(w, &classes));
-    try!(generate_interfaces_structs(w, &prepare(ns)));
+    try!(generate_interfaces_structs(w, &interfaces));
 
     try!(statics::before_func(w));
 
     try!(writeln!(w, ""));
     try!(writeln!(w, "extern \"C\" {{"));
     try!(functions::generate_classes_funcs(w, env, &classes));
+    try!(functions::generate_interfaces_funcs(w, env, &interfaces));
 
     //TODO: other functions
     try!(writeln!(w, "\n}}"));
@@ -57,7 +59,7 @@ where library::Type: MaybeRef<T> {
     vec
 }
 
-fn generate_bitfields<W: Write>(w: &mut W, ns_name: &str, items: &Vec<&library::Bitfield>)
+fn generate_bitfields<W: Write>(w: &mut W, ns_name: &str, items: &[&library::Bitfield])
         -> Result<()> {
     try!(writeln!(w, ""));
     for item in items {
@@ -74,7 +76,7 @@ fn generate_bitfields<W: Write>(w: &mut W, ns_name: &str, items: &Vec<&library::
     Ok(())
 }
 
-fn generate_enums<W: Write>(w: &mut W, ns_name: &str, items: &Vec<&library::Enumeration>)
+fn generate_enums<W: Write>(w: &mut W, ns_name: &str, items: &[&library::Enumeration])
         -> Result<()> {
     try!(writeln!(w, ""));
     for item in items {
@@ -97,7 +99,7 @@ fn generate_enums<W: Write>(w: &mut W, ns_name: &str, items: &Vec<&library::Enum
     Ok(())
 }
 
-fn generate_classes_structs<W: Write>(w: &mut W, classes: &Vec<&library::Class>) -> Result<()> {
+fn generate_classes_structs<W: Write>(w: &mut W, classes: &[&library::Class]) -> Result<()> {
     try!(writeln!(w, ""));
     for klass in classes {
         try!(writeln!(w, "#[repr(C)]\npub struct {};", klass.glib_type_name));
@@ -106,7 +108,7 @@ fn generate_classes_structs<W: Write>(w: &mut W, classes: &Vec<&library::Class>)
     Ok(())
 }
 
-fn generate_interfaces_structs<W: Write>(w: &mut W, interfaces: &Vec<&library::Interface>) -> Result<()> {
+fn generate_interfaces_structs<W: Write>(w: &mut W, interfaces: &[&library::Interface]) -> Result<()> {
     try!(writeln!(w, ""));
     for interface in interfaces {
         try!(writeln!(w, "#[repr(C)]\npub struct {};", interface.glib_type_name));
