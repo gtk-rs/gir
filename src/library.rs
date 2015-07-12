@@ -247,12 +247,12 @@ pub struct Class {
 
 macro_rules! impl_lexical_ord {
     () => ();
-    ($name:ident, $($more:ident,)*) => (
-        impl_lexical_ord!($($more,)*);
+    ($name:ident => $field:ident, $($more_name:ident => $more_field:ident,)*) => (
+        impl_lexical_ord!($($more_name => $more_field,)*);
 
         impl PartialEq for $name {
             fn eq(&self, other: &$name) -> bool {
-                self.glib_type_name.eq(&other.glib_type_name)
+                self.$field.eq(&other.$field)
             }
         }
 
@@ -260,23 +260,24 @@ macro_rules! impl_lexical_ord {
 
         impl PartialOrd for $name {
             fn partial_cmp(&self, other: &$name) -> Option<Ordering> {
-                self.glib_type_name.partial_cmp(&other.glib_type_name)
+                self.$field.partial_cmp(&other.$field)
             }
         }
 
         impl Ord for $name {
             fn cmp(&self, other: &$name) -> Ordering {
-                self.glib_type_name.cmp(&other.glib_type_name)
+                self.$field.cmp(&other.$field)
             }
         }
     );
 }
 
 impl_lexical_ord!(
-    Bitfield,
-    Class,
-    Enumeration,
-    Interface,
+    Bitfield => glib_type_name,
+    Class => glib_type_name,
+    Enumeration => glib_type_name,
+    Function => c_identifier,
+    Interface => glib_type_name,
 );
 
 pub enum Type {
@@ -443,6 +444,7 @@ impl_maybe_ref!(
     Bitfield,
     Class,
     Enumeration,
+    Function,
     Interface,
 );
 
