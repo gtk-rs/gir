@@ -201,7 +201,7 @@ pub struct Record {
 pub struct Field {
     pub name: String,
     pub typ: TypeId,
-    pub c_type: String,
+    pub c_type: Option<String>,
 }
 
 #[derive(Default)]

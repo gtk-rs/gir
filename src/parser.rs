@@ -304,9 +304,6 @@ impl Library {
                                 return Err(mk_error!("Too many <type> elements", &pos));
                             }
                             typ = Some(try!(self.read_type(parser, ns_id, &name, &attributes)));
-                            if typ.as_ref().unwrap().1.is_none() {
-                                return Err(mk_error!("Missing c:type attribute", &pos));
-                            }
                         }
                         "doc" | "doc-deprecated" => try!(ignore_element(parser)),
                         x => return Err(mk_error!(format!("Unexpected element <{}>", x), parser)),
@@ -320,7 +317,7 @@ impl Library {
             Ok(Field {
                 name: name.into(),
                 typ: tid,
-                c_type: c_type.unwrap(),
+                c_type: c_type,
             })
         }
         else {
