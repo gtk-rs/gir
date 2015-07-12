@@ -49,7 +49,7 @@ pub fn ffi_type(env: &Env, tid: library::TypeId, c_type: &str) -> Result {
         }
         Type::Record(..)
             | Type::Alias(..)
-            | Type::Callback(..) => {
+            | Type::Function(..) => {
                 inner = format!("[Not yet supported type {}]", c_type);
                 ok = false;
             }

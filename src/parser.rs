@@ -305,7 +305,7 @@ impl Library {
                      attrs: &Attributes) -> Result<(), Error> {
         let name = try!(attrs.get("name").ok_or_else(|| mk_error!("Missing callback name", parser)));
         let func = try!(self.read_function(parser, ns_id, "callback", attrs));
-        let cb = Type::Callback(func);
+        let cb = Type::Function(func);
         self.add_type(ns_id, name, cb);
         Ok(())
     }

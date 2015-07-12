@@ -53,7 +53,7 @@ fn show(library: &Library) {
                 Some(Type::Record(ref x)) => println!("\trecord {}", x.name),
                 Some(Type::Union(ref x)) => println!("\tunion {}", x.name),
                 Some(Type::Interface(ref x)) => println!("\tinterface {}", x.name),
-                Some(Type::Callback(ref x)) => println!("\tcallback {}", x.name),
+                Some(Type::Function(ref x)) => println!("\tcallback {}", x.name),
                 Some(Type::Bitfield(ref x)) => println!("\tbitfield {}", x.name),
                 Some(Type::Enumeration(ref x)) => println!("\tenumeration {}", x.name),
                 _ => (),
