@@ -197,12 +197,14 @@ pub struct Record {
     pub functions: Vec<Function>,
 }
 
+#[derive(Default)]
 pub struct Field {
     pub name: String,
     pub typ: TypeId,
     pub c_type: String,
 }
 
+#[derive(Default)]
 pub struct Union {
     pub name: String,
     pub glib_type_name: String,
@@ -357,6 +359,12 @@ impl Type {
             }
             _ => None,
         }.map(|(name, typ)| library.add_type(INTERNAL_NAMESPACE, &name, typ))
+    }
+
+    pub fn union(library: &mut Library, fields: Vec<Field>) -> TypeId {
+        let field_tids: Vec<TypeId> = fields.iter().map(|f| f.typ).collect();
+        let typ = Type::Union(Union { fields: fields, .. Union::default() });
+        library.add_type(INTERNAL_NAMESPACE, &format!("#{:?}", field_tids), typ)
     }
 }
 

@@ -102,7 +102,7 @@ impl Library {
                             try!(self.read_record(parser, ns_id, &attributes));
                         }
                         "union" => {
-                            try!(self.read_union(parser, ns_id, &attributes));
+                            try!(self.read_named_union(parser, ns_id, &attributes));
                         }
                         "interface" => {
                             try!(self.read_interface(parser, ns_id, &attributes));
@@ -193,6 +193,7 @@ impl Library {
         let name = try!(attrs.get("name").ok_or_else(|| mk_error!("Missing record name", parser)));
         let type_name = try!(attrs.get("type").or_else(|| attrs.get("type-name"))
             .ok_or_else(|| mk_error!("Missing glib:type-name/c:type attributes", parser)));
+        let mut fields = Vec::new();
         let mut fns = Vec::new();
         loop {
             let event = parser.next();
@@ -207,7 +208,15 @@ impl Library {
                             }
                             fns.push(f);
                         }
-                        "field" | "union" => try!(ignore_element(parser)),
+                        "union" => {
+                            let (union_fields, _) = try!(self.read_union(parser, ns_id));
+                            let typ = Type::union(self, union_fields);
+                            fields.push(Field { typ: typ, .. Field::default() });
+                        }
+                        "field" => {
+                            fields.push(try!(
+                                self.read_field(parser, ns_id, &attributes)));
+                        }
                         "doc" | "doc-deprecated" => try!(ignore_element(parser)),
                         x => return Err(mk_error!(format!("Unexpected element <{}>", x), parser)),
                     }
@@ -231,9 +240,24 @@ impl Library {
         Ok(())
     }
 
-    fn read_union(&mut self, parser: &mut Reader,
-                  ns_id: u16, attrs: &Attributes) -> Result<(), Error> {
+    fn read_named_union(&mut self, parser: &mut Reader, ns_id: u16, attrs: &Attributes)
+            -> Result<(), Error> {
         let name = try!(attrs.get("name").ok_or_else(|| mk_error!("Missing union name", parser)));
+        let type_name = attrs.get("type-name").unwrap_or(name);
+        let (fields, fns) = try!(self.read_union(parser, ns_id));
+        let typ = Type::Union(
+            Union {
+                name: name.into(),
+                glib_type_name: type_name.into(),
+                fields: fields,
+                functions: fns,
+            });
+        self.add_type(ns_id, name, typ);
+        Ok(())
+    }
+
+    fn read_union(&mut self, parser: &mut Reader, ns_id: u16)
+            -> Result<(Vec<Field>, Vec<Function>), Error> {
         let mut fields = Vec::new();
         let mut fns = Vec::new();
         loop {
@@ -262,17 +286,7 @@ impl Library {
                 _ => xml_try!(event, parser),
             }
         }
-
-        let type_name = attrs.get("type-name").unwrap_or(name);
-        let typ = Type::Union(
-            Union {
-                name: name.into(),
-                glib_type_name: type_name.into(),
-                fields: fields,
-                functions: fns,
-            });
-        self.add_type(ns_id, name, typ);
-        Ok(())
+        Ok((fields, fns))
     }
 
     fn read_field(&mut self, parser: &mut Reader, ns_id: u16,
