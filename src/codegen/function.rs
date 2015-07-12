@@ -6,7 +6,7 @@ use env::Env;
 use super::function_body::Builder;
 use super::general::tabs;
 use super::parameter::ToParameter;
-use super::return_value::ToReturnValue;
+use super::return_value::{out_parameters_as_return, ToReturnValue};
 use super::translate_from_glib::TranslateFromGlib;
 use super::translate_to_glib::TranslateToGlib;
 
@@ -40,12 +40,20 @@ pub fn generate<W: Write>(w: &mut W, env: &Env, analysis: &analysis::functions::
 }
 
 pub fn declaration(env: &Env, analysis: &analysis::functions::Info) -> String {
-    let return_str = analysis.ret.to_return_value(env, analysis);
+    let outs_as_return = !analysis.outs.is_empty();
+    let return_str = if outs_as_return {
+        out_parameters_as_return(env, analysis)
+    } else {
+        analysis.ret.to_return_value(env, analysis)
+    };
     let mut param_str = String::with_capacity(100);
 
     let upcasts = upcasts(&analysis.upcasts);
 
     for (pos, par) in analysis.parameters.iter().enumerate() {
+        if outs_as_return && par.direction.can_as_return() {
+            continue;
+        }
         if pos > 0 { param_str.push_str(", ") }
         let s = par.to_parameter(env, &analysis.upcasts);
         param_str.push_str(&s);
@@ -64,6 +72,7 @@ fn upcasts(upcasts: &Upcasts) -> String {
 
 pub fn body(env: &Env, analysis: &analysis::functions::Info,
     in_trait: bool) -> Vec<String> {
+    let outs_as_return = !analysis.outs.is_empty();
     let mut builder = Builder::new();
     builder.glib_name(&analysis.glib_name)
         .from_glib(analysis.ret.translate_from_glib_as_function(env, &analysis));
@@ -71,7 +80,7 @@ pub fn body(env: &Env, analysis: &analysis::functions::Info,
     //TODO: change to map on parameters with pass Vec<String> to builder
     for par in &analysis.parameters {
         let s = par.translate_to_glib(&env.library, in_trait);
-        builder.parameter(s);
+        builder.parameter(s, outs_as_return && par.direction.can_as_return());
     }
 
     builder.generate()
