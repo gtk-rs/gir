@@ -95,7 +95,7 @@ fn fix_external_name(env: &Env, type_id: library::TypeId, name: &str) -> Result 
     } else {
         let name_with_prefix = format!("{}_ffi::{}",
             fix_namespace(env, type_id), name);
-        if env.type_status(&type_id.full_name(&env.library)) == GStatus::Ignore {
+        if env.type_status_sys(&type_id.full_name(&env.library)) == GStatus::Ignore {
             Err(name_with_prefix.into())
         } else {
             Ok(name_with_prefix)
@@ -109,7 +109,7 @@ fn fix_namespace(env: &Env, type_id: library::TypeId) -> String {
     name = match name {
         "gdk_pixbuf" => "gdk",
         "gio" => "glib",
-        "gobject" => "glib",
+        "g_object" => "glib",
         _ => name,
     };
     name.into()
