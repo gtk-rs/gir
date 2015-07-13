@@ -389,7 +389,10 @@ impl Library {
 
     fn read_bitfield(&mut self, parser: &mut Reader, ns_id: u16,
                      attrs: &Attributes) -> Result<(), Error> {
-        let name = try!(attrs.get("name").ok_or_else(|| mk_error!("Missing bitfield name", parser)));
+        let name = try!(attrs.get("name")
+                        .ok_or_else(|| mk_error!("Missing bitfield name", parser)));
+        let c_type = try!(attrs.get("type")
+                          .ok_or_else(|| mk_error!("Missing c:type attribute", parser)));
         let mut members = Vec::new();
         let mut fns = Vec::new();
         loop {
@@ -418,11 +421,10 @@ impl Library {
             }
         }
 
-        let type_name = attrs.get("type-name").unwrap_or(name);
         let typ = Type::Bitfield(
             Bitfield {
                 name: name.into(),
-                glib_type_name: type_name.into(),
+                c_type: c_type.into(),
                 members: members,
                 functions: fns,
             });
@@ -432,7 +434,10 @@ impl Library {
 
     fn read_enumeration(&mut self, parser: &mut Reader, ns_id: u16,
                         attrs: &Attributes) -> Result<(), Error> {
-        let name = try!(attrs.get("name").ok_or_else(|| mk_error!("Missing enumeration name", parser)));
+        let name = try!(attrs.get("name")
+                        .ok_or_else(|| mk_error!("Missing enumeration name", parser)));
+        let c_type = try!(attrs.get("type")
+                          .ok_or_else(|| mk_error!("Missing c:type attribute", parser)));
         let mut members = Vec::new();
         let mut fns = Vec::new();
         loop {
@@ -461,11 +466,10 @@ impl Library {
             }
         }
 
-        let type_name = attrs.get("type-name").unwrap_or(name);
         let typ = Type::Enumeration(
             Enumeration {
                 name: name.into(),
-                glib_type_name: type_name.into(),
+                c_type: c_type.into(),
                 members: members,
                 functions: fns,
             });

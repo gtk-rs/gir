@@ -89,7 +89,7 @@ fn generate_bitfields<W: Write>(w: &mut W, ns_name: &str, items: &[&library::Bit
                           tabs(2), strip_prefix(ns_name, &member.c_identifier), member.value));
         }
         try!(writeln!(w, "{}}}\n}}", tabs(1)));
-        try!(writeln!(w, "pub type {} = {};", item.glib_type_name, item.name));
+        try!(writeln!(w, "pub type {} = {};", item.c_type, item.name));
         try!(writeln!(w, ""));
     }
 
@@ -112,7 +112,7 @@ fn generate_enums<W: Write>(w: &mut W, ns_name: &str, items: &[&library::Enumera
                           strip_prefix(ns_name, &member.c_identifier),
                           item.name, member.name.to_camel()));
         }
-        try!(writeln!(w, "pub type {} = {};", item.glib_type_name, item.name));
+        try!(writeln!(w, "pub type {} = {};", item.c_type, item.name));
         try!(writeln!(w, ""));
     }
 
