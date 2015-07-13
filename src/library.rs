@@ -198,6 +198,7 @@ pub struct Bitfield {
 pub struct Record {
     pub name: String,
     pub glib_type_name: String,
+    pub fields: Vec<Field>,
     pub functions: Vec<Function>,
 }
 

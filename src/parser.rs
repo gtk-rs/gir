@@ -234,6 +234,7 @@ impl Library {
             Record {
                 name: name.into(),
                 glib_type_name: type_name.into(),
+                fields: fields,
                 functions: fns,
             });
         self.add_type(ns_id, name, typ);
