@@ -16,4 +16,8 @@ impl Env {
         self.config.objects.get(name).map(|o| o.status)
             .unwrap_or(Default::default())
     }
+    pub fn type_status_sys(&self, name: &str) -> GStatus {
+        self.config.objects.get(name).map(|o| o.status)
+            .unwrap_or(GStatus::Generate)
+    }
 }
