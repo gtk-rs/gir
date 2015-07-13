@@ -628,6 +628,19 @@ impl Library {
                 _ => xml_try!(event, parser),
             }
         }
+        let throws = attrs.get("throws").unwrap_or("") == "1";
+        if throws {
+            params.push(Parameter {
+                name: "error".into(),
+                typ: self.find_or_stub_type(ns_id, "GLib.Error"),
+                c_type: "GError**".into(),
+                instance_parameter: false,
+                direction: ParameterDirection::Out,
+                transfer: Transfer::Full,
+                nullable: true,
+                allow_none: true,
+            });
+        }
         if let Some(ret) = ret {
             Ok(Function {
                 name: name.into(),
@@ -635,6 +648,7 @@ impl Library {
                 kind: kind,
                 parameters: params,
                 ret: ret,
+                throws: throws,
             })
         }
         else {
