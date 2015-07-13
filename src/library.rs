@@ -289,6 +289,7 @@ impl_lexical_ord!(
     Enumeration => glib_type_name,
     Function => c_identifier,
     Interface => glib_type_name,
+    Record => glib_type_name,
 );
 
 pub enum Type {
@@ -410,6 +411,8 @@ impl_maybe_ref!(
     Enumeration,
     Function,
     Interface,
+    Record,
+    Union,
 );
 
 pub trait MaybeRefAs {
