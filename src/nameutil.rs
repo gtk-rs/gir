@@ -1,4 +1,6 @@
 use std::ascii::AsciiExt;
+use std::borrow::Cow;
+use std::collections::HashMap;
 use std::path::*;
 use std::string::String;
 
@@ -53,6 +55,32 @@ pub fn file_name_sys(library_name: &str, name: &str) -> String {
 
 pub fn module_name(name: &str) -> String {
     name.to_snake()
+}
+
+pub fn mangle_keywords<'a, S: Into<Cow<'a, str>>>(name: S) -> Cow<'a, str> {
+    let name = name.into();
+    if let Some(s) = KEYWORDS.get(&*name) {
+        s[..].into()
+    }
+    else {
+        name
+    }
+}
+
+lazy_static! {
+    static ref KEYWORDS: HashMap<&'static str, String> = {
+        let mut map = HashMap::new();
+        [
+            "abstract", "alignof", "as", "become", "box", "break", "const",
+            "continue", "crate", "do", "else", "enum", "extern", "false", "final",
+            "fn", "for", "if", "impl", "in", "let", "loop", "macro", "match", "mod",
+            "move", "mut", "offsetof", "override", "priv", "proc", "pub", "pure",
+            "ref", "return", "Self", "self", "sizeof", "static", "struct", "super",
+            "trait", "true", "type", "typeof", "unsafe", "unsized", "use", "virtual",
+            "where", "while", "yield",
+        ].iter().map(|k| map.insert(*k, format!("{}_", k))).count();
+        map
+    };
 }
 
 #[cfg(test)]

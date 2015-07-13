@@ -2,8 +2,8 @@ use std::io::{Result, Write};
 
 use env::Env;
 use library;
+use nameutil;
 use super::ffi_type::*;
-use super::super::general;
 use traits::*;
 
 pub fn generate_classes_funcs<W: Write>(w: &mut W, env: &Env, classes: &[&library::Class]) -> Result<()> {
@@ -83,7 +83,7 @@ fn function_parameter(env: &Env, par: &library::Parameter, bare: bool) -> (bool,
         ffi_type.as_str().into()
     }
     else {
-        format!("{}: {}", general::fix_parameter_name(&par.name), ffi_type.as_str())
+        format!("{}: {}", nameutil::mangle_keywords(&*par.name), ffi_type.as_str())
     };
     (commented, res)
 }
