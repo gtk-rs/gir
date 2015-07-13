@@ -2,15 +2,15 @@ use std::path::*;
 use std::io::{Result, Write};
 use case::CaseExt;
 
-use analysis::rust_type::AsStr;
 use env::Env;
 use file_saver::*;
-use library::{self, MaybeRef, MaybeRefAs};
+use library;
 use nameutil::*;
 use super::ffi_type::ffi_type;
 use super::functions;
 use super::statics;
 use super::super::general::{self, tabs, fix_parameter_name};
+use traits::*;
 
 pub fn generate(env: &Env) {
     println!("generating sys for {}", env.config.library_name);

@@ -1,10 +1,10 @@
 use std::io::{Result, Write};
 
-use analysis::rust_type::AsStr;
 use env::Env;
 use library;
 use super::ffi_type::*;
 use super::super::general;
+use traits::*;
 
 pub fn generate_classes_funcs<W: Write>(w: &mut W, env: &Env, classes: &[&library::Class]) -> Result<()> {
     for klass in classes {
