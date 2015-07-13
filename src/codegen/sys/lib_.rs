@@ -163,8 +163,16 @@ fn generate_records<W: Write>(w: &mut W, env: &Env, records: &[&library::Record]
             }
             else {
                 let name = fix_parameter_name(&field.name);
-                lines.push(format!("{}{} {}: [{:?}],", tabs(1), "pub", name, field.typ));
-                commented = true;
+                if let Some(ref func) =
+                        env.library.type_(field.typ).maybe_ref_as::<library::Function>() {
+                    let (com, sig) = functions::function_signature(env, func, true);
+                    lines.push(format!("{}{} {}: fn{},", tabs(1), "pub", name, sig));
+                    commented |= com;
+                }
+                else {
+                    lines.push(format!("{}{} {}: [{:?}],", tabs(1), "pub", name, field.typ));
+                    commented = true;
+                }
             }
         }
         let comment = if commented { "//" } else { "" };
