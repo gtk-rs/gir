@@ -119,19 +119,28 @@ fn generate_enums<W: Write>(w: &mut W, ns_name: &str, items: &[&library::Enumera
         try!(writeln!(w, "pub enum {} {{", item.name));
         for member in &item.members {
             try!(writeln!(w, "{}{} = {},",
-                          tabs(1), member.name.to_camel(), member.value));
+                          tabs(1), &prepare_enum_member_name(&member.name), member.value));
         }
         try!(writeln!(w, "}}"));
         for member in &item.members {
             try!(writeln!(w, "pub const {}: {} = {1}::{};",
                           strip_prefix(ns_name, &member.c_identifier),
-                          item.name, member.name.to_camel()));
+                          item.name, &prepare_enum_member_name(&member.name)));
         }
         try!(writeln!(w, "pub type {} = {};", item.c_type, item.name));
         try!(writeln!(w, ""));
     }
 
     Ok(())
+}
+
+fn prepare_enum_member_name(name: &str) -> String {
+    let cameled = name.to_camel();
+    if name.chars().next().unwrap().is_digit(10) {
+        format!("_{}", cameled)
+    } else {
+        cameled
+    }
 }
 
 fn generate_classes_structs<W: Write>(w: &mut W, classes: &[&library::Class]) -> Result<()> {
