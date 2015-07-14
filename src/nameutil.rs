@@ -26,6 +26,15 @@ pub fn strip_prefix<'a>(prefix: &str, name: &'a str) -> &'a str {
     &name[skip..]
 }
 
+pub fn strip_suffix<'a>(name: &'a str, suffix: &str) -> Option<&'a str> {
+    if name.ends_with(suffix) {
+        Some(&name[..name.len() - suffix.len()])
+    }
+    else {
+        None
+    }
+}
+
 pub fn file_name(full_name: &str) -> String {
     let (_, class_name) = split_namespace_name(full_name);
     let mut name = PathBuf::from(module_name(class_name));

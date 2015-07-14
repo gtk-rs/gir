@@ -56,9 +56,9 @@ fn ffi_inner(env: &Env, tid: library::TypeId, inner: String) -> Result {
             };
             Ok(inner.into())
         }
-        Type::Record(..)
-            | Type::Alias(..)
-            | Type::Function(..) => Err(format!("[Not yet supported type {}]", inner)),
+        Type::Record(..) | Type::Alias(..) | Type::Function(..) => {
+            fix_external_name(env, tid, &inner)
+        }
         // TODO: need to recurse into it
         Type::Array(inner_tid) => {
             ffi_inner(env, inner_tid, inner)

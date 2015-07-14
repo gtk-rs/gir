@@ -2,13 +2,15 @@ use std::path::*;
 use std::io::{Result, Write};
 use case::CaseExt;
 
+use analysis::rust_type::AsStr;
 use env::Env;
 use file_saver::*;
-use library::{self, MaybeRef};
+use library::{self, MaybeRef, MaybeRefAs};
 use nameutil::*;
+use super::ffi_type::ffi_type;
 use super::functions;
 use super::statics;
-use super::super::general::{self, tabs};
+use super::super::general::{self, tabs, fix_parameter_name};
 
 pub fn generate(env: &Env) {
     println!("generating sys for {}", env.config.library_name);
@@ -31,6 +33,7 @@ fn generate_lib<W: Write>(w: &mut W, env: &Env) -> Result<()>{
     try!(generate_enums(w, &ns.name, &prepare(ns)));
     try!(generate_bitfields(w, &ns.name, &prepare(ns)));
     try!(functions::generate_callbacks(w, env, &prepare(ns)));
+    try!(generate_records(w, env, &prepare_records(ns)));
     try!(generate_classes_structs(w, &classes));
     try!(generate_interfaces_structs(w, &interfaces));
 
@@ -53,6 +56,23 @@ where library::Type: MaybeRef<T> {
     for typ in ns.types.iter().filter_map(|t| t.as_ref()) {
         if let Some(ref x) = typ.maybe_ref() {
             vec.push(x);
+        }
+    }
+    vec.sort();
+    vec
+}
+
+fn prepare_records(ns: &library::Namespace) -> Vec<&library::Record> {
+    let mut vec = Vec::with_capacity(ns.types.len());
+    for typ in ns.types.iter().filter_map(|t| t.as_ref()) {
+        if let Some(rec) = typ.maybe_ref_as::<library::Record>() {
+            // We don't want the FooBarPrivate and similar records where FooBar is a type
+            if ["Private", "Class", "Iface", "Interface"].iter()
+                    .filter_map(|s| strip_suffix(&rec.name, s))
+                    .any(|s| ns.index.get(s).is_some()) {
+                continue;
+            }
+            vec.push(rec);
         }
     }
     vec.sort();
@@ -114,5 +134,50 @@ fn generate_interfaces_structs<W: Write>(w: &mut W, interfaces: &[&library::Inte
         try!(writeln!(w, "#[repr(C)]\npub struct {};", interface.glib_type_name));
     }
 
+    Ok(())
+}
+
+fn generate_records<W: Write>(w: &mut W, env: &Env, records: &[&library::Record]) -> Result<()> {
+    try!(writeln!(w, ""));
+    for record in records {
+        let mut lines = Vec::new();
+        let mut commented = false;
+        let mut has_union = false;
+        for field in &record.fields {
+            if has_union {
+                warn!("A record has fields after the union placeholder");
+                lines.push(format!("{}// ignoring the fields after the union", tabs(1)));
+                break;
+            }
+            if env.library.type_(field.typ).maybe_ref_as::<library::Union>().is_some() {
+                lines.push(format!("{}_union_placeholder: (),", tabs(1)));
+                has_union = true;
+            }
+            else if let Some(ref c_type) = field.c_type {
+                let name = fix_parameter_name(&field.name);
+                let c_type = ffi_type(env, field.typ, c_type);
+                lines.push(format!("{}{} {}: {},", tabs(1), "pub", name, c_type.as_str()));
+                if c_type.is_err() {
+                    commented = true;
+                }
+            }
+            else {
+                let name = fix_parameter_name(&field.name);
+                lines.push(format!("{}{} {}: [{:?}],", tabs(1), "pub", name, field.typ));
+                commented = true;
+            }
+        }
+        let comment = if commented { "//" } else { "" };
+        if lines.is_empty() {
+            try!(writeln!(w, "{}#[repr(C)]\n{0}pub struct {};\n", comment, record.glib_type_name));
+        }
+        else {
+            try!(writeln!(w, "{}#[repr(C)]\n{0}pub struct {} {{", comment, record.glib_type_name));
+            for line in lines {
+                try!(writeln!(w, "{}{}", comment, line));
+            }
+            try!(writeln!(w, "{}}}\n", comment));
+        }
+    }
     Ok(())
 }
