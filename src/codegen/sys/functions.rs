@@ -8,7 +8,7 @@ use traits::*;
 
 pub fn generate_classes_funcs<W: Write>(w: &mut W, env: &Env, classes: &[&library::Class]) -> Result<()> {
     for klass in classes {
-        try!(generate_object_funcs(w, env, &klass.glib_type_name,
+        try!(generate_object_funcs(w, env, &klass.c_type,
             &klass.glib_get_type, &klass.functions));
     }
 
@@ -17,18 +17,18 @@ pub fn generate_classes_funcs<W: Write>(w: &mut W, env: &Env, classes: &[&librar
 
 pub fn generate_interfaces_funcs<W: Write>(w: &mut W, env: &Env, interfaces: &[&library::Interface]) -> Result<()> {
     for interface in interfaces {
-        try!(generate_object_funcs(w, env,  &interface.glib_type_name,
+        try!(generate_object_funcs(w, env,  &interface.c_type,
             &interface.glib_get_type, &interface.functions));
     }
 
     Ok(())
 }
 
-fn generate_object_funcs<W: Write>(w: &mut W, env: &Env, glib_type_name: &str,
+fn generate_object_funcs<W: Write>(w: &mut W, env: &Env, c_type: &str,
     glib_get_type: &str, functions: &[library::Function]) -> Result<()> {
     try!(writeln!(w, ""));
     try!(writeln!(w, "    //========================================================================="));
-    try!(writeln!(w, "    // {}", glib_type_name));
+    try!(writeln!(w, "    // {}", c_type));
     try!(writeln!(w, "    //========================================================================="));
     try!(writeln!(w, "    pub fn {:<36}() -> GType;", glib_get_type));
 

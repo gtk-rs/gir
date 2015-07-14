@@ -141,6 +141,8 @@ impl Library {
     fn read_class(&mut self, parser: &mut Reader,
                   ns_id: u16, attrs: &Attributes) -> Result<(), Error> {
         let name = try!(attrs.get("name").ok_or_else(|| mk_error!("Missing class name", parser)));
+        let c_type = try!(attrs.get("type").or_else(|| attrs.get("type-name"))
+            .ok_or_else(|| mk_error!("Missing c:type/glib:type-name attributes", parser)));
         let get_type = try!(attrs.get("get-type")
             .ok_or_else(|| mk_error!("Missing get-type attribute", parser)));
         let mut fns = Vec::new();
@@ -172,12 +174,11 @@ impl Library {
             }
         }
 
-        let type_name = attrs.get("type-name").unwrap_or(name);
         let parent = attrs.get("parent").map(|s| self.find_or_stub_type(ns_id, s));
         let typ = Type::Class(
             Class {
                 name: name.into(),
-                glib_type_name: type_name.into(),
+                c_type: c_type.into(),
                 glib_get_type : get_type.into(),
                 functions: fns,
                 parent: parent,
@@ -191,8 +192,8 @@ impl Library {
     fn read_record(&mut self, parser: &mut Reader,
                   ns_id: u16, attrs: &Attributes) -> Result<(), Error> {
         let name = try!(attrs.get("name").ok_or_else(|| mk_error!("Missing record name", parser)));
-        let type_name = try!(attrs.get("type").or_else(|| attrs.get("type-name"))
-            .ok_or_else(|| mk_error!("Missing glib:type-name/c:type attributes", parser)));
+        let c_type = try!(attrs.get("type")
+                          .ok_or_else(|| mk_error!("Missing c:type attribute", parser)));
         let mut fields = Vec::new();
         let mut fns = Vec::new();
         loop {
@@ -233,7 +234,7 @@ impl Library {
         let typ = Type::Record(
             Record {
                 name: name.into(),
-                glib_type_name: type_name.into(),
+                c_type: c_type.into(),
                 fields: fields,
                 functions: fns,
             });
@@ -244,12 +245,12 @@ impl Library {
     fn read_named_union(&mut self, parser: &mut Reader, ns_id: u16, attrs: &Attributes)
             -> Result<(), Error> {
         let name = try!(attrs.get("name").ok_or_else(|| mk_error!("Missing union name", parser)));
-        let type_name = attrs.get("type-name").unwrap_or(name);
+        let c_type = attrs.get("type");
         let (fields, fns) = try!(self.read_union(parser, ns_id));
         let typ = Type::Union(
             Union {
                 name: name.into(),
-                glib_type_name: type_name.into(),
+                c_type: c_type.map(|s| s.into()),
                 fields: fields,
                 functions: fns,
             });
@@ -354,6 +355,8 @@ impl Library {
     fn read_interface(&mut self, parser: &mut Reader,
                       ns_id: u16, attrs: &Attributes) -> Result<(), Error> {
         let name = try!(attrs.get("name").ok_or_else(|| mk_error!("Missing interface name", parser)));
+        let c_type = try!(attrs.get("type")
+                          .ok_or_else(|| mk_error!("Missing c:type attribute", parser)));
         let get_type = try!(attrs.get("get-type")
             .ok_or_else(|| mk_error!("Missing get-type attribute", parser)));
         let mut fns = Vec::new();
@@ -379,11 +382,10 @@ impl Library {
             }
         }
 
-        let type_name = attrs.get("type-name").unwrap_or(name);
         let typ = Type::Interface(
             Interface {
                 name: name.into(),
-                glib_type_name: type_name.into(),
+                c_type: c_type.into(),
                 glib_get_type : get_type.into(),
                 functions: fns,
             });

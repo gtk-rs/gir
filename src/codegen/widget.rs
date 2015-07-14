@@ -16,7 +16,7 @@ pub fn generate<W: Write>(w: &mut W, env: &Env, analysis: &analysis::object::Inf
 
     try!(general::start_comments(w, &env.config));
     try!(general::uses(w, &analysis.used_types));
-    try!(general::objects_child_type(w, &analysis.name, &type_.glib_type_name));
+    try!(general::objects_child_type(w, &analysis.name, &type_.c_type));
     try!(general::impl_parents(w, &analysis.name, &analysis.parents));
     try!(general::impl_interfaces(w, &analysis.name, &analysis.implements));
 
