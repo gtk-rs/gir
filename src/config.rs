@@ -100,7 +100,8 @@ impl Config {
             a => a
         };
 
-        let objects = gobjects::parse_toml(toml.lookup("object").unwrap());
+        let objects = toml.lookup("object").map(|t| gobjects::parse_toml(t))
+            .unwrap_or_else(|| Default::default());
 
         Config {
             work_mode: work_mode,
