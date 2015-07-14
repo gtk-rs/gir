@@ -53,7 +53,7 @@ pub fn generate_callbacks<W: Write>(w: &mut W, env: &Env, callbacks: &[&library:
     Ok(())
 }
 
-fn function_signature(env: &Env, func: &library::Function, bare: bool) -> (bool, String) {
+pub fn function_signature(env: &Env, func: &library::Function, bare: bool) -> (bool, String) {
     let (mut commented, ret_str) = function_return_value(env, func);
 
     let mut parameter_strs: Vec<String> = Vec::new();
