@@ -16,7 +16,7 @@ pub fn generate(env: &Env) {
     println!("generating sys for {}", env.config.library_name);
 
     let path =  PathBuf::from(&env.config.target_path)
-        .join(file_name_sys(&env.config.library_name, "lib"));
+        .join(file_name_sys("lib"));
     println!("Generating file {:?}", path);
 
     save_to_file(path, &mut |w| generate_lib(w, env));
