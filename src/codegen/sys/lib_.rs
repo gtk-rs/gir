@@ -31,6 +31,11 @@ fn generate_lib<W: Write>(w: &mut W, env: &Env) -> Result<()>{
 
     if env.config.library_name != "GLib" {
         try!(statics::use_glib_ffi(w));
+    } else {
+        try!(statics::only_for_glib(w));
+    }
+    if env.config.library_name == "Gtk" {
+        try!(statics::only_for_gtk(w));
     }
 
     let ns = env.library.namespace(library::MAIN_NAMESPACE);
@@ -43,8 +48,6 @@ fn generate_lib<W: Write>(w: &mut W, env: &Env) -> Result<()>{
     try!(generate_records(w, env, &prepare_records(ns)));
     try!(generate_classes_structs(w, &classes));
     try!(generate_interfaces_structs(w, &interfaces));
-
-    try!(statics::before_func(w));
 
     try!(writeln!(w, ""));
     try!(writeln!(w, "extern \"C\" {{"));
