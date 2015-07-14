@@ -2,3 +2,5 @@ language: rust
 script:
   - cargo build --release
   - cargo test --release
+  - git clone -q https://github.com/gkoz/gir-files tests/gir-files
+  - ./tests/sys/test.sh

@@ -1,3 +1,6 @@
 target
 /gtk
 /src/version.rs
+tests/gir-files
+tests/sys/*-sys/**
+!tests/sys/*-sys/Cargo.toml
