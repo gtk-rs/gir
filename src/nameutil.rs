@@ -45,9 +45,8 @@ pub fn file_name(full_name: &str) -> String {
     name.to_str().unwrap().into()
 }
 
-pub fn file_name_sys(library_name: &str, name: &str) -> String {
-    let mut path = PathBuf::from(format!("{}-sys", crate_name(library_name)))
-        .join("src").join(name);
+pub fn file_name_sys(name: &str) -> String {
+    let mut path = PathBuf::from("src").join(name);
     let added = path.set_extension("rs");
     assert!(added);
     path.to_str().unwrap().into()
@@ -125,15 +124,8 @@ mod tests {
 
     #[test]
     fn file_name_sys_works() {
-        let expected: String = PathBuf::from("gtk-sys").join("src").join("funcs.rs")
+        let expected: String = PathBuf::from("src").join("funcs.rs")
             .to_str().unwrap().into();
-        assert_eq!(file_name_sys("Gtk", "funcs"), expected);
-    }
-
-    #[test]
-    fn file_name_sys_works_for_glib() {
-        let expected: String = PathBuf::from("glib-sys").join("src").join("lib.rs")
-            .to_str().unwrap().into();
-        assert_eq!(file_name_sys("GLib", "lib"), expected);
+        assert_eq!(file_name_sys("funcs"), expected);
     }
 }
