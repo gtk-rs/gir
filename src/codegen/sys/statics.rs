@@ -10,8 +10,6 @@ pub fn begin<W: Write>(w: &mut W) -> Result<()>{
 "",
 "extern crate libc;",
 "#[macro_use] extern crate bitflags;",
-"",
-"pub mod enums;",
     ];
 
     write_vec(w, &v)
