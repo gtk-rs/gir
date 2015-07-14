@@ -413,6 +413,7 @@ impl_maybe_ref!(
     Class,
     Enumeration,
     Function,
+    Fundamental,
     Interface,
     Record,
     Union,

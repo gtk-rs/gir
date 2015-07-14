@@ -9,6 +9,13 @@ use nameutil::crate_name;
 // TODO: ffi_type computations should be cached
 
 pub fn ffi_type(env: &Env, tid: library::TypeId, c_type: &str) -> Result {
+    // Fast track plain fundamental types avoiding some checks
+    if let Some(c_tid) = env.library.find_type(0, c_type) {
+        if env.library.type_(c_tid).maybe_ref_as::<Fundamental>().is_some() {
+            return ffi_inner(env, c_tid, c_type.into());
+        }
+    }
+
     let (ptr, inner) = rustify_pointers(c_type);
     let res = match (ptr.is_empty(), ffi_inner(env, tid, inner)) {
         (true, x) => x,
