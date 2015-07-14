@@ -183,14 +183,14 @@ pub struct Member {
 
 pub struct Enumeration {
     pub name: String,
-    pub glib_type_name: String,
+    pub c_type: String,
     pub members: Vec<Member>,
     pub functions: Vec<Function>,
 }
 
 pub struct Bitfield {
     pub name: String,
-    pub glib_type_name: String,
+    pub c_type: String,
     pub members: Vec<Member>,
     pub functions: Vec<Function>,
 }
@@ -284,9 +284,9 @@ macro_rules! impl_lexical_ord {
 }
 
 impl_lexical_ord!(
-    Bitfield => glib_type_name,
+    Bitfield => c_type,
     Class => glib_type_name,
-    Enumeration => glib_type_name,
+    Enumeration => c_type,
     Function => c_identifier,
     Interface => glib_type_name,
     Record => glib_type_name,
@@ -333,8 +333,8 @@ impl Type {
         use self::Type::*;
         match self {
             &Alias(ref alias) => Some(&alias.c_identifier),
-            &Enumeration(ref enum_) => Some(&enum_.glib_type_name),
-            &Bitfield(ref bit_field) => Some(&bit_field.glib_type_name),
+            &Enumeration(ref enum_) => Some(&enum_.c_type),
+            &Bitfield(ref bit_field) => Some(&bit_field.c_type),
             &Record(ref rec) => Some(&rec.glib_type_name),
             &Union(ref union) => Some(&union.glib_type_name),
             &Function(ref func) => func.c_identifier.as_ref().map(|s| &s[..]),
