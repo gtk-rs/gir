@@ -20,6 +20,13 @@ pub fn after_extern_crates<W: Write>(w: &mut W) -> Result<()>{
 "",
 "#[allow(unused_imports)]",
 "use libc::{c_int, c_char, c_float, c_uint, c_double, c_long, c_void, size_t, ssize_t, time_t};",
+    ];
+
+    write_vec(w, &v)
+}
+
+pub fn use_glib_ffi<W: Write>(w: &mut W) -> Result<()>{
+    let v = vec![
 "",
 "pub use glib_ffi::{",
 "    gboolean, GFALSE, GTRUE, gsize, gpointer, GType, GObject, GPermission,",

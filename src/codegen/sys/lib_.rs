@@ -29,6 +29,10 @@ fn generate_lib<W: Write>(w: &mut W, env: &Env) -> Result<()>{
     try!(generate_extern_crates(w, env));
     try!(statics::after_extern_crates(w));
 
+    if env.config.library_name != "GLib" {
+        try!(statics::use_glib_ffi(w));
+    }
+
     let ns = env.library.namespace(library::MAIN_NAMESPACE);
     let classes = prepare(ns);
     let interfaces = prepare(ns);
