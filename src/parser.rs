@@ -323,11 +323,15 @@ impl Library {
                 _ => xml_try!(event, parser),
             }
         }
+        let private = attrs.get("private").unwrap_or("") == "1";
+        let bits = attrs.get("bits").and_then(|s| s.parse().ok());
         if let Some((tid, c_type)) = typ {
             Ok(Field {
                 name: name.into(),
                 typ: tid,
                 c_type: c_type,
+                private: private,
+                bits: bits,
             })
         }
         else {

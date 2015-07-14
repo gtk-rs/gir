@@ -207,6 +207,8 @@ pub struct Field {
     pub name: String,
     pub typ: TypeId,
     pub c_type: Option<String>,
+    pub private: bool,
+    pub bits: Option<u8>,
 }
 
 #[derive(Default)]
