@@ -36,7 +36,7 @@ Options:
     -c CONFIG           Config file path (default: Gir.toml)
     -d GIRSPATH         Directory for girs
     -m MODE             Work mode: normal or sys
-    -o PATH             Target root path
+    -o PATH             Target path
 ";
 
 #[derive(Debug)]
@@ -95,7 +95,7 @@ impl Config {
 
         let target_path = match args.get_str("-o") {
             "" => toml.lookup("options.target_path")
-                    .expect("No options.target_path in config")
+                    .expect("No target path specified")
                     .as_str().unwrap(),
             a => a
         };
