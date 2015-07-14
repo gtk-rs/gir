@@ -33,6 +33,7 @@ Usage: gir [options] [<library> <version>]
 
 Options:
     -h, --help          Show this message.
+    -c CONFIG           Config file path (default: Gir.toml)
     -d GIRSPATH         Directory for girs
     -m MODE             Work mode: normal or sys
     -o PATH             Target root path
@@ -54,7 +55,13 @@ impl Config {
             .and_then(|dopt| dopt.parse())
             .unwrap_or_else(|e| e.exit());
 
-        let toml = read_toml("Gir.toml");
+        let config_file = match args.get_str("-c") {
+            "" => "Gir.toml",
+            a => a,
+        };
+
+        //TODO: add check file existence when stable std::fs::PathExt
+        let toml = read_toml(config_file);
 
         let work_mode_str = match args.get_str("-m") {
             "" => toml.lookup("options.work_mode")
