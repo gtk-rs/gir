@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::path::*;
 use std::io::{Result, Write};
 use case::CaseExt;
@@ -118,17 +119,31 @@ fn generate_enums<W: Write>(w: &mut W, ns_name: &str, items: &[&library::Enumera
         -> Result<()> {
     try!(writeln!(w, ""));
     for item in items {
+        if item.members.len() == 1 {
+            try!(writeln!(w, "pub type {} = i32;", item.name));
+            try!(writeln!(w, "pub const {}: {} = {};",
+                          item.members[0].c_identifier, item.name, item.members[0].value));
+            try!(writeln!(w, "pub type {} = {};", item.c_type, item.name));
+            try!(writeln!(w, ""));
+            continue;
+        }
+
+        let mut vals = HashMap::new();
         try!(writeln!(w, "#[derive(Clone, Copy, Debug, Eq, PartialEq)]\n#[repr(C)]"));
         try!(writeln!(w, "pub enum {} {{", item.name));
         for member in &item.members {
+            if vals.get(&member.value).is_some() {
+                continue;
+            }
             try!(writeln!(w, "{}{} = {},",
                           tabs(1), &prepare_enum_member_name(&member.name), member.value));
+            vals.insert(member.value.clone(), member.name.clone());
         }
         try!(writeln!(w, "}}"));
         for member in &item.members {
             try!(writeln!(w, "pub const {}: {} = {1}::{};",
                           strip_prefix(ns_name, &member.c_identifier),
-                          item.name, &prepare_enum_member_name(&member.name)));
+                          item.name, &prepare_enum_member_name(vals.get(&member.value).unwrap())));
         }
         try!(writeln!(w, "pub type {} = {};", item.c_type, item.name));
         try!(writeln!(w, ""));
