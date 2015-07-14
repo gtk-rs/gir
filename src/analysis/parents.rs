@@ -5,7 +5,8 @@ use analysis::rust_type::used_rust_type;
 use env::Env;
 use super::general::StatusedTypeId;
 use gobjects::*;
-use library::{Class, MaybeRefAs};
+use library::Class;
+use traits::*;
 
 pub fn analyze(env: &Env, type_: &Class, used_types: &mut HashSet<String>)
     -> (Vec<StatusedTypeId>, bool) {

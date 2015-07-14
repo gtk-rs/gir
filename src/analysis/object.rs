@@ -2,10 +2,11 @@ use std::collections::HashSet;
 
 use env::Env;
 use gobjects::{GObject, GStatus};
-use library::{self, MaybeRef};
+use library;
 use nameutil::*;
 use super::*;
 use super::type_kind::TypeKind;
+use traits::*;
 
 #[derive(Default)]
 pub struct Info {
