@@ -81,21 +81,6 @@ pub fn tabs(num: i32) -> String {
     (0..num).map(|_| "    ").collect::<String>()
 }
 
-//TODO: use in non sys codegen
-pub fn fix_parameter_name(name: &str) -> String{
-    let bad_names = vec![
-        "self",
-        "type",
-        "box",
-        "where",
-    ];
-    if bad_names.contains(&name) {
-        format!("{}_", name)
-    } else {
-        name.into()
-    }
-}
-
 pub fn write_vec<W: Write, T: Display>(w: &mut W, v: &[T]) -> Result<()> {
     for s in v {
         try!(writeln!(w, "{}", s));

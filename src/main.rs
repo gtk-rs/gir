@@ -3,6 +3,8 @@ extern crate docopt;
 extern crate env_logger;
 extern crate git2;
 #[macro_use]
+extern crate lazy_static;
+#[macro_use]
 extern crate log;
 extern crate xml;
 extern crate toml;

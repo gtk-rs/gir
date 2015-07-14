@@ -9,7 +9,7 @@ use nameutil::*;
 use super::ffi_type::ffi_type;
 use super::functions;
 use super::statics;
-use super::super::general::{self, tabs, fix_parameter_name};
+use super::super::general::{self, tabs};
 use traits::*;
 
 pub fn generate(env: &Env) {
@@ -154,7 +154,7 @@ fn generate_records<W: Write>(w: &mut W, env: &Env, records: &[&library::Record]
                 has_union = true;
             }
             else if let Some(ref c_type) = field.c_type {
-                let name = fix_parameter_name(&field.name);
+                let name = mangle_keywords(&*field.name);
                 let c_type = ffi_type(env, field.typ, c_type);
                 lines.push(format!("{}{} {}: {},", tabs(1), "pub", name, c_type.as_str()));
                 if c_type.is_err() {
@@ -162,7 +162,7 @@ fn generate_records<W: Write>(w: &mut W, env: &Env, records: &[&library::Record]
                 }
             }
             else {
-                let name = fix_parameter_name(&field.name);
+                let name = mangle_keywords(&*field.name);
                 if let Some(ref func) =
                         env.library.type_(field.typ).maybe_ref_as::<library::Function>() {
                     let (com, sig) = functions::function_signature(env, func, true);
