@@ -26,6 +26,9 @@ fn generate_lib<W: Write>(w: &mut W, env: &Env) -> Result<()>{
     try!(general::start_comments(w, &env.config));
     try!(statics::begin(w));
 
+    try!(generate_extern_crates(w, env));
+    try!(statics::after_extern_crates(w));
+
     let ns = env.library.namespace(library::MAIN_NAMESPACE);
     let classes = prepare(ns);
     let interfaces = prepare(ns);
@@ -46,6 +49,14 @@ fn generate_lib<W: Write>(w: &mut W, env: &Env) -> Result<()>{
 
     //TODO: other functions
     try!(writeln!(w, "\n}}"));
+
+    Ok(())
+}
+
+fn generate_extern_crates<W: Write>(w: &mut W, env: &Env) -> Result<()>{
+    for library_name in &env.config.external_libraries {
+        try!(writeln!(w, "extern crate {0}_sys as {0}_ffi;", crate_name(library_name)));
+    }
 
     Ok(())
 }

@@ -46,6 +46,7 @@ pub struct Config {
     pub library_name: String,
     pub library_version: String,
     pub target_path: String,
+    pub external_libraries: Vec<String>,
     pub objects: gobjects::GObjects,
 }
 
@@ -103,12 +104,20 @@ impl Config {
         let objects = toml.lookup("object").map(|t| gobjects::parse_toml(t))
             .unwrap_or_else(|| Default::default());
 
+        let external_libraries = toml.lookup("options.external_libraries")
+            .map(|a| a.as_slice().unwrap().iter()
+                .filter_map(|v|
+                    if let &toml::Value::String(ref s) = v { Some(s.clone()) } else { None } )
+                .collect())
+            .unwrap_or_else(|| Vec::new());
+
         Config {
             work_mode: work_mode,
             girs_dir: girs_dir.into(),
             library_name: library_name.into(),
             library_version: library_version.into(),
             target_path: target_path.into(),
+            external_libraries: external_libraries,
             objects: objects,
         }
     }

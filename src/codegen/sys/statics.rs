@@ -10,11 +10,15 @@ pub fn begin<W: Write>(w: &mut W) -> Result<()>{
 "",
 "extern crate libc;",
 "#[macro_use] extern crate bitflags;",
-"extern crate glib_sys as glib_ffi;",
-"extern crate gdk_sys as gdk_ffi;",
-"extern crate pango_sys as pango_ffi;",
 "",
 "pub mod enums;",
+    ];
+
+    write_vec(w, &v)
+}
+
+pub fn after_extern_crates<W: Write>(w: &mut W) -> Result<()>{
+    let v = vec![
 "",
 "#[allow(unused_imports)]",
 "use libc::{c_int, c_char, c_float, c_uint, c_double, c_long, c_void, size_t, ssize_t, time_t};",
