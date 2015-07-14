@@ -3,7 +3,7 @@ use std::result;
 use env::Env;
 use gobjects::GStatus;
 use library;
-use nameutil::module_name;
+use nameutil::crate_name;
 
 pub type Result = result::Result<String, String>;
 
@@ -62,7 +62,7 @@ pub fn rust_type(env: &Env, type_id: library::TypeId) -> Result {
         rust_type
     } else {
         let rust_type_with_prefix = rust_type.map(|s| format!("{}::{}",
-            module_name(&env.library.namespace(type_id.ns_id).name), s));
+            crate_name(&env.library.namespace(type_id.ns_id).name), s));
         if env.type_status(&type_id.full_name(&env.library)) == GStatus::Ignore {
             Err(rust_type_with_prefix.as_str().into())
         } else {
