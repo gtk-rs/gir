@@ -26,6 +26,18 @@ fn generate_lib<W: Write>(w: &mut W, env: &Env) -> Result<()>{
     try!(general::start_comments(w, &env.config));
     try!(statics::begin(w));
 
+    try!(generate_extern_crates(w, env));
+    try!(statics::after_extern_crates(w));
+
+    if env.config.library_name != "GLib" {
+        try!(statics::use_glib_ffi(w));
+    } else {
+        try!(statics::only_for_glib(w));
+    }
+    if env.config.library_name == "Gtk" {
+        try!(statics::only_for_gtk(w));
+    }
+
     let ns = env.library.namespace(library::MAIN_NAMESPACE);
     let classes = prepare(ns);
     let interfaces = prepare(ns);
@@ -37,8 +49,6 @@ fn generate_lib<W: Write>(w: &mut W, env: &Env) -> Result<()>{
     try!(generate_classes_structs(w, &classes));
     try!(generate_interfaces_structs(w, &interfaces));
 
-    try!(statics::before_func(w));
-
     try!(writeln!(w, ""));
     try!(writeln!(w, "extern \"C\" {{"));
     try!(functions::generate_classes_funcs(w, env, &classes));
@@ -46,6 +56,14 @@ fn generate_lib<W: Write>(w: &mut W, env: &Env) -> Result<()>{
 
     //TODO: other functions
     try!(writeln!(w, "\n}}"));
+
+    Ok(())
+}
+
+fn generate_extern_crates<W: Write>(w: &mut W, env: &Env) -> Result<()>{
+    for library_name in &env.config.external_libraries {
+        try!(writeln!(w, "extern crate {0}_sys as {0}_ffi;", crate_name(library_name)));
+    }
 
     Ok(())
 }
@@ -104,19 +122,28 @@ fn generate_enums<W: Write>(w: &mut W, ns_name: &str, items: &[&library::Enumera
         try!(writeln!(w, "pub enum {} {{", item.name));
         for member in &item.members {
             try!(writeln!(w, "{}{} = {},",
-                          tabs(1), member.name.to_camel(), member.value));
+                          tabs(1), &prepare_enum_member_name(&member.name), member.value));
         }
         try!(writeln!(w, "}}"));
         for member in &item.members {
             try!(writeln!(w, "pub const {}: {} = {1}::{};",
                           strip_prefix(ns_name, &member.c_identifier),
-                          item.name, member.name.to_camel()));
+                          item.name, &prepare_enum_member_name(&member.name)));
         }
         try!(writeln!(w, "pub type {} = {};", item.c_type, item.name));
         try!(writeln!(w, ""));
     }
 
     Ok(())
+}
+
+fn prepare_enum_member_name(name: &str) -> String {
+    let cameled = name.to_camel();
+    if name.chars().next().unwrap().is_digit(10) {
+        format!("_{}", cameled)
+    } else {
+        cameled
+    }
 }
 
 fn generate_classes_structs<W: Write>(w: &mut W, classes: &[&library::Class]) -> Result<()> {

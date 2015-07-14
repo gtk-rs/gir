@@ -10,14 +10,25 @@ pub fn begin<W: Write>(w: &mut W) -> Result<()>{
 "",
 "extern crate libc;",
 "#[macro_use] extern crate bitflags;",
-"extern crate glib_sys as glib_ffi;",
-"extern crate gdk_sys as gdk_ffi;",
-"extern crate pango_sys as pango_ffi;",
-"",
-"pub mod enums;",
+    ];
+
+    write_vec(w, &v)
+}
+
+pub fn after_extern_crates<W: Write>(w: &mut W) -> Result<()>{
+    let v = vec![
 "",
 "#[allow(unused_imports)]",
-"use libc::{c_int, c_char, c_float, c_uint, c_double, c_long, c_void, size_t, ssize_t, time_t};",
+"use libc::{c_int, c_char, c_float, c_uint, c_double,",
+"    c_short, c_ushort, c_long, c_ulong,",
+"    c_void, size_t, ssize_t, time_t};",
+    ];
+
+    write_vec(w, &v)
+}
+
+pub fn use_glib_ffi<W: Write>(w: &mut W) -> Result<()>{
+    let v = vec![
 "",
 "pub use glib_ffi::{",
 "    gboolean, GFALSE, GTRUE, gsize, gpointer, GType, GObject, GPermission,",
@@ -27,8 +38,46 @@ pub fn begin<W: Write>(w: &mut W) -> Result<()>{
     write_vec(w, &v)
 }
 
-pub fn before_func<W: Write>(w: &mut W) -> Result<()>{
+pub fn only_for_glib<W: Write>(w: &mut W) -> Result<()>{
     let v = vec![
+"",
+"pub type GQuark = u32;",
+"",
+"pub type gsize = size_t;",
+"pub type GType = gsize;",
+"",
+"pub type gboolean = c_int;",
+"pub const GFALSE:  c_int = 0;",
+"pub const GTRUE:   c_int = 1;",
+"",
+"pub type gconstpointer = *const c_void;",
+"pub type gpointer = *mut c_void;",
+"",
+"#[repr(C)]",
+"pub struct GValue {",
+"    type_: GType,",
+"    data: [size_t; 2],",
+"}",
+"",
+"#[repr(C)]",
+"pub struct GPermission;",
+"",
+"#[repr(C)]",
+"pub struct GObject;",
+"",
+"#[repr(C)]",
+"pub struct GPid;",
+"",
+"#[repr(C)]",
+"pub struct GSourcePrivate;",  //for GSource
+    ];
+
+    write_vec(w, &v)
+}
+
+pub fn only_for_gtk<W: Write>(w: &mut W) -> Result<()>{
+    let v = vec![
+"",
 "pub const GTK_ENTRY_BUFFER_MAX_SIZE: u16 = ::std::u16::MAX;",
 "",
 "//pub type GtkTreeModelForeachFunc = fn(model: *mut GtkTreeModel, path: *mut GtkTreePath, iter: *mut GtkTreeIter, data: gpointer) -> gboolean;",

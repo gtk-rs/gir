@@ -33,9 +33,10 @@ Usage: gir [options] [<library> <version>]
 
 Options:
     -h, --help          Show this message.
+    -c CONFIG           Config file path (default: Gir.toml)
     -d GIRSPATH         Directory for girs
     -m MODE             Work mode: normal or sys
-    -o PATH             Target root path
+    -o PATH             Target path
 ";
 
 #[derive(Debug)]
@@ -45,6 +46,7 @@ pub struct Config {
     pub library_name: String,
     pub library_version: String,
     pub target_path: String,
+    pub external_libraries: Vec<String>,
     pub objects: gobjects::GObjects,
 }
 
@@ -54,7 +56,13 @@ impl Config {
             .and_then(|dopt| dopt.parse())
             .unwrap_or_else(|e| e.exit());
 
-        let toml = read_toml("Gir.toml");
+        let config_file = match args.get_str("-c") {
+            "" => "Gir.toml",
+            a => a,
+        };
+
+        //TODO: add check file existence when stable std::fs::PathExt
+        let toml = read_toml(config_file);
 
         let work_mode_str = match args.get_str("-m") {
             "" => toml.lookup("options.work_mode")
@@ -88,12 +96,20 @@ impl Config {
 
         let target_path = match args.get_str("-o") {
             "" => toml.lookup("options.target_path")
-                    .expect("No options.target_path in config")
+                    .expect("No target path specified")
                     .as_str().unwrap(),
             a => a
         };
 
-        let objects = gobjects::parse_toml(toml.lookup("object").unwrap());
+        let objects = toml.lookup("object").map(|t| gobjects::parse_toml(t))
+            .unwrap_or_else(|| Default::default());
+
+        let external_libraries = toml.lookup("options.external_libraries")
+            .map(|a| a.as_slice().unwrap().iter()
+                .filter_map(|v|
+                    if let &toml::Value::String(ref s) = v { Some(s.clone()) } else { None } )
+                .collect())
+            .unwrap_or_else(|| Vec::new());
 
         Config {
             work_mode: work_mode,
@@ -101,6 +117,7 @@ impl Config {
             library_name: library_name.into(),
             library_version: library_version.into(),
             target_path: target_path.into(),
+            external_libraries: external_libraries,
             objects: objects,
         }
     }

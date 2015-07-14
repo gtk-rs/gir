@@ -3,7 +3,7 @@ use env::Env;
 use gobjects::GStatus;
 use library;
 use library::*;
-use nameutil::module_name;
+use nameutil::crate_name;
 
 // FIXME: This module needs redundant allocations audit
 // TODO: ffi_type computations should be cached
@@ -102,11 +102,11 @@ fn fix_external_name(env: &Env, type_id: library::TypeId, name: &str) -> Result 
 
 //TODO: check if need to use in non sys codegen
 fn fix_namespace(env: &Env, type_id: library::TypeId) -> String {
-    let mut name: &str = &module_name(&env.library.namespace(type_id.ns_id).name);
+    let mut name: &str = &crate_name(&env.library.namespace(type_id.ns_id).name);
     name = match name {
-        "gdk_pixbuf" => "gdk",
+        "gdkpixbuf" => "gdk",
         "gio" => "glib",
-        "g_object" => "glib",
+        "gobject" => "glib",
         _ => name,
     };
     name.into()
