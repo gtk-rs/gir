@@ -235,6 +235,7 @@ pub struct Function {
     pub kind: FunctionKind,
     pub parameters: Vec<Parameter>,
     pub ret: Parameter,
+    pub throws: bool,
 }
 
 pub struct Interface {
