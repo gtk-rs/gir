@@ -534,8 +534,10 @@ impl Library {
 
     fn read_alias(&mut self, parser: &mut Reader, ns_id: u16,
                      attrs: &Attributes) -> Result<(), Error> {
-        let name = try!(attrs.get("name").ok_or_else(|| mk_error!("Missing constant name", parser)));
-        let c_identifier = attrs.get("type").unwrap_or(name);
+        let name = try!(attrs.get("name")
+                        .ok_or_else(|| mk_error!("Missing alias name", parser)));
+        let c_identifier = try!(attrs.get("type")
+                                .ok_or_else(|| mk_error!("Missing c:type attribute", parser)));
         let mut inner = None;
         loop {
             let event = parser.next();
@@ -546,7 +548,15 @@ impl Library {
                             if inner.is_some() {
                                 return Err(mk_error!("Too many <type> elements", parser));
                             }
-                            inner = Some(try!(self.read_type(parser, ns_id, &name, &attributes)).0);
+                            let pos = parser.position();
+                            let (typ, c_type) =
+                                try!(self.read_type(parser, ns_id, &name, &attributes));
+                            if let Some(c_type) = c_type {
+                                inner = Some((typ, c_type));
+                            }
+                            else{
+                                return Err(mk_error!("Missing alias target's c:type", &pos));
+                            }
                         }
                         "doc" | "doc-deprecated" => try!(ignore_element(parser)),
                         x => return Err(mk_error!(format!("Unexpected element <{}>", x), parser)),
@@ -556,12 +566,13 @@ impl Library {
                 _ => xml_try!(event, parser),
             }
         }
-        if let Some(inner) = inner {
+        if let Some((typ, c_type)) = inner {
             let typ = Type::Alias(
                 Alias {
                     name: name.into(),
                     c_identifier: c_identifier.into(),
-                    typ: inner,
+                    typ: typ,
+                    target_c_type: c_type.into(),
                 });
             self.add_type(ns_id, name, typ);
             Ok(())
@@ -787,13 +798,23 @@ impl Library {
                 _ => xml_try!(event, parser),
             }
         }
-        if !inner.is_empty() {
-            let tid = try!(Type::container(self, name, inner)
-                           .ok_or_else(|| mk_error!("Unknown container type", &start_pos)));
-            Ok((tid, c_type))
+        if inner.is_empty() {
+            if name == "array" {
+                Err(mk_error!("Missing element type", &start_pos))
+            }
+            else {
+                Ok((self.find_or_stub_type(ns_id, name), c_type))
+            }
         }
         else {
-            Ok((self.find_or_stub_type(ns_id, name), c_type))
+            let tid = if name == "array" {
+                Type::array(self, inner[0], attrs.get("fixed-size").and_then(|n| n.parse().ok()))
+            }
+            else {
+                try!(Type::container(self, name, inner)
+                               .ok_or_else(|| mk_error!("Unknown container type", &start_pos)))
+            };
+            Ok((tid, c_type))
         }
     }
 }

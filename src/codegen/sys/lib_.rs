@@ -43,10 +43,12 @@ fn generate_lib<W: Write>(w: &mut W, env: &Env) -> Result<()>{
     let classes = prepare(ns);
     let interfaces = prepare(ns);
 
+    try!(generate_aliases(w, env, &prepare(ns)));
     try!(generate_enums(w, &ns.name, &prepare(ns)));
     try!(generate_bitfields(w, &ns.name, &prepare(ns)));
+    try!(generate_unions(w, &prepare(ns)));
     try!(functions::generate_callbacks(w, env, &prepare(ns)));
-    try!(generate_records(w, env, &prepare_records(ns)));
+    try!(generate_records(w, env, &prepare(ns)));
     try!(generate_classes_structs(w, &classes));
     try!(generate_interfaces_structs(w, &interfaces));
 
@@ -81,21 +83,18 @@ where library::Type: MaybeRef<T> {
     vec
 }
 
-fn prepare_records(ns: &library::Namespace) -> Vec<&library::Record> {
-    let mut vec = Vec::with_capacity(ns.types.len());
-    for typ in ns.types.iter().filter_map(|t| t.as_ref()) {
-        if let Some(rec) = typ.maybe_ref_as::<library::Record>() {
-            // We don't want the FooBarPrivate and similar records where FooBar is a type
-            if ["Private", "Class", "Iface", "Interface"].iter()
-                    .filter_map(|s| strip_suffix(&rec.name, s))
-                    .any(|s| ns.index.get(s).is_some()) {
-                continue;
-            }
-            vec.push(rec);
-        }
+fn generate_aliases<W: Write>(w: &mut W, env: &Env, items: &[&library::Alias])
+        -> Result<()> {
+    try!(writeln!(w, ""));
+    for item in items {
+        let (comment, c_type) = match ffi_type(env, item.typ, &item.target_c_type) {
+            Ok(x) => ("", x),
+            Err(x) => ("//", x),
+        };
+        try!(writeln!(w, "{}pub type {} = {};", comment, item.c_identifier, c_type));
     }
-    vec.sort();
-    vec
+
+    Ok(())
 }
 
 fn generate_bitfields<W: Write>(w: &mut W, ns_name: &str, items: &[&library::Bitfield])
@@ -146,6 +145,20 @@ fn generate_enums<W: Write>(w: &mut W, ns_name: &str, items: &[&library::Enumera
                           item.name, &prepare_enum_member_name(vals.get(&member.value).unwrap())));
         }
         try!(writeln!(w, "pub type {} = {};", item.c_type, item.name));
+        try!(writeln!(w, ""));
+    }
+
+    Ok(())
+}
+
+fn generate_unions<W: Write>(w: &mut W, items: &[&library::Union])
+        -> Result<()> {
+    try!(writeln!(w, ""));
+    for item in items {
+        try!(writeln!(w, "pub type {} = c_void;", item.name));
+        if let Some(ref c_type) = item.c_type {
+            try!(writeln!(w, "pub type {} = {};", c_type, item.name));
+        }
         try!(writeln!(w, ""));
     }
 
