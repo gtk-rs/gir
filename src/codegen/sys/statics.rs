@@ -30,9 +30,8 @@ pub fn after_extern_crates<W: Write>(w: &mut W) -> Result<()>{
 pub fn use_glib_ffi<W: Write>(w: &mut W) -> Result<()>{
     let v = vec![
 "",
-"pub use glib_ffi::{",
-"    gboolean, GFALSE, GTRUE, gsize, gpointer, GType, GObject, GPermission,",
-"    GList, GSList, GError, GValue};",
+"#[allow(unused_imports)]",
+"use glib_ffi::{gboolean, gconstpointer, gpointer};",
     ];
 
     write_vec(w, &v)
@@ -41,26 +40,12 @@ pub fn use_glib_ffi<W: Write>(w: &mut W) -> Result<()>{
 pub fn only_for_glib<W: Write>(w: &mut W) -> Result<()>{
     let v = vec![
 "",
-"pub type gsize = size_t;",
-"",
 "pub type gboolean = c_int;",
 "pub const GFALSE:  c_int = 0;",
 "pub const GTRUE:   c_int = 1;",
 "",
 "pub type gconstpointer = *const c_void;",
 "pub type gpointer = *mut c_void;",
-"",
-"#[repr(C)]",
-"pub struct GValue {",
-"    type_: GType,",
-"    data: [size_t; 2],",
-"}",
-"",
-"#[repr(C)]",
-"pub struct GPermission;",
-"",
-"#[repr(C)]",
-"pub struct GObject;",
     ];
 
     write_vec(w, &v)
