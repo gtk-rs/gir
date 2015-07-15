@@ -86,7 +86,7 @@ fn prepare_records(ns: &library::Namespace) -> Vec<&library::Record> {
     for typ in ns.types.iter().filter_map(|t| t.as_ref()) {
         if let Some(rec) = typ.maybe_ref_as::<library::Record>() {
             // We don't want the FooBarPrivate and similar records where FooBar is a type
-            if ["Private", "Class", "Iface", "Interface"].iter()
+            if ["Private"].iter()
                     .filter_map(|s| strip_suffix(&rec.name, s))
                     .any(|s| ns.index.get(s).is_some()) {
                 continue;
