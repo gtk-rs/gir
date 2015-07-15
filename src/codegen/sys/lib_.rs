@@ -156,7 +156,9 @@ fn generate_unions<W: Write>(w: &mut W, items: &[&library::Union])
     try!(writeln!(w, ""));
     for item in items {
         try!(writeln!(w, "pub type {} = c_void;", item.name));
-        try!(writeln!(w, "pub type {} = {};", item.c_type.as_ref().unwrap(), item.name));
+        if let Some(ref c_type) = item.c_type {
+            try!(writeln!(w, "pub type {} = {};", c_type, item.name));
+        }
         try!(writeln!(w, ""));
     }
 
