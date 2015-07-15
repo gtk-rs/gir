@@ -167,6 +167,7 @@ pub struct Alias {
     pub name: String,
     pub c_identifier: String,
     pub typ: TypeId,
+    pub target_c_type: String,
 }
 
 pub struct Constant {
