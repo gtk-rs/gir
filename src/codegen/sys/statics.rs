@@ -41,10 +41,7 @@ pub fn use_glib_ffi<W: Write>(w: &mut W) -> Result<()>{
 pub fn only_for_glib<W: Write>(w: &mut W) -> Result<()>{
     let v = vec![
 "",
-"pub type GQuark = u32;",
-"",
 "pub type gsize = size_t;",
-"pub type GType = gsize;",
 "",
 "pub type gboolean = c_int;",
 "pub const GFALSE:  c_int = 0;",
@@ -64,9 +61,6 @@ pub fn only_for_glib<W: Write>(w: &mut W) -> Result<()>{
 "",
 "#[repr(C)]",
 "pub struct GObject;",
-"",
-"#[repr(C)]",
-"pub struct GPid;",
 "",
 "#[repr(C)]",
 "pub struct GSourcePrivate;",  //for GSource
