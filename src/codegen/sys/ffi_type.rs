@@ -11,7 +11,12 @@ use nameutil::crate_name;
 pub fn ffi_type(env: &Env, tid: library::TypeId, c_type: &str) -> Result {
     // Fast track plain fundamental types avoiding some checks
     if let Some(c_tid) = env.library.find_type(0, c_type) {
-        if env.library.type_(c_tid).maybe_ref_as::<Fundamental>().is_some() {
+        let fundamental_c_type = env.library.type_(c_tid).maybe_ref_as::<Fundamental>().is_some();
+        let array = match env.library.type_(tid) {
+            &library::Type::ArraySized(..) => true,
+            _ => false,
+        };
+        if fundamental_c_type && !array {
             return ffi_inner(env, c_tid, c_type.into());
         }
     }
@@ -66,9 +71,12 @@ fn ffi_inner(env: &Env, tid: library::TypeId, inner: String) -> Result {
         Type::Record(..) | Type::Alias(..) | Type::Function(..) => {
             fix_external_name(env, tid, &inner)
         }
-        // TODO: need to recurse into it
-        Type::Array(inner_tid) => {
-            ffi_inner(env, inner_tid, inner)
+        Type::Array(inner_tid) => ffi_inner(env, inner_tid, inner),
+        Type::ArraySized(inner_tid, size) => {
+            match ffi_inner(env, inner_tid, inner) {
+                Ok(s) => Ok(format!("[{}; {}]", s, size)),
+                Err(s) => Err(format!("[{}; {}]", s, size)),
+            }
         }
         Type::List(..) | Type::SList(..) => Ok(inner),
         _ => {
