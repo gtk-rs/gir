@@ -6,7 +6,6 @@ pub fn begin<W: Write>(w: &mut W) -> Result<()>{
     let v = vec![
 "",
 "#![allow(non_camel_case_types)]",
-"#![allow(dead_code)]",
 "",
 "extern crate libc;",
 "#[macro_use] extern crate bitflags;",
