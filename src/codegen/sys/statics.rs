@@ -30,7 +30,7 @@ pub fn use_glib_ffi<W: Write>(w: &mut W) -> Result<()>{
     let v = vec![
 "",
 "#[allow(unused_imports)]",
-"use glib_ffi::{gboolean, gconstpointer, gpointer};",
+"use glib_ffi::{gboolean, gconstpointer, gpointer, GList, GSList};",
     ];
 
     write_vec(w, &v)
