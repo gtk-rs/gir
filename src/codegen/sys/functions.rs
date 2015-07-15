@@ -26,11 +26,16 @@ pub fn generate_interfaces_funcs<W: Write>(w: &mut W, env: &Env, interfaces: &[&
 
 fn generate_object_funcs<W: Write>(w: &mut W, env: &Env, c_type: &str,
     glib_get_type: &str, functions: &[library::Function]) -> Result<()> {
-    try!(writeln!(w, ""));
-    try!(writeln!(w, "    //========================================================================="));
-    try!(writeln!(w, "    // {}", c_type));
-    try!(writeln!(w, "    //========================================================================="));
-    try!(writeln!(w, "    pub fn {:<36}() -> GType;", glib_get_type));
+    let write_get_type = glib_get_type != "intern";
+    if write_get_type && !functions.is_empty() {
+        try!(writeln!(w, ""));
+        try!(writeln!(w, "    //========================================================================="));
+        try!(writeln!(w, "    // {}", c_type));
+        try!(writeln!(w, "    //========================================================================="));
+    }
+    if write_get_type {
+        try!(writeln!(w, "    pub fn {:<36}() -> GType;", glib_get_type));
+    }
 
     for func in functions {
         let (commented, sig) = function_signature(env, func, false);
