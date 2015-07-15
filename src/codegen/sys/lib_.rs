@@ -48,7 +48,7 @@ fn generate_lib<W: Write>(w: &mut W, env: &Env) -> Result<()>{
     try!(generate_bitfields(w, &ns.name, &prepare(ns)));
     try!(generate_unions(w, &prepare(ns)));
     try!(functions::generate_callbacks(w, env, &prepare(ns)));
-    try!(generate_records(w, env, &prepare_records(ns)));
+    try!(generate_records(w, env, &prepare(ns)));
     try!(generate_classes_structs(w, &classes));
     try!(generate_interfaces_structs(w, &interfaces));
 
@@ -77,23 +77,6 @@ where library::Type: MaybeRef<T> {
     for typ in ns.types.iter().filter_map(|t| t.as_ref()) {
         if let Some(ref x) = typ.maybe_ref() {
             vec.push(x);
-        }
-    }
-    vec.sort();
-    vec
-}
-
-fn prepare_records(ns: &library::Namespace) -> Vec<&library::Record> {
-    let mut vec = Vec::with_capacity(ns.types.len());
-    for typ in ns.types.iter().filter_map(|t| t.as_ref()) {
-        if let Some(rec) = typ.maybe_ref_as::<library::Record>() {
-            // We don't want the FooBarPrivate and similar records where FooBar is a type
-            if ["Private"].iter()
-                    .filter_map(|s| strip_suffix(&rec.name, s))
-                    .any(|s| ns.index.get(s).is_some()) {
-                continue;
-            }
-            vec.push(rec);
         }
     }
     vec.sort();

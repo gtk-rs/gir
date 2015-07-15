@@ -61,9 +61,6 @@ pub fn only_for_glib<W: Write>(w: &mut W) -> Result<()>{
 "",
 "#[repr(C)]",
 "pub struct GObject;",
-"",
-"#[repr(C)]",
-"pub struct GSourcePrivate;",  //for GSource
     ];
 
     write_vec(w, &v)
