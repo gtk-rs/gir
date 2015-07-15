@@ -1,0 +1,10 @@
+[package]
+name = "glib-sys"
+version = "0.0.1"
+
+[lib]
+name = "glib_sys"
+
+[dependencies]
+bitflags = "^0.3"
+libc = "^0.1"
