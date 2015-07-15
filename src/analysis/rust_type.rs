@@ -4,12 +4,9 @@ use env::Env;
 use gobjects::GStatus;
 use library;
 use nameutil::crate_name;
+use traits::*;
 
 pub type Result = result::Result<String, String>;
-
-pub trait AsStr {
-    fn as_str(&self) -> &str;
-}
 
 impl AsStr for Result {
     #[inline]

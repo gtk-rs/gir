@@ -2,7 +2,8 @@ use analysis;
 use env::Env;
 use library;
 use analysis::type_kind::TypeKind;
-use analysis::rust_type::{AsStr, parameter_rust_type};
+use analysis::rust_type::parameter_rust_type;
+use traits::*;
 
 pub trait ToReturnValue {
     fn to_return_value(&self, env: &Env, func: &analysis::functions::Info) -> String;

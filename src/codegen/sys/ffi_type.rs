@@ -4,6 +4,7 @@ use gobjects::GStatus;
 use library;
 use library::*;
 use nameutil::crate_name;
+use traits::*;
 
 // FIXME: This module needs redundant allocations audit
 // TODO: ffi_type computations should be cached
