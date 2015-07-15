@@ -288,6 +288,7 @@ macro_rules! impl_lexical_ord {
 }
 
 impl_lexical_ord!(
+    Alias => c_identifier,
     Bitfield => c_type,
     Class => c_type,
     Enumeration => c_type,
@@ -419,6 +420,7 @@ macro_rules! impl_maybe_ref {
 }
 
 impl_maybe_ref!(
+    Alias,
     Bitfield,
     Class,
     Enumeration,

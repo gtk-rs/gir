@@ -43,6 +43,7 @@ fn generate_lib<W: Write>(w: &mut W, env: &Env) -> Result<()>{
     let classes = prepare(ns);
     let interfaces = prepare(ns);
 
+    try!(generate_aliases(w, env, &prepare(ns)));
     try!(generate_enums(w, &ns.name, &prepare(ns)));
     try!(generate_bitfields(w, &ns.name, &prepare(ns)));
     try!(generate_unions(w, &ns.name, &prepare(ns)));
@@ -97,6 +98,20 @@ fn prepare_records(ns: &library::Namespace) -> Vec<&library::Record> {
     }
     vec.sort();
     vec
+}
+
+fn generate_aliases<W: Write>(w: &mut W, env: &Env, items: &[&library::Alias])
+        -> Result<()> {
+    try!(writeln!(w, ""));
+    for item in items {
+        let (comment, c_type) = match ffi_type(env, item.typ, &item.target_c_type) {
+            Ok(x) => ("", x),
+            Err(x) => ("//", x),
+        };
+        try!(writeln!(w, "{}pub type {} = {};", comment, item.c_identifier, c_type));
+    }
+
+    Ok(())
 }
 
 fn generate_bitfields<W: Write>(w: &mut W, ns_name: &str, items: &[&library::Bitfield])
