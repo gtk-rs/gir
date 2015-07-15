@@ -1,0 +1,9 @@
+[options]
+work_mode = "sys"
+girs_dir = "../gir-files"
+library = "GObject"
+version = "2.0"
+target_path = "./gobject-sys"
+external_libraries = [
+   "GLib",
+]

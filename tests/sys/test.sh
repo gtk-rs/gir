@@ -1,7 +1,7 @@
 #!/bin/sh
 
 GIR="cargo run --release --"
-LIBS=glib
+LIBS="glib gobject"
 export RUST_LOG="gir=warn"
 
 cd "`dirname $0`"
