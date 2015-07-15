@@ -787,13 +787,23 @@ impl Library {
                 _ => xml_try!(event, parser),
             }
         }
-        if !inner.is_empty() {
-            let tid = try!(Type::container(self, name, inner)
-                           .ok_or_else(|| mk_error!("Unknown container type", &start_pos)));
-            Ok((tid, c_type))
+        if inner.is_empty() {
+            if name == "array" {
+                Err(mk_error!("Missing element type", &start_pos))
+            }
+            else {
+                Ok((self.find_or_stub_type(ns_id, name), c_type))
+            }
         }
         else {
-            Ok((self.find_or_stub_type(ns_id, name), c_type))
+            let tid = if name == "array" {
+                Type::array(self, inner[0], attrs.get("fixed-size").and_then(|n| n.parse().ok()))
+            }
+            else {
+                try!(Type::container(self, name, inner)
+                               .ok_or_else(|| mk_error!("Unknown container type", &start_pos)))
+            };
+            Ok((tid, c_type))
         }
     }
 }
