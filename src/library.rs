@@ -197,7 +197,7 @@ pub struct Bitfield {
 
 pub struct Record {
     pub name: String,
-    pub glib_type_name: String,
+    pub c_type: String,
     pub fields: Vec<Field>,
     pub functions: Vec<Function>,
 }
@@ -214,7 +214,7 @@ pub struct Field {
 #[derive(Default)]
 pub struct Union {
     pub name: String,
-    pub glib_type_name: String,
+    pub c_type: Option<String>,
     pub fields: Vec<Field>,
     pub functions: Vec<Function>,
 }
@@ -242,7 +242,7 @@ pub struct Function {
 
 pub struct Interface {
     pub name: String,
-    pub glib_type_name: String,
+    pub c_type: String,
     pub glib_get_type: String,
     pub functions: Vec<Function>,
 }
@@ -250,7 +250,7 @@ pub struct Interface {
 #[derive(Default)]
 pub struct Class {
     pub name: String,
-    pub glib_type_name: String,
+    pub c_type: String,
     pub glib_get_type: String,
     pub functions: Vec<Function>,
     pub parent: Option<TypeId>,
@@ -288,11 +288,11 @@ macro_rules! impl_lexical_ord {
 
 impl_lexical_ord!(
     Bitfield => c_type,
-    Class => glib_type_name,
+    Class => c_type,
     Enumeration => c_type,
     Function => c_identifier,
-    Interface => glib_type_name,
-    Record => glib_type_name,
+    Interface => c_type,
+    Record => c_type,
 );
 
 pub enum Type {
@@ -338,11 +338,11 @@ impl Type {
             &Alias(ref alias) => Some(&alias.c_identifier),
             &Enumeration(ref enum_) => Some(&enum_.c_type),
             &Bitfield(ref bit_field) => Some(&bit_field.c_type),
-            &Record(ref rec) => Some(&rec.glib_type_name),
-            &Union(ref union) => Some(&union.glib_type_name),
+            &Record(ref rec) => Some(&rec.c_type),
+            &Union(ref union) => union.c_type.as_ref().map(|s| &s[..]),
             &Function(ref func) => func.c_identifier.as_ref().map(|s| &s[..]),
-            &Interface(ref interface) => Some(&interface.glib_type_name),
-            &Class(ref class) => Some(&class.glib_type_name),
+            &Interface(ref interface) => Some(&interface.c_type),
+            &Class(ref class) => Some(&class.c_type),
             _ => None,
         }
     }
@@ -413,6 +413,7 @@ impl_maybe_ref!(
     Class,
     Enumeration,
     Function,
+    Fundamental,
     Interface,
     Record,
     Union,
@@ -672,14 +673,14 @@ mod tests {
         let object_tid = lib.add_type(glib_ns_id, "Object".into(), Type::Class(
             Class {
                 name: "Object".into(),
-                glib_type_name: "GObject".into(),
+                c_type: "GObject".into(),
                 glib_get_type: "g_object_get_type".into(),
                 .. Class::default()
             }));
         let ioobject_tid = lib.add_type(glib_ns_id, "InitiallyUnowned".into(), Type::Class(
             Class {
                 name: "InitiallyUnowned".into(),
-                glib_type_name: "GInitiallyUnowned".into(),
+                c_type: "GInitiallyUnowned".into(),
                 glib_get_type: "g_initially_unowned_get_type".into(),
                 parent: Some(object_tid),
                 .. Class::default()
@@ -687,7 +688,7 @@ mod tests {
         lib.add_type(gtk_ns_id, "Widget".into(), Type::Class(
             Class {
                 name: "Widget".into(),
-                glib_type_name: "GtkWidget".into(),
+                c_type: "GtkWidget".into(),
                 glib_get_type: "gtk_widget_get_type".into(),
                 parent: Some(ioobject_tid),
                 .. Class::default()

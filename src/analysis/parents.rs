@@ -27,7 +27,7 @@ pub fn analyze(env: &Env, type_: &Class, used_types: &mut HashSet<String>)
 
         if status == GStatus::Ignore { has_ignored_parents = true; }
 
-        if parent_type.glib_type_name == "GtkWidget" { break }
+        if parent_type.c_type == "GtkWidget" { break }
     }
     parents.reverse();
 

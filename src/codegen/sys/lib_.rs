@@ -164,7 +164,7 @@ fn prepare_enum_member_name(name: &str) -> String {
 fn generate_classes_structs<W: Write>(w: &mut W, classes: &[&library::Class]) -> Result<()> {
     try!(writeln!(w, ""));
     for klass in classes {
-        try!(writeln!(w, "#[repr(C)]\npub struct {};", klass.glib_type_name));
+        try!(writeln!(w, "#[repr(C)]\npub struct {};", klass.c_type));
     }
 
     Ok(())
@@ -173,7 +173,7 @@ fn generate_classes_structs<W: Write>(w: &mut W, classes: &[&library::Class]) ->
 fn generate_interfaces_structs<W: Write>(w: &mut W, interfaces: &[&library::Interface]) -> Result<()> {
     try!(writeln!(w, ""));
     for interface in interfaces {
-        try!(writeln!(w, "#[repr(C)]\npub struct {};", interface.glib_type_name));
+        try!(writeln!(w, "#[repr(C)]\npub struct {};", interface.c_type));
     }
 
     Ok(())
@@ -218,10 +218,10 @@ fn generate_records<W: Write>(w: &mut W, env: &Env, records: &[&library::Record]
         }
         let comment = if commented { "//" } else { "" };
         if lines.is_empty() {
-            try!(writeln!(w, "{}#[repr(C)]\n{0}pub struct {};\n", comment, record.glib_type_name));
+            try!(writeln!(w, "{}#[repr(C)]\n{0}pub struct {};\n", comment, record.c_type));
         }
         else {
-            try!(writeln!(w, "{}#[repr(C)]\n{0}pub struct {} {{", comment, record.glib_type_name));
+            try!(writeln!(w, "{}#[repr(C)]\n{0}pub struct {} {{", comment, record.c_type));
             for line in lines {
                 try!(writeln!(w, "{}{}", comment, line));
             }
