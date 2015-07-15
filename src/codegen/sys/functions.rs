@@ -30,7 +30,9 @@ fn generate_object_funcs<W: Write>(w: &mut W, env: &Env, c_type: &str,
     try!(writeln!(w, "    //========================================================================="));
     try!(writeln!(w, "    // {}", c_type));
     try!(writeln!(w, "    //========================================================================="));
-    try!(writeln!(w, "    pub fn {:<36}() -> GType;", glib_get_type));
+    if glib_get_type != "intern" {
+        try!(writeln!(w, "    pub fn {:<36}() -> GType;", glib_get_type));
+    }
 
     for func in functions {
         let (commented, sig) = function_signature(env, func, false);
