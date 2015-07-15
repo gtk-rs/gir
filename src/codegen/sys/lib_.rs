@@ -45,6 +45,7 @@ fn generate_lib<W: Write>(w: &mut W, env: &Env) -> Result<()>{
 
     try!(generate_enums(w, &ns.name, &prepare(ns)));
     try!(generate_bitfields(w, &ns.name, &prepare(ns)));
+    try!(generate_unions(w, &ns.name, &prepare(ns)));
     try!(functions::generate_callbacks(w, env, &prepare(ns)));
     try!(generate_records(w, env, &prepare_records(ns)));
     try!(generate_classes_structs(w, &classes));
@@ -86,7 +87,7 @@ fn prepare_records(ns: &library::Namespace) -> Vec<&library::Record> {
     for typ in ns.types.iter().filter_map(|t| t.as_ref()) {
         if let Some(rec) = typ.maybe_ref_as::<library::Record>() {
             // We don't want the FooBarPrivate and similar records where FooBar is a type
-            if ["Private", "Class", "Iface", "Interface"].iter()
+            if ["Private"].iter()
                     .filter_map(|s| strip_suffix(&rec.name, s))
                     .any(|s| ns.index.get(s).is_some()) {
                 continue;
@@ -146,6 +147,18 @@ fn generate_enums<W: Write>(w: &mut W, ns_name: &str, items: &[&library::Enumera
                           item.name, &prepare_enum_member_name(vals.get(&member.value).unwrap())));
         }
         try!(writeln!(w, "pub type {} = {};", item.c_type, item.name));
+        try!(writeln!(w, ""));
+    }
+
+    Ok(())
+}
+
+fn generate_unions<W: Write>(w: &mut W, _ns_name: &str, items: &[&library::Union])
+        -> Result<()> {
+    try!(writeln!(w, ""));
+    for item in items {
+        try!(writeln!(w, "pub type {} = c_void;", item.name));
+        try!(writeln!(w, "pub type {} = {};", item.c_type.as_ref().unwrap(), item.name));
         try!(writeln!(w, ""));
     }
 

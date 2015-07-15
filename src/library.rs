@@ -293,6 +293,7 @@ impl_lexical_ord!(
     Function => c_identifier,
     Interface => c_type,
     Record => c_type,
+    Union => c_type,
 );
 
 pub enum Type {
