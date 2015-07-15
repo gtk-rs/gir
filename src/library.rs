@@ -307,6 +307,7 @@ pub enum Type {
     Interface(Interface),
     Class(Class),
     Array(TypeId),
+    ArraySized(TypeId, u16),
     HashTable(TypeId, TypeId),
     List(TypeId),
     SList(TypeId),
@@ -327,6 +328,7 @@ impl Type {
             &Interface(ref interface) => interface.name.clone(),
             &Class(ref class) => class.name.clone(),
             &Array(type_id) => format!("Array {:?}", type_id),
+            &ArraySized(type_id, size) => format!("ArraySized {:?}; {}", type_id, size),
             &HashTable(key_type_id, value_type_id) => format!("HashTable {:?}/{:?}", key_type_id, value_type_id),
             &List(type_id) => format!("List {:?}", type_id),
             &SList(type_id) => format!("SList {:?}", type_id),
@@ -348,12 +350,18 @@ impl Type {
         }
     }
 
+    pub fn array(library: &mut Library, inner: TypeId, size: Option<u16>) -> TypeId {
+        if let Some(size) = size {
+            library.add_type(INTERNAL_NAMESPACE, &format!("[#{:?}; {}]", inner, size),
+                             Type::ArraySized(inner, size))
+        }
+        else {
+            library.add_type(INTERNAL_NAMESPACE, &format!("[#{:?}]", inner), Type::Array(inner))
+        }
+    }
+
     pub fn container(library: &mut Library, name: &str, mut inner: Vec<TypeId>) -> Option<TypeId> {
         match (name, inner.len()) {
-            ("array", 1) => {
-                let tid = inner.remove(0);
-                Some((format!("array(#{:?})", tid), Type::Array(tid)))
-            }
             ("GLib.HashTable", 2) => {
                 let k_tid = inner.remove(0);
                 let v_tid = inner.remove(0);
