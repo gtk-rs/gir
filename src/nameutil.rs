@@ -55,7 +55,13 @@ pub fn file_name_sys(name: &str) -> String {
 }
 
 pub fn crate_name(name: &str) -> String {
-    name.to_ascii_lowercase()
+    let name = name.to_snake();
+    if name.starts_with("g_") {
+        format!("g{}", &name[2..])
+    }
+    else {
+        name
+    }
 }
 
 pub fn module_name(name: &str) -> String {
@@ -117,6 +123,13 @@ mod tests {
     fn strip_prefix_gtk() {
         assert_eq!(strip_prefix("Gtk", "GtkAlign"), "Align");
         assert_eq!(strip_prefix("Gtk", "GTK_ALIGN_FILL"), "ALIGN_FILL");
+    }
+
+    #[test]
+    fn crate_name_works() {
+        assert_eq!(crate_name("GdkPixbuf"), "gdk_pixbuf");
+        assert_eq!(crate_name("GLib"), "glib");
+        assert_eq!(crate_name("Gtk"), "gtk");
     }
 
     #[test]
