@@ -184,21 +184,20 @@ fn generate_records<W: Write>(w: &mut W, env: &Env, records: &[&library::Record]
     for record in records {
         let mut lines = Vec::new();
         let mut commented = false;
-        let mut has_union = false;
         for field in &record.fields {
-            if has_union {
-                warn!("A record has fields after the union placeholder");
-                lines.push(format!("{}// ignoring the fields after the union", tabs(1)));
+            if env.library.type_(field.typ).maybe_ref_as::<library::Union>().is_some()
+                    || field.bits.is_some() {
+                warn!("Record `{}` field `{}` not expressible in Rust, truncated",
+                      record.name, field.name);
+                lines.push(format!("{}_truncated_record_marker: (),", tabs(1)));
                 break;
             }
-            if env.library.type_(field.typ).maybe_ref_as::<library::Union>().is_some() {
-                lines.push(format!("{}_union_placeholder: (),", tabs(1)));
-                has_union = true;
-            }
-            else if let Some(ref c_type) = field.c_type {
+            let vis = if field.private { "" } else { "pub " };
+
+            if let Some(ref c_type) = field.c_type {
                 let name = mangle_keywords(&*field.name);
                 let c_type = ffi_type(env, field.typ, c_type);
-                lines.push(format!("{}{} {}: {},", tabs(1), "pub", name, c_type.as_str()));
+                lines.push(format!("{}{}{}: {},", tabs(1), vis, name, c_type.as_str()));
                 if c_type.is_err() {
                     commented = true;
                 }
@@ -208,11 +207,11 @@ fn generate_records<W: Write>(w: &mut W, env: &Env, records: &[&library::Record]
                 if let Some(ref func) =
                         env.library.type_(field.typ).maybe_ref_as::<library::Function>() {
                     let (com, sig) = functions::function_signature(env, func, true);
-                    lines.push(format!("{}{} {}: fn{},", tabs(1), "pub", name, sig));
+                    lines.push(format!("{}{}{}: fn{},", tabs(1), vis, name, sig));
                     commented |= com;
                 }
                 else {
-                    lines.push(format!("{}{} {}: [{:?}],", tabs(1), "pub", name, field.typ));
+                    lines.push(format!("{}{}{}: [{:?}],", tabs(1), vis, name, field.typ));
                     commented = true;
                 }
             }
