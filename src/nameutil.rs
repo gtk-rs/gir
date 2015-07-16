@@ -28,6 +28,7 @@ pub fn strip_prefix<'a>(prefix: &str, name: &'a str) -> &'a str {
     &name[skip..]
 }
 
+/* unused :(
 pub fn strip_suffix<'a>(name: &'a str, suffix: &str) -> Option<&'a str> {
     if name.ends_with(suffix) {
         Some(&name[..name.len() - suffix.len()])
@@ -36,6 +37,7 @@ pub fn strip_suffix<'a>(name: &'a str, suffix: &str) -> Option<&'a str> {
         None
     }
 }
+*/
 
 pub fn file_name(full_name: &str) -> String {
     let (_, class_name) = split_namespace_name(full_name);
