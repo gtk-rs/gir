@@ -69,7 +69,7 @@ fn parse_object(toml_object: &Value) -> GObject {
 
 pub fn parse_status_shorthands(objects: &mut GObjects, toml: &Value) {
     use self::GStatus::*;
-    for &status in [Ignore].iter() {
+    for &status in [Manual, Generate, Comment, Ignore].iter() {
         parse_status_shorthand(objects, status, toml);
     }
 }
