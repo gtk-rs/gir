@@ -16,3 +16,6 @@ path = "../gio-sys"
 
 [dependencies.pango-sys]
 path = "../pango-sys"
+
+[dependencies.secret-sys]
+path = "../secret-sys"
