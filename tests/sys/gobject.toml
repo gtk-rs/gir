@@ -7,3 +7,7 @@ target_path = "./gobject-sys"
 external_libraries = [
    "GLib",
 ]
+
+[[object]]
+name = "GObject.VaClosureMarshal"
+status = "ignore"
