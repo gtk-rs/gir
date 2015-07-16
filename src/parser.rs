@@ -774,13 +774,9 @@ impl Library {
     fn read_type(&mut self, parser: &mut Reader, ns_id: u16,
                  name: &OwnedName, attrs: &Attributes) -> Result<(TypeId, Option<String>), Error> {
         let start_pos = parser.position();
-        let name =
-            if name.local_name == "array" {
-                "array"
-            }
-            else {
-                try!(attrs.get("name").ok_or_else(|| mk_error!("Missing type name", &start_pos)))
-            };
+        let name = try!(attrs.get("name")
+                        .or_else(|| if name.local_name == "array" { Some("array") } else { None })
+                        .ok_or_else(|| mk_error!("Missing type name", &start_pos)));
         let c_type = attrs.get("type").map(|s| s.into());
         let mut inner = Vec::new();
         loop {
@@ -798,7 +794,7 @@ impl Library {
                 _ => xml_try!(event, parser),
             }
         }
-        if inner.is_empty() {
+        if inner.is_empty() || name == "GLib.ByteArray" {
             if name == "array" {
                 Err(mk_error!("Missing element type", &start_pos))
             }
@@ -808,7 +804,7 @@ impl Library {
         }
         else {
             let tid = if name == "array" {
-                Type::array(self, inner[0], attrs.get("fixed-size").and_then(|n| n.parse().ok()))
+                Type::c_array(self, inner[0], attrs.get("fixed-size").and_then(|n| n.parse().ok()))
             }
             else {
                 try!(Type::container(self, name, inner)

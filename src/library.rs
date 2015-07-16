@@ -309,8 +309,10 @@ pub enum Type {
     Function(Function),
     Interface(Interface),
     Class(Class),
+    Array(TypeId),
     CArray(TypeId),
     FixedArray(TypeId, u16),
+    PtrArray(TypeId),
     HashTable(TypeId, TypeId),
     List(TypeId),
     SList(TypeId),
@@ -329,9 +331,11 @@ impl Type {
             &Union(ref union) => union.name.clone(),
             &Function(ref func) => func.name.clone(),
             &Interface(ref interface) => interface.name.clone(),
+            &Array(type_id) => format!("Array {:?}", type_id),
             &Class(ref class) => class.name.clone(),
             &CArray(type_id) => format!("CArray {:?}", type_id),
             &FixedArray(type_id, size) => format!("FixedArray {:?}; {}", type_id, size),
+            &PtrArray(type_id) => format!("PtrArray {:?}", type_id),
             &HashTable(key_type_id, value_type_id) => format!("HashTable {:?}/{:?}", key_type_id, value_type_id),
             &List(type_id) => format!("List {:?}", type_id),
             &SList(type_id) => format!("SList {:?}", type_id),
@@ -353,7 +357,7 @@ impl Type {
         }
     }
 
-    pub fn array(library: &mut Library, inner: TypeId, size: Option<u16>) -> TypeId {
+    pub fn c_array(library: &mut Library, inner: TypeId, size: Option<u16>) -> TypeId {
         if let Some(size) = size {
             library.add_type(INTERNAL_NAMESPACE, &format!("[#{:?}; {}]", inner, size),
                              Type::FixedArray(inner, size))
@@ -365,6 +369,14 @@ impl Type {
 
     pub fn container(library: &mut Library, name: &str, mut inner: Vec<TypeId>) -> Option<TypeId> {
         match (name, inner.len()) {
+            ("GLib.Array", 1) => {
+                let tid = inner.remove(0);
+                Some((format!("Array(#{:?})", tid), Type::Array(tid)))
+            }
+            ("GLib.PtrArray", 1) => {
+                let tid = inner.remove(0);
+                Some((format!("PtrArray(#{:?})", tid), Type::PtrArray(tid)))
+            }
             ("GLib.HashTable", 2) => {
                 let k_tid = inner.remove(0);
                 let v_tid = inner.remove(0);
