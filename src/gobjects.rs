@@ -76,19 +76,16 @@ pub fn parse_status_shorthands(objects: &mut GObjects, toml: &Value) {
 
 fn parse_status_shorthand(objects: &mut GObjects, status: GStatus, toml: &Value) {
     let name = format!("options.{:?}", status).to_ascii_lowercase();
-    match toml.lookup(&name) {
-        Some(&Value::Array(ref a)) =>
-            for name_ in a.iter().map(|s| s.as_str().unwrap()) {
-                match objects.get(name_) {
-                    None => {
-                        objects.insert(name_.into(), GObject {
-                            name: name_.into(),
-                            status: GStatus::Ignore,
-                        });
-                    },
-                    Some(_) => panic!("Bad name in {}: {} already defined", name, name_),
-                }
+    toml.lookup(&name).map(|a| a.as_slice().unwrap())
+        .map(|a| for name_ in a.iter().map(|s| s.as_str().unwrap()) {
+        match objects.get(name_) {
+            None => {
+                objects.insert(name_.into(), GObject {
+                    name: name_.into(),
+                    status: GStatus::Ignore,
+                });
             },
-        _ => (),
-    }
+            Some(_) => panic!("Bad name in {}: {} already defined", name, name_),
+        }
+    });
 }
