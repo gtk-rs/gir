@@ -77,7 +77,7 @@ fn ffi_inner(env: &Env, tid: library::TypeId, inner: String) -> Result {
             Ok(inner.into())
         }
         Type::Record(..) | Type::Alias(..) | Type::Function(..) => {
-            fix_external_name(env, tid, &inner)
+            fix_name(env, tid, &inner)
         }
         Type::Array(inner_tid) => ffi_inner(env, inner_tid, inner),
         Type::ArraySized(inner_tid, size) => {
@@ -96,7 +96,7 @@ fn ffi_inner(env: &Env, tid: library::TypeId, inner: String) -> Result {
                     Err(msg)
                 }
                 else {
-                    fix_external_name(env, tid, &inner)
+                    fix_name(env, tid, &inner)
                 }
             }
             else {
@@ -109,14 +109,17 @@ fn ffi_inner(env: &Env, tid: library::TypeId, inner: String) -> Result {
     }
 }
 
-fn fix_external_name(env: &Env, type_id: library::TypeId, name: &str) -> Result {
-    if type_id.ns_id == library::MAIN_NAMESPACE || type_id.ns_id == library::INTERNAL_NAMESPACE {
+fn fix_name(env: &Env, type_id: library::TypeId, name: &str) -> Result {
+    if type_id.ns_id == library::INTERNAL_NAMESPACE {
         Ok(name.into())
     } else {
-        let name_with_prefix = format!("{}_ffi::{}",
-            fix_namespace(env, type_id), name);
+        let name_with_prefix = if type_id.ns_id == library::MAIN_NAMESPACE {
+            name.into()
+        } else {
+            format!("{}_ffi::{}", fix_namespace(env, type_id), name)
+        };
         if env.type_status_sys(&type_id.full_name(&env.library)) == GStatus::Ignore {
-            Err(name_with_prefix.into())
+            Err(name_with_prefix)
         } else {
             Ok(name_with_prefix)
         }

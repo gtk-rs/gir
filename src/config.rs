@@ -101,8 +101,9 @@ impl Config {
             a => a
         };
 
-        let objects = toml.lookup("object").map(|t| gobjects::parse_toml(t))
+        let mut objects = toml.lookup("object").map(|t| gobjects::parse_toml(t))
             .unwrap_or_else(|| Default::default());
+        gobjects::parse_status_shorthands(&mut objects, &toml);
 
         let external_libraries = toml.lookup("options.external_libraries")
             .map(|a| a.as_slice().unwrap().iter()

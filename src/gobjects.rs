@@ -1,3 +1,4 @@
+use std::ascii::AsciiExt;
 use std::collections::HashMap;
 use std::str::FromStr;
 use toml::Value;
@@ -64,4 +65,27 @@ fn parse_object(toml_object: &Value) -> GObject {
         None => Default::default(),
     };
     GObject { name: name, status: status }
+}
+
+pub fn parse_status_shorthands(objects: &mut GObjects, toml: &Value) {
+    use self::GStatus::*;
+    for &status in [Manual, Generate, Comment, Ignore].iter() {
+        parse_status_shorthand(objects, status, toml);
+    }
+}
+
+fn parse_status_shorthand(objects: &mut GObjects, status: GStatus, toml: &Value) {
+    let name = format!("options.{:?}", status).to_ascii_lowercase();
+    toml.lookup(&name).map(|a| a.as_slice().unwrap())
+        .map(|a| for name_ in a.iter().map(|s| s.as_str().unwrap()) {
+        match objects.get(name_) {
+            None => {
+                objects.insert(name_.into(), GObject {
+                    name: name_.into(),
+                    status: GStatus::Ignore,
+                });
+            },
+            Some(_) => panic!("Bad name in {}: {} already defined", name, name_),
+        }
+    });
 }
