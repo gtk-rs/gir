@@ -15,7 +15,7 @@ pub fn ffi_type(env: &Env, tid: library::TypeId, c_type: &str) -> Result {
         if let Some(c_tid) = env.library.find_type(0, c_type) {
             // Fast track plain fundamental types avoiding some checks
             if env.library.type_(c_tid).maybe_ref_as::<Fundamental>().is_some() {
-                if let &library::Type::ArraySized(_, size) = env.library.type_(tid) {
+                if let &library::Type::FixedArray(_, size) = env.library.type_(tid) {
                     ffi_inner(env, c_tid, c_type.into())
                         .map_any(|s| format!("[{}; {}]", s, size))
                 }
@@ -82,8 +82,8 @@ fn ffi_inner(env: &Env, tid: library::TypeId, inner: String) -> Result {
         Type::Record(..) | Type::Alias(..) | Type::Function(..) => {
             fix_name(env, tid, &inner)
         }
-        Type::Array(inner_tid) => ffi_inner(env, inner_tid, inner),
-        Type::ArraySized(inner_tid, size) => {
+        Type::CArray(inner_tid) => ffi_inner(env, inner_tid, inner),
+        Type::FixedArray(inner_tid, size) => {
             match ffi_inner(env, inner_tid, inner) {
                 Ok(s) => Ok(format!("[{}; {}]", s, size)),
                 Err(s) => Err(format!("[{}; {}]", s, size)),

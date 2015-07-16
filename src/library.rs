@@ -309,8 +309,8 @@ pub enum Type {
     Function(Function),
     Interface(Interface),
     Class(Class),
-    Array(TypeId),
-    ArraySized(TypeId, u16),
+    CArray(TypeId),
+    FixedArray(TypeId, u16),
     HashTable(TypeId, TypeId),
     List(TypeId),
     SList(TypeId),
@@ -330,8 +330,8 @@ impl Type {
             &Function(ref func) => func.name.clone(),
             &Interface(ref interface) => interface.name.clone(),
             &Class(ref class) => class.name.clone(),
-            &Array(type_id) => format!("Array {:?}", type_id),
-            &ArraySized(type_id, size) => format!("ArraySized {:?}; {}", type_id, size),
+            &CArray(type_id) => format!("CArray {:?}", type_id),
+            &FixedArray(type_id, size) => format!("FixedArray {:?}; {}", type_id, size),
             &HashTable(key_type_id, value_type_id) => format!("HashTable {:?}/{:?}", key_type_id, value_type_id),
             &List(type_id) => format!("List {:?}", type_id),
             &SList(type_id) => format!("SList {:?}", type_id),
@@ -356,10 +356,10 @@ impl Type {
     pub fn array(library: &mut Library, inner: TypeId, size: Option<u16>) -> TypeId {
         if let Some(size) = size {
             library.add_type(INTERNAL_NAMESPACE, &format!("[#{:?}; {}]", inner, size),
-                             Type::ArraySized(inner, size))
+                             Type::FixedArray(inner, size))
         }
         else {
-            library.add_type(INTERNAL_NAMESPACE, &format!("[#{:?}]", inner), Type::Array(inner))
+            library.add_type(INTERNAL_NAMESPACE, &format!("[#{:?}]", inner), Type::CArray(inner))
         }
     }
 
