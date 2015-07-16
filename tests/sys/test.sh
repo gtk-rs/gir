@@ -8,7 +8,6 @@ cd "`dirname $0`"
 cargo build --release || exit 1
 
 for LIB in $LIBS; do
-	mkdir -p ${LIB}-sys/src
 	$GIR -c ${LIB}.toml || exit 2
 done
 
