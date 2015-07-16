@@ -15,7 +15,7 @@ pub fn ffi_type(env: &Env, tid: library::TypeId, c_type: &str) -> Result {
         if let Some(c_tid) = env.library.find_type(0, c_type) {
             // Fast track plain fundamental types avoiding some checks
             if env.library.type_(c_tid).maybe_ref_as::<Fundamental>().is_some() {
-                if let &library::Type::ArraySized(_, size) = env.library.type_(tid) {
+                if let &library::Type::FixedArray(_, size) = env.library.type_(tid) {
                     ffi_inner(env, c_tid, c_type.into())
                         .map_any(|s| format!("[{}; {}]", s, size))
                 }
@@ -82,14 +82,17 @@ fn ffi_inner(env: &Env, tid: library::TypeId, inner: String) -> Result {
         Type::Record(..) | Type::Alias(..) | Type::Function(..) => {
             fix_name(env, tid, &inner)
         }
-        Type::Array(inner_tid) => ffi_inner(env, inner_tid, inner),
-        Type::ArraySized(inner_tid, size) => {
+        Type::CArray(inner_tid) => ffi_inner(env, inner_tid, inner),
+        Type::FixedArray(inner_tid, size) => {
             match ffi_inner(env, inner_tid, inner) {
                 Ok(s) => Ok(format!("[{}; {}]", s, size)),
                 Err(s) => Err(format!("[{}; {}]", s, size)),
             }
         }
-        Type::List(..) | Type::SList(..) => Ok(inner),
+        Type::Array(..) | Type::PtrArray(..)
+                | Type::List(..) | Type::SList(..) | Type::HashTable(..) => {
+            fix_name(env, tid, &inner)
+        }
         _ => {
             if let Some(glib_name) = env.library.type_(tid).get_glib_name() {
                 if inner != glib_name {
@@ -114,7 +117,18 @@ fn ffi_inner(env: &Env, tid: library::TypeId, inner: String) -> Result {
 
 fn fix_name(env: &Env, type_id: library::TypeId, name: &str) -> Result {
     if type_id.ns_id == library::INTERNAL_NAMESPACE {
-        Ok(name.into())
+        match *env.library.type_(type_id) {
+            Type::Array(..) | Type::PtrArray(..)
+                    | Type::List(..) | Type::SList(..) | Type::HashTable(..) => {
+                if Some(MAIN_NAMESPACE) == env.library.find_namespace("GLib") {
+                    Ok(name.into())
+                }
+                else {
+                    Ok(format!("{}_ffi::{}", crate_name("GLib"), name))
+                }
+            }
+            _ => Ok(name.into())
+        }
     } else {
         let name_with_prefix = if type_id.ns_id == library::MAIN_NAMESPACE {
             name.into()
