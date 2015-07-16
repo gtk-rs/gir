@@ -101,10 +101,11 @@ fn generate_bitfields<W: Write>(w: &mut W, ns_name: &str, items: &[&library::Bit
         -> Result<()> {
     try!(writeln!(w, ""));
     for item in items {
-        try!(writeln!(w, "bitflags! {{\n{}#[repr(C)]\n{0}flags {}: i32 {{", tabs(1), item.name));
+        try!(writeln!(w, "bitflags! {{\n{}#[repr(C)]\n{0}flags {}: c_uint {{", tabs(1), item.name));
         for member in &item.members {
+            let val: i64 = member.value.parse().unwrap();
             try!(writeln!(w, "{}const {} = {},",
-                          tabs(2), strip_prefix(ns_name, &member.c_identifier), member.value));
+                          tabs(2), strip_prefix(ns_name, &member.c_identifier), val as u32));
         }
         try!(writeln!(w, "{}}}\n}}", tabs(1)));
         try!(writeln!(w, "pub type {} = {};", item.c_type, item.name));
@@ -119,7 +120,7 @@ fn generate_enums<W: Write>(w: &mut W, ns_name: &str, items: &[&library::Enumera
     try!(writeln!(w, ""));
     for item in items {
         if item.members.len() == 1 {
-            try!(writeln!(w, "pub type {} = i32;", item.name));
+            try!(writeln!(w, "pub type {} = c_int;", item.name));
             try!(writeln!(w, "pub const {}: {} = {};",
                           item.members[0].c_identifier, item.name, item.members[0].value));
             try!(writeln!(w, "pub type {} = {};", item.c_type, item.name));
