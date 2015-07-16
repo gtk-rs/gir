@@ -70,7 +70,10 @@ fn ffi_inner(env: &Env, tid: library::TypeId, inner: String) -> Result {
                 Utf8 => "c_char",
                 Filename => "c_char",
                 Type => "GType",
-                Pointer => return Ok(inner),
+                Pointer => match &inner[..]  {
+                    "void" => "c_void",
+                    _ => return Ok(inner),
+                },
                 Unsupported => return Err(format!("[Unsupported type {}]", inner)),
                 VarArgs => panic!("Should not reach here"),
             };
