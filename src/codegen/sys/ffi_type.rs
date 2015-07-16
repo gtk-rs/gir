@@ -4,28 +4,36 @@ use gobjects::GStatus;
 use library;
 use library::*;
 use nameutil::crate_name;
+use traits::*;
 
 // FIXME: This module needs redundant allocations audit
 // TODO: ffi_type computations should be cached
 
 pub fn ffi_type(env: &Env, tid: library::TypeId, c_type: &str) -> Result {
-    // Fast track plain fundamental types avoiding some checks
-    if let Some(c_tid) = env.library.find_type(0, c_type) {
-        let fundamental_c_type = env.library.type_(c_tid).maybe_ref_as::<Fundamental>().is_some();
-        let array = match env.library.type_(tid) {
-            &library::Type::ArraySized(..) => true,
-            _ => false,
-        };
-        if fundamental_c_type && !array {
-            return ffi_inner(env, c_tid, c_type.into());
+    let (ptr, inner) = rustify_pointers(c_type);
+    let res = if ptr.is_empty() {
+        if let Some(c_tid) = env.library.find_type(0, c_type) {
+            // Fast track plain fundamental types avoiding some checks
+            if env.library.type_(c_tid).maybe_ref_as::<Fundamental>().is_some() {
+                if let &library::Type::ArraySized(_, size) = env.library.type_(tid) {
+                    ffi_inner(env, c_tid, c_type.into())
+                        .map_any(|s| format!("[{}; {}]", s, size))
+                }
+                else {
+                    ffi_inner(env, c_tid, c_type.into())
+                }
+            }
+            else { // c_type isn't fundamental
+                ffi_inner(env, tid, inner)
+            }
+        }
+        else { // c_type doesn't match any type in the library by name
+            ffi_inner(env, tid, inner)
         }
     }
-
-    let (ptr, inner) = rustify_pointers(c_type);
-    let res = match (ptr.is_empty(), ffi_inner(env, tid, inner)) {
-        (true, x) => x,
-        (_, Ok(s)) => Ok(format!("{} {}", ptr, s)),
-        (_, Err(s)) => Err(format!("{} {}", ptr, s)),
+    else { // ptr not empty
+        ffi_inner(env, tid, inner)
+            .map_any(|s| format!("{} {}", ptr, s))
     };
     trace!("ffi_type({:?}, {}) -> {:?}", tid, c_type, res);
     res

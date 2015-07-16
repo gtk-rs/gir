@@ -1,8 +1,9 @@
 use analysis;
-use analysis::rust_type::{AsStr, rust_type};
+use analysis::rust_type::rust_type;
 use analysis::type_kind::TypeKind;
 use env::Env;
 use library;
+use traits::*;
 
 pub trait TranslateFromGlib {
     fn translate_from_glib_as_function(&self, env: &Env,

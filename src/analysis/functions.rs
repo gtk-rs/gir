@@ -7,6 +7,7 @@ use analysis::rust_type::*;
 use analysis::upcasts::Upcasts;
 use env::Env;
 use library;
+use traits::*;
 
 //TODO: change use Parameter to reference?
 pub struct Info {

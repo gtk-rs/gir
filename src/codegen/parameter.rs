@@ -1,8 +1,9 @@
 use env::Env;
 use library;
 use analysis::type_kind::TypeKind;
-use analysis::rust_type::{AsStr, parameter_rust_type};
+use analysis::rust_type::parameter_rust_type;
 use analysis::upcasts::Upcasts;
+use traits::*;
 
 pub trait ToParameter {
     fn to_parameter(&self, env: &Env, upcasts: &Upcasts) -> String;

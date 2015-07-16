@@ -2,6 +2,7 @@ use std::cmp::{Ord, Ordering, PartialOrd};
 use std::collections::{HashMap, HashSet};
 use std::str::FromStr;
 use nameutil::split_namespace_name;
+use traits::*;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum Transfer {
@@ -395,11 +396,6 @@ impl Type {
     }
 }
 
-pub trait MaybeRef<T> {
-    fn maybe_ref(&self) -> Option<&T>;
-    fn to_ref(&self) -> &T;
-}
-
 macro_rules! impl_maybe_ref {
     () => ();
     ($name:ident, $($more:ident,)*) => (
@@ -430,11 +426,6 @@ impl_maybe_ref!(
     Record,
     Union,
 );
-
-pub trait MaybeRefAs {
-    fn maybe_ref_as<T>(&self) -> Option<&T> where Self: MaybeRef<T>;
-    fn to_ref_as<T>(&self) -> &T where Self: MaybeRef<T>;
-}
 
 impl<U> MaybeRefAs for U {
     fn maybe_ref_as<T>(&self) -> Option<&T> where Self: MaybeRef<T> {
@@ -677,6 +668,7 @@ impl Library {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use traits::*;
 
     fn make_library() -> Library {
         let mut lib = Library::new("Gtk");
