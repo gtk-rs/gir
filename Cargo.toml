@@ -6,7 +6,7 @@ authors = [
 	"Gleb Kozyrev <gleb@gkoz.com>",
 ]
 build = "build.rs"
-exclude = ["Gir*.toml", "tests/**/*.toml"]
+exclude = ["Gir*.toml", "tests/**/*"]
 
 [dependencies]
 docopt = "*"

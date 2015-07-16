@@ -128,14 +128,7 @@ fn fix_name(env: &Env, type_id: library::TypeId, name: &str) -> Result {
 
 //TODO: check if need to use in non sys codegen
 fn fix_namespace(env: &Env, type_id: library::TypeId) -> String {
-    let mut name: &str = &crate_name(&env.library.namespace(type_id.ns_id).name);
-    name = match name {
-        "gdkpixbuf" => "gdk",
-        "gio" => "glib",
-        "gobject" => "glib",
-        _ => name,
-    };
-    name.into()
+    crate_name(&env.library.namespace(type_id.ns_id).name)
 }
 
 fn rustify_pointers(c_type: &str) -> (String, String) {

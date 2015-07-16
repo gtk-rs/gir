@@ -560,7 +560,10 @@ impl Library {
     }
 
     pub fn find_type(&self, current_ns_id: u16, name: &str) -> Option<TypeId> {
-        let (ns, name) = split_namespace_name(name);
+        let (mut ns, name) = split_namespace_name(name);
+        if name == "GType" {
+            ns = None;
+        }
 
         if let Some(ns) = ns {
             self.find_namespace(ns).and_then(|ns_id| {
@@ -621,8 +624,16 @@ impl Library {
     }
 
     pub fn fill_in(&mut self) {
+        self.fix_gtype();
         self.check_resolved();
         self.fill_class_relationships();
+    }
+
+    pub fn fix_gtype(&mut self) {
+        if let Some(ns_id) = self.find_namespace("GObject") {
+            // hide the `GType` type alias in `GObject`
+            self.add_type(ns_id, "Type", Type::Fundamental(Fundamental::Unsupported));
+        }
     }
 
     fn fill_class_relationships(&mut self) {
