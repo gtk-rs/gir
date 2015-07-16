@@ -8,6 +8,6 @@ external_libraries = [
    "GLib",
 ]
 
-[[object]]
-name = "GObject.VaClosureMarshal"
-status = "ignore"
+ignore = [
+   "GObject.VaClosureMarshal",
+]
