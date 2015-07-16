@@ -1,0 +1,15 @@
+[package]
+name = "sys_build"
+version = "0.0.1"
+
+[lib]
+name = "sys_build"
+
+[dependencies.glib-sys]
+path = "../glib-sys"
+
+[dependencies.gobject-sys]
+path = "../gobject-sys"
+
+[dependencies.gio-sys]
+path = "../gio-sys"
