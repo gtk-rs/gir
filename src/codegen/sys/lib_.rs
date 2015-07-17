@@ -49,8 +49,8 @@ fn generate_lib<W: Write>(w: &mut W, env: &Env) -> Result<()>{
     let interfaces = prepare(ns);
 
     try!(generate_aliases(w, env, &prepare(ns)));
-    try!(generate_enums(w, &ns.name, &prepare(ns)));
-    try!(generate_bitfields(w, &ns.name, &prepare(ns)));
+    try!(generate_enums(w, &prepare(ns)));
+    try!(generate_bitfields(w, &prepare(ns)));
     try!(generate_unions(w, &prepare(ns)));
     try!(functions::generate_callbacks(w, env, &prepare(ns)));
     try!(generate_records(w, env, &prepare(ns)));
@@ -102,25 +102,24 @@ fn generate_aliases<W: Write>(w: &mut W, env: &Env, items: &[&library::Alias])
     Ok(())
 }
 
-fn generate_bitfields<W: Write>(w: &mut W, ns_name: &str, items: &[&library::Bitfield])
+fn generate_bitfields<W: Write>(w: &mut W, items: &[&library::Bitfield])
         -> Result<()> {
     try!(writeln!(w, ""));
     for item in items {
-        try!(writeln!(w, "bitflags! {{\n{}#[repr(C)]\n{0}flags {}: c_uint {{", tabs(1), item.name));
+        try!(writeln!(w, "bitflags! {{\n{}#[repr(C)]\n{0}flags {}: c_uint {{",
+                      tabs(1), item.c_type));
         for member in &item.members {
             let val: i64 = member.value.parse().unwrap();
-            try!(writeln!(w, "{}const {} = {},",
-                          tabs(2), strip_prefix(ns_name, &member.c_identifier), val as u32));
+            try!(writeln!(w, "{}const {} = {},", tabs(2), member.c_identifier, val as u32));
         }
         try!(writeln!(w, "{}}}\n}}", tabs(1)));
-        try!(writeln!(w, "pub type {} = {};", item.c_type, item.name));
         try!(writeln!(w, ""));
     }
 
     Ok(())
 }
 
-fn generate_enums<W: Write>(w: &mut W, ns_name: &str, items: &[&library::Enumeration])
+fn generate_enums<W: Write>(w: &mut W, items: &[&library::Enumeration])
         -> Result<()> {
     try!(writeln!(w, ""));
     for item in items {
@@ -135,7 +134,7 @@ fn generate_enums<W: Write>(w: &mut W, ns_name: &str, items: &[&library::Enumera
 
         let mut vals = HashMap::new();
         try!(writeln!(w, "#[derive(Clone, Copy, Debug, Eq, PartialEq)]\n#[repr(C)]"));
-        try!(writeln!(w, "pub enum {} {{", item.name));
+        try!(writeln!(w, "pub enum {} {{", item.c_type));
         for member in &item.members {
             if vals.get(&member.value).is_some() {
                 continue;
@@ -146,11 +145,9 @@ fn generate_enums<W: Write>(w: &mut W, ns_name: &str, items: &[&library::Enumera
         }
         try!(writeln!(w, "}}"));
         for member in &item.members {
-            try!(writeln!(w, "pub const {}: {} = {1}::{};",
-                          prepare_enum_member_name(strip_prefix(ns_name, &member.c_identifier)),
-                          item.name, &prepare_enum_member_name(vals.get(&member.value).unwrap())));
+            try!(writeln!(w, "pub const {}: {} = {1}::{};", member.c_identifier, item.c_type,
+                          &prepare_enum_member_name(vals.get(&member.value).unwrap())));
         }
-        try!(writeln!(w, "pub type {} = {};", item.c_type, item.name));
         try!(writeln!(w, ""));
     }
 
@@ -161,12 +158,11 @@ fn generate_unions<W: Write>(w: &mut W, items: &[&library::Union])
         -> Result<()> {
     try!(writeln!(w, ""));
     for item in items {
-        try!(writeln!(w, "pub type {} = c_void;", item.name));
         if let Some(ref c_type) = item.c_type {
-            try!(writeln!(w, "pub type {} = {};", c_type, item.name));
+            try!(writeln!(w, "pub type {} = c_void; // union", c_type));
         }
-        try!(writeln!(w, ""));
     }
+    try!(writeln!(w, ""));
 
     Ok(())
 }
