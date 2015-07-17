@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::fs;
 use std::path::*;
 use std::io::{Result, Write};
 use case::CaseExt;
@@ -18,9 +19,13 @@ pub fn generate(env: &Env) {
 
     let path =  PathBuf::from(&env.config.target_path)
         .join(file_name_sys("lib"));
-    println!("Generating file {:?}", path);
 
-    save_to_file(path, &mut |w| generate_lib(w, env));
+    let parent = path.parent().unwrap();
+    //TODO: do only if not exists
+    let _ = fs::create_dir(parent);
+
+    println!("Generating file {:?}", path);
+    save_to_file(&path, &mut |w| generate_lib(w, env));
 }
 
 fn generate_lib<W: Write>(w: &mut W, env: &Env) -> Result<()>{
