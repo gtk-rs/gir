@@ -1,0 +1,19 @@
+[package]
+name = "gdk-pixbuf-sys"
+version = "0.0.1"
+
+[lib]
+name = "gdk_pixbuf_sys"
+
+[dependencies]
+bitflags = "^0.3"
+libc = "^0.1"
+
+[dependencies.glib-sys]
+path = "../glib-sys"
+
+[dependencies.gobject-sys]
+path = "../gobject-sys"
+
+[dependencies.gio-sys]
+path = "../gio-sys"

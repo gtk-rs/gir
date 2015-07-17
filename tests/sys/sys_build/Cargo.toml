@@ -17,5 +17,8 @@ path = "../gio-sys"
 [dependencies.pango-sys]
 path = "../pango-sys"
 
+[dependencies.gdk-pixbuf-sys]
+path = "../gdk-pixbuf-sys"
+
 [dependencies.secret-sys]
 path = "../secret-sys"
