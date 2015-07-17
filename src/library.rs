@@ -116,7 +116,7 @@ pub enum Fundamental {
     Unsupported,
 }
 
-pub const FUNDAMENTAL: [(&'static str, Fundamental); 30] = [
+pub const FUNDAMENTAL: [(&'static str, Fundamental); 31] = [
     ("none", Fundamental::None),
     ("gboolean", Fundamental::Boolean),
     ("gint8", Fundamental::Int8),
@@ -141,6 +141,7 @@ pub const FUNDAMENTAL: [(&'static str, Fundamental); 30] = [
     ("gdouble", Fundamental::Double),
     ("long double", Fundamental::Unsupported),
     ("gunichar", Fundamental::UniChar),
+    ("gconstpointer", Fundamental::Pointer),
     ("gpointer", Fundamental::Pointer),
     ("va_list", Fundamental::Unsupported),
     ("varargs", Fundamental::VarArgs),
