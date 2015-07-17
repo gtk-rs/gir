@@ -244,6 +244,15 @@ fn generate_records<W: Write>(w: &mut W, env: &Env, records: &[&library::Record]
                     lines.push(format!("{}{}{}: fn{},", tabs(1), vis, name, sig));
                     commented |= com;
                 }
+                else if let Some(c_type) = env.library.type_(field.typ).get_glib_name() {
+                    warn!("Record `{}`, field `{}` missing c:type assumed `{}`",
+                          record.name, field.name, c_type);
+                    let c_type = ffi_type(env, field.typ, c_type);
+                    lines.push(format!("{}{}{}: {},", tabs(1), vis, name, c_type.as_str()));
+                    if c_type.is_err() {
+                        commented = true;
+                    }
+                }
                 else {
                     lines.push(format!("{}{}{}: [{:?} {}],", tabs(1),
                         vis, name, field.typ, field.typ.full_name(&env.library)));
