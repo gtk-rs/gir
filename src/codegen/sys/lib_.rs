@@ -147,7 +147,7 @@ fn generate_enums<W: Write>(w: &mut W, ns_name: &str, items: &[&library::Enumera
         try!(writeln!(w, "}}"));
         for member in &item.members {
             try!(writeln!(w, "pub const {}: {} = {1}::{};",
-                          strip_prefix(ns_name, &member.c_identifier),
+                          prepare_enum_member_name(strip_prefix(ns_name, &member.c_identifier)),
                           item.name, &prepare_enum_member_name(vals.get(&member.value).unwrap())));
         }
         try!(writeln!(w, "pub type {} = {};", item.c_type, item.name));
