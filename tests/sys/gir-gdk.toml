@@ -10,5 +10,5 @@ external_libraries = [
    "Gio",
    "GdkPixbuf",
    "Pango",
-#   "Cairo",
+   "Cairo",
 ]

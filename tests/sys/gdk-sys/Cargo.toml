@@ -21,7 +21,8 @@ path = "../gio-sys"
 [dependencies.pango-sys]
 path = "../pango-sys"
 
-#[dependencies.cairo-sys]
+[dependencies.cairo-sys-rs]
+git = "https://github.com/rust-gnome/cairo"
 #path = "../cairo-sys"
 
 [dependencies.gdk-pixbuf-sys]
