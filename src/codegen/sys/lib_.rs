@@ -230,7 +230,8 @@ fn generate_records<W: Write>(w: &mut W, env: &Env, records: &[&library::Record]
                     commented |= com;
                 }
                 else {
-                    lines.push(format!("{}{}{}: [{:?}],", tabs(1), vis, name, field.typ));
+                    lines.push(format!("{}{}{}: [{:?} {}],", tabs(1),
+                        vis, name, field.typ, field.typ.full_name(&env.library)));
                     commented = true;
                 }
             }
