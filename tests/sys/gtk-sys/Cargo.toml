@@ -18,6 +18,9 @@ path = "../gobject-sys"
 [dependencies.gio-sys]
 path = "../gio-sys"
 
+[dependencies.atk-sys]
+path = "../atk-sys"
+
 [dependencies.pango-sys]
 path = "../pango-sys"
 
