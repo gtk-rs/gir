@@ -23,6 +23,9 @@ path = "../gdk-pixbuf-sys"
 [dependencies.gdk-sys]
 path = "../gdk-sys"
 
+[dependencies.atk-sys]
+path = "../atk-sys"
+
 [dependencies.gtk-sys]
 path = "../gtk-sys"
 
