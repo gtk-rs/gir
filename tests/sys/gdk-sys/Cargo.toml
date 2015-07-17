@@ -1,9 +1,13 @@
 [package]
-name = "sys_build"
+name = "gdk-sys"
 version = "0.0.1"
 
 [lib]
-name = "sys_build"
+name = "gdk_sys"
+
+[dependencies]
+bitflags = "^0.3"
+libc = "^0.1"
 
 [dependencies.glib-sys]
 path = "../glib-sys"
@@ -17,11 +21,8 @@ path = "../gio-sys"
 [dependencies.pango-sys]
 path = "../pango-sys"
 
+#[dependencies.cairo-sys]
+#path = "../cairo-sys"
+
 [dependencies.gdk-pixbuf-sys]
 path = "../gdk-pixbuf-sys"
-
-[dependencies.gdk-sys]
-path = "../gdk-sys"
-
-[dependencies.secret-sys]
-path = "../secret-sys"
