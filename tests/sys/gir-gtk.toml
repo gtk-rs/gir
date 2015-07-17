@@ -14,3 +14,7 @@ external_libraries = [
    "Pango",
    "Cairo",
 ]
+
+ignore = [
+   "xlib.Window",
+]
