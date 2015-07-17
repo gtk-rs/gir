@@ -203,14 +203,29 @@ fn generate_records<W: Write>(w: &mut W, env: &Env, records: &[&library::Record]
     for record in records {
         let mut lines = Vec::new();
         let mut commented = false;
+        let mut truncated = false;
         for field in &record.fields {
-            if env.library.type_(field.typ).maybe_ref_as::<library::Union>().is_some()
-                    || field.bits.is_some() {
+            let is_union = env.library.type_(field.typ).maybe_ref_as::<library::Union>().is_some();
+            let is_bits = field.bits.is_some();
+            if !truncated && (is_union || is_bits) {
                 warn!("Record `{}` field `{}` not expressible in Rust, truncated",
                       record.name, field.name);
                 lines.push(format!("{}_truncated_record_marker: (),", tabs(1)));
-                break;
+                truncated = true;
             }
+            if truncated {
+                if is_union {
+                    lines.push(format!("{}//union,", tabs(1)));
+                }
+                else {
+                    let bits = field.bits.map(|n| format!(": {}", n)).unwrap_or("".into());
+                    lines.push(
+                        format!("{}//{}: {}{},", tabs(1), field.name,
+                                field.c_type.as_ref().map(|s| &s[..]).unwrap_or("fn"), bits));
+                };
+                continue;
+            }
+
             let vis = if field.private { "" } else { "pub " };
 
             if let Some(ref c_type) = field.c_type {
