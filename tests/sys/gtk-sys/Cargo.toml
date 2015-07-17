@@ -1,9 +1,13 @@
 [package]
-name = "sys_build"
+name = "gtk-sys"
 version = "0.0.1"
 
 [lib]
-name = "sys_build"
+name = "gtk_sys"
+
+[dependencies]
+bitflags = "^0.3"
+libc = "^0.1"
 
 [dependencies.glib-sys]
 path = "../glib-sys"
@@ -17,14 +21,12 @@ path = "../gio-sys"
 [dependencies.pango-sys]
 path = "../pango-sys"
 
+[dependencies.cairo-sys-rs]
+git = "https://github.com/rust-gnome/cairo"
+#path = "../cairo-sys"
+
 [dependencies.gdk-pixbuf-sys]
 path = "../gdk-pixbuf-sys"
 
 [dependencies.gdk-sys]
 path = "../gdk-sys"
-
-[dependencies.gtk-sys]
-path = "../gtk-sys"
-
-[dependencies.secret-sys]
-path = "../secret-sys"
