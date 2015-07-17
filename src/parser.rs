@@ -360,6 +360,7 @@ impl Library {
         let get_type = try!(attrs.get("get-type")
             .ok_or_else(|| mk_error!("Missing get-type attribute", parser)));
         let mut fns = Vec::new();
+        let mut prereqs = Vec::new();
         loop {
             let event = parser.next();
             match event {
@@ -372,6 +373,9 @@ impl Library {
                                 return Err(mk_error!("Missing c:identifier attribute", &pos));
                             }
                             fns.push(f);
+                        }
+                        "prerequisite" => {
+                            prereqs.push(try!(self.read_type(parser, ns_id, &name, &attributes)).0);
                         }
                         "doc" | "doc-deprecated" => try!(ignore_element(parser)),
                         _ => try!(ignore_element(parser)),
@@ -388,6 +392,8 @@ impl Library {
                 c_type: c_type.into(),
                 glib_get_type : get_type.into(),
                 functions: fns,
+                prerequisites: prereqs,
+                .. Interface::default()
             });
         self.add_type(ns_id, name, typ);
         Ok(())

@@ -95,7 +95,7 @@ fn ffi_inner(env: &Env, tid: library::TypeId, inner: String) -> Result {
         }
         _ => {
             if let Some(glib_name) = env.library.type_(tid).get_glib_name() {
-                if inner != glib_name {
+                if inner != glib_name && !implements_c_type(&env.library, tid, &inner) {
                     let msg = format!("[c:type mismatch {} != {} of {}]", inner, glib_name,
                       env.library.type_(tid).get_name());
                     warn!("{}", msg);
@@ -146,6 +146,20 @@ fn fix_name(env: &Env, type_id: library::TypeId, name: &str) -> Result {
 //TODO: check if need to use in non sys codegen
 fn fix_namespace(env: &Env, type_id: library::TypeId) -> String {
     crate_name(&env.library.namespace(type_id.ns_id).name)
+}
+
+fn implements_c_type(library: &library::Library, tid: TypeId, c_type: &str) -> bool {
+    if let Some(ref klass) = library.type_(tid).maybe_ref_as::<library::Class>() {
+        klass.implements.iter().chain(klass.parents.iter())
+            .any(|&super_tid| library.type_(super_tid).get_glib_name() == Some(c_type))
+    }
+    else if let Some(ref iface) = library.type_(tid).maybe_ref_as::<library::Interface>() {
+        iface.prereq_parents.iter()
+            .any(|&super_tid| library.type_(super_tid).get_glib_name() == Some(c_type))
+    }
+    else {
+        false
+    }
 }
 
 fn rustify_pointers(c_type: &str) -> (String, String) {

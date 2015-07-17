@@ -116,7 +116,7 @@ pub enum Fundamental {
     Unsupported,
 }
 
-pub const FUNDAMENTAL: [(&'static str, Fundamental); 30] = [
+pub const FUNDAMENTAL: [(&'static str, Fundamental); 31] = [
     ("none", Fundamental::None),
     ("gboolean", Fundamental::Boolean),
     ("gint8", Fundamental::Int8),
@@ -141,6 +141,7 @@ pub const FUNDAMENTAL: [(&'static str, Fundamental); 30] = [
     ("gdouble", Fundamental::Double),
     ("long double", Fundamental::Unsupported),
     ("gunichar", Fundamental::UniChar),
+    ("gconstpointer", Fundamental::Pointer),
     ("gpointer", Fundamental::Pointer),
     ("va_list", Fundamental::Unsupported),
     ("varargs", Fundamental::VarArgs),
@@ -161,6 +162,24 @@ impl TypeId {
         let ns_name = &library.namespace(self.ns_id).name;
         let type_ = &library.type_(*self);
         format!("{}.{}", ns_name, &type_.get_name()).into()
+    }
+}
+
+impl PartialOrd for TypeId {
+    fn partial_cmp(&self, other: &TypeId) -> Option<Ordering> {
+        match self.ns_id.partial_cmp(&other.ns_id) {
+            Some(Ordering::Equal) => self.id.partial_cmp(&other.id),
+            x => x,
+        }
+    }
+}
+
+impl Ord for TypeId {
+    fn cmp(&self, other: &TypeId) -> Ordering {
+        match self.ns_id.cmp(&other.ns_id) {
+            Ordering::Equal => self.id.cmp(&other.id),
+            x => x,
+        }
     }
 }
 
@@ -242,11 +261,14 @@ pub struct Function {
     pub throws: bool,
 }
 
+#[derive(Default)]
 pub struct Interface {
     pub name: String,
     pub c_type: String,
     pub glib_get_type: String,
     pub functions: Vec<Function>,
+    pub prerequisites: Vec<TypeId>,
+    pub prereq_parents: Vec<TypeId>,
 }
 
 #[derive(Default)]
@@ -639,6 +661,7 @@ impl Library {
         self.fix_gtype();
         self.check_resolved();
         self.fill_class_relationships();
+        self.fill_class_iface_relationships();
     }
 
     pub fn fix_gtype(&mut self) {
@@ -683,6 +706,36 @@ impl Library {
                 if let Type::Class(ref mut klass) = *self.type_mut(parent_tid) {
                     klass.children.insert(tid);
                 }
+            }
+        }
+    }
+
+    fn fill_class_iface_relationships(&mut self) {
+        let mut ifaces = Vec::new();
+        for (ns_id, ns) in self.namespaces.iter().enumerate() {
+            for id in 0..ns.types.len() {
+                let tid = TypeId { ns_id: ns_id as u16, id: id as u32 };
+                if let Type::Interface(_) = *self.type_(tid) {
+                    ifaces.push(tid);
+                }
+            }
+        }
+
+        let mut prereqs = Vec::with_capacity(10);
+        for tid in ifaces {
+            prereqs.clear();
+            if let Type::Interface(ref iface) = *self.type_(tid) {
+                for &c_tid in &iface.prerequisites {
+                    if let Type::Class(ref klass) = *self.type_(c_tid) {
+                        prereqs.push(c_tid);
+                        klass.parents.iter().map(|&p_tid| prereqs.push(p_tid)).count();
+                    }
+                }
+            }
+            prereqs.sort();
+            prereqs.dedup();
+            if let Type::Interface(ref mut iface) = *self.type_mut(tid) {
+                prereqs.iter().map(|&tid| iface.prereq_parents.push(tid)).count();
             }
         }
     }
