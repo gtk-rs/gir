@@ -24,10 +24,14 @@ pub fn generate_interfaces_funcs<W: Write>(w: &mut W, env: &Env, interfaces: &[&
     Ok(())
 }
 
+pub fn generate_other_funcs<W: Write>(w: &mut W, env: &Env, functions: &[library::Function]) -> Result<()> {
+    generate_object_funcs(w, env,  "Other functions", "intern", functions)
+}
+
 fn generate_object_funcs<W: Write>(w: &mut W, env: &Env, c_type: &str,
     glib_get_type: &str, functions: &[library::Function]) -> Result<()> {
     let write_get_type = glib_get_type != "intern";
-    if write_get_type && !functions.is_empty() {
+    if write_get_type || !functions.is_empty() {
         try!(writeln!(w, ""));
         try!(writeln!(w, "    //========================================================================="));
         try!(writeln!(w, "    // {}", c_type));

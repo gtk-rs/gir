@@ -491,6 +491,8 @@ impl Library {
 
     fn read_global_function(&mut self, parser: &mut Reader, ns_id: u16,
                             attrs: &Attributes) -> Result<(), Error> {
+        let moved_to = attrs.get("moved-to").is_some();
+        if moved_to { return ignore_element(parser); }
         let pos = parser.position();
         let func = try!(self.read_function(parser, ns_id, "global", attrs));
         if func.c_identifier.is_none() {
