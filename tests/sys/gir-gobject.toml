@@ -10,4 +10,5 @@ external_libraries = [
 
 ignore = [
    "GObject.VaClosureMarshal",
+   "GObject.SignalCVaMarshaller",
 ]
