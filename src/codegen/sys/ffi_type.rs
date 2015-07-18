@@ -40,7 +40,8 @@ pub fn ffi_type(env: &Env, tid: library::TypeId, c_type: &str) -> Result {
 }
 
 fn ffi_inner(env: &Env, tid: library::TypeId, inner: String) -> Result {
-    match *env.library.type_(tid) {
+    let typ = env.library.type_(tid);
+    match *typ {
         Type::Fundamental(fund) => {
             use library::Fundamental::*;
             let inner = match fund {
@@ -80,6 +81,17 @@ fn ffi_inner(env: &Env, tid: library::TypeId, inner: String) -> Result {
             Ok(inner.into())
         }
         Type::Record(..) | Type::Alias(..) | Type::Function(..) => {
+            if let Some(declared_c_type) = typ.get_glib_name() {
+                if declared_c_type != inner {
+                    let msg = format!("[c:type mismatch `{}` != `{}` of `{}`]",
+                                      inner, declared_c_type, typ.get_name());
+                    warn!("{}", msg);
+                    return Err(msg);
+                }
+            }
+            else {
+                warn!("Type `{}` missing c_type", typ.get_name());
+            }
             fix_name(env, tid, &inner)
         }
         Type::CArray(inner_tid) => ffi_inner(env, inner_tid, inner),
