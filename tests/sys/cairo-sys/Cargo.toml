@@ -1,0 +1,13 @@
+[package]
+name = "cairo-sys"
+version = "0.0.1"
+
+[lib]
+name = "cairo_sys"
+
+[dependencies]
+bitflags = "^0.3"
+libc = "^0.1"
+
+[dependencies.glib-sys]
+path = "../glib-sys"

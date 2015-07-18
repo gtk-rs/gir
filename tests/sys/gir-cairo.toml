@@ -1,0 +1,9 @@
+[options]
+work_mode = "sys"
+girs_dir = "../gir-files"
+library = "cairo"
+version = "1.0"
+target_path = "./cairo-sys"
+external_libraries = [
+   "GLib",
+]
