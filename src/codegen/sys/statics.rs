@@ -20,7 +20,7 @@ pub fn after_extern_crates<W: Write>(w: &mut W) -> Result<()>{
 "#[allow(unused_imports)]",
 "use libc::{c_int, c_char, c_float, c_uint, c_double,",
 "    c_short, c_ushort, c_long, c_ulong,",
-"    c_void, size_t, ssize_t, time_t};",
+"    c_void, size_t, ssize_t, time_t, FILE};",
     ];
 
     write_vec(w, &v)
