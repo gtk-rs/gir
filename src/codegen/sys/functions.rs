@@ -6,6 +6,9 @@ use nameutil;
 use super::ffi_type::*;
 use traits::*;
 
+//used as glib:get-type in GLib-2.0.gir
+const INTERN: &'static str= "intern";
+
 pub fn generate_classes_funcs<W: Write>(w: &mut W, env: &Env, classes: &[&library::Class]) -> Result<()> {
     for klass in classes {
         try!(generate_object_funcs(w, env, &klass.c_type,
@@ -25,12 +28,12 @@ pub fn generate_interfaces_funcs<W: Write>(w: &mut W, env: &Env, interfaces: &[&
 }
 
 pub fn generate_other_funcs<W: Write>(w: &mut W, env: &Env, functions: &[library::Function]) -> Result<()> {
-    generate_object_funcs(w, env,  "Other functions", "intern", functions)
+    generate_object_funcs(w, env,  "Other functions", INTERN, functions)
 }
 
 fn generate_object_funcs<W: Write>(w: &mut W, env: &Env, c_type: &str,
     glib_get_type: &str, functions: &[library::Function]) -> Result<()> {
-    let write_get_type = glib_get_type != "intern";
+    let write_get_type = glib_get_type != INTERN;
     if write_get_type || !functions.is_empty() {
         try!(writeln!(w, ""));
         try!(writeln!(w, "    //========================================================================="));
