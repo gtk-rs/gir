@@ -61,8 +61,8 @@ fn generate_lib<W: Write>(w: &mut W, env: &Env) -> Result<()>{
     try!(writeln!(w, "extern \"C\" {{"));
     try!(functions::generate_classes_funcs(w, env, &classes));
     try!(functions::generate_interfaces_funcs(w, env, &interfaces));
+    try!(functions::generate_other_funcs(w, env, &ns.functions));
 
-    //TODO: other functions
     try!(writeln!(w, "\n}}"));
 
     Ok(())
