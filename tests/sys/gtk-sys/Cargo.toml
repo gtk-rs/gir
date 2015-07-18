@@ -9,8 +9,8 @@ libc = "^0.1"
 [dependencies.atk-sys]
 path = "../atk-sys"
 
-[dependencies.cairo-sys-rs]
-git = "https://github.com/rust-gnome/cairo"
+[dependencies.cairo-sys]
+path = "../cairo-sys"
 
 [dependencies.gdk-pixbuf-sys]
 path = "../gdk-pixbuf-sys"
