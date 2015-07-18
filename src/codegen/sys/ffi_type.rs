@@ -78,6 +78,7 @@ fn ffi_inner(env: &Env, tid: library::TypeId, mut inner: String) -> Result {
                 Type => "GType",
                 Pointer => match &inner[..]  {
                     "void" => "c_void",
+                    "tm" => return Err(inner),  //TODO: try use time:Tm
                     _ => &*inner,
                 },
                 Unsupported => return Err(format!("[Unsupported type {}]", inner)),
