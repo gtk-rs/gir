@@ -1,4 +1,3 @@
-use std::ascii::AsciiExt;
 use std::borrow::Cow;
 use std::collections::HashMap;
 use std::path::*;
@@ -15,6 +14,7 @@ pub fn split_namespace_name(name: &str) -> (Option<&str>, &str) {
     (ns, name)
 }
 
+/* unused :(
 pub fn strip_prefix<'a>(prefix: &str, name: &'a str) -> &'a str {
     let mut skip = 0;
     let mut prefix_upper = prefix.to_ascii_uppercase();
@@ -28,7 +28,6 @@ pub fn strip_prefix<'a>(prefix: &str, name: &'a str) -> &'a str {
     &name[skip..]
 }
 
-/* unused :(
 pub fn strip_suffix<'a>(name: &'a str, suffix: &str) -> Option<&'a str> {
     if name.ends_with(suffix) {
         Some(&name[..name.len() - suffix.len()])
@@ -113,6 +112,7 @@ mod tests {
         assert_eq!(name, "StatusIcon");
     }
 
+    /*
     #[test]
     fn strip_prefix_g() {
         assert_eq!(strip_prefix("G", "GBusType"), "BusType");
@@ -124,6 +124,7 @@ mod tests {
         assert_eq!(strip_prefix("Gtk", "GtkAlign"), "Align");
         assert_eq!(strip_prefix("Gtk", "GTK_ALIGN_FILL"), "ALIGN_FILL");
     }
+    */
 
     #[test]
     fn crate_name_works() {
