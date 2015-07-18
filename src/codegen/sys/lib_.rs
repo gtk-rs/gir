@@ -45,6 +45,7 @@ fn generate_lib<W: Write>(w: &mut W, env: &Env) -> Result<()>{
     }
 
     let ns = env.library.namespace(library::MAIN_NAMESPACE);
+    let records = prepare(ns);
     let classes = prepare(ns);
     let interfaces = prepare(ns);
 
@@ -53,12 +54,13 @@ fn generate_lib<W: Write>(w: &mut W, env: &Env) -> Result<()>{
     try!(generate_bitfields(w, &prepare(ns)));
     try!(generate_unions(w, &prepare(ns)));
     try!(functions::generate_callbacks(w, env, &prepare(ns)));
-    try!(generate_records(w, env, &prepare(ns)));
+    try!(generate_records(w, env, &records));
     try!(generate_classes_structs(w, &classes));
     try!(generate_interfaces_structs(w, &interfaces));
 
     try!(writeln!(w, ""));
     try!(writeln!(w, "extern \"C\" {{"));
+    try!(functions::generate_records_funcs(w, env, &records));
     try!(functions::generate_classes_funcs(w, env, &classes));
     try!(functions::generate_interfaces_funcs(w, env, &interfaces));
     try!(functions::generate_other_funcs(w, env, &ns.functions));

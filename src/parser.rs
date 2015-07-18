@@ -194,6 +194,7 @@ impl Library {
         let name = try!(attrs.get("name").ok_or_else(|| mk_error!("Missing record name", parser)));
         let c_type = try!(attrs.get("type")
                           .ok_or_else(|| mk_error!("Missing c:type attribute", parser)));
+        let get_type = attrs.get("get-type");
         let mut fields = Vec::new();
         let mut fns = Vec::new();
         loop {
@@ -235,6 +236,7 @@ impl Library {
             Record {
                 name: name.into(),
                 c_type: c_type.into(),
+                glib_get_type: get_type.map(|s| s.into()),
                 fields: fields,
                 functions: fns,
             });

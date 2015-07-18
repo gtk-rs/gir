@@ -9,6 +9,17 @@ use traits::*;
 //used as glib:get-type in GLib-2.0.gir
 const INTERN: &'static str= "intern";
 
+pub fn generate_records_funcs<W: Write>(w: &mut W, env: &Env, records: &[&library::Record]) -> Result<()> {
+    let intern_str = INTERN.to_string();
+    for record in records {
+        let glib_get_type = record.glib_get_type.as_ref().unwrap_or(&intern_str);
+        try!(generate_object_funcs(w, env, &record.c_type,
+            glib_get_type, &record.functions));
+    }
+
+    Ok(())
+}
+
 pub fn generate_classes_funcs<W: Write>(w: &mut W, env: &Env, classes: &[&library::Class]) -> Result<()> {
     for klass in classes {
         try!(generate_object_funcs(w, env, &klass.c_type,
