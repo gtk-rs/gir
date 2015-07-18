@@ -5,23 +5,8 @@ version = "0.0.1"
 [lib]
 name = "sys_build"
 
-[dependencies.glib-sys]
-path = "../glib-sys"
-
-[dependencies.gobject-sys]
-path = "../gobject-sys"
-
-[dependencies.gio-sys]
-path = "../gio-sys"
-
-[dependencies.pango-sys]
-path = "../pango-sys"
-
-[dependencies.gdk-pixbuf-sys]
-path = "../gdk-pixbuf-sys"
-
-[dependencies.gdk-sys]
-path = "../gdk-sys"
+[dependencies.gtk-sys]
+path = "../gtk-sys"
 
 [dependencies.secret-sys]
 path = "../secret-sys"

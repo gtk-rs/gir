@@ -1,0 +1,35 @@
+[package]
+name = "gtk-sys"
+version = "0.0.1"
+
+[lib]
+name = "gtk_sys"
+
+[dependencies]
+bitflags = "^0.3"
+libc = "^0.1"
+
+[dependencies.glib-sys]
+path = "../glib-sys"
+
+[dependencies.gobject-sys]
+path = "../gobject-sys"
+
+[dependencies.gio-sys]
+path = "../gio-sys"
+
+[dependencies.atk-sys]
+path = "../atk-sys"
+
+[dependencies.pango-sys]
+path = "../pango-sys"
+
+[dependencies.cairo-sys-rs]
+git = "https://github.com/rust-gnome/cairo"
+#path = "../cairo-sys"
+
+[dependencies.gdk-pixbuf-sys]
+path = "../gdk-pixbuf-sys"
+
+[dependencies.gdk-sys]
+path = "../gdk-sys"

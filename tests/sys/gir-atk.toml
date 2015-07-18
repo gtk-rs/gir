@@ -1,0 +1,10 @@
+[options]
+work_mode = "sys"
+girs_dir = "../gir-files"
+library = "Atk"
+version = "1.0"
+target_path = "./atk-sys"
+external_libraries = [
+   "GLib",
+   "GObject",
+]
