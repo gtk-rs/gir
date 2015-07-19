@@ -237,7 +237,7 @@ fn generate_records<W: Write>(w: &mut W, env: &Env, records: &[&library::Record]
                 if let Some(ref func) =
                         env.library.type_(field.typ).maybe_ref_as::<library::Function>() {
                     let (com, sig) = functions::function_signature(env, func, true);
-                    lines.push(format!("{}{}{}: fn{},", tabs(1), vis, name, sig));
+                    lines.push(format!("{}{}{}: Option<unsafe extern \"C\" fn{}>,", tabs(1), vis, name, sig));
                     commented |= com;
                 }
                 else if let Some(c_type) = env.library.type_(field.typ).get_glib_name() {

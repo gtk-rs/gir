@@ -55,7 +55,7 @@ pub fn generate_callbacks<W: Write>(w: &mut W, env: &Env, callbacks: &[&library:
     for func in callbacks {
         let (commented, sig) = function_signature(env, func, true);
         let comment = if commented { "//" } else { "" };
-        try!(writeln!(w, "{}pub type {} = unsafe extern \"C\" fn{};",
+        try!(writeln!(w, "{}pub type {} = Option<unsafe extern \"C\" fn{}>;",
                       comment, func.c_identifier.as_ref().unwrap(), sig));
     }
 
