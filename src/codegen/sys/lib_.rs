@@ -4,6 +4,7 @@ use std::path::*;
 use std::io::{Result, Write};
 use case::CaseExt;
 
+use analysis::rust_type::parameter_rust_type;
 use env::Env;
 use file_saver::*;
 use library;
@@ -50,6 +51,7 @@ fn generate_lib<W: Write>(w: &mut W, env: &Env) -> Result<()>{
 
     try!(generate_aliases(w, env, &prepare(ns)));
     try!(generate_enums(w, &prepare(ns)));
+    try!(generate_constants(w, env, &ns.constants));
     try!(generate_bitfields(w, &prepare(ns)));
     try!(generate_unions(w, &prepare(ns)));
     try!(functions::generate_callbacks(w, env, &prepare(ns)));
@@ -117,6 +119,39 @@ fn generate_bitfields<W: Write>(w: &mut W, items: &[&library::Bitfield])
     }
 
     Ok(())
+}
+
+fn generate_constants<W: Write>(w: &mut W, env: &Env, constants: &[library::Constant]) -> Result<()> {
+    try!(writeln!(w, ""));
+    for constant in constants {
+        let (comment, mut type_) = match parameter_rust_type(env, constant.typ, library::ParameterDirection::In) {
+            Ok(x) => ("", x),
+            Err(x) => ("//", x),
+        };
+        let mut value = constant.value.clone();
+        if type_ == "&str" {
+            type_ = "&'static str".into();
+            value = format!("\"{}\"", escape_string(&value));
+        }
+        try!(writeln!(w, "{}pub const {}:{} = {};", comment,
+            constant.c_identifier, type_, value));
+    }
+
+    Ok(())
+}
+
+fn escape_string(s: &str) -> String {
+    let mut es = String::with_capacity(s.len() * 2);
+    let _ = s.chars().map(|c| {
+        match c {
+            '\'' | '\"' | '\\' => {
+                es.push('\\');
+                es.push(c)
+            }
+            _ => es.push(c),
+        }
+    }).count();
+    es
 }
 
 fn generate_enums<W: Write>(w: &mut W, items: &[&library::Enumeration])
