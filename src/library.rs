@@ -192,7 +192,9 @@ pub struct Alias {
 
 pub struct Constant {
     pub name: String,
+    pub c_identifier: String,
     pub typ: TypeId,
+    pub c_type: String,
     pub value: String,
 }
 

@@ -505,18 +505,28 @@ impl Library {
     fn read_constant(&mut self, parser: &mut Reader, ns_id: u16,
                      attrs: &Attributes) -> Result<(), Error> {
         let name = try!(attrs.get("name").ok_or_else(|| mk_error!("Missing constant name", parser)));
+        let c_identifier = try!(attrs.get("type")
+                                .ok_or_else(|| mk_error!("Missing c:type attribute", parser)));
         let value = try!(attrs.get("value").ok_or_else(|| mk_error!("Missing constant value", parser)));
-        let mut typ = None;
+        let mut inner = None;
         loop {
             let event = parser.next();
             match event {
                 StartElement { name, attributes, .. } => {
                     match name.local_name.as_ref() {
                         "type" | "array" => {
-                            if typ.is_some() {
+                            if inner.is_some() {
                                 return Err(mk_error!("Too many <type> elements", parser));
                             }
-                            typ = Some(try!(self.read_type(parser, ns_id, &name, &attributes)).0);
+                            let pos = parser.position();
+                            let (typ, c_type) =
+                                try!(self.read_type(parser, ns_id, &name, &attributes));
+                            if let Some(c_type) = c_type {
+                                inner = Some((typ, c_type));
+                            }
+                            else{
+                                return Err(mk_error!("Missing constant's c:type", &pos));
+                            }
                         }
                         "doc" | "doc-deprecated" => try!(ignore_element(parser)),
                         x => return Err(mk_error!(format!("Unexpected element <{}>", x), parser)),
@@ -526,11 +536,13 @@ impl Library {
                 _ => xml_try!(event, parser),
             }
         }
-        if let Some(typ) = typ {
+        if let Some((typ, c_type)) = inner {
             self.add_constant(ns_id,
                 Constant {
                     name: name.into(),
+                    c_identifier: c_identifier.into(),
                     typ: typ,
+                    c_type: c_type.into(),
                     value: value.into(),
                 });
             Ok(())
