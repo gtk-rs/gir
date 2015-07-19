@@ -135,27 +135,13 @@ fn generate_constants<W: Write>(w: &mut W, env: &Env, constants: &[library::Cons
         let mut value = constant.value.clone();
         if type_ == "&str" {
             type_ = "&'static str".into();
-            value = format!("\"{}\"", escape_string(&value));
+            value = format!("r##\"{}\"##", value);
         }
         try!(writeln!(w, "{}pub const {}:{} = {};", comment,
             constant.c_identifier, type_, value));
     }
 
     Ok(())
-}
-
-fn escape_string(s: &str) -> String {
-    let mut es = String::with_capacity(s.len() * 2);
-    let _ = s.chars().map(|c| {
-        match c {
-            '\'' | '\"' | '\\' => {
-                es.push('\\');
-                es.push(c)
-            }
-            _ => es.push(c),
-        }
-    }).count();
-    es
 }
 
 fn generate_enums<W: Write>(w: &mut W, items: &[&library::Enumeration])
