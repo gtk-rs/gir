@@ -30,7 +30,7 @@ pub fn use_glib_ffi<W: Write>(w: &mut W) -> Result<()>{
     let v = vec![
 "",
 "#[allow(unused_imports)]",
-"use glib_ffi::{gboolean, gconstpointer, gpointer, GType};",
+"use glib_ffi::{gboolean, gconstpointer, gpointer, GType, Volatile};",
     ];
 
     write_vec(w, &v)
@@ -45,6 +45,10 @@ pub fn only_for_glib<W: Write>(w: &mut W) -> Result<()>{
 "",
 "pub type gconstpointer = *const c_void;",
 "pub type gpointer = *mut c_void;",
+"",
+"#[repr(C)]",
+"pub struct Volatile<T>(T);",
+"",
     ];
 
     write_vec(w, &v)

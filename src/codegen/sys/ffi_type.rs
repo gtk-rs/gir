@@ -39,8 +39,14 @@ pub fn ffi_type(env: &Env, tid: library::TypeId, c_type: &str) -> Result {
     res
 }
 
-fn ffi_inner(env: &Env, tid: library::TypeId, inner: String) -> Result {
-    match *env.library.type_(tid) {
+fn ffi_inner(env: &Env, tid: library::TypeId, mut inner: String) -> Result {
+    let volatile = inner.starts_with("volatile ");
+    if volatile {
+        inner = inner["volatile ".len()..].into();
+    }
+
+    let typ = env.library.type_(tid);
+    let res = match *typ {
         Type::Fundamental(fund) => {
             use library::Fundamental::*;
             let inner = match fund {
@@ -72,7 +78,7 @@ fn ffi_inner(env: &Env, tid: library::TypeId, inner: String) -> Result {
                 Type => "GType",
                 Pointer => match &inner[..]  {
                     "void" => "c_void",
-                    _ => return Ok(inner),
+                    _ => &*inner,
                 },
                 Unsupported => return Err(format!("[Unsupported type {}]", inner)),
                 VarArgs => panic!("Should not reach here"),
@@ -80,6 +86,17 @@ fn ffi_inner(env: &Env, tid: library::TypeId, inner: String) -> Result {
             Ok(inner.into())
         }
         Type::Record(..) | Type::Alias(..) | Type::Function(..) => {
+            if let Some(declared_c_type) = typ.get_glib_name() {
+                if declared_c_type != inner {
+                    let msg = format!("[c:type mismatch `{}` != `{}` of `{}`]",
+                                      inner, declared_c_type, typ.get_name());
+                    warn!("{}", msg);
+                    return Err(msg);
+                }
+            }
+            else {
+                warn!("Type `{}` missing c_type", typ.get_name());
+            }
             fix_name(env, tid, &inner)
         }
         Type::CArray(inner_tid) => ffi_inner(env, inner_tid, inner),
@@ -112,6 +129,13 @@ fn ffi_inner(env: &Env, tid: library::TypeId, inner: String) -> Result {
                 Err(msg)
             }
         }
+    };
+
+    if volatile {
+        res.map(|s| format!("Volatile<{}>", s))
+    }
+    else {
+        res
     }
 }
 
