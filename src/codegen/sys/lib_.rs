@@ -139,7 +139,7 @@ fn generate_constants<W: Write>(w: &mut W, env: &Env, constants: &[library::Cons
             type_ = "&'static str".into();
             value = format!("r##\"{}\"##", value);
         }
-        try!(writeln!(w, "{}pub const {}:{} = {};", comment,
+        try!(writeln!(w, "{}pub const {}: {} = {};", comment,
             constant.c_identifier, type_, value));
     }
 
