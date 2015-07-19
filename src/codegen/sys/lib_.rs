@@ -7,6 +7,7 @@ use case::CaseExt;
 use analysis::rust_type::parameter_rust_type;
 use env::Env;
 use file_saver::*;
+use gobjects::GStatus;
 use library;
 use nameutil::*;
 use super::ffi_type::ffi_type;
@@ -124,10 +125,13 @@ fn generate_bitfields<W: Write>(w: &mut W, items: &[&library::Bitfield])
 fn generate_constants<W: Write>(w: &mut W, env: &Env, constants: &[library::Constant]) -> Result<()> {
     try!(writeln!(w, ""));
     for constant in constants {
-        let (comment, mut type_) = match parameter_rust_type(env, constant.typ, library::ParameterDirection::In) {
+        let (mut comment, mut type_) = match parameter_rust_type(env, constant.typ, library::ParameterDirection::In) {
             Ok(x) => ("", x),
             Err(x) => ("//", x),
         };
+        if env.type_status_sys(&format!("{}.{}", env.config.library_name, constant.name)) == GStatus::Ignore {
+            comment = "//";
+        }
         let mut value = constant.value.clone();
         if type_ == "&str" {
             type_ = "&'static str".into();
