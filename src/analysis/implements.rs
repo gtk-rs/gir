@@ -4,7 +4,6 @@ use std::vec::Vec;
 use analysis::rust_type::used_rust_type;
 use env::Env;
 use super::general::StatusedTypeId;
-use gobjects::*;
 use library;
 
 pub fn analyze(env: &Env, type_: &library::Class, used_types: &mut HashSet<String>)
@@ -14,7 +13,7 @@ pub fn analyze(env: &Env, type_: &library::Class, used_types: &mut HashSet<Strin
     for &interface_tid in &type_.implements {
         let status = env.type_status(&interface_tid.full_name(&env.library));
 
-        if status == GStatus::Ignore { continue }
+        if status.ignored() { continue }
 
         let name = env.type_(interface_tid).get_name();
 

@@ -11,6 +11,18 @@ pub enum GStatus {
     Ignore,
 }
 
+impl GStatus {
+    pub fn ignored(&self) -> bool {
+        self == &GStatus::Ignore
+    }
+    pub fn need_generate(&self) -> bool {
+        self == &GStatus::Generate
+    }
+    pub fn normal(&self) -> bool {
+        self == &GStatus::Generate || self == &GStatus::Manual
+    }
+}
+
 impl Default for GStatus {
     fn default() -> GStatus { GStatus::Ignore }
 }

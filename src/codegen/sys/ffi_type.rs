@@ -1,6 +1,5 @@
 use analysis::rust_type::Result;
 use env::Env;
-use gobjects::GStatus;
 use library;
 use library::*;
 use nameutil::crate_name;
@@ -159,7 +158,7 @@ fn fix_name(env: &Env, type_id: library::TypeId, name: &str) -> Result {
         } else {
             format!("{}_ffi::{}", fix_namespace(env, type_id), name)
         };
-        if env.type_status_sys(&type_id.full_name(&env.library)) == GStatus::Ignore {
+        if env.type_status_sys(&type_id.full_name(&env.library)).ignored() {
             Err(name_with_prefix)
         } else {
             Ok(name_with_prefix)

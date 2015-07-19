@@ -4,14 +4,13 @@ use analysis;
 use analysis::general::is_widget;
 use env::Env;
 use file_saver::*;
-use gobjects::*;
 use nameutil::*;
 
 pub fn generate(env: &Env) {
     let root_path = PathBuf::from(&env.config.target_path).join("src").join("widgets");
 
     for obj in env.config.objects.values() {
-        if obj.status != GStatus::Generate || !is_widget(&obj.name, &env.library){
+        if obj.status.need_generate() || !is_widget(&obj.name, &env.library){
             continue;
         }
 

@@ -7,7 +7,6 @@ use case::CaseExt;
 use analysis::rust_type::parameter_rust_type;
 use env::Env;
 use file_saver::*;
-use gobjects::GStatus;
 use library;
 use nameutil::*;
 use super::ffi_type::ffi_type;
@@ -129,7 +128,8 @@ fn generate_constants<W: Write>(w: &mut W, env: &Env, constants: &[library::Cons
             Ok(x) => ("", x),
             Err(x) => ("//", x),
         };
-        if env.type_status_sys(&format!("{}.{}", env.config.library_name, constant.name)) == GStatus::Ignore {
+        if env.type_status_sys(&format!("{}.{}", env.config.library_name,
+            constant.name)).ignored() {
             comment = "//";
         }
         let mut value = constant.value.clone();

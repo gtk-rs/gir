@@ -1,7 +1,7 @@
 use std::collections::HashSet;
 
 use env::Env;
-use gobjects::{GObject, GStatus};
+use gobjects::GObject;
 use library;
 use nameutil::*;
 use super::*;
@@ -68,7 +68,7 @@ pub fn new(env: &Env, obj: &GObject) -> Info {
         let status = env.config.objects.get(&child_name)
             .map(|o| o.status)
             .unwrap_or(Default::default());
-        if status == GStatus::Manual || status == GStatus::Generate {
+        if status.normal() {
             has_children = true;
             break;
         }
