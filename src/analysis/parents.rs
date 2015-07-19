@@ -4,7 +4,6 @@ use std::vec::Vec;
 use analysis::rust_type::used_rust_type;
 use env::Env;
 use super::general::StatusedTypeId;
-use gobjects::*;
 use library::Class;
 use traits::*;
 
@@ -25,7 +24,7 @@ pub fn analyze(env: &Env, type_: &Class, used_types: &mut HashSet<String>)
         });
         used_rust_type(env, parent_tid).ok().map(|s| used_types.insert(s));
 
-        if status == GStatus::Ignore { has_ignored_parents = true; }
+        if status.ignored() { has_ignored_parents = true; }
 
         if parent_type.c_type == "GtkWidget" { break }
     }

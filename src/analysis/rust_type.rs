@@ -1,7 +1,6 @@
 use std::result;
 
 use env::Env;
-use gobjects::GStatus;
 use library;
 use nameutil::crate_name;
 use traits::*;
@@ -60,7 +59,7 @@ pub fn rust_type(env: &Env, type_id: library::TypeId) -> Result {
     } else {
         let rust_type_with_prefix = rust_type.map(|s| format!("{}::{}",
             crate_name(&env.library.namespace(type_id.ns_id).name), s));
-        if env.type_status(&type_id.full_name(&env.library)) == GStatus::Ignore {
+        if env.type_status(&type_id.full_name(&env.library)).ignored() {
             Err(rust_type_with_prefix.as_str().into())
         } else {
             rust_type_with_prefix
