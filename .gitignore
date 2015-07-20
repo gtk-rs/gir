@@ -1,6 +1,6 @@
 target
 /gtk
-/src/version.rs
+/src/gir_version.rs
 tests/gir-files
 tests/sys/*-sys/**
 tests/sys/sys_build/Cargo.lock

@@ -2,6 +2,7 @@ use std::io::BufReader;
 use std::fs::File;
 use std::path::PathBuf;
 use std::str::FromStr;
+use version::Version;
 use xml::attribute::OwnedAttribute;
 use xml::common::{Error, Position};
 use xml::name::OwnedName;
@@ -593,6 +594,24 @@ impl Library {
         let name = try!(attrs.get("name").ok_or_else(|| mk_error!("Missing function name", parser)));
         let c_identifier = attrs.get("identifier").or_else(|| attrs.get("type"));
         let kind = try!(FunctionKind::from_str(kind_str).map_err(|why| mk_error!(why, parser)));
+        let version = match attrs.get("version") {
+            Some(v) => Some(try!(v.parse().map_err(|why| mk_error!(why, parser)))),
+            None => None,
+        };
+        let deprecated = to_bool(attrs.get("deprecated").unwrap_or("none"));
+        let deprecated_version = if deprecated {
+            match attrs.get("deprecated-version") {
+                Some(v) => Some(try!(v.parse().map_err(|why| mk_error!(why, parser)))),
+                None => None,
+            }
+        } else {
+            None
+        };
+        if ns_id == MAIN_NAMESPACE {
+            let identifier = c_identifier.unwrap_or(name);
+            self.check_version(version, "function", identifier);
+            self.check_version(deprecated_version, "deprecated function", identifier);
+        }
         let mut params = Vec::new();
         let mut ret = None;
         loop {
@@ -641,6 +660,8 @@ impl Library {
                 parameters: params,
                 ret: ret,
                 throws: throws,
+                version: version,
+                deprecated_version: deprecated_version,
             })
         }
         else {
@@ -808,6 +829,18 @@ impl Library {
                                .ok_or_else(|| mk_error!("Unknown container type", &start_pos)))
             };
             Ok((tid, c_type))
+        }
+    }
+
+    fn check_version(&self, version: Option<Version>, type_: &str, name: &str) {
+        if let Some(v) = version {
+            let Version(_major, minor, patch) = v;
+            if patch != 0 {
+                warn!("{} {} has patch {:?}", type_, name, v);
+            }
+            if (minor % 2) == 1 {
+                warn!("{} {} has odd minor {:?}", type_, name, v);
+            }
         }
     }
 }
