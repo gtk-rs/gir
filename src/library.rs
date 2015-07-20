@@ -264,6 +264,7 @@ pub struct Function {
     pub ret: Parameter,
     pub throws: bool,
     pub version: Option<Version>,
+    pub deprecated_version: Option<Version>,
 }
 
 #[derive(Default)]

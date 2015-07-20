@@ -598,8 +598,19 @@ impl Library {
             Some(v) => Some(try!(v.parse().map_err(|why| mk_error!(why, parser)))),
             None => None,
         };
+        let deprecated = to_bool(attrs.get("deprecated").unwrap_or("none"));
+        let deprecated_version = if deprecated {
+            match attrs.get("deprecated-version") {
+                Some(v) => Some(try!(v.parse().map_err(|why| mk_error!(why, parser)))),
+                None => None,
+            }
+        } else {
+            None
+        };
         if ns_id == MAIN_NAMESPACE {
-            self.check_version(version, "function", c_identifier.unwrap_or(name));
+            let identifier = c_identifier.unwrap_or(name);
+            self.check_version(version, "function", identifier);
+            self.check_version(deprecated_version, "deprecated function", identifier);
         }
         let mut params = Vec::new();
         let mut ret = None;
@@ -650,6 +661,7 @@ impl Library {
                 ret: ret,
                 throws: throws,
                 version: version,
+                deprecated_version: deprecated_version,
             })
         }
         else {
