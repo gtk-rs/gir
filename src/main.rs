@@ -26,6 +26,7 @@ mod library;
 mod nameutil;
 mod parser;
 mod traits;
+mod version;
 
 #[cfg_attr(test, allow(dead_code))]
 fn main() {
