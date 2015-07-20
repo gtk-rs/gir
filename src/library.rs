@@ -3,6 +3,7 @@ use std::collections::{HashMap, HashSet};
 use std::str::FromStr;
 use nameutil::split_namespace_name;
 use traits::*;
+use version::Version;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum Transfer {
@@ -262,6 +263,7 @@ pub struct Function {
     pub parameters: Vec<Parameter>,
     pub ret: Parameter,
     pub throws: bool,
+    pub version: Option<Version>,
 }
 
 #[derive(Default)]
