@@ -1,6 +1,8 @@
+use std::cmp::{Ord, Ordering, PartialOrd};
+use std::fmt::{self, Display, Formatter};
 use std::str::FromStr;
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 // major, minor, patch
 pub struct Version(pub u16, pub u16, pub u16);
 
@@ -15,6 +17,32 @@ impl FromStr for Version {
             .map(Result::unwrap);
         Ok(Version(parts.next().unwrap_or(0),
             parts.next().unwrap_or(0), parts.next().unwrap_or(0)))
+    }
+}
+
+impl Display for Version {
+    fn fmt(&self, f: &mut Formatter) -> Result<(), fmt::Error> {
+        write!(f, "{}.{}.{}", self.0, self.1, self.2)
+    }
+}
+
+impl PartialOrd for Version {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl Ord for Version {
+    fn cmp(&self, other: &Self) -> Ordering {
+        match self.0.cmp(&other.0) {
+            Ordering::Equal => {
+                match self.1.cmp(&other.1) {
+                    Ordering::Equal => self.2.cmp(&other.2),
+                    x => x,
+                }
+            }
+            x => x,
+        }
     }
 }
 
@@ -34,5 +62,13 @@ mod tests {
     #[test]
     fn parse_works() {
         assert_eq!("1".parse(), Ok(Version(1, 0, 0)));
+    }
+
+    #[test]
+    fn ord() {
+        assert!(Version(0, 0, 0) < Version(1, 2, 3));
+        assert!(Version(1, 0, 0) < Version(1, 2, 3));
+        assert!(Version(1, 2, 0) < Version(1, 2, 3));
+        assert!(Version(1, 2, 3) == Version(1, 2, 3));
     }
 }

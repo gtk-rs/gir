@@ -836,10 +836,10 @@ impl Library {
         if let Some(v) = version {
             let Version(_major, minor, patch) = v;
             if patch != 0 {
-                warn!("{} {} has patch {:?}", type_, name, v);
+                warn!("{} {} has patch version: {}", type_, name, v);
             }
             if (minor % 2) == 1 {
-                warn!("{} {} has odd minor {:?}", type_, name, v);
+                warn!("{} {} has odd minor version: {}", type_, name, v);
             }
         }
     }
