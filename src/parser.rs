@@ -2,7 +2,6 @@ use std::io::BufReader;
 use std::fs::File;
 use std::path::PathBuf;
 use std::str::FromStr;
-use version::Version;
 use xml::attribute::OwnedAttribute;
 use xml::common::{Error, Position};
 use xml::name::OwnedName;
@@ -59,6 +58,7 @@ impl Library {
     }
 
     fn read_repository(&mut self, dir: &str, parser: &mut Reader) -> Result<(), Error> {
+        let mut package = None;
         loop {
             let event = parser.next();
             match event {
@@ -74,7 +74,16 @@ impl Library {
                             }
                             try!(ignore_element(parser));
                         }
-                        "namespace" => try!(self.read_namespace(parser, &attributes)),
+                        "package" => {
+                            package = attributes.get("name").map(|s| s.to_owned());
+                            if package.is_none() {
+                                return Err(mk_error!("Missing package name", parser));
+                            }
+                            try!(ignore_element(parser));
+                        }
+                        "namespace" => {
+                            try!(self.read_namespace(parser, &attributes, package.take()));
+                        }
                         _ => try!(ignore_element(parser)),
                     }
                 }
@@ -84,10 +93,11 @@ impl Library {
         }
     }
 
-    fn read_namespace(&mut self, parser: &mut Reader,
-                      attrs: &Attributes) -> Result<(), Error> {
+    fn read_namespace(&mut self, parser: &mut Reader, attrs: &Attributes, package: Option<String>)
+            -> Result<(), Error> {
         let name = try!(attrs.get("name").ok_or_else(|| mk_error!("Missing namespace name", parser)));
         let ns_id = self.add_namespace(name);
+        self.namespace_mut(ns_id).package_name = package;
         trace!("Reading {}-{}", name, attrs.get("version").unwrap());
         loop {
             let event = parser.next();
@@ -607,11 +617,13 @@ impl Library {
         } else {
             None
         };
-        if ns_id == MAIN_NAMESPACE {
-            let identifier = c_identifier.unwrap_or(name);
-            self.check_version(version, "function", identifier);
-            self.check_version(deprecated_version, "deprecated function", identifier);
+        if let Some(v) = version {
+            self.register_version(ns_id, v);
         }
+        if let Some(v) = deprecated_version {
+            self.register_version(ns_id, v);
+        }
+
         let mut params = Vec::new();
         let mut ret = None;
         loop {
@@ -829,18 +841,6 @@ impl Library {
                                .ok_or_else(|| mk_error!("Unknown container type", &start_pos)))
             };
             Ok((tid, c_type))
-        }
-    }
-
-    fn check_version(&self, version: Option<Version>, type_: &str, name: &str) {
-        if let Some(v) = version {
-            let Version(_major, minor, patch) = v;
-            if patch != 0 {
-                warn!("{} {} has patch version: {}", type_, name, v);
-            }
-            if (minor % 2) == 1 {
-                warn!("{} {} has odd minor version: {}", type_, name, v);
-            }
         }
     }
 }
