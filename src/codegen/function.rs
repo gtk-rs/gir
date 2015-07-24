@@ -19,7 +19,7 @@ pub fn generate<W: Write>(w: &mut W, env: &Env, analysis: &analysis::functions::
     let suffix = if only_declaration { ";" } else { " {" };
 
     try!(version_condition(w, &env.config.library_name,
-        env.config.min_cfg_version, analysis.version, indent));
+        env.config.min_cfg_version, analysis.version, analysis.comented, indent));
     try!(writeln!(w, "{}{}{}{}{}", tabs(indent),
         comment_prefix, pub_prefix, declaration, suffix));
 
