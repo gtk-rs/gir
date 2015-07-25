@@ -1,13 +1,13 @@
-[package]
-name = "gdk-pixbuf-sys"
-version = "0.0.1"
 
-[lib]
-name = "gdk_pixbuf_sys"
+[build-dependencies]
+pkg-config = "^0.3.5"
 
 [dependencies]
 bitflags = "^0.3"
 libc = "^0.1"
+
+[dependencies.gio-sys]
+path = "../gio-sys"
 
 [dependencies.glib-sys]
 path = "../glib-sys"
@@ -15,5 +15,11 @@ path = "../glib-sys"
 [dependencies.gobject-sys]
 path = "../gobject-sys"
 
-[dependencies.gio-sys]
-path = "../gio-sys"
+[lib]
+name = "gdk_pixbuf_sys"
+
+[package]
+build = "build.rs"
+links = "gdk_pixbuf"
+name = "gdk-pixbuf-sys"
+version = "0.2.0"

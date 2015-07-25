@@ -3,6 +3,7 @@ work_mode = "sys"
 girs_dir = "../gir-files"
 library = "Gdk"
 version = "3.0"
+min_cfg_version = "3.4"
 target_path = "./gdk-sys"
 external_libraries = [
    "GLib",
