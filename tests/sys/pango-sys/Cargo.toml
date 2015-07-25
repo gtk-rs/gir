@@ -1,9 +1,6 @@
-[package]
-name = "pango-sys"
-version = "0.0.1"
 
-[lib]
-name = "pango_sys"
+[build-dependencies]
+pkg-config = "^0.3.5"
 
 [dependencies]
 bitflags = "^0.3"
@@ -14,3 +11,12 @@ path = "../glib-sys"
 
 [dependencies.gobject-sys]
 path = "../gobject-sys"
+
+[lib]
+name = "pango_sys"
+
+[package]
+build = "build.rs"
+links = "pango"
+name = "pango-sys"
+version = "0.2.0"

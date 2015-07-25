@@ -1,9 +1,6 @@
-[package]
-name = "secret-sys"
-version = "0.0.1"
 
-[lib]
-name = "secret_sys"
+[build-dependencies]
+pkg-config = "^0.3.5"
 
 [dependencies]
 bitflags = "^0.3"
@@ -17,3 +14,12 @@ path = "../glib-sys"
 
 [dependencies.gobject-sys]
 path = "../gobject-sys"
+
+[lib]
+name = "secret_sys"
+
+[package]
+build = "build.rs"
+links = "secret"
+name = "secret-sys"
+version = "0.2.0"
