@@ -2,9 +2,19 @@ use std::cmp::{Ord, Ordering, PartialOrd};
 use std::fmt::{self, Display, Formatter};
 use std::str::FromStr;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
 // major, minor, patch
 pub struct Version(pub u16, pub u16, pub u16);
+
+impl Version {
+    pub fn to_cfg(&self, crate_name: &str) -> String {
+        match *self {
+            Version(major, minor, 0) => format!("{}_{}_{}", crate_name, major, minor),
+            Version(major, minor, patch) =>
+                format!("{}_{}_{}_{}", crate_name, major, minor, patch),
+        }
+    }
+}
 
 impl FromStr for Version {
     type Err = String;

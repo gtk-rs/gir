@@ -5,6 +5,7 @@ use docopt::Docopt;
 use toml;
 
 use gobjects;
+use version::Version;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum WorkMode {
@@ -48,6 +49,7 @@ pub struct Config {
     pub target_path: String,
     pub external_libraries: Vec<String>,
     pub objects: gobjects::GObjects,
+    pub min_cfg_version: Version,
 }
 
 impl Config {
@@ -112,6 +114,10 @@ impl Config {
                 .collect())
             .unwrap_or_else(|| Vec::new());
 
+        let min_cfg_version = toml.lookup("options.min_cfg_version")
+            .map_or_else(|| Ok(Default::default()), |t| t.as_str().unwrap().parse())
+            .unwrap_or_else(|e| panic!(e));
+
         Config {
             work_mode: work_mode,
             girs_dir: girs_dir.into(),
@@ -120,6 +126,7 @@ impl Config {
             target_path: target_path.into(),
             external_libraries: external_libraries,
             objects: objects,
+            min_cfg_version: min_cfg_version,
         }
     }
 

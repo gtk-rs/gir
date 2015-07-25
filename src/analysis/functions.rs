@@ -8,6 +8,7 @@ use analysis::upcasts::Upcasts;
 use env::Env;
 use library;
 use traits::*;
+use version::Version;
 
 //TODO: change use Parameter to reference?
 pub struct Info {
@@ -20,6 +21,7 @@ pub struct Info {
     pub ret: Option<library::Parameter>,
     pub upcasts: Upcasts,
     pub outs: out_parameters::Info,
+    pub version: Option<Version>,
 }
 
 pub fn analyze(env: &Env, type_: &library::Class, class_tid: library::TypeId,
@@ -75,5 +77,6 @@ fn analyze_function(env: &Env, type_: &library::Function, class_tid: library::Ty
         ret: ret,
         upcasts: upcasts,
         outs: outs,
+        version: type_.version,
     }
 }

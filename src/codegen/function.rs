@@ -4,7 +4,7 @@ use analysis;
 use analysis::upcasts::Upcasts;
 use env::Env;
 use super::function_body::Builder;
-use super::general::tabs;
+use super::general::{tabs, version_condition};
 use super::parameter::ToParameter;
 use super::return_value::{out_parameters_as_return, ToReturnValue};
 use super::translate_from_glib::TranslateFromGlib;
@@ -18,6 +18,8 @@ pub fn generate<W: Write>(w: &mut W, env: &Env, analysis: &analysis::functions::
     let declaration = declaration(env, analysis);
     let suffix = if only_declaration { ";" } else { " {" };
 
+    try!(version_condition(w, &env.config.library_name,
+        env.config.min_cfg_version, analysis.version, indent));
     try!(writeln!(w, "{}{}{}{}{}", tabs(indent),
         comment_prefix, pub_prefix, declaration, suffix));
 
