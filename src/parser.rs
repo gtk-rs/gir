@@ -75,9 +75,12 @@ impl Library {
                             try!(ignore_element(parser));
                         }
                         "package" => {
-                            package = attributes.get("name").map(|s| s.to_owned());
+                            // take the first package element and ignore any other ones
                             if package.is_none() {
-                                return Err(mk_error!("Missing package name", parser));
+                                package = attributes.get("name").map(|s| s.to_owned());
+                                if package.is_none() {
+                                    return Err(mk_error!("Missing package name", parser));
+                                }
                             }
                             try!(ignore_element(parser));
                         }
