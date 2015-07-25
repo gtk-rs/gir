@@ -77,9 +77,11 @@ pub fn impl_static_type<W: Write>(w: &mut W, type_name: &str, glib_func_name: &s
     Ok(())
 }
 
-pub fn version_condition<W: Write>(w: &mut W, library_name: &str, version: Option<Version>, indent: i32) -> Result<()> {
+pub fn version_condition<W: Write>(w: &mut W, library_name: &str, min_cfg_version: Version, version: Option<Version>, indent: i32) -> Result<()> {
     if let Some(v) = version {
-        try!(writeln!(w, "{}#[cfg({})]", tabs(indent), v.to_cfg(&crate_name(library_name))));
+        if v >= min_cfg_version {
+            try!(writeln!(w, "{}#[cfg({})]", tabs(indent), v.to_cfg(&crate_name(library_name))));
+        }
     }
 
     Ok(())
