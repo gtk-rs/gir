@@ -1,5 +1,5 @@
 use std::cmp::{Ord, Ordering, PartialOrd};
-use std::collections::{HashMap, HashSet};
+use std::collections::{BTreeSet, HashMap, HashSet};
 use std::str::FromStr;
 use nameutil::split_namespace_name;
 use traits::*;
@@ -477,22 +477,22 @@ impl<U> MaybeRefAs for U {
     }
 }
 
+#[derive(Default)]
 pub struct Namespace {
     pub name: String,
     pub types: Vec<Option<Type>>,
     pub index: HashMap<String, u32>,
     pub constants: Vec<Constant>,
     pub functions: Vec<Function>,
+    pub package_name: Option<String>,
+    pub versions: BTreeSet<Version>,
 }
 
 impl Namespace {
     fn new(name: &str) -> Namespace {
         Namespace {
             name: name.into(),
-            types: Vec::new(),
-            index: HashMap::new(),
-            constants: Vec::new(),
-            functions: Vec::new(),
+            .. Namespace::default()
         }
     }
 
@@ -661,6 +661,10 @@ impl Library {
         if !list.is_empty() {
             panic!("Incomplete library, unresolved: {:?}", list);
         }
+    }
+
+    pub fn register_version(&mut self, ns_id: u16, version: Version) {
+        self.namespace_mut(ns_id).versions.insert(version);
     }
 
     pub fn fill_in(&mut self) {

@@ -2,7 +2,7 @@ use std::cmp::{Ord, Ordering, PartialOrd};
 use std::fmt::{self, Display, Formatter};
 use std::str::FromStr;
 
-#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Default, Clone, Copy, Hash, PartialEq, Eq)]
 // major, minor, patch
 pub struct Version(pub u16, pub u16, pub u16);
 
