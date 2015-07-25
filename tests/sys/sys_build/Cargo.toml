@@ -5,8 +5,14 @@ version = "0.0.1"
 [lib]
 name = "sys_build"
 
+[features]
+full = [
+	"secret-sys",
+]
+
 [dependencies.gtk-sys]
 path = "../gtk-sys"
 
 [dependencies.secret-sys]
+optional = true
 path = "../secret-sys"
