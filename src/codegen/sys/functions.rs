@@ -4,6 +4,7 @@ use env::Env;
 use library;
 use nameutil;
 use super::ffi_type::*;
+use super::super::general::version_condition;
 use traits::*;
 
 //used as glib:get-type in GLib-2.0.gir
@@ -58,6 +59,8 @@ fn generate_object_funcs<W: Write>(w: &mut W, env: &Env, c_type: &str,
     for func in functions {
         let (commented, sig) = function_signature(env, func, false);
         let comment = if commented { "//" } else { "" };
+        try!(version_condition(w, &env.config.library_name,
+            env.config.min_cfg_version, func.version, commented, 1));
         try!(writeln!(w, "    {}pub fn {:<36}{};",
                       comment, func.c_identifier.as_ref().unwrap(), sig));
     }
