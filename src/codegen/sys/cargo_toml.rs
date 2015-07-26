@@ -16,7 +16,7 @@ pub fn generate(env: &Env) {
 
     let parent = path.parent().unwrap();
     //TODO: do only if not exists
-    let _ = fs::create_dir(parent);
+    let _ = fs::create_dir_all(parent);
 
     let mut toml_str = String::new();
     if let Ok(mut file) = File::open(&path) {
@@ -30,7 +30,7 @@ pub fn generate(env: &Env) {
         fill_empty(&mut root_table, env);
     }
     fill_in(&mut root_table, env);
-    
+
     save_to_file(&path, &mut |w| w.write_all(toml::encode_str(&root_table).as_bytes()));
 }
 
