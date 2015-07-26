@@ -16,7 +16,7 @@ pub fn generate(env: &Env) {
 
     let parent = path.parent().unwrap();
     //TODO: do only if not exists
-    let _ = fs::create_dir(parent);
+    let _ = fs::create_dir_all(parent);
 
     println!("Generating file {:?}", path);
     save_to_file(&path, &mut |w| generate_build_script(w, env));
