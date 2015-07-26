@@ -198,9 +198,10 @@ impl Library {
 
     fn read_record(&mut self, parser: &mut Reader,
                   ns_id: u16, attrs: &Attributes) -> Result<(), Error> {
-        let name = try!(attrs.get("name").ok_or_else(|| mk_error!("Missing record name", parser)));
-        let c_type = try!(attrs.get("type")
-                          .ok_or_else(|| mk_error!("Missing c:type attribute", parser)));
+        let mut name = try!(attrs.get("name")
+                            .ok_or_else(|| mk_error!("Missing record name", parser)));
+        let mut c_type = try!(attrs.get("type")
+                              .ok_or_else(|| mk_error!("Missing c:type attribute", parser)));
         let get_type = attrs.get("get-type");
         let mut fields = Vec::new();
         let mut fns = Vec::new();
@@ -231,6 +232,21 @@ impl Library {
 
         if attrs.get("is-gtype-struct").is_some() {
             return Ok(());
+        }
+
+        if name == "Atom" && self.namespace(ns_id).name == "Gdk" {
+            // the gir definitions don't reflect the following correctly
+            // typedef struct _GdkAtom *GdkAtom;
+            name = "_Atom";
+            c_type = "_GdkAtom";
+            let tid = self.find_or_stub_type(ns_id, "Gdk._Atom");
+            self.add_type(ns_id, "Atom", Type::Alias(
+                Alias {
+                    name: "Atom".into(),
+                    c_identifier: "GdkAtom".into(),
+                    typ: tid,
+                    target_c_type: "_GdkAtom*".into(),
+                }));
         }
 
         let typ = Type::Record(
