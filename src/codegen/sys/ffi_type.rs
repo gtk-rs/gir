@@ -60,7 +60,7 @@ fn ffi_inner(env: &Env, tid: library::TypeId, mut inner: String) -> Result {
                 Int64 => "i64",
                 UInt64 => "u64",
                 Char => "c_char",
-                UChar => "c_char",
+                UChar => "c_uchar",
                 Short => "c_short",
                 UShort => "c_ushort",
                 Int => "c_int",
