@@ -38,11 +38,12 @@ fn generate_lib<W: Write>(w: &mut W, env: &Env) -> Result<()>{
 
     if env.config.library_name != "GLib" {
         try!(statics::use_glib_ffi(w));
-    } else {
-        try!(statics::only_for_glib(w));
     }
-    if env.config.library_name == "Gtk" {
-        try!(statics::only_for_gtk(w));
+    match &*env.config.library_name {
+        "GLib" => try!(statics::only_for_glib(w)),
+        "GObject" => try!(statics::only_for_gobject(w)),
+        "Gtk" => try!(statics::only_for_gtk(w)),
+        _ => (),
     }
 
     let ns = env.library.namespace(library::MAIN_NAMESPACE);
