@@ -37,7 +37,7 @@ fn generate_lib<W: Write>(w: &mut W, env: &Env) -> Result<()>{
     try!(statics::after_extern_crates(w));
 
     if env.config.library_name != "GLib" {
-        try!(statics::use_glib_ffi(w));
+        try!(statics::use_glib(w));
     }
     match &*env.config.library_name {
         "GLib" => try!(statics::only_for_glib(w)),
@@ -75,7 +75,7 @@ fn generate_lib<W: Write>(w: &mut W, env: &Env) -> Result<()>{
 
 fn generate_extern_crates<W: Write>(w: &mut W, env: &Env) -> Result<()>{
     for library_name in &env.config.external_libraries {
-        try!(writeln!(w, "extern crate {0}_sys as {0}_ffi;", crate_name(library_name)));
+        try!(writeln!(w, "extern crate {0}_sys as {0};", crate_name(library_name)));
     }
 
     Ok(())
