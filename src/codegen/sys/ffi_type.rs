@@ -148,7 +148,7 @@ fn fix_name(env: &Env, type_id: library::TypeId, name: &str) -> Result {
                     Ok(name.into())
                 }
                 else {
-                    Ok(format!("{}_ffi::{}", crate_name("GLib"), name))
+                    Ok(format!("{}::{}", crate_name("GLib"), name))
                 }
             }
             _ => Ok(name.into())
@@ -157,7 +157,7 @@ fn fix_name(env: &Env, type_id: library::TypeId, name: &str) -> Result {
         let name_with_prefix = if type_id.ns_id == library::MAIN_NAMESPACE {
             name.into()
         } else {
-            format!("{}_ffi::{}", fix_namespace(env, type_id), name)
+            format!("{}::{}", fix_namespace(env, type_id), name)
         };
         if env.type_status_sys(&type_id.full_name(&env.library)).ignored() {
             Err(name_with_prefix)

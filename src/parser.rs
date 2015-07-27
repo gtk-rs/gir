@@ -237,15 +237,15 @@ impl Library {
         if name == "Atom" && self.namespace(ns_id).name == "Gdk" {
             // the gir definitions don't reflect the following correctly
             // typedef struct _GdkAtom *GdkAtom;
-            name = "_Atom";
-            c_type = "_GdkAtom";
-            let tid = self.find_or_stub_type(ns_id, "Gdk._Atom");
+            name = "Atom_";
+            c_type = "GdkAtom_";
+            let tid = self.find_or_stub_type(ns_id, "Gdk.Atom_");
             self.add_type(ns_id, "Atom", Type::Alias(
                 Alias {
                     name: "Atom".into(),
                     c_identifier: "GdkAtom".into(),
                     typ: tid,
-                    target_c_type: "_GdkAtom*".into(),
+                    target_c_type: "GdkAtom_*".into(),
                 }));
         }
 
