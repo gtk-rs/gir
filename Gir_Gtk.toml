@@ -24,6 +24,14 @@ name = "Gtk.Bin"
 status = "generate"
 
 [[object]]
+name = "Gtk.Window"
+status = "generate"
+
+[[object]]
+name = "Gtk.Dialog"
+status = "generate"
+
+[[object]]
 name = "Gtk.DrawingArea"
 status = "generate"
 

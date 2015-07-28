@@ -21,6 +21,7 @@ pub struct Info {
     pub functions: Vec<functions::Info>,
     pub has_constructors: bool,
     pub has_methods: bool,
+    pub has_functions: bool,
     pub used_types: HashSet<String>,
 }
 
@@ -42,6 +43,12 @@ impl Info {
     pub fn methods(&self) -> Vec<&functions::Info> {
         self.functions.iter()
             .filter(|f| f.kind == library::FunctionKind::Method)
+            .collect()
+    }
+
+    pub fn functions(&self) -> Vec<&functions::Info> {
+        self.functions.iter()
+            .filter(|f| f.kind == library::FunctionKind::Function)
             .collect()
     }
 }
@@ -95,8 +102,10 @@ pub fn new(env: &Env, obj: &GObject) -> Info {
 
     let has_constructors = !info.constructors().is_empty();
     let has_methods = !info.methods().is_empty();
+    let has_functions = !info.functions().is_empty();
 
     info.has_constructors = has_constructors;
     info.has_methods = has_methods;
+    info.has_functions = has_functions;
     info
 }

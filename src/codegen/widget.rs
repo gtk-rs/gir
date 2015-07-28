@@ -11,6 +11,7 @@ pub fn generate<W: Write>(w: &mut W, env: &Env, analysis: &analysis::object::Inf
     let mut generate_trait = false;
 
     generate_impl |= analysis.has_constructors;
+    generate_impl |= analysis.has_functions;
 
     if analysis.has_children { generate_trait |= true } else { generate_impl |= true };
 
@@ -31,6 +32,10 @@ pub fn generate<W: Write>(w: &mut W, env: &Env, analysis: &analysis::object::Inf
             for func_analysis in &analysis.methods() {
                 try!(function::generate(w, env, func_analysis, false, false, 1));
             }
+        }
+
+        for func_analysis in &analysis.functions() {
+            try!(function::generate(w, env, func_analysis, false, false, 1));
         }
         try!(writeln!(w, "}}"));
     }
