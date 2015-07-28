@@ -3,10 +3,12 @@ use std::fs::File;
 use std::io::Result;
 use std::path::Path;
 
-pub fn save_to_file<P, F>(path: P, closure: &mut F) where
+pub fn save_to_file<P, F>(path: P, make_backup: bool, closure: &mut F) where
     P: AsRef<Path>, F: FnMut(&mut File) -> Result<()> {
-    let _backuped = create_backup(&path)
-        .unwrap_or_else(|why| panic!("couldn't create backup for {:?}: {:?}", path.as_ref(), why));
+    if make_backup {
+        let _backuped = create_backup(&path)
+            .unwrap_or_else(|why| panic!("couldn't create backup for {:?}: {:?}", path.as_ref(), why));
+    }
     let mut file = File::create(&path)
         .unwrap_or_else(|why| panic!("couldn't create {:?}: {}", path.as_ref(), why));
     closure(&mut file)

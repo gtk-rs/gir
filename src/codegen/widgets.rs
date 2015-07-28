@@ -24,6 +24,7 @@ pub fn generate(env: &Env) {
         let path = root_path.join(file_name(&class_analysis.full_name));
         println!("Generating file {:?}", path);
 
-        save_to_file(path, &mut |w| super::widget::generate(w, env, &class_analysis));
+        save_to_file(path, env.config.make_backup,
+            &mut |w| super::widget::generate(w, env, &class_analysis));
     }
 }

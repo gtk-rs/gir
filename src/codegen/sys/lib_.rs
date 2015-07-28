@@ -26,7 +26,8 @@ pub fn generate(env: &Env) {
     let _ = fs::create_dir_all(parent);
 
     println!("Generating file {:?}", path);
-    save_to_file(&path, &mut |w| generate_lib(w, env));
+    save_to_file(&path, env.config.make_backup,
+        &mut |w| generate_lib(w, env));
 }
 
 fn generate_lib<W: Write>(w: &mut W, env: &Env) -> Result<()>{
