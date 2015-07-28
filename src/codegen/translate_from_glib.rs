@@ -32,7 +32,7 @@ impl TranslateFromGlib for library::Parameter {
                     TypeKind::Enumeration => (String::new(), String::new()),
                 //TODO: check gtk_dialog_get_content_area <type name="Box" c:type="GtkWidget*"/>
                 TypeKind::Object => from_glib_xxx(self.transfer),
-                _ => ("TODO:".into(), String::new()),
+                _ => (format!("TODO {:?}:", kind), String::new()),
             }
         }
     }
