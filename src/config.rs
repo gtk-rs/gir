@@ -38,6 +38,7 @@ Options:
     -d GIRSPATH         Directory for girs
     -m MODE             Work mode: normal or sys
     -o PATH             Target path
+    -b, --make_backup   Make backup before generating
 ";
 
 #[derive(Debug)]
@@ -50,6 +51,7 @@ pub struct Config {
     pub external_libraries: Vec<String>,
     pub objects: gobjects::GObjects,
     pub min_cfg_version: Version,
+    pub make_backup: bool,
 }
 
 impl Config {
@@ -118,6 +120,8 @@ impl Config {
             .map_or_else(|| Ok(Default::default()), |t| t.as_str().unwrap().parse())
             .unwrap_or_else(|e| panic!(e));
 
+        let make_backup = args.get_bool("-b");
+
         Config {
             work_mode: work_mode,
             girs_dir: girs_dir.into(),
@@ -127,6 +131,7 @@ impl Config {
             external_libraries: external_libraries,
             objects: objects,
             min_cfg_version: min_cfg_version,
+            make_backup: make_backup,
         }
     }
 
