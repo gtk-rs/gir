@@ -53,7 +53,7 @@ fn generate_object_funcs<W: Write>(w: &mut W, env: &Env, c_type: &str,
         try!(writeln!(w, "    //========================================================================="));
     }
     if write_get_type {
-        try!(writeln!(w, "    pub fn {:<36}() -> GType;", glib_get_type));
+        try!(writeln!(w, "    pub fn {}() -> GType;", glib_get_type));
     }
 
     for func in functions {
@@ -61,7 +61,7 @@ fn generate_object_funcs<W: Write>(w: &mut W, env: &Env, c_type: &str,
         let comment = if commented { "//" } else { "" };
         try!(version_condition(w, &env.config.library_name,
             env.config.min_cfg_version, func.version, commented, 1));
-        try!(writeln!(w, "    {}pub fn {:<36}{};",
+        try!(writeln!(w, "    {}pub fn {}{};",
                       comment, func.c_identifier.as_ref().unwrap(), sig));
     }
 
