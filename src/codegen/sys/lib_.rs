@@ -208,7 +208,7 @@ fn prepare_enum_member_name(name: &str) -> String {
 fn generate_classes_structs<W: Write>(w: &mut W, classes: &[&library::Class]) -> Result<()> {
     try!(writeln!(w, ""));
     for klass in classes {
-        try!(writeln!(w, "#[repr(C)]\npub struct {};", klass.c_type));
+        try!(writeln!(w, "#[repr(C)]\npub struct {}(c_void);", klass.c_type));
     }
 
     Ok(())
@@ -217,7 +217,7 @@ fn generate_classes_structs<W: Write>(w: &mut W, classes: &[&library::Class]) ->
 fn generate_interfaces_structs<W: Write>(w: &mut W, interfaces: &[&library::Interface]) -> Result<()> {
     try!(writeln!(w, ""));
     for interface in interfaces {
-        try!(writeln!(w, "#[repr(C)]\npub struct {};", interface.c_type));
+        try!(writeln!(w, "#[repr(C)]\npub struct {}(c_void);", interface.c_type));
     }
 
     Ok(())
@@ -235,7 +235,7 @@ fn generate_records<W: Write>(w: &mut W, env: &Env, records: &[&library::Record]
             if !truncated && (is_union || is_bits) {
                 warn!("Record `{}` field `{}` not expressible in Rust, truncated",
                       record.name, field.name);
-                lines.push(format!("{}_truncated_record_marker: (),", tabs(1)));
+                lines.push(format!("{}_truncated_record_marker: c_void,", tabs(1)));
                 truncated = true;
             }
             if truncated {
@@ -287,7 +287,7 @@ fn generate_records<W: Write>(w: &mut W, env: &Env, records: &[&library::Record]
         }
         let comment = if commented { "//" } else { "" };
         if lines.is_empty() {
-            try!(writeln!(w, "{}#[repr(C)]\n{0}pub struct {};\n", comment, record.c_type));
+            try!(writeln!(w, "{}#[repr(C)]\n{0}pub struct {}(c_void);\n", comment, record.c_type));
         }
         else {
             try!(writeln!(w, "{}#[repr(C)]\n{0}pub struct {} {{", comment, record.c_type));
