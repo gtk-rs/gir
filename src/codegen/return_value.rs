@@ -30,11 +30,11 @@ impl ToReturnValue for library::Parameter {
     }
 }
 
-impl ToReturnValue for Option<library::Parameter> {
+impl ToReturnValue for analysis::return_value::Info {
     fn to_return_value(&self, env: &Env, func: &analysis::functions::Info) -> String {
-        match self {
-            &Some(ref par) => par.to_return_value(env, func),
-            &None => String::new(),
+        match self.parameter {
+            Some(ref par) => par.to_return_value(env, func),
+            None => String::new(),
         }
     }
 }

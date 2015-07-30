@@ -46,7 +46,7 @@ pub fn declaration(env: &Env, analysis: &analysis::functions::Info) -> String {
     let return_str = if outs_as_return {
         out_parameters_as_return(env, analysis)
     } else {
-        analysis.ret.parameter.to_return_value(env, analysis)
+        analysis.ret.to_return_value(env, analysis)
     };
     let mut param_str = String::with_capacity(100);
 
