@@ -1,12 +1,13 @@
 use std::collections::HashSet;
 
+use analysis::c_type::rustify_pointers;
 use analysis::rust_type::*;
 use env::Env;
 use library;
 
 pub struct Info {
     pub parameter: Option<library::Parameter>,
-    pub base_tid: Option<library::TypeId>,
+    pub base_tid: Option<library::TypeId>,  //Some only if need downcast
     pub commented: bool,
 }
 
@@ -23,15 +24,12 @@ pub fn analyze(env: &Env, type_: &library::Function, class_tid: library::TypeId,
             })
     };
 
-    let mut base_tid = None;
-
     let commented = if type_.ret.typ == Default::default() { false } else {
         parameter_rust_type(env, type_.ret.typ, type_.ret.direction).is_err()
     };
 
     if type_.kind == library::FunctionKind::Constructor {
         if let Some(par) = parameter {
-            base_tid = Some(par.typ);
             parameter = Some(library::Parameter {
                 typ: class_tid,
                 nullable: false,
@@ -39,6 +37,12 @@ pub fn analyze(env: &Env, type_: &library::Function, class_tid: library::TypeId,
             });
         }
     }
+
+    let base_tid = if let Some(ref par) = parameter {
+        get_base_type_id_from_c_type(env, par)
+    } else {
+        None
+    };
 
     Info {
         parameter: parameter,
@@ -67,5 +71,19 @@ fn can_be_nullable_return(env: &Env, type_id: library::TypeId) -> bool
         &Interface(_) => true,
         &Class(_) => true,
         _ => true
+    }
+}
+
+fn get_base_type_id_from_c_type(env: &Env, par: &library::Parameter) -> Option<library::TypeId> {
+    match env.type_(par.typ) {
+        &library::Type::Class(_) => {
+            let (_, inner) = rustify_pointers(&par.c_type);
+            let typ = env.library.find_type_by_glib_name(&inner);
+            match typ {
+                Some(tid) => if tid == par.typ { None } else { typ },
+                None => typ
+            }
+        }
+        _ => None,
     }
 }

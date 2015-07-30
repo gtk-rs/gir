@@ -482,6 +482,7 @@ pub struct Namespace {
     pub name: String,
     pub types: Vec<Option<Type>>,
     pub index: HashMap<String, u32>,
+    pub glib_name_index: HashMap<String, u32>,
     pub constants: Vec<Constant>,
     pub functions: Vec<Function>,
     pub package_name: Option<String>,
@@ -513,7 +514,9 @@ impl Namespace {
     }
 
     fn add_type(&mut self, name: &str, typ: Option<Type>) -> u32 {
-        if let Some(id) = self.find_type(name) {
+        let glib_name = typ.as_ref().and_then(|t| t.get_glib_name())
+            .map(|s| s.to_string());
+        let id = if let Some(id) = self.find_type(name) {
             self.types[id as usize] = typ;
             id
         }
@@ -522,11 +525,19 @@ impl Namespace {
             self.types.push(typ);
             self.index.insert(name.into(), id);
             id
+        };
+        if let Some(s) = glib_name {
+            self.glib_name_index.insert(s, id);
         }
+        id
     }
 
     fn find_type(&self, name: &str) -> Option<u32> {
         self.index.get(name).cloned()
+    }
+
+    fn find_type_by_glib_name(&self, c_type: &str) -> Option<u32> {
+        self.glib_name_index.get(c_type).cloned()
     }
 
     fn unresolved(&self) -> Vec<&str> {
@@ -642,6 +653,16 @@ impl Library {
 
         let id = self.namespace_mut(current_ns_id).add_type(name, None);
         TypeId { ns_id: current_ns_id, id: id }
+    }
+
+    pub fn find_type_by_glib_name(&self, c_type: &str) -> Option<TypeId> {
+        for (ns_id, ns) in self.namespaces.iter().enumerate() {
+            match ns.find_type_by_glib_name(c_type) {
+                Some(id) => return Some(TypeId { ns_id: ns_id as u16, id: id }),
+                None => ()
+            }
+        }
+        None
     }
 
     pub fn type_(&self, tid: TypeId) -> &Type {
