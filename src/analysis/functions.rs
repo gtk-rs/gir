@@ -42,7 +42,7 @@ fn analyze_function(env: &Env, type_: &library::Function, class_tid: library::Ty
     let mut commented = false;
     let mut upcasts: Upcasts = Default::default();
 
-    let ret = return_value::analyze(env, type_, used_types);
+    let ret = return_value::analyze(env, type_, class_tid, used_types);
     commented |= ret.commented;
 
     for (pos, par) in type_.parameters.iter().enumerate() {

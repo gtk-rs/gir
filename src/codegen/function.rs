@@ -46,7 +46,7 @@ pub fn declaration(env: &Env, analysis: &analysis::functions::Info) -> String {
     let return_str = if outs_as_return {
         out_parameters_as_return(env, analysis)
     } else {
-        analysis.ret.to_return_value(env, analysis)
+        analysis.ret.to_return_value(env)
     };
     let mut param_str = String::with_capacity(100);
 
@@ -77,7 +77,7 @@ pub fn body(env: &Env, analysis: &analysis::functions::Info,
     let outs_as_return = !analysis.outs.is_empty();
     let mut builder = Builder::new();
     builder.glib_name(&analysis.glib_name)
-        .from_glib(analysis.ret.translate_from_glib_as_function(env, &analysis));
+        .from_glib(analysis.ret.translate_from_glib_as_function(env));
 
     //TODO: change to map on parameters with pass Vec<String> to builder
     for par in &analysis.parameters {

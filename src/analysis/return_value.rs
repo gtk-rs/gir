@@ -6,13 +6,14 @@ use library;
 
 pub struct Info {
     pub parameter: Option<library::Parameter>,
+    pub base_tid: Option<library::TypeId>,
     pub commented: bool,
 }
 
-pub fn analyze(env: &Env, type_: &library::Function,
+pub fn analyze(env: &Env, type_: &library::Function, class_tid: library::TypeId,
     used_types: &mut HashSet<String>) -> Info {
 
-    let parameter = if type_.ret.typ == Default::default() { None } else {
+    let mut parameter = if type_.ret.typ == Default::default() { None } else {
         used_rust_type(env, type_.ret.typ).ok().map(|s| used_types.insert(s));
         Some(library::Parameter {
                 //Many missing return nullables in girs so detecting it
@@ -21,12 +22,27 @@ pub fn analyze(env: &Env, type_: &library::Function,
                 ..type_.ret.clone()
             })
     };
+
+    let mut base_tid = None;
+
     let commented = if type_.ret.typ == Default::default() { false } else {
         parameter_rust_type(env, type_.ret.typ, type_.ret.direction).is_err()
     };
 
+    if type_.kind == library::FunctionKind::Constructor {
+        if let Some(par) = parameter {
+            base_tid = Some(par.typ);
+            parameter = Some(library::Parameter {
+                typ: class_tid,
+                nullable: false,
+                ..par
+            });
+        }
+    }
+
     Info {
         parameter: parameter,
+        base_tid: base_tid,
         commented: commented,
     }
 }
