@@ -3,6 +3,7 @@ use std::vec::Vec;
 
 use analysis::needed_upcast::needed_upcast;
 use analysis::out_parameters;
+use analysis::return_value;
 use analysis::rust_type::*;
 use analysis::upcasts::Upcasts;
 use env::Env;
@@ -18,7 +19,7 @@ pub struct Info {
     pub comented: bool,
     pub class_name: Result,
     pub parameters: Vec<library::Parameter>,
-    pub ret: Option<library::Parameter>,
+    pub ret: return_value::Info,
     pub upcasts: Upcasts,
     pub outs: out_parameters::Info,
     pub version: Option<Version>,
@@ -41,15 +42,8 @@ fn analyze_function(env: &Env, type_: &library::Function, class_tid: library::Ty
     let mut commented = false;
     let mut upcasts: Upcasts = Default::default();
 
-    let ret = if type_.ret.typ == Default::default() { None } else {
-        used_rust_type(env, type_.ret.typ).ok().map(|s| used_types.insert(s));
-        Some(type_.ret.clone())
-    };
-
-    if let Some(ref ret_) = ret {
-        if parameter_rust_type(env, ret_.typ, ret_.direction)
-            .is_err() { commented = true; }
-    }
+    let ret = return_value::analyze(env, type_, used_types);
+    commented |= ret.commented;
 
     for (pos, par) in type_.parameters.iter().enumerate() {
         assert!(!par.instance_parameter || pos == 0,
