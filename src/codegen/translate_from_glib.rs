@@ -39,12 +39,12 @@ impl TranslateFromGlib for library::Parameter {
     }
 }
 
-impl TranslateFromGlib for Option<library::Parameter> {
+impl TranslateFromGlib for analysis::return_value::Info {
     fn translate_from_glib_as_function(&self, env: &Env,
         func: &analysis::functions::Info) -> (String, String) {
-        match self {
-            &Some(ref par) => par.translate_from_glib_as_function(env, func),
-            &None => (String::new(), ";".into())
+        match self.parameter {
+            Some(ref par) => par.translate_from_glib_as_function(env, func),
+            None => (String::new(), ";".into())
         }
     }
 }
