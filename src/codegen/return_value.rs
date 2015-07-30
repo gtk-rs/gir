@@ -17,15 +17,15 @@ impl ToReturnValue for library::Parameter {
             let rust_type = parameter_rust_type(env, self.typ, self.direction);
             let name = rust_type.as_str();
             let kind = TypeKind::of(&env.library, self.typ);
-            match kind {
-                TypeKind::Unknown => format_return(&format!("/*Unknown kind*/{}", name)),
+            let type_str = match kind {
+                TypeKind::Unknown => format!("/*Unknown kind*/{}", name),
                 //TODO: records as in gtk_container_get_path_for_child
                 TypeKind::Direct |
-                    TypeKind::Converted |
-                    TypeKind::Enumeration => format_return(&name),
+                    TypeKind::Enumeration => name.into(),
 
-                _ => format_return(&format!("Option<{}>", name)),
-            }
+                _ => maybe_optional(name, self)
+            };
+            format_return(&type_str)
         }
     }
 }
@@ -41,6 +41,14 @@ impl ToReturnValue for analysis::return_value::Info {
 
 fn format_return(type_str: &str) -> String {
     format!(" -> {}", type_str)
+}
+
+fn maybe_optional(name: &str, par: &library::Parameter) -> String {
+    if par.nullable {
+        format!("Option<{}>", name)
+    } else {
+        name.into()
+    }
 }
 
 pub fn out_parameters_as_return(env: &Env, analysis: &analysis::functions::Info) -> String {
