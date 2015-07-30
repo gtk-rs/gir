@@ -6,41 +6,41 @@ use analysis::rust_type::parameter_rust_type;
 use traits::*;
 
 pub trait ToReturnValue {
-    fn to_return_value(&self, env: &Env, func: &analysis::functions::Info) -> String;
+    fn to_return_value(&self, env: &Env) -> String;
 }
 
 impl ToReturnValue for library::Parameter {
-    fn to_return_value(&self, env: &Env, func: &analysis::functions::Info) -> String {
-        if func.kind == library::FunctionKind::Constructor {
-            format_return(&func.class_name.as_str())
-        } else {
-            let rust_type = parameter_rust_type(env, self.typ, self.direction);
-            let name = rust_type.as_str();
-            let kind = TypeKind::of(&env.library, self.typ);
-            match kind {
-                TypeKind::Unknown => format_return(&format!("/*Unknown kind*/{}", name)),
-                //TODO: records as in gtk_container_get_path_for_child
-                TypeKind::Direct |
-                    TypeKind::Converted |
-                    TypeKind::Enumeration => format_return(&name),
+    fn to_return_value(&self, env: &Env) -> String {
+        let rust_type = parameter_rust_type(env, self.typ, self.direction);
+        let name = rust_type.as_str();
+        let kind = TypeKind::of(&env.library, self.typ);
+        let type_str = match kind {
+            TypeKind::Unknown => format!("/*Unknown kind*/{}", name),
+            //TODO: records as in gtk_container_get_path_for_child
+            TypeKind::Direct |
+                TypeKind::Enumeration => name.into(),
 
-                _ => format_return(&format!("Option<{}>", name)),
-            }
+            _ => maybe_optional(name, self)
+        };
+        format!(" -> {}", type_str)
+    }
+}
+
+impl ToReturnValue for analysis::return_value::Info {
+    fn to_return_value(&self, env: &Env) -> String {
+        match self.parameter {
+            Some(ref par) => par.to_return_value(env),
+            None => String::new(),
         }
     }
 }
 
-impl ToReturnValue for Option<library::Parameter> {
-    fn to_return_value(&self, env: &Env, func: &analysis::functions::Info) -> String {
-        match self {
-            &Some(ref par) => par.to_return_value(env, func),
-            &None => String::new(),
-        }
+fn maybe_optional(name: &str, par: &library::Parameter) -> String {
+    if par.nullable {
+        format!("Option<{}>", name)
+    } else {
+        name.into()
     }
-}
-
-fn format_return(type_str: &str) -> String {
-    format!(" -> {}", type_str)
 }
 
 pub fn out_parameters_as_return(env: &Env, analysis: &analysis::functions::Info) -> String {
