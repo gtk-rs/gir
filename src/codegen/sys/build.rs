@@ -24,11 +24,7 @@ pub fn generate(env: &Env) {
 }
 
 fn generate_build_script<W: Write>(w: &mut W, env: &Env) -> Result<()> {
-    try!(writeln!(w, "{}",
-r##"
-extern crate pkg_config;
-use std::cmp::Ordering;
-"##));
+    try!(writeln!(w, "{}", "extern crate pkg_config;\n"));
 
     let ns = env.library.namespace(MAIN_NAMESPACE);
     try!(writeln!(w, "const LIBRARY_NAME: &'static str = \"{}\";", crate_name(&ns.name)));
@@ -57,7 +53,7 @@ fn main() {
     println!("cargo:cfg={}", cfgs.connect(" "));
 }
 
-#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
 struct Version(pub u16, pub u16, pub u16);
 
 impl Version {
@@ -75,26 +71,6 @@ impl Version {
             Version(major, minor, 0) => format!("{}_{}_{}", LIBRARY_NAME, major, minor),
             Version(major, minor, patch) =>
                 format!("{}_{}_{}_{}", LIBRARY_NAME, major, minor, patch),
-        }
-    }
-}
-
-impl PartialOrd for Version {
-    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        Some(self.cmp(other))
-    }
-}
-
-impl Ord for Version {
-    fn cmp(&self, other: &Self) -> Ordering {
-        match self.0.cmp(&other.0) {
-            Ordering::Equal => {
-                match self.1.cmp(&other.1) {
-                    Ordering::Equal => self.2.cmp(&other.2),
-                    x => x,
-                }
-            }
-            x => x,
         }
     }
 }

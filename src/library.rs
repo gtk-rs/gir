@@ -152,7 +152,7 @@ pub const FUNDAMENTAL: [(&'static str, Fundamental); 31] = [
 ];
 
 //default = "*.None"
-#[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct TypeId {
     pub ns_id: u16,
     pub id: u32,
@@ -163,24 +163,6 @@ impl TypeId {
         let ns_name = &library.namespace(self.ns_id).name;
         let type_ = &library.type_(*self);
         format!("{}.{}", ns_name, &type_.get_name()).into()
-    }
-}
-
-impl PartialOrd for TypeId {
-    fn partial_cmp(&self, other: &TypeId) -> Option<Ordering> {
-        match self.ns_id.partial_cmp(&other.ns_id) {
-            Some(Ordering::Equal) => self.id.partial_cmp(&other.id),
-            x => x,
-        }
-    }
-}
-
-impl Ord for TypeId {
-    fn cmp(&self, other: &TypeId) -> Ordering {
-        match self.ns_id.cmp(&other.ns_id) {
-            Ordering::Equal => self.id.cmp(&other.id),
-            x => x,
-        }
     }
 }
 
