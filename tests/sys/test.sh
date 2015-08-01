@@ -1,8 +1,8 @@
 #!/bin/sh
 
 GIR="cargo run --release --"
-FEATURES=
-if [ "$1" == "full" ]; then
+FEATURES=""
+if [ "$1" = "full" ]; then
 	FEATURES="$FEATURES full"
 fi
 export RUST_LOG="gir=warn"
