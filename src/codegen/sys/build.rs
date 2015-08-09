@@ -1,5 +1,4 @@
 use std::io::{Result, Write};
-use std::fs;
 use std::path::PathBuf;
 
 use env::Env;
@@ -13,10 +12,6 @@ pub fn generate(env: &Env) {
 
     let path = PathBuf::from(&env.config.target_path)
         .join("build.rs");
-
-    let parent = path.parent().unwrap();
-    //TODO: do only if not exists
-    let _ = fs::create_dir_all(parent);
 
     println!("Generating file {:?}", path);
     save_to_file(&path, env.config.make_backup,
