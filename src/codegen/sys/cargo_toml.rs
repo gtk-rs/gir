@@ -1,5 +1,5 @@
 use std::collections::BTreeMap;
-use std::fs::{self, File};
+use std::fs::File;
 use std::io::prelude::*;
 use std::path::PathBuf;
 use toml::{self, Parser, Table, Value};
@@ -13,10 +13,6 @@ pub fn generate(env: &Env) {
 
     let path = PathBuf::from(&env.config.target_path)
         .join("Cargo.toml");
-
-    let parent = path.parent().unwrap();
-    //TODO: do only if not exists
-    let _ = fs::create_dir_all(parent);
 
     let mut toml_str = String::new();
     if let Ok(mut file) = File::open(&path) {

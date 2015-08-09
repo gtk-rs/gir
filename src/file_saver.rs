@@ -5,6 +5,10 @@ use std::path::Path;
 
 pub fn save_to_file<P, F>(path: P, make_backup: bool, closure: &mut F) where
     P: AsRef<Path>, F: FnMut(&mut File) -> Result<()> {
+    if let Some(parent) = path.as_ref().parent() {
+        let _ = fs::create_dir_all(parent);
+    }
+
     if make_backup {
         let _backuped = create_backup(&path)
             .unwrap_or_else(|why| panic!("couldn't create backup for {:?}: {:?}", path.as_ref(), why));
