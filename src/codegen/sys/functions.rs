@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::io::{Result, Write};
 
 use env::Env;
@@ -61,11 +62,34 @@ fn generate_object_funcs<W: Write>(w: &mut W, env: &Env, c_type: &str,
         let comment = if commented { "//" } else { "" };
         try!(version_condition(w, &env.config.library_name,
             env.config.min_cfg_version, func.version, commented, 1));
-        try!(writeln!(w, "    {}pub fn {}{};",
-                      comment, func.c_identifier.as_ref().unwrap(), sig));
+        let name = func.c_identifier.as_ref().unwrap();
+        // since we work with gir-files from Linux, some function names need to be adjusted
+        if let Some(win_name) = RENAME_ON_WINDOWS.get(&name[..]) {
+            try!(writeln!(w, "    {}#[cfg(windows)]", comment));
+            try!(writeln!(w, "    {}pub fn {}{};", comment, win_name, sig));
+            try!(version_condition(w, &env.config.library_name,
+                env.config.min_cfg_version, func.version, commented, 1));
+            try!(writeln!(w, "    {}#[cfg(not(windows))]", comment));
+        }
+        try!(writeln!(w, "    {}pub fn {}{};", comment, name, sig));
     }
 
     Ok(())
+}
+
+lazy_static! {
+    static ref RENAME_ON_WINDOWS: HashMap<&'static str, &'static str> = {
+        let mut map = HashMap::new();
+        [
+            ("gdk_pixbuf_new_from_file", "gdk_pixbuf_new_from_file_utf8"),
+            ("gdk_pixbuf_new_from_file_at_size", "gdk_pixbuf_new_from_file_at_size_utf8"),
+            ("gdk_pixbuf_new_from_file_at_scale", "gdk_pixbuf_new_from_file_at_scale_utf8"),
+            ("gdk_pixbuf_save", "gdk_pixbuf_save_utf8"),
+            ("gdk_pixbuf_savev", "gdk_pixbuf_savev_utf8"),
+            ("gdk_pixbuf_animation_new_from_file", "gdk_pixbuf_animation_new_from_file_utf8"),
+        ].iter().map(|&(k, v)| map.insert(k, v)).count();
+        map
+    };
 }
 
 pub fn generate_callbacks<W: Write>(w: &mut W, env: &Env, callbacks: &[&library::Function]) -> Result<()> {
