@@ -47,7 +47,7 @@ impl TypeKind {
                 VarArgs => TypeKind::Unknown,
                 Utf8 => TypeKind::Pointer,
                 Filename => TypeKind::Pointer,
-                Type => TypeKind::Enumeration,
+                Type => TypeKind::Converted,
                 None => TypeKind::Unknown,
                 Unsupported => TypeKind::Unknown,
             },
