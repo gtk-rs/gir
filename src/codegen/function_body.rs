@@ -58,7 +58,7 @@ impl Builder {
         let mut param_str = String::with_capacity(100);
         for (pos, &(ref par, out_as_returns)) in self.parameters.iter().enumerate() {
             if pos > 0 { param_str.push_str(", ") }
-            if out_as_returns { param_str.push_str("&") }
+            if out_as_returns { param_str.push_str("&mut ") }
             param_str.push_str(&*par);
         }
         param_str
@@ -72,7 +72,7 @@ impl Builder {
     fn write_out_variables(&self, v: &mut Vec<String>) {
         let outs = self.get_outs();
         for par in outs {
-            write_to_vec!(v, "let {} = Default::default();", par);
+            write_to_vec!(v, "let mut {} = Default::default();", par);
         }
     }
     fn generate_out_return(&self) -> String {
