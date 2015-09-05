@@ -285,7 +285,8 @@ fn generate_records<W: Write>(w: &mut W, env: &Env, records: &[&library::Record]
             try!(writeln!(w, "{}#[repr(C)]\n{0}pub struct {}(c_void);\n", comment, record.c_type));
         }
         else {
-            try!(writeln!(w, "{}#[repr(C)]\n{0}pub struct {} {{", comment, record.c_type));
+            try!(writeln!(w, "{}#[repr(C)]\n{0}#[derive(Debug)]", comment));
+            try!(writeln!(w, "{}pub struct {} {{", comment, record.c_type));
             for line in lines {
                 try!(writeln!(w, "{}{}", comment, line));
             }
