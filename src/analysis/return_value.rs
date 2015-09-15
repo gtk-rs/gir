@@ -11,24 +11,24 @@ pub struct Info {
     pub commented: bool,
 }
 
-pub fn analyze(env: &Env, type_: &library::Function, class_tid: library::TypeId,
+pub fn analyze(env: &Env, func: &library::Function, class_tid: library::TypeId,
     used_types: &mut HashSet<String>) -> Info {
 
-    let mut parameter = if type_.ret.typ == Default::default() { None } else {
-        used_rust_type(env, type_.ret.typ).ok().map(|s| used_types.insert(s));
+    let mut parameter = if func.ret.typ == Default::default() { None } else {
+        used_rust_type(env, func.ret.typ).ok().map(|s| used_types.insert(s));
         Some(library::Parameter {
                 //Many missing return nullables in girs so detecting it
-                nullable: type_.ret.nullable ||
-                    can_be_nullable_return(env, type_.ret.typ),
-                ..type_.ret.clone()
+                nullable: func.ret.nullable ||
+                    can_be_nullable_return(env, func.ret.typ),
+                .. func.ret.clone()
             })
     };
 
-    let commented = if type_.ret.typ == Default::default() { false } else {
-        parameter_rust_type(env, type_.ret.typ, type_.ret.direction).is_err()
+    let commented = if func.ret.typ == Default::default() { false } else {
+        parameter_rust_type(env, func.ret.typ, func.ret.direction).is_err()
     };
 
-    if type_.kind == library::FunctionKind::Constructor {
+    if func.kind == library::FunctionKind::Constructor {
         if let Some(par) = parameter {
             parameter = Some(library::Parameter {
                 typ: class_tid,
