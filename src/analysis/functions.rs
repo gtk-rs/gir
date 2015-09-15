@@ -26,11 +26,11 @@ pub struct Info {
 }
 
 pub fn analyze(env: &Env, klass: &library::Class, class_tid: library::TypeId,
-    used_types: &mut HashSet<String>) -> Vec<Info> {
+    non_nullable_overrides: &[String], used_types: &mut HashSet<String>) -> Vec<Info> {
     let mut funcs = Vec::new();
 
     for func in &klass.functions {
-        let info = analyze_function(env, func, class_tid, used_types);
+        let info = analyze_function(env, func, class_tid, non_nullable_overrides, used_types);
         funcs.push(info);
     }
 
@@ -38,11 +38,11 @@ pub fn analyze(env: &Env, klass: &library::Class, class_tid: library::TypeId,
 }
 
 fn analyze_function(env: &Env, func: &library::Function, class_tid: library::TypeId,
-    used_types: &mut HashSet<String>) -> Info {
+    non_nullable_overrides: &[String], used_types: &mut HashSet<String>) -> Info {
     let mut commented = false;
     let mut upcasts: Upcasts = Default::default();
 
-    let ret = return_value::analyze(env, func, class_tid, used_types);
+    let ret = return_value::analyze(env, func, class_tid, non_nullable_overrides, used_types);
     commented |= ret.commented;
 
     for (pos, par) in func.parameters.iter().enumerate() {

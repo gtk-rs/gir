@@ -12,14 +12,18 @@ pub struct Info {
 }
 
 pub fn analyze(env: &Env, func: &library::Function, class_tid: library::TypeId,
-    used_types: &mut HashSet<String>) -> Info {
+    non_nullable_overrides: &[String], used_types: &mut HashSet<String>) -> Info {
 
     let mut parameter = if func.ret.typ == Default::default() { None } else {
         used_rust_type(env, func.ret.typ).ok().map(|s| used_types.insert(s));
+        // Since GIRs are bad at specifying return value nullability, assume
+        // any returned pointer is nullable unless overridden by the config.
+        let mut nullable = func.ret.nullable || can_be_nullable_return(env, func.ret.typ);
+        if non_nullable_overrides.binary_search(&func.name).is_ok() {
+            nullable = false;
+        }
         Some(library::Parameter {
-                //Many missing return nullables in girs so detecting it
-                nullable: func.ret.nullable ||
-                    can_be_nullable_return(env, func.ret.typ),
+                nullable: nullable,
                 .. func.ret.clone()
             })
     };
