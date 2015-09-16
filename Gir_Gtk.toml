@@ -41,6 +41,9 @@ status = "generate"
 
 [[object]]
 name = "Gtk.Range"
+non_nullable = [
+    "get_adjustment",
+]
 status = "generate"
 
 [[object]]

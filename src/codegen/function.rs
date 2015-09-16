@@ -81,7 +81,9 @@ pub fn body(env: &Env, analysis: &analysis::functions::Info,
 
     //TODO: change to map on parameters with pass Vec<String> to builder
     for par in &analysis.parameters {
-        let s = par.translate_to_glib(&env.library, in_trait);
+        let upcast = in_trait && par.instance_parameter
+            || analysis.upcasts.iter().any(|&(ref name, _, _)| name == &par.name);
+        let s = par.translate_to_glib(&env.library, upcast);
         builder.parameter(s, outs_as_return && par.direction.can_as_return());
     }
 

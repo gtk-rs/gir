@@ -81,7 +81,8 @@ pub fn new(env: &Env, obj: &GObject) -> Info {
         }
     }
 
-    let functions = functions::analyze(env, klass, class_tid, &mut used_types);
+    let functions =
+        functions::analyze(env, klass, class_tid, &obj.non_nullable_overrides, &mut used_types);
 
     //don't `use` yourself
     used_types.remove(&name);

@@ -44,6 +44,7 @@ impl FromStr for GStatus {
 #[derive(Clone, Debug)]
 pub struct GObject {
     pub name: String,
+    pub non_nullable_overrides: Vec<String>, // sorted
     pub status: GStatus,
 }
 
@@ -51,6 +52,7 @@ impl Default for GObject {
     fn default() -> GObject {
         GObject {
             name: "Default".into(),
+            non_nullable_overrides: Vec::new(),
             status: Default::default(),
         }
     }
@@ -76,7 +78,16 @@ fn parse_object(toml_object: &Value) -> GObject {
         Some(value) => GStatus::from_str(value.as_str().unwrap()).unwrap_or(Default::default()),
         None => Default::default(),
     };
-    GObject { name: name, status: status }
+
+    let mut non_nullable_overrides = Vec::new();
+    if let Some(fn_names) = toml_object.lookup("non_nullable").and_then(|o| o.as_slice()) {
+        non_nullable_overrides = fn_names.iter()
+            .filter_map(|fn_name| fn_name.as_str().map(String::from))
+            .collect();
+        non_nullable_overrides.sort();
+    }
+
+    GObject { name: name, non_nullable_overrides: non_nullable_overrides, status: status }
 }
 
 pub fn parse_status_shorthands(objects: &mut GObjects, toml: &Value) {
@@ -94,7 +105,7 @@ fn parse_status_shorthand(objects: &mut GObjects, status: GStatus, toml: &Value)
             None => {
                 objects.insert(name_.into(), GObject {
                     name: name_.into(),
-                    status: GStatus::Ignore,
+                    .. Default::default()
                 });
             },
             Some(_) => panic!("Bad name in {}: {} already defined", name, name_),
