@@ -69,7 +69,7 @@ fn upcasts(upcasts: &Upcasts) -> String {
     let strs: Vec<String> = upcasts.iter()
         .map(|upcast| { format!("{}: Upcast<{}>", upcast.1, upcast.2)})
         .collect();
-    format!("<{}>", strs.connect(", "))
+    format!("<{}>", strs.join(", "))
 }
 
 pub fn body(env: &Env, analysis: &analysis::functions::Info,
