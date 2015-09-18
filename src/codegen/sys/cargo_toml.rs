@@ -52,7 +52,7 @@ fn fill_empty(root: &mut Table, env: &Env) {
             .replace("_", "-");
         let dep = upsert_table(deps, &*ext_package);
         set_string(dep, "path", format!("../{}", ext_package));
-        set_string(dep, "version", "^0.2.0");
+        set_string(dep, "version", "0.2.0");
     }
 }
 
@@ -66,13 +66,13 @@ fn fill_in(root: &mut Table, env: &Env) {
 
     {
         let deps = upsert_table(root, "dependencies");
-        set_string(deps, "bitflags", "^0.3");
-        set_string(deps, "libc", "^0.1");
+        set_string(deps, "bitflags", "0.3");
+        set_string(deps, "libc", "0.1");
     }
 
     {
         let build_deps = upsert_table(root, "build-dependencies");
-        set_string(build_deps, "pkg-config", "^0.3.5");
+        set_string(build_deps, "pkg-config", "0.3.5");
     }
 }
 

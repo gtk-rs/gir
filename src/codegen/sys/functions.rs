@@ -113,7 +113,7 @@ pub fn function_signature(env: &Env, func: &library::Function, bare: bool) -> (b
         if c { commented = true; }
     }
 
-    (commented, format!("({}){}", parameter_strs.connect(", "), ret_str))
+    (commented, format!("({}){}", parameter_strs.join(", "), ret_str))
 }
 
 fn function_return_value(env: &Env, func: &library::Function) -> (bool, String) {

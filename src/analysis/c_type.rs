@@ -18,7 +18,7 @@ pub fn rustify_pointers(c_type: &str) -> (String, String) {
         *p = "*const";
     }
 
-    let res = (ptrs.connect(" "), inner);
+    let res = (ptrs.join(" "), inner);
     trace!("rustify `{}` -> `{}` `{}`", c_type, res.0, res.1);
     res
 }
