@@ -3,7 +3,7 @@ use std::collections::HashSet;
 use analysis::c_type::rustify_pointers;
 use analysis::rust_type::*;
 use env::Env;
-use library;
+use library::{self, Nullable};
 
 pub struct Info {
     pub parameter: Option<library::Parameter>,
@@ -29,7 +29,7 @@ pub fn analyze(env: &Env, func: &library::Function, class_tid: library::TypeId,
     };
 
     let commented = if func.ret.typ == Default::default() { false } else {
-        parameter_rust_type(env, func.ret.typ, func.ret.direction).is_err()
+        parameter_rust_type(env, func.ret.typ, func.ret.direction, Nullable(false)).is_err()
     };
 
     if func.kind == library::FunctionKind::Constructor {

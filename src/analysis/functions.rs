@@ -7,7 +7,7 @@ use analysis::return_value;
 use analysis::rust_type::*;
 use analysis::upcasts::Upcasts;
 use env::Env;
-use library;
+use library::{self, Nullable};
 use traits::*;
 use version::Version;
 
@@ -55,8 +55,9 @@ fn analyze_function(env: &Env, func: &library::Function, class_tid: library::Typ
                 panic!("Too many parameters upcasts for {}", func.c_identifier.as_ref().unwrap())
             }
         }
-        if parameter_rust_type(env, par.typ, par.direction)
-            .is_err() { commented = true; }
+        if parameter_rust_type(env, par.typ, par.direction, Nullable(false)).is_err() {
+            commented = true;
+        }
     }
 
     let outs = out_parameters::analyze(func);

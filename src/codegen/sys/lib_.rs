@@ -123,10 +123,11 @@ fn generate_bitfields<W: Write>(w: &mut W, items: &[&Bitfield])
 fn generate_constants<W: Write>(w: &mut W, env: &Env, constants: &[Constant]) -> Result<()> {
     try!(writeln!(w, ""));
     for constant in constants {
-        let (mut comment, mut type_) = match parameter_rust_type(env, constant.typ, ParameterDirection::In) {
-            Ok(x) => ("", x),
-            Err(x) => ("//", x),
-        };
+        let (mut comment, mut type_) =
+            match parameter_rust_type(env, constant.typ, ParameterDirection::In, Nullable(false)) {
+                Ok(x) => ("", x),
+                Err(x) => ("//", x),
+            };
         if env.type_status_sys(&format!("{}.{}", env.config.library_name,
             constant.name)).ignored() {
             comment = "//";
