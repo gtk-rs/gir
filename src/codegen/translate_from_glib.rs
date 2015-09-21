@@ -19,6 +19,10 @@ impl TranslateFromGlib for library::Parameter {
                 TypeKind::Enumeration => (String::new(), String::new()),
             TypeKind::Pointer | //Checked only for Option<String>
                 TypeKind::Object => from_glib_xxx(self.transfer),
+            TypeKind::Container => {
+                let trans = from_glib_xxx(self.transfer);
+                (format!("FromGlibPtrContainer::{}", trans.0), trans.1)
+            }
             _ => (format!("TODO {:?}:", kind), String::new()),
         }
     }
@@ -58,6 +62,6 @@ fn from_glib_xxx(transfer: library::Transfer) -> (String, String) {
     match transfer {
         None => ("from_glib_none(".into(), ")".into()),
         Full => ("from_glib_full(".into(), ")".into()),
-        Container => ("TODO:".into(), String::new()),
+        Container => ("from_glib_container(".into(), ")".into()),
     }
 }

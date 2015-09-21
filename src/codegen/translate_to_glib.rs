@@ -18,6 +18,7 @@ impl TranslateToGlib for library::Parameter {
             TypeKind::Direct |
                 TypeKind::Enumeration => self.name.clone(),
             TypeKind::Pointer |
+                TypeKind::Container |
                 TypeKind::Object => {
                 if self.instance_parameter {
                     format!("self{}{}", upcast_str, to_glib_xxx(self.transfer))
@@ -36,6 +37,6 @@ fn to_glib_xxx(transfer: library::Transfer) -> &'static str {
     match transfer {
         None => ".to_glib_none().0",
         Full => ".to_glib_full()",
-        Container => "TODO:container",
+        Container => ".to_glib_container()",
     }
 }
