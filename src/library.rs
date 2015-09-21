@@ -1,5 +1,6 @@
 use std::cmp::{Ord, Ordering, PartialOrd};
 use std::collections::{BTreeSet, HashMap, HashSet};
+use std::ops::Deref;
 use std::str::FromStr;
 use nameutil::split_namespace_name;
 use traits::*;
@@ -58,6 +59,16 @@ impl FromStr for ParameterDirection {
 impl Default for ParameterDirection {
     fn default() -> ParameterDirection {
         ParameterDirection::In
+    }
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct Nullable(pub bool);
+
+impl Deref for Nullable {
+    type Target = bool;
+    fn deref(&self) -> &bool {
+        &self.0
     }
 }
 
