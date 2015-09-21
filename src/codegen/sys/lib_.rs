@@ -6,7 +6,7 @@ use case::CaseExt;
 use analysis::rust_type::parameter_rust_type;
 use env::Env;
 use file_saver::*;
-use library;
+use library::*;
 use nameutil::*;
 use super::ffi_type::ffi_type;
 use super::functions;
@@ -42,7 +42,7 @@ fn generate_lib<W: Write>(w: &mut W, env: &Env) -> Result<()>{
         _ => (),
     }
 
-    let ns = env.library.namespace(library::MAIN_NAMESPACE);
+    let ns = env.library.namespace(MAIN_NAMESPACE);
     let records = prepare(ns);
     let classes = prepare(ns);
     let interfaces = prepare(ns);
@@ -77,8 +77,8 @@ fn generate_extern_crates<W: Write>(w: &mut W, env: &Env) -> Result<()>{
     Ok(())
 }
 
-fn prepare<T: Ord>(ns: &library::Namespace) -> Vec<&T>
-where library::Type: MaybeRef<T> {
+fn prepare<T: Ord>(ns: &Namespace) -> Vec<&T>
+where Type: MaybeRef<T> {
     let mut vec: Vec<&T> = Vec::with_capacity(ns.types.len());
     for typ in ns.types.iter().filter_map(|t| t.as_ref()) {
         if let Some(ref x) = typ.maybe_ref() {
@@ -89,7 +89,7 @@ where library::Type: MaybeRef<T> {
     vec
 }
 
-fn generate_aliases<W: Write>(w: &mut W, env: &Env, items: &[&library::Alias])
+fn generate_aliases<W: Write>(w: &mut W, env: &Env, items: &[&Alias])
         -> Result<()> {
     try!(writeln!(w, ""));
     for item in items {
@@ -103,7 +103,7 @@ fn generate_aliases<W: Write>(w: &mut W, env: &Env, items: &[&library::Alias])
     Ok(())
 }
 
-fn generate_bitfields<W: Write>(w: &mut W, items: &[&library::Bitfield])
+fn generate_bitfields<W: Write>(w: &mut W, items: &[&Bitfield])
         -> Result<()> {
     try!(writeln!(w, ""));
     for item in items {
@@ -120,10 +120,10 @@ fn generate_bitfields<W: Write>(w: &mut W, items: &[&library::Bitfield])
     Ok(())
 }
 
-fn generate_constants<W: Write>(w: &mut W, env: &Env, constants: &[library::Constant]) -> Result<()> {
+fn generate_constants<W: Write>(w: &mut W, env: &Env, constants: &[Constant]) -> Result<()> {
     try!(writeln!(w, ""));
     for constant in constants {
-        let (mut comment, mut type_) = match parameter_rust_type(env, constant.typ, library::ParameterDirection::In) {
+        let (mut comment, mut type_) = match parameter_rust_type(env, constant.typ, ParameterDirection::In) {
             Ok(x) => ("", x),
             Err(x) => ("//", x),
         };
@@ -143,7 +143,7 @@ fn generate_constants<W: Write>(w: &mut W, env: &Env, constants: &[library::Cons
     Ok(())
 }
 
-fn generate_enums<W: Write>(w: &mut W, items: &[&library::Enumeration])
+fn generate_enums<W: Write>(w: &mut W, items: &[&Enumeration])
         -> Result<()> {
     try!(writeln!(w, ""));
     for item in items {
@@ -178,7 +178,7 @@ fn generate_enums<W: Write>(w: &mut W, items: &[&library::Enumeration])
     Ok(())
 }
 
-fn generate_unions<W: Write>(w: &mut W, items: &[&library::Union])
+fn generate_unions<W: Write>(w: &mut W, items: &[&Union])
         -> Result<()> {
     try!(writeln!(w, ""));
     for item in items {
@@ -200,7 +200,7 @@ fn prepare_enum_member_name(name: &str) -> String {
     }
 }
 
-fn generate_classes_structs<W: Write>(w: &mut W, classes: &[&library::Class]) -> Result<()> {
+fn generate_classes_structs<W: Write>(w: &mut W, classes: &[&Class]) -> Result<()> {
     try!(writeln!(w, ""));
     for klass in classes {
         try!(writeln!(w, "#[repr(C)]\npub struct {}(c_void);", klass.c_type));
@@ -209,7 +209,7 @@ fn generate_classes_structs<W: Write>(w: &mut W, classes: &[&library::Class]) ->
     Ok(())
 }
 
-fn generate_interfaces_structs<W: Write>(w: &mut W, interfaces: &[&library::Interface]) -> Result<()> {
+fn generate_interfaces_structs<W: Write>(w: &mut W, interfaces: &[&Interface]) -> Result<()> {
     try!(writeln!(w, ""));
     for interface in interfaces {
         try!(writeln!(w, "#[repr(C)]\npub struct {}(c_void);", interface.c_type));
@@ -218,14 +218,14 @@ fn generate_interfaces_structs<W: Write>(w: &mut W, interfaces: &[&library::Inte
     Ok(())
 }
 
-fn generate_records<W: Write>(w: &mut W, env: &Env, records: &[&library::Record]) -> Result<()> {
+fn generate_records<W: Write>(w: &mut W, env: &Env, records: &[&Record]) -> Result<()> {
     try!(writeln!(w, ""));
     for record in records {
         let mut lines = Vec::new();
         let mut commented = false;
         let mut truncated = false;
         for field in &record.fields {
-            let is_union = env.library.type_(field.typ).maybe_ref_as::<library::Union>().is_some();
+            let is_union = env.library.type_(field.typ).maybe_ref_as::<Union>().is_some();
             let is_bits = field.bits.is_some();
             if !truncated && (is_union || is_bits) {
                 warn!("Record `{}` field `{}` not expressible in Rust, truncated",
@@ -259,7 +259,7 @@ fn generate_records<W: Write>(w: &mut W, env: &Env, records: &[&library::Record]
             else {
                 let name = mangle_keywords(&*field.name);
                 if let Some(ref func) =
-                        env.library.type_(field.typ).maybe_ref_as::<library::Function>() {
+                        env.library.type_(field.typ).maybe_ref_as::<Function>() {
                     let (com, sig) = functions::function_signature(env, func, true);
                     lines.push(format!("{}{}{}: Option<unsafe extern \"C\" fn{}>,", tabs(1), vis, name, sig));
                     commented |= com;
