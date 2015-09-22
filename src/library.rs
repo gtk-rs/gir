@@ -1,6 +1,6 @@
 use std::cmp::{Ord, Ordering, PartialOrd};
 use std::collections::{BTreeSet, HashMap, HashSet};
-use std::ops::Deref;
+use std::ops::{Deref, DerefMut};
 use std::str::FromStr;
 use nameutil::split_namespace_name;
 use traits::*;
@@ -69,6 +69,12 @@ impl Deref for Nullable {
     type Target = bool;
     fn deref(&self) -> &bool {
         &self.0
+    }
+}
+
+impl DerefMut for Nullable {
+    fn deref_mut(&mut self) -> &mut bool {
+        &mut self.0
     }
 }
 
@@ -245,7 +251,7 @@ pub struct Parameter {
     pub instance_parameter: bool,
     pub direction: ParameterDirection,
     pub transfer: Transfer,
-    pub nullable: bool,
+    pub nullable: Nullable,
     pub allow_none: bool,
 }
 

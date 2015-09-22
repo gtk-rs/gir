@@ -1,6 +1,6 @@
 use analysis;
 use env::Env;
-use library::{self, Nullable, ParameterDirection};
+use library::{self, ParameterDirection};
 use analysis::type_kind::TypeKind;
 use analysis::rust_type::parameter_rust_type;
 use traits::*;
@@ -11,7 +11,7 @@ pub trait ToReturnValue {
 
 impl ToReturnValue for library::Parameter {
     fn to_return_value(&self, env: &Env) -> String {
-        let rust_type = parameter_rust_type(env, self.typ, self.direction, Nullable(self.nullable));
+        let rust_type = parameter_rust_type(env, self.typ, self.direction, self.nullable);
         let name = rust_type.as_str();
         let kind = TypeKind::of(&env.library, self.typ);
         let type_str = match kind {
@@ -48,8 +48,7 @@ pub fn out_parameters_as_return(env: &Env, analysis: &analysis::functions::Info)
 
 fn out_parameter_as_return(par: &library::Parameter, env: &Env) -> String {
     //TODO: upcasts?
-    let rust_type = parameter_rust_type(env, par.typ, ParameterDirection::Return,
-        Nullable(par.nullable));
+    let rust_type = parameter_rust_type(env, par.typ, ParameterDirection::Return, par.nullable);
     let name = rust_type.as_str();
     let kind = TypeKind::of(&env.library, par.typ);
     match kind {

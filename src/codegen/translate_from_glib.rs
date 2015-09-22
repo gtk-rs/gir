@@ -35,12 +35,12 @@ impl TranslateFromGlib for analysis::return_value::Info {
                 Some(tid) => {
                     let rust_type = rust_type(env, tid);
                     let from_glib_xxx = from_glib_xxx(par.transfer);
-                    let prefix = if par.nullable {
+                    let prefix = if *par.nullable {
                         format!("Option::<{}>::{}", rust_type.as_str(), from_glib_xxx.0)
                     } else {
                         format!("{}::{}", rust_type.as_str(), from_glib_xxx.0)
                     };
-                    let suffix_function = if par.nullable {
+                    let suffix_function = if *par.nullable {
                         "map(Downcast::downcast_unchecked)"
                     } else {
                         "downcast_unchecked()"

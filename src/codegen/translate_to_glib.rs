@@ -8,7 +8,7 @@ pub trait TranslateToGlib {
 impl TranslateToGlib for library::Parameter {
     fn translate_to_glib(&self, library: &library::Library, upcast: bool) -> String {
         let kind = TypeKind::of(library, self.typ);
-        let upcast_str = match (upcast, self.nullable) {
+        let upcast_str = match (upcast, *self.nullable) {
             (true, true) => ".map(Upcast::upcast)",
             (true, false) => ".upcast()",
             _ => "",

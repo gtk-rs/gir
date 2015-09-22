@@ -1,5 +1,5 @@
 use env::Env;
-use library::{self, Nullable};
+use library;
 use analysis::type_kind::TypeKind;
 use analysis::rust_type::parameter_rust_type;
 use analysis::upcasts::Upcasts;
@@ -17,7 +17,7 @@ impl ToParameter for library::Parameter {
             let type_str: String;
             match upcasts.get_parameter_type_alias(&self.name) {
                 Some(t) => {
-                    if self.nullable {
+                    if *self.nullable {
                         type_str = format!("Option<&{}>", t)
                     }
                     else {
@@ -26,7 +26,7 @@ impl ToParameter for library::Parameter {
                 }
                 None => {
                     let rust_type = parameter_rust_type(env, self.typ, self.direction,
-                        Nullable(self.nullable));
+                        self.nullable);
                     let type_name = rust_type.as_str();
                     let kind = TypeKind::of(&env.library, self.typ);
                     type_str = match kind {

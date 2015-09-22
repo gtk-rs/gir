@@ -18,9 +18,12 @@ pub fn analyze(env: &Env, func: &library::Function, class_tid: library::TypeId,
         used_rust_type(env, func.ret.typ).ok().map(|s| used_types.insert(s));
         // Since GIRs are bad at specifying return value nullability, assume
         // any returned pointer is nullable unless overridden by the config.
-        let mut nullable = func.ret.nullable || can_be_nullable_return(env, func.ret.typ);
-        if non_nullable_overrides.binary_search(&func.name).is_ok() {
-            nullable = false;
+        let mut nullable = func.ret.nullable;
+        if !*nullable && can_be_nullable_return(env, func.ret.typ) {
+            *nullable = true;
+        }
+        if *nullable && non_nullable_overrides.binary_search(&func.name).is_ok() {
+            *nullable = false;
         }
         Some(library::Parameter {
                 nullable: nullable,
@@ -36,7 +39,7 @@ pub fn analyze(env: &Env, func: &library::Function, class_tid: library::TypeId,
         if let Some(par) = parameter {
             parameter = Some(library::Parameter {
                 typ: class_tid,
-                nullable: false,
+                nullable: Nullable(false),
                 ..par
             });
         }
