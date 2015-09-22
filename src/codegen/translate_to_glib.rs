@@ -16,6 +16,7 @@ impl TranslateToGlib for library::Parameter {
         match kind {
             TypeKind::Converted => format!("{}{}", self.name, ".to_glib()"),
             TypeKind::Direct |
+                TypeKind::Bitfield |
                 TypeKind::Enumeration => self.name.clone(),
             TypeKind::Pointer |
                 TypeKind::Container |

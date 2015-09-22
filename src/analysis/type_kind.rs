@@ -9,6 +9,7 @@ pub enum TypeKind {
     Object,     //coded with from_glib_xxx
     Interface,  //coded with from_glib_xxx
     Enumeration,//coded without conversion
+    Bitfield,   //coded without conversion
     Unknown,
 }
 
@@ -52,6 +53,7 @@ impl TypeKind {
                 None => TypeKind::Unknown,
                 Unsupported => TypeKind::Unknown,
             },
+            Bitfield(_) => TypeKind::Bitfield,
             Enumeration(_) => TypeKind::Enumeration,
             Interface(_) => TypeKind::Interface,
             Class(_) => TypeKind::Object,

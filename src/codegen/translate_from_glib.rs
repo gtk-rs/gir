@@ -16,6 +16,7 @@ impl TranslateFromGlib for library::Parameter {
         match kind {
             TypeKind::Converted => ("from_glib(".into(), ")".into()),
             TypeKind::Direct |
+                TypeKind::Bitfield |
                 TypeKind::Enumeration => (String::new(), String::new()),
             TypeKind::Pointer | //Checked only for Option<String>
                 TypeKind::Object => from_glib_xxx(self.transfer),

@@ -54,6 +54,7 @@ fn rust_type_full(env: &Env, type_id: library::TypeId, nullable: Nullable, by_re
         },
 
         Enumeration(ref enum_) => Ok(enum_.name.clone()),
+        Bitfield(ref bitfield) => Ok(bitfield.name.clone()),
         Interface(ref interface) => Ok(interface.name.clone()),
         Class(ref klass) => Ok(klass.name.clone()),
         List(inner_tid) => {
@@ -86,10 +87,11 @@ fn rust_type_full(env: &Env, type_id: library::TypeId, nullable: Nullable, by_re
 
 pub fn used_rust_type(env: &Env, type_id: library::TypeId) -> Result {
     use library::Type::*;
-    match env.library.type_(type_id) {
-        &Enumeration(_) |
-            &Interface(_) |
-            &Class(_) => rust_type(env, type_id),
+    match *env.library.type_(type_id) {
+        Bitfield(..) |
+            Class(..) |
+            Enumeration(..) |
+            Interface(..) => rust_type(env, type_id),
         _ => Err("Don't need use".into()),
     }
 }
@@ -118,7 +120,8 @@ pub fn parameter_rust_type(env: &Env, type_id:library::TypeId,
             }
         },
 
-        Enumeration(_) => format_parameter(rust_type, direction),
+        Enumeration(..) |
+            Bitfield(..) => format_parameter(rust_type, direction),
 
         Class(..) => {
             match direction {
