@@ -57,7 +57,6 @@ pub fn impl_parents<W: Write>(w: &mut W, type_name: &str, parents: &[StatusedTyp
 }
 
 pub fn impl_interfaces<W: Write>(w: &mut W, type_name: &str, implements: &[StatusedTypeId]) -> Result<()>{
-    try!(writeln!(w, ""));
     for stid in implements {
         try!(writeln!(w, "unsafe impl Upcast<{}> for {} {{ }}", stid.name, type_name));
     }
