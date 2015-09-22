@@ -679,7 +679,7 @@ impl Library {
                 instance_parameter: false,
                 direction: ParameterDirection::Out,
                 transfer: Transfer::Full,
-                nullable: true,
+                nullable: Nullable(true),
                 allow_none: true,
             });
         }
@@ -799,7 +799,7 @@ impl Library {
                 instance_parameter: instance_parameter,
                 direction: direction,
                 transfer: transfer,
-                nullable: nullable,
+                nullable: Nullable(nullable),
                 allow_none: allow_none,
             })
         }
@@ -811,7 +811,7 @@ impl Library {
                 instance_parameter: instance_parameter,
                 direction: Default::default(),
                 transfer: Transfer::None,
-                nullable: nullable,
+                nullable: Nullable(false),
                 allow_none: allow_none,
             })
         }

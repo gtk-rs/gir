@@ -1,7 +1,7 @@
 use std::result;
 
 use env::Env;
-use library;
+use library::{self, Nullable};
 use nameutil::crate_name;
 use traits::*;
 
@@ -15,11 +15,16 @@ impl AsStr for Result {
 }
 
 pub fn rust_type(env: &Env, type_id: library::TypeId) -> Result {
+    rust_type_full(env, type_id, Nullable(false), false)
+}
+
+fn rust_type_full(env: &Env, type_id: library::TypeId, nullable: Nullable, by_ref: bool) -> Result {
     use library::Type::*;
     use library::Fundamental::*;
+    let mut skip_option = false;
     let type_ = env.library.type_(type_id);
-    let rust_type = match type_ {
-        &Fundamental(fund) => {
+    let mut rust_type = match *type_ {
+        Fundamental(fund) => {
             let ok = |s: &str| Ok(s.into());
             let err = |s: &str| Err(s.into());
             match fund {
@@ -40,7 +45,7 @@ pub fn rust_type(env: &Env, type_id: library::TypeId) -> Result {
                 Float => ok("f32"),
                 Double => ok("f64"),
 
-                Utf8 => ok("String"),
+                Utf8 => if by_ref { ok("str") } else { ok("String") },
 
                 Type => ok("types::Type"),
                 Unsupported => err("Unsupported"),
@@ -48,23 +53,35 @@ pub fn rust_type(env: &Env, type_id: library::TypeId) -> Result {
             }
         },
 
-        &Enumeration(ref enum_) => Ok(enum_.name.clone()),
-        &Interface(ref interface) => Ok(interface.name.clone()),
-        &Class(ref klass) => Ok(klass.name.clone()),
+        Enumeration(ref enum_) => Ok(enum_.name.clone()),
+        Interface(ref interface) => Ok(interface.name.clone()),
+        Class(ref klass) => Ok(klass.name.clone()),
+        List(inner_tid) => {
+            skip_option = true;
+            rust_type(env, inner_tid)
+                .map_any(|s| if by_ref { format!("[{}]", s) } else { format!("Vec<{}>", s) })
+        }
         _ => Err(format!("Unknown rust type: {:?}", type_.get_name())),
         //TODO: check usage library::Type::get_name() when no _ in this
     };
-    if type_id.ns_id == library::MAIN_NAMESPACE || type_id.ns_id == library::INTERNAL_NAMESPACE {
-        rust_type
-    } else {
+
+    if type_id.ns_id != library::MAIN_NAMESPACE && type_id.ns_id != library::INTERNAL_NAMESPACE {
         let rust_type_with_prefix = rust_type.map(|s| format!("{}::{}",
             crate_name(&env.library.namespace(type_id.ns_id).name), s));
         if env.type_status(&type_id.full_name(&env.library)).ignored() {
-            Err(rust_type_with_prefix.as_str().into())
+            rust_type = Err(rust_type_with_prefix.as_str().into());
         } else {
-            rust_type_with_prefix
+            rust_type = rust_type_with_prefix;
         }
     }
+    if by_ref {
+        rust_type = rust_type.map_any(|s| format!("&{}", s));
+    }
+    if *nullable && !skip_option {
+        rust_type = rust_type.map_any(|s| format!("Option<{}>", s));
+    }
+
+    rust_type
 }
 
 pub fn used_rust_type(env: &Env, type_id: library::TypeId) -> Result {
@@ -77,16 +94,23 @@ pub fn used_rust_type(env: &Env, type_id: library::TypeId) -> Result {
     }
 }
 
-pub fn parameter_rust_type(env: &Env, type_id:library::TypeId, direction: library::ParameterDirection) -> Result {
+pub fn parameter_rust_type(env: &Env, type_id:library::TypeId,
+        direction: library::ParameterDirection, nullable: Nullable) -> Result {
     use library::Type::*;
     let type_ = env.library.type_(type_id);
-    let rust_type = rust_type(env, type_id);
-    match type_ {
-        &Fundamental(fund) => {
+    let by_ref = match *type_ {
+        Fundamental(library::Fundamental::Utf8) |
+            Class(..) |
+            List(..) => direction == library::ParameterDirection::In,
+        _ => false,
+    };
+    let rust_type = rust_type_full(env, type_id, nullable, by_ref);
+    match *type_ {
+        Fundamental(fund) => {
             if fund == library::Fundamental::Utf8 {
                 match direction {
-                    library::ParameterDirection::In => Ok("&str".into()),
-                    library::ParameterDirection::Return => rust_type,
+                    library::ParameterDirection::In |
+                        library::ParameterDirection::Return => rust_type,
                     _ => Err(format!("/*Unimplemented*/{}", rust_type.as_str())),
                 }
             } else {
@@ -94,15 +118,22 @@ pub fn parameter_rust_type(env: &Env, type_id:library::TypeId, direction: librar
             }
         },
 
-        &Enumeration(_) => format_parameter(rust_type, direction),
+        Enumeration(_) => format_parameter(rust_type, direction),
 
-        &Class(_) => {
+        Class(..) => {
             match direction {
-                library::ParameterDirection::In => rust_type.map(|s| format!("&{}", s)),
+                library::ParameterDirection::In |
+                    library::ParameterDirection::Return => rust_type,
+                _ => Err(format!("/*Unimplemented*/{}", rust_type.as_str())),
+            }
+        }
+
+        List(..) => {
+            match direction {
                 library::ParameterDirection::Return => rust_type,
                 _ => Err(format!("/*Unimplemented*/{}", rust_type.as_str())),
             }
-        },
+        }
         _ => Err(format!("Unknown rust type: {:?}", type_.get_name())),
         //TODO: check usage library::Type::get_name() when no _ in this
     }

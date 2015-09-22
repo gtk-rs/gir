@@ -19,6 +19,10 @@ impl TranslateFromGlib for library::Parameter {
                 TypeKind::Enumeration => (String::new(), String::new()),
             TypeKind::Pointer | //Checked only for Option<String>
                 TypeKind::Object => from_glib_xxx(self.transfer),
+            TypeKind::Container => {
+                let trans = from_glib_xxx(self.transfer);
+                (format!("FromGlibPtrContainer::{}", trans.0), trans.1)
+            }
             _ => (format!("TODO {:?}:", kind), String::new()),
         }
     }
@@ -31,12 +35,12 @@ impl TranslateFromGlib for analysis::return_value::Info {
                 Some(tid) => {
                     let rust_type = rust_type(env, tid);
                     let from_glib_xxx = from_glib_xxx(par.transfer);
-                    let prefix = if par.nullable {
+                    let prefix = if *par.nullable {
                         format!("Option::<{}>::{}", rust_type.as_str(), from_glib_xxx.0)
                     } else {
                         format!("{}::{}", rust_type.as_str(), from_glib_xxx.0)
                     };
-                    let suffix_function = if par.nullable {
+                    let suffix_function = if *par.nullable {
                         "map(Downcast::downcast_unchecked)"
                     } else {
                         "downcast_unchecked()"
@@ -58,6 +62,6 @@ fn from_glib_xxx(transfer: library::Transfer) -> (String, String) {
     match transfer {
         None => ("from_glib_none(".into(), ")".into()),
         Full => ("from_glib_full(".into(), ")".into()),
-        Container => ("TODO:".into(), String::new()),
+        Container => ("from_glib_container(".into(), ")".into()),
     }
 }

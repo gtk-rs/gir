@@ -14,11 +14,19 @@ impl ToParameter for library::Parameter {
         if self.instance_parameter {
             "&self".into()
         } else {
-            let mut type_str: String;
+            let type_str: String;
             match upcasts.get_parameter_type_alias(&self.name) {
-                Some(t) => type_str = format!("&{}", t),
+                Some(t) => {
+                    if *self.nullable {
+                        type_str = format!("Option<&{}>", t)
+                    }
+                    else {
+                        type_str = format!("&{}", t)
+                    }
+                }
                 None => {
-                    let rust_type = parameter_rust_type(env, self.typ, self.direction);
+                    let rust_type = parameter_rust_type(env, self.typ, self.direction,
+                        self.nullable);
                     let type_name = rust_type.as_str();
                     let kind = TypeKind::of(&env.library, self.typ);
                     type_str = match kind {
@@ -26,9 +34,6 @@ impl ToParameter for library::Parameter {
                         _ => type_name.into()
                     }
                 }
-            }
-            if self.nullable {
-                type_str = format!("Option<{}>", type_str);
             }
             format_parameter(&self.name, &type_str)
         }
