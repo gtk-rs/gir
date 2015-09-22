@@ -1,5 +1,5 @@
 use std::ascii::AsciiExt;
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 use std::str::FromStr;
 use toml::Value;
 
@@ -59,7 +59,7 @@ impl Default for GObject {
 }
 
 //TODO: ?change to HashMap<String, GStatus>
-pub type GObjects =  HashMap<String, GObject>;
+pub type GObjects =  BTreeMap<String, GObject>;
 
 pub fn parse_toml(toml_objects: &Value) -> GObjects {
     let mut objects = GObjects::new();
