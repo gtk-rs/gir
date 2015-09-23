@@ -87,6 +87,10 @@ name = "Gtk.AppChooserWidget"
 status = "generate"
 
 [[object]]
+name = "Gtk.AspectFrame"
+status = "generate"
+
+[[object]]
 name = "Gtk.Button"
 status = "generate"
 
@@ -111,7 +115,47 @@ name = "Gtk.DrawingArea"
 status = "generate"
 
 [[object]]
+name = "Gtk.Fixed"
+status = "generate"
+
+[[object]]
+name = "Gtk.FlowBox"
+status = "generate"
+
+[[object]]
+name = "Gtk.FlowBoxChild"
+status = "generate"
+
+[[object]]
 name = "Gtk.FontButton"
+status = "generate"
+
+[[object]]
+name = "Gtk.Frame"
+status = "generate"
+
+[[object]]
+name = "Gtk.Grid"
+status = "generate"
+
+[[object]]
+name = "Gtk.HeaderBar"
+status = "generate"
+
+[[object]]
+name = "Gtk.Image"
+status = "generate"
+
+[[object]]
+name = "Gtk.Label"
+status = "generate"
+
+[[object]]
+name = "Gtk.Layout"
+status = "generate"
+
+[[object]]
+name = "Gtk.LevelBar"
 status = "generate"
 
 [[object]]
@@ -149,3 +193,11 @@ status = "generate"
 [[object]]
 name = "Gtk.ToggleButton"
 status = "generate"
+
+[[object]]
+name = "GdkPixbuf.Pixbuf"
+status = "manual"
+
+[[object]]
+name = "GdkPixbuf.PixbufAnimation"
+status = "manual"
