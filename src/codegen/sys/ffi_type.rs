@@ -113,11 +113,18 @@ fn ffi_inner(env: &Env, tid: library::TypeId, mut inner: String) -> Result {
         }
         _ => {
             if let Some(glib_name) = env.library.type_(tid).get_glib_name() {
-                if inner != glib_name && !implements_c_type(&env.library, tid, &inner) {
-                    let msg = format!("[c:type mismatch {} != {} of {}]", inner, glib_name,
-                      env.library.type_(tid).get_name());
-                    warn!("{}", msg);
-                    Err(msg)
+                if inner != glib_name {
+                    if implements_c_type(&env.library, tid, &inner) {
+                        info!("[c:type {} of {} <: {}, fixing]", glib_name,
+                            env.library.type_(tid).get_name(), inner);
+                        fix_name(env, tid, &glib_name)
+                    }
+                    else {
+                        let msg = format!("[c:type mismatch {} != {} of {}]", inner, glib_name,
+                            env.library.type_(tid).get_name());
+                        warn!("{}", msg);
+                        Err(msg)
+                    }
                 }
                 else {
                     fix_name(env, tid, &inner)
