@@ -64,7 +64,7 @@ pub fn crate_name(name: &str) -> String {
 }
 
 pub fn module_name(name: &str) -> String {
-    name.to_snake()
+    mangle_keywords(name.to_snake()).into_owned()
 }
 
 pub fn mangle_keywords<'a, S: Into<Cow<'a, str>>>(name: S) -> Cow<'a, str> {
