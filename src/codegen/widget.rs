@@ -61,13 +61,19 @@ fn generate_trait(analysis: &analysis::object::Info) -> bool {
     analysis.has_children
 }
 
-pub fn generate_reexports(analysis: &analysis::object::Info, module_name: &str,
+pub fn generate_reexports(env: &Env, analysis: &analysis::object::Info, module_name: &str,
         contents: &mut Vec<String>, traits: &mut Vec<String>) {
+    let version_cfg = general::version_condition_string(&env.config.library_name,
+        env.config.min_cfg_version, analysis.version, false, 0);
+    let (cfg, cfg_1) = match version_cfg {
+        Some(s) => (format!("{}\n", s), format!("{}{}\n", tabs(1), s)),
+        None => ("".into(), "".into()),
+    };
     contents.push(format!(""));
-    contents.push(format!("mod {};", module_name));
-    contents.push(format!("pub use self::{}::{};", module_name, analysis.name));
+    contents.push(format!("{}mod {};", cfg, module_name));
+    contents.push(format!("{}pub use self::{}::{};", cfg, module_name, analysis.name));
     if generate_trait(analysis) {
-        contents.push(format!("pub use self::{}::{}Ext;", module_name, analysis.name));
-        traits.push(format!("{}pub use super::{}Ext;", tabs(1), analysis.name));
+        contents.push(format!("{}pub use self::{}::{}Ext;", cfg, module_name, analysis.name));
+        traits.push(format!("{}{}pub use super::{}Ext;", cfg_1, tabs(1), analysis.name));
     }
 }

@@ -33,7 +33,8 @@ pub fn generate(env: &Env) {
             &mut |w| super::widget::generate(w, env, &class_analysis));
 
         let mod_name = module_name(split_namespace_name(&class_analysis.full_name).1);
-        super::widget::generate_reexports(&class_analysis, &mod_name, &mut mod_rs, &mut traits);
+        super::widget::generate_reexports(env, &class_analysis, &mod_name, &mut mod_rs,
+            &mut traits);
     }
 
     generate_mod_rs(env, &root_path, mod_rs, traits);
