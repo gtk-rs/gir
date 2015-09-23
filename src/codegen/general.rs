@@ -77,16 +77,24 @@ pub fn impl_static_type<W: Write>(w: &mut W, type_name: &str, glib_func_name: &s
 }
 
 pub fn version_condition<W: Write>(w: &mut W, library_name: &str, min_cfg_version: Version,
-    version: Option<Version>, commented: bool, indent: i32) -> Result<()> {
-    if let Some(v) = version {
-        if v >= min_cfg_version {
-            let comment = if commented { "//" } else { "" };
-            try!(writeln!(w, "{}{}#[cfg({})]", tabs(indent), comment,
-                v.to_cfg(&crate_name(library_name))));
-        }
+        version: Option<Version>, commented: bool, indent: i32) -> Result<()> {
+    let s = version_condition_string(library_name, min_cfg_version, version, commented, indent);
+    if let Some(s) = s {
+        try!(writeln!(w, "{}", s));
     }
-
     Ok(())
+}
+
+pub fn version_condition_string(library_name: &str, min_cfg_version: Version,
+        version: Option<Version>, commented: bool, indent: i32) -> Option<String> {
+    match version {
+        Some(v) if v >= min_cfg_version => {
+            let comment = if commented { "//" } else { "" };
+            Some(format!("{}{}#[cfg({})]", tabs(indent), comment,
+                v.to_cfg(&crate_name(library_name))))
+        }
+        _ => None
+    }
 }
 
 //TODO: convert to macro with usage
