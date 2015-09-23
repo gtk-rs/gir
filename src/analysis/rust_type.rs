@@ -46,6 +46,7 @@ fn rust_type_full(env: &Env, type_id: library::TypeId, nullable: Nullable, by_re
                 Double => ok("f64"),
 
                 Utf8 => if by_ref { ok("str") } else { ok("String") },
+                Filename => if by_ref { ok("str") } else { ok("String") },
 
                 Type => ok("types::Type"),
                 Unsupported => err("Unsupported"),
@@ -102,6 +103,7 @@ pub fn parameter_rust_type(env: &Env, type_id:library::TypeId,
     let type_ = env.library.type_(type_id);
     let by_ref = match *type_ {
         Fundamental(library::Fundamental::Utf8) |
+            Fundamental(library::Fundamental::Filename) |
             Class(..) |
             List(..) => direction == library::ParameterDirection::In,
         _ => false,
@@ -109,7 +111,7 @@ pub fn parameter_rust_type(env: &Env, type_id:library::TypeId,
     let rust_type = rust_type_full(env, type_id, nullable, by_ref);
     match *type_ {
         Fundamental(fund) => {
-            if fund == library::Fundamental::Utf8 {
+            if fund == library::Fundamental::Utf8 || fund == library::Fundamental::Filename {
                 match direction {
                     library::ParameterDirection::In |
                         library::ParameterDirection::Return => rust_type,
