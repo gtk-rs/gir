@@ -2,7 +2,6 @@ use std::io::Write;
 use std::path::{Path, PathBuf};
 
 use analysis;
-use analysis::general::is_widget;
 use env::Env;
 use file_saver::*;
 use nameutil::*;
@@ -15,7 +14,7 @@ pub fn generate(env: &Env) {
     let mut traits: Vec<String> = Vec::new();
 
     for obj in env.config.objects.values() {
-        if !obj.status.need_generate() || !is_widget(&obj.name, &env.library){
+        if !obj.status.need_generate() {
             continue;
         }
 
