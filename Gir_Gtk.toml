@@ -17,45 +17,26 @@ status = "manual"
 
 [[object]]
 name = "Gtk.Container"
-status = "generate"
+status = "manual"
 
 [[object]]
 name = "Gtk.Bin"
 status = "generate"
 
 [[object]]
-name = "Gtk.Window"
+name = "Gtk.Box"
 status = "generate"
+
+[[object]]
+name = "Gtk.Window"
+status = "manual"
 
 [[object]]
 name = "Gtk.Dialog"
-status = "generate"
+status = "manual"
 
 [[object]]
-name = "Gtk.DrawingArea"
-status = "generate"
-
-[[object]]
-name = "Gtk.Switch"
-status = "generate"
-
-[[object]]
-name = "Gtk.Range"
-non_nullable = [
-    "get_adjustment",
-]
-status = "generate"
-
-[[object]]
-name = "Gtk.Scale"
-status = "generate"
-
-[[object]]
-name = "Gtk.RadioButton"
-status = "generate"
-
-[[object]]
-name = "Gtk.AboutDialog"
+name = "Gtk.Misc"
 status = "generate"
 
 [[object]]
@@ -75,5 +56,96 @@ name = "Gtk.Orientable"
 status = "manual"
 
 [[object]]
+name = "Gtk.AccelGroup"
+status = "generate"
+
+[[object]]
 name = "Gtk.Alignment"
+status = "manual"
+
+[[object]]
+name = "Gtk.ActionBar"
+status = "generate"
+
+[[object]]
+name = "Gtk.Alignment"
+status = "generate"
+
+[[object]]
+name = "Gtk.Arrow"
+status = "generate"
+
+[[object]]
+name = "Gtk.AppChooserDialog"
+status = "generate"
+non_nullable = [
+    "get_widget",
+]
+
+[[object]]
+name = "Gtk.AppChooserWidget"
+status = "generate"
+
+[[object]]
+name = "Gtk.Button"
+status = "generate"
+
+[[object]]
+name = "Gtk.ButtonBox"
+status = "generate"
+
+[[object]]
+name = "Gtk.Calendar"
+status = "generate"
+
+[[object]]
+name = "Gtk.CheckButton"
+status = "generate"
+
+[[object]]
+name = "Gtk.ColorButton"
+status = "generate"
+
+[[object]]
+name = "Gtk.DrawingArea"
+status = "generate"
+
+[[object]]
+name = "Gtk.FontButton"
+status = "generate"
+
+[[object]]
+name = "Gtk.LinkButton"
+status = "generate"
+
+[[object]]
+name = "Gtk.Menu"
+status = "generate"
+
+[[object]]
+name = "Gtk.MenuButton"
+status = "generate"
+
+[[object]]
+name = "Gtk.MenuItem"
+status = "generate"
+
+[[object]]
+name = "Gtk.MenuShell"
+status = "generate"
+
+[[object]]
+name = "Gtk.Popover"
+status = "generate"
+
+[[object]]
+name = "Gtk.RadioButton"
+status = "generate"
+
+[[object]]
+name = "Gtk.ScaleButton"
+status = "generate"
+
+[[object]]
+name = "Gtk.ToggleButton"
 status = "generate"
