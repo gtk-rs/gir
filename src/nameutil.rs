@@ -67,10 +67,11 @@ pub fn module_name(name: &str) -> String {
     mangle_keywords(name.to_snake()).into_owned()
 }
 
+// If the mangling happened, guaranteed to return Owned.
 pub fn mangle_keywords<'a, S: Into<Cow<'a, str>>>(name: S) -> Cow<'a, str> {
     let name = name.into();
     if let Some(s) = KEYWORDS.get(&*name) {
-        s[..].into()
+        s.clone().into()
     }
     else {
         name

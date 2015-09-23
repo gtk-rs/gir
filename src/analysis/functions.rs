@@ -1,3 +1,4 @@
+use std::borrow::Cow;
 use std::collections::HashSet;
 use std::vec::Vec;
 
@@ -8,6 +9,7 @@ use analysis::rust_type::*;
 use analysis::upcasts::Upcasts;
 use env::Env;
 use library::{self, Nullable};
+use nameutil;
 use traits::*;
 use version::Version;
 
@@ -46,11 +48,18 @@ fn analyze_function(env: &Env, func: &library::Function, class_tid: library::Typ
     let ret = return_value::analyze(env, func, class_tid, non_nullable_overrides, &mut used_types);
     commented |= ret.commented;
 
-    for (pos, par) in func.parameters.iter().enumerate() {
+    let mut parameters = func.parameters.clone();
+
+    for (pos, par) in parameters.iter_mut().enumerate() {
         assert!(!par.instance_parameter || pos == 0,
             "Wrong instance parameter in {}", func.c_identifier.as_ref().unwrap());
         if let Ok(s) = used_rust_type(env, par.typ) {
             used_types.push(s);
+        }
+        if !par.instance_parameter {
+            if let Cow::Owned(mangled) = nameutil::mangle_keywords(&*par.name) {
+                par.name = mangled;
+            }
         }
         if !par.instance_parameter && needed_upcast(&env.library, par.typ) {
             let type_name = rust_type(env, par.typ);
@@ -72,12 +81,12 @@ fn analyze_function(env: &Env, func: &library::Function, class_tid: library::Typ
     let outs = out_parameters::analyze(func);
 
     Info {
-        name: func.name.clone(),
+        name: nameutil::mangle_keywords(&*func.name).into_owned(),
         glib_name: func.c_identifier.as_ref().unwrap().clone(),
         kind: func.kind,
         comented: commented,
         class_name: rust_type(env, class_tid),
-        parameters: func.parameters.clone(),
+        parameters: parameters,
         ret: ret,
         upcasts: upcasts,
         outs: outs,
