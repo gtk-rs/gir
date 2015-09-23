@@ -74,7 +74,12 @@ fn analyze_function(env: &Env, func: &library::Function, class_tid: library::Typ
 
     if !commented {
         for s in used_types {
-            all_used_types.insert(s);
+            if let Some(i) = s.find("::") {
+                all_used_types.insert(s[..i].into());
+            }
+            else {
+                all_used_types.insert(s);
+            }
         }
     }
 
