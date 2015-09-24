@@ -38,9 +38,6 @@ impl ParameterDirection {
     pub fn is_out(&self) -> bool {
         self == &ParameterDirection::Out || self == &ParameterDirection::InOut
     }
-    pub fn can_as_return(&self) -> bool {
-        self == &ParameterDirection::Out
-    }
 }
 
 impl FromStr for ParameterDirection {

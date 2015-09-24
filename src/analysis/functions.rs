@@ -83,7 +83,7 @@ fn analyze_function(env: &Env, func: &library::Function, class_tid: library::Typ
         }
     }
 
-    let outs = out_parameters::analyze(func);
+    let outs = out_parameters::analyze(env, func);
 
     Info {
         name: nameutil::mangle_keywords(&*func.name).into_owned(),
