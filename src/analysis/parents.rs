@@ -15,6 +15,8 @@ pub fn analyze(env: &Env, type_: &Class, used_types: &mut HashSet<String>)
     for &parent_tid in &type_.parents {
         let parent_type = env.type_(parent_tid).to_ref_as::<Class>();
 
+        if parent_type.c_type == "GObject" { break }
+
         let status = env.type_status(&parent_tid.full_name(&env.library));
 
         parents.push(StatusedTypeId{

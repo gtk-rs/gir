@@ -7,6 +7,7 @@ pub struct StatusedTypeId{
     pub status: GStatus,
 }
 
+/*
 fn widget_tid(library: &Library) -> TypeId {
     library.find_type(0, "Gtk.Widget").expect("type Gtk.Widget not found")
 }
@@ -18,3 +19,4 @@ pub fn is_widget(name: &str, library: &Library) -> bool {
         _ => false,
     }
 }
+*/

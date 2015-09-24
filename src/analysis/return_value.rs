@@ -1,5 +1,3 @@
-use std::collections::HashSet;
-
 use analysis::c_type::rustify_pointers;
 use analysis::rust_type::*;
 use env::Env;
@@ -12,10 +10,12 @@ pub struct Info {
 }
 
 pub fn analyze(env: &Env, func: &library::Function, class_tid: library::TypeId,
-    non_nullable_overrides: &[String], used_types: &mut HashSet<String>) -> Info {
+    non_nullable_overrides: &[String], used_types: &mut Vec<String>) -> Info {
 
     let mut parameter = if func.ret.typ == Default::default() { None } else {
-        used_rust_type(env, func.ret.typ).ok().map(|s| used_types.insert(s));
+        if let Ok(s) = used_rust_type(env, func.ret.typ) {
+            used_types.push(s);
+        }
         // Since GIRs are bad at specifying return value nullability, assume
         // any returned pointer is nullable unless overridden by the config.
         let mut nullable = func.ret.nullable;

@@ -7,6 +7,7 @@ use nameutil::*;
 use super::*;
 use super::type_kind::TypeKind;
 use traits::*;
+use version::Version;
 
 #[derive(Default)]
 pub struct Info {
@@ -23,6 +24,7 @@ pub struct Info {
     pub has_methods: bool,
     pub has_functions: bool,
     pub used_types: HashSet<String>,
+    pub version: Option<Version>,
 }
 
 impl Info {
@@ -84,6 +86,8 @@ pub fn new(env: &Env, obj: &GObject) -> Info {
     let functions =
         functions::analyze(env, klass, class_tid, &obj.non_nullable_overrides, &mut used_types);
 
+    let version = functions.iter().filter_map(|f| f.version).min();
+
     //don't `use` yourself
     used_types.remove(&name);
 
@@ -98,6 +102,7 @@ pub fn new(env: &Env, obj: &GObject) -> Info {
         has_ignored_parents: has_ignored_parents,
         functions: functions,
         used_types: used_types,
+        version: version,
         .. Default::default()
     };
 

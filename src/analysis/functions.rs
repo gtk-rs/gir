@@ -1,3 +1,4 @@
+use std::borrow::Cow;
 use std::collections::HashSet;
 use std::vec::Vec;
 
@@ -8,6 +9,7 @@ use analysis::rust_type::*;
 use analysis::upcasts::Upcasts;
 use env::Env;
 use library::{self, Nullable};
+use nameutil;
 use traits::*;
 use version::Version;
 
@@ -38,17 +40,27 @@ pub fn analyze(env: &Env, klass: &library::Class, class_tid: library::TypeId,
 }
 
 fn analyze_function(env: &Env, func: &library::Function, class_tid: library::TypeId,
-    non_nullable_overrides: &[String], used_types: &mut HashSet<String>) -> Info {
+    non_nullable_overrides: &[String], all_used_types: &mut HashSet<String>) -> Info {
     let mut commented = false;
     let mut upcasts: Upcasts = Default::default();
+    let mut used_types: Vec<String> = Vec::with_capacity(4);
 
-    let ret = return_value::analyze(env, func, class_tid, non_nullable_overrides, used_types);
+    let ret = return_value::analyze(env, func, class_tid, non_nullable_overrides, &mut used_types);
     commented |= ret.commented;
 
-    for (pos, par) in func.parameters.iter().enumerate() {
+    let mut parameters = func.parameters.clone();
+
+    for (pos, par) in parameters.iter_mut().enumerate() {
         assert!(!par.instance_parameter || pos == 0,
             "Wrong instance parameter in {}", func.c_identifier.as_ref().unwrap());
-        used_rust_type(env, par.typ).ok().map(|s| used_types.insert(s));
+        if let Ok(s) = used_rust_type(env, par.typ) {
+            used_types.push(s);
+        }
+        if !par.instance_parameter {
+            if let Cow::Owned(mangled) = nameutil::mangle_keywords(&*par.name) {
+                par.name = mangled;
+            }
+        }
         if !par.instance_parameter && needed_upcast(&env.library, par.typ) {
             let type_name = rust_type(env, par.typ);
             if !upcasts.add_parameter(&par.name, type_name.as_str()) {
@@ -60,15 +72,26 @@ fn analyze_function(env: &Env, func: &library::Function, class_tid: library::Typ
         }
     }
 
+    if !commented {
+        for s in used_types {
+            if let Some(i) = s.find("::") {
+                all_used_types.insert(s[..i].into());
+            }
+            else {
+                all_used_types.insert(s);
+            }
+        }
+    }
+
     let outs = out_parameters::analyze(func);
 
     Info {
-        name: func.name.clone(),
+        name: nameutil::mangle_keywords(&*func.name).into_owned(),
         glib_name: func.c_identifier.as_ref().unwrap().clone(),
         kind: func.kind,
         comented: commented,
         class_name: rust_type(env, class_tid),
-        parameters: func.parameters.clone(),
+        parameters: parameters,
         ret: ret,
         upcasts: upcasts,
         outs: outs,

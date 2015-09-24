@@ -36,6 +36,7 @@ pub fn generate<W: Write>(w: &mut W, env: &Env, analysis: &analysis::functions::
             }
             try!(writeln!(w, "{}}}", tabs(indent)));
         }
+        try!(writeln!(w, ""));
     }
 
     Ok(())
