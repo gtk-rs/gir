@@ -72,6 +72,9 @@ fn analyze_function(env: &Env, func: &library::Function, class_tid: library::Typ
         }
     }
 
+    let (outs, unsupported_outs) = out_parameters::analyze(env, func);
+    if unsupported_outs { commented = true; }
+
     if !commented {
         for s in used_types {
             if let Some(i) = s.find("::") {
@@ -82,8 +85,6 @@ fn analyze_function(env: &Env, func: &library::Function, class_tid: library::Typ
             }
         }
     }
-
-    let outs = out_parameters::analyze(env, func);
 
     Info {
         name: nameutil::mangle_keywords(&*func.name).into_owned(),
