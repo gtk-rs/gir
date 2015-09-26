@@ -73,7 +73,10 @@ fn analyze_function(env: &Env, func: &library::Function, class_tid: library::Typ
     }
 
     let (outs, unsupported_outs) = out_parameters::analyze(env, func);
-    if unsupported_outs { commented = true; }
+    if unsupported_outs {
+        warn!("Function {} has unsupported outs", func.c_identifier.as_ref().unwrap_or(&func.name));
+        commented = true;
+    }
 
     if !commented {
         for s in used_types {
