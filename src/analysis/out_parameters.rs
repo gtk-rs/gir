@@ -28,6 +28,7 @@ fn can_as_return(env: &Env, par: &Parameter) -> bool {
     use super::type_kind::TypeKind::*;
     match TypeKind::of(&env.library, par.typ) {
         Enumeration |
+            Converted |
             Direct => true,
         _ => false
     }
