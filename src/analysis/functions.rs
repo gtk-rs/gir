@@ -1,7 +1,7 @@
 use std::borrow::Cow;
-use std::collections::HashSet;
 use std::vec::Vec;
 
+use analysis::imports::Imports;
 use analysis::needed_upcast::needed_upcast;
 use analysis::out_parameters;
 use analysis::return_value;
@@ -28,11 +28,11 @@ pub struct Info {
 }
 
 pub fn analyze(env: &Env, klass: &library::Class, class_tid: library::TypeId,
-    non_nullable_overrides: &[String], used_types: &mut HashSet<String>) -> Vec<Info> {
+    non_nullable_overrides: &[String], imports: &mut Imports) -> Vec<Info> {
     let mut funcs = Vec::new();
 
     for func in &klass.functions {
-        let info = analyze_function(env, func, class_tid, non_nullable_overrides, used_types);
+        let info = analyze_function(env, func, class_tid, non_nullable_overrides, imports);
         funcs.push(info);
     }
 
@@ -40,7 +40,7 @@ pub fn analyze(env: &Env, klass: &library::Class, class_tid: library::TypeId,
 }
 
 fn analyze_function(env: &Env, func: &library::Function, class_tid: library::TypeId,
-    non_nullable_overrides: &[String], all_used_types: &mut HashSet<String>) -> Info {
+    non_nullable_overrides: &[String], imports: &mut Imports) -> Info {
     let mut commented = false;
     let mut upcasts: Upcasts = Default::default();
     let mut used_types: Vec<String> = Vec::with_capacity(4);
@@ -77,16 +77,16 @@ fn analyze_function(env: &Env, func: &library::Function, class_tid: library::Typ
         warn!("Function {} has unsupported outs", func.c_identifier.as_ref().unwrap_or(&func.name));
         commented = true;
     } else if !outs.is_empty() {
-        all_used_types.insert("std::mem".into());
+        imports.add("std::mem".into(), func.version);
     }
 
     if !commented {
         for s in used_types {
             if let Some(i) = s.find("::") {
-                all_used_types.insert(s[..i].into());
+                imports.add(s[..i].into(), func.version);
             }
             else {
-                all_used_types.insert(s);
+                imports.add(s, func.version);
             }
         }
     }

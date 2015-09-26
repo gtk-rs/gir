@@ -1,12 +1,12 @@
-use std::collections::HashSet;
 use std::vec::Vec;
 
 use analysis::rust_type::used_rust_type;
 use env::Env;
 use super::general::StatusedTypeId;
+use super::imports::Imports;
 use library;
 
-pub fn analyze(env: &Env, type_: &library::Class, used_types: &mut HashSet<String>)
+pub fn analyze(env: &Env, type_: &library::Class, imports: &mut Imports)
     -> Vec<StatusedTypeId> {
     let mut implements = Vec::new();
 
@@ -23,7 +23,7 @@ pub fn analyze(env: &Env, type_: &library::Class, used_types: &mut HashSet<Strin
             status: status,
         });
         let _ = used_rust_type(env, interface_tid)
-            .map(|s| used_types.insert(s));
+            .map(|s| imports.add(s, None));
     }
     implements
 }

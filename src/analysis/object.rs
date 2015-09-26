@@ -1,10 +1,9 @@
-use std::collections::HashSet;
-
 use env::Env;
 use gobjects::GObject;
 use library;
 use nameutil::*;
 use super::*;
+use super::imports::Imports;
 use super::type_kind::TypeKind;
 use traits::*;
 use version::Version;
@@ -23,7 +22,7 @@ pub struct Info {
     pub has_constructors: bool,
     pub has_methods: bool,
     pub has_functions: bool,
-    pub used_types: HashSet<String>,
+    pub imports: Imports,
     pub version: Option<Version>,
 }
 
@@ -56,7 +55,7 @@ impl Info {
 }
 
 pub fn new(env: &Env, obj: &GObject) -> Info {
-    let mut used_types: HashSet<String> = HashSet::with_capacity(20);
+    let mut imports = Imports::new();
     let full_name = obj.name.clone();
 
     let class_tid = env.library.find_type_unwrapped(0, &full_name, "Class");
@@ -64,11 +63,11 @@ pub fn new(env: &Env, obj: &GObject) -> Info {
     let type_ = env.type_(class_tid);
     let kind = TypeKind::of(&env.library, class_tid);
 
-    let name = split_namespace_name(&full_name).1.into();
+    let name: String = split_namespace_name(&full_name).1.into();
 
     let klass = type_.to_ref();
-    let (parents, has_ignored_parents) = parents::analyze(env, klass, &mut used_types);
-    let implements = implements::analyze(env, klass, &mut used_types);
+    let (parents, has_ignored_parents) = parents::analyze(env, klass, &mut imports);
+    let implements = implements::analyze(env, klass, &mut imports);
 
     let mut has_children = false;
 
@@ -84,12 +83,12 @@ pub fn new(env: &Env, obj: &GObject) -> Info {
     }
 
     let functions =
-        functions::analyze(env, klass, class_tid, &obj.non_nullable_overrides, &mut used_types);
+        functions::analyze(env, klass, class_tid, &obj.non_nullable_overrides, &mut imports);
 
     let version = functions.iter().filter_map(|f| f.version).min();
 
     //don't `use` yourself
-    used_types.remove(&name);
+    imports.remove(&name);
 
     let mut info = Info {
         full_name: full_name,
@@ -101,7 +100,7 @@ pub fn new(env: &Env, obj: &GObject) -> Info {
         has_children: has_children,
         has_ignored_parents: has_ignored_parents,
         functions: functions,
-        used_types: used_types,
+        imports: imports,
         version: version,
         .. Default::default()
     };
