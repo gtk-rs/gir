@@ -54,15 +54,15 @@ impl Builder {
     pub fn generate(&self) -> Vec<String> {
         let mut v: Vec<String> = Vec::with_capacity(16);
         let unsafed = self.generate_unsafed();
-        if self.outs_as_return {
-            self.write_out_variables(&mut v);
-        }
         write_to_vec!(v, "unsafe {{");
-        write_to_vec!(v, "{}{}", tabs(1), unsafed);
-        write_to_vec!(v, "}}");
         if self.outs_as_return {
-            write_to_vec!(v, "{}", self.generate_out_return());
+            self.write_out_variables(&mut v, 1);
         }
+        write_to_vec!(v, "{}{}", tabs(1), unsafed);
+        if self.outs_as_return {
+            write_to_vec!(v, "{}{}", tabs(1), self.generate_out_return());
+        }
+        write_to_vec!(v, "}}");
         v
     }
     fn generate_unsafed(&self) -> String {
@@ -89,11 +89,11 @@ impl Builder {
             .filter_map(|par| if let Out{ .. } = *par { Some(par) } else { None })
             .collect()
     }
-    fn write_out_variables(&self, v: &mut Vec<String>) {
+    fn write_out_variables(&self, v: &mut Vec<String>, indent: i32) {
         let outs = self.get_outs();
         for par in outs {
             if let Out{ ref name, .. } = *par {
-                write_to_vec!(v, "let mut {} = Default::default();", name);
+                write_to_vec!(v, "{}let mut {} = mem::uninitialized();", tabs(indent), name);
             }
         }
     }
