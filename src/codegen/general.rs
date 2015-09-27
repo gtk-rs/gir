@@ -1,8 +1,8 @@
-use std::collections::HashSet;
 use std::fmt::Display;
 use std::io::{Result, Write};
 
 use analysis::general::StatusedTypeId;
+use analysis::imports::Imports;
 use config::Config;
 use git::repo_hash;
 use gir_version::VERSION;
@@ -17,7 +17,8 @@ pub fn start_comments<W: Write>(w: &mut W, conf: &Config) -> Result<()>{
     Ok(())
 }
 
-pub fn uses<W: Write>(w: &mut W, used_types: &HashSet<String>) -> Result<()>{
+pub fn uses<W: Write>(w: &mut W, imports: &Imports, library_name: &str, min_cfg_version: Version)
+        -> Result<()>{
     let v = vec![
         "",
         "use glib::translate::*;",
@@ -28,11 +29,8 @@ pub fn uses<W: Write>(w: &mut W, used_types: &HashSet<String>) -> Result<()>{
     ];
     try!(write_vec(w, &v));
 
-    let mut used_types: Vec<String> = used_types.iter()
-        .map(|s| s.clone()).collect();
-    used_types.sort_by(|a, b| a.cmp(b));
-
-    for name in used_types {
+    for (name, version) in imports.iter() {
+        try!(version_condition(w, library_name, min_cfg_version, version.clone(), false, 0));
         try!(writeln!(w, "use {};", name));
     }
 

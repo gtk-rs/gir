@@ -2,6 +2,7 @@ pub mod c_type;
 pub mod functions;
 pub mod general;
 pub mod implements;
+pub mod imports;
 pub mod needed_upcast;
 pub mod object;
 pub mod out_parameters;
