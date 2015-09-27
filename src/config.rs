@@ -55,7 +55,7 @@ pub struct Config {
 }
 
 impl Config {
-    pub fn new() -> Config {
+    pub fn new() -> Result<Config, String> {
         let args = Docopt::new(USAGE)
             .and_then(|dopt| dopt.parse())
             .unwrap_or_else(|e| e.exit());
@@ -66,7 +66,12 @@ impl Config {
         };
 
         //TODO: add check file existence when stable std::fs::PathExt
-        let toml = read_toml(config_file);
+        let toml = match read_toml(config_file) {
+            Ok(t) => t,
+            Err(e) => {
+                return Err(e);
+            }
+        };
 
         let work_mode_str = match args.get_str("-m") {
             "" => toml.lookup("options.work_mode")
@@ -122,7 +127,7 @@ impl Config {
 
         let make_backup = args.get_bool("-b");
 
-        Config {
+        Ok(Config {
             work_mode: work_mode,
             girs_dir: girs_dir.into(),
             library_name: library_name.into(),
@@ -132,7 +137,7 @@ impl Config {
             objects: objects,
             min_cfg_version: min_cfg_version,
             make_backup: make_backup,
-        }
+        })
     }
 
     pub fn library_full_name(&self) -> String {
@@ -140,14 +145,19 @@ impl Config {
     }
 }
 
-fn read_toml(filename: &str) -> toml::Value {
+fn read_toml(filename: &str) -> Result<toml::Value, String> {
     let mut input = String::new();
-    File::open(filename).and_then(|mut f| {
+    match File::open(filename).and_then(|mut f| {
         f.read_to_string(&mut input)
-    }).unwrap();
+    }) {
+        Ok(_) => {}
+        Err(e) => {
+            return Err(format!("Error on \"{}\": {}", filename, e))
+        }
+    }
     let mut parser = toml::Parser::new(&input);
     match parser.parse() {
-        Some(toml) => toml::Value::Table(toml),
+        Some(toml) => Ok(toml::Value::Table(toml)),
         None => {
             for err in &parser.errors {
                 let (loline, locol) = parser.to_linecol(err.lo);
@@ -155,7 +165,7 @@ fn read_toml(filename: &str) -> toml::Value {
                 println!("{}:{}:{}-{}:{} error: {}",
                          filename, loline, locol, hiline, hicol, err.desc);
             }
-            panic!("Errors in config")
+            Err("Errors in config".to_owned())
         }
     }
 }

@@ -32,7 +32,13 @@ mod version;
 fn main() {
     env_logger::init().unwrap_or_else(|e| panic!("{}", e));
 
-    let cfg = config::Config::new();
+    let cfg = match config::Config::new() {
+        Ok(c) => c,
+        Err(e) => {
+            println!("{}", e);
+            return;
+        }
+    };
 
     let mut library = Library::new(&cfg.library_name);
     library.read_file(&cfg.girs_dir, &cfg.library_full_name());
