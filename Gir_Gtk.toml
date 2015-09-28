@@ -115,6 +115,10 @@ name = "Gtk.DrawingArea"
 status = "generate"
 
 [[object]]
+name = "Gtk.EventController"
+status = "generate"
+
+[[object]]
 name = "Gtk.Fixed"
 status = "generate"
 
@@ -132,6 +136,42 @@ status = "generate"
 
 [[object]]
 name = "Gtk.Frame"
+status = "generate"
+
+[[object]]
+name = "Gtk.Gesture"
+status = "generate"
+
+[[object]]
+name = "Gtk.GestureDrag"
+status = "generate"
+
+[[object]]
+name = "Gtk.GestureLongPress"
+status = "generate"
+
+[[object]]
+name = "Gtk.GestureMultiPress"
+status = "generate"
+
+[[object]]
+name = "Gtk.GesturePan"
+status = "generate"
+
+[[object]]
+name = "Gtk.GestureRotate"
+status = "generate"
+
+[[object]]
+name = "Gtk.GestureSingle"
+status = "generate"
+
+[[object]]
+name = "Gtk.GestureSwipe"
+status = "generate"
+
+[[object]]
+name = "Gtk.GestureZoom"
 status = "generate"
 
 [[object]]
@@ -180,6 +220,10 @@ status = "generate"
 
 [[object]]
 name = "Gtk.Popover"
+status = "generate"
+
+[[object]]
+name = "Gtk.PopoverMenu"
 status = "generate"
 
 [[object]]
