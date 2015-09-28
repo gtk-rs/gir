@@ -165,7 +165,6 @@ pub const FUNDAMENTAL: [(&'static str, Fundamental); 31] = [
     ("GType", Fundamental::Type),
 ];
 
-//default = "*.None"
 #[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct TypeId {
     pub ns_id: u16,
@@ -177,6 +176,14 @@ impl TypeId {
         let ns_name = &library.namespace(self.ns_id).name;
         let type_ = &library.type_(*self);
         format!("{}.{}", ns_name, &type_.get_name()).into()
+    }
+
+    pub fn tid_none() -> TypeId {
+        Default::default()
+    }
+
+    pub fn tid_bool() -> TypeId {
+        TypeId { ns_id: 0, id: 1 }
     }
 }
 
@@ -814,4 +821,13 @@ mod tests {
         assert_eq!(lib.type_(ioobject_tid).to_ref_as::<Class>().parents, &[object_tid]);
         assert_eq!(lib.type_(widget_tid).to_ref_as::<Class>().parents, &[ioobject_tid, object_tid]);
     }
+
+    #[test]
+    fn fundamental_tids() {
+        let lib = Library::new("Gtk");
+
+        assert_eq!(TypeId::tid_none().full_name(&lib), "*.None");
+        assert_eq!(TypeId::tid_bool().full_name(&lib), "*.Boolean");
+    }
+    
 }

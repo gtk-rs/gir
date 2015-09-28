@@ -35,7 +35,7 @@ pub fn analyze(env: &Env, type_: &Function) -> (Info, bool) {
     let mut unsupported_outs = false;
 
     //Only process out parameters if function returns None
-    if type_.ret.typ == Default::default() {
+    if type_.ret.typ == TypeId::tid_none() {
         info.mode = Mode::Normal;
     } else {
         return (info, false);
