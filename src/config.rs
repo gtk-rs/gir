@@ -1,6 +1,10 @@
 use std::io::prelude::*;
 use std::fs::File;
 use std::str::FromStr;
+use std::error::Error;
+use std::io::Error as IoError;
+use std::fmt::{self, Display, Formatter};
+use std::convert::From;
 use docopt::Docopt;
 use toml;
 
@@ -25,6 +29,40 @@ impl FromStr for WorkMode {
             "sys" => Ok(WorkMode::Sys),
             _ => Err("Wrong work mode".into())
         }
+    }
+}
+
+#[derive(Debug)]
+pub enum ConfigError {
+    Io(IoError),
+    TomlError(String),
+}
+
+impl Error for ConfigError {
+    fn description(&self) -> &str {
+        match self {
+            &ConfigError::Io(ref e) => e.description(),
+            &ConfigError::TomlError(ref s) => {
+                s
+            }
+        }
+    }
+}
+
+impl Display for ConfigError {
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+        match self {
+            &ConfigError::Io(ref e) => e.fmt(f),
+            &ConfigError::TomlError(ref s) => {
+                write!(f, "Toml parsing error on '{}'", s)
+            }
+        }
+    }
+}
+
+impl From<IoError> for ConfigError {
+    fn from(e: IoError) -> ConfigError {
+        ConfigError::Io(e)
     }
 }
 
@@ -55,7 +93,7 @@ pub struct Config {
 }
 
 impl Config {
-    pub fn new() -> Result<Config, String> {
+    pub fn new() -> Result<Config, ConfigError> {
         let args = Docopt::new(USAGE)
             .and_then(|dopt| dopt.parse())
             .unwrap_or_else(|e| e.exit());
@@ -66,13 +104,7 @@ impl Config {
         };
 
         //TODO: add check file existence when stable std::fs::PathExt
-        let toml = match read_toml(config_file) {
-            Ok(t) => t,
-            Err(e) => {
-                return Err(e);
-            }
-        };
-
+        let toml = try!(read_toml(config_file));
         let work_mode_str = match args.get_str("-m") {
             "" => toml.lookup("options.work_mode")
                     .expect("No options.work_mode in config")
@@ -145,16 +177,12 @@ impl Config {
     }
 }
 
-fn read_toml(filename: &str) -> Result<toml::Value, String> {
+fn read_toml(filename: &str) -> Result<toml::Value, ConfigError> {
     let mut input = String::new();
-    match File::open(filename).and_then(|mut f| {
+    try!(File::open(filename).and_then(|mut f| {
         f.read_to_string(&mut input)
-    }) {
-        Ok(_) => {}
-        Err(e) => {
-            return Err(format!("Error on \"{}\": {}", filename, e))
-        }
-    }
+    }));
+
     let mut parser = toml::Parser::new(&input);
     match parser.parse() {
         Some(toml) => Ok(toml::Value::Table(toml)),
@@ -165,7 +193,7 @@ fn read_toml(filename: &str) -> Result<toml::Value, String> {
                 println!("{}:{}:{}-{}:{} error: {}",
                          filename, loline, locol, hiline, hicol, err.desc);
             }
-            Err("Errors in config".to_owned())
+            Err(ConfigError::TomlError(filename.to_owned()))
         }
     }
 }
