@@ -1,27 +1,70 @@
+use std::slice::Iter;
 use std::vec::Vec;
 
 use env::Env;
 use library::*;
 use super::type_kind::TypeKind;
 
-pub type Info = Vec<Parameter>;
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum Mode {
+    None,
+    Normal,
+    Optional,
+}
+
+impl Default for Mode {
+    fn default() -> Mode {
+        Mode::None
+    }
+}
+
+#[derive(Default)]
+pub struct Info {
+    pub mode: Mode,
+    pub params: Vec<Parameter>,
+}
+
+impl Info {
+    pub fn is_empty(&self) -> bool {
+        self.mode == Mode::None
+    }
+
+    pub fn iter(&self) -> Iter<Parameter> {
+        self.params.iter()
+    }
+
+    pub fn len(&self) -> usize {
+        self.params.len()
+    }
+}
 
 pub fn analyze(env: &Env, type_: &Function) -> (Info, bool) {
-    let mut outs = Info::new();
+    let mut info: Info = Default::default();
     let mut unsupported_outs = false;
-    //Only process out parameters if function returns None
-    if type_.ret.typ != Default::default() { return (outs, false); }
+
+    if type_.throws {
+        //TODO: throwable functions
+        return (info, true);
+    } else if type_.ret.typ == TypeId::tid_none() {
+        info.mode = Mode::Normal;
+    } else if type_.ret.typ == TypeId::tid_bool() {
+        info.mode = Mode::Optional;
+    } else {
+        return (info, false);
+    }
 
     for par in &type_.parameters {
         if par.direction != ParameterDirection::Out { continue; }
         if can_as_return(env, par) {
-            outs.push(par.clone());
+            info.params.push(par.clone());
         } else {
             unsupported_outs = true;
         }
     }
 
-    (outs, unsupported_outs)
+    if info.params.is_empty() { info.mode = Mode::None }
+
+    (info, unsupported_outs)
 }
 
 fn can_as_return(env: &Env, par: &Parameter) -> bool {

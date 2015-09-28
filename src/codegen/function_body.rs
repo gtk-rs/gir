@@ -1,5 +1,6 @@
 use std::fmt;
 
+use analysis::out_parameters::Mode;
 use super::general::tabs;
 
 macro_rules! write_to_vec(
@@ -27,6 +28,7 @@ pub struct Builder {
     from_glib_suffix: String,
     parameters: Vec<Parameter>,
     outs_as_return: bool,
+    outs_mode: Mode,
 }
 
 impl Builder {
@@ -51,6 +53,10 @@ impl Builder {
         self.outs_as_return = true;
         self
     }
+    pub fn outs_mode(&mut self, mode: Mode) -> &mut Builder {
+        self.outs_mode = mode;
+        self
+    }
     pub fn generate(&self) -> Vec<String> {
         let mut v: Vec<String> = Vec::with_capacity(16);
         let unsafed = self.generate_unsafed();
@@ -66,9 +72,18 @@ impl Builder {
         v
     }
     fn generate_unsafed(&self) -> String {
+        let (prefix, suffix) = self.unsafed_parts();
         let param_str = self.generate_func_parameters();
-        format!("{}ffi::{}({}){}", self.from_glib_prefix,
-            self.glib_name, param_str, self.from_glib_suffix)
+        format!("{}{}ffi::{}({}){}{}", prefix, self.from_glib_prefix,
+            self.glib_name, param_str, self.from_glib_suffix, suffix)
+    }
+    fn unsafed_parts(&self) -> (&'static str, &'static str) {
+        use analysis::out_parameters::Mode::*;
+        match self.outs_mode {
+            None => ( "", "" ),
+            Normal => ( "", "" ),
+            Optional => ( "let ret = ", ";" ),
+        }
     }
     fn generate_func_parameters(&self) -> String {
         let mut param_str = String::with_capacity(100);
@@ -99,7 +114,7 @@ impl Builder {
     }
     fn generate_out_return(&self) -> String {
         let outs = self.get_outs();
-        let (prefix, suffix) = if outs.len() > 1 { ("(", ")") } else { ("", "") };
+        let (prefix, suffix) = self.out_return_parts(outs.len() > 1);
         let mut ret_str = String::with_capacity(100);
         ret_str.push_str(prefix);
         for (pos, par) in outs.iter().enumerate() {
@@ -112,5 +127,18 @@ impl Builder {
         }
         ret_str.push_str(suffix);
         ret_str
+    }
+    
+    pub fn out_return_parts(&self, is_tuple: bool) -> (&'static str, &'static str) {
+        use analysis::out_parameters::Mode::*;
+        match self.outs_mode {
+            Normal =>  if is_tuple { ("(", ")") } else { ("", "") },
+            Optional => if is_tuple {
+                ("if ret { Some((", ")) } else { None }")
+            } else {
+                ("if ret { Some(", ") } else { None }")
+            },
+            None => unreachable!(),
+        }
     }
 }
