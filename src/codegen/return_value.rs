@@ -32,8 +32,19 @@ impl ToReturnValue for analysis::return_value::Info {
     }
 }
 
+pub fn out_parameter_as_return_parts(analysis: &analysis::functions::Info)
+                                     -> (&'static str, &'static str) {
+    use analysis::out_parameters::Mode::*;
+    let is_tuple = analysis.outs.len() > 1;
+    match analysis.outs.mode {
+        Normal =>  if is_tuple { ("(", ")") } else { ("", "") },
+        Optional => if is_tuple { ("Option<(", ")>") } else { ("Option<", ">") },
+        None => unreachable!(),
+    }
+}
+
 pub fn out_parameters_as_return(env: &Env, analysis: &analysis::functions::Info) -> String {
-    let (prefix, suffix) = if analysis.outs.len() > 1 { ("(", ")") } else { ("", "") };
+    let (prefix, suffix) = out_parameter_as_return_parts(analysis);
     let mut return_str = String::with_capacity(100);
     return_str.push_str(" -> ");
     return_str.push_str(prefix);

@@ -9,8 +9,16 @@ use super::type_kind::TypeKind;
 pub enum Mode {
     None,
     Normal,
+    Optional,
 }
 
+impl Default for Mode {
+    fn default() -> Mode {
+        Mode::None
+    }
+}
+
+#[derive(Default)]
 pub struct Info {
     pub mode: Mode,
     pub params: Vec<Parameter>,
@@ -31,12 +39,16 @@ impl Info {
 }
 
 pub fn analyze(env: &Env, type_: &Function) -> (Info, bool) {
-    let mut info = Info { mode: Mode::None, params: Vec::new() };
+    let mut info: Info = Default::default();
     let mut unsupported_outs = false;
 
-    //Only process out parameters if function returns None
-    if type_.ret.typ == TypeId::tid_none() {
+    if type_.throws {
+        //TODO: throwable functions
+        return (info, true);
+    } else if type_.ret.typ == TypeId::tid_none() {
         info.mode = Mode::Normal;
+    } else if type_.ret.typ == TypeId::tid_bool() {
+        info.mode = Mode::Optional;
     } else {
         return (info, false);
     }
