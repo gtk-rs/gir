@@ -15,7 +15,7 @@ pub fn analyze(env: &Env, type_: &Class, imports: &mut Imports)
     for &parent_tid in &type_.parents {
         let parent_type = env.type_(parent_tid).to_ref_as::<Class>();
 
-        if parent_type.c_type == "GObject" { break }
+        if parent_type.c_type == "GObject" || parent_type.c_type == "GInitiallyUnowned" { break }
 
         let status = env.type_status(&parent_tid.full_name(&env.library));
 
