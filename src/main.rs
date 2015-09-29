@@ -35,7 +35,7 @@ fn main() {
     let cfg = match config::Config::new() {
         Ok(c) => c,
         Err(e) => {
-            println!("{}", e);
+            println!("Failed to read config: {}", e);
             return;
         }
     };
