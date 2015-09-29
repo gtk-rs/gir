@@ -1,3 +1,5 @@
+#![allow(unused_must_use)]
+
 use std::io::prelude::*;
 use std::fs::File;
 use std::str::FromStr;
@@ -34,17 +36,15 @@ impl FromStr for WorkMode {
 
 #[derive(Debug)]
 pub enum ConfigError {
-    Io(IoError),
-    TomlError(String),
+    Io(IoError, String),
+    TomlError(toml::ParserError, String),
 }
 
 impl Error for ConfigError {
     fn description(&self) -> &str {
         match self {
-            &ConfigError::Io(ref e) => e.description(),
-            &ConfigError::TomlError(ref s) => {
-                s
-            }
+            &ConfigError::Io(ref e, _) => e.description(),
+            &ConfigError::TomlError(ref s, _) => s.description(),
         }
     }
 }
@@ -52,9 +52,13 @@ impl Error for ConfigError {
 impl Display for ConfigError {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         match self {
-            &ConfigError::Io(ref e) => e.fmt(f),
-            &ConfigError::TomlError(ref s) => {
-                write!(f, "Toml parsing error on '{}'", s)
+            &ConfigError::Io(ref e, ref filename) => {
+                write!(f, "\"{}\": ", filename);
+                e.fmt(f)
+            }
+            &ConfigError::TomlError(ref err, ref filename) => {
+                write!(f, "Toml parsing error on \"{}\": error: {}",
+                         filename, err.desc)
             }
         }
     }
@@ -62,7 +66,7 @@ impl Display for ConfigError {
 
 impl From<IoError> for ConfigError {
     fn from(e: IoError) -> ConfigError {
-        ConfigError::Io(e)
+        ConfigError::Io(e, String::new())
     }
 }
 
@@ -179,21 +183,21 @@ impl Config {
 
 fn read_toml(filename: &str) -> Result<toml::Value, ConfigError> {
     let mut input = String::new();
-    try!(File::open(filename).and_then(|mut f| {
+    match File::open(filename).and_then(|mut f| {
         f.read_to_string(&mut input)
-    }));
+    }) {
+        Ok(_) => {}
+        Err(e) => {
+            return Err(ConfigError::Io(e, filename.to_owned()));
+        }
+    }
 
     let mut parser = toml::Parser::new(&input);
     match parser.parse() {
         Some(toml) => Ok(toml::Value::Table(toml)),
         None => {
-            for err in &parser.errors {
-                let (loline, locol) = parser.to_linecol(err.lo);
-                let (hiline, hicol) = parser.to_linecol(err.hi);
-                println!("{}:{}:{}-{}:{} error: {}",
-                         filename, loline, locol, hiline, hicol, err.desc);
-            }
-            Err(ConfigError::TomlError(filename.to_owned()))
+            let tmp = parser.errors.get(0).unwrap();
+            Err(ConfigError::TomlError(toml::ParserError{lo:0,hi:0,desc:tmp.desc.clone()}, filename.to_owned()))
         }
     }
 }
