@@ -3,10 +3,10 @@ use std::fs::File;
 use std::path::PathBuf;
 use std::str::FromStr;
 use xml::attribute::OwnedAttribute;
-use xml::common::{Error, Position};
+use xml::common::Position;
 use xml::name::OwnedName;
-use xml::reader::EventReader;
-use xml::reader::events::XmlEvent::{self, StartElement, EndElement, EndDocument};
+use xml::reader::{Error, EventReader};
+use xml::reader::XmlEvent::{StartElement, EndElement, EndDocument};
 
 use library::*;
 
@@ -19,10 +19,9 @@ macro_rules! mk_error {
     )
 }
 
-macro_rules! xml_try {
+macro_rules! xml_next {
     ($event:expr, $pos:expr) => (
         match $event {
-            XmlEvent::Error(e) => return Err(e),
             EndDocument => return Err(mk_error!("Unexpected end of document", $pos)),
             _ => (),
         }
@@ -39,8 +38,8 @@ impl Library {
         loop {
             let event = parser.next();
             match event {
-                StartElement { name: OwnedName { ref local_name,
-                                                 namespace: Some(ref namespace), .. }, .. }
+                Ok(StartElement { name: OwnedName { ref local_name,
+                                                 namespace: Some(ref namespace), .. }, .. })
                             if local_name == &"repository"
                             && namespace == &"http://www.gtk.org/introspection/core/1.0" => {
                     match self.read_repository(dir, &mut parser) {
@@ -49,9 +48,8 @@ impl Library {
                         Ok(_) => (),
                     }
                 }
-                XmlEvent::Error(e) => panic!("{} in {}:{}",
-                                             e.msg(), display_name, e.position()),
-                EndDocument => break,
+                Ok(EndDocument) => break,
+                Err(e) => panic!("{} in {}:{}", e.msg(), display_name, e.position()),
                 _ => continue,
             }
         }
@@ -60,7 +58,7 @@ impl Library {
     fn read_repository(&mut self, dir: &str, parser: &mut Reader) -> Result<(), Error> {
         let mut package = None;
         loop {
-            let event = parser.next();
+            let event = try!(parser.next());
             match event {
                 StartElement { name, attributes, .. } => {
                     match name.local_name.as_ref() {
@@ -91,7 +89,7 @@ impl Library {
                     }
                 }
                 EndElement { .. } => return Ok(()),
-                _ => xml_try!(event, parser),
+                _ => xml_next!(event, parser),
             }
         }
     }
@@ -103,7 +101,7 @@ impl Library {
         self.namespace_mut(ns_id).package_name = package;
         trace!("Reading {}-{}", name, attrs.get("version").unwrap());
         loop {
-            let event = parser.next();
+            let event = try!(parser.next());
             match event {
                 StartElement { name, attributes, .. } => {
                     trace!("<{} name={:?}>", name.local_name, attributes.get("name"));
@@ -146,7 +144,7 @@ impl Library {
                     }
                 }
                 EndElement { .. } => break,
-                _ => xml_try!(event, parser),
+                _ => xml_next!(event, parser),
             }
         }
         Ok(())
@@ -162,7 +160,7 @@ impl Library {
         let mut fns = Vec::new();
         let mut impls = Vec::new();
         loop {
-            let event = parser.next();
+            let event = try!(parser.next());
             match event {
                 StartElement { name, attributes, .. } => {
                     match name.local_name.as_ref() {
@@ -177,7 +175,7 @@ impl Library {
                     }
                 }
                 EndElement { .. } => break,
-                _ => xml_try!(event, parser),
+                _ => xml_next!(event, parser),
             }
         }
 
@@ -206,7 +204,7 @@ impl Library {
         let mut fields = Vec::new();
         let mut fns = Vec::new();
         loop {
-            let event = parser.next();
+            let event = try!(parser.next());
             match event {
                 StartElement { name, attributes, .. } => {
                     match name.local_name.as_ref() {
@@ -226,7 +224,7 @@ impl Library {
                     }
                 }
                 EndElement { .. } => break,
-                _ => xml_try!(event, parser),
+                _ => xml_next!(event, parser),
             }
         }
 
@@ -282,7 +280,7 @@ impl Library {
         let mut fields = Vec::new();
         let mut fns = Vec::new();
         loop {
-            let event = parser.next();
+            let event = try!(parser.next());
             match event {
                 StartElement { name, attributes, .. } => {
                     match name.local_name.as_ref() {
@@ -298,7 +296,7 @@ impl Library {
                     }
                 }
                 EndElement { .. } => break,
-                _ => xml_try!(event, parser),
+                _ => xml_next!(event, parser),
             }
         }
         Ok((fields, fns))
@@ -309,7 +307,7 @@ impl Library {
         let name = try!(attrs.get("name").ok_or_else(|| mk_error!("Missing field name", parser)));
         let mut typ = None;
         loop {
-            let event = parser.next();
+            let event = try!(parser.next());
             match event {
                 StartElement { name, attributes, .. } => {
                     match name.local_name.as_ref() {
@@ -334,7 +332,7 @@ impl Library {
                     }
                 }
                 EndElement { .. } => break,
-                _ => xml_try!(event, parser),
+                _ => xml_next!(event, parser),
             }
         }
         let private = attrs.get("private").unwrap_or("") == "1";
@@ -371,7 +369,7 @@ impl Library {
         let mut fns = Vec::new();
         let mut prereqs = Vec::new();
         loop {
-            let event = parser.next();
+            let event = try!(parser.next());
             match event {
                 StartElement { name, attributes, .. } => {
                     match name.local_name.as_ref() {
@@ -384,7 +382,7 @@ impl Library {
                     }
                 }
                 EndElement { .. } => break,
-                _ => xml_try!(event, parser),
+                _ => xml_next!(event, parser),
             }
         }
 
@@ -410,7 +408,7 @@ impl Library {
         let mut members = Vec::new();
         let mut fns = Vec::new();
         loop {
-            let event = parser.next();
+            let event = try!(parser.next());
             match event {
                 StartElement { name, attributes, .. } => {
                     match name.local_name.as_ref() {
@@ -425,7 +423,7 @@ impl Library {
                     }
                 }
                 EndElement { .. } => break,
-                _ => xml_try!(event, parser),
+                _ => xml_next!(event, parser),
             }
         }
 
@@ -449,7 +447,7 @@ impl Library {
         let mut members = Vec::new();
         let mut fns = Vec::new();
         loop {
-            let event = parser.next();
+            let event = try!(parser.next());
             match event {
                 StartElement { name, attributes, .. } => {
                     match name.local_name.as_ref() {
@@ -464,7 +462,7 @@ impl Library {
                     }
                 }
                 EndElement { .. } => break,
-                _ => xml_try!(event, parser),
+                _ => xml_next!(event, parser),
             }
         }
 
@@ -495,7 +493,7 @@ impl Library {
         let value = try!(attrs.get("value").ok_or_else(|| mk_error!("Missing constant value", parser)));
         let mut inner = None;
         loop {
-            let event = parser.next();
+            let event = try!(parser.next());
             match event {
                 StartElement { name, attributes, .. } => {
                     match name.local_name.as_ref() {
@@ -518,7 +516,7 @@ impl Library {
                     }
                 }
                 EndElement { .. } => break,
-                _ => xml_try!(event, parser),
+                _ => xml_next!(event, parser),
             }
         }
         if let Some((typ, c_type)) = inner {
@@ -545,7 +543,7 @@ impl Library {
                                 .ok_or_else(|| mk_error!("Missing c:type attribute", parser)));
         let mut inner = None;
         loop {
-            let event = parser.next();
+            let event = try!(parser.next());
             match event {
                 StartElement { name, attributes, .. } => {
                     match name.local_name.as_ref() {
@@ -568,7 +566,7 @@ impl Library {
                     }
                 }
                 EndElement { .. } => break,
-                _ => xml_try!(event, parser),
+                _ => xml_next!(event, parser),
             }
         }
         if let Some((typ, c_type)) = inner {
@@ -592,7 +590,7 @@ impl Library {
         let value = try!(attrs.get("value").ok_or_else(|| mk_error!("Missing member value", parser)));
         let c_identifier = attrs.get("identifier").map(|x| x.into());
         loop {
-            let event = parser.next();
+            let event = try!(parser.next());
             match event {
                 StartElement { name, attributes, .. } => {
                     match (name.local_name.as_ref(), attributes.get("name")) {
@@ -608,7 +606,7 @@ impl Library {
                     }
                 }
                 EndElement { .. } => break,
-                _ => xml_try!(event, parser),
+                _ => xml_next!(event, parser),
             }
         }
         Ok(Member {
@@ -646,7 +644,7 @@ impl Library {
         let mut params = Vec::new();
         let mut ret = None;
         loop {
-            let event = parser.next();
+            let event = try!(parser.next());
             match event {
                 StartElement { name, attributes, .. } => {
                     match name.local_name.as_ref() {
@@ -667,7 +665,7 @@ impl Library {
                     }
                 }
                 EndElement { .. } => break,
-                _ => xml_try!(event, parser),
+                _ => xml_next!(event, parser),
             }
         }
         let throws = attrs.get("throws").unwrap_or("") == "1";
@@ -726,7 +724,7 @@ impl Library {
                     -> Result<Vec<Parameter>, Error> {
         let mut params = Vec::new();
         loop {
-            let event = parser.next();
+            let event = try!(parser.next());
             match event {
                 StartElement { name, attributes, .. } => {
                     match name.local_name.as_ref() {
@@ -739,7 +737,7 @@ impl Library {
                     }
                 }
                 EndElement { .. } => break,
-                _ => xml_try!(event, parser),
+                _ => xml_next!(event, parser),
             }
         }
         Ok(params)
@@ -765,7 +763,7 @@ impl Library {
         let mut typ = None;
         let mut varargs = false;
         loop {
-            let event = parser.next();
+            let event = try!(parser.next());
             match event {
                 StartElement { name, attributes, .. } => {
                     match name.local_name.as_ref() {
@@ -788,7 +786,7 @@ impl Library {
                     }
                 }
                 EndElement { .. } => break,
-                _ => xml_try!(event, parser),
+                _ => xml_next!(event, parser),
             }
         }
         if let Some((tid, c_type)) = typ {
@@ -829,7 +827,7 @@ impl Library {
         let c_type = attrs.get("type").map(|s| s.into());
         let mut inner = Vec::new();
         loop {
-            let event = parser.next();
+            let event = try!(parser.next());
             match event {
                 StartElement { name, attributes, .. } => {
                     match name.local_name.as_ref() {
@@ -840,7 +838,7 @@ impl Library {
                     }
                 }
                 EndElement { .. } => break,
-                _ => xml_try!(event, parser),
+                _ => xml_next!(event, parser),
             }
         }
         if inner.is_empty() || name == "GLib.ByteArray" {
@@ -881,11 +879,11 @@ impl Get for Attributes {
 
 fn ignore_element(parser: &mut Reader) -> Result<(), Error> {
     loop {
-        let event = parser.next();
+        let event = try!(parser.next());
         match event {
             StartElement { .. } => try!(ignore_element(parser)),
             EndElement { .. } => return Ok(()),
-            _ => xml_try!(event, parser),
+            _ => xml_next!(event, parser),
         }
     }
 }
