@@ -1,6 +1,9 @@
 use std::io::prelude::*;
 use std::fs::File;
 use std::str::FromStr;
+use std::error::Error;
+use std::io::Error as IoError;
+use std::fmt::{self, Display, Formatter};
 use docopt::Docopt;
 use toml;
 
@@ -24,6 +27,35 @@ impl FromStr for WorkMode {
             "normal" => Ok(WorkMode::Normal),
             "sys" => Ok(WorkMode::Sys),
             _ => Err("Wrong work mode".into())
+        }
+    }
+}
+
+#[derive(Debug)]
+pub enum ConfigError {
+    Io(IoError, String),
+    TomlError(String, String),
+}
+
+impl Error for ConfigError {
+    fn description(&self) -> &str {
+        match *self {
+            ConfigError::Io(ref e, _) => e.description(),
+            ConfigError::TomlError(ref s, _) => s,
+        }
+    }
+}
+
+impl Display for ConfigError {
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+        match *self {
+            ConfigError::Io(ref err, ref filename) => {
+                try!(write!(f, "\"{}\": ", filename));
+                err.fmt(f)
+            }
+            ConfigError::TomlError(ref err, ref filename) => {
+                write!(f, "\"{}\": {}", filename, err)
+            }
         }
     }
 }
@@ -55,7 +87,7 @@ pub struct Config {
 }
 
 impl Config {
-    pub fn new() -> Config {
+    pub fn new() -> Result<Config, ConfigError> {
         let args = Docopt::new(USAGE)
             .and_then(|dopt| dopt.parse())
             .unwrap_or_else(|e| e.exit());
@@ -66,8 +98,7 @@ impl Config {
         };
 
         //TODO: add check file existence when stable std::fs::PathExt
-        let toml = read_toml(config_file);
-
+        let toml = try!(read_toml(config_file));
         let work_mode_str = match args.get_str("-m") {
             "" => toml.lookup("options.work_mode")
                     .expect("No options.work_mode in config")
@@ -122,7 +153,7 @@ impl Config {
 
         let make_backup = args.get_bool("-b");
 
-        Config {
+        Ok(Config {
             work_mode: work_mode,
             girs_dir: girs_dir.into(),
             library_name: library_name.into(),
@@ -132,7 +163,7 @@ impl Config {
             objects: objects,
             min_cfg_version: min_cfg_version,
             make_backup: make_backup,
-        }
+        })
     }
 
     pub fn library_full_name(&self) -> String {
@@ -140,22 +171,24 @@ impl Config {
     }
 }
 
-fn read_toml(filename: &str) -> toml::Value {
+fn read_toml(filename: &str) -> Result<toml::Value, ConfigError> {
     let mut input = String::new();
-    File::open(filename).and_then(|mut f| {
+    match File::open(filename).and_then(|mut f| {
         f.read_to_string(&mut input)
-    }).unwrap();
+    }) {
+        Ok(_) => {},
+        Err(e) => return Err(ConfigError::Io(e, filename.to_owned())),
+    }
+
     let mut parser = toml::Parser::new(&input);
     match parser.parse() {
-        Some(toml) => toml::Value::Table(toml),
+        Some(toml) => Ok(toml::Value::Table(toml)),
         None => {
-            for err in &parser.errors {
-                let (loline, locol) = parser.to_linecol(err.lo);
-                let (hiline, hicol) = parser.to_linecol(err.hi);
-                println!("{}:{}:{}-{}:{} error: {}",
-                         filename, loline, locol, hiline, hicol, err.desc);
-            }
-            panic!("Errors in config")
+            let err = &parser.errors[parser.errors.len() - 1];
+            let (loline, locol) = parser.to_linecol(err.lo);
+            let (hiline, hicol) = parser.to_linecol(err.hi);
+            let s = format!("{}:{}-{}:{} error: {}", loline, locol, hiline, hicol, err.desc);
+            Err(ConfigError::TomlError(s, filename.to_owned()))
         }
     }
 }
