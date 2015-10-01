@@ -2,6 +2,7 @@
 
 Running:
 ```shell
-cargo run --release -- -d ../gir-files Gtk-3.0
+cargo run --release -- -c Gir_Gtk.toml -d ../gir-files -o gtk
 ```
 where `gir-files` contains the [GIR definitions](https://github.com/gkoz/gir-files).
+The generated files will be placed in `gtk`
