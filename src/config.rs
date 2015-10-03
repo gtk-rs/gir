@@ -1,7 +1,7 @@
 use std::io::prelude::*;
 use std::fs::File;
 use std::str::FromStr;
-use std::error::Error;
+use std::error::Error as StdError;
 use std::io::Error as IoError;
 use std::fmt::{self, Display, Formatter};
 use docopt::Docopt;
@@ -33,35 +33,35 @@ impl FromStr for WorkMode {
 }
 
 #[derive(Debug)]
-pub enum ConfigError {
+pub enum Error {
     CommandLine(DocoptError),
     Io(IoError, String),
-    TomlError(String, String),
+    Toml(String, String),
     Options(String, String),
 }
 
-impl Error for ConfigError {
+impl StdError for Error {
     fn description(&self) -> &str {
-        use self::ConfigError::*;
+        use self::Error::*;
         match *self {
             CommandLine(ref e) => e.description(),
             Io(ref e, _) => e.description(),
-            TomlError(ref s, _) => s,
+            Toml(ref s, _) => s,
             Options(ref s, _) => s,
         }
     }
 }
 
-impl Display for ConfigError {
+impl Display for Error {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-        use self::ConfigError::*;
+        use self::Error::*;
         match *self {
             CommandLine(ref err) => err.fmt(f),
             Io(ref err, ref filename) => {
                 try!(write!(f, "Failed to read config \"{}\": ", filename));
                 err.fmt(f)
             }
-            TomlError(ref err, ref filename) => {
+            Toml(ref err, ref filename) => {
                 write!(f, "\"{}\": {}", filename, err)
             }
             Options(ref err, ref filename) => {
@@ -71,36 +71,36 @@ impl Display for ConfigError {
     }
 }
 
-impl<'a> From<DocoptError> for ConfigError {
-    fn from(e: DocoptError) -> ConfigError {
-        ConfigError::CommandLine(e)
+impl<'a> From<DocoptError> for Error {
+    fn from(e: DocoptError) -> Error {
+        Error::CommandLine(e)
     }
 }
 
-impl<'a> From<(IoError, &'a str)> for ConfigError {
-    fn from(e: (IoError, &'a str)) -> ConfigError {
-        ConfigError::Io(e.0, e.1.into())
+impl<'a> From<(IoError, &'a str)> for Error {
+    fn from(e: (IoError, &'a str)) -> Error {
+        Error::Io(e.0, e.1.into())
     }
 }
 
-impl<'a, 'b> From<(&'a str, &'b str)> for ConfigError {
-    fn from(e: (&'a str, &'b str)) -> ConfigError {
-        ConfigError::Options(e.0.into(), e.1.into())
+impl<'a, 'b> From<(&'a str, &'b str)> for Error {
+    fn from(e: (&'a str, &'b str)) -> Error {
+        Error::Options(e.0.into(), e.1.into())
     }
 }
 
-impl<'a> From<(String, &'a str)> for ConfigError {
-    fn from(e: (String, &'a str)) -> ConfigError {
-        ConfigError::Options(e.0, e.1.into())
+impl<'a> From<(String, &'a str)> for Error {
+    fn from(e: (String, &'a str)) -> Error {
+        Error::Options(e.0, e.1.into())
     }
 }
 
 trait LookupStr {
-    fn lookup_str<'a>(&'a self, option: &'a str, err: &str, config_file: &str) -> Result<&'a str, ConfigError>;
+    fn lookup_str<'a>(&'a self, option: &'a str, err: &str, config_file: &str) -> Result<&'a str, Error>;
 }
 
 impl LookupStr for toml::Value {
-    fn lookup_str<'a>(&'a self, option: &'a str, err: &str, config_file: &str) -> Result<&'a str, ConfigError> {
+    fn lookup_str<'a>(&'a self, option: &'a str, err: &str, config_file: &str) -> Result<&'a str, Error> {
         let value = try!(self.lookup(option).ok_or((err, config_file)));
         Ok(value.as_str().unwrap())
     }
@@ -133,7 +133,7 @@ pub struct Config {
 }
 
 impl Config {
-    pub fn new() -> Result<Config, ConfigError> {
+    pub fn new() -> Result<Config, Error> {
         let args = try!(Docopt::new(USAGE)
             .and_then(|dopt| dopt.parse()));
 
@@ -207,7 +207,7 @@ impl Config {
     }
 }
 
-fn read_toml(filename: &str) -> Result<toml::Value, ConfigError> {
+fn read_toml(filename: &str) -> Result<toml::Value, Error> {
     let mut input = String::new();
     try!(File::open(filename)
          .and_then(|mut f| f.read_to_string(&mut input))
@@ -221,7 +221,7 @@ fn read_toml(filename: &str) -> Result<toml::Value, ConfigError> {
             let (loline, locol) = parser.to_linecol(err.lo);
             let (hiline, hicol) = parser.to_linecol(err.hi);
             let s = format!("{}:{}-{}:{} error: {}", loline, locol, hiline, hicol, err.desc);
-            Err(ConfigError::TomlError(s, filename.to_owned()))
+            Err(Error::Toml(s, filename.to_owned()))
         }
     }
 }

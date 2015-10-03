@@ -34,7 +34,7 @@ fn main() {
 
     let cfg = match config::Config::new() {
         Ok(c) => c,
-        Err(config::ConfigError::CommandLine(e)) => e.exit(),
+        Err(config::Error::CommandLine(e)) => e.exit(),
         Err(e) => {
             println!("{}", e);
             ::std::process::exit(1);
