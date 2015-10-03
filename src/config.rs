@@ -5,6 +5,7 @@ use std::error::Error;
 use std::io::Error as IoError;
 use std::fmt::{self, Display, Formatter};
 use docopt::Docopt;
+use docopt::Error as DocoptError;
 use toml;
 
 use gobjects;
@@ -33,30 +34,75 @@ impl FromStr for WorkMode {
 
 #[derive(Debug)]
 pub enum ConfigError {
+    CommandLine(DocoptError),
     Io(IoError, String),
     TomlError(String, String),
+    Options(String, String),
 }
 
 impl Error for ConfigError {
     fn description(&self) -> &str {
+        use self::ConfigError::*;
         match *self {
-            ConfigError::Io(ref e, _) => e.description(),
-            ConfigError::TomlError(ref s, _) => s,
+            CommandLine(ref e) => e.description(),
+            Io(ref e, _) => e.description(),
+            TomlError(ref s, _) => s,
+            Options(ref s, _) => s,
         }
     }
 }
 
 impl Display for ConfigError {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+        use self::ConfigError::*;
         match *self {
-            ConfigError::Io(ref err, ref filename) => {
-                try!(write!(f, "\"{}\": ", filename));
+            CommandLine(ref err) => err.fmt(f),
+            Io(ref err, ref filename) => {
+                try!(write!(f, "Failed to read config \"{}\": ", filename));
                 err.fmt(f)
             }
-            ConfigError::TomlError(ref err, ref filename) => {
+            TomlError(ref err, ref filename) => {
+                write!(f, "\"{}\": {}", filename, err)
+            }
+            Options(ref err, ref filename) => {
                 write!(f, "\"{}\": {}", filename, err)
             }
         }
+    }
+}
+
+impl<'a> From<DocoptError> for ConfigError {
+    fn from(e: DocoptError) -> ConfigError {
+        ConfigError::CommandLine(e)
+    }
+}
+
+impl<'a> From<(IoError, &'a str)> for ConfigError {
+    fn from(e: (IoError, &'a str)) -> ConfigError {
+        ConfigError::Io(e.0, e.1.into())
+    }
+}
+
+impl<'a, 'b> From<(&'a str, &'b str)> for ConfigError {
+    fn from(e: (&'a str, &'b str)) -> ConfigError {
+        ConfigError::Options(e.0.into(), e.1.into())
+    }
+}
+
+impl<'a> From<(String, &'a str)> for ConfigError {
+    fn from(e: (String, &'a str)) -> ConfigError {
+        ConfigError::Options(e.0, e.1.into())
+    }
+}
+
+trait LookupStr {
+    fn lookup_str<'a>(&'a self, option: &'a str, err: &str, config_file: &str) -> Result<&'a str, ConfigError>;
+}
+
+impl LookupStr for toml::Value {
+    fn lookup_str<'a>(&'a self, option: &'a str, err: &str, config_file: &str) -> Result<&'a str, ConfigError> {
+        let value = try!(self.lookup(option).ok_or((err, config_file)));
+        Ok(value.as_str().unwrap())
     }
 }
 
@@ -88,9 +134,8 @@ pub struct Config {
 
 impl Config {
     pub fn new() -> Result<Config, ConfigError> {
-        let args = Docopt::new(USAGE)
-            .and_then(|dopt| dopt.parse())
-            .unwrap_or_else(|e| e.exit());
+        let args = try!(Docopt::new(USAGE)
+            .and_then(|dopt| dopt.parse()));
 
         let config_file = match args.get_str("-c") {
             "" => "Gir.toml",
@@ -99,40 +144,31 @@ impl Config {
 
         //TODO: add check file existence when stable std::fs::PathExt
         let toml = try!(read_toml(config_file));
+
         let work_mode_str = match args.get_str("-m") {
-            "" => toml.lookup("options.work_mode")
-                    .expect("No options.work_mode in config")
-                    .as_str().unwrap(),
+            "" => try!(toml.lookup_str("options.work_mode", "No options.work_mode in config", config_file)),
             a => a,
         };
         let work_mode = WorkMode::from_str(work_mode_str)
             .unwrap_or_else(|e| panic!(e));
 
         let girs_dir = match args.get_str("-d") {
-            "" => toml.lookup("options.girs_dir")
-                      .expect("No options.girs_dir in config")
-                      .as_str().unwrap(),
+            "" => try!(toml.lookup_str("options.girs_dir", "No options.girs_dir in config", config_file)),
             a => a
         };
 
         let (library_name, library_version) =
             match (args.get_str("<library>"), args.get_str("<version>")) {
             ("", "") => (
-                toml.lookup("options.library")
-                    .expect("No options.library in config")
-                    .as_str().unwrap(),
-                toml.lookup("options.version")
-                    .expect("No options.version in config")
-                    .as_str().unwrap()
+                try!(toml.lookup_str("options.library", "No options.library in config", config_file)),
+                try!(toml.lookup_str("options.version", "No options.version in config", config_file))
             ),
-            ("", _) | (_, "") => panic!("Library and version can not be specified separately"),
+            ("", _) | (_, "") => try!(Err(("Library and version can not be specified separately", config_file))),
             (a, b) => (a, b)
         };
 
         let target_path = match args.get_str("-o") {
-            "" => toml.lookup("options.target_path")
-                    .expect("No target path specified")
-                    .as_str().unwrap(),
+            "" => try!(toml.lookup_str("options.target_path", "No target path specified", config_file)),
             a => a
         };
 
@@ -147,9 +183,9 @@ impl Config {
                 .collect())
             .unwrap_or_else(|| Vec::new());
 
-        let min_cfg_version = toml.lookup("options.min_cfg_version")
-            .map_or_else(|| Ok(Default::default()), |t| t.as_str().unwrap().parse())
-            .unwrap_or_else(|e| panic!(e));
+        let min_cfg_version = try!(toml.lookup("options.min_cfg_version")
+           .map_or_else(|| Ok(Default::default()), |t| t.as_str().unwrap().parse())
+           .map_err(|e: String| (e, config_file)));
 
         let make_backup = args.get_bool("-b");
 
@@ -173,12 +209,9 @@ impl Config {
 
 fn read_toml(filename: &str) -> Result<toml::Value, ConfigError> {
     let mut input = String::new();
-    match File::open(filename).and_then(|mut f| {
-        f.read_to_string(&mut input)
-    }) {
-        Ok(_) => {},
-        Err(e) => return Err(ConfigError::Io(e, filename.to_owned())),
-    }
+    try!(File::open(filename)
+         .and_then(|mut f| f.read_to_string(&mut input))
+         .map_err(|e| (e, filename)));
 
     let mut parser = toml::Parser::new(&input);
     match parser.parse() {
