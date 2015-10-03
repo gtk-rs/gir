@@ -83,8 +83,8 @@ impl<'a> From<(IoError, &'a str)> for Error {
     }
 }
 
-impl<'a, 'b> From<(&'a str, &'b str)> for Error {
-    fn from(e: (&'a str, &'b str)) -> Error {
+impl<'a> From<(&'a str, &'a str)> for Error {
+    fn from(e: (&'a str, &'a str)) -> Error {
         Error::Options(e.0.into(), e.1.into())
     }
 }
@@ -95,14 +95,28 @@ impl<'a> From<(String, &'a str)> for Error {
     }
 }
 
-trait LookupStr {
+trait TomlHelper where Self: Sized {
     fn lookup_str<'a>(&'a self, option: &'a str, err: &str, config_file: &str) -> Result<&'a str, Error>;
+    fn as_result_str<'a>(&'a self, option: &'a str, config_file: &str) -> Result<&'a str, Error>;
+    fn as_result_slice<'a>(&'a self, option: &'a str, config_file: &str) -> Result<&'a [Self], Error>;
 }
 
-impl LookupStr for toml::Value {
+impl TomlHelper for toml::Value {
     fn lookup_str<'a>(&'a self, option: &'a str, err: &str, config_file: &str) -> Result<&'a str, Error> {
         let value = try!(self.lookup(option).ok_or((err, config_file)));
-        Ok(value.as_str().unwrap())
+        value.as_result_str(option, config_file)
+    }
+    fn as_result_str<'a>(&'a self, option: &'a str, config_file: &str) -> Result<&'a str, Error> {
+        self.as_str()
+            .ok_or(Error::Options(format!("Invalid `{}` value, expected a string, found {}",
+                                          option, self.type_str()),
+                                  config_file.into()))
+    }
+    fn as_result_slice<'a>(&'a self, option: &'a str, config_file: &str) -> Result<&'a [Self], Error> {
+        self.as_slice()
+            .ok_or(Error::Options(format!("Invalid `{}` value, expected a array, found {}",
+                                          option, self.type_str()),
+                                  config_file.into()))
     }
 }
 
@@ -176,16 +190,20 @@ impl Config {
             .unwrap_or_else(|| Default::default());
         gobjects::parse_status_shorthands(&mut objects, &toml);
 
-        let external_libraries = toml.lookup("options.external_libraries")
-            .map(|a| a.as_slice().unwrap().iter()
-                .filter_map(|v|
-                    if let &toml::Value::String(ref s) = v { Some(s.clone()) } else { None } )
-                .collect())
-            .unwrap_or_else(|| Vec::new());
+        let external_libraries = match toml.lookup("options.external_libraries") {
+            Some(a) => {
+                try!(a.as_result_slice("options.external_libraries", &config_file))
+                    .iter().filter_map(|v| v.as_str().map(String::from))
+                    .collect()
+            }
+            None => Vec::new(),
+        };
 
-        let min_cfg_version = try!(toml.lookup("options.min_cfg_version")
-           .map_or_else(|| Ok(Default::default()), |t| t.as_str().unwrap().parse())
-           .map_err(|e: String| (e, config_file)));
+        let min_cfg_version = match toml.lookup("options.min_cfg_version") {
+            Some(v) => try!(try!(v.as_result_str("options.min_cfg_version", config_file))
+                            .parse().map_err(|e: String| (e, config_file))),
+            None => Default::default(),
+        };
 
         let make_backup = args.get_bool("-b");
 
