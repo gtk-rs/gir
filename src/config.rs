@@ -158,20 +158,30 @@ impl Config {
             a => a,
         }.into();
 
+        let config_dir = match config_file.parent() {
+            Some(path) => path.into(),
+            None => PathBuf::new(),
+        };
+
         //TODO: add check file existence when stable std::fs::PathExt
         let toml = try!(read_toml(&config_file));
 
         let work_mode_str = match args.get_str("-m") {
-            "" => try!(toml.lookup_str("options.work_mode", "No options.work_mode in config", &config_file)),
+            "" => try!(toml.lookup_str("options.work_mode",
+               "No options.work_mode in config", &config_file)),
             a => a,
         };
         let work_mode = WorkMode::from_str(work_mode_str)
             .unwrap_or_else(|e| panic!(e));
 
         let girs_dir: PathBuf = match args.get_str("-d") {
-            "" => try!(toml.lookup_str("options.girs_dir", "No options.girs_dir in config", &config_file)),
-            a => a
-        }.into();
+            "" => {
+                let path = try!(toml.lookup_str("options.girs_dir",
+                    "No options.girs_dir in config", &config_file));
+                config_dir.join(path)
+            }
+            a => a.into(),
+        };
 
         let (library_name, library_version) =
             match (args.get_str("<library>"), args.get_str("<version>")) {
@@ -179,14 +189,19 @@ impl Config {
                 try!(toml.lookup_str("options.library", "No options.library in config", &config_file)),
                 try!(toml.lookup_str("options.version", "No options.version in config", &config_file))
             ),
-            ("", _) | (_, "") => try!(Err(("Library and version can not be specified separately", &config_file))),
+            ("", _) | (_, "") => try!(Err(("Library and version can not be specified separately",
+                                           &config_file))),
             (a, b) => (a, b)
         };
 
         let target_path: PathBuf = match args.get_str("-o") {
-            "" => try!(toml.lookup_str("options.target_path", "No target path specified", &config_file)),
-            a => a
-        }.into();
+            "" => {
+                let path = try!(toml.lookup_str("options.target_path",
+                    "No target path specified", &config_file));
+                config_dir.join(path)
+            }
+            a => a.into()
+        };
 
         let mut objects = toml.lookup("object").map(|t| gobjects::parse_toml(t))
             .unwrap_or_else(|| Default::default());
