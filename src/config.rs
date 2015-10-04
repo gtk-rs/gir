@@ -1,6 +1,7 @@
 use docopt::Docopt;
 use docopt::Error as DocoptError;
 use std::error::Error as StdError;
+use std::ffi::OsStr;
 use std::fmt::{self, Display, Formatter};
 use std::fs::File;
 use std::io::Error as IoError;
@@ -78,46 +79,46 @@ impl<'a> From<DocoptError> for Error {
     }
 }
 
-impl<P: AsRef<Path>> From<(IoError, P)> for Error {
+impl<P: AsRef<OsStr>> From<(IoError, P)> for Error {
     fn from(e: (IoError, P)) -> Error {
-        Error::Io(e.0, e.1.as_ref().into())
+        Error::Io(e.0, PathBuf::from(&e.1))
     }
 }
 
-impl<'a, P: AsRef<Path>> From<(&'a str, P)> for Error {
+impl<'a, P: AsRef<OsStr>> From<(&'a str, P)> for Error {
     fn from(e: (&'a str, P)) -> Error {
-        Error::Options(e.0.into(), e.1.as_ref().into())
+        Error::Options(e.0.into(), PathBuf::from(&e.1))
     }
 }
 
-impl<P: AsRef<Path>> From<(String, P)> for Error {
+impl<P: AsRef<OsStr>> From<(String, P)> for Error {
     fn from(e: (String, P)) -> Error {
-        Error::Options(e.0, e.1.as_ref().into())
+        Error::Options(e.0, PathBuf::from(&e.1))
     }
 }
 
 trait TomlHelper where Self: Sized {
-    fn lookup_str<'a, P: AsRef<Path>>(&'a self, option: &'a str, err: &str, config_file: P) -> Result<&'a str, Error>;
-    fn as_result_str<'a, P: AsRef<Path>>(&'a self, option: &'a str, config_file: P) -> Result<&'a str, Error>;
-    fn as_result_slice<'a, P: AsRef<Path>>(&'a self, option: &'a str, config_file: P) -> Result<&'a [Self], Error>;
+    fn lookup_str<'a, P: AsRef<OsStr>>(&'a self, option: &'a str, err: &str, config_file: P) -> Result<&'a str, Error>;
+    fn as_result_str<'a, P: AsRef<OsStr>>(&'a self, option: &'a str, config_file: P) -> Result<&'a str, Error>;
+    fn as_result_slice<'a, P: AsRef<OsStr>>(&'a self, option: &'a str, config_file: P) -> Result<&'a [Self], Error>;
 }
 
 impl TomlHelper for toml::Value {
-    fn lookup_str<'a, P: AsRef<Path>>(&'a self, option: &'a str, err: &str, config_file: P) -> Result<&'a str, Error> {
+    fn lookup_str<'a, P: AsRef<OsStr>>(&'a self, option: &'a str, err: &str, config_file: P) -> Result<&'a str, Error> {
         let value = try!(self.lookup(option).ok_or((err, &config_file)));
         value.as_result_str(option, config_file)
     }
-    fn as_result_str<'a, P: AsRef<Path>>(&'a self, option: &'a str, config_file: P) -> Result<&'a str, Error> {
+    fn as_result_str<'a, P: AsRef<OsStr>>(&'a self, option: &'a str, config_file: P) -> Result<&'a str, Error> {
         self.as_str()
             .ok_or(Error::Options(format!("Invalid `{}` value, expected a string, found {}",
                                           option, self.type_str()),
-                                  config_file.as_ref().into()))
+                                  PathBuf::from(&config_file)))
     }
-    fn as_result_slice<'a, P: AsRef<Path>>(&'a self, option: &'a str, config_file: P) -> Result<&'a [Self], Error> {
+    fn as_result_slice<'a, P: AsRef<OsStr>>(&'a self, option: &'a str, config_file: P) -> Result<&'a [Self], Error> {
         self.as_slice()
             .ok_or(Error::Options(format!("Invalid `{}` value, expected a array, found {}",
                                           option, self.type_str()),
-                                  config_file.as_ref().into()))
+                                  PathBuf::from(&config_file)))
     }
 }
 
@@ -229,7 +230,7 @@ impl Config {
     }
 }
 
-fn read_toml<P: AsRef<Path>>(filename: P) -> Result<toml::Value, Error> {
+fn read_toml<P: AsRef<OsStr> + AsRef<Path>>(filename: P) -> Result<toml::Value, Error> {
     let mut input = String::new();
     try!(File::open(&filename)
          .and_then(|mut f| f.read_to_string(&mut input))
@@ -243,7 +244,7 @@ fn read_toml<P: AsRef<Path>>(filename: P) -> Result<toml::Value, Error> {
             let (loline, locol) = parser.to_linecol(err.lo);
             let (hiline, hicol) = parser.to_linecol(err.hi);
             let s = format!("{}:{}-{}:{} error: {}", loline, locol, hiline, hicol, err.desc);
-            Err(Error::Toml(s, filename.as_ref().into()))
+            Err(Error::Toml(s, PathBuf::from(&filename)))
         }
     }
 }
