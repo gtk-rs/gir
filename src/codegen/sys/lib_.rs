@@ -1,5 +1,4 @@
 use std::collections::HashMap;
-use std::path::*;
 use std::io::{Result, Write};
 use case::CaseExt;
 
@@ -17,8 +16,7 @@ use traits::*;
 pub fn generate(env: &Env) {
     println!("generating sys for {}", env.config.library_name);
 
-    let path =  PathBuf::from(&env.config.target_path)
-        .join(file_name_sys("lib"));
+    let path =  env.config.target_path.join(file_name_sys("lib"));
 
     println!("Generating file {:?}", path);
     save_to_file(&path, env.config.make_backup,

@@ -1,5 +1,4 @@
 use std::io::{Result, Write};
-use std::path::PathBuf;
 
 use env::Env;
 use file_saver::save_to_file;
@@ -10,8 +9,7 @@ use version::Version;
 pub fn generate(env: &Env) {
     println!("generating sys build script for {}", env.config.library_name);
 
-    let path = PathBuf::from(&env.config.target_path)
-        .join("build.rs");
+    let path = env.config.target_path.join("build.rs");
 
     println!("Generating file {:?}", path);
     save_to_file(&path, env.config.make_backup,

@@ -137,10 +137,10 @@ Options:
 #[derive(Debug)]
 pub struct Config {
     pub work_mode: WorkMode,
-    pub girs_dir: String,
+    pub girs_dir: PathBuf,
     pub library_name: String,
     pub library_version: String,
-    pub target_path: String,
+    pub target_path: PathBuf,
     pub external_libraries: Vec<String>,
     pub objects: gobjects::GObjects,
     pub min_cfg_version: Version,
@@ -167,10 +167,10 @@ impl Config {
         let work_mode = WorkMode::from_str(work_mode_str)
             .unwrap_or_else(|e| panic!(e));
 
-        let girs_dir = match args.get_str("-d") {
+        let girs_dir: PathBuf = match args.get_str("-d") {
             "" => try!(toml.lookup_str("options.girs_dir", "No options.girs_dir in config", &config_file)),
             a => a
-        };
+        }.into();
 
         let (library_name, library_version) =
             match (args.get_str("<library>"), args.get_str("<version>")) {
@@ -182,10 +182,10 @@ impl Config {
             (a, b) => (a, b)
         };
 
-        let target_path = match args.get_str("-o") {
+        let target_path: PathBuf = match args.get_str("-o") {
             "" => try!(toml.lookup_str("options.target_path", "No target path specified", &config_file)),
             a => a
-        };
+        }.into();
 
         let mut objects = toml.lookup("object").map(|t| gobjects::parse_toml(t))
             .unwrap_or_else(|| Default::default());
@@ -213,10 +213,10 @@ impl Config {
 
         Ok(Config {
             work_mode: work_mode,
-            girs_dir: girs_dir.into(),
+            girs_dir: girs_dir,
             library_name: library_name.into(),
             library_version: library_version.into(),
-            target_path: target_path.into(),
+            target_path: target_path,
             external_libraries: external_libraries,
             objects: objects,
             min_cfg_version: min_cfg_version,

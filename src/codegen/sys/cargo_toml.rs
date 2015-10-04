@@ -1,7 +1,6 @@
 use std::collections::BTreeMap;
 use std::fs::File;
 use std::io::prelude::*;
-use std::path::PathBuf;
 use toml::{self, Parser, Table, Value};
 
 use env::Env;
@@ -11,8 +10,7 @@ use nameutil::crate_name;
 pub fn generate(env: &Env) {
     println!("manipulating sys Cargo.toml for {}", env.config.library_name);
 
-    let path = PathBuf::from(&env.config.target_path)
-        .join("Cargo.toml");
+    let path = env.config.target_path.join("Cargo.toml");
 
     let mut toml_str = String::new();
     if let Ok(mut file) = File::open(&path) {
