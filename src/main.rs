@@ -34,9 +34,10 @@ fn main() {
 
     let cfg = match config::Config::new() {
         Ok(c) => c,
+        Err(config::Error::CommandLine(e)) => e.exit(),
         Err(e) => {
-            println!("Failed to read config: {}", e);
-            return;
+            println!("{}", e);
+            ::std::process::exit(1);
         }
     };
 

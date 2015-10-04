@@ -1,6 +1,6 @@
 use std::io::BufReader;
 use std::fs::File;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::str::FromStr;
 use xml::attribute::OwnedAttribute;
 use xml::common::Position;
@@ -29,9 +29,9 @@ macro_rules! xml_next {
 }
 
 impl Library {
-    pub fn read_file(&mut self, dir: &str, lib: &str) {
+    pub fn read_file(&mut self, dir: &Path, lib: &str) {
         let name = make_file_name(dir, lib);
-        let display_name = name.to_string_lossy().into_owned();
+        let display_name = name.display();
         let file = BufReader::new(File::open(&name)
             .unwrap_or_else(|e| panic!("{} - {}", e, name.to_string_lossy())));
         let mut parser = EventReader::new(file);
@@ -42,7 +42,7 @@ impl Library {
                                                  namespace: Some(ref namespace), .. }, .. })
                             if local_name == &"repository"
                             && namespace == &"http://www.gtk.org/introspection/core/1.0" => {
-                    match self.read_repository(dir, &mut parser) {
+                    match self.read_repository(&dir, &mut parser) {
                         Err(e) => panic!("{} in {}:{}",
                                          e.msg(), display_name, e.position()),
                         Ok(_) => (),
@@ -55,7 +55,7 @@ impl Library {
         }
     }
 
-    fn read_repository(&mut self, dir: &str, parser: &mut Reader) -> Result<(), Error> {
+    fn read_repository(&mut self, dir: &Path, parser: &mut Reader) -> Result<(), Error> {
         let mut package = None;
         loop {
             let event = try!(parser.next());
@@ -888,8 +888,8 @@ fn ignore_element(parser: &mut Reader) -> Result<(), Error> {
     }
 }
 
-fn make_file_name(dir: &str, name: &str) -> PathBuf {
-    let mut path = PathBuf::from(dir);
+fn make_file_name(dir: &Path, name: &str) -> PathBuf {
+    let mut path = dir.to_path_buf();
     let name = format!("{}.gir", name);
     path.push(name);
     path

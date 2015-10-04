@@ -1,10 +1,13 @@
-use std::io::prelude::*;
-use std::fs::File;
-use std::str::FromStr;
-use std::error::Error;
-use std::io::Error as IoError;
-use std::fmt::{self, Display, Formatter};
 use docopt::Docopt;
+use docopt::Error as DocoptError;
+use std::error::Error as StdError;
+use std::ffi::OsStr;
+use std::fmt::{self, Display, Formatter};
+use std::fs::File;
+use std::io::Error as IoError;
+use std::io::prelude::*;
+use std::path::{Path, PathBuf};
+use std::str::FromStr;
 use toml;
 
 use gobjects;
@@ -32,31 +35,90 @@ impl FromStr for WorkMode {
 }
 
 #[derive(Debug)]
-pub enum ConfigError {
-    Io(IoError, String),
-    TomlError(String, String),
+pub enum Error {
+    CommandLine(DocoptError),
+    Io(IoError, PathBuf),
+    Toml(String, PathBuf),
+    Options(String, PathBuf),
 }
 
-impl Error for ConfigError {
+impl StdError for Error {
     fn description(&self) -> &str {
+        use self::Error::*;
         match *self {
-            ConfigError::Io(ref e, _) => e.description(),
-            ConfigError::TomlError(ref s, _) => s,
+            CommandLine(ref e) => e.description(),
+            Io(ref e, _) => e.description(),
+            Toml(ref s, _) => s,
+            Options(ref s, _) => s,
         }
     }
 }
 
-impl Display for ConfigError {
+impl Display for Error {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+        use self::Error::*;
         match *self {
-            ConfigError::Io(ref err, ref filename) => {
-                try!(write!(f, "\"{}\": ", filename));
+            CommandLine(ref err) => err.fmt(f),
+            Io(ref err, ref filename) => {
+                try!(write!(f, "Failed to read config \"{}\": ", filename.display()));
                 err.fmt(f)
             }
-            ConfigError::TomlError(ref err, ref filename) => {
-                write!(f, "\"{}\": {}", filename, err)
+            Toml(ref err, ref filename) => {
+                write!(f, "\"{}\": {}", filename.display(), err)
+            }
+            Options(ref err, ref filename) => {
+                write!(f, "\"{}\": {}", filename.display(), err)
             }
         }
+    }
+}
+
+impl<'a> From<DocoptError> for Error {
+    fn from(e: DocoptError) -> Error {
+        Error::CommandLine(e)
+    }
+}
+
+impl<P: AsRef<OsStr>> From<(IoError, P)> for Error {
+    fn from(e: (IoError, P)) -> Error {
+        Error::Io(e.0, PathBuf::from(&e.1))
+    }
+}
+
+impl<'a, P: AsRef<OsStr>> From<(&'a str, P)> for Error {
+    fn from(e: (&'a str, P)) -> Error {
+        Error::Options(e.0.into(), PathBuf::from(&e.1))
+    }
+}
+
+impl<P: AsRef<OsStr>> From<(String, P)> for Error {
+    fn from(e: (String, P)) -> Error {
+        Error::Options(e.0, PathBuf::from(&e.1))
+    }
+}
+
+trait TomlHelper where Self: Sized {
+    fn lookup_str<'a, P: AsRef<OsStr>>(&'a self, option: &'a str, err: &str, config_file: P) -> Result<&'a str, Error>;
+    fn as_result_str<'a, P: AsRef<OsStr>>(&'a self, option: &'a str, config_file: P) -> Result<&'a str, Error>;
+    fn as_result_slice<'a, P: AsRef<OsStr>>(&'a self, option: &'a str, config_file: P) -> Result<&'a [Self], Error>;
+}
+
+impl TomlHelper for toml::Value {
+    fn lookup_str<'a, P: AsRef<OsStr>>(&'a self, option: &'a str, err: &str, config_file: P) -> Result<&'a str, Error> {
+        let value = try!(self.lookup(option).ok_or((err, &config_file)));
+        value.as_result_str(option, config_file)
+    }
+    fn as_result_str<'a, P: AsRef<OsStr>>(&'a self, option: &'a str, config_file: P) -> Result<&'a str, Error> {
+        self.as_str()
+            .ok_or(Error::Options(format!("Invalid `{}` value, expected a string, found {}",
+                                          option, self.type_str()),
+                                  PathBuf::from(&config_file)))
+    }
+    fn as_result_slice<'a, P: AsRef<OsStr>>(&'a self, option: &'a str, config_file: P) -> Result<&'a [Self], Error> {
+        self.as_slice()
+            .ok_or(Error::Options(format!("Invalid `{}` value, expected a array, found {}",
+                                          option, self.type_str()),
+                                  PathBuf::from(&config_file)))
     }
 }
 
@@ -76,10 +138,10 @@ Options:
 #[derive(Debug)]
 pub struct Config {
     pub work_mode: WorkMode,
-    pub girs_dir: String,
+    pub girs_dir: PathBuf,
     pub library_name: String,
     pub library_version: String,
-    pub target_path: String,
+    pub target_path: PathBuf,
     pub external_libraries: Vec<String>,
     pub objects: gobjects::GObjects,
     pub min_cfg_version: Version,
@@ -87,78 +149,75 @@ pub struct Config {
 }
 
 impl Config {
-    pub fn new() -> Result<Config, ConfigError> {
-        let args = Docopt::new(USAGE)
-            .and_then(|dopt| dopt.parse())
-            .unwrap_or_else(|e| e.exit());
+    pub fn new() -> Result<Config, Error> {
+        let args = try!(Docopt::new(USAGE)
+            .and_then(|dopt| dopt.parse()));
 
-        let config_file = match args.get_str("-c") {
+        let config_file: PathBuf = match args.get_str("-c") {
             "" => "Gir.toml",
             a => a,
-        };
+        }.into();
 
         //TODO: add check file existence when stable std::fs::PathExt
-        let toml = try!(read_toml(config_file));
+        let toml = try!(read_toml(&config_file));
+
         let work_mode_str = match args.get_str("-m") {
-            "" => toml.lookup("options.work_mode")
-                    .expect("No options.work_mode in config")
-                    .as_str().unwrap(),
+            "" => try!(toml.lookup_str("options.work_mode", "No options.work_mode in config", &config_file)),
             a => a,
         };
         let work_mode = WorkMode::from_str(work_mode_str)
             .unwrap_or_else(|e| panic!(e));
 
-        let girs_dir = match args.get_str("-d") {
-            "" => toml.lookup("options.girs_dir")
-                      .expect("No options.girs_dir in config")
-                      .as_str().unwrap(),
+        let girs_dir: PathBuf = match args.get_str("-d") {
+            "" => try!(toml.lookup_str("options.girs_dir", "No options.girs_dir in config", &config_file)),
             a => a
-        };
+        }.into();
 
         let (library_name, library_version) =
             match (args.get_str("<library>"), args.get_str("<version>")) {
             ("", "") => (
-                toml.lookup("options.library")
-                    .expect("No options.library in config")
-                    .as_str().unwrap(),
-                toml.lookup("options.version")
-                    .expect("No options.version in config")
-                    .as_str().unwrap()
+                try!(toml.lookup_str("options.library", "No options.library in config", &config_file)),
+                try!(toml.lookup_str("options.version", "No options.version in config", &config_file))
             ),
-            ("", _) | (_, "") => panic!("Library and version can not be specified separately"),
+            ("", _) | (_, "") => try!(Err(("Library and version can not be specified separately", &config_file))),
             (a, b) => (a, b)
         };
 
-        let target_path = match args.get_str("-o") {
-            "" => toml.lookup("options.target_path")
-                    .expect("No target path specified")
-                    .as_str().unwrap(),
+        let target_path: PathBuf = match args.get_str("-o") {
+            "" => try!(toml.lookup_str("options.target_path", "No target path specified", &config_file)),
             a => a
-        };
+        }.into();
 
         let mut objects = toml.lookup("object").map(|t| gobjects::parse_toml(t))
             .unwrap_or_else(|| Default::default());
         gobjects::parse_status_shorthands(&mut objects, &toml);
 
-        let external_libraries = toml.lookup("options.external_libraries")
-            .map(|a| a.as_slice().unwrap().iter()
-                .filter_map(|v|
-                    if let &toml::Value::String(ref s) = v { Some(s.clone()) } else { None } )
-                .collect())
-            .unwrap_or_else(|| Vec::new());
+        let external_libraries = match toml.lookup("options.external_libraries") {
+            Some(a) => {
+                try!(a.as_result_slice("options.external_libraries", &config_file))
+                    .iter().filter_map(|v| v.as_str().map(String::from))
+                    .collect()
+            }
+            None => Vec::new(),
+        };
 
-        let min_cfg_version = toml.lookup("options.min_cfg_version")
-            .map_or_else(|| Ok(Default::default()), |t| t.as_str().unwrap().parse())
-            .unwrap_or_else(|e| panic!(e));
+        let min_cfg_version = match toml.lookup("options.min_cfg_version") {
+            Some(v) => {
+                try!(
+                    try!(v.as_result_str("options.min_cfg_version", &config_file))
+                        .parse().map_err(|e: String| (e, config_file)))
+            }
+            None => Default::default(),
+        };
 
         let make_backup = args.get_bool("-b");
 
         Ok(Config {
             work_mode: work_mode,
-            girs_dir: girs_dir.into(),
+            girs_dir: girs_dir,
             library_name: library_name.into(),
             library_version: library_version.into(),
-            target_path: target_path.into(),
+            target_path: target_path,
             external_libraries: external_libraries,
             objects: objects,
             min_cfg_version: min_cfg_version,
@@ -171,14 +230,11 @@ impl Config {
     }
 }
 
-fn read_toml(filename: &str) -> Result<toml::Value, ConfigError> {
+fn read_toml<P: AsRef<OsStr> + AsRef<Path>>(filename: P) -> Result<toml::Value, Error> {
     let mut input = String::new();
-    match File::open(filename).and_then(|mut f| {
-        f.read_to_string(&mut input)
-    }) {
-        Ok(_) => {},
-        Err(e) => return Err(ConfigError::Io(e, filename.to_owned())),
-    }
+    try!(File::open(&filename)
+         .and_then(|mut f| f.read_to_string(&mut input))
+         .map_err(|e| (e, &filename)));
 
     let mut parser = toml::Parser::new(&input);
     match parser.parse() {
@@ -188,7 +244,7 @@ fn read_toml(filename: &str) -> Result<toml::Value, ConfigError> {
             let (loline, locol) = parser.to_linecol(err.lo);
             let (hiline, hicol) = parser.to_linecol(err.hi);
             let s = format!("{}:{}-{}:{} error: {}", loline, locol, hiline, hicol, err.desc);
-            Err(ConfigError::TomlError(s, filename.to_owned()))
+            Err(Error::Toml(s, PathBuf::from(&filename)))
         }
     }
 }

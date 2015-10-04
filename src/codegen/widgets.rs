@@ -1,5 +1,5 @@
 use std::io::Write;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
 use analysis;
 use env::Env;
@@ -8,7 +8,7 @@ use nameutil::*;
 use super::general;
 
 pub fn generate(env: &Env) {
-    let root_path = PathBuf::from(&env.config.target_path).join("src").join("auto");
+    let root_path = env.config.target_path.join("src").join("auto");
 
     let mut mod_rs: Vec<String> = Vec::new();
     let mut traits: Vec<String> = Vec::new();
