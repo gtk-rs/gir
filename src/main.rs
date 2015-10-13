@@ -47,7 +47,10 @@ fn do_main() -> Result<(), Box<Error>> {
 
     let cfg = match config::Config::new() {
         Ok(cfg) => cfg,
-        Err(config::Error::CommandLine(ref err)) if !err.fatal() => return Ok(()),
+        Err(config::Error::CommandLine(ref err)) if !err.fatal() => {
+            println!("{}", err);
+            return Ok(());
+        }
         Err(err) => return Err(Box::new(err)),
     };
 
