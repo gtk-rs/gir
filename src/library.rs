@@ -539,10 +539,6 @@ impl Namespace {
         self.index.get(name).cloned()
     }
 
-    fn find_type_by_glib_name(&self, c_type: &str) -> Option<u32> {
-        self.glib_name_index.get(c_type).cloned()
-    }
-
     fn unresolved(&self) -> Vec<&str> {
         self.index.iter().filter_map(|(name, &id)| {
             if self.types[id as usize].is_none() {
@@ -656,16 +652,6 @@ impl Library {
 
         let id = self.namespace_mut(current_ns_id).add_type(name, None);
         TypeId { ns_id: current_ns_id, id: id }
-    }
-
-    pub fn find_type_by_glib_name(&self, c_type: &str) -> Option<TypeId> {
-        for (ns_id, ns) in self.namespaces.iter().enumerate() {
-            match ns.find_type_by_glib_name(c_type) {
-                Some(id) => return Some(TypeId { ns_id: ns_id as u16, id: id }),
-                None => ()
-            }
-        }
-        None
     }
 
     pub fn type_(&self, tid: TypeId) -> &Type {
