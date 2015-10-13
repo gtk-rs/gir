@@ -15,12 +15,21 @@ pub fn ffi_type(env: &Env, tid: library::TypeId, c_type: &str) -> Result {
         if let Some(c_tid) = env.library.find_type(0, c_type) {
             // Fast track plain fundamental types avoiding some checks
             if env.library.type_(c_tid).maybe_ref_as::<Fundamental>().is_some() {
-                if let &library::Type::FixedArray(_, size) = env.library.type_(tid) {
-                    ffi_inner(env, c_tid, c_type.into())
-                        .map_any(|s| format!("[{}; {}]", s, size))
-                }
-                else {
-                    ffi_inner(env, c_tid, c_type.into())
+                match *env.library.type_(tid) {
+                    Type::FixedArray(_, size) => {
+                        ffi_inner(env, c_tid, c_type.into())
+                            .map_any(|s| format!("[{}; {}]", s, size))
+                    }
+                    Type::Class(Class { c_type: ref expected, .. }) |
+                            Type::Interface(Interface { c_type: ref expected, .. })
+                            if c_type == "gpointer" => {
+                        info!("[c:type `gpointer` instead of `*mut {}`, fixing]", expected);
+                        ffi_inner(env, tid, expected.clone())
+                            .map_any(|s| format!("*mut {}", s))
+                    }
+                    _ => {
+                        ffi_inner(env, c_tid, c_type.into())
+                    }
                 }
             }
             else { // c_type isn't fundamental
