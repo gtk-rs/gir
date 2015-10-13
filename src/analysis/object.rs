@@ -17,7 +17,6 @@ pub struct Info {
     pub parents: Vec<general::StatusedTypeId>,
     pub implements: Vec<general::StatusedTypeId>,
     pub has_children: bool,
-    pub has_ignored_parents: bool,
     pub functions: Vec<functions::Info>,
     pub has_constructors: bool,
     pub has_methods: bool,
@@ -66,7 +65,7 @@ pub fn new(env: &Env, obj: &GObject) -> Info {
     let name: String = split_namespace_name(&full_name).1.into();
 
     let klass = type_.to_ref();
-    let (parents, has_ignored_parents) = parents::analyze(env, klass, &mut imports);
+    let parents = parents::analyze(env, klass, &mut imports);
     let implements = implements::analyze(env, klass, &mut imports);
 
     let mut has_children = false;
@@ -98,7 +97,6 @@ pub fn new(env: &Env, obj: &GObject) -> Info {
         parents: parents,
         implements: implements,
         has_children: has_children,
-        has_ignored_parents: has_ignored_parents,
         functions: functions,
         imports: imports,
         version: version,
