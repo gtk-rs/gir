@@ -20,10 +20,6 @@ pub fn generate(env: &Env) {
 
         info!("Analyzing {:?}", obj.name);
         let class_analysis = analysis::widget::new(env, obj);
-        if class_analysis.has_ignored_parents {
-            warn!("Skipping {:?}, it has ignored parents", obj.name);
-            continue;
-        }
 
         let path = root_path.join(file_name(&class_analysis.full_name));
         info!("Generating file {:?}", path);

@@ -48,7 +48,9 @@ pub fn impl_parents<W: Write>(w: &mut W, type_name: &str, parents: &[StatusedTyp
     try!(writeln!(w, ""));
     for stid in parents {
         //TODO: don't generate for parents without traits
-        try!(writeln!(w, "unsafe impl Upcast<{}> for {} {{ }}", stid.name, type_name));
+        if !stid.status.ignored() {
+            try!(writeln!(w, "unsafe impl Upcast<{}> for {} {{ }}", stid.name, type_name));
+        }
     }
 
     Ok(())
@@ -56,7 +58,9 @@ pub fn impl_parents<W: Write>(w: &mut W, type_name: &str, parents: &[StatusedTyp
 
 pub fn impl_interfaces<W: Write>(w: &mut W, type_name: &str, implements: &[StatusedTypeId]) -> Result<()>{
     for stid in implements {
-        try!(writeln!(w, "unsafe impl Upcast<{}> for {} {{ }}", stid.name, type_name));
+        if !stid.status.ignored() {
+            try!(writeln!(w, "unsafe impl Upcast<{}> for {} {{ }}", stid.name, type_name));
+        }
     }
 
     Ok(())
