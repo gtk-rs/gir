@@ -9,6 +9,9 @@ extern crate log;
 extern crate xml;
 extern crate toml;
 
+use std::error::Error;
+use std::process;
+
 use env::Env;
 use library::Library;
 
@@ -30,15 +33,19 @@ mod version;
 
 #[cfg_attr(test, allow(dead_code))]
 fn main() {
-    env_logger::init().unwrap_or_else(|e| panic!("{}", e));
+    if let Err(err) = do_main() {
+        println!("{}", err);
+        process::exit(1);
+    }
+}
+
+fn do_main() -> Result<(), Box<Error>> {
+    try!(env_logger::init());
 
     let cfg = match config::Config::new() {
-        Ok(c) => c,
-        Err(config::Error::CommandLine(e)) => e.exit(),
-        Err(e) => {
-            println!("{}", e);
-            ::std::process::exit(1);
-        }
+        Ok(cfg) => cfg,
+        Err(config::Error::CommandLine(ref err)) if !err.fatal() => return Ok(()),
+        Err(err) => return Err(Box::new(err)),
     };
 
     let mut library = Library::new(&cfg.library_name);
@@ -47,4 +54,6 @@ fn main() {
 
     let env = Env{ library: library, config: cfg };
     codegen::generate(&env);
+
+    Ok(())
 }
