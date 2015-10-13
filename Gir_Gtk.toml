@@ -56,12 +56,12 @@ name = "Gtk.Orientable"
 status = "manual"
 
 [[object]]
-name = "Gtk.AccelGroup"
+name = "Gtk.Adjustment"
 status = "generate"
 
 [[object]]
-name = "Gtk.Alignment"
-status = "manual"
+name = "Gtk.AccelGroup"
+status = "generate"
 
 [[object]]
 name = "Gtk.ActionBar"
@@ -111,11 +111,23 @@ name = "Gtk.ColorButton"
 status = "generate"
 
 [[object]]
+name = "Gtk.ColorChooserWidget"
+status = "generate"
+
+[[object]]
 name = "Gtk.DrawingArea"
 status = "generate"
 
 [[object]]
-name = "Gtk.EventController"
+name = "Gtk.EventBox"
+status = "generate"
+
+[[object]]
+name = "Gtk.Expander"
+status = "generate"
+
+[[object]]
+name = "Gtk.FileChooserWidget"
 status = "generate"
 
 [[object]]
@@ -135,43 +147,11 @@ name = "Gtk.FontButton"
 status = "generate"
 
 [[object]]
+name = "Gtk.FontChooserWidget"
+status = "generate"
+
+[[object]]
 name = "Gtk.Frame"
-status = "generate"
-
-[[object]]
-name = "Gtk.Gesture"
-status = "generate"
-
-[[object]]
-name = "Gtk.GestureDrag"
-status = "generate"
-
-[[object]]
-name = "Gtk.GestureLongPress"
-status = "generate"
-
-[[object]]
-name = "Gtk.GestureMultiPress"
-status = "generate"
-
-[[object]]
-name = "Gtk.GesturePan"
-status = "generate"
-
-[[object]]
-name = "Gtk.GestureRotate"
-status = "generate"
-
-[[object]]
-name = "Gtk.GestureSingle"
-status = "generate"
-
-[[object]]
-name = "Gtk.GestureSwipe"
-status = "generate"
-
-[[object]]
-name = "Gtk.GestureZoom"
 status = "generate"
 
 [[object]]
@@ -184,6 +164,10 @@ status = "generate"
 
 [[object]]
 name = "Gtk.Image"
+status = "generate"
+
+[[object]]
+name = "Gtk.InfoBar"
 status = "generate"
 
 [[object]]
@@ -203,6 +187,14 @@ name = "Gtk.LinkButton"
 status = "generate"
 
 [[object]]
+name = "Gtk.ListBox"
+status = "generate"
+
+[[object]]
+name = "Gtk.ListBoxRow"
+status = "generate"
+
+[[object]]
 name = "Gtk.Menu"
 status = "generate"
 
@@ -215,7 +207,19 @@ name = "Gtk.MenuItem"
 status = "generate"
 
 [[object]]
+name = "Gtk.MenuToolButton"
+status = "generate"
+
+[[object]]
 name = "Gtk.MenuShell"
+status = "generate"
+
+[[object]]
+name = "Gtk.Notebook"
+status = "generate"
+
+[[object]]
+name = "Gtk.Overlay"
 status = "generate"
 
 [[object]]
@@ -231,11 +235,31 @@ name = "Gtk.RadioButton"
 status = "generate"
 
 [[object]]
+name = "Gtk.RecentChooserWidget"
+status = "generate"
+
+[[object]]
 name = "Gtk.ScaleButton"
 status = "generate"
 
 [[object]]
+name = "Gtk.SeparatorToolItem"
+status = "generate"
+
+[[object]]
+name = "Gtk.SizeGroup"
+status = "generate"
+
+[[object]]
 name = "Gtk.ToggleButton"
+status = "generate"
+
+[[object]]
+name = "Gtk.ToolButton"
+status = "generate"
+
+[[object]]
+name = "Gtk.ToolItem"
 status = "generate"
 
 [[object]]
