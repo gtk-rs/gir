@@ -1,4 +1,3 @@
-use analysis::c_type::rustify_pointers;
 use analysis::rust_type::*;
 use env::Env;
 use library::{self, Nullable};
@@ -35,8 +34,13 @@ pub fn analyze(env: &Env, func: &library::Function, class_tid: library::TypeId,
         parameter_rust_type(env, func.ret.typ, func.ret.direction, Nullable(false)).is_err()
     };
 
+    let mut base_tid = None;
+
     if func.kind == library::FunctionKind::Constructor {
         if let Some(par) = parameter {
+            if par.typ != class_tid {
+                base_tid = Some(par.typ);
+            }
             parameter = Some(library::Parameter {
                 typ: class_tid,
                 nullable: Nullable(false),
@@ -44,12 +48,6 @@ pub fn analyze(env: &Env, func: &library::Function, class_tid: library::TypeId,
             });
         }
     }
-
-    let base_tid = if let Some(ref par) = parameter {
-        get_base_type_id_from_c_type(env, par)
-    } else {
-        None
-    };
 
     Info {
         parameter: parameter,
@@ -78,19 +76,5 @@ fn can_be_nullable_return(env: &Env, type_id: library::TypeId) -> bool
         &Interface(_) => true,
         &Class(_) => true,
         _ => true
-    }
-}
-
-fn get_base_type_id_from_c_type(env: &Env, par: &library::Parameter) -> Option<library::TypeId> {
-    match env.type_(par.typ) {
-        &library::Type::Class(_) => {
-            let (_, inner) = rustify_pointers(&par.c_type);
-            let typ = env.library.find_type_by_glib_name(&inner);
-            match typ {
-                Some(tid) => if tid == par.typ { None } else { typ },
-                None => typ
-            }
-        }
-        _ => None,
     }
 }
