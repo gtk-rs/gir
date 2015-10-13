@@ -40,6 +40,9 @@ fn main() {
 }
 
 fn do_main() -> Result<(), Box<Error>> {
+    if std::env::var_os("RUST_LOG").is_none() {
+        std::env::set_var("RUST_LOG", "gir=warn");
+    }
     try!(env_logger::init());
 
     let cfg = match config::Config::new() {
