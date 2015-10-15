@@ -4,7 +4,6 @@ use library;
 use nameutil::*;
 use super::*;
 use super::imports::Imports;
-use super::type_kind::TypeKind;
 use traits::*;
 use version::Version;
 
@@ -12,7 +11,6 @@ use version::Version;
 pub struct Info {
     pub full_name: String,
     pub class_tid: library::TypeId,
-    pub kind: type_kind::TypeKind,
     pub name: String,
     pub parents: Vec<general::StatusedTypeId>,
     pub implements: Vec<general::StatusedTypeId>,
@@ -60,7 +58,6 @@ pub fn new(env: &Env, obj: &GObject) -> Info {
     let class_tid = env.library.find_type_unwrapped(0, &full_name, "Class");
 
     let type_ = env.type_(class_tid);
-    let kind = TypeKind::of(&env.library, class_tid);
 
     let name: String = split_namespace_name(&full_name).1.into();
 
@@ -92,7 +89,6 @@ pub fn new(env: &Env, obj: &GObject) -> Info {
     let mut info = Info {
         full_name: full_name,
         class_tid: class_tid,
-        kind: kind,
         name: name,
         parents: parents,
         implements: implements,
