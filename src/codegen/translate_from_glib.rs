@@ -1,6 +1,6 @@
 use analysis;
 use analysis::rust_type::rust_type;
-use analysis::type_kind::TypeKind;
+use analysis::conversion_type::ConversionType;
 use env::Env;
 use library;
 use traits::*;
@@ -12,19 +12,18 @@ pub trait TranslateFromGlib {
 //TODO: move to code for analysis::return_value::Info
 impl TranslateFromGlib for library::Parameter {
     fn translate_from_glib_as_function(&self, env: &Env) -> (String, String) {
-        let kind = TypeKind::of(&env.library, self.typ);
-        match kind {
-            TypeKind::Converted => ("from_glib(".into(), ")".into()),
-            TypeKind::Direct |
-                TypeKind::Bitfield |
-                TypeKind::Enumeration => (String::new(), String::new()),
-            TypeKind::Pointer | //Checked only for Option<String>
-                TypeKind::Object => from_glib_xxx(self.transfer),
-            TypeKind::Container => {
+        use analysis::conversion_type::ConversionType::*;
+        match ConversionType::of(&env.library, self.typ) {
+            Direct => (String::new(), String::new()),
+            Scalar => ("from_glib(".into(), ")".into()),
+            Pointer => {
                 let trans = from_glib_xxx(self.transfer);
-                (format!("FromGlibPtrContainer::{}", trans.0), trans.1)
+                match *env.type_(self.typ) {
+                    library::Type::List(..) => (format!("FromGlibPtrContainer::{}", trans.0), trans.1),
+                    _ => trans,
+                }
             }
-            _ => (format!("TODO {:?}:", kind), String::new()),
+            Unknown => ("/*Unknown conversion*/".into(), String::new()),
         }
     }
 }
