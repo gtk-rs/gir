@@ -3,7 +3,7 @@ use std::vec::Vec;
 
 use env::Env;
 use library::*;
-use super::type_kind::TypeKind;
+use super::conversion_type::ConversionType;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum Mode {
@@ -68,11 +68,11 @@ pub fn analyze(env: &Env, type_: &Function) -> (Info, bool) {
 }
 
 fn can_as_return(env: &Env, par: &Parameter) -> bool {
-    use super::type_kind::TypeKind::*;
-    match TypeKind::of(&env.library, par.typ) {
-        Enumeration |
-            Converted |
-            Direct => true,
-        _ => false
+    use super::conversion_type::ConversionType::*;
+    match ConversionType::of(&env.library, par.typ) {
+        Direct => true,
+        Scalar => true,
+        Pointer => false,
+        Unknown => false,
     }
 }

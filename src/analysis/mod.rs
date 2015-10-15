@@ -1,4 +1,5 @@
 pub mod c_type;
+pub mod conversion_type;
 pub mod functions;
 pub mod general;
 pub mod implements;
@@ -9,6 +10,5 @@ pub mod out_parameters;
 pub mod parents;
 pub mod return_value;
 pub mod rust_type;
-pub mod type_kind;
 pub mod upcasts;
 pub mod widget;

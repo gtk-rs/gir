@@ -1,7 +1,7 @@
 use analysis;
 use env::Env;
 use library::{self, ParameterDirection};
-use analysis::type_kind::TypeKind;
+use analysis::conversion_type::ConversionType;
 use analysis::rust_type::parameter_rust_type;
 use traits::*;
 
@@ -13,9 +13,8 @@ impl ToReturnValue for library::Parameter {
     fn to_return_value(&self, env: &Env) -> String {
         let rust_type = parameter_rust_type(env, self.typ, self.direction, self.nullable);
         let name = rust_type.as_str();
-        let kind = TypeKind::of(&env.library, self.typ);
-        let type_str = match kind {
-            TypeKind::Unknown => format!("/*Unknown kind*/{}", name),
+        let type_str = match ConversionType::of(&env.library, self.typ) {
+            ConversionType::Unknown => format!("/*Unknown conversion*/{}", name),
             //TODO: records as in gtk_container_get_path_for_child
             _ => name.into(),
         };
@@ -61,9 +60,8 @@ fn out_parameter_as_return(par: &library::Parameter, env: &Env) -> String {
     //TODO: upcasts?
     let rust_type = parameter_rust_type(env, par.typ, ParameterDirection::Return, par.nullable);
     let name = rust_type.as_str();
-    let kind = TypeKind::of(&env.library, par.typ);
-    match kind {
-        TypeKind::Unknown => format!("/*Unknown kind*/{}", name),
+    match ConversionType::of(&env.library, par.typ) {
+        ConversionType::Unknown => format!("/*Unknown conversion*/{}", name),
         _ => name.into(),
     }
 }

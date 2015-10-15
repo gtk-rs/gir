@@ -3,7 +3,7 @@ use std::result;
 use env::Env;
 use library::{self, Nullable};
 use nameutil::crate_name;
-use super::type_kind::TypeKind;
+use super::conversion_type::ConversionType;
 use traits::*;
 
 pub type Result = result::Result<String, String>;
@@ -22,6 +22,7 @@ pub fn rust_type(env: &Env, type_id: library::TypeId) -> Result {
 fn rust_type_full(env: &Env, type_id: library::TypeId, nullable: Nullable, by_ref: bool) -> Result {
     use library::Type::*;
     use library::Fundamental::*;
+    let mut skip_option = false;
     let type_ = env.library.type_(type_id);
     let mut rust_type = match *type_ {
         Fundamental(fund) => {
@@ -59,6 +60,7 @@ fn rust_type_full(env: &Env, type_id: library::TypeId, nullable: Nullable, by_re
         Interface(ref interface) => Ok(interface.name.clone()),
         Class(ref klass) => Ok(klass.name.clone()),
         List(inner_tid) => {
+            skip_option = true;
             rust_type(env, inner_tid)
                 .map_any(|s| if by_ref { format!("[{}]", s) } else { format!("Vec<{}>", s) })
         }
@@ -78,12 +80,9 @@ fn rust_type_full(env: &Env, type_id: library::TypeId, nullable: Nullable, by_re
     if by_ref {
         rust_type = rust_type.map_any(|s| format!("&{}", s));
     }
-    if *nullable {
-        // ignore nullability of containers, they don't require wrapping in an Option
-        match TypeKind::of(&env.library, type_id) {
-            TypeKind::Pointer |
-                TypeKind::Object |
-                TypeKind::Interface => rust_type = rust_type.map_any(|s| format!("Option<{}>", s)),
+    if *nullable && !skip_option {
+        match ConversionType::of(&env.library, type_id) {
+            ConversionType::Pointer => rust_type = rust_type.map_any(|s| format!("Option<{}>", s)),
             _ => (),
         }
     }
