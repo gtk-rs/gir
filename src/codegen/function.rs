@@ -4,14 +4,15 @@ use analysis;
 use analysis::upcasts::Upcasts;
 use env::Env;
 use super::function_body::Builder;
-use super::general::{tabs, version_condition};
+use super::general::version_condition;
 use super::parameter::ToParameter;
 use super::return_value::{out_parameters_as_return, ToReturnValue};
 use super::translate_from_glib::TranslateFromGlib;
 use super::translate_to_glib::TranslateToGlib;
+use writer::primitives::tabs;
 
 pub fn generate<W: Write>(w: &mut W, env: &Env, analysis: &analysis::functions::Info,
-    in_trait: bool, only_declaration: bool, indent: i32) -> Result<()> {
+    in_trait: bool, only_declaration: bool, indent: usize) -> Result<()> {
 
     let comment_prefix = if analysis.comented { "//" } else { "" };
     let pub_prefix = if in_trait { "" } else { "pub " };

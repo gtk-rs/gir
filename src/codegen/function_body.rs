@@ -1,7 +1,7 @@
 use std::fmt;
 
 use analysis::out_parameters::Mode;
-use super::general::tabs;
+use writer::primitives::tabs;
 
 macro_rules! write_to_vec(
     ($dst:expr, $($arg:tt)*) => (
@@ -104,7 +104,7 @@ impl Builder {
             .filter_map(|par| if let Out{ .. } = *par { Some(par) } else { None })
             .collect()
     }
-    fn write_out_variables(&self, v: &mut Vec<String>, indent: i32) {
+    fn write_out_variables(&self, v: &mut Vec<String>, indent: usize) {
         let outs = self.get_outs();
         for par in outs {
             if let Out{ ref name, .. } = *par {

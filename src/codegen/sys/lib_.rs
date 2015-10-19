@@ -10,8 +10,9 @@ use nameutil::*;
 use super::ffi_type::ffi_type;
 use super::functions;
 use super::statics;
-use super::super::general::{self, tabs};
+use super::super::general;
 use traits::*;
+use writer::primitives::tabs;
 
 pub fn generate(env: &Env) {
     println!("generating sys for {}", env.config.library_name);

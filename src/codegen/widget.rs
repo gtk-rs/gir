@@ -3,7 +3,7 @@ use std::io::{Result, Write};
 use analysis;
 use env::Env;
 use super::{function, general};
-use super::general::tabs;
+use writer::primitives::tabs;
 
 pub fn generate<W: Write>(w: &mut W, env: &Env, analysis: &analysis::object::Info) -> Result<()>{
     let type_ = analysis.type_(&env.library);

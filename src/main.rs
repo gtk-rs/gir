@@ -30,6 +30,7 @@ mod nameutil;
 mod parser;
 mod traits;
 mod version;
+mod writer;
 
 #[cfg_attr(test, allow(dead_code))]
 fn main() {
