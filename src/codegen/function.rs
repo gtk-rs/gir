@@ -9,7 +9,8 @@ use super::parameter::ToParameter;
 use super::return_value::{out_parameters_as_return, ToReturnValue};
 use super::translate_from_glib::TranslateFromGlib;
 use super::translate_to_glib::TranslateToGlib;
-use writer::primitives::tabs;
+use writer::ffi_function_todo;
+use writer::primitives::{indent_strings, tabs};
 
 pub fn generate<W: Write>(w: &mut W, env: &Env, analysis: &analysis::functions::Info,
     in_trait: bool, only_declaration: bool, indent: usize) -> Result<()> {
@@ -25,17 +26,17 @@ pub fn generate<W: Write>(w: &mut W, env: &Env, analysis: &analysis::functions::
         comment_prefix, pub_prefix, declaration, suffix));
 
     if !only_declaration {
-        if analysis.comented {
-            try!(writeln!(w, "{}//{}unsafe {{ TODO: call ffi:{}() }}",
-                tabs(indent), tabs(1), analysis.glib_name));
-            try!(writeln!(w, "{}//}}", tabs(indent)));
+        let body = if analysis.comented {
+            ffi_function_todo(&analysis.glib_name)
         }
         else {
             let body = body(env, analysis, in_trait);
-            for s in body {
-                try!(writeln!(w, "{}{}", tabs(indent + 1), s));
-            }
-            try!(writeln!(w, "{}}}", tabs(indent)));
+            let mut body = indent_strings(&body, 1);
+            body.push("}".into());
+            body
+        };
+        for s in body {
+            try!(writeln!(w, "{}{}", tabs(indent), s));
         }
         try!(writeln!(w, ""));
     }
