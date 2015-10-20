@@ -61,12 +61,14 @@ fn do_main() -> Result<(), Box<Error>> {
     library.fill_in();
 
     let namespaces = analysis::namespaces::run(&library);
+    analysis::foreign::run();
 
     let env = Env{
         library: library,
         config: cfg,
         namespaces: namespaces,
     };
+
     codegen::generate(&env);
 
     Ok(())
