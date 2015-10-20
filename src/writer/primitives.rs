@@ -7,10 +7,6 @@ pub fn tabs(num: usize) -> String {
     format!("{:1$}", "", TAB_SIZE * num)
 }
 
-pub fn indent_strings(strs: &[String], indent: usize) -> Vec<String> {
-    strs.iter().map(|s| format!("{}{}", tabs(indent), s)).collect()
-}
-
 pub fn format_block(prefix: &str, suffix: &str, body: &[String]) -> Vec<String> {
     let mut v = Vec::new();
     if !prefix.is_empty() { v.push(prefix.into()); }
@@ -67,12 +63,6 @@ mod tests {
         assert_eq!(tabs(0), "");
         assert_eq!(tabs(1), format!("{}", TAB));
         assert_eq!(tabs(2), format!("{0}{0}", TAB));
-    }
-
-    #[test]
-    fn test_indent_strings() {
-        assert_eq!(indent_strings(&["a".into(), "b".into()], 1),
-                   ["    a", "    b"]);
     }
 
     #[test]

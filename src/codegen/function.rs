@@ -10,7 +10,7 @@ use super::return_value::{out_parameters_as_return, ToReturnValue};
 use super::translate_from_glib::TranslateFromGlib;
 use super::translate_to_glib::TranslateToGlib;
 use writer::ffi_function_todo;
-use writer::primitives::{indent_strings, tabs};
+use writer::primitives::{format_block, tabs};
 
 pub fn generate<W: Write>(w: &mut W, env: &Env, analysis: &analysis::functions::Info,
     in_trait: bool, only_declaration: bool, indent: usize) -> Result<()> {
@@ -31,9 +31,7 @@ pub fn generate<W: Write>(w: &mut W, env: &Env, analysis: &analysis::functions::
         }
         else {
             let body = body(env, analysis, in_trait);
-            let mut body = indent_strings(&body, 1);
-            body.push("}".into());
-            body
+            format_block("", "}", &body)
         };
         for s in body {
             try!(writeln!(w, "{}{}", tabs(indent), s));
