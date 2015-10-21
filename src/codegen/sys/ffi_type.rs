@@ -1,9 +1,9 @@
 use analysis::c_type::rustify_pointers;
+use analysis::namespaces;
 use analysis::rust_type::Result;
 use env::Env;
 use library;
 use library::*;
-use nameutil::crate_name;
 use traits::*;
 
 // FIXME: This module needs redundant allocations audit
@@ -161,11 +161,12 @@ fn fix_name(env: &Env, type_id: library::TypeId, name: &str) -> Result {
         match *env.library.type_(type_id) {
             Type::Array(..) | Type::PtrArray(..)
                     | Type::List(..) | Type::SList(..) | Type::HashTable(..) => {
-                if Some(MAIN_NAMESPACE) == env.library.find_namespace("GLib") {
+                if env.namespaces.glib_ns_id == namespaces::MAIN {
                     Ok(name.into())
                 }
                 else {
-                    Ok(format!("{}::{}", crate_name("GLib"), name))
+                    Ok(format!("{}::{}", &env.namespaces[env.namespaces.glib_ns_id].crate_name,
+                        name))
                 }
             }
             _ => Ok(name.into())
@@ -174,7 +175,7 @@ fn fix_name(env: &Env, type_id: library::TypeId, name: &str) -> Result {
         let name_with_prefix = if type_id.ns_id == library::MAIN_NAMESPACE {
             name.into()
         } else {
-            format!("{}::{}", fix_namespace(env, type_id), name)
+            format!("{}::{}", &env.namespaces[type_id.ns_id].crate_name, name)
         };
         if env.type_status_sys(&type_id.full_name(&env.library)).ignored() {
             Err(name_with_prefix)
@@ -182,11 +183,6 @@ fn fix_name(env: &Env, type_id: library::TypeId, name: &str) -> Result {
             Ok(name_with_prefix)
         }
     }
-}
-
-//TODO: check if need to use in non sys codegen
-fn fix_namespace(env: &Env, type_id: library::TypeId) -> String {
-    crate_name(&env.library.namespace(type_id.ns_id).name)
 }
 
 fn implements_c_type(library: &library::Library, tid: TypeId, c_type: &str) -> bool {
