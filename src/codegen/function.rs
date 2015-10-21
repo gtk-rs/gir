@@ -2,6 +2,7 @@ use std::io::{Result, Write};
 
 use analysis;
 use analysis::upcasts::Upcasts;
+use chunk::ffi_function_todo;
 use env::Env;
 use super::function_body::Builder;
 use super::general::version_condition;
@@ -9,8 +10,8 @@ use super::parameter::ToParameter;
 use super::return_value::{out_parameters_as_return, ToReturnValue};
 use super::translate_from_glib::TranslateFromGlib;
 use super::translate_to_glib::TranslateToGlib;
-use writer::ffi_function_todo;
 use writer::primitives::{format_block, tabs};
+use writer::ToCode;
 
 pub fn generate<W: Write>(w: &mut W, env: &Env, analysis: &analysis::functions::Info,
     in_trait: bool, only_declaration: bool, indent: usize) -> Result<()> {
@@ -27,7 +28,8 @@ pub fn generate<W: Write>(w: &mut W, env: &Env, analysis: &analysis::functions::
 
     if !only_declaration {
         let body = if analysis.comented {
-            ffi_function_todo(&analysis.glib_name)
+            let ch = ffi_function_todo(&analysis.glib_name);
+            ch.to_code()
         }
         else {
             let body = body(env, analysis, in_trait);

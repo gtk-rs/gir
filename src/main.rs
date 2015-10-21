@@ -19,6 +19,7 @@ use library::Library;
 mod gir_version;
 
 mod analysis;
+mod chunk;
 mod codegen;
 mod config;
 mod env;
