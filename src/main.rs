@@ -19,6 +19,7 @@ use library::Library;
 mod gir_version;
 
 mod analysis;
+mod chunk;
 mod codegen;
 mod config;
 mod env;
@@ -30,6 +31,7 @@ mod nameutil;
 mod parser;
 mod traits;
 mod version;
+mod writer;
 
 #[cfg_attr(test, allow(dead_code))]
 fn main() {

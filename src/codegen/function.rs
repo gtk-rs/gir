@@ -2,16 +2,19 @@ use std::io::{Result, Write};
 
 use analysis;
 use analysis::upcasts::Upcasts;
+use chunk::ffi_function_todo;
 use env::Env;
 use super::function_body::Builder;
-use super::general::{tabs, version_condition};
+use super::general::version_condition;
 use super::parameter::ToParameter;
 use super::return_value::{out_parameters_as_return, ToReturnValue};
 use super::translate_from_glib::TranslateFromGlib;
 use super::translate_to_glib::TranslateToGlib;
+use writer::primitives::{format_block, tabs};
+use writer::ToCode;
 
 pub fn generate<W: Write>(w: &mut W, env: &Env, analysis: &analysis::functions::Info,
-    in_trait: bool, only_declaration: bool, indent: i32) -> Result<()> {
+    in_trait: bool, only_declaration: bool, indent: usize) -> Result<()> {
 
     let comment_prefix = if analysis.comented { "//" } else { "" };
     let pub_prefix = if in_trait { "" } else { "pub " };
@@ -24,17 +27,16 @@ pub fn generate<W: Write>(w: &mut W, env: &Env, analysis: &analysis::functions::
         comment_prefix, pub_prefix, declaration, suffix));
 
     if !only_declaration {
-        if analysis.comented {
-            try!(writeln!(w, "{}//{}unsafe {{ TODO: call ffi:{}() }}",
-                tabs(indent), tabs(1), analysis.glib_name));
-            try!(writeln!(w, "{}//}}", tabs(indent)));
+        let body = if analysis.comented {
+            let ch = ffi_function_todo(&analysis.glib_name);
+            ch.to_code()
         }
         else {
             let body = body(env, analysis, in_trait);
-            for s in body {
-                try!(writeln!(w, "{}{}", tabs(indent + 1), s));
-            }
-            try!(writeln!(w, "{}}}", tabs(indent)));
+            format_block("", "}", &body)
+        };
+        for s in body {
+            try!(writeln!(w, "{}{}", tabs(indent), s));
         }
         try!(writeln!(w, ""));
     }
