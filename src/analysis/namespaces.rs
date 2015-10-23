@@ -33,6 +33,10 @@ impl Info {
     pub fn main(&self) -> &Namespace {
         &self[MAIN]
     }
+
+    pub fn len(&self) -> usize {
+        self.namespaces.len()
+    }
 }
 
 impl Index<NsId> for Info {

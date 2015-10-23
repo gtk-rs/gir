@@ -28,6 +28,7 @@ mod git;
 mod gobjects;
 mod library;
 mod nameutil;
+mod ns_vec;
 mod parser;
 mod traits;
 mod version;
@@ -61,7 +62,7 @@ fn do_main() -> Result<(), Box<Error>> {
     library.fill_in();
 
     let namespaces = analysis::namespaces::run(&library);
-    analysis::foreign::run();
+    analysis::foreign::run(&library, &namespaces);
 
     let env = Env{
         library: library,
@@ -69,7 +70,7 @@ fn do_main() -> Result<(), Box<Error>> {
         namespaces: namespaces,
     };
 
-    codegen::generate(&env);
+    //codegen::generate(&env);
 
     Ok(())
 }

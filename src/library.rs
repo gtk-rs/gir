@@ -187,6 +187,7 @@ impl TypeId {
     }
 }
 
+#[derive(Debug)]
 pub struct Alias {
     pub name: String,
     pub c_identifier: String,
@@ -194,6 +195,7 @@ pub struct Alias {
     pub target_c_type: String,
 }
 
+#[derive(Debug)]
 pub struct Constant {
     pub name: String,
     pub c_identifier: String,
@@ -202,12 +204,14 @@ pub struct Constant {
     pub value: String,
 }
 
+#[derive(Debug)]
 pub struct Member {
     pub name: String,
     pub c_identifier: String,
     pub value: String,
 }
 
+#[derive(Debug)]
 pub struct Enumeration {
     pub name: String,
     pub c_type: String,
@@ -215,6 +219,7 @@ pub struct Enumeration {
     pub functions: Vec<Function>,
 }
 
+#[derive(Debug)]
 pub struct Bitfield {
     pub name: String,
     pub c_type: String,
@@ -222,6 +227,7 @@ pub struct Bitfield {
     pub functions: Vec<Function>,
 }
 
+#[derive(Debug)]
 pub struct Record {
     pub name: String,
     pub c_type: String,
@@ -230,7 +236,7 @@ pub struct Record {
     pub functions: Vec<Function>,
 }
 
-#[derive(Default)]
+#[derive(Debug, Default)]
 pub struct Field {
     pub name: String,
     pub typ: TypeId,
@@ -239,7 +245,7 @@ pub struct Field {
     pub bits: Option<u8>,
 }
 
-#[derive(Default)]
+#[derive(Debug, Default)]
 pub struct Union {
     pub name: String,
     pub c_type: Option<String>,
@@ -247,7 +253,7 @@ pub struct Union {
     pub functions: Vec<Function>,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Parameter {
     pub name: String,
     pub typ: TypeId,
@@ -259,6 +265,7 @@ pub struct Parameter {
     pub allow_none: bool,
 }
 
+#[derive(Debug)]
 pub struct Function {
     pub name: String,
     pub c_identifier: Option<String>,
@@ -270,7 +277,7 @@ pub struct Function {
     pub deprecated_version: Option<Version>,
 }
 
-#[derive(Default)]
+#[derive(Debug, Default)]
 pub struct Interface {
     pub name: String,
     pub c_type: String,
@@ -280,7 +287,7 @@ pub struct Interface {
     pub prereq_parents: Vec<TypeId>,
 }
 
-#[derive(Default)]
+#[derive(Debug, Default)]
 pub struct Class {
     pub name: String,
     pub c_type: String,
@@ -330,6 +337,7 @@ impl_lexical_ord!(
     Union => c_type,
 );
 
+#[derive(Debug)]
 pub enum Type {
     Fundamental(Fundamental),
     Alias(Alias),
