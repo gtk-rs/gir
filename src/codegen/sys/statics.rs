@@ -2,7 +2,7 @@ use std::io::{Result, Write};
 
 use super::super::general::write_vec;
 
-pub fn begin<W: Write>(w: &mut W) -> Result<()>{
+pub fn begin(w: &mut Write) -> Result<()>{
     let v = vec![
 "",
 "#![allow(non_camel_case_types, non_upper_case_globals)]",
@@ -14,7 +14,7 @@ pub fn begin<W: Write>(w: &mut W) -> Result<()>{
     write_vec(w, &v)
 }
 
-pub fn after_extern_crates<W: Write>(w: &mut W) -> Result<()>{
+pub fn after_extern_crates(w: &mut Write) -> Result<()>{
     let v = vec![
 "",
 "#[allow(unused_imports)]",
@@ -26,7 +26,7 @@ pub fn after_extern_crates<W: Write>(w: &mut W) -> Result<()>{
     write_vec(w, &v)
 }
 
-pub fn use_glib<W: Write>(w: &mut W) -> Result<()>{
+pub fn use_glib(w: &mut Write) -> Result<()>{
     let v = vec![
 "",
 "#[allow(unused_imports)]",
@@ -36,7 +36,7 @@ pub fn use_glib<W: Write>(w: &mut W) -> Result<()>{
     write_vec(w, &v)
 }
 
-pub fn only_for_glib<W: Write>(w: &mut W) -> Result<()>{
+pub fn only_for_glib(w: &mut Write) -> Result<()>{
     let v = vec![
 "",
 "pub type gboolean = c_int;",
@@ -54,7 +54,7 @@ pub fn only_for_glib<W: Write>(w: &mut W) -> Result<()>{
     write_vec(w, &v)
 }
 
-pub fn only_for_gobject<W: Write>(w: &mut W) -> Result<()>{
+pub fn only_for_gobject(w: &mut Write) -> Result<()>{
     let v = vec![
 "",
 "pub const G_TYPE_INVALID: GType = 0 << G_TYPE_FUNDAMENTAL_SHIFT;",
@@ -84,7 +84,7 @@ pub fn only_for_gobject<W: Write>(w: &mut W) -> Result<()>{
     write_vec(w, &v)
 }
 
-pub fn only_for_gtk<W: Write>(w: &mut W) -> Result<()>{
+pub fn only_for_gtk(w: &mut Write) -> Result<()>{
     let v = vec![
 "",
 "pub const GTK_ENTRY_BUFFER_MAX_SIZE: u16 = ::std::u16::MAX;",
