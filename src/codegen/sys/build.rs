@@ -13,10 +13,10 @@ pub fn generate(env: &Env) {
 
     println!("Generating file {:?}", path);
     save_to_file(&path, env.config.make_backup,
-        &mut |w| generate_build_script(w, env));
+        |w| generate_build_script(w, env));
 }
 
-fn generate_build_script<W: Write>(w: &mut W, env: &Env) -> Result<()> {
+fn generate_build_script(w: &mut Write, env: &Env) -> Result<()> {
     try!(writeln!(w, "{}", "extern crate pkg_config;\n"));
 
     let ns = env.library.namespace(MAIN_NAMESPACE);

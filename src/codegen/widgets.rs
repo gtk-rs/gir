@@ -25,7 +25,7 @@ pub fn generate(env: &Env) {
         info!("Generating file {:?}", path);
 
         save_to_file(path, env.config.make_backup,
-            &mut |w| super::widget::generate(w, env, &class_analysis));
+            |w| super::widget::generate(w, env, &class_analysis));
 
         let mod_name = module_name(split_namespace_name(&class_analysis.full_name).1);
         super::widget::generate_reexports(env, &class_analysis, &mod_name, &mut mod_rs,
@@ -37,7 +37,7 @@ pub fn generate(env: &Env) {
 
 fn generate_mod_rs(env: &Env, root_path: &Path, mod_rs: Vec<String>, traits: Vec<String>) {
     let path = root_path.join("mod.rs");
-    save_to_file(path, env.config.make_backup, &mut |w| {
+    save_to_file(path, env.config.make_backup, |w| {
         try!(general::start_comments(w, &env.config));
         try!(general::write_vec(w, &mod_rs));
         try!(writeln!(w, ""));

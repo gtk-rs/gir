@@ -13,7 +13,7 @@ use super::translate_to_glib::TranslateToGlib;
 use writer::primitives::{format_block, tabs};
 use writer::ToCode;
 
-pub fn generate<W: Write>(w: &mut W, env: &Env, analysis: &analysis::functions::Info,
+pub fn generate(w: &mut Write, env: &Env, analysis: &analysis::functions::Info,
     in_trait: bool, only_declaration: bool, indent: usize) -> Result<()> {
 
     let comment_prefix = if analysis.comented { "//" } else { "" };

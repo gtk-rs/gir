@@ -11,7 +11,7 @@ use traits::*;
 //used as glib:get-type in GLib-2.0.gir
 const INTERN: &'static str= "intern";
 
-pub fn generate_records_funcs<W: Write>(w: &mut W, env: &Env, records: &[&library::Record]) -> Result<()> {
+pub fn generate_records_funcs(w: &mut Write, env: &Env, records: &[&library::Record]) -> Result<()> {
     let intern_str = INTERN.to_string();
     for record in records {
         let glib_get_type = record.glib_get_type.as_ref().unwrap_or(&intern_str);
@@ -22,7 +22,7 @@ pub fn generate_records_funcs<W: Write>(w: &mut W, env: &Env, records: &[&librar
     Ok(())
 }
 
-pub fn generate_classes_funcs<W: Write>(w: &mut W, env: &Env, classes: &[&library::Class]) -> Result<()> {
+pub fn generate_classes_funcs(w: &mut Write, env: &Env, classes: &[&library::Class]) -> Result<()> {
     for klass in classes {
         try!(generate_object_funcs(w, env, &klass.c_type,
             &klass.glib_get_type, &klass.functions));
@@ -31,7 +31,7 @@ pub fn generate_classes_funcs<W: Write>(w: &mut W, env: &Env, classes: &[&librar
     Ok(())
 }
 
-pub fn generate_interfaces_funcs<W: Write>(w: &mut W, env: &Env, interfaces: &[&library::Interface]) -> Result<()> {
+pub fn generate_interfaces_funcs(w: &mut Write, env: &Env, interfaces: &[&library::Interface]) -> Result<()> {
     for interface in interfaces {
         try!(generate_object_funcs(w, env,  &interface.c_type,
             &interface.glib_get_type, &interface.functions));
@@ -40,11 +40,11 @@ pub fn generate_interfaces_funcs<W: Write>(w: &mut W, env: &Env, interfaces: &[&
     Ok(())
 }
 
-pub fn generate_other_funcs<W: Write>(w: &mut W, env: &Env, functions: &[library::Function]) -> Result<()> {
+pub fn generate_other_funcs(w: &mut Write, env: &Env, functions: &[library::Function]) -> Result<()> {
     generate_object_funcs(w, env,  "Other functions", INTERN, functions)
 }
 
-fn generate_object_funcs<W: Write>(w: &mut W, env: &Env, c_type: &str,
+fn generate_object_funcs(w: &mut Write, env: &Env, c_type: &str,
     glib_get_type: &str, functions: &[library::Function]) -> Result<()> {
     let write_get_type = glib_get_type != INTERN;
     if write_get_type || !functions.is_empty() {
@@ -92,7 +92,7 @@ lazy_static! {
     };
 }
 
-pub fn generate_callbacks<W: Write>(w: &mut W, env: &Env, callbacks: &[&library::Function]) -> Result<()> {
+pub fn generate_callbacks(w: &mut Write, env: &Env, callbacks: &[&library::Function]) -> Result<()> {
     for func in callbacks {
         let (commented, sig) = function_signature(env, func, true);
         let comment = if commented { "//" } else { "" };

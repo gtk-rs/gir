@@ -21,10 +21,10 @@ pub fn generate(env: &Env) {
 
     println!("Generating file {:?}", path);
     save_to_file(&path, env.config.make_backup,
-        &mut |w| generate_lib(w, env));
+        |w| generate_lib(w, env));
 }
 
-fn generate_lib<W: Write>(w: &mut W, env: &Env) -> Result<()>{
+fn generate_lib(w: &mut Write, env: &Env) -> Result<()>{
     try!(general::start_comments(w, &env.config));
     try!(statics::begin(w));
 
@@ -68,7 +68,7 @@ fn generate_lib<W: Write>(w: &mut W, env: &Env) -> Result<()>{
     Ok(())
 }
 
-fn generate_extern_crates<W: Write>(w: &mut W, env: &Env) -> Result<()>{
+fn generate_extern_crates(w: &mut Write, env: &Env) -> Result<()>{
     for library_name in &env.config.external_libraries {
         try!(writeln!(w, "extern crate {0}_sys as {0};", crate_name(library_name)));
     }
@@ -88,7 +88,7 @@ where Type: MaybeRef<T> {
     vec
 }
 
-fn generate_aliases<W: Write>(w: &mut W, env: &Env, items: &[&Alias])
+fn generate_aliases(w: &mut Write, env: &Env, items: &[&Alias])
         -> Result<()> {
     try!(writeln!(w, ""));
     for item in items {
@@ -102,7 +102,7 @@ fn generate_aliases<W: Write>(w: &mut W, env: &Env, items: &[&Alias])
     Ok(())
 }
 
-fn generate_bitfields<W: Write>(w: &mut W, items: &[&Bitfield])
+fn generate_bitfields(w: &mut Write, items: &[&Bitfield])
         -> Result<()> {
     try!(writeln!(w, ""));
     for item in items {
@@ -119,7 +119,7 @@ fn generate_bitfields<W: Write>(w: &mut W, items: &[&Bitfield])
     Ok(())
 }
 
-fn generate_constants<W: Write>(w: &mut W, env: &Env, constants: &[Constant]) -> Result<()> {
+fn generate_constants(w: &mut Write, env: &Env, constants: &[Constant]) -> Result<()> {
     try!(writeln!(w, ""));
     for constant in constants {
         let (mut comment, mut type_) =
@@ -143,7 +143,7 @@ fn generate_constants<W: Write>(w: &mut W, env: &Env, constants: &[Constant]) ->
     Ok(())
 }
 
-fn generate_enums<W: Write>(w: &mut W, items: &[&Enumeration])
+fn generate_enums(w: &mut Write, items: &[&Enumeration])
         -> Result<()> {
     try!(writeln!(w, ""));
     for item in items {
@@ -178,7 +178,7 @@ fn generate_enums<W: Write>(w: &mut W, items: &[&Enumeration])
     Ok(())
 }
 
-fn generate_unions<W: Write>(w: &mut W, items: &[&Union])
+fn generate_unions(w: &mut Write, items: &[&Union])
         -> Result<()> {
     try!(writeln!(w, ""));
     for item in items {
@@ -200,7 +200,7 @@ fn prepare_enum_member_name(name: &str) -> String {
     }
 }
 
-fn generate_classes_structs<W: Write>(w: &mut W, classes: &[&Class]) -> Result<()> {
+fn generate_classes_structs(w: &mut Write, classes: &[&Class]) -> Result<()> {
     try!(writeln!(w, ""));
     for klass in classes {
         try!(writeln!(w, "#[repr(C)]\npub struct {}(c_void);", klass.c_type));
@@ -209,7 +209,7 @@ fn generate_classes_structs<W: Write>(w: &mut W, classes: &[&Class]) -> Result<(
     Ok(())
 }
 
-fn generate_interfaces_structs<W: Write>(w: &mut W, interfaces: &[&Interface]) -> Result<()> {
+fn generate_interfaces_structs(w: &mut Write, interfaces: &[&Interface]) -> Result<()> {
     try!(writeln!(w, ""));
     for interface in interfaces {
         try!(writeln!(w, "#[repr(C)]\npub struct {}(c_void);", interface.c_type));
@@ -218,7 +218,7 @@ fn generate_interfaces_structs<W: Write>(w: &mut W, interfaces: &[&Interface]) -
     Ok(())
 }
 
-fn generate_records<W: Write>(w: &mut W, env: &Env, records: &[&Record]) -> Result<()> {
+fn generate_records(w: &mut Write, env: &Env, records: &[&Record]) -> Result<()> {
     try!(writeln!(w, ""));
     for record in records {
         let mut lines = Vec::new();

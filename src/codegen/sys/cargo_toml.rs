@@ -26,7 +26,7 @@ pub fn generate(env: &Env) {
     fill_in(&mut root_table, env);
 
     save_to_file(&path, env.config.make_backup,
-        &mut |w| w.write_all(toml::encode_str(&root_table).as_bytes()));
+        |w| w.write_all(toml::encode_str(&root_table).as_bytes()));
 }
 
 fn fill_empty(root: &mut Table, env: &Env) {
