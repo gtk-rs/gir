@@ -12,7 +12,6 @@ use super::functions;
 use super::statics;
 use super::super::general;
 use traits::*;
-use writer::primitives::tabs;
 
 pub fn generate(env: &Env) {
     println!("generating sys for {}", env.config.library_name);
@@ -106,13 +105,12 @@ fn generate_bitfields(w: &mut Write, items: &[&Bitfield])
         -> Result<()> {
     try!(writeln!(w, ""));
     for item in items {
-        try!(writeln!(w, "bitflags! {{\n{}#[repr(C)]\n{0}flags {}: c_uint {{",
-                      tabs(1), item.c_type));
+        try!(writeln!(w, "bitflags! {{\n\t#[repr(C)]\n\tflags {}: c_uint {{", item.c_type));
         for member in &item.members {
             let val: i64 = member.value.parse().unwrap();
-            try!(writeln!(w, "{}const {} = {},", tabs(2), member.c_identifier, val as u32));
+            try!(writeln!(w, "\t\tconst {} = {},", member.c_identifier, val as u32));
         }
-        try!(writeln!(w, "{}}}\n}}", tabs(1)));
+        try!(writeln!(w, "\t}}\n}}"));
         try!(writeln!(w, ""));
     }
 
@@ -163,8 +161,8 @@ fn generate_enums(w: &mut Write, items: &[&Enumeration])
             if vals.get(&member.value).is_some() {
                 continue;
             }
-            try!(writeln!(w, "{}{} = {},",
-                          tabs(1), &prepare_enum_member_name(&member.name), member.value));
+            try!(writeln!(w, "\t{} = {},",
+                          &prepare_enum_member_name(&member.name), member.value));
             vals.insert(member.value.clone(), member.name.clone());
         }
         try!(writeln!(w, "}}"));
@@ -230,17 +228,17 @@ fn generate_records(w: &mut Write, env: &Env, records: &[&Record]) -> Result<()>
             if !truncated && (is_union || is_bits) {
                 warn!("Record `{}` field `{}` not expressible in Rust, truncated",
                       record.name, field.name);
-                lines.push(format!("{}_truncated_record_marker: c_void,", tabs(1)));
+                lines.push(format!("\t_truncated_record_marker: c_void,"));
                 truncated = true;
             }
             if truncated {
                 if is_union {
-                    lines.push(format!("{}//union,", tabs(1)));
+                    lines.push(format!("\t//union,"));
                 }
                 else {
                     let bits = field.bits.map(|n| format!(": {}", n)).unwrap_or("".into());
                     lines.push(
-                        format!("{}//{}: {}{},", tabs(1), field.name,
+                        format!("\t//{}: {}{},", field.name,
                                 field.c_type.as_ref().map(|s| &s[..]).unwrap_or("fn"), bits));
                 };
                 continue;
@@ -251,7 +249,7 @@ fn generate_records(w: &mut Write, env: &Env, records: &[&Record]) -> Result<()>
             if let Some(ref c_type) = field.c_type {
                 let name = mangle_keywords(&*field.name);
                 let c_type = ffi_type(env, field.typ, c_type);
-                lines.push(format!("{}{}{}: {},", tabs(1), vis, name, c_type.as_str()));
+                lines.push(format!("\t{}{}: {},", vis, name, c_type.as_str()));
                 if c_type.is_err() {
                     commented = true;
                 }
@@ -261,20 +259,20 @@ fn generate_records(w: &mut Write, env: &Env, records: &[&Record]) -> Result<()>
                 if let Some(ref func) =
                         env.library.type_(field.typ).maybe_ref_as::<Function>() {
                     let (com, sig) = functions::function_signature(env, func, true);
-                    lines.push(format!("{}{}{}: Option<unsafe extern \"C\" fn{}>,", tabs(1), vis, name, sig));
+                    lines.push(format!("\t{}{}: Option<unsafe extern \"C\" fn{}>,", vis, name, sig));
                     commented |= com;
                 }
                 else if let Some(c_type) = env.library.type_(field.typ).get_glib_name() {
                     warn!("Record `{}`, field `{}` missing c:type assumed `{}`",
                           record.name, field.name, c_type);
                     let c_type = ffi_type(env, field.typ, c_type);
-                    lines.push(format!("{}{}{}: {},", tabs(1), vis, name, c_type.as_str()));
+                    lines.push(format!("\t{}{}: {},", vis, name, c_type.as_str()));
                     if c_type.is_err() {
                         commented = true;
                     }
                 }
                 else {
-                    lines.push(format!("{}{}{}: [{:?} {}],", tabs(1),
+                    lines.push(format!("\t{}{}: [{:?} {}],",
                         vis, name, field.typ, field.typ.full_name(&env.library)));
                     commented = true;
                 }
