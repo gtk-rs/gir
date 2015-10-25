@@ -28,10 +28,7 @@ pub fn generate(w: &mut Write, env: &Env, analysis: &analysis::functions::Info,
         comment_prefix, pub_prefix, declaration, suffix));
 
     if !only_declaration {
-        let body = if analysis.comented {
-            let ch = ffi_function_todo(&analysis.glib_name);
-            ch.to_code()
-        } else if let Some(chunk) = body_chunk(env, analysis, in_trait) {
+        let body = if let Some(chunk) = body_chunk(env, analysis, in_trait) {
             chunk.to_code()
         } else {
             let body = body(env, analysis, in_trait);
@@ -79,6 +76,10 @@ fn upcasts(upcasts: &Upcasts) -> String {
 
 pub fn body_chunk(env: &Env, analysis: &analysis::functions::Info,
     in_trait: bool) -> Option<Chunk> {
+    if analysis.comented {
+        return Some(ffi_function_todo(&analysis.glib_name));
+    }
+
     let outs_as_return = !analysis.outs.is_empty();
     let mut builder = function_body_chunk::Builder::new();
     builder.glib_name(&analysis.glib_name)
