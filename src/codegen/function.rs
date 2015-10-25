@@ -2,9 +2,10 @@ use std::io::{Result, Write};
 
 use analysis;
 use analysis::upcasts::Upcasts;
-use chunk::ffi_function_todo;
+use chunk::{ffi_function_todo, Chunk};
 use env::Env;
-use super::function_body::Builder;
+use super::function_body;
+use super::function_body_chunk;
 use super::general::version_condition;
 use super::parameter::ToParameter;
 use super::return_value::{out_parameters_as_return, ToReturnValue};
@@ -30,8 +31,9 @@ pub fn generate(w: &mut Write, env: &Env, analysis: &analysis::functions::Info,
         let body = if analysis.comented {
             let ch = ffi_function_todo(&analysis.glib_name);
             ch.to_code()
-        }
-        else {
+        } else if let Some(chunk) = body_chunk(env, analysis, in_trait) {
+            chunk.to_code()
+        } else {
             let body = body(env, analysis, in_trait);
             format_block("", "}", &body)
         };
@@ -75,10 +77,35 @@ fn upcasts(upcasts: &Upcasts) -> String {
     format!("<{}>", strs.join(", "))
 }
 
+pub fn body_chunk(env: &Env, analysis: &analysis::functions::Info,
+    in_trait: bool) -> Option<Chunk> {
+    let outs_as_return = !analysis.outs.is_empty();
+    let mut builder = function_body_chunk::Builder::new();
+    builder.glib_name(&analysis.glib_name)
+        .from_glib(analysis.ret.translate_from_glib_as_function(env))
+        .outs_mode(analysis.outs.mode);
+
+    //TODO: change to map on parameters with pass Vec<String> to builder
+    for par in &analysis.parameters {
+        if outs_as_return && analysis.outs.iter().any(|p| p.name==par.name) {
+            let name = par.name.clone();
+            let (prefix, suffix) = par.translate_from_glib_as_function(env);
+            builder.out_parameter(name, prefix, suffix);
+        } else {
+            let upcast = in_trait && par.instance_parameter
+                || analysis.upcasts.iter().any(|&(ref name, _, _)| name == &par.name);
+            let s = par.translate_to_glib(&env.library, upcast);
+            builder.parameter(s);
+        }
+    }
+
+    builder.generate()
+}
+
 pub fn body(env: &Env, analysis: &analysis::functions::Info,
     in_trait: bool) -> Vec<String> {
     let outs_as_return = !analysis.outs.is_empty();
-    let mut builder = Builder::new();
+    let mut builder = function_body::Builder::new();
     builder.glib_name(&analysis.glib_name)
         .from_glib(analysis.ret.translate_from_glib_as_function(env))
         .outs_mode(analysis.outs.mode);
