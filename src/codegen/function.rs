@@ -29,7 +29,7 @@ pub fn generate(w: &mut Write, env: &Env, analysis: &analysis::functions::Info,
 
     if !only_declaration {
         let body = if let Some(chunk) = body_chunk(env, analysis, in_trait) {
-            chunk.to_code()
+            chunk.to_code(env)
         } else {
             let body = body(env, analysis, in_trait);
             format_block("", "}", &body)
@@ -95,8 +95,7 @@ pub fn body_chunk(env: &Env, analysis: &analysis::functions::Info,
         } else {
             let upcast = in_trait && par.instance_parameter
                 || analysis.upcasts.iter().any(|&(ref name, _, _)| name == &par.name);
-            let s = par.translate_to_glib(&env.library, upcast);
-            builder.parameter(s);
+            builder.parameter(par, upcast);
         }
     }
 

@@ -1,10 +1,13 @@
 use analysis::out_parameters::Mode;
 use chunk::{chunks, Chunk};
+use chunk::parameter_ffi_call_in;
+use library;
 
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 enum Parameter {
     In {
-        parameter: String,
+        parameter: parameter_ffi_call_in::Parameter,
+        upcast: bool,
     },
     Out {
         name: String,
@@ -15,7 +18,7 @@ enum Parameter {
 
 use self::Parameter::*;
 
-#[derive(Default, Debug)]
+#[derive(Default)]
 pub struct Builder {
     glib_name: String,
     from_glib_prefix: String,
@@ -38,8 +41,11 @@ impl Builder {
         self.from_glib_suffix = prefix_suffix.1;
         self
     }
-    pub fn parameter(&mut self, parameter: String) -> &mut Builder {
-        self.parameters.push(Parameter::In { parameter: parameter });
+    pub fn parameter(&mut self, parameter: &library::Parameter, upcast: bool) -> &mut Builder {
+        self.parameters.push(Parameter::In {
+            parameter: parameter.into(),
+            upcast: upcast
+        });
         self
     }
     pub fn out_parameter(&mut self, name: String, prefix: String, suffix: String) -> &mut Builder {
@@ -83,8 +89,11 @@ impl Builder {
         let mut params = Vec::new();
         for par in &self.parameters {
             match *par {
-                In { ref parameter } => {
-                    let chunk = Chunk::FfiCallParameter(parameter.clone());
+                In { ref parameter, upcast } => {
+                    let chunk = Chunk::FfiCallParameter{
+                        par: parameter.clone(),
+                        upcast: upcast,
+                    };
                     params.push(chunk);
                 }
                 Out { .. } => (), //TODO: FfiCallOutParameter
