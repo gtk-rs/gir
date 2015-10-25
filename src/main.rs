@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 extern crate case;
 extern crate docopt;
 extern crate env_logger;

@@ -1,3 +1,4 @@
+/*
 use env::Env;
 
 mod build;
@@ -12,3 +13,4 @@ pub fn generate(env: &Env) {
     build::generate(env);
     cargo_toml::generate(env);
 }
+*/

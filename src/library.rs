@@ -236,11 +236,23 @@ pub struct Record {
     pub functions: Vec<Function>,
 }
 
+#[derive(Debug)]
+pub enum FieldType {
+    Type(TypeId, Option<String>),
+    Function(Function),
+    Union(Union),
+}
+
+impl Default for FieldType {
+    fn default() -> FieldType {
+        FieldType::Type(TypeId::default(), None)
+    }
+}
+
 #[derive(Debug, Default)]
 pub struct Field {
     pub name: String,
-    pub typ: TypeId,
-    pub c_type: Option<String>,
+    pub typ: FieldType,
     pub private: bool,
     pub bits: Option<u8>,
 }
@@ -438,12 +450,6 @@ impl Type {
         param_tids.push(func.ret.typ);
         let typ = Type::Function(func);
         library.add_type(INTERNAL_NAMESPACE, &format!("fn<#{:?}>", param_tids), typ)
-    }
-
-    pub fn union(library: &mut Library, fields: Vec<Field>) -> TypeId {
-        let field_tids: Vec<TypeId> = fields.iter().map(|f| f.typ).collect();
-        let typ = Type::Union(Union { fields: fields, .. Union::default() });
-        library.add_type(INTERNAL_NAMESPACE, &format!("#{:?}", field_tids), typ)
     }
 }
 

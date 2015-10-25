@@ -15,7 +15,7 @@ pub struct NsVec<I, T> {
     _dummy: PhantomData<I>,
 }
 
-impl<I, T> NsVec<I, T> 
+impl<I, T> NsVec<I, T>
 where I: Deref<Target = Id> + From<Id> {
     pub fn new(ns_count: usize) -> Self {
         let mut data = Vec::with_capacity(ns_count);
@@ -37,18 +37,18 @@ where I: Deref<Target = Id> + From<Id> {
     }
 }
 
-impl<I, T> Index<Id> for NsVec<I, T> 
+impl<I, T> Index<I> for NsVec<I, T>
 where I: Deref<Target = Id> {
     type Output = T;
 
-    fn index(&self, index: Id) -> &T {
+    fn index(&self, index: I) -> &T {
         &self.data[index.ns_id as usize][index.id as usize]
     }
 }
 
-impl<I, T> IndexMut<Id> for NsVec<I, T> 
+impl<I, T> IndexMut<I> for NsVec<I, T>
 where I: Deref<Target = Id> {
-    fn index_mut(&mut self, index: Id) -> &mut T {
+    fn index_mut(&mut self, index: I) -> &mut T {
         &mut self.data[index.ns_id as usize][index.id as usize]
     }
 }

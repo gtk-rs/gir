@@ -212,7 +212,12 @@ impl Library {
                             try!(self.read_function_to_vec(parser, ns_id, kind, &attributes, &mut fns)),
                         "union" => {
                             let (union_fields, _) = try!(self.read_union(parser, ns_id));
-                            let typ = Type::union(self, union_fields);
+                            let name = String::from(attributes.get("name").unwrap_or("unn"));
+                            let typ = FieldType::Union(Union {
+                                name: name,
+                                fields: union_fields,
+                                ..Default::default()
+                            });
                             fields.push(Field { typ: typ, .. Field::default() });
                         }
                         "field" => {
@@ -305,7 +310,7 @@ impl Library {
     fn read_field(&mut self, parser: &mut Reader, ns_id: u16,
                   attrs: &Attributes) -> Result<Field, Error> {
         let name = try!(attrs.get("name").ok_or_else(|| mk_error!("Missing field name", parser)));
-        let mut typ = None;
+        let mut typ: Option<FieldType> = None;
         loop {
             let event = try!(parser.next());
             match event {
@@ -316,7 +321,8 @@ impl Library {
                             if typ.is_some() {
                                 return Err(mk_error!("Too many <type> elements", &pos));
                             }
-                            typ = Some(try!(self.read_type(parser, ns_id, &name, &attributes)));
+                            let tup = try!(self.read_type(parser, ns_id, &name, &attributes));
+                            typ = Some(FieldType::Type(tup.0, tup.1));
                         }
                         "callback" => {
                             let pos = parser.position();
@@ -325,7 +331,7 @@ impl Library {
                             }
                             let f =
                                 try!(self.read_function(parser, ns_id, "callback", &attributes));
-                            typ = Some((Type::function(self, f), None));
+                            typ = Some(FieldType::Function(f));
                         }
                         "doc" | "doc-deprecated" => try!(ignore_element(parser)),
                         x => return Err(mk_error!(format!("Unexpected element <{}>", x), parser)),
@@ -337,11 +343,10 @@ impl Library {
         }
         let private = attrs.get("private").unwrap_or("") == "1";
         let bits = attrs.get("bits").and_then(|s| s.parse().ok());
-        if let Some((tid, c_type)) = typ {
+        if let Some(typ) = typ {
             Ok(Field {
                 name: name.into(),
-                typ: tid,
-                c_type: c_type,
+                typ: typ,
                 private: private,
                 bits: bits,
             })
