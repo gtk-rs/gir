@@ -83,7 +83,7 @@ pub fn body_chunk(env: &Env, analysis: &analysis::functions::Info,
     let outs_as_return = !analysis.outs.is_empty();
     let mut builder = function_body_chunk::Builder::new();
     builder.glib_name(&analysis.glib_name)
-        .from_glib(analysis.ret.translate_from_glib_as_function(env))
+        .ret(&analysis.ret)
         .outs_mode(analysis.outs.mode);
 
     //TODO: change to map on parameters with pass Vec<String> to builder

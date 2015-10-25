@@ -1,4 +1,5 @@
 use analysis::out_parameters::Mode;
+use analysis::return_value;
 use chunk::{chunks, Chunk};
 use chunk::parameter_ffi_call_in;
 use library;
@@ -21,9 +22,8 @@ use self::Parameter::*;
 #[derive(Default)]
 pub struct Builder {
     glib_name: String,
-    from_glib_prefix: String,
-    from_glib_suffix: String,
     parameters: Vec<Parameter>,
+    ret: return_value::Info,
     outs_as_return: bool,
     outs_mode: Mode,
 }
@@ -36,9 +36,8 @@ impl Builder {
         self.glib_name = name.into();
         self
     }
-    pub fn from_glib(&mut self, prefix_suffix: (String, String)) -> &mut Builder {
-        self.from_glib_prefix = prefix_suffix.0;
-        self.from_glib_suffix = prefix_suffix.1;
+    pub fn ret(&mut self, ret: &return_value::Info) -> &mut Builder {
+        self.ret = ret.clone();
         self
     }
     pub fn parameter(&mut self, parameter: &library::Parameter, upcast: bool) -> &mut Builder {
@@ -69,7 +68,8 @@ impl Builder {
         let mut body = Vec::new();
 
         let call = self.generate_call();
-        body.push(call);
+        let conv = self.generate_call_conversion(call);
+        body.push(conv);
 
         let unsafe_ = Chunk::Unsafe(body);
         let block = Chunk::BlockHalf(chunks(unsafe_));
@@ -79,11 +79,16 @@ impl Builder {
         let params = self.generate_func_parameters();
         let func = Chunk::FfiCall {
             name: self.glib_name.clone(),
-            prefix: self.from_glib_prefix.clone(),
-            suffix: self.from_glib_suffix.clone(),
             params: params,
         };
         func
+    }
+    fn generate_call_conversion(&self, call: Chunk) -> Chunk {
+        let conv = Chunk::FfiCallConversion {
+            ret: self.ret.clone(),
+            call: Box::new(call),
+        };
+        conv
     }
     fn generate_func_parameters(&self) -> Vec<Chunk> {
         let mut params = Vec::new();

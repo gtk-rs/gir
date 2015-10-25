@@ -2,6 +2,7 @@ use analysis::rust_type::*;
 use env::Env;
 use library::{self, Nullable};
 
+#[derive(Clone, Default)]
 pub struct Info {
     pub parameter: Option<library::Parameter>,
     pub base_tid: Option<library::TypeId>,  //Some only if need downcast
