@@ -3,7 +3,6 @@ use std::io::{Result, Write};
 use analysis;
 use env::Env;
 use super::{function, general};
-use writer::primitives::tabs;
 
 pub fn generate(w: &mut Write, env: &Env, analysis: &analysis::object::Info) -> Result<()>{
     let type_ = analysis.type_(&env.library);
@@ -66,7 +65,7 @@ pub fn generate_reexports(env: &Env, analysis: &analysis::object::Info, module_n
     let version_cfg = general::version_condition_string(&env.config.library_name,
         env.config.min_cfg_version, analysis.version, false, 0);
     let (cfg, cfg_1) = match version_cfg {
-        Some(s) => (format!("{}\n", s), format!("{}{}\n", tabs(1), s)),
+        Some(s) => (format!("{}\n", s), format!("\t{}\n", s)),
         None => ("".into(), "".into()),
     };
     contents.push(format!(""));
@@ -74,6 +73,6 @@ pub fn generate_reexports(env: &Env, analysis: &analysis::object::Info, module_n
     contents.push(format!("{}pub use self::{}::{};", cfg, module_name, analysis.name));
     if generate_trait(analysis) {
         contents.push(format!("{}pub use self::{}::{}Ext;", cfg, module_name, analysis.name));
-        traits.push(format!("{}{}pub use super::{}Ext;", cfg_1, tabs(1), analysis.name));
+        traits.push(format!("{}\tpub use super::{}Ext;", cfg_1, analysis.name));
     }
 }

@@ -64,9 +64,9 @@ impl Builder {
         if self.outs_as_return {
             self.write_out_variables(&mut v, 1);
         }
-        write_to_vec!(v, "{}{}", tabs(1), unsafed);
+        write_to_vec!(v, "\t{}", unsafed);
         if self.outs_as_return {
-            write_to_vec!(v, "{}{}", tabs(1), self.generate_out_return());
+            write_to_vec!(v, "\t{}", self.generate_out_return());
         }
         write_to_vec!(v, "}}");
         v
