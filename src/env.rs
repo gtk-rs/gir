@@ -1,4 +1,4 @@
-use analysis::namespaces;
+use analysis;
 use config::Config;
 use gobjects::GStatus;
 use library::*;
@@ -6,7 +6,8 @@ use library::*;
 pub struct Env {
     pub library: Library,
     pub config: Config,
-    pub namespaces: namespaces::Info,
+    pub namespaces: analysis::namespaces::Info,
+    pub foreign: analysis::foreign::Info,
 }
 
 impl Env {

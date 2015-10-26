@@ -16,6 +16,6 @@ mod widgets;
 pub fn generate(env: &Env) {
     match env.config.work_mode {
         WorkMode::Normal => widgets::generate(env),
-        WorkMode::Sys => {}//sys::generate(env),
+        WorkMode::Sys => sys::generate(env),
     }
 }

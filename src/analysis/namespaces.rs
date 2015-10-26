@@ -6,6 +6,7 @@ use nameutil;
 use version::Version;
 
 pub type NsId = u16;
+pub const INTERNAL: NsId = library::INTERNAL_NAMESPACE;
 pub const MAIN: NsId = library::MAIN_NAMESPACE;
 
 #[derive(Debug)]

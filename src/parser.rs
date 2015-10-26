@@ -111,7 +111,7 @@ impl Library {
                             try!(self.read_class(parser, ns_id, &attributes));
                         }
                         "record" => {
-                            try!(self.read_record(parser, ns_id, &attributes));
+                            try!(self.read_named_record(parser, ns_id, &attributes));
                         }
                         "union" => {
                             try!(self.read_named_union(parser, ns_id, &attributes));
@@ -194,44 +194,15 @@ impl Library {
         Ok(())
     }
 
-    fn read_record(&mut self, parser: &mut Reader,
+    fn read_named_record(&mut self, parser: &mut Reader,
                   ns_id: u16, attrs: &Attributes) -> Result<(), Error> {
         let mut name = try!(attrs.get("name")
                             .ok_or_else(|| mk_error!("Missing record name", parser)));
         let mut c_type = try!(attrs.get("type")
                               .ok_or_else(|| mk_error!("Missing c:type attribute", parser)));
         let get_type = attrs.get("get-type");
-        let mut fields = Vec::new();
-        let mut fns = Vec::new();
-        loop {
-            let event = try!(parser.next());
-            match event {
-                StartElement { name, attributes, .. } => {
-                    match name.local_name.as_ref() {
-                        kind @ "constructor" | kind @ "function" | kind @ "method" =>
-                            try!(self.read_function_to_vec(parser, ns_id, kind, &attributes, &mut fns)),
-                        "union" => {
-                            let (union_fields, _) = try!(self.read_union(parser, ns_id));
-                            let name = String::from(attributes.get("name").unwrap_or("unn"));
-                            let typ = FieldType::Union(Union {
-                                name: name,
-                                fields: union_fields,
-                                ..Default::default()
-                            });
-                            fields.push(Field { typ: typ, .. Field::default() });
-                        }
-                        "field" => {
-                            fields.push(try!(
-                                self.read_field(parser, ns_id, &attributes)));
-                        }
-                        "doc" | "doc-deprecated" => try!(ignore_element(parser)),
-                        x => return Err(mk_error!(format!("Unexpected element <{}>", x), parser)),
-                    }
-                }
-                EndElement { .. } => break,
-                _ => xml_next!(event, parser),
-            }
-        }
+
+        let (fields, fns) = try!(self.read_struct(parser, ns_id));
 
         if attrs.get("is-gtype-struct").is_some() {
             return Ok(());
@@ -255,7 +226,7 @@ impl Library {
         let typ = Type::Record(
             Record {
                 name: name.into(),
-                c_type: c_type.into(),
+                c_type: Some(c_type.into()),
                 glib_get_type: get_type.map(|s| s.into()),
                 fields: fields,
                 functions: fns,
@@ -268,7 +239,7 @@ impl Library {
             -> Result<(), Error> {
         let name = try!(attrs.get("name").ok_or_else(|| mk_error!("Missing union name", parser)));
         let c_type = attrs.get("type");
-        let (fields, fns) = try!(self.read_union(parser, ns_id));
+        let (fields, fns) = try!(self.read_struct(parser, ns_id));
         let typ = Type::Union(
             Union {
                 name: name.into(),
@@ -280,7 +251,7 @@ impl Library {
         Ok(())
     }
 
-    fn read_union(&mut self, parser: &mut Reader, ns_id: u16)
+    fn read_struct(&mut self, parser: &mut Reader, ns_id: u16)
             -> Result<(Vec<Field>, Vec<Function>), Error> {
         let mut fields = Vec::new();
         let mut fns = Vec::new();
@@ -293,9 +264,22 @@ impl Library {
                             fields.push(try!(
                                 self.read_field(parser, ns_id, &attributes)));
                         }
-                        kind @ "constructor" | kind @ "function" | kind @ "method" =>
-                            try!(self.read_function_to_vec(parser, ns_id, kind, &attributes, &mut fns)),
-                        "record" => try!(ignore_element(parser)),
+                        kind @ "constructor" | kind @ "function" | kind @ "method" => {
+                            try!(self.read_function_to_vec(parser, ns_id, kind, &attributes,
+                                &mut fns))
+                        }
+                        "record" =>  {
+                            let (record_fields, _) = try!(self.read_struct(parser, ns_id));
+                            let name = String::from(attributes.get("name").unwrap_or("unn"));
+                            let typ = Type::anonymous_record(self, record_fields);
+                            fields.push(Field { name: name, typ: typ, ..Field::default() });
+                        }
+                        "union" => {
+                            let (union_fields, _) = try!(self.read_struct(parser, ns_id));
+                            let name = String::from(attributes.get("name").unwrap_or("unn"));
+                            let typ = Type::anonymous_union(self, union_fields);
+                            fields.push(Field { name: name, typ: typ, ..Field::default() });
+                        }
                         "doc" | "doc-deprecated" => try!(ignore_element(parser)),
                         x => return Err(mk_error!(format!("Unexpected element <{}>", x), parser)),
                     }
@@ -310,7 +294,7 @@ impl Library {
     fn read_field(&mut self, parser: &mut Reader, ns_id: u16,
                   attrs: &Attributes) -> Result<Field, Error> {
         let name = try!(attrs.get("name").ok_or_else(|| mk_error!("Missing field name", parser)));
-        let mut typ: Option<FieldType> = None;
+        let mut typ = None;
         loop {
             let event = try!(parser.next());
             match event {
@@ -321,8 +305,7 @@ impl Library {
                             if typ.is_some() {
                                 return Err(mk_error!("Too many <type> elements", &pos));
                             }
-                            let tup = try!(self.read_type(parser, ns_id, &name, &attributes));
-                            typ = Some(FieldType::Type(tup.0, tup.1));
+                            typ = Some(try!(self.read_type(parser, ns_id, &name, &attributes)));
                         }
                         "callback" => {
                             let pos = parser.position();
@@ -331,7 +314,7 @@ impl Library {
                             }
                             let f =
                                 try!(self.read_function(parser, ns_id, "callback", &attributes));
-                            typ = Some(FieldType::Function(f));
+                            typ = Some((Type::anonymous_function(self, f), None));
                         }
                         "doc" | "doc-deprecated" => try!(ignore_element(parser)),
                         x => return Err(mk_error!(format!("Unexpected element <{}>", x), parser)),
@@ -343,10 +326,11 @@ impl Library {
         }
         let private = attrs.get("private").unwrap_or("") == "1";
         let bits = attrs.get("bits").and_then(|s| s.parse().ok());
-        if let Some(typ) = typ {
+        if let Some((tid, c_type)) = typ {
             Ok(Field {
                 name: name.into(),
-                typ: typ,
+                typ: tid,
+                c_type: c_type,
                 private: private,
                 bits: bits,
             })

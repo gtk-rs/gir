@@ -1,6 +1,5 @@
 use std::marker::PhantomData;
 use std::ops::{Deref, Index, IndexMut};
-use std::slice::Iter;
 
 use analysis::namespaces::NsId;
 
@@ -8,6 +7,28 @@ use analysis::namespaces::NsId;
 pub struct Id {
     ns_id: NsId,
     id: u32,
+}
+
+pub struct NsIds<I> {
+    pos: Id,
+    len: u32,
+    _dummy: PhantomData<I>,
+}
+
+impl<I> Iterator for NsIds<I>
+where I: Deref<Target = Id> + From<Id> {
+    type Item = I;
+
+    fn next(&mut self) -> Option<I> {
+        if self.pos.id < self.len {
+            let ret = I::from(self.pos);
+            self.pos.id += 1;
+            Some(ret)
+        }
+        else {
+            None
+        }
+    }
 }
 
 pub struct NsVec<I, T> {
@@ -32,8 +53,12 @@ where I: Deref<Target = Id> + From<Id> {
         I::from(Id { ns_id: ns_id, id: id as u32 })
     }
 
-    pub fn ns_iter(&self, ns_id: u16) -> Iter<T> {
-        self.data[ns_id as usize].iter()
+    pub fn ids_by_ns(&self, ns_id: NsId) -> NsIds<I> {
+        NsIds {
+            pos: Id { ns_id: ns_id, id: 0 },
+            len: self.data[ns_id as usize].len() as u32,
+            _dummy: PhantomData,
+        }
     }
 }
 

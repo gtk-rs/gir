@@ -227,32 +227,20 @@ pub struct Bitfield {
     pub functions: Vec<Function>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct Record {
     pub name: String,
-    pub c_type: String,
+    pub c_type: Option<String>,
     pub glib_get_type: Option<String>,
     pub fields: Vec<Field>,
     pub functions: Vec<Function>,
 }
 
-#[derive(Debug)]
-pub enum FieldType {
-    Type(TypeId, Option<String>),
-    Function(Function),
-    Union(Union),
-}
-
-impl Default for FieldType {
-    fn default() -> FieldType {
-        FieldType::Type(TypeId::default(), None)
-    }
-}
-
 #[derive(Debug, Default)]
 pub struct Field {
     pub name: String,
-    pub typ: FieldType,
+    pub typ: TypeId,
+    pub c_type: Option<String>,
     pub private: bool,
     pub bits: Option<u8>,
 }
@@ -399,7 +387,7 @@ impl Type {
             &Alias(ref alias) => Some(&alias.c_identifier),
             &Enumeration(ref enum_) => Some(&enum_.c_type),
             &Bitfield(ref bit_field) => Some(&bit_field.c_type),
-            &Record(ref rec) => Some(&rec.c_type),
+            &Record(ref rec) => rec.c_type.as_ref().map(|s| &s[..]),
             &Union(ref union) => union.c_type.as_ref().map(|s| &s[..]),
             &Function(ref func) => func.c_identifier.as_ref().map(|s| &s[..]),
             &Interface(ref interface) => Some(&interface.c_type),
@@ -445,11 +433,23 @@ impl Type {
         }.map(|(name, typ)| library.add_type(INTERNAL_NAMESPACE, &name, typ))
     }
 
-    pub fn function(library: &mut Library, func: Function) -> TypeId {
+    pub fn anonymous_function(library: &mut Library, func: Function) -> TypeId {
         let mut param_tids: Vec<TypeId> = func.parameters.iter().map(|p| p.typ).collect();
         param_tids.push(func.ret.typ);
         let typ = Type::Function(func);
         library.add_type(INTERNAL_NAMESPACE, &format!("fn<#{:?}>", param_tids), typ)
+    }
+
+    pub fn anonymous_record(library: &mut Library, fields: Vec<Field>) -> TypeId {
+        let field_tids: Vec<TypeId> = fields.iter().map(|f| f.typ).collect();
+        let typ = Type::Record(Record { fields: fields, ..Record::default() });
+        library.add_type(INTERNAL_NAMESPACE, &format!("record#{:?}", field_tids), typ)
+    }
+
+    pub fn anonymous_union(library: &mut Library, fields: Vec<Field>) -> TypeId {
+        let field_tids: Vec<TypeId> = fields.iter().map(|f| f.typ).collect();
+        let typ = Type::Union(Union { fields: fields, ..Union::default() });
+        library.add_type(INTERNAL_NAMESPACE, &format!("union#{:?}", field_tids), typ)
     }
 }
 
