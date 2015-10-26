@@ -18,6 +18,21 @@ pub fn format_block(prefix: &str, suffix: &str, body: &[String]) -> Vec<String> 
     v
 }
 
+pub fn format_block_one_line(prefix: &str, suffix: &str, body: &[String],
+                             outer_separator: &str, inner_separator: &str) -> String {
+    let mut s = format!("{}{}", prefix, outer_separator);
+    let mut first = true;
+    for s_ in body {
+        if first {
+            first = false;
+            s = s + s_;
+        } else {
+            s = s + inner_separator + s_;
+        }
+    }
+    s + outer_separator + suffix
+}
+
 pub fn format_block_smart(prefix: &str, suffix: &str, body: &[String],
                           outer_separator: &str, inner_separator: &str) -> Vec<String> {
     format_block_smart_width(prefix, suffix, body, outer_separator, inner_separator, MAX_TEXT_WIDTH)
@@ -34,17 +49,7 @@ pub fn format_block_smart_width(prefix: &str, suffix: &str, body: &[String], out
     if (outer_len + inner_len) > max_width {
         format_block(prefix, suffix, body)
     } else {
-        let mut s = format!("{}{}", prefix, outer_separator);
-        let mut first = true;
-        for s_ in body {
-            if first {
-                first = false;
-                s = s + s_;
-            } else {
-                s = s + inner_separator + s_;
-            }
-        }
-        s = s + outer_separator + suffix;
+        let s = format_block_one_line(prefix, suffix, body, outer_separator, inner_separator);
         vec![s]
     }
 }

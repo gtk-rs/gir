@@ -3,12 +3,13 @@ use config::WorkMode;
 
 mod function;
 mod function_body;
+mod function_body_chunk;
 mod general;
 mod parameter;
 mod return_value;
 mod sys;
-mod translate_from_glib;
-mod translate_to_glib;
+pub mod translate_from_glib;
+pub mod translate_to_glib;
 mod widget;
 mod widgets;
 
