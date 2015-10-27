@@ -1,17 +1,19 @@
-use std::collections::HashMap;
+//use std::collections::HashMap;
 use std::io::{Result, Write};
-use case::CaseExt;
+//use case::CaseExt;
 
-use analysis::rust_type::parameter_rust_type;
+//use analysis::rust_type::parameter_rust_type;
+use analysis::foreign::{FieldType, Type, TypeDefId};
+use analysis::namespaces;
 use env::Env;
 use file_saver::*;
-use library::*;
+//use library::*;
 use nameutil::*;
 //use super::ffi_type::ffi_type;
 //use super::functions;
 use super::statics;
 use super::super::general;
-use traits::*;
+//use traits::*;
 
 pub fn generate(env: &Env) {
     println!("generating sys for {}", env.config.library_name);
@@ -23,6 +25,74 @@ pub fn generate(env: &Env) {
         |w| generate_lib(w, env));
 }
 
+fn generate_lib(w: &mut Write, env: &Env) -> Result<()> {
+    try!(general::start_comments(w, &env.config));
+    try!(statics::begin(w));
+
+    try!(generate_extern_crates(w, env));
+    try!(statics::after_extern_crates(w));
+
+    if env.config.library_name != "GLib" {
+        try!(statics::use_glib(w));
+    }
+    match &*env.config.library_name {
+        "GLib" => try!(statics::only_for_glib(w)),
+        "GObject" => try!(statics::only_for_gobject(w)),
+        "Gtk" => try!(statics::only_for_gtk(w)),
+        _ => (),
+    }
+
+    try!(generate_type_defs(w, env));
+
+    Ok(())
+}
+
+fn generate_extern_crates(w: &mut Write, env: &Env) -> Result<()> {
+    for library_name in &env.config.external_libraries {
+        try!(writeln!(w, "extern crate {0}_sys as {0};", crate_name(library_name)));
+    }
+
+    Ok(())
+}
+
+fn generate_type_defs(w: &mut Write, env: &Env) -> Result<()> {
+    use std::cmp::Ord;
+    let mut def_ids: Vec<TypeDefId> = env.foreign.data.ids_by_ns(namespaces::MAIN).collect();
+    def_ids.sort_by(|&a, &b| env.foreign.data[a].name.cmp(&env.foreign.data[b].name));
+
+    for def_id in def_ids {
+        let def = &env.foreign.data[def_id];
+        if def.ignore == Some(true) {
+            continue;
+        }
+        match def.type_ {
+            Type::Record { ref fields, .. } if fields.len() > 0 => {
+                try!(writeln!(w, "#[repr(C)]"));
+                try!(writeln!(w, "pub struct {} {{", def.name));
+                for field in fields {
+                    match field.type_ {
+                        FieldType::Ref(ref type_ref) => {
+                            try!(writeln!(w, "\tpub {}: {},", field.name,
+                                env.foreign.rust_type.get(type_ref).unwrap()));
+                        }
+                        FieldType::Function(..) => {
+                            try!(writeln!(w, "\tpub {}: fn(),", field.name));
+                        }
+                    }
+                }
+                try!(writeln!(w, "}}"));
+            }
+            _ => {
+                try!(writeln!(w, "pub type {} = c_void;", def.name));
+            }
+        }
+        try!(writeln!(w, ""));
+    }
+
+    Ok(())
+}
+
+/*
 fn generate_lib(w: &mut Write, env: &Env) -> Result<()>{
     try!(general::start_comments(w, &env.config));
     try!(statics::begin(w));
@@ -63,14 +133,6 @@ fn generate_lib(w: &mut Write, env: &Env) -> Result<()>{
     try!(functions::generate_other_funcs(w, env, &ns.functions));
 
     try!(writeln!(w, "\n}}"));
-
-    Ok(())
-}
-
-fn generate_extern_crates(w: &mut Write, env: &Env) -> Result<()>{
-    for library_name in &env.config.external_libraries {
-        try!(writeln!(w, "extern crate {0}_sys as {0};", crate_name(library_name)));
-    }
 
     Ok(())
 }
@@ -292,3 +354,4 @@ fn generate_records(w: &mut Write, env: &Env, records: &[&Record]) -> Result<()>
     }
     Ok(())
 }
+*/

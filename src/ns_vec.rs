@@ -5,8 +5,8 @@ use analysis::namespaces::NsId;
 
 #[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Id {
-    ns_id: NsId,
-    id: u32,
+    pub ns_id: NsId,
+    pub id: u32,
 }
 
 pub struct NsIds<I> {

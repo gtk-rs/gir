@@ -200,10 +200,10 @@ impl Library {
                             .ok_or_else(|| mk_error!("Missing record name", parser)));
         let mut c_type = try!(attrs.get("type")
                               .ok_or_else(|| mk_error!("Missing c:type attribute", parser)));
+        let disguised = attrs.get("disguised").unwrap_or("") == "1";
         let get_type = attrs.get("get-type");
 
         let (fields, fns) = try!(self.read_struct(parser, ns_id));
-
         if attrs.get("is-gtype-struct").is_some() {
             return Ok(());
         }
@@ -230,6 +230,7 @@ impl Library {
                 glib_get_type: get_type.map(|s| s.into()),
                 fields: fields,
                 functions: fns,
+                disguised: disguised,
             });
         self.add_type(ns_id, name, typ);
         Ok(())

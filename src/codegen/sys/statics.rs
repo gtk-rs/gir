@@ -9,6 +9,9 @@ pub fn begin(w: &mut Write) -> Result<()>{
 "",
 "extern crate libc;",
 "#[macro_use] extern crate bitflags;",
+"",
+r#"#[cfg(all(feature = "abi_tests", test))]"#,
+"mod abi_tests;",
     ];
 
     write_vec(w, &v)

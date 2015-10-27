@@ -15,7 +15,13 @@ pub fn generate(env: &Env) {
 }
 
 fn generate_build_script(w: &mut Write, env: &Env) -> Result<()> {
-    try!(writeln!(w, "{}", "extern crate pkg_config;\n"));
+    try!(writeln!(w, "{}",
+r#"#[cfg(feature = "abi_tests")]
+extern crate gcc;
+extern crate pkg_config;
+
+use pkg_config::Library;
+"#));
 
     let ns = env.namespaces.main();
     try!(writeln!(w, "const LIBRARY_NAME: &'static str = \"{}\";", ns.crate_name));
@@ -42,6 +48,24 @@ fn main() {
         cfgs.push(cfg);
     }
     println!("cargo:cfg={}", cfgs.join(" "));
+
+    build_test_lib(&lib, &cfgs);
+}
+
+#[cfg(not(feature = "abi_tests"))]
+fn build_test_lib(_: &Library, _: &[String]) { }
+
+#[cfg(feature = "abi_tests")]
+fn build_test_lib(lib: &Library, cfgs: &[String]) {
+    let mut gcc = gcc::Config::new();
+    for path in &lib.include_paths {
+        gcc.include(path);
+    }
+    gcc.file("src/abi_tests.c");
+    for cfg in cfgs {
+        gcc.flag(&format!("-D{}", cfg));
+    }
+    gcc.compile("libabi_tests.a");
 }
 
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]

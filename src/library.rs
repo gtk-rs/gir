@@ -234,6 +234,7 @@ pub struct Record {
     pub glib_get_type: Option<String>,
     pub fields: Vec<Field>,
     pub functions: Vec<Function>,
+    pub disguised: bool,
 }
 
 #[derive(Debug, Default)]

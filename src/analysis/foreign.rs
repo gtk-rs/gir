@@ -1,3 +1,4 @@
+use std::borrow::Cow;
 use std::collections::{HashMap, VecDeque};
 use std::fmt::Debug;
 use std::ops::Deref;
@@ -39,7 +40,7 @@ impl Default for FTypeStatus {
 }
 */
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum Decorator {
     ConstPtr,
     MutPtr,
@@ -47,7 +48,7 @@ pub enum Decorator {
     FixedArray(u16),
 }
 
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug, Default, PartialEq, Eq, Hash)]
 pub struct Decorators(pub Vec<Decorator>);
 
 impl Decorators {
@@ -96,9 +97,23 @@ impl Decorators {
         }
         Decorators(ptrs)
     }
+
+    pub fn to_rust(&self, name: &str) -> String {
+        use self::Decorator::*;
+        let mut ret = String::from(name);
+        for dec in self.0.iter().rev() {
+            match *dec {
+                ConstPtr => ret = format!("*const {}", ret),
+                MutPtr => ret = format!("*mut {}", ret),
+                Volatile => ret = format!("Volatile<{}>", ret),
+                FixedArray(length) => ret = format!("[{}; {}]", ret, length),
+            }
+        }
+        ret
+    }
 }
 
-#[derive(Debug)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum TypeTerminal {
     Void,
     Boolean,
@@ -126,12 +141,6 @@ pub enum TypeTerminal {
     Function,
     Id(TypeDefId),
     Postponed(library::TypeId),
-}
-
-#[derive(Debug, Default)]
-pub struct TypeRef {
-    pub decorators: Decorators,
-    pub type_terminal: TypeTerminal,
 }
 
 impl TypeTerminal {
@@ -172,16 +181,83 @@ impl TypeTerminal {
     }
 }
 
+impl TypeTerminal {
+    fn to_rust<'a>(&self, info: &'a Info, env: &Env) -> (&'a str, Cow<str>) {
+        use self::TypeTerminal::*;
+        match *self {
+            Void => ("c_void", Cow::from("c_void")),
+            Boolean => ("gboolean", Cow::from("gboolean")),
+            Int8 => ("i8", Cow::from("i8")),
+            UInt8 => ("u8", Cow::from("u8")),
+            Int16 => ("i16", Cow::from("i16")),
+            UInt16 => ("u16", Cow::from("u16")),
+            Int32 => ("i32", Cow::from("i32")),
+            UInt32 => ("u32", Cow::from("u32")),
+            Int64 => ("i64", Cow::from("i64")),
+            UInt64 => ("u64", Cow::from("u64")),
+            Char => ("c_char", Cow::from("c_char")),
+            UChar => ("c_uchar", Cow::from("c_uchar")),
+            Short => ("c_short", Cow::from("c_short")),
+            UShort => ("c_ushort", Cow::from("c_ushort")),
+            Int => ("c_int", Cow::from("c_int")),
+            UInt => ("c_uint", Cow::from("c_uint")),
+            Long => ("c_long", Cow::from("c_long")),
+            ULong => ("c_ulong", Cow::from("c_ulong")),
+            Size => ("size_t", Cow::from("size_t")),
+            SSize => ("ssize_t", Cow::from("ssize_t")),
+            Float => ("c_float", Cow::from("c_float")),
+            Double => ("c_double", Cow::from("c_double")),
+            Type => ("GType", Cow::from("GType")),
+            Function => ("fn()", Cow::from("fn()")),
+            Id(def_id) => {
+                let name = &info.data[def_id].name;
+                let external_name =
+                    Cow::from(format!("{}::{}", env.namespaces[def_id.ns_id].name, name));
+                (name, external_name)
+            }
+            Postponed(..) => {
+                ("c_void /* error */", Cow::from("c_void /* error */"))
+            }
+        }
+    }
+}
+
 impl Default for TypeTerminal {
     fn default() -> TypeTerminal {
         TypeTerminal::Void
     }
 }
 
+#[derive(Clone, Debug, Default, PartialEq, Eq, Hash)]
+pub struct TypeRef(Decorators, TypeTerminal);
+
+impl TypeRef {
+    fn to_rust(&self, info: &Info, env: &Env) -> (String, String) {
+        let TypeRef(ref decorators, ref type_terminal) = *self;
+        let (name, external_name) = type_terminal.to_rust(info, env);
+        (decorators.to_rust(name), decorators.to_rust(&*external_name))
+    }
+}
+
+#[derive(Debug, Default)]
+pub struct Function;
+
+#[derive(Debug)]
+pub enum FieldType {
+    Ref(TypeRef),
+    Function(Function),
+}
+
+impl Default for FieldType {
+    fn default() -> FieldType {
+        FieldType::Ref(TypeRef::default())
+    }
+}
+
 #[derive(Debug, Default)]
 pub struct Field {
-    name: String,
-    type_ref: TypeRef,
+    pub name: String,
+    pub type_: FieldType,
     fake: bool,
 }
 
@@ -195,6 +271,7 @@ pub enum Type {
     Record {
         fields: Vec<Field>,
         is_class: bool,
+        fake: bool,
     },
     Union {
         fields: Vec<Field>,
@@ -209,17 +286,20 @@ impl Default for Type {
 
 #[derive(Debug, Default)]
 pub struct TypeDef {
-    name: String,
+    pub name: String,
     gir_tid: Option<library::TypeId>,
-    type_: Type,
-    ignore: Option<bool>,
+    pub type_: Type,
+    pub ignore: Option<bool>,
+    pub public: bool,
 }
 
 pub struct Info {
-    data: NsVec<TypeDefId, TypeDef>,
+    pub data: NsVec<TypeDefId, TypeDef>,
     gir_tid_index: HashMap<library::TypeId, TypeDefId>,
     name_index: HashMap<String, TypeDefId>,
     queue: VecDeque<library::TypeId>,
+    pub rust_type: HashMap<TypeRef, String>,
+    pub rust_type_external: HashMap<TypeRef, String>,
 }
 
 struct Env<'a> {
@@ -233,6 +313,8 @@ pub fn run(gir: &library::Library, namespaces: &namespaces::Info) -> Info {
         gir_tid_index: HashMap::new(),
         name_index: HashMap::new(),
         queue: VecDeque::new(),
+        rust_type: HashMap::new(),
+        rust_type_external: HashMap::new(),
     };
 
     let env = Env {
@@ -250,6 +332,7 @@ pub fn run(gir: &library::Library, namespaces: &namespaces::Info) -> Info {
     }
 
     resolve_postponed_types(&mut info, &env);
+    prepare_rust_types(&mut info, &env);
 
     //analyze(&mut info, &env);
 
@@ -349,77 +432,45 @@ fn transfer_gir_type(info: &mut Info, env: &Env, gir_tid: library::TypeId) {
             info.gir_tid_index.insert(gir_tid, info.name_index.get("GSList").cloned().unwrap());
             return;
         }
-        /*
-        Bitfield(ref x) => x.c_type.clone(),
-        Class(ref x) => x.c_type.clone(),
-        Enumeration(ref x) => x.c_type.clone(),
-        Function(library::Function { ref name, ref c_identifier, .. }) => {
-            c_identifier.as_ref().unwrap_or(name).clone()
-        }
-        Interface(ref x) => x.c_type.clone(),
-        Record(ref x) => x.c_type.clone(),
-        Union(library::Union { ref name, ref c_type, .. }) => {
-            c_type.as_ref().unwrap_or(name).clone()
-        }
-        */
         _ => {
             info!("Can't copy type `{:?}`", typ);
             return;
         }
     };
     typedef.gir_tid = Some(gir_tid);
-    trace!("Adding `{:?}`", typedef);
     push(info, gir_tid.ns_id, typedef);
 }
 
 fn make_type_ref(info: &mut Info, env: &Env, gir_tid: library::TypeId, c_type_hint: &str)
         -> TypeRef {
     let gir_type = env.gir.type_(gir_tid);
-    let decs = Decorators::from_c_type(c_type_hint);
-    if let Some(term) = TypeTerminal::primitive(gir_type) {
-        TypeRef {
-            decorators: decs,
-            type_terminal: term,
-            ..Default::default
-        }
+    let decorators = Decorators::from_c_type(c_type_hint);
+    if let Some(type_terminal) = TypeTerminal::primitive(gir_type) {
+        TypeRef(decorators, type_terminal)
     }
     else if let Some(&def_id) = info.gir_tid_index.get(&gir_tid) {
-        TypeRef {
-            decorators: decs,
-            type_terminal: TypeTerminal::Id(def_id),
-            ..Default::default
-        }
+        TypeRef(decorators, TypeTerminal::Id(def_id))
     }
     else if let library::Type::CArray(tid) = *gir_type {
-        let TypeRef { type_terminal, .. } = make_type_ref(info, env, tid, "");
-        TypeRef {
-            decorators: Decorators::mut_ptr(),
-            type_terminal: type_terminal,
-            ..Default::default
-        }
+        let TypeRef(_, type_terminal) = make_type_ref(info, env, tid, "");
+        TypeRef(Decorators::mut_ptr(), type_terminal)
     }
     else if let library::Type::FixedArray(tid, length) = *gir_type {
-        let TypeRef { type_terminal, .. } = make_type_ref(info, env, tid, "");
-        TypeRef {
-            decorators: Decorators::fixed_array(length),
-            type_terminal: type_terminal,
-            ..Default::default
-        }
+        let TypeRef(_, type_terminal) = make_type_ref(info, env, tid, "");
+        TypeRef(Decorators::fixed_array(length), type_terminal)
     }
     else {
         info.queue.push_back(gir_tid);
-        TypeRef {
-            decorators: decs,
-            type_terminal: TypeTerminal::Postponed(gir_tid),
-            ..Default::default
-        }
+        TypeRef(decorators, TypeTerminal::Postponed(gir_tid))
     }
 }
 
 fn transfer_gir_record(info: &mut Info, env: &Env, ns_id: NsId, record: &library::Record)
         -> TypeDef {
     let name = record.c_type.as_ref().unwrap_or(&record.name).clone();
-    transfer_gir_recordlike(info, env, ns_id, name, &record.fields, false, record)
+    let mut def = transfer_gir_recordlike(info, env, ns_id, name, &record.fields, false, record);
+    def.public = !record.disguised;
+    def
 }
 
 fn transfer_gir_class(info: &mut Info, env: &Env, ns_id: NsId, class: &library::Class)
@@ -430,36 +481,36 @@ fn transfer_gir_class(info: &mut Info, env: &Env, ns_id: NsId, class: &library::
 
 fn transfer_gir_recordlike(info: &mut Info, env: &Env, ns_id: NsId, name: String,
         record_fields: &[library::Field], is_class: bool, record: &Debug) -> TypeDef {
+    fn flush_bits_placeholder(fields: &mut Vec<Field>, bits: u8, count: u8) {
+        let bytes = (bits + 7) / 8;
+        fields.push(Field {
+            name: format!("bits{}", count),
+            type_: FieldType::Ref(
+                TypeRef(Decorators::fixed_array(bytes as u16), TypeTerminal::UInt8)),
+            fake: true,
+            ..Default::default()
+        });
+    }
+
     let mut fields: Vec<Field> = Vec::new();
     let mut bits: Option<u8> = None;
-    let mut bit_names: Vec<&str> = vec![];
+    let mut bits_placeholder_count = 0u8;
     //let mut ignore = false;
 
     for field in record_fields {
         if let Some(more_bits) = field.bits {
             bits = Some(bits.unwrap_or(0) + more_bits);
-            bit_names.push(&field.name);
             continue;
         }
         if let Some(bits) = bits.take() {
-            let bytes = (bits + 7) / 8;
-            fields.push(Field {
-                name: nameutil::mangle_keywords(&*bit_names.join("__")).into_owned(),
-                type_ref: TypeRef {
-                    decorators: Decorators::fixed_array(bytes as u16),
-                    type_terminal: TypeTerminal::UInt8,
-                    ..Default::default()
-                },
-                fake: true,
-                ..Default::default()
-            });
-            bit_names.clear();
+            flush_bits_placeholder(&mut fields, bits, bits_placeholder_count);
+            bits_placeholder_count += 1;
         }
         match *field {
             library::Field { typ, c_type: Some(ref c_type_hint), .. } => {
                 fields.push(Field {
                     name: nameutil::mangle_keywords(&*field.name).into_owned(),
-                    type_ref: make_type_ref(info, env, typ, c_type_hint),
+                    type_: FieldType::Ref(make_type_ref(info, env, typ, c_type_hint)),
                     ..Default::default()
                 });
             }
@@ -468,27 +519,20 @@ fn transfer_gir_recordlike(info: &mut Info, env: &Env, ns_id: NsId, name: String
                     library::Type::Function(..) => {
                         fields.push(Field {
                             name: nameutil::mangle_keywords(&*field.name).into_owned(),
-                            type_ref: TypeRef {
-                                decorators: Decorators::none(),
-                                type_terminal: TypeTerminal::Function,
-                                ..Default::default()
-                            }
+                            type_: FieldType::Function(Function),
                             ..Default::default()
                         });
                     }
                     library::Type::Union(ref union) => {
                         let mut def = transfer_gir_union(info, env, ns_id, union);
                         def.name = format!("{}_{}", name, field.name);
+                        //def.fake = true;
                         def.gir_tid = Some(typ);
-                        trace!("Adding `{:?}`", def);
                         let def_id = push(info, ns_id, def);
                         fields.push(Field {
                             name: nameutil::mangle_keywords(&*field.name).into_owned(),
-                            type_ref: TypeRef {
-                                decorators: Decorators::none(),
-                                type_terminal: TypeTerminal::Id(def_id),
-                                ..Default::default()
-                            }
+                            type_: FieldType::Ref(
+                                TypeRef(Decorators::none(), TypeTerminal::Id(def_id))),
                             ..Default::default()
                         });
                     }
@@ -502,11 +546,15 @@ fn transfer_gir_recordlike(info: &mut Info, env: &Env, ns_id: NsId, name: String
                 //warn!("Missing c:type for field `{:?}` from `{:?}`", field, record);
                 fields.push(Field {
                     name: nameutil::mangle_keywords(&*field.name).into_owned(),
-                    type_ref: make_type_ref(info, env, typ, ""),
+                    type_: FieldType::Ref(make_type_ref(info, env, typ, "")),
                     ..Default::default()
                 });
             }
         }
+    }
+
+    if let Some(bits) = bits.take() {
+        flush_bits_placeholder(&mut fields, bits, bits_placeholder_count);
     }
 
     TypeDef {
@@ -514,6 +562,7 @@ fn transfer_gir_recordlike(info: &mut Info, env: &Env, ns_id: NsId, name: String
         type_: Type::Record {
             fields: fields,
             is_class: is_class,
+            fake: false,
         },
         //ignore: ignore,
         ..Default::default()
@@ -530,7 +579,7 @@ fn transfer_gir_union(info: &mut Info, env: &Env, ns_id: NsId, union: &library::
             library::Field { typ, c_type: Some(ref c_type_hint), .. } => {
                 fields.push(Field {
                     name: nameutil::mangle_keywords(&*field.name).into_owned(),
-                    type_ref: make_type_ref(info, env, typ, c_type_hint),
+                    type_: FieldType::Ref(make_type_ref(info, env, typ, c_type_hint)),
                     ..Default::default()
                 });
             }
@@ -539,16 +588,15 @@ fn transfer_gir_union(info: &mut Info, env: &Env, ns_id: NsId, union: &library::
                     library::Type::Record(ref record) => {
                         let mut def = transfer_gir_record(info, env, ns_id, record);
                         def.name = format!("{}_{}", name, field.name);
+                        if let Type::Record { ref mut fake, .. } = def.type_ {
+                            *fake = true;
+                        }
                         def.gir_tid = Some(typ);
-                        trace!("Adding `{:?}`", def);
                         let def_id = push(info, ns_id, def);
                         fields.push(Field {
                             name: nameutil::mangle_keywords(&*field.name).into_owned(),
-                            type_ref: TypeRef {
-                                decorators: Decorators::none(),
-                                type_terminal: TypeTerminal::Id(def_id),
-                                ..Default::default()
-                            }
+                            type_: FieldType::Ref(
+                                TypeRef(Decorators::none(), TypeTerminal::Id(def_id))),
                             ..Default::default()
                         });
                     }
@@ -576,6 +624,7 @@ fn transfer_gir_union(info: &mut Info, env: &Env, ns_id: NsId, union: &library::
 }
 
 fn push(info: &mut Info, ns_id: NsId, type_def: TypeDef) -> TypeDefId {
+    trace!("Adding `{:?}`", type_def);
     let gir_tid = type_def.gir_tid;
     let name = type_def.name.clone();
     let fid = info.data.push(ns_id, type_def);
@@ -597,8 +646,12 @@ fn resolve_postponed_types(info: &mut Info, env: &Env) {
                 }
                 Type::Record { ref mut fields, .. } => {
                     for field in fields.iter_mut() {
-                        resolve(&info.gir_tid_index, env, &mut field.type_ref,
-                            ignore);
+                        match field.type_ {
+                            FieldType::Ref(ref mut type_ref) => {
+                                resolve(&info.gir_tid_index, env, type_ref, ignore);
+                            }
+                            FieldType::Function(..) => {}
+                        }
                     }
                 }
                 _ => {}
@@ -609,15 +662,55 @@ fn resolve_postponed_types(info: &mut Info, env: &Env) {
 
 fn resolve(gir_tid_index: &HashMap<library::TypeId, TypeDefId>, env: &Env, type_ref: &mut TypeRef,
         ignore: &mut Option<bool>) {
-    if let TypeTerminal::Postponed(gir_tid) = *type_ref.type_terminal {
+    let TypeRef(_, ref mut type_terminal) = *type_ref;
+    if let TypeTerminal::Postponed(gir_tid) = *type_terminal {
         if let Some(&def_id) = gir_tid_index.get(&gir_tid) {
             trace!("Resolved `{:?}` to `{:?}`", gir_tid, def_id);
-            *type_ref.type_terminal = TypeTerminal::Id(def_id);
+            *type_terminal = TypeTerminal::Id(def_id);
         }
         else {
             info!("Couldn't resolve `{:?}`", env.gir.type_(gir_tid));
             *ignore = Some(true);
         }
+    }
+}
+
+fn prepare_rust_types(info: &mut Info, env: &Env) {
+    for ns_id in 0..env.namespaces.len() as NsId {
+        for def_id in info.data.ids_by_ns(ns_id) {
+            let TypeDef { ref type_, .. } = info.data[def_id];
+            match *type_ {
+                Type::Alias(ref type_ref) => {
+                    if let Some((s, s_ext)) = make_rust_type(info, env, type_ref) {
+                        info.rust_type.insert(type_ref.clone(), s);
+                        info.rust_type_external.insert(type_ref.clone(), s_ext);
+                    }
+                }
+                Type::Record { ref fields, .. } => {
+                    for field in fields {
+                        match field.type_ {
+                            FieldType::Ref(ref type_ref) => {
+                                if let Some((s, s_ext)) = make_rust_type(info, env, type_ref) {
+                                    info.rust_type.insert(type_ref.clone(), s);
+                                    info.rust_type_external.insert(type_ref.clone(), s_ext);
+                                }
+                            }
+                            FieldType::Function(..) => {}
+                        }
+                    }
+                }
+                _ => {}
+            }
+        }
+    }
+}
+
+fn make_rust_type(info: &Info, env: &Env, type_ref: &TypeRef) -> Option<(String, String)> {
+    if info.rust_type.get(type_ref).is_some() {
+        None
+    }
+    else {
+        Some(type_ref.to_rust(info, env))
     }
 }
 
