@@ -66,6 +66,10 @@ fn generate_type_defs(w: &mut Write, env: &Env) -> Result<()> {
             continue;
         }
         match def.type_ {
+            Type::Alias(ref type_ref) => {
+                try!(writeln!(w, "pub type {} = {};", def.name,
+                    env.foreign.rust_type.get(type_ref).unwrap()));
+            }
             Type::Record { ref fields, .. } if fields.len() > 0 => {
                 try!(writeln!(w, "#[repr(C)]"));
                 try!(writeln!(w, "pub struct {} {{", def.name));
@@ -81,6 +85,10 @@ fn generate_type_defs(w: &mut Write, env: &Env) -> Result<()> {
                     }
                 }
                 try!(writeln!(w, "}}"));
+            }
+            Type::Record { .. } => {
+                try!(writeln!(w, "#[repr(C)]"));
+                try!(writeln!(w, "pub struct {}(c_void);", def.name));
             }
             _ => {
                 try!(writeln!(w, "pub type {} = c_void;", def.name));
