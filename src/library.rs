@@ -351,7 +351,7 @@ pub enum Type {
     Class(Class),
     Array(TypeId),
     CArray(TypeId),
-    FixedArray(TypeId, u16),
+    FixedArray(TypeId, u16, Option<String>),
     PtrArray(TypeId),
     HashTable(TypeId, TypeId),
     List(TypeId),
@@ -374,7 +374,7 @@ impl Type {
             &Array(type_id) => format!("Array {:?}", type_id),
             &Class(ref class) => class.name.clone(),
             &CArray(type_id) => format!("CArray {:?}", type_id),
-            &FixedArray(type_id, size) => format!("FixedArray {:?}; {}", type_id, size),
+            &FixedArray(type_id, size, _) => format!("FixedArray {:?}; {}", type_id, size),
             &PtrArray(type_id) => format!("PtrArray {:?}", type_id),
             &HashTable(key_type_id, value_type_id) => format!("HashTable {:?}/{:?}", key_type_id, value_type_id),
             &List(type_id) => format!("List {:?}", type_id),
@@ -397,10 +397,11 @@ impl Type {
         }
     }
 
-    pub fn c_array(library: &mut Library, inner: TypeId, size: Option<u16>) -> TypeId {
+    pub fn c_array(library: &mut Library, inner: TypeId, size: Option<u16>,
+            inner_c_type: Option<&str>) -> TypeId {
         if let Some(size) = size {
             library.add_type(INTERNAL_NAMESPACE, &format!("[#{:?}; {}]", inner, size),
-                             Type::FixedArray(inner, size))
+                             Type::FixedArray(inner, size, inner_c_type.map(|s| String::from(s))))
         }
         else {
             library.add_type(INTERNAL_NAMESPACE, &format!("[#{:?}]", inner), Type::CArray(inner))

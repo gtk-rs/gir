@@ -822,7 +822,7 @@ impl Library {
                 StartElement { name, attributes, .. } => {
                     match name.local_name.as_ref() {
                         "type" | "array" => {
-                            inner.push(try!(self.read_type(parser, ns_id, &name, &attributes)).0);
+                            inner.push(try!(self.read_type(parser, ns_id, &name, &attributes)));
                         }
                         x => return Err(mk_error!(format!("Unexpected element <{}>", x), parser)),
                     }
@@ -841,10 +841,12 @@ impl Library {
         }
         else {
             let tid = if name == "array" {
-                Type::c_array(self, inner[0], attrs.get("fixed-size").and_then(|n| n.parse().ok()))
+                Type::c_array(self, inner[0].0,
+                    attrs.get("fixed-size").and_then(|n| n.parse().ok()),
+                    inner[0].1.as_ref().map(|s| &s[..]))
             }
             else {
-                try!(Type::container(self, name, inner)
+                try!(Type::container(self, name, inner.into_iter().map(|t| t.0).collect())
                                .ok_or_else(|| mk_error!("Unknown container type", &start_pos)))
             };
             Ok((tid, c_type))
