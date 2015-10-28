@@ -10,9 +10,9 @@ use ns_vec::{self, NsVec};
 use super::namespaces::{self, NsId};
 
 #[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct TypeDefId(ns_vec::Id);
+pub struct DefId(ns_vec::Id);
 
-impl Deref for TypeDefId {
+impl Deref for DefId {
     type Target = ns_vec::Id;
 
     fn deref(&self) -> &ns_vec::Id {
@@ -20,26 +20,11 @@ impl Deref for TypeDefId {
     }
 }
 
-impl From<ns_vec::Id> for TypeDefId {
-    fn from(val: ns_vec::Id) -> TypeDefId {
-        TypeDefId(val)
+impl From<ns_vec::Id> for DefId {
+    fn from(val: ns_vec::Id) -> DefId {
+        DefId(val)
     }
 }
-
-/*
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum FTypeStatus {
-    Pending,
-    Ignore,
-    Ok,
-}
-
-impl Default for FTypeStatus {
-    fn default() -> Self {
-        FTypeStatus::Pending
-    }
-}
-*/
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum Decorator {
@@ -140,39 +125,41 @@ pub enum TypeTerminal {
     Double,
     Type,
     Function,
-    Id(TypeDefId),
+    Id(DefId),
     Postponed(library::TypeId),
 }
 
 impl TypeTerminal {
     fn primitive(typ: &library::Type) -> Option<TypeTerminal> {
+        use library::Fundamental;
+        use self::TypeTerminal::*;
         if let library::Type::Fundamental(fund) = *typ {
             match fund {
-                library::Fundamental::None => Some(TypeTerminal::Void),
-                library::Fundamental::Boolean => Some(TypeTerminal::Boolean),
-                library::Fundamental::Int8 => Some(TypeTerminal::Int8),
-                library::Fundamental::UInt8 => Some(TypeTerminal::UInt8),
-                library::Fundamental::Int16 => Some(TypeTerminal::Int16),
-                library::Fundamental::UInt16 => Some(TypeTerminal::UInt16),
-                library::Fundamental::Int32 => Some(TypeTerminal::Int32),
-                library::Fundamental::UInt32 => Some(TypeTerminal::UInt32),
-                library::Fundamental::Int64 => Some(TypeTerminal::Int64),
-                library::Fundamental::UInt64 => Some(TypeTerminal::UInt64),
-                library::Fundamental::Char => Some(TypeTerminal::Char),
-                library::Fundamental::UChar => Some(TypeTerminal::UChar),
-                library::Fundamental::Short => Some(TypeTerminal::Short),
-                library::Fundamental::UShort => Some(TypeTerminal::UShort),
-                library::Fundamental::Int => Some(TypeTerminal::Int),
-                library::Fundamental::UInt => Some(TypeTerminal::UInt),
-                library::Fundamental::Long => Some(TypeTerminal::Long),
-                library::Fundamental::ULong => Some(TypeTerminal::ULong),
-                library::Fundamental::Size => Some(TypeTerminal::Size),
-                library::Fundamental::SSize => Some(TypeTerminal::SSize),
-                library::Fundamental::Float => Some(TypeTerminal::Float),
-                library::Fundamental::Double => Some(TypeTerminal::Double),
-                library::Fundamental::Pointer => Some(TypeTerminal::Void),
-                library::Fundamental::Type => Some(TypeTerminal::Type),
-                library::Fundamental::Utf8 => Some(TypeTerminal::Char),
+                Fundamental::None => Some(Void),
+                Fundamental::Boolean => Some(Boolean),
+                Fundamental::Int8 => Some(Int8),
+                Fundamental::UInt8 => Some(UInt8),
+                Fundamental::Int16 => Some(Int16),
+                Fundamental::UInt16 => Some(UInt16),
+                Fundamental::Int32 => Some(Int32),
+                Fundamental::UInt32 => Some(UInt32),
+                Fundamental::Int64 => Some(Int64),
+                Fundamental::UInt64 => Some(UInt64),
+                Fundamental::Char => Some(Char),
+                Fundamental::UChar => Some(UChar),
+                Fundamental::Short => Some(Short),
+                Fundamental::UShort => Some(UShort),
+                Fundamental::Int => Some(Int),
+                Fundamental::UInt => Some(UInt),
+                Fundamental::Long => Some(Long),
+                Fundamental::ULong => Some(ULong),
+                Fundamental::Size => Some(Size),
+                Fundamental::SSize => Some(SSize),
+                Fundamental::Float => Some(Float),
+                Fundamental::Double => Some(Double),
+                Fundamental::Pointer => Some(Void),
+                Fundamental::Type => Some(Type),
+                Fundamental::Utf8 => Some(Char),
                 _ => None,
             }
         }
@@ -211,7 +198,7 @@ impl TypeTerminal {
             Type => ("GType", Cow::from("GType")),
             Function => ("fn()", Cow::from("fn()")),
             Id(def_id) => {
-                let name = &info.data[def_id].name;
+                let name = &info.defs[def_id].name;
                 let external_name =
                     Cow::from(format!("{}::{}", env.namespaces[def_id.ns_id].name, name));
                 (name, external_name)
@@ -244,26 +231,26 @@ impl TypeRef {
 pub struct Function;
 
 #[derive(Debug)]
-pub enum FieldType {
+pub enum Type {
     Ref(TypeRef),
     Function(Function),
 }
 
-impl Default for FieldType {
-    fn default() -> FieldType {
-        FieldType::Ref(TypeRef::default())
+impl Default for Type {
+    fn default() -> Type {
+        Type::Ref(TypeRef::default())
     }
 }
 
 #[derive(Debug, Default)]
 pub struct Field {
     pub name: String,
-    pub type_: FieldType,
+    pub type_: Type,
     fake: bool,
 }
 
 #[derive(Debug)]
-pub enum Type {
+pub enum DefKind {
     Alias(TypeRef),
     Bitfield,
     Enumeration,
@@ -279,23 +266,23 @@ pub enum Type {
     },
 }
 
-impl Default for Type {
-    fn default() -> Type {
-        Type::Alias(Default::default())
+impl Default for DefKind {
+    fn default() -> DefKind {
+        DefKind::Alias(Default::default())
     }
 }
 
 #[derive(Debug, Default)]
-pub struct TypeDef {
+pub struct Def {
     pub name: String,
     gir_tid: Option<library::TypeId>,
-    pub type_: Type,
+    pub kind: DefKind,
     pub ignore: Option<bool>,
     pub public: bool,
 }
 
 pub struct Info {
-    pub data: NsVec<TypeDefId, TypeDef>,
+    pub defs: NsVec<DefId, Def>,
     gir_tid_index: HashMap<library::TypeId, TypeTerminal>,
     name_index: HashMap<String, TypeTerminal>,
     queue: VecDeque<library::TypeId>,
@@ -310,7 +297,7 @@ struct Env<'a> {
 
 pub fn run(gir: &library::Library, namespaces: &namespaces::Info) -> Info {
     let mut info = Info {
-        data: NsVec::new(namespaces.len()),
+        defs: NsVec::new(namespaces.len()),
         gir_tid_index: HashMap::new(),
         name_index: HashMap::new(),
         queue: VecDeque::new(),
@@ -368,38 +355,38 @@ fn transfer_gir_type(info: &mut Info, env: &Env, gir_tid: library::TypeId) {
     let typ = env.gir.type_(gir_tid);
     let mut typedef = match *typ {
         Alias(library::Alias { ref c_identifier, typ, ref target_c_type, .. }) => {
-            TypeDef {
+            Def {
                 name: c_identifier.clone(),
-                type_: Type::Alias(make_type_ref(info, env, typ, target_c_type)),
+                kind: DefKind::Alias(make_type_ref(info, env, typ, target_c_type)),
                 ..Default::default()
             }
         }
         Bitfield(library::Bitfield { ref c_type, .. }) => {
-            TypeDef {
+            Def {
                 name: c_type.clone(),
-                type_: Type::Bitfield,
+                kind: DefKind::Bitfield,
                 ..Default::default()
             }
         }
         Enumeration(library::Enumeration { ref c_type, .. }) => {
-            TypeDef {
+            Def {
                 name: c_type.clone(),
-                type_: Type::Enumeration,
+                kind: DefKind::Enumeration,
                 ..Default::default()
             }
         }
         Function(library::Function { ref name, ref c_identifier, .. }) => {
             let name = c_identifier.as_ref().unwrap_or(name);
-            TypeDef {
+            Def {
                 name: name.clone(),
-                type_: Type::Function,
+                kind: DefKind::Function,
                 ..Default::default()
             }
         }
         Interface(library::Interface { ref c_type, .. }) => {
-            TypeDef {
+            Def {
                 name: c_type.clone(),
-                type_: Type::Opaque,
+                kind: DefKind::Opaque,
                 ..Default::default()
             }
         }
@@ -466,7 +453,7 @@ fn make_type_ref(info: &mut Info, env: &Env, gir_tid: library::TypeId, c_type_hi
 }
 
 fn transfer_gir_record(info: &mut Info, env: &Env, ns_id: NsId, record: &library::Record)
-        -> TypeDef {
+        -> Def {
     let name = record.c_type.as_ref().unwrap_or(&record.name).clone();
     let mut def = transfer_gir_recordlike(info, env, ns_id, name, &record.fields, false, record);
     def.public = !record.disguised;
@@ -474,18 +461,18 @@ fn transfer_gir_record(info: &mut Info, env: &Env, ns_id: NsId, record: &library
 }
 
 fn transfer_gir_class(info: &mut Info, env: &Env, ns_id: NsId, class: &library::Class)
-        -> TypeDef {
+        -> Def {
     let name = class.c_type.clone();
     transfer_gir_recordlike(info, env, ns_id, name, &[], true, class)
 }
 
 fn transfer_gir_recordlike(info: &mut Info, env: &Env, ns_id: NsId, name: String,
-        record_fields: &[library::Field], is_class: bool, record: &Debug) -> TypeDef {
+        record_fields: &[library::Field], is_class: bool, record: &Debug) -> Def {
     fn flush_bits_placeholder(fields: &mut Vec<Field>, bits: u8, count: u8) {
         let bytes = (bits + 7) / 8;
         fields.push(Field {
             name: format!("bits{}", count),
-            type_: FieldType::Ref(
+            type_: Type::Ref(
                 TypeRef(Decorators::fixed_array(bytes as u16), TypeTerminal::UInt8)),
             fake: true,
             ..Default::default()
@@ -510,7 +497,7 @@ fn transfer_gir_recordlike(info: &mut Info, env: &Env, ns_id: NsId, name: String
             library::Field { typ, c_type: Some(ref c_type_hint), .. } => {
                 fields.push(Field {
                     name: nameutil::mangle_keywords(&*field.name).into_owned(),
-                    type_: FieldType::Ref(make_type_ref(info, env, typ, c_type_hint)),
+                    type_: Type::Ref(make_type_ref(info, env, typ, c_type_hint)),
                     ..Default::default()
                 });
             }
@@ -519,7 +506,7 @@ fn transfer_gir_recordlike(info: &mut Info, env: &Env, ns_id: NsId, name: String
                     library::Type::Function(..) => {
                         fields.push(Field {
                             name: nameutil::mangle_keywords(&*field.name).into_owned(),
-                            type_: FieldType::Function(Function),
+                            type_: Type::Function(Function),
                             ..Default::default()
                         });
                     }
@@ -531,7 +518,7 @@ fn transfer_gir_recordlike(info: &mut Info, env: &Env, ns_id: NsId, name: String
                         let def_id = push(info, ns_id, def);
                         fields.push(Field {
                             name: nameutil::mangle_keywords(&*field.name).into_owned(),
-                            type_: FieldType::Ref(
+                            type_: Type::Ref(
                                 TypeRef(Decorators::none(), TypeTerminal::Id(def_id))),
                             ..Default::default()
                         });
@@ -546,7 +533,7 @@ fn transfer_gir_recordlike(info: &mut Info, env: &Env, ns_id: NsId, name: String
                 //warn!("Missing c:type for field `{:?}` from `{:?}`", field, record);
                 fields.push(Field {
                     name: nameutil::mangle_keywords(&*field.name).into_owned(),
-                    type_: FieldType::Ref(make_type_ref(info, env, typ, "")),
+                    type_: Type::Ref(make_type_ref(info, env, typ, "")),
                     ..Default::default()
                 });
             }
@@ -557,9 +544,9 @@ fn transfer_gir_recordlike(info: &mut Info, env: &Env, ns_id: NsId, name: String
         flush_bits_placeholder(&mut fields, bits, bits_placeholder_count);
     }
 
-    TypeDef {
+    Def {
         name: name,
-        type_: Type::Record {
+        kind: DefKind::Record {
             fields: fields,
             is_class: is_class,
             fake: false,
@@ -569,7 +556,7 @@ fn transfer_gir_recordlike(info: &mut Info, env: &Env, ns_id: NsId, name: String
     }
 }
 
-fn transfer_gir_union(info: &mut Info, env: &Env, ns_id: NsId, union: &library::Union) -> TypeDef {
+fn transfer_gir_union(info: &mut Info, env: &Env, ns_id: NsId, union: &library::Union) -> Def {
     let mut fields: Vec<Field> = Vec::new();
     let name = union.c_type.as_ref().unwrap_or(&union.name).clone();
     //let mut ignore = false;
@@ -579,7 +566,7 @@ fn transfer_gir_union(info: &mut Info, env: &Env, ns_id: NsId, union: &library::
             library::Field { typ, c_type: Some(ref c_type_hint), .. } => {
                 fields.push(Field {
                     name: nameutil::mangle_keywords(&*field.name).into_owned(),
-                    type_: FieldType::Ref(make_type_ref(info, env, typ, c_type_hint)),
+                    type_: Type::Ref(make_type_ref(info, env, typ, c_type_hint)),
                     ..Default::default()
                 });
             }
@@ -588,14 +575,14 @@ fn transfer_gir_union(info: &mut Info, env: &Env, ns_id: NsId, union: &library::
                     library::Type::Record(ref record) => {
                         let mut def = transfer_gir_record(info, env, ns_id, record);
                         def.name = format!("{}_{}", name, field.name);
-                        if let Type::Record { ref mut fake, .. } = def.type_ {
+                        if let DefKind::Record { ref mut fake, .. } = def.kind {
                             *fake = true;
                         }
                         def.gir_tid = Some(typ);
                         let def_id = push(info, ns_id, def);
                         fields.push(Field {
                             name: nameutil::mangle_keywords(&*field.name).into_owned(),
-                            type_: FieldType::Ref(
+                            type_: Type::Ref(
                                 TypeRef(Decorators::none(), TypeTerminal::Id(def_id))),
                             ..Default::default()
                         });
@@ -613,9 +600,9 @@ fn transfer_gir_union(info: &mut Info, env: &Env, ns_id: NsId, union: &library::
         }
     }
 
-    TypeDef {
+    Def {
         name: name,
-        type_: Type::Union {
+        kind: DefKind::Union {
             fields: fields,
         },
         //ignore: ignore,
@@ -623,11 +610,11 @@ fn transfer_gir_union(info: &mut Info, env: &Env, ns_id: NsId, union: &library::
     }
 }
 
-fn push(info: &mut Info, ns_id: NsId, def: TypeDef) -> TypeDefId {
+fn push(info: &mut Info, ns_id: NsId, def: Def) -> DefId {
     trace!("Adding `{:?}`", def);
     let gir_tid = def.gir_tid;
     let name = def.name.clone();
-    let def_id = info.data.push(ns_id, def);
+    let def_id = info.defs.push(ns_id, def);
     if let Some(gir_tid) = gir_tid {
         info.gir_tid_index.insert(gir_tid, TypeTerminal::Id(def_id));
     }
@@ -638,19 +625,19 @@ fn push(info: &mut Info, ns_id: NsId, def: TypeDef) -> TypeDefId {
 
 fn resolve_postponed_types(info: &mut Info, env: &Env) {
     for ns_id in 0..env.namespaces.len() as NsId {
-        for def_id in info.data.ids_by_ns(ns_id) {
-            let TypeDef { ref mut type_, ref mut ignore, .. } = info.data[def_id];
-            match *type_ {
-                Type::Alias(ref mut type_ref) => {
+        for def_id in info.defs.ids_by_ns(ns_id) {
+            let Def { ref mut kind, ref mut ignore, .. } = info.defs[def_id];
+            match *kind {
+                DefKind::Alias(ref mut type_ref) => {
                     resolve(&info.gir_tid_index, env, type_ref, ignore);
                 }
-                Type::Record { ref mut fields, .. } => {
+                DefKind::Record { ref mut fields, .. } => {
                     for field in fields.iter_mut() {
                         match field.type_ {
-                            FieldType::Ref(ref mut type_ref) => {
+                            Type::Ref(ref mut type_ref) => {
                                 resolve(&info.gir_tid_index, env, type_ref, ignore);
                             }
-                            FieldType::Function(..) => {}
+                            Type::Function(..) => {}
                         }
                     }
                 }
@@ -677,25 +664,25 @@ fn resolve(gir_tid_index: &HashMap<library::TypeId, TypeTerminal>, env: &Env,
 
 fn prepare_rust_types(info: &mut Info, env: &Env) {
     for ns_id in 0..env.namespaces.len() as NsId {
-        for def_id in info.data.ids_by_ns(ns_id) {
-            let TypeDef { ref type_, .. } = info.data[def_id];
-            match *type_ {
-                Type::Alias(ref type_ref) => {
+        for def_id in info.defs.ids_by_ns(ns_id) {
+            let Def { ref kind, .. } = info.defs[def_id];
+            match *kind {
+                DefKind::Alias(ref type_ref) => {
                     if let Some((s, s_ext)) = make_rust_type(info, env, type_ref) {
                         info.rust_type.insert(type_ref.clone(), s);
                         info.rust_type_external.insert(type_ref.clone(), s_ext);
                     }
                 }
-                Type::Record { ref fields, .. } => {
+                DefKind::Record { ref fields, .. } => {
                     for field in fields {
                         match field.type_ {
-                            FieldType::Ref(ref type_ref) => {
+                            Type::Ref(ref type_ref) => {
                                 if let Some((s, s_ext)) = make_rust_type(info, env, type_ref) {
                                     info.rust_type.insert(type_ref.clone(), s);
                                     info.rust_type_external.insert(type_ref.clone(), s_ext);
                                 }
                             }
-                            FieldType::Function(..) => {}
+                            Type::Function(..) => {}
                         }
                     }
                 }
@@ -717,15 +704,15 @@ fn make_rust_type(info: &Info, env: &Env, type_ref: &TypeRef) -> Option<(String,
 fn fix_weird_types(info: &mut Info) {
     fn atomize(info: &mut Info, name: &str) {
         if let Some(&TypeTerminal::Id(def_id)) = info.name_index.get(name) {
-            let mut def = TypeDef {
+            let mut def = Def {
                 name: String::from(name),
                 ..Default::default()
             };
-            mem::swap(&mut def, &mut info.data[def_id]);
+            mem::swap(&mut def, &mut info.defs[def_id]);
             def.name = format!("_{}", name);
             let new_def_id = push(info, def_id.ns_id, def);
-            info.data[def_id].type_ =
-                Type::Alias(TypeRef(Decorators::mut_ptr(), TypeTerminal::Id(new_def_id)));
+            info.defs[def_id].kind =
+                DefKind::Alias(TypeRef(Decorators::mut_ptr(), TypeTerminal::Id(new_def_id)));
         }
     }
 

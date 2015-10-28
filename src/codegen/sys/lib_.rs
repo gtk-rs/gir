@@ -3,7 +3,7 @@ use std::io::{Result, Write};
 //use case::CaseExt;
 
 //use analysis::rust_type::parameter_rust_type;
-use analysis::foreign::{FieldType, Type, TypeDefId};
+use analysis::foreign::{Type, DefKind, DefId};
 use analysis::namespaces;
 use env::Env;
 use file_saver::*;
@@ -57,36 +57,36 @@ fn generate_extern_crates(w: &mut Write, env: &Env) -> Result<()> {
 
 fn generate_type_defs(w: &mut Write, env: &Env) -> Result<()> {
     use std::cmp::Ord;
-    let mut def_ids: Vec<TypeDefId> = env.foreign.data.ids_by_ns(namespaces::MAIN).collect();
-    def_ids.sort_by(|&a, &b| env.foreign.data[a].name.cmp(&env.foreign.data[b].name));
+    let mut def_ids: Vec<DefId> = env.foreign.defs.ids_by_ns(namespaces::MAIN).collect();
+    def_ids.sort_by(|&a, &b| env.foreign.defs[a].name.cmp(&env.foreign.defs[b].name));
 
     for def_id in def_ids {
-        let def = &env.foreign.data[def_id];
+        let def = &env.foreign.defs[def_id];
         if def.ignore == Some(true) {
             continue;
         }
-        match def.type_ {
-            Type::Alias(ref type_ref) => {
+        match def.kind {
+            DefKind::Alias(ref type_ref) => {
                 try!(writeln!(w, "pub type {} = {};", def.name,
                     env.foreign.rust_type.get(type_ref).unwrap()));
             }
-            Type::Record { ref fields, .. } if fields.len() > 0 => {
+            DefKind::Record { ref fields, .. } if fields.len() > 0 => {
                 try!(writeln!(w, "#[repr(C)]"));
                 try!(writeln!(w, "pub struct {} {{", def.name));
                 for field in fields {
                     match field.type_ {
-                        FieldType::Ref(ref type_ref) => {
+                        Type::Ref(ref type_ref) => {
                             try!(writeln!(w, "\tpub {}: {},", field.name,
                                 env.foreign.rust_type.get(type_ref).unwrap()));
                         }
-                        FieldType::Function(..) => {
+                        Type::Function(..) => {
                             try!(writeln!(w, "\tpub {}: fn(),", field.name));
                         }
                     }
                 }
                 try!(writeln!(w, "}}"));
             }
-            Type::Record { .. } => {
+            DefKind::Record { .. } => {
                 try!(writeln!(w, "#[repr(C)]"));
                 try!(writeln!(w, "pub struct {}(c_void);", def.name));
             }
