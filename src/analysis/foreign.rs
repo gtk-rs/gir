@@ -40,6 +40,9 @@ pub enum Decorator {
 #[derive(Clone, Debug, Default, PartialEq, Eq, Hash)]
 pub struct Decorators(pub Vec<Decorator>);
 
+const CONST: &'static str = "const ";
+const VOLATILE: &'static str = "volatile ";
+
 impl Decorators {
     pub fn none() -> Decorators {
         Decorators(vec![])
@@ -63,9 +66,13 @@ impl Decorators {
 
     pub fn from_c_type(c_type: &str) -> Decorators {
         let mut input = c_type.trim();
-        let leading_const = input.starts_with("const ");
+        let volatile = input.starts_with(VOLATILE);
+        if volatile {
+            input = &input[VOLATILE.len()..];
+        }
+        let leading_const = input.starts_with(CONST);
         if leading_const {
-            input = &input[6..];
+            input = &input[CONST.len()..];
         }
         let end = [
                 input.find(" const"),
@@ -81,6 +88,9 @@ impl Decorators {
             .collect::<Vec<_>>();
         if let (true, Some(p)) = (leading_const, ptrs.last_mut()) {
             *p = Decorator::ConstPtr;
+        }
+        if volatile {
+            ptrs.push(Decorator::Volatile);
         }
         if inner == "gconstpointer" {
             ptrs.push(Decorator::ConstPtr);
