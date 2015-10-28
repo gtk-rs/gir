@@ -66,7 +66,7 @@ fn generate_type_defs(w: &mut Write, env: &Env) -> Result<()> {
             continue;
         }
         match def.kind {
-            DefKind::Alias(ref type_ref) => {
+            DefKind::Alias(Type::Ref(ref type_ref)) => {
                 try!(writeln!(w, "pub type {} = {};", def.name,
                     env.foreign.rust_type.get(type_ref).unwrap()));
             }

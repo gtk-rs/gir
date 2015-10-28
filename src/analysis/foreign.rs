@@ -251,7 +251,7 @@ pub struct Field {
 
 #[derive(Debug)]
 pub enum DefKind {
-    Alias(TypeRef),
+    Alias(Type),
     Bitfield,
     Enumeration,
     Function,
@@ -357,7 +357,7 @@ fn transfer_gir_type(info: &mut Info, env: &Env, gir_tid: library::TypeId) {
         Alias(library::Alias { ref c_identifier, typ, ref target_c_type, .. }) => {
             Def {
                 name: c_identifier.clone(),
-                kind: DefKind::Alias(make_type_ref(info, env, typ, target_c_type)),
+                kind: DefKind::Alias(Type::Ref(make_type_ref(info, env, typ, target_c_type))),
                 ..Default::default()
             }
         }
@@ -628,7 +628,7 @@ fn resolve_postponed_types(info: &mut Info, env: &Env) {
         for def_id in info.defs.ids_by_ns(ns_id) {
             let Def { ref mut kind, ref mut ignore, .. } = info.defs[def_id];
             match *kind {
-                DefKind::Alias(ref mut type_ref) => {
+                DefKind::Alias(Type::Ref(ref mut type_ref)) => {
                     resolve(&info.gir_tid_index, env, type_ref, ignore);
                 }
                 DefKind::Record { ref mut fields, .. } => {
@@ -667,7 +667,7 @@ fn prepare_rust_types(info: &mut Info, env: &Env) {
         for def_id in info.defs.ids_by_ns(ns_id) {
             let Def { ref kind, .. } = info.defs[def_id];
             match *kind {
-                DefKind::Alias(ref type_ref) => {
+                DefKind::Alias(Type::Ref(ref type_ref)) => {
                     if let Some((s, s_ext)) = make_rust_type(info, env, type_ref) {
                         info.rust_type.insert(type_ref.clone(), s);
                         info.rust_type_external.insert(type_ref.clone(), s_ext);
@@ -712,7 +712,8 @@ fn fix_weird_types(info: &mut Info) {
             def.name = format!("_{}", name);
             let new_def_id = push(info, def_id.ns_id, def);
             info.defs[def_id].kind =
-                DefKind::Alias(TypeRef(Decorators::mut_ptr(), TypeTerminal::Id(new_def_id)));
+                DefKind::Alias(Type::Ref(
+                        TypeRef(Decorators::mut_ptr(), TypeTerminal::Id(new_def_id))));
         }
     }
 
