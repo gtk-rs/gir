@@ -1,6 +1,7 @@
 use std::borrow::Cow;
 use std::collections::{HashMap, VecDeque};
 use std::fmt::Debug;
+use std::mem;
 use std::ops::Deref;
 
 use library;
@@ -332,9 +333,8 @@ pub fn run(gir: &library::Library, namespaces: &namespaces::Info) -> Info {
     }
 
     resolve_postponed_types(&mut info, &env);
+    fix_weird_types(&mut info);
     prepare_rust_types(&mut info, &env);
-
-    //analyze(&mut info, &env);
 
     info
 }
@@ -714,5 +714,20 @@ fn make_rust_type(info: &Info, env: &Env, type_ref: &TypeRef) -> Option<(String,
     }
 }
 
-//fn analyze(info: &mut Info, env: &Env) {
-//}
+fn fix_weird_types(info: &mut Info) {
+    fn atomize(info: &mut Info, name: &str) {
+        if let Some(&def_id) = info.name_index.get(name) {
+            let mut def = TypeDef {
+                name: String::from(name),
+                ..Default::default()
+            };
+            mem::swap(&mut def, &mut info.data[def_id]);
+            def.name = format!("_{}", name);
+            let new_def_id = push(info, def_id.ns_id, def);
+            info.data[def_id].type_ =
+                Type::Alias(TypeRef(Decorators::mut_ptr(), TypeTerminal::Id(new_def_id)));
+        }
+    }
+
+    atomize(info, "GIConv");
+}
