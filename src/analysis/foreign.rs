@@ -296,8 +296,8 @@ pub struct TypeDef {
 
 pub struct Info {
     pub data: NsVec<TypeDefId, TypeDef>,
-    gir_tid_index: HashMap<library::TypeId, TypeDefId>,
-    name_index: HashMap<String, TypeDefId>,
+    gir_tid_index: HashMap<library::TypeId, TypeTerminal>,
+    name_index: HashMap<String, TypeTerminal>,
     queue: VecDeque<library::TypeId>,
     pub rust_type: HashMap<TypeRef, String>,
     pub rust_type_external: HashMap<TypeRef, String>,
@@ -448,8 +448,8 @@ fn make_type_ref(info: &mut Info, env: &Env, gir_tid: library::TypeId, c_type_hi
     if let Some(type_terminal) = TypeTerminal::primitive(gir_type) {
         TypeRef(decorators, type_terminal)
     }
-    else if let Some(&def_id) = info.gir_tid_index.get(&gir_tid) {
-        TypeRef(decorators, TypeTerminal::Id(def_id))
+    else if let Some(&type_terminal) = info.gir_tid_index.get(&gir_tid) {
+        TypeRef(decorators, type_terminal)
     }
     else if let library::Type::CArray(tid) = *gir_type {
         let TypeRef(_, type_terminal) = make_type_ref(info, env, tid, "");
@@ -623,16 +623,16 @@ fn transfer_gir_union(info: &mut Info, env: &Env, ns_id: NsId, union: &library::
     }
 }
 
-fn push(info: &mut Info, ns_id: NsId, type_def: TypeDef) -> TypeDefId {
-    trace!("Adding `{:?}`", type_def);
-    let gir_tid = type_def.gir_tid;
-    let name = type_def.name.clone();
-    let fid = info.data.push(ns_id, type_def);
+fn push(info: &mut Info, ns_id: NsId, def: TypeDef) -> TypeDefId {
+    trace!("Adding `{:?}`", def);
+    let gir_tid = def.gir_tid;
+    let name = def.name.clone();
+    let def_id = info.data.push(ns_id, def);
     if let Some(gir_tid) = gir_tid {
-        info.gir_tid_index.insert(gir_tid, fid);
+        info.gir_tid_index.insert(gir_tid, TypeTerminal::Id(def_id));
     }
-    info.name_index.insert(name, fid);
-    fid
+    info.name_index.insert(name, TypeTerminal::Id(def_id));
+    def_id
 }
 
 
@@ -660,13 +660,13 @@ fn resolve_postponed_types(info: &mut Info, env: &Env) {
     }
 }
 
-fn resolve(gir_tid_index: &HashMap<library::TypeId, TypeDefId>, env: &Env, type_ref: &mut TypeRef,
-        ignore: &mut Option<bool>) {
+fn resolve(gir_tid_index: &HashMap<library::TypeId, TypeTerminal>, env: &Env,
+        type_ref: &mut TypeRef, ignore: &mut Option<bool>) {
     let TypeRef(_, ref mut type_terminal) = *type_ref;
     if let TypeTerminal::Postponed(gir_tid) = *type_terminal {
-        if let Some(&def_id) = gir_tid_index.get(&gir_tid) {
-            trace!("Resolved `{:?}` to `{:?}`", gir_tid, def_id);
-            *type_terminal = TypeTerminal::Id(def_id);
+        if let Some(&resolved) = gir_tid_index.get(&gir_tid) {
+            trace!("Resolved `{:?}` to `{:?}`", gir_tid, resolved);
+            *type_terminal = resolved;
         }
         else {
             info!("Couldn't resolve `{:?}`", env.gir.type_(gir_tid));
@@ -716,7 +716,7 @@ fn make_rust_type(info: &Info, env: &Env, type_ref: &TypeRef) -> Option<(String,
 
 fn fix_weird_types(info: &mut Info) {
     fn atomize(info: &mut Info, name: &str) {
-        if let Some(&def_id) = info.name_index.get(name) {
+        if let Some(&TypeTerminal::Id(def_id)) = info.name_index.get(name) {
             let mut def = TypeDef {
                 name: String::from(name),
                 ..Default::default()
