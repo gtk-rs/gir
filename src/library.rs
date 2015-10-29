@@ -573,6 +573,7 @@ pub const MAIN_NAMESPACE: u16 = 1;
 pub struct Library {
     pub namespaces: Vec<Namespace>,
     pub index: HashMap<String, u16>,
+    fundamental: Vec<TypeId>,
 }
 
 impl Library {
@@ -580,10 +581,12 @@ impl Library {
         let mut library = Library {
             namespaces: Vec::new(),
             index: HashMap::new(),
+            fundamental: vec![TypeId::default(); FUNDAMENTAL.len()],
         };
         assert!(library.add_namespace(INTERNAL_NAMESPACE_NAME) == INTERNAL_NAMESPACE);
         for &(name, t) in &FUNDAMENTAL {
-            library.add_type(INTERNAL_NAMESPACE, name, Type::Fundamental(t));
+            let tid = library.add_type(INTERNAL_NAMESPACE, name, Type::Fundamental(t));
+            library.fundamental[t as usize] = tid;
         }
         assert!(library.add_namespace(main_namespace_name) == MAIN_NAMESPACE);
         library
@@ -668,6 +671,10 @@ impl Library {
 
         let id = self.namespace_mut(current_ns_id).add_type(name, None);
         TypeId { ns_id: current_ns_id, id: id }
+    }
+
+    pub fn find_fundamental(&self, fund: Fundamental) -> TypeId {
+        self.fundamental[fund as usize]
     }
 
     pub fn type_(&self, tid: TypeId) -> &Type {
