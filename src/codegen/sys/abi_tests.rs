@@ -1,7 +1,7 @@
 use std::cmp::Ord;
 use std::io::{Result, Write};
 
-use analysis::foreign::{Def, DefId, DefKind};
+use analysis::foreign::{Def, DefId, DefKind, Type, TypeTerminal};
 use analysis::namespaces;
 use env::Env;
 use file_saver;
@@ -15,6 +15,8 @@ pub fn generate(env: &Env) {
             match env.foreign.defs[def_id] {
                 Def { public: true, kind: DefKind::Bitfield, .. } => true,
                 Def { public: true, kind: DefKind::Enumeration, .. } => true,
+                Def { public: true, ignore, kind: DefKind::Union { .. }, .. }
+                    if ignore != Some(true) => true,
                 Def { public: true, kind: DefKind::Record { ref fields, fake, .. }, .. }
                     if !fields.is_empty() && !fake => true,
                 _ => false,
@@ -58,6 +60,26 @@ fn {name}_size() {{
     unsafe {{ assert_eq!(size_of::<{name}>(), {name}_size() as usize); }}
 }}
 ", name = env.foreign.defs[def_id].name));
+
+        if let DefKind::Union { ref fields, .. } = env.foreign.defs[def_id].kind {
+            for field in fields {
+                if let Type(_, TypeTerminal::Id(field_def_id)) = field.type_ {
+                    try!(writeln!(w, "\
+#[test]
+fn {name}_alignment() {{
+    extern {{ fn {union_name}_alignment() -> size_t; }}
+    unsafe {{ assert!(align_of::<{name}>() <= {union_name}_alignment() as usize); }}
+}}
+
+#[test]
+fn {name}_size() {{
+    extern {{ fn {union_name}_size() -> size_t; }}
+    unsafe {{ assert!(size_of::<{name}>() <= {union_name}_size() as usize); }}
+}}
+", union_name = env.foreign.defs[def_id].name, name = env.foreign.defs[field_def_id].name));
+                }
+            }
+        }
     }
 
     Ok(())

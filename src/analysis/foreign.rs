@@ -268,7 +268,7 @@ impl Default for TypeTerminal {
 }
 
 #[derive(Clone, Debug, Default, PartialEq, Eq, Hash)]
-pub struct Type(Decorators, TypeTerminal);
+pub struct Type(pub Decorators, pub TypeTerminal);
 
 #[derive(Debug, Default)]
 pub struct Parameter {
@@ -630,6 +630,7 @@ fn transfer_gir_recordlike(info: &mut Info, env: &Env, ns_id: NsId, name: String
 fn transfer_gir_union(info: &mut Info, env: &Env, ns_id: NsId, union: &library::Union) -> Def {
     let mut fields: Vec<Field> = Vec::new();
     let name = union.c_type.as_ref().unwrap_or(&union.name).clone();
+    let public = union.c_type.is_some();
     //let mut ignore = false;
 
     for field in &union.fields {
@@ -686,6 +687,7 @@ fn transfer_gir_union(info: &mut Info, env: &Env, ns_id: NsId, union: &library::
             repr: repr,
         },
         ignore: ignore,
+        public: public,
         ..Default::default()
     }
 }
