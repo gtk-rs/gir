@@ -415,7 +415,15 @@ fn transfer_gir_type(info: &mut Info, env: &Env, gir_tid: library::TypeId) {
                 ..Default::default()
             }
         }
-        Function(ref func) => transfer_gir_function(info, env, func),
+        Function(ref func) => {
+            let def = transfer_gir_function(info, env, func);
+            let def_id = push_transparent(info, gir_tid.ns_id, def);
+            Def {
+                name: func.c_identifier.clone().unwrap(),
+                kind: DefKind::Alias(Type(Decorators::none(), TypeTerminal::Id(def_id))),
+                ..Default::default()
+            }
+        }
         Interface(library::Interface { ref c_type, .. }) => {
             Def {
                 name: c_type.clone(),
