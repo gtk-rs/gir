@@ -403,6 +403,7 @@ fn transfer_gir_type(info: &mut Info, env: &Env, gir_tid: library::TypeId) {
             Def {
                 name: c_type.clone(),
                 kind: DefKind::Bitfield,
+                public: true,
                 ..Default::default()
             }
         }
@@ -410,6 +411,7 @@ fn transfer_gir_type(info: &mut Info, env: &Env, gir_tid: library::TypeId) {
             Def {
                 name: c_type.clone(),
                 kind: DefKind::Enumeration,
+                public: true,
                 ..Default::default()
             }
         }

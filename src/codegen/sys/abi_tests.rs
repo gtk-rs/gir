@@ -13,6 +13,8 @@ pub fn generate(env: &Env) {
     let mut def_ids: Vec<DefId> = env.foreign.defs.ids_by_ns(namespaces::MAIN)
         .filter(|&def_id| {
             match env.foreign.defs[def_id] {
+                Def { public: true, kind: DefKind::Bitfield, .. } => true,
+                Def { public: true, kind: DefKind::Enumeration, .. } => true,
                 Def { public: true, kind: DefKind::Record { ref fields, fake, .. }, .. }
                     if !fields.is_empty() && !fake => true,
                 _ => false,
