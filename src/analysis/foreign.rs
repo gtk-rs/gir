@@ -237,8 +237,8 @@ impl TypeTerminal {
                 }
             }
             Postponed(..) => {
-                //Cow::from("c_void /* error */")
-                unreachable!()
+                Cow::from("c_void /* error */")
+                //unreachable!()
             }
         }
     }
