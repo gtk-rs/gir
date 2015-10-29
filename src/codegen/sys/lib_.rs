@@ -93,6 +93,9 @@ fn generate_type_defs(w: &mut Write, env: &Env) -> Result<()> {
                 try!(writeln!(w, "#[repr(C)]"));
                 try!(writeln!(w, "pub struct {}(c_void);", def.name));
             }
+            DefKind::Union { repr: Some(ref repr), .. } => {
+                try!(writeln!(w, "{}", repr));
+            }
             _ => {
                 try!(writeln!(w, "pub type {} = c_void;", def.name));
             }

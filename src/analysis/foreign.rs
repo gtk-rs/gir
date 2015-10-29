@@ -11,6 +11,23 @@ use nameutil;
 use ns_vec::{self, NsVec};
 use super::namespaces::{self, NsId};
 
+const UNION_REPR: &'static [(&'static str, &'static str)] = &[
+    ("GMutex",
+r#"#[cfg(target_pointer_width = "32")]
+#[derive(Copy, Clone, Debug)]
+#[repr(C)]
+pub struct GMutex([size_t; 2]);
+
+#[cfg(target_pointer_width = "64")]
+#[derive(Copy, Clone, Debug)]
+#[repr(C)]
+pub struct GMutex(size_t);"#),
+    ("GTokenValue",
+r#"#[derive(Copy, Clone, Debug)]
+#[repr(C)]
+pub struct GTokenValue(c_double);"#)
+];
+
 #[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct DefId(ns_vec::Id);
 
@@ -283,6 +300,7 @@ pub enum DefKind {
     },
     Union {
         fields: Vec<Field>,
+        repr: Option<String>,
     },
 }
 
@@ -652,12 +670,22 @@ fn transfer_gir_union(info: &mut Info, env: &Env, ns_id: NsId, union: &library::
         }
     }
 
+    let mut repr = None;
+    for &(item_name, item_repr) in UNION_REPR {
+        if item_name == name {
+            repr = Some(String::from(item_repr));
+            break;
+        }
+    }
+    let ignore = if repr.is_none() { Some(true) } else { None };
+
     Def {
         name: name,
         kind: DefKind::Union {
             fields: fields,
+            repr: repr,
         },
-        //ignore: ignore,
+        ignore: ignore,
         ..Default::default()
     }
 }
