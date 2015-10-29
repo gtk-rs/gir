@@ -518,24 +518,35 @@ fn transfer_gir_recordlike(info: &mut Info, env: &Env, ns_id: NsId, name: String
     //let mut ignore = false;
 
     for field in record_fields {
+        let mut field_tid = field.typ;
         if let Some(more_bits) = field.bits {
-            bits = Some(bits.unwrap_or(0) + more_bits);
-            continue;
+            match (bits, more_bits, field_tid) {
+                (None, 32, tid) if tid == env.gir.find_fundamental(library::Fundamental::Int) => {
+                    field_tid = env.gir.find_fundamental(library::Fundamental::Int32);
+                }
+                (None, 32, tid) if tid == env.gir.find_fundamental(library::Fundamental::UInt) => {
+                    field_tid = env.gir.find_fundamental(library::Fundamental::UInt32);
+                }
+                _ => {
+                    bits = Some(bits.unwrap_or(0) + more_bits);
+                    continue;
+                }
+            }
         }
         if let Some(bits) = bits.take() {
             flush_bits_placeholder(&mut fields, bits, bits_placeholder_count);
             bits_placeholder_count += 1;
         }
         match *field {
-            library::Field { typ, c_type: Some(ref c_type_hint), .. } => {
+            library::Field { c_type: Some(ref c_type_hint), .. } => {
                 fields.push(Field {
                     name: nameutil::mangle_keywords(&*field.name).into_owned(),
-                    type_: make_type(info, env, typ, c_type_hint),
+                    type_: make_type(info, env, field_tid, c_type_hint),
                     ..Default::default()
                 });
             }
-            library::Field { typ, .. } if typ.ns_id == namespaces::INTERNAL => {
-                match *env.gir.type_(typ) {
+            library::Field { .. } if field_tid.ns_id == namespaces::INTERNAL => {
+                match *env.gir.type_(field_tid) {
                     library::Type::Function(ref func) => {
                         let def = transfer_gir_function(info, env, func);
                         let def_id = push_transparent(info, ns_id, def);
@@ -549,7 +560,7 @@ fn transfer_gir_recordlike(info: &mut Info, env: &Env, ns_id: NsId, name: String
                         let mut def = transfer_gir_union(info, env, ns_id, union);
                         def.name = format!("{}_{}", name, field.name);
                         //def.fake = true;
-                        def.gir_tid = Some(typ);
+                        def.gir_tid = Some(field_tid);
                         let def_id = push(info, ns_id, def);
                         fields.push(Field {
                             name: nameutil::mangle_keywords(&*field.name).into_owned(),
@@ -562,12 +573,12 @@ fn transfer_gir_recordlike(info: &mut Info, env: &Env, ns_id: NsId, name: String
                     }
                 }
             }
-            library::Field { typ, c_type: None, .. } => {
+            library::Field { c_type: None, .. } => {
                 // seems harmless
                 //warn!("Missing c:type for field `{:?}` from `{:?}`", field, record);
                 fields.push(Field {
                     name: nameutil::mangle_keywords(&*field.name).into_owned(),
-                    type_: make_type(info, env, typ, ""),
+                    type_: make_type(info, env, field_tid, ""),
                     ..Default::default()
                 });
             }
