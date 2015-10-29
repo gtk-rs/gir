@@ -2,8 +2,6 @@ use std::io::{Result, Write};
 
 use env::Env;
 use file_saver::save_to_file;
-use library::MAIN_NAMESPACE;
-use nameutil::crate_name;
 use version::Version;
 
 pub fn generate(env: &Env) {
@@ -19,8 +17,8 @@ pub fn generate(env: &Env) {
 fn generate_build_script(w: &mut Write, env: &Env) -> Result<()> {
     try!(writeln!(w, "{}", "extern crate pkg_config;\n"));
 
-    let ns = env.library.namespace(MAIN_NAMESPACE);
-    try!(writeln!(w, "const LIBRARY_NAME: &'static str = \"{}\";", crate_name(&ns.name)));
+    let ns = env.namespaces.main();
+    try!(writeln!(w, "const LIBRARY_NAME: &'static str = \"{}\";", ns.crate_name));
     try!(writeln!(w, "const PACKAGE_NAME: &'static str = \"{}\";",
                   ns.package_name.as_ref().unwrap()));
     try!(writeln!(w, "const VERSIONS: &'static [Version] = &["));

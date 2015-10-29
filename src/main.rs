@@ -60,7 +60,13 @@ fn do_main() -> Result<(), Box<Error>> {
     library.read_file(&cfg.girs_dir, &cfg.library_full_name());
     library.fill_in();
 
-    let env = Env{ library: library, config: cfg };
+    let namespaces = analysis::namespaces::run(&library);
+
+    let env = Env{
+        library: library,
+        config: cfg,
+        namespaces: namespaces,
+    };
     codegen::generate(&env);
 
     Ok(())
