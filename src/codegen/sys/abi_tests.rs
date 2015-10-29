@@ -1,25 +1,25 @@
 use std::cmp::Ord;
 use std::io::{Result, Write};
 
-use analysis::foreign::{Type, TypeDef, TypeDefId};
+use analysis::foreign::{Def, DefId, DefKind};
 use analysis::namespaces;
 use env::Env;
 use file_saver;
 use nameutil;
 
 pub fn generate(env: &Env) {
-    println!("generating abi tests for {}", env.config.library_name);
+    println!("Generating ABI tests for {}", env.config.library_name);
 
-    let mut def_ids: Vec<TypeDefId> = env.foreign.data.ids_by_ns(namespaces::MAIN)
+    let mut def_ids: Vec<DefId> = env.foreign.defs.ids_by_ns(namespaces::MAIN)
         .filter(|&def_id| {
-            match env.foreign.data[def_id] {
-                TypeDef { public: true, type_: Type::Record { ref fields, fake, .. }, .. }
+            match env.foreign.defs[def_id] {
+                Def { public: true, kind: DefKind::Record { ref fields, fake, .. }, .. }
                     if !fields.is_empty() && !fake => true,
                 _ => false,
             }
         })
         .collect();
-    def_ids.sort_by(|&a, &b| env.foreign.data[a].name.cmp(&env.foreign.data[b].name));
+    def_ids.sort_by(|&a, &b| env.foreign.defs[a].name.cmp(&env.foreign.defs[b].name));
 
     let mut path = env.config.target_path.join(nameutil::file_name_sys("abi_tests"));
 
@@ -33,8 +33,8 @@ pub fn generate(env: &Env) {
         |w| generate_c_side(w, env, &def_ids));
 }
 
-fn generate_rust_side(w: &mut Write, env: &Env, def_ids: &[TypeDefId]) -> Result<()> {
-    try!(writeln!(w, "{}", 
+fn generate_rust_side(w: &mut Write, env: &Env, def_ids: &[DefId]) -> Result<()> {
+    try!(writeln!(w, "{}",
 r#"#![allow(non_snake_case)]
 
 use std::mem::{align_of, size_of};
@@ -55,15 +55,15 @@ fn {name}_size() {{
     extern {{ fn {name}_size() -> size_t; }}
     unsafe {{ assert_eq!(size_of::<{name}>(), {name}_size() as usize); }}
 }}
-", name = env.foreign.data[def_id].name));
+", name = env.foreign.defs[def_id].name));
     }
 
     Ok(())
 }
 
-fn generate_c_side(w: &mut Write, env: &Env, def_ids: &[TypeDefId]) -> Result<()> {
-    try!(writeln!(w, "{}", r#"\
-#include <stdalign.h>
+fn generate_c_side(w: &mut Write, env: &Env, def_ids: &[DefId]) -> Result<()> {
+    try!(writeln!(w, "{}",
+r#"#include <stdalign.h>
 #include <glib.h>
 "#));
 
@@ -76,7 +76,7 @@ size_t {name}_alignment(void) {{
 size_t {name}_size(void) {{
 	return sizeof({name});
 }}
-", name = env.foreign.data[def_id].name));
+", name = env.foreign.defs[def_id].name));
     }
 
     Ok(())
