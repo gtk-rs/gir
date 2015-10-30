@@ -1,7 +1,7 @@
 use std::collections::BTreeMap;
 use std::fs::File;
 use std::io::prelude::*;
-use toml::{self, Parser, Table, Value};
+use toml::{self, Array, Parser, Table, Value};
 
 use env::Env;
 use file_saver::save_to_file;
@@ -71,7 +71,26 @@ fn fill_in(root: &mut Table, env: &Env) {
     {
         let build_deps = upsert_table(root, "build-dependencies");
         set_string(build_deps, "pkg-config", "0.3.5");
+        let gcc = upsert_table(build_deps, "gcc");
+        set_string(gcc, "version", "0.3.19");
+        set_boolean(gcc, "optional", true);
     }
+
+    {
+        let features = upsert_table(root, "features");
+        let abi_tests = upsert_array(features, "abi_tests");
+        if !abi_tests.iter().any(|v| v.as_str() == Some("gcc")) {
+            abi_tests.push(Value::String("gcc".into()));
+        }
+    }
+}
+
+fn set_boolean(table: &mut Table, name: &str, new_value: bool) {
+    if let Some(v) = table.get_mut(name) {
+        *v = Value::Boolean(new_value);
+        return;
+    }
+    table.insert(name.into(), Value::Boolean(new_value));
 }
 
 fn set_string<S: Into<String>>(table: &mut Table, name: &str, new_value: S) {
@@ -82,7 +101,17 @@ fn set_string<S: Into<String>>(table: &mut Table, name: &str, new_value: S) {
     table.insert(name.into(), Value::String(new_value.into()));
 }
 
-fn upsert_table<'a, S: Into<String>>(parent: &'a mut Table, name: S) -> &'a mut Table {
+fn upsert_array<S: Into<String>>(parent: &mut Table, name: S) -> &mut Array {
+    if let &mut Value::Array(ref mut array) = parent.entry(name.into())
+            .or_insert_with(|| Value::Array(Vec::new())) {
+        array
+    }
+    else {
+        unreachable!()
+    }
+}
+
+fn upsert_table<S: Into<String>>(parent: &mut Table, name: S) -> &mut Table {
     if let &mut Value::Table(ref mut table) = parent.entry(name.into())
             .or_insert_with(|| Value::Table(BTreeMap::new())) {
         table

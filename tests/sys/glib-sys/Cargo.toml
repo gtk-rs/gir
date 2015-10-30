@@ -4,7 +4,7 @@ pkg-config = "0.3.5"
 
 [build-dependencies.gcc]
 optional = true
-version = "0.3"
+version = "0.3.19"
 
 [dependencies]
 bitflags = "0.3"
