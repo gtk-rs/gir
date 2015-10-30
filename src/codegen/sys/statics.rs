@@ -58,7 +58,8 @@ pub fn only_for_glib(w: &mut Write) -> Result<()>{
 }
 
 pub fn only_for_gobject(w: &mut Write) -> Result<()>{
-    let v = vec![
+    let v: Vec<String> = vec![
+/*
 "",
 "pub const G_TYPE_INVALID: GType = 0 << G_TYPE_FUNDAMENTAL_SHIFT;",
 "pub const G_TYPE_NONE: GType = 1 << G_TYPE_FUNDAMENTAL_SHIFT;",
@@ -82,6 +83,7 @@ pub fn only_for_gobject(w: &mut Write) -> Result<()>{
 "pub const G_TYPE_PARAM: GType = 19 << G_TYPE_FUNDAMENTAL_SHIFT;",
 "pub const G_TYPE_OBJECT: GType = 20 << G_TYPE_FUNDAMENTAL_SHIFT;",
 "pub const G_TYPE_VARIANT: GType = 21 << G_TYPE_FUNDAMENTAL_SHIFT;",
+*/
     ];
 
     write_vec(w, &v)
