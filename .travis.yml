@@ -12,4 +12,11 @@ script:
   - cargo test --release
   - git clone -q https://github.com/gkoz/gir-files tests/gir-files
   - export CC=clang
+  - BUNDLE="gtk-3.18.1-2"
+  - WD="$PWD"
+  - cd "$HOME"
+  - curl -LO "https://github.com/gkoz/gtk-bootstrap/releases/download/$BUNDLE/deps.txz"
+  - tar xf deps.txz
+  - cd "$WD"
+  - export PKG_CONFIG_PATH="$HOME/local/lib/pkgconfig"
   - ./tests/sys/test.sh
