@@ -11,4 +11,5 @@ script:
   - cargo build --release
   - cargo test --release
   - git clone -q https://github.com/gkoz/gir-files tests/gir-files
+  - export CC=clang
   - ./tests/sys/test.sh
