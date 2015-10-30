@@ -16,16 +16,53 @@ const UNION_REPR: &'static [(&'static str, &'static str)] = &[
 r#"#[cfg(target_pointer_width = "32")]
 #[derive(Copy, Clone, Debug)]
 #[repr(C)]
-pub struct GMutex([size_t; 2]);
+pub struct GMutex([u32; 2]);
 
 #[cfg(target_pointer_width = "64")]
 #[derive(Copy, Clone, Debug)]
 #[repr(C)]
-pub struct GMutex(size_t);"#),
+pub struct GMutex(u64);"#),
+
     ("GTokenValue",
 r#"#[derive(Copy, Clone, Debug)]
 #[repr(C)]
-pub struct GTokenValue(c_double);"#)
+pub struct GTokenValue(u64);"#),
+
+    ("GTypeCValue",
+r#"#[derive(Copy, Clone, Debug)]
+#[repr(C)]
+pub struct GTypeCValue(u64);"#),
+
+    ("GWeakRef_priv",
+r#"#[derive(Copy, Clone, Debug)]
+#[repr(C)]
+pub struct GWeakRef_priv(size_t);"#),
+
+    ("_Value__data__union",
+r#"#[derive(Copy, Clone, Debug)]
+#[repr(C)]
+pub struct _Value__data__union(u64);"#),
+
+    ("GdkEvent",
+r#"#[derive(Copy, Clone, Debug)]
+#[repr(C)]
+pub struct GdkEvent(u64);"#),
+
+    ("GtkBindingArg_d",
+r#"#[derive(Copy, Clone, Debug)]
+#[repr(C)]
+pub struct GtkBindingArg_d(u64);"#),
+
+    ("GtkTextAppearance_unn",
+r#"#[cfg(target_pointer_width = "32")]
+#[derive(Copy, Clone, Debug)]
+#[repr(C)]
+pub struct GtkTextAppearance_unn([u32; 4]);
+
+#[cfg(target_pointer_width = "64")]
+#[derive(Copy, Clone, Debug)]
+#[repr(C)]
+pub struct GtkTextAppearance_unn([u64; 2]);"#),
 ];
 
 #[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq, PartialOrd, Ord)]
