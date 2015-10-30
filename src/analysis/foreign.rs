@@ -488,7 +488,7 @@ fn transfer_gir_type(info: &mut Info, env: &Env, gir_tid: library::TypeId) {
         }
         Class(ref class) => transfer_gir_class(info, env, gir_tid.ns_id, class),
         Record(ref record) => transfer_gir_record(info, env, gir_tid.ns_id, record),
-        Union(ref union) => transfer_gir_union(info, env, gir_tid.ns_id, union),
+        Union(ref union) => transfer_gir_union(info, env, gir_tid.ns_id, union, None),
         Array(..) => {
             info.gir_tid_index.insert(gir_tid, info.name_index.get("GArray").cloned().unwrap());
             return;
@@ -620,8 +620,8 @@ fn transfer_gir_recordlike(info: &mut Info, env: &Env, ns_id: NsId, name: String
                         });
                     }
                     library::Type::Union(ref union) => {
-                        let mut def = transfer_gir_union(info, env, ns_id, union);
-                        def.name = format!("{}_{}", name, field.name);
+                        let mut def = transfer_gir_union(info, env, ns_id, union,
+                            Some(format!("{}_{}", name, field.name)));
                         //def.fake = true;
                         def.gir_tid = Some(field_tid);
                         let def_id = push(info, ns_id, def);
@@ -664,9 +664,12 @@ fn transfer_gir_recordlike(info: &mut Info, env: &Env, ns_id: NsId, name: String
     }
 }
 
-fn transfer_gir_union(info: &mut Info, env: &Env, ns_id: NsId, union: &library::Union) -> Def {
+fn transfer_gir_union(info: &mut Info, env: &Env, ns_id: NsId, union: &library::Union,
+        name_override: Option<String>) -> Def {
     let mut fields: Vec<Field> = Vec::new();
-    let name = union.c_type.as_ref().unwrap_or(&union.name).clone();
+    let name = name_override.unwrap_or_else(|| {
+        union.c_type.as_ref().unwrap_or(&union.name).clone()
+    });
     let public = union.c_type.is_some();
     //let mut ignore = false;
 
