@@ -2,6 +2,7 @@ use std::vec::Vec;
 
 use analysis::return_value;
 use super::parameter_ffi_call_in;
+use super::parameter_ffi_call_out;
 
 pub enum Chunk {
     Comment(Vec<Chunk>),
@@ -11,8 +12,14 @@ pub enum Chunk {
     FfiCallTODO(String),
     FfiCall{name: String, params: Vec<Chunk>},
     FfiCallParameter{par: parameter_ffi_call_in::Parameter, upcast: bool},
+    FfiCallOutParameter{par: parameter_ffi_call_out::Parameter},
     //TODO: separate without return_value::Info
     FfiCallConversion{ret: return_value::Info, call: Box<Chunk>},
+    Let{name: String, is_mut: bool, value: Box<Chunk>},
+    Uninitialized,
+    VariableValue{name: String},
+    Tuple(Vec<Chunk>),
+    FromGlibConversion{par: parameter_ffi_call_out::Parameter, value: Box<Chunk>},
 }
 
 pub fn chunks(ch: Chunk) -> Vec<Chunk> {

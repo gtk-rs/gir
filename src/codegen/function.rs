@@ -28,7 +28,7 @@ pub fn generate(w: &mut Write, env: &Env, analysis: &analysis::functions::Info,
         comment_prefix, pub_prefix, declaration, suffix));
 
     if !only_declaration {
-        let body = if let Some(chunk) = body_chunk(env, analysis, in_trait) {
+        let body = if let Some(chunk) = body_chunk(analysis, in_trait) {
             chunk.to_code(env)
         } else {
             let body = body(env, analysis, in_trait);
@@ -74,7 +74,7 @@ fn upcasts(upcasts: &Upcasts) -> String {
     format!("<{}>", strs.join(", "))
 }
 
-pub fn body_chunk(env: &Env, analysis: &analysis::functions::Info,
+pub fn body_chunk(analysis: &analysis::functions::Info,
     in_trait: bool) -> Option<Chunk> {
     if analysis.comented {
         return Some(ffi_function_todo(&analysis.glib_name));
@@ -86,12 +86,9 @@ pub fn body_chunk(env: &Env, analysis: &analysis::functions::Info,
         .ret(&analysis.ret)
         .outs_mode(analysis.outs.mode);
 
-    //TODO: change to map on parameters with pass Vec<String> to builder
     for par in &analysis.parameters {
         if outs_as_return && analysis.outs.iter().any(|p| p.name==par.name) {
-            let name = par.name.clone();
-            let (prefix, suffix) = par.translate_from_glib_as_function(env);
-            builder.out_parameter(name, prefix, suffix);
+            builder.out_parameter(par);
         } else {
             let upcast = in_trait && par.instance_parameter
                 || analysis.upcasts.iter().any(|&(ref name, _, _)| name == &par.name);
