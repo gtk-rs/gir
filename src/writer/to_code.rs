@@ -28,11 +28,41 @@ impl ToCode for Chunk {
             FfiCallParameter{ref par, upcast } => {
                 let s = par.translate_to_glib(&env.library, upcast);
                 vec![s]
-            },
+            }
+            FfiCallOutParameter{ref par} => {
+                let s = format!("&mut {}", par.name);
+                vec![s]
+            }
             FfiCallConversion{ref ret, ref call} => {
                 let call_strings = call.to_code(env);
                 let (prefix, suffix) = ret.translate_from_glib_as_function(env);
                 let s = format_block_one_line(&prefix, &suffix, &call_strings, "", "");
+                vec![s]
+            }
+            Let{ref name, is_mut, ref value} => {
+                let modif = if is_mut { "mut " } else { "" };
+                let value_strings = value.to_code(env);
+                let prefix = format!("let {}{} = ", modif, name);
+                let s = format_block_one_line(&prefix, ";", &value_strings, "", "");
+                vec![s]
+            }
+            Uninitialized => vec!["mem::uninitialized()".into()],
+            VariableValue{ref name} => vec![name.clone()],
+            Tuple(ref chs) => {
+                let s = format_block_one_line("(", ")", &chs.to_code(env), "", ", ");
+                vec![s]
+            }
+            FromGlibConversion{ref mode, ref value} => {
+                let value_strings = value.to_code(env);
+                let (prefix, suffix) = mode.translate_from_glib_as_function(env);
+                let s = format_block_one_line(&prefix, &suffix, &value_strings, "", "");
+                vec![s]
+            }
+            OptionalReturn{ref condition, ref value} => {
+                let value_strings = value.to_code(env);
+                let prefix = format!("if {} {{ Some(", condition);
+                let suffix = ") } else { None }";
+                let s = format_block_one_line(&prefix, suffix, &value_strings, "", "");
                 vec![s]
             }
         }
