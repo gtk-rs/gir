@@ -149,7 +149,7 @@ impl Builder {
     fn out_parameter_to_return(&self, parameter: &parameter_ffi_call_out::Parameter) -> Chunk {
         let value = Chunk::VariableValue{name: parameter.name.clone()};
         Chunk::FromGlibConversion{
-            par: parameter.clone(),
+            mode: parameter.into(),
             value: Box::new(value),
         }
     }

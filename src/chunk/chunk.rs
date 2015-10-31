@@ -1,6 +1,7 @@
 use std::vec::Vec;
 
 use analysis::return_value;
+use super::conversion_from_glib;
 use super::parameter_ffi_call_in;
 use super::parameter_ffi_call_out;
 
@@ -19,7 +20,7 @@ pub enum Chunk {
     Uninitialized,
     VariableValue{name: String},
     Tuple(Vec<Chunk>),
-    FromGlibConversion{par: parameter_ffi_call_out::Parameter, value: Box<Chunk>},
+    FromGlibConversion{mode: conversion_from_glib::Mode, value: Box<Chunk>},
 }
 
 pub fn chunks(ch: Chunk) -> Vec<Chunk> {

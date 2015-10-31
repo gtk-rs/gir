@@ -1,4 +1,5 @@
 mod chunk;
+pub mod conversion_from_glib;
 pub mod parameter_ffi_call_in;
 pub mod parameter_ffi_call_out;
 

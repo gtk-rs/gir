@@ -1,7 +1,7 @@
 use analysis;
 use analysis::rust_type::rust_type;
 use analysis::conversion_type::ConversionType;
-use chunk;
+use chunk::conversion_from_glib::Mode;
 use env::Env;
 use library;
 use traits::*;
@@ -10,7 +10,7 @@ pub trait TranslateFromGlib {
     fn translate_from_glib_as_function(&self, env: &Env) -> (String, String);
 }
 
-impl TranslateFromGlib for chunk::parameter_ffi_call_out::Parameter {
+impl TranslateFromGlib for Mode {
     fn translate_from_glib_as_function(&self, env: &Env) -> (String, String) {
         use analysis::conversion_type::ConversionType::*;
         match ConversionType::of(&env.library, self.typ) {
@@ -28,7 +28,7 @@ impl TranslateFromGlib for chunk::parameter_ffi_call_out::Parameter {
     }
 }
 
-//TODO: move to code for analysis::return_value::Info
+//TODO: remove
 impl TranslateFromGlib for library::Parameter {
     fn translate_from_glib_as_function(&self, env: &Env) -> (String, String) {
         use analysis::conversion_type::ConversionType::*;
@@ -69,7 +69,7 @@ impl TranslateFromGlib for analysis::return_value::Info {
                         format!("{}.{}", from_glib_xxx.1, suffix_function)
                     )
                 }
-                None => par.translate_from_glib_as_function(env)
+                None => Mode::from(par).translate_from_glib_as_function(env),
             },
             None => (String::new(), ";".into())
         }

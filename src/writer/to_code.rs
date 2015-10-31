@@ -52,9 +52,9 @@ impl ToCode for Chunk {
                 let s = format_block_one_line("(", ")", &chs.to_code(env), "", ", ");
                 vec![s]
             }
-            FromGlibConversion{ref par, ref value} => {
+            FromGlibConversion{ref mode, ref value} => {
                 let value_strings = value.to_code(env);
-                let (prefix, suffix) = par.translate_from_glib_as_function(env);
+                let (prefix, suffix) = mode.translate_from_glib_as_function(env);
                 let s = format_block_one_line(&prefix, &suffix, &value_strings, "", "");
                 vec![s]
             }
