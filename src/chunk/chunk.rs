@@ -21,6 +21,7 @@ pub enum Chunk {
     VariableValue{name: String},
     Tuple(Vec<Chunk>),
     FromGlibConversion{mode: conversion_from_glib::Mode, value: Box<Chunk>},
+    OptionalReturn{condition: String, value: Box<Chunk>},
 }
 
 pub fn chunks(ch: Chunk) -> Vec<Chunk> {

@@ -58,6 +58,13 @@ impl ToCode for Chunk {
                 let s = format_block_one_line(&prefix, &suffix, &value_strings, "", "");
                 vec![s]
             }
+            OptionalReturn{ref condition, ref value} => {
+                let value_strings = value.to_code(env);
+                let prefix = format!("if {} {{ Some(", condition);
+                let suffix = ") } else { None }";
+                let s = format_block_one_line(&prefix, suffix, &value_strings, "", "");
+                vec![s]
+            }
         }
     }
 }

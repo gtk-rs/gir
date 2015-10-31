@@ -59,9 +59,6 @@ impl Builder {
     }
     // TODO: remove option
     pub fn generate(&self) -> Option<Chunk> {
-        if self.outs_mode == Mode::Optional {
-            return None;
-        }
         let mut body = Vec::new();
 
         if self.outs_as_return {
@@ -69,10 +66,13 @@ impl Builder {
         }
 
         let call = self.generate_call();
-        let conv = self.generate_call_conversion(call);
-        body.push(conv);
-        if self.outs_as_return {
-            self.generate_out_return(&mut body);
+        let call = self.generate_call_conversion(call);
+        let ret = self.generate_out_return();
+        let (call, ret) = self.apply_outs_mode(call, ret);
+
+        body.push(call);
+        if let Some(chunk) = ret {
+            body.push(chunk);
         }
 
         let unsafe_ = Chunk::Unsafe(body);
@@ -129,7 +129,10 @@ impl Builder {
             }
         }
     }
-    fn generate_out_return(&self, v: &mut Vec<Chunk>) {
+    fn generate_out_return(&self) -> Option<Chunk> {
+        if !self.outs_as_return {
+            return None;
+        }
         let outs = self.get_outs();
         let chunk = if outs.len() == 1 {
             if let Out{ ref parameter } = *(outs[0]) {
@@ -144,13 +147,33 @@ impl Builder {
             }
             Chunk::Tuple(chs)
         };
-        v.push(chunk);
+        Some(chunk)
     }
     fn out_parameter_to_return(&self, parameter: &parameter_ffi_call_out::Parameter) -> Chunk {
         let value = Chunk::VariableValue{name: parameter.name.clone()};
         Chunk::FromGlibConversion{
             mode: parameter.into(),
             value: Box::new(value),
+        }
+    }
+    fn apply_outs_mode(&self, call: Chunk, ret: Option<Chunk>) -> (Chunk, Option<Chunk>) {
+        use analysis::out_parameters::Mode::*;
+        match self.outs_mode {
+            None => (call, ret),
+            Normal => (call, ret),
+            Optional => {
+                let call = Chunk::Let{
+                    name: "ret".into(),
+                    is_mut: false,
+                    value: Box::new(call),
+                };
+                let ret = ret.expect("No return in optional outs mode");
+                let ret = Chunk::OptionalReturn{
+                    condition: "ret".into(),
+                    value: Box::new(ret),
+                };
+                (call, Some(ret))
+            },
         }
     }
 }
