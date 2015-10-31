@@ -57,8 +57,7 @@ impl Builder {
         self.outs_mode = mode;
         self
     }
-    // TODO: remove option
-    pub fn generate(&self) -> Option<Chunk> {
+    pub fn generate(&self) -> Chunk {
         let mut body = Vec::new();
 
         if self.outs_as_return {
@@ -76,8 +75,7 @@ impl Builder {
         }
 
         let unsafe_ = Chunk::Unsafe(body);
-        let block = Chunk::BlockHalf(chunks(unsafe_));
-        Some(block)
+        Chunk::BlockHalf(chunks(unsafe_))
     }
     fn generate_call(&self) -> Chunk {
         let params = self.generate_func_parameters();

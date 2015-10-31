@@ -28,25 +28,6 @@ impl TranslateFromGlib for Mode {
     }
 }
 
-//TODO: remove
-impl TranslateFromGlib for library::Parameter {
-    fn translate_from_glib_as_function(&self, env: &Env) -> (String, String) {
-        use analysis::conversion_type::ConversionType::*;
-        match ConversionType::of(&env.library, self.typ) {
-            Direct => (String::new(), String::new()),
-            Scalar => ("from_glib(".into(), ")".into()),
-            Pointer => {
-                let trans = from_glib_xxx(self.transfer);
-                match *env.type_(self.typ) {
-                    library::Type::List(..) => (format!("FromGlibPtrContainer::{}", trans.0), trans.1),
-                    _ => trans,
-                }
-            }
-            Unknown => ("/*Unknown conversion*/".into(), String::new()),
-        }
-    }
-}
-
 impl TranslateFromGlib for analysis::return_value::Info {
     fn translate_from_glib_as_function(&self, env: &Env) -> (String, String) {
         match self.parameter {
