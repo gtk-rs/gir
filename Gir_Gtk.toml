@@ -349,3 +349,11 @@ status = "manual"
 [[object]]
 name = "Gdk.Window"
 status = "manual"
+
+[[object]]
+name = "Gtk.PageSetup"
+status = "generate"
+
+[[object]]
+name = "Gtk.PaperSize"
+status = "generate"
