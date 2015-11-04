@@ -9,7 +9,7 @@ pub fn generate(w: &mut Write, env: &Env, analysis: &analysis::object::Info) -> 
 
     try!(general::start_comments(w, &env.config));
     try!(general::uses(w, &analysis.imports, &env.config.library_name, env.config.min_cfg_version));
-    try!(general::objects_child_type(w, &analysis.name, &type_.c_type));
+    try!(general::define_object_type(w, &analysis.name, &type_.c_type));
     try!(general::impl_parents(w, &analysis.name, &analysis.parents));
     try!(general::impl_interfaces(w, &analysis.name, &analysis.implements));
 

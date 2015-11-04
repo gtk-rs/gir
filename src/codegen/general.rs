@@ -38,9 +38,25 @@ pub fn uses(w: &mut Write, imports: &Imports, library_name: &str, min_cfg_versio
     Ok(())
 }
 
-pub fn objects_child_type(w: &mut Write, type_name: &str, glib_name: &str) -> Result<()>{
+pub fn define_object_type(w: &mut Write, type_name: &str, glib_name: &str) -> Result<()>{
     try!(writeln!(w, ""));
     try!(writeln!(w, "pub type {} = Object<ffi::{}>;", type_name, glib_name));
+
+    Ok(())
+}
+
+pub fn define_boxed_type(w: &mut Write, type_name: &str, glib_name: &str,
+                                copy_fn: &str, free_fn: &str) -> Result<()>{
+    try!(writeln!(w, ""));
+    try!(writeln!(w, "glib_wrapper! {{"));
+    try!(writeln!(w, "\tpub struct {}(Boxed<ffi::{}>);", type_name, glib_name));
+    try!(writeln!(w, ""));
+    try!(writeln!(w, "\tmatch fn {{"));
+    try!(writeln!(w, "\t\tcopy => |ptr| ffi::{}(ptr as *mut ffi::{}),",
+                  copy_fn, glib_name));
+    try!(writeln!(w, "\t\tfree => |ptr| ffi::{}(ptr),", free_fn));
+    try!(writeln!(w, "\t}}"));
+    try!(writeln!(w, "}}"));
 
     Ok(())
 }

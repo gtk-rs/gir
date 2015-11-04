@@ -9,6 +9,7 @@ pub mod needed_upcast;
 pub mod object;
 pub mod out_parameters;
 pub mod parents;
+pub mod record;
 pub mod return_value;
 pub mod rust_type;
 pub mod upcasts;

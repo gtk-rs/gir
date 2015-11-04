@@ -10,6 +10,8 @@ mod general;
 mod object;
 mod objects;
 mod parameter;
+mod record;
+mod records;
 mod return_value;
 mod sys;
 pub mod translate_from_glib;
@@ -28,6 +30,7 @@ fn normal_generate(env: &Env) {
     let root_path = env.config.target_path.join("src").join("auto");
 
     objects::generate(env, &root_path, &mut mod_rs, &mut traits);
+    records::generate(env, &root_path, &mut mod_rs);
 
     generate_mod_rs(env, &root_path, mod_rs, traits);
 }

@@ -6,7 +6,7 @@ use file_saver::*;
 use nameutil::*;
 
 pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>, traits: &mut Vec<String>) {
-
+    info!("Generate objects");
     for obj in env.config.objects.values() {
         if !obj.status.need_generate() {
             continue;

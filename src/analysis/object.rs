@@ -63,12 +63,13 @@ pub fn new(env: &Env, obj: &GObject) -> Option<Info> {
 
     let name: String = split_namespace_name(&full_name).1.into();
 
-    let klass = match type_.maybe_ref() {
+    let klass: &library::Class = match type_.maybe_ref() {
         Some(klass) => klass,
         None => return None,
     };
 
     let mut imports = Imports::new();
+    //TODO: imports.add("object::*".into(), None);
     let parents = parents::analyze(env, klass, &mut imports);
     let implements = implements::analyze(env, klass, &mut imports);
 
@@ -86,7 +87,7 @@ pub fn new(env: &Env, obj: &GObject) -> Option<Info> {
     }
 
     let functions =
-        functions::analyze(env, klass, class_tid, &obj.non_nullable_overrides, &mut imports);
+        functions::analyze(env, &klass.functions, class_tid, &obj.non_nullable_overrides, &mut imports);
 
     let version = functions.iter().filter_map(|f| f.version).min();
 
