@@ -10,22 +10,14 @@ external_libraries = [
    "Gdk",
    "Pango", 
 ]
-
-[[object]]
-name = "Gtk.Widget"
-status = "manual"
-
-[[object]]
-name = "Gtk.Container"
-status = "manual"
-
-[[object]]
-name = "Gtk.Bin"
-status = "generate"
-
-[[object]]
-name = "Gtk.Box"
-status = "generate"
+generate = [
+    "Gtk.Bin",
+    "Gtk.Box",
+]
+manual = [
+    "Gtk.Widget",
+    "Gtk.Container",
+]
 
 [[object]]
 name = "Gtk.Window"
