@@ -13,7 +13,13 @@ pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>, traits: &
         }
 
         info!("Analyzing {:?}", obj.name);
-        let class_analysis = analysis::widget::new(env, obj);
+        let class_analysis = match analysis::widget::new(env, obj) {
+            Some(info) => info,
+            None => {
+                warn!("Class {} not found.", obj.name);
+                continue;
+            }
+        };
 
         let path = root_path.join(file_name(&class_analysis.full_name));
         info!("Generating file {:?}", path);
