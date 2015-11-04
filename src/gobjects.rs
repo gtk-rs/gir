@@ -105,6 +105,7 @@ fn parse_status_shorthand(objects: &mut GObjects, status: GStatus, toml: &Value)
             None => {
                 objects.insert(name_.into(), GObject {
                     name: name_.into(),
+                    status: status,
                     .. Default::default()
                 });
             },
