@@ -1,6 +1,7 @@
 use std::io::{Result, Write};
 
 use analysis;
+use analysis::special_functions::Type;
 use env::Env;
 use super::{function, general};
 
@@ -10,8 +11,9 @@ pub fn generate(w: &mut Write, env: &Env, analysis: &analysis::record::Info) -> 
     try!(general::start_comments(w, &env.config));
     try!(general::uses(w, &analysis.imports, &env.config.library_name, env.config.min_cfg_version));
 
-    //TODO: get special function names
-    try!(general::define_boxed_type(w, &analysis.name, &type_.c_type, "xxx_copy", "xxx_free"));
+    let copy_fn = analysis.specials.get(&Type::Copy).expect("No copy function for record");
+    let free_fn = analysis.specials.get(&Type::Free).expect("No free function for record");
+    try!(general::define_boxed_type(w, &analysis.name, &type_.c_type, copy_fn, free_fn));
     try!(writeln!(w, ""));
     try!(writeln!(w, "impl {} {{", analysis.name));
 

@@ -13,6 +13,7 @@ pub struct Info {
     pub record_tid: library::TypeId,
     pub name: String,
     pub functions: Vec<functions::Info>,
+    pub specials: special_functions::Infos,
     pub imports: Imports,
     pub version: Option<Version>,
 }
@@ -45,11 +46,20 @@ pub fn new(env: &Env, obj: &GObject) -> Option<Info> {
 
     let mut imports = Imports::new();
 
-    let functions =
+    let mut functions =
         functions::analyze(env, &record.functions, record_tid, &obj.non_nullable_overrides, &mut imports);
 
     let version = functions.iter().filter_map(|f| f.version).min();
-    //TODO: remove copy, free, ref, unref (special functions)
+
+    let specials = special_functions::extract(&mut functions);
+
+    //accept only boxed records
+    if specials.get(&special_functions::Type::Copy).is_none() {
+        return None;
+    };
+    if specials.get(&special_functions::Type::Free).is_none() {
+        return None;
+    };
 
     //don't `use` yourself
     imports.remove(&name);
@@ -59,6 +69,7 @@ pub fn new(env: &Env, obj: &GObject) -> Option<Info> {
         record_tid: record_tid,
         name: name,
         functions: functions,
+        specials: specials,
         imports: imports,
         version: version,
     };

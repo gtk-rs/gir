@@ -12,4 +12,5 @@ pub mod parents;
 pub mod record;
 pub mod return_value;
 pub mod rust_type;
+pub mod special_functions;
 pub mod upcasts;
