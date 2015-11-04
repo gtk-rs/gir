@@ -12,4 +12,3 @@ pub mod parents;
 pub mod return_value;
 pub mod rust_type;
 pub mod upcasts;
-pub mod widget;

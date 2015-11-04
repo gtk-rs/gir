@@ -7,13 +7,13 @@ use file_saver::*;
 mod function;
 mod function_body_chunk;
 mod general;
+mod object;
+mod objects;
 mod parameter;
 mod return_value;
 mod sys;
 pub mod translate_from_glib;
 pub mod translate_to_glib;
-mod widget;
-mod widgets;
 
 pub fn generate(env: &Env) {
     match env.config.work_mode {
@@ -27,7 +27,7 @@ fn normal_generate(env: &Env) {
     let mut traits: Vec<String> = Vec::new();
     let root_path = env.config.target_path.join("src").join("auto");
 
-    widgets::generate(env, &root_path, &mut mod_rs, &mut traits);
+    objects::generate(env, &root_path, &mut mod_rs, &mut traits);
 
     generate_mod_rs(env, &root_path, mod_rs, traits);
 }
