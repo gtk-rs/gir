@@ -49,6 +49,7 @@ impl ConversionType {
                 Unsupported => ConversionType::Unknown,
             },
             Bitfield(_) => ConversionType::Direct,
+            Record(_) => ConversionType::Pointer,
             Enumeration(_) => ConversionType::Direct,
             Interface(_) => ConversionType::Pointer,
             Class(_) => ConversionType::Pointer,
