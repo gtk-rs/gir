@@ -20,16 +20,7 @@ pub fn start_comments(w: &mut Write, conf: &Config) -> Result<()>{
 
 pub fn uses(w: &mut Write, imports: &Imports, library_name: &str, min_cfg_version: Version)
         -> Result<()>{
-    let v = vec![
-        "",
-        "use glib::translate::*;",
-        "use glib::types;",
-        "use ffi;",
-        "",
-        "use object::*;",
-    ];
-    try!(write_vec(w, &v));
-
+    try!(writeln!(w, ""));
     for (name, version) in imports.iter() {
         try!(version_condition(w, library_name, min_cfg_version, version.clone(), false, 0));
         try!(writeln!(w, "use {};", name));
