@@ -51,17 +51,25 @@ impl Info {
     }
 }
 
-pub fn new(env: &Env, obj: &GObject) -> Info {
-    let mut imports = Imports::new();
+pub fn new(env: &Env, obj: &GObject) -> Option<Info> {
     let full_name = obj.name.clone();
 
-    let class_tid = env.library.find_type_unwrapped(0, &full_name, "Class");
+    let class_tid = match env.library.find_type(0, &full_name) {
+        Some(tid) => tid,
+        None => return None,
+    };
 
     let type_ = env.type_(class_tid);
 
     let name: String = split_namespace_name(&full_name).1.into();
 
-    let klass = type_.to_ref();
+    let klass: &library::Class = match type_.maybe_ref() {
+        Some(klass) => klass,
+        None => return None,
+    };
+
+    let mut imports = Imports::new();
+    //TODO: imports.add("object::*".into(), None);
     let parents = parents::analyze(env, klass, &mut imports);
     let implements = implements::analyze(env, klass, &mut imports);
 
@@ -79,7 +87,7 @@ pub fn new(env: &Env, obj: &GObject) -> Info {
     }
 
     let functions =
-        functions::analyze(env, klass, class_tid, &obj.non_nullable_overrides, &mut imports);
+        functions::analyze(env, &klass.functions, class_tid, &obj.non_nullable_overrides, &mut imports);
 
     let version = functions.iter().filter_map(|f| f.version).min();
 
@@ -106,5 +114,5 @@ pub fn new(env: &Env, obj: &GObject) -> Info {
     info.has_constructors = has_constructors;
     info.has_methods = has_methods;
     info.has_functions = has_functions;
-    info
+    Some(info)
 }

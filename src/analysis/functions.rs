@@ -19,7 +19,7 @@ pub struct Info {
     pub glib_name: String,
     pub kind: library::FunctionKind,
     pub comented: bool,
-    pub class_name: Result,
+    pub type_name: Result,
     pub parameters: Vec<library::Parameter>,
     pub ret: return_value::Info,
     pub upcasts: Upcasts,
@@ -27,25 +27,25 @@ pub struct Info {
     pub version: Option<Version>,
 }
 
-pub fn analyze(env: &Env, klass: &library::Class, class_tid: library::TypeId,
+pub fn analyze(env: &Env, functions: &[library::Function], type_tid: library::TypeId,
     non_nullable_overrides: &[String], imports: &mut Imports) -> Vec<Info> {
     let mut funcs = Vec::new();
 
-    for func in &klass.functions {
-        let info = analyze_function(env, func, class_tid, non_nullable_overrides, imports);
+    for func in functions {
+        let info = analyze_function(env, func, type_tid, non_nullable_overrides, imports);
         funcs.push(info);
     }
 
     funcs
 }
 
-fn analyze_function(env: &Env, func: &library::Function, class_tid: library::TypeId,
+fn analyze_function(env: &Env, func: &library::Function, type_tid: library::TypeId,
     non_nullable_overrides: &[String], imports: &mut Imports) -> Info {
     let mut commented = false;
     let mut upcasts: Upcasts = Default::default();
     let mut used_types: Vec<String> = Vec::with_capacity(4);
 
-    let ret = return_value::analyze(env, func, class_tid, non_nullable_overrides, &mut used_types);
+    let ret = return_value::analyze(env, func, type_tid, non_nullable_overrides, &mut used_types);
     commented |= ret.commented;
 
     let mut parameters = func.parameters.clone();
@@ -96,7 +96,7 @@ fn analyze_function(env: &Env, func: &library::Function, class_tid: library::Typ
         glib_name: func.c_identifier.as_ref().unwrap().clone(),
         kind: func.kind,
         comented: commented,
-        class_name: rust_type(env, class_tid),
+        type_name: rust_type(env, type_tid),
         parameters: parameters,
         ret: ret,
         upcasts: upcasts,

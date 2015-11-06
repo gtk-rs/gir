@@ -9,7 +9,7 @@ pub struct Info {
     pub commented: bool,
 }
 
-pub fn analyze(env: &Env, func: &library::Function, class_tid: library::TypeId,
+pub fn analyze(env: &Env, func: &library::Function, type_tid: library::TypeId,
     non_nullable_overrides: &[String], used_types: &mut Vec<String>) -> Info {
 
     let mut parameter = if func.ret.typ == Default::default() { None } else {
@@ -39,11 +39,11 @@ pub fn analyze(env: &Env, func: &library::Function, class_tid: library::TypeId,
 
     if func.kind == library::FunctionKind::Constructor {
         if let Some(par) = parameter {
-            if par.typ != class_tid {
+            if par.typ != type_tid {
                 base_tid = Some(par.typ);
             }
             parameter = Some(library::Parameter {
-                typ: class_tid,
+                typ: type_tid,
                 nullable: Nullable(false),
                 ..par
             });

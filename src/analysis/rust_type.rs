@@ -57,6 +57,7 @@ fn rust_type_full(env: &Env, type_id: library::TypeId, nullable: Nullable, by_re
 
         Enumeration(ref enum_) => Ok(enum_.name.clone()),
         Bitfield(ref bitfield) => Ok(bitfield.name.clone()),
+        Record(ref record) => Ok(record.name.clone()),
         Interface(ref interface) => Ok(interface.name.clone()),
         Class(ref klass) => Ok(klass.name.clone()),
         List(inner_tid) => {
@@ -94,6 +95,7 @@ pub fn used_rust_type(env: &Env, type_id: library::TypeId) -> Result {
     use library::Type::*;
     match *env.library.type_(type_id) {
         Bitfield(..) |
+            Record(..) |
             Class(..) |
             Enumeration(..) |
             Interface(..) => rust_type(env, type_id),
@@ -108,6 +110,7 @@ pub fn parameter_rust_type(env: &Env, type_id:library::TypeId,
     let by_ref = match *type_ {
         Fundamental(library::Fundamental::Utf8) |
             Fundamental(library::Fundamental::Filename) |
+            Record(..) |
             Class(..) |
             List(..) => direction == library::ParameterDirection::In,
         _ => false,
@@ -128,6 +131,14 @@ pub fn parameter_rust_type(env: &Env, type_id:library::TypeId,
 
         Enumeration(..) |
             Bitfield(..) => format_parameter(rust_type, direction),
+
+        Record(..) => {
+            match direction {
+                library::ParameterDirection::In |
+                    library::ParameterDirection::Return => rust_type,
+                _ => Err(format!("/*Unimplemented*/{}", rust_type.as_str())),
+            }
+        }
 
         Class(..) => {
             match direction {
