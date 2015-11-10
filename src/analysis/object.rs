@@ -69,7 +69,11 @@ pub fn new(env: &Env, obj: &GObject) -> Option<Info> {
     };
 
     let mut imports = Imports::new();
-    //TODO: imports.add("object::*".into(), None);
+    imports.add("object::*".into(), None);
+    imports.add("glib::translate::*".into(), None);
+    imports.add("glib::types".into(), None);
+    imports.add("ffi".into(), None);
+
     let parents = parents::analyze(env, klass, &mut imports);
     let implements = implements::analyze(env, klass, &mut imports);
 
