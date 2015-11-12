@@ -30,7 +30,11 @@ impl ToCode for Chunk {
                 vec![s]
             }
             FfiCallOutParameter{ref par} => {
-                let s = format!("&mut {}", par.name);
+                let s = if par.caller_allocates {
+                    format!("{}.to_glib_none_mut().0", par.name)
+                } else {
+                    format!("&mut {}", par.name)
+                };
                 vec![s]
             }
             FfiCallConversion{ref ret, ref call} => {
