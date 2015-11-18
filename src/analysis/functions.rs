@@ -89,6 +89,9 @@ fn analyze_function(env: &Env, func: &library::Function, type_tid: library::Type
                 imports.add(s, func.version);
             }
         }
+        if !upcasts.is_empty() {
+            imports.add("object::*".into(), None);
+        }
     }
 
     Info {
