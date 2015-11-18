@@ -357,3 +357,12 @@ status = "generate"
 [[object]]
 name = "Gtk.PaperSize"
 status = "generate"
+
+[[object]]
+name = "Gtk.WidgetPath"
+status = "generate"
+ignored_functions = [
+    "iter_has_qclass",
+    "iter_has_qname",
+    "iter_has_qregion",
+]
