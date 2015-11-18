@@ -45,6 +45,7 @@ impl FromStr for GStatus {
 pub struct GObject {
     pub name: String,
     pub non_nullable_overrides: Vec<String>, // sorted
+    pub ignored_functions: Vec<String>, // sorted
     pub status: GStatus,
 }
 
@@ -53,6 +54,7 @@ impl Default for GObject {
         GObject {
             name: "Default".into(),
             non_nullable_overrides: Vec::new(),
+            ignored_functions: Vec::new(),
             status: Default::default(),
         }
     }
@@ -87,7 +89,20 @@ fn parse_object(toml_object: &Value) -> GObject {
         non_nullable_overrides.sort();
     }
 
-    GObject { name: name, non_nullable_overrides: non_nullable_overrides, status: status }
+    let mut ignored_functions = Vec::new();
+    if let Some(fn_names) = toml_object.lookup("ignored_functions").and_then(|o| o.as_slice()) {
+        ignored_functions = fn_names.iter()
+            .filter_map(|fn_name| fn_name.as_str().map(String::from))
+            .collect();
+        ignored_functions.sort();
+    }
+
+    GObject {
+        name: name,
+        non_nullable_overrides: non_nullable_overrides,
+        ignored_functions: ignored_functions,
+        status: status
+    }
 }
 
 pub fn parse_status_shorthands(objects: &mut GObjects, toml: &Value) {

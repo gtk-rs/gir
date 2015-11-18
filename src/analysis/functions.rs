@@ -28,10 +28,14 @@ pub struct Info {
 }
 
 pub fn analyze(env: &Env, functions: &[library::Function], type_tid: library::TypeId,
-    non_nullable_overrides: &[String], imports: &mut Imports) -> Vec<Info> {
+    non_nullable_overrides: &[String], ignored_functions: &[String],
+    imports: &mut Imports) -> Vec<Info> {
     let mut funcs = Vec::new();
 
     for func in functions {
+        if ignored_functions.binary_search(&func.name).is_ok() {
+            continue;
+        }
         let info = analyze_function(env, func, type_tid, non_nullable_overrides, imports);
         funcs.push(info);
     }
