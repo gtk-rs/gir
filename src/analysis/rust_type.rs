@@ -49,7 +49,7 @@ fn rust_type_full(env: &Env, type_id: library::TypeId, nullable: Nullable, by_re
                 Utf8 => if by_ref { ok("str") } else { ok("String") },
                 Filename => if by_ref { ok("str") } else { ok("String") },
 
-                Type => ok("types::Type"),
+                Type => ok("glib::types::Type"),
                 Unsupported => err("Unsupported"),
                 _ => err(&format!("Fundamental: {:?}", fund)),
             }
@@ -94,7 +94,8 @@ fn rust_type_full(env: &Env, type_id: library::TypeId, nullable: Nullable, by_re
 pub fn used_rust_type(env: &Env, type_id: library::TypeId) -> Result {
     use library::Type::*;
     match *env.library.type_(type_id) {
-        Bitfield(..) |
+        Fundamental(library::Fundamental::Type) |
+            Bitfield(..) |
             Record(..) |
             Class(..) |
             Enumeration(..) |
