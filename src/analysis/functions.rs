@@ -61,13 +61,15 @@ fn analyze_function(env: &Env, func: &library::Function, type_tid: library::Type
                 par.name = mangled;
             }
         }
+        let type_error = parameter_rust_type(env, par.typ, par.direction, Nullable(false)).is_err();
         if !par.instance_parameter && needed_upcast(&env.library, par.typ) {
             let type_name = rust_type(env, par.typ);
-            if !upcasts.add_parameter(&par.name, type_name.as_str()) {
+            let ignored = if type_error { "/*Ignored*/" } else { "" };
+            if !upcasts.add_parameter(&par.name, &format!("{}{}", ignored, type_name.as_str())) {
                 panic!("Too many parameters upcasts for {}", func.c_identifier.as_ref().unwrap())
             }
         }
-        if parameter_rust_type(env, par.typ, par.direction, Nullable(false)).is_err() {
+        if type_error {
             commented = true;
         }
     }
