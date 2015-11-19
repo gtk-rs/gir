@@ -103,6 +103,8 @@ manual = [
     "Gtk.Dialog",
     "Gtk.Widget",
     "Gtk.Window",
+    "Gdk.Rectangle",
+    "cairo.RectangleInt",
 ]
 
 ignore = [
