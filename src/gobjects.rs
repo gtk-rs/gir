@@ -1,7 +1,10 @@
 use std::ascii::AsciiExt;
 use std::collections::BTreeMap;
 use std::str::FromStr;
+use regex::Regex;
 use toml::Value;
+
+use regexlist::RegexList;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum GStatus {
@@ -45,6 +48,7 @@ impl FromStr for GStatus {
 pub struct GObject {
     pub name: String,
     pub non_nullable_overrides: Vec<String>, // sorted
+    pub ignored_functions: RegexList,
     pub status: GStatus,
 }
 
@@ -53,6 +57,7 @@ impl Default for GObject {
         GObject {
             name: "Default".into(),
             non_nullable_overrides: Vec::new(),
+            ignored_functions: RegexList::new(),
             status: Default::default(),
         }
     }
@@ -87,7 +92,28 @@ fn parse_object(toml_object: &Value) -> GObject {
         non_nullable_overrides.sort();
     }
 
-    GObject { name: name, non_nullable_overrides: non_nullable_overrides, status: status }
+    let ignored_functions = toml_object.lookup("ignored_functions");
+    let ignored_functions = match ignored_functions.and_then(|o| o.as_slice()) {
+        Some(fn_names) => fn_names.iter().filter_map(|fn_name| {
+            if let Some(s) =  fn_name.as_str() {
+                match Regex::new(s) {
+                    Ok(ok) => Some(ok),
+                    Err(err) => {
+                        error!("ignored_functions for {}: {}", name, err);
+                        None
+                    }
+                }
+            } else { None }
+        }).collect(),
+        None => RegexList::new(),
+    };
+
+    GObject {
+        name: name,
+        non_nullable_overrides: non_nullable_overrides,
+        ignored_functions: ignored_functions,
+        status: status
+    }
 }
 
 pub fn parse_status_shorthands(objects: &mut GObjects, toml: &Value) {

@@ -49,7 +49,7 @@ fn rust_type_full(env: &Env, type_id: library::TypeId, nullable: Nullable, by_re
                 Utf8 => if by_ref { ok("str") } else { ok("String") },
                 Filename => if by_ref { ok("str") } else { ok("String") },
 
-                Type => ok("types::Type"),
+                Type => ok("glib::types::Type"),
                 Unsupported => err("Unsupported"),
                 _ => err(&format!("Fundamental: {:?}", fund)),
             }
@@ -94,7 +94,8 @@ fn rust_type_full(env: &Env, type_id: library::TypeId, nullable: Nullable, by_re
 pub fn used_rust_type(env: &Env, type_id: library::TypeId) -> Result {
     use library::Type::*;
     match *env.library.type_(type_id) {
-        Bitfield(..) |
+        Fundamental(library::Fundamental::Type) |
+            Bitfield(..) |
             Record(..) |
             Class(..) |
             Enumeration(..) |
@@ -107,14 +108,7 @@ pub fn parameter_rust_type(env: &Env, type_id:library::TypeId,
         direction: library::ParameterDirection, nullable: Nullable) -> Result {
     use library::Type::*;
     let type_ = env.library.type_(type_id);
-    let by_ref = match *type_ {
-        Fundamental(library::Fundamental::Utf8) |
-            Fundamental(library::Fundamental::Filename) |
-            Record(..) |
-            Class(..) |
-            List(..) => direction == library::ParameterDirection::In,
-        _ => false,
-    };
+    let by_ref = use_by_ref(type_, direction);
     let rust_type = rust_type_full(env, type_id, nullable, by_ref);
     match *type_ {
         Fundamental(fund) => {
@@ -171,5 +165,18 @@ fn format_parameter(rust_type: Result, direction: library::ParameterDirection) -
         rust_type.map(|s| format!("&mut {}", s))
     } else {
         rust_type
+    }
+}
+
+#[inline]
+fn use_by_ref(type_: &library::Type, direction: library::ParameterDirection) -> bool {
+    use library::Type::*;
+    match *type_ {
+        Fundamental(library::Fundamental::Utf8) |
+            Fundamental(library::Fundamental::Filename) |
+            Record(..) |
+            Class(..) |
+            List(..) => direction == library::ParameterDirection::In,
+        _ => false,
     }
 }

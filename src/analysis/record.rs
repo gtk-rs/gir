@@ -49,7 +49,8 @@ pub fn new(env: &Env, obj: &GObject) -> Option<Info> {
     imports.add("ffi".into(), None);
 
     let mut functions =
-        functions::analyze(env, &record.functions, record_tid, &obj.non_nullable_overrides, &mut imports);
+        functions::analyze(env, &record.functions, record_tid, &obj.non_nullable_overrides,
+                           &obj.ignored_functions, &mut imports);
 
     let version = functions.iter().filter_map(|f| f.version).min();
 

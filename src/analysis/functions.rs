@@ -10,6 +10,7 @@ use analysis::upcasts::Upcasts;
 use env::Env;
 use library::{self, Nullable};
 use nameutil;
+use regexlist::RegexList;
 use traits::*;
 use version::Version;
 
@@ -28,10 +29,14 @@ pub struct Info {
 }
 
 pub fn analyze(env: &Env, functions: &[library::Function], type_tid: library::TypeId,
-    non_nullable_overrides: &[String], imports: &mut Imports) -> Vec<Info> {
+    non_nullable_overrides: &[String], ignored_functions: &RegexList,
+    imports: &mut Imports) -> Vec<Info> {
     let mut funcs = Vec::new();
 
     for func in functions {
+        if ignored_functions.is_match(&func.name) {
+            continue;
+        }
         let info = analyze_function(env, func, type_tid, non_nullable_overrides, imports);
         funcs.push(info);
     }
@@ -90,6 +95,9 @@ fn analyze_function(env: &Env, func: &library::Function, type_tid: library::Type
             else {
                 imports.add(s, func.version);
             }
+        }
+        if !upcasts.is_empty() {
+            imports.add("object::*".into(), None);
         }
     }
 
