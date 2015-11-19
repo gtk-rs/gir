@@ -1,7 +1,10 @@
 use std::ascii::AsciiExt;
 use std::collections::BTreeMap;
 use std::str::FromStr;
+use regex::Regex;
 use toml::Value;
+
+use regexlist::RegexList;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum GStatus {
@@ -45,7 +48,7 @@ impl FromStr for GStatus {
 pub struct GObject {
     pub name: String,
     pub non_nullable_overrides: Vec<String>, // sorted
-    pub ignored_functions: Vec<String>, // sorted
+    pub ignored_functions: RegexList,
     pub status: GStatus,
 }
 
@@ -54,7 +57,7 @@ impl Default for GObject {
         GObject {
             name: "Default".into(),
             non_nullable_overrides: Vec::new(),
-            ignored_functions: Vec::new(),
+            ignored_functions: RegexList::new(),
             status: Default::default(),
         }
     }
@@ -89,13 +92,21 @@ fn parse_object(toml_object: &Value) -> GObject {
         non_nullable_overrides.sort();
     }
 
-    let mut ignored_functions = Vec::new();
-    if let Some(fn_names) = toml_object.lookup("ignored_functions").and_then(|o| o.as_slice()) {
-        ignored_functions = fn_names.iter()
-            .filter_map(|fn_name| fn_name.as_str().map(String::from))
-            .collect();
-        ignored_functions.sort();
-    }
+    let ignored_functions = toml_object.lookup("ignored_functions");
+    let ignored_functions = match ignored_functions.and_then(|o| o.as_slice()) {
+        Some(fn_names) => fn_names.iter().filter_map(|fn_name| {
+            if let Some(s) =  fn_name.as_str() {
+                match Regex::new(s) {
+                    Ok(ok) => Some(ok),
+                    Err(err) => {
+                        error!("ignored_functions for {}: {}", name, err);
+                        None
+                    }
+                }
+            } else { None }
+        }).collect(),
+        None => RegexList::new(),
+    };
 
     GObject {
         name: name,

@@ -8,6 +8,7 @@ extern crate lazy_static;
 extern crate log;
 extern crate xml;
 extern crate toml;
+extern crate regex;
 
 use std::error::Error;
 use std::process;
@@ -29,6 +30,7 @@ mod gobjects;
 mod library;
 mod nameutil;
 mod parser;
+mod regexlist;
 mod traits;
 mod version;
 mod writer;

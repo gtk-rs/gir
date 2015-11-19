@@ -362,7 +362,5 @@ status = "generate"
 name = "Gtk.WidgetPath"
 status = "generate"
 ignored_functions = [
-    "iter_has_qclass",
-    "iter_has_qname",
-    "iter_has_qregion",
+    'iter_has_q\w+',
 ]
