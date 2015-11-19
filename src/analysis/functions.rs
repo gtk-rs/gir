@@ -83,7 +83,8 @@ fn analyze_function(env: &Env, func: &library::Function, type_tid: library::Type
     if unsupported_outs {
         warn!("Function {} has unsupported outs", func.c_identifier.as_ref().unwrap_or(&func.name));
         commented = true;
-    } else if !outs.is_empty() {
+    } else if !outs.is_empty() && !commented {
+        //TODO: move to out_parameters::analyze
         imports.add("std::mem".into(), func.version);
     }
 
