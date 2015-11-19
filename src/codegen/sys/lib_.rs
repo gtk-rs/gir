@@ -133,6 +133,9 @@ fn generate_constants(w: &mut Write, env: &Env, constants: &[Constant]) -> Resul
         if type_ == "&str" {
             type_ = "&'static str".into();
             value = format!("r##\"{}\"##", value);
+        } else if type_ == "Glyph" && env.config.library_name == "Pango"  {
+            //Fix single constant alias
+            type_ = "PangoGlyph".into();
         }
         try!(writeln!(w, "{}pub const {}: {} = {};", comment,
             constant.c_identifier, type_, value));
