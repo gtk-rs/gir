@@ -54,6 +54,8 @@ fn rust_type_full(env: &Env, type_id: library::TypeId, nullable: Nullable, by_re
                 _ => err(&format!("Fundamental: {:?}", fund)),
             }
         },
+        Alias(ref alias) => rust_type_full(env, alias.typ, nullable, by_ref)
+                .map_any(|_| alias.name.clone()),
 
         Enumeration(ref enum_) => Ok(enum_.name.clone()),
         Bitfield(ref bitfield) => Ok(bitfield.name.clone()),
@@ -95,6 +97,7 @@ pub fn used_rust_type(env: &Env, type_id: library::TypeId) -> Result {
     use library::Type::*;
     match *env.library.type_(type_id) {
         Fundamental(library::Fundamental::Type) |
+            Alias(..) |
             Bitfield(..) |
             Record(..) |
             Class(..) |
@@ -109,7 +112,7 @@ pub fn parameter_rust_type(env: &Env, type_id:library::TypeId,
         direction: library::ParameterDirection, nullable: Nullable) -> Result {
     use library::Type::*;
     let type_ = env.library.type_(type_id);
-    let by_ref = use_by_ref(type_, direction);
+    let by_ref = use_by_ref(&env.library, type_, direction);
     let rust_type = rust_type_full(env, type_id, nullable, by_ref);
     match *type_ {
         Fundamental(fund) => {
@@ -122,7 +125,15 @@ pub fn parameter_rust_type(env: &Env, type_id:library::TypeId,
             } else {
                 format_parameter(rust_type, direction)
             }
-        },
+        }
+        Alias(ref alias) => {
+            let res = format_parameter(rust_type, direction);
+            if parameter_rust_type(env, alias.typ, direction, nullable).is_ok() {
+                res
+            } else {
+                res.and_then(|s| Err(s))
+            }
+        }
 
         Enumeration(..) |
             Bitfield(..) => format_parameter(rust_type, direction),
@@ -171,7 +182,7 @@ fn format_parameter(rust_type: Result, direction: library::ParameterDirection) -
 }
 
 #[inline]
-fn use_by_ref(type_: &library::Type, direction: library::ParameterDirection) -> bool {
+fn use_by_ref(library: &library::Library, type_: &library::Type, direction: library::ParameterDirection) -> bool {
     use library::Type::*;
     match *type_ {
         Fundamental(library::Fundamental::Utf8) |
@@ -180,6 +191,10 @@ fn use_by_ref(type_: &library::Type, direction: library::ParameterDirection) -> 
             Class(..) |
             Interface(..) |
             List(..) => direction == library::ParameterDirection::In,
+        Alias(ref alias) => {
+            let type_ = library.type_(alias.typ);
+            use_by_ref(library, type_, direction)
+        }
         _ => false,
     }
 }
