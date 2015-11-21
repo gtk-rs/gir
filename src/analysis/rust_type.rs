@@ -139,13 +139,12 @@ pub fn parameter_rust_type(env: &Env, type_id:library::TypeId,
             Bitfield(..) => format_parameter(rust_type, direction),
 
         Record(..) => {
-            match direction {
-                _ if env.type_status(&type_id.full_name(&env.library)).ignored() => {
-                    Err(format!("/*Ignored*/{}", rust_type.as_str()))
-                }
-                library::ParameterDirection::In |
-                    library::ParameterDirection::Return => rust_type,
-                _ => Err(format!("/*Unimplemented*/{}", rust_type.as_str())),
+            if env.type_status(&type_id.full_name(&env.library)).ignored() {
+                Err(format!("/*Ignored*/{}", rust_type.as_str()))
+            } else if direction == library::ParameterDirection::InOut {
+                Err(format!("/*Unimplemented*/{}", rust_type.as_str()))
+            } else {
+                rust_type
             }
         }
 
