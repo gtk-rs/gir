@@ -71,7 +71,8 @@ fn rust_type_full(env: &Env, type_id: library::TypeId, nullable: Nullable, by_re
         //TODO: check usage library::Type::get_name() when no _ in this
     };
 
-    if type_id.ns_id != library::MAIN_NAMESPACE && type_id.ns_id != library::INTERNAL_NAMESPACE {
+    if type_id.ns_id != library::MAIN_NAMESPACE && type_id.ns_id != library::INTERNAL_NAMESPACE
+        && !implemented_in_main_namespace(&env.library, type_id) {
         let rust_type_with_prefix = rust_type.map(|s| format!("{}::{}",
             crate_name(&env.library.namespace(type_id.ns_id).name), s));
         if env.type_status(&type_id.full_name(&env.library)).ignored() {
@@ -194,6 +195,16 @@ fn use_by_ref(library: &library::Library, type_: &library::Type, direction: libr
             let type_ = library.type_(alias.typ);
             use_by_ref(library, type_, direction)
         }
+        _ => false,
+    }
+}
+
+fn implemented_in_main_namespace(library: &library::Library, type_id: library::TypeId) -> bool {
+    if library.namespace(library::MAIN_NAMESPACE).name != "Gtk" {
+        return false;
+    }
+    match &*type_id.full_name(library) {
+        "Gdk.Rectangle" => true,
         _ => false,
     }
 }
