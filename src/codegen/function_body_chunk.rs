@@ -9,7 +9,6 @@ use library;
 enum Parameter {
     In {
         parameter: parameter_ffi_call_in::Parameter,
-        upcast: bool,
     },
     Out {
         parameter: parameter_ffi_call_out::Parameter,
@@ -39,10 +38,9 @@ impl Builder {
         self.ret = ret.clone();
         self
     }
-    pub fn parameter(&mut self, parameter: &library::Parameter, upcast: bool) -> &mut Builder {
+    pub fn parameter(&mut self, parameter: &library::Parameter) -> &mut Builder {
         self.parameters.push(Parameter::In {
             parameter: parameter.into(),
-            upcast: upcast
         });
         self
     }
@@ -96,9 +94,8 @@ impl Builder {
         let mut params = Vec::new();
         for par in &self.parameters {
             let chunk = match *par {
-                In { ref parameter, upcast } => Chunk::FfiCallParameter{
+                In { ref parameter } => Chunk::FfiCallParameter{
                     par: parameter.clone(),
-                    upcast: upcast,
                 },
                 Out { ref parameter} => Chunk::FfiCallOutParameter{
                     par: parameter.clone(),

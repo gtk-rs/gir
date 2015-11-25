@@ -69,9 +69,7 @@ pub fn new(env: &Env, obj: &GObject) -> Option<Info> {
     };
 
     let mut imports = Imports::new();
-    imports.add("object::*".into(), None);
     imports.add("glib::translate::*".into(), None);
-    imports.add("glib::types".into(), None);
     imports.add("ffi".into(), None);
 
     let parents = parents::analyze(env, klass, &mut imports);
@@ -88,6 +86,10 @@ pub fn new(env: &Env, obj: &GObject) -> Option<Info> {
             has_children = true;
             break;
         }
+    }
+
+    if has_children {
+        imports.add("glib::object::Upcast".into(), None);
     }
 
     let functions =

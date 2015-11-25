@@ -29,9 +29,28 @@ pub fn uses(w: &mut Write, imports: &Imports, library_name: &str, min_cfg_versio
     Ok(())
 }
 
-pub fn define_object_type(w: &mut Write, type_name: &str, glib_name: &str) -> Result<()>{
+pub fn define_object_type(w: &mut Write, type_name: &str, glib_name: &str,
+        glib_func_name: &str, parents: &[&StatusedTypeId]) -> Result<()> {
+    //TODO: don't generate for parents without traits
+    let parents: Vec<&str> = parents.iter()
+        .filter(|p| !p.status.ignored())
+        .map(|p| &p.name[..])
+        .collect();
+
     try!(writeln!(w, ""));
-    try!(writeln!(w, "pub type {} = Object<ffi::{}>;", type_name, glib_name));
+    try!(writeln!(w, "glib_wrapper! {{"));
+    if parents.is_empty() {
+        try!(writeln!(w, "\tpub struct {}(Object<ffi::{}>);", type_name, glib_name));
+    }
+    else {
+        try!(writeln!(w, "\tpub struct {}(Object<ffi::{}>): {};", type_name, glib_name,
+            parents.join(", ")));
+    }
+    try!(writeln!(w, ""));
+    try!(writeln!(w, "\tmatch fn {{"));
+    try!(writeln!(w, "\t\tget_type => || ffi::{}(),", glib_func_name));
+    try!(writeln!(w, "\t}}"));
+    try!(writeln!(w, "}}"));
 
     Ok(())
 }
@@ -46,40 +65,6 @@ pub fn define_boxed_type(w: &mut Write, type_name: &str, glib_name: &str,
     try!(writeln!(w, "\t\tcopy => |ptr| ffi::{}(ptr as *mut ffi::{}),",
                   copy_fn, glib_name));
     try!(writeln!(w, "\t\tfree => |ptr| ffi::{}(ptr),", free_fn));
-    try!(writeln!(w, "\t}}"));
-    try!(writeln!(w, "}}"));
-
-    Ok(())
-}
-
-pub fn impl_parents(w: &mut Write, type_name: &str, parents: &[StatusedTypeId]) -> Result<()>{
-    try!(writeln!(w, ""));
-    for stid in parents {
-        //TODO: don't generate for parents without traits
-        if !stid.status.ignored() {
-            try!(writeln!(w, "unsafe impl Upcast<{}> for {} {{ }}", stid.name, type_name));
-        }
-    }
-
-    Ok(())
-}
-
-pub fn impl_interfaces(w: &mut Write, type_name: &str, implements: &[StatusedTypeId]) -> Result<()>{
-    for stid in implements {
-        if !stid.status.ignored() {
-            try!(writeln!(w, "unsafe impl Upcast<{}> for {} {{ }}", stid.name, type_name));
-        }
-    }
-
-    Ok(())
-}
-
-pub fn impl_static_type(w: &mut Write, type_name: &str, glib_func_name: &str) -> Result<()>{
-    try!(writeln!(w, ""));
-    try!(writeln!(w, "impl types::StaticType for {} {{", type_name));
-    try!(writeln!(w, "\t#[inline]"));
-    try!(writeln!(w, "\tfn static_type() -> types::Type {{"));
-    try!(writeln!(w, "\t\tunsafe {{ from_glib(ffi::{}()) }}", glib_func_name));
     try!(writeln!(w, "\t}}"));
     try!(writeln!(w, "}}"));
 
