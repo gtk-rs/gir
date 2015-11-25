@@ -1,17 +1,20 @@
 use std::io::{Result, Write};
 
 use analysis;
+use analysis::general::StatusedTypeId;
 use env::Env;
 use super::{function, general};
 
 pub fn generate(w: &mut Write, env: &Env, analysis: &analysis::object::Info) -> Result<()>{
     let type_ = analysis.type_(&env.library);
 
+    let implements: Vec<&StatusedTypeId> = analysis.parents.iter()
+        .chain(analysis.implements.iter())
+        .collect();
     try!(general::start_comments(w, &env.config));
     try!(general::uses(w, &analysis.imports, &env.config.library_name, env.config.min_cfg_version));
-    try!(general::define_object_type(w, &analysis.name, &type_.c_type));
-    try!(general::impl_parents(w, &analysis.name, &analysis.parents));
-    try!(general::impl_interfaces(w, &analysis.name, &analysis.implements));
+    try!(general::define_object_type(w, &analysis.name, &type_.c_type, &type_.glib_get_type,
+        &implements));
 
     if generate_inherent(analysis) {
         try!(writeln!(w, ""));
@@ -31,7 +34,6 @@ pub fn generate(w: &mut Write, env: &Env, analysis: &analysis::object::Info) -> 
         }
         try!(writeln!(w, "}}"));
     }
-    try!(general::impl_static_type(w, &analysis.name, &type_.glib_get_type));
 
     if generate_trait(analysis) {
         try!(writeln!(w, ""));
