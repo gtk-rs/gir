@@ -25,7 +25,7 @@ pub fn generate(w: &mut Write, env: &Env, analysis: &analysis::functions::Info,
         comment_prefix, pub_prefix, declaration, suffix));
 
     if !only_declaration {
-        let body = body_chunk(analysis, in_trait).to_code(env);
+        let body = body_chunk(analysis).to_code(env);
         for s in body {
             try!(writeln!(w, "{}{}", tabs(indent), s));
         }
@@ -66,8 +66,7 @@ fn upcasts(upcasts: &Upcasts) -> String {
     format!("<{}>", strs.join(", "))
 }
 
-pub fn body_chunk(analysis: &analysis::functions::Info,
-    in_trait: bool) -> Chunk {
+pub fn body_chunk(analysis: &analysis::functions::Info) -> Chunk {
     if analysis.comented {
         return ffi_function_todo(&analysis.glib_name);
     }
@@ -82,9 +81,7 @@ pub fn body_chunk(analysis: &analysis::functions::Info,
         if outs_as_return && analysis.outs.iter().any(|p| p.name==par.name) {
             builder.out_parameter(par);
         } else {
-            let upcast = in_trait && par.instance_parameter
-                || analysis.upcasts.iter().any(|&(ref name, _, _)| name == &par.name);
-            builder.parameter(par, upcast);
+            builder.parameter(par);
         }
     }
 

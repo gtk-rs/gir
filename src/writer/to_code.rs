@@ -25,8 +25,8 @@ impl ToCode for Chunk {
                 let s = format_block_one_line(&prefix, ")", &params.to_code(env), "", ", ");
                 vec![s]
             }
-            FfiCallParameter{ref par, upcast } => {
-                let s = par.translate_to_glib(&env.library, upcast);
+            FfiCallParameter{ref par} => {
+                let s = par.translate_to_glib(&env.library);
                 vec![s]
             }
             FfiCallOutParameter{ref par} => {
