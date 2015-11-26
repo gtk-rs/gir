@@ -100,6 +100,7 @@ pub fn used_rust_type(env: &Env, type_id: library::TypeId) -> Result {
             Class(..) |
             Enumeration(..) |
             Interface(..) => rust_type(env, type_id),
+        List(inner_tid) => used_rust_type(env, inner_tid),
         _ => Err("Don't need use".into()),
     }
 }
