@@ -331,6 +331,14 @@ name = "Gtk.ToolPalette"
 status = "generate"
 
 [[object]]
+name = "Gtk.TreeModel"
+status = "generate"
+
+[[object]]
+name = "Gtk.TreeSortable"
+status = "generate"
+
+[[object]]
 name = "Gtk.Viewport"
 status = "generate"
 
