@@ -35,12 +35,11 @@ pub fn analyze_interface(env: &Env, type_: &Interface, imports: &mut Imports)
     let mut parents = Vec::new();
 
     for &parent_tid in &type_.prereq_parents {
-        let parent_type = env.type_(parent_tid).to_ref_as::<Class>();
         let status = env.type_status(&parent_tid.full_name(&env.library));
 
         parents.push(StatusedTypeId{
             type_id: parent_tid,
-            name: parent_type.name.clone(),
+            name: env.type_(parent_tid).get_name().into(),
             status: status,
         });
 
