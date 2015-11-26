@@ -736,16 +736,26 @@ impl Library {
             }
         }
 
+        fn get_iface_prereqs(vec: &mut Vec<TypeId>, library: &Library, iface: &Interface) {
+            for &tid in &iface.prerequisites {
+                vec.push(tid);
+                match *library.type_(tid) {
+                    Type::Class(ref p_class) => {
+                        for &tid in &p_class.parents {
+                            vec.push(tid);
+                        }
+                    }
+                    Type::Interface(ref p_iface) => get_iface_prereqs(vec, library, p_iface),
+                    _ => {}
+                }
+            }
+        }
+
         let mut prereqs = Vec::with_capacity(10);
         for tid in ifaces {
             prereqs.clear();
             if let Type::Interface(ref iface) = *self.type_(tid) {
-                for &c_tid in &iface.prerequisites {
-                    if let Type::Class(ref klass) = *self.type_(c_tid) {
-                        prereqs.push(c_tid);
-                        klass.parents.iter().map(|&p_tid| prereqs.push(p_tid)).count();
-                    }
-                }
+                get_iface_prereqs(&mut prereqs, self, iface);
             }
             prereqs.sort();
             prereqs.dedup();
