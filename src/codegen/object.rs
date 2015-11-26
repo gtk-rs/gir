@@ -6,14 +6,12 @@ use env::Env;
 use super::{function, general};
 
 pub fn generate(w: &mut Write, env: &Env, analysis: &analysis::object::Info) -> Result<()>{
-    let type_ = analysis.type_(&env.library);
-
     let implements: Vec<&StatusedTypeId> = analysis.parents.iter()
         .chain(analysis.implements.iter())
         .collect();
     try!(general::start_comments(w, &env.config));
     try!(general::uses(w, &analysis.imports, &env.config.library_name, env.config.min_cfg_version));
-    try!(general::define_object_type(w, &analysis.name, &type_.c_type, &type_.glib_get_type,
+    try!(general::define_object_type(w, &analysis.name, &analysis.c_type, &analysis.get_type,
         &implements));
 
     if generate_inherent(analysis) {
