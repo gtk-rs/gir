@@ -45,7 +45,7 @@ status = "manual"
 
 [[object]]
 name = "Gtk.Orientable"
-status = "manual"
+status = "generate"
 
 [[object]]
 name = "Gtk.Adjustment"
@@ -136,6 +136,10 @@ status = "generate"
 
 [[object]]
 name = "Gtk.FontButton"
+status = "generate"
+
+[[object]]
+name = "Gtk.FontChooser"
 status = "generate"
 
 [[object]]
