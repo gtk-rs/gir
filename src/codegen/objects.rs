@@ -13,10 +13,12 @@ pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>, traits: &
         }
 
         info!("Analyzing {:?}", obj.name);
-        let class_analysis = match analysis::object::new(env, obj) {
+        let info = analysis::object::new(env, obj)
+            .or_else(|| analysis::object::interface(env, obj));
+        let class_analysis = match info {
             Some(info) => info,
             None => {
-                warn!("Class {} not found.", obj.name);
+                warn!("Class or interface {} not found.", obj.name);
                 continue;
             }
         };

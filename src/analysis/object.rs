@@ -12,6 +12,8 @@ pub struct Info {
     pub full_name: String,
     pub class_tid: library::TypeId,
     pub name: String,
+    pub c_type: String,
+    pub get_type: String,
     pub parents: Vec<general::StatusedTypeId>,
     pub implements: Vec<general::StatusedTypeId>,
     pub has_children: bool,
@@ -24,13 +26,6 @@ pub struct Info {
 }
 
 impl Info {
-    //TODO: add test in tests/ for panic
-    pub fn type_<'a>(&self, library: &'a library::Library) -> &'a library::Class {
-        let type_ = library.type_(self.class_tid).maybe_ref()
-            .unwrap_or_else(|| panic!("{} is not a class.", self.full_name));
-        type_
-    }
-
     ///TODO: return iterator
     pub fn constructors(&self) -> Vec<&functions::Info> {
         self.functions.iter()
@@ -72,7 +67,7 @@ pub fn new(env: &Env, obj: &GObject) -> Option<Info> {
     imports.add("glib::translate::*".into(), None);
     imports.add("ffi".into(), None);
 
-    let parents = parents::analyze(env, klass, &mut imports);
+    let parents = parents::analyze_class(env, klass, &mut imports);
     let implements = implements::analyze(env, klass, &mut imports);
 
     let mut has_children = false;
@@ -105,6 +100,8 @@ pub fn new(env: &Env, obj: &GObject) -> Option<Info> {
         full_name: full_name,
         class_tid: class_tid,
         name: name,
+        c_type: klass.c_type.clone(),
+        get_type: klass.glib_get_type.clone(),
         parents: parents,
         implements: implements,
         has_children: has_children,
@@ -121,5 +118,56 @@ pub fn new(env: &Env, obj: &GObject) -> Option<Info> {
     info.has_constructors = has_constructors;
     info.has_methods = has_methods;
     info.has_functions = has_functions;
+    Some(info)
+}
+
+pub fn interface(env: &Env, obj: &GObject) -> Option<Info> {
+    let full_name = obj.name.clone();
+
+    let iface_tid = match env.library.find_type(0, &full_name) {
+        Some(tid) => tid,
+        None => return None,
+    };
+
+    let type_ = env.type_(iface_tid);
+
+    let name: String = split_namespace_name(&full_name).1.into();
+
+    let iface: &library::Interface = match type_.maybe_ref() {
+        Some(iface) => iface,
+        None => return None,
+    };
+
+    let mut imports = Imports::new();
+    imports.add("glib::translate::*".into(), None);
+    imports.add("ffi".into(), None);
+    imports.add("glib::object::Upcast".into(), None);
+
+    let parents = parents::analyze_interface(env, iface, &mut imports);
+
+    let functions =
+        functions::analyze(env, &iface.functions, iface_tid, &obj.non_nullable_overrides,
+                           &obj.ignored_functions, &mut imports);
+
+    let version = functions.iter().filter_map(|f| f.version).min();
+
+    //don't `use` yourself
+    imports.remove(&name);
+
+    let mut info = Info {
+        full_name: full_name,
+        class_tid: iface_tid,
+        name: name,
+        c_type: iface.c_type.clone(),
+        get_type: iface.glib_get_type.clone(),
+        parents: parents,
+        has_children: true,
+        functions: functions,
+        imports: imports,
+        version: version,
+        .. Default::default()
+    };
+
+    info.has_methods = !info.methods().is_empty();
     Some(info)
 }

@@ -138,7 +138,8 @@ pub fn parameter_rust_type(env: &Env, type_id:library::TypeId,
             }
         }
 
-        Class(..) => {
+        Class(..) |
+            Interface (..) => {
             match direction {
                 _ if env.type_status(&type_id.full_name(&env.library)).ignored() => {
                     Err(format!("/*Ignored*/{}", rust_type.as_str()))
@@ -177,6 +178,7 @@ fn use_by_ref(type_: &library::Type, direction: library::ParameterDirection) -> 
             Fundamental(library::Fundamental::Filename) |
             Record(..) |
             Class(..) |
+            Interface(..) |
             List(..) => direction == library::ParameterDirection::In,
         _ => false,
     }
