@@ -255,6 +255,7 @@ pub struct Parameter {
     pub instance_parameter: bool,
     pub direction: ParameterDirection,
     pub transfer: Transfer,
+    pub caller_allocates: bool,
     pub nullable: Nullable,
     pub allow_none: bool,
 }

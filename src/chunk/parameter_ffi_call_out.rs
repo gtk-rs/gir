@@ -5,6 +5,7 @@ pub struct Parameter {
     pub name: String,
     pub typ: library::TypeId,
     pub transfer: library::Transfer,
+    pub caller_allocates: bool,
 }
 
 impl<'a> From<&'a library::Parameter> for Parameter {
@@ -13,6 +14,7 @@ impl<'a> From<&'a library::Parameter> for Parameter {
             name: orig.name.clone(),
             typ: orig.typ,
             transfer: orig.transfer,
+            caller_allocates: orig.caller_allocates,
         }
     }
 }

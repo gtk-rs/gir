@@ -1,3 +1,4 @@
+use analysis::conversion_type::ConversionType;
 use analysis::out_parameters::Mode;
 use analysis::return_value;
 use chunk::{chunks, Chunk};
@@ -12,7 +13,15 @@ enum Parameter {
     },
     Out {
         parameter: parameter_ffi_call_out::Parameter,
+        mem_mode: OutMemMode,
     },
+}
+
+#[derive(Clone, Eq, PartialEq)]
+enum OutMemMode {
+    Uninitialized,
+    UninitializedNamed(String),
+    NullPtr,
 }
 
 use self::Parameter::*;
@@ -44,9 +53,21 @@ impl Builder {
         });
         self
     }
-    pub fn out_parameter(&mut self, parameter: &library::Parameter) -> &mut Builder {
+    pub fn out_parameter(&mut self, library: &library::Library, parameter: &library::Parameter) -> &mut Builder {
+        use self::OutMemMode::*;
+        let mem_mode = if ConversionType::of(library, parameter.typ) == ConversionType::Pointer {
+            if parameter.caller_allocates {
+                let type_name = library.type_(parameter.typ).get_name();
+                UninitializedNamed(type_name.clone())
+            } else {
+                NullPtr
+            }
+        } else {
+            Uninitialized
+        };
         self.parameters.push(Parameter::Out {
             parameter: parameter.into(),
+            mem_mode: mem_mode,
         });
         self.outs_as_return = true;
         self
@@ -97,7 +118,7 @@ impl Builder {
                 In { ref parameter } => Chunk::FfiCallParameter{
                     par: parameter.clone(),
                 },
-                Out { ref parameter} => Chunk::FfiCallOutParameter{
+                Out { ref parameter, .. } => Chunk::FfiCallOutParameter{
                     par: parameter.clone(),
                 },
             };
@@ -113,8 +134,8 @@ impl Builder {
     fn write_out_variables(&self, v: &mut Vec<Chunk>) {
         let outs = self.get_outs();
         for par in outs {
-            if let Out{ ref parameter } = *par {
-                let val = Chunk::Uninitialized;
+            if let Out{ ref parameter, ref mem_mode } = *par {
+                let val = self.get_uninitialized(mem_mode);
                 let chunk = Chunk::Let{
                     name: parameter.name.clone(),
                     is_mut: true,
@@ -124,31 +145,43 @@ impl Builder {
             }
         }
     }
+    fn get_uninitialized(&self, mem_mode: &OutMemMode) -> Chunk {
+        use self::OutMemMode::*;
+        match *mem_mode {
+            Uninitialized => Chunk::Uninitialized,
+            UninitializedNamed(ref name) => Chunk::UninitializedNamed{ name: name.clone() },
+            NullPtr => Chunk::NullMutPtr,
+        }
+    }
     fn generate_out_return(&self) -> Option<Chunk> {
         if !self.outs_as_return {
             return None;
         }
         let outs = self.get_outs();
         let chunk = if outs.len() == 1 {
-            if let Out{ ref parameter } = *(outs[0]) {
-                self.out_parameter_to_return(parameter)
+            if let Out{ ref parameter, ref mem_mode } = *(outs[0]) {
+                self.out_parameter_to_return(parameter, mem_mode)
             } else { unreachable!() } 
         } else {
             let mut chs: Vec<Chunk> = Vec::new();
             for par in outs {
-                if let Out{ ref parameter } = *par {
-                    chs.push(self.out_parameter_to_return(parameter));
+                if let Out{ ref parameter, ref mem_mode } = *par {
+                    chs.push(self.out_parameter_to_return(parameter, mem_mode));
                 }
             }
             Chunk::Tuple(chs)
         };
         Some(chunk)
     }
-    fn out_parameter_to_return(&self, parameter: &parameter_ffi_call_out::Parameter) -> Chunk {
+    fn out_parameter_to_return(&self, parameter: &parameter_ffi_call_out::Parameter, mem_mode: &OutMemMode) -> Chunk {
         let value = Chunk::VariableValue{name: parameter.name.clone()};
-        Chunk::FromGlibConversion{
-            mode: parameter.into(),
-            value: Box::new(value),
+        if let OutMemMode::UninitializedNamed(_) = *mem_mode {
+            value
+        } else {
+            Chunk::FromGlibConversion{
+                mode: parameter.into(),
+                value: Box::new(value),
+            }
         }
     }
     fn apply_outs_mode(&self, call: Chunk, ret: Option<Chunk>) -> (Chunk, Option<Chunk>) {

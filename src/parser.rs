@@ -677,6 +677,7 @@ impl Library {
                 instance_parameter: false,
                 direction: ParameterDirection::Out,
                 transfer: Transfer::Full,
+                caller_allocates: false,
                 nullable: Nullable(true),
                 allow_none: true,
             });
@@ -752,6 +753,7 @@ impl Library {
                 .map_err(|why| mk_error!(why, parser)));
         let nullable = to_bool(attrs.get("nullable").unwrap_or("none"));
         let allow_none = to_bool(attrs.get("allow-none").unwrap_or("none"));
+        let caller_allocates = to_bool(attrs.get("caller-allocates").unwrap_or("none"));
         let direction = try!(
             if kind_str == "return-value" {
                 Ok(ParameterDirection::Return)
@@ -797,6 +799,7 @@ impl Library {
                 instance_parameter: instance_parameter,
                 direction: direction,
                 transfer: transfer,
+                caller_allocates: caller_allocates,
                 nullable: Nullable(nullable),
                 allow_none: allow_none,
             })
@@ -809,6 +812,7 @@ impl Library {
                 instance_parameter: instance_parameter,
                 direction: Default::default(),
                 transfer: Transfer::None,
+                caller_allocates: false,
                 nullable: Nullable(false),
                 allow_none: allow_none,
             })

@@ -30,7 +30,11 @@ impl ToCode for Chunk {
                 vec![s]
             }
             FfiCallOutParameter{ref par} => {
-                let s = format!("&mut {}", par.name);
+                let s = if par.caller_allocates {
+                    format!("{}.to_glib_none_mut().0", par.name)
+                } else {
+                    format!("&mut {}", par.name)
+                };
                 vec![s]
             }
             FfiCallConversion{ref ret, ref call} => {
@@ -47,6 +51,11 @@ impl ToCode for Chunk {
                 vec![s]
             }
             Uninitialized => vec!["mem::uninitialized()".into()],
+            UninitializedNamed{ ref name } => {
+                let s = format!("{}::uninitialized()", name);
+                vec![s]
+            }
+            NullMutPtr => vec!["ptr::null_mut()".into()],
             VariableValue{ref name} => vec![name.clone()],
             Tuple(ref chs) => {
                 let s = format_block_one_line("(", ")", &chs.to_code(env), "", ", ");

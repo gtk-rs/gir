@@ -90,6 +90,11 @@ generate = [
     "Gtk.TreeSortable",
     "Gtk.Viewport",
     "Gtk.VolumeButton",
+    "Gtk.TextBuffer",
+    "Gtk.TextIter",
+    "Gtk.TreeIter",
+    "Gtk.TreePath",
+    "Gtk.TreeView",
 ]
 
 manual = [
