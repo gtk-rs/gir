@@ -18,6 +18,8 @@ pub enum Chunk {
     FfiCallConversion{ret: return_value::Info, call: Box<Chunk>},
     Let{name: String, is_mut: bool, value: Box<Chunk>},
     Uninitialized,
+    UninitializedNamed{name: String},
+    NullMutPtr,
     VariableValue{name: String},
     Tuple(Vec<Chunk>),
     FromGlibConversion{mode: conversion_from_glib::Mode, value: Box<Chunk>},

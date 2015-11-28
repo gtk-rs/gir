@@ -51,6 +51,11 @@ impl ToCode for Chunk {
                 vec![s]
             }
             Uninitialized => vec!["mem::uninitialized()".into()],
+            UninitializedNamed{ ref name } => {
+                let s = format!("{}::uninitialized()", name);
+                vec![s]
+            }
+            NullMutPtr => vec!["ptr::null_mut()".into()],
             VariableValue{ref name} => vec![name.clone()],
             Tuple(ref chs) => {
                 let s = format_block_one_line("(", ")", &chs.to_code(env), "", ", ");
