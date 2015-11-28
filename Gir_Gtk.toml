@@ -92,6 +92,9 @@ generate = [
     "Gtk.VolumeButton",
     "Gtk.TextBuffer",
     "Gtk.TextIter",
+    "Gtk.TreeIter",
+    "Gtk.TreePath",
+    "Gtk.TreeView",
 ]
 
 manual = [
