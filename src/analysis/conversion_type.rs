@@ -48,6 +48,7 @@ impl ConversionType {
                 None => ConversionType::Unknown,
                 Unsupported => ConversionType::Unknown,
             },
+            Alias(ref alias) => ConversionType::of(library, alias.typ),
             Bitfield(_) => ConversionType::Direct,
             Record(_) => ConversionType::Pointer,
             Enumeration(_) => ConversionType::Direct,

@@ -4,6 +4,7 @@ use std::vec::Vec;
 use env::Env;
 use library::*;
 use super::conversion_type::ConversionType;
+use super::rust_type::parameter_rust_type;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum Mode {
@@ -72,7 +73,7 @@ fn can_as_return(env: &Env, par: &Parameter) -> bool {
     match ConversionType::of(&env.library, par.typ) {
         Direct => true,
         Scalar => true,
-        Pointer => false,
+        Pointer => parameter_rust_type(env, par.typ, ParameterDirection::Out, Nullable(false)).is_ok(),
         Unknown => false,
     }
 }

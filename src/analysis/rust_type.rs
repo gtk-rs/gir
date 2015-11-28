@@ -54,6 +54,8 @@ fn rust_type_full(env: &Env, type_id: library::TypeId, nullable: Nullable, by_re
                 _ => err(&format!("Fundamental: {:?}", fund)),
             }
         },
+        Alias(ref alias) => rust_type_full(env, alias.typ, nullable, by_ref)
+                .map_any(|_| alias.name.clone()),
 
         Enumeration(ref enum_) => Ok(enum_.name.clone()),
         Bitfield(ref bitfield) => Ok(bitfield.name.clone()),
@@ -69,7 +71,8 @@ fn rust_type_full(env: &Env, type_id: library::TypeId, nullable: Nullable, by_re
         //TODO: check usage library::Type::get_name() when no _ in this
     };
 
-    if type_id.ns_id != library::MAIN_NAMESPACE && type_id.ns_id != library::INTERNAL_NAMESPACE {
+    if type_id.ns_id != library::MAIN_NAMESPACE && type_id.ns_id != library::INTERNAL_NAMESPACE
+        && !implemented_in_main_namespace(&env.library, type_id) {
         let rust_type_with_prefix = rust_type.map(|s| format!("{}::{}",
             crate_name(&env.library.namespace(type_id.ns_id).name), s));
         if env.type_status(&type_id.full_name(&env.library)).ignored() {
@@ -95,6 +98,7 @@ pub fn used_rust_type(env: &Env, type_id: library::TypeId) -> Result {
     use library::Type::*;
     match *env.library.type_(type_id) {
         Fundamental(library::Fundamental::Type) |
+            Alias(..) |
             Bitfield(..) |
             Record(..) |
             Class(..) |
@@ -109,7 +113,7 @@ pub fn parameter_rust_type(env: &Env, type_id:library::TypeId,
         direction: library::ParameterDirection, nullable: Nullable) -> Result {
     use library::Type::*;
     let type_ = env.library.type_(type_id);
-    let by_ref = use_by_ref(type_, direction);
+    let by_ref = use_by_ref(&env.library, type_, direction);
     let rust_type = rust_type_full(env, type_id, nullable, by_ref);
     match *type_ {
         Fundamental(fund) => {
@@ -122,19 +126,26 @@ pub fn parameter_rust_type(env: &Env, type_id:library::TypeId,
             } else {
                 format_parameter(rust_type, direction)
             }
-        },
+        }
+        Alias(ref alias) => {
+            let res = format_parameter(rust_type, direction);
+            if parameter_rust_type(env, alias.typ, direction, nullable).is_ok() {
+                res
+            } else {
+                res.and_then(|s| Err(s))
+            }
+        }
 
         Enumeration(..) |
             Bitfield(..) => format_parameter(rust_type, direction),
 
         Record(..) => {
-            match direction {
-                _ if env.type_status(&type_id.full_name(&env.library)).ignored() => {
-                    Err(format!("/*Ignored*/{}", rust_type.as_str()))
-                }
-                library::ParameterDirection::In |
-                    library::ParameterDirection::Return => rust_type,
-                _ => Err(format!("/*Unimplemented*/{}", rust_type.as_str())),
+            if env.type_status(&type_id.full_name(&env.library)).ignored() {
+                Err(format!("/*Ignored*/{}", rust_type.as_str()))
+            } else if direction == library::ParameterDirection::InOut {
+                Err(format!("/*Unimplemented*/{}", rust_type.as_str()))
+            } else {
+                rust_type
             }
         }
 
@@ -171,7 +182,7 @@ fn format_parameter(rust_type: Result, direction: library::ParameterDirection) -
 }
 
 #[inline]
-fn use_by_ref(type_: &library::Type, direction: library::ParameterDirection) -> bool {
+fn use_by_ref(library: &library::Library, type_: &library::Type, direction: library::ParameterDirection) -> bool {
     use library::Type::*;
     match *type_ {
         Fundamental(library::Fundamental::Utf8) |
@@ -180,6 +191,20 @@ fn use_by_ref(type_: &library::Type, direction: library::ParameterDirection) -> 
             Class(..) |
             Interface(..) |
             List(..) => direction == library::ParameterDirection::In,
+        Alias(ref alias) => {
+            let type_ = library.type_(alias.typ);
+            use_by_ref(library, type_, direction)
+        }
+        _ => false,
+    }
+}
+
+fn implemented_in_main_namespace(library: &library::Library, type_id: library::TypeId) -> bool {
+    if library.namespace(library::MAIN_NAMESPACE).name != "Gtk" {
+        return false;
+    }
+    match &*type_id.full_name(library) {
+        "Gdk.Rectangle" => true,
         _ => false,
     }
 }
