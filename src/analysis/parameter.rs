@@ -44,7 +44,7 @@ pub fn analyze(env: &Env, par: &library::Parameter) -> Parameter {
 }
 
 #[inline]
-fn use_by_ref(library: &library::Library, tid: library::TypeId, direction: library::ParameterDirection) -> bool {
+pub fn use_by_ref(library: &library::Library, tid: library::TypeId, direction: library::ParameterDirection) -> bool {
     use library::Type::*;
     match *library.type_(tid) {
         Fundamental(library::Fundamental::Utf8) |
