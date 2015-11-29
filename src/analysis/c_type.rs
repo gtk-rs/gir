@@ -23,6 +23,11 @@ pub fn rustify_pointers(c_type: &str) -> (String, String) {
     res
 }
 
+pub fn is_mut_ptr(c_type: &str) -> bool {
+    let (ptr, _inner) = rustify_pointers(c_type);
+    ptr.find("*mut") == Some(0)
+}
+
 #[cfg(test)]
 mod tests {
     use super::rustify_pointers as rustify_ptr;

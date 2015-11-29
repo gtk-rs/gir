@@ -29,7 +29,7 @@ pub fn analyze(env: &Env, par: &library::Parameter) -> Parameter {
         nameutil::mangle_keywords(&*par.name)
     };
 
-    let ref_mode = RefMode::of(&env.library, par.typ, par.direction);
+    let ref_mode = RefMode::without_unneeded_mut(&env.library, par);
 
     Parameter {
         name: name.into_owned(),

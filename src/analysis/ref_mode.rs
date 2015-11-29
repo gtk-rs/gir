@@ -1,4 +1,5 @@
 use library;
+use super::c_type::is_mut_ptr;
 use super::record_type::RecordType;
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
@@ -33,6 +34,15 @@ impl RefMode {
             },
             Alias(ref alias) => RefMode::of(library, alias.typ, direction),
             _ => RefMode::None,
+        }
+    }
+
+    pub fn without_unneeded_mut(library: &library::Library, par: &library::Parameter) -> RefMode {
+        let ref_mode = RefMode::of(library, par.typ, par.direction);
+        if ref_mode == RefMode::ByRefMut && !is_mut_ptr(&*par.c_type) {
+            RefMode::ByRef
+        } else {
+            ref_mode
         }
     }
 
