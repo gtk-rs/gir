@@ -1,6 +1,7 @@
 use env::Env;
 use analysis::conversion_type::ConversionType;
 use analysis::parameter::Parameter;
+use analysis::ref_mode::RefMode;
 use analysis::rust_type::parameter_rust_type;
 use analysis::upcasts::Upcasts;
 use traits::*;
@@ -11,17 +12,18 @@ pub trait ToParameter {
 
 impl ToParameter for Parameter {
     fn to_parameter(&self, env: &Env, upcasts: &Upcasts) -> String {
+        let mut_str = if self.ref_mode == RefMode::ByRefMut { "mut " } else { "" };
         if self.instance_parameter {
-            "&self".into()
+            format!("&{}self", mut_str)
         } else {
             let type_str: String;
             match upcasts.get_parameter_type_alias(&self.name) {
                 Some(t) => {
                     if *self.nullable {
-                        type_str = format!("Option<&{}>", t)
+                        type_str = format!("Option<&{}{}>", mut_str, t)
                     }
                     else {
-                        type_str = format!("&{}", t)
+                        type_str = format!("&{}{}", mut_str, t)
                     }
                 }
                 None => {

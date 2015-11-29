@@ -1,9 +1,11 @@
 use library;
+use super::record_type::RecordType;
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
 pub enum RefMode {
     None,
     ByRef,
+    ByRefMut,
 }
 
 impl RefMode {
@@ -13,11 +15,19 @@ impl RefMode {
         match *library.type_(tid) {
             Fundamental(library::Fundamental::Utf8) |
             Fundamental(library::Fundamental::Filename) |
-            Record(..) |
             Class(..) |
             Interface(..) |
             List(..) => if direction == library::ParameterDirection::In {
                 RefMode::ByRef
+            } else {
+                RefMode::None
+            },
+            Record(ref record) => if direction == library::ParameterDirection::In {
+                match RecordType::of(record) {
+                    RecordType::Direct => RefMode::ByRefMut,
+                    RecordType::Boxed => RefMode::ByRefMut,
+                    RecordType::Refcounted => RefMode::ByRef,
+                }
             } else {
                 RefMode::None
             },
@@ -31,6 +41,7 @@ impl RefMode {
         match *self {
             None => false,
             ByRef => true,
+            ByRefMut => true,
         }
     }
 }

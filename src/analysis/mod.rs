@@ -11,6 +11,7 @@ pub mod out_parameters;
 pub mod parameter;
 pub mod parents;
 pub mod record;
+pub mod record_type;
 pub mod ref_mode;
 pub mod return_value;
 pub mod rust_type;

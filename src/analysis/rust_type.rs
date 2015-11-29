@@ -89,6 +89,7 @@ fn rust_type_full(env: &Env, type_id: library::TypeId, nullable: Nullable, ref_m
     match ref_mode {
         RefMode::None => {}
         RefMode::ByRef => rust_type = rust_type.map_any(|s| format!("&{}", s)),
+        RefMode::ByRefMut => rust_type = rust_type.map_any(|s| format!("&mut {}", s)),
     }
     if *nullable && !skip_option {
         match ConversionType::of(&env.library, type_id) {
