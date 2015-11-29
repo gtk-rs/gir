@@ -4,6 +4,7 @@ use analysis::imports::Imports;
 use analysis::needed_upcast::needed_upcast;
 use analysis::out_parameters;
 use analysis::parameter;
+use analysis::ref_mode::RefMode;
 use analysis::return_value;
 use analysis::rust_type::*;
 use analysis::upcasts::Upcasts;
@@ -62,7 +63,7 @@ fn analyze_function(env: &Env, func: &library::Function, type_tid: library::Type
         if let Ok(s) = used_rust_type(env, par.typ) {
             used_types.push(s);
         }
-        let type_error = parameter_rust_type(env, par.typ, par.direction, Nullable(false), false).is_err();
+        let type_error = parameter_rust_type(env, par.typ, par.direction, Nullable(false), RefMode::None).is_err();
         if !par.instance_parameter && needed_upcast(&env.library, par.typ) {
             let type_name = rust_type(env, par.typ);
             let ignored = if type_error { "/*Ignored*/" } else { "" };

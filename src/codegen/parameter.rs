@@ -26,7 +26,7 @@ impl ToParameter for Parameter {
                 }
                 None => {
                     let rust_type = parameter_rust_type(env, self.typ, self.direction,
-                                                        self.nullable, self.by_ref);
+                                                        self.nullable, self.ref_mode);
                     let type_name = rust_type.as_str();
                     type_str = match ConversionType::of(&env.library, self.typ) {
                         ConversionType::Unknown => format!("/*Unknown conversion*/{}", type_name),

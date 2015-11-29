@@ -1,6 +1,7 @@
 use std::slice::Iter;
 use std::vec::Vec;
 
+use analysis::ref_mode::RefMode;
 use env::Env;
 use library::*;
 use super::conversion_type::ConversionType;
@@ -73,7 +74,7 @@ fn can_as_return(env: &Env, par: &Parameter) -> bool {
     match ConversionType::of(&env.library, par.typ) {
         Direct => true,
         Scalar => true,
-        Pointer => parameter_rust_type(env, par.typ, ParameterDirection::Out, Nullable(false), false).is_ok(),
+        Pointer => parameter_rust_type(env, par.typ, ParameterDirection::Out, Nullable(false), RefMode::None).is_ok(),
         Unknown => false,
     }
 }

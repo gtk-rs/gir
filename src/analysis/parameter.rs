@@ -3,7 +3,9 @@ use std::borrow::Cow;
 use env::Env;
 use library;
 use nameutil;
+use super::ref_mode::RefMode;
 
+#[derive(Clone)]
 pub struct Parameter {
     //from library::Parameter
     pub name: String,
@@ -17,7 +19,7 @@ pub struct Parameter {
     pub allow_none: bool,
 
     //analysis fields
-    pub by_ref: bool,
+    pub ref_mode: RefMode,
 }
 
 pub fn analyze(env: &Env, par: &library::Parameter) -> Parameter {
@@ -27,7 +29,7 @@ pub fn analyze(env: &Env, par: &library::Parameter) -> Parameter {
         nameutil::mangle_keywords(&*par.name)
     };
 
-    let by_ref = use_by_ref(&env.library, par.typ, par.direction);
+    let ref_mode = RefMode::of(&env.library, par.typ, par.direction);
 
     Parameter {
         name: name.into_owned(),
@@ -39,21 +41,6 @@ pub fn analyze(env: &Env, par: &library::Parameter) -> Parameter {
         caller_allocates: par.caller_allocates,
         nullable: par.nullable,
         allow_none: par.allow_none,
-        by_ref: by_ref,
-    }
-}
-
-#[inline]
-pub fn use_by_ref(library: &library::Library, tid: library::TypeId, direction: library::ParameterDirection) -> bool {
-    use library::Type::*;
-    match *library.type_(tid) {
-        Fundamental(library::Fundamental::Utf8) |
-            Fundamental(library::Fundamental::Filename) |
-            Record(..) |
-            Class(..) |
-            Interface(..) |
-            List(..) => direction == library::ParameterDirection::In,
-        Alias(ref alias) => use_by_ref(library, alias.typ, direction),
-        _ => false,
+        ref_mode: ref_mode,
     }
 }

@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use std::io::{Result, Write};
 use case::CaseExt;
 
-use analysis::parameter::use_by_ref;
+use analysis::ref_mode::RefMode;
 use analysis::rust_type::parameter_rust_type;
 use env::Env;
 use file_saver::*;
@@ -122,10 +122,10 @@ fn generate_constants(w: &mut Write, env: &Env, constants: &[Constant]) -> Resul
     try!(writeln!(w, ""));
     for constant in constants {
         let direction = ParameterDirection::In;
-        let by_ref = use_by_ref(&env.library, constant.typ, direction);
+        let ref_mode = RefMode::of(&env.library, constant.typ, direction);
         let (mut comment, mut type_) =
             match parameter_rust_type(env, constant.typ, direction,
-                                      Nullable(false), by_ref) {
+                                      Nullable(false), ref_mode) {
                 Ok(x) => ("", x),
                 Err(x) => ("//", x),
             };
