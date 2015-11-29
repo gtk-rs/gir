@@ -110,10 +110,10 @@ pub fn used_rust_type(env: &Env, type_id: library::TypeId) -> Result {
 }
 
 pub fn parameter_rust_type(env: &Env, type_id:library::TypeId,
-        direction: library::ParameterDirection, nullable: Nullable) -> Result {
+                           direction: library::ParameterDirection, nullable: Nullable,
+                           by_ref: bool) -> Result {
     use library::Type::*;
     let type_ = env.library.type_(type_id);
-    let by_ref = use_by_ref(&env.library, type_, direction);
     let rust_type = rust_type_full(env, type_id, nullable, by_ref);
     match *type_ {
         Fundamental(fund) => {
@@ -129,7 +129,7 @@ pub fn parameter_rust_type(env: &Env, type_id:library::TypeId,
         }
         Alias(ref alias) => {
             let res = format_parameter(rust_type, direction);
-            if parameter_rust_type(env, alias.typ, direction, nullable).is_ok() {
+            if parameter_rust_type(env, alias.typ, direction, nullable, by_ref).is_ok() {
                 res
             } else {
                 res.and_then(|s| Err(s))
@@ -178,24 +178,6 @@ fn format_parameter(rust_type: Result, direction: library::ParameterDirection) -
         rust_type.map(|s| format!("&mut {}", s))
     } else {
         rust_type
-    }
-}
-
-#[inline]
-fn use_by_ref(library: &library::Library, type_: &library::Type, direction: library::ParameterDirection) -> bool {
-    use library::Type::*;
-    match *type_ {
-        Fundamental(library::Fundamental::Utf8) |
-            Fundamental(library::Fundamental::Filename) |
-            Record(..) |
-            Class(..) |
-            Interface(..) |
-            List(..) => direction == library::ParameterDirection::In,
-        Alias(ref alias) => {
-            let type_ = library.type_(alias.typ);
-            use_by_ref(library, type_, direction)
-        }
-        _ => false,
     }
 }
 

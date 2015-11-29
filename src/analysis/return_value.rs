@@ -32,7 +32,7 @@ pub fn analyze(env: &Env, func: &library::Function, type_tid: library::TypeId,
     };
 
     let commented = if func.ret.typ == Default::default() { false } else {
-        parameter_rust_type(env, func.ret.typ, func.ret.direction, Nullable(false)).is_err()
+        parameter_rust_type(env, func.ret.typ, func.ret.direction, Nullable(false), false).is_err()
     };
 
     let mut base_tid = None;

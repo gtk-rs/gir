@@ -1,6 +1,6 @@
 use env::Env;
-use library;
 use analysis::conversion_type::ConversionType;
+use analysis::parameter::Parameter;
 use analysis::rust_type::parameter_rust_type;
 use analysis::upcasts::Upcasts;
 use traits::*;
@@ -9,7 +9,7 @@ pub trait ToParameter {
     fn to_parameter(&self, env: &Env, upcasts: &Upcasts) -> String;
 }
 
-impl ToParameter for library::Parameter {
+impl ToParameter for Parameter {
     fn to_parameter(&self, env: &Env, upcasts: &Upcasts) -> String {
         if self.instance_parameter {
             "&self".into()
@@ -26,7 +26,7 @@ impl ToParameter for library::Parameter {
                 }
                 None => {
                     let rust_type = parameter_rust_type(env, self.typ, self.direction,
-                        self.nullable);
+                                                        self.nullable, self.by_ref);
                     let type_name = rust_type.as_str();
                     type_str = match ConversionType::of(&env.library, self.typ) {
                         ConversionType::Unknown => format!("/*Unknown conversion*/{}", type_name),

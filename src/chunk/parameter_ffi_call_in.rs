@@ -1,3 +1,4 @@
+use analysis;
 use library;
 
 #[derive(Clone)]
@@ -10,8 +11,8 @@ pub struct Parameter {
     pub nullable: library::Nullable,
 }
 
-impl<'a> From<&'a library::Parameter> for Parameter {
-    fn from(orig: &'a library::Parameter) -> Parameter {
+impl<'a> From<&'a analysis::parameter::Parameter> for Parameter {
+    fn from(orig: &'a analysis::parameter::Parameter) -> Parameter {
         Parameter {
             name: orig.name.clone(),
             typ: orig.typ,

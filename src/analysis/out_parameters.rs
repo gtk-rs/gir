@@ -73,7 +73,7 @@ fn can_as_return(env: &Env, par: &Parameter) -> bool {
     match ConversionType::of(&env.library, par.typ) {
         Direct => true,
         Scalar => true,
-        Pointer => parameter_rust_type(env, par.typ, ParameterDirection::Out, Nullable(false)).is_ok(),
+        Pointer => parameter_rust_type(env, par.typ, ParameterDirection::Out, Nullable(false), false).is_ok(),
         Unknown => false,
     }
 }

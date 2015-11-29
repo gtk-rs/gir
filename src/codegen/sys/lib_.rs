@@ -121,7 +121,8 @@ fn generate_constants(w: &mut Write, env: &Env, constants: &[Constant]) -> Resul
     try!(writeln!(w, ""));
     for constant in constants {
         let (mut comment, mut type_) =
-            match parameter_rust_type(env, constant.typ, ParameterDirection::In, Nullable(false)) {
+            match parameter_rust_type(env, constant.typ, ParameterDirection::In,
+                                      Nullable(false), false) {
                 Ok(x) => ("", x),
                 Err(x) => ("//", x),
             };

@@ -1,4 +1,5 @@
 use analysis::conversion_type::ConversionType;
+use analysis::parameter::Parameter as AnalysisParameter;
 use analysis::out_parameters::Mode;
 use analysis::return_value;
 use chunk::{chunks, Chunk};
@@ -47,13 +48,13 @@ impl Builder {
         self.ret = ret.clone();
         self
     }
-    pub fn parameter(&mut self, parameter: &library::Parameter) -> &mut Builder {
+    pub fn parameter(&mut self, parameter: &AnalysisParameter) -> &mut Builder {
         self.parameters.push(Parameter::In {
             parameter: parameter.into(),
         });
         self
     }
-    pub fn out_parameter(&mut self, library: &library::Library, parameter: &library::Parameter) -> &mut Builder {
+    pub fn out_parameter(&mut self, library: &library::Library, parameter: &AnalysisParameter) -> &mut Builder {
         use self::OutMemMode::*;
         let mem_mode = if ConversionType::of(library, parameter.typ) == ConversionType::Pointer {
             if parameter.caller_allocates {
