@@ -1,9 +1,10 @@
-use std::borrow::Cow;
 use std::vec::Vec;
 
 use analysis::imports::Imports;
 use analysis::needed_upcast::needed_upcast;
 use analysis::out_parameters;
+use analysis::parameter;
+use analysis::ref_mode::RefMode;
 use analysis::return_value;
 use analysis::rust_type::*;
 use analysis::upcasts::Upcasts;
@@ -21,7 +22,7 @@ pub struct Info {
     pub kind: library::FunctionKind,
     pub comented: bool,
     pub type_name: Result,
-    pub parameters: Vec<library::Parameter>,
+    pub parameters: Vec<parameter::Parameter>,
     pub ret: return_value::Info,
     pub upcasts: Upcasts,
     pub outs: out_parameters::Info,
@@ -53,20 +54,16 @@ fn analyze_function(env: &Env, func: &library::Function, type_tid: library::Type
     let ret = return_value::analyze(env, func, type_tid, non_nullable_overrides, &mut used_types);
     commented |= ret.commented;
 
-    let mut parameters = func.parameters.clone();
+    let parameters: Vec<parameter::Parameter> =
+        func.parameters.iter().map(|par| parameter::analyze(env, par)).collect();
 
-    for (pos, par) in parameters.iter_mut().enumerate() {
+    for (pos, par) in parameters.iter().enumerate() {
         assert!(!par.instance_parameter || pos == 0,
             "Wrong instance parameter in {}", func.c_identifier.as_ref().unwrap());
         if let Ok(s) = used_rust_type(env, par.typ) {
             used_types.push(s);
         }
-        if !par.instance_parameter {
-            if let Cow::Owned(mangled) = nameutil::mangle_keywords(&*par.name) {
-                par.name = mangled;
-            }
-        }
-        let type_error = parameter_rust_type(env, par.typ, par.direction, Nullable(false)).is_err();
+        let type_error = parameter_rust_type(env, par.typ, par.direction, Nullable(false), RefMode::None).is_err();
         if !par.instance_parameter && needed_upcast(&env.library, par.typ) {
             let type_name = rust_type(env, par.typ);
             let ignored = if type_error { "/*Ignored*/" } else { "" };

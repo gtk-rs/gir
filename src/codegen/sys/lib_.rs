@@ -2,6 +2,7 @@ use std::collections::HashMap;
 use std::io::{Result, Write};
 use case::CaseExt;
 
+use analysis::ref_mode::RefMode;
 use analysis::rust_type::parameter_rust_type;
 use env::Env;
 use file_saver::*;
@@ -120,8 +121,11 @@ fn generate_bitfields(w: &mut Write, items: &[&Bitfield])
 fn generate_constants(w: &mut Write, env: &Env, constants: &[Constant]) -> Result<()> {
     try!(writeln!(w, ""));
     for constant in constants {
+        let direction = ParameterDirection::In;
+        let ref_mode = RefMode::of(&env.library, constant.typ, direction);
         let (mut comment, mut type_) =
-            match parameter_rust_type(env, constant.typ, ParameterDirection::In, Nullable(false)) {
+            match parameter_rust_type(env, constant.typ, direction,
+                                      Nullable(false), ref_mode) {
                 Ok(x) => ("", x),
                 Err(x) => ("//", x),
             };

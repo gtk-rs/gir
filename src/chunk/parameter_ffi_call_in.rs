@@ -1,3 +1,4 @@
+use analysis;
 use library;
 
 #[derive(Clone)]
@@ -8,10 +9,11 @@ pub struct Parameter {
     pub direction: library::ParameterDirection,
     pub transfer: library::Transfer,
     pub nullable: library::Nullable,
+    pub ref_mode: analysis::ref_mode::RefMode,
 }
 
-impl<'a> From<&'a library::Parameter> for Parameter {
-    fn from(orig: &'a library::Parameter) -> Parameter {
+impl<'a> From<&'a analysis::parameter::Parameter> for Parameter {
+    fn from(orig: &'a analysis::parameter::Parameter) -> Parameter {
         Parameter {
             name: orig.name.clone(),
             typ: orig.typ,
@@ -19,6 +21,7 @@ impl<'a> From<&'a library::Parameter> for Parameter {
             direction: orig.direction,
             transfer: orig.transfer,
             nullable: orig.nullable,
+            ref_mode: orig.ref_mode,
         }
     }
 }

@@ -1,5 +1,6 @@
 use std::result;
 
+use analysis::ref_mode::RefMode;
 use env::Env;
 use library::{self, Nullable};
 use nameutil::crate_name;
@@ -16,10 +17,10 @@ impl AsStr for Result {
 }
 
 pub fn rust_type(env: &Env, type_id: library::TypeId) -> Result {
-    rust_type_full(env, type_id, Nullable(false), false)
+    rust_type_full(env, type_id, Nullable(false), RefMode::None)
 }
 
-fn rust_type_full(env: &Env, type_id: library::TypeId, nullable: Nullable, by_ref: bool) -> Result {
+fn rust_type_full(env: &Env, type_id: library::TypeId, nullable: Nullable, ref_mode: RefMode) -> Result {
     use library::Type::*;
     use library::Fundamental::*;
     let mut skip_option = false;
@@ -46,15 +47,15 @@ fn rust_type_full(env: &Env, type_id: library::TypeId, nullable: Nullable, by_re
                 Float => ok("f32"),
                 Double => ok("f64"),
 
-                Utf8 => if by_ref { ok("str") } else { ok("String") },
-                Filename => if by_ref { ok("str") } else { ok("String") },
+                Utf8 => if ref_mode.is_ref() { ok("str") } else { ok("String") },
+                Filename => if ref_mode.is_ref() { ok("str") } else { ok("String") },
 
                 Type => ok("glib::types::Type"),
                 Unsupported => err("Unsupported"),
                 _ => err(&format!("Fundamental: {:?}", fund)),
             }
         },
-        Alias(ref alias) => rust_type_full(env, alias.typ, nullable, by_ref)
+        Alias(ref alias) => rust_type_full(env, alias.typ, nullable, ref_mode)
                 .map_any(|_| alias.name.clone()),
 
         Enumeration(ref enum_) => Ok(enum_.name.clone()),
@@ -65,7 +66,11 @@ fn rust_type_full(env: &Env, type_id: library::TypeId, nullable: Nullable, by_re
         List(inner_tid) => {
             skip_option = true;
             rust_type(env, inner_tid)
-                .map_any(|s| if by_ref { format!("[{}]", s) } else { format!("Vec<{}>", s) })
+                .map_any(|s| if ref_mode.is_ref() {
+                    format!("[{}]", s)
+                } else {
+                    format!("Vec<{}>", s)
+                })
         }
         _ => Err(format!("Unknown rust type: {:?}", type_.get_name())),
         //TODO: check usage library::Type::get_name() when no _ in this
@@ -81,8 +86,10 @@ fn rust_type_full(env: &Env, type_id: library::TypeId, nullable: Nullable, by_re
             rust_type = rust_type_with_prefix;
         }
     }
-    if by_ref {
-        rust_type = rust_type.map_any(|s| format!("&{}", s));
+    match ref_mode {
+        RefMode::None => {}
+        RefMode::ByRef => rust_type = rust_type.map_any(|s| format!("&{}", s)),
+        RefMode::ByRefMut => rust_type = rust_type.map_any(|s| format!("&mut {}", s)),
     }
     if *nullable && !skip_option {
         match ConversionType::of(&env.library, type_id) {
@@ -110,11 +117,11 @@ pub fn used_rust_type(env: &Env, type_id: library::TypeId) -> Result {
 }
 
 pub fn parameter_rust_type(env: &Env, type_id:library::TypeId,
-        direction: library::ParameterDirection, nullable: Nullable) -> Result {
+                           direction: library::ParameterDirection, nullable: Nullable,
+                           ref_mode: RefMode) -> Result {
     use library::Type::*;
     let type_ = env.library.type_(type_id);
-    let by_ref = use_by_ref(&env.library, type_, direction);
-    let rust_type = rust_type_full(env, type_id, nullable, by_ref);
+    let rust_type = rust_type_full(env, type_id, nullable, ref_mode);
     match *type_ {
         Fundamental(fund) => {
             if fund == library::Fundamental::Utf8 || fund == library::Fundamental::Filename {
@@ -129,7 +136,7 @@ pub fn parameter_rust_type(env: &Env, type_id:library::TypeId,
         }
         Alias(ref alias) => {
             let res = format_parameter(rust_type, direction);
-            if parameter_rust_type(env, alias.typ, direction, nullable).is_ok() {
+            if parameter_rust_type(env, alias.typ, direction, nullable, ref_mode).is_ok() {
                 res
             } else {
                 res.and_then(|s| Err(s))
@@ -178,24 +185,6 @@ fn format_parameter(rust_type: Result, direction: library::ParameterDirection) -
         rust_type.map(|s| format!("&mut {}", s))
     } else {
         rust_type
-    }
-}
-
-#[inline]
-fn use_by_ref(library: &library::Library, type_: &library::Type, direction: library::ParameterDirection) -> bool {
-    use library::Type::*;
-    match *type_ {
-        Fundamental(library::Fundamental::Utf8) |
-            Fundamental(library::Fundamental::Filename) |
-            Record(..) |
-            Class(..) |
-            Interface(..) |
-            List(..) => direction == library::ParameterDirection::In,
-        Alias(ref alias) => {
-            let type_ = library.type_(alias.typ);
-            use_by_ref(library, type_, direction)
-        }
-        _ => false,
     }
 }
 
