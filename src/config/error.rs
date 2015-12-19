@@ -14,6 +14,20 @@ pub enum Error {
     Options(String, PathBuf),
 }
 
+impl Error {
+    pub fn io<P: AsRef<OsStr>>(error: IoError, filename: P) -> Error {
+        Error::Io(error, PathBuf::from(&filename))
+    }
+
+    pub fn toml<S: Into<String>, P: AsRef<OsStr>>(error: S, filename: P) -> Error {
+        Error::Toml(error.into(), PathBuf::from(&filename))
+    }
+
+    pub fn options<S: Into<String>, P: AsRef<OsStr>>(error: S, filename: P) -> Error {
+        Error::Options(error.into(), PathBuf::from(&filename))
+    }
+}
+
 impl StdError for Error {
     fn description(&self) -> &str {
         use self::Error::*;
@@ -45,51 +59,38 @@ impl Display for Error {
     }
 }
 
-impl<'a> From<DocoptError> for Error {
+impl From<DocoptError> for Error {
     fn from(e: DocoptError) -> Error {
         Error::CommandLine(e)
     }
 }
 
-impl<P: AsRef<OsStr>> From<(IoError, P)> for Error {
-    fn from(e: (IoError, P)) -> Error {
-        Error::Io(e.0, PathBuf::from(&e.1))
-    }
-}
-
-impl<'a, P: AsRef<OsStr>> From<(&'a str, P)> for Error {
-    fn from(e: (&'a str, P)) -> Error {
-        Error::Options(e.0.into(), PathBuf::from(&e.1))
-    }
-}
-
-impl<P: AsRef<OsStr>> From<(String, P)> for Error {
-    fn from(e: (String, P)) -> Error {
-        Error::Options(e.0, PathBuf::from(&e.1))
-    }
-}
-
 pub trait TomlHelper where Self: Sized {
     fn lookup_str<'a, P: AsRef<OsStr>>(&'a self, option: &'a str, err: &str, config_file: P) -> Result<&'a str, Error>;
+    fn lookup_slice<'a, P: AsRef<OsStr>>(&'a self, option: &'a str, err: &str, config_file: P) -> Result<&'a [Self], Error>;
     fn as_result_str<'a, P: AsRef<OsStr>>(&'a self, option: &'a str, config_file: P) -> Result<&'a str, Error>;
     fn as_result_slice<'a, P: AsRef<OsStr>>(&'a self, option: &'a str, config_file: P) -> Result<&'a [Self], Error>;
 }
 
 impl TomlHelper for toml::Value {
     fn lookup_str<'a, P: AsRef<OsStr>>(&'a self, option: &'a str, err: &str, config_file: P) -> Result<&'a str, Error> {
-        let value = try!(self.lookup(option).ok_or((err, &config_file)));
+        let value = try!(self.lookup(option).ok_or(Error::options(err, &config_file)));
         value.as_result_str(option, config_file)
+    }
+    fn lookup_slice<'a, P: AsRef<OsStr>>(&'a self, option: &'a str, err: &str, config_file: P) -> Result<&'a [Self], Error> {
+        let value = try!(self.lookup(option).ok_or(Error::options(err, &config_file)));
+        value.as_result_slice(option, config_file)
     }
     fn as_result_str<'a, P: AsRef<OsStr>>(&'a self, option: &'a str, config_file: P) -> Result<&'a str, Error> {
         self.as_str()
-            .ok_or(Error::Options(format!("Invalid `{}` value, expected a string, found {}",
+            .ok_or(Error::options(format!("Invalid `{}` value, expected a string, found {}",
                                           option, self.type_str()),
-                                  PathBuf::from(&config_file)))
+                                  config_file))
     }
     fn as_result_slice<'a, P: AsRef<OsStr>>(&'a self, option: &'a str, config_file: P) -> Result<&'a [Self], Error> {
         self.as_slice()
-            .ok_or(Error::Options(format!("Invalid `{}` value, expected a array, found {}",
+            .ok_or(Error::options(format!("Invalid `{}` value, expected a array, found {}",
                                           option, self.type_str()),
-                                  PathBuf::from(&config_file)))
+                                  config_file))
     }
 }

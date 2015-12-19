@@ -78,7 +78,7 @@ impl Config {
                 try!(toml.lookup_str("options.library", "No options.library in config", &config_file)),
                 try!(toml.lookup_str("options.version", "No options.version in config", &config_file))
             ),
-            ("", _) | (_, "") => try!(Err(("Library and version can not be specified separately",
+            ("", _) | (_, "") => try!(Err(Error::options("Library and version can not be specified separately",
                                            &config_file))),
             (a, b) => (a, b)
         };
@@ -109,7 +109,7 @@ impl Config {
             Some(v) => {
                 try!(
                     try!(v.as_result_str("options.min_cfg_version", &config_file))
-                        .parse().map_err(|e: String| (e, config_file)))
+                        .parse().map_err(|e| Error::options(e, config_file)))
             }
             None => Default::default(),
         };
@@ -138,7 +138,7 @@ fn read_toml<P: AsRef<OsStr> + AsRef<Path>>(filename: P) -> Result<toml::Value, 
     let mut input = String::new();
     try!(File::open(&filename)
          .and_then(|mut f| f.read_to_string(&mut input))
-         .map_err(|e| (e, &filename)));
+         .map_err(|e| Error::io(e, &filename)));
 
     let mut parser = toml::Parser::new(&input);
     match parser.parse() {
@@ -148,7 +148,7 @@ fn read_toml<P: AsRef<OsStr> + AsRef<Path>>(filename: P) -> Result<toml::Value, 
             let (loline, locol) = parser.to_linecol(err.lo);
             let (hiline, hicol) = parser.to_linecol(err.hi);
             let s = format!("{}:{}-{}:{} error: {}", loline, locol, hiline, hicol, err.desc);
-            Err(Error::Toml(s, PathBuf::from(&filename)))
+            Err(Error::toml(s, &filename))
         }
     }
 }
