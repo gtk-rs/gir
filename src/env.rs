@@ -1,6 +1,6 @@
 use analysis::namespaces;
 use config::Config;
-use gobjects::GStatus;
+use config::gobjects::GStatus;
 use library::*;
 
 pub struct Env {

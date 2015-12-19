@@ -1,5 +1,5 @@
+use config::gobjects::GObject;
 use env::Env;
-use gobjects::GObject;
 use library;
 use nameutil::*;
 use super::*;

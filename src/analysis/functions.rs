@@ -11,7 +11,7 @@ use analysis::upcasts::Upcasts;
 use env::Env;
 use library::{self, Nullable};
 use nameutil;
-use regexlist::RegexList;
+use config::RegexList;
 use traits::*;
 use version::Version;
 

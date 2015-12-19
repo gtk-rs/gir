@@ -26,11 +26,9 @@ mod config;
 mod env;
 mod file_saver;
 mod git;
-mod gobjects;
 mod library;
 mod nameutil;
 mod parser;
-mod regexlist;
 mod traits;
 mod version;
 mod writer;
@@ -51,7 +49,7 @@ fn do_main() -> Result<(), Box<Error>> {
 
     let cfg = match config::Config::new() {
         Ok(cfg) => cfg,
-        Err(config::Error::CommandLine(ref err)) if !err.fatal() => {
+        Err(config::error::Error::CommandLine(ref err)) if !err.fatal() => {
             println!("{}", err);
             return Ok(());
         }

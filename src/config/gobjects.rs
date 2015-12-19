@@ -4,7 +4,7 @@ use std::str::FromStr;
 use regex::Regex;
 use toml::Value;
 
-use regexlist::RegexList;
+use super::RegexList;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum GStatus {
