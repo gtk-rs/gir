@@ -1,5 +1,6 @@
 pub mod config;
 pub mod error;
+pub mod functions;
 pub mod gobjects;
 pub mod regex_list;
 pub mod work_mode;

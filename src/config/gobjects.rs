@@ -4,6 +4,7 @@ use std::str::FromStr;
 use regex::Regex;
 use toml::Value;
 
+use super::functions::Functions;
 use super::RegexList;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -49,6 +50,7 @@ pub struct GObject {
     pub name: String,
     pub non_nullable_overrides: Vec<String>, // sorted
     pub ignored_functions: RegexList,
+    pub functions: Functions,
     pub status: GStatus,
 }
 
@@ -58,6 +60,7 @@ impl Default for GObject {
             name: "Default".into(),
             non_nullable_overrides: Vec::new(),
             ignored_functions: RegexList::new(),
+            functions: Functions::new(),
             status: Default::default(),
         }
     }
@@ -76,7 +79,7 @@ pub fn parse_toml(toml_objects: &Value) -> GObjects {
 }
 
 fn parse_object(toml_object: &Value) -> GObject {
-    let name = toml_object.lookup("name").expect("Object name not defined")
+    let name: String = toml_object.lookup("name").expect("Object name not defined")
         .as_str().unwrap().into();
 
     let status = match toml_object.lookup("status") {
@@ -108,10 +111,13 @@ fn parse_object(toml_object: &Value) -> GObject {
         None => RegexList::new(),
     };
 
+    let functions = Functions::parse(toml_object.lookup("function"), &name);
+
     GObject {
         name: name,
         non_nullable_overrides: non_nullable_overrides,
         ignored_functions: ignored_functions,
+        functions: functions,
         status: status
     }
 }
