@@ -57,7 +57,6 @@ generate = [
     "Gtk.Notebook",
     "Gtk.Orientable",
     "Gtk.Overlay",
-    "Gtk.PageSetup",
     "Gtk.Paned",
     "Gtk.PaperSize",
     "Gtk.PlacesSidebar",
@@ -119,13 +118,23 @@ ignore = [
 [[object]]
 name = "Gtk.AppChooserDialog"
 status = "generate"
-non_nullable = [
-    "get_widget",
-]
+[[object.function]]
+name = "get_widget"
+[object.function.return]
+nullable = false
 
 [[object]]
 name = "Gtk.WidgetPath"
 status = "generate"
-ignored_functions = [
-    'iter_has_q\w+',
-]
+[[object.function]]
+pattern = 'iter_has_q\w+'
+ignore = true
+
+[[object]]
+name = "Gtk.PageSetup"
+status = "generate"
+[[object.function]]
+name = "set_paper_size"
+[[object.function.parameter]]
+name = "size"
+const = true
