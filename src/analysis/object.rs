@@ -88,8 +88,7 @@ pub fn new(env: &Env, obj: &GObject) -> Option<Info> {
     }
 
     let functions =
-        functions::analyze(env, &klass.functions, class_tid, &obj.non_nullable_overrides,
-                           &obj.ignored_functions, &mut imports);
+        functions::analyze(env, &klass.functions, class_tid, &obj, &mut imports);
 
     let version = functions.iter().filter_map(|f| f.version).min();
 
@@ -146,8 +145,7 @@ pub fn interface(env: &Env, obj: &GObject) -> Option<Info> {
     let parents = parents::analyze_interface(env, iface, &mut imports);
 
     let functions =
-        functions::analyze(env, &iface.functions, iface_tid, &obj.non_nullable_overrides,
-                           &obj.ignored_functions, &mut imports);
+        functions::analyze(env, &iface.functions, iface_tid, &obj, &mut imports);
 
     let version = functions.iter().filter_map(|f| f.version).min();
 

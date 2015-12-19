@@ -1,5 +1,6 @@
 use analysis::ref_mode::RefMode;
 use analysis::rust_type::*;
+use config;
 use env::Env;
 use library::{self, Nullable};
 
@@ -11,7 +12,8 @@ pub struct Info {
 }
 
 pub fn analyze(env: &Env, func: &library::Function, type_tid: library::TypeId,
-    non_nullable_overrides: &[String], used_types: &mut Vec<String>) -> Info {
+               configured_functions: &[&config::functions::Function],
+               used_types: &mut Vec<String>) -> Info {
 
     let mut parameter = if func.ret.typ == Default::default() { None } else {
         if let Ok(s) = used_rust_type(env, func.ret.typ) {
@@ -23,7 +25,7 @@ pub fn analyze(env: &Env, func: &library::Function, type_tid: library::TypeId,
         if !*nullable && can_be_nullable_return(env, func.ret.typ) {
             *nullable = true;
         }
-        if *nullable && non_nullable_overrides.binary_search(&func.name).is_ok() {
+        if *nullable && configured_functions.iter().any(|f| f.ret.nullable == false) {
             *nullable = false;
         }
         Some(library::Parameter {

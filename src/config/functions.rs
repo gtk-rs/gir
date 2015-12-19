@@ -27,6 +27,14 @@ impl Ident {
                 .map(|s| Ident::Name(s.into())),
         }
     }
+
+    fn is_match(&self, name: &str) -> bool {
+        use self::Ident::*;
+        match *self {
+            Name(ref n) => name == n,
+            Pattern(ref regex) => regex.is_match(name),
+        }
+    }
 }
 
 #[derive(Clone, Debug)]
@@ -160,6 +168,10 @@ impl Functions {
         Functions(v)
     }
 
+    pub fn matched(&self, function_name: &str) -> Vec<&Function> {
+        self.0.iter().filter(|f| f.ident.is_match(function_name)).collect()
+    }
+
     #[cfg(test)]
     fn vec(&self) -> &Vec<Function> {
         &self.0
@@ -285,5 +297,27 @@ pattern = 'bad_func4[\w+'
         } else {
             assert!(false, "Pattern don't parsed");
         }
+    }
+
+    #[test]
+    fn functions_parse_matches() {
+        let toml = functions_toml(r#"
+[[f]]
+name = "func1"
+[[f]]
+name = "f1.5"
+[[f]]
+name = "func2"
+[[f]]
+pattern = 'func\d+'
+"#);
+        let fns = Functions::parse(Some(&toml), "a");
+        assert_eq!(fns.vec().len(), 4);
+
+        assert_eq!(fns.matched("func1").len(), 2);
+        assert_eq!(fns.matched("func2").len(), 2);
+        assert_eq!(fns.matched("func3").len(), 1);
+        assert_eq!(fns.matched("f1.5").len(), 1);
+        assert_eq!(fns.matched("none").len(), 0);
     }
 }
