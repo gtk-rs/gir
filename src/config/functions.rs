@@ -82,6 +82,10 @@ impl Parameters {
         Parameters(v)
     }
 
+    pub fn matched(&self, parameter_name: &str) -> Vec<&Parameter> {
+        self.0.iter().filter(|p| p.ident.is_match(parameter_name)).collect()
+    }
+
     #[cfg(test)]
     fn vec(&self) -> &Vec<Parameter> {
         &self.0
@@ -144,6 +148,18 @@ impl Function {
             parameters: parameters,
             ret: ret,
         })
+    }
+
+    pub fn matched_parameters<'a>(functions: &[&'a Function], parameter_name: &str) -> Vec<&'a Parameter> {
+        let mut v = Vec::new();
+        for f in functions {
+            let pars = f.parameters.matched(parameter_name);
+            //TODO: change to push_all
+            for par in pars {
+                v.push(par);
+            }
+        }
+        v
     }
 }
 
@@ -319,5 +335,37 @@ pattern = 'func\d+'
         assert_eq!(fns.matched("func3").len(), 1);
         assert_eq!(fns.matched("f1.5").len(), 1);
         assert_eq!(fns.matched("none").len(), 0);
+    }
+
+    #[test]
+    fn functions_parse_matched_parameters() {
+        let toml = functions_toml(r#"
+[[f]]
+name = "func"
+[[f.parameter]]
+name="par1"
+[[f.parameter]]
+name="par2"
+[[f.parameter]]
+pattern='par\d+'
+[[f]]
+name = "func"
+[[f.parameter]]
+name="par2"
+[[f.parameter]]
+name="par3"
+[[f.parameter]]
+pattern='par\d+'
+"#);
+        let fns = Functions::parse(Some(&toml), "a");
+        assert_eq!(fns.vec().len(), 2);
+        let m = fns.matched("func");
+        assert_eq!(m.len(), 2);
+
+        assert_eq!(Function::matched_parameters(&m, "param").len(), 0);
+        assert_eq!(Function::matched_parameters(&m, "par1").len(), 3);
+        assert_eq!(Function::matched_parameters(&m, "par2").len(), 4);
+        assert_eq!(Function::matched_parameters(&m, "par3").len(), 3);
+        assert_eq!(Function::matched_parameters(&m, "par4").len(), 2);
     }
 }

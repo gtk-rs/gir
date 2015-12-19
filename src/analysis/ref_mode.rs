@@ -7,6 +7,7 @@ pub enum RefMode {
     None,
     ByRef,
     ByRefMut,
+    ByRefImmut, //immutable reference with mutable pointer in ffi
 }
 
 impl RefMode {
@@ -37,10 +38,16 @@ impl RefMode {
         }
     }
 
-    pub fn without_unneeded_mut(library: &library::Library, par: &library::Parameter) -> RefMode {
+    pub fn without_unneeded_mut(library: &library::Library, par: &library::Parameter, immutable: bool) -> RefMode {
         let ref_mode = RefMode::of(library, par.typ, par.direction);
-        if ref_mode == RefMode::ByRefMut && !is_mut_ptr(&*par.c_type) {
-            RefMode::ByRef
+        if ref_mode == RefMode::ByRefMut {
+            if !is_mut_ptr(&*par.c_type) {
+                RefMode::ByRef
+            } else if immutable {
+                RefMode::ByRefImmut
+            } else {
+                ref_mode
+            }
         } else {
             ref_mode
         }
@@ -52,6 +59,7 @@ impl RefMode {
             None => false,
             ByRef => true,
             ByRefMut => true,
+            ByRefImmut => true,
         }
     }
 }

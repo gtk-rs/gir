@@ -56,7 +56,7 @@ fn analyze_function(env: &Env, func: &library::Function, type_tid: library::Type
     commented |= ret.commented;
 
     let parameters: Vec<parameter::Parameter> =
-        func.parameters.iter().map(|par| parameter::analyze(env, par)).collect();
+        func.parameters.iter().map(|par| parameter::analyze(env, par, configured_functions)).collect();
 
     for (pos, par) in parameters.iter().enumerate() {
         assert!(!par.instance_parameter || pos == 0,

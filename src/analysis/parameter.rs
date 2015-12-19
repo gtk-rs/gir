@@ -1,5 +1,6 @@
 use std::borrow::Cow;
 
+use config::functions::Function;
 use env::Env;
 use library;
 use nameutil;
@@ -22,14 +23,16 @@ pub struct Parameter {
     pub ref_mode: RefMode,
 }
 
-pub fn analyze(env: &Env, par: &library::Parameter) -> Parameter {
+pub fn analyze(env: &Env, par: &library::Parameter, configured_functions: &[&Function]) -> Parameter {
     let name = if par.instance_parameter {
         Cow::Borrowed(&*par.name)
     } else {
         nameutil::mangle_keywords(&*par.name)
     };
 
-    let ref_mode = RefMode::without_unneeded_mut(&env.library, par);
+    let immutable = Function::matched_parameters(configured_functions, &name)
+        .iter().any(|p| p.constant);
+    let ref_mode = RefMode::without_unneeded_mut(&env.library, par, immutable);
 
     Parameter {
         name: name.into_owned(),
