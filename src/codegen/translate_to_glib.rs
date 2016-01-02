@@ -30,7 +30,7 @@ fn to_glib_xxx(transfer: library::Transfer, ref_mode: RefMode) -> &'static str {
     use library::Transfer::*;
     match transfer {
         None => match ref_mode {
-            RefMode::None => unreachable!(),
+            RefMode::None => ".to_glib_none_mut().0",//unreachable!(),
             RefMode::ByRef => ".to_glib_none().0",
             RefMode::ByRefMut => ".to_glib_none_mut().0",
             RefMode::ByRefImmut => ".to_glib_none().0 as *mut _",
