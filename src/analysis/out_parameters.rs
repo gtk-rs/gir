@@ -1,6 +1,7 @@
 use std::slice::Iter;
 use std::vec::Vec;
 
+use analysis::imports::Imports;
 use analysis::ref_mode::RefMode;
 use env::Env;
 use library::*;
@@ -67,6 +68,19 @@ pub fn analyze(env: &Env, type_: &Function) -> (Info, bool) {
     if info.params.is_empty() { info.mode = Mode::None }
 
     (info, unsupported_outs)
+}
+
+pub fn analyze_imports(env: &Env, func: &Function, imports: &mut Imports) {
+    for par in &func.parameters {
+        if par.direction == ParameterDirection::Out && !par.caller_allocates {
+            match *env.library.type_(par.typ) {
+                Type::Fundamental(..) |
+                    Type::Bitfield(..) |
+                    Type::Enumeration(..) => imports.add("std::mem".into(), func.version),
+                _ => imports.add("std::ptr".into(), func.version),
+            }
+        }
+    }
 }
 
 fn can_as_return(env: &Env, par: &Parameter) -> bool {
