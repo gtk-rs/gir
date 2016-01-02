@@ -11,7 +11,7 @@ use analysis::upcasts::Upcasts;
 use env::Env;
 use library::{self, Nullable};
 use nameutil;
-use regexlist::RegexList;
+use config;
 use traits::*;
 use version::Version;
 
@@ -30,15 +30,15 @@ pub struct Info {
 }
 
 pub fn analyze(env: &Env, functions: &[library::Function], type_tid: library::TypeId,
-    non_nullable_overrides: &[String], ignored_functions: &RegexList,
-    imports: &mut Imports) -> Vec<Info> {
+               obj: &config::gobjects::GObject, imports: &mut Imports) -> Vec<Info> {
     let mut funcs = Vec::new();
 
     for func in functions {
-        if ignored_functions.is_match(&func.name) {
+        let configured_functions = obj.functions.matched(&func.name);
+        if configured_functions.iter().any(|f| f.ignore) {
             continue;
         }
-        let info = analyze_function(env, func, type_tid, non_nullable_overrides, imports);
+        let info = analyze_function(env, func, type_tid, &configured_functions, imports);
         funcs.push(info);
     }
 
@@ -46,16 +46,17 @@ pub fn analyze(env: &Env, functions: &[library::Function], type_tid: library::Ty
 }
 
 fn analyze_function(env: &Env, func: &library::Function, type_tid: library::TypeId,
-    non_nullable_overrides: &[String], imports: &mut Imports) -> Info {
+                    configured_functions: &[&config::functions::Function],
+                    imports: &mut Imports) -> Info {
     let mut commented = false;
     let mut upcasts: Upcasts = Default::default();
     let mut used_types: Vec<String> = Vec::with_capacity(4);
 
-    let ret = return_value::analyze(env, func, type_tid, non_nullable_overrides, &mut used_types);
+    let ret = return_value::analyze(env, func, type_tid, configured_functions, &mut used_types);
     commented |= ret.commented;
 
     let parameters: Vec<parameter::Parameter> =
-        func.parameters.iter().map(|par| parameter::analyze(env, par)).collect();
+        func.parameters.iter().map(|par| parameter::analyze(env, par, configured_functions)).collect();
 
     for (pos, par) in parameters.iter().enumerate() {
         assert!(!par.instance_parameter || pos == 0,

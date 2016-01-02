@@ -1,4 +1,4 @@
-use gobjects::*;
+use config::gobjects::*;
 use library::*;
 
 pub struct StatusedTypeId{

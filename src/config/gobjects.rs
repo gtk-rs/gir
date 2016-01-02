@@ -1,10 +1,9 @@
 use std::ascii::AsciiExt;
 use std::collections::BTreeMap;
 use std::str::FromStr;
-use regex::Regex;
 use toml::Value;
 
-use regexlist::RegexList;
+use super::functions::Functions;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum GStatus {
@@ -47,8 +46,7 @@ impl FromStr for GStatus {
 #[derive(Clone, Debug)]
 pub struct GObject {
     pub name: String,
-    pub non_nullable_overrides: Vec<String>, // sorted
-    pub ignored_functions: RegexList,
+    pub functions: Functions,
     pub status: GStatus,
 }
 
@@ -56,8 +54,7 @@ impl Default for GObject {
     fn default() -> GObject {
         GObject {
             name: "Default".into(),
-            non_nullable_overrides: Vec::new(),
-            ignored_functions: RegexList::new(),
+            functions: Functions::new(),
             status: Default::default(),
         }
     }
@@ -76,7 +73,7 @@ pub fn parse_toml(toml_objects: &Value) -> GObjects {
 }
 
 fn parse_object(toml_object: &Value) -> GObject {
-    let name = toml_object.lookup("name").expect("Object name not defined")
+    let name: String = toml_object.lookup("name").expect("Object name not defined")
         .as_str().unwrap().into();
 
     let status = match toml_object.lookup("status") {
@@ -84,34 +81,11 @@ fn parse_object(toml_object: &Value) -> GObject {
         None => Default::default(),
     };
 
-    let mut non_nullable_overrides = Vec::new();
-    if let Some(fn_names) = toml_object.lookup("non_nullable").and_then(|o| o.as_slice()) {
-        non_nullable_overrides = fn_names.iter()
-            .filter_map(|fn_name| fn_name.as_str().map(String::from))
-            .collect();
-        non_nullable_overrides.sort();
-    }
-
-    let ignored_functions = toml_object.lookup("ignored_functions");
-    let ignored_functions = match ignored_functions.and_then(|o| o.as_slice()) {
-        Some(fn_names) => fn_names.iter().filter_map(|fn_name| {
-            if let Some(s) =  fn_name.as_str() {
-                match Regex::new(s) {
-                    Ok(ok) => Some(ok),
-                    Err(err) => {
-                        error!("ignored_functions for {}: {}", name, err);
-                        None
-                    }
-                }
-            } else { None }
-        }).collect(),
-        None => RegexList::new(),
-    };
+    let functions = Functions::parse(toml_object.lookup("function"), &name);
 
     GObject {
         name: name,
-        non_nullable_overrides: non_nullable_overrides,
-        ignored_functions: ignored_functions,
+        functions: functions,
         status: status
     }
 }
