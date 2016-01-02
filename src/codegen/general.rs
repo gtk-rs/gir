@@ -62,8 +62,7 @@ pub fn define_boxed_type(w: &mut Write, type_name: &str, glib_name: &str,
     try!(writeln!(w, "\tpub struct {}(Boxed<ffi::{}>);", type_name, glib_name));
     try!(writeln!(w, ""));
     try!(writeln!(w, "\tmatch fn {{"));
-    try!(writeln!(w, "\t\tcopy => |ptr| ffi::{}(ptr as *mut ffi::{}),",
-                  copy_fn, glib_name));
+    try!(writeln!(w, "\t\tcopy => |ptr| ffi::{}(mut_override(ptr)),", copy_fn));
     try!(writeln!(w, "\t\tfree => |ptr| ffi::{}(ptr),", free_fn));
     try!(writeln!(w, "\t}}"));
     try!(writeln!(w, "}}"));
