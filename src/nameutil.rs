@@ -38,14 +38,6 @@ pub fn strip_suffix<'a>(name: &'a str, suffix: &str) -> Option<&'a str> {
 }
 */
 
-pub fn file_name(full_name: &str) -> String {
-    let (_, class_name) = split_namespace_name(full_name);
-    let mut name = PathBuf::from(module_name(class_name));
-    let added = name.set_extension("rs");
-    assert!(added);
-    name.to_str().unwrap().into()
-}
-
 pub fn file_name_sys(name: &str) -> String {
     let mut path = PathBuf::from("src").join(name);
     let added = path.set_extension("rs");
@@ -132,11 +124,6 @@ mod tests {
         assert_eq!(crate_name("GdkPixbuf"), "gdk_pixbuf");
         assert_eq!(crate_name("GLib"), "glib");
         assert_eq!(crate_name("Gtk"), "gtk");
-    }
-
-    #[test]
-    fn file_name_works() {
-        assert_eq!(file_name("Gtk.StatusIcon"), "status_icon.rs");
     }
 
     #[test]
