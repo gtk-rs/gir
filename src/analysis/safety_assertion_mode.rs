@@ -1,5 +1,6 @@
 use analysis::parameter::Parameter;
 use env::Env;
+use library;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum SafetyAssertionMode {
@@ -26,7 +27,7 @@ impl SafetyAssertionMode {
         }
         for par in params {
             match *env.library.type_(par.typ) {
-                Class(..) | Interface(..) if !*par.nullable
+                Class(..) | Interface(..) if !*par.nullable && par.typ.ns_id == library::MAIN_NAMESPACE
                     => return Skip,
                 _ => (),
             }
