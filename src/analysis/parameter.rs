@@ -34,6 +34,11 @@ pub fn analyze(env: &Env, par: &library::Parameter, configured_functions: &[&Fun
         .iter().any(|p| p.constant);
     let ref_mode = RefMode::without_unneeded_mut(&env.library, par, immutable);
 
+    let nullable_override = Function::matched_parameters(configured_functions, &name).iter()
+        .filter_map(|p| p.nullable)
+        .next();
+    let nullable = nullable_override.unwrap_or(par.nullable);
+
     Parameter {
         name: name.into_owned(),
         typ: par.typ,
@@ -42,7 +47,7 @@ pub fn analyze(env: &Env, par: &library::Parameter, configured_functions: &[&Fun
         direction: par.direction,
         transfer: par.transfer,
         caller_allocates: par.caller_allocates,
-        nullable: par.nullable,
+        nullable: nullable,
         allow_none: par.allow_none,
         ref_mode: ref_mode,
     }
