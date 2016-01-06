@@ -74,6 +74,8 @@ impl ToCode for Chunk {
                 let s = format_block_one_line(&prefix, suffix, &value_strings, "", "");
                 vec![s]
             }
+            AssertInitializedAndInMainThread =>
+                vec!["assert_initialized_main_thread!();".to_string()],
         }
     }
 }

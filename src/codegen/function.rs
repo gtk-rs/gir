@@ -74,6 +74,7 @@ pub fn body_chunk(env: &Env, analysis: &analysis::functions::Info) -> Chunk {
     let outs_as_return = !analysis.outs.is_empty();
     let mut builder = function_body_chunk::Builder::new();
     builder.glib_name(&analysis.glib_name)
+        .assertion(analysis.assertion)
         .ret(&analysis.ret)
         .outs_mode(analysis.outs.mode);
 

@@ -7,11 +7,12 @@ use analysis::parameter;
 use analysis::ref_mode::RefMode;
 use analysis::return_value;
 use analysis::rust_type::*;
+use analysis::safety_assertion_mode::SafetyAssertionMode;
 use analysis::upcasts::Upcasts;
+use config;
 use env::Env;
 use library::{self, Nullable};
 use nameutil;
-use config;
 use traits::*;
 use version::Version;
 
@@ -27,6 +28,7 @@ pub struct Info {
     pub upcasts: Upcasts,
     pub outs: out_parameters::Info,
     pub version: Option<Version>,
+    pub assertion: SafetyAssertionMode,
 }
 
 pub fn analyze(env: &Env, functions: &[library::Function], type_tid: library::TypeId,
@@ -102,6 +104,8 @@ fn analyze_function(env: &Env, func: &library::Function, type_tid: library::Type
         }
     }
 
+    let assertion = SafetyAssertionMode::of(&parameters);
+
     Info {
         name: nameutil::mangle_keywords(&*func.name).into_owned(),
         glib_name: func.c_identifier.as_ref().unwrap().clone(),
@@ -113,5 +117,6 @@ fn analyze_function(env: &Env, func: &library::Function, type_tid: library::Type
         upcasts: upcasts,
         outs: outs,
         version: func.version,
+        assertion: assertion,
     }
 }

@@ -2,6 +2,7 @@ use analysis::conversion_type::ConversionType;
 use analysis::parameter::Parameter as AnalysisParameter;
 use analysis::out_parameters::Mode;
 use analysis::return_value;
+use analysis::safety_assertion_mode::SafetyAssertionMode;
 use chunk::{chunks, Chunk};
 use chunk::parameter_ffi_call_in;
 use chunk::parameter_ffi_call_out;
@@ -34,6 +35,7 @@ pub struct Builder {
     ret: return_value::Info,
     outs_as_return: bool,
     outs_mode: Mode,
+    assertion: SafetyAssertionMode,
 }
 
 impl Builder {
@@ -42,6 +44,10 @@ impl Builder {
     }
     pub fn glib_name(&mut self, name: &str) -> &mut Builder {
         self.glib_name = name.into();
+        self
+    }
+    pub fn assertion(&mut self, assertion: SafetyAssertionMode) -> &mut Builder {
+        self.assertion = assertion;
         self
     }
     pub fn ret(&mut self, ret: &return_value::Info) -> &mut Builder {
@@ -95,7 +101,18 @@ impl Builder {
         }
 
         let unsafe_ = Chunk::Unsafe(body);
-        Chunk::BlockHalf(chunks(unsafe_))
+
+        let mut chunks = Vec::new();
+        self.add_assertion(&mut chunks);
+        chunks.push(unsafe_);
+        Chunk::BlockHalf(chunks)
+    }
+    fn add_assertion(&self, chunks: &mut Vec<Chunk>) {
+        match self.assertion {
+            SafetyAssertionMode::None => (),
+            SafetyAssertionMode::InMainThread =>
+                chunks.push(Chunk::AssertInitializedAndInMainThread),
+        }
     }
     fn generate_call(&self) -> Chunk {
         let params = self.generate_func_parameters();
