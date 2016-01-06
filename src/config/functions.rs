@@ -1,3 +1,4 @@
+use library::Nullable;
 use regex::*;
 use std::vec::Vec;
 use toml::Value;
@@ -43,6 +44,7 @@ pub struct Parameter {
     //true - parameter don't changed in ffi function,
     //false(default) - parameter can be changed in ffi function
     pub constant: bool,
+    pub nullable: Option<Nullable>,
 }
 
 impl Parameter {
@@ -57,10 +59,14 @@ impl Parameter {
         let constant = toml.lookup("const")
             .and_then(|val| val.as_bool())
             .unwrap_or(false);
+        let nullable = toml.lookup("nullable")
+            .and_then(|val| val.as_bool())
+            .map(|b| Nullable(b));
 
         Some(Parameter{
             ident: ident,
             constant: constant,
+            nullable: nullable,
         })
     }
 }
