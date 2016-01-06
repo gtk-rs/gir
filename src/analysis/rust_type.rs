@@ -47,6 +47,7 @@ fn rust_type_full(env: &Env, type_id: library::TypeId, nullable: Nullable, ref_m
                 Float => ok("f32"),
                 Double => ok("f64"),
 
+                UniChar => ok("char"),
                 Utf8 => if ref_mode.is_ref() { ok("str") } else { ok("String") },
                 Filename => if ref_mode.is_ref() { ok("str") } else { ok("String") },
 
@@ -93,7 +94,10 @@ fn rust_type_full(env: &Env, type_id: library::TypeId, nullable: Nullable, ref_m
     }
     if *nullable && !skip_option {
         match ConversionType::of(&env.library, type_id) {
-            ConversionType::Pointer => rust_type = rust_type.map_any(|s| format!("Option<{}>", s)),
+            ConversionType::Pointer
+                | ConversionType::Scalar => {
+                rust_type = rust_type.map_any(|s| format!("Option<{}>", s))
+            }
             _ => (),
         }
     }

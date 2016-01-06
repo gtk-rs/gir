@@ -39,7 +39,7 @@ impl ConversionType {
                 SSize => ConversionType::Direct,
                 Float => ConversionType::Direct,
                 Double => ConversionType::Direct,
-                UniChar => ConversionType::Unknown,
+                UniChar => ConversionType::Scalar,
                 Pointer => ConversionType::Pointer,
                 VarArgs => ConversionType::Unknown,
                 Utf8 => ConversionType::Pointer,

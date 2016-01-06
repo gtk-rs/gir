@@ -100,9 +100,7 @@ impl Parameters {
 
 #[derive(Clone, Debug)]
 pub struct Return {
-    //true(default) - function can be nullable,
-    //false - function is nonnullable
-    pub nullable: bool,
+    pub nullable: Option<Nullable>,
 }
 
 impl Return {
@@ -110,13 +108,13 @@ impl Return {
         if let Some(v) = toml {
             let nullable = v.lookup("nullable")
                 .and_then(|v| v.as_bool())
-                .unwrap_or(true);
+                .map(|b| Nullable(b));
             Return {
                 nullable: nullable,
             }
         } else {
             Return {
-                nullable: true,
+                nullable: None,
             }
         }
         
@@ -202,6 +200,7 @@ impl Functions {
 
 #[cfg(test)]
 mod tests {
+    use library::Nullable;
     use super::*;
     use toml;
 
@@ -236,7 +235,7 @@ ignore = true
 name = "func1"
 "#);
         let f = Function::parse(&toml, "a").unwrap();
-        assert_eq!(f.ret.nullable, true);
+        assert_eq!(f.ret.nullable, None);
     }
     #[test]
     fn function_parse_return_nullable_default2() {
@@ -245,7 +244,7 @@ name = "func1"
 [return]
 "#);
         let f = Function::parse(&toml, "a").unwrap();
-        assert_eq!(f.ret.nullable, true);
+        assert_eq!(f.ret.nullable, None);
     }
 
     #[test]
@@ -257,9 +256,11 @@ name = "par1"
 [[parameter]]
 name = "par2"
 const = false
+nullable = false
 [[parameter]]
 name = "par3"
 const = true
+nullable = true
 [[parameter]]
 pattern = "par4"
 const = true
@@ -269,15 +270,19 @@ const = true
         assert_eq!(pars.len(), 4);
         assert_eq!(pars[0].ident, Ident::Name("par1".into()));
         assert_eq!(pars[0].constant, false);
+        assert_eq!(pars[0].nullable, None);
         assert_eq!(pars[1].ident, Ident::Name("par2".into()));
         assert_eq!(pars[1].constant, false);
+        assert_eq!(pars[1].nullable, Some(Nullable(false)));
         assert_eq!(pars[2].ident, Ident::Name("par3".into()));
         assert_eq!(pars[2].constant, true);
+        assert_eq!(pars[2].nullable, Some(Nullable(true)));
         if let Ident::Pattern(_) = pars[3].ident {
         } else {
             assert!(false, "Pattern don't parsed");
         }
         assert_eq!(pars[3].constant, true);
+        assert_eq!(pars[3].nullable, None);
     }
     
     #[test]
@@ -288,7 +293,18 @@ name = "func1"
 nullable = false
 "#);
         let f = Function::parse(&toml, "a").unwrap();
-        assert_eq!(f.ret.nullable, false);
+        assert_eq!(f.ret.nullable, Some(Nullable(false)));
+    }
+
+    #[test]
+    fn function_parse_return_nullable_true() {
+        let toml = toml(r#"
+name = "func1"
+[return]
+nullable = true
+"#);
+        let f = Function::parse(&toml, "a").unwrap();
+        assert_eq!(f.ret.nullable, Some(Nullable(true)));
     }
 
     #[test]
