@@ -25,6 +25,7 @@ pub enum Chunk {
     FromGlibConversion{mode: conversion_from_glib::Mode, value: Box<Chunk>},
     OptionalReturn{condition: String, value: Box<Chunk>},
     AssertInitializedAndInMainThread,
+    AssertSkipInitialized,
 }
 
 pub fn chunks(ch: Chunk) -> Vec<Chunk> {

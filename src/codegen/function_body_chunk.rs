@@ -110,6 +110,8 @@ impl Builder {
     fn add_assertion(&self, chunks: &mut Vec<Chunk>) {
         match self.assertion {
             SafetyAssertionMode::None => (),
+            SafetyAssertionMode::Skip =>
+                chunks.push(Chunk::AssertSkipInitialized),
             SafetyAssertionMode::InMainThread =>
                 chunks.push(Chunk::AssertInitializedAndInMainThread),
         }
