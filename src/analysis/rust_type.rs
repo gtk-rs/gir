@@ -47,6 +47,7 @@ fn rust_type_full(env: &Env, type_id: library::TypeId, nullable: Nullable, ref_m
                 Float => ok("f32"),
                 Double => ok("f64"),
 
+                UniChar => ok("char"),
                 Utf8 => if ref_mode.is_ref() { ok("str") } else { ok("String") },
                 Filename => if ref_mode.is_ref() { ok("str") } else { ok("String") },
 
