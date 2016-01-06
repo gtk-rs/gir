@@ -5,6 +5,7 @@ library = "Gtk"
 version = "3.0"
 min_cfg_version = "3.4"
 #target_path = "./gtk"
+generate_safety_asserts = false
 external_libraries = [
    "GLib",
    "Gdk",

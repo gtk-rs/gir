@@ -35,6 +35,7 @@ pub struct Config {
     pub objects: gobjects::GObjects,
     pub min_cfg_version: Version,
     pub make_backup: bool,
+    pub generate_safety_asserts: bool,
 }
 
 impl Config {
@@ -109,12 +110,17 @@ impl Config {
             Some(v) => {
                 try!(
                     try!(v.as_result_str("options.min_cfg_version", &config_file))
-                        .parse().map_err(|e| Error::options(e, config_file)))
+                        .parse().map_err(|e| Error::options(e, &config_file)))
             }
             None => Default::default(),
         };
 
         let make_backup = args.get_bool("-b");
+
+        let generate_safety_asserts = match toml.lookup("options.generate_safety_asserts") {
+            Some(v) => try!(v.as_result_bool("options.generate_safety_asserts", &config_file)),
+            None => false
+        };
 
         Ok(Config {
             work_mode: work_mode,
@@ -126,6 +132,7 @@ impl Config {
             objects: objects,
             min_cfg_version: min_cfg_version,
             make_backup: make_backup,
+            generate_safety_asserts: generate_safety_asserts,
         })
     }
 
