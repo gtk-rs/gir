@@ -124,6 +124,11 @@ name = "get_widget"
 nullable = false
 
 [[object]]
+name = "Gtk.GLArea"
+status = "generate"
+module_name = "gl_area"
+
+[[object]]
 name = "Gtk.WidgetPath"
 status = "generate"
 [[object.function]]
