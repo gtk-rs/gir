@@ -104,7 +104,7 @@ fn analyze_function(env: &Env, func: &library::Function, type_tid: library::Type
         }
     }
 
-    let assertion = SafetyAssertionMode::of(&parameters);
+    let assertion = SafetyAssertionMode::of(env, &parameters);
 
     Info {
         name: nameutil::mangle_keywords(&*func.name).into_owned(),

@@ -70,6 +70,7 @@ pub trait TomlHelper where Self: Sized {
     fn lookup_slice<'a, P: AsRef<OsStr>>(&'a self, option: &'a str, err: &str, config_file: P) -> Result<&'a [Self], Error>;
     fn as_result_str<'a, P: AsRef<OsStr>>(&'a self, option: &'a str, config_file: P) -> Result<&'a str, Error>;
     fn as_result_slice<'a, P: AsRef<OsStr>>(&'a self, option: &'a str, config_file: P) -> Result<&'a [Self], Error>;
+    fn as_result_bool<'a, P: AsRef<OsStr>>(&'a self, option: &'a str, config_file: P) -> Result<bool, Error>;
 }
 
 impl TomlHelper for toml::Value {
@@ -90,6 +91,12 @@ impl TomlHelper for toml::Value {
     fn as_result_slice<'a, P: AsRef<OsStr>>(&'a self, option: &'a str, config_file: P) -> Result<&'a [Self], Error> {
         self.as_slice()
             .ok_or(Error::options(format!("Invalid `{}` value, expected a array, found {}",
+                                          option, self.type_str()),
+                                  config_file))
+    }
+    fn as_result_bool<'a, P: AsRef<OsStr>>(&'a self, option: &'a str, config_file: P) -> Result<bool, Error> {
+        self.as_bool()
+            .ok_or(Error::options(format!("Invalid `{}` value, expected a boolean, found {}",
                                           option, self.type_str()),
                                   config_file))
     }
