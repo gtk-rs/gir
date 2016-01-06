@@ -100,9 +100,7 @@ impl Parameters {
 
 #[derive(Clone, Debug)]
 pub struct Return {
-    //true(default) - function can be nullable,
-    //false - function is nonnullable
-    pub nullable: bool,
+    pub nullable: Option<Nullable>,
 }
 
 impl Return {
@@ -110,13 +108,13 @@ impl Return {
         if let Some(v) = toml {
             let nullable = v.lookup("nullable")
                 .and_then(|v| v.as_bool())
-                .unwrap_or(true);
+                .map(|b| Nullable(b));
             Return {
                 nullable: nullable,
             }
         } else {
             Return {
-                nullable: true,
+                nullable: None,
             }
         }
         

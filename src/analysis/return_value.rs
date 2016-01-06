@@ -25,8 +25,11 @@ pub fn analyze(env: &Env, func: &library::Function, type_tid: library::TypeId,
         if !*nullable && can_be_nullable_return(env, func.ret.typ) {
             *nullable = true;
         }
-        if *nullable && configured_functions.iter().any(|f| f.ret.nullable == false) {
-            *nullable = false;
+        let nullable_override = configured_functions.iter()
+            .filter_map(|f| f.ret.nullable)
+            .next();
+        if let Some(val) = nullable_override {
+            nullable = val;
         }
         Some(library::Parameter {
                 nullable: nullable,
