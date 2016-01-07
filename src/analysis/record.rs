@@ -55,11 +55,10 @@ pub fn new(env: &Env, obj: &GObject) -> Option<Info> {
 
     let specials = special_functions::extract(&mut functions);
 
-    //accept only boxed records
-    if specials.get(&special_functions::Type::Copy).is_none() {
-        return None;
-    };
-    if specials.get(&special_functions::Type::Free).is_none() {
+    let is_shared = specials.get(&special_functions::Type::Ref).is_some() &&
+        specials.get(&special_functions::Type::Unref).is_some();
+    if is_shared {
+        // accept only boxed records
         return None;
     };
 
