@@ -6,9 +6,12 @@ use analysis::functions::Visibility;
 
 #[derive(Clone, Copy, Eq, Debug, Ord, PartialEq, PartialOrd)]
 pub enum Type {
+    Compare,
     Copy,
+    Equal,
     Free,
     Ref,
+    ToString,
     Unref,
 }
 
@@ -18,9 +21,13 @@ impl FromStr for Type {
     fn from_str(s: &str) -> Result<Type, ()> {
         use self::Type::*;
         match s {
+            "compare" => Ok(Compare),
             "copy" => Ok(Copy),
+            "equal" => Ok(Equal),
             "free" => Ok(Free),
+            "is_equal" => Ok(Equal),
             "ref" => Ok(Ref),
+            "to_string" => Ok(ToString),
             "unref" => Ok(Unref),
             _ => Err(()),
         }
@@ -37,6 +44,12 @@ pub fn extract(functions: &mut Vec<FuncInfo>) -> Infos {
             if func.visibility != Visibility::Comment {
                 func.visibility = visibility(type_);
             }
+            // I assume `to_string` functions never return `NULL`
+            if type_ == Type::ToString {
+                if let Some(par) = func.ret.parameter.as_mut() {
+                    *par.nullable = false;
+                }
+            }
             specials.insert(type_, func.glib_name.clone());
         }
     }
@@ -51,6 +64,9 @@ fn visibility(t: Type) -> Visibility {
             Free |
             Ref |
             Unref => Visibility::Hidden,
+        Compare |
+            Equal |
+            ToString => Visibility::Private,
     }
 }
 
