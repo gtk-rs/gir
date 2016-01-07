@@ -18,6 +18,7 @@ pub struct Info {
     pub implements: Vec<general::StatusedTypeId>,
     pub has_children: bool,
     pub functions: Vec<functions::Info>,
+    pub specials: special_functions::Infos,
     pub has_constructors: bool,
     pub has_methods: bool,
     pub has_functions: bool,
@@ -89,6 +90,7 @@ pub fn new(env: &Env, obj: &GObject) -> Option<Info> {
 
     let functions =
         functions::analyze(env, &klass.functions, class_tid, &obj, &mut imports);
+    let specials = special_functions::extract(&mut functions);
 
     let version = functions.iter().filter_map(|f| f.version).min();
 
@@ -105,6 +107,7 @@ pub fn new(env: &Env, obj: &GObject) -> Option<Info> {
         implements: implements,
         has_children: has_children,
         functions: functions,
+        specials: specials,
         imports: imports,
         version: version,
         .. Default::default()
