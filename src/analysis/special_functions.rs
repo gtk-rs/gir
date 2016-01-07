@@ -3,6 +3,7 @@ use std::str::FromStr;
 
 use analysis::functions::Info as FuncInfo;
 use analysis::functions::Visibility;
+use analysis::imports::Imports;
 
 #[derive(Clone, Copy, Eq, Debug, Ord, PartialEq, PartialOrd)]
 pub enum Type {
@@ -78,6 +79,17 @@ pub fn unhide(functions: &mut Vec<FuncInfo>, specials: &Infos, type_: Type) {
             .next();
         if let Some(func) = func {
             func.visibility = Visibility::Public;
+        }
+    }
+}
+
+pub fn analyze_imports(specials: &Infos, imports: &mut Imports) {
+    use self::Type::*;
+    for type_ in specials.keys() {
+        match *type_ {
+            Compare => imports.add("std::cmp".into(), None),
+            ToString => imports.add("std::fmt".into(), None),
+            _ => {}
         }
     }
 }

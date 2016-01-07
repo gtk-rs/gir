@@ -93,6 +93,7 @@ pub fn new(env: &Env, obj: &GObject) -> Option<Info> {
     let specials = special_functions::extract(&mut functions);
     // `copy` will duplicate an object while `clone` just adds a reference
     special_functions::unhide(&mut functions, &specials, special_functions::Type::Copy);
+    special_functions::analyze_imports(&specials, &mut imports);
 
     let version = functions.iter().filter_map(|f| f.version).min();
 

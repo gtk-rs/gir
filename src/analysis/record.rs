@@ -64,6 +64,8 @@ pub fn new(env: &Env, obj: &GObject) -> Option<Info> {
         return None;
     };
 
+    special_functions::analyze_imports(&specials, &mut imports);
+
     //don't `use` yourself
     imports.remove(&name);
 

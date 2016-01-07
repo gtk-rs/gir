@@ -3,7 +3,7 @@ use std::io::{Result, Write};
 use analysis;
 use analysis::general::StatusedTypeId;
 use env::Env;
-use super::{function, general};
+use super::{function, general, trait_impls};
 
 pub fn generate(w: &mut Write, env: &Env, analysis: &analysis::object::Info) -> Result<()>{
     let implements: Vec<&StatusedTypeId> = analysis.parents.iter()
@@ -32,6 +32,8 @@ pub fn generate(w: &mut Write, env: &Env, analysis: &analysis::object::Info) -> 
         }
         try!(writeln!(w, "}}"));
     }
+
+    try!(trait_impls::generate(w, &analysis.name, &analysis.functions, &analysis.specials));
 
     if generate_trait(analysis) {
         try!(writeln!(w, ""));
