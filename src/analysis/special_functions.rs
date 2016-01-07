@@ -2,8 +2,9 @@ use std::collections::BTreeMap;
 use std::str::FromStr;
 
 use analysis::functions::Info as FuncInfo;
+use analysis::functions::Visibility;
 
-#[derive(Eq, Debug, Ord, PartialEq, PartialOrd)]
+#[derive(Clone, Copy, Eq, Debug, Ord, PartialEq, PartialOrd)]
 pub enum Type {
     Copy,
     Free,
@@ -31,15 +32,22 @@ pub type Infos = BTreeMap<Type, String>; //Type => glib_name
 pub fn extract(functions: &mut Vec<FuncInfo>) -> Infos {
     let mut specials = BTreeMap::new();
 
-    functions.retain(|func| {
-        match Type::from_str(&*func.name) {
-            Ok(type_) => {
-                specials.insert(type_, func.glib_name.clone());
-                false
-            }
-            Err(_) => true,
+    for func in functions.iter_mut() {
+        if let Ok(type_) = Type::from_str(&func.name) {
+            func.visibility = visibility(type_);
+            specials.insert(type_, func.glib_name.clone());
         }
-    });
+    }
 
     specials
+}
+
+fn visibility(t: Type) -> Visibility {
+    use self::Type::*;
+    match t {
+        Copy |
+            Free |
+            Ref |
+            Unref => Visibility::Hidden,
+    }
 }
