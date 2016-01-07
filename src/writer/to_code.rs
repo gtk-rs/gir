@@ -76,6 +76,8 @@ impl ToCode for Chunk {
             }
             AssertInitializedAndInMainThread =>
                 vec!["assert_initialized_main_thread!();".to_string()],
+            AssertSkipInitialized =>
+                vec!["skip_assert_initialized!();".to_string()],
         }
     }
 }
