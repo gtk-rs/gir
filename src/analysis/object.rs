@@ -88,9 +88,11 @@ pub fn new(env: &Env, obj: &GObject) -> Option<Info> {
         imports.add("glib::object::Upcast".into(), None);
     }
 
-    let functions =
+    let mut functions =
         functions::analyze(env, &klass.functions, class_tid, &obj, &mut imports);
     let specials = special_functions::extract(&mut functions);
+    // `copy` will duplicate an object while `clone` just adds a reference
+    special_functions::unhide(&mut functions, &specials, special_functions::Type::Copy);
 
     let version = functions.iter().filter_map(|f| f.version).min();
 
