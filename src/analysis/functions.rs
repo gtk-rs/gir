@@ -16,12 +16,20 @@ use nameutil;
 use traits::*;
 use version::Version;
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Visibility {
+    Public,
+    Comment,
+    Private,
+    Hidden,
+}
+
 //TODO: change use Parameter to reference?
 pub struct Info {
     pub name: String,
     pub glib_name: String,
     pub kind: library::FunctionKind,
-    pub comented: bool,
+    pub visibility: Visibility,
     pub type_name: Result,
     pub parameters: Vec<parameter::Parameter>,
     pub ret: return_value::Info,
@@ -104,13 +112,14 @@ fn analyze_function(env: &Env, func: &library::Function, type_tid: library::Type
         }
     }
 
+    let visibility = if commented { Visibility::Comment } else { Visibility::Public };
     let assertion = SafetyAssertionMode::of(env, &parameters);
 
     Info {
         name: nameutil::mangle_keywords(&*func.name).into_owned(),
         glib_name: func.c_identifier.as_ref().unwrap().clone(),
         kind: func.kind,
-        comented: commented,
+        visibility: visibility,
         type_name: rust_type(env, type_tid),
         parameters: parameters,
         ret: ret,
