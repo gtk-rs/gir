@@ -21,7 +21,7 @@ impl Default for Mode {
     }
 }
 
-#[derive(Default)]
+#[derive(Debug, Default)]
 pub struct Info {
     pub mode: Mode,
     pub params: Vec<Parameter>,

@@ -25,6 +25,7 @@ pub enum Visibility {
 }
 
 //TODO: change use Parameter to reference?
+#[derive(Debug)]
 pub struct Info {
     pub name: String,
     pub glib_name: String,

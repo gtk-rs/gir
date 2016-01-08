@@ -6,7 +6,7 @@ use library;
 use nameutil;
 use super::ref_mode::RefMode;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Parameter {
     //from library::Parameter
     pub name: String,

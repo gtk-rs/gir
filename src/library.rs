@@ -247,7 +247,7 @@ pub struct Union {
     pub functions: Vec<Function>,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Parameter {
     pub name: String,
     pub typ: TypeId,
