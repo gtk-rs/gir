@@ -91,6 +91,26 @@ pub fn version_condition_string(library_name: &str, min_cfg_version: Version,
     }
 }
 
+pub fn cfg_condition(w: &mut Write, cfg_condition: &Option<String>, commented: bool, indent: usize)
+                     -> Result<()> {
+    let s = cfg_condition_string(cfg_condition, commented, indent);
+    if let Some(s) = s {
+        try!(writeln!(w, "{}", s));
+    }
+    Ok(())
+}
+
+pub fn cfg_condition_string(cfg_condition: &Option<String>, commented: bool, indent: usize)
+                            -> Option<String> {
+    match cfg_condition.as_ref() {
+        Some(v) => {
+            let comment = if commented { "//" } else { "" };
+            Some(format!("{}{}#[cfg({})]", tabs(indent), comment, v))
+        }
+        None => None,
+    }
+}
+
 pub fn write_vec<T: Display>(w: &mut Write, v: &[T]) -> Result<()> {
     for s in v {
         try!(writeln!(w, "{}", s));

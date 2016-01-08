@@ -129,6 +129,7 @@ pub struct Function {
     //false(default) - process this function
     pub ignore: bool,
     pub version: Option<Version>,
+    pub cfg_condition: Option<String>,
     pub parameters: Parameters,
     pub ret: Return,
 }
@@ -148,6 +149,9 @@ impl Function {
         let version = toml.lookup("version")
             .and_then(|v| v.as_str())
             .and_then(|s| s.parse().ok());
+        let cfg_condition = toml.lookup("cfg_condition")
+            .and_then(|v| v.as_str())
+            .map(|s| s.to_owned());
         let parameters = Parameters::parse(toml.lookup("parameter"), object_name);
         let ret = Return::parse(toml.lookup("return"));
 
@@ -157,6 +161,7 @@ impl Function {
             version: version,
             parameters: parameters,
             ret: ret,
+            cfg_condition: cfg_condition,
         })
     }
 
@@ -253,6 +258,25 @@ version = "3.20"
 "#);
         let f = Function::parse(&toml, "a").unwrap();
         assert_eq!(f.version, Some(Version(3, 20, 0)));
+    }
+
+    #[test]
+    fn function_parse_cfg_condition_default() {
+        let toml = toml(r#"
+name = "func1"
+"#);
+        let f = Function::parse(&toml, "a").unwrap();
+        assert_eq!(f.cfg_condition, None);
+    }
+
+    #[test]
+    fn function_parse_cfg_condition() {
+        let toml = toml(r#"
+name = "func1"
+cfg_condition = 'unix'
+"#);
+        let f = Function::parse(&toml, "a").unwrap();
+        assert_eq!(f.cfg_condition, Some("unix".to_string()));
     }
     
     #[test]

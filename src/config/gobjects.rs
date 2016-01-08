@@ -49,6 +49,7 @@ pub struct GObject {
     pub functions: Functions,
     pub status: GStatus,
     pub module_name: Option<String>,
+    pub cfg_condition: Option<String>,
 }
 
 impl Default for GObject {
@@ -58,6 +59,7 @@ impl Default for GObject {
             functions: Functions::new(),
             status: Default::default(),
             module_name: None,
+            cfg_condition: None,
         }
     }
 }
@@ -87,12 +89,16 @@ fn parse_object(toml_object: &Value) -> GObject {
     let module_name = toml_object.lookup("module_name")
         .and_then(|v| v.as_str())
         .map(|s| s.to_owned());
+    let cfg_condition = toml_object.lookup("cfg_condition")
+        .and_then(|v| v.as_str())
+        .map(|s| s.to_owned());
 
     GObject {
         name: name,
         functions: functions,
         status: status,
         module_name: module_name,
+        cfg_condition: cfg_condition,
     }
 }
 

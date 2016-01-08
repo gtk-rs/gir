@@ -6,7 +6,7 @@ use analysis::upcasts::Upcasts;
 use chunk::{ffi_function_todo, Chunk};
 use env::Env;
 use super::function_body_chunk;
-use super::general::version_condition;
+use super::general::{cfg_condition, version_condition};
 use super::parameter::ToParameter;
 use super::return_value::{out_parameters_as_return, ToReturnValue};
 use writer::primitives::tabs;
@@ -37,6 +37,7 @@ pub fn generate(w: &mut Write, env: &Env, analysis: &analysis::functions::Info,
     let declaration = declaration(env, analysis);
     let suffix = if only_declaration { ";" } else { " {" };
 
+    try!(cfg_condition(w, &analysis.cfg_condition, commented, indent));
     try!(version_condition(w, &env.config.library_name,
         env.config.min_cfg_version, analysis.version, commented, indent));
     try!(writeln!(w, "{}{}{}{}{}", tabs(indent),

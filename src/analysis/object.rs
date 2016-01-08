@@ -24,6 +24,7 @@ pub struct Info {
     pub has_functions: bool,
     pub imports: Imports,
     pub version: Option<Version>,
+    pub cfg_condition: Option<String>,
 }
 
 impl Info {
@@ -113,6 +114,7 @@ pub fn new(env: &Env, obj: &GObject) -> Option<Info> {
         specials: specials,
         imports: imports,
         version: version,
+        cfg_condition: obj.cfg_condition.clone(),
         .. Default::default()
     };
 
@@ -169,6 +171,7 @@ pub fn interface(env: &Env, obj: &GObject) -> Option<Info> {
         functions: functions,
         imports: imports,
         version: version,
+        cfg_condition: obj.cfg_condition.clone(),
         .. Default::default()
     };
 

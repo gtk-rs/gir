@@ -63,18 +63,34 @@ fn generate_trait(analysis: &analysis::object::Info) -> bool {
 }
 
 pub fn generate_reexports(env: &Env, analysis: &analysis::object::Info, module_name: &str,
-        contents: &mut Vec<String>, traits: &mut Vec<String>) {
-    let version_cfg = general::version_condition_string(&env.config.library_name,
-        env.config.min_cfg_version, analysis.version, false, 0);
-    let (cfg, cfg_1) = match version_cfg {
-        Some(s) => (format!("{}\n", s), format!("\t{}\n", s)),
-        None => ("".into(), "".into()),
-    };
+                          contents: &mut Vec<String>, traits: &mut Vec<String>) {
+    let mut cfgs: Vec<String> = Vec::new();
+    if let Some(cfg) = general::cfg_condition_string(&analysis.cfg_condition, false, 0) {
+        cfgs.push(cfg);
+    }
+    if let Some(cfg) = general::version_condition_string(&env.config.library_name,
+                                                         env.config.min_cfg_version,
+                                                         analysis.version, false, 0) {
+        cfgs.push(cfg);
+    }
     contents.push(format!(""));
-    contents.push(format!("{}mod {};", cfg, module_name));
-    contents.push(format!("{}pub use self::{}::{};", cfg, module_name, analysis.name));
+    //TODO: replace to Vec::extend_from_slice on stable 1.6
+    for cfg in &cfgs {
+        contents.push(cfg.clone());
+    }
+    contents.push(format!("mod {};", module_name));
+    for cfg in &cfgs {
+        contents.push(cfg.clone());
+    }
+    contents.push(format!("pub use self::{}::{};", module_name, analysis.name));
     if generate_trait(analysis) {
-        contents.push(format!("{}pub use self::{}::{}Ext;", cfg, module_name, analysis.name));
-        traits.push(format!("{}\tpub use super::{}Ext;", cfg_1, analysis.name));
+        for cfg in &cfgs {
+            contents.push(cfg.clone());
+        }
+        contents.push(format!("pub use self::{}::{}Ext;", module_name, analysis.name));
+        for cfg in &cfgs {
+            traits.push(format!("\t{}", cfg));
+        }
+        traits.push(format!("\tpub use super::{}Ext;", analysis.name));
     }
 }
