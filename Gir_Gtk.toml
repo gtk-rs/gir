@@ -59,7 +59,6 @@ generate = [
     "Gtk.Orientable",
     "Gtk.Overlay",
     "Gtk.Paned",
-    "Gtk.PaperSize",
     "Gtk.PlacesSidebar",
     "Gtk.Popover",
     "Gtk.PopoverMenu",
@@ -144,3 +143,10 @@ name = "set_paper_size"
 [[object.function.parameter]]
 name = "size"
 const = true
+
+[[object]]
+name = "Gtk.PaperSize"
+status = "generate"
+[[object.function]]
+name = "is_ipp"
+version = "3.16"
