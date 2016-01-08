@@ -3,7 +3,7 @@ use std::io::{Result, Write};
 use analysis;
 use analysis::special_functions::Type;
 use env::Env;
-use super::{function, general};
+use super::{function, general, trait_impls};
 
 pub fn generate(w: &mut Write, env: &Env, analysis: &analysis::record::Info) -> Result<()>{
     let type_ = analysis.type_(&env.library);
@@ -22,6 +22,8 @@ pub fn generate(w: &mut Write, env: &Env, analysis: &analysis::record::Info) -> 
     }
 
     try!(writeln!(w, "}}"));
+
+    try!(trait_impls::generate(w, &analysis.name, &analysis.functions, &analysis.specials));
 
     Ok(())
 }

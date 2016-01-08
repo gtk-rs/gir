@@ -55,13 +55,16 @@ pub fn new(env: &Env, obj: &GObject) -> Option<Info> {
 
     let specials = special_functions::extract(&mut functions);
 
-    //accept only boxed records
-    if specials.get(&special_functions::Type::Copy).is_none() {
+    let is_shared = specials.get(&special_functions::Type::Ref).is_some() &&
+        specials.get(&special_functions::Type::Unref).is_some();
+    if is_shared {
+        // `copy` will duplicate a struct while `clone` just adds a reference
+        special_functions::unhide(&mut functions, &specials, special_functions::Type::Copy);
+        // accept only boxed records
         return None;
     };
-    if specials.get(&special_functions::Type::Free).is_none() {
-        return None;
-    };
+
+    special_functions::analyze_imports(&specials, &mut imports);
 
     //don't `use` yourself
     imports.remove(&name);

@@ -14,6 +14,7 @@ mod record;
 mod records;
 mod return_value;
 mod sys;
+mod trait_impls;
 pub mod translate_from_glib;
 pub mod translate_to_glib;
 

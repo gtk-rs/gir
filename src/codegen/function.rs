@@ -1,6 +1,7 @@
 use std::io::{Result, Write};
 
 use analysis;
+use analysis::functions::Visibility;
 use analysis::upcasts::Upcasts;
 use chunk::{ffi_function_todo, Chunk};
 use env::Env;
@@ -14,13 +15,30 @@ use writer::ToCode;
 pub fn generate(w: &mut Write, env: &Env, analysis: &analysis::functions::Info,
     in_trait: bool, only_declaration: bool, indent: usize) -> Result<()> {
 
-    let comment_prefix = if analysis.comented { "//" } else { "" };
-    let pub_prefix = if in_trait { "" } else { "pub " };
+    let mut commented = false;
+    let mut comment_prefix = "";
+    let mut pub_prefix = if in_trait { "" } else { "pub " };
+    match analysis.visibility {
+        Visibility::Public => {}
+        Visibility::Comment => {
+            commented = true;
+            comment_prefix = "//";
+        }
+        Visibility::Private => {
+            if in_trait {
+                warn!("Generating trait method for private function {}", analysis.glib_name);
+            }
+            else {
+                pub_prefix = "";
+            }
+        }
+        Visibility::Hidden => return Ok(()),
+    }
     let declaration = declaration(env, analysis);
     let suffix = if only_declaration { ";" } else { " {" };
 
     try!(version_condition(w, &env.config.library_name,
-        env.config.min_cfg_version, analysis.version, analysis.comented, indent));
+        env.config.min_cfg_version, analysis.version, commented, indent));
     try!(writeln!(w, "{}{}{}{}{}", tabs(indent),
         comment_prefix, pub_prefix, declaration, suffix));
 
@@ -67,7 +85,7 @@ fn upcasts(upcasts: &Upcasts) -> String {
 }
 
 pub fn body_chunk(env: &Env, analysis: &analysis::functions::Info) -> Chunk {
-    if analysis.comented {
+    if analysis.visibility == Visibility::Comment {
         return ffi_function_todo(&analysis.glib_name);
     }
 
