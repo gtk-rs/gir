@@ -11,7 +11,7 @@ use analysis::safety_assertion_mode::SafetyAssertionMode;
 use analysis::upcasts::Upcasts;
 use config;
 use env::Env;
-use library::{self, Nullable};
+use library::{self, Nullable, ParameterDirection};
 use nameutil;
 use traits::*;
 use version::Version;
@@ -25,6 +25,7 @@ pub enum Visibility {
 }
 
 //TODO: change use Parameter to reference?
+#[derive(Debug)]
 pub struct Info {
     pub name: String,
     pub glib_name: String,
@@ -80,7 +81,8 @@ fn analyze_function(env: &Env, func: &library::Function, type_tid: library::Type
             used_types.push(s);
         }
         let type_error = parameter_rust_type(env, par.typ, par.direction, Nullable(false), RefMode::None).is_err();
-        if !par.instance_parameter && needed_upcast(&env.library, par.typ) {
+        if !par.instance_parameter && par.direction != ParameterDirection::Out &&
+                needed_upcast(&env.library, par.typ) {
             let type_name = rust_type(env, par.typ);
             let ignored = if type_error { "/*Ignored*/" } else { "" };
             if !upcasts.add_parameter(&par.name, &format!("{}{}", ignored, type_name.as_str())) {

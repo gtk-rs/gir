@@ -4,7 +4,7 @@ use config;
 use env::Env;
 use library::{self, Nullable};
 
-#[derive(Clone, Default)]
+#[derive(Clone, Debug, Default)]
 pub struct Info {
     pub parameter: Option<library::Parameter>,
     pub base_tid: Option<library::TypeId>,  //Some only if need downcast

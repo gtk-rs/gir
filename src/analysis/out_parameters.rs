@@ -13,6 +13,7 @@ pub enum Mode {
     None,
     Normal,
     Optional,
+    Combined,
 }
 
 impl Default for Mode {
@@ -21,7 +22,7 @@ impl Default for Mode {
     }
 }
 
-#[derive(Default)]
+#[derive(Debug, Default)]
 pub struct Info {
     pub mode: Mode,
     pub params: Vec<Parameter>,
@@ -41,22 +42,22 @@ impl Info {
     }
 }
 
-pub fn analyze(env: &Env, type_: &Function) -> (Info, bool) {
+pub fn analyze(env: &Env, func: &Function) -> (Info, bool) {
     let mut info: Info = Default::default();
     let mut unsupported_outs = false;
 
-    if type_.throws {
+    if func.throws {
         //TODO: throwable functions
         return (info, true);
-    } else if type_.ret.typ == TypeId::tid_none() {
+    } else if func.ret.typ == TypeId::tid_none() {
         info.mode = Mode::Normal;
-    } else if type_.ret.typ == TypeId::tid_bool() {
+    } else if func.ret.typ == TypeId::tid_bool() {
         info.mode = Mode::Optional;
     } else {
-        return (info, false);
+        info.mode = Mode::Combined;
     }
 
-    for par in &type_.parameters {
+    for par in &func.parameters {
         if par.direction != ParameterDirection::Out { continue; }
         if can_as_return(env, par) {
             info.params.push(par.clone());
@@ -65,7 +66,12 @@ pub fn analyze(env: &Env, type_: &Function) -> (Info, bool) {
         }
     }
 
-    if info.params.is_empty() { info.mode = Mode::None }
+    if info.params.is_empty() {
+        info.mode = Mode::None;
+    }
+    if info.mode == Mode::Combined {
+        info.params.insert(0, func.ret.clone());
+    }
 
     (info, unsupported_outs)
 }

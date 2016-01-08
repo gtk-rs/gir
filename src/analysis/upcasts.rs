@@ -2,6 +2,7 @@ use std::collections::vec_deque::VecDeque;
 use std::slice::Iter;
 use std::vec::Vec;
 
+#[derive(Debug)]
 pub struct Upcasts {
     unused: VecDeque<String>,
     //Vector tuples <parameter name>, <alias>, <type>
