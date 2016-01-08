@@ -62,6 +62,9 @@ fn analyze_function(env: &Env, func: &library::Function, type_tid: library::Type
     let mut upcasts: Upcasts = Default::default();
     let mut used_types: Vec<String> = Vec::with_capacity(4);
 
+    let version = configured_functions.iter().filter_map(|f| f.version).min()
+        .or(func.version);
+
     let ret = return_value::analyze(env, func, type_tid, configured_functions, &mut used_types);
     commented |= ret.commented;
 
@@ -98,10 +101,10 @@ fn analyze_function(env: &Env, func: &library::Function, type_tid: library::Type
     if !commented {
         for s in used_types {
             if let Some(i) = s.find("::") {
-                imports.add(s[..i].into(), func.version);
+                imports.add(s[..i].into(), version);
             }
             else {
-                imports.add(s, func.version);
+                imports.add(s, version);
             }
         }
         if ret.base_tid.is_some() {
@@ -125,7 +128,7 @@ fn analyze_function(env: &Env, func: &library::Function, type_tid: library::Type
         ret: ret,
         upcasts: upcasts,
         outs: outs,
-        version: func.version,
+        version: version,
         assertion: assertion,
     }
 }

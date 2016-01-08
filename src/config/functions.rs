@@ -2,6 +2,7 @@ use library::Nullable;
 use regex::*;
 use std::vec::Vec;
 use toml::Value;
+use version::Version;
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum Ident {
@@ -127,6 +128,7 @@ pub struct Function {
     //true - ignore this function,
     //false(default) - process this function
     pub ignore: bool,
+    pub version: Option<Version>,
     pub parameters: Parameters,
     pub ret: Return,
 }
@@ -143,12 +145,16 @@ impl Function {
         let ignore = toml.lookup("ignore")
             .and_then(|val| val.as_bool())
             .unwrap_or(false);
+        let version = toml.lookup("version")
+            .and_then(|v| v.as_str())
+            .and_then(|s| s.parse().ok());
         let parameters = Parameters::parse(toml.lookup("parameter"), object_name);
         let ret = Return::parse(toml.lookup("return"));
 
         Some(Function{
             ident: ident,
             ignore: ignore,
+            version: version,
             parameters: parameters,
             ret: ret,
         })
@@ -203,6 +209,7 @@ mod tests {
     use library::Nullable;
     use super::*;
     use toml;
+    use version::Version;
 
     fn functions_toml(input: &str) -> toml::Value {
         let mut parser = toml::Parser::new(&input);
@@ -230,6 +237,25 @@ ignore = true
     }
 
     #[test]
+    fn function_parse_version_default() {
+        let toml = toml(r#"
+name = "func1"
+"#);
+        let f = Function::parse(&toml, "a").unwrap();
+        assert_eq!(f.version, None);
+    }
+
+    #[test]
+    fn function_parse_version() {
+        let toml = toml(r#"
+name = "func1"
+version = "3.20"
+"#);
+        let f = Function::parse(&toml, "a").unwrap();
+        assert_eq!(f.version, Some(Version(3, 20, 0)));
+    }
+    
+    #[test]
     fn function_parse_return_nullable_default1() {
         let toml = toml(r#"
 name = "func1"
@@ -237,6 +263,7 @@ name = "func1"
         let f = Function::parse(&toml, "a").unwrap();
         assert_eq!(f.ret.nullable, None);
     }
+
     #[test]
     fn function_parse_return_nullable_default2() {
         let toml = toml(r#"
