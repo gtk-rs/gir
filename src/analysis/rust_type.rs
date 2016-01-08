@@ -69,7 +69,12 @@ fn rust_type_full(env: &Env, type_id: library::TypeId, nullable: Nullable, ref_m
             CArray(inner_tid)
             if ConversionType::of(&env.library, inner_tid) == ConversionType::Pointer => {
             skip_option = true;
-            rust_type_full(env, inner_tid, Nullable(false), ref_mode)
+            let inner_ref_mode = match *env.library.type_(inner_tid) {
+                Class(..) |
+                    Interface(..) => RefMode::None,
+                _ => ref_mode,
+            };
+            rust_type_full(env, inner_tid, Nullable(false), inner_ref_mode)
                 .map_any(|s| if ref_mode.is_ref() {
                     format!("[{}]", s)
                 } else {
