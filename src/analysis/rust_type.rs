@@ -167,6 +167,7 @@ pub fn parameter_rust_type(env: &Env, type_id:library::TypeId,
                     Err(format!("/*Ignored*/{}", rust_type.as_str()))
                 }
                 library::ParameterDirection::In |
+                    library::ParameterDirection::Out |
                     library::ParameterDirection::Return => rust_type,
                 _ => Err(format!("/*Unimplemented*/{}", rust_type.as_str())),
             }
