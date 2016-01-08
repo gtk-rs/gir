@@ -38,7 +38,8 @@ pub fn out_parameter_as_return_parts(analysis: &analysis::functions::Info)
     use analysis::out_parameters::Mode::*;
     let is_tuple = analysis.outs.len() > 1;
     match analysis.outs.mode {
-        Normal =>  if is_tuple { ("(", ")") } else { ("", "") },
+        Normal |
+            Combined => if is_tuple { ("(", ")") } else { ("", "") },
         Optional => if is_tuple { ("Option<(", ")>") } else { ("Option<", ">") },
         None => unreachable!(),
     }

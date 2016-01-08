@@ -13,6 +13,7 @@ pub enum Mode {
     None,
     Normal,
     Optional,
+    Combined,
 }
 
 impl Default for Mode {
@@ -53,7 +54,7 @@ pub fn analyze(env: &Env, func: &Function) -> (Info, bool) {
     } else if func.ret.typ == TypeId::tid_bool() {
         info.mode = Mode::Optional;
     } else {
-        return (info, false);
+        info.mode = Mode::Combined;
     }
 
     for par in &func.parameters {
@@ -65,7 +66,12 @@ pub fn analyze(env: &Env, func: &Function) -> (Info, bool) {
         }
     }
 
-    if info.params.is_empty() { info.mode = Mode::None }
+    if info.params.is_empty() {
+        info.mode = Mode::None;
+    }
+    if info.mode == Mode::Combined {
+        info.params.insert(0, func.ret.clone());
+    }
 
     (info, unsupported_outs)
 }

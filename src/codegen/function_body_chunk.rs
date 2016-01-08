@@ -221,7 +221,23 @@ impl Builder {
                     value: Box::new(ret),
                 };
                 (call, Some(ret))
-            },
+            }
+            Combined => {
+                let call = Chunk::Let{
+                    name: "ret".into(),
+                    is_mut: false,
+                    value: Box::new(call),
+                };
+                let mut ret = ret.expect("No return in combined outs mode");
+                ret = match ret {
+                    tup @ Chunk::Tuple(..) => tup,
+                    chunk => Chunk::Tuple(vec![chunk]),
+                };
+                if let Chunk::Tuple(ref mut vec) = ret {
+                    vec.insert(0, Chunk::VariableValue { name: "ret".into() });
+                }
+                (call, Some(ret))
+            }
         }
     }
 }
