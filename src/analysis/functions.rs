@@ -36,6 +36,7 @@ pub struct Info {
     pub upcasts: Upcasts,
     pub outs: out_parameters::Info,
     pub version: Option<Version>,
+    pub cfg_condition: Option<String>,
     pub assertion: SafetyAssertionMode,
 }
 
@@ -64,6 +65,7 @@ fn analyze_function(env: &Env, func: &library::Function, type_tid: library::Type
 
     let version = configured_functions.iter().filter_map(|f| f.version).min()
         .or(func.version);
+    let cfg_condition = configured_functions.iter().filter_map(|f| f.cfg_condition.clone()).next();
 
     let ret = return_value::analyze(env, func, type_tid, configured_functions, &mut used_types);
     commented |= ret.commented;
@@ -129,6 +131,7 @@ fn analyze_function(env: &Env, func: &library::Function, type_tid: library::Type
         upcasts: upcasts,
         outs: outs,
         version: version,
+        cfg_condition: cfg_condition,
         assertion: assertion,
     }
 }
