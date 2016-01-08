@@ -19,7 +19,9 @@ impl RefMode {
             Fundamental(library::Fundamental::Filename) |
             Class(..) |
             Interface(..) |
-            List(..) => if direction == library::ParameterDirection::In {
+            List(..) |
+            SList(..) |
+            CArray(..) => if direction == library::ParameterDirection::In {
                 RefMode::ByRef
             } else {
                 RefMode::None
