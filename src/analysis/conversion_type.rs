@@ -54,7 +54,9 @@ impl ConversionType {
             Enumeration(_) => ConversionType::Direct,
             Interface(_) => ConversionType::Pointer,
             Class(_) => ConversionType::Pointer,
-            List(..) => ConversionType::Pointer,
+            CArray(_) => ConversionType::Pointer,
+            List(_) => ConversionType::Pointer,
+            SList(_) => ConversionType::Pointer,
             _ => ConversionType::Unknown,
         }
     }

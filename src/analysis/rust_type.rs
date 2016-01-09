@@ -64,9 +64,17 @@ fn rust_type_full(env: &Env, type_id: library::TypeId, nullable: Nullable, ref_m
         Record(ref record) => Ok(record.name.clone()),
         Interface(ref interface) => Ok(interface.name.clone()),
         Class(ref klass) => Ok(klass.name.clone()),
-        List(inner_tid) => {
+        List(inner_tid) |
+            SList(inner_tid) |
+            CArray(inner_tid)
+            if ConversionType::of(&env.library, inner_tid) == ConversionType::Pointer => {
             skip_option = true;
-            rust_type(env, inner_tid)
+            let inner_ref_mode = match *env.library.type_(inner_tid) {
+                Class(..) |
+                    Interface(..) => RefMode::None,
+                _ => ref_mode,
+            };
+            rust_type_full(env, inner_tid, Nullable(false), inner_ref_mode)
                 .map_any(|s| if ref_mode.is_ref() {
                     format!("[{}]", s)
                 } else {
@@ -115,7 +123,9 @@ pub fn used_rust_type(env: &Env, type_id: library::TypeId) -> Result {
             Class(..) |
             Enumeration(..) |
             Interface(..) => rust_type(env, type_id),
-        List(inner_tid) => used_rust_type(env, inner_tid),
+        List(inner_tid) |
+            SList(inner_tid) |
+            CArray(inner_tid) => used_rust_type(env, inner_tid),
         _ => Err("Don't need use".into()),
     }
 }
@@ -173,9 +183,12 @@ pub fn parameter_rust_type(env: &Env, type_id:library::TypeId,
             }
         }
 
-        List(..) => {
+        List(..) |
+            SList(..) |
+            CArray(..) => {
             match direction {
-                library::ParameterDirection::Return => rust_type,
+                library::ParameterDirection::In |
+                    library::ParameterDirection::Return => rust_type,
                 _ => Err(format!("/*Unimplemented*/{}", rust_type.as_str())),
             }
         }

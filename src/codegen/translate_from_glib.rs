@@ -19,7 +19,11 @@ impl TranslateFromGlib for Mode {
             Pointer => {
                 let trans = from_glib_xxx(self.transfer);
                 match *env.type_(self.typ) {
-                    library::Type::List(..) => (format!("FromGlibPtrContainer::{}", trans.0), trans.1),
+                    library::Type::List(..) |
+                        library::Type::SList(..) |
+                        library::Type::CArray(..) => {
+                        (format!("FromGlibPtrContainer::{}", trans.0), trans.1)
+                    }
                     _ => trans,
                 }
             }
