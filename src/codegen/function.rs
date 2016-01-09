@@ -80,7 +80,14 @@ pub fn declaration(env: &Env, analysis: &analysis::functions::Info) -> String {
 fn upcasts(upcasts: &Upcasts) -> String {
     if upcasts.is_empty() { return String::new() }
     let strs: Vec<String> = upcasts.iter()
-        .map(|upcast| { format!("{}: Upcast<{}>", upcast.1, upcast.2)})
+        .map(|upcast| {
+            if upcast.3 {
+                format!("{}: Upcast<{}> = {1}", upcast.1, upcast.2)
+            }
+            else {
+                format!("{}: Upcast<{}>", upcast.1, upcast.2)
+            }
+        })
         .collect();
     format!("<{}>", strs.join(", "))
 }

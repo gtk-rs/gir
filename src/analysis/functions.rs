@@ -85,7 +85,9 @@ fn analyze_function(env: &Env, func: &library::Function, type_tid: library::Type
                 needed_upcast(&env.library, par.typ) {
             let type_name = rust_type(env, par.typ);
             let ignored = if type_error { "/*Ignored*/" } else { "" };
-            if !upcasts.add_parameter(&par.name, &format!("{}{}", ignored, type_name.as_str())) {
+            let type_name = format!("{}{}", ignored, type_name.as_str());
+            let with_default = *par.nullable;
+            if !upcasts.add_parameter(&par.name, &type_name, with_default) {
                 panic!("Too many parameters upcasts for {}", func.c_identifier.as_ref().unwrap())
             }
         }
