@@ -22,15 +22,18 @@ generate = [
     "Gtk.AspectFrame",
     "Gtk.Bin",
     "Gtk.Box",
+    "Gtk.Builder",
     "Gtk.Button",
     "Gtk.ButtonBox",
     "Gtk.Calendar",
     "Gtk.CheckButton",
     "Gtk.ColorButton",
     "Gtk.ColorChooserWidget",
+    "Gtk.CssProvider",
     "Gtk.DrawingArea",
     "Gtk.EventBox",
     "Gtk.Expander",
+    "Gtk.FileChooser",
     "Gtk.FileChooserWidget",
     "Gtk.Fixed",
     "Gtk.FlowBox",
@@ -41,6 +44,7 @@ generate = [
     "Gtk.Frame",
     "Gtk.Grid",
     "Gtk.HeaderBar",
+    "Gtk.IconInfo",
     "Gtk.Image",
     "Gtk.InfoBar",
     "Gtk.Label",
@@ -66,6 +70,7 @@ generate = [
     "Gtk.RadioButton",
     "Gtk.Range",
     "Gtk.RecentChooserWidget",
+    "Gtk.RecentManager",
     "Gtk.Revealer",
     "Gtk.Scale",
     "Gtk.ScaleButton",
@@ -97,6 +102,7 @@ generate = [
 ]
 
 manual = [
+    "GLib.Error",
     "Gdk.Screen",
     "Gdk.Window",
     "GdkPixbuf.Pixbuf",
@@ -105,9 +111,12 @@ manual = [
     "Gtk.Buildable",
     "Gtk.Container",
     "Gtk.Dialog",
+    "Gtk.RecentData",
+    "Gtk.RecentInfo",
     "Gtk.Widget",
     "Gtk.Window",
     "Gdk.Rectangle",
+#    "Gdk.RGBA",
     "cairo.RectangleInt",
 ]
 
@@ -150,3 +159,18 @@ status = "generate"
 [[object.function]]
 name = "is_ipp"
 version = "3.16"
+
+[[object]]
+name = "Gtk.PrintSettings"
+status = "generate"
+    [[object.function]]
+    name = "get_page_ranges"
+    ignore = true
+    [[object.function]]
+    name = "set_page_ranges"
+    ignore = true
+    [[object.function]]
+    name = "set_paper_size"
+        [[object.function.parameter]]
+        name = "paper_size"
+        const = true
