@@ -3,7 +3,7 @@ use analysis::parameter::Parameter as AnalysisParameter;
 use analysis::out_parameters::Mode;
 use analysis::return_value;
 use analysis::safety_assertion_mode::SafetyAssertionMode;
-use chunk::{chunks, Chunk};
+use chunk::{chunks, Chunk, TupleMode};
 use chunk::parameter_ffi_call_in;
 use chunk::parameter_ffi_call_out;
 use library;
@@ -151,6 +151,19 @@ impl Builder {
             .filter_map(|par| if let Out{ .. } = *par { Some(par) } else { None })
             .collect()
     }
+    fn get_outs_without_error(&self) -> Vec<&Parameter> {
+        self.parameters.iter()
+            .filter_map(|par| if let Out{ ref parameter, .. } = *par {
+                if parameter.is_error {
+                    None
+                } else {
+                    Some(par)
+                }
+            } else {
+                None
+            })
+            .collect()
+    }
     fn write_out_variables(&self, v: &mut Vec<Chunk>) {
         let outs = self.get_outs();
         for par in outs {
@@ -177,20 +190,14 @@ impl Builder {
         if !self.outs_as_return {
             return None;
         }
-        let outs = self.get_outs();
-        let chunk = if outs.len() == 1 {
-            if let Out{ ref parameter, ref mem_mode } = *(outs[0]) {
-                self.out_parameter_to_return(parameter, mem_mode)
-            } else { unreachable!() } 
-        } else {
-            let mut chs: Vec<Chunk> = Vec::new();
-            for par in outs {
-                if let Out{ ref parameter, ref mem_mode } = *par {
-                    chs.push(self.out_parameter_to_return(parameter, mem_mode));
-                }
+        let outs = self.get_outs_without_error();
+        let mut chs: Vec<Chunk> = Vec::with_capacity(outs.len());
+        for par in outs {
+            if let Out{ ref parameter, ref mem_mode } = *par {
+                chs.push(self.out_parameter_to_return(parameter, mem_mode));
             }
-            Chunk::Tuple(chs)
-        };
+        }
+        let chunk = Chunk::Tuple(chs, TupleMode::Auto);
         Some(chunk)
     }
     fn out_parameter_to_return(&self, parameter: &parameter_ffi_call_out::Parameter, mem_mode: &OutMemMode) -> Chunk {
@@ -229,13 +236,48 @@ impl Builder {
                     value: Box::new(call),
                 };
                 let mut ret = ret.expect("No return in combined outs mode");
-                ret = match ret {
-                    tup @ Chunk::Tuple(..) => tup,
-                    chunk => Chunk::Tuple(vec![chunk]),
-                };
-                if let Chunk::Tuple(ref mut vec) = ret {
+                if let Chunk::Tuple(ref mut vec, _) = ret {
                     vec.insert(0, Chunk::VariableValue { name: "ret".into() });
                 }
+                (call, Some(ret))
+            }
+            Throws(use_ret) => {
+                //extracting original FFI function call
+                let (boxed_call, ret_info) = if let Chunk::FfiCallConversion{call: inner, ret: ret_info} = call {
+                    (inner, ret_info)
+                } else {
+                    panic!("Call without Chunk::FfiCallConversion")
+                };
+                let call = if use_ret {
+                    Chunk::Let{
+                        name: "ret".into(),
+                        is_mut: false,
+                        value: boxed_call,
+                    }
+                } else {
+                    Chunk::Let{
+                        name: "_".into(),
+                        is_mut: false,
+                        value: boxed_call,
+                    }
+                };
+                let mut ret = ret.expect("No return in throws outs mode");
+                if let Chunk::Tuple(ref mut vec, ref mut mode ) = ret {
+                    *mode = TupleMode::WithUnit;
+                    if use_ret {
+                        let val = Chunk::VariableValue { name: "ret".into() };
+                        let conv = Chunk::FfiCallConversion{
+                            call: Box::new(val),
+                            ret: ret_info,
+                        };
+                        vec.insert(0, conv);
+                    }
+                } else {
+                    panic!("Return is not Tuple")
+                }
+                ret = Chunk::ErrorResultReturn{
+                    value: Box::new(ret),
+                };
                 (call, Some(ret))
             }
         }

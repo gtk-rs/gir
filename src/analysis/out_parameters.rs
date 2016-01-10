@@ -14,6 +14,8 @@ pub enum Mode {
     Normal,
     Optional,
     Combined,
+    //<use function return>
+    Throws(bool),
 }
 
 impl Default for Mode {
@@ -47,8 +49,8 @@ pub fn analyze(env: &Env, func: &Function) -> (Info, bool) {
     let mut unsupported_outs = false;
 
     if func.throws {
-        //TODO: throwable functions
-        return (info, true);
+        let use_ret = use_function_return_for_result(env, &func.ret);
+        info.mode = Mode::Throws(use_ret);
     } else if func.ret.typ == TypeId::tid_none() {
         info.mode = Mode::Normal;
     } else if func.ret.typ == TypeId::tid_bool() {
@@ -69,7 +71,7 @@ pub fn analyze(env: &Env, func: &Function) -> (Info, bool) {
     if info.params.is_empty() {
         info.mode = Mode::None;
     }
-    if info.mode == Mode::Combined {
+    if info.mode == Mode::Combined || info.mode == Mode::Throws(true) {
         info.params.insert(0, func.ret.clone());
     }
 
@@ -96,5 +98,16 @@ fn can_as_return(env: &Env, par: &Parameter) -> bool {
         Scalar => true,
         Pointer => parameter_rust_type(env, par.typ, ParameterDirection::Out, Nullable(false), RefMode::None).is_ok(),
         Unknown => false,
+    }
+}
+
+fn use_function_return_for_result(env: &Env, ret: &Parameter) -> bool {
+    if ret.typ == Default::default() { return false; }
+    if ret.typ.ns_id != INTERNAL_NAMESPACE { return true; }
+    let type_ = env.type_(ret.typ);
+    match &*type_.get_name() {
+        "UInt" => false,
+        "Boolean" => false,
+        _ => true,
     }
 }
