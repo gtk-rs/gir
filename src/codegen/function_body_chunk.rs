@@ -3,7 +3,7 @@ use analysis::parameter::Parameter as AnalysisParameter;
 use analysis::out_parameters::Mode;
 use analysis::return_value;
 use analysis::safety_assertion_mode::SafetyAssertionMode;
-use chunk::{chunks, Chunk};
+use chunk::{chunks, Chunk, TupleMode};
 use chunk::parameter_ffi_call_in;
 use chunk::parameter_ffi_call_out;
 use library;
@@ -191,19 +191,13 @@ impl Builder {
             return None;
         }
         let outs = self.get_outs_without_error();
-        let chunk = if outs.len() == 1 {
-            if let Out{ ref parameter, ref mem_mode } = *(outs[0]) {
-                self.out_parameter_to_return(parameter, mem_mode)
-            } else { unreachable!() } 
-        } else {
-            let mut chs: Vec<Chunk> = Vec::new();
-            for par in outs {
-                if let Out{ ref parameter, ref mem_mode } = *par {
-                    chs.push(self.out_parameter_to_return(parameter, mem_mode));
-                }
+        let mut chs: Vec<Chunk> = Vec::with_capacity(outs.len());
+        for par in outs {
+            if let Out{ ref parameter, ref mem_mode } = *par {
+                chs.push(self.out_parameter_to_return(parameter, mem_mode));
             }
-            Chunk::Tuple(chs)
-        };
+        }
+        let chunk = Chunk::Tuple(chs, TupleMode::Auto);
         Some(chunk)
     }
     fn out_parameter_to_return(&self, parameter: &parameter_ffi_call_out::Parameter, mem_mode: &OutMemMode) -> Chunk {
@@ -242,11 +236,7 @@ impl Builder {
                     value: Box::new(call),
                 };
                 let mut ret = ret.expect("No return in combined outs mode");
-                ret = match ret {
-                    tup @ Chunk::Tuple(..) => tup,
-                    chunk => Chunk::Tuple(vec![chunk]),
-                };
-                if let Chunk::Tuple(ref mut vec) = ret {
+                if let Chunk::Tuple(ref mut vec, _) = ret {
                     vec.insert(0, Chunk::VariableValue { name: "ret".into() });
                 }
                 (call, Some(ret))
@@ -272,12 +262,9 @@ impl Builder {
                     }
                 };
                 let mut ret = ret.expect("No return in throws outs mode");
-                if use_ret {
-                    ret = match ret {
-                        tup @ Chunk::Tuple(..) => tup,
-                        chunk => Chunk::Tuple(vec![chunk]),
-                    };
-                    if let Chunk::Tuple(ref mut vec) = ret {
+                if let Chunk::Tuple(ref mut vec, ref mut mode ) = ret {
+                    *mode = TupleMode::WithUnit;
+                    if use_ret {
                         vec.insert(0, Chunk::VariableValue { name: "ret".into() });
                     }
                 }

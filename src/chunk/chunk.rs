@@ -21,7 +21,7 @@ pub enum Chunk {
     UninitializedNamed{name: String},
     NullMutPtr,
     VariableValue{name: String},
-    Tuple(Vec<Chunk>),
+    Tuple(Vec<Chunk>, TupleMode),
     FromGlibConversion{mode: conversion_from_glib::Mode, value: Box<Chunk>},
     OptionalReturn{condition: String, value: Box<Chunk>},
     ErrorResultReturn{value: Box<Chunk>},
@@ -31,4 +31,11 @@ pub enum Chunk {
 
 pub fn chunks(ch: Chunk) -> Vec<Chunk> {
     vec![ch]
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum TupleMode {
+    Auto,      // "", "1", "(1,2)"
+    WithUnit,  // "()", "1", "(1,2)"
+    //Simple,    // "()", "(1)", "(1,2)"
 }

@@ -1,6 +1,6 @@
 use std::vec::Vec;
 
-use chunk::Chunk;
+use chunk::{Chunk, TupleMode};
 use codegen::translate_from_glib::TranslateFromGlib;
 use codegen::translate_to_glib::TranslateToGlib;
 use env::Env;
@@ -57,8 +57,14 @@ impl ToCode for Chunk {
             }
             NullMutPtr => vec!["ptr::null_mut()".into()],
             VariableValue{ref name} => vec![name.clone()],
-            Tuple(ref chs) => {
-                let s = format_block_one_line("(", ")", &chs.to_code(env), "", ", ");
+            Tuple(ref chs, mode) => {
+                let with_bracket = match mode {
+                    TupleMode::Auto => chs.len() > 1,
+                    TupleMode::WithUnit => chs.len() != 1,
+//                    TupleMode::Simple => true,
+                };
+                let (prefix, suffix) = if with_bracket { ( "(", ")" ) } else { ( "", "" ) };
+                let s = format_block_one_line(prefix, suffix, &chs.to_code(env), "", ", ");
                 vec![s]
             }
             FromGlibConversion{ref mode, ref value} => {
