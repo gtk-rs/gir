@@ -242,19 +242,19 @@ impl Builder {
                 (call, Some(ret))
             }
             Throws(use_ret) => {
+                //extracting original FFI function call
+                let (boxed_call, ret_info) = if let Chunk::FfiCallConversion{call: inner, ret: ret_info} = call {
+                    (inner, ret_info)
+                } else {
+                    panic!("Call without Chunk::FfiCallConversion")
+                };
                 let call = if use_ret {
                     Chunk::Let{
                         name: "ret".into(),
                         is_mut: false,
-                        value: Box::new(call),
+                        value: boxed_call,
                     }
                 } else {
-                    //extracting original FFI function call
-                    let boxed_call = if let Chunk::FfiCallConversion{call: inner, ..} = call {
-                        inner
-                    } else {
-                        Box::new(call)
-                    };
                     Chunk::Let{
                         name: "_".into(),
                         is_mut: false,
@@ -265,8 +265,15 @@ impl Builder {
                 if let Chunk::Tuple(ref mut vec, ref mut mode ) = ret {
                     *mode = TupleMode::WithUnit;
                     if use_ret {
-                        vec.insert(0, Chunk::VariableValue { name: "ret".into() });
+                        let val = Chunk::VariableValue { name: "ret".into() };
+                        let conv = Chunk::FfiCallConversion{
+                            call: Box::new(val),
+                            ret: ret_info,
+                        };
+                        vec.insert(0, conv);
                     }
+                } else {
+                    panic!("Return is not Tuple")
                 }
                 ret = Chunk::ErrorResultReturn{
                     value: Box::new(ret),
