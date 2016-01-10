@@ -50,6 +50,11 @@ impl ToCode for Chunk {
                 let s = format_block_one_line(&prefix, ";", &value_strings, "", "");
                 vec![s]
             }
+            Operator{ref value} => {
+                let value_strings = value.to_code(env);
+                let s = format_block_one_line("", ";", &value_strings, "", "");
+                vec![s]
+            }
             Uninitialized => vec!["mem::uninitialized()".into()],
             UninitializedNamed{ ref name } => {
                 let s = format!("{}::uninitialized()", name);
@@ -71,6 +76,13 @@ impl ToCode for Chunk {
                 let value_strings = value.to_code(env);
                 let prefix = format!("if {} {{ Some(", condition);
                 let suffix = ") } else { None }";
+                let s = format_block_one_line(&prefix, suffix, &value_strings, "", "");
+                vec![s]
+            }
+            ErrorResultReturn{ref value} => {
+                let value_strings = value.to_code(env);
+                let prefix = "if error.is_null() { Ok(";
+                let suffix = ") } else { Err(from_glib_full(error)) }";
                 let s = format_block_one_line(&prefix, suffix, &value_strings, "", "");
                 vec![s]
             }

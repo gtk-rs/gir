@@ -17,6 +17,7 @@ pub enum Chunk {
     //TODO: separate without return_value::Info
     FfiCallConversion{ret: return_value::Info, call: Box<Chunk>},
     Let{name: String, is_mut: bool, value: Box<Chunk>},
+    Operator{value: Box<Chunk>},  //convert value to operator by adding ';' (oneliner)
     Uninitialized,
     UninitializedNamed{name: String},
     NullMutPtr,
@@ -24,6 +25,7 @@ pub enum Chunk {
     Tuple(Vec<Chunk>),
     FromGlibConversion{mode: conversion_from_glib::Mode, value: Box<Chunk>},
     OptionalReturn{condition: String, value: Box<Chunk>},
+    ErrorResultReturn{value: Box<Chunk>},
     AssertInitializedAndInMainThread,
     AssertSkipInitialized,
 }

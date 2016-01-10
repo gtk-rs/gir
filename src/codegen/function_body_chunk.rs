@@ -151,6 +151,19 @@ impl Builder {
             .filter_map(|par| if let Out{ .. } = *par { Some(par) } else { None })
             .collect()
     }
+    fn get_outs_without_error(&self) -> Vec<&Parameter> {
+        self.parameters.iter()
+            .filter_map(|par| if let Out{ ref parameter, .. } = *par {
+                if &*parameter.name != "error" {
+                    Some(par)
+                } else {
+                    None
+                }
+            } else {
+                None
+            })
+            .collect()
+    }
     fn write_out_variables(&self, v: &mut Vec<Chunk>) {
         let outs = self.get_outs();
         for par in outs {
@@ -177,7 +190,7 @@ impl Builder {
         if !self.outs_as_return {
             return None;
         }
-        let outs = self.get_outs();
+        let outs = self.get_outs_without_error();
         let chunk = if outs.len() == 1 {
             if let Out{ ref parameter, ref mem_mode } = *(outs[0]) {
                 self.out_parameter_to_return(parameter, mem_mode)
@@ -236,6 +249,33 @@ impl Builder {
                 if let Chunk::Tuple(ref mut vec) = ret {
                     vec.insert(0, Chunk::VariableValue { name: "ret".into() });
                 }
+                (call, Some(ret))
+            }
+            Throws(use_ret) => {
+                let call = if use_ret {
+                    Chunk::Let{
+                        name: "ret".into(),
+                        is_mut: false,
+                        value: Box::new(call),
+                    }
+                } else {
+                    Chunk::Operator{
+                        value: Box::new(call),
+                    }
+                };
+                let mut ret = ret.expect("No return in throws outs mode");
+                if use_ret {
+                    ret = match ret {
+                        tup @ Chunk::Tuple(..) => tup,
+                        chunk => Chunk::Tuple(vec![chunk]),
+                    };
+                    if let Chunk::Tuple(ref mut vec) = ret {
+                        vec.insert(0, Chunk::VariableValue { name: "ret".into() });
+                    }
+                }
+                ret = Chunk::ErrorResultReturn{
+                    value: Box::new(ret),
+                };
                 (call, Some(ret))
             }
         }

@@ -41,6 +41,12 @@ pub fn out_parameter_as_return_parts(analysis: &analysis::functions::Info)
         Normal |
             Combined => if is_tuple { ("(", ")") } else { ("", "") },
         Optional => if is_tuple { ("Option<(", ")>") } else { ("Option<", ">") },
+        Throws(..) => if analysis.outs.len() == 1 + 1 {
+            //if only one parameter except "glib::Error"
+            ("Result<", ", glib::Error>")
+        } else {
+            ("Result<(", "), glib::Error>")
+        },
         None => unreachable!(),
     }
 }
@@ -50,7 +56,7 @@ pub fn out_parameters_as_return(env: &Env, analysis: &analysis::functions::Info)
     let mut return_str = String::with_capacity(100);
     return_str.push_str(" -> ");
     return_str.push_str(prefix);
-    for (pos, par) in analysis.outs.iter().enumerate() {
+    for (pos, par) in analysis.outs.iter().filter(|par| par.name != "error").enumerate() {
         if pos > 0 { return_str.push_str(", ") }
         let s = out_parameter_as_return(par, env);
         return_str.push_str(&s);
