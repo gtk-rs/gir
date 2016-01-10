@@ -212,6 +212,7 @@ fn implemented_in_main_namespace(library: &library::Library, type_id: library::T
     }
     match &*type_id.full_name(library) {
         "Gdk.Rectangle" => true,
+        "GLib.Error" => true,
         _ => false,
     }
 }

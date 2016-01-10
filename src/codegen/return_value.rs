@@ -43,9 +43,9 @@ pub fn out_parameter_as_return_parts(analysis: &analysis::functions::Info)
         Optional => if is_tuple { ("Option<(", ")>") } else { ("Option<", ">") },
         Throws(..) => if analysis.outs.len() == 1 + 1 {
             //if only one parameter except "glib::Error"
-            ("Result<", ", glib::Error>")
+            ("Result<", ", Error>")
         } else {
-            ("Result<(", "), glib::Error>")
+            ("Result<(", "), Error>")
         },
         None => unreachable!(),
     }
