@@ -258,6 +258,7 @@ pub struct Parameter {
     pub caller_allocates: bool,
     pub nullable: Nullable,
     pub allow_none: bool,
+    pub is_error: bool,
 }
 
 pub struct Function {

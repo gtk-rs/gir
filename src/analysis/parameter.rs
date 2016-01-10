@@ -18,6 +18,7 @@ pub struct Parameter {
     pub caller_allocates: bool,
     pub nullable: library::Nullable,
     pub allow_none: bool,
+    pub is_error: bool,
 
     //analysis fields
     pub ref_mode: RefMode,
@@ -50,5 +51,6 @@ pub fn analyze(env: &Env, par: &library::Parameter, configured_functions: &[&Fun
         nullable: nullable,
         allow_none: par.allow_none,
         ref_mode: ref_mode,
+        is_error: par.is_error,
     }
 }

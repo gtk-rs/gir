@@ -680,6 +680,7 @@ impl Library {
                 caller_allocates: false,
                 nullable: Nullable(true),
                 allow_none: true,
+                is_error: true,
             });
         }
         if let Some(ret) = ret {
@@ -802,6 +803,7 @@ impl Library {
                 caller_allocates: caller_allocates,
                 nullable: Nullable(nullable),
                 allow_none: allow_none,
+                is_error: false,
             })
         }
         else if varargs {
@@ -815,6 +817,7 @@ impl Library {
                 caller_allocates: false,
                 nullable: Nullable(false),
                 allow_none: allow_none,
+                is_error: false,
             })
         }
         else {

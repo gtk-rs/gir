@@ -154,10 +154,10 @@ impl Builder {
     fn get_outs_without_error(&self) -> Vec<&Parameter> {
         self.parameters.iter()
             .filter_map(|par| if let Out{ ref parameter, .. } = *par {
-                if &*parameter.name != "error" {
-                    Some(par)
-                } else {
+                if parameter.is_error {
                     None
+                } else {
+                    Some(par)
                 }
             } else {
                 None

@@ -7,6 +7,7 @@ pub struct Parameter {
     pub typ: library::TypeId,
     pub transfer: library::Transfer,
     pub caller_allocates: bool,
+    pub is_error: bool,
 }
 
 impl<'a> From<&'a analysis::parameter::Parameter> for Parameter {
@@ -16,6 +17,7 @@ impl<'a> From<&'a analysis::parameter::Parameter> for Parameter {
             typ: orig.typ,
             transfer: orig.transfer,
             caller_allocates: orig.caller_allocates,
+            is_error: orig.is_error,
         }
     }
 }
