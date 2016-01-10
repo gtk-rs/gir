@@ -259,8 +259,16 @@ impl Builder {
                         value: Box::new(call),
                     }
                 } else {
-                    Chunk::Operator{
-                        value: Box::new(call),
+                    //extracting original FFI function call
+                    let boxed_call = if let Chunk::FfiCallConversion{call: inner, ..} = call {
+                        inner
+                    } else {
+                        Box::new(call)
+                    };
+                    Chunk::Let{
+                        name: "_".into(),
+                        is_mut: false,
+                        value: boxed_call,
                     }
                 };
                 let mut ret = ret.expect("No return in throws outs mode");

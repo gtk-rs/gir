@@ -17,7 +17,6 @@ pub enum Chunk {
     //TODO: separate without return_value::Info
     FfiCallConversion{ret: return_value::Info, call: Box<Chunk>},
     Let{name: String, is_mut: bool, value: Box<Chunk>},
-    Operator{value: Box<Chunk>},  //convert value to operator by adding ';' (oneliner)
     Uninitialized,
     UninitializedNamed{name: String},
     NullMutPtr,

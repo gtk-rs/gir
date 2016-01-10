@@ -50,11 +50,6 @@ impl ToCode for Chunk {
                 let s = format_block_one_line(&prefix, ";", &value_strings, "", "");
                 vec![s]
             }
-            Operator{ref value} => {
-                let value_strings = value.to_code(env);
-                let s = format_block_one_line("", ";", &value_strings, "", "");
-                vec![s]
-            }
             Uninitialized => vec!["mem::uninitialized()".into()],
             UninitializedNamed{ ref name } => {
                 let s = format!("{}::uninitialized()", name);
