@@ -44,7 +44,7 @@ pub fn generate(w: &mut Write, env: &Env, analysis: &analysis::object::Info) -> 
         try!(writeln!(w, "}}"));
 
         try!(writeln!(w, ""));
-        try!(writeln!(w, "impl<O: Upcast<{}>> {}Ext for O {{", analysis.name, analysis.name));
+        try!(write!(w, "impl<O: Upcast<{}>> {}Ext for O {{", analysis.name, analysis.name));
         for func_analysis in &analysis.methods() {
             try!(function::generate(w, env, func_analysis, true, false, 1));
         }
