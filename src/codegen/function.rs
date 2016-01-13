@@ -14,10 +14,10 @@ use writer::ToCode;
 
 pub fn generate(w: &mut Write, env: &Env, analysis: &analysis::functions::Info,
     in_trait: bool, only_declaration: bool, indent: usize) -> Result<()> {
-
     let mut commented = false;
     let mut comment_prefix = "";
     let mut pub_prefix = if in_trait { "" } else { "pub " };
+    try!(writeln!(w, ""));
     match analysis.visibility {
         Visibility::Public => {}
         Visibility::Comment => {
@@ -48,7 +48,6 @@ pub fn generate(w: &mut Write, env: &Env, analysis: &analysis::functions::Info,
         for s in body {
             try!(writeln!(w, "{}{}", tabs(indent), s));
         }
-        try!(writeln!(w, ""));
     }
 
     Ok(())

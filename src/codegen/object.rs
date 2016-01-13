@@ -16,7 +16,7 @@ pub fn generate(w: &mut Write, env: &Env, analysis: &analysis::object::Info) -> 
 
     if generate_inherent(analysis) {
         try!(writeln!(w, ""));
-        try!(writeln!(w, "impl {} {{", analysis.name));
+        try!(write!(w, "impl {} {{", analysis.name));
         for func_analysis in &analysis.constructors() {
             try!(function::generate(w, env, func_analysis, false, false, 1));
         }
@@ -37,7 +37,7 @@ pub fn generate(w: &mut Write, env: &Env, analysis: &analysis::object::Info) -> 
 
     if generate_trait(analysis) {
         try!(writeln!(w, ""));
-        try!(writeln!(w, "pub trait {}Ext {{", analysis.name));
+        try!(write!(w, "pub trait {}Ext {{", analysis.name));
         for func_analysis in &analysis.methods() {
             try!(function::generate(w, env, func_analysis, true, true, 1));
         }
