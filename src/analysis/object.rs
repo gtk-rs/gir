@@ -86,7 +86,7 @@ pub fn new(env: &Env, obj: &GObject) -> Option<Info> {
     }
 
     if has_children {
-        imports.add("glib::object::Upcast".into(), None);
+        imports.add("glib::object::IsA".into(), None);
     }
 
     let mut functions =
@@ -148,7 +148,7 @@ pub fn interface(env: &Env, obj: &GObject) -> Option<Info> {
     let mut imports = Imports::new();
     imports.add("glib::translate::*".into(), None);
     imports.add("ffi".into(), None);
-    imports.add("glib::object::Upcast".into(), None);
+    imports.add("glib::object::IsA".into(), None);
 
     let parents = parents::analyze_interface(env, iface, &mut imports);
 

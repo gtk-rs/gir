@@ -115,7 +115,7 @@ fn analyze_function(env: &Env, func: &library::Function, type_tid: library::Type
             imports.add("glib::object::Downcast".into(), None);
         }
         if !upcasts.is_empty() {
-            imports.add("glib::object::Upcast".into(), None);
+            imports.add("glib::object::IsA".into(), None);
         }
     }
 
