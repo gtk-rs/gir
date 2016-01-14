@@ -17,7 +17,6 @@ pub fn generate(w: &mut Write, env: &Env, analysis: &analysis::functions::Info,
     let mut commented = false;
     let mut comment_prefix = "";
     let mut pub_prefix = if in_trait { "" } else { "pub " };
-    try!(writeln!(w, ""));
     match analysis.visibility {
         Visibility::Public => {}
         Visibility::Comment => {
@@ -37,6 +36,7 @@ pub fn generate(w: &mut Write, env: &Env, analysis: &analysis::functions::Info,
     let declaration = declaration(env, analysis);
     let suffix = if only_declaration { ";" } else { " {" };
 
+    try!(writeln!(w, ""));
     try!(cfg_condition(w, &analysis.cfg_condition, commented, indent));
     try!(version_condition(w, &env.config.library_name,
         env.config.min_cfg_version, analysis.version, commented, indent));
