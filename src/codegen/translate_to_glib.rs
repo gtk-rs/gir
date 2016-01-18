@@ -37,6 +37,6 @@ fn to_glib_xxx(transfer: library::Transfer, ref_mode: RefMode) -> (&'static str,
             RefMode::ByRefImmut => ("mut_override(", ".to_glib_none().0)"),
         },
         Full => ("", ".to_glib_full()"),
-        Container => ("", ".to_glib_container()"),
+        Container => ("", ".to_glib_container().0"),
     }
 }
