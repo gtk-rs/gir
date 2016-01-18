@@ -1,54 +1,36 @@
+use std::ops::Deref;
+
 use config::gobjects::GObject;
 use env::Env;
 use library;
 use nameutil::*;
 use super::*;
 use super::imports::Imports;
+use super::info_base::InfoBase;
 use traits::*;
-use version::Version;
 
 #[derive(Default)]
 pub struct Info {
-    pub full_name: String,
-    pub class_tid: library::TypeId,
-    pub name: String,
+    pub base: InfoBase,
     pub c_type: String,
     pub get_type: String,
     pub parents: Vec<general::StatusedTypeId>,
     pub implements: Vec<general::StatusedTypeId>,
     pub has_children: bool,
-    pub functions: Vec<functions::Info>,
-    pub specials: special_functions::Infos,
     pub has_constructors: bool,
     pub has_methods: bool,
     pub has_functions: bool,
-    pub imports: Imports,
-    pub version: Option<Version>,
-    pub cfg_condition: Option<String>,
 }
 
-impl Info {
-    ///TODO: return iterator
-    pub fn constructors(&self) -> Vec<&functions::Info> {
-        self.functions.iter()
-            .filter(|f| f.kind == library::FunctionKind::Constructor)
-            .collect()
-    }
+impl Deref for Info {
+    type Target = InfoBase;
 
-    pub fn methods(&self) -> Vec<&functions::Info> {
-        self.functions.iter()
-            .filter(|f| f.kind == library::FunctionKind::Method)
-            .collect()
-    }
-
-    pub fn functions(&self) -> Vec<&functions::Info> {
-        self.functions.iter()
-            .filter(|f| f.kind == library::FunctionKind::Function)
-            .collect()
+    fn deref(&self) -> &InfoBase {
+        &self.base
     }
 }
 
-pub fn new(env: &Env, obj: &GObject) -> Option<Info> {
+pub fn class(env: &Env, obj: &GObject) -> Option<Info> {
     let full_name = obj.name.clone();
 
     let class_tid = match env.library.find_type(0, &full_name) {
@@ -101,30 +83,33 @@ pub fn new(env: &Env, obj: &GObject) -> Option<Info> {
     //don't `use` yourself
     imports.remove(&name);
 
-    let mut info = Info {
+    let base = InfoBase {
         full_name: full_name,
-        class_tid: class_tid,
+        type_id: class_tid,
         name: name,
-        c_type: klass.c_type.clone(),
-        get_type: klass.glib_get_type.clone(),
-        parents: parents,
-        implements: implements,
-        has_children: has_children,
         functions: functions,
         specials: specials,
         imports: imports,
         version: version,
         cfg_condition: obj.cfg_condition.clone(),
-        .. Default::default()
     };
 
-    let has_constructors = !info.constructors().is_empty();
-    let has_methods = !info.methods().is_empty();
-    let has_functions = !info.functions().is_empty();
+    let has_constructors = !base.constructors().is_empty();
+    let has_methods = !base.methods().is_empty();
+    let has_functions = !base.functions().is_empty();
 
-    info.has_constructors = has_constructors;
-    info.has_methods = has_methods;
-    info.has_functions = has_functions;
+    let info = Info {
+        base: base,
+        c_type: klass.c_type.clone(),
+        get_type: klass.glib_get_type.clone(),
+        parents: parents,
+        implements: implements,
+        has_children: has_children,
+        has_constructors: has_constructors,
+        has_methods: has_methods,
+        has_functions: has_functions,
+    };
+
     Some(info)
 }
 
@@ -160,21 +145,28 @@ pub fn interface(env: &Env, obj: &GObject) -> Option<Info> {
     //don't `use` yourself
     imports.remove(&name);
 
-    let mut info = Info {
+    let base = InfoBase {
         full_name: full_name,
-        class_tid: iface_tid,
+        type_id: iface_tid,
         name: name,
+        functions: functions,
+        specials: Default::default(),
+        imports: imports,
+        version: version,
+        cfg_condition: obj.cfg_condition.clone(),
+    };
+    
+    let has_methods = !base.methods().is_empty();
+    
+    let info = Info {
+        base: base,
         c_type: iface.c_type.clone(),
         get_type: iface.glib_get_type.clone(),
         parents: parents,
         has_children: true,
-        functions: functions,
-        imports: imports,
-        version: version,
-        cfg_condition: obj.cfg_condition.clone(),
+        has_methods: has_methods,
         .. Default::default()
     };
 
-    info.has_methods = !info.methods().is_empty();
     Some(info)
 }
