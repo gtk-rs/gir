@@ -1,28 +1,31 @@
+use std::ops::Deref;
+
 use config::gobjects::GObject;
 use env::Env;
 use library;
 use nameutil::*;
 use super::*;
 use super::imports::Imports;
+use super::info_base::InfoBase;
 use traits::*;
-use version::Version;
 
 #[derive(Default)]
 pub struct Info {
-    pub full_name: String,
-    pub record_tid: library::TypeId,
-    pub name: String,
-    pub functions: Vec<functions::Info>,
-    pub specials: special_functions::Infos,
-    pub imports: Imports,
-    pub version: Option<Version>,
-    pub cfg_condition: Option<String>,
+    pub base: InfoBase,
+}
+
+impl Deref for Info {
+    type Target = InfoBase;
+
+    fn deref(&self) -> &InfoBase {
+        &self.base
+    }
 }
 
 impl Info {
     //TODO: add test in tests/ for panic
     pub fn type_<'a>(&self, library: &'a library::Library) -> &'a library::Record {
-        let type_ = library.type_(self.record_tid).maybe_ref()
+        let type_ = library.type_(self.type_id).maybe_ref()
             .unwrap_or_else(|| panic!("{} is not a record.", self.full_name));
         type_
     }
@@ -70,15 +73,19 @@ pub fn new(env: &Env, obj: &GObject) -> Option<Info> {
     //don't `use` yourself
     imports.remove(&name);
 
-    let info = Info {
+    let base = InfoBase {
         full_name: full_name,
-        record_tid: record_tid,
+        type_id: record_tid,
         name: name,
         functions: functions,
         specials: specials,
         imports: imports,
         version: version,
         cfg_condition: obj.cfg_condition.clone(),
+    };
+    
+    let info = Info {
+        base: base,
     };
 
     Some(info)

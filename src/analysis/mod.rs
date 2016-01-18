@@ -4,6 +4,7 @@ pub mod functions;
 pub mod general;
 pub mod implements;
 pub mod imports;
+pub mod info_base;
 pub mod namespaces;
 pub mod needed_upcast;
 pub mod object;

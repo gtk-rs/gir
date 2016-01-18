@@ -13,7 +13,7 @@ pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>, traits: &
         }
 
         info!("Analyzing {:?}", obj.name);
-        let info = analysis::object::new(env, obj)
+        let info = analysis::object::class(env, obj)
             .or_else(|| analysis::object::interface(env, obj));
         let class_analysis = match info {
             Some(info) => info,
