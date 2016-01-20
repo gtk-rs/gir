@@ -8,6 +8,7 @@ pub enum RefMode {
     ByRef,
     ByRefMut,
     ByRefImmut, //immutable reference with mutable pointer in ffi
+    ByRefFake,
 }
 
 impl RefMode {
@@ -62,6 +63,7 @@ impl RefMode {
             ByRef => true,
             ByRefMut => true,
             ByRefImmut => true,
+            ByRefFake => true,
         }
     }
 }

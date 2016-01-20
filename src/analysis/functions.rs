@@ -80,12 +80,13 @@ fn analyze_function(env: &Env, func: &library::Function, type_tid: library::Type
             used_types.push(s);
         }
         let type_error = parameter_rust_type(env, par.typ, par.direction, Nullable(false), RefMode::None).is_err();
-        if !par.instance_parameter && par.direction != ParameterDirection::Out &&
-                Bounds::is_needed(&env.library, par.typ) {
-            let type_name = rust_type(env, par.typ);
-            let ignored = if type_error { "/*Ignored*/" } else { "" };
-            if !bounds.add_parameter(&par.name, &format!("{}{}", ignored, type_name.as_str())) {
-                panic!("Too many parameters upcasts for {}", func.c_identifier.as_ref().unwrap())
+        if !par.instance_parameter && par.direction != ParameterDirection::Out {
+            if let Some(bound_type) = Bounds::type_for(&env.library, par.typ) {
+                let type_name = bounds_rust_type(env, par.typ);
+                let ignored = if type_error { "/*Ignored*/" } else { "" };
+                if !bounds.add_parameter(&par.name, &format!("{}{}", ignored, type_name.as_str()), bound_type) {
+                    panic!("Too many parameters upcasts for {}", func.c_identifier.as_ref().unwrap())
+                }
             }
         }
         if type_error {

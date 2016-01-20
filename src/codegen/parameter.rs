@@ -1,5 +1,5 @@
 use env::Env;
-use analysis::bounds::Bounds;
+use analysis::bounds::{Bounds, BoundType};
 use analysis::conversion_type::ConversionType;
 use analysis::parameter::Parameter;
 use analysis::ref_mode::RefMode;
@@ -17,13 +17,15 @@ impl ToParameter for Parameter {
             format!("&{}self", mut_str)
         } else {
             let type_str: String;
-            match bounds.get_parameter_type_alias(&self.name) {
-                Some(t) => {
-                    if *self.nullable {
-                        type_str = format!("Option<&{}{}>", mut_str, t)
-                    }
-                    else {
-                        type_str = format!("&{}{}", mut_str, t)
+            match bounds.get_parameter_alias_info(&self.name) {
+                Some((t, bound_type)) => {
+                    match bound_type {
+                        BoundType::IsA => if *self.nullable {
+                            type_str = format!("Option<&{}{}>", mut_str, t)
+                        } else {
+                            type_str = format!("&{}{}", mut_str, t)
+                        },
+                        BoundType::AsRef  => type_str = t.to_owned(),
                     }
                 }
                 None => {

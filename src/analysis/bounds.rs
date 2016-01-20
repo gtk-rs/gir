@@ -2,13 +2,19 @@ use std::collections::vec_deque::VecDeque;
 use std::slice::Iter;
 use std::vec::Vec;
 
-use library::{Library, Type, TypeId};
+use library::{Fundamental, Library, Type, TypeId};
+
+#[derive(Copy, Clone, Eq, Debug, PartialEq)]
+pub enum BoundType {
+    IsA,
+    AsRef,
+}
 
 #[derive(Debug)]
 pub struct Bounds {
     unused: VecDeque<String>,
-    //Vector tuples <parameter name>, <alias>, <type>
-    used: Vec<(String, String, String)>,
+    //Vector tuples <parameter name>, <alias>, <type>, <bound type>
+    used: Vec<(String, String, String, BoundType)>,
 }
 
 impl Default for Bounds {
@@ -21,31 +27,33 @@ impl Default for Bounds {
 }
 
 impl Bounds {
-    pub fn is_needed(library: &Library, type_id: TypeId) -> bool {
+    pub fn type_for(library: &Library, type_id: TypeId) -> Option<BoundType> {
+        use self::BoundType::*;
         match *library.type_(type_id) {
-            Type::Class(ref klass) => !klass.children.is_empty(),
-            Type::Interface(..) => true,
-            _ => false,
+            Type::Fundamental(Fundamental::Filename) => Some(AsRef),
+            Type::Class(ref klass) => if klass.children.is_empty() { None } else { Some(IsA) },
+            Type::Interface(..) => Some(IsA),
+            _ => None,
         }
     }
-    pub fn add_parameter(&mut self, name: &str, type_str: &str) -> bool {
+    pub fn add_parameter(&mut self, name: &str, type_str: &str, bound_type: BoundType) -> bool {
         if self.used.iter().any(|ref n| n.0 == name)  { return false; }
         let front = self.unused.pop_front();
         if let Some(alias) = front {
-            self.used.push((name.into(), alias.clone(), type_str.into()));
+            self.used.push((name.into(), alias.clone(), type_str.into(), bound_type));
             true
         } else {
             false
         }
     }
-    pub fn get_parameter_type_alias(&self, name: &str) -> Option<String> {
+    pub fn get_parameter_alias_info(&self, name: &str) -> Option<(&str, BoundType)> {
         self.used.iter().find(|ref n| n.0 == name)
-            .map(|t| t.1.clone())
+            .map(|t| (&*t.1, t.3))
     }
     pub fn is_empty(&self) -> bool {
         self.used.is_empty()
     }
-    pub fn iter(&self) ->  Iter<(String, String, String)> {
+    pub fn iter(&self) ->  Iter<(String, String, String, BoundType)> {
         self.used.iter()
     }
 }
@@ -57,24 +65,26 @@ mod tests {
     #[test]
     fn get_new_all() {
         let mut bounds: Bounds = Default::default();
-        assert_eq!(bounds.add_parameter("a", ""), true);
-        assert_eq!(bounds.add_parameter("a", ""), false);  //Don't add second time
-        assert_eq!(bounds.add_parameter("b", ""), true);
-        assert_eq!(bounds.add_parameter("c", ""), true);
-        assert_eq!(bounds.add_parameter("d", ""), true);
-        assert_eq!(bounds.add_parameter("e", ""), true);
-        assert_eq!(bounds.add_parameter("f", ""), true);
-        assert_eq!(bounds.add_parameter("g", ""), true);
-        assert_eq!(bounds.add_parameter("h", ""), false);
+        let typ = BoundType::IsA;
+        assert_eq!(bounds.add_parameter("a", "", typ), true);
+        assert_eq!(bounds.add_parameter("a", "", typ), false);  //Don't add second time
+        assert_eq!(bounds.add_parameter("b", "", typ), true);
+        assert_eq!(bounds.add_parameter("c", "", typ), true);
+        assert_eq!(bounds.add_parameter("d", "", typ), true);
+        assert_eq!(bounds.add_parameter("e", "", typ), true);
+        assert_eq!(bounds.add_parameter("f", "", typ), true);
+        assert_eq!(bounds.add_parameter("g", "", typ), true);
+        assert_eq!(bounds.add_parameter("h", "", typ), false);
     }
 
     #[test]
-    fn get_parameter_type_alias() {
+    fn get_parameter_alias_info() {
         let mut bounds: Bounds = Default::default();
-        bounds.add_parameter("a", "");
-        bounds.add_parameter("b", "");
-        assert_eq!(bounds.get_parameter_type_alias("a"), Some("T".into()));
-        assert_eq!(bounds.get_parameter_type_alias("b"), Some("U".into()));
-        assert_eq!(bounds.get_parameter_type_alias("c"), None);
+        let typ = BoundType::IsA;
+        bounds.add_parameter("a", "", typ);
+        bounds.add_parameter("b", "", typ);
+        assert_eq!(bounds.get_parameter_alias_info("a"), Some(("T", typ)));
+        assert_eq!(bounds.get_parameter_alias_info("b"), Some(("U", typ)));
+        assert_eq!(bounds.get_parameter_alias_info("c"), None);
     }
 }

@@ -77,9 +77,13 @@ pub fn declaration(env: &Env, analysis: &analysis::functions::Info) -> String {
 }
 
 fn bounds(bounds: &Bounds) -> String {
+    use analysis::bounds::BoundType::*;
     if bounds.is_empty() { return String::new() }
     let strs: Vec<String> = bounds.iter()
-        .map(|bound| { format!("{}: IsA<{}>", bound.1, bound.2)})
+        .map(|bound| match bound.3 {
+            IsA => format!("{}: IsA<{}>", bound.1, bound.2),
+            AsRef => format!("{}: AsRef<{}>", bound.1, bound.2),
+        })
         .collect();
     format!("<{}>", strs.join(", "))
 }
