@@ -1,14 +1,13 @@
 use std::vec::Vec;
 
+use analysis::bounds::Bounds;
 use analysis::imports::Imports;
-use analysis::needed_upcast::needed_upcast;
 use analysis::out_parameters;
 use analysis::parameter;
 use analysis::ref_mode::RefMode;
 use analysis::return_value;
 use analysis::rust_type::*;
 use analysis::safety_assertion_mode::SafetyAssertionMode;
-use analysis::upcasts::Upcasts;
 use config;
 use env::Env;
 use library::{self, Nullable, ParameterDirection};
@@ -34,7 +33,7 @@ pub struct Info {
     pub type_name: Result,
     pub parameters: Vec<parameter::Parameter>,
     pub ret: return_value::Info,
-    pub upcasts: Upcasts,
+    pub bounds: Bounds,
     pub outs: out_parameters::Info,
     pub version: Option<Version>,
     pub cfg_condition: Option<String>,
@@ -61,7 +60,7 @@ fn analyze_function(env: &Env, func: &library::Function, type_tid: library::Type
                     configured_functions: &[&config::functions::Function],
                     imports: &mut Imports) -> Info {
     let mut commented = false;
-    let mut upcasts: Upcasts = Default::default();
+    let mut bounds: Bounds = Default::default();
     let mut used_types: Vec<String> = Vec::with_capacity(4);
 
     let version = configured_functions.iter().filter_map(|f| f.version).min()
@@ -82,10 +81,10 @@ fn analyze_function(env: &Env, func: &library::Function, type_tid: library::Type
         }
         let type_error = parameter_rust_type(env, par.typ, par.direction, Nullable(false), RefMode::None).is_err();
         if !par.instance_parameter && par.direction != ParameterDirection::Out &&
-                needed_upcast(&env.library, par.typ) {
+                Bounds::is_needed(&env.library, par.typ) {
             let type_name = rust_type(env, par.typ);
             let ignored = if type_error { "/*Ignored*/" } else { "" };
-            if !upcasts.add_parameter(&par.name, &format!("{}{}", ignored, type_name.as_str())) {
+            if !bounds.add_parameter(&par.name, &format!("{}{}", ignored, type_name.as_str())) {
                 panic!("Too many parameters upcasts for {}", func.c_identifier.as_ref().unwrap())
             }
         }
@@ -114,7 +113,7 @@ fn analyze_function(env: &Env, func: &library::Function, type_tid: library::Type
         if ret.base_tid.is_some() {
             imports.add("glib::object::Downcast".into(), None);
         }
-        if !upcasts.is_empty() {
+        if !bounds.is_empty() {
             imports.add("glib::object::IsA".into(), None);
         }
     }
@@ -130,7 +129,7 @@ fn analyze_function(env: &Env, func: &library::Function, type_tid: library::Type
         type_name: rust_type(env, type_tid),
         parameters: parameters,
         ret: ret,
-        upcasts: upcasts,
+        bounds: bounds,
         outs: outs,
         version: version,
         cfg_condition: cfg_condition,
