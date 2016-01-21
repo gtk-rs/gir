@@ -1,29 +1,31 @@
 use env::Env;
+use analysis::bounds::{Bounds, BoundType};
 use analysis::conversion_type::ConversionType;
 use analysis::parameter::Parameter;
 use analysis::ref_mode::RefMode;
 use analysis::rust_type::parameter_rust_type;
-use analysis::upcasts::Upcasts;
 use traits::*;
 
 pub trait ToParameter {
-    fn to_parameter(&self, env: &Env, upcasts: &Upcasts) -> String;
+    fn to_parameter(&self, env: &Env, bounds: &Bounds) -> String;
 }
 
 impl ToParameter for Parameter {
-    fn to_parameter(&self, env: &Env, upcasts: &Upcasts) -> String {
+    fn to_parameter(&self, env: &Env, bounds: &Bounds) -> String {
         let mut_str = if self.ref_mode == RefMode::ByRefMut { "mut " } else { "" };
         if self.instance_parameter {
             format!("&{}self", mut_str)
         } else {
             let type_str: String;
-            match upcasts.get_parameter_type_alias(&self.name) {
-                Some(t) => {
-                    if *self.nullable {
-                        type_str = format!("Option<&{}{}>", mut_str, t)
-                    }
-                    else {
-                        type_str = format!("&{}{}", mut_str, t)
+            match bounds.get_parameter_alias_info(&self.name) {
+                Some((t, bound_type)) => {
+                    match bound_type {
+                        BoundType::IsA => if *self.nullable {
+                            type_str = format!("Option<&{}{}>", mut_str, t)
+                        } else {
+                            type_str = format!("&{}{}", mut_str, t)
+                        },
+                        BoundType::AsRef  => type_str = t.to_owned(),
                     }
                 }
                 None => {

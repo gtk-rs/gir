@@ -49,8 +49,8 @@ pub fn new(env: &Env, obj: &GObject) -> Option<Info> {
     };
 
     let mut imports = Imports::new();
-    imports.add("glib::translate::*".into(), None);
-    imports.add("ffi".into(), None);
+    imports.add("glib::translate::*", None);
+    imports.add("ffi", None);
 
     let mut functions =
         functions::analyze(env, &record.functions, record_tid, &obj, &mut imports);

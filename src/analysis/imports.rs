@@ -12,8 +12,8 @@ impl Imports {
         Imports { map: BTreeMap::new() }
     }
 
-    pub fn add(&mut self, name: String, version: Option<Version>) {
-        let entry = self.map.entry(name).or_insert(version);
+    pub fn add(&mut self, name: &str, version: Option<Version>) {
+        let entry = self.map.entry(name.to_owned()).or_insert(version);
         if version < *entry {
             *entry = version;
         }

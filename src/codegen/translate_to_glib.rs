@@ -19,7 +19,7 @@ impl TranslateToGlib for chunk::parameter_ffi_call_in::Parameter {
                     format!("{}self{}", left, right)
                 }
                 else {
-                    format!("{}{}{}", left, self.name, right)
+                    format!("{}{}{}{}", left, self.name, self.to_glib_extra, right)
                 }
             }
             Unknown => format!("/*Unknown conversion*/{}", self.name),
@@ -35,6 +35,7 @@ fn to_glib_xxx(transfer: library::Transfer, ref_mode: RefMode) -> (&'static str,
             RefMode::ByRef => ("", ".to_glib_none().0"),
             RefMode::ByRefMut => ("", ".to_glib_none_mut().0"),
             RefMode::ByRefImmut => ("mut_override(", ".to_glib_none().0)"),
+            RefMode::ByRefFake => ("", ""),//unreachable!(),
         },
         Full => ("", ".to_glib_full()"),
         Container => ("", ".to_glib_container().0"),

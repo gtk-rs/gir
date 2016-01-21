@@ -1,3 +1,4 @@
+pub mod bounds;
 pub mod c_type;
 pub mod conversion_type;
 pub mod functions;
@@ -6,7 +7,6 @@ pub mod implements;
 pub mod imports;
 pub mod info_base;
 pub mod namespaces;
-pub mod needed_upcast;
 pub mod object;
 pub mod out_parameters;
 pub mod parameter;
@@ -18,4 +18,3 @@ pub mod return_value;
 pub mod rust_type;
 pub mod safety_assertion_mode;
 pub mod special_functions;
-pub mod upcasts;

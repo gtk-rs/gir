@@ -48,8 +48,8 @@ pub fn class(env: &Env, obj: &GObject) -> Option<Info> {
     };
 
     let mut imports = Imports::new();
-    imports.add("glib::translate::*".into(), None);
-    imports.add("ffi".into(), None);
+    imports.add("glib::translate::*", None);
+    imports.add("ffi", None);
 
     let parents = parents::analyze_class(env, klass, &mut imports);
     let implements = implements::analyze(env, klass, &mut imports);
@@ -68,7 +68,7 @@ pub fn class(env: &Env, obj: &GObject) -> Option<Info> {
     }
 
     if has_children {
-        imports.add("glib::object::IsA".into(), None);
+        imports.add("glib::object::IsA", None);
     }
 
     let mut functions =
@@ -131,9 +131,9 @@ pub fn interface(env: &Env, obj: &GObject) -> Option<Info> {
     };
 
     let mut imports = Imports::new();
-    imports.add("glib::translate::*".into(), None);
-    imports.add("ffi".into(), None);
-    imports.add("glib::object::IsA".into(), None);
+    imports.add("glib::translate::*", None);
+    imports.add("ffi", None);
+    imports.add("glib::object::IsA", None);
 
     let parents = parents::analyze_interface(env, iface, &mut imports);
 

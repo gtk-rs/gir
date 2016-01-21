@@ -4,6 +4,7 @@ use config::functions::Function;
 use env::Env;
 use library;
 use nameutil;
+use super::bounds::Bounds;
 use super::ref_mode::RefMode;
 
 #[derive(Clone, Debug)]
@@ -22,6 +23,9 @@ pub struct Parameter {
 
     //analysis fields
     pub ref_mode: RefMode,
+    //for AsRef trait bound
+    //TODO: Find normal way to do it
+    pub to_glib_extra: String,
 }
 
 pub fn analyze(env: &Env, par: &library::Parameter, configured_functions: &[&Function]) -> Parameter {
@@ -39,6 +43,7 @@ pub fn analyze(env: &Env, par: &library::Parameter, configured_functions: &[&Fun
         .filter_map(|p| p.nullable)
         .next();
     let nullable = nullable_override.unwrap_or(par.nullable);
+    let to_glib_extra = Bounds::to_glib_extra(&env.library, par.typ);
 
     Parameter {
         name: name.into_owned(),
@@ -52,5 +57,6 @@ pub fn analyze(env: &Env, par: &library::Parameter, configured_functions: &[&Fun
         allow_none: par.allow_none,
         ref_mode: ref_mode,
         is_error: par.is_error,
+        to_glib_extra: to_glib_extra,
     }
 }

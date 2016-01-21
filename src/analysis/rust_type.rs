@@ -20,6 +20,10 @@ pub fn rust_type(env: &Env, type_id: library::TypeId) -> Result {
     rust_type_full(env, type_id, Nullable(false), RefMode::None)
 }
 
+pub fn bounds_rust_type(env: &Env, type_id: library::TypeId) -> Result {
+    rust_type_full(env, type_id, Nullable(false), RefMode::ByRefFake)
+}
+
 fn rust_type_full(env: &Env, type_id: library::TypeId, nullable: Nullable, ref_mode: RefMode) -> Result {
     use library::Type::*;
     use library::Fundamental::*;
@@ -49,7 +53,7 @@ fn rust_type_full(env: &Env, type_id: library::TypeId, nullable: Nullable, ref_m
 
                 UniChar => ok("char"),
                 Utf8 => if ref_mode.is_ref() { ok("str") } else { ok("String") },
-                Filename => if ref_mode.is_ref() { ok("str") } else { ok("String") },
+                Filename => if ref_mode.is_ref() { ok("std::path::Path") } else { ok("std::path::PathBuf") },
 
                 Type => ok("glib::types::Type"),
                 Unsupported => err("Unsupported"),
@@ -96,7 +100,7 @@ fn rust_type_full(env: &Env, type_id: library::TypeId, nullable: Nullable, ref_m
         }
     }
     match ref_mode {
-        RefMode::None => {}
+        RefMode::None | RefMode::ByRefFake => {}
         RefMode::ByRef | RefMode::ByRefImmut => rust_type = rust_type.map_any(|s| format!("&{}", s)),
         RefMode::ByRefMut => rust_type = rust_type.map_any(|s| format!("&mut {}", s)),
     }

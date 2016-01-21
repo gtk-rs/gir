@@ -1,8 +1,8 @@
 use std::io::{Result, Write};
 
 use analysis;
+use analysis::bounds::Bounds;
 use analysis::functions::Visibility;
-use analysis::upcasts::Upcasts;
 use chunk::{ffi_function_todo, Chunk};
 use env::Env;
 use super::function_body_chunk;
@@ -62,24 +62,28 @@ pub fn declaration(env: &Env, analysis: &analysis::functions::Info) -> String {
     };
     let mut param_str = String::with_capacity(100);
 
-    let upcasts = upcasts(&analysis.upcasts);
+    let bounds = bounds(&analysis.bounds);
 
     for (pos, par) in analysis.parameters.iter().enumerate() {
         if outs_as_return && analysis.outs.iter().any(|p| p.name==par.name) {
             continue;
         }
         if pos > 0 { param_str.push_str(", ") }
-        let s = par.to_parameter(env, &analysis.upcasts);
+        let s = par.to_parameter(env, &analysis.bounds);
         param_str.push_str(&s);
     }
 
-    format!("fn {}{}({}){}", analysis.name, upcasts, param_str, return_str)
+    format!("fn {}{}({}){}", analysis.name, bounds, param_str, return_str)
 }
 
-fn upcasts(upcasts: &Upcasts) -> String {
-    if upcasts.is_empty() { return String::new() }
-    let strs: Vec<String> = upcasts.iter()
-        .map(|upcast| { format!("{}: IsA<{}>", upcast.1, upcast.2)})
+fn bounds(bounds: &Bounds) -> String {
+    use analysis::bounds::BoundType::*;
+    if bounds.is_empty() { return String::new() }
+    let strs: Vec<String> = bounds.iter()
+        .map(|bound| match bound.3 {
+            IsA => format!("{}: IsA<{}>", bound.1, bound.2),
+            AsRef => format!("{}: AsRef<{}>", bound.1, bound.2),
+        })
         .collect();
     format!("<{}>", strs.join(", "))
 }
