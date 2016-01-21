@@ -37,6 +37,12 @@ impl Bounds {
             _ => None,
         }
     }
+    pub fn to_glib_extra(library: &Library, type_id: TypeId) -> String {
+        match *library.type_(type_id) {
+            Type::Fundamental(Fundamental::Filename) => ".as_ref()".to_owned(),
+            _ => String::new(),
+        }
+    }
     pub fn add_parameter(&mut self, name: &str, type_str: &str, bound_type: BoundType) -> bool {
         if self.used.iter().any(|ref n| n.0 == name)  { return false; }
         let front = self.unused.pop_front();

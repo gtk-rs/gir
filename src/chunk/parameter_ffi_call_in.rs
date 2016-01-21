@@ -10,6 +10,7 @@ pub struct Parameter {
     pub transfer: library::Transfer,
     pub nullable: library::Nullable,
     pub ref_mode: analysis::ref_mode::RefMode,
+    pub to_glib_extra: String,
 }
 
 impl<'a> From<&'a analysis::parameter::Parameter> for Parameter {
@@ -22,6 +23,7 @@ impl<'a> From<&'a analysis::parameter::Parameter> for Parameter {
             transfer: orig.transfer,
             nullable: orig.nullable,
             ref_mode: orig.ref_mode,
+            to_glib_extra: orig.to_glib_extra.clone(),
         }
     }
 }

@@ -19,7 +19,7 @@ impl TranslateToGlib for chunk::parameter_ffi_call_in::Parameter {
                     format!("{}self{}", left, right)
                 }
                 else {
-                    format!("{}{}{}", left, self.name, right)
+                    format!("{}{}{}{}", left, self.name, self.to_glib_extra, right)
                 }
             }
             Unknown => format!("/*Unknown conversion*/{}", self.name),
