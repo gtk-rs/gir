@@ -22,7 +22,7 @@ pub fn analyze_class(env: &Env, type_: &Class, imports: &mut Imports)
         });
 
         if !status.ignored() {
-            used_rust_type(env, parent_tid).ok().map(|s| imports.add(s, None));
+            used_rust_type(env, parent_tid).ok().map(|s| imports.add(&s, None));
         }
     }
 
@@ -44,7 +44,7 @@ pub fn analyze_interface(env: &Env, type_: &Interface, imports: &mut Imports)
         });
 
         if !status.ignored() {
-            used_rust_type(env, parent_tid).ok().map(|s| imports.add(s, None));
+            used_rust_type(env, parent_tid).ok().map(|s| imports.add(&s, None));
         }
     }
 

@@ -23,7 +23,7 @@ pub fn analyze(env: &Env, type_: &library::Class, imports: &mut Imports)
             status: status,
         });
         let _ = used_rust_type(env, interface_tid)
-            .map(|s| imports.add(s, None));
+            .map(|s| imports.add(&s, None));
     }
     implements
 }

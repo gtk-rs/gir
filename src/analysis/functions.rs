@@ -105,18 +105,15 @@ fn analyze_function(env: &Env, func: &library::Function, type_tid: library::Type
     if !commented {
         for s in used_types {
             if let Some(i) = s.find("::") {
-                imports.add(s[..i].into(), version);
-            }
-            else {
-                imports.add(s, version);
+                imports.add(&s[..i], version);
+            } else {
+                imports.add(&s, version);
             }
         }
         if ret.base_tid.is_some() {
-            imports.add("glib::object::Downcast".into(), None);
+            imports.add("glib::object::Downcast", None);
         }
-        if !bounds.is_empty() {
-            imports.add("glib::object::IsA".into(), None);
-        }
+        bounds.update_imports(imports);
     }
 
     let visibility = if commented { Visibility::Comment } else { Visibility::Public };

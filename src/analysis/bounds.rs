@@ -3,6 +3,7 @@ use std::slice::Iter;
 use std::vec::Vec;
 
 use library::{Fundamental, Library, Type, TypeId};
+use super::imports::Imports;
 
 #[derive(Copy, Clone, Eq, Debug, PartialEq)]
 pub enum BoundType {
@@ -50,6 +51,20 @@ impl Bounds {
         self.used.iter().find(|ref n| n.0 == name)
             .map(|t| (&*t.1, t.3))
     }
+    pub fn update_imports(&self, imports: &mut Imports) {
+        //TODO: import with versions
+        use self::BoundType::*;
+        for used in &self.used {
+            match used.3 {
+                IsA => imports.add("glib::object::IsA", None),
+                AsRef => if let Some(i) = used.2.find("::") {
+                    imports.add(&used.2[..i], None);
+                } else {
+                    imports.add(&used.2, None);
+                }
+            }
+        }
+   }
     pub fn is_empty(&self) -> bool {
         self.used.is_empty()
     }

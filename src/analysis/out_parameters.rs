@@ -84,7 +84,7 @@ pub fn analyze_imports(env: &Env, func: &Function, imports: &mut Imports) {
             match *env.library.type_(par.typ) {
                 Type::Fundamental(..) |
                     Type::Bitfield(..) |
-                    Type::Enumeration(..) => imports.add("std::mem".into(), func.version),
+                    Type::Enumeration(..) => imports.add("std::mem", func.version),
                 _ => imports.add("std::ptr".into(), func.version),
             }
         }
