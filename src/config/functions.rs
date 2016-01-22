@@ -169,10 +169,7 @@ impl Function {
         let mut v = Vec::new();
         for f in functions {
             let pars = f.parameters.matched(parameter_name);
-            //TODO: change to push_all
-            for par in pars {
-                v.push(par);
-            }
+            v.extend_from_slice(&pars);
         }
         v
     }
