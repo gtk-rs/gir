@@ -100,10 +100,7 @@ impl ToCode for [Chunk] {
         let mut v = Vec::new();
         for ch in self {
             let strs = ch.to_code(env);
-            //TODO: append
-            for s in strs {
-                v.push(s.clone());
-            }
+            v.extend_from_slice(&strs);
         }
         v
     }

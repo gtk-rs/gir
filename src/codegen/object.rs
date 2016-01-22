@@ -74,19 +74,12 @@ pub fn generate_reexports(env: &Env, analysis: &analysis::object::Info, module_n
         cfgs.push(cfg);
     }
     contents.push(format!(""));
-    //TODO: replace to Vec::extend_from_slice on stable 1.6
-    for cfg in &cfgs {
-        contents.push(cfg.clone());
-    }
+    contents.extend_from_slice(&cfgs);
     contents.push(format!("mod {};", module_name));
-    for cfg in &cfgs {
-        contents.push(cfg.clone());
-    }
+    contents.extend_from_slice(&cfgs);
     contents.push(format!("pub use self::{}::{};", module_name, analysis.name));
     if generate_trait(analysis) {
-        for cfg in &cfgs {
-            contents.push(cfg.clone());
-        }
+        contents.extend_from_slice(&cfgs);
         contents.push(format!("pub use self::{}::{}Ext;", module_name, analysis.name));
         for cfg in &cfgs {
             traits.push(format!("\t{}", cfg));
