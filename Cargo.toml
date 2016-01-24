@@ -4,6 +4,7 @@ version = "0.0.1"
 authors = [
 	"Evgenii Pashkin <eapashkin@gmail.com>",
 	"Gleb Kozyrev <gleb@gkoz.com>",
+	"Guillaume Gomez <guillaume1.gomez@gmail.com>",
 ]
 build = "build.rs"
 exclude = ["Gir*.toml", "tests/**/*", "*.md"]
