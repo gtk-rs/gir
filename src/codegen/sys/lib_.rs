@@ -45,12 +45,15 @@ fn generate_lib(w: &mut Write, env: &Env) -> Result<()>{
     let records = prepare(ns);
     let classes = prepare(ns);
     let interfaces = prepare(ns);
+    let bitfields = prepare(ns);
+    let enums = prepare(ns);
+    let unions = prepare(ns);
 
     try!(generate_aliases(w, env, &prepare(ns)));
-    try!(generate_enums(w, &prepare(ns)));
+    try!(generate_enums(w, &enums));
     try!(generate_constants(w, env, &ns.constants));
-    try!(generate_bitfields(w, &prepare(ns)));
-    try!(generate_unions(w, &prepare(ns)));
+    try!(generate_bitfields(w, &bitfields));
+    try!(generate_unions(w, &unions));
     try!(functions::generate_callbacks(w, env, &prepare(ns)));
     try!(generate_records(w, env, &records));
     try!(generate_classes_structs(w, &classes));
@@ -58,6 +61,9 @@ fn generate_lib(w: &mut Write, env: &Env) -> Result<()>{
 
     try!(writeln!(w, ""));
     try!(writeln!(w, "extern \"C\" {{"));
+    try!(functions::generate_enums_funcs(w, env, &enums));
+    try!(functions::generate_bitfields_funcs(w, env, &bitfields));
+    try!(functions::generate_unions_funcs(w, env, &unions));
     try!(functions::generate_records_funcs(w, env, &records));
     try!(functions::generate_classes_funcs(w, env, &classes));
     try!(functions::generate_interfaces_funcs(w, env, &interfaces));

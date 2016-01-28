@@ -31,6 +31,36 @@ pub fn generate_classes_funcs(w: &mut Write, env: &Env, classes: &[&library::Cla
     Ok(())
 }
 
+pub fn generate_bitfields_funcs(w: &mut Write, env: &Env, bitfields: &[&library::Bitfield])
+        -> Result<()> {
+    for bitfield in bitfields {
+        try!(generate_object_funcs(w, env, &bitfield.c_type, INTERN, &bitfield.functions));
+    }
+
+    Ok(())
+}
+
+pub fn generate_enums_funcs(w: &mut Write, env: &Env, enums: &[&library::Enumeration])
+        -> Result<()> {
+    for en in enums {
+        try!(generate_object_funcs(w, env, &en.c_type, INTERN, &en.functions));
+    }
+
+    Ok(())
+}
+
+pub fn generate_unions_funcs(w: &mut Write, env: &Env, unions: &[&library::Union]) -> Result<()> {
+    for union in unions {
+        let c_type = match union.c_type {
+            Some(ref x) => x,
+            None => return Ok(()),
+        };
+        try!(generate_object_funcs(w, env, c_type, INTERN, &union.functions));
+    }
+
+    Ok(())
+}
+
 pub fn generate_interfaces_funcs(w: &mut Write, env: &Env, interfaces: &[&library::Interface]) -> Result<()> {
     for interface in interfaces {
         try!(generate_object_funcs(w, env,  &interface.c_type,
