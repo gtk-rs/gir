@@ -11,7 +11,7 @@ exclude = ["Gir*.toml", "tests/**/*", "*.md"]
 
 [dependencies]
 docopt = "*"
-xml-rs = "*"
+xml-rs = "0.2.1"
 toml = "*"
 case = "*"
 env_logger = "*"
@@ -19,6 +19,7 @@ git2 = "*"
 lazy_static = "*"
 log = "*"
 regex = "*"
+stripper_interface = "*"
 
 [build-dependencies]
 git2 = "*"
