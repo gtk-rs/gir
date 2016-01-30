@@ -276,7 +276,7 @@ pub struct Parameter {
     pub allow_none: bool,
     pub is_error: bool,
     pub doc: Option<String>,
-    pub doc_deprecated: Option<String>,
+    pub doc_deprecated: Option<String>, // Unused but needed for interface
 }
 
 pub struct Function {

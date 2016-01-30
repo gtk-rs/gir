@@ -735,8 +735,8 @@ impl Library {
                 nullable: Nullable(true),
                 allow_none: true,
                 is_error: true,
-                doc: doc.clone(),
-                doc_deprecated: doc_deprecated.clone(),
+                doc: None,
+                doc_deprecated: None,
             });
         }
         if let Some(ret) = ret {
@@ -823,6 +823,7 @@ impl Library {
 
         let mut typ = None;
         let mut varargs = false;
+        let mut doc = None;
         loop {
             let event = try!(parser.next());
             match event {
@@ -842,7 +843,7 @@ impl Library {
                             varargs = true;
                             try!(ignore_element(parser));
                         }
-                        "doc" => try!(ignore_element(parser)),
+                        "doc" => doc = try!(read_text(parser)),
                         x => return Err(mk_error!(format!("Unexpected element <{}>", x), parser)),
                     }
                 }
@@ -862,7 +863,7 @@ impl Library {
                 nullable: Nullable(nullable),
                 allow_none: allow_none,
                 is_error: false,
-                doc: None,
+                doc: doc,
                 doc_deprecated: None,
             })
         }
@@ -878,7 +879,7 @@ impl Library {
                 nullable: Nullable(false),
                 allow_none: allow_none,
                 is_error: false,
-                doc: None,
+                doc: doc,
                 doc_deprecated: None,
             })
         }
@@ -947,19 +948,25 @@ impl Get for Attributes {
 }
 
 fn read_text(parser: &mut Reader) -> Result<Option<String>, Error> {
-    match try!(parser.next()) {
-        Characters(mut text) => {
-            Ok(if let Some(ret) = try!(read_text(parser)) {
-                text.push_str(&ret);
-                Some(text)
-            } else {
-                Some(text)
-            })
+    let mut ret_text = None;
+
+    loop {
+        let event = try!(parser.next());
+        match event {
+            Characters(text) => {
+                ret_text = match ret_text {
+                    Some(t) => Some(format!("{}{}", t, text)),
+                    None => Some(text),
+                }
+            }
+            EndElement { .. } => break,
+            StartElement { name, .. } => return Err(mk_error!(&format!("Unexpected element: {}",
+                                                                       name.local_name),
+                                                              parser)),
+            _ => xml_next!(event, parser),
         }
-        EndElement { .. } => Ok(None),
-        StartElement { .. } => Err(mk_error!("Unexpected element: StartElement", parser)),
-        _ => read_text(parser),
     }
+    Ok(ret_text)
 }
 
 fn ignore_element(parser: &mut Reader) -> Result<(), Error> {
