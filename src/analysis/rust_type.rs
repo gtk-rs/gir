@@ -94,7 +94,7 @@ fn rust_type_full(env: &Env, type_id: library::TypeId, nullable: Nullable, ref_m
         let rust_type_with_prefix = rust_type.map(|s| format!("{}::{}",
             crate_name(&env.library.namespace(type_id.ns_id).name), s));
         if env.type_status(&type_id.full_name(&env.library)).ignored() {
-            rust_type = Err(rust_type_with_prefix.as_str().into());
+            rust_type = Err(format!("/*Ignored*/{}", rust_type_with_prefix.as_str()));
         } else {
             rust_type = rust_type_with_prefix;
         }
@@ -165,9 +165,7 @@ pub fn parameter_rust_type(env: &Env, type_id:library::TypeId,
             Bitfield(..) => format_parameter(rust_type, direction),
 
         Record(..) => {
-            if env.type_status(&type_id.full_name(&env.library)).ignored() {
-                Err(format!("/*Ignored*/{}", rust_type.as_str()))
-            } else if direction == library::ParameterDirection::InOut {
+            if direction == library::ParameterDirection::InOut {
                 Err(format!("/*Unimplemented*/{}", rust_type.as_str()))
             } else {
                 rust_type
@@ -177,9 +175,6 @@ pub fn parameter_rust_type(env: &Env, type_id:library::TypeId,
         Class(..) |
             Interface (..) => {
             match direction {
-                _ if env.type_status(&type_id.full_name(&env.library)).ignored() => {
-                    Err(format!("/*Ignored*/{}", rust_type.as_str()))
-                }
                 library::ParameterDirection::In |
                     library::ParameterDirection::Out |
                     library::ParameterDirection::Return => rust_type,
