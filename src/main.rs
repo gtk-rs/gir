@@ -9,6 +9,7 @@ extern crate log;
 extern crate xml;
 extern crate toml;
 extern crate regex;
+extern crate stripper_interface;
 
 use std::error::Error;
 use std::process;

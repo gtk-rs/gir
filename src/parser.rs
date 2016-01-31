@@ -6,7 +6,7 @@ use xml::attribute::OwnedAttribute;
 use xml::common::Position;
 use xml::name::OwnedName;
 use xml::reader::{Error, EventReader};
-use xml::reader::XmlEvent::{StartElement, EndElement, EndDocument};
+use xml::reader::XmlEvent::{StartElement, EndElement, EndDocument, Characters};
 
 use library::*;
 
@@ -159,6 +159,8 @@ impl Library {
             .ok_or_else(|| mk_error!("Missing get-type attribute", parser)));
         let mut fns = Vec::new();
         let mut impls = Vec::new();
+        let mut doc = None;
+        let mut doc_deprecated = None;
         loop {
             let event = try!(parser.next());
             match event {
@@ -170,7 +172,8 @@ impl Library {
                             impls.push(try!(self.read_type(parser, ns_id, &name, &attributes)).0),
                         "field" | "property"
                             | "signal" | "virtual-method" => try!(ignore_element(parser)),
-                        "doc" | "doc-deprecated" => try!(ignore_element(parser)),
+                        "doc" => doc = try!(read_text(parser)),
+                        "doc-deprecated" => doc_deprecated = try!(read_text(parser)),
                         x => return Err(mk_error!(format!("Unexpected element <{}>", x), parser)),
                     }
                 }
@@ -188,6 +191,8 @@ impl Library {
                 functions: fns,
                 parent: parent,
                 implements: impls,
+                doc: doc,
+                doc_deprecated: doc_deprecated,
                 .. Class::default()
             });
         self.add_type(ns_id, name, typ);
@@ -203,6 +208,8 @@ impl Library {
         let get_type = attrs.get("get-type");
         let mut fields = Vec::new();
         let mut fns = Vec::new();
+        let mut doc = None;
+        let mut doc_deprecated = None;
         loop {
             let event = try!(parser.next());
             match event {
@@ -211,15 +218,16 @@ impl Library {
                         kind @ "constructor" | kind @ "function" | kind @ "method" =>
                             try!(self.read_function_to_vec(parser, ns_id, kind, &attributes, &mut fns)),
                         "union" => {
-                            let (union_fields, _) = try!(self.read_union(parser, ns_id));
+                            let (union_fields, _, doc, doc_deprecated) = try!(self.read_union(parser, ns_id));
                             let typ = Type::union(self, union_fields);
-                            fields.push(Field { typ: typ, .. Field::default() });
+                            fields.push(Field { typ: typ, doc: doc, doc_deprecated: doc_deprecated, .. Field::default() });
                         }
                         "field" => {
                             fields.push(try!(
                                 self.read_field(parser, ns_id, &attributes)));
                         }
-                        "doc" | "doc-deprecated" => try!(ignore_element(parser)),
+                        "doc" => doc = try!(read_text(parser)),
+                        "doc-deprecated" => doc_deprecated = try!(read_text(parser)),
                         x => return Err(mk_error!(format!("Unexpected element <{}>", x), parser)),
                     }
                 }
@@ -244,6 +252,8 @@ impl Library {
                     c_identifier: "GdkAtom".into(),
                     typ: tid,
                     target_c_type: "GdkAtom_*".into(),
+                    doc: doc.clone(),
+                    doc_deprecated: doc.clone(),
                 }));
         }
 
@@ -254,6 +264,8 @@ impl Library {
                 glib_get_type: get_type.map(|s| s.into()),
                 fields: fields,
                 functions: fns,
+                doc: doc,
+                doc_deprecated: doc_deprecated,
             });
         self.add_type(ns_id, name, typ);
         Ok(())
@@ -263,22 +275,26 @@ impl Library {
             -> Result<(), Error> {
         let name = try!(attrs.get("name").ok_or_else(|| mk_error!("Missing union name", parser)));
         let c_type = attrs.get("type");
-        let (fields, fns) = try!(self.read_union(parser, ns_id));
+        let (fields, fns, doc, doc_deprecated) = try!(self.read_union(parser, ns_id));
         let typ = Type::Union(
             Union {
                 name: name.into(),
                 c_type: c_type.map(|s| s.into()),
                 fields: fields,
                 functions: fns,
+                doc: doc,
+                doc_deprecated: doc_deprecated,
             });
         self.add_type(ns_id, name, typ);
         Ok(())
     }
 
     fn read_union(&mut self, parser: &mut Reader, ns_id: u16)
-            -> Result<(Vec<Field>, Vec<Function>), Error> {
+            -> Result<(Vec<Field>, Vec<Function>, Option<String>, Option<String>), Error> {
         let mut fields = Vec::new();
         let mut fns = Vec::new();
+        let mut doc = None;
+        let mut doc_deprecated = None;
         loop {
             let event = try!(parser.next());
             match event {
@@ -291,7 +307,8 @@ impl Library {
                         kind @ "constructor" | kind @ "function" | kind @ "method" =>
                             try!(self.read_function_to_vec(parser, ns_id, kind, &attributes, &mut fns)),
                         "record" => try!(ignore_element(parser)),
-                        "doc" | "doc-deprecated" => try!(ignore_element(parser)),
+                        "doc" => doc = try!(read_text(parser)),
+                        "doc-deprecated" => doc_deprecated = try!(read_text(parser)),
                         x => return Err(mk_error!(format!("Unexpected element <{}>", x), parser)),
                     }
                 }
@@ -299,13 +316,15 @@ impl Library {
                 _ => xml_next!(event, parser),
             }
         }
-        Ok((fields, fns))
+        Ok((fields, fns, doc, doc_deprecated))
     }
 
     fn read_field(&mut self, parser: &mut Reader, ns_id: u16,
                   attrs: &Attributes) -> Result<Field, Error> {
         let name = try!(attrs.get("name").ok_or_else(|| mk_error!("Missing field name", parser)));
         let mut typ = None;
+        let mut doc = None;
+        let mut doc_deprecated = None;
         loop {
             let event = try!(parser.next());
             match event {
@@ -327,7 +346,8 @@ impl Library {
                                 try!(self.read_function(parser, ns_id, "callback", &attributes));
                             typ = Some((Type::function(self, f), None));
                         }
-                        "doc" | "doc-deprecated" => try!(ignore_element(parser)),
+                        "doc" => doc = try!(read_text(parser)),
+                        "doc-deprecated" => doc_deprecated = try!(read_text(parser)),
                         x => return Err(mk_error!(format!("Unexpected element <{}>", x), parser)),
                     }
                 }
@@ -344,6 +364,8 @@ impl Library {
                 c_type: c_type,
                 private: private,
                 bits: bits,
+                doc: doc,
+                doc_deprecated: doc_deprecated,
             })
         }
         else {
@@ -368,6 +390,8 @@ impl Library {
             .ok_or_else(|| mk_error!("Missing get-type attribute", parser)));
         let mut fns = Vec::new();
         let mut prereqs = Vec::new();
+        let mut doc = None;
+        let mut doc_deprecated = None;
         loop {
             let event = try!(parser.next());
             match event {
@@ -377,7 +401,8 @@ impl Library {
                             try!(self.read_function_to_vec(parser, ns_id, kind, &attributes, &mut fns)),
                         "prerequisite" =>
                             prereqs.push(try!(self.read_type(parser, ns_id, &name, &attributes)).0),
-                        "doc" | "doc-deprecated" => try!(ignore_element(parser)),
+                        "doc" => doc = try!(read_text(parser)),
+                        "doc-deprecated" => doc_deprecated = try!(read_text(parser)),
                         _ => try!(ignore_element(parser)),
                     }
                 }
@@ -393,6 +418,8 @@ impl Library {
                 glib_get_type : get_type.into(),
                 functions: fns,
                 prerequisites: prereqs,
+                doc: doc,
+                doc_deprecated: doc_deprecated,
                 .. Interface::default()
             });
         self.add_type(ns_id, name, typ);
@@ -407,6 +434,8 @@ impl Library {
                           .ok_or_else(|| mk_error!("Missing c:type attribute", parser)));
         let mut members = Vec::new();
         let mut fns = Vec::new();
+        let mut doc = None;
+        let mut doc_deprecated = None;
         loop {
             let event = try!(parser.next());
             match event {
@@ -418,7 +447,8 @@ impl Library {
                         }
                         kind @ "constructor" | kind @ "function" | kind @ "method" =>
                             try!(self.read_function_to_vec(parser, ns_id, kind, &attributes, &mut fns)),
-                        "doc" | "doc-deprecated" => try!(ignore_element(parser)),
+                        "doc" => doc = try!(read_text(parser)),
+                        "doc-deprecated" => doc_deprecated = try!(read_text(parser)),
                         x => return Err(mk_error!(format!("Unexpected element <{}>", x), parser)),
                     }
                 }
@@ -433,6 +463,8 @@ impl Library {
                 c_type: c_type.into(),
                 members: members,
                 functions: fns,
+                doc: doc,
+                doc_deprecated: doc_deprecated,
             });
         self.add_type(ns_id, name, typ);
         Ok(())
@@ -446,6 +478,8 @@ impl Library {
                           .ok_or_else(|| mk_error!("Missing c:type attribute", parser)));
         let mut members = Vec::new();
         let mut fns = Vec::new();
+        let mut doc = None;
+        let mut doc_deprecated = None;
         loop {
             let event = try!(parser.next());
             match event {
@@ -457,7 +491,8 @@ impl Library {
                         }
                         kind @ "constructor" | kind @ "function" | kind @ "method" =>
                             try!(self.read_function_to_vec(parser, ns_id, kind, &attributes, &mut fns)),
-                        "doc" | "doc-deprecated" => try!(ignore_element(parser)),
+                        "doc" => doc = try!(read_text(parser)),
+                        "doc-deprecated" => doc_deprecated = try!(read_text(parser)),
                         x => return Err(mk_error!(format!("Unexpected element <{}>", x), parser)),
                     }
                 }
@@ -472,6 +507,8 @@ impl Library {
                 c_type: c_type.into(),
                 members: members,
                 functions: fns,
+                doc: doc,
+                doc_deprecated: doc_deprecated,
             });
         self.add_type(ns_id, name, typ);
         Ok(())
@@ -492,6 +529,8 @@ impl Library {
                                 .ok_or_else(|| mk_error!("Missing c:type attribute", parser)));
         let value = try!(attrs.get("value").ok_or_else(|| mk_error!("Missing constant value", parser)));
         let mut inner = None;
+        let mut doc = None;
+        let mut doc_deprecated = None;
         loop {
             let event = try!(parser.next());
             match event {
@@ -511,7 +550,8 @@ impl Library {
                                 return Err(mk_error!("Missing constant's c:type", &pos));
                             }
                         }
-                        "doc" | "doc-deprecated" => try!(ignore_element(parser)),
+                        "doc" => doc = try!(read_text(parser)),
+                        "doc-deprecated" => doc_deprecated = try!(read_text(parser)),
                         x => return Err(mk_error!(format!("Unexpected element <{}>", x), parser)),
                     }
                 }
@@ -527,6 +567,8 @@ impl Library {
                     typ: typ,
                     c_type: c_type.into(),
                     value: value.into(),
+                    doc: doc,
+                    doc_deprecated: doc_deprecated,
                 });
             Ok(())
         }
@@ -542,6 +584,8 @@ impl Library {
         let c_identifier = try!(attrs.get("type")
                                 .ok_or_else(|| mk_error!("Missing c:type attribute", parser)));
         let mut inner = None;
+        let mut doc = None;
+        let mut doc_deprecated = None;
         loop {
             let event = try!(parser.next());
             match event {
@@ -556,12 +600,12 @@ impl Library {
                                 try!(self.read_type(parser, ns_id, &name, &attributes));
                             if let Some(c_type) = c_type {
                                 inner = Some((typ, c_type));
-                            }
-                            else{
+                            } else {
                                 return Err(mk_error!("Missing alias target's c:type", &pos));
                             }
                         }
-                        "doc" | "doc-deprecated" => try!(ignore_element(parser)),
+                        "doc" => doc = try!(read_text(parser)),
+                        "doc-deprecated" => doc_deprecated = try!(read_text(parser)),
                         x => return Err(mk_error!(format!("Unexpected element <{}>", x), parser)),
                     }
                 }
@@ -576,6 +620,8 @@ impl Library {
                     c_identifier: c_identifier.into(),
                     typ: typ,
                     target_c_type: c_type.into(),
+                    doc: doc,
+                    doc_deprecated: doc_deprecated,
                 });
             self.add_type(ns_id, name, typ);
             Ok(())
@@ -589,6 +635,8 @@ impl Library {
         let name = try!(attrs.get("name").ok_or_else(|| mk_error!("Missing member name", parser)));
         let value = try!(attrs.get("value").ok_or_else(|| mk_error!("Missing member value", parser)));
         let c_identifier = attrs.get("identifier").map(|x| x.into());
+        let mut doc = None;
+        let mut doc_deprecated = None;
         loop {
             let event = try!(parser.next());
             match event {
@@ -601,7 +649,8 @@ impl Library {
                             c_identifier = Some(value.into());
                         }
                         */
-                        ("doc", _) | ("doc-deprecated", _) => try!(ignore_element(parser)),
+                        ("doc", _) => doc = try!(read_text(parser)),
+                        ("doc-deprecated", _) => doc_deprecated = try!(read_text(parser)),
                         (x, _) => return Err(mk_error!(format!("Unexpected element <{}>", x), parser)),
                     }
                 }
@@ -612,6 +661,8 @@ impl Library {
         Ok(Member {
             name: name.into(),
             value: value.into(),
+            doc: doc,
+            doc_deprecated: doc_deprecated,
             c_identifier: c_identifier.unwrap_or_else(|| name.into()),
         })
     }
@@ -643,6 +694,8 @@ impl Library {
 
         let mut params = Vec::new();
         let mut ret = None;
+        let mut doc = None;
+        let mut doc_deprecated = None;
         loop {
             let event = try!(parser.next());
             match event {
@@ -660,7 +713,8 @@ impl Library {
                             ret = Some(try!(
                                 self.read_parameter(parser, ns_id, "return-value", &attributes)));
                         }
-                        "doc" | "doc-deprecated" => try!(ignore_element(parser)),
+                        "doc" => doc = try!(read_text(parser)),
+                        "doc-deprecated" => doc_deprecated = try!(read_text(parser)),
                         x => return Err(mk_error!(format!("Unexpected element <{}>", x), parser)),
                     }
                 }
@@ -681,6 +735,8 @@ impl Library {
                 nullable: Nullable(true),
                 allow_none: true,
                 is_error: true,
+                doc: None,
+                doc_deprecated: None,
             });
         }
         if let Some(ret) = ret {
@@ -693,6 +749,8 @@ impl Library {
                 throws: throws,
                 version: version,
                 deprecated_version: deprecated_version,
+                doc: doc,
+                doc_deprecated: doc_deprecated,
             })
         }
         else {
@@ -765,6 +823,7 @@ impl Library {
 
         let mut typ = None;
         let mut varargs = false;
+        let mut doc = None;
         loop {
             let event = try!(parser.next());
             match event {
@@ -784,7 +843,7 @@ impl Library {
                             varargs = true;
                             try!(ignore_element(parser));
                         }
-                        "doc" => try!(ignore_element(parser)),
+                        "doc" => doc = try!(read_text(parser)),
                         x => return Err(mk_error!(format!("Unexpected element <{}>", x), parser)),
                     }
                 }
@@ -804,6 +863,8 @@ impl Library {
                 nullable: Nullable(nullable),
                 allow_none: allow_none,
                 is_error: false,
+                doc: doc,
+                doc_deprecated: None,
             })
         }
         else if varargs {
@@ -818,6 +879,8 @@ impl Library {
                 nullable: Nullable(false),
                 allow_none: allow_none,
                 is_error: false,
+                doc: doc,
+                doc_deprecated: None,
             })
         }
         else {
@@ -882,6 +945,28 @@ impl Get for Attributes {
         }
         None
     }
+}
+
+fn read_text(parser: &mut Reader) -> Result<Option<String>, Error> {
+    let mut ret_text = None;
+
+    loop {
+        let event = try!(parser.next());
+        match event {
+            Characters(text) => {
+                ret_text = match ret_text {
+                    Some(t) => Some(format!("{}{}", t, text)),
+                    None => Some(text),
+                }
+            }
+            EndElement { .. } => break,
+            StartElement { name, .. } => return Err(mk_error!(&format!("Unexpected element: {}",
+                                                                       name.local_name),
+                                                              parser)),
+            _ => xml_next!(event, parser),
+        }
+    }
+    Ok(ret_text)
 }
 
 fn ignore_element(parser: &mut Reader) -> Result<(), Error> {

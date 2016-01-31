@@ -4,6 +4,7 @@ use env::Env;
 use config::WorkMode;
 use file_saver::*;
 
+mod doc;
 mod function;
 mod function_body_chunk;
 mod general;
@@ -22,6 +23,7 @@ pub fn generate(env: &Env) {
     match env.config.work_mode {
         WorkMode::Normal => normal_generate(env),
         WorkMode::Sys => sys::generate(env),
+        WorkMode::Doc => doc::generate(env),
     }
 }
 
