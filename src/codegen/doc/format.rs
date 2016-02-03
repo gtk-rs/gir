@@ -1,59 +1,65 @@
 use regex::{Captures, Regex};
 
+const LANGUAGE_SEP_BEGIN : &'static str = "<!-- language=\"";
 const LANGUAGE_SEP_END : &'static str = "\" -->";
-const LANGUAGE_BLOCK_BEGIN : &'static str = "|[<!-- language=\"";
+const LANGUAGE_BLOCK_BEGIN : &'static str = "|[";
 const LANGUAGE_BLOCK_END : &'static str = "\n]|";
 
-pub fn reformat_doc(input: &str) -> String {
-    let out = code_blocks_transformation(input);
-    replace_c_types(&out)
+lazy_static! {
+    static ref REG : Regex = Regex::new(r"#?(G[dt]k)([\w]*)").unwrap();
+    static ref REG2 : Regex = Regex::new(r"@(\w*)").unwrap();
 }
 
-fn code_blocks_transformation(input: &str) -> String {
+pub fn reformat_doc(input: &str) -> String {
+    code_blocks_transformation(input)
+}
+
+fn try_split<'a>(src: &'a str, needle: &str) -> (&'a str, Option<&'a str>) {
+    match src.find(needle) {
+        Some(pos) => (&src[..pos], Some(&src[pos + needle.len()..])),
+        None => (src, None),
+    }
+}
+
+fn code_blocks_transformation(mut input: &str) -> String {
     let mut out = String::new();
 
-    for entry in input.split(LANGUAGE_BLOCK_BEGIN) {
-        if out.is_empty() {
-            out.push_str(entry);
-            continue;
-        }
-        out.push_str("```");
-        let entry = get_language(entry, &mut out);
-        out.push_str(&format!("{}", entry.replace(LANGUAGE_BLOCK_END, "\n```")))
+    loop {
+        input = match try_split(input, LANGUAGE_BLOCK_BEGIN) {
+            (before, Some(after)) => {
+                out.push_str(&replace_c_types(before));
+                if let (before, Some(after)) = try_split(get_language(after, &mut out),
+                                                         LANGUAGE_BLOCK_END) {
+                    out.push_str(before);
+                    out.push_str("\n```");
+                    after
+                } else {
+                    after
+                }
+            }
+            (before, None) => {
+                out.push_str(&replace_c_types(before));
+                return out
+            }
+        };
     }
-    out
 }
 
 fn get_language<'a>(entry: &'a str, out: &mut String) -> &'a str {
-    if let Some(pos) = entry.find(LANGUAGE_SEP_END) {
-        out.push_str(&entry[0..pos]);
-        &entry[(pos + LANGUAGE_SEP_END.len())..]
-    } else {
-        out.push_str("\n");
-        entry
+    if let Some(pos) = entry.find(LANGUAGE_SEP_BEGIN) {
+        let entry = &entry[pos + LANGUAGE_SEP_BEGIN.len()..];
+        if let Some(pos) = entry.find(LANGUAGE_SEP_END) {
+            out.push_str(&format!("```{}", &entry[0..pos]));
+            return &entry[(pos + LANGUAGE_SEP_END.len())..]
+        }
     }
+    out.push_str("```");
+    entry
 }
 
 fn replace_c_types(entry: &str) -> String {
-    if let Ok(reg) = Regex::new(r"Gtk[\w]*") {
-        let mut out = vec!();
-
-        for (num, part) in entry.split("```").into_iter().enumerate() {
-            out.push(
-                if num & 1 == 0 {
-                    reg.replace_all(part, |caps: &Captures| {
-                        match caps.at(0) {
-                            Some(s) => format!("`{}`", &s[4..]),
-                            None => String::new(),
-                        }
-                    })
-                } else {
-                    part.to_owned()
-                }
-            );
-        }
-        out.join("```")
-    } else {
-        entry.to_owned()
-    }
+    let out = &REG.replace_all(entry, |caps: &Captures| {
+        format!("`{}::{}`", &caps[1].to_lowercase(), &caps[2])
+    });
+    REG2.replace_all(out, "`$1`")
 }
