@@ -14,6 +14,8 @@ use stripper_interface::Type as SType;
 use stripper_interface::TypeStruct;
 use stripper_interface::{FILE, /*FILE_COMMENT, */MOD_COMMENT};
 
+mod format;
+
 trait FunctionTraitType {
     fn functions(&self) -> &Vec<Function>;
     fn name(&self) -> &str;
@@ -245,7 +247,7 @@ fn create_fn_doc(w: &mut Write, fn_: &Function, parent: Option<Box<TypeStruct>>)
 }
 
 fn write_lines(w: &mut Write, lines: &str, tabs: &str) -> Result<()> {
-    for line in lines.split("\n") {
+    for line in format::reformat_doc(&lines).split("\n") {
         try!(writeln!(w, "{}/// {}", tabs, line));
     }
     Ok(())
