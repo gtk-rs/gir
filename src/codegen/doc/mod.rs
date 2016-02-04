@@ -84,8 +84,8 @@ pub fn generate(env: &Env) {
 }
 
 fn generate_doc(mut w: &mut Write, env: &Env) -> Result<()> {
-
     //try!(create_sub_docs(&mut output, &namespace.constants, None));
+    let namespace_name = env.library.namespace(MAIN).name.clone();
     for obj in env.config.objects.values() {
         if !obj.status.need_generate() {
             continue;
@@ -103,31 +103,35 @@ fn generate_doc(mut w: &mut Write, env: &Env) -> Result<()> {
             module_name(split_namespace_name(&class_analysis.full_name).1)
         });
         try!(writeln!(w, "{}src/auto/{}.rs", FILE, mod_name));
-        try!(handle_type(w, &env.library.type_(class_analysis.type_id), None, has_trait, true));
+        try!(handle_type(w, &env.library.type_(class_analysis.type_id), None, has_trait,
+                         true, &namespace_name));
     }
 
     let namespace = env.library.namespace(MAIN);
     for ty in namespace.types.iter().filter_map(|t| t.as_ref()) {
-        try!(handle_type(&mut w, &ty, None, false, false));
+        try!(handle_type(&mut w, &ty, None, false, false, &namespace_name));
     }
     Ok(())
 }
 
 fn handle_type(w: &mut Write, ty: &LType, parent: Option<Box<TypeStruct>>,
-               has_trait: bool, handle_structs: bool) -> Result<()> {
+               has_trait: bool, handle_structs: bool, namespace_name: &str) -> Result<()> {
     match *ty {
-        LType::Alias(ref a) => create_sub_doc(w, a, parent),
-        LType::Enumeration(ref e) => create_enum_doc(w, &e, parent),
-        LType::Function(ref f) => create_fn_doc(w, &f, parent),
-        LType::Interface(ref i) if handle_structs => create_class_doc(w, i, parent, has_trait),
-        LType::Class(ref c) if handle_structs => create_class_doc(w, c, parent, has_trait),
+        LType::Alias(ref a) => create_sub_doc(w, a, parent, namespace_name),
+        LType::Enumeration(ref e) => create_enum_doc(w, &e, parent, namespace_name),
+        LType::Function(ref f) => create_fn_doc(w, &f, parent, namespace_name),
+        LType::Interface(ref i) if handle_structs => create_class_doc(w, i, parent, has_trait,
+                                                                      namespace_name),
+        LType::Class(ref c) if handle_structs => create_class_doc(w, c, parent, has_trait,
+                                                                  namespace_name),
         _ => Ok(()),
     }
 }
 
 fn create_class_doc<T: FunctionTraitType + ToStripperType>(w: &mut Write, class: &T,
                                                            parent: Option<Box<TypeStruct>>,
-                                                           has_trait: bool)
+                                                           has_trait: bool,
+                                                           namespace_name: &str)
                                                           -> Result<()> {
     let tabs : String = primitives::tabs(compute_indent(&parent));
     let mut ty = class.convert();
@@ -139,16 +143,16 @@ fn create_class_doc<T: FunctionTraitType + ToStripperType>(w: &mut Write, class:
     }
 
     if let Some(ref class_doc) = class.doc() {
-        try!(write_lines(w, &class_doc, &tabs));
+        try!(write_lines(w, &class_doc, &tabs, &namespace_name));
     }
     if let Some(ref class_doc) = class.doc_deprecated() {
         try!(write_header(w, &tabs, "Deprecated"));
-        try!(write_lines(w, &class_doc, &tabs));
+        try!(write_lines(w, &class_doc, &tabs, &namespace_name));
     }
 
     for function in class.functions().iter() {
         if function.parameters.iter().any(|p| p.instance_parameter) == false {
-            try!(create_fn_doc(w, &function, Some(Box::new(ty.clone()))));
+            try!(create_fn_doc(w, &function, Some(Box::new(ty.clone())), namespace_name));
         }
     }
     if has_trait {
@@ -157,7 +161,7 @@ fn create_class_doc<T: FunctionTraitType + ToStripperType>(w: &mut Write, class:
 
         for function in class.functions().iter() {
             if function.parameters.iter().any(|p| p.instance_parameter) {
-                try!(create_fn_doc(w, &function, Some(Box::new(ty.clone()))));
+                try!(create_fn_doc(w, &function, Some(Box::new(ty.clone())), namespace_name));
             }
         }
     }
@@ -165,7 +169,8 @@ fn create_class_doc<T: FunctionTraitType + ToStripperType>(w: &mut Write, class:
 }
 
 fn create_enum_doc(w: &mut Write, enum_: &Enumeration,
-                   parent: Option<Box<TypeStruct>>) -> Result<()> {
+                   parent: Option<Box<TypeStruct>>,
+                   namespace_name: &str) -> Result<()> {
     let indent = compute_indent(&parent);
     let mut ty = enum_.convert();
     ty.parent = parent;
@@ -176,11 +181,11 @@ fn create_enum_doc(w: &mut Write, enum_: &Enumeration,
     }
 
     if let Some(ref enum_doc) = enum_.doc() {
-        try!(write_lines(w, &enum_doc, &tabs));
+        try!(write_lines(w, &enum_doc, &tabs, &namespace_name));
     }
     if let Some(ref enum_doc) = enum_.doc_deprecated() {
         try!(write_header(w, &tabs, "Deprecated"));
-        try!(write_lines(w, &enum_doc, &tabs));
+        try!(write_lines(w, &enum_doc, &tabs, &namespace_name));
     }
 
     let tabs : String = primitives::tabs(indent + 1);
@@ -192,17 +197,18 @@ fn create_enum_doc(w: &mut Write, enum_: &Enumeration,
             try!(writeln!(w, "{}{}", MOD_COMMENT, sub_ty));
         }
         if let Some(ref m_doc) = member_doc.doc() {
-            try!(write_lines(w, &m_doc, &tabs));
+            try!(write_lines(w, &m_doc, &tabs, &namespace_name));
         }
         if let Some(ref m_doc) = member_doc.doc_deprecated() {
             try!(write_header(w, &tabs, "Deprecated"));
-            try!(write_lines(w, &m_doc, &tabs));
+            try!(write_lines(w, &m_doc, &tabs, &namespace_name));
         }
     }
     Ok(())
 }
 
-fn create_fn_doc(w: &mut Write, fn_: &Function, parent: Option<Box<TypeStruct>>) -> Result<()> {
+fn create_fn_doc(w: &mut Write, fn_: &Function, parent: Option<Box<TypeStruct>>,
+                 namespace_name: &str) -> Result<()> {
     let tabs : String = primitives::tabs(compute_indent(&parent) + 1);
 
     if fn_.doc().is_none() && fn_.doc_deprecated().is_none() && fn_.ret.doc().is_none() {
@@ -217,11 +223,11 @@ fn create_fn_doc(w: &mut Write, fn_: &Function, parent: Option<Box<TypeStruct>>)
     try!(writeln!(w, "{}{}", MOD_COMMENT, sub_ty));
 
     if let Some(ref docs) = fn_.doc() {
-        try!(write_lines(w, &docs, &tabs));
+        try!(write_lines(w, &docs, &tabs, &namespace_name));
     };
     if let Some(ref docs) = fn_.doc_deprecated() {
         try!(write_header(w, &tabs, "Deprecated"));
-        try!(write_lines(w, &docs, &tabs));
+        try!(write_lines(w, &docs, &tabs, &namespace_name));
     };
 
     if fn_.parameters.iter().any(|x| {
@@ -235,26 +241,28 @@ fn create_fn_doc(w: &mut Write, fn_: &Function, parent: Option<Box<TypeStruct>>)
         }
         if let Some(ref parameter_doc) = parameter.doc() {
             try!(writeln!(w, "{}/// ## {}:", tabs, parameter.name));
-            try!(write_lines(w, &parameter_doc, &tabs));
+            try!(write_lines(w, &parameter_doc, &tabs, &namespace_name));
         }
     }
 
     if let Some(ref doc) = fn_.ret.doc() {
         try!(write_header(w, &tabs, "Returns"));
-        try!(write_lines(w, &doc, &tabs));
+        try!(write_lines(w, &doc, &tabs, &namespace_name));
     }
     Ok(())
 }
 
-fn write_lines(w: &mut Write, lines: &str, tabs: &str) -> Result<()> {
-    for line in format::reformat_doc(&lines).split("\n") {
+fn write_lines(w: &mut Write, lines: &str, tabs: &str,
+               namespace_name: &str) -> Result<()> {
+    for line in format::reformat_doc(&lines, namespace_name).split("\n") {
         try!(writeln!(w, "{}/// {}", tabs, line));
     }
     Ok(())
 }
 
 fn create_sub_doc<T: ToStripperType>(w: &mut Write, ty: &T,
-                                     parent: Option<Box<TypeStruct>>) -> Result<()> {
+                                     parent: Option<Box<TypeStruct>>,
+                                     namespace_name: &str) -> Result<()> {
     let tabs : String = primitives::tabs(compute_indent(&parent));
     let mut sub_ty = ty.convert();
     sub_ty.parent = parent;
@@ -264,11 +272,11 @@ fn create_sub_doc<T: ToStripperType>(w: &mut Write, ty: &T,
     }
 
     if let Some(doc) = ty.doc() {
-        try!(write_lines(w, &doc, &tabs));
+        try!(write_lines(w, &doc, &tabs, &namespace_name));
     }
     if let Some(doc) = ty.doc_deprecated() {
         try!(write_header(w, &tabs, "Deprecated"));
-        try!(write_lines(w, &doc, &tabs));
+        try!(write_lines(w, &doc, &tabs, &namespace_name));
     }
     Ok(())
 }
