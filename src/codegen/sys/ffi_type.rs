@@ -1,6 +1,6 @@
 use analysis::c_type::rustify_pointers;
 use analysis::namespaces;
-use analysis::rust_type::Result;
+use analysis::rust_type::{Result, TypeError};
 use env::Env;
 use library;
 use library::*;
@@ -87,10 +87,10 @@ fn ffi_inner(env: &Env, tid: library::TypeId, mut inner: String) -> Result {
                 Type => "GType",
                 Pointer => match &inner[..]  {
                     "void" => "c_void",
-                    "tm" => return Err(inner),  //TODO: try use time:Tm
+                    "tm" => return Err(TypeError::Unimplemented(inner)),  //TODO: try use time:Tm
                     _ => &*inner,
                 },
-                Unsupported => return Err(format!("[Unsupported type {}]", inner)),
+                Unsupported => return Err(TypeError::Unimplemented(inner)),
                 VarArgs => panic!("Should not reach here"),
             };
             Ok(inner.into())
@@ -101,7 +101,7 @@ fn ffi_inner(env: &Env, tid: library::TypeId, mut inner: String) -> Result {
                     let msg = format!("[c:type mismatch `{}` != `{}` of `{}`]",
                                       inner, declared_c_type, typ.get_name());
                     warn!("{}", msg);
-                    return Err(msg);
+                    return Err(TypeError::Mismatch(msg));
                 }
             }
             else {
@@ -111,10 +111,8 @@ fn ffi_inner(env: &Env, tid: library::TypeId, mut inner: String) -> Result {
         }
         Type::CArray(inner_tid) => ffi_inner(env, inner_tid, inner),
         Type::FixedArray(inner_tid, size) => {
-            match ffi_inner(env, inner_tid, inner) {
-                Ok(s) => Ok(format!("[{}; {}]", s, size)),
-                Err(s) => Err(format!("[{}; {}]", s, size)),
-            }
+            ffi_inner(env, inner_tid, inner)
+                .map_any(|s| format!("[{}; {}]", s, size))
         }
         Type::Array(..) | Type::PtrArray(..)
                 | Type::List(..) | Type::SList(..) | Type::HashTable(..) => {
@@ -132,7 +130,7 @@ fn ffi_inner(env: &Env, tid: library::TypeId, mut inner: String) -> Result {
                         let msg = format!("[c:type mismatch {} != {} of {}]", inner, glib_name,
                             env.library.type_(tid).get_name());
                         warn!("{}", msg);
-                        Err(msg)
+                        Err(TypeError::Mismatch(msg))
                     }
                 }
                 else {
@@ -143,7 +141,7 @@ fn ffi_inner(env: &Env, tid: library::TypeId, mut inner: String) -> Result {
                 let msg = format!("[Missing glib_name of {}, can't match != {}]",
                                   env.library.type_(tid).get_name(), inner);
                 warn!("{}", msg);
-                Err(msg)
+                Err(TypeError::Mismatch(msg))
             }
         }
     };
@@ -178,7 +176,7 @@ fn fix_name(env: &Env, type_id: library::TypeId, name: &str) -> Result {
             format!("{}::{}", &env.namespaces[type_id.ns_id].crate_name, name)
         };
         if env.type_status_sys(&type_id.full_name(&env.library)).ignored() {
-            Err(name_with_prefix)
+            Err(TypeError::Ignored(name_with_prefix))
         } else {
             Ok(name_with_prefix)
         }
