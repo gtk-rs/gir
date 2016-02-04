@@ -87,21 +87,36 @@ fn rust_type_full(env: &Env, type_id: library::TypeId, nullable: Nullable, ref_m
 
                 UniChar => ok("char"),
                 Utf8 => if ref_mode.is_ref() { ok("str") } else { ok("String") },
-                Filename => if ref_mode.is_ref() { ok("std::path::Path") } else { ok("std::path::PathBuf") },
-
+                Filename => {
+                    if ref_mode.is_ref() {
+                        ok("std::path::Path")
+                    }
+                    else {
+                        ok("std::path::PathBuf")
+                    }
+                }
                 Type => ok("glib::types::Type"),
                 Unsupported => err("Unsupported"),
                 _ => err(&format!("Fundamental: {:?}", fund)),
             }
         },
-        Alias(ref alias) => rust_type_full(env, alias.typ, nullable, ref_mode)
-                .map_any(|_| alias.name.clone()),
-
-        Enumeration(ref enum_) => Ok(enum_.name.clone()),
-        Bitfield(ref bitfield) => Ok(bitfield.name.clone()),
-        Record(ref record) => Ok(record.name.clone()),
-        Interface(ref interface) => Ok(interface.name.clone()),
-        Class(ref klass) => Ok(klass.name.clone()),
+        Alias(ref alias) => {
+            rust_type_full(env, alias.typ, nullable, ref_mode)
+                .map_any(|_| alias.name.clone())
+        }
+        Enumeration(..) |
+            Bitfield(..) => Ok(type_.get_name().to_owned()),
+        Record(..) |
+            Class(..) |
+            Interface(..) => {
+            let name = type_.get_name().to_owned();
+            if env.type_status(&type_id.full_name(&env.library)).ignored() {
+                Err(TypeError::Ignored(name))
+            }
+            else {
+                Ok(name)
+            }
+        }
         List(inner_tid) |
             SList(inner_tid) |
             CArray(inner_tid)
@@ -119,20 +134,18 @@ fn rust_type_full(env: &Env, type_id: library::TypeId, nullable: Nullable, ref_m
                     format!("Vec<{}>", s)
                 })
         }
-        _ => Err(format!("Unknown rust type: {:?}", type_.get_name())),
-        //TODO: check usage library::Type::get_name() when no _ in this
+        _ => Err(TypeError::Unimplemented(type_.get_name().to_owned())),
     };
 
     if type_id.ns_id != library::MAIN_NAMESPACE && type_id.ns_id != library::INTERNAL_NAMESPACE
         && !implemented_in_main_namespace(&env.library, type_id) {
-        let rust_type_with_prefix = rust_type.map(|s| format!("{}::{}",
-            crate_name(&env.library.namespace(type_id.ns_id).name), s));
         if env.type_status(&type_id.full_name(&env.library)).ignored() {
-            rust_type = Err(format!("/*Ignored*/{}", rust_type_with_prefix.as_str()));
-        } else {
-            rust_type = rust_type_with_prefix;
+            rust_type = Err(TypeError::Ignored(into_inner(rust_type)));
         }
+        rust_type = rust_type.map_any(|s| format!("{}::{}",
+            crate_name(&env.library.namespace(type_id.ns_id).name), s));
     }
+
     match ref_mode {
         RefMode::None | RefMode::ByRefFake => {}
         RefMode::ByRef | RefMode::ByRefImmut => rust_type = rust_type.map_any(|s| format!("&{}", s)),
@@ -187,9 +200,11 @@ pub fn parameter_rust_type(env: &Env, type_id:library::TypeId,
             }
         }
         Alias(ref alias) => {
-            let rust_type = rust_type.map_any(|s| format_parameter(s, direction));
-            parameter_rust_type(env, alias.typ, direction, nullable, ref_mode)
-                .and_then(|_| rust_type)
+            rust_type.and_then(|s| {
+                parameter_rust_type(env, alias.typ, direction, nullable, ref_mode)
+                    .map_any(|_| s)
+            })
+                .map_any(|s| format_parameter(s, direction))
         }
 
         Enumeration(..) |
@@ -223,7 +238,6 @@ pub fn parameter_rust_type(env: &Env, type_id:library::TypeId,
             }
         }
         _ => Err(TypeError::Unimplemented(type_.get_name().to_owned())),
-        //TODO: check usage library::Type::get_name() when no _ in this
     }
 }
 
