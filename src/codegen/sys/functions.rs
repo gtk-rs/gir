@@ -150,7 +150,7 @@ fn function_return_value(env: &Env, func: &library::Function) -> (bool, String) 
     if func.ret.typ == Default::default() { return (false, String::new()) }
     let ffi_type = ffi_type(env, func.ret.typ, &func.ret.c_type);
     let commented = ffi_type.is_err();
-    (commented, format!(" -> {}", ffi_type.as_str()))
+    (commented, format!(" -> {}", ffi_type.into_string()))
 }
 
 fn function_parameter(env: &Env, par: &library::Parameter, bare: bool) -> (bool, String) {
@@ -160,10 +160,10 @@ fn function_parameter(env: &Env, par: &library::Parameter, bare: bool) -> (bool,
     let ffi_type = ffi_type(env, par.typ, &par.c_type);
     let commented = ffi_type.is_err();
     let res = if bare {
-        ffi_type.as_str().into()
+        ffi_type.into_string()
     }
     else {
-        format!("{}: {}", nameutil::mangle_keywords(&*par.name), ffi_type.as_str())
+        format!("{}: {}", nameutil::mangle_keywords(&*par.name), ffi_type.into_string())
     };
     (commented, res)
 }

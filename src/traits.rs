@@ -2,6 +2,10 @@ pub trait AsStr {
     fn as_str(&self) -> &str;
 }
 
+pub trait IntoString {
+    fn into_string(self) -> String;
+}
+
 pub trait MapAny<T> {
     fn map_any<F: FnOnce(T) -> T>(self, op: F) -> Self;
 }

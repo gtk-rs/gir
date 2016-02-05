@@ -7,12 +7,46 @@ use nameutil::crate_name;
 use super::conversion_type::ConversionType;
 use traits::*;
 
-pub type Result = result::Result<String, String>;
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum TypeError {
+    Ignored(String),
+    Mismatch(String),
+    Unimplemented(String),
+}
 
-impl AsStr for Result {
-    #[inline]
-    fn as_str(&self) -> &str {
-        self.as_ref().unwrap_or_else(|s| s)
+pub type Result = result::Result<String, TypeError>;
+
+fn into_inner(res: Result) -> String {
+    use self::TypeError::*;
+    match res {
+        Ok(s) |
+            Err(Ignored(s)) |
+            Err(Mismatch(s)) |
+            Err(Unimplemented(s)) => s,
+    }
+}
+
+impl IntoString for Result {
+    fn into_string(self) -> String {
+        use self::TypeError::*;
+        match self {
+            Ok(s) => s,
+            Err(Ignored(s)) => format!("/*Ignored*/{}", s),
+            Err(Mismatch(s)) => format!("/*Metadata mismatch*/{}", s),
+            Err(Unimplemented(s)) => format!("/*Unimplemented*/{}", s),
+        }
+    }
+}
+
+impl MapAny<String> for Result {
+    fn map_any<F: FnOnce(String) -> String>(self, op: F) -> Result {
+        use self::TypeError::*;
+        match self {
+            Ok(s) => Ok(op(s)),
+            Err(Ignored(s)) => Err(Ignored(op(s))),
+            Err(Mismatch(s)) => Err(Mismatch(op(s))),
+            Err(Unimplemented(s)) => Err(Unimplemented(op(s))),
+        }
     }
 }
 
@@ -32,7 +66,7 @@ fn rust_type_full(env: &Env, type_id: library::TypeId, nullable: Nullable, ref_m
     let mut rust_type = match *type_ {
         Fundamental(fund) => {
             let ok = |s: &str| Ok(s.into());
-            let err = |s: &str| Err(s.into());
+            let err = |s: &str| Err(TypeError::Unimplemented(s.into()));
             match fund {
                 None => err("()"),
                 Boolean => ok("bool"),
@@ -53,21 +87,36 @@ fn rust_type_full(env: &Env, type_id: library::TypeId, nullable: Nullable, ref_m
 
                 UniChar => ok("char"),
                 Utf8 => if ref_mode.is_ref() { ok("str") } else { ok("String") },
-                Filename => if ref_mode.is_ref() { ok("std::path::Path") } else { ok("std::path::PathBuf") },
-
+                Filename => {
+                    if ref_mode.is_ref() {
+                        ok("std::path::Path")
+                    }
+                    else {
+                        ok("std::path::PathBuf")
+                    }
+                }
                 Type => ok("glib::types::Type"),
                 Unsupported => err("Unsupported"),
                 _ => err(&format!("Fundamental: {:?}", fund)),
             }
         },
-        Alias(ref alias) => rust_type_full(env, alias.typ, nullable, ref_mode)
-                .map_any(|_| alias.name.clone()),
-
-        Enumeration(ref enum_) => Ok(enum_.name.clone()),
-        Bitfield(ref bitfield) => Ok(bitfield.name.clone()),
-        Record(ref record) => Ok(record.name.clone()),
-        Interface(ref interface) => Ok(interface.name.clone()),
-        Class(ref klass) => Ok(klass.name.clone()),
+        Alias(ref alias) => {
+            rust_type_full(env, alias.typ, nullable, ref_mode)
+                .map_any(|_| alias.name.clone())
+        }
+        Enumeration(..) |
+            Bitfield(..) => Ok(type_.get_name().to_owned()),
+        Record(..) |
+            Class(..) |
+            Interface(..) => {
+            let name = type_.get_name().to_owned();
+            if env.type_status(&type_id.full_name(&env.library)).ignored() {
+                Err(TypeError::Ignored(name))
+            }
+            else {
+                Ok(name)
+            }
+        }
         List(inner_tid) |
             SList(inner_tid) |
             CArray(inner_tid)
@@ -85,20 +134,18 @@ fn rust_type_full(env: &Env, type_id: library::TypeId, nullable: Nullable, ref_m
                     format!("Vec<{}>", s)
                 })
         }
-        _ => Err(format!("Unknown rust type: {:?}", type_.get_name())),
-        //TODO: check usage library::Type::get_name() when no _ in this
+        _ => Err(TypeError::Unimplemented(type_.get_name().to_owned())),
     };
 
     if type_id.ns_id != library::MAIN_NAMESPACE && type_id.ns_id != library::INTERNAL_NAMESPACE
         && !implemented_in_main_namespace(&env.library, type_id) {
-        let rust_type_with_prefix = rust_type.map(|s| format!("{}::{}",
-            crate_name(&env.library.namespace(type_id.ns_id).name), s));
         if env.type_status(&type_id.full_name(&env.library)).ignored() {
-            rust_type = Err(rust_type_with_prefix.as_str().into());
-        } else {
-            rust_type = rust_type_with_prefix;
+            rust_type = Err(TypeError::Ignored(into_inner(rust_type)));
         }
+        rust_type = rust_type.map_any(|s| format!("{}::{}",
+            crate_name(&env.library.namespace(type_id.ns_id).name), s));
     }
+
     match ref_mode {
         RefMode::None | RefMode::ByRefFake => {}
         RefMode::ByRef | RefMode::ByRefImmut => rust_type = rust_type.map_any(|s| format!("&{}", s)),
@@ -130,7 +177,7 @@ pub fn used_rust_type(env: &Env, type_id: library::TypeId) -> Result {
         List(inner_tid) |
             SList(inner_tid) |
             CArray(inner_tid) => used_rust_type(env, inner_tid),
-        _ => Err("Don't need use".into()),
+        _ => Err(TypeError::Ignored("Don't need use".to_owned())),
     }
 }
 
@@ -146,29 +193,26 @@ pub fn parameter_rust_type(env: &Env, type_id:library::TypeId,
                 match direction {
                     library::ParameterDirection::In |
                         library::ParameterDirection::Return => rust_type,
-                    _ => Err(format!("/*Unimplemented*/{}", rust_type.as_str())),
+                    _ => Err(TypeError::Unimplemented(into_inner(rust_type))),
                 }
             } else {
-                format_parameter(rust_type, direction)
+                rust_type.map_any(|s| format_parameter(s, direction))
             }
         }
         Alias(ref alias) => {
-            let res = format_parameter(rust_type, direction);
-            if parameter_rust_type(env, alias.typ, direction, nullable, ref_mode).is_ok() {
-                res
-            } else {
-                res.and_then(|s| Err(s))
-            }
+            rust_type.and_then(|s| {
+                parameter_rust_type(env, alias.typ, direction, nullable, ref_mode)
+                    .map_any(|_| s)
+            })
+                .map_any(|s| format_parameter(s, direction))
         }
 
         Enumeration(..) |
-            Bitfield(..) => format_parameter(rust_type, direction),
+            Bitfield(..) => rust_type.map_any(|s| format_parameter(s, direction)),
 
         Record(..) => {
-            if env.type_status(&type_id.full_name(&env.library)).ignored() {
-                Err(format!("/*Ignored*/{}", rust_type.as_str()))
-            } else if direction == library::ParameterDirection::InOut {
-                Err(format!("/*Unimplemented*/{}", rust_type.as_str()))
+            if direction == library::ParameterDirection::InOut {
+                Err(TypeError::Unimplemented(into_inner(rust_type)))
             } else {
                 rust_type
             }
@@ -177,13 +221,10 @@ pub fn parameter_rust_type(env: &Env, type_id:library::TypeId,
         Class(..) |
             Interface (..) => {
             match direction {
-                _ if env.type_status(&type_id.full_name(&env.library)).ignored() => {
-                    Err(format!("/*Ignored*/{}", rust_type.as_str()))
-                }
                 library::ParameterDirection::In |
                     library::ParameterDirection::Out |
                     library::ParameterDirection::Return => rust_type,
-                _ => Err(format!("/*Unimplemented*/{}", rust_type.as_str())),
+                _ => Err(TypeError::Unimplemented(into_inner(rust_type))),
             }
         }
 
@@ -193,18 +234,17 @@ pub fn parameter_rust_type(env: &Env, type_id:library::TypeId,
             match direction {
                 library::ParameterDirection::In |
                     library::ParameterDirection::Return => rust_type,
-                _ => Err(format!("/*Unimplemented*/{}", rust_type.as_str())),
+                _ => Err(TypeError::Unimplemented(into_inner(rust_type))),
             }
         }
-        _ => Err(format!("Unknown rust type: {:?}", type_.get_name())),
-        //TODO: check usage library::Type::get_name() when no _ in this
+        _ => Err(TypeError::Unimplemented(type_.get_name().to_owned())),
     }
 }
 
 #[inline]
-fn format_parameter(rust_type: Result, direction: library::ParameterDirection) -> Result {
+fn format_parameter(rust_type: String, direction: library::ParameterDirection) -> String {
     if direction.is_out() {
-        rust_type.map(|s| format!("&mut {}", s))
+        format!("&mut {}", rust_type)
     } else {
         rust_type
     }
