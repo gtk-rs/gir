@@ -297,12 +297,23 @@ pub struct Function {
     pub doc_deprecated: Option<String>,
 }
 
+pub struct Signal {
+    pub name: String,
+    pub parameters: Vec<Parameter>,
+    pub ret: Parameter,
+    pub version: Option<Version>,
+    pub deprecated_version: Option<Version>,
+    pub doc: Option<String>,
+    pub doc_deprecated: Option<String>,
+}
+
 #[derive(Default)]
 pub struct Interface {
     pub name: String,
     pub c_type: String,
     pub glib_get_type: String,
     pub functions: Vec<Function>,
+    pub signals: Vec<Signal>,
     pub prerequisites: Vec<TypeId>,
     pub version: Option<Version>,
     pub deprecated_version: Option<Version>,
@@ -315,6 +326,7 @@ pub struct Class {
     pub c_type: String,
     pub glib_get_type: String,
     pub functions: Vec<Function>,
+    pub signals: Vec<Signal>,
     pub parent: Option<TypeId>,
     pub implements: Vec<TypeId>,
     pub version: Option<Version>,

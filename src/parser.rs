@@ -172,6 +172,7 @@ impl Library {
         let deprecated_version = try!(self.parse_version(parser, ns_id,
             attrs.get("deprecated-version")));
         let mut fns = Vec::new();
+        let mut signals = Vec::new();
         let mut impls = Vec::new();
         let mut doc = None;
         loop {
@@ -183,8 +184,9 @@ impl Library {
                             try!(self.read_function_to_vec(parser, ns_id, kind, &attributes, &mut fns)),
                         "implements" =>
                             impls.push(try!(self.read_type(parser, ns_id, &name, &attributes)).0),
+                        "signal" => try!(self.read_signal_to_vec(parser, ns_id, &attributes, &mut signals)),
                         "field" | "property"
-                            | "signal" | "virtual-method" => try!(ignore_element(parser)),
+                            | "virtual-method" => try!(ignore_element(parser)),
                         "doc" => doc = try!(read_text(parser)),
                         x => return Err(mk_error!(format!("Unexpected element <{}>", x), parser)),
                     }
@@ -201,6 +203,7 @@ impl Library {
                 c_type: c_type.into(),
                 glib_get_type : get_type.into(),
                 functions: fns,
+                signals: signals,
                 parent: parent,
                 implements: impls,
                 doc: doc,
@@ -403,6 +406,7 @@ impl Library {
         let deprecated_version = try!(self.parse_version(parser, ns_id,
             attrs.get("deprecated-version")));
         let mut fns = Vec::new();
+        let mut signals = Vec::new();
         let mut prereqs = Vec::new();
         let mut doc = None;
         loop {
@@ -411,9 +415,12 @@ impl Library {
                 StartElement { name, attributes, .. } => {
                     match name.local_name.as_ref() {
                         kind @ "constructor" | kind @ "function" | kind @ "method" =>
-                            try!(self.read_function_to_vec(parser, ns_id, kind, &attributes, &mut fns)),
-                        "prerequisite" =>
-                            prereqs.push(try!(self.read_type(parser, ns_id, &name, &attributes)).0),
+                            try!(self.read_function_to_vec(parser, ns_id, kind,
+                                                           &attributes, &mut fns)),
+                        "prerequisite" => prereqs.push(try!(self.read_type(parser, ns_id,
+                                                                           &name, &attributes)).0),
+                        "signal" => try!(self.read_signal_to_vec(parser, ns_id,
+                                                                 &attributes, &mut signals)),
                         "doc" => doc = try!(read_text(parser)),
                         _ => try!(ignore_element(parser)),
                     }
@@ -429,6 +436,7 @@ impl Library {
                 c_type: c_type.into(),
                 glib_get_type : get_type.into(),
                 functions: fns,
+                signals: signals,
                 prerequisites: prereqs,
                 doc: doc,
                 version: version,
@@ -718,8 +726,8 @@ impl Library {
                             if ret.is_some() {
                                 return Err(mk_error!("Too many <return-value> elements", parser));
                             }
-                            ret = Some(try!(
-                                self.read_parameter(parser, ns_id, "return-value", &attributes)));
+                            ret = Some(try!(self.read_parameter(parser, ns_id,
+                                                                "return-value", &attributes)));
                         }
                         "doc" => doc = try!(read_text(parser)),
                         "doc-deprecated" => doc_deprecated = try!(read_text(parser)),
@@ -785,6 +793,82 @@ impl Library {
         }
 
         Ok(Some(f))
+    }
+
+    fn read_signal(&mut self, parser: &mut Reader, ns_id: u16,
+                     attrs: &Attributes) -> Result<Signal, Error> {
+        let name = try!(attrs.get("name").ok_or_else(|| mk_error!("Missing signal name", parser)));
+        let version = match attrs.get("version") {
+            Some(v) => Some(try!(v.parse().map_err(|why| mk_error!(why, parser)))),
+            None => None,
+        };
+        let deprecated = to_bool(attrs.get("deprecated").unwrap_or("none"));
+        let deprecated_version = if deprecated {
+            match attrs.get("deprecated-version") {
+                Some(v) => Some(try!(v.parse().map_err(|why| mk_error!(why, parser)))),
+                None => None,
+            }
+        } else {
+            None
+        };
+        if let Some(v) = version {
+            self.register_version(ns_id, v);
+        }
+        if let Some(v) = deprecated_version {
+            self.register_version(ns_id, v);
+        }
+
+        let mut params = Vec::new();
+        let mut ret = None;
+        let mut doc = None;
+        let mut doc_deprecated = None;
+        loop {
+            let event = try!(parser.next());
+            match event {
+                StartElement { name, attributes, .. } => {
+                    match name.local_name.as_ref() {
+                        "parameters" => {
+                            try!(self.read_parameters(parser, ns_id)).into_iter()
+                                .map(|p| params.push(p)).count();
+                        }
+                        "return-value" => {
+                            if ret.is_some() {
+                                return Err(mk_error!("Too many <return-value> elements", parser));
+                            }
+                            ret = Some(try!(self.read_parameter(parser, ns_id,
+                                                                "return-value", &attributes)));
+                        }
+                        "doc" => doc = try!(read_text(parser)),
+                        "doc-deprecated" => doc_deprecated = try!(read_text(parser)),
+                        x => return Err(mk_error!(format!("Unexpected element <{}>", x), parser)),
+                    }
+                }
+                EndElement { .. } => break,
+                _ => xml_next!(event, parser),
+            }
+        }
+        if let Some(ret) = ret {
+            Ok(Signal {
+                name: name.into(),
+                parameters: params,
+                ret: ret,
+                version: version,
+                deprecated_version: deprecated_version,
+                doc: doc,
+                doc_deprecated: doc_deprecated,
+            })
+        }
+        else {
+            Err(mk_error!("Missing <return-value> element", parser))
+        }
+    }
+
+    fn read_signal_to_vec(&mut self, parser: &mut Reader, ns_id: u16,
+                    attrs: &Attributes, signals: &mut Vec<Signal>) -> Result<(), Error> {
+        let s = try!(self.read_signal(parser, ns_id, attrs));
+        signals.push(s);
+
+        Ok(())
     }
 
     fn read_parameters(&mut self, parser: &mut Reader, ns_id: u16)
