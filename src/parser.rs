@@ -14,6 +14,8 @@ use version::Version;
 type Reader = EventReader<BufReader<File>>;
 type Attributes = Vec<OwnedAttribute>;
 
+const EMPTY_CTYPE: &'static str = "/*EMPTY*/";
+
 macro_rules! mk_error {
     ($msg:expr, $obj:expr) => (
         Error::new($obj, format!("{}:{} {}", file!(), line!(), $msg))
@@ -719,7 +721,7 @@ impl Library {
                     match name.local_name.as_ref() {
                         "parameters" => {
                             //params.append(&mut try!(self.read_parameters(parser, ns_id)));
-                            try!(self.read_parameters(parser, ns_id)).into_iter()
+                            try!(self.read_parameters(parser, ns_id, false)).into_iter()
                                 .map(|p| params.push(p)).count();
                         }
                         "return-value" => {
@@ -727,7 +729,7 @@ impl Library {
                                 return Err(mk_error!("Too many <return-value> elements", parser));
                             }
                             ret = Some(try!(self.read_parameter(parser, ns_id,
-                                                                "return-value", &attributes)));
+                                                                "return-value", &attributes, false)));
                         }
                         "doc" => doc = try!(read_text(parser)),
                         "doc-deprecated" => doc_deprecated = try!(read_text(parser)),
@@ -828,7 +830,7 @@ impl Library {
                 StartElement { name, attributes, .. } => {
                     match name.local_name.as_ref() {
                         "parameters" => {
-                            try!(self.read_parameters(parser, ns_id)).into_iter()
+                            try!(self.read_parameters(parser, ns_id, true)).into_iter()
                                 .map(|p| params.push(p)).count();
                         }
                         "return-value" => {
@@ -836,7 +838,7 @@ impl Library {
                                 return Err(mk_error!("Too many <return-value> elements", parser));
                             }
                             ret = Some(try!(self.read_parameter(parser, ns_id,
-                                                                "return-value", &attributes)));
+                                                                "return-value", &attributes, true)));
                         }
                         "doc" => doc = try!(read_text(parser)),
                         "doc-deprecated" => doc_deprecated = try!(read_text(parser)),
@@ -871,7 +873,7 @@ impl Library {
         Ok(())
     }
 
-    fn read_parameters(&mut self, parser: &mut Reader, ns_id: u16)
+    fn read_parameters(&mut self, parser: &mut Reader, ns_id: u16, allow_no_ctype: bool)
                     -> Result<Vec<Parameter>, Error> {
         let mut params = Vec::new();
         loop {
@@ -881,7 +883,7 @@ impl Library {
                     match name.local_name.as_ref() {
                         kind @ "parameter" | kind @ "instance-parameter"  => {
                             let param = try!(
-                                self.read_parameter(parser, ns_id, kind, &attributes));
+                                self.read_parameter(parser, ns_id, kind, &attributes, allow_no_ctype));
                             params.push(param);
                         }
                         x => return Err(mk_error!(format!("Unexpected element <{}>", x), parser)),
@@ -895,7 +897,8 @@ impl Library {
     }
 
     fn read_parameter(&mut self, parser: &mut Reader, ns_id: u16,
-                      kind_str: &str, attrs: &Attributes) -> Result<Parameter, Error> {
+                      kind_str: &str, attrs: &Attributes,
+                      allow_no_ctype: bool) -> Result<Parameter, Error> {
         let name = attrs.get("name").unwrap_or("");
         let instance_parameter = kind_str == "instance-parameter";
         let transfer = try!(
@@ -926,8 +929,12 @@ impl Library {
                                 return Err(mk_error!("Too many <type> elements", &pos));
                             }
                             typ = Some(try!(self.read_type(parser, ns_id, &name, &attributes)));
-                            if typ.as_ref().unwrap().1.is_none() {
-                                return Err(mk_error!("Missing c:type attribute", &pos));
+                            if let Some((tid, None)) = typ {
+                                if allow_no_ctype {
+                                    typ = Some((tid, Some(EMPTY_CTYPE.to_owned())));
+                                } else {
+                                    return Err(mk_error!("Missing c:type attribute", &pos));
+                                }
                             }
                         }
                         "varargs" => {
