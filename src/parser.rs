@@ -16,6 +16,10 @@ type Attributes = Vec<OwnedAttribute>;
 
 const EMPTY_CTYPE: &'static str = "/*EMPTY*/";
 
+pub fn is_empty_c_type(c_type: &str) -> bool {
+    c_type == EMPTY_CTYPE
+}
+
 macro_rules! mk_error {
     ($msg:expr, $obj:expr) => (
         Error::new($obj, format!("{}:{} {}", file!(), line!(), $msg))
