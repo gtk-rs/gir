@@ -42,9 +42,9 @@ impl Library {
     fn fill_class_relationships(&mut self) {
         let mut classes = Vec::new();
         for (ns_id, ns) in self.namespaces.iter().enumerate() {
-            for id in 0..ns.types.len() {
+            for (id, type_) in ns.types.iter().enumerate() {
                 let tid = TypeId { ns_id: ns_id as u16, id: id as u32 };
-                if let Type::Class(_) = *self.type_(tid) {
+                if let Type::Class(_) = *type_.as_ref().unwrap() {
                     classes.push(tid);
                 }
             }
@@ -81,9 +81,9 @@ impl Library {
     fn fill_class_iface_relationships(&mut self) {
         let mut ifaces = Vec::new();
         for (ns_id, ns) in self.namespaces.iter().enumerate() {
-            for id in 0..ns.types.len() {
+            for (id, type_) in ns.types.iter().enumerate() {
                 let tid = TypeId { ns_id: ns_id as u16, id: id as u32 };
-                if let Type::Interface(_) = *self.type_(tid) {
+                if let Type::Interface(_) = *type_.as_ref().unwrap() {
                     ifaces.push(tid);
                 }
             }
