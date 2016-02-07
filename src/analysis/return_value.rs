@@ -67,21 +67,21 @@ fn can_be_nullable_return(env: &Env, type_id: library::TypeId) -> bool
 {
     use library::Type::*;
     use library::Fundamental::*;
-    match env.library.type_(type_id) {
-        &Fundamental(fund) => match fund {
+    match *env.library.type_(type_id) {
+        Fundamental(fund) => match fund {
             Pointer => true,
             Utf8 => true,
             Filename => true,
             _ => false,
         },
-        &Alias(ref alias) => can_be_nullable_return(env, alias.typ),
-        &Enumeration(_) => false,
-        &Bitfield(_) => false,
-        &Record(_) => false,
-        &Union(_) => false,
-        &Function(_) => true,
-        &Interface(_) => true,
-        &Class(_) => true,
+        Alias(ref alias) => can_be_nullable_return(env, alias.typ),
+        Enumeration(_) => false,
+        Bitfield(_) => false,
+        Record(_) => false,
+        Union(_) => false,
+        Function(_) => true,
+        Interface(_) => true,
+        Class(_) => true,
         _ => true
     }
 }

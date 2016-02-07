@@ -376,40 +376,39 @@ pub enum Type {
 }
 
 impl Type {
-    //others that Library and Parser must use analysis::rust_type::ToRustType
     pub fn get_name(&self) -> String {
         use self::Type::*;
-        match self {
-            &Fundamental(fund) => format!("{:?}", fund).into(),
-            &Alias(ref alias) => alias.name.clone(),
-            &Enumeration(ref enum_) => enum_.name.clone(),
-            &Bitfield(ref bit_field) => bit_field.name.clone(),
-            &Record(ref rec) => rec.name.clone(),
-            &Union(ref union) => union.name.clone(),
-            &Function(ref func) => func.name.clone(),
-            &Interface(ref interface) => interface.name.clone(),
-            &Array(type_id) => format!("Array {:?}", type_id),
-            &Class(ref class) => class.name.clone(),
-            &CArray(type_id) => format!("CArray {:?}", type_id),
-            &FixedArray(type_id, size) => format!("FixedArray {:?}; {}", type_id, size),
-            &PtrArray(type_id) => format!("PtrArray {:?}", type_id),
-            &HashTable(key_type_id, value_type_id) => format!("HashTable {:?}/{:?}", key_type_id, value_type_id),
-            &List(type_id) => format!("List {:?}", type_id),
-            &SList(type_id) => format!("SList {:?}", type_id),
+        match *self {
+            Fundamental(fund) => format!("{:?}", fund).into(),
+            Alias(ref alias) => alias.name.clone(),
+            Enumeration(ref enum_) => enum_.name.clone(),
+            Bitfield(ref bit_field) => bit_field.name.clone(),
+            Record(ref rec) => rec.name.clone(),
+            Union(ref union) => union.name.clone(),
+            Function(ref func) => func.name.clone(),
+            Interface(ref interface) => interface.name.clone(),
+            Array(type_id) => format!("Array {:?}", type_id),
+            Class(ref class) => class.name.clone(),
+            CArray(type_id) => format!("CArray {:?}", type_id),
+            FixedArray(type_id, size) => format!("FixedArray {:?}; {}", type_id, size),
+            PtrArray(type_id) => format!("PtrArray {:?}", type_id),
+            HashTable(key_type_id, value_type_id) => format!("HashTable {:?}/{:?}", key_type_id, value_type_id),
+            List(type_id) => format!("List {:?}", type_id),
+            SList(type_id) => format!("SList {:?}", type_id),
         }
     }
 
     pub fn get_glib_name(&self) -> Option<&str> {
         use self::Type::*;
-        match self {
-            &Alias(ref alias) => Some(&alias.c_identifier),
-            &Enumeration(ref enum_) => Some(&enum_.c_type),
-            &Bitfield(ref bit_field) => Some(&bit_field.c_type),
-            &Record(ref rec) => Some(&rec.c_type),
-            &Union(ref union) => union.c_type.as_ref().map(|s| &s[..]),
-            &Function(ref func) => func.c_identifier.as_ref().map(|s| &s[..]),
-            &Interface(ref interface) => Some(&interface.c_type),
-            &Class(ref class) => Some(&class.c_type),
+        match *self {
+            Alias(ref alias) => Some(&alias.c_identifier),
+            Enumeration(ref enum_) => Some(&enum_.c_type),
+            Bitfield(ref bit_field) => Some(&bit_field.c_type),
+            Record(ref rec) => Some(&rec.c_type),
+            Union(ref union) => union.c_type.as_ref().map(|s| &s[..]),
+            Function(ref func) => func.c_identifier.as_ref().map(|s| &s[..]),
+            Interface(ref interface) => Some(&interface.c_type),
+            Class(ref class) => Some(&class.c_type),
             _ => None,
         }
     }
