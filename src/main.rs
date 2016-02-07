@@ -28,6 +28,7 @@ mod env;
 mod file_saver;
 mod git;
 mod library;
+mod library_postprocessing;
 mod nameutil;
 mod parser;
 mod traits;
@@ -59,7 +60,7 @@ fn do_main() -> Result<(), Box<Error>> {
 
     let mut library = Library::new(&cfg.library_name);
     library.read_file(&cfg.girs_dir, &cfg.library_full_name());
-    library.fill_in();
+    library.postprocessing();
 
     let namespaces = analysis::namespaces::run(&library);
 
