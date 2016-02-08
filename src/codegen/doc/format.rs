@@ -1,13 +1,14 @@
-use std::ascii::AsciiExt;
 use regex::{Captures, Regex};
+use analysis::namespaces::MAIN;
+use env::Env;
 
 const LANGUAGE_SEP_BEGIN : &'static str = "<!-- language=\"";
 const LANGUAGE_SEP_END : &'static str = "\" -->";
 const LANGUAGE_BLOCK_BEGIN : &'static str = "|[";
 const LANGUAGE_BLOCK_END : &'static str = "\n]|";
 
-pub fn reformat_doc(input: &str, namespace_name: &str) -> String {
-    code_blocks_transformation(input, namespace_name)
+pub fn reformat_doc(input: &str, env: &Env) -> String {
+    code_blocks_transformation(input, env)
 }
 
 fn try_split<'a>(src: &'a str, needle: &str) -> (&'a str, Option<&'a str>) {
@@ -17,13 +18,14 @@ fn try_split<'a>(src: &'a str, needle: &str) -> (&'a str, Option<&'a str>) {
     }
 }
 
-fn code_blocks_transformation(mut input: &str, namespace_name: &str) -> String {
+fn code_blocks_transformation(mut input: &str,
+                              env: &Env) -> String {
     let mut out = String::new();
 
     loop {
         input = match try_split(input, LANGUAGE_BLOCK_BEGIN) {
             (before, Some(after)) => {
-                out.push_str(&replace_c_types(before, namespace_name));
+                out.push_str(&replace_c_types(before, env));
                 if let (before, Some(after)) = try_split(get_language(after, &mut out),
                                                          LANGUAGE_BLOCK_END) {
                     out.push_str(before);
@@ -34,16 +36,11 @@ fn code_blocks_transformation(mut input: &str, namespace_name: &str) -> String {
                 }
             }
             (before, None) => {
-                out.push_str(&replace_c_types(before, namespace_name));
+                out.push_str(&replace_c_types(before, env));
                 return out
             }
         };
     }
-}
-
-lazy_static! {
-    static ref REG : Regex = Regex::new(r"#?(G[dt]k)([\w]*)").unwrap();
-    static ref REG2 : Regex = Regex::new(r"@(\w*)").unwrap();
 }
 
 fn get_language<'a>(entry: &'a str, out: &mut String) -> &'a str {
@@ -57,12 +54,18 @@ fn get_language<'a>(entry: &'a str, out: &mut String) -> &'a str {
     entry
 }
 
-fn replace_c_types(entry: &str, namespace_name: &str) -> String {
+lazy_static! {
+    static ref REG : Regex = Regex::new(r"#?(G[dt]k)([\w]+:?:?\.?[\w-]+)").unwrap();
+    static ref REG2 : Regex = Regex::new(r"@(\w*)").unwrap();
+}
+
+fn replace_c_types(entry: &str, env: &Env) -> String {
     let out = &REG.replace_all(entry, |caps: &Captures| {
-        if caps[1].eq_ignore_ascii_case(namespace_name) {
+        let pos = env.library.find_namespace(&caps[1]).unwrap();
+        if pos == MAIN {
             format!("`{}`", &caps[2])
         } else {
-            format!("`{}::{}`", &caps[1].to_lowercase(), &caps[2])
+            format!("`{}::{}`", &env.namespaces[pos].crate_name, &caps[2])
         }
     });
     REG2.replace_all(out, "`$1`")
