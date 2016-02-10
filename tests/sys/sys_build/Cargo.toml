@@ -12,6 +12,7 @@ full = [
 
 [dependencies.gtk-sys]
 path = "../gtk-sys"
+features = ["3.16"]
 
 [dependencies.secret-sys]
 optional = true
