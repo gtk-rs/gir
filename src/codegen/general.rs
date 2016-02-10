@@ -81,7 +81,7 @@ pub fn version_condition(w: &mut Write, min_cfg_version: Version,
 pub fn version_condition_string(min_cfg_version: Version,
         version: Option<Version>, commented: bool, indent: usize) -> Option<String> {
     match version {
-        Some(v) if v >= min_cfg_version => {
+        Some(v) if v > min_cfg_version => {
             let comment = if commented { "//" } else { "" };
             Some(format!("{}{}#[cfg({})]", tabs(indent), comment, v.to_cfg()))
         }
