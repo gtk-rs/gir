@@ -5,7 +5,6 @@ rust:
 addons:
   apt:
     packages:
-    - libgtk-3-dev
     - libssh2-1-dev
 script:
   - cargo build --release
