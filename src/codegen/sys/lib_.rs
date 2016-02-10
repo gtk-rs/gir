@@ -4,6 +4,7 @@ use case::CaseExt;
 
 use analysis::ref_mode::RefMode;
 use analysis::rust_type::parameter_rust_type;
+use codegen::general::{self, version_condition};
 use env::Env;
 use file_saver::*;
 use library::*;
@@ -11,8 +12,8 @@ use nameutil::*;
 use super::ffi_type::ffi_type;
 use super::functions;
 use super::statics;
-use super::super::general;
 use traits::*;
+use version::Version;
 
 pub fn generate(env: &Env) {
     println!("generating sys for {}", env.config.library_name);
@@ -50,9 +51,9 @@ fn generate_lib(w: &mut Write, env: &Env) -> Result<()>{
     let unions = prepare(ns);
 
     try!(generate_aliases(w, env, &prepare(ns)));
-    try!(generate_enums(w, &enums));
+    try!(generate_enums(w, env, &enums));
     try!(generate_constants(w, env, &ns.constants));
-    try!(generate_bitfields(w, &bitfields));
+    try!(generate_bitfields(w, env, &bitfields));
     try!(generate_unions(w, &unions));
     try!(functions::generate_callbacks(w, env, &prepare(ns)));
     try!(generate_records(w, env, &records));
@@ -108,12 +109,20 @@ fn generate_aliases(w: &mut Write, env: &Env, items: &[&Alias])
     Ok(())
 }
 
-fn generate_bitfields(w: &mut Write, items: &[&Bitfield])
+fn generate_bitfields(w: &mut Write, env: &Env, items: &[&Bitfield])
         -> Result<()> {
     try!(writeln!(w, ""));
     for item in items {
+        let full_name = format!("{}.{}", env.namespaces.main().name, item.name);
+        let config = env.config.objects.get(&full_name);
+
         try!(writeln!(w, "bitflags! {{\n\t#[repr(C)]\n\tflags {}: c_uint {{", item.c_type));
         for member in &item.members {
+            let member_config = config.as_ref()
+                .map(|c| c.members.matched(&member.name)).unwrap_or(vec![]);
+            let version = member_config.iter().filter_map(|m| m.version).next();
+
+            try!(version_condition(w, env.config.min_cfg_version, version, false, 2));
             let val: i64 = member.value.parse().unwrap();
             try!(writeln!(w, "\t\tconst {} = {},", member.c_identifier, val as u32));
         }
@@ -154,7 +163,7 @@ fn generate_constants(w: &mut Write, env: &Env, constants: &[Constant]) -> Resul
     Ok(())
 }
 
-fn generate_enums(w: &mut Write, items: &[&Enumeration])
+fn generate_enums(w: &mut Write, env: &Env, items: &[&Enumeration])
         -> Result<()> {
     try!(writeln!(w, ""));
     for item in items {
@@ -167,21 +176,33 @@ fn generate_enums(w: &mut Write, items: &[&Enumeration])
             continue;
         }
 
-        let mut vals = HashMap::new();
+        let full_name = format!("{}.{}", env.namespaces.main().name, item.name);
+        let config = env.config.objects.get(&full_name);
+
+        let mut vals: HashMap<String, (String, Option<Version>)> = HashMap::new();
         try!(writeln!(w, "#[derive(Clone, Copy, Debug, Eq, PartialEq)]\n#[repr(C)]"));
         try!(writeln!(w, "pub enum {} {{", item.c_type));
         for member in &item.members {
-            if vals.get(&member.value).is_some() {
+            let member_config = config.as_ref()
+                .map(|c| c.members.matched(&member.name)).unwrap_or(vec![]);
+            let is_alias = member_config.iter().any(|m| m.alias);
+            let version = member_config.iter().filter_map(|m| m.version).next();
+
+            if is_alias || vals.get(&member.value).is_some() {
                 continue;
             }
+            try!(version_condition(w, env.config.min_cfg_version, version, false, 1));
             try!(writeln!(w, "\t{} = {},",
                           &prepare_enum_member_name(&member.name), member.value));
-            vals.insert(member.value.clone(), member.name.clone());
+            vals.insert(member.value.clone(), (member.name.clone(), version.clone()));
         }
         try!(writeln!(w, "}}"));
         for member in &item.members {
-            try!(writeln!(w, "pub const {}: {} = {1}::{};", member.c_identifier, item.c_type,
-                          &prepare_enum_member_name(vals.get(&member.value).unwrap())));
+            if let Some(&(ref value, version)) = vals.get(&member.value) {
+                try!(version_condition(w, env.config.min_cfg_version, version, false, 0));
+                try!(writeln!(w, "pub const {}: {} = {1}::{};", member.c_identifier, item.c_type,
+                          &prepare_enum_member_name(value)));
+            }
         }
         try!(writeln!(w, ""));
     }
