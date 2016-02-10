@@ -10,7 +10,7 @@ pub fn generate(w: &mut Write, env: &Env, analysis: &analysis::object::Info) -> 
         .chain(analysis.implements.iter())
         .collect();
     try!(general::start_comments(w, &env.config));
-    try!(general::uses(w, &analysis.imports, &env.config.library_name, env.config.min_cfg_version));
+    try!(general::uses(w, &analysis.imports, env.config.min_cfg_version));
     try!(general::define_object_type(w, &analysis.name, &analysis.c_type, &analysis.get_type,
         &implements));
 
@@ -68,8 +68,7 @@ pub fn generate_reexports(env: &Env, analysis: &analysis::object::Info, module_n
     if let Some(cfg) = general::cfg_condition_string(&analysis.cfg_condition, false, 0) {
         cfgs.push(cfg);
     }
-    if let Some(cfg) = general::version_condition_string(&env.config.library_name,
-                                                         env.config.min_cfg_version,
+    if let Some(cfg) = general::version_condition_string(env.config.min_cfg_version,
                                                          analysis.version, false, 0) {
         cfgs.push(cfg);
     }
