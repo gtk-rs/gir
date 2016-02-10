@@ -6,7 +6,6 @@ use analysis::imports::Imports;
 use config::Config;
 use git::repo_hash;
 use gir_version::VERSION;
-use nameutil::crate_name;
 use version::Version;
 use writer::primitives::tabs;
 
@@ -18,11 +17,11 @@ pub fn start_comments(w: &mut Write, conf: &Config) -> Result<()>{
     Ok(())
 }
 
-pub fn uses(w: &mut Write, imports: &Imports, library_name: &str, min_cfg_version: Version)
+pub fn uses(w: &mut Write, imports: &Imports, min_cfg_version: Version)
         -> Result<()>{
     try!(writeln!(w, ""));
     for (name, version) in imports.iter() {
-        try!(version_condition(w, library_name, min_cfg_version, version.clone(), false, 0));
+        try!(version_condition(w, min_cfg_version, version.clone(), false, 0));
         try!(writeln!(w, "use {};", name));
     }
 
@@ -70,22 +69,21 @@ pub fn define_boxed_type(w: &mut Write, type_name: &str, glib_name: &str,
     Ok(())
 }
 
-pub fn version_condition(w: &mut Write, library_name: &str, min_cfg_version: Version,
+pub fn version_condition(w: &mut Write, min_cfg_version: Version,
         version: Option<Version>, commented: bool, indent: usize) -> Result<()> {
-    let s = version_condition_string(library_name, min_cfg_version, version, commented, indent);
+    let s = version_condition_string(min_cfg_version, version, commented, indent);
     if let Some(s) = s {
         try!(writeln!(w, "{}", s));
     }
     Ok(())
 }
 
-pub fn version_condition_string(library_name: &str, min_cfg_version: Version,
+pub fn version_condition_string(min_cfg_version: Version,
         version: Option<Version>, commented: bool, indent: usize) -> Option<String> {
     match version {
         Some(v) if v >= min_cfg_version => {
             let comment = if commented { "//" } else { "" };
-            Some(format!("{}{}#[cfg({})]", tabs(indent), comment,
-                v.to_cfg(&crate_name(library_name))))
+            Some(format!("{}{}#[cfg({})]", tabs(indent), comment, v.to_cfg()))
         }
         _ => None
     }
