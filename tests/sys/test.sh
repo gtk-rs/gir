@@ -1,6 +1,10 @@
 #!/bin/sh
 
 GIR="cargo run --release --"
+FEATURES=""
+if [ "$1" = "full" ]; then
+	FEATURES="$FEATURES full"
+fi
 export RUST_LOG="gir=warn"
 
 cd "`dirname $0`"
@@ -11,5 +15,5 @@ for TOML in gir-*.toml; do
 done
 
 cd sys_build
-cargo build || exit 3
+cargo build --features "$FEATURES" || exit 3
 cd ..

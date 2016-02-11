@@ -4,7 +4,6 @@ use std::str::FromStr;
 use toml::Value;
 
 use super::functions::Functions;
-use super::members::Members;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum GStatus {
@@ -48,7 +47,6 @@ impl FromStr for GStatus {
 pub struct GObject {
     pub name: String,
     pub functions: Functions,
-    pub members: Members,
     pub status: GStatus,
     pub module_name: Option<String>,
     pub cfg_condition: Option<String>,
@@ -59,7 +57,6 @@ impl Default for GObject {
         GObject {
             name: "Default".into(),
             functions: Functions::new(),
-            members: Members::new(),
             status: Default::default(),
             module_name: None,
             cfg_condition: None,
@@ -89,7 +86,6 @@ fn parse_object(toml_object: &Value) -> GObject {
     };
 
     let functions = Functions::parse(toml_object.lookup("function"), &name);
-    let members = Members::parse(toml_object.lookup("member"), &name);
     let module_name = toml_object.lookup("module_name")
         .and_then(|v| v.as_str())
         .map(|s| s.to_owned());
@@ -100,7 +96,6 @@ fn parse_object(toml_object: &Value) -> GObject {
     GObject {
         name: name,
         functions: functions,
-        members: members,
         status: status,
         module_name: module_name,
         cfg_condition: cfg_condition,

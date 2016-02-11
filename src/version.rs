@@ -6,8 +6,12 @@ use std::str::FromStr;
 pub struct Version(pub u16, pub u16, pub u16);
 
 impl Version {
-    pub fn to_cfg(&self) -> String {
-        format!("feature = \"{}\"", self)
+    pub fn to_cfg(&self, crate_name: &str) -> String {
+        match *self {
+            Version(major, minor, 0) => format!("{}_{}_{}", crate_name, major, minor),
+            Version(major, minor, patch) =>
+                format!("{}_{}_{}_{}", crate_name, major, minor, patch),
+        }
     }
 }
 
@@ -27,10 +31,7 @@ impl FromStr for Version {
 
 impl Display for Version {
     fn fmt(&self, f: &mut Formatter) -> Result<(), fmt::Error> {
-        match *self {
-            Version(major, minor, 0) => write!(f, "{}.{}", major, minor),
-            Version(major, minor, patch) => write!(f, "{}.{}.{}", major, minor, patch),
-        }
+        write!(f, "{}.{}.{}", self.0, self.1, self.2)
     }
 }
 
