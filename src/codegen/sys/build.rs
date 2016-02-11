@@ -2,7 +2,7 @@ use std::io::{Result, Write};
 
 use env::Env;
 use file_saver::save_to_file;
-use version::Version;
+use regex::Regex;
 
 pub fn generate(env: &Env) {
     println!("generating sys build script for {}", env.config.library_name);
@@ -15,33 +15,58 @@ pub fn generate(env: &Env) {
 }
 
 fn generate_build_script(w: &mut Write, env: &Env) -> Result<()> {
-    try!(writeln!(w, "{}", "extern crate pkg_config;\n"));
+    try!(write!(w, "{}",
+r##"extern crate pkg_config;
+use std::env;
+use std::io::prelude::*;
+use std::io;
+use std::process;
+
+fn main() {
+    if let Err(s) = find() {
+        let _ = writeln!(io::stderr(), "{}", s);
+        process::exit(1);
+    }
+}
+
+fn find() -> Result<(), String> {
+"##));
 
     let ns = env.namespaces.main();
-    try!(writeln!(w, "const LIBRARY_NAME: &'static str = \"{}\";", ns.crate_name));
-    try!(writeln!(w, "const PACKAGE_NAME: &'static str = \"{}\";",
-                  ns.package_name.as_ref().unwrap()));
-    try!(writeln!(w, "const VERSIONS: &'static [Version] = &["));
+    let regex = Regex::new(r"^lib(.+)\.so.*$").unwrap();
+    let shared_libs: Vec<String> = ns.shared_libs.iter()
+        .map(|s| regex.replace(s, "\"$1\""))
+        .collect();
+
+    try!(writeln!(w, "\tlet package_name = \"{}\";", ns.package_name.as_ref().unwrap()));
+    try!(writeln!(w, "\tlet shared_libs = [{}];", shared_libs.join(", ")));
+    try!(write!(w, "\tlet expected_version =\n\t\t"));
     let versions = ns.versions.iter()
-        .filter(|v| **v >= env.config.min_cfg_version);
-    for &Version(major, minor, patch) in versions {
-        try!(writeln!(w, "\tVersion({}, {}, {}),", major, minor, patch));
+        .filter(|v| **v >= env.config.min_cfg_version)
+        .skip(1)
+        .collect::<Vec<_>>();
+    for v in versions.iter().rev() {
+        try!(write!(w, "if cfg!({}) {{\n\t\t\t\"{}\"\n\t\t}} else ", v.to_cfg(), v));
     }
-    try!(writeln!(w, "];"));
+    try!(writeln!(w, "{{\n\t\t\t\"{}\"\n\t\t}};", env.config.min_cfg_version));
 
     writeln!(w, "{}",
 r##"
-fn main() {
-    let lib = pkg_config::find_library(PACKAGE_NAME)
-        .unwrap_or_else(|e| panic!("{}", e));
-    let version = Version::new(&lib.version);
-    let mut cfgs = Vec::new();
-    for v in VERSIONS.iter().filter(|&&v| v <= version) {
-        let cfg = v.to_cfg();
-        println!("cargo:rustc-cfg={}", cfg);
-        cfgs.push(cfg);
+    if let Ok(lib_dir) = env::var("GTK_LIB_DIR") {
+        for lib_ in shared_libs.iter() {
+            println!("cargo:rustc-link-lib=dylib={}", lib_);
+        }
+        println!("cargo:rustc-link-search=native={}", lib_dir);
+        Ok(())
+    } else {
+        let lib = try!(pkg_config::find_library(package_name));
+        if Version::new(&lib.version) >= Version::new(expected_version) {
+            Ok(())
+        } else {
+            Err(format!("Installed `{}` version `{}` lower than `{}` requested by cargo features",
+                        package_name, lib.version, expected_version))
+        }
     }
-    println!("cargo:cfg={}", cfgs.join(" "));
 }
 
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
@@ -55,14 +80,6 @@ impl Version {
             .map(Result::unwrap);
         Version(parts.next().unwrap_or(0),
             parts.next().unwrap_or(0), parts.next().unwrap_or(0))
-    }
-
-    fn to_cfg(&self) -> String {
-        match *self {
-            Version(major, minor, 0) => format!("{}_{}_{}", LIBRARY_NAME, major, minor),
-            Version(major, minor, patch) =>
-                format!("{}_{}_{}_{}", LIBRARY_NAME, major, minor, patch),
-        }
     }
 }
 "##)
