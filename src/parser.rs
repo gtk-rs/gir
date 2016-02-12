@@ -99,6 +99,9 @@ impl Library {
         let name = try!(attrs.get("name").ok_or_else(|| mk_error!("Missing namespace name", parser)));
         let ns_id = self.add_namespace(name);
         self.namespace_mut(ns_id).package_name = package;
+        if let Some(s) = attrs.get("shared-library") {
+            self.namespace_mut(ns_id).shared_library = s.split(",").map(String::from).collect();
+        }
         trace!("Reading {}-{}", name, attrs.get("version").unwrap());
         loop {
             let event = try!(parser.next());

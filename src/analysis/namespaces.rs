@@ -13,6 +13,7 @@ pub struct Namespace {
     pub name: String,
     pub crate_name: String,
     pub package_name: Option<String>,
+    pub shared_libs: Vec<String>,
     pub versions: Vec<Version>,
 }
 
@@ -54,6 +55,7 @@ pub fn run(gir: &library::Library) -> Info {
             name: ns.name.clone(),
             crate_name: nameutil::crate_name(&ns.name),
             package_name: ns.package_name.clone(),
+            shared_libs: ns.shared_library.clone(),
             versions: ns.versions.iter().cloned().collect(),
         });
         //name_index.insert(ns.name.clone(), ns_id);

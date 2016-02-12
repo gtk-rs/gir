@@ -1,43 +1,7 @@
 use library::Nullable;
-use regex::*;
-use std::vec::Vec;
+use super::ident::Ident;
 use toml::Value;
 use version::Version;
-
-#[derive(Clone, Debug, Eq, PartialEq)]
-pub enum Ident {
-    Name(String),
-    Pattern(Regex),
-}
-
-impl Ident {
-    pub fn parse(toml: &Value, object_name: &str, is_parameter: bool) -> Option<Ident> {
-        match toml.lookup("pattern").and_then(|v| v.as_str()) {
-            Some(s) => Regex::new(s)
-                .map(|r| Ident::Pattern(r))
-                .map_err(|e| {
-                    if is_parameter {
-                        error!("Bad pattern '{}' in functions parameter for '{}': {}", s, object_name, e);
-                    } else {
-                        error!("Bad pattern '{}' in function for '{}': {}", s, object_name, e);
-                    }
-                    e
-                })
-                .ok(),
-            None => toml.lookup("name")
-                .and_then(|val| val.as_str())
-                .map(|s| Ident::Name(s.into())),
-        }
-    }
-
-    fn is_match(&self, name: &str) -> bool {
-        use self::Ident::*;
-        match *self {
-            Name(ref n) => name == n,
-            Pattern(ref regex) => regex.is_match(name),
-        }
-    }
-}
 
 #[derive(Clone, Debug)]
 pub struct Parameter {
@@ -50,7 +14,7 @@ pub struct Parameter {
 
 impl Parameter {
     pub fn parse(toml: &Value, object_name: &str) -> Option<Parameter> {
-        let ident = match Ident::parse(toml, object_name, true) {
+        let ident = match Ident::parse(toml, object_name, "function parameter") {
             Some(ident) => ident,
             None => {
                 error!("No 'name' or 'pattern' given for parameter for object {}", object_name);
@@ -136,7 +100,7 @@ pub struct Function {
 
 impl Function {
     pub fn parse(toml: &Value, object_name: &str) -> Option<Function> {
-        let ident = match Ident::parse(toml, object_name, false) {
+        let ident = match Ident::parse(toml, object_name, "function") {
             Some(ident) => ident,
             None => {
                 error!("No 'name' or 'pattern' given for function for object {}", object_name);
@@ -209,6 +173,7 @@ impl Functions {
 #[cfg(test)]
 mod tests {
     use library::Nullable;
+    use super::super::ident::Ident;
     use super::*;
     use toml;
     use version::Version;

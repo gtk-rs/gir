@@ -2,13 +2,9 @@
 name = "sys_build"
 version = "0.0.1"
 
-[lib]
-name = "sys_build"
-
 [features]
-full = [
-	"secret-sys",
-]
+full = ["secret-sys"]
+"3.16" = ["gtk-sys/3.16"]
 
 [dependencies.gtk-sys]
 path = "../gtk-sys"

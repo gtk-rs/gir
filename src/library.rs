@@ -517,6 +517,7 @@ pub struct Namespace {
     pub versions: BTreeSet<Version>,
     pub doc: Option<String>,
     pub doc_deprecated: Option<String>,
+    pub shared_library: Vec<String>,
 }
 
 impl Namespace {

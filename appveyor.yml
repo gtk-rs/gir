@@ -1,0 +1,31 @@
+environment:
+  matrix:
+    - RUST_VERSION: 1.6.0
+      BITS: 32
+    - RUST_VERSION: 1.6.0
+      BITS: 64
+
+install:
+  - IF "%BITS%" == "32" SET ARCH=i686
+  - IF "%BITS%" == "64" SET ARCH=x86_64
+  - ps: Start-FileDownload "https://static.rust-lang.org/dist/rust-${env:RUST_VERSION}-${env:ARCH}-pc-windows-gnu.exe" -FileName rust-dist.exe
+  - rust-dist.exe /VERYSILENT /NORESTART /COMPONENTS="Rustc,Gcc,Cargo,Std" /DIR="C:\Rust"
+  - SET PATH=C:\Rust\bin;C:\Program Files\Git\cmd;C:\Program Files\Git\usr\bin
+  - SET PATH=C:\msys64\mingw%BITS%\bin;C:\msys64\usr\bin;%PATH%
+  - pacman --noconfirm -S mingw-w64-%ARCH%-gtk3
+  - SET GTK_LIB_DIR=C:\msys64\mingw%BITS%\lib
+
+build_script:
+  - git clone -q https://github.com/gkoz/gir-files tests/gir-files
+  - rustc -V
+  - cargo build --release
+  - cargo test --release
+  - ps: >-
+      foreach ($file in Get-ChildItem "tests\sys\gir-*.toml") {
+          cargo run --release -- -c $file
+      }
+  - cd tests\sys\sys_build
+  - cargo build
+  - cargo build --features 3.16
+
+test: false

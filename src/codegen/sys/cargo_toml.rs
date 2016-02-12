@@ -6,6 +6,7 @@ use toml::{self, Parser, Table, Value};
 use env::Env;
 use file_saver::save_to_file;
 use nameutil::crate_name;
+use version::Version;
 
 pub fn generate(env: &Env) {
     println!("manipulating sys Cargo.toml for {}", env.config.library_name);
@@ -64,13 +65,27 @@ fn fill_in(root: &mut Table, env: &Env) {
 
     {
         let deps = upsert_table(root, "dependencies");
-        set_string(deps, "bitflags", "0.3");
-        set_string(deps, "libc", "0.1");
+        set_string(deps, "bitflags", "0.4");
+        set_string(deps, "libc", "0.2");
     }
 
     {
         let build_deps = upsert_table(root, "build-dependencies");
         set_string(build_deps, "pkg-config", "0.3.5");
+    }
+
+    {
+        let features = upsert_table(root, "features");
+        features.clear();
+        let versions = env.namespaces.main().versions.iter()
+            .filter(|&&v| v > env.config.min_cfg_version);
+        versions.fold(None::<Version>, |prev, &version| {
+            let prev_array: Vec<Value> = prev.iter()
+                .map(|v| Value::String(v.to_string()))
+                .collect();
+            features.insert(version.to_string(), Value::Array(prev_array));
+            Some(version)
+        });
     }
 }
 
