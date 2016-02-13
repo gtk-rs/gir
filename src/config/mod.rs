@@ -1,3 +1,6 @@
+#[macro_use]
+pub mod identables;
+
 pub mod config;
 pub mod error;
 pub mod functions;

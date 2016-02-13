@@ -34,31 +34,7 @@ impl Member {
     }
 }
 
-#[derive(Clone, Debug)]
-pub struct Members(Vec<Member>);
-
-impl Members {
-    pub fn new() -> Members {
-        Members(Vec::new())
-    }
-
-    pub fn parse(toml: Option<&Value>, object_name: &str) -> Members {
-        let mut v = Vec::new();
-        if let Some(items) = toml.and_then(|val| val.as_slice()) {
-            for item in items {
-                if let Some(item) = Member::parse(item, object_name) {
-                    v.push(item);
-                }
-            }
-        }
-
-        Members(v)
-    }
-
-    pub fn matched(&self, member_name: &str) -> Vec<&Member> {
-        self.0.iter().filter(|m| m.ident.is_match(member_name)).collect()
-    }
-}
+identables!(Members<Member>);
 
 #[cfg(test)]
 mod tests {
