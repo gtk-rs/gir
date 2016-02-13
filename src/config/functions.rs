@@ -36,32 +36,7 @@ impl Parameter {
     }
 }
 
-#[derive(Clone, Debug)]
-pub struct Parameters(Vec<Parameter>);
-
-impl Parameters {
-    pub fn parse(toml: Option<&Value>, object_name: &str) -> Parameters {
-        let mut v = Vec::new();
-        if let Some(pars) = toml.and_then(|val| val.as_slice()) {
-            for par in pars {
-                if let Some(par) = Parameter::parse(par, object_name) {
-                    v.push(par);
-                }
-            }
-        }
-
-        Parameters(v)
-    }
-
-    pub fn matched(&self, parameter_name: &str) -> Vec<&Parameter> {
-        self.0.iter().filter(|p| p.ident.is_match(parameter_name)).collect()
-    }
-
-    #[cfg(test)]
-    fn vec(&self) -> &Vec<Parameter> {
-        &self.0
-    }
-}
+identables!(Parameters<Parameter>);
 
 #[derive(Clone, Debug)]
 pub struct Return {
@@ -139,36 +114,7 @@ impl Function {
     }
 }
 
-#[derive(Clone, Debug)]
-pub struct Functions(Vec<Function>);
-
-impl Functions {
-    pub fn new() -> Functions {
-        Functions(Vec::new())
-    }
-
-    pub fn parse(toml: Option<&Value>, object_name: &str) -> Functions {
-        let mut v = Vec::new();
-        if let Some(fns) = toml.and_then(|val| val.as_slice()) {
-            for f in fns {
-                if let Some(f) = Function::parse(f, object_name) {
-                    v.push(f);
-                }
-            }
-        }
-
-        Functions(v)
-    }
-
-    pub fn matched(&self, function_name: &str) -> Vec<&Function> {
-        self.0.iter().filter(|f| f.ident.is_match(function_name)).collect()
-    }
-
-    #[cfg(test)]
-    fn vec(&self) -> &Vec<Function> {
-        &self.0
-    }
-}
+identables!(Functions<Function>);
 
 #[cfg(test)]
 mod tests {
