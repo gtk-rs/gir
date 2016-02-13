@@ -1,5 +1,6 @@
 use library::Nullable;
 use super::ident::Ident;
+use super::identables::{Identables, Parse};
 use toml::Value;
 use version::Version;
 
@@ -12,8 +13,8 @@ pub struct Parameter {
     pub nullable: Option<Nullable>,
 }
 
-impl Parameter {
-    pub fn parse(toml: &Value, object_name: &str) -> Option<Parameter> {
+impl Parse for Parameter {
+    fn parse(toml: &Value, object_name: &str) -> Option<Parameter> {
         let ident = match Ident::parse(toml, object_name, "function parameter") {
             Some(ident) => ident,
             None => {
@@ -36,32 +37,13 @@ impl Parameter {
     }
 }
 
-#[derive(Clone, Debug)]
-pub struct Parameters(Vec<Parameter>);
-
-impl Parameters {
-    pub fn parse(toml: Option<&Value>, object_name: &str) -> Parameters {
-        let mut v = Vec::new();
-        if let Some(pars) = toml.and_then(|val| val.as_slice()) {
-            for par in pars {
-                if let Some(par) = Parameter::parse(par, object_name) {
-                    v.push(par);
-                }
-            }
-        }
-
-        Parameters(v)
-    }
-
-    pub fn matched(&self, parameter_name: &str) -> Vec<&Parameter> {
-        self.0.iter().filter(|p| p.ident.is_match(parameter_name)).collect()
-    }
-
-    #[cfg(test)]
-    fn vec(&self) -> &Vec<Parameter> {
-        &self.0
+impl AsRef<Ident> for Parameter {
+    fn as_ref(&self) -> &Ident {
+        &self.ident
     }
 }
+
+pub type Parameters = Vec<Parameter>;
 
 #[derive(Clone, Debug)]
 pub struct Return {
@@ -98,8 +80,8 @@ pub struct Function {
     pub ret: Return,
 }
 
-impl Function {
-    pub fn parse(toml: &Value, object_name: &str) -> Option<Function> {
+impl Parse for Function {
+    fn parse(toml: &Value, object_name: &str) -> Option<Function> {
         let ident = match Ident::parse(toml, object_name, "function") {
             Some(ident) => ident,
             None => {
@@ -128,7 +110,9 @@ impl Function {
             cfg_condition: cfg_condition,
         })
     }
+}
 
+impl Function {
     pub fn matched_parameters<'a>(functions: &[&'a Function], parameter_name: &str) -> Vec<&'a Parameter> {
         let mut v = Vec::new();
         for f in functions {
@@ -139,41 +123,19 @@ impl Function {
     }
 }
 
-#[derive(Clone, Debug)]
-pub struct Functions(Vec<Function>);
-
-impl Functions {
-    pub fn new() -> Functions {
-        Functions(Vec::new())
-    }
-
-    pub fn parse(toml: Option<&Value>, object_name: &str) -> Functions {
-        let mut v = Vec::new();
-        if let Some(fns) = toml.and_then(|val| val.as_slice()) {
-            for f in fns {
-                if let Some(f) = Function::parse(f, object_name) {
-                    v.push(f);
-                }
-            }
-        }
-
-        Functions(v)
-    }
-
-    pub fn matched(&self, function_name: &str) -> Vec<&Function> {
-        self.0.iter().filter(|f| f.ident.is_match(function_name)).collect()
-    }
-
-    #[cfg(test)]
-    fn vec(&self) -> &Vec<Function> {
-        &self.0
+impl AsRef<Ident> for Function {
+    fn as_ref(&self) -> &Ident {
+        &self.ident
     }
 }
+
+pub type Functions = Vec<Function>;
 
 #[cfg(test)]
 mod tests {
     use library::Nullable;
     use super::super::ident::Ident;
+    use super::super::identables::*;
     use super::*;
     use toml;
     use version::Version;
@@ -279,7 +241,7 @@ pattern = "par4"
 const = true
 "#);
         let f = Function::parse(&toml, "a").unwrap();
-        let pars = f.parameters.vec();
+        let pars = f.parameters;
         assert_eq!(pars.len(), 4);
         assert_eq!(pars[0].ident, Ident::Name("par1".into()));
         assert_eq!(pars[0].constant, false);
@@ -323,7 +285,7 @@ nullable = true
     #[test]
     fn functions_parse_empty_for_none() {
         let fns = Functions::parse(None, "a");
-        assert!(fns.vec().is_empty());
+        assert!(fns.is_empty());
     }
 
     #[test]
@@ -341,10 +303,10 @@ pattern = 'func3\w+'
 pattern = 'bad_func4[\w+'
 "#);
         let fns = Functions::parse(Some(&toml), "a");
-        assert_eq!(fns.vec().len(), 3);
-        assert_eq!(fns.vec()[0].ident, Ident::Name("func1".into()));
-        assert_eq!(fns.vec()[1].ident, Ident::Name("func2".into()));
-        if let Ident::Pattern(_) = fns.vec()[2].ident {
+        assert_eq!(fns.len(), 3);
+        assert_eq!(fns[0].ident, Ident::Name("func1".into()));
+        assert_eq!(fns[1].ident, Ident::Name("func2".into()));
+        if let Ident::Pattern(_) = fns[2].ident {
         } else {
             assert!(false, "Pattern don't parsed");
         }
@@ -363,7 +325,7 @@ name = "func2"
 pattern = 'func\d+'
 "#);
         let fns = Functions::parse(Some(&toml), "a");
-        assert_eq!(fns.vec().len(), 4);
+        assert_eq!(fns.len(), 4);
 
         assert_eq!(fns.matched("func1").len(), 2);
         assert_eq!(fns.matched("func2").len(), 2);
@@ -393,7 +355,7 @@ name="par3"
 pattern='par\d+'
 "#);
         let fns = Functions::parse(Some(&toml), "a");
-        assert_eq!(fns.vec().len(), 2);
+        assert_eq!(fns.len(), 2);
         let m = fns.matched("func");
         assert_eq!(m.len(), 2);
 
