@@ -1,4 +1,5 @@
 use super::ident::Ident;
+use super::identables::{Identables, Parse};
 use toml::Value;
 use version::Version;
 
@@ -10,8 +11,8 @@ pub struct Member {
     pub version: Option<Version>,
 }
 
-impl Member {
-    pub fn parse(toml: &Value, object_name: &str) -> Option<Member> {
+impl Parse for Member {
+    fn parse(toml: &Value, object_name: &str) -> Option<Member> {
         let ident = match Ident::parse(toml, object_name, "member") {
             Some(ident) => ident,
             None => {
@@ -34,35 +35,18 @@ impl Member {
     }
 }
 
-#[derive(Clone, Debug)]
-pub struct Members(Vec<Member>);
-
-impl Members {
-    pub fn new() -> Members {
-        Members(Vec::new())
-    }
-
-    pub fn parse(toml: Option<&Value>, object_name: &str) -> Members {
-        let mut v = Vec::new();
-        if let Some(items) = toml.and_then(|val| val.as_slice()) {
-            for item in items {
-                if let Some(item) = Member::parse(item, object_name) {
-                    v.push(item);
-                }
-            }
-        }
-
-        Members(v)
-    }
-
-    pub fn matched(&self, member_name: &str) -> Vec<&Member> {
-        self.0.iter().filter(|m| m.ident.is_match(member_name)).collect()
+impl AsRef<Ident> for Member {
+    fn as_ref(&self) -> &Ident {
+        &self.ident
     }
 }
+
+pub type Members = Vec<Member>;
 
 #[cfg(test)]
 mod tests {
     use super::super::ident::Ident;
+    use super::super::identables::*;
     use super::*;
     use toml;
     use version::Version;

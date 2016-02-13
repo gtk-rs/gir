@@ -1,3 +1,5 @@
+pub use config::identables::Identables;
+
 pub trait AsStr {
     fn as_str(&self) -> &str;
 }
