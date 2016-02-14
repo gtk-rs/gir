@@ -16,6 +16,7 @@ pub mod ref_mode;
 pub mod return_value;
 pub mod rust_type;
 pub mod safety_assertion_mode;
+pub mod signals;
 pub mod special_functions;
 pub mod supertypes;
 pub mod symbols;

@@ -19,6 +19,13 @@ pub struct Info {
     pub has_constructors: bool,
     pub has_methods: bool,
     pub has_functions: bool,
+    pub signals: Vec<signals::Info>,
+}
+
+impl Info {
+    pub fn has_signals(&self) -> bool {
+        !self.signals.is_empty()
+    }
 }
 
 impl Deref for Info {
@@ -75,6 +82,8 @@ pub fn class(env: &Env, obj: &GObject) -> Option<Info> {
     special_functions::unhide(&mut functions, &specials, special_functions::Type::Copy);
     special_functions::analyze_imports(&specials, &mut imports);
 
+    let signals = signals::analyze(&klass.signals);
+
     let (version, deprecated_version) = info_base::versions(env, &obj, &functions, klass.version,
          klass.deprecated_version);
 
@@ -116,6 +125,7 @@ pub fn class(env: &Env, obj: &GObject) -> Option<Info> {
         has_constructors: has_constructors,
         has_methods: has_methods,
         has_functions: has_functions,
+        signals: signals,
     };
 
     Some(info)
@@ -147,6 +157,8 @@ pub fn interface(env: &Env, obj: &GObject) -> Option<Info> {
 
     let functions = functions::analyze(env, &iface.functions, iface_tid, &obj, &mut imports);
 
+    let signals = signals::analyze(&iface.signals);
+
     let (version, deprecated_version) = info_base::versions(env, &obj, &functions, iface.version,
          iface.deprecated_version);
 
@@ -174,6 +186,7 @@ pub fn interface(env: &Env, obj: &GObject) -> Option<Info> {
         supertypes: supertypes,
         has_children: true,
         has_methods: has_methods,
+        signals: signals,
         .. Default::default()
     };
 

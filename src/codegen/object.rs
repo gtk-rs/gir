@@ -2,7 +2,7 @@ use std::io::{Result, Write};
 
 use analysis;
 use env::Env;
-use super::{function, general, trait_impls};
+use super::{function, general, signal, trait_impls};
 
 pub fn generate(w: &mut Write, env: &Env, analysis: &analysis::object::Info) -> Result<()>{
     try!(general::start_comments(w, &env.config));
@@ -26,6 +26,13 @@ pub fn generate(w: &mut Write, env: &Env, analysis: &analysis::object::Info) -> 
         for func_analysis in &analysis.functions() {
             try!(function::generate(w, env, func_analysis, false, false, 1));
         }
+
+        if !generate_trait(analysis) {
+            for signal_analysis in &analysis.signals {
+                try!(signal::generate(w, signal_analysis, false, false, 1));
+            }
+        }
+
         try!(writeln!(w, "}}"));
     }
 
@@ -37,12 +44,19 @@ pub fn generate(w: &mut Write, env: &Env, analysis: &analysis::object::Info) -> 
         for func_analysis in &analysis.methods() {
             try!(function::generate(w, env, func_analysis, true, true, 1));
         }
+        for signal_analysis in &analysis.signals {
+            try!(signal::generate(w, signal_analysis, true, true, 1));
+        }
         try!(writeln!(w, "}}"));
 
         try!(writeln!(w, ""));
-        try!(write!(w, "impl<O: IsA<{}>> {}Ext for O {{", analysis.name, analysis.name));
+        let extra_isa = if analysis.has_signals() { " + IsA<Object>" } else { "" };
+        try!(write!(w, "impl<O: IsA<{}>{}> {0}Ext for O {{", analysis.name, extra_isa));
         for func_analysis in &analysis.methods() {
             try!(function::generate(w, env, func_analysis, true, false, 1));
+        }
+        for signal_analysis in &analysis.signals {
+            try!(signal::generate(w, signal_analysis, true, false, 1));
         }
         try!(writeln!(w, "}}"));
     }
