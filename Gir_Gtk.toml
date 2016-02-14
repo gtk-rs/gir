@@ -30,6 +30,7 @@ generate = [
     "Gtk.CheckButton",
     "Gtk.ColorButton",
     "Gtk.ColorChooserWidget",
+    "Gtk.ComboBoxText",
     "Gtk.CssProvider",
     "Gtk.DrawingArea",
     "Gtk.EventBox",
@@ -259,3 +260,11 @@ status = "generate"
         [[object.function.parameter]]
         name = "paper_size"
         const = true
+
+[[object]]
+name = "Gtk.ComboBox"
+status = "generate"
+
+[[object]]
+name = "Gtk.TreeSelection"
+status = "generate"
