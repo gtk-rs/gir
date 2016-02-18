@@ -93,33 +93,22 @@ fn generate_doc(mut w: &mut Write, env: &Env) -> Result<()> {
 
         let info = analysis::object::class(env, obj)
             .or_else(|| analysis::object::interface(env, obj));
-        let class_analysis = match info {
-            Some(info) => info,
-            None => continue,
-        };
-        let has_trait = class_analysis.has_children;
-
-        try!(handle_type(w, &env.library.type_(class_analysis.type_id), None, has_trait,
-                         true, &env));
+        if let Some(info) = info {
+            try!(create_object_doc(w, env, &info));
+        }
     }
 
     for ty in namespace.types.iter().filter_map(|t| t.as_ref()) {
-        try!(handle_type(&mut w, &ty, None, false, false, &env));
+        try!(handle_type(&mut w, &ty, &env));
     }
     Ok(())
 }
 
-fn handle_type(w: &mut Write, ty: &LType, parent: Option<Box<TypeStruct>>,
-               has_trait: bool, handle_structs: bool,
-               env: &Env) -> Result<()> {
+fn handle_type(w: &mut Write, ty: &LType, env: &Env) -> Result<()> {
     match *ty {
-        LType::Alias(ref a) => create_sub_doc(w, a, parent, env),
-        LType::Enumeration(ref e) => create_enum_doc(w, &e, parent, env),
-        LType::Function(ref f) => create_fn_doc(w, &f, parent, env),
-        LType::Interface(ref i) if handle_structs => create_class_doc(w, i, parent, has_trait,
-                                                                      env),
-        LType::Class(ref c) if handle_structs => create_class_doc(w, c, parent, has_trait,
-                                                                  env),
+        LType::Alias(ref a) => create_sub_doc(w, a, env),
+        LType::Enumeration(ref e) => create_enum_doc(w, &e, env),
+        LType::Function(ref f) => create_fn_doc(w, &f, None, env),
         _ => Ok(()),
     }
 }
@@ -164,13 +153,9 @@ fn create_class_doc<T: FunctionTraitType + ToStripperType>(w: &mut Write, class:
     Ok(())
 }
 
-fn create_enum_doc(w: &mut Write, enum_: &Enumeration,
-                   parent: Option<Box<TypeStruct>>,
-                   env: &Env) -> Result<()> {
-    let indent = compute_indent(&parent);
-    let mut ty = enum_.convert();
-    ty.parent = parent;
-    let tabs : String = primitives::tabs(indent);
+fn create_enum_doc(w: &mut Write, enum_: &Enumeration, env: &Env) -> Result<()> {
+    let ty = enum_.convert();
+    let tabs = "";
 
     if enum_.doc().is_some() || enum_.doc_deprecated().is_some() {
         try!(writeln!(w, "{}{}", MOD_COMMENT, ty));
@@ -184,7 +169,7 @@ fn create_enum_doc(w: &mut Write, enum_: &Enumeration,
         try!(write_lines(w, &enum_doc, &tabs, env));
     }
 
-    let tabs : String = primitives::tabs(indent + 1);
+    let tabs = "\t";
     for member_doc in enum_.members.iter() {
         let mut sub_ty : TypeStruct = member_doc.convert();
 
@@ -256,12 +241,9 @@ fn write_lines(w: &mut Write, lines: &str, tabs: &str,
     Ok(())
 }
 
-fn create_sub_doc<T: ToStripperType>(w: &mut Write, ty: &T,
-                                     parent: Option<Box<TypeStruct>>,
-                                     env: &Env) -> Result<()> {
-    let tabs : String = primitives::tabs(compute_indent(&parent));
-    let mut sub_ty = ty.convert();
-    sub_ty.parent = parent;
+fn create_sub_doc<T: ToStripperType>(w: &mut Write, ty: &T, env: &Env) -> Result<()> {
+    let tabs = "";
+    let sub_ty = ty.convert();
 
     if ty.doc().is_some() || ty.doc_deprecated().is_some() {
         try!(writeln!(w, "{}{}", MOD_COMMENT, sub_ty));
