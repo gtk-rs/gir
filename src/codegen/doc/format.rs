@@ -46,11 +46,11 @@ fn code_blocks_transformation(mut input: &str,
 fn get_language<'a>(entry: &'a str, out: &mut String) -> &'a str {
     if let (_, Some(after)) = try_split(entry, LANGUAGE_SEP_BEGIN) {
         if let (before, Some(after)) = try_split(after, LANGUAGE_SEP_END) {
-            out.push_str(&format!("```{}", before));
+            out.push_str(&format!("\n```{}", before));
             return after
         }
     }
-    out.push_str("```text");
+    out.push_str("\n```text");
     entry
 }
 
