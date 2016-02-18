@@ -130,8 +130,12 @@ fn create_class_doc<T: FunctionTraitType + ToStripperType>(w: &mut Write, class:
                                                            env: &Env)
                                                           -> Result<()> {
     let tabs : String = primitives::tabs(compute_indent(&parent));
-    let mut ty = class.convert();
-    ty.parent = parent;
+    let ty = TypeStruct { parent: parent, ..class.convert() };
+    let ty_ext = TypeStruct {
+        ty: SType::Trait,
+        name: format!("{}Ext", ty.name),
+        ..ty.clone()
+    };
 
     //try!(writeln!(w, "{}src/auto/{}.rs", FILE, module_name(&class.name())));
     if class.doc().is_some() || class.doc_deprecated().is_some() {
@@ -146,20 +150,16 @@ fn create_class_doc<T: FunctionTraitType + ToStripperType>(w: &mut Write, class:
         try!(write_lines(w, &class_doc, &tabs, env));
     }
 
-    for function in class.functions().iter() {
-        if function.parameters.iter().any(|p| p.instance_parameter) == false {
-            try!(create_fn_doc(w, &function, Some(Box::new(ty.clone())), env));
-        }
-    }
-    if has_trait {
-        ty.ty = SType::Trait;
-        ty.name = format!("{}Ext", class.convert().name);
+    let ty = TypeStruct { ty: SType::Impl, ..ty };
 
-        for function in class.functions().iter() {
-            if function.parameters.iter().any(|p| p.instance_parameter) {
-                try!(create_fn_doc(w, &function, Some(Box::new(ty.clone())), env));
-            }
+    for function in class.functions().iter() {
+        let ty = if has_trait && function.parameters.iter().any(|p| p.instance_parameter) {
+            ty_ext.clone()
         }
+        else {
+            ty.clone()
+        };
+        try!(create_fn_doc(w, &function, Some(Box::new(ty)), env));
     }
     Ok(())
 }
