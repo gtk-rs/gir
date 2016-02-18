@@ -7,7 +7,6 @@ use file_saver::save_to_file;
 use library::*;
 use library::Type as LType;
 use writer::primitives;
-use nameutil::*;
 
 use stripper_interface as stripper;
 use stripper_interface::Type as SType;
@@ -84,6 +83,8 @@ pub fn generate(env: &Env) {
 }
 
 fn generate_doc(mut w: &mut Write, env: &Env) -> Result<()> {
+    try!(writeln!(w, "{}*", FILE));
+
     let namespace = env.library.namespace(MAIN);
     for obj in env.config.objects.values() {
         if !obj.status.need_generate() {
@@ -98,10 +99,6 @@ fn generate_doc(mut w: &mut Write, env: &Env) -> Result<()> {
         };
         let has_trait = class_analysis.has_children;
 
-        let mod_name = obj.module_name.clone().unwrap_or_else(|| {
-            module_name(split_namespace_name(&class_analysis.full_name).1)
-        });
-        try!(writeln!(w, "{}src/auto/{}.rs", FILE, mod_name));
         try!(handle_type(w, &env.library.type_(class_analysis.type_id), None, has_trait,
                          true, &env));
     }
