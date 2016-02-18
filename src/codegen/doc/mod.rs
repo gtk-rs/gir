@@ -113,35 +113,58 @@ fn handle_type(w: &mut Write, ty: &LType, env: &Env) -> Result<()> {
     }
 }
 
-fn create_class_doc<T: FunctionTraitType + ToStripperType>(w: &mut Write, class: &T,
-                                                           parent: Option<Box<TypeStruct>>,
-                                                           has_trait: bool,
-                                                           env: &Env)
-                                                          -> Result<()> {
-    let tabs : String = primitives::tabs(compute_indent(&parent));
-    let ty = TypeStruct { parent: parent, ..class.convert() };
-    let ty_ext = TypeStruct {
-        ty: SType::Trait,
-        name: format!("{}Ext", ty.name),
-        ..ty.clone()
-    };
+fn create_object_doc(w: &mut Write, env: &Env, info: &analysis::object::Info) -> Result<()> {
+    let tabs = "";
+    let ty = TypeStruct::new(SType::Struct, &info.name);
+    let ty_ext = TypeStruct::new(SType::Trait, &format!("{}Ext", info.name));
+    let has_trait = info.has_children;
+    let class: &ToStripperType;
+    let functions: &[Function];
+    let implements: Vec<TypeId>;
 
-    //try!(writeln!(w, "{}src/auto/{}.rs", FILE, module_name(&class.name())));
-    if class.doc().is_some() || class.doc_deprecated().is_some() {
-        try!(writeln!(w, "{}{}", MOD_COMMENT, ty));
+    match *env.library.type_(info.type_id) {
+        Type::Class(ref cl) => {
+            class = cl;
+            functions = &cl.functions;
+            implements = cl.parents.iter()
+                .chain(cl.implements.iter())
+                .map(|&tid| tid)
+                .collect();
+        }
+        Type::Interface(ref iface) => {
+            class = iface;
+            functions = &iface.functions;
+            implements = iface.prereq_parents.clone();
+        }
+        _ => unreachable!(),
     }
+
+    try!(writeln!(w, "{}{}", MOD_COMMENT, ty));
 
     if let Some(ref class_doc) = class.doc() {
         try!(write_lines(w, &class_doc, &tabs, env));
     }
+
+    try!(write_header(w, &tabs, "Implements"));
+    let implements = implements.iter()
+        .filter(|&tid| !env.type_status(&tid.full_name(&env.library)).ignored())
+        .map(|&tid| format!("`{}Ext`", env.library.type_(tid).get_name()))
+        .collect::<Vec<_>>();
+    try!(write_verbatim(w, &implements.join(", "), &tabs));
+
     if let Some(ref class_doc) = class.doc_deprecated() {
         try!(write_header(w, &tabs, "Deprecated"));
         try!(write_lines(w, &class_doc, &tabs, env));
     }
 
+    if has_trait {
+        try!(writeln!(w, "{}{}", MOD_COMMENT, ty_ext));
+        try!(write_verbatim(w, &format!("Trait containing all `{}` methods.", ty.name), &tabs));
+    }
+
     let ty = TypeStruct { ty: SType::Impl, ..ty };
 
-    for function in class.functions().iter() {
+    for function in functions {
         let ty = if has_trait && function.parameters.iter().any(|p| p.instance_parameter) {
             ty_ext.clone()
         }
@@ -233,9 +256,12 @@ fn create_fn_doc(w: &mut Write, fn_: &Function, parent: Option<Box<TypeStruct>>,
     Ok(())
 }
 
-fn write_lines(w: &mut Write, lines: &str, tabs: &str,
-               env: &Env) -> Result<()> {
-    for line in format::reformat_doc(&lines, env).split("\n") {
+fn write_lines(w: &mut Write, lines: &str, tabs: &str, env: &Env) -> Result<()> {
+    write_verbatim(w, &format::reformat_doc(&lines, env), tabs)
+}
+
+fn write_verbatim(w: &mut Write, lines: &str, tabs: &str) -> Result<()> {
+    for line in lines.split("\n") {
         try!(writeln!(w, "{}/// {}", tabs, line));
     }
     Ok(())
