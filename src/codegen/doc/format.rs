@@ -57,6 +57,7 @@ fn get_language<'a>(entry: &'a str, out: &mut String) -> &'a str {
 lazy_static! {
     static ref REG : Regex = Regex::new(r"#?(G[dt]k)([\w]+:?:?\.?[\w-]+)").unwrap();
     static ref REG2 : Regex = Regex::new(r"@(\w*)").unwrap();
+    static ref SPACES: Regex = Regex::new(r"[ ][ ]+").unwrap();
 }
 
 fn replace_c_types(entry: &str, env: &Env) -> String {
@@ -68,5 +69,6 @@ fn replace_c_types(entry: &str, env: &Env) -> String {
             format!("`{}::{}`", &env.namespaces[pos].crate_name, &caps[2])
         }
     });
-    REG2.replace_all(out, "`$1`")
+    let out = REG2.replace_all(&out, "`$1`");
+    SPACES.replace_all(&out, " ")
 }
