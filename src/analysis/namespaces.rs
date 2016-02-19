@@ -7,6 +7,7 @@ use version::Version;
 
 pub type NsId = u16;
 pub const MAIN: NsId = library::MAIN_NAMESPACE;
+pub const INTERNAL: NsId = library::INTERNAL_NAMESPACE;
 
 #[derive(Debug)]
 pub struct Namespace {

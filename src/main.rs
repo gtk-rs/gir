@@ -11,6 +11,7 @@ extern crate toml;
 extern crate regex;
 extern crate stripper_interface;
 
+use std::cell::RefCell;
 use std::error::Error;
 use std::process;
 
@@ -63,11 +64,13 @@ fn do_main() -> Result<(), Box<Error>> {
     library.postprocessing();
 
     let namespaces = analysis::namespaces::run(&library);
+    let symbols = analysis::symbols::run(&library, &namespaces);
 
     let env = Env{
         library: library,
         config: cfg,
         namespaces: namespaces,
+        symbols: RefCell::new(symbols),
     };
     codegen::generate(&env);
 

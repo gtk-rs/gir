@@ -18,3 +18,4 @@ pub mod return_value;
 pub mod rust_type;
 pub mod safety_assertion_mode;
 pub mod special_functions;
+pub mod symbols;
