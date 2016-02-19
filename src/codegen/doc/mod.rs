@@ -7,6 +7,8 @@ use env::Env;
 use file_saver::save_to_file;
 use library::*;
 use library::Type as LType;
+use nameutil;
+use regex::{Captures, Regex};
 use writer::primitives;
 
 use stripper_interface as stripper;
@@ -214,6 +216,21 @@ fn create_enum_doc(w: &mut Write, enum_: &Enumeration, symbols: &symbols::Info) 
     Ok(())
 }
 
+lazy_static! {
+    static ref PARAM_NAME: Regex = Regex::new(r"@(\w+)\b").unwrap();
+}
+
+fn fix_param_names(doc: &str, self_name: &Option<String>) -> String {
+    PARAM_NAME.replace_all(doc, |caps: &Captures| {
+        if let Some(ref self_name) = *self_name {
+            if &caps[1] == self_name {
+                return "@self".into()
+            }
+        }
+        format!("@{}", nameutil::mangle_keywords(&caps[1]))
+    })
+}
+
 fn create_fn_doc(w: &mut Write, fn_: &Function, parent: Option<Box<TypeStruct>>,
                  symbols: &symbols::Info) -> Result<()> {
     let tabs : String = primitives::tabs(compute_indent(&parent) + 1);
@@ -227,14 +244,19 @@ fn create_fn_doc(w: &mut Write, fn_: &Function, parent: Option<Box<TypeStruct>>,
     }
     let mut sub_ty = fn_.convert();
     sub_ty.parent = parent;
+
+    let self_name: Option<String> = fn_.parameters.iter()
+        .find(|p| p.instance_parameter)
+        .map(|p| p.name.clone());
+
     try!(writeln!(w, "{}{}", MOD_COMMENT, sub_ty));
 
     if let Some(ref docs) = fn_.doc() {
-        try!(write_lines(w, &docs, &tabs, symbols));
+        try!(write_lines(w, &fix_param_names(docs, &self_name), &tabs, symbols));
     };
     if let Some(ref docs) = fn_.doc_deprecated() {
         try!(write_header(w, &tabs, "Deprecated"));
-        try!(write_lines(w, &docs, &tabs, symbols));
+        try!(write_lines(w, &fix_param_names(docs, &self_name), &tabs, symbols));
     };
 
     if fn_.parameters.iter().any(|x| {
@@ -248,13 +270,13 @@ fn create_fn_doc(w: &mut Write, fn_: &Function, parent: Option<Box<TypeStruct>>,
         }
         if let Some(ref parameter_doc) = parameter.doc() {
             try!(writeln!(w, "{}/// ## {}:", tabs, parameter.name));
-            try!(write_lines(w, &parameter_doc, &tabs, symbols));
+            try!(write_lines(w, &fix_param_names(parameter_doc, &self_name), &tabs, symbols));
         }
     }
 
     if let Some(ref doc) = fn_.ret.doc() {
         try!(write_header(w, &tabs, "Returns"));
-        try!(write_lines(w, &doc, &tabs, symbols));
+        try!(write_lines(w, &fix_param_names(doc, &self_name), &tabs, symbols));
     }
     Ok(())
 }
