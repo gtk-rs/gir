@@ -18,12 +18,12 @@ fn try_split<'a>(src: &'a str, needle: &str) -> (&'a str, Option<&'a str>) {
 }
 
 fn code_blocks_transformation(mut input: &str, symbols: &symbols::Info) -> String {
-    let mut out = String::new();
+    let mut out = String::with_capacity(input.len());
 
     loop {
         input = match try_split(input, LANGUAGE_BLOCK_BEGIN) {
             (before, Some(after)) => {
-                out.push_str(&replace_c_types(before, symbols));
+                out.push_str(&format(before, symbols));
                 if let (before, Some(after)) = try_split(get_language(after, &mut out),
                                                          LANGUAGE_BLOCK_END) {
                     out.push_str(before);
@@ -34,7 +34,7 @@ fn code_blocks_transformation(mut input: &str, symbols: &symbols::Info) -> Strin
                 }
             }
             (before, None) => {
-                out.push_str(&replace_c_types(before, symbols));
+                out.push_str(&format(before, symbols));
                 return out
             }
         };
@@ -57,6 +57,28 @@ lazy_static! {
     static ref FUNCTION: Regex = Regex::new(r"(\b[a-z0-9_]+)\(\)") .unwrap();
     static ref GDK_GTK: Regex = Regex::new(r"(G[dt]k[A-Z][\w]+\b)").unwrap();
     static ref SPACES: Regex = Regex::new(r"[ ][ ]+").unwrap();
+}
+
+fn format(mut input: &str, symbols: &symbols::Info) -> String {
+    let mut ret = String::with_capacity(input.len());
+    loop {
+        let (before, after) = try_split(input, "`");
+        ret.push_str(&replace_c_types(before, symbols));
+        if let Some(after) = after {
+            ret.push_str("`");
+            let (before, after) = try_split(after, "`");
+            // don't touch anything enclosed in backticks
+            ret.push_str(before);
+            if let Some(after) = after {
+                ret.push_str("`");
+                input = after;
+            } else {
+                return ret;
+            }
+        } else {
+            return ret;
+        }
+    }
 }
 
 fn replace_c_types(entry: &str, symbols: &symbols::Info) -> String {
