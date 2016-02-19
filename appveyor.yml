@@ -13,7 +13,6 @@ install:
   - SET PATH=C:\Rust\bin;C:\Program Files\Git\cmd;C:\Program Files\Git\usr\bin
   - SET PATH=C:\msys64\mingw%BITS%\bin;C:\msys64\usr\bin;%PATH%
   - pacman --noconfirm -S mingw-w64-%ARCH%-gtk3
-  - SET GTK_LIB_DIR=C:\msys64\mingw%BITS%\lib
 
 build_script:
   - git clone -q https://github.com/gkoz/gir-files tests/gir-files
