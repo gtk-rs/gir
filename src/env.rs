@@ -1,12 +1,14 @@
-use analysis::namespaces;
+use analysis;
 use config::Config;
 use config::gobjects::GStatus;
 use library::*;
+use std::cell::RefCell;
 
 pub struct Env {
     pub library: Library,
     pub config: Config,
-    pub namespaces: namespaces::Info,
+    pub namespaces: analysis::namespaces::Info,
+    pub symbols: RefCell<analysis::symbols::Info>,
 }
 
 impl Env {

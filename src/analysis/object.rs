@@ -94,6 +94,16 @@ pub fn class(env: &Env, obj: &GObject) -> Option<Info> {
         cfg_condition: obj.cfg_condition.clone(),
     };
 
+    // patch up trait methods in the symbol table
+    if has_children {
+        let mut symbols = env.symbols.borrow_mut();
+        for func in base.methods() {
+            if let Some(symbol) = symbols.by_c_name_mut(&func.glib_name) {
+                symbol.make_trait_method();
+            }
+        }
+    }
+
     let has_constructors = !base.constructors().is_empty();
     let has_methods = !base.methods().is_empty();
     let has_functions = !base.functions().is_empty();
