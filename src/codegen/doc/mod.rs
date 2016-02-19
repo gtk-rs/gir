@@ -1,6 +1,7 @@
 use std::io::{Result, Write};
 
 use analysis;
+use analysis::symbols;
 use analysis::namespaces::MAIN;
 use env::Env;
 use file_saver::save_to_file;
@@ -98,22 +99,24 @@ fn generate_doc(mut w: &mut Write, env: &Env) -> Result<()> {
         }
     }
 
+    let symbols = env.symbols.borrow();
     for ty in namespace.types.iter().filter_map(|t| t.as_ref()) {
-        try!(handle_type(&mut w, &ty, &env));
+        try!(handle_type(&mut w, &ty, &symbols));
     }
     Ok(())
 }
 
-fn handle_type(w: &mut Write, ty: &LType, env: &Env) -> Result<()> {
+fn handle_type(w: &mut Write, ty: &LType, symbols: &symbols::Info) -> Result<()> {
     match *ty {
-        LType::Alias(ref a) => create_sub_doc(w, a, env),
-        LType::Enumeration(ref e) => create_enum_doc(w, &e, env),
-        LType::Function(ref f) => create_fn_doc(w, &f, None, env),
+        LType::Alias(ref a) => create_sub_doc(w, a, symbols),
+        LType::Enumeration(ref e) => create_enum_doc(w, &e, symbols),
+        LType::Function(ref f) => create_fn_doc(w, &f, None, symbols),
         _ => Ok(()),
     }
 }
 
 fn create_object_doc(w: &mut Write, env: &Env, info: &analysis::object::Info) -> Result<()> {
+    let symbols = env.symbols.borrow();
     let tabs = "";
     let ty = TypeStruct::new(SType::Struct, &info.name);
     let ty_ext = TypeStruct::new(SType::Trait, &format!("{}Ext", info.name));
@@ -142,7 +145,7 @@ fn create_object_doc(w: &mut Write, env: &Env, info: &analysis::object::Info) ->
     try!(writeln!(w, "{}{}", MOD_COMMENT, ty));
 
     if let Some(ref class_doc) = class.doc() {
-        try!(write_lines(w, &class_doc, &tabs, env));
+        try!(write_lines(w, &class_doc, &tabs, &symbols));
     }
 
     try!(write_header(w, &tabs, "Implements"));
@@ -154,7 +157,7 @@ fn create_object_doc(w: &mut Write, env: &Env, info: &analysis::object::Info) ->
 
     if let Some(ref class_doc) = class.doc_deprecated() {
         try!(write_header(w, &tabs, "Deprecated"));
-        try!(write_lines(w, &class_doc, &tabs, env));
+        try!(write_lines(w, &class_doc, &tabs, &symbols));
     }
 
     if has_trait {
@@ -171,12 +174,12 @@ fn create_object_doc(w: &mut Write, env: &Env, info: &analysis::object::Info) ->
         else {
             ty.clone()
         };
-        try!(create_fn_doc(w, &function, Some(Box::new(ty)), env));
+        try!(create_fn_doc(w, &function, Some(Box::new(ty)), &symbols));
     }
     Ok(())
 }
 
-fn create_enum_doc(w: &mut Write, enum_: &Enumeration, env: &Env) -> Result<()> {
+fn create_enum_doc(w: &mut Write, enum_: &Enumeration, symbols: &symbols::Info) -> Result<()> {
     let ty = enum_.convert();
     let tabs = "";
 
@@ -185,11 +188,11 @@ fn create_enum_doc(w: &mut Write, enum_: &Enumeration, env: &Env) -> Result<()> 
     }
 
     if let Some(ref enum_doc) = enum_.doc() {
-        try!(write_lines(w, &enum_doc, &tabs, env));
+        try!(write_lines(w, &enum_doc, &tabs, symbols));
     }
     if let Some(ref enum_doc) = enum_.doc_deprecated() {
         try!(write_header(w, &tabs, "Deprecated"));
-        try!(write_lines(w, &enum_doc, &tabs, env));
+        try!(write_lines(w, &enum_doc, &tabs, symbols));
     }
 
     let tabs = "\t";
@@ -201,18 +204,18 @@ fn create_enum_doc(w: &mut Write, enum_: &Enumeration, env: &Env) -> Result<()> 
             try!(writeln!(w, "{}{}", MOD_COMMENT, sub_ty));
         }
         if let Some(ref m_doc) = member_doc.doc() {
-            try!(write_lines(w, &m_doc, &tabs, env));
+            try!(write_lines(w, &m_doc, &tabs, symbols));
         }
         if let Some(ref m_doc) = member_doc.doc_deprecated() {
             try!(write_header(w, &tabs, "Deprecated"));
-            try!(write_lines(w, &m_doc, &tabs, env));
+            try!(write_lines(w, &m_doc, &tabs, symbols));
         }
     }
     Ok(())
 }
 
 fn create_fn_doc(w: &mut Write, fn_: &Function, parent: Option<Box<TypeStruct>>,
-                 env: &Env) -> Result<()> {
+                 symbols: &symbols::Info) -> Result<()> {
     let tabs : String = primitives::tabs(compute_indent(&parent) + 1);
 
     if fn_.doc().is_none() && fn_.doc_deprecated().is_none() && fn_.ret.doc().is_none() {
@@ -227,11 +230,11 @@ fn create_fn_doc(w: &mut Write, fn_: &Function, parent: Option<Box<TypeStruct>>,
     try!(writeln!(w, "{}{}", MOD_COMMENT, sub_ty));
 
     if let Some(ref docs) = fn_.doc() {
-        try!(write_lines(w, &docs, &tabs, env));
+        try!(write_lines(w, &docs, &tabs, symbols));
     };
     if let Some(ref docs) = fn_.doc_deprecated() {
         try!(write_header(w, &tabs, "Deprecated"));
-        try!(write_lines(w, &docs, &tabs, env));
+        try!(write_lines(w, &docs, &tabs, symbols));
     };
 
     if fn_.parameters.iter().any(|x| {
@@ -245,19 +248,19 @@ fn create_fn_doc(w: &mut Write, fn_: &Function, parent: Option<Box<TypeStruct>>,
         }
         if let Some(ref parameter_doc) = parameter.doc() {
             try!(writeln!(w, "{}/// ## {}:", tabs, parameter.name));
-            try!(write_lines(w, &parameter_doc, &tabs, env));
+            try!(write_lines(w, &parameter_doc, &tabs, symbols));
         }
     }
 
     if let Some(ref doc) = fn_.ret.doc() {
         try!(write_header(w, &tabs, "Returns"));
-        try!(write_lines(w, &doc, &tabs, env));
+        try!(write_lines(w, &doc, &tabs, symbols));
     }
     Ok(())
 }
 
-fn write_lines(w: &mut Write, lines: &str, tabs: &str, env: &Env) -> Result<()> {
-    write_verbatim(w, &format::reformat_doc(&lines, env), tabs)
+fn write_lines(w: &mut Write, lines: &str, tabs: &str, symbols: &symbols::Info) -> Result<()> {
+    write_verbatim(w, &format::reformat_doc(&lines, symbols), tabs)
 }
 
 fn write_verbatim(w: &mut Write, lines: &str, tabs: &str) -> Result<()> {
@@ -267,7 +270,7 @@ fn write_verbatim(w: &mut Write, lines: &str, tabs: &str) -> Result<()> {
     Ok(())
 }
 
-fn create_sub_doc<T: ToStripperType>(w: &mut Write, ty: &T, env: &Env) -> Result<()> {
+fn create_sub_doc<T: ToStripperType>(w: &mut Write, ty: &T, symbols: &symbols::Info) -> Result<()> {
     let tabs = "";
     let sub_ty = ty.convert();
 
@@ -276,11 +279,11 @@ fn create_sub_doc<T: ToStripperType>(w: &mut Write, ty: &T, env: &Env) -> Result
     }
 
     if let Some(doc) = ty.doc() {
-        try!(write_lines(w, &doc, &tabs, env));
+        try!(write_lines(w, &doc, &tabs, symbols));
     }
     if let Some(doc) = ty.doc_deprecated() {
         try!(write_header(w, &tabs, "Deprecated"));
-        try!(write_lines(w, &doc, &tabs, env));
+        try!(write_lines(w, &doc, &tabs, symbols));
     }
     Ok(())
 }
