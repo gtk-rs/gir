@@ -55,7 +55,8 @@ fn get_language<'a>(entry: &'a str, out: &mut String) -> &'a str {
 lazy_static! {
     static ref SYMBOL: Regex = Regex::new(r"(^|[^\\])[@#%]([\w]+\b)([:.]+[\w_-]+\b)?") .unwrap();
     static ref FUNCTION: Regex = Regex::new(r"(\b[a-z0-9_]+)\(\)") .unwrap();
-    static ref GDK_GTK: Regex = Regex::new(r"(G[dt]k[A-Z][\w]+\b)").unwrap();
+    static ref GDK_GTK: Regex = Regex::new(r"G[dt]k[A-Z][\w]+\b").unwrap();
+    static ref TAGS: Regex = Regex::new(r"<[\w/-]+>").unwrap();
     static ref SPACES: Regex = Regex::new(r"[ ][ ]+").unwrap();
 }
 
@@ -94,7 +95,8 @@ fn replace_c_types(entry: &str, symbols: &symbols::Info) -> String {
         format!("`{}`", lookup(&caps[1]))
     });
     let out = GDK_GTK.replace_all(&out, |caps: &Captures| {
-        format!("`{}`", lookup(&caps[1]))
+        format!("`{}`", lookup(&caps[0]))
     });
+    let out = TAGS.replace_all(&out, "`$0`");
     SPACES.replace_all(&out, " ")
 }
