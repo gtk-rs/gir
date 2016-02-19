@@ -269,7 +269,8 @@ fn create_fn_doc(w: &mut Write, fn_: &Function, parent: Option<Box<TypeStruct>>,
             continue
         }
         if let Some(ref parameter_doc) = parameter.doc() {
-            try!(writeln!(w, "{}/// ## {}:", tabs, parameter.name));
+            try!(writeln!(w, "{}/// ## `{}`", tabs,
+                          nameutil::mangle_keywords(&parameter.name[..])));
             try!(write_lines(w, &fix_param_names(parameter_doc, &self_name), &tabs, symbols));
         }
     }
