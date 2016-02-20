@@ -12,7 +12,8 @@ install:
   - rust-dist.exe /VERYSILENT /NORESTART /COMPONENTS="Rustc,Gcc,Cargo,Std" /DIR="C:\Rust"
   - SET PATH=C:\Rust\bin;C:\Program Files\Git\cmd;C:\Program Files\Git\usr\bin
   - SET PATH=C:\msys64\mingw%BITS%\bin;C:\msys64\usr\bin;%PATH%
-  - pacman --noconfirm -S mingw-w64-%ARCH%-gtk3
+  - SET LIBGIT2_SYS_USE_PKG_CONFIG=1
+  - pacman --noconfirm -S mingw-w64-%ARCH%-gtk3 mingw-w64-%ARCH%-libgit2
 
 build_script:
   - git clone -q https://github.com/gkoz/gir-files tests/gir-files
