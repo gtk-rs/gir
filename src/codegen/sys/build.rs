@@ -76,13 +76,9 @@ r##"
                 for lib_ in shared_libs.iter() {
                     println!("cargo:rustc-link-lib=dylib={}", lib_);
                 }
-            } else {
-                for lib_ in library.libs.iter() {
-                    println!("cargo:rustc-link-lib=dylib={}", lib_);
+                for path in library.link_paths.iter() {
+                    println!("cargo:rustc-link-search=native={}", path.to_str().unwrap());
                 }
-            }
-            for path in library.link_paths.iter() {
-                println!("cargo:rustc-link-search=native={}", path.to_str().unwrap());
             }
             Ok(())
         }
