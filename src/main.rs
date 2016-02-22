@@ -9,7 +9,7 @@ extern crate log;
 extern crate xml;
 extern crate toml;
 extern crate regex;
-extern crate stripper_interface;
+extern crate stripper_lib;
 
 use std::cell::RefCell;
 use std::error::Error;

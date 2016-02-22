@@ -9,12 +9,9 @@ use library::*;
 use library::Type as LType;
 use nameutil;
 use regex::{Captures, Regex};
-use writer::primitives;
-
-use stripper_interface as stripper;
-use stripper_interface::Type as SType;
-use stripper_interface::TypeStruct;
-use stripper_interface::{FILE, /*FILE_COMMENT, */MOD_COMMENT};
+use self::format::reformat_doc;
+use stripper_lib::Type as SType;
+use stripper_lib::{TypeStruct, write_file_name, write_item_doc};
 
 mod format;
 
@@ -41,9 +38,9 @@ impl_function_trait_type!(Class);
 impl_function_trait_type!(Interface);
 
 trait ToStripperType {
-    fn convert(&self) -> stripper::TypeStruct;
-    fn doc(&self) -> Option<String>;
-    fn doc_deprecated(&self) -> Option<String>;
+    fn convert(&self) -> TypeStruct;
+    fn doc(&self) -> Option<&str>;
+    fn doc_deprecated(&self) -> Option<&str>;
 }
 
 macro_rules! impl_to_stripper_type {
@@ -53,12 +50,12 @@ macro_rules! impl_to_stripper_type {
                 TypeStruct::new(SType::$enum_var, &self.name)
             }
 
-            fn doc(&self) -> Option<String> {
-                self.doc.clone()
+            fn doc(&self) -> Option<&str> {
+                self.doc.as_ref().map(|s| &s[..])
             }
 
-            fn doc_deprecated(&self) -> Option<String> {
-                self.doc_deprecated.clone()
+            fn doc_deprecated(&self) -> Option<&str> {
+                self.doc_deprecated.as_ref().map(|s| &s[..])
             }
         }
     }
@@ -79,14 +76,14 @@ impl_to_stripper_type!(Namespace, Mod);
 impl_to_stripper_type!(Parameter, Variant);
 
 pub fn generate(env: &Env) {
-    let path =  env.config.target_path.join("doc.cmts");
+    let path =  env.config.target_path.join("docs.md");
     println!("Generating documentation {:?}", path);
     save_to_file(&path, env.config.make_backup,
         |w| generate_doc(w, &env));
 }
 
 fn generate_doc(mut w: &mut Write, env: &Env) -> Result<()> {
-    try!(writeln!(w, "{}*", FILE));
+    try!(write_file_name(w, None));
 
     let namespace = env.library.namespace(MAIN);
     for obj in env.config.objects.values() {
@@ -119,10 +116,10 @@ fn handle_type(w: &mut Write, ty: &LType, symbols: &symbols::Info) -> Result<()>
 
 fn create_object_doc(w: &mut Write, env: &Env, info: &analysis::object::Info) -> Result<()> {
     let symbols = env.symbols.borrow();
-    let tabs = "";
     let ty = TypeStruct::new(SType::Struct, &info.name);
     let ty_ext = TypeStruct::new(SType::Trait, &format!("{}Ext", info.name));
     let has_trait = info.has_children;
+    let impl_self = if has_trait { Some(info.type_id) } else { None };
     let class: &ToStripperType;
     let functions: &[Function];
     let implements: Vec<TypeId>;
@@ -131,7 +128,8 @@ fn create_object_doc(w: &mut Write, env: &Env, info: &analysis::object::Info) ->
         Type::Class(ref cl) => {
             class = cl;
             functions = &cl.functions;
-            implements = cl.parents.iter()
+            implements = impl_self.iter()
+                .chain(cl.parents.iter())
                 .chain(cl.implements.iter())
                 .map(|&tid| tid)
                 .collect();
@@ -139,32 +137,40 @@ fn create_object_doc(w: &mut Write, env: &Env, info: &analysis::object::Info) ->
         Type::Interface(ref iface) => {
             class = iface;
             functions = &iface.functions;
-            implements = iface.prereq_parents.clone();
+            implements = impl_self.iter()
+                .chain(iface.prereq_parents.iter())
+                .map(|&tid| tid)
+                .collect();
         }
         _ => unreachable!(),
     }
 
-    try!(writeln!(w, "{}{}", MOD_COMMENT, ty));
+    if class.doc().is_some() || class.doc_deprecated().is_some() {
+        try!(write_item_doc(w, &ty, |w| {
+            if let Some(doc) = class.doc() {
+                try!(writeln!(w, "{}", reformat_doc(doc, &symbols)));
+            }
 
-    if let Some(ref class_doc) = class.doc() {
-        try!(write_lines(w, &class_doc, &tabs, &symbols));
-    }
+            try!(writeln!(w, "\n# Implements\n"));
+            let implements = implements.iter()
+                .filter(|&tid| !env.type_status(&tid.full_name(&env.library)).ignored())
+                .map(|&tid| format!("[`{name}Ext`](trait.{name}Ext.html)",
+                                    name = env.library.type_(tid).get_name()))
+                .collect::<Vec<_>>();
+            try!(writeln!(w, "{}", &implements.join(", ")));
 
-    try!(write_header(w, &tabs, "Implements"));
-    let implements = implements.iter()
-        .filter(|&tid| !env.type_status(&tid.full_name(&env.library)).ignored())
-        .map(|&tid| format!("`{}Ext`", env.library.type_(tid).get_name()))
-        .collect::<Vec<_>>();
-    try!(write_verbatim(w, &implements.join(", "), &tabs));
-
-    if let Some(ref class_doc) = class.doc_deprecated() {
-        try!(write_header(w, &tabs, "Deprecated"));
-        try!(write_lines(w, &class_doc, &tabs, &symbols));
+            if let Some(doc) = class.doc_deprecated() {
+                try!(writeln!(w, "\n# Deprecated\n"));
+                try!(writeln!(w, "{}", reformat_doc(doc, &symbols)));
+            }
+            Ok(())
+        }));
     }
 
     if has_trait {
-        try!(writeln!(w, "{}{}", MOD_COMMENT, ty_ext));
-        try!(write_verbatim(w, &format!("Trait containing all `{}` methods.", ty.name), &tabs));
+        try!(write_item_doc(w, &ty_ext, |w| {
+            writeln!(w, "Trait containing all `{}` methods.", ty.name)
+        }));
     }
 
     let ty = TypeStruct { ty: SType::Impl, ..ty };
@@ -183,34 +189,33 @@ fn create_object_doc(w: &mut Write, env: &Env, info: &analysis::object::Info) ->
 
 fn create_enum_doc(w: &mut Write, enum_: &Enumeration, symbols: &symbols::Info) -> Result<()> {
     let ty = enum_.convert();
-    let tabs = "";
 
-    if enum_.doc().is_some() || enum_.doc_deprecated().is_some() {
-        try!(writeln!(w, "{}{}", MOD_COMMENT, ty));
-    }
+    try!(write_item_doc(w, &ty, |w| {
+        if let Some(doc) = enum_.doc() {
+            try!(writeln!(w, "{}", reformat_doc(doc, symbols)));
+        }
+        if let Some(doc) = enum_.doc_deprecated() {
+            try!(writeln!(w, "\n# Deprecated\n"));
+            try!(writeln!(w, "{}", reformat_doc(doc, symbols)));
+        }
+        Ok(())
+    }));
 
-    if let Some(ref enum_doc) = enum_.doc() {
-        try!(write_lines(w, &enum_doc, &tabs, symbols));
-    }
-    if let Some(ref enum_doc) = enum_.doc_deprecated() {
-        try!(write_header(w, &tabs, "Deprecated"));
-        try!(write_lines(w, &enum_doc, &tabs, symbols));
-    }
+    for member in enum_.members.iter() {
+        let mut sub_ty : TypeStruct = member.convert();
 
-    let tabs = "\t";
-    for member_doc in enum_.members.iter() {
-        let mut sub_ty : TypeStruct = member_doc.convert();
-
-        if member_doc.doc().is_some() || member_doc.doc_deprecated().is_some() {
+        if member.doc().is_some() || member.doc_deprecated().is_some() {
             sub_ty.parent = Some(Box::new(ty.clone()));
-            try!(writeln!(w, "{}{}", MOD_COMMENT, sub_ty));
-        }
-        if let Some(ref m_doc) = member_doc.doc() {
-            try!(write_lines(w, &m_doc, &tabs, symbols));
-        }
-        if let Some(ref m_doc) = member_doc.doc_deprecated() {
-            try!(write_header(w, &tabs, "Deprecated"));
-            try!(write_lines(w, &m_doc, &tabs, symbols));
+            try!(write_item_doc(w, &sub_ty, |w| {
+                if let Some(doc) = member.doc() {
+                    try!(writeln!(w, "{}", reformat_doc(doc, symbols)));
+                }
+                if let Some(doc) = member.doc_deprecated() {
+                    try!(writeln!(w, "\n# Deprecated\n"));
+                    try!(writeln!(w, "{}", reformat_doc(doc, symbols)));
+                }
+                Ok(())
+            }));
         }
     }
     Ok(())
@@ -233,8 +238,6 @@ fn fix_param_names(doc: &str, self_name: &Option<String>) -> String {
 
 fn create_fn_doc(w: &mut Write, fn_: &Function, parent: Option<Box<TypeStruct>>,
                  symbols: &symbols::Info) -> Result<()> {
-    let tabs : String = primitives::tabs(compute_indent(&parent) + 1);
-
     if fn_.doc().is_none() && fn_.doc_deprecated().is_none() && fn_.ret.doc().is_none() {
         if fn_.parameters.iter().all(|x| {
             x.doc().is_none()
@@ -249,75 +252,52 @@ fn create_fn_doc(w: &mut Write, fn_: &Function, parent: Option<Box<TypeStruct>>,
         .find(|p| p.instance_parameter)
         .map(|p| p.name.clone());
 
-    try!(writeln!(w, "{}{}", MOD_COMMENT, sub_ty));
+    write_item_doc(w, &sub_ty, |w| {
+        if let Some(doc) = fn_.doc() {
+            try!(writeln!(w, "{}", reformat_doc(&fix_param_names(doc, &self_name), symbols)));
+        };
+        if let Some(doc) = fn_.doc_deprecated() {
+            try!(writeln!(w, "\n# Deprecated\n"));
+            try!(writeln!(w, "{}", reformat_doc(&fix_param_names(doc, &self_name), symbols)));
+        };
 
-    if let Some(ref docs) = fn_.doc() {
-        try!(write_lines(w, &fix_param_names(docs, &self_name), &tabs, symbols));
-    };
-    if let Some(ref docs) = fn_.doc_deprecated() {
-        try!(write_header(w, &tabs, "Deprecated"));
-        try!(write_lines(w, &fix_param_names(docs, &self_name), &tabs, symbols));
-    };
-
-    if fn_.parameters.iter().any(|x| {
-           x.instance_parameter == false && !x.name.is_empty() && x.doc().is_some()
-       }) {
-        try!(write_header(w, &tabs, "Parameters"));
-    }
-    for parameter in fn_.parameters.iter() {
-        if parameter.instance_parameter || parameter.name.is_empty() {
-            continue
+        if fn_.parameters.iter().any(|x| {
+               x.instance_parameter == false && !x.name.is_empty() && x.doc().is_some()
+           }) {
+            try!(writeln!(w, "\n# Parameters\n"));
         }
-        if let Some(ref parameter_doc) = parameter.doc() {
-            try!(writeln!(w, "{}/// ## `{}`", tabs,
-                          nameutil::mangle_keywords(&parameter.name[..])));
-            try!(write_lines(w, &fix_param_names(parameter_doc, &self_name), &tabs, symbols));
+        for parameter in fn_.parameters.iter() {
+            if parameter.instance_parameter || parameter.name.is_empty() {
+                continue
+            }
+            if let Some(doc) = parameter.doc() {
+                try!(writeln!(w, "## `{}`", nameutil::mangle_keywords(&parameter.name[..])));
+                try!(writeln!(w, "{}", reformat_doc(&fix_param_names(doc, &self_name), symbols)));
+            }
         }
-    }
 
-    if let Some(ref doc) = fn_.ret.doc() {
-        try!(write_header(w, &tabs, "Returns"));
-        try!(write_lines(w, &fix_param_names(doc, &self_name), &tabs, symbols));
-    }
-    Ok(())
-}
-
-fn write_lines(w: &mut Write, lines: &str, tabs: &str, symbols: &symbols::Info) -> Result<()> {
-    write_verbatim(w, &format::reformat_doc(&lines, symbols), tabs)
-}
-
-fn write_verbatim(w: &mut Write, lines: &str, tabs: &str) -> Result<()> {
-    for line in lines.split("\n") {
-        try!(writeln!(w, "{}/// {}", tabs, line));
-    }
-    Ok(())
+        if let Some(doc) = fn_.ret.doc() {
+            try!(writeln!(w, "\n# Returns\n"));
+            try!(writeln!(w, "{}", reformat_doc(&fix_param_names(doc, &self_name), symbols)));
+        }
+        Ok(())
+    })
 }
 
 fn create_sub_doc<T: ToStripperType>(w: &mut Write, ty: &T, symbols: &symbols::Info) -> Result<()> {
-    let tabs = "";
     let sub_ty = ty.convert();
 
     if ty.doc().is_some() || ty.doc_deprecated().is_some() {
-        try!(writeln!(w, "{}{}", MOD_COMMENT, sub_ty));
-    }
-
-    if let Some(doc) = ty.doc() {
-        try!(write_lines(w, &doc, &tabs, symbols));
-    }
-    if let Some(doc) = ty.doc_deprecated() {
-        try!(write_header(w, &tabs, "Deprecated"));
-        try!(write_lines(w, &doc, &tabs, symbols));
+        try!(write_item_doc(w, &sub_ty, |w| {
+            if let Some(doc) = ty.doc() {
+                try!(writeln!(w, "{}", reformat_doc(doc, symbols)));
+            }
+            if let Some(doc) = ty.doc_deprecated() {
+                try!(writeln!(w, "\n# Deprecated\n"));
+                try!(writeln!(w, "{}", reformat_doc(doc, symbols)));
+            }
+            Ok(())
+        }));
     }
     Ok(())
-}
-
-fn compute_indent(e: &Option<Box<TypeStruct>>) -> usize {
-    match *e {
-        Some(ref e) if e.parent.is_some() => compute_indent(&e.parent) + 1,
-        _ => 0,
-    }
-}
-
-fn write_header(w: &mut Write, tabs: &str, header: &str) -> Result<()> {
-    writeln!(w, "{0}///\n{0}/// # {1}\n{0}///", tabs, header)
 }
