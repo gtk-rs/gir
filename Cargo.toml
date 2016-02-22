@@ -19,7 +19,7 @@ git2 = "*"
 lazy_static = "*"
 log = "*"
 regex = "*"
-stripper_interface = "*"
+rustdoc-stripper = { git = "https://github.com/GuillaumeGomez/rustdoc-stripper" }
 
 [build-dependencies]
 git2 = "*"
