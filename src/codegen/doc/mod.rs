@@ -12,6 +12,7 @@ use regex::{Captures, Regex};
 use self::format::reformat_doc;
 use stripper_lib::Type as SType;
 use stripper_lib::{TypeStruct, write_file_name, write_item_doc};
+use traits::*;
 
 mod format;
 
@@ -66,7 +67,7 @@ impl_to_stripper_type!(Constant, Const);
 impl_to_stripper_type!(Member, Variant);
 impl_to_stripper_type!(Enumeration, Enum);
 impl_to_stripper_type!(Bitfield, Type);
-impl_to_stripper_type!(Record, Type);
+impl_to_stripper_type!(Record, Struct);
 impl_to_stripper_type!(Field, Variant);
 impl_to_stripper_type!(Union, Struct);
 impl_to_stripper_type!(Function, Fn);
@@ -87,14 +88,25 @@ fn generate_doc(mut w: &mut Write, env: &Env) -> Result<()> {
 
     let namespace = env.library.namespace(MAIN);
     for obj in env.config.objects.values() {
-        if !obj.status.need_generate() {
+        if obj.status.ignored() {
             continue;
         }
 
         let info = analysis::object::class(env, obj)
             .or_else(|| analysis::object::interface(env, obj));
         if let Some(info) = info {
-            try!(create_object_doc(w, env, &info));
+            if info.type_id.ns_id == MAIN {
+                try!(create_object_doc(w, env, &info));
+            }
+        }
+
+        if let Some(info) = analysis::record::new(env, obj) {
+            if info.type_id.ns_id == MAIN {
+                println!("documenting struct {}", info.name);
+                let record = env.library.type_(info.type_id).to_ref_as::<Record>();
+                let symbols = env.symbols.borrow();
+                try!(create_record_doc(w, record, &symbols));
+            }
         }
     }
 
@@ -183,6 +195,30 @@ fn create_object_doc(w: &mut Write, env: &Env, info: &analysis::object::Info) ->
             ty.clone()
         };
         try!(create_fn_doc(w, &function, Some(Box::new(ty)), &symbols));
+    }
+    Ok(())
+}
+
+fn create_record_doc(w: &mut Write, record: &Record, symbols: &symbols::Info) -> Result<()> {
+    let ty = record.convert();
+
+    if record.doc().is_some() || record.doc_deprecated().is_some() {
+        try!(write_item_doc(w, &ty, |w| {
+            if let Some(doc) = record.doc() {
+                try!(writeln!(w, "{}", reformat_doc(doc, symbols)));
+            }
+
+            if let Some(doc) = record.doc_deprecated() {
+                try!(writeln!(w, "\n# Deprecated\n"));
+                try!(writeln!(w, "{}", reformat_doc(doc, symbols)));
+            }
+            Ok(())
+        }));
+    }
+
+    let ty = TypeStruct { ty: SType::Impl, ..ty };
+    for function in &record.functions {
+        try!(create_fn_doc(w, &function, Some(Box::new(ty.clone())), &symbols));
     }
     Ok(())
 }
