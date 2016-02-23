@@ -2,7 +2,7 @@ use std::io::{Result, Write};
 
 use analysis;
 use env::Env;
-use super::{function, general, signal, trait_impls};
+use super::{function, general, signal, trait_impls, trampoline};
 
 pub fn generate(w: &mut Write, env: &Env, analysis: &analysis::object::Info) -> Result<()>{
     try!(general::start_comments(w, &env.config));
@@ -59,6 +59,12 @@ pub fn generate(w: &mut Write, env: &Env, analysis: &analysis::object::Info) -> 
             try!(signal::generate(w, signal_analysis, true, false, 1));
         }
         try!(writeln!(w, "}}"));
+    }
+
+    if !analysis.trampolines.is_empty() {
+        for trampoline in &analysis.trampolines {
+            try!(trampoline::generate(w, trampoline, generate_trait(analysis), &analysis.name));
+        }
     }
 
     Ok(())

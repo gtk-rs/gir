@@ -20,3 +20,4 @@ pub mod signals;
 pub mod special_functions;
 pub mod supertypes;
 pub mod symbols;
+pub mod trampolines;

@@ -17,7 +17,12 @@ pub fn generate(w: &mut Write, analysis: &analysis::signals::Info,
 
     if !only_declaration {
         //TODO: body
-        try!(writeln!(w, "{}{}\tTODO: connect to trampoline", tabs(indent), comment_prefix));
+        match analysis.trampoline_name {
+            Some(ref name) => try!(writeln!(w, "{}{}\tTODO: connect to {}",
+                                            tabs(indent), comment_prefix, name)),
+            None => try!(writeln!(w, "{}{}\tTODO: connect to unknown trampoline",
+                                  tabs(indent), comment_prefix)),
+        }
         try!(writeln!(w, "{}{}}}", tabs(indent), comment_prefix));
     }
 

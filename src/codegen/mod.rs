@@ -19,6 +19,7 @@ mod return_value;
 mod signal;
 mod sys;
 mod trait_impls;
+mod trampoline;
 pub mod translate_from_glib;
 pub mod translate_to_glib;
 

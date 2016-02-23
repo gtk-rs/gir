@@ -20,6 +20,7 @@ pub struct Info {
     pub has_methods: bool,
     pub has_functions: bool,
     pub signals: Vec<signals::Info>,
+    pub trampolines: trampolines::Trampolines,
 }
 
 impl Info {
@@ -76,13 +77,16 @@ pub fn class(env: &Env, obj: &GObject) -> Option<Info> {
         imports.add("glib::object::IsA", None);
     }
 
-    let mut functions = functions::analyze(env, &klass.functions, class_tid, &obj, &mut imports);
+    let mut trampolines = trampolines::Trampolines::new();
+
+    let mut functions =
+        functions::analyze(env, &klass.functions, class_tid, &obj, &mut imports);
     let specials = special_functions::extract(&mut functions);
     // `copy` will duplicate an object while `clone` just adds a reference
     special_functions::unhide(&mut functions, &specials, special_functions::Type::Copy);
     special_functions::analyze_imports(&specials, &mut imports);
 
-    let signals = signals::analyze(&klass.signals);
+    let signals = signals::analyze(&klass.signals, &mut trampolines);
 
     let (version, deprecated_version) = info_base::versions(env, &obj, &functions, klass.version,
          klass.deprecated_version);
@@ -126,6 +130,7 @@ pub fn class(env: &Env, obj: &GObject) -> Option<Info> {
         has_methods: has_methods,
         has_functions: has_functions,
         signals: signals,
+        trampolines: trampolines,
     };
 
     Some(info)
@@ -155,9 +160,12 @@ pub fn interface(env: &Env, obj: &GObject) -> Option<Info> {
 
     let supertypes = supertypes::analyze(env, iface_tid, &mut imports);
 
-    let functions = functions::analyze(env, &iface.functions, iface_tid, &obj, &mut imports);
+    let mut trampolines = trampolines::Trampolines::new();
 
-    let signals = signals::analyze(&iface.signals);
+    let functions =
+        functions::analyze(env, &iface.functions, iface_tid, &obj, &mut imports);
+
+    let signals = signals::analyze(&iface.signals, &mut trampolines);
 
     let (version, deprecated_version) = info_base::versions(env, &obj, &functions, iface.version,
          iface.deprecated_version);
@@ -187,6 +195,7 @@ pub fn interface(env: &Env, obj: &GObject) -> Option<Info> {
         has_children: true,
         has_methods: has_methods,
         signals: signals,
+        trampolines: trampolines,
         .. Default::default()
     };
 
