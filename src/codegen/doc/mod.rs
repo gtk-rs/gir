@@ -297,11 +297,6 @@ fn create_fn_doc(w: &mut Write, fn_: &Function, parent: Option<Box<TypeStruct>>,
             try!(writeln!(w, "{}", reformat_doc(&fix_param_names(doc, &self_name), symbols)));
         };
 
-        if fn_.parameters.iter().any(|x| {
-               x.instance_parameter == false && !x.name.is_empty() && x.doc().is_some()
-           }) {
-            try!(writeln!(w, "\n# Parameters\n"));
-        }
         for parameter in fn_.parameters.iter() {
             if parameter.instance_parameter || parameter.name.is_empty() {
                 continue
