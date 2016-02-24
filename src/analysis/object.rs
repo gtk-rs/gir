@@ -14,8 +14,7 @@ pub struct Info {
     pub base: InfoBase,
     pub c_type: String,
     pub get_type: String,
-    pub parents: Vec<general::StatusedTypeId>,
-    pub implements: Vec<general::StatusedTypeId>,
+    pub supertypes: Vec<general::StatusedTypeId>,
     pub has_children: bool,
     pub has_constructors: bool,
     pub has_methods: bool,
@@ -51,12 +50,11 @@ pub fn class(env: &Env, obj: &GObject) -> Option<Info> {
     imports.add("glib::translate::*", None);
     imports.add("ffi", None);
 
-    let parents = parents::analyze_class(env, klass, &mut imports);
-    let implements = implements::analyze(env, klass, &mut imports);
+    let supertypes = supertypes::analyze(env, class_tid, &mut imports);
 
     let mut has_children = false;
 
-    for child_tid in &klass.children {
+    for child_tid in env.class_hierarchy.subtypes(class_tid) {
         let child_name = child_tid.full_name(&env.library);
         let status = env.config.objects.get(&child_name)
             .map(|o| o.status)
@@ -112,8 +110,7 @@ pub fn class(env: &Env, obj: &GObject) -> Option<Info> {
         base: base,
         c_type: klass.c_type.clone(),
         get_type: klass.glib_get_type.clone(),
-        parents: parents,
-        implements: implements,
+        supertypes: supertypes,
         has_children: has_children,
         has_constructors: has_constructors,
         has_methods: has_methods,
@@ -145,7 +142,7 @@ pub fn interface(env: &Env, obj: &GObject) -> Option<Info> {
     imports.add("ffi", None);
     imports.add("glib::object::IsA", None);
 
-    let parents = parents::analyze_interface(env, iface, &mut imports);
+    let supertypes = supertypes::analyze(env, iface_tid, &mut imports);
 
     let functions =
         functions::analyze(env, &iface.functions, iface_tid, &obj, &mut imports);
@@ -172,7 +169,7 @@ pub fn interface(env: &Env, obj: &GObject) -> Option<Info> {
         base: base,
         c_type: iface.c_type.clone(),
         get_type: iface.glib_get_type.clone(),
-        parents: parents,
+        supertypes: supertypes,
         has_children: true,
         has_methods: has_methods,
         .. Default::default()

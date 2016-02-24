@@ -131,28 +131,17 @@ fn create_object_doc(w: &mut Write, env: &Env, info: &analysis::object::Info) ->
     let ty = TypeStruct::new(SType::Struct, &info.name);
     let ty_ext = TypeStruct::new(SType::Trait, &format!("{}Ext", info.name));
     let has_trait = info.has_children;
-    let impl_self = if has_trait { Some(info.type_id) } else { None };
     let class: &ToStripperType;
     let functions: &[Function];
-    let implements: Vec<TypeId>;
 
     match *env.library.type_(info.type_id) {
         Type::Class(ref cl) => {
             class = cl;
             functions = &cl.functions;
-            implements = impl_self.iter()
-                .chain(cl.parents.iter())
-                .chain(cl.implements.iter())
-                .map(|&tid| tid)
-                .collect();
         }
         Type::Interface(ref iface) => {
             class = iface;
             functions = &iface.functions;
-            implements = impl_self.iter()
-                .chain(iface.prereq_parents.iter())
-                .map(|&tid| tid)
-                .collect();
         }
         _ => unreachable!(),
     }
@@ -164,7 +153,9 @@ fn create_object_doc(w: &mut Write, env: &Env, info: &analysis::object::Info) ->
             }
 
             try!(writeln!(w, "\n# Implements\n"));
-            let implements = implements.iter()
+            let impl_self = if has_trait { Some(info.type_id) } else { None };
+            let implements = impl_self.iter()
+                .chain(env.class_hierarchy.supertypes(info.type_id))
                 .filter(|&tid| !env.type_status(&tid.full_name(&env.library)).ignored())
                 .map(|&tid| format!("[`{name}Ext`](trait.{name}Ext.html)",
                                     name = env.library.type_(tid).get_name()))

@@ -1,18 +1,14 @@
 use std::io::{Result, Write};
 
 use analysis;
-use analysis::general::StatusedTypeId;
 use env::Env;
 use super::{function, general, trait_impls};
 
 pub fn generate(w: &mut Write, env: &Env, analysis: &analysis::object::Info) -> Result<()>{
-    let implements: Vec<&StatusedTypeId> = analysis.parents.iter()
-        .chain(analysis.implements.iter())
-        .collect();
     try!(general::start_comments(w, &env.config));
     try!(general::uses(w, &analysis.imports, env.config.min_cfg_version));
     try!(general::define_object_type(w, &analysis.name, &analysis.c_type, &analysis.get_type,
-        &implements));
+        &analysis.supertypes));
 
     if generate_inherent(analysis) {
         try!(writeln!(w, ""));

@@ -121,7 +121,7 @@ fn ffi_inner(env: &Env, tid: library::TypeId, mut inner: String) -> Result {
         _ => {
             if let Some(glib_name) = env.library.type_(tid).get_glib_name() {
                 if inner != glib_name {
-                    if implements_c_type(&env.library, tid, &inner) {
+                    if implements_c_type(env, tid, &inner) {
                         info!("[c:type {} of {} <: {}, fixing]", glib_name,
                             env.library.type_(tid).get_name(), inner);
                         fix_name(env, tid, &glib_name)
@@ -183,16 +183,7 @@ fn fix_name(env: &Env, type_id: library::TypeId, name: &str) -> Result {
     }
 }
 
-fn implements_c_type(library: &library::Library, tid: TypeId, c_type: &str) -> bool {
-    if let Some(ref klass) = library.type_(tid).maybe_ref_as::<library::Class>() {
-        klass.implements.iter().chain(klass.parents.iter())
-            .any(|&super_tid| library.type_(super_tid).get_glib_name() == Some(c_type))
-    }
-    else if let Some(ref iface) = library.type_(tid).maybe_ref_as::<library::Interface>() {
-        iface.prereq_parents.iter()
-            .any(|&super_tid| library.type_(super_tid).get_glib_name() == Some(c_type))
-    }
-    else {
-        false
-    }
+fn implements_c_type(env: &Env, tid: TypeId, c_type: &str) -> bool {
+    env.class_hierarchy.supertypes(tid).iter()
+        .any(|&super_tid| env.library.type_(super_tid).get_glib_name() == Some(c_type))
 }
