@@ -1,5 +1,6 @@
 use std::cmp::{Ord, Ordering, PartialOrd};
 use std::collections::{BTreeSet, HashMap, HashSet};
+use std::iter::Iterator;
 use std::ops::{Deref, DerefMut};
 use std::str::FromStr;
 use nameutil::split_namespace_name;
@@ -677,6 +678,17 @@ impl Library {
 
     pub fn register_version(&mut self, ns_id: u16, version: Version) {
         self.namespace_mut(ns_id).versions.insert(version);
+    }
+
+    pub fn types<'a>(&'a self) -> Box<Iterator<Item = (TypeId, &Type)> + 'a> {
+        Box::new(self.namespaces.iter().enumerate()
+            .flat_map(|(ns_id, ns)| {
+                ns.types.iter().enumerate()
+                    .filter_map(move |(id, type_)| {
+                        let tid = TypeId { ns_id: ns_id as u16, id: id as u32 };
+                        type_.as_ref().map(|t| (tid, t))
+                    })
+            }))
     }
 }
 
