@@ -1,5 +1,5 @@
 use std::cmp::{Ord, Ordering, PartialOrd};
-use std::collections::{BTreeSet, HashMap, HashSet};
+use std::collections::{BTreeSet, HashMap};
 use std::iter::Iterator;
 use std::ops::{Deref, DerefMut};
 use std::str::FromStr;
@@ -300,7 +300,6 @@ pub struct Interface {
     pub glib_get_type: String,
     pub functions: Vec<Function>,
     pub prerequisites: Vec<TypeId>,
-    pub prereq_parents: Vec<TypeId>,
     pub doc: Option<String>,
     pub doc_deprecated: Option<String>,
 }
@@ -312,8 +311,6 @@ pub struct Class {
     pub glib_get_type: String,
     pub functions: Vec<Function>,
     pub parent: Option<TypeId>,
-    pub parents: Vec<TypeId>,
-    pub children: HashSet<TypeId>,
     pub implements: Vec<TypeId>,
     pub doc: Option<String>,
     pub doc_deprecated: Option<String>,
@@ -541,10 +538,6 @@ impl Namespace {
         self.types[id as usize].as_ref().unwrap()
     }
 
-    fn type_mut(&mut self, id: u32) -> &mut Type {
-        self.types[id as usize].as_mut().unwrap()
-    }
-
     fn add_type(&mut self, name: &str, typ: Option<Type>) -> u32 {
         let glib_name = typ.as_ref().and_then(|t| t.get_glib_name())
             .map(|s| s.to_string());
@@ -670,10 +663,6 @@ impl Library {
 
     pub fn type_(&self, tid: TypeId) -> &Type {
         self.namespace(tid.ns_id).type_(tid.id)
-    }
-
-    pub fn type_mut(&mut self, tid: TypeId) -> &mut Type {
-        self.namespace_mut(tid.ns_id).type_mut(tid.id)
     }
 
     pub fn register_version(&mut self, ns_id: u16, version: Version) {
