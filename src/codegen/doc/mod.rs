@@ -151,7 +151,6 @@ fn create_object_doc(w: &mut Write, env: &Env, info: &analysis::object::Info) ->
                 try!(writeln!(w, "{}", reformat_doc(doc, &symbols)));
             }
 
-            try!(writeln!(w, "\n# Implements\n"));
             let impl_self = if has_trait { Some(info.type_id) } else { None };
             let implements = impl_self.iter()
                 .chain(env.class_hierarchy.supertypes(info.type_id))
@@ -159,7 +158,10 @@ fn create_object_doc(w: &mut Write, env: &Env, info: &analysis::object::Info) ->
                 .map(|&tid| format!("[`{name}Ext`](trait.{name}Ext.html)",
                                     name = env.library.type_(tid).get_name()))
                 .collect::<Vec<_>>();
-            try!(writeln!(w, "{}", &implements.join(", ")));
+            if !implements.is_empty() {
+                try!(writeln!(w, "\n# Implements\n"));
+                try!(writeln!(w, "{}", &implements.join(", ")));
+            }
 
             if let Some(doc) = class.doc_deprecated() {
                 try!(writeln!(w, "\n# Deprecated\n"));
