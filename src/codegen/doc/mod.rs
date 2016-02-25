@@ -3,6 +3,7 @@ use std::io::{Result, Write};
 use analysis;
 use analysis::symbols;
 use analysis::namespaces::MAIN;
+use case::CaseExt;
 use env::Env;
 use file_saver::save_to_file;
 use library::*;
@@ -239,7 +240,7 @@ fn create_enum_doc(w: &mut Write, enum_: &Enumeration, symbols: &symbols::Info) 
     }));
 
     for member in enum_.members.iter() {
-        let mut sub_ty : TypeStruct = member.convert();
+        let mut sub_ty = TypeStruct { name: member.name.to_camel(), ..member.convert()};
 
         if member.doc().is_some() || member.doc_deprecated().is_some() {
             sub_ty.parent = Some(Box::new(ty.clone()));
