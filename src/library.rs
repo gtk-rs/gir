@@ -1,5 +1,5 @@
 use std::cmp::{Ord, Ordering, PartialOrd};
-use std::collections::{BTreeSet, HashMap};
+use std::collections::{BTreeMap, BTreeSet, HashMap};
 use std::iter::Iterator;
 use std::ops::{Deref, DerefMut};
 use std::str::FromStr;
@@ -507,7 +507,7 @@ impl<U> MaybeRefAs for U {
 pub struct Namespace {
     pub name: String,
     pub types: Vec<Option<Type>>,
-    pub index: HashMap<String, u32>,
+    pub index: BTreeMap<String, u32>,
     pub glib_name_index: HashMap<String, u32>,
     pub constants: Vec<Constant>,
     pub functions: Vec<Function>,
@@ -677,6 +677,15 @@ impl Library {
                         let tid = TypeId { ns_id: ns_id as u16, id: id as u32 };
                         type_.as_ref().map(|t| (tid, t))
                     })
+            }))
+    }
+
+    /// Types from a single namespace in alphabetical order.
+    pub fn namespace_types<'a>(&'a self, ns_id: u16) -> Box<Iterator<Item = (TypeId, &Type)> + 'a> {
+        let ns = self.namespace(ns_id);
+        Box::new(ns.index.values()
+            .map(move |&id| {
+                (TypeId { ns_id: ns_id, id: id }, ns.types[id as usize].as_ref().unwrap())
             }))
     }
 }
