@@ -121,7 +121,6 @@ fn handle_type(w: &mut Write, ty: &LType, symbols: &symbols::Info) -> Result<()>
     match *ty {
         LType::Alias(ref a) => create_sub_doc(w, a, symbols),
         LType::Enumeration(ref e) => create_enum_doc(w, &e, symbols),
-        LType::Function(ref f) => create_fn_doc(w, &f, None, symbols),
         _ => Ok(()),
     }
 }
