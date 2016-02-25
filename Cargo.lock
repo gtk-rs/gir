@@ -9,7 +9,7 @@ dependencies = [
  "lazy_static 0.1.15 (registry+https://github.com/rust-lang/crates.io-index)",
  "log 0.3.5 (registry+https://github.com/rust-lang/crates.io-index)",
  "regex 0.1.48 (registry+https://github.com/rust-lang/crates.io-index)",
- "stripper_interface 0.0.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "rustdoc-stripper 0.1.0 (git+https://github.com/GuillaumeGomez/rustdoc-stripper)",
  "toml 0.1.25 (registry+https://github.com/rust-lang/crates.io-index)",
  "xml-rs 0.2.2 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
@@ -233,9 +233,9 @@ version = "0.3.16"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
-name = "stripper_interface"
-version = "0.0.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
+name = "rustdoc-stripper"
+version = "0.1.0"
+source = "git+https://github.com/GuillaumeGomez/rustdoc-stripper#eb7309d26d94b2d567687543e942c7cccc34d9e6"
 
 [[package]]
 name = "strsim"

@@ -2,6 +2,7 @@ use std::collections::vec_deque::VecDeque;
 use std::slice::Iter;
 use std::vec::Vec;
 
+use env::Env;
 use library::{Fundamental, Library, Type, TypeId};
 use super::imports::Imports;
 
@@ -28,11 +29,17 @@ impl Default for Bounds {
 }
 
 impl Bounds {
-    pub fn type_for(library: &Library, type_id: TypeId) -> Option<BoundType> {
+    pub fn type_for(env: &Env, type_id: TypeId) -> Option<BoundType> {
         use self::BoundType::*;
-        match *library.type_(type_id) {
+        match *env.library.type_(type_id) {
             Type::Fundamental(Fundamental::Filename) => Some(AsRef),
-            Type::Class(ref klass) => if klass.children.is_empty() { None } else { Some(IsA) },
+            Type::Class(..) => {
+                if env.class_hierarchy.subtypes(type_id).next().is_some() {
+                    Some(IsA)
+                } else {
+                    None
+                }
+            }
             Type::Interface(..) => Some(IsA),
             _ => None,
         }

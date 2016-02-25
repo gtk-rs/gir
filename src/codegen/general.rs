@@ -29,7 +29,7 @@ pub fn uses(w: &mut Write, imports: &Imports, min_cfg_version: Version)
 }
 
 pub fn define_object_type(w: &mut Write, type_name: &str, glib_name: &str,
-        glib_func_name: &str, parents: &[&StatusedTypeId]) -> Result<()> {
+        glib_func_name: &str, parents: &[StatusedTypeId]) -> Result<()> {
     //TODO: don't generate for parents without traits
     let parents: Vec<&str> = parents.iter()
         .filter(|p| !p.status.ignored())

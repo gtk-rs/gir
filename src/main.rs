@@ -9,7 +9,7 @@ extern crate log;
 extern crate xml;
 extern crate toml;
 extern crate regex;
-extern crate stripper_interface;
+extern crate stripper_lib;
 
 use std::cell::RefCell;
 use std::error::Error;
@@ -65,12 +65,14 @@ fn do_main() -> Result<(), Box<Error>> {
 
     let namespaces = analysis::namespaces::run(&library);
     let symbols = analysis::symbols::run(&library, &namespaces);
+    let class_hierarchy = analysis::class_hierarchy::run(&library);
 
     let env = Env{
         library: library,
         config: cfg,
         namespaces: namespaces,
         symbols: RefCell::new(symbols),
+        class_hierarchy: class_hierarchy,
     };
     codegen::generate(&env);
 
