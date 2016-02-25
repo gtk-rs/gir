@@ -12,7 +12,6 @@ use regex::{Captures, Regex};
 use self::format::reformat_doc;
 use stripper_lib::Type as SType;
 use stripper_lib::{TypeStruct, write_file_name, write_item_doc};
-use traits::*;
 
 mod format;
 
@@ -86,34 +85,34 @@ pub fn generate(env: &Env) {
 fn generate_doc(mut w: &mut Write, env: &Env) -> Result<()> {
     try!(write_file_name(w, None));
 
-    let namespace = env.library.namespace(MAIN);
-    for obj in env.config.objects.values() {
-        if obj.status.ignored() {
-            continue;
-        }
-
-        let info = analysis::object::class(env, obj)
-            .or_else(|| analysis::object::interface(env, obj));
-        if let Some(info) = info {
-            if info.type_id.ns_id == MAIN {
-                try!(create_object_doc(w, env, &info));
+    for (tid, type_) in env.library.namespace_types(MAIN) {
+        let obj = env.config.objects.get(&tid.full_name(&env.library))
+            .and_then(|obj| if obj.status.ignored() { None } else { Some(obj) });
+        match *type_ {
+            LType::Class(..) => {
+                if let Some(obj) = obj {
+                    try!(create_object_doc(w, env, &analysis::object::class(env, obj).unwrap()));
+                }
             }
-        }
-
-        if let Some(info) = analysis::record::new(env, obj) {
-            if info.type_id.ns_id == MAIN {
-                println!("documenting struct {}", info.name);
-                let record = env.library.type_(info.type_id).to_ref_as::<Record>();
+            LType::Interface(..) => {
+                if let Some(obj) = obj {
+                    try!(create_object_doc(w, env,
+                                           &analysis::object::interface(env, obj).unwrap()));
+                }
+            }
+            LType::Record(ref rec) => {
+                if obj.is_some() {
+                    let symbols = env.symbols.borrow();
+                    try!(create_record_doc(w, rec, &symbols));
+                }
+            }
+            _ => {
                 let symbols = env.symbols.borrow();
-                try!(create_record_doc(w, record, &symbols));
+                try!(handle_type(&mut w, type_, &symbols));
             }
         }
     }
 
-    let symbols = env.symbols.borrow();
-    for ty in namespace.types.iter().filter_map(|t| t.as_ref()) {
-        try!(handle_type(&mut w, &ty, &symbols));
-    }
     Ok(())
 }
 
