@@ -3,6 +3,7 @@ use std::io::{Result, Write};
 use analysis;
 use analysis::symbols;
 use analysis::namespaces::MAIN;
+use case::CaseExt;
 use env::Env;
 use file_saver::save_to_file;
 use library::*;
@@ -120,7 +121,6 @@ fn handle_type(w: &mut Write, ty: &LType, symbols: &symbols::Info) -> Result<()>
     match *ty {
         LType::Alias(ref a) => create_sub_doc(w, a, symbols),
         LType::Enumeration(ref e) => create_enum_doc(w, &e, symbols),
-        LType::Function(ref f) => create_fn_doc(w, &f, None, symbols),
         _ => Ok(()),
     }
 }
@@ -151,7 +151,6 @@ fn create_object_doc(w: &mut Write, env: &Env, info: &analysis::object::Info) ->
                 try!(writeln!(w, "{}", reformat_doc(doc, &symbols)));
             }
 
-            try!(writeln!(w, "\n# Implements\n"));
             let impl_self = if has_trait { Some(info.type_id) } else { None };
             let implements = impl_self.iter()
                 .chain(env.class_hierarchy.supertypes(info.type_id))
@@ -159,7 +158,10 @@ fn create_object_doc(w: &mut Write, env: &Env, info: &analysis::object::Info) ->
                 .map(|&tid| format!("[`{name}Ext`](trait.{name}Ext.html)",
                                     name = env.library.type_(tid).get_name()))
                 .collect::<Vec<_>>();
-            try!(writeln!(w, "{}", &implements.join(", ")));
+            if !implements.is_empty() {
+                try!(writeln!(w, "\n# Implements\n"));
+                try!(writeln!(w, "{}", &implements.join(", ")));
+            }
 
             if let Some(doc) = class.doc_deprecated() {
                 try!(writeln!(w, "\n# Deprecated\n"));
@@ -239,7 +241,7 @@ fn create_enum_doc(w: &mut Write, enum_: &Enumeration, symbols: &symbols::Info) 
     }));
 
     for member in enum_.members.iter() {
-        let mut sub_ty : TypeStruct = member.convert();
+        let mut sub_ty = TypeStruct { name: member.name.to_camel(), ..member.convert()};
 
         if member.doc().is_some() || member.doc_deprecated().is_some() {
             sub_ty.parent = Some(Box::new(ty.clone()));
