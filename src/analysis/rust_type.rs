@@ -3,7 +3,6 @@ use std::result;
 use analysis::ref_mode::RefMode;
 use env::Env;
 use library::{self, Nullable};
-use nameutil::crate_name;
 use super::conversion_type::ConversionType;
 use traits::*;
 
@@ -143,7 +142,7 @@ fn rust_type_full(env: &Env, type_id: library::TypeId, nullable: Nullable, ref_m
             rust_type = Err(TypeError::Ignored(into_inner(rust_type)));
         }
         rust_type = rust_type.map_any(|s| format!("{}::{}",
-            crate_name(&env.library.namespace(type_id.ns_id).name), s));
+            env.namespaces[type_id.ns_id].higher_crate_name, s));
     }
 
     match ref_mode {
