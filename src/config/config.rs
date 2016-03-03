@@ -139,6 +139,16 @@ impl Config {
     pub fn library_full_name(&self) -> String {
         format!("{}-{}", self.library_name, self.library_version)
     }
+
+    pub fn filter_version(&self, version: Option<Version>) -> Option<Version> {
+        version.and_then(|v| {
+            if v > self.min_cfg_version {
+                Some(v)
+            } else {
+                None
+            }
+        })
+    }
 }
 
 fn read_toml<P: AsRef<OsStr> + AsRef<Path>>(filename: P) -> Result<toml::Value, Error> {

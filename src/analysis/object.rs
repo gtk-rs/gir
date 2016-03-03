@@ -69,14 +69,14 @@ pub fn class(env: &Env, obj: &GObject) -> Option<Info> {
         imports.add("glib::object::IsA", None);
     }
 
-    let mut functions =
-        functions::analyze(env, &klass.functions, class_tid, &obj, &mut imports);
+    let mut functions = functions::analyze(env, &klass.functions, class_tid, &obj, &mut imports);
     let specials = special_functions::extract(&mut functions);
     // `copy` will duplicate an object while `clone` just adds a reference
     special_functions::unhide(&mut functions, &specials, special_functions::Type::Copy);
     special_functions::analyze_imports(&specials, &mut imports);
 
-    let version = functions.iter().filter_map(|f| f.version).min();
+    let (version, deprecated_version) = info_base::versions(env, &obj, &functions, klass.version,
+         klass.deprecated_version);
 
     //don't `use` yourself
     imports.remove(&name);
@@ -89,6 +89,7 @@ pub fn class(env: &Env, obj: &GObject) -> Option<Info> {
         specials: specials,
         imports: imports,
         version: version,
+        deprecated_version: deprecated_version,
         cfg_condition: obj.cfg_condition.clone(),
     };
 
@@ -144,10 +145,10 @@ pub fn interface(env: &Env, obj: &GObject) -> Option<Info> {
 
     let supertypes = supertypes::analyze(env, iface_tid, &mut imports);
 
-    let functions =
-        functions::analyze(env, &iface.functions, iface_tid, &obj, &mut imports);
+    let functions = functions::analyze(env, &iface.functions, iface_tid, &obj, &mut imports);
 
-    let version = functions.iter().filter_map(|f| f.version).min();
+    let (version, deprecated_version) = info_base::versions(env, &obj, &functions, iface.version,
+         iface.deprecated_version);
 
     //don't `use` yourself
     imports.remove(&name);
@@ -160,6 +161,7 @@ pub fn interface(env: &Env, obj: &GObject) -> Option<Info> {
         specials: Default::default(),
         imports: imports,
         version: version,
+        deprecated_version: deprecated_version,
         cfg_condition: obj.cfg_condition.clone(),
     };
     

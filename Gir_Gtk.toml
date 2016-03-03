@@ -64,7 +64,6 @@ generate = [
     "Gtk.Overlay",
     "Gtk.Paned",
     "Gtk.PlacesSidebar",
-    "Gtk.Popover",
     "Gtk.PopoverMenu",
     "Gtk.ProgressBar",
     "Gtk.RadioButton",
@@ -159,6 +158,11 @@ status = "generate"
 [[object.function]]
 name = "is_ipp"
 version = "3.16"
+
+[[object]]
+name = "Gtk.Popover"
+status = "generate"
+version = "3.12"
 
 [[object]]
 name = "Gtk.PrintSettings"

@@ -36,6 +36,7 @@ pub struct Info {
     pub bounds: Bounds,
     pub outs: out_parameters::Info,
     pub version: Option<Version>,
+    pub deprecated_version: Option<Version>,
     pub cfg_condition: Option<String>,
     pub assertion: SafetyAssertionMode,
 }
@@ -65,6 +66,8 @@ fn analyze_function(env: &Env, func: &library::Function, type_tid: library::Type
 
     let version = configured_functions.iter().filter_map(|f| f.version).min()
         .or(func.version);
+    let version = env.config.filter_version(version);
+    let deprecated_version = func.deprecated_version;
     let cfg_condition = configured_functions.iter().filter_map(|f| f.cfg_condition.clone()).next();
 
     let ret = return_value::analyze(env, func, type_tid, configured_functions, &mut used_types);
@@ -129,6 +132,7 @@ fn analyze_function(env: &Env, func: &library::Function, type_tid: library::Type
         bounds: bounds,
         outs: outs,
         version: version,
+        deprecated_version: deprecated_version,
         cfg_condition: cfg_condition,
         assertion: assertion,
     }

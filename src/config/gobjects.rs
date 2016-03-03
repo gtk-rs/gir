@@ -6,6 +6,7 @@ use toml::Value;
 use super::identables::Identables;
 use super::functions::Functions;
 use super::members::Members;
+use version::Version;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum GStatus {
@@ -52,6 +53,7 @@ pub struct GObject {
     pub members: Members,
     pub status: GStatus,
     pub module_name: Option<String>,
+    pub version: Option<Version>,
     pub cfg_condition: Option<String>,
 }
 
@@ -63,6 +65,7 @@ impl Default for GObject {
             members: Members::new(),
             status: Default::default(),
             module_name: None,
+            version: None,
             cfg_condition: None,
         }
     }
@@ -94,6 +97,9 @@ fn parse_object(toml_object: &Value) -> GObject {
     let module_name = toml_object.lookup("module_name")
         .and_then(|v| v.as_str())
         .map(|s| s.to_owned());
+    let version = toml_object.lookup("version")
+        .and_then(|v| v.as_str())
+        .and_then(|s| s.parse().ok());
     let cfg_condition = toml_object.lookup("cfg_condition")
         .and_then(|v| v.as_str())
         .map(|s| s.to_owned());
@@ -104,6 +110,7 @@ fn parse_object(toml_object: &Value) -> GObject {
         members: members,
         status: status,
         module_name: module_name,
+        version: version,
         cfg_condition: cfg_condition,
     }
 }
