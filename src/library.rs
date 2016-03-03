@@ -194,7 +194,6 @@ pub struct Alias {
     pub typ: TypeId,
     pub target_c_type: String,
     pub doc: Option<String>,
-    pub doc_deprecated: Option<String>,
 }
 
 pub struct Constant {
@@ -203,6 +202,8 @@ pub struct Constant {
     pub typ: TypeId,
     pub c_type: String,
     pub value: String,
+    pub version: Option<Version>,
+    pub deprecated_version: Option<Version>,
     pub doc: Option<String>,
     pub doc_deprecated: Option<String>,
 }
@@ -212,7 +213,6 @@ pub struct Member {
     pub c_identifier: String,
     pub value: String,
     pub doc: Option<String>,
-    pub doc_deprecated: Option<String>,
 }
 
 pub struct Enumeration {
@@ -220,6 +220,8 @@ pub struct Enumeration {
     pub c_type: String,
     pub members: Vec<Member>,
     pub functions: Vec<Function>,
+    pub version: Option<Version>,
+    pub deprecated_version: Option<Version>,
     pub doc: Option<String>,
     pub doc_deprecated: Option<String>,
 }
@@ -229,6 +231,8 @@ pub struct Bitfield {
     pub c_type: String,
     pub members: Vec<Member>,
     pub functions: Vec<Function>,
+    pub version: Option<Version>,
+    pub deprecated_version: Option<Version>,
     pub doc: Option<String>,
     pub doc_deprecated: Option<String>,
 }
@@ -239,6 +243,8 @@ pub struct Record {
     pub glib_get_type: Option<String>,
     pub fields: Vec<Field>,
     pub functions: Vec<Function>,
+    pub version: Option<Version>,
+    pub deprecated_version: Option<Version>,
     pub doc: Option<String>,
     pub doc_deprecated: Option<String>,
 }
@@ -251,7 +257,6 @@ pub struct Field {
     pub private: bool,
     pub bits: Option<u8>,
     pub doc: Option<String>,
-    pub doc_deprecated: Option<String>,
 }
 
 #[derive(Default)]
@@ -261,7 +266,6 @@ pub struct Union {
     pub fields: Vec<Field>,
     pub functions: Vec<Function>,
     pub doc: Option<String>,
-    pub doc_deprecated: Option<String>,
 }
 
 #[derive(Clone, Debug)]
@@ -277,7 +281,6 @@ pub struct Parameter {
     pub allow_none: bool,
     pub is_error: bool,
     pub doc: Option<String>,
-    pub doc_deprecated: Option<String>, // Unused but needed for interface
 }
 
 pub struct Function {
@@ -300,8 +303,9 @@ pub struct Interface {
     pub glib_get_type: String,
     pub functions: Vec<Function>,
     pub prerequisites: Vec<TypeId>,
+    pub version: Option<Version>,
+    pub deprecated_version: Option<Version>,
     pub doc: Option<String>,
-    pub doc_deprecated: Option<String>,
 }
 
 #[derive(Default)]
@@ -312,8 +316,9 @@ pub struct Class {
     pub functions: Vec<Function>,
     pub parent: Option<TypeId>,
     pub implements: Vec<TypeId>,
+    pub version: Option<Version>,
+    pub deprecated_version: Option<Version>,
     pub doc: Option<String>,
-    pub doc_deprecated: Option<String>,
 }
 
 macro_rules! impl_lexical_ord {
