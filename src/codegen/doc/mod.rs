@@ -277,11 +277,22 @@ fn create_fn_doc(w: &mut Write, env: &Env, fn_: &Function, parent: Option<Box<Ty
 
     write_item_doc(w, &ty, |w| {
         if let Some(ref doc) = fn_.doc {
-            if let Some(ver) = fn_.deprecated_version {
-                try!(write!(w, "`[Deprecated since {}]` ", ver));
-            }
             try!(writeln!(w, "{}", reformat_doc(&fix_param_names(doc, &self_name), &symbols)));
         }
+        if let Some(version) = fn_.version {
+            if version > env.config.min_cfg_version {
+                try!(writeln!(w, "\nSince: {}\n", version));
+            }
+        }
+        if let Some(ver) = fn_.deprecated_version {
+            try!(writeln!(w, "\n# Deprecated since {}\n", ver));
+        } else if fn_.doc_deprecated.is_some() {
+            try!(writeln!(w, "\n# Deprecated\n"));
+        }
+        if let Some(ref doc) = fn_.doc_deprecated {
+            try!(writeln!(w, "{}", reformat_doc(&fix_param_names(doc, &self_name), &symbols)));
+        }
+
         for parameter in fn_.parameters.iter() {
             if parameter.instance_parameter || parameter.name.is_empty() {
                 continue
@@ -294,20 +305,6 @@ fn create_fn_doc(w: &mut Write, env: &Env, fn_: &Function, parent: Option<Box<Ty
 
         if let Some(ref doc) = fn_.ret.doc {
             try!(writeln!(w, "\n# Returns\n"));
-            try!(writeln!(w, "{}", reformat_doc(&fix_param_names(doc, &self_name), &symbols)));
-        }
-
-        if let Some(version) = fn_.version {
-            if version > env.config.min_cfg_version {
-                try!(writeln!(w, "\nSince: {}\n", version));
-            }
-        }
-        if let Some(ver) = fn_.deprecated_version {
-            try!(writeln!(w, "\n# Deprecated since {}\n", ver));
-        } else if fn_.doc_deprecated.is_some() {
-            try!(writeln!(w, "\n# Deprecated\n"));
-        }
-        if let Some(ref doc) = fn_.doc_deprecated {
             try!(writeln!(w, "{}", reformat_doc(&fix_param_names(doc, &self_name), &symbols)));
         }
         Ok(())
