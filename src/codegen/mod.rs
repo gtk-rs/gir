@@ -44,6 +44,7 @@ pub fn generate_mod_rs(env: &Env, root_path: &Path, mod_rs: Vec<String>, traits:
         try!(general::start_comments(w, &env.config));
         try!(general::write_vec(w, &mod_rs));
         try!(writeln!(w, ""));
+        try!(writeln!(w, "#[doc(hidden)]"));
         try!(writeln!(w, "pub mod traits {{"));
         try!(general::write_vec(w, &traits));
         writeln!(w, "}}")
