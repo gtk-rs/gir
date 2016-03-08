@@ -13,6 +13,7 @@ pub const INTERNAL: NsId = library::INTERNAL_NAMESPACE;
 pub struct Namespace {
     pub name: String,
     pub crate_name: String,
+    pub higher_crate_name: String,
     pub package_name: Option<String>,
     pub shared_libs: Vec<String>,
     pub versions: Vec<Version>,
@@ -52,9 +53,15 @@ pub fn run(gir: &library::Library) -> Info {
 
     for (ns_id, ns) in gir.namespaces.iter().enumerate() {
         let ns_id = ns_id as NsId;
+        let crate_name = nameutil::crate_name(&ns.name);
+        let higher_crate_name = match &crate_name[..] {
+            "gobject" | "gio" => "glib".to_owned(),
+            _ => crate_name.clone(),
+        };
         namespaces.push(Namespace {
             name: ns.name.clone(),
-            crate_name: nameutil::crate_name(&ns.name),
+            crate_name: crate_name,
+            higher_crate_name: higher_crate_name,
             package_name: ns.package_name.clone(),
             shared_libs: ns.shared_library.clone(),
             versions: ns.versions.iter().cloned().collect(),
