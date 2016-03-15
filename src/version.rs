@@ -7,7 +7,17 @@ pub struct Version(pub u16, pub u16, pub u16);
 
 impl Version {
     pub fn to_cfg(&self) -> String {
-        format!("feature = \"{}\"", self)
+        match *self {
+            Version(major, minor, 0) => format!("feature = \"v{}_{}\"", major, minor),
+            Version(major, minor, patch) => format!("feature = \"v{}_{}_{}\"", major, minor, patch),
+        }
+    }
+
+    pub fn to_feature(&self) -> String {
+        match *self {
+            Version(major, minor, 0) => format!("v{}_{}", major, minor),
+            Version(major, minor, patch) => format!("v{}_{}_{}", major, minor, patch),
+        }
     }
 }
 

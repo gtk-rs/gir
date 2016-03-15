@@ -26,6 +26,6 @@ build_script:
       }
   - cd tests\sys\sys_build
   - cargo build
-  - cargo build --features 3.16
+  - cargo build --features v3_16
 
 test: false

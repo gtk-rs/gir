@@ -81,9 +81,9 @@ fn fill_in(root: &mut Table, env: &Env) {
             .filter(|&&v| v > env.config.min_cfg_version);
         versions.fold(None::<Version>, |prev, &version| {
             let prev_array: Vec<Value> = prev.iter()
-                .map(|v| Value::String(v.to_string()))
+                .map(|v| Value::String(v.to_feature()))
                 .collect();
-            features.insert(version.to_string(), Value::Array(prev_array));
+            features.insert(version.to_feature(), Value::Array(prev_array));
             Some(version)
         });
     }
