@@ -4,7 +4,7 @@ version = "0.0.1"
 
 [features]
 full = ["secret-sys"]
-"3.16" = ["gtk-sys/3.16"]
+v3_16 = ["gtk-sys/v3_16"]
 
 [dependencies.gtk-sys]
 path = "../gtk-sys"
