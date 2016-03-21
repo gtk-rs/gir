@@ -3,7 +3,9 @@ use std::io::{Result, Write};
 
 use analysis::general::StatusedTypeId;
 use analysis::imports::Imports;
+use analysis::namespaces;
 use config::Config;
+use env::Env;
 use git::repo_hash;
 use gir_version::VERSION;
 use version::Version;
@@ -28,20 +30,35 @@ pub fn uses(w: &mut Write, imports: &Imports, min_cfg_version: Version)
     Ok(())
 }
 
-pub fn define_object_type(w: &mut Write, type_name: &str, glib_name: &str,
+pub fn define_object_type(w: &mut Write, env: &Env, type_name: &str, glib_name: &str,
         glib_func_name: &str, parents: &[StatusedTypeId]) -> Result<()> {
-    //TODO: don't generate for parents without traits
-    let parents: Vec<&str> = parents.iter()
+    let mut external_parents = false;
+    let parents: Vec<String> = parents.iter()
         .filter(|p| !p.status.ignored())
-        .map(|p| &p.name[..])
+        .map(|p| {
+            if p.type_id.ns_id == namespaces::MAIN {
+                p.name.clone()
+            } else {
+                external_parents = true;
+                format!("{krate}::{name} => {krate}_ffi::{ffi_name}",
+                    krate = env.namespaces[p.type_id.ns_id].crate_name,
+                    name = p.name,
+                    ffi_name = env.library.type_(p.type_id).get_glib_name().unwrap())
+            }
+        })
         .collect();
 
     try!(writeln!(w, ""));
     try!(writeln!(w, "glib_wrapper! {{"));
     if parents.is_empty() {
         try!(writeln!(w, "\tpub struct {}(Object<ffi::{}>);", type_name, glib_name));
-    }
-    else {
+    } else if external_parents {
+        try!(writeln!(w, "\tpub struct {}(Object<ffi::{}>): [", type_name, glib_name));
+        for parent in parents {
+            try!(writeln!(w, "\t\t{},", parent));
+        }
+        try!(writeln!(w, "\t];"));
+    } else {
         try!(writeln!(w, "\tpub struct {}(Object<ffi::{}>): {};", type_name, glib_name,
             parents.join(", ")));
     }

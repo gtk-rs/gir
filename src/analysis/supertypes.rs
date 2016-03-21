@@ -1,6 +1,7 @@
 use std::vec::Vec;
 
 use analysis::rust_type::used_rust_type;
+use analysis::namespaces;
 use env::Env;
 use super::general::StatusedTypeId;
 use super::imports::Imports;
@@ -19,7 +20,15 @@ pub fn analyze(env: &Env, type_id: TypeId, imports: &mut Imports) -> Vec<Statuse
         });
 
         if !status.ignored() {
-            used_rust_type(env, super_tid).ok().map(|s| imports.add(&s, None));
+            if let Ok(s) = used_rust_type(env, super_tid) {
+                if super_tid.ns_id == namespaces::MAIN {
+                    imports.add(&s, None);
+                } else {
+                    let ns = &env.namespaces[super_tid.ns_id];
+                    imports.add(&ns.crate_name, None);
+                    imports.add(&ns.ffi_crate_name, None);
+                }
+            }
         }
     }
 
