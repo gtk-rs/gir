@@ -55,7 +55,7 @@ pub fn run(gir: &library::Library) -> Info {
         let ns_id = ns_id as NsId;
         let crate_name = nameutil::crate_name(&ns.name);
         let higher_crate_name = match &crate_name[..] {
-            "gobject" | "gio" => "glib".to_owned(),
+            "gobject" => "glib".to_owned(),
             _ => crate_name.clone(),
         };
         namespaces.push(Namespace {
