@@ -14,20 +14,24 @@ pub fn split_namespace_name(name: &str) -> (Option<&str>, &str) {
     (ns, name)
 }
 
-/* unused :(
-pub fn strip_prefix<'a>(prefix: &str, name: &'a str) -> &'a str {
-    let mut skip = 0;
-    let mut prefix_upper = prefix.to_ascii_uppercase();
-    prefix_upper.push('_');
-    if name.starts_with(&prefix_upper) {
-        skip = prefix_upper.len();
+/// Strip the longest of the prefixes from an upper-case name (G_|FOO_BAR)
+pub fn strip_prefix_uppercase<'a, S>(prefixes: &[S], name: &'a str) -> &'a str
+where S: AsRef<str> {
+    let mut cut = 0;
+    for prefix in prefixes {
+        let prefix = prefix.as_ref();
+        if prefix.len() + 1 <= cut {
+            continue
+        }
+        let prefix_upper = format!("{}_", prefix.to_uppercase());
+        if name.starts_with(&prefix_upper) {
+            cut = prefix_upper.len()
+        }
     }
-    else if name.starts_with(prefix) {
-        skip = prefix.len();
-    }
-    &name[skip..]
+    &name[cut..]
 }
 
+/* unused :(
 pub fn strip_suffix<'a>(name: &'a str, suffix: &str) -> Option<&'a str> {
     if name.ends_with(suffix) {
         Some(&name[..name.len() - suffix.len()])
