@@ -103,6 +103,13 @@ impl Library {
         if let Some(s) = attrs.get("shared-library") {
             self.namespace_mut(ns_id).shared_library = s.split(",").map(String::from).collect();
         }
+        if let Some(s) = attrs.get("identifier-prefixes") {
+            self.namespace_mut(ns_id).identifier_prefixes = s.split(",").map(String::from)
+                .collect();
+        }
+        if let Some(s) = attrs.get("symbol-prefixes") {
+            self.namespace_mut(ns_id).symbol_prefixes = s.split(",").map(String::from).collect();
+        }
         trace!("Reading {}-{}", name, attrs.get("version").unwrap());
         loop {
             let event = try!(parser.next());
@@ -490,6 +497,7 @@ impl Library {
         let version = try!(self.parse_version(parser, ns_id, attrs.get("version")));
         let deprecated_version = try!(self.parse_version(parser, ns_id,
             attrs.get("deprecated-version")));
+        let error_domain = attrs.get("error-domain").map(String::from);
         let mut members = Vec::new();
         let mut fns = Vec::new();
         let mut doc = None;
@@ -525,6 +533,7 @@ impl Library {
                 deprecated_version: deprecated_version,
                 doc: doc,
                 doc_deprecated: doc_deprecated,
+                error_domain: error_domain,
             });
         self.add_type(ns_id, name, typ);
         Ok(())
