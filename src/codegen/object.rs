@@ -7,7 +7,7 @@ use super::{function, general, trait_impls};
 pub fn generate(w: &mut Write, env: &Env, analysis: &analysis::object::Info) -> Result<()>{
     try!(general::start_comments(w, &env.config));
     try!(general::uses(w, &analysis.imports, env.config.min_cfg_version));
-    try!(general::define_object_type(w, &analysis.name, &analysis.c_type, &analysis.get_type,
+    try!(general::define_object_type(w, env, &analysis.name, &analysis.c_type, &analysis.get_type,
         &analysis.supertypes));
 
     if generate_inherent(analysis) {

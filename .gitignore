@@ -1,4 +1,5 @@
 target
+/gio
 /gtk
 /src/gir_version.rs
 tests/gir-files
