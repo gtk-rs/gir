@@ -63,7 +63,7 @@ pub fn generate(w: &mut Write, env: &Env, analysis: &analysis::object::Info) -> 
 
     if !analysis.trampolines.is_empty() {
         for trampoline in &analysis.trampolines {
-            try!(trampoline::generate(w, trampoline, generate_trait(analysis), &analysis.name));
+            try!(trampoline::generate(w, env, trampoline, generate_trait(analysis), &analysis.name));
         }
     }
 
