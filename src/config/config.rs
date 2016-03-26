@@ -6,6 +6,7 @@ use std::path::{Path, PathBuf};
 use std::str::FromStr;
 use toml;
 
+use library::Library;
 use super::WorkMode;
 use super::gobjects;
 use super::error::{Error, TomlHelper};
@@ -148,6 +149,10 @@ impl Config {
                 None
             }
         })
+    }
+
+    pub fn resolve_type_ids(&mut self, library: &Library) {
+        gobjects::resolve_type_ids(&mut self.objects, library)
     }
 }
 

@@ -50,7 +50,7 @@ fn do_main() -> Result<(), Box<Error>> {
     }
     try!(env_logger::init());
 
-    let cfg = match config::Config::new() {
+    let mut cfg = match config::Config::new() {
         Ok(cfg) => cfg,
         Err(config::error::Error::CommandLine(ref err)) if !err.fatal() => {
             println!("{}", err);
@@ -63,6 +63,7 @@ fn do_main() -> Result<(), Box<Error>> {
     library.read_file(&cfg.girs_dir, &cfg.library_full_name());
     library.postprocessing();
 
+    cfg.resolve_type_ids(&library);
     let namespaces = analysis::namespaces::run(&library);
     let symbols = analysis::symbols::run(&library, &namespaces);
     let class_hierarchy = analysis::class_hierarchy::run(&library);
