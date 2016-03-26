@@ -9,7 +9,7 @@ pub fn generate(w: &mut Write, env: &Env, analysis: &analysis::record::Info) -> 
     let type_ = analysis.type_(&env.library);
 
     try!(general::start_comments(w, &env.config));
-    try!(general::uses(w, &analysis.imports, env.config.min_cfg_version));
+    try!(general::uses(w, env, &analysis.imports));
 
     let copy_fn = analysis.specials.get(&Type::Copy).expect("No copy function for record");
     let free_fn = analysis.specials.get(&Type::Free).expect("No free function for record");
@@ -31,8 +31,7 @@ pub fn generate(w: &mut Write, env: &Env, analysis: &analysis::record::Info) -> 
 pub fn generate_reexports(env: &Env, analysis: &analysis::record::Info, module_name: &str,
                           contents: &mut Vec<String>) {
     let cfg_condition = general::cfg_condition_string(&analysis.cfg_condition, false, 0);
-    let version_cfg = general::version_condition_string(env.config.min_cfg_version,
-                                                        analysis.version, false, 0);
+    let version_cfg = general::version_condition_string(env, analysis.version, false, 0);
     let mut cfg = String::new();
     if let Some(s) = cfg_condition {
         cfg.push_str(&s);

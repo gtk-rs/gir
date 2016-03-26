@@ -6,7 +6,7 @@ use super::{function, general, trait_impls};
 
 pub fn generate(w: &mut Write, env: &Env, analysis: &analysis::object::Info) -> Result<()>{
     try!(general::start_comments(w, &env.config));
-    try!(general::uses(w, &analysis.imports, env.config.min_cfg_version));
+    try!(general::uses(w, env, &analysis.imports));
     try!(general::define_object_type(w, env, &analysis.name, &analysis.c_type, &analysis.get_type,
         &analysis.supertypes));
 
@@ -64,8 +64,7 @@ pub fn generate_reexports(env: &Env, analysis: &analysis::object::Info, module_n
     if let Some(cfg) = general::cfg_condition_string(&analysis.cfg_condition, false, 0) {
         cfgs.push(cfg);
     }
-    if let Some(cfg) = general::version_condition_string(env.config.min_cfg_version,
-                                                         analysis.version, false, 0) {
+    if let Some(cfg) = general::version_condition_string(env, analysis.version, false, 0) {
         cfgs.push(cfg);
     }
     contents.push(format!(""));
