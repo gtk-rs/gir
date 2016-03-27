@@ -77,7 +77,7 @@ fn can_be_nullable_return(env: &Env, type_id: library::TypeId) -> bool
         Alias(ref alias) => can_be_nullable_return(env, alias.typ),
         Enumeration(_) => false,
         Bitfield(_) => false,
-        Record(_) => false,
+        Record(_) => true,
         Union(_) => false,
         Function(_) => true,
         Interface(_) => true,
