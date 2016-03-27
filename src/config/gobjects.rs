@@ -145,6 +145,10 @@ fn parse_status_shorthand(objects: &mut GObjects, status: GStatus, toml: &Value)
 
 pub fn resolve_type_ids(objects: &mut GObjects, library: &Library) {
     for (name, object) in objects.iter_mut() {
-        object.type_id = library.find_type(0, name)
+        let type_id = library.find_type(0, name);
+        if type_id.is_none() {
+            warn!("Configured object `{}` missing from the library", name);
+        }
+        object.type_id = type_id;
     }
 }
