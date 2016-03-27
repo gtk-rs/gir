@@ -107,8 +107,8 @@ fn rust_type_full(env: &Env, type_id: library::TypeId, nullable: Nullable, ref_m
             if ref_mode.is_ref() { ok("VariantTy") } else { ok("VariantType") }
         }
         Enumeration(..) |
-            Bitfield(..) => Ok(type_.get_name().to_owned()),
-        Record(..) |
+            Bitfield(..) |
+            Record(..) |
             Class(..) |
             Interface(..) => {
             let name = type_.get_name().to_owned();
