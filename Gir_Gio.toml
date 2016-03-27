@@ -31,4 +31,5 @@ generate = [
 
 manual = [
     "GLib.Error",
+    "GObject.Object",
 ]
