@@ -60,12 +60,12 @@ pub fn bounds_rust_type(env: &Env, type_id: library::TypeId) -> Result {
 fn rust_type_full(env: &Env, type_id: library::TypeId, nullable: Nullable, ref_mode: RefMode) -> Result {
     use library::Type::*;
     use library::Fundamental::*;
+    let ok = |s: &str| Ok(s.into());
+    let err = |s: &str| Err(TypeError::Unimplemented(s.into()));
     let mut skip_option = false;
     let type_ = env.library.type_(type_id);
     let mut rust_type = match *type_ {
         Fundamental(fund) => {
-            let ok = |s: &str| Ok(s.into());
-            let err = |s: &str| Err(TypeError::Unimplemented(s.into()));
             match fund {
                 None => err("()"),
                 Boolean => ok("bool"),
@@ -102,6 +102,9 @@ fn rust_type_full(env: &Env, type_id: library::TypeId, nullable: Nullable, ref_m
         Alias(ref alias) => {
             rust_type_full(env, alias.typ, nullable, ref_mode)
                 .map_any(|_| alias.name.clone())
+        }
+        Record(library::Record { ref c_type, .. }) if c_type == "GVariantType" => {
+            if ref_mode.is_ref() { ok("VariantTy") } else { ok("VariantType") }
         }
         Enumeration(..) |
             Bitfield(..) => Ok(type_.get_name().to_owned()),
