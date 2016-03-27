@@ -9,8 +9,14 @@ use library::TypeId;
 
 pub fn analyze(env: &Env, type_id: TypeId, imports: &mut Imports) -> Vec<StatusedTypeId> {
     let mut parents = Vec::new();
+    let gobject_id = env.library.find_type(0, "GObject.Object").unwrap();
 
     for &super_tid in env.class_hierarchy.supertypes(type_id) {
+        // skip GObject, it's inherited implicitly
+        if super_tid == gobject_id {
+            continue
+        }
+
         let status = env.type_status(&super_tid.full_name(&env.library));
 
         parents.push(StatusedTypeId{
