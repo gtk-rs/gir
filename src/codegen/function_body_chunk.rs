@@ -2,11 +2,12 @@ use analysis::conversion_type::ConversionType;
 use analysis::parameter::Parameter as AnalysisParameter;
 use analysis::out_parameters::Mode;
 use analysis::return_value;
+use analysis::rust_type::rust_type;
 use analysis::safety_assertion_mode::SafetyAssertionMode;
 use chunk::{chunks, Chunk, TupleMode};
 use chunk::parameter_ffi_call_in;
 use chunk::parameter_ffi_call_out;
-use library;
+use env::Env;
 
 #[derive(Clone)]
 enum Parameter {
@@ -60,17 +61,17 @@ impl Builder {
         });
         self
     }
-    pub fn out_parameter(&mut self, library: &library::Library, parameter: &AnalysisParameter) -> &mut Builder {
+    pub fn out_parameter(&mut self, env: &Env, parameter: &AnalysisParameter) -> &mut Builder {
         use self::OutMemMode::*;
-        let mem_mode = if ConversionType::of(library, parameter.typ) == ConversionType::Pointer {
-            if parameter.caller_allocates {
-                let type_name = library.type_(parameter.typ).get_name();
-                UninitializedNamed(type_name.clone())
-            } else {
-                NullPtr
+        let mem_mode = match ConversionType::of(&env.library, parameter.typ) {
+            ConversionType::Pointer => {
+                if parameter.caller_allocates {
+                    UninitializedNamed(rust_type(env, parameter.typ).unwrap())
+                } else {
+                    NullPtr
+                }
             }
-        } else {
-            Uninitialized
+            _ => Uninitialized,
         };
         self.parameters.push(Parameter::Out {
             parameter: parameter.into(),
