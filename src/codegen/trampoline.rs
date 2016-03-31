@@ -6,7 +6,9 @@ use analysis::parameter::Parameter;
 use analysis::ref_mode::RefMode;
 use analysis::rust_type::parameter_rust_type;
 use analysis::trampolines::Trampoline;
+use nameutil;
 use super::return_value::ToReturnValue;
+use super::sys::ffi_type::ffi_type;
 use traits::IntoString;
 
 pub fn generate(w: &mut Write, env: &Env, analysis: &Trampoline,
@@ -18,11 +20,13 @@ pub fn generate(w: &mut Write, env: &Env, analysis: &Trampoline,
         ("", " {")
     };
 
+    let params_str = trampoline_parameters(env, analysis);
     let func_str = func_string(env, analysis);
+    let ret_str = trampoline_returns(env, analysis);
 
     //TODO: version, cfg_condition
-    try!(writeln!(w, "unsafe extern \"C\" fn {}{}(/*TODO: params*/, f: &Box<{}>){}",
-                  analysis.name, bounds, func_str, end));
+    try!(writeln!(w, "unsafe extern \"C\" fn {}{}({}, f: &Box<{}>){}{}",
+                  analysis.name, bounds, params_str, func_str, ret_str, end));
     if in_trait {
         try!(writeln!(w, "where T: IsA<{}> {{", object_name));
     }
@@ -81,5 +85,29 @@ fn func_returns(env: &Env, analysis: &Trampoline) -> String {
         String::new()
     } else {
         analysis.ret.to_return_value(&env)
+    }
+}
+
+fn trampoline_parameters(env: &Env, analysis: &Trampoline) -> String {
+    let mut parameter_strs: Vec<String> = Vec::new();
+    for par in &analysis.parameters {
+        let par_str = trampoline_parameter(env, par);
+        parameter_strs.push(par_str);
+    }
+
+    parameter_strs.join(", ")
+}
+
+fn trampoline_parameter(env: &Env, par: &Parameter) -> String {
+    let ffi_type = ffi_type(env, par.typ, &par.c_type);
+    format!("{}: {}", nameutil::mangle_keywords(&*par.name), ffi_type.into_string())
+}
+
+fn trampoline_returns(env: &Env, analysis: &Trampoline) -> String {
+    if analysis.ret.typ == Default::default() {
+        String::new()
+    } else {
+        let ffi_type = ffi_type(env, analysis.ret.typ, &analysis.ret.c_type);
+        format!(" -> {}", ffi_type.into_string())
     }
 }

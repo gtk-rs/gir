@@ -1,7 +1,7 @@
 use env::Env;
 
 mod build;
-mod ffi_type;
+pub mod ffi_type;
 mod functions;
 mod lib_;
 mod statics;
