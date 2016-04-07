@@ -7,7 +7,7 @@ use super::bounds::{Bounds, BoundType};
 use super::conversion_type::ConversionType;
 use super::parameter;
 use super::ref_mode::RefMode;
-use super::rust_type::bounds_rust_type;
+use super::rust_type::{bounds_rust_type, rust_type};
 use traits::IntoString;
 
 #[derive(Debug)]
@@ -78,18 +78,26 @@ pub fn analyze(env: &Env, signal: &library::Signal, type_tid: library::TypeId, i
 }
 
 fn can_generate(env: &Env, signal: &library::Signal) -> bool {
-    if signal.ret.typ != Default::default() &&
-        ConversionType::of(&env.library, signal.ret.typ) == ConversionType::Unknown {
-            return false;
-        }
+    if signal.ret.typ != Default::default() && !can_use_type(env, &signal.ret, &signal.name) {
+        return false;
+    }
     for par in &signal.parameters {
-        if ConversionType::of(&env.library, par.typ) == ConversionType::Unknown {
-            return false;
-        }
-        if is_empty_c_type(&par.c_type) {
-            warn!("{} has empty ctype", signal.name);
+        if !can_use_type(env, par, &signal.name) {
             return false;
         }
     }
     true
+}
+
+fn can_use_type(env: &Env, par: &library::Parameter, signal_name: &str) -> bool {
+    if ConversionType::of(&env.library, par.typ) == ConversionType::Unknown {
+        false
+    } else if is_empty_c_type(&par.c_type) {
+        warn!("{} has empty ctype", signal_name);
+        false
+    } else if rust_type(env, par.typ).is_err() {
+        false
+    } else {
+        true
+    }
 }
