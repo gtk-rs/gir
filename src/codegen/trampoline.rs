@@ -23,7 +23,7 @@ pub fn generate(w: &mut Write, env: &Env, analysis: &Trampoline,
     };
 
     let params_str = trampoline_parameters(env, analysis);
-    let func_str = func_string(env, analysis);
+    let func_str = func_string(env, analysis, None::<(&str, &str)>);
     let ret_str = trampoline_returns(env, analysis);
 
     //TODO: version, cfg_condition
@@ -40,26 +40,29 @@ pub fn generate(w: &mut Write, env: &Env, analysis: &Trampoline,
     Ok(())
 }
 
-fn func_string(env: &Env, analysis: &Trampoline) -> String {
-    let param_str = func_parameters(env, analysis);
+pub fn func_string(env: &Env, analysis: &Trampoline,
+                   bound_replace: Option<(&str, &str)>) -> String {
+    let param_str = func_parameters(env, analysis, bound_replace);
     let return_str = func_returns(env, analysis);
 
     format!("Fn({}){} + 'static", param_str, return_str)
 }
 
-fn func_parameters(env: &Env, analysis: &Trampoline) -> String {
+fn func_parameters(env: &Env, analysis: &Trampoline,
+                   bound_replace: Option<(&str, &str)>) -> String {
     let mut param_str = String::with_capacity(100);
 
     for (pos, par) in analysis.parameters.iter().enumerate() {
         if pos > 0 { param_str.push_str(", ") }
-        let s = func_parameter(env, par, &analysis.bounds);
+        let s = func_parameter(env, par, &analysis.bounds, bound_replace);
         param_str.push_str(&s);
     }
 
     param_str
 }
 
-fn func_parameter(env: &Env, par: &Parameter, bounds: &Bounds) -> String {
+fn func_parameter(env: &Env, par: &Parameter, bounds: &Bounds,
+                  bound_replace: Option<(&str, &str)>) -> String {
     let mut_str = if par.ref_mode == RefMode::ByRefMut { "mut " } else { "" };
 
     let type_str: String;
@@ -69,6 +72,11 @@ fn func_parameter(env: &Env, par: &Parameter, bounds: &Bounds) -> String {
                 BoundType::IsA => if *par.nullable {
                     type_str = format!("Option<&{}{}>", mut_str, t)
                 } else {
+                    let t = if let Some((from, to)) = bound_replace {
+                        if from == t { to } else { t }
+                    } else {
+                        t
+                    };
                     type_str = format!("&{}{}", mut_str, t)
                 },
                 BoundType::AsRef  => type_str = t.to_owned(),

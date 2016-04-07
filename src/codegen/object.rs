@@ -29,7 +29,7 @@ pub fn generate(w: &mut Write, env: &Env, analysis: &analysis::object::Info) -> 
 
         if !generate_trait(analysis) {
             for signal_analysis in &analysis.signals {
-                try!(signal::generate(w, signal_analysis, false, false, 1));
+                try!(signal::generate(w, env, signal_analysis, &analysis.trampolines, false, false, 1));
             }
         }
 
@@ -45,7 +45,7 @@ pub fn generate(w: &mut Write, env: &Env, analysis: &analysis::object::Info) -> 
             try!(function::generate(w, env, func_analysis, true, true, 1));
         }
         for signal_analysis in &analysis.signals {
-            try!(signal::generate(w, signal_analysis, true, true, 1));
+            try!(signal::generate(w, env, signal_analysis, &analysis.trampolines, true, true, 1));
         }
         try!(writeln!(w, "}}"));
 
@@ -56,7 +56,7 @@ pub fn generate(w: &mut Write, env: &Env, analysis: &analysis::object::Info) -> 
             try!(function::generate(w, env, func_analysis, true, false, 1));
         }
         for signal_analysis in &analysis.signals {
-            try!(signal::generate(w, signal_analysis, true, false, 1));
+            try!(signal::generate(w, env, signal_analysis, &analysis.trampolines, true, false, 1));
         }
         try!(writeln!(w, "}}"));
     }
