@@ -20,6 +20,8 @@ mod signal;
 mod sys;
 mod trait_impls;
 mod trampoline;
+mod trampoline_from_glib;
+mod trampoline_to_glib;
 pub mod translate_from_glib;
 pub mod translate_to_glib;
 

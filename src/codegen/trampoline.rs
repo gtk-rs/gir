@@ -9,6 +9,8 @@ use analysis::trampolines::Trampoline;
 use nameutil;
 use super::return_value::ToReturnValue;
 use super::sys::ffi_type::ffi_type;
+use super::trampoline_from_glib::TrampolineFromGlib;
+use super::trampoline_to_glib::TrampolineToGlib;
 use traits::IntoString;
 
 pub fn generate(w: &mut Write, env: &Env, analysis: &Trampoline,
@@ -31,7 +33,8 @@ pub fn generate(w: &mut Write, env: &Env, analysis: &Trampoline,
         try!(writeln!(w, "where T: IsA<{}> {{", object_name));
     }
     try!(writeln!(w, "\tcallback_guard!();"));
-    try!(writeln!(w, "\t//TODO: body"));
+    let call = trampoline_call_func(env, analysis, in_trait);
+    try!(writeln!(w, "\t{}", call));
     try!(writeln!(w, "}}"));
 
     Ok(())
@@ -110,4 +113,26 @@ fn trampoline_returns(env: &Env, analysis: &Trampoline) -> String {
         let ffi_type = ffi_type(env, analysis.ret.typ, &analysis.ret.c_type);
         format!(" -> {}", ffi_type.into_string())
     }
+}
+
+fn trampoline_call_func(env: &Env, analysis: &Trampoline, in_trait: bool) -> String {
+    let params = trampoline_call_parameters(env, analysis, in_trait);
+    let ret = if analysis.ret.typ == Default::default() {
+        String::new()
+    } else {
+        analysis.ret.trampoline_to_glib(&env.library)
+    };
+    format!("f({}){}", params, ret)
+}
+
+fn trampoline_call_parameters(env: &Env, analysis: &Trampoline, in_trait: bool) -> String {
+    let mut need_downcast = in_trait;
+    let mut parameter_strs: Vec<String> = Vec::new();
+    for par in &analysis.parameters {
+        let par_str = par.trampoline_from_glib(env, need_downcast);
+        parameter_strs.push(par_str);
+        need_downcast = false;  //Only downcast first parameter
+    }
+
+    parameter_strs.join(", ")
 }
