@@ -90,10 +90,13 @@ fn can_generate(env: &Env, signal: &library::Signal) -> bool {
 }
 
 fn can_use_type(env: &Env, par: &library::Parameter, signal_name: &str) -> bool {
-    if ConversionType::of(&env.library, par.typ) == ConversionType::Unknown {
+    if par.direction == library::ParameterDirection::Out ||
+        par.direction == library::ParameterDirection::InOut {
         false
     } else if is_empty_c_type(&par.c_type) {
         warn!("{} has empty ctype", signal_name);
+        false
+    } else if ConversionType::of(&env.library, par.typ) == ConversionType::Unknown {
         false
     } else if rust_type(env, par.typ).is_err() {
         false
