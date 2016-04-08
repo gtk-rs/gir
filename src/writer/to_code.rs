@@ -43,10 +43,16 @@ impl ToCode for Chunk {
                 let s = format_block_one_line(&prefix, &suffix, &call_strings, "", "");
                 vec![s]
             }
-            Let{ref name, is_mut, ref value} => {
+            Let{ref name, is_mut, ref value, ref type_} => {
                 let modif = if is_mut { "mut " } else { "" };
+                let type_string = if let Some(ref type_) = *type_ {
+                    let type_strings = type_.to_code(env);
+                    format_block_one_line(": ", "", &type_strings, "", "")
+                } else {
+                    "".to_owned()
+                };
                 let value_strings = value.to_code(env);
-                let prefix = format!("let {}{} = ", modif, name);
+                let prefix = format!("let {}{}{} = ", modif, name, type_string);
                 let s = format_block_one_line(&prefix, ";", &value_strings, "", "");
                 vec![s]
             }
@@ -56,7 +62,7 @@ impl ToCode for Chunk {
                 vec![s]
             }
             NullMutPtr => vec!["ptr::null_mut()".into()],
-            VariableValue{ref name} => vec![name.clone()],
+            Custom(ref string) => vec![string.clone()],
             Tuple(ref chs, mode) => {
                 let with_bracket = match mode {
                     TupleMode::Auto => chs.len() > 1,
