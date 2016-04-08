@@ -85,6 +85,21 @@ pub fn define_boxed_type(w: &mut Write, type_name: &str, glib_name: &str,
     Ok(())
 }
 
+pub fn define_shared_type(w: &mut Write, type_name: &str, glib_name: &str,
+                          ref_fn: &str, unref_fn: &str) -> Result<()>{
+    try!(writeln!(w, ""));
+    try!(writeln!(w, "glib_wrapper! {{"));
+    try!(writeln!(w, "\tpub struct {}(Shared<ffi::{}>);", type_name, glib_name));
+    try!(writeln!(w, ""));
+    try!(writeln!(w, "\tmatch fn {{"));
+    try!(writeln!(w, "\t\tref => |ptr| ffi::{}(ptr),", ref_fn));
+    try!(writeln!(w, "\t\tunref => |ptr| ffi::{}(ptr),", unref_fn));
+    try!(writeln!(w, "\t}}"));
+    try!(writeln!(w, "}}"));
+
+    Ok(())
+}
+
 pub fn version_condition(w: &mut Write, env: &Env, version: Option<Version>, commented: bool,
                          indent: usize) -> Result<()> {
     if let Some(s) = version_condition_string(env, version, commented, indent) {

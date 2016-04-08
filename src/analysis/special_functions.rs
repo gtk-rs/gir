@@ -27,7 +27,7 @@ impl FromStr for Type {
             "equal" => Ok(Equal),
             "free" => Ok(Free),
             "is_equal" => Ok(Equal),
-            "ref" => Ok(Ref),
+            "ref" | "ref_" => Ok(Ref),
             "to_string" => Ok(ToString),
             "unref" => Ok(Unref),
             _ => Err(()),

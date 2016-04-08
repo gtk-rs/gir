@@ -8,7 +8,6 @@ work_mode = "normal"
 
 generate = [
     "Gio.Action",
-    "Gio.ActionGroup",
     "Gio.ActionMap",
     "Gio.AppInfo",
     "Gio.AppLaunchContext",
@@ -22,6 +21,9 @@ generate = [
     "Gio.MenuModel",
     "Gio.Mount",
     "Gio.Permission",
+    "Gio.Resource",
+    "Gio.ResourceError",
+    "Gio.ResourceLookupFlags",
     "Gio.Settings",
     "Gio.SettingsBindFlags",
     "Gio.SimpleAction",
@@ -32,6 +34,16 @@ generate = [
 ]
 
 manual = [
+    "GLib.Bytes",
     "GLib.Error",
+    "GLib.Variant",
+    "GLib.VariantType",
     "GObject.Object",
 ]
+
+[[object]]
+name = "Gio.ActionGroup"
+status = "generate"
+    [[object.function]]
+    name = "query_action"
+    ignore = true

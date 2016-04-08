@@ -63,8 +63,6 @@ pub fn new(env: &Env, obj: &GObject) -> Option<Info> {
     if is_shared {
         // `copy` will duplicate a struct while `clone` just adds a reference
         special_functions::unhide(&mut functions, &specials, special_functions::Type::Copy);
-        // accept only boxed records
-        return None;
     };
 
     special_functions::analyze_imports(&specials, &mut imports);
