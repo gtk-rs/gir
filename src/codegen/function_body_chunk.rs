@@ -174,6 +174,7 @@ impl Builder {
                     name: parameter.name.clone(),
                     is_mut: true,
                     value: Box::new(val),
+                    type_: None,
                 };
                 v.push(chunk);
             }
@@ -202,7 +203,7 @@ impl Builder {
         Some(chunk)
     }
     fn out_parameter_to_return(&self, parameter: &parameter_ffi_call_out::Parameter, mem_mode: &OutMemMode) -> Chunk {
-        let value = Chunk::VariableValue{name: parameter.name.clone()};
+        let value = Chunk::Custom(parameter.name.clone());
         if let OutMemMode::UninitializedNamed(_) = *mem_mode {
             value
         } else {
@@ -222,6 +223,7 @@ impl Builder {
                     name: "ret".into(),
                     is_mut: false,
                     value: Box::new(call),
+                    type_: Option::None,
                 };
                 let ret = ret.expect("No return in optional outs mode");
                 let ret = Chunk::OptionalReturn{
@@ -235,10 +237,11 @@ impl Builder {
                     name: "ret".into(),
                     is_mut: false,
                     value: Box::new(call),
+                    type_: Option::None,
                 };
                 let mut ret = ret.expect("No return in combined outs mode");
                 if let Chunk::Tuple(ref mut vec, _) = ret {
-                    vec.insert(0, Chunk::VariableValue { name: "ret".into() });
+                    vec.insert(0, Chunk::Custom("ret".into()));
                 }
                 (call, Some(ret))
             }
@@ -254,19 +257,21 @@ impl Builder {
                         name: "ret".into(),
                         is_mut: false,
                         value: boxed_call,
+                        type_: Option::None,
                     }
                 } else {
                     Chunk::Let{
                         name: "_".into(),
                         is_mut: false,
                         value: boxed_call,
+                        type_: Option::None,
                     }
                 };
                 let mut ret = ret.expect("No return in throws outs mode");
                 if let Chunk::Tuple(ref mut vec, ref mut mode ) = ret {
                     *mode = TupleMode::WithUnit;
                     if use_ret {
-                        let val = Chunk::VariableValue { name: "ret".into() };
+                        let val = Chunk::Custom("ret".into());
                         let conv = Chunk::FfiCallConversion{
                             call: Box::new(val),
                             ret: ret_info,

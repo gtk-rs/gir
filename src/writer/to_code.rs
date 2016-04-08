@@ -97,6 +97,12 @@ impl ToCode for Chunk {
                 vec!["assert_initialized_main_thread!();".to_string()],
             AssertSkipInitialized =>
                 vec!["skip_assert_initialized!();".to_string()],
+            Connect{ref signal, ref trampoline, in_trait} => {
+                let s1 = format!("connect(self.to_glib_none().0, \"{}\",", signal);
+                let self_str = if in_trait { "::<Self>" } else { "" };
+                let s2 = format!("\ttransmute({}{} as usize), Box::into_raw(f) as *mut _)", trampoline, self_str);
+                vec![s1, s2]
+            }
         }
     }
 }

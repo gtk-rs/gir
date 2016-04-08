@@ -27,6 +27,7 @@ pub enum Chunk {
     ErrorResultReturn{value: Box<Chunk>},
     AssertInitializedAndInMainThread,
     AssertSkipInitialized,
+    Connect{signal: String, trampoline: String, in_trait: bool},
 }
 
 pub fn chunks(ch: Chunk) -> Vec<Chunk> {
