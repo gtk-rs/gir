@@ -11,9 +11,15 @@ pub fn generate(w: &mut Write, env: &Env, analysis: &analysis::record::Info) -> 
     try!(general::start_comments(w, &env.config));
     try!(general::uses(w, env, &analysis.imports));
 
-    let copy_fn = analysis.specials.get(&Type::Copy).expect("No copy function for record");
-    let free_fn = analysis.specials.get(&Type::Free).expect("No free function for record");
-    try!(general::define_boxed_type(w, &analysis.name, &type_.c_type, copy_fn, free_fn));
+    if let (Some(ref_fn), Some(unref_fn)) = (analysis.specials.get(&Type::Ref),
+                                             analysis.specials.get(&Type::Unref)) {
+        try!(general::define_shared_type(w, &analysis.name, &type_.c_type, ref_fn, unref_fn));
+    } else if let (Some(copy_fn), Some(free_fn)) = (analysis.specials.get(&Type::Copy),
+                                                    analysis.specials.get(&Type::Free)) {
+        try!(general::define_boxed_type(w, &analysis.name, &type_.c_type, copy_fn, free_fn));
+    } else {
+        panic!("Missing memory management functions for {}", analysis.full_name);
+    }
     try!(writeln!(w, ""));
     try!(writeln!(w, "impl {} {{", analysis.name));
 
