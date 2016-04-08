@@ -38,7 +38,7 @@ pub fn generate(w: &mut Write, env: &Env, analysis: &analysis::functions::Info,
 
     try!(writeln!(w, ""));
     try!(cfg_condition(w, &analysis.cfg_condition, commented, indent));
-    try!(version_condition(w, env.config.min_cfg_version, analysis.version, commented, indent));
+    try!(version_condition(w, env, analysis.version, commented, indent));
     try!(writeln!(w, "{}{}{}{}{}", tabs(indent),
         comment_prefix, pub_prefix, declaration, suffix));
 

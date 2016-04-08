@@ -224,6 +224,7 @@ pub struct Enumeration {
     pub deprecated_version: Option<Version>,
     pub doc: Option<String>,
     pub doc_deprecated: Option<String>,
+    pub error_domain: Option<String>,
 }
 
 pub struct Bitfield {
@@ -521,6 +522,8 @@ pub struct Namespace {
     pub doc: Option<String>,
     pub doc_deprecated: Option<String>,
     pub shared_library: Vec<String>,
+    pub identifier_prefixes: Vec<String>,
+    pub symbol_prefixes: Vec<String>,
 }
 
 impl Namespace {

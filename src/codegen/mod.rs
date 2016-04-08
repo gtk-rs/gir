@@ -5,6 +5,8 @@ use config::WorkMode;
 use file_saver::*;
 
 mod doc;
+mod enums;
+mod flags;
 mod function;
 mod function_body_chunk;
 mod general;
@@ -34,6 +36,8 @@ fn normal_generate(env: &Env) {
 
     objects::generate(env, &root_path, &mut mod_rs, &mut traits);
     records::generate(env, &root_path, &mut mod_rs);
+    enums::generate(env, &root_path, &mut mod_rs);
+    flags::generate(env, &root_path, &mut mod_rs);
 
     generate_mod_rs(env, &root_path, mod_rs, traits);
 }

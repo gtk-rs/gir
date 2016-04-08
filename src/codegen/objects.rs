@@ -17,10 +17,7 @@ pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>, traits: &
             .or_else(|| analysis::object::interface(env, obj));
         let class_analysis = match info {
             Some(info) => info,
-            None => {
-                warn!("Class or interface {} not found.", obj.name);
-                continue;
-            }
+            None => continue,
         };
 
         let mod_name = obj.module_name.clone().unwrap_or_else(|| {

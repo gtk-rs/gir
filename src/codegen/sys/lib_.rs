@@ -122,7 +122,7 @@ fn generate_bitfields(w: &mut Write, env: &Env, items: &[&Bitfield])
                 .map(|c| c.members.matched(&member.name)).unwrap_or(vec![]);
             let version = member_config.iter().filter_map(|m| m.version).next();
 
-            try!(version_condition(w, env.config.min_cfg_version, version, false, 2));
+            try!(version_condition(w, env, version, false, 2));
             let val: i64 = member.value.parse().unwrap();
             try!(writeln!(w, "\t\tconst {} = {},", member.c_identifier, val as u32));
         }
@@ -191,7 +191,7 @@ fn generate_enums(w: &mut Write, env: &Env, items: &[&Enumeration])
             if is_alias || vals.get(&member.value).is_some() {
                 continue;
             }
-            try!(version_condition(w, env.config.min_cfg_version, version, false, 1));
+            try!(version_condition(w, env, version, false, 1));
             try!(writeln!(w, "\t{} = {},",
                           &prepare_enum_member_name(&member.name), member.value));
             vals.insert(member.value.clone(), (member.name.clone(), version.clone()));
@@ -199,7 +199,7 @@ fn generate_enums(w: &mut Write, env: &Env, items: &[&Enumeration])
         try!(writeln!(w, "}}"));
         for member in &item.members {
             if let Some(&(ref value, version)) = vals.get(&member.value) {
-                try!(version_condition(w, env.config.min_cfg_version, version, false, 0));
+                try!(version_condition(w, env, version, false, 0));
                 try!(writeln!(w, "pub const {}: {} = {1}::{};", member.c_identifier, item.c_type,
                           &prepare_enum_member_name(value)));
             }

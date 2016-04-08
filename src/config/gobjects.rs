@@ -3,6 +3,7 @@ use std::collections::BTreeMap;
 use std::str::FromStr;
 use toml::Value;
 
+use library::{Library, TypeId};
 use super::identables::Identables;
 use super::functions::Functions;
 use super::members::Members;
@@ -55,6 +56,7 @@ pub struct GObject {
     pub module_name: Option<String>,
     pub version: Option<Version>,
     pub cfg_condition: Option<String>,
+    pub type_id: Option<TypeId>,
 }
 
 impl Default for GObject {
@@ -67,6 +69,7 @@ impl Default for GObject {
             module_name: None,
             version: None,
             cfg_condition: None,
+            type_id: None,
         }
     }
 }
@@ -112,6 +115,7 @@ fn parse_object(toml_object: &Value) -> GObject {
         module_name: module_name,
         version: version,
         cfg_condition: cfg_condition,
+        type_id: None,
     }
 }
 
@@ -137,4 +141,14 @@ fn parse_status_shorthand(objects: &mut GObjects, status: GStatus, toml: &Value)
             Some(_) => panic!("Bad name in {}: {} already defined", name, name_),
         }
     });
+}
+
+pub fn resolve_type_ids(objects: &mut GObjects, library: &Library) {
+    for (name, object) in objects.iter_mut() {
+        let type_id = library.find_type(0, name);
+        if type_id.is_none() {
+            warn!("Configured object `{}` missing from the library", name);
+        }
+        object.type_id = type_id;
+    }
 }

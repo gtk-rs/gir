@@ -90,13 +90,13 @@ fn generate_object_funcs(w: &mut Write, env: &Env, c_type: &str,
     for func in functions {
         let (commented, sig) = function_signature(env, func, false);
         let comment = if commented { "//" } else { "" };
-        try!(version_condition(w, env.config.min_cfg_version, func.version, commented, 1));
+        try!(version_condition(w, env, func.version, commented, 1));
         let name = func.c_identifier.as_ref().unwrap();
         // since we work with gir-files from Linux, some function names need to be adjusted
         if let Some(win_name) = RENAME_ON_WINDOWS.get(&name[..]) {
             try!(writeln!(w, "    {}#[cfg(windows)]", comment));
             try!(writeln!(w, "    {}pub fn {}{};", comment, win_name, sig));
-            try!(version_condition(w, env.config.min_cfg_version, func.version, commented, 1));
+            try!(version_condition(w, env, func.version, commented, 1));
             try!(writeln!(w, "    {}#[cfg(not(windows))]", comment));
         }
         try!(writeln!(w, "    {}pub fn {}{};", comment, name, sig));
