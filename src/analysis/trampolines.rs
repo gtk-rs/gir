@@ -7,7 +7,7 @@ use super::bounds::{Bounds, BoundType};
 use super::conversion_type::ConversionType;
 use super::parameter;
 use super::ref_mode::RefMode;
-use super::rust_type::{bounds_rust_type, rust_type};
+use super::rust_type::{bounds_rust_type, rust_type, used_rust_type};
 use traits::IntoString;
 
 #[derive(Debug)]
@@ -21,7 +21,7 @@ pub struct Trampoline {
 pub type Trampolines = Vec<Trampoline>;
 
 pub fn analyze(env: &Env, signal: &library::Signal, type_tid: library::TypeId, in_trait: bool,
-               trampolines: &mut Trampolines) -> Option<String> {
+               trampolines: &mut Trampolines, used_types: &mut Vec<String>) -> Option<String> {
     if !can_generate(env, signal) {
         warn!("Can't generate {} trampoline for signal '{}'", type_tid.full_name(&env.library),
               signal.name);
@@ -64,6 +64,11 @@ pub fn analyze(env: &Env, signal: &library::Signal, type_tid: library::TypeId, i
 
     for par in &signal.parameters {
         let analysis = parameter::analyze(env, par, &configured_functions);
+
+        if let Ok(s) = used_rust_type(env, par.typ) {
+            used_types.push(s);
+        }
+
         parameters.push(analysis);
     }
 
