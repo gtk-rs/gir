@@ -9,6 +9,7 @@ use super::parameter;
 use super::ref_mode::RefMode;
 use super::rust_type::{bounds_rust_type, rust_type, used_rust_type};
 use traits::IntoString;
+use version::Version;
 
 #[derive(Debug)]
 pub struct Trampoline {
@@ -16,12 +17,14 @@ pub struct Trampoline {
     pub parameters: Vec<parameter::Parameter>,
     pub ret: library::Parameter,
     pub bounds: Bounds,
+    pub version: Option<Version>,
 }
 
 pub type Trampolines = Vec<Trampoline>;
 
 pub fn analyze(env: &Env, signal: &library::Signal, type_tid: library::TypeId, in_trait: bool,
-               trampolines: &mut Trampolines, used_types: &mut Vec<String>) -> Option<String> {
+               trampolines: &mut Trampolines, used_types: &mut Vec<String>,
+               version: Option<Version>) -> Option<String> {
     if !can_generate(env, signal) {
         warn!("Can't generate {} trampoline for signal '{}'", type_tid.full_name(&env.library),
               signal.name);
@@ -77,6 +80,7 @@ pub fn analyze(env: &Env, signal: &library::Signal, type_tid: library::TypeId, i
         parameters: parameters,
         ret: signal.ret.clone(),
         bounds: bounds,
+        version: version,
     };
     trampolines.push(trampoline);
     Some(name)

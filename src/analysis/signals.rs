@@ -5,12 +5,15 @@ use library;
 use nameutil;
 use super::trampolines;
 use super::imports::Imports;
+use version::Version;
 
 #[derive(Debug)]
 pub struct Info {
     pub connect_name: String,
     pub signal_name: String,
     pub trampoline_name: Option<String>, //TODO: remove Option
+    pub version: Option<Version>,
+    pub deprecated_version: Option<Version>,
 }
 
 pub fn analyze(env: &Env, signals: &[library::Signal], type_tid: library::TypeId,
@@ -37,33 +40,37 @@ fn analyze_signal(env: &Env, signal: &library::Signal, type_tid: library::TypeId
                   in_trait: bool, trampolines: &mut trampolines::Trampolines,
                   imports: &mut Imports) -> Option<Info> {
     let mut used_types: Vec<String> = Vec::with_capacity(4);
+    let version = signal.version;
+    let deprecated_version = signal.deprecated_version;
 
     let connect_name = format!("connect_{}", nameutil::signal_to_snake(&signal.name));
     let trampoline_name = trampolines::analyze(env, signal, type_tid, in_trait, trampolines,
-                                               &mut used_types);
+                                               &mut used_types, version);
 
     if trampoline_name.is_some() {
         for s in used_types {
             if let Some(i) = s.find("::") {
-                imports.add(&s[..i], None);
+                imports.add(&s[..i], version);
             } else {
-                imports.add(&s, None);
+                imports.add(&s, version);
             }
         }
 
         if in_trait {
-            imports.add("Object", None);
+            imports.add("Object", version);
         }
 
-        imports.add("glib::signal::connect", None);
-        imports.add("std::mem::transmute", None);
-        imports.add("std::boxed::Box as Box_", None);
+        imports.add("glib::signal::connect", version);
+        imports.add("std::mem::transmute", version);
+        imports.add("std::boxed::Box as Box_", version);
     }
 
     let info = Info {
         connect_name: connect_name,
         signal_name: signal.name.clone(),
         trampoline_name: trampoline_name,
+        version: version,
+        deprecated_version: deprecated_version,
     };
     Some(info)
 }

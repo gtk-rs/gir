@@ -7,6 +7,7 @@ use analysis::ref_mode::RefMode;
 use analysis::rust_type::parameter_rust_type;
 use analysis::trampolines::Trampoline;
 use nameutil;
+use super::general::version_condition;
 use super::return_value::ToReturnValue;
 use super::sys::ffi_type::ffi_type;
 use super::trampoline_from_glib::TrampolineFromGlib;
@@ -26,7 +27,7 @@ pub fn generate(w: &mut Write, env: &Env, analysis: &Trampoline,
     let func_str = func_string(env, analysis, None::<(&str, &str)>);
     let ret_str = trampoline_returns(env, analysis);
 
-    //TODO: version, cfg_condition
+    try!(version_condition(w, env, analysis.version, false, 0));
     try!(writeln!(w, "unsafe extern \"C\" fn {}{}({}, f: &Box_<{}>){}{}",
                   analysis.name, bounds, params_str, func_str, ret_str, end));
     if in_trait {
