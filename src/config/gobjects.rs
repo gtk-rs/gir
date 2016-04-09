@@ -7,6 +7,7 @@ use library::{Library, TypeId};
 use super::identables::Identables;
 use super::functions::Functions;
 use super::members::Members;
+use super::signals::Signals;
 use version::Version;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -51,6 +52,7 @@ impl FromStr for GStatus {
 pub struct GObject {
     pub name: String,
     pub functions: Functions,
+    pub signals: Signals,
     pub members: Members,
     pub status: GStatus,
     pub module_name: Option<String>,
@@ -65,6 +67,7 @@ impl Default for GObject {
         GObject {
             name: "Default".into(),
             functions: Functions::new(),
+            signals: Signals::new(),
             members: Members::new(),
             status: Default::default(),
             module_name: None,
@@ -98,6 +101,7 @@ fn parse_object(toml_object: &Value) -> GObject {
     };
 
     let functions = Functions::parse(toml_object.lookup("function"), &name);
+    let signals = Signals::parse(toml_object.lookup("signal"), &name);
     let members = Members::parse(toml_object.lookup("member"), &name);
     let module_name = toml_object.lookup("module_name")
         .and_then(|v| v.as_str())
@@ -115,6 +119,7 @@ fn parse_object(toml_object: &Value) -> GObject {
     GObject {
         name: name,
         functions: functions,
+        signals: signals,
         members: members,
         status: status,
         module_name: module_name,

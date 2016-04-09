@@ -58,7 +58,6 @@ generate = [
     "Gtk.Menu",
     "Gtk.MenuButton",
     "Gtk.MenuItem",
-    "Gtk.MenuShell",
     "Gtk.MenuToolButton",
     "Gtk.Misc",
     "Gtk.Notebook",
@@ -268,3 +267,11 @@ status = "generate"
 [[object]]
 name = "Gtk.TreeSelection"
 status = "generate"
+
+[[object]]
+name = "Gtk.MenuShell"
+status = "generate"
+    [[object.signal]]
+    name = "move-current"
+#only for example
+    ignore = true

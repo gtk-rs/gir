@@ -1,3 +1,5 @@
+use config::gobjects::GObject;
+use config::identables::Identables;
 use env::Env;
 use library;
 use nameutil;
@@ -13,10 +15,15 @@ pub struct Info {
 
 pub fn analyze(env: &Env, signals: &[library::Signal], type_tid: library::TypeId,
                in_trait: bool, trampolines: &mut trampolines::Trampolines,
-               imports: &mut Imports) -> Vec<Info> {
+               obj: &GObject, imports: &mut Imports) -> Vec<Info> {
     let mut sns = Vec::new();
 
     for signal in signals {
+        let configured_signals = obj.signals.matched(&signal.name);
+        if configured_signals.iter().any(|f| f.ignore) {
+            continue;
+        }
+
         let info = analyze_signal(env, signal, type_tid, in_trait, trampolines, imports);
         if let Some(info) = info {
             sns.push(info);

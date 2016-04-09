@@ -5,6 +5,7 @@ pub mod gobjects;
 pub mod ident;
 pub mod identables;
 pub mod members;
+pub mod signals;
 pub mod work_mode;
 
 pub use self::config::Config;
