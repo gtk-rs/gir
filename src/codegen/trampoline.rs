@@ -27,7 +27,7 @@ pub fn generate(w: &mut Write, env: &Env, analysis: &Trampoline,
     let ret_str = trampoline_returns(env, analysis);
 
     //TODO: version, cfg_condition
-    try!(writeln!(w, "unsafe extern \"C\" fn {}{}({}, f: &Box<{}>){}{}",
+    try!(writeln!(w, "unsafe extern \"C\" fn {}{}({}, f: &Box_<{}>){}{}",
                   analysis.name, bounds, params_str, func_str, ret_str, end));
     if in_trait {
         try!(writeln!(w, "where T: IsA<{}> {{", object_name));

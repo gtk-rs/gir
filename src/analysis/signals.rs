@@ -50,6 +50,7 @@ fn analyze_signal(env: &Env, signal: &library::Signal, type_tid: library::TypeId
 
         imports.add("glib::signal::connect", None);
         imports.add("std::mem::transmute", None);
+        imports.add("std::boxed::Box as Box_", None);
     }
 
     let info = Info {

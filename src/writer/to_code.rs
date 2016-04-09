@@ -100,7 +100,7 @@ impl ToCode for Chunk {
             Connect{ref signal, ref trampoline, in_trait} => {
                 let s1 = format!("connect(self.to_glib_none().0, \"{}\",", signal);
                 let self_str = if in_trait { "::<Self>" } else { "" };
-                let s2 = format!("\ttransmute({}{} as usize), Box::into_raw(f) as *mut _)", trampoline, self_str);
+                let s2 = format!("\ttransmute({}{} as usize), Box_::into_raw(f) as *mut _)", trampoline, self_str);
                 vec![s1, s2]
             }
         }
