@@ -48,18 +48,10 @@ fn analyze_signal(env: &Env, signal: &library::Signal, type_tid: library::TypeId
                                                &mut used_types, version);
 
     if trampoline_name.is_some() {
-        for s in used_types {
-            if let Some(i) = s.find("::") {
-                imports.add(&s[..i], version);
-            } else {
-                imports.add(&s, version);
-            }
-        }
-
+        imports.add_used_types(&used_types, version);
         if in_trait {
             imports.add("Object", version);
         }
-
         imports.add("glib::signal::connect", version);
         imports.add("std::mem::transmute", version);
         imports.add("std::boxed::Box as Box_", version);

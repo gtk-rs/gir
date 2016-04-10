@@ -19,6 +19,16 @@ impl Imports {
         }
     }
 
+    pub fn add_used_types(&mut self, used_types: &[String], version: Option<Version>) {
+        for s in used_types {
+            if let Some(i) = s.find("::") {
+                self.add(&s[..i], version);
+            } else {
+                self.add(&s, version);
+            }
+        }
+    }
+
     pub fn remove(&mut self, name: &str) {
         self.map.remove(name);
     }

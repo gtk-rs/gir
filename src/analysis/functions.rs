@@ -105,13 +105,7 @@ fn analyze_function(env: &Env, func: &library::Function, type_tid: library::Type
     }
 
     if !commented {
-        for s in used_types {
-            if let Some(i) = s.find("::") {
-                imports.add(&s[..i], version);
-            } else {
-                imports.add(&s, version);
-            }
-        }
+        imports.add_used_types(&used_types, version);
         if ret.base_tid.is_some() {
             imports.add("glib::object::Downcast", None);
         }
