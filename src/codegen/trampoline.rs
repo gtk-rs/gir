@@ -28,12 +28,13 @@ pub fn generate(w: &mut Write, env: &Env, analysis: &Trampoline,
     let ret_str = trampoline_returns(env, analysis);
 
     try!(version_condition(w, env, analysis.version, false, 0));
-    try!(writeln!(w, "unsafe extern \"C\" fn {}{}({}, f: &Box_<{}>){}{}",
-                  analysis.name, bounds, params_str, func_str, ret_str, end));
+    try!(writeln!(w, "unsafe extern \"C\" fn {}{}({}, f: gpointer){}{}",
+                  analysis.name, bounds, params_str, ret_str, end));
     if in_trait {
         try!(writeln!(w, "where T: IsA<{}> {{", object_name));
     }
     try!(writeln!(w, "\tcallback_guard!();"));
+    try!(writeln!(w, "\tlet f: &Box_<{}> = transmute(f);", func_str));
     let call = trampoline_call_func(env, analysis, in_trait);
     try!(writeln!(w, "\t{}", call));
     try!(writeln!(w, "}}"));
