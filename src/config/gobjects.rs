@@ -57,6 +57,7 @@ pub struct GObject {
     pub version: Option<Version>,
     pub cfg_condition: Option<String>,
     pub type_id: Option<TypeId>,
+    pub force_trait: bool,
 }
 
 impl Default for GObject {
@@ -70,6 +71,7 @@ impl Default for GObject {
             version: None,
             cfg_condition: None,
             type_id: None,
+            force_trait: false,
         }
     }
 }
@@ -106,6 +108,9 @@ fn parse_object(toml_object: &Value) -> GObject {
     let cfg_condition = toml_object.lookup("cfg_condition")
         .and_then(|v| v.as_str())
         .map(|s| s.to_owned());
+    let force_trait = toml_object.lookup("trait")
+        .and_then(|v| v.as_bool())
+        .unwrap_or(false);
 
     GObject {
         name: name,
@@ -116,6 +121,7 @@ fn parse_object(toml_object: &Value) -> GObject {
         version: version,
         cfg_condition: cfg_condition,
         type_id: None,
+        force_trait: force_trait,
     }
 }
 
