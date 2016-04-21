@@ -65,7 +65,14 @@ fn func_parameters(env: &Env, analysis: &Trampoline,
 
 fn func_parameter(env: &Env, par: &Parameter, bounds: &Bounds,
                   bound_replace: Option<(&str, &str)>) -> String {
-    let mut_str = if par.ref_mode == RefMode::ByRefMut { "mut " } else { "" };
+    //TODO: restore mutable support
+    //let mut_str = if par.ref_mode == RefMode::ByRefMut { "mut " } else { "" };
+    let mut_str = "";
+    let ref_mode = if par.ref_mode == RefMode::ByRefMut {
+        RefMode::ByRef
+    } else {
+        par.ref_mode
+    };
 
     let type_str: String;
     match bounds.get_parameter_alias_info(&par.name) {
@@ -86,7 +93,7 @@ fn func_parameter(env: &Env, par: &Parameter, bounds: &Bounds,
         }
         None => {
             let rust_type = parameter_rust_type(env, par.typ, par.direction,
-                                                par.nullable, par.ref_mode);
+                                                par.nullable, ref_mode);
             type_str = rust_type.into_string();
         }
     }
