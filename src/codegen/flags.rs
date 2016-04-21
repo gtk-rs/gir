@@ -80,14 +80,20 @@ impl ToGlib for {name} {{
 }}
 ", name = flags.name, ffi_name = flags.c_type));
 
+    let assert = if env.config.generate_safety_asserts {
+        "skip_assert_initialized!();\n\t\t"
+    } else {
+        ""
+    };
+
     try!(version_condition(w, env, flags.version, false, 0));
     try!(writeln!(w, "#[doc(hidden)]
 impl FromGlib<ffi::{ffi_name}> for {name} {{
     fn from_glib(value: ffi::{ffi_name}) -> {name} {{
-        {name}::from_bits_truncate(value.bits())
+        {assert}{name}::from_bits_truncate(value.bits())
     }}
 }}
-", name = flags.name, ffi_name = flags.c_type));
+", name = flags.name, ffi_name = flags.c_type, assert = assert));
 
     Ok(())
 }
