@@ -90,6 +90,10 @@ lazy_static! {
     };
 }
 
+pub fn signal_to_snake(signal: &str) -> String {
+    signal.chars().map(|ch| if ch == '-' { '_' } else { ch }).collect()
+}
+
 #[cfg(test)]
 mod tests {
     use std::path::*;
@@ -135,5 +139,11 @@ mod tests {
         let expected: String = PathBuf::from("src").join("funcs.rs")
             .to_str().unwrap().into();
         assert_eq!(file_name_sys("funcs"), expected);
+    }
+
+    #[test]
+    fn signal_to_snake_works() {
+        assert_eq!(signal_to_snake("changed"), "changed");
+        assert_eq!(signal_to_snake("move-active"), "move_active");
     }
 }

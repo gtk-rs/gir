@@ -297,12 +297,23 @@ pub struct Function {
     pub doc_deprecated: Option<String>,
 }
 
+pub struct Signal {
+    pub name: String,
+    pub parameters: Vec<Parameter>,
+    pub ret: Parameter,
+    pub version: Option<Version>,
+    pub deprecated_version: Option<Version>,
+    pub doc: Option<String>,
+    pub doc_deprecated: Option<String>,
+}
+
 #[derive(Default)]
 pub struct Interface {
     pub name: String,
     pub c_type: String,
     pub glib_get_type: String,
     pub functions: Vec<Function>,
+    pub signals: Vec<Signal>,
     pub prerequisites: Vec<TypeId>,
     pub version: Option<Version>,
     pub deprecated_version: Option<Version>,
@@ -315,6 +326,7 @@ pub struct Class {
     pub c_type: String,
     pub glib_get_type: String,
     pub functions: Vec<Function>,
+    pub signals: Vec<Signal>,
     pub parent: Option<TypeId>,
     pub implements: Vec<TypeId>,
     pub version: Option<Version>,
@@ -545,6 +557,10 @@ impl Namespace {
     fn type_(&self, id: u32) -> &Type {
         self.types[id as usize].as_ref().unwrap()
     }
+ 
+    fn type_mut(&mut self, id: u32) -> &mut Type {
+        self.types[id as usize].as_mut().unwrap()
+    }
 
     fn add_type(&mut self, name: &str, typ: Option<Type>) -> u32 {
         let glib_name = typ.as_ref().and_then(|t| t.get_glib_name())
@@ -671,6 +687,10 @@ impl Library {
 
     pub fn type_(&self, tid: TypeId) -> &Type {
         self.namespace(tid.ns_id).type_(tid.id)
+    }
+
+    pub fn type_mut(&mut self, tid: TypeId) -> &mut Type {
+        self.namespace_mut(tid.ns_id).type_mut(tid.id)
     }
 
     pub fn register_version(&mut self, ns_id: u16, version: Version) {
