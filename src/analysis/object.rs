@@ -25,7 +25,7 @@ pub struct Info {
 
 impl Info {
     pub fn has_signals(&self) -> bool {
-        !self.signals.is_empty()
+        self.signals.iter().any(|s| s.trampoline_name.is_some())
     }
 }
 
