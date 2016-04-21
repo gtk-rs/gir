@@ -22,7 +22,11 @@ impl Imports {
     pub fn add_used_types(&mut self, used_types: &[String], version: Option<Version>) {
         for s in used_types {
             if let Some(i) = s.find("::") {
-                self.add(&s[..i], version);
+                if i == 0 {
+                    self.add(&s[2..], version);
+                } else {
+                    self.add(&s[..i], version);
+                }
             } else {
                 self.add(&s, version);
             }

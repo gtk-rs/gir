@@ -5,6 +5,7 @@ use nameutil::signal_to_snake;
 use parser::is_empty_c_type;
 use super::bounds::{Bounds, BoundType};
 use super::conversion_type::ConversionType;
+use super::ffi_type::used_ffi_type;
 use super::parameter;
 use super::ref_mode::RefMode;
 use super::rust_type::{bounds_rust_type, rust_type, used_rust_type};
@@ -60,6 +61,10 @@ pub fn analyze(env: &Env, signal: &library::Signal, type_tid: library::TypeId, i
     };
     parameters.push(this);
 
+    if let Some(s) = used_ffi_type(env, type_tid) {
+        used_types.push(s);
+    }
+
     if in_trait {
         let type_name = bounds_rust_type(env, type_tid);
         bounds.add_parameter("this", &type_name.into_string(), BoundType::IsA);
@@ -71,8 +76,17 @@ pub fn analyze(env: &Env, signal: &library::Signal, type_tid: library::TypeId, i
         if let Ok(s) = used_rust_type(env, par.typ) {
             used_types.push(s);
         }
+        if let Some(s) = used_ffi_type(env, par.typ) {
+            used_types.push(s);
+        }
 
         parameters.push(analysis);
+    }
+
+    if signal.ret.typ != Default::default() {
+        if let Some(s) = used_ffi_type(env, signal.ret.typ) {
+            used_types.push(s);
+        }
     }
 
     let trampoline = Trampoline {

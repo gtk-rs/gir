@@ -2,6 +2,7 @@ pub mod bounds;
 pub mod c_type;
 pub mod class_hierarchy;
 pub mod conversion_type;
+mod ffi_type;
 pub mod functions;
 pub mod general;
 pub mod imports;
