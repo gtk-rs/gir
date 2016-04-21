@@ -101,11 +101,17 @@ impl ToGlib for {name} {{
 }
 "));
 
+    let assert = if env.config.generate_safety_asserts {
+        "skip_assert_initialized!();\n\t\t"
+    } else {
+        ""
+    };
+
     try!(version_condition(w, env, enum_.version, false, 0));
     try!(writeln!(w, "#[doc(hidden)]
 impl FromGlib<ffi::{ffi_name}> for {name} {{
     fn from_glib(value: ffi::{ffi_name}) -> Self {{
-        match value {{", name = enum_.name, ffi_name = enum_.c_type));
+        {assert}match value {{", name = enum_.name, ffi_name = enum_.c_type, assert = assert));
     for member in &members {
         try!(version_condition(w, env, member.version, false, 3));
         try!(writeln!(w, "\t\t\tffi::{} => {}::{},", member.c_name, enum_.name, member.name));
@@ -126,7 +132,7 @@ impl FromGlib<ffi::{ffi_name}> for {name} {{
         try!(version_condition(w, env, enum_.version, false, 0));
         try!(writeln!(w, "impl ErrorDomain for {name} {{
     fn domain() -> glib_ffi::GQuark {{
-        unsafe {{ ffi::{get_quark}() }}
+        {assert}unsafe {{ ffi::{get_quark}() }}
     }}
 
     fn code(self) -> i32 {{
@@ -134,7 +140,7 @@ impl FromGlib<ffi::{ffi_name}> for {name} {{
     }}
 
     fn from(code: i32) -> Option<Self> {{
-        match code {{", name = enum_.name, get_quark = get_quark));
+        {assert}match code {{", name = enum_.name, get_quark = get_quark, assert = assert));
 
         for member in &members {
             try!(version_condition(w, env, member.version, false, 3));
