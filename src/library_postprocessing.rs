@@ -124,9 +124,17 @@ impl Library {
     }
 
     fn c_type_by_type_id(&self, tid: TypeId) -> Option<String> {
-        let glib_name = self.type_(tid).get_glib_name();
+        use library::Type::*;
+        let type_ = self.type_(tid);
+        let glib_name = type_.get_glib_name();
         if glib_name.is_none() { return None; }
-        let detected_c_type = format!("{}*", glib_name.unwrap());
+        let glib_name = glib_name.unwrap();
+        let detected_c_type = match *type_ {
+            Record(..) |
+            Class(..) |
+            Interface(..) => format!("{}*", glib_name),
+            _ => glib_name.to_string(),
+        };
         Some(detected_c_type)
     }
 }
