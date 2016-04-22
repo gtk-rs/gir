@@ -25,11 +25,12 @@ pub type Trampolines = Vec<Trampoline>;
 
 pub fn analyze(env: &Env, signal: &library::Signal, type_tid: library::TypeId, in_trait: bool,
                trampolines: &mut Trampolines, used_types: &mut Vec<String>,
-               version: Option<Version>) -> Option<String> {
-    if !can_generate(env, signal) {
+               version: Option<Version>) -> Result<String, Vec<String>> {
+    let errors = closure_errors(env, signal);
+    if !errors.is_empty() {
         warn!("Can't generate {} trampoline for signal '{}'", type_tid.full_name(&env.library),
               signal.name);
-        return None;
+        return Err(errors);
     }
 
     let name = format!("{}_trampoline", signal_to_snake(&signal.name));
@@ -97,33 +98,42 @@ pub fn analyze(env: &Env, signal: &library::Signal, type_tid: library::TypeId, i
         version: version,
     };
     trampolines.push(trampoline);
-    Some(name)
+    Ok(name)
 }
 
-fn can_generate(env: &Env, signal: &library::Signal) -> bool {
-    if signal.ret.typ != Default::default() && !can_use_type(env, &signal.ret, &signal.name) {
-        return false;
-    }
+fn closure_errors(env: &Env, signal: &library::Signal) -> Vec<String> {
+    let mut errors: Vec<String> = Vec::new();
     for par in &signal.parameters {
-        if !can_use_type(env, par, &signal.name) {
-            return false;
+        if let Some(error) = type_error(env, par) {
+            errors.push(format!("{} {}: {}", error, par.name,
+                                par.typ.full_name(&env.library)));
         }
     }
-    true
+    if signal.ret.typ != Default::default() {
+        if let Some(error) = type_error(env, &signal.ret) {
+            errors.push(format!("{} return value {}", error,
+                                signal.ret.typ.full_name(&env.library)));
+        }
+    }
+    errors
 }
 
-fn can_use_type(env: &Env, par: &library::Parameter, signal_name: &str) -> bool {
-    if par.direction == library::ParameterDirection::Out ||
-        par.direction == library::ParameterDirection::InOut {
-        false
+fn type_error(env: &Env, par: &library::Parameter) -> Option<&'static str> {
+    use super::rust_type::TypeError::*;
+    if par.direction == library::ParameterDirection::Out {
+        Some("Out")
+    } else if par.direction == library::ParameterDirection::InOut {
+        Some("InOut")
     } else if is_empty_c_type(&par.c_type) {
-        warn!("{} has empty ctype", signal_name);
-        false
+        Some("Empty ctype")
     } else if ConversionType::of(&env.library, par.typ) == ConversionType::Unknown {
-        false
-    } else if rust_type(env, par.typ).is_err() {
-        false
+        Some("Unknown conversion")
     } else {
-        true
+        match rust_type(env, par.typ) {
+            Err(Ignored(_)) => Some("Ignored"),
+            Err(Mismatch(_)) => Some("Mismatch"),
+            Err(Unimplemented(_)) => Some("Unimplemented"),
+            Ok(_) => None,
+        }
     }
 }
