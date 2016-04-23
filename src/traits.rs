@@ -1,3 +1,5 @@
+pub use std::borrow::Cow;
+
 pub use config::identables::Identables;
 
 pub trait AsStr {
@@ -6,6 +8,11 @@ pub trait AsStr {
 
 pub trait IntoString {
     fn into_string(self) -> String;
+}
+
+pub trait IntoStatic {
+    type Static;
+    fn into_static(self) -> Self::Static;
 }
 
 pub trait MapAny<T> {

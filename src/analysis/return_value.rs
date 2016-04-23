@@ -17,7 +17,7 @@ pub fn analyze(env: &Env, func: &library::Function, type_tid: library::TypeId,
 
     let mut parameter = if func.ret.typ == Default::default() { None } else {
         if let Ok(s) = used_rust_type(env, func.ret.typ) {
-            used_types.push(s);
+            used_types.push(s.into_owned());
         }
         // Since GIRs are bad at specifying return value nullability, assume
         // any returned pointer is nullable unless overridden by the config.

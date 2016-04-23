@@ -30,7 +30,7 @@ pub struct Info {
     pub glib_name: String,
     pub kind: library::FunctionKind,
     pub visibility: Visibility,
-    pub type_name: Result,
+    pub type_name: Result<'static>,
     pub parameters: Vec<parameter::Parameter>,
     pub ret: return_value::Info,
     pub bounds: Bounds,
@@ -80,7 +80,7 @@ fn analyze_function(env: &Env, func: &library::Function, type_tid: library::Type
         assert!(!par.instance_parameter || pos == 0,
             "Wrong instance parameter in {}", func.c_identifier.as_ref().unwrap());
         if let Ok(s) = used_rust_type(env, par.typ) {
-            used_types.push(s);
+            used_types.push(s.into_owned());
         }
         let type_error = parameter_rust_type(env, par.typ, par.direction, Nullable(false), RefMode::None).is_err();
         if !par.instance_parameter && par.direction != ParameterDirection::Out {
@@ -120,7 +120,7 @@ fn analyze_function(env: &Env, func: &library::Function, type_tid: library::Type
         glib_name: func.c_identifier.as_ref().unwrap().clone(),
         kind: func.kind,
         visibility: visibility,
-        type_name: rust_type(env, type_tid),
+        type_name: rust_type(env, type_tid).into_static(),
         parameters: parameters,
         ret: ret,
         bounds: bounds,

@@ -9,7 +9,7 @@ use traits::*;
 // FIXME: This module needs redundant allocations audit
 // TODO: ffi_type computations should be cached
 
-pub fn ffi_type(env: &Env, tid: library::TypeId, c_type: &str) -> Result {
+pub fn ffi_type(env: &Env, tid: library::TypeId, c_type: &str) -> Result<'static> {
     let (ptr, inner) = rustify_pointers(c_type);
     let res = if ptr.is_empty() {
         if let Some(c_tid) = env.library.find_type(0, c_type) {
@@ -48,7 +48,7 @@ pub fn ffi_type(env: &Env, tid: library::TypeId, c_type: &str) -> Result {
     res
 }
 
-fn ffi_inner(env: &Env, tid: library::TypeId, mut inner: String) -> Result {
+fn ffi_inner(env: &Env, tid: library::TypeId, mut inner: String) -> Result<'static> {
     let volatile = inner.starts_with("volatile ");
     if volatile {
         inner = inner["volatile ".len()..].into();
@@ -88,7 +88,7 @@ fn ffi_inner(env: &Env, tid: library::TypeId, mut inner: String) -> Result {
                 Pointer => match &inner[..]  {
                     "void" => "c_void",
                     "tm" => return Err(TypeError::Unimplemented(inner)),  //TODO: try use time:Tm
-                    _ => &*inner,
+                    _ => return Ok(inner.into()),
                 },
                 Unsupported => return Err(TypeError::Unimplemented(inner)),
                 VarArgs => panic!("Should not reach here"),
@@ -147,27 +147,27 @@ fn ffi_inner(env: &Env, tid: library::TypeId, mut inner: String) -> Result {
     };
 
     if volatile {
-        res.map(|s| format!("Volatile<{}>", s))
+        res.map(|s| Cow::Owned(format!("Volatile<{}>", s)))
     }
     else {
         res
     }
 }
 
-fn fix_name(env: &Env, type_id: library::TypeId, name: &str) -> Result {
+fn fix_name<'a>(env: &Env, type_id: library::TypeId, name: &'a str) -> Result<'static> {
     if type_id.ns_id == library::INTERNAL_NAMESPACE {
         match *env.library.type_(type_id) {
             Type::Array(..) | Type::PtrArray(..)
                     | Type::List(..) | Type::SList(..) | Type::HashTable(..) => {
                 if env.namespaces.glib_ns_id == namespaces::MAIN {
-                    Ok(name.into())
+                    Ok(Cow::Owned(name.into()))
                 }
                 else {
-                    Ok(format!("{}::{}", &env.namespaces[env.namespaces.glib_ns_id].crate_name,
-                        name))
+                    Ok(Cow::Owned(format!("{}::{}", &env.namespaces[env.namespaces.glib_ns_id].crate_name,
+                        name)))
                 }
             }
-            _ => Ok(name.into())
+            _ => Ok(Cow::Owned(name.into()))
         }
     } else {
         let name_with_prefix = if type_id.ns_id == library::MAIN_NAMESPACE {
@@ -178,7 +178,7 @@ fn fix_name(env: &Env, type_id: library::TypeId, name: &str) -> Result {
         if env.type_status_sys(&type_id.full_name(&env.library)).ignored() {
             Err(TypeError::Ignored(name_with_prefix))
         } else {
-            Ok(name_with_prefix)
+            Ok(Cow::Owned(name_with_prefix))
         }
     }
 }

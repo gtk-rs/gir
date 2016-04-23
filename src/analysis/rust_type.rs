@@ -1,3 +1,4 @@
+use std::mem;
 use std::result;
 
 use analysis::ref_mode::RefMode;
@@ -13,23 +14,23 @@ pub enum TypeError {
     Unimplemented(String),
 }
 
-pub type Result = result::Result<String, TypeError>;
+pub type Result<'a> = result::Result<Cow<'a, str>, TypeError>;
 
 fn into_inner(res: Result) -> String {
     use self::TypeError::*;
     match res {
-        Ok(s) |
-            Err(Ignored(s)) |
+        Ok(s) => s.into_owned(),
+        Err(Ignored(s)) |
             Err(Mismatch(s)) |
             Err(Unimplemented(s)) => s,
     }
 }
 
-impl IntoString for Result {
+impl<'a> IntoString for Result<'a> {
     fn into_string(self) -> String {
         use self::TypeError::*;
         match self {
-            Ok(s) => s,
+            Ok(s) => s.into_owned(),
             Err(Ignored(s)) => format!("/*Ignored*/{}", s),
             Err(Mismatch(s)) => format!("/*Metadata mismatch*/{}", s),
             Err(Unimplemented(s)) => format!("/*Unimplemented*/{}", s),
@@ -37,11 +38,11 @@ impl IntoString for Result {
     }
 }
 
-impl MapAny<String> for Result {
-    fn map_any<F: FnOnce(String) -> String>(self, op: F) -> Result {
+impl<'a> MapAny<String> for Result<'a> {
+    fn map_any<F: FnOnce(String) -> String>(self, op: F) -> Result<'static> {
         use self::TypeError::*;
         match self {
-            Ok(s) => Ok(op(s)),
+            Ok(s) => Ok(Cow::Owned(op(s.into_owned()))),
             Err(Ignored(s)) => Err(Ignored(op(s))),
             Err(Mismatch(s)) => Err(Mismatch(op(s))),
             Err(Unimplemented(s)) => Err(Unimplemented(op(s))),
@@ -49,7 +50,18 @@ impl MapAny<String> for Result {
     }
 }
 
-pub fn rust_type(env: &Env, type_id: library::TypeId) -> Result {
+impl<'a> IntoStatic for Result<'a> {
+    type Static = Result<'static>;
+    fn into_static(self) -> Result<'static> {
+        match self {
+            Ok(Cow::Borrowed(s)) => Ok(Cow::Owned(s.to_owned())),
+            o @ Ok(Cow::Owned(_)) |
+            o @ Err(_) => unsafe{ mem::transmute(o) },
+        }
+    }
+}
+
+pub fn rust_type(env: &Env, type_id: library::TypeId) -> Result<'static> {
     rust_type_full(env, type_id, Nullable(false), RefMode::None)
 }
 
@@ -57,10 +69,10 @@ pub fn bounds_rust_type(env: &Env, type_id: library::TypeId) -> Result {
     rust_type_full(env, type_id, Nullable(false), RefMode::ByRefFake)
 }
 
-fn rust_type_full(env: &Env, type_id: library::TypeId, nullable: Nullable, ref_mode: RefMode) -> Result {
+fn rust_type_full(env: &Env, type_id: library::TypeId, nullable: Nullable, ref_mode: RefMode) -> Result<'static> {
     use library::Type::*;
     use library::Fundamental::*;
-    let ok = |s: &str| Ok(s.into());
+    let ok = |s: &'static str| Ok(s.into());
     let err = |s: &str| Err(TypeError::Unimplemented(s.into()));
     let mut skip_option = false;
     let type_ = env.library.type_(type_id);
@@ -116,7 +128,7 @@ fn rust_type_full(env: &Env, type_id: library::TypeId, nullable: Nullable, ref_m
                 Err(TypeError::Ignored(name))
             }
             else {
-                Ok(name)
+                Ok(Cow::Owned(name))
             }
         }
         List(inner_tid) |
@@ -204,7 +216,7 @@ pub fn parameter_rust_type(env: &Env, type_id:library::TypeId,
         Alias(ref alias) => {
             rust_type.and_then(|s| {
                 parameter_rust_type(env, alias.typ, direction, nullable, ref_mode)
-                    .map_any(|_| s)
+                    .map_any(|_| s.into_owned())
             })
                 .map_any(|s| format_parameter(s, direction))
         }

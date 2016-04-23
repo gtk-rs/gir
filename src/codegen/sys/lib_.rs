@@ -101,7 +101,7 @@ fn generate_aliases(w: &mut Write, env: &Env, items: &[&Alias])
     for item in items {
         let (comment, c_type) = match ffi_type(env, item.typ, &item.target_c_type) {
             Ok(x) => ("", x),
-            x @ Err(..) => ("//", x.into_string()),
+            x @ Err(..) => ("//", Cow::Owned(x.into_string())),
         };
         try!(writeln!(w, "{}pub type {} = {};", comment, item.c_identifier, c_type));
     }
@@ -142,7 +142,7 @@ fn generate_constants(w: &mut Write, env: &Env, constants: &[Constant]) -> Resul
             match parameter_rust_type(env, constant.typ, direction,
                                       Nullable(false), ref_mode) {
                 Ok(x) => ("", x),
-                x @ Err(..) => ("//", x.into_string()),
+                x @ Err(..) => ("//", Cow::Owned(x.into_string())),
             };
         if env.type_status_sys(&format!("{}.{}", env.config.library_name,
             constant.name)).ignored() {
