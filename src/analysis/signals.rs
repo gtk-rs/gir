@@ -8,17 +8,17 @@ use super::imports::Imports;
 use version::Version;
 
 #[derive(Debug)]
-pub struct Info {
+pub struct Info<'e> {
     pub connect_name: String,
-    pub signal_name: String,
+    pub signal_name: &'e str,
     pub trampoline_name: Option<String>, //TODO: remove Option
     pub version: Option<Version>,
     pub deprecated_version: Option<Version>,
 }
 
-pub fn analyze(env: &Env, signals: &[library::Signal], type_tid: library::TypeId,
-               in_trait: bool, trampolines: &mut trampolines::Trampolines,
-               obj: &GObject, imports: &mut Imports) -> Vec<Info> {
+pub fn analyze<'e>(env: &'e Env, signals: &'e [library::Signal], type_tid: library::TypeId,
+               in_trait: bool, trampolines: &mut trampolines::Trampolines<'e>,
+               obj: &GObject, imports: &mut Imports) -> Vec<Info<'e>> {
     let mut sns = Vec::new();
 
     for signal in signals {
@@ -36,9 +36,9 @@ pub fn analyze(env: &Env, signals: &[library::Signal], type_tid: library::TypeId
     sns
 }
 
-fn analyze_signal(env: &Env, signal: &library::Signal, type_tid: library::TypeId,
-                  in_trait: bool, trampolines: &mut trampolines::Trampolines,
-                  imports: &mut Imports) -> Option<Info> {
+fn analyze_signal<'e>(env: &'e Env, signal: &'e library::Signal, type_tid: library::TypeId,
+                  in_trait: bool, trampolines: &mut trampolines::Trampolines<'e>,
+                  imports: &mut Imports) -> Option<Info<'e>> {
     let mut used_types: Vec<String> = Vec::with_capacity(4);
     let version = signal.version;
     let deprecated_version = signal.deprecated_version;
@@ -61,7 +61,7 @@ fn analyze_signal(env: &Env, signal: &library::Signal, type_tid: library::TypeId
 
     let info = Info {
         connect_name: connect_name,
-        signal_name: signal.name.clone(),
+        signal_name: &*signal.name,
         trampoline_name: trampoline_name,
         version: version,
         deprecated_version: deprecated_version,

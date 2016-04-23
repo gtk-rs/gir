@@ -13,7 +13,7 @@ pub struct Parameter {
     pub to_glib_extra: String,
 }
 
-impl<'a> From<&'a analysis::parameter::Parameter> for Parameter {
+impl<'a> From<&'a analysis::parameter::Parameter<'a>> for Parameter {
     fn from(orig: &'a analysis::parameter::Parameter) -> Parameter {
         Parameter {
             name: orig.name.clone(),

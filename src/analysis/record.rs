@@ -10,28 +10,28 @@ use super::info_base::InfoBase;
 use traits::*;
 
 #[derive(Default)]
-pub struct Info {
-    pub base: InfoBase,
+pub struct Info<'e> {
+    pub base: InfoBase<'e>,
 }
 
-impl Deref for Info {
-    type Target = InfoBase;
+impl<'e> Deref for Info<'e> {
+    type Target = InfoBase<'e>;
 
-    fn deref(&self) -> &InfoBase {
+    fn deref(&self) -> &InfoBase<'e> {
         &self.base
     }
 }
 
-impl Info {
+impl<'e> Info<'e> {
     //TODO: add test in tests/ for panic
-    pub fn type_<'a>(&self, library: &'a library::Library) -> &'a library::Record {
+    pub fn type_(&self, library: &'e library::Library) -> &'e library::Record {
         let type_ = library.type_(self.type_id).maybe_ref()
             .unwrap_or_else(|| panic!("{} is not a record.", self.full_name));
         type_
     }
 }
 
-pub fn new(env: &Env, obj: &GObject) -> Option<Info> {
+pub fn new<'e>(env: &'e Env, obj: &GObject) -> Option<Info<'e>> {
     let full_name = obj.name.clone();
 
     let record_tid = match env.library.find_type(0, &full_name) {
@@ -81,7 +81,7 @@ pub fn new(env: &Env, obj: &GObject) -> Option<Info> {
         deprecated_version: deprecated_version,
         cfg_condition: obj.cfg_condition.clone(),
     };
-    
+
     let info = Info {
         base: base,
     };

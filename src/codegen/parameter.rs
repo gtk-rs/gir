@@ -10,7 +10,7 @@ pub trait ToParameter {
     fn to_parameter(&self, env: &Env, bounds: &Bounds) -> String;
 }
 
-impl ToParameter for Parameter {
+impl<'e> ToParameter for Parameter<'e> {
     fn to_parameter(&self, env: &Env, bounds: &Bounds) -> String {
         let mut_str = if self.ref_mode == RefMode::ByRefMut { "mut " } else { "" };
         if self.instance_parameter {

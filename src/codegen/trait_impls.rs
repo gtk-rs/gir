@@ -22,7 +22,7 @@ pub fn generate(w: &mut Write, type_name: &str, functions: &[Info], specials: &I
     Ok(())
 }
 
-fn lookup<'a>(functions: &'a [Info], name: &str) -> &'a Info {
+fn lookup<'a>(functions: &'a [Info], name: &str) -> &'a Info<'a> {
     functions.iter()
         .filter(|f| f.glib_name == name)
         .next()

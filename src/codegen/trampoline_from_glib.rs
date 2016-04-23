@@ -9,7 +9,7 @@ pub trait TrampolineFromGlib {
     fn trampoline_from_glib(&self, env: &Env, need_downcast: bool) -> String;
 }
 
-impl TrampolineFromGlib for Parameter {
+impl<'e> TrampolineFromGlib for Parameter<'e> {
     fn trampoline_from_glib(&self, env: &Env, need_downcast: bool) -> String {
         use analysis::conversion_type::ConversionType::*;
         let need_type_name = need_downcast || is_need_type_name(env, self.typ);

@@ -10,34 +10,34 @@ use super::info_base::InfoBase;
 use traits::*;
 
 #[derive(Default)]
-pub struct Info {
-    pub base: InfoBase,
+pub struct Info<'e> {
+    pub base: InfoBase<'e>,
     pub c_type: String,
     pub get_type: String,
-    pub supertypes: Vec<general::StatusedTypeId>,
+    pub supertypes: Vec<general::StatusedTypeId<'e>>,
     pub has_children: bool,
     pub has_constructors: bool,
     pub has_methods: bool,
     pub has_functions: bool,
-    pub signals: Vec<signals::Info>,
-    pub trampolines: trampolines::Trampolines,
+    pub signals: Vec<signals::Info<'e>>,
+    pub trampolines: trampolines::Trampolines<'e>,
 }
 
-impl Info {
+impl<'e> Info<'e> {
     pub fn has_signals(&self) -> bool {
         self.signals.iter().any(|s| s.trampoline_name.is_some())
     }
 }
 
-impl Deref for Info {
-    type Target = InfoBase;
+impl<'e> Deref for Info<'e> {
+    type Target = InfoBase<'e>;
 
-    fn deref(&self) -> &InfoBase {
+    fn deref(&self) -> &InfoBase<'e> {
         &self.base
     }
 }
 
-pub fn class(env: &Env, obj: &GObject) -> Option<Info> {
+pub fn class<'e>(env: &'e Env, obj: &GObject) -> Option<Info<'e>> {
     let full_name = obj.name.clone();
 
     let class_tid = match env.library.find_type(0, &full_name) {
@@ -137,7 +137,7 @@ pub fn class(env: &Env, obj: &GObject) -> Option<Info> {
     Some(info)
 }
 
-pub fn interface(env: &Env, obj: &GObject) -> Option<Info> {
+pub fn interface<'e>(env: &'e Env, obj: &GObject) -> Option<Info<'e>> {
     let full_name = obj.name.clone();
 
     let iface_tid = match env.library.find_type(0, &full_name) {

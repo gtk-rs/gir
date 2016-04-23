@@ -13,18 +13,18 @@ use traits::IntoString;
 use version::Version;
 
 #[derive(Debug)]
-pub struct Trampoline {
+pub struct Trampoline<'e> {
     pub name: String,
-    pub parameters: Vec<parameter::Parameter>,
-    pub ret: library::Parameter,
+    pub parameters: Vec<parameter::Parameter<'e>>,
+    pub ret: &'e library::Parameter,
     pub bounds: Bounds,
     pub version: Option<Version>,
 }
 
-pub type Trampolines = Vec<Trampoline>;
+pub type Trampolines<'e> = Vec<Trampoline<'e>>;
 
-pub fn analyze(env: &Env, signal: &library::Signal, type_tid: library::TypeId, in_trait: bool,
-               trampolines: &mut Trampolines, used_types: &mut Vec<String>,
+pub fn analyze<'e>(env: &'e Env, signal: &'e library::Signal, type_tid: library::TypeId, in_trait: bool,
+               trampolines: &mut Trampolines<'e>, used_types: &mut Vec<String>,
                version: Option<Version>) -> Option<String> {
     if !can_generate(env, signal) {
         warn!("Can't generate {} trampoline for signal '{}'", type_tid.full_name(&env.library),
@@ -48,7 +48,7 @@ pub fn analyze(env: &Env, signal: &library::Signal, type_tid: library::TypeId, i
     let this = parameter::Parameter {
         name: "this".to_owned(),
         typ: type_tid,
-        c_type: c_type,
+        c_type: c_type.into(),
         instance_parameter: false, //true,
         direction: library::ParameterDirection::In,
         transfer: library::Transfer::None,
@@ -92,7 +92,7 @@ pub fn analyze(env: &Env, signal: &library::Signal, type_tid: library::TypeId, i
     let trampoline = Trampoline {
         name: name.clone(),
         parameters: parameters,
-        ret: signal.ret.clone(),
+        ret: &signal.ret,
         bounds: bounds,
         version: version,
     };

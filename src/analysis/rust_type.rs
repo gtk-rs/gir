@@ -1,4 +1,3 @@
-use std::mem;
 use std::result;
 
 use analysis::ref_mode::RefMode;
@@ -46,17 +45,6 @@ impl<'a> MapAny<'a, str> for Result<'a>  {
             Err(Ignored(s)) => Err(Ignored(op(s))),
             Err(Mismatch(s)) => Err(Mismatch(op(s))),
             Err(Unimplemented(s)) => Err(Unimplemented(op(s))),
-        }
-    }
-}
-
-impl<'a> IntoStatic for Result<'a> {
-    type Static = Result<'static>;
-    fn into_static(self) -> Result<'static> {
-        match self {
-            Ok(Cow::Borrowed(s)) => Ok(Cow::Owned(s.to_owned())),
-            o @ Ok(Cow::Owned(_)) |
-            o @ Err(_) => unsafe{ mem::transmute(o) },
         }
     }
 }
