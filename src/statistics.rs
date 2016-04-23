@@ -3,30 +3,29 @@ use std::slice::Iter;
 
 use stopwatch::Stopwatch;
 
-#[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
-pub enum SWType {
-    Empty,
-    Total,
-    Loading,
-    Generating,
-}
+macro_rules! iterated_enum {
+    ($name: ident ; $num: expr => [ $($thing: ident),* ] ) => {
+        #[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
+        pub enum $name {
+            $($thing),*
+        }
 
-impl SWType {
-    pub fn iterator() -> Iter<'static, SWType> {
-        use self::SWType::*;
-        static ITEMS: [SWType;  3] = [
-            Total,
-            Loading,
-            Generating,
-        ];
-        ITEMS.into_iter()
+        impl $name {
+            fn iter() -> Iter<'static, $name> {
+                use self::$name::*;
+                static THINGS: [$name; $num] = [ $($thing),* ];
+                THINGS.into_iter()
+            }
+        }
     }
 }
 
-impl Default for SWType {
-    fn default() -> SWType {
-        SWType::Empty
-    }
+iterated_enum! {
+    SWType ; 3 => [
+        Total,
+        Loading,
+        Generating
+    ]
 }
 
 #[derive(Default)]
@@ -50,7 +49,7 @@ impl Statistics {
     }
 
     pub fn print(&mut self) {
-        for typ in SWType::iterator() {
+        for typ in SWType::iter() {
             let sw = self.stopwatches.entry(*typ).or_insert(Default::default());
             let elapsed = sw.elapsed();
             let elapsed_ms = sw.elapsed_ms();
