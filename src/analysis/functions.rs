@@ -25,13 +25,13 @@ pub enum Visibility {
 
 //TODO: change use Parameter to reference?
 #[derive(Debug)]
-pub struct Info {
+pub struct Info<'e> {
     pub name: String,
     pub glib_name: String,
     pub kind: library::FunctionKind,
     pub visibility: Visibility,
-    pub type_name: Result,
-    pub parameters: Vec<parameter::Parameter>,
+    pub type_name: Result<'e>,
+    pub parameters: Vec<parameter::Parameter<'e>>,
     pub ret: return_value::Info,
     pub bounds: Bounds,
     pub outs: out_parameters::Info,
@@ -41,8 +41,8 @@ pub struct Info {
     pub assertion: SafetyAssertionMode,
 }
 
-pub fn analyze(env: &Env, functions: &[library::Function], type_tid: library::TypeId,
-               obj: &config::gobjects::GObject, imports: &mut Imports) -> Vec<Info> {
+pub fn analyze<'e>(env: &'e Env, functions: &'e [library::Function], type_tid: library::TypeId,
+               obj: &config::gobjects::GObject, imports: &mut Imports) -> Vec<Info<'e>> {
     let mut funcs = Vec::new();
 
     for func in functions {
@@ -57,9 +57,9 @@ pub fn analyze(env: &Env, functions: &[library::Function], type_tid: library::Ty
     funcs
 }
 
-fn analyze_function(env: &Env, func: &library::Function, type_tid: library::TypeId,
+fn analyze_function<'e>(env: &'e Env, func: &'e library::Function, type_tid: library::TypeId,
                     configured_functions: &[&config::functions::Function],
-                    imports: &mut Imports) -> Info {
+                    imports: &mut Imports) -> Info<'e> {
     let mut commented = false;
     let mut bounds: Bounds = Default::default();
     let mut used_types: Vec<String> = Vec::with_capacity(4);
@@ -80,13 +80,13 @@ fn analyze_function(env: &Env, func: &library::Function, type_tid: library::Type
         assert!(!par.instance_parameter || pos == 0,
             "Wrong instance parameter in {}", func.c_identifier.as_ref().unwrap());
         if let Ok(s) = used_rust_type(env, par.typ) {
-            used_types.push(s);
+            used_types.push(s.into_owned());
         }
         let type_error = parameter_rust_type(env, par.typ, par.direction, Nullable(false), RefMode::None).is_err();
         if !par.instance_parameter && par.direction != ParameterDirection::Out {
             if let Some(bound_type) = Bounds::type_for(env, par.typ) {
                 let type_name = bounds_rust_type(env, par.typ);
-                if !bounds.add_parameter(&par.name, &type_name.into_string(), bound_type) {
+                if !bounds.add_parameter(&par.name, type_name.to_cow_str(), bound_type) {
                     panic!("Too many parameters upcasts for {}", func.c_identifier.as_ref().unwrap())
                 }
             }

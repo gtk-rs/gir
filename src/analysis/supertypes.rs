@@ -7,7 +7,7 @@ use super::general::StatusedTypeId;
 use super::imports::Imports;
 use library::TypeId;
 
-pub fn analyze(env: &Env, type_id: TypeId, imports: &mut Imports) -> Vec<StatusedTypeId> {
+pub fn analyze<'e>(env: &'e Env, type_id: TypeId, imports: &mut Imports) -> Vec<StatusedTypeId<'e>> {
     let mut parents = Vec::new();
     let gobject_id = env.library.find_type(0, "GObject.Object").unwrap();
 

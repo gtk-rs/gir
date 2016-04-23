@@ -36,7 +36,7 @@ pub fn define_object_type(w: &mut Write, env: &Env, type_name: &str, glib_name: 
         .filter(|p| !p.status.ignored())
         .map(|p| {
             if p.type_id.ns_id == namespaces::MAIN {
-                p.name.clone()
+                p.name.clone().into_owned()
             } else {
                 external_parents = true;
                 format!("{krate}::{name} => {krate}_ffi::{ffi_name}",

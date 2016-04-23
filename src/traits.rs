@@ -1,3 +1,5 @@
+pub use std::borrow::Cow;
+
 pub use config::identables::Identables;
 
 pub trait AsStr {
@@ -8,17 +10,18 @@ pub trait IntoString {
     fn into_string(self) -> String;
 }
 
-pub trait MapAny<T> {
-    fn map_any<F: FnOnce(T) -> T>(self, op: F) -> Self;
+pub trait ToCowStr {
+    fn to_cow_str(&self) -> Cow<str>;
 }
 
-impl<T> MapAny<T> for Result<T, T> {
-    fn map_any<F: FnOnce(T) -> T>(self, op: F) -> Self {
-        match self {
-            Ok(x) => Ok(op(x)),
-            Err(x) => Err(op(x)),
-        }
-    }
+pub trait IntoStatic {
+    type Static;
+    fn into_static(self) -> Self::Static;
+}
+
+pub trait MapAny<'a, B: ?Sized + 'a>
+where B: ToOwned {
+    fn map_any<F: FnOnce(Cow<'a, B>) -> Cow<'a, B>>(self, op: F) -> Self;
 }
 
 pub trait MaybeRef<T> {

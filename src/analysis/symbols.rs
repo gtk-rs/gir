@@ -62,10 +62,10 @@ pub fn run(library: &Library, namespaces: &namespaces::Info) -> Info {
         for typ in ns.types.iter().map(|t| t.as_ref().unwrap()) {
             let symbol = Symbol {
                 crate_name: crate_name.cloned(),
-                name: typ.get_name(),
+                name: typ.get_name().into_owned(),
                 ..Default::default()
             };
-            
+
             match *typ {
                 Type::Alias(Alias { ref c_identifier, .. }) => {
                     info.insert(c_identifier, symbol);

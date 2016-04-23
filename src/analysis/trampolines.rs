@@ -9,22 +9,22 @@ use super::ffi_type::used_ffi_type;
 use super::parameter;
 use super::ref_mode::RefMode;
 use super::rust_type::{bounds_rust_type, rust_type, used_rust_type};
-use traits::IntoString;
+use traits::ToCowStr;
 use version::Version;
 
 #[derive(Debug)]
-pub struct Trampoline {
+pub struct Trampoline<'e> {
     pub name: String,
-    pub parameters: Vec<parameter::Parameter>,
-    pub ret: library::Parameter,
+    pub parameters: Vec<parameter::Parameter<'e>>,
+    pub ret: &'e library::Parameter,
     pub bounds: Bounds,
     pub version: Option<Version>,
 }
 
-pub type Trampolines = Vec<Trampoline>;
+pub type Trampolines<'e> = Vec<Trampoline<'e>>;
 
-pub fn analyze(env: &Env, signal: &library::Signal, type_tid: library::TypeId, in_trait: bool,
-               trampolines: &mut Trampolines, used_types: &mut Vec<String>,
+pub fn analyze<'e>(env: &'e Env, signal: &'e library::Signal, type_tid: library::TypeId, in_trait: bool,
+               trampolines: &mut Trampolines<'e>, used_types: &mut Vec<String>,
                version: Option<Version>) -> Option<String> {
     if !can_generate(env, signal) {
         warn!("Can't generate {} trampoline for signal '{}'", type_tid.full_name(&env.library),
@@ -48,7 +48,7 @@ pub fn analyze(env: &Env, signal: &library::Signal, type_tid: library::TypeId, i
     let this = parameter::Parameter {
         name: "this".to_owned(),
         typ: type_tid,
-        c_type: c_type,
+        c_type: c_type.into(),
         instance_parameter: false, //true,
         direction: library::ParameterDirection::In,
         transfer: library::Transfer::None,
@@ -67,14 +67,14 @@ pub fn analyze(env: &Env, signal: &library::Signal, type_tid: library::TypeId, i
 
     if in_trait {
         let type_name = bounds_rust_type(env, type_tid);
-        bounds.add_parameter("this", &type_name.into_string(), BoundType::IsA);
+        bounds.add_parameter("this", type_name.to_cow_str(), BoundType::IsA);
     }
 
     for par in &signal.parameters {
         let analysis = parameter::analyze(env, par, &configured_functions);
 
         if let Ok(s) = used_rust_type(env, par.typ) {
-            used_types.push(s);
+            used_types.push(s.into_owned());
         }
         if let Some(s) = used_ffi_type(env, par.typ) {
             used_types.push(s);
@@ -92,7 +92,7 @@ pub fn analyze(env: &Env, signal: &library::Signal, type_tid: library::TypeId, i
     let trampoline = Trampoline {
         name: name.clone(),
         parameters: parameters,
-        ret: signal.ret.clone(),
+        ret: &signal.ret,
         bounds: bounds,
         version: version,
     };

@@ -7,29 +7,29 @@ use super::conversion_type::ConversionType;
 use traits::*;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub enum TypeError {
-    Ignored(String),
-    Mismatch(String),
-    Unimplemented(String),
+pub enum TypeError<'a> {
+    Ignored(Cow<'a, str>),
+    Mismatch(Cow<'a, str>),
+    Unimplemented(Cow<'a, str>),
 }
 
-pub type Result = result::Result<String, TypeError>;
+pub type Result<'a> = result::Result<Cow<'a, str>, TypeError<'a>>;
 
-fn into_inner(res: Result) -> String {
+fn into_inner(res: Result) -> Cow<str> {
     use self::TypeError::*;
     match res {
         Ok(s) |
-            Err(Ignored(s)) |
-            Err(Mismatch(s)) |
-            Err(Unimplemented(s)) => s,
+        Err(Ignored(s)) |
+        Err(Mismatch(s)) |
+        Err(Unimplemented(s)) => s,
     }
 }
 
-impl IntoString for Result {
+impl<'a> IntoString for Result<'a> {
     fn into_string(self) -> String {
         use self::TypeError::*;
         match self {
-            Ok(s) => s,
+            Ok(s) => s.into_owned(),
             Err(Ignored(s)) => format!("/*Ignored*/{}", s),
             Err(Mismatch(s)) => format!("/*Metadata mismatch*/{}", s),
             Err(Unimplemented(s)) => format!("/*Unimplemented*/{}", s),
@@ -37,8 +37,20 @@ impl IntoString for Result {
     }
 }
 
-impl MapAny<String> for Result {
-    fn map_any<F: FnOnce(String) -> String>(self, op: F) -> Result {
+impl<'a> ToCowStr for Result<'a> {
+    fn to_cow_str(&self) -> Cow<str> {
+        use self::TypeError::*;
+        match *self {
+            Ok(ref s) => s.clone(),
+            Err(Ignored(ref s)) => format!("/*Ignored*/{}", s).into(),
+            Err(Mismatch(ref s)) => format!("/*Metadata mismatch*/{}", s).into(),
+            Err(Unimplemented(ref s)) => format!("/*Unimplemented*/{}", s).into(),
+        }
+    }
+}
+
+impl<'a> MapAny<'a, str> for Result<'a>  {
+    fn map_any<F: FnOnce(Cow<'a, str>) -> Cow<'a, str>>(self, op: F) -> Self {
         use self::TypeError::*;
         match self {
             Ok(s) => Ok(op(s)),
@@ -60,8 +72,9 @@ pub fn bounds_rust_type(env: &Env, type_id: library::TypeId) -> Result {
 fn rust_type_full(env: &Env, type_id: library::TypeId, nullable: Nullable, ref_mode: RefMode) -> Result {
     use library::Type::*;
     use library::Fundamental::*;
-    let ok = |s: &str| Ok(s.into());
-    let err = |s: &str| Err(TypeError::Unimplemented(s.into()));
+    let ok = |s: &'static str| Ok(s.into());
+    let err = |s: &'static str| Err(TypeError::Unimplemented(s.into()));
+    let err_owned = |s: String| Err(TypeError::Unimplemented(s.into()));
     let mut skip_option = false;
     let type_ = env.library.type_(type_id);
     let mut rust_type = match *type_ {
@@ -96,12 +109,12 @@ fn rust_type_full(env: &Env, type_id: library::TypeId, nullable: Nullable, ref_m
                 }
                 Type => ok("glib::types::Type"),
                 Unsupported => err("Unsupported"),
-                _ => err(&format!("Fundamental: {:?}", fund)),
+                _ => err_owned(format!("Fundamental: {:?}", fund)),
             }
         },
         Alias(ref alias) => {
             rust_type_full(env, alias.typ, nullable, ref_mode)
-                .map_any(|_| alias.name.clone())
+                .map_any(|_| Cow::Borrowed(&*alias.name))
         }
         Record(library::Record { ref c_type, .. }) if c_type == "GVariantType" => {
             if ref_mode.is_ref() { ok("VariantTy") } else { ok("VariantType") }
@@ -111,7 +124,7 @@ fn rust_type_full(env: &Env, type_id: library::TypeId, nullable: Nullable, ref_m
             Record(..) |
             Class(..) |
             Interface(..) => {
-            let name = type_.get_name().to_owned();
+            let name = type_.get_name();
             if env.type_status(&type_id.full_name(&env.library)).ignored() {
                 Err(TypeError::Ignored(name))
             }
@@ -131,12 +144,12 @@ fn rust_type_full(env: &Env, type_id: library::TypeId, nullable: Nullable, ref_m
             };
             rust_type_full(env, inner_tid, Nullable(false), inner_ref_mode)
                 .map_any(|s| if ref_mode.is_ref() {
-                    format!("[{}]", s)
+                    format!("[{}]", s).into()
                 } else {
-                    format!("Vec<{}>", s)
+                    format!("Vec<{}>", s).into()
                 })
         }
-        _ => Err(TypeError::Unimplemented(type_.get_name().to_owned())),
+        _ => Err(TypeError::Unimplemented(type_.get_name())),
     };
 
     if type_id.ns_id != library::MAIN_NAMESPACE && type_id.ns_id != library::INTERNAL_NAMESPACE
@@ -145,19 +158,20 @@ fn rust_type_full(env: &Env, type_id: library::TypeId, nullable: Nullable, ref_m
             rust_type = Err(TypeError::Ignored(into_inner(rust_type)));
         }
         rust_type = rust_type.map_any(|s| format!("{}::{}",
-            env.namespaces[type_id.ns_id].higher_crate_name, s));
+            env.namespaces[type_id.ns_id].higher_crate_name, s).into());
     }
 
     match ref_mode {
         RefMode::None | RefMode::ByRefFake => {}
-        RefMode::ByRef | RefMode::ByRefImmut => rust_type = rust_type.map_any(|s| format!("&{}", s)),
-        RefMode::ByRefMut => rust_type = rust_type.map_any(|s| format!("&mut {}", s)),
+        RefMode::ByRef | RefMode::ByRefImmut =>
+            rust_type = rust_type.map_any(|s| format!("&{}", s).into()),
+        RefMode::ByRefMut => rust_type = rust_type.map_any(|s| format!("&mut {}", s).into()),
     }
     if *nullable && !skip_option {
         match ConversionType::of(&env.library, type_id) {
             ConversionType::Pointer
                 | ConversionType::Scalar => {
-                rust_type = rust_type.map_any(|s| format!("Option<{}>", s))
+                rust_type = rust_type.map_any(|s| format!("Option<{}>", s).into())
             }
             _ => (),
         }
@@ -179,13 +193,13 @@ pub fn used_rust_type(env: &Env, type_id: library::TypeId) -> Result {
         List(inner_tid) |
             SList(inner_tid) |
             CArray(inner_tid) => used_rust_type(env, inner_tid),
-        _ => Err(TypeError::Ignored("Don't need use".to_owned())),
+        _ => Err(TypeError::Ignored("Don't need use".into())),
     }
 }
 
-pub fn parameter_rust_type(env: &Env, type_id:library::TypeId,
+pub fn parameter_rust_type<'e>(env: &'e Env, type_id:library::TypeId,
                            direction: library::ParameterDirection, nullable: Nullable,
-                           ref_mode: RefMode) -> Result {
+                           ref_mode: RefMode) -> Result<'e> {
     use library::Type::*;
     let type_ = env.library.type_(type_id);
     let rust_type = rust_type_full(env, type_id, nullable, ref_mode);
@@ -239,14 +253,14 @@ pub fn parameter_rust_type(env: &Env, type_id:library::TypeId,
                 _ => Err(TypeError::Unimplemented(into_inner(rust_type))),
             }
         }
-        _ => Err(TypeError::Unimplemented(type_.get_name().to_owned())),
+        _ => Err(TypeError::Unimplemented(type_.get_name())),
     }
 }
 
 #[inline]
-fn format_parameter(rust_type: String, direction: library::ParameterDirection) -> String {
+fn format_parameter(rust_type: Cow<str>, direction: library::ParameterDirection) -> Cow<str> {
     if direction.is_out() {
-        format!("&mut {}", rust_type)
+        format!("&mut {}", rust_type).into()
     } else {
         rust_type
     }

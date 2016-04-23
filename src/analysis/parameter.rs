@@ -8,11 +8,11 @@ use super::bounds::Bounds;
 use super::ref_mode::RefMode;
 
 #[derive(Clone, Debug)]
-pub struct Parameter {
+pub struct Parameter<'e> {
     //from library::Parameter
     pub name: String,
     pub typ: library::TypeId,
-    pub c_type: String,
+    pub c_type: Cow<'e, str>,
     pub instance_parameter: bool,
     pub direction: library::ParameterDirection,
     pub transfer: library::Transfer,
@@ -28,7 +28,7 @@ pub struct Parameter {
     pub to_glib_extra: String,
 }
 
-pub fn analyze(env: &Env, par: &library::Parameter, configured_functions: &[&Function]) -> Parameter {
+pub fn analyze<'e>(env: &'e Env, par: &'e library::Parameter, configured_functions: &[&Function]) -> Parameter<'e> {
     let name = if par.instance_parameter {
         Cow::Borrowed(&*par.name)
     } else {
@@ -48,7 +48,7 @@ pub fn analyze(env: &Env, par: &library::Parameter, configured_functions: &[&Fun
     Parameter {
         name: name.into_owned(),
         typ: par.typ,
-        c_type: par.c_type.clone(),
+        c_type: Cow::Borrowed(&*par.c_type),
         instance_parameter: par.instance_parameter,
         direction: par.direction,
         transfer: par.transfer,

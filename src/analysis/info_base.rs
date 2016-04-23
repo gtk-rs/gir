@@ -8,11 +8,11 @@ use super::imports::Imports;
 use version::Version;
 
 #[derive(Default)]
-pub struct InfoBase {
+pub struct InfoBase<'e> {
     pub full_name: String,
     pub type_id: library::TypeId,
     pub name: String,
-    pub functions: Vec<functions::Info>,
+    pub functions: Vec<functions::Info<'e>>,
     pub specials: special_functions::Infos,
     pub imports: Imports,
     pub version: Option<Version>,
@@ -20,7 +20,7 @@ pub struct InfoBase {
     pub cfg_condition: Option<String>,
 }
 
-impl InfoBase {
+impl<'e> InfoBase<'e> {
     ///TODO: return iterator
     pub fn constructors(&self) -> Vec<&functions::Info> {
         self.functions.iter()

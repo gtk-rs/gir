@@ -1,3 +1,4 @@
+use std::borrow::Cow;
 use std::collections::vec_deque::VecDeque;
 use std::slice::Iter;
 use std::vec::Vec;
@@ -50,11 +51,11 @@ impl Bounds {
             _ => String::new(),
         }
     }
-    pub fn add_parameter(&mut self, name: &str, type_str: &str, bound_type: BoundType) -> bool {
+    pub fn add_parameter(&mut self, name: &str, type_str: Cow<str>, bound_type: BoundType) -> bool {
         if self.used.iter().any(|ref n| n.0 == name)  { return false; }
         let front = self.unused.pop_front();
         if let Some(alias) = front {
-            self.used.push((name.into(), alias.clone(), type_str.into(), bound_type));
+            self.used.push((name.into(), alias.clone(), type_str.into_owned(), bound_type));
             true
         } else {
             false
@@ -94,23 +95,23 @@ mod tests {
     fn get_new_all() {
         let mut bounds: Bounds = Default::default();
         let typ = BoundType::IsA;
-        assert_eq!(bounds.add_parameter("a", "", typ), true);
-        assert_eq!(bounds.add_parameter("a", "", typ), false);  //Don't add second time
-        assert_eq!(bounds.add_parameter("b", "", typ), true);
-        assert_eq!(bounds.add_parameter("c", "", typ), true);
-        assert_eq!(bounds.add_parameter("d", "", typ), true);
-        assert_eq!(bounds.add_parameter("e", "", typ), true);
-        assert_eq!(bounds.add_parameter("f", "", typ), true);
-        assert_eq!(bounds.add_parameter("g", "", typ), true);
-        assert_eq!(bounds.add_parameter("h", "", typ), false);
+        assert_eq!(bounds.add_parameter("a", "".into(), typ), true);
+        assert_eq!(bounds.add_parameter("a", "".into(), typ), false);  //Don't add second time
+        assert_eq!(bounds.add_parameter("b", "".into(), typ), true);
+        assert_eq!(bounds.add_parameter("c", "".into(), typ), true);
+        assert_eq!(bounds.add_parameter("d", "".into(), typ), true);
+        assert_eq!(bounds.add_parameter("e", "".into(), typ), true);
+        assert_eq!(bounds.add_parameter("f", "".into(), typ), true);
+        assert_eq!(bounds.add_parameter("g", "".into(), typ), true);
+        assert_eq!(bounds.add_parameter("h", "".into(), typ), false);
     }
 
     #[test]
     fn get_parameter_alias_info() {
         let mut bounds: Bounds = Default::default();
         let typ = BoundType::IsA;
-        bounds.add_parameter("a", "", typ);
-        bounds.add_parameter("b", "", typ);
+        bounds.add_parameter("a", "".into(), typ);
+        bounds.add_parameter("b", "".into(), typ);
         assert_eq!(bounds.get_parameter_alias_info("a"), Some(("T", typ)));
         assert_eq!(bounds.get_parameter_alias_info("b"), Some(("U", typ)));
         assert_eq!(bounds.get_parameter_alias_info("c"), None);

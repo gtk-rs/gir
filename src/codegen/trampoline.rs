@@ -12,7 +12,7 @@ use super::return_value::ToReturnValue;
 use super::sys::ffi_type::ffi_type;
 use super::trampoline_from_glib::TrampolineFromGlib;
 use super::trampoline_to_glib::TrampolineToGlib;
-use traits::IntoString;
+use traits::{IntoString, ToCowStr};
 
 pub fn generate(w: &mut Write, env: &Env, analysis: &Trampoline,
                 in_trait: bool, object_name: &str) -> Result<()> {
@@ -120,7 +120,7 @@ fn trampoline_parameters(env: &Env, analysis: &Trampoline) -> String {
 
 fn trampoline_parameter(env: &Env, par: &Parameter) -> String {
     let ffi_type = ffi_type(env, par.typ, &par.c_type);
-    format!("{}: {}", nameutil::mangle_keywords(&*par.name), ffi_type.into_string())
+    format!("{}: {}", nameutil::mangle_keywords(&*par.name), ffi_type.to_cow_str())
 }
 
 fn trampoline_returns(env: &Env, analysis: &Trampoline) -> String {
@@ -128,7 +128,7 @@ fn trampoline_returns(env: &Env, analysis: &Trampoline) -> String {
         String::new()
     } else {
         let ffi_type = ffi_type(env, analysis.ret.typ, &analysis.ret.c_type);
-        format!(" -> {}", ffi_type.into_string())
+        format!(" -> {}", ffi_type.to_cow_str())
     }
 }
 

@@ -66,7 +66,7 @@ impl Builder {
         let mem_mode = match ConversionType::of(&env.library, parameter.typ) {
             ConversionType::Pointer => {
                 if parameter.caller_allocates {
-                    UninitializedNamed(rust_type(env, parameter.typ).unwrap())
+                    UninitializedNamed(rust_type(env, parameter.typ).unwrap().into_owned())
                 } else {
                     NullPtr
                 }

@@ -176,7 +176,7 @@ impl TypeId {
     pub fn full_name(&self, library: &Library) -> String{
         let ns_name = &library.namespace(self.ns_id).name;
         let type_ = &library.type_(*self);
-        format!("{}.{}", ns_name, &type_.get_name()).into()
+        format!("{}.{}", ns_name, &type_.get_name())
     }
 
     pub fn tid_none() -> TypeId {
@@ -392,25 +392,25 @@ pub enum Type {
 }
 
 impl Type {
-    pub fn get_name(&self) -> String {
+    pub fn get_name(&self) -> Cow<str> {
         use self::Type::*;
         match *self {
             Fundamental(fund) => format!("{:?}", fund).into(),
-            Alias(ref alias) => alias.name.clone(),
-            Enumeration(ref enum_) => enum_.name.clone(),
-            Bitfield(ref bit_field) => bit_field.name.clone(),
-            Record(ref rec) => rec.name.clone(),
-            Union(ref union) => union.name.clone(),
-            Function(ref func) => func.name.clone(),
-            Interface(ref interface) => interface.name.clone(),
-            Array(type_id) => format!("Array {:?}", type_id),
-            Class(ref class) => class.name.clone(),
-            CArray(type_id) => format!("CArray {:?}", type_id),
-            FixedArray(type_id, size) => format!("FixedArray {:?}; {}", type_id, size),
-            PtrArray(type_id) => format!("PtrArray {:?}", type_id),
-            HashTable(key_type_id, value_type_id) => format!("HashTable {:?}/{:?}", key_type_id, value_type_id),
-            List(type_id) => format!("List {:?}", type_id),
-            SList(type_id) => format!("SList {:?}", type_id),
+            Alias(ref alias) => Cow::Borrowed(&*alias.name),
+            Enumeration(ref enum_) => Cow::Borrowed(&*enum_.name),
+            Bitfield(ref bit_field) => Cow::Borrowed(&*bit_field.name),
+            Record(ref rec) => Cow::Borrowed(&*rec.name),
+            Union(ref union) => Cow::Borrowed(&*union.name),
+            Function(ref func) => Cow::Borrowed(&*func.name),
+            Interface(ref interface) => Cow::Borrowed(&*interface.name),
+            Array(type_id) => format!("Array {:?}", type_id).into(),
+            Class(ref class) => Cow::Borrowed(&*class.name),
+            CArray(type_id) => format!("CArray {:?}", type_id).into(),
+            FixedArray(type_id, size) => format!("FixedArray {:?}; {}", type_id, size).into(),
+            PtrArray(type_id) => format!("PtrArray {:?}", type_id).into(),
+            HashTable(key_type_id, value_type_id) => format!("HashTable {:?}/{:?}", key_type_id, value_type_id).into(),
+            List(type_id) => format!("List {:?}", type_id).into(),
+            SList(type_id) => format!("SList {:?}", type_id).into(),
         }
     }
 
@@ -557,7 +557,7 @@ impl Namespace {
     fn type_(&self, id: u32) -> &Type {
         self.types[id as usize].as_ref().unwrap()
     }
- 
+
     fn type_mut(&mut self, id: u32) -> &mut Type {
         self.types[id as usize].as_mut().unwrap()
     }
@@ -729,5 +729,5 @@ mod tests {
         assert_eq!(TypeId::tid_none().full_name(&lib), "*.None");
         assert_eq!(TypeId::tid_bool().full_name(&lib), "*.Boolean");
     }
-    
+
 }
