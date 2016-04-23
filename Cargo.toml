@@ -19,6 +19,8 @@ git2 = "*"
 lazy_static = "*"
 log = "*"
 regex = "*"
+time = "*"
+stopwatch = "*"
 rustdoc-stripper = { git = "https://github.com/GuillaumeGomez/rustdoc-stripper" }
 
 [build-dependencies]
