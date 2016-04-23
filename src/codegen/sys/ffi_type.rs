@@ -87,10 +87,10 @@ fn ffi_inner(env: &Env, tid: library::TypeId, mut inner: String) -> Result<'stat
                 Type => "GType",
                 Pointer => match &inner[..]  {
                     "void" => "c_void",
-                    "tm" => return Err(TypeError::Unimplemented(inner)),  //TODO: try use time:Tm
+                    "tm" => return Err(TypeError::Unimplemented(inner.into())),  //TODO: try use time:Tm
                     _ => return Ok(inner.into()),
                 },
-                Unsupported => return Err(TypeError::Unimplemented(inner)),
+                Unsupported => return Err(TypeError::Unimplemented(inner.into())),
                 VarArgs => panic!("Should not reach here"),
             };
             Ok(inner.into())
@@ -99,9 +99,9 @@ fn ffi_inner(env: &Env, tid: library::TypeId, mut inner: String) -> Result<'stat
             if let Some(declared_c_type) = typ.get_glib_name() {
                 if declared_c_type != inner {
                     let msg = format!("[c:type mismatch `{}` != `{}` of `{}`]",
-                                      inner, declared_c_type, typ.get_name());
+                                      inner, declared_c_type, typ.get_name_cow());
                     warn!("{}", msg);
-                    return Err(TypeError::Mismatch(msg));
+                    return Err(TypeError::Mismatch(msg.into()));
                 }
             }
             else {
@@ -130,7 +130,7 @@ fn ffi_inner(env: &Env, tid: library::TypeId, mut inner: String) -> Result<'stat
                         let msg = format!("[c:type mismatch {} != {} of {}]", inner, glib_name,
                             env.library.type_(tid).get_name());
                         warn!("{}", msg);
-                        Err(TypeError::Mismatch(msg))
+                        Err(TypeError::Mismatch(msg.into()))
                     }
                 }
                 else {
@@ -141,7 +141,7 @@ fn ffi_inner(env: &Env, tid: library::TypeId, mut inner: String) -> Result<'stat
                 let msg = format!("[Missing glib_name of {}, can't match != {}]",
                                   env.library.type_(tid).get_name(), inner);
                 warn!("{}", msg);
-                Err(TypeError::Mismatch(msg))
+                Err(TypeError::Mismatch(msg.into()))
             }
         }
     };
@@ -171,14 +171,14 @@ fn fix_name<'a>(env: &Env, type_id: library::TypeId, name: &'a str) -> Result<'s
         }
     } else {
         let name_with_prefix = if type_id.ns_id == library::MAIN_NAMESPACE {
-            name.into()
+            Cow::Owned(name.into())
         } else {
-            format!("{}::{}", &env.namespaces[type_id.ns_id].crate_name, name)
+            format!("{}::{}", &env.namespaces[type_id.ns_id].crate_name, name).into()
         };
         if env.type_status_sys(&type_id.full_name(&env.library)).ignored() {
             Err(TypeError::Ignored(name_with_prefix))
         } else {
-            Ok(Cow::Owned(name_with_prefix))
+            Ok(name_with_prefix)
         }
     }
 }

@@ -8,21 +8,21 @@ use super::conversion_type::ConversionType;
 use traits::*;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub enum TypeError {
-    Ignored(String),
-    Mismatch(String),
-    Unimplemented(String),
+pub enum TypeError<'a> {
+    Ignored(Cow<'a, str>),
+    Mismatch(Cow<'a, str>),
+    Unimplemented(Cow<'a, str>),
 }
 
-pub type Result<'a> = result::Result<Cow<'a, str>, TypeError>;
+pub type Result<'a> = result::Result<Cow<'a, str>, TypeError<'a>>;
 
-fn into_inner(res: Result) -> String {
+fn into_inner(res: Result) -> Cow<str> {
     use self::TypeError::*;
     match res {
-        Ok(s) => s.into_owned(),
+        Ok(s) |
         Err(Ignored(s)) |
-            Err(Mismatch(s)) |
-            Err(Unimplemented(s)) => s,
+        Err(Mismatch(s)) |
+        Err(Unimplemented(s)) => s,
     }
 }
 
@@ -43,9 +43,9 @@ impl<'a> MapAny<'a, str> for Result<'a>  {
         use self::TypeError::*;
         match self {
             Ok(s) => Ok(op(s)),
-            Err(Ignored(s)) => Err(Ignored(op(s.into()).into_owned())),
-            Err(Mismatch(s)) => Err(Mismatch(op(s.into()).into_owned())),
-            Err(Unimplemented(s)) => Err(Unimplemented(op(s.into()).into_owned())),
+            Err(Ignored(s)) => Err(Ignored(op(s))),
+            Err(Mismatch(s)) => Err(Mismatch(op(s))),
+            Err(Unimplemented(s)) => Err(Unimplemented(op(s))),
         }
     }
 }
@@ -73,8 +73,8 @@ fn rust_type_full(env: &Env, type_id: library::TypeId, nullable: Nullable, ref_m
     use library::Type::*;
     use library::Fundamental::*;
     let ok = |s: &'static str| Ok(s.into());
-    let err = |s: &'static str| Err(TypeError::Unimplemented(s.to_owned()));
-    let err_owned = |s: String| Err(TypeError::Unimplemented(s));
+    let err = |s: &'static str| Err(TypeError::Unimplemented(s.into()));
+    let err_owned = |s: String| Err(TypeError::Unimplemented(s.into()));
     let mut skip_option = false;
     let type_ = env.library.type_(type_id);
     let mut rust_type = match *type_ {
@@ -126,7 +126,7 @@ fn rust_type_full(env: &Env, type_id: library::TypeId, nullable: Nullable, ref_m
             Interface(..) => {
             let name = type_.get_name_cow();
             if env.type_status(&type_id.full_name(&env.library)).ignored() {
-                Err(TypeError::Ignored(name.into_owned()))
+                Err(TypeError::Ignored(name))
             }
             else {
                 Ok(name)
@@ -149,7 +149,7 @@ fn rust_type_full(env: &Env, type_id: library::TypeId, nullable: Nullable, ref_m
                     format!("Vec<{}>", s).into()
                 })
         }
-        _ => Err(TypeError::Unimplemented(type_.get_name())),
+        _ => Err(TypeError::Unimplemented(type_.get_name_cow())),
     };
 
     if type_id.ns_id != library::MAIN_NAMESPACE && type_id.ns_id != library::INTERNAL_NAMESPACE
@@ -193,7 +193,7 @@ pub fn used_rust_type(env: &Env, type_id: library::TypeId) -> Result {
         List(inner_tid) |
             SList(inner_tid) |
             CArray(inner_tid) => used_rust_type(env, inner_tid),
-        _ => Err(TypeError::Ignored("Don't need use".to_owned())),
+        _ => Err(TypeError::Ignored("Don't need use".into())),
     }
 }
 
@@ -253,7 +253,7 @@ pub fn parameter_rust_type<'e>(env: &'e Env, type_id:library::TypeId,
                 _ => Err(TypeError::Unimplemented(into_inner(rust_type))),
             }
         }
-        _ => Err(TypeError::Unimplemented(type_.get_name())),
+        _ => Err(TypeError::Unimplemented(type_.get_name_cow())),
     }
 }
 
