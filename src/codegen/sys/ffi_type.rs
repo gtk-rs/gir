@@ -18,14 +18,14 @@ pub fn ffi_type(env: &Env, tid: library::TypeId, c_type: &str) -> Result<'static
                 match *env.library.type_(tid) {
                     Type::FixedArray(_, size) => {
                         ffi_inner(env, c_tid, c_type.into())
-                            .map_any(|s| format!("[{}; {}]", s, size))
+                            .map_any(|s| format!("[{}; {}]", s, size).into())
                     }
                     Type::Class(Class { c_type: ref expected, .. }) |
                             Type::Interface(Interface { c_type: ref expected, .. })
                             if c_type == "gpointer" => {
                         info!("[c:type `gpointer` instead of `*mut {}`, fixing]", expected);
                         ffi_inner(env, tid, expected.clone())
-                            .map_any(|s| format!("*mut {}", s))
+                            .map_any(|s| format!("*mut {}", s).into())
                     }
                     _ => {
                         ffi_inner(env, c_tid, c_type.into())
@@ -42,7 +42,7 @@ pub fn ffi_type(env: &Env, tid: library::TypeId, c_type: &str) -> Result<'static
     }
     else { // ptr not empty
         ffi_inner(env, tid, inner)
-            .map_any(|s| format!("{} {}", ptr, s))
+            .map_any(|s| format!("{} {}", ptr, s).into())
     };
     trace!("ffi_type({:?}, {}) -> {:?}", tid, c_type, res);
     res
@@ -112,7 +112,7 @@ fn ffi_inner(env: &Env, tid: library::TypeId, mut inner: String) -> Result<'stat
         Type::CArray(inner_tid) => ffi_inner(env, inner_tid, inner),
         Type::FixedArray(inner_tid, size) => {
             ffi_inner(env, inner_tid, inner)
-                .map_any(|s| format!("[{}; {}]", s, size))
+                .map_any(|s| format!("[{}; {}]", s, size).into())
         }
         Type::Array(..) | Type::PtrArray(..)
                 | Type::List(..) | Type::SList(..) | Type::HashTable(..) => {
@@ -147,7 +147,7 @@ fn ffi_inner(env: &Env, tid: library::TypeId, mut inner: String) -> Result<'stat
     };
 
     if volatile {
-        res.map(|s| Cow::Owned(format!("Volatile<{}>", s)))
+        res.map(|s| format!("Volatile<{}>", s).into())
     }
     else {
         res
