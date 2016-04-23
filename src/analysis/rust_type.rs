@@ -124,7 +124,7 @@ fn rust_type_full(env: &Env, type_id: library::TypeId, nullable: Nullable, ref_m
             Record(..) |
             Class(..) |
             Interface(..) => {
-            let name = type_.get_name_cow();
+            let name = type_.get_name();
             if env.type_status(&type_id.full_name(&env.library)).ignored() {
                 Err(TypeError::Ignored(name))
             }
@@ -149,7 +149,7 @@ fn rust_type_full(env: &Env, type_id: library::TypeId, nullable: Nullable, ref_m
                     format!("Vec<{}>", s).into()
                 })
         }
-        _ => Err(TypeError::Unimplemented(type_.get_name_cow())),
+        _ => Err(TypeError::Unimplemented(type_.get_name())),
     };
 
     if type_id.ns_id != library::MAIN_NAMESPACE && type_id.ns_id != library::INTERNAL_NAMESPACE
@@ -253,7 +253,7 @@ pub fn parameter_rust_type<'e>(env: &'e Env, type_id:library::TypeId,
                 _ => Err(TypeError::Unimplemented(into_inner(rust_type))),
             }
         }
-        _ => Err(TypeError::Unimplemented(type_.get_name_cow())),
+        _ => Err(TypeError::Unimplemented(type_.get_name())),
     }
 }
 

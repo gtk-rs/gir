@@ -176,7 +176,7 @@ impl TypeId {
     pub fn full_name(&self, library: &Library) -> String{
         let ns_name = &library.namespace(self.ns_id).name;
         let type_ = &library.type_(*self);
-        format!("{}.{}", ns_name, &type_.get_name()).into()
+        format!("{}.{}", ns_name, &type_.get_name())
     }
 
     pub fn tid_none() -> TypeId {
@@ -392,10 +392,7 @@ pub enum Type {
 }
 
 impl Type {
-    pub fn get_name(&self) -> String {
-        self.get_name_cow().into_owned()
-    }
-    pub fn get_name_cow<'a>(&'a self) -> Cow<'a, str> {
+    pub fn get_name(&self) -> Cow<str> {
         use self::Type::*;
         match *self {
             Fundamental(fund) => format!("{:?}", fund).into(),

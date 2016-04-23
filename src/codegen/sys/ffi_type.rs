@@ -99,7 +99,7 @@ fn ffi_inner(env: &Env, tid: library::TypeId, mut inner: String) -> Result<'stat
             if let Some(declared_c_type) = typ.get_glib_name() {
                 if declared_c_type != inner {
                     let msg = format!("[c:type mismatch `{}` != `{}` of `{}`]",
-                                      inner, declared_c_type, typ.get_name_cow());
+                                      inner, declared_c_type, typ.get_name());
                     warn!("{}", msg);
                     return Err(TypeError::Mismatch(msg.into()));
                 }
