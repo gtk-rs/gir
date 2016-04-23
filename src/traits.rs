@@ -10,6 +10,10 @@ pub trait IntoString {
     fn into_string(self) -> String;
 }
 
+pub trait ToCowStr {
+    fn to_cow_str(&self) -> Cow<str>;
+}
+
 pub trait IntoStatic {
     type Static;
     fn into_static(self) -> Self::Static;

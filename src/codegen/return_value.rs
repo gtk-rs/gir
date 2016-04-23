@@ -14,9 +14,9 @@ impl ToReturnValue for library::Parameter {
     fn to_return_value(&self, env: &Env) -> String {
         let rust_type = parameter_rust_type(env, self.typ, self.direction,
                                             self.nullable, RefMode::None);
-        let name = rust_type.into_string();
+        let name = rust_type.to_cow_str();
         let type_str = match ConversionType::of(&env.library, self.typ) {
-            ConversionType::Unknown => format!("/*Unknown conversion*/{}", name),
+            ConversionType::Unknown => format!("/*Unknown conversion*/{}", name).into(),
             //TODO: records as in gtk_container_get_path_for_child
             _ => name,
         };
@@ -65,13 +65,13 @@ pub fn out_parameters_as_return(env: &Env, analysis: &analysis::functions::Info)
     return_str
 }
 
-fn out_parameter_as_return(par: &library::Parameter, env: &Env) -> String {
+fn out_parameter_as_return<'e>(par: &library::Parameter, env: &'e Env) -> String {
     //TODO: upcasts?
     let rust_type = parameter_rust_type(env, par.typ, ParameterDirection::Return,
                                         par.nullable, RefMode::None);
-    let name = rust_type.into_string();
+    let name = rust_type.to_cow_str();
     match ConversionType::of(&env.library, par.typ) {
         ConversionType::Unknown => format!("/*Unknown conversion*/{}", name),
-        _ => name,
+        _ => name.into_owned(),
     }
 }

@@ -21,9 +21,9 @@ impl<'e> ToParameter for Parameter<'e> {
                 Some((t, bound_type)) => {
                     match bound_type {
                         BoundType::IsA => if *self.nullable {
-                            type_str = format!("Option<&{}{}>", mut_str, t)
+                            type_str = format!("Option<&{}{}>", mut_str, t);
                         } else {
-                            type_str = format!("&{}{}", mut_str, t)
+                            type_str = format!("&{}{}", mut_str, t);
                         },
                         BoundType::AsRef  => type_str = t.to_owned(),
                     }
@@ -31,10 +31,10 @@ impl<'e> ToParameter for Parameter<'e> {
                 None => {
                     let rust_type = parameter_rust_type(env, self.typ, self.direction,
                                                         self.nullable, self.ref_mode);
-                    let type_name = rust_type.into_string();
+                    let type_name = rust_type.to_cow_str();
                     type_str = match ConversionType::of(&env.library, self.typ) {
-                        ConversionType::Unknown => format!("/*Unknown conversion*/{}", type_name),
-                        _ => type_name
+                        ConversionType::Unknown => format!("/*Unknown conversion*/{}", type_name).into(),
+                        _ => type_name.into_owned(),
                     }
                 }
             }

@@ -9,7 +9,7 @@ use super::ffi_type::used_ffi_type;
 use super::parameter;
 use super::ref_mode::RefMode;
 use super::rust_type::{bounds_rust_type, rust_type, used_rust_type};
-use traits::IntoString;
+use traits::ToCowStr;
 use version::Version;
 
 #[derive(Debug)]
@@ -67,7 +67,7 @@ pub fn analyze<'e>(env: &'e Env, signal: &'e library::Signal, type_tid: library:
 
     if in_trait {
         let type_name = bounds_rust_type(env, type_tid);
-        bounds.add_parameter("this", &type_name.into_string(), BoundType::IsA);
+        bounds.add_parameter("this", type_name.to_cow_str(), BoundType::IsA);
     }
 
     for par in &signal.parameters {

@@ -37,6 +37,18 @@ impl<'a> IntoString for Result<'a> {
     }
 }
 
+impl<'a> ToCowStr for Result<'a> {
+    fn to_cow_str(&self) -> Cow<str> {
+        use self::TypeError::*;
+        match *self {
+            Ok(ref s) => s.clone(),
+            Err(Ignored(ref s)) => format!("/*Ignored*/{}", s).into(),
+            Err(Mismatch(ref s)) => format!("/*Metadata mismatch*/{}", s).into(),
+            Err(Unimplemented(ref s)) => format!("/*Unimplemented*/{}", s).into(),
+        }
+    }
+}
+
 impl<'a> MapAny<'a, str> for Result<'a>  {
     fn map_any<F: FnOnce(Cow<'a, str>) -> Cow<'a, str>>(self, op: F) -> Self {
         use self::TypeError::*;

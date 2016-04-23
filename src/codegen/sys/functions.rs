@@ -148,7 +148,7 @@ fn function_return_value(env: &Env, func: &library::Function) -> (bool, String) 
     if func.ret.typ == Default::default() { return (false, String::new()) }
     let ffi_type = ffi_type(env, func.ret.typ, &func.ret.c_type);
     let commented = ffi_type.is_err();
-    (commented, format!(" -> {}", ffi_type.into_string()))
+    (commented, format!(" -> {}", ffi_type.to_cow_str()))
 }
 
 fn function_parameter(env: &Env, par: &library::Parameter, bare: bool) -> (bool, String) {
@@ -159,9 +159,8 @@ fn function_parameter(env: &Env, par: &library::Parameter, bare: bool) -> (bool,
     let commented = ffi_type.is_err();
     let res = if bare {
         ffi_type.into_string()
-    }
-    else {
-        format!("{}: {}", nameutil::mangle_keywords(&*par.name), ffi_type.into_string())
+    } else {
+        format!("{}: {}", nameutil::mangle_keywords(&*par.name), ffi_type.to_cow_str())
     };
     (commented, res)
 }

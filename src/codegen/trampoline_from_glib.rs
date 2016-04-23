@@ -19,8 +19,8 @@ impl<'e> TrampolineFromGlib for Parameter<'e> {
             Pointer => {
                 let (mut left, mut right) = from_glib_xxx(self.transfer);
                 if need_type_name {
-                    let type_name = rust_type(env, self.typ).into_string();
-                    left = format!("&{}::{}", type_name, left);
+                    let type_ = rust_type(env, self.typ);
+                    left = format!("&{}::{}", type_.to_cow_str(), left);
                 } else {
                     left = format!("&{}", left);
                 }
