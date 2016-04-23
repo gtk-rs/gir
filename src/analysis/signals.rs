@@ -11,7 +11,7 @@ use version::Version;
 pub struct Info {
     pub connect_name: String,
     pub signal_name: String,
-    pub trampoline_name: Option<String>, //TODO: remove Option
+    pub trampoline_name: Result<String, Vec<String>>,
     pub version: Option<Version>,
     pub deprecated_version: Option<Version>,
 }
@@ -47,7 +47,7 @@ fn analyze_signal(env: &Env, signal: &library::Signal, type_tid: library::TypeId
     let trampoline_name = trampolines::analyze(env, signal, type_tid, in_trait, trampolines,
                                                &mut used_types, version);
 
-    if trampoline_name.is_some() {
+    if trampoline_name.is_ok() {
         imports.add_used_types(&used_types, version);
         if in_trait {
             imports.add("Object", version);

@@ -12,7 +12,7 @@ use writer::ToCode;
 pub fn generate(w: &mut Write, env: &Env, analysis: &analysis::signals::Info,
                 trampolines: &analysis::trampolines::Trampolines,
                 in_trait: bool, only_declaration: bool, indent: usize) -> Result<()> {
-    let commented = analysis.trampoline_name.is_none();
+    let commented = analysis.trampoline_name.is_err();
     let comment_prefix = if commented { "//" } else { "" };
     let pub_prefix = if in_trait { "" } else { "pub " };
 
@@ -33,8 +33,17 @@ pub fn generate(w: &mut Write, env: &Env, analysis: &analysis::signals::Info,
                     try!(writeln!(w, "{}{}", tabs(indent), s));
                 }
             }
-            _ => try!(writeln!(w, "{}{}\tTODO: connect to trampoline\n{0}{1}}}",
-                                  tabs(indent), comment_prefix)),
+            _ => {
+                if let Err(ref errors) = analysis.trampoline_name {
+                    for error in errors {
+                        try!(writeln!(w, "{}{}\t{}", tabs(indent), comment_prefix, error));
+                    }
+                    try!(writeln!(w, "{}{}}}", tabs(indent), comment_prefix));
+                } else {
+                    try!(writeln!(w, "{}{}\tTODO: connect to trampoline\n{0}{1}}}",
+                                  tabs(indent), comment_prefix));
+                }
+            }
         }
     }
 
@@ -43,7 +52,7 @@ pub fn generate(w: &mut Write, env: &Env, analysis: &analysis::signals::Info,
 
 fn function_type_string(env: &Env, analysis: &analysis::signals::Info,
                         trampolines: &analysis::trampolines::Trampolines)-> Option<String> {
-    if analysis.trampoline_name.is_none() {
+    if analysis.trampoline_name.is_err() {
         return None;
     }
 
