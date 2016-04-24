@@ -48,15 +48,16 @@ impl Statistics {
         sw.stop();
     }
 
-    pub fn print(&mut self) {
+    pub fn print(&self) {
         for typ in SWType::iter() {
-            let sw = self.stopwatches.entry(*typ).or_insert(Default::default());
-            let elapsed = sw.elapsed();
-            let elapsed_ms = sw.elapsed_ms();
-            let typ_str = format!("{:?}", typ);
-            let elapsed_str = format!("{}", elapsed);
-            let elapsed_ms_str = format!("{}", elapsed_ms);
-            println!("{:20} {:>20} {:>20}", typ_str, elapsed_str, elapsed_ms_str);
+            if let Some(sw) = self.stopwatches.get(typ) {
+                let elapsed = sw.elapsed();
+                let elapsed_ms = sw.elapsed_ms();
+                let typ_str = format!("{:?}", typ);
+                let elapsed_str = format!("{}", elapsed);
+                let elapsed_ms_str = format!("{}", elapsed_ms);
+                println!("{:20} {:>20} {:>20}", typ_str, elapsed_str, elapsed_ms_str);
+            }
         }
     }
 }
