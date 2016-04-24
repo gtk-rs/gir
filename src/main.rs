@@ -65,8 +65,8 @@ fn do_main() -> Result<(), Box<Error>> {
 
     let mut statistics = Statistics::new();
 
-    statistics.start(SWType::Total);
-    statistics.start(SWType::Loading);
+    let watcher_total = statistics.start(SWType::Total);
+    let watcher_loading = statistics.start(SWType::Loading);
 
     let mut library = Library::new(&cfg.library_name);
     library.read_file(&cfg.girs_dir, &cfg.library_full_name());
@@ -85,13 +85,14 @@ fn do_main() -> Result<(), Box<Error>> {
         class_hierarchy: class_hierarchy,
     };
 
-    statistics.stop(SWType::Loading);
-    statistics.start(SWType::Generating);
+    drop(watcher_loading);
+    {
+        let _watcher_generating = statistics.start(SWType::Generating);
 
-    codegen::generate(&env);
+        codegen::generate(&env);
+    }
 
-    statistics.stop(SWType::Generating);
-    statistics.stop(SWType::Total);
+    drop(watcher_total);
 
     statistics.print();
 

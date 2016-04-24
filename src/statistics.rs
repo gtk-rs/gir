@@ -1,4 +1,6 @@
+use std::cell::RefCell;
 use std::collections::HashMap;
+use std::rc::Rc;
 use std::slice::Iter;
 
 use stopwatch::Stopwatch;
@@ -28,9 +30,19 @@ iterated_enum! {
     ]
 }
 
+pub struct Watcher {
+    stopwatch: Rc<RefCell<Stopwatch>>,
+}
+
+impl Drop for Watcher {
+    fn drop(&mut self) {
+        self.stopwatch.borrow_mut().stop();
+    }
+}
+
 #[derive(Default)]
 pub struct Statistics {
-    stopwatches:  HashMap<SWType, Stopwatch>,
+    stopwatches:  HashMap<SWType, Rc<RefCell<Stopwatch>>>,
 }
 
 impl Statistics {
@@ -38,19 +50,16 @@ impl Statistics {
         Default::default()
     }
 
-    pub fn start(&mut self, typ: SWType) {
-        let mut sw = self.stopwatches.entry(typ).or_insert(Default::default());
-        sw.start();
-    }
-
-    pub fn stop(&mut self, typ: SWType) {
-        let mut sw = self.stopwatches.entry(typ).or_insert(Default::default());
-        sw.stop();
+    pub fn start(&mut self, typ: SWType) -> Watcher {
+        let stopwatch = self.stopwatches.entry(typ).or_insert(Default::default());
+        stopwatch.borrow_mut().start();
+        Watcher{ stopwatch: stopwatch.clone() }
     }
 
     pub fn print(&self) {
         for typ in SWType::iter() {
             if let Some(sw) = self.stopwatches.get(typ) {
+                let sw = sw.borrow();
                 let elapsed = sw.elapsed();
                 let elapsed_ms = sw.elapsed_ms();
                 let typ_str = format!("{:?}", typ);
