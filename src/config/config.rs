@@ -24,6 +24,7 @@ Options:
     -m MODE             Work mode: doc, normal or sys
     -o PATH             Target path
     -b, --make_backup   Make backup before generating
+    -s, --stats         Show statistics
 ";
 
 #[derive(Debug)]
@@ -39,6 +40,7 @@ pub struct Config {
     pub min_cfg_version: Version,
     pub make_backup: bool,
     pub generate_safety_asserts: bool,
+    pub show_statistics: bool,
 }
 
 impl Config {
@@ -126,6 +128,8 @@ impl Config {
             None => false
         };
 
+        let show_statistics = args.get_bool("-s");
+
         Ok(Config {
             work_mode: work_mode,
             girs_dir: girs_dir,
@@ -138,6 +142,7 @@ impl Config {
             min_cfg_version: min_cfg_version,
             make_backup: make_backup,
             generate_safety_asserts: generate_safety_asserts,
+            show_statistics: show_statistics,
         })
     }
 

@@ -94,7 +94,9 @@ fn do_main() -> Result<(), Box<Error>> {
 
     drop(watcher_total);
 
-    statistics.print();
+    if env.config.show_statistics {
+        statistics.print();
+    }
 
     Ok(())
 }
