@@ -6,6 +6,7 @@ use std::path::{Path, PathBuf};
 use std::str::FromStr;
 use toml;
 
+use git::repo_hash;
 use library::Library;
 use super::WorkMode;
 use super::gobjects;
@@ -29,6 +30,7 @@ Options:
 pub struct Config {
     pub work_mode: WorkMode,
     pub girs_dir: PathBuf,
+    pub girs_version: String, //Version in girs_dir, detected by git
     pub library_name: String,
     pub library_version: String,
     pub target_path: PathBuf,
@@ -73,6 +75,7 @@ impl Config {
             }
             a => a.into(),
         };
+        let girs_version = repo_hash(&girs_dir).unwrap_or_else(|_| "???".into());
 
         let (library_name, library_version) =
             match (args.get_str("<library>"), args.get_str("<version>")) {
@@ -126,6 +129,7 @@ impl Config {
         Ok(Config {
             work_mode: work_mode,
             girs_dir: girs_dir,
+            girs_version: girs_version,
             library_name: library_name.into(),
             library_version: library_version.into(),
             target_path: target_path,
