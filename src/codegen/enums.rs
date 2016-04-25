@@ -79,7 +79,7 @@ fn generate_enum(env: &Env, w: &mut Write, enum_: &Enumeration, config: &GObject
         try!(writeln!(w, "\t{},", member.name));
     }
     try!(writeln!(w, "{}", "    #[doc(hidden)]
-    __Nonexhaustive,
+    __Nonexhaustive(()),
 }
 "));
 
@@ -94,7 +94,7 @@ impl ToGlib for {name} {{
         try!(version_condition(w, env, member.version, false, 3));
         try!(writeln!(w, "\t\t\t{}::{} => ffi::{},", enum_.name, member.name, member.c_name));
     }
-    try!(writeln!(w, "\t\t\t{}::__Nonexhaustive => panic!(),", enum_.name));
+    try!(writeln!(w, "\t\t\t{}::__Nonexhaustive(_) => panic!(),", enum_.name));
     try!(writeln!(w, "{}",
 "        }
     }
@@ -117,7 +117,7 @@ impl FromGlib<ffi::{ffi_name}> for {name} {{
         try!(writeln!(w, "\t\t\tffi::{} => {}::{},", member.c_name, enum_.name, member.name));
     }
     if members.len() == 1 {
-        try!(writeln!(w, "\t\t\t_ => {}::__Nonexhaustive,", enum_.name));
+        try!(writeln!(w, "\t\t\t_ => {}::__Nonexhaustive(()),", enum_.name));
     }
     try!(writeln!(w, "{}",
 "        }
@@ -150,7 +150,7 @@ impl FromGlib<ffi::{ffi_name}> for {name} {{
         if has_failed_member {
             try!(writeln!(w, "\t\t\t_ => Some({}::Failed),", enum_.name));
         } else {
-            try!(writeln!(w, "\t\t\t_ => Some({}::__Nonexhaustive),", enum_.name));
+            try!(writeln!(w, "\t\t\t_ => Some({}::__Nonexhaustive(())),", enum_.name));
         }
 
         try!(writeln!(w, "{}",
