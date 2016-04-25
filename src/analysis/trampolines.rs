@@ -85,6 +85,9 @@ pub fn analyze(env: &Env, signal: &library::Signal, type_tid: library::TypeId, i
     }
 
     if signal.ret.typ != Default::default() {
+        if let Ok(s) = used_rust_type(env, signal.ret.typ) {
+            used_types.push(s);
+        }
         if let Some(s) = used_ffi_type(env, signal.ret.typ) {
             used_types.push(s);
         }
