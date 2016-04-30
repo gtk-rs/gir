@@ -50,6 +50,9 @@ pub fn analyze(env: &Env, functions: &[library::Function], type_tid: library::Ty
         if configured_functions.iter().any(|f| f.ignore) {
             continue;
         }
+        if env.is_totally_deprecated(func.deprecated_version) {
+            continue;
+        }
         let info = analyze_function(env, func, type_tid, &configured_functions, imports);
         funcs.push(info);
     }
