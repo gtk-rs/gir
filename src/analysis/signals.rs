@@ -26,6 +26,9 @@ pub fn analyze(env: &Env, signals: &[library::Signal], type_tid: library::TypeId
         if configured_signals.iter().any(|f| f.ignore) {
             continue;
         }
+        if env.is_totally_deprecated(signal.deprecated_version) {
+            continue;
+        }
 
         let info = analyze_signal(env, signal, type_tid, in_trait, trampolines, imports);
         if let Some(info) = info {

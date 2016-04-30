@@ -40,6 +40,7 @@ pub struct Config {
     pub min_cfg_version: Version,
     pub make_backup: bool,
     pub generate_safety_asserts: bool,
+    pub deprecate_by_min_version: bool,
     pub show_statistics: bool,
 }
 
@@ -128,6 +129,11 @@ impl Config {
             None => false
         };
 
+        let deprecate_by_min_version = match toml.lookup("options.deprecate_by_min_version") {
+            Some(v) => try!(v.as_result_bool("options.deprecate_by_min_version", &config_file)),
+            None => false
+        };
+
         let show_statistics = args.get_bool("-s");
 
         Ok(Config {
@@ -142,6 +148,7 @@ impl Config {
             min_cfg_version: min_cfg_version,
             make_backup: make_backup,
             generate_safety_asserts: generate_safety_asserts,
+            deprecate_by_min_version: deprecate_by_min_version,
             show_statistics: show_statistics,
         })
     }
