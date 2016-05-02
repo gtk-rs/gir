@@ -28,7 +28,7 @@ pub fn generate(w: &mut Write, env: &Env, analysis: &Trampoline,
     let ret_str = trampoline_returns(env, analysis);
 
     try!(version_condition(w, env, analysis.version, false, 0));
-    try!(writeln!(w, "unsafe extern \"C\" fn {}{}({}, f: gpointer){}{}",
+    try!(writeln!(w, "unsafe extern \"C\" fn {}{}({}, f: glib_ffi::gpointer){}{}",
                   analysis.name, bounds, params_str, ret_str, end));
     if in_trait {
         try!(writeln!(w, "where T: IsA<{}> {{", object_name));

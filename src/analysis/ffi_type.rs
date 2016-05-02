@@ -4,53 +4,10 @@ use env::Env;
 use library::*;
 use traits::*;
 
-//todo: use ffi_type
-pub fn used_ffi_type(env: &Env, type_id: TypeId) -> Option<String> {
-    use library::Type::*;
-    use library::Fundamental::*;
-    let type_ = env.library.type_(type_id);
-    let ok = |s: &str| Some(format!("::{}", s));
-    match  *type_ {
-        Fundamental(fund) => {
-            match fund {
-                None => ok("c_void"),
-                Boolean => ok("glib_ffi::gboolean"),
-                Short => ok("libc::c_short"),
-                UShort => ok("libc::c_ushort"),
-                Int => ok("libc::c_int"),
-                UInt => ok("libc::c_uint"),
-                Long => ok("libc::c_long"),
-                ULong => ok("libc::c_ulong"),
-                Size => ok("libc::size_t"),
-                SSize => ok("libc::ssize_t"),
-                Float => ok("libc::c_float"),
-                Double => ok("libc::c_double"),
-                UChar => ok("libc::c_uchar"),
-                Char |
-                Utf8 |
-                Filename => ok("libc::c_char"),
-                Type => ok("glib_ffi::GType"),
-                _ => Option::None,
-            }
-        }
-        Alias(ref alias) => used_ffi_type(env, alias.typ)
-            .and_then(|_| get_type_qualified_ffi_name(env, type_id, type_)),
-        Bitfield(..) |
-        Record(..) |
-        Class(..) |
-        Enumeration(..) |
-        Interface(..) => get_type_qualified_ffi_name(env, type_id, type_),
-        _ => Option::None,
-    }
-}
-
-fn get_type_qualified_ffi_name(env: &Env, type_id: TypeId, type_: &Type) -> Option<String> {
-    let name = if let Some(name) = type_.get_glib_name() {
-        name
-    } else {
-        return None;
-    };
-    Some(format!("{}::{}", &env.namespaces[type_id.ns_id].ffi_crate_name[..], name))
+pub fn used_ffi_type(env: &Env, type_id: TypeId, c_type: &str) -> Option<String> {
+    let (_ptr, inner) = rustify_pointers(c_type);
+    let type_ = ffi_inner(env, type_id, &inner);
+    type_.ok()
 }
 
 pub fn ffi_type(env: &Env, tid: TypeId, c_type: &str) -> Result {
@@ -98,8 +55,8 @@ fn ffi_inner(env: &Env, tid: TypeId, inner: &str) -> Result {
         Type::Fundamental(fund) => {
             use library::Fundamental::*;
             let inner = match fund {
-                None => "c_void",
-                Boolean => "gboolean",
+                None => "libc::c_void",
+                Boolean => "glib_ffi::gboolean", //TODO:check main namespace
                 Int8 => "i8",
                 UInt8 => "u8",
                 Int16 => "i16",
@@ -108,22 +65,22 @@ fn ffi_inner(env: &Env, tid: TypeId, inner: &str) -> Result {
                 UInt32 => "u32",
                 Int64 => "i64",
                 UInt64 => "u64",
-                Char => "c_char",
-                UChar => "c_uchar",
-                Short => "c_short",
-                UShort => "c_ushort",
-                Int => "c_int",
-                UInt => "c_uint",
-                Long => "c_long",
-                ULong => "c_ulong",
-                Size => "size_t",
-                SSize => "ssize_t",
-                Float => "c_float",
-                Double => "c_double",
+                Char => "libc::c_char",
+                UChar => "libc::c_uchar",
+                Short => "libc::c_short",
+                UShort => "libc::c_ushort",
+                Int => "libc::c_int",
+                UInt => "libc::c_uint",
+                Long => "libc::c_long",
+                ULong => "libc::c_ulong",
+                Size => "libc::size_t",
+                SSize => "libc::ssize_t",
+                Float => "libc::c_float",
+                Double => "libc::c_double",
                 UniChar => "u32",
-                Utf8 => "c_char",
-                Filename => "c_char",
-                Type => "GType",
+                Utf8 => "libc::c_char",
+                Filename => "libc::c_char",
+                Type => "glib_ffi::GType",
                 _ => return Err(TypeError::Unimplemented(inner.into())),
             };
             Ok(inner.into())
