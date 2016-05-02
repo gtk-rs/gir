@@ -1,4 +1,4 @@
-use analysis::c_type::rustify_pointers;
+use analysis::c_type::{implements_c_type, rustify_pointers};
 use analysis::rust_type::{Result, TypeError};
 use env::Env;
 use library::*;
@@ -183,7 +183,6 @@ fn ffi_inner(env: &Env, tid: TypeId, inner: &str) -> Result {
 fn fix_name(env: &Env, type_id: TypeId, name: &str) -> Result {
     if type_id.ns_id == INTERNAL_NAMESPACE {
         match *env.library.type_(type_id) {
-            //TODO: move to ffi_type
             Type::Array(..) | Type::PtrArray(..) |
             Type::List(..) | Type::SList(..) | Type::HashTable(..) =>
                 Ok(format!("{}::{}", &env.namespaces[env.namespaces.glib_ns_id].ffi_crate_name, name)),
@@ -197,9 +196,4 @@ fn fix_name(env: &Env, type_id: TypeId, name: &str) -> Result {
             Ok(name_with_prefix)
         }
     }
-}
-
-fn implements_c_type(env: &Env, tid: TypeId, c_type: &str) -> bool {
-    env.class_hierarchy.supertypes(tid).iter()
-        .any(|&super_tid| env.library.type_(super_tid).get_glib_name() == Some(c_type))
 }
