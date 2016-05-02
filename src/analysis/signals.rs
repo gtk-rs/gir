@@ -59,7 +59,7 @@ fn analyze_signal(env: &Env, signal: &library::Signal, type_tid: library::TypeId
         imports.add("glib::signal::connect", version);
         imports.add("std::mem::transmute", version);
         imports.add("std::boxed::Box as Box_", version);
-        imports.add("glib_ffi::gpointer", version);
+        imports.add("glib_ffi", version);
     }
 
     let info = Info {

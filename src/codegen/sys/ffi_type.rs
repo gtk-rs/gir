@@ -1,4 +1,4 @@
-use analysis::c_type::rustify_pointers;
+use analysis::c_type::{implements_c_type, rustify_pointers};
 use analysis::namespaces;
 use analysis::rust_type::{Result, TypeError};
 use env::Env;
@@ -170,7 +170,7 @@ fn fix_name(env: &Env, type_id: library::TypeId, name: &str) -> Result {
             _ => Ok(name.into())
         }
     } else {
-        let name_with_prefix = if type_id.ns_id == library::MAIN_NAMESPACE {
+        let name_with_prefix = if type_id.ns_id == namespaces::MAIN {
             name.into()
         } else {
             format!("{}::{}", &env.namespaces[type_id.ns_id].crate_name, name)
@@ -181,9 +181,4 @@ fn fix_name(env: &Env, type_id: library::TypeId, name: &str) -> Result {
             Ok(name_with_prefix)
         }
     }
-}
-
-fn implements_c_type(env: &Env, tid: TypeId, c_type: &str) -> bool {
-    env.class_hierarchy.supertypes(tid).iter()
-        .any(|&super_tid| env.library.type_(super_tid).get_glib_name() == Some(c_type))
 }

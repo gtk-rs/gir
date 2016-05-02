@@ -2,6 +2,7 @@ use std::io::{Result, Write};
 
 use env::Env;
 use analysis::bounds::{Bounds, BoundType};
+use analysis::ffi_type::ffi_type;
 use analysis::parameter::Parameter;
 use analysis::ref_mode::RefMode;
 use analysis::rust_type::parameter_rust_type;
@@ -9,7 +10,6 @@ use analysis::trampolines::Trampoline;
 use nameutil;
 use super::general::version_condition;
 use super::return_value::ToReturnValue;
-use super::sys::ffi_type::ffi_type;
 use super::trampoline_from_glib::TrampolineFromGlib;
 use super::trampoline_to_glib::TrampolineToGlib;
 use traits::IntoString;
@@ -28,7 +28,7 @@ pub fn generate(w: &mut Write, env: &Env, analysis: &Trampoline,
     let ret_str = trampoline_returns(env, analysis);
 
     try!(version_condition(w, env, analysis.version, false, 0));
-    try!(writeln!(w, "unsafe extern \"C\" fn {}{}({}, f: gpointer){}{}",
+    try!(writeln!(w, "unsafe extern \"C\" fn {}{}({}, f: glib_ffi::gpointer){}{}",
                   analysis.name, bounds, params_str, ret_str, end));
     if in_trait {
         try!(writeln!(w, "where T: IsA<{}> {{", object_name));

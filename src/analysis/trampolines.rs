@@ -46,6 +46,10 @@ pub fn analyze(env: &Env, signal: &library::Signal, type_tid: library::TypeId, i
 
     let mut parameters: Vec<parameter::Parameter> = Vec::with_capacity(signal.parameters.len() + 1);
 
+    if let Some(s) = used_ffi_type(env, type_tid, &c_type) {
+        used_types.push(s);
+    }
+
     let this = parameter::Parameter {
         name: "this".to_owned(),
         typ: type_tid,
@@ -62,10 +66,6 @@ pub fn analyze(env: &Env, signal: &library::Signal, type_tid: library::TypeId, i
     };
     parameters.push(this);
 
-    if let Some(s) = used_ffi_type(env, type_tid) {
-        used_types.push(s);
-    }
-
     if in_trait {
         let type_name = bounds_rust_type(env, type_tid);
         bounds.add_parameter("this", &type_name.into_string(), BoundType::IsA);
@@ -77,7 +77,7 @@ pub fn analyze(env: &Env, signal: &library::Signal, type_tid: library::TypeId, i
         if let Ok(s) = used_rust_type(env, par.typ) {
             used_types.push(s);
         }
-        if let Some(s) = used_ffi_type(env, par.typ) {
+        if let Some(s) = used_ffi_type(env, par.typ, &par.c_type) {
             used_types.push(s);
         }
 
@@ -88,7 +88,7 @@ pub fn analyze(env: &Env, signal: &library::Signal, type_tid: library::TypeId, i
         if let Ok(s) = used_rust_type(env, signal.ret.typ) {
             used_types.push(s);
         }
-        if let Some(s) = used_ffi_type(env, signal.ret.typ) {
+        if let Some(s) = used_ffi_type(env, signal.ret.typ, &signal.ret.c_type) {
             used_types.push(s);
         }
     }

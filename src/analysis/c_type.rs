@@ -1,3 +1,6 @@
+use env::Env;
+use library::TypeId;
+
 pub fn rustify_pointers(c_type: &str) -> (String, String) {
     let mut input = c_type.trim();
     let leading_const = input.starts_with("const ");
@@ -26,6 +29,11 @@ pub fn rustify_pointers(c_type: &str) -> (String, String) {
 pub fn is_mut_ptr(c_type: &str) -> bool {
     let (ptr, _inner) = rustify_pointers(c_type);
     ptr.find("*mut") == Some(0)
+}
+
+pub fn implements_c_type(env: &Env, tid: TypeId, c_type: &str) -> bool {
+    env.class_hierarchy.supertypes(tid).iter()
+        .any(|&super_tid| env.library.type_(super_tid).get_glib_name() == Some(c_type))
 }
 
 #[cfg(test)]
