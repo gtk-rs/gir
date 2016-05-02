@@ -2,7 +2,6 @@ use analysis::c_type::rustify_pointers;
 use analysis::rust_type::{Result, TypeError};
 use env::Env;
 use library::*;
-use analysis::namespaces;
 use traits::*;
 
 //todo: use ffi_type
@@ -51,12 +50,7 @@ fn get_type_qualified_ffi_name(env: &Env, type_id: TypeId, type_: &Type) -> Opti
     } else {
         return None;
     };
-    let ffi_crate_name = if type_id.ns_id == namespaces::MAIN {
-        "ffi"
-    } else {
-        &env.namespaces[type_id.ns_id].ffi_crate_name[..]
-    };
-    Some(format!("{}::{}", ffi_crate_name, name))
+    Some(format!("{}::{}", &env.namespaces[type_id.ns_id].ffi_crate_name[..], name))
 }
 
 pub fn ffi_type(env: &Env, tid: TypeId, c_type: &str) -> Result {
@@ -190,24 +184,13 @@ fn fix_name(env: &Env, type_id: TypeId, name: &str) -> Result {
     if type_id.ns_id == INTERNAL_NAMESPACE {
         match *env.library.type_(type_id) {
             //TODO: move to ffi_type
-            Type::Array(..) | Type::PtrArray(..)
-                    | Type::List(..) | Type::SList(..) | Type::HashTable(..) => {
-                if env.namespaces.glib_ns_id == namespaces::MAIN {
-                    Ok(format!("ffi::{}", name))
-                }
-                else {
-                    Ok(format!("{}::{}", &env.namespaces[env.namespaces.glib_ns_id].ffi_crate_name,
-                        name))
-                }
-            }
-            _ => Ok(name.into())
+            Type::Array(..) | Type::PtrArray(..) |
+            Type::List(..) | Type::SList(..) | Type::HashTable(..) =>
+                Ok(format!("{}::{}", &env.namespaces[env.namespaces.glib_ns_id].ffi_crate_name, name)),
+            _ => Ok(name.into()),
         }
     } else {
-        let name_with_prefix = if type_id.ns_id == namespaces::MAIN {
-            format!("ffi::{}", name)
-        } else {
-            format!("{}::{}", &env.namespaces[type_id.ns_id].ffi_crate_name, name)
-        };
+        let name_with_prefix = format!("{}::{}", &env.namespaces[type_id.ns_id].ffi_crate_name, name);
         if env.type_status_sys(&type_id.full_name(&env.library)).ignored() {
             Err(TypeError::Ignored(name_with_prefix))
         } else {
