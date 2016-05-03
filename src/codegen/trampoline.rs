@@ -79,7 +79,7 @@ fn func_parameter(env: &Env, par: &Parameter, bounds: &Bounds,
         Some((t, bound_type)) => {
             match bound_type {
                 BoundType::IsA => if *par.nullable {
-                    type_str = format!("Option<&{}{}>", mut_str, t)
+                    type_str = format!("&Option<{}{}>", mut_str, t)
                 } else {
                     let t = if let Some((from, to)) = bound_replace {
                         if from == t { to } else { t }
@@ -94,7 +94,7 @@ fn func_parameter(env: &Env, par: &Parameter, bounds: &Bounds,
         None => {
             let rust_type = parameter_rust_type(env, par.typ, par.direction,
                                                 par.nullable, ref_mode);
-            type_str = rust_type.into_string();
+            type_str = rust_type.into_string().replace("Option<&", "&Option<");
         }
     }
     type_str
