@@ -19,11 +19,13 @@ pub struct Trampoline {
     pub ret: library::Parameter,
     pub bounds: Bounds,
     pub version: Option<Version>,
+    pub inhibit: bool,
 }
 
 pub type Trampolines = Vec<Trampoline>;
 
 pub fn analyze(env: &Env, signal: &library::Signal, type_tid: library::TypeId, in_trait: bool,
+               configured_signals: &[&config::signals::Signal],
                trampolines: &mut Trampolines, used_types: &mut Vec<String>,
                version: Option<Version>) -> Result<String, Vec<String>> {
     let errors = closure_errors(env, signal);
@@ -41,6 +43,14 @@ pub fn analyze(env: &Env, signal: &library::Signal, type_tid: library::TypeId, i
 
     //Fake
     let configured_functions: Vec<&config::functions::Function> = Vec::new();
+
+    let inhibit = configured_signals.iter().any(|f| f.inhibit);
+    if inhibit {
+        if signal.ret.typ != library::TypeId::tid_bool() {
+            error!("Wrong return type for Inhibit for signal '{}'", signal.name);
+        }
+        used_types.push("::signal::Inhibit".into());
+    }
 
     let mut bounds: Bounds = Default::default();
 
@@ -99,6 +109,7 @@ pub fn analyze(env: &Env, signal: &library::Signal, type_tid: library::TypeId, i
         ret: signal.ret.clone(),
         bounds: bounds,
         version: version,
+        inhibit: inhibit,
     };
     trampolines.push(trampoline);
     Ok(name)

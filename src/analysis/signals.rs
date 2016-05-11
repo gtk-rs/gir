@@ -1,3 +1,4 @@
+use config;
 use config::gobjects::GObject;
 use config::identables::Identables;
 use env::Env;
@@ -30,7 +31,7 @@ pub fn analyze(env: &Env, signals: &[library::Signal], type_tid: library::TypeId
             continue;
         }
 
-        let info = analyze_signal(env, signal, type_tid, in_trait, trampolines, imports);
+        let info = analyze_signal(env, signal, type_tid, in_trait, &configured_signals, trampolines, imports);
         if let Some(info) = info {
             sns.push(info);
         }
@@ -40,15 +41,16 @@ pub fn analyze(env: &Env, signals: &[library::Signal], type_tid: library::TypeId
 }
 
 fn analyze_signal(env: &Env, signal: &library::Signal, type_tid: library::TypeId,
-                  in_trait: bool, trampolines: &mut trampolines::Trampolines,
+                  in_trait: bool, configured_signals: &[&config::signals::Signal],
+                  trampolines: &mut trampolines::Trampolines,
                   imports: &mut Imports) -> Option<Info> {
     let mut used_types: Vec<String> = Vec::with_capacity(4);
     let version = signal.version;
     let deprecated_version = signal.deprecated_version;
 
     let connect_name = format!("connect_{}", nameutil::signal_to_snake(&signal.name));
-    let trampoline_name = trampolines::analyze(env, signal, type_tid, in_trait, trampolines,
-                                               &mut used_types, version);
+    let trampoline_name = trampolines::analyze(env, signal, type_tid, in_trait, configured_signals,
+                                               trampolines, &mut used_types, version);
 
     if trampoline_name.is_ok() {
         imports.add_used_types(&used_types, version);

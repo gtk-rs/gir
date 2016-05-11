@@ -8,6 +8,7 @@ pub struct Signal {
     //true - ignore this signal
     //false(default) - process this signal
     pub ignore: bool,
+    pub inhibit: bool,
 }
 
 impl Parse for Signal {
@@ -23,9 +24,14 @@ impl Parse for Signal {
             .and_then(|val| val.as_bool())
             .unwrap_or(false);
 
+        let inhibit = toml.lookup("inhibit")
+            .and_then(|val| val.as_bool())
+            .unwrap_or(false);
+
         Some(Signal{
             ident: ident,
             ignore: ignore,
+            inhibit: inhibit,
         })
     }
 }
