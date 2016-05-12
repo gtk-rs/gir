@@ -109,6 +109,7 @@ fn rust_type_full(env: &Env, type_id: library::TypeId, nullable: Nullable, ref_m
         Enumeration(..) |
             Bitfield(..) |
             Record(..) |
+            Union(..) |
             Class(..) |
             Interface(..) => {
             let name = type_.get_name().to_owned();
@@ -173,6 +174,7 @@ pub fn used_rust_type(env: &Env, type_id: library::TypeId) -> Result {
             Alias(..) |
             Bitfield(..) |
             Record(..) |
+            Union(..) |
             Class(..) |
             Enumeration(..) |
             Interface(..) => rust_type(env, type_id),
@@ -210,6 +212,7 @@ pub fn parameter_rust_type(env: &Env, type_id:library::TypeId,
         }
 
         Enumeration(..) |
+            Union(..) |
             Bitfield(..) => rust_type.map_any(|s| format_parameter(s, direction)),
 
         Record(..) => {
