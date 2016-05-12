@@ -50,7 +50,6 @@ generate = [
     "Gtk.IconInfo",
     "Gtk.Image",
     "Gtk.InfoBar",
-    "Gtk.Label",
     "Gtk.Layout",
     "Gtk.LevelBar",
     "Gtk.LinkButton",
@@ -224,6 +223,13 @@ status = "generate"
 [[object.function]]
 pattern = 'iter_has_q\w+'
 ignore = true
+
+[[object]]
+name = "Gtk.Label"
+status = "generate"
+[[object.signal]]
+name = "activate-link"
+inhibit = true
 
 [[object]]
 name = "Gtk.PageSetup"
