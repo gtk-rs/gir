@@ -131,6 +131,7 @@ impl Library {
         let glib_name = glib_name.unwrap();
         let detected_c_type = match *type_ {
             Record(..) |
+            Union(..) |
             Class(..) |
             Interface(..) => format!("{}*", glib_name),
             _ => glib_name.to_string(),

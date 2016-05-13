@@ -78,7 +78,7 @@ fn can_be_nullable_return(env: &Env, type_id: library::TypeId) -> bool
         Enumeration(_) => false,
         Bitfield(_) => false,
         Record(_) => true,
-        Union(_) => false,
+        Union(_) => true,
         Function(_) => true,
         Interface(_) => true,
         Class(_) => true,

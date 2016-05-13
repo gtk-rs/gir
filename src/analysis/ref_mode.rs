@@ -36,6 +36,11 @@ impl RefMode {
             } else {
                 RefMode::None
             },
+            Union(..) => if direction == library::ParameterDirection::In {
+                RefMode::ByRefMut
+            } else {
+                RefMode::None
+            },
             Alias(ref alias) => RefMode::of(library, alias.typ, direction),
             _ => RefMode::None,
         }

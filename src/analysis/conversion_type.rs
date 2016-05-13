@@ -51,6 +51,7 @@ impl ConversionType {
             Alias(ref alias) => ConversionType::of(library, alias.typ),
             Bitfield(_) => ConversionType::Scalar,
             Record(_) => ConversionType::Pointer,
+            Union(_) => ConversionType::Pointer,
             Enumeration(_) => ConversionType::Scalar,
             Interface(_) => ConversionType::Pointer,
             Class(_) => ConversionType::Pointer,
