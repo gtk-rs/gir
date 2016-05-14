@@ -124,18 +124,25 @@ impl Library {
     }
 
     fn c_type_by_type_id(&self, tid: TypeId) -> Option<String> {
-        use library::Type::*;
         let type_ = self.type_(tid);
-        let glib_name = type_.get_glib_name();
-        if glib_name.is_none() { return None; }
-        let glib_name = glib_name.unwrap();
-        let detected_c_type = match *type_ {
+        type_.get_glib_name().map(|glib_name| {
+            if self.is_referenced_type(type_) {
+                format!("{}*", glib_name)
+            } else {
+                glib_name.to_string()
+            }
+        })
+    }
+
+    fn is_referenced_type(&self, type_: &Type) -> bool {
+        use library::Type::*;
+        match *type_ {
+            Alias(ref alias) => self.is_referenced_type(self.type_(alias.typ)),
             Record(..) |
             Union(..) |
             Class(..) |
-            Interface(..) => format!("{}*", glib_name),
-            _ => glib_name.to_string(),
-        };
-        Some(detected_c_type)
+            Interface(..) => true,
+            _ => false,
+        }
     }
 }
