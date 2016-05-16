@@ -1,5 +1,5 @@
 use super::ident::Ident;
-use super::identables::{Identables, Parse};
+use super::identables::Parse;
 use toml::Value;
 
 #[derive(Clone, Debug)]
