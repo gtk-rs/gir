@@ -85,10 +85,10 @@ fn format(mut input: &str, symbols: &symbols::Info, refs: &TypeReferences) -> St
 }
 
 fn to_url(type_name: &str, refs: &TypeReferences) -> Option<String> {
-    let ty = type_name.split("::").collect::<Vec<&str>>();
+    let ty = type_name.split(":");
 
-    if let Some(t) = refs.get_type(&ty.last().unwrap()) {
-        Some(format!("./{}.{}.html", t.ty, t.name))
+    if let Some(t) = refs.get_type(&ty.last().unwrap().to_owned()) {
+        Some(format!("{}.{}.html", t.ty, t.name))
     } else {
         None
     }

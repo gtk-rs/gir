@@ -1,4 +1,5 @@
 use std::io::{Result, Write};
+use std::collections::HashMap;
 
 use analysis;
 use analysis::namespaces::MAIN;
@@ -45,107 +46,85 @@ pub fn generate(env: &Env) {
 }
 
 pub struct TypeReferences {
-    refs: Vec<TypeStruct>,
+    refs: HashMap<String, TypeStruct>,
 }
 
 impl TypeReferences {
     pub fn new() -> TypeReferences {
-        TypeReferences { refs: vec!() }
+        TypeReferences { refs: HashMap::new() }
     }
 
     pub fn add(&mut self, ty: TypeStruct) {
-        if let Some(_) = self.get_type(&ty.name) {}
+        if let Some(_) = self.refs.get(&ty.name) {}
         else {
-            self.refs.push(ty);
+            self.refs.insert(ty.name.clone(), ty);
         }
     }
 
-    pub fn get_type(&self, type_name: &str) -> Option<TypeStruct> {
-        for ty in self.refs.iter() {
-            if &ty.name == type_name {
-                return Some(ty.clone())
-            }
-        }
-        None
+    pub fn get_type(&self, type_name: &String) -> Option<&TypeStruct> {
+        self.refs.get(type_name)
     }
 }
 
-fn create_references(env: &Env) -> TypeReferences {
+fn generate_doc(mut w: &mut Write, env: &Env) -> Result<()> {
+    try!(write_file_name(w, None));
+
     let mut refs = TypeReferences::new();
+    let mut classes = vec!();
+    let mut interfaces = vec!();
+    let mut records = vec!();
+    let mut enums = vec!();
 
     for (tid, type_) in env.library.namespace_types(MAIN) {
         if let Some(obj) = env.config.objects.get(&tid.full_name(&env.library))
             .and_then(|obj| if obj.status.ignored() { None } else { Some(obj) }) {
-            for ty in match *type_ {
+            match *type_ {
                 LType::Class(..) => {
                     let ty = analysis::object::class(env, obj).unwrap();
-                    vec!(TypeStruct::new(SType::Struct, &ty.name),
-                         TypeStruct::new(SType::Trait, &format!("{}Ext", &ty.name)))
+                    refs.add(TypeStruct::new(SType::Struct, &ty.name));
+                    refs.add(TypeStruct::new(SType::Trait, &format!("{}Ext", &ty.name)));
+                    classes.push(ty);
                 }
                 LType::Interface(..) => {
                     let ty = analysis::object::interface(env, obj).unwrap();
-                    vec!(TypeStruct::new(SType::Struct, &ty.name),
-                         TypeStruct::new(SType::Trait, &format!("{}Ext", &ty.name)))
+                    refs.add(TypeStruct::new(SType::Struct, &ty.name));
+                    refs.add(TypeStruct::new(SType::Trait, &format!("{}Ext", &ty.name)));
+                    interfaces.push(ty);
                 }
                 LType::Record(..) => {
-                    let type_id = analysis::record::new(env, obj).unwrap().type_id;
-                    vec!(env.library.type_(type_id).to_ref_as::<Record>().to_stripper_type())
+                    let ty = analysis::record::new(env, obj).unwrap();
+                    let type_id = ty.type_id;
+                    refs.add(env.library.type_(type_id).to_ref_as::<Record>().to_stripper_type());
+                    records.push(ty);
                 }
                 LType::Enumeration(ref e) => {
-                    vec!(e.to_stripper_type())
+                    refs.add(e.to_stripper_type());
+                    enums.push(e);
                 }
-                _ => { vec!() }
-            }.iter() {
-                refs.add(ty.clone());
+                _ => {}
             }
         } else {
             match *type_ {
                 LType::Enumeration(ref e) => {
                     refs.add(e.to_stripper_type());
+                    enums.push(e);
                 }
                 _ => {}
             }
         }
     }
-    refs
-}
 
-fn generate_doc(mut w: &mut Write, env: &Env) -> Result<()> {
-    try!(write_file_name(w, None));
-    let refs = create_references(env);
-
-    for (tid, type_) in env.library.namespace_types(MAIN) {
-        if let Some(obj) = env.config.objects.get(&tid.full_name(&env.library))
-            .and_then(|obj| if obj.status.ignored() { None } else { Some(obj) }) {
-            match *type_ {
-                LType::Class(..) => {
-                    try!(create_object_doc(w, env,
-                                           &analysis::object::class(env, obj).unwrap(),
-                                           &refs));
-                }
-                LType::Interface(..) => {
-                    try!(create_object_doc(w, env,
-                                           &analysis::object::interface(env, obj).unwrap(),
-                                           &refs));
-                }
-                LType::Record(..) => {
-                    try!(create_record_doc(w, env,
-                                           &analysis::record::new(env, obj).unwrap(),
-                                           &refs));
-                }
-                LType::Enumeration(ref e) => {
-                    try!(create_enum_doc(w, env, &e, &refs));
-                }
-                _ => {}
-            }
-        } else {
-            match *type_ {
-                LType::Enumeration(ref e) => {
-                    try!(create_enum_doc(w, env, &e, &refs));
-                }
-                _ => {}
-            }
-        }
+    for obj in classes {
+        try!(create_object_doc(w, env, &obj, &refs));
+    }
+    for interface in interfaces {
+        try!(create_object_doc(w, env, &interface, &refs));
+    }
+    for record in records {
+        try!(create_record_doc(w, env, &record, &refs));
+    }
+    for enum_ in enums {
+        try!(create_enum_doc(w, env, enum_, &refs));
     }
 
     Ok(())
