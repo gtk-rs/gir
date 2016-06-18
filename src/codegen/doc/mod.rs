@@ -113,7 +113,7 @@ fn create_object_doc(w: &mut Write, env: &Env, info: &analysis::object::Info) ->
             try!(writeln!(w, ""));
         }
         if let Some(version) = info.version {
-            try!(writeln!(w, "\nSince: {}", version));
+            try!(writeln!(w, "\nFeature: `{}`", version.to_feature()));
         }
 
         let impl_self = if has_trait { Some(info.type_id) } else { None };
@@ -138,7 +138,7 @@ fn create_object_doc(w: &mut Write, env: &Env, info: &analysis::object::Info) ->
             try!(writeln!(w, "Trait containing all `{}` methods.", ty.name));
 
             if let Some(version) = info.version {
-                try!(writeln!(w, "\nSince: {}", version));
+                try!(writeln!(w, "\nFeature: `{}`", version.to_feature()));
             }
 
             let mut implementors = Some(info.type_id).into_iter()
@@ -190,7 +190,7 @@ fn create_record_doc(w: &mut Write, env: &Env, info: &analysis::record::Info) ->
             try!(writeln!(w, "{}", reformat_doc(doc, &symbols)));
         }
         if let Some(version) = info.version {
-            try!(writeln!(w, "\nSince: {}", version));
+            try!(writeln!(w, "\nFeature: `{}`", version.to_feature()));
         }
         Ok(())
     }));
@@ -237,7 +237,7 @@ fn create_enum_doc(w: &mut Write, env: &Env, enum_: &Enumeration) -> Result<()> 
 
     if let Some(version) = enum_.version {
         if version > env.config.min_cfg_version {
-            try!(writeln!(w, "\nSince: {}\n", version));
+            try!(writeln!(w, "\nFeature: `{}`\n", version.to_feature()));
         }
     }
     Ok(())
@@ -281,7 +281,7 @@ fn create_fn_doc(w: &mut Write, env: &Env, fn_: &Function, parent: Option<Box<Ty
         }
         if let Some(version) = fn_.version {
             if version > env.config.min_cfg_version {
-                try!(writeln!(w, "\nSince: {}\n", version));
+                try!(writeln!(w, "\nFeature: `{}`\n", version.to_feature()));
             }
         }
         if let Some(ver) = fn_.deprecated_version {
