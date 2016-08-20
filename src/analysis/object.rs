@@ -95,6 +95,8 @@ pub fn class(env: &Env, obj: &GObject) -> Option<Info> {
     //don't `use` yourself
     imports.remove(&name);
 
+    imports.clean_glib(env);
+
     let base = InfoBase {
         full_name: full_name,
         type_id: class_tid,
@@ -174,6 +176,8 @@ pub fn interface(env: &Env, obj: &GObject) -> Option<Info> {
 
     //don't `use` yourself
     imports.remove(&name);
+
+    imports.clean_glib(env);
 
     let base = InfoBase {
         full_name: full_name,
