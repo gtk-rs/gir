@@ -15,13 +15,17 @@ pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>) {
     let path = root_path.join("flags.rs");
     file_saver::save_to_file(path, env.config.make_backup, |w| {
         try!(general::start_comments(w, &env.config));
-        try!(writeln!(w, "{}", "
-use ffi;
-use glib::translate::*;
-"));
+        try!(writeln!(w, ""));
+        try!(writeln!(w, "use ffi;"));
+        if env.namespaces.glib_ns_id == namespaces::MAIN {
+            try!(writeln!(w, "use translate::*;"));
+        } else {
+            try!(writeln!(w, "use glib::translate::*;"));
+        }
+        try!(writeln!(w, ""));
 
         let configs = env.config.objects.values()
-            .filter(|c| { 
+            .filter(|c| {
                 c.status.need_generate() &&
                     c.type_id.map_or(false, |tid| tid.ns_id == namespaces::MAIN)
             });

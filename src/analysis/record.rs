@@ -70,6 +70,8 @@ pub fn new(env: &Env, obj: &GObject) -> Option<Info> {
     //don't `use` yourself
     imports.remove(&name);
 
+    imports.clean_glib(env);
+
     let base = InfoBase {
         full_name: full_name,
         type_id: record_tid,

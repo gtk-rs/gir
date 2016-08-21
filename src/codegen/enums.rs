@@ -16,15 +16,21 @@ pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>) {
     let path = root_path.join("enums.rs");
     file_saver::save_to_file(path, env.config.make_backup, |w| {
         try!(general::start_comments(w, &env.config));
-        try!(writeln!(w, "{}", "
-use ffi;
-use glib_ffi;
+        try!(writeln!(w, ""));
+        try!(writeln!(w, "use ffi;"));
+        if env.namespaces.glib_ns_id == namespaces::MAIN {
+            try!(writeln!(w, "use error::ErrorDomain;
+use translate::*;"));
+        } else {
+            try!(writeln!(w, "use glib_ffi;
 use glib::error::ErrorDomain;
-use glib::translate::*;
-"));
+use glib::translate::*;"));
+        }
+        try!(writeln!(w, ""));
+
 
         let configs = env.config.objects.values()
-            .filter(|c| { 
+            .filter(|c| {
                 c.status.need_generate() &&
                     c.type_id.map_or(false, |tid| tid.ns_id == namespaces::MAIN)
             });
