@@ -19,7 +19,8 @@ pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>) {
         try!(writeln!(w, ""));
         try!(writeln!(w, "use ffi;"));
         if env.namespaces.glib_ns_id == namespaces::MAIN {
-            try!(writeln!(w, "use error::ErrorDomain;
+            try!(writeln!(w, "use ffi as glib_ffi;
+use error::ErrorDomain;
 use translate::*;"));
         } else {
             try!(writeln!(w, "use glib_ffi;
