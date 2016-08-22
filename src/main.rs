@@ -77,15 +77,21 @@ fn do_main() -> Result<(), Box<Error>> {
     let symbols = analysis::symbols::run(&library, &namespaces);
     let class_hierarchy = analysis::class_hierarchy::run(&library);
 
-    let env = Env{
+    let mut env = Env{
         library: library,
         config: cfg,
         namespaces: namespaces,
         symbols: RefCell::new(symbols),
         class_hierarchy: class_hierarchy,
+        analysis: Default::default(),
     };
 
     drop(watcher_loading);
+    {
+        let _watcher = statistics.enter("Analysing");
+        analysis::run(&mut env);
+    }
+
     {
         let _watcher_generating = statistics.enter("Generating");
 
