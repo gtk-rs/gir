@@ -38,6 +38,7 @@ impl Deref for Info {
 }
 
 pub fn class(env: &Env, obj: &GObject) -> Option<Info> {
+    info!("Analyzing class {}", obj.name);
     let full_name = obj.name.clone();
 
     let class_tid = match env.library.find_type(0, &full_name) {
@@ -140,6 +141,7 @@ pub fn class(env: &Env, obj: &GObject) -> Option<Info> {
 }
 
 pub fn interface(env: &Env, obj: &GObject) -> Option<Info> {
+    info!("Analyzing interface {}", obj.name);
     let full_name = obj.name.clone();
 
     let iface_tid = match env.library.find_type(0, &full_name) {

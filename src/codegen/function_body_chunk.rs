@@ -4,7 +4,7 @@ use analysis::out_parameters::Mode;
 use analysis::return_value;
 use analysis::rust_type::rust_type;
 use analysis::safety_assertion_mode::SafetyAssertionMode;
-use chunk::{chunks, Chunk, TupleMode};
+use chunk::{Chunk, TupleMode};
 use chunk::parameter_ffi_call_in;
 use chunk::parameter_ffi_call_out;
 use env::Env;

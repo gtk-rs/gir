@@ -12,6 +12,7 @@ pub struct Env {
     pub namespaces: analysis::namespaces::Info,
     pub symbols: RefCell<analysis::symbols::Info>,
     pub class_hierarchy: analysis::class_hierarchy::Info,
+    pub analysis: analysis::Analysis,
 }
 
 impl Env {

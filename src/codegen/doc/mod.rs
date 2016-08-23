@@ -46,41 +46,44 @@ pub fn generate(env: &Env) {
 
 fn generate_doc(mut w: &mut Write, env: &Env) -> Result<()> {
     try!(write_file_name(w, None));
+    let mut generators: Vec<(&str, Box<Fn(&mut Write, &Env) -> Result<()>>)> = Vec::new();
 
-    for (tid, type_) in env.library.namespace_types(MAIN) {
-        let obj = env.config.objects.get(&tid.full_name(&env.library))
-            .and_then(|obj| if obj.status.ignored() { None } else { Some(obj) });
-        match *type_ {
-            LType::Class(..) => {
-                if let Some(obj) = obj {
-                    try!(create_object_doc(w, env, &analysis::object::class(env, obj).unwrap()));
-                }
-            }
-            LType::Interface(..) => {
-                if let Some(obj) = obj {
-                    try!(create_object_doc(w, env,
-                                           &analysis::object::interface(env, obj).unwrap()));
-                }
-            }
-            LType::Record(..) => {
-                if let Some(obj) = obj {
-                    try!(create_record_doc(w, env, &analysis::record::new(env, obj).unwrap()));
-                }
-            }
-            _ => {
-                try!(handle_type(&mut w, env, type_));
-            }
+    for info in &env.analysis.objects {
+        if info.type_id.ns_id == MAIN {
+            generators.push((&info.name, Box::new(move |w, e| {
+                create_object_doc(w, e, info)
+            })));
         }
     }
 
-    Ok(())
-}
-
-fn handle_type(w: &mut Write, env: &Env, ty: &LType) -> Result<()> {
-    match *ty {
-        LType::Enumeration(ref e) => create_enum_doc(w, env, &e),
-        _ => Ok(()),
+    for info in &env.analysis.records {
+        if info.type_id.ns_id == MAIN {
+            generators.push((&info.name, Box::new(move |w, e| {
+                create_record_doc(w, e, info)
+            })));
+        }
     }
+
+    for (tid, type_) in env.library.namespace_types(MAIN) {
+        match *type_ {
+            LType::Enumeration(ref enum_) => {
+                if !env.config.objects.get(&tid.full_name(&env.library))
+                        .map_or(true, |obj| obj.status.ignored()) {
+                    generators.push((&enum_.name[..], Box::new(move |w, e| {
+                        create_enum_doc(w, e, &enum_)
+                    })));
+                }
+            }
+            _ => {}
+        }
+    }
+
+    generators.sort_by_key(|&(name, _)| name);
+    for (_, f) in generators {
+        try!(f(w, env));
+    }
+
+    Ok(())
 }
 
 fn create_object_doc(w: &mut Write, env: &Env, info: &analysis::object::Info) -> Result<()> {

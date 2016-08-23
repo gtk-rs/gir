@@ -1,22 +1,16 @@
 use std::path::Path;
 
-use analysis;
 use env::Env;
 use file_saver::*;
 use nameutil::*;
 
 pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>) {
     info!("Generate records");
-    for obj in env.config.objects.values() {
+    for record_analysis in &env.analysis.records {
+        let obj = &env.config.objects[&record_analysis.full_name];
         if !obj.status.need_generate() {
             continue;
         }
-
-        info!("Analyzing {:?}", obj.name);
-        let record_analysis = match analysis::record::new(env, obj) {
-            Some(info) => info,
-            None => continue,
-        };
 
         let mod_name = obj.module_name.clone().unwrap_or_else(|| {
             module_name(split_namespace_name(&record_analysis.full_name).1)

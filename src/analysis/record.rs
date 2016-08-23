@@ -32,6 +32,7 @@ impl Info {
 }
 
 pub fn new(env: &Env, obj: &GObject) -> Option<Info> {
+    info!("Analyzing record {}", obj.name);
     let full_name = obj.name.clone();
 
     let record_tid = match env.library.find_type(0, &full_name) {
