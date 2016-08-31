@@ -64,7 +64,7 @@ impl Return {
                 nullable: None,
             }
         }
-        
+
     }
 }
 
@@ -181,7 +181,7 @@ name = "func1"
 version = "3.20"
 "#);
         let f = Function::parse(&toml, "a").unwrap();
-        assert_eq!(f.version, Some(Version(3, 20, 0)));
+        assert_eq!(f.version, Some(Version::Full(3, 20, 0)));
     }
 
     #[test]
@@ -202,7 +202,7 @@ cfg_condition = 'unix'
         let f = Function::parse(&toml, "a").unwrap();
         assert_eq!(f.cfg_condition, Some("unix".to_string()));
     }
-    
+
     #[test]
     fn function_parse_return_nullable_default1() {
         let toml = toml(r#"
@@ -259,7 +259,7 @@ const = true
         assert_eq!(pars[3].constant, true);
         assert_eq!(pars[3].nullable, None);
     }
-    
+
     #[test]
     fn function_parse_return_nullable_false() {
         let toml = toml(r#"
