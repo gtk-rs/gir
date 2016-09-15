@@ -7,7 +7,13 @@ use traits::*;
 pub fn used_ffi_type(env: &Env, type_id: TypeId, c_type: &str) -> Option<String> {
     let (_ptr, inner) = rustify_pointers(c_type);
     let type_ = ffi_inner(env, type_id, &inner);
-    type_.ok()
+    type_.ok().and_then(|type_name| {
+        if type_name.find(':').is_some() {
+            Some(type_name)
+        } else {
+            None
+        }
+    })
 }
 
 pub fn ffi_type(env: &Env, tid: TypeId, c_type: &str) -> Result {
