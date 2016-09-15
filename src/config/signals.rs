@@ -1,6 +1,7 @@
 use super::ident::Ident;
 use super::identables::Parse;
 use toml::Value;
+use version::Version;
 
 #[derive(Clone, Debug)]
 pub struct Signal {
@@ -9,6 +10,7 @@ pub struct Signal {
     //false(default) - process this signal
     pub ignore: bool,
     pub inhibit: bool,
+    pub version: Option<Version>,
 }
 
 impl Parse for Signal {
@@ -27,11 +29,15 @@ impl Parse for Signal {
         let inhibit = toml.lookup("inhibit")
             .and_then(|val| val.as_bool())
             .unwrap_or(false);
+        let version = toml.lookup("version")
+            .and_then(|v| v.as_str())
+            .and_then(|s| s.parse().ok());
 
         Some(Signal{
             ident: ident,
             ignore: ignore,
             inhibit: inhibit,
+            version: version,
         })
     }
 }
