@@ -131,8 +131,13 @@ impl FromGlib<ffi::{ffi_name}> for {name} {{
     }
 }
 "));
+    let error_domain: Option<String> = enum_.functions.iter()
+        .filter(|f| f.name == "quark")
+        .next()
+        .and_then(|f| f.c_identifier.clone())
+        .or_else(|| enum_.error_domain.clone());
 
-    if let Some(ref get_quark) = enum_.error_domain {
+    if let Some(ref get_quark) = error_domain {
         let get_quark = get_quark.replace("-", "_");
         let has_failed_member = members.iter().any(|m| m.name == "Failed");
 
