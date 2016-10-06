@@ -180,6 +180,7 @@ impl Library {
         let mut fns = Vec::new();
         let mut signals = Vec::new();
         let mut impls = Vec::new();
+        let mut fields = Vec::new();
         let mut doc = None;
         loop {
             let event = try!(parser.next());
@@ -191,8 +192,9 @@ impl Library {
                         "implements" =>
                             impls.push(try!(self.read_type(parser, ns_id, &name, &attributes)).0),
                         "signal" => try!(self.read_signal_to_vec(parser, ns_id, &attributes, &mut signals)),
-                        "field" | "property"
-                            | "virtual-method" => try!(ignore_element(parser)),
+                        "field" =>
+                            fields.push(try!(self.read_field(parser, ns_id, &attributes))),
+                        "property" | "virtual-method" => try!(ignore_element(parser)),
                         "doc" => doc = try!(read_text(parser)),
                         x => return Err(mk_error!(format!("Unexpected element <{}>", x), parser)),
                     }
@@ -208,6 +210,7 @@ impl Library {
                 name: name.into(),
                 c_type: c_type.into(),
                 glib_get_type : get_type.into(),
+                fields: fields,
                 functions: fns,
                 signals: signals,
                 parent: parent,

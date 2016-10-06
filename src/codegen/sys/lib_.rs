@@ -57,7 +57,7 @@ fn generate_lib(w: &mut Write, env: &Env) -> Result<()>{
     try!(generate_unions(w, &unions));
     try!(functions::generate_callbacks(w, env, &prepare(ns)));
     try!(generate_records(w, env, &records));
-    try!(generate_classes_structs(w, &classes));
+    try!(generate_classes_structs(w, env, &classes));
     try!(generate_interfaces_structs(w, &interfaces));
 
     try!(writeln!(w, ""));
@@ -232,10 +232,23 @@ fn prepare_enum_member_name(name: &str) -> String {
     }
 }
 
-fn generate_classes_structs(w: &mut Write, classes: &[&Class]) -> Result<()> {
+fn generate_classes_structs(w: &mut Write, env: &Env, classes: &[&Class]) -> Result<()> {
     try!(writeln!(w, ""));
     for klass in classes {
-        try!(writeln!(w, "#[repr(C)]\npub struct {}(c_void);", klass.c_type));
+        let (lines, commented) = generate_fields(env, &klass.name, &klass.fields);
+        
+        let comment = if commented { "//" } else { "" };
+        if lines.is_empty() {
+            try!(writeln!(w, "{comment}#[repr(C)]\n{comment}pub struct {name}(c_void);\n", comment=comment, name=klass.c_type));
+        }
+        else {
+            try!(writeln!(w, "{comment}#[repr(C)]\n{comment}pub struct {name} {{", comment=comment, name=klass.c_type));
+
+            for line in lines {
+                try!(writeln!(w, "{}{}", comment, line));
+            }
+            try!(writeln!(w, "{}}}\n", comment));
+        }
     }
 
     Ok(())
@@ -253,65 +266,8 @@ fn generate_interfaces_structs(w: &mut Write, interfaces: &[&Interface]) -> Resu
 fn generate_records(w: &mut Write, env: &Env, records: &[&Record]) -> Result<()> {
     try!(writeln!(w, ""));
     for record in records {
-        let mut lines = Vec::new();
-        let mut commented = false;
-        let mut truncated = false;
-        for field in &record.fields {
-            let is_union = env.library.type_(field.typ).maybe_ref_as::<Union>().is_some();
-            let is_bits = field.bits.is_some();
-            if !truncated && (is_union || is_bits) {
-                warn!("Record `{}` field `{}` not expressible in Rust, truncated",
-                      record.name, field.name);
-                lines.push(format!("\t_truncated_record_marker: c_void,"));
-                truncated = true;
-            }
-            if truncated {
-                if is_union {
-                    lines.push(format!("\t//union,"));
-                }
-                else {
-                    let bits = field.bits.map(|n| format!(": {}", n)).unwrap_or("".into());
-                    lines.push(
-                        format!("\t//{}: {}{},", field.name,
-                                field.c_type.as_ref().map(|s| &s[..]).unwrap_or("fn"), bits));
-                };
-                continue;
-            }
-
-            let vis = if field.private { "" } else { "pub " };
-
-            if let Some(ref c_type) = field.c_type {
-                let name = mangle_keywords(&*field.name);
-                let c_type = ffi_type(env, field.typ, c_type);
-                if c_type.is_err() {
-                    commented = true;
-                }
-                lines.push(format!("\t{}{}: {},", vis, name, c_type.into_string()));
-            }
-            else {
-                let name = mangle_keywords(&*field.name);
-                if let Some(ref func) =
-                        env.library.type_(field.typ).maybe_ref_as::<Function>() {
-                    let (com, sig) = functions::function_signature(env, func, true);
-                    lines.push(format!("\t{}{}: Option<unsafe extern \"C\" fn{}>,", vis, name, sig));
-                    commented |= com;
-                }
-                else if let Some(c_type) = env.library.type_(field.typ).get_glib_name() {
-                    warn!("Record `{}`, field `{}` missing c:type assumed `{}`",
-                          record.name, field.name, c_type);
-                    let c_type = ffi_type(env, field.typ, c_type);
-                    if c_type.is_err() {
-                        commented = true;
-                    }
-                    lines.push(format!("\t{}{}: {},", vis, name, c_type.into_string()));
-                }
-                else {
-                    lines.push(format!("\t{}{}: [{:?} {}],",
-                        vis, name, field.typ, field.typ.full_name(&env.library)));
-                    commented = true;
-                }
-            }
-        }
+        let (lines, commented) = generate_fields(env, &record.name, &record.fields);
+        
         let comment = if commented { "//" } else { "" };
         if lines.is_empty() {
             try!(writeln!(w, "{}#[repr(C)]\n{0}pub struct {}(c_void);\n", comment, record.c_type));
@@ -325,4 +281,68 @@ fn generate_records(w: &mut Write, env: &Env, records: &[&Record]) -> Result<()>
         }
     }
     Ok(())
+}
+
+fn generate_fields(env: &Env, struct_name: &str, fields: &[Field]) -> (Vec<String>, bool){
+    let mut lines = Vec::new();
+    let mut commented = false;
+    let mut truncated = false;
+
+    for field in fields {
+        let is_union = env.library.type_(field.typ).maybe_ref_as::<Union>().is_some();
+        let is_bits = field.bits.is_some();
+        if !truncated && (is_union || is_bits) {
+            warn!("Field `{}::{}` not expressible in Rust, truncated",
+                  struct_name, field.name);
+            lines.push(format!("\t_truncated_record_marker: c_void,"));
+            truncated = true;
+        }
+        if truncated {
+            if is_union {
+                lines.push(format!("\t//union,"));
+            }
+            else {
+                let bits = field.bits.map(|n| format!(": {}", n)).unwrap_or("".into());
+                lines.push(
+                    format!("\t//{}: {}{},", field.name,
+                            field.c_type.as_ref().map(|s| &s[..]).unwrap_or("fn"), bits));
+            };
+            continue;
+        }
+
+        let vis = if field.private { "" } else { "pub " };
+
+        if let Some(ref c_type) = field.c_type {
+            let name = mangle_keywords(&*field.name);
+            let c_type = ffi_type(env, field.typ, c_type);
+            if c_type.is_err() {
+                commented = true;
+            }
+            lines.push(format!("\t{}{}: {},", vis, name, c_type.into_string()));
+        }
+        else {
+            let name = mangle_keywords(&*field.name);
+            if let Some(ref func) =
+                env.library.type_(field.typ).maybe_ref_as::<Function>() {
+                    let (com, sig) = functions::function_signature(env, func, true);
+                    lines.push(format!("\t{}{}: Option<unsafe extern \"C\" fn{}>,", vis, name, sig));
+                    commented |= com;
+                }
+            else if let Some(c_type) = env.library.type_(field.typ).get_glib_name() {
+                warn!("Field `{}::{}` missing c:type assumed `{}`",
+                      struct_name, field.name, c_type);
+                let c_type = ffi_type(env, field.typ, c_type);
+                if c_type.is_err() {
+                    commented = true;
+                }
+                lines.push(format!("\t{}{}: {},", vis, name, c_type.into_string()));
+            }
+            else {
+                lines.push(format!("\t{}{}: [{:?} {}],",
+                                   vis, name, field.typ, field.typ.full_name(&env.library)));
+                commented = true;
+            }
+        }
+    }
+    (lines, commented)
 }
