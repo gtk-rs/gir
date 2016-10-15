@@ -30,13 +30,24 @@ fn lookup<'a>(functions: &'a [Info], name: &str) -> &'a Info {
 }
 
 fn generate_display(w: &mut Write, type_name: &str, func: &Info) -> Result<()> {
+    use analysis::out_parameters::Mode;
+    let body = if let Mode::Throws(_) = func.outs.mode {
+        format!("if let Ok(val) = self.{}() {{
+            write!(f, \"{{}}\", val)
+        }} else {{
+            Err(fmt::Error)
+        }}", func.name)
+    } else {
+        format!("write!(f, \"{{}}\", self.{func_name}())",
+                func_name = func.name)
+    };
     writeln!(w, "
 impl fmt::Display for {type_name} {{
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {{
-        write!(f, \"{{}}\", self.{func_name}())
+        {body}
     }}
-}}", type_name = type_name, func_name = func.name)
+}}", type_name = type_name, body = body)
 }
 
 fn generate_eq(w: &mut Write, type_name: &str, func: &Info) -> Result<()> {
