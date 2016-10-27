@@ -1,3 +1,4 @@
+use super::functions::Return;
 use super::ident::Ident;
 use super::identables::Parse;
 use toml::Value;
@@ -11,6 +12,7 @@ pub struct Signal {
     pub ignore: bool,
     pub inhibit: bool,
     pub version: Option<Version>,
+    pub ret: Return,
 }
 
 impl Parse for Signal {
@@ -32,12 +34,14 @@ impl Parse for Signal {
         let version = toml.lookup("version")
             .and_then(|v| v.as_str())
             .and_then(|s| s.parse().ok());
+        let ret = Return::parse(toml.lookup("return"));
 
         Some(Signal{
             ident: ident,
             ignore: ignore,
             inhibit: inhibit,
             version: version,
+            ret: ret,
         })
     }
 }

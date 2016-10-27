@@ -44,6 +44,7 @@ pub fn analyze(env: &Env, signal: &library::Signal, type_tid: library::TypeId, i
     //Fake
     let configured_functions: Vec<&config::functions::Function> = Vec::new();
 
+    //TODO: move to object.signal.return config
     let inhibit = configured_signals.iter().any(|f| f.inhibit);
     if inhibit {
         if signal.ret.typ != library::TypeId::tid_bool() {
@@ -94,6 +95,8 @@ pub fn analyze(env: &Env, signal: &library::Signal, type_tid: library::TypeId, i
         parameters.push(analysis);
     }
 
+    let mut ret_nullable = signal.ret.nullable;
+
     if signal.ret.typ != Default::default() {
         if let Ok(s) = used_rust_type(env, signal.ret.typ) {
             used_types.push(s);
@@ -101,12 +104,24 @@ pub fn analyze(env: &Env, signal: &library::Signal, type_tid: library::TypeId, i
         if let Some(s) = used_ffi_type(env, signal.ret.typ, &signal.ret.c_type) {
             used_types.push(s);
         }
+
+        let nullable_override = configured_signals.iter()
+            .filter_map(|f| f.ret.nullable)
+            .next();
+        if let Some(val) = nullable_override {
+            ret_nullable = val;
+        }
     }
+
+    let ret = library::Parameter {
+        nullable: ret_nullable,
+        .. signal.ret.clone()
+    };
 
     let trampoline = Trampoline {
         name: name.clone(),
         parameters: parameters,
-        ret: signal.ret.clone(),
+        ret: ret,
         bounds: bounds,
         version: version,
         inhibit: inhibit,
