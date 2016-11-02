@@ -45,12 +45,15 @@ pub fn analyze(env: &Env, func: &library::Function, type_tid: library::TypeId,
 
     if func.kind == library::FunctionKind::Constructor {
         if let Some(par) = parameter {
+            let nullable_override = configured_functions.iter()
+                .filter_map(|f| f.ret.nullable)
+                .next();
             if par.typ != type_tid {
                 base_tid = Some(par.typ);
             }
             parameter = Some(library::Parameter {
                 typ: type_tid,
-                nullable: Nullable(false),
+                nullable: nullable_override.unwrap_or(Nullable(false)),
                 ..par
             });
         }
