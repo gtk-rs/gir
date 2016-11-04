@@ -108,8 +108,8 @@ pub fn analyze(env: &Env, signal: &library::Signal, type_tid: library::TypeId, i
         let nullable_override = configured_signals.iter()
             .filter_map(|f| f.ret.nullable)
             .next();
-        if let Some(val) = nullable_override {
-            ret_nullable = val;
+        if let Some(nullable) = nullable_override {
+            ret_nullable = nullable;
         }
     }
 
