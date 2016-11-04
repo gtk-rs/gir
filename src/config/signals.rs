@@ -1,7 +1,7 @@
 use library::Nullable;
 use super::functions::Return;
 use super::ident::Ident;
-use super::matchable::Matchable;
+use super::parameter_matchable::Functionlike;
 use super::parsable::{Parsable, Parse};
 use toml::Value;
 use version::Version;
@@ -85,14 +85,11 @@ impl Parse for Signal {
     }
 }
 
-impl Signal {
-    pub fn matched_parameters<'a>(signals: &[&'a Signal], parameter_name: &str) -> Vec<&'a Parameter> {
-        let mut v = Vec::new();
-        for f in signals {
-            let pars = f.parameters.matched(parameter_name);
-            v.extend_from_slice(&pars);
-        }
-        v
+impl Functionlike for Signal {
+    type Parameter = self::Parameter;
+
+    fn parameters(&self) -> &[Self::Parameter] {
+        &self.parameters
     }
 }
 

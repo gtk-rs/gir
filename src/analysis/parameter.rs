@@ -1,6 +1,7 @@
 use std::borrow::Cow;
 
 use config::functions::Function;
+use config::parameter_matchable::ParameterMatchable;
 use config::signals::Signal;
 use env::Env;
 use library;
@@ -36,11 +37,11 @@ pub fn analyze(env: &Env, par: &library::Parameter, configured_functions: &[&Fun
         nameutil::mangle_keywords(&*par.name)
     };
 
-    let immutable = Function::matched_parameters(configured_functions, &name)
+    let immutable = configured_functions.matched_parameters(&name)
         .iter().any(|p| p.constant);
     let ref_mode = RefMode::without_unneeded_mut(&env.library, par, immutable);
 
-    let nullable_override = Function::matched_parameters(configured_functions, &name).iter()
+    let nullable_override = configured_functions.matched_parameters(&name).iter()
         .filter_map(|p| p.nullable)
         .next();
     let nullable = nullable_override.unwrap_or(par.nullable);
@@ -71,7 +72,7 @@ pub fn analyze_for_trampoline(env: &Env, par: &library::Parameter, configured_si
 
     let ref_mode = RefMode::without_unneeded_mut(&env.library, par, false);
 
-    let nullable_override = Signal::matched_parameters(configured_signals, &name).iter()
+    let nullable_override = configured_signals.matched_parameters(&name).iter()
         .filter_map(|p| p.nullable)
         .next();
     let nullable = nullable_override.unwrap_or(par.nullable);

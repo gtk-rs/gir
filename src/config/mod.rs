@@ -1,5 +1,6 @@
 pub mod config;
 pub mod error;
+pub mod parameter_matchable;
 pub mod functions;
 pub mod gobjects;
 pub mod ident;

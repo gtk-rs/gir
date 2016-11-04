@@ -1,4 +1,5 @@
 pub use config::matchable::Matchable;
+pub use config::parameter_matchable::ParameterMatchable;
 
 pub trait AsStr {
     fn as_str(&self) -> &str;
