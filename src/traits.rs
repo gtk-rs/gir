@@ -1,4 +1,4 @@
-pub use config::identables::Identables;
+pub use config::matchable::Matchable;
 
 pub trait AsStr {
     fn as_str(&self) -> &str;

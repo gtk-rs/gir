@@ -1,5 +1,5 @@
 use super::ident::Ident;
-use super::identables::Parse;
+use super::parsable::Parse;
 use toml::Value;
 use version::Version;
 
@@ -46,7 +46,7 @@ pub type Members = Vec<Member>;
 #[cfg(test)]
 mod tests {
     use super::super::ident::Ident;
-    use super::super::identables::*;
+    use super::super::parsable::Parse;
     use super::*;
     use toml;
     use version::Version;

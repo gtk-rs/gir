@@ -1,11 +1,11 @@
 use config;
 use config::gobjects::GObject;
-use config::identables::Identables;
 use env::Env;
 use library;
 use nameutil;
 use super::trampolines;
 use super::imports::Imports;
+use traits::*;
 use version::Version;
 
 #[derive(Debug)]

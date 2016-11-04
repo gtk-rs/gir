@@ -1,7 +1,8 @@
 use library::Nullable;
 use super::functions::Return;
 use super::ident::Ident;
-use super::identables::{Identables, Parse};
+use super::matchable::Matchable;
+use super::parsable::{Parsable, Parse};
 use toml::Value;
 use version::Version;
 
@@ -106,7 +107,7 @@ pub type Signals = Vec<Signal>;
 #[cfg(test)]
 mod tests {
     use super::super::ident::Ident;
-    use super::super::identables::*;
+    use super::super::parsable::Parse;
     use super::*;
     use toml;
 

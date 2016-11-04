@@ -1,6 +1,7 @@
 use library::Nullable;
 use super::ident::Ident;
-use super::identables::{Identables, Parse};
+use super::matchable::Matchable;
+use super::parsable::{Parsable, Parse};
 use toml::Value;
 use version::Version;
 
@@ -135,7 +136,8 @@ pub type Functions = Vec<Function>;
 mod tests {
     use library::Nullable;
     use super::super::ident::Ident;
-    use super::super::identables::*;
+    use super::super::matchable::Matchable;
+    use super::super::parsable::{Parsable, Parse};
     use super::*;
     use toml;
     use version::Version;
