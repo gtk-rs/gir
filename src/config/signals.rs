@@ -1,8 +1,43 @@
+use library::Nullable;
 use super::functions::Return;
 use super::ident::Ident;
-use super::identables::Parse;
+use super::identables::{Identables, Parse};
 use toml::Value;
 use version::Version;
+
+#[derive(Clone, Debug)]
+pub struct Parameter {
+    pub ident: Ident,
+    pub nullable: Option<Nullable>,
+}
+
+impl Parse for Parameter {
+    fn parse(toml: &Value, object_name: &str) -> Option<Parameter> {
+        let ident = match Ident::parse(toml, object_name, "signal parameter") {
+            Some(ident) => ident,
+            None => {
+                error!("No 'name' or 'pattern' given for parameter for object {}", object_name);
+                return None
+            }
+        };
+        let nullable = toml.lookup("nullable")
+            .and_then(|val| val.as_bool())
+            .map(|b| Nullable(b));
+
+        Some(Parameter{
+            ident: ident,
+            nullable: nullable,
+        })
+    }
+}
+
+impl AsRef<Ident> for Parameter {
+    fn as_ref(&self) -> &Ident {
+        &self.ident
+    }
+}
+
+pub type Parameters = Vec<Parameter>;
 
 #[derive(Clone, Debug)]
 pub struct Signal {
@@ -12,6 +47,7 @@ pub struct Signal {
     pub ignore: bool,
     pub inhibit: bool,
     pub version: Option<Version>,
+    pub parameters: Parameters,
     pub ret: Return,
 }
 
@@ -34,6 +70,7 @@ impl Parse for Signal {
         let version = toml.lookup("version")
             .and_then(|v| v.as_str())
             .and_then(|s| s.parse().ok());
+        let parameters = Parameters::parse(toml.lookup("parameter"), object_name);
         let ret = Return::parse(toml.lookup("return"));
 
         Some(Signal{
@@ -41,8 +78,20 @@ impl Parse for Signal {
             ignore: ignore,
             inhibit: inhibit,
             version: version,
+            parameters: parameters,
             ret: ret,
         })
+    }
+}
+
+impl Signal {
+    pub fn matched_parameters<'a>(signals: &[&'a Signal], parameter_name: &str) -> Vec<&'a Parameter> {
+        let mut v = Vec::new();
+        for f in signals {
+            let pars = f.parameters.matched(parameter_name);
+            v.extend_from_slice(&pars);
+        }
+        v
     }
 }
 

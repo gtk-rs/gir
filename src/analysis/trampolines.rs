@@ -83,7 +83,15 @@ pub fn analyze(env: &Env, signal: &library::Signal, type_tid: library::TypeId, i
     }
 
     for par in &signal.parameters {
-        let analysis = parameter::analyze(env, par, &configured_functions);
+        let mut analysis = parameter::analyze(env, par, &configured_functions);
+
+        //TODO: move to parameter::analyze
+        let nullable_override = config::signals::Signal::matched_parameters(configured_signals, &analysis.name).iter()
+            .filter_map(|p| p.nullable)
+            .next();
+        if let Some(nullable) = nullable_override {
+            analysis.nullable = nullable;
+        }
 
         if let Ok(s) = used_rust_type(env, par.typ) {
             used_types.push(s);
