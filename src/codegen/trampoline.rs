@@ -3,11 +3,10 @@ use std::io::{Result, Write};
 use env::Env;
 use analysis::bounds::{Bounds, BoundType};
 use analysis::ffi_type::ffi_type;
-use analysis::parameter::Parameter;
 use analysis::ref_mode::RefMode;
 use analysis::rust_type::parameter_rust_type;
+use analysis::trampoline_parameters::*;
 use analysis::trampolines::Trampoline;
-use nameutil;
 use super::general::version_condition;
 use super::return_value::ToReturnValue;
 use super::trampoline_from_glib::TrampolineFromGlib;
@@ -54,7 +53,7 @@ fn func_parameters(env: &Env, analysis: &Trampoline,
                    bound_replace: Option<(&str, &str)>) -> String {
     let mut param_str = String::with_capacity(100);
 
-    for (pos, par) in analysis.parameters.iter().enumerate() {
+    for (pos, par) in analysis.parameters.rust_parameters.iter().enumerate() {
         if pos > 0 { param_str.push_str(", ") }
         let s = func_parameter(env, par, &analysis.bounds, bound_replace);
         param_str.push_str(&s);
@@ -63,7 +62,7 @@ fn func_parameters(env: &Env, analysis: &Trampoline,
     param_str
 }
 
-fn func_parameter(env: &Env, par: &Parameter, bounds: &Bounds,
+fn func_parameter(env: &Env, par: &RustParameter, bounds: &Bounds,
                   bound_replace: Option<(&str, &str)>) -> String {
     //TODO: restore mutable support
     //let mut_str = if par.ref_mode == RefMode::ByRefMut { "mut " } else { "" };
@@ -112,7 +111,7 @@ fn func_returns(env: &Env, analysis: &Trampoline) -> String {
 
 fn trampoline_parameters(env: &Env, analysis: &Trampoline) -> String {
     let mut parameter_strs: Vec<String> = Vec::new();
-    for par in &analysis.parameters {
+    for par in &analysis.parameters.c_parameters {
         let par_str = trampoline_parameter(env, par);
         parameter_strs.push(par_str);
     }
@@ -120,9 +119,9 @@ fn trampoline_parameters(env: &Env, analysis: &Trampoline) -> String {
     parameter_strs.join(", ")
 }
 
-fn trampoline_parameter(env: &Env, par: &Parameter) -> String {
+fn trampoline_parameter(env: &Env, par: &CParameter) -> String {
     let ffi_type = ffi_type(env, par.typ, &par.c_type);
-    format!("{}: {}", nameutil::mangle_keywords(&*par.name), ffi_type.into_string())
+    format!("{}: {}", par.name, ffi_type.into_string())
 }
 
 fn trampoline_returns(env: &Env, analysis: &Trampoline) -> String {
@@ -147,8 +146,15 @@ fn trampoline_call_func(env: &Env, analysis: &Trampoline, in_trait: bool) -> Str
 fn trampoline_call_parameters(env: &Env, analysis: &Trampoline, in_trait: bool) -> String {
     let mut need_downcast = in_trait;
     let mut parameter_strs: Vec<String> = Vec::new();
-    for par in &analysis.parameters {
-        let par_str = par.trampoline_from_glib(env, need_downcast);
+    for (ind, par) in analysis.parameters.rust_parameters.iter().enumerate() {
+        let transformation = match analysis.parameters.get(ind) {
+            Some(transformation) => transformation,
+            None => {
+                error!("No transformation for {}", par.name);
+                continue;
+            }
+        };
+        let par_str = transformation.trampoline_from_glib(env, need_downcast);
         parameter_strs.push(par_str);
         need_downcast = false;  //Only downcast first parameter
     }

@@ -1,6 +1,5 @@
-use analysis::parameter::Parameter;
 use analysis::rust_type::rust_type;
-use analysis::conversion_type::ConversionType;
+use analysis::trampoline_parameters::Transformation;
 use env::Env;
 use library;
 use traits::*;
@@ -9,11 +8,11 @@ pub trait TrampolineFromGlib {
     fn trampoline_from_glib(&self, env: &Env, need_downcast: bool) -> String;
 }
 
-impl TrampolineFromGlib for Parameter {
+impl TrampolineFromGlib for Transformation {
     fn trampoline_from_glib(&self, env: &Env, need_downcast: bool) -> String {
         use analysis::conversion_type::ConversionType::*;
         let need_type_name = need_downcast || is_need_type_name(env, self.typ);
-        match ConversionType::of(&env.library, self.typ) {
+        match self.conversion_type {
             Direct => self.name.clone(),
             Scalar => format!("from_glib({})", self.name),
             Pointer => {
