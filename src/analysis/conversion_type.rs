@@ -5,6 +5,7 @@ pub enum ConversionType {
     Direct,     //coded without conversion
     Scalar,     //coded with from_glib
     Pointer,    //coded with from_glib_xxx
+    Borrow,     //same as Pointer, except that use from_glib_borrow instead from_glib_none
     Unknown,
 }
 

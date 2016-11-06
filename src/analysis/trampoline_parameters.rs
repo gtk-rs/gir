@@ -6,6 +6,8 @@ use nameutil;
 use super::conversion_type::ConversionType;
 use super::ref_mode::RefMode;
 
+pub use config::signals::TransformationType;
+
 #[derive(Clone, Debug)]
 pub struct RustParameter {
     pub name: String,
@@ -20,11 +22,6 @@ pub struct CParameter {
     pub name: String,
     pub typ: library::TypeId,
     pub c_type: String,
-}
-
-#[derive(Clone, Debug)]
-pub enum TransformationType {
-    None,
 }
 
 #[derive(Clone, Debug)]
@@ -55,11 +52,11 @@ impl Parameters {
         }
     }
 
-    //TODO: temp
-    fn push(&mut self, type_tid: library::TypeId, name: String, c_type: String,
-            direction: library::ParameterDirection, transfer: library::Transfer,
-            nullable: library::Nullable, ref_mode: RefMode,
-            conversion_type: ConversionType) {
+    fn prepare_transformation(&mut self, type_tid: library::TypeId, name: String,
+                              c_type: String, direction: library::ParameterDirection,
+                              transfer: library::Transfer, nullable: library::Nullable,
+                              ref_mode: RefMode, conversion_type: ConversionType)
+                              -> Transformation {
         let c_par = CParameter {
             name: name.clone(),
             typ: type_tid,
@@ -78,7 +75,7 @@ impl Parameters {
         let ind_rust = self.rust_parameters.len();
         self.rust_parameters.push(rust_par);
 
-        let transform = Transformation {
+        Transformation {
             ind_c: ind_c,
             ind_rust: ind_rust,
             transformation: TransformationType::None,
@@ -87,8 +84,7 @@ impl Parameters {
             transfer: transfer,
             ref_mode: ref_mode,
             conversion_type: conversion_type,
-        };
-        self.transformations.push(transform);
+        }
     }
 
     pub fn get(&self, ind_rust: usize) -> Option<&Transformation> {
@@ -105,10 +101,13 @@ pub fn analyze(env: &Env, signal_parameters: &[library::Parameter], type_tid: li
     let owner = env.type_(type_tid);
     let c_type = format!("{}*", owner.get_glib_name().unwrap());
 
-    parameters.push(type_tid, "this".to_owned(), c_type,
-                    library::ParameterDirection::In, library::Transfer::None,
-                    library::Nullable(false), RefMode::ByRef,
-                    ConversionType::Pointer);
+    let transform = parameters.prepare_transformation(type_tid, "this".to_owned(), c_type,
+                                                      library::ParameterDirection::In,
+                                                      library::Transfer::None,
+                                                      library::Nullable(false),
+                                                      RefMode::ByRef,
+                                                      ConversionType::Pointer);
+    parameters.transformations.push(transform);
 
     for par in signal_parameters {
         let name = nameutil::mangle_keywords(&*par.name).into_owned();
@@ -122,8 +121,27 @@ pub fn analyze(env: &Env, signal_parameters: &[library::Parameter], type_tid: li
 
         let conversion_type = ConversionType::of(&env.library, par.typ);
 
-        parameters.push(par.typ, name, par.c_type.clone(), par.direction,
-                        par.transfer, nullable, ref_mode, conversion_type);
+        let transformation_override = configured_signals.matched_parameters(&name).iter()
+            .filter_map(|p| p.transformation)
+            .next();
+
+        let mut transform = parameters.prepare_transformation(par.typ, name, par.c_type.clone(),
+                                                              par.direction, par.transfer,
+                                                              nullable, ref_mode, conversion_type);
+        if let Some(transformation_type) = transformation_override {
+            match transformation_type {
+                TransformationType::None => (),
+                TransformationType::Borrow => {
+                    if transform.conversion_type == ConversionType::Pointer {
+                        transform.conversion_type = ConversionType::Borrow;
+                    } else {
+                        error!("Wrong conversion_type for borrow transformation {:?}",
+                               transform.conversion_type);
+                    }
+                }
+            }
+        }
+        parameters.transformations.push(transform);
     }
 
     parameters

@@ -15,8 +15,9 @@ impl TrampolineFromGlib for Transformation {
         match self.conversion_type {
             Direct => self.name.clone(),
             Scalar => format!("from_glib({})", self.name),
-            Pointer => {
-                let (mut left, mut right) = from_glib_xxx(self.transfer);
+            Borrow | Pointer => {
+                let is_borrow = self.conversion_type == Borrow;
+                let (mut left, mut right) = from_glib_xxx(self.transfer, is_borrow);
                 if need_type_name {
                     let type_name = rust_type(env, self.typ).into_string();
                     left = format!("&{}::{}", type_name, left);
@@ -33,9 +34,10 @@ impl TrampolineFromGlib for Transformation {
     }
 }
 
-fn from_glib_xxx(transfer: library::Transfer) -> (String, String) {
+fn from_glib_xxx(transfer: library::Transfer, is_borrow: bool) -> (String, String) {
     use library::Transfer::*;
     match transfer {
+        None if is_borrow => ("from_glib_borrow(".into(), ")".into()),
         None => ("from_glib_none(".into(), ")".into()),
         Full => ("from_glib_full(".into(), ")".into()),
         Container => ("from_glib_container(".into(), ")".into()),
