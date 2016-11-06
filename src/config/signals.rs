@@ -12,6 +12,8 @@ use version::Version;
 pub enum TransformationType {
     None,
     Borrow, //replace from_glib_none to from_glib_borrow
+    //TODO: configure
+    TreePath, //convert string to TreePath
 }
 
 impl FromStr for TransformationType {
@@ -20,6 +22,7 @@ impl FromStr for TransformationType {
         match s {
             "none" => Ok(TransformationType::None),
             "borrow" => Ok(TransformationType::Borrow),
+            "treepath" => Ok(TransformationType::TreePath),
             _ => Err(format!("Wrong transformation \"{}\"", s))
         }
     }

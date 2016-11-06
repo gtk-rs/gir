@@ -129,20 +129,47 @@ pub fn analyze(env: &Env, signal_parameters: &[library::Parameter], type_tid: li
                                                               par.direction, par.transfer,
                                                               nullable, ref_mode, conversion_type);
         if let Some(transformation_type) = transformation_override {
-            match transformation_type {
-                TransformationType::None => (),
-                TransformationType::Borrow => {
-                    if transform.conversion_type == ConversionType::Pointer {
-                        transform.conversion_type = ConversionType::Borrow;
-                    } else {
-                        error!("Wrong conversion_type for borrow transformation {:?}",
-                               transform.conversion_type);
-                    }
-                }
-            }
+            apply_transformation_type(env, &mut parameters, &mut transform, transformation_type);
         }
         parameters.transformations.push(transform);
     }
 
     parameters
+}
+
+fn apply_transformation_type(env: &Env, parameters: &mut Parameters,
+                             transform: &mut Transformation,
+                             transformation_type: TransformationType) {
+    transform.transformation = transformation_type;
+    match transformation_type {
+        TransformationType::None => (),
+        TransformationType::Borrow => {
+            if transform.conversion_type == ConversionType::Pointer {
+                transform.conversion_type = ConversionType::Borrow;
+            } else {
+                error!("Wrong conversion_type for borrow transformation {:?}",
+                       transform.conversion_type);
+            }
+        }
+        TransformationType::TreePath => {
+            let type_ = env.type_(transform.typ);
+            if let &library::Type::Fundamental(library::Fundamental::Utf8) = type_
+            {
+                if let Some(type_tid) = env.library.find_type(0, "Gtk.TreePath") {
+                    transform.typ = type_tid;
+                    transform.conversion_type = ConversionType::Direct;
+                    if let Some(rust_par) = parameters.rust_parameters
+                        .get_mut(transform.ind_rust) {
+                            rust_par.typ = type_tid;
+                            rust_par.ref_mode = RefMode::None;
+                        }
+                } else {
+                    error!("Type Gtk.TreePath not found for treepath transformation");
+                }
+            } else {
+                error!("Wrong parameter type for treepath transformation {:?}",
+                       transform.typ);
+            }
+        }
+    }
 }

@@ -34,6 +34,7 @@ pub fn generate(w: &mut Write, env: &Env, analysis: &Trampoline,
     }
     try!(writeln!(w, "\tcallback_guard!();"));
     try!(writeln!(w, "\tlet f: &Box_<{}> = transmute(f);", func_str));
+    try!(transformation_vars(w, analysis));
     let call = trampoline_call_func(env, analysis, in_trait);
     try!(writeln!(w, "\t{}", call));
     try!(writeln!(w, "}}"));
@@ -131,6 +132,23 @@ fn trampoline_returns(env: &Env, analysis: &Trampoline) -> String {
         let ffi_type = ffi_type(env, analysis.ret.typ, &analysis.ret.c_type);
         format!(" -> {}", ffi_type.into_string())
     }
+}
+
+fn transformation_vars(w: &mut Write, analysis: &Trampoline) -> Result<()> {
+    use analysis::trampoline_parameters::TransformationType::*;
+    for transform in &analysis.parameters.transformations {
+        match transform.transformation {
+            None => (),
+            Borrow => (),
+            TreePath => {
+                let c_par = analysis.parameters.c_parameters.get(transform.ind_c).unwrap();
+                try!(writeln!(w,
+                              "\tlet {} = from_glib_full(ffi::gtk_tree_path_new_from_string({}));",
+                              transform.name, c_par.name));
+            }
+        }
+    }
+    Ok(())
 }
 
 fn trampoline_call_func(env: &Env, analysis: &Trampoline, in_trait: bool) -> String {
