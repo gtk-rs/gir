@@ -33,6 +33,7 @@ pub struct Parameter {
     pub ident: Ident,
     pub nullable: Option<Nullable>,
     pub transformation: Option<TransformationType>,
+    pub new_name: Option<String>,
 }
 
 impl Parse for Parameter {
@@ -54,11 +55,15 @@ impl Parse for Parameter {
                           error!("{0}", err);
                           err
                       }).ok());
+        let new_name = toml.lookup("new_name")
+            .and_then(|val| val.as_str())
+            .map(|s| s.to_owned());
 
         Some(Parameter{
             ident: ident,
             nullable: nullable,
             transformation: transformation,
+            new_name: new_name,
         })
     }
 }

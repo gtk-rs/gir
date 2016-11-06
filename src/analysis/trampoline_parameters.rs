@@ -121,6 +121,9 @@ pub fn analyze(env: &Env, signal_parameters: &[library::Parameter], type_tid: li
 
         let conversion_type = ConversionType::of(&env.library, par.typ);
 
+        let new_name = configured_signals.matched_parameters(&name).iter()
+            .filter_map(|p| p.new_name.clone())
+            .next();
         let transformation_override = configured_signals.matched_parameters(&name).iter()
             .filter_map(|p| p.transformation)
             .next();
@@ -128,6 +131,11 @@ pub fn analyze(env: &Env, signal_parameters: &[library::Parameter], type_tid: li
         let mut transform = parameters.prepare_transformation(par.typ, name, par.c_type.clone(),
                                                               par.direction, par.transfer,
                                                               nullable, ref_mode, conversion_type);
+
+        if let Some(new_name) = new_name {
+            transform.name = new_name;
+        }
+
         if let Some(transformation_type) = transformation_override {
             apply_transformation_type(env, &mut parameters, &mut transform, transformation_type);
         }
