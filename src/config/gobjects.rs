@@ -4,7 +4,7 @@ use std::str::FromStr;
 use toml::Value;
 
 use library::{Library, TypeId};
-use super::identables::Identables;
+use config::parsable::Parsable;
 use super::functions::Functions;
 use super::members::Members;
 use super::signals::Signals;

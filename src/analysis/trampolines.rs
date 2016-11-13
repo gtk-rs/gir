@@ -41,9 +41,6 @@ pub fn analyze(env: &Env, signal: &library::Signal, type_tid: library::TypeId, i
 
     let c_type = format!("{}*", owner.get_glib_name().unwrap());
 
-    //Fake
-    let configured_functions: Vec<&config::functions::Function> = Vec::new();
-
     //TODO: move to object.signal.return config
     let inhibit = configured_signals.iter().any(|f| f.inhibit);
     if inhibit {
@@ -83,7 +80,7 @@ pub fn analyze(env: &Env, signal: &library::Signal, type_tid: library::TypeId, i
     }
 
     for par in &signal.parameters {
-        let analysis = parameter::analyze(env, par, &configured_functions);
+        let analysis = parameter::analyze_for_trampoline(env, par, configured_signals);
 
         if let Ok(s) = used_rust_type(env, par.typ) {
             used_types.push(s);
@@ -108,8 +105,8 @@ pub fn analyze(env: &Env, signal: &library::Signal, type_tid: library::TypeId, i
         let nullable_override = configured_signals.iter()
             .filter_map(|f| f.ret.nullable)
             .next();
-        if let Some(val) = nullable_override {
-            ret_nullable = val;
+        if let Some(nullable) = nullable_override {
+            ret_nullable = nullable;
         }
     }
 

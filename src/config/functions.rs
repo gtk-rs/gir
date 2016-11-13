@@ -1,6 +1,7 @@
 use library::Nullable;
 use super::ident::Ident;
-use super::identables::{Identables, Parse};
+use super::parameter_matchable::Functionlike;
+use super::parsable::{Parsable, Parse};
 use toml::Value;
 use version::Version;
 
@@ -112,14 +113,11 @@ impl Parse for Function {
     }
 }
 
-impl Function {
-    pub fn matched_parameters<'a>(functions: &[&'a Function], parameter_name: &str) -> Vec<&'a Parameter> {
-        let mut v = Vec::new();
-        for f in functions {
-            let pars = f.parameters.matched(parameter_name);
-            v.extend_from_slice(&pars);
-        }
-        v
+impl Functionlike for Function {
+    type Parameter = self::Parameter;
+
+    fn parameters(&self) -> &[Self::Parameter] {
+        &self.parameters
     }
 }
 
@@ -135,7 +133,9 @@ pub type Functions = Vec<Function>;
 mod tests {
     use library::Nullable;
     use super::super::ident::Ident;
-    use super::super::identables::*;
+    use super::super::matchable::Matchable;
+    use super::super::parsable::{Parsable, Parse};
+    use super::super::parameter_matchable::ParameterMatchable;
     use super::*;
     use toml;
     use version::Version;
@@ -359,10 +359,10 @@ pattern='par\d+'
         let m = fns.matched("func");
         assert_eq!(m.len(), 2);
 
-        assert_eq!(Function::matched_parameters(&m, "param").len(), 0);
-        assert_eq!(Function::matched_parameters(&m, "par1").len(), 3);
-        assert_eq!(Function::matched_parameters(&m, "par2").len(), 4);
-        assert_eq!(Function::matched_parameters(&m, "par3").len(), 3);
-        assert_eq!(Function::matched_parameters(&m, "par4").len(), 2);
+        assert_eq!(m.matched_parameters("param").len(), 0);
+        assert_eq!(m.matched_parameters("par1").len(), 3);
+        assert_eq!(m.matched_parameters("par2").len(), 4);
+        assert_eq!(m.matched_parameters("par3").len(), 3);
+        assert_eq!(m.matched_parameters("par4").len(), 2);
     }
 }
