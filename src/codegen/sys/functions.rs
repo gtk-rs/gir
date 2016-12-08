@@ -121,11 +121,17 @@ lazy_static! {
 }
 
 pub fn generate_callbacks(w: &mut Write, env: &Env, callbacks: &[&library::Function]) -> Result<()> {
+    if !callbacks.is_empty() {
+        try!(writeln!(w, "// Callbacks"));
+    }
     for func in callbacks {
         let (commented, sig) = function_signature(env, func, true);
         let comment = if commented { "//" } else { "" };
         try!(writeln!(w, "{}pub type {} = Option<unsafe extern \"C\" fn{}>;",
                       comment, func.c_identifier.as_ref().unwrap(), sig));
+    }
+    if !callbacks.is_empty() {
+        try!(writeln!(w, ""));
     }
 
     Ok(())
