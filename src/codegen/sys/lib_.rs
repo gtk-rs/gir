@@ -41,6 +41,7 @@ fn generate_lib(w: &mut Write, env: &Env) -> Result<()>{
         "Gtk" => try!(statics::only_for_gtk(w)),
         _ => (),
     }
+    try!(writeln!(w, ""));
 
     let ns = env.library.namespace(MAIN_NAMESPACE);
     let records = prepare(ns);
@@ -60,7 +61,6 @@ fn generate_lib(w: &mut Write, env: &Env) -> Result<()>{
     try!(generate_classes_structs(w, env, &classes));
     try!(generate_interfaces_structs(w, &interfaces));
 
-    try!(writeln!(w, ""));
     try!(writeln!(w, "extern \"C\" {{"));
     try!(functions::generate_enums_funcs(w, env, &enums));
     try!(functions::generate_bitfields_funcs(w, env, &bitfields));
@@ -97,7 +97,9 @@ where Type: MaybeRef<T> {
 
 fn generate_aliases(w: &mut Write, env: &Env, items: &[&Alias])
         -> Result<()> {
-    try!(writeln!(w, ""));
+    if !items.is_empty() {
+        try!(writeln!(w, "// Aliases"));
+    }
     for item in items {
         let (comment, c_type) = match ffi_type(env, item.typ, &item.target_c_type) {
             Ok(x) => ("", x),
@@ -105,13 +107,18 @@ fn generate_aliases(w: &mut Write, env: &Env, items: &[&Alias])
         };
         try!(writeln!(w, "{}pub type {} = {};", comment, item.c_identifier, c_type));
     }
+    if !items.is_empty() {
+        try!(writeln!(w, ""));
+    }
 
     Ok(())
 }
 
 fn generate_bitfields(w: &mut Write, env: &Env, items: &[&Bitfield])
         -> Result<()> {
-    try!(writeln!(w, ""));
+    if !items.is_empty() {
+        try!(writeln!(w, "// Flags"));
+    }
     for item in items {
         let full_name = format!("{}.{}", env.namespaces.main().name, item.name);
         let config = env.config.objects.get(&full_name);
@@ -134,7 +141,9 @@ fn generate_bitfields(w: &mut Write, env: &Env, items: &[&Bitfield])
 }
 
 fn generate_constants(w: &mut Write, env: &Env, constants: &[Constant]) -> Result<()> {
-    try!(writeln!(w, ""));
+    if !constants.is_empty() {
+        try!(writeln!(w, "// Constants"));
+    }
     for constant in constants {
         let direction = ParameterDirection::In;
         let ref_mode = RefMode::of(&env.library, constant.typ, direction);
@@ -159,13 +168,18 @@ fn generate_constants(w: &mut Write, env: &Env, constants: &[Constant]) -> Resul
         try!(writeln!(w, "{}pub const {}: {} = {};", comment,
             constant.c_identifier, type_, value));
     }
+    if !constants.is_empty() {
+        try!(writeln!(w, ""));
+    }
 
     Ok(())
 }
 
 fn generate_enums(w: &mut Write, env: &Env, items: &[&Enumeration])
         -> Result<()> {
-    try!(writeln!(w, ""));
+    if !items.is_empty() {
+        try!(writeln!(w, "// Enums"));
+    }
     for item in items {
         if item.members.len() == 1 {
             try!(writeln!(w, "pub type {} = c_int;", item.name));
@@ -212,13 +226,17 @@ fn generate_enums(w: &mut Write, env: &Env, items: &[&Enumeration])
 
 fn generate_unions(w: &mut Write, items: &[&Union])
         -> Result<()> {
-    try!(writeln!(w, ""));
+    if !items.is_empty() {
+        try!(writeln!(w, "// Unions"));
+    }
     for item in items {
         if let Some(ref c_type) = item.c_type {
             try!(writeln!(w, "pub type {} = c_void; // union", c_type));
         }
     }
-    try!(writeln!(w, ""));
+    if !items.is_empty() {
+        try!(writeln!(w, ""));
+    }
 
     Ok(())
 }
@@ -233,10 +251,12 @@ fn prepare_enum_member_name(name: &str) -> String {
 }
 
 fn generate_classes_structs(w: &mut Write, env: &Env, classes: &[&Class]) -> Result<()> {
-    try!(writeln!(w, ""));
+    if !classes.is_empty() {
+        try!(writeln!(w, "// Classes"));
+    }
     for klass in classes {
         let (lines, commented) = generate_fields(env, &klass.name, &klass.fields);
-        
+
         let comment = if commented { "//" } else { "" };
         if lines.is_empty() {
             try!(writeln!(w, "{comment}#[repr(C)]\n{comment}pub struct {name}(c_void);\n", comment=comment, name=klass.c_type));
@@ -255,19 +275,26 @@ fn generate_classes_structs(w: &mut Write, env: &Env, classes: &[&Class]) -> Res
 }
 
 fn generate_interfaces_structs(w: &mut Write, interfaces: &[&Interface]) -> Result<()> {
-    try!(writeln!(w, ""));
+    if !interfaces.is_empty() {
+        try!(writeln!(w, "// Interfaces"));
+    }
     for interface in interfaces {
         try!(writeln!(w, "#[repr(C)]\npub struct {}(c_void);", interface.c_type));
+    }
+    if !interfaces.is_empty() {
+        try!(writeln!(w, ""));
     }
 
     Ok(())
 }
 
 fn generate_records(w: &mut Write, env: &Env, records: &[&Record]) -> Result<()> {
-    try!(writeln!(w, ""));
+    if !records.is_empty() {
+        try!(writeln!(w, "// Records"));
+    }
     for record in records {
         let (lines, commented) = generate_fields(env, &record.name, &record.fields);
-        
+
         let comment = if commented { "//" } else { "" };
         if lines.is_empty() {
             try!(writeln!(w, "{}#[repr(C)]\n{0}pub struct {}(c_void);\n", comment, record.c_type));
