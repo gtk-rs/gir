@@ -325,6 +325,7 @@ pub struct Class {
     pub name: String,
     pub c_type: String,
     pub glib_get_type: String,
+    pub fields: Vec<Field>,
     pub functions: Vec<Function>,
     pub signals: Vec<Signal>,
     pub parent: Option<TypeId>,
