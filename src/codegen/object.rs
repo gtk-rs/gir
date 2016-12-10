@@ -2,7 +2,7 @@ use std::io::{Result, Write};
 
 use analysis;
 use env::Env;
-use super::{function, general, signal, trait_impls, trampoline};
+use super::{child_properties, function, general, signal, trait_impls, trampoline};
 
 pub fn generate(w: &mut Write, env: &Env, analysis: &analysis::object::Info) -> Result<()>{
     try!(general::start_comments(w, &env.config));
@@ -20,6 +20,9 @@ pub fn generate(w: &mut Write, env: &Env, analysis: &analysis::object::Info) -> 
         if !generate_trait(analysis) {
             for func_analysis in &analysis.methods() {
                 try!(function::generate(w, env, func_analysis, false, false, 1));
+            }
+            for child_property in &analysis.child_properties {
+                try!(child_properties::generate(w, env, child_property, false, false, 1));
             }
         }
 
@@ -44,16 +47,24 @@ pub fn generate(w: &mut Write, env: &Env, analysis: &analysis::object::Info) -> 
         for func_analysis in &analysis.methods() {
             try!(function::generate(w, env, func_analysis, true, true, 1));
         }
+        for child_property in &analysis.child_properties {
+            try!(child_properties::generate(w, env, child_property, true, true, 1));
+        }
         for signal_analysis in &analysis.signals {
             try!(signal::generate(w, env, signal_analysis, &analysis.trampolines, true, true, 1));
         }
         try!(writeln!(w, "}}"));
 
         try!(writeln!(w, ""));
-        let extra_isa = if analysis.has_signals() { " + IsA<Object>" } else { "" };
-        try!(write!(w, "impl<O: IsA<{}>{}> {0}Ext for O {{", analysis.name, extra_isa));
+        let mut extra_isa: Vec<&'static str> = Vec::new();
+        if !analysis.child_properties.is_empty() { extra_isa.push(" + IsA<Container>"); }
+        if analysis.has_signals() { extra_isa.push(" + IsA<Object>"); }
+        try!(write!(w, "impl<O: IsA<{}>{}> {0}Ext for O {{", analysis.name, extra_isa.join("")));
         for func_analysis in &analysis.methods() {
             try!(function::generate(w, env, func_analysis, true, false, 1));
+        }
+        for child_property in &analysis.child_properties {
+            try!(child_properties::generate(w, env, child_property, true, false, 1));
         }
         for signal_analysis in &analysis.signals {
             try!(signal::generate(w, env, signal_analysis, &analysis.trampolines, true, false, 1));
