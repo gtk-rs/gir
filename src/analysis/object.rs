@@ -5,6 +5,7 @@ use env::Env;
 use library;
 use nameutil::*;
 use super::*;
+use super::child_properties::ChildProperties;
 use super::imports::Imports;
 use super::info_base::InfoBase;
 use traits::*;
@@ -21,6 +22,7 @@ pub struct Info {
     pub has_functions: bool,
     pub signals: Vec<signals::Info>,
     pub trampolines: trampolines::Trampolines,
+    pub child_properties: ChildProperties,
 }
 
 impl Info {
@@ -93,6 +95,9 @@ pub fn class(env: &Env, obj: &GObject) -> Option<Info> {
     let (version, deprecated_version) = info_base::versions(env, &obj, &functions, klass.version,
          klass.deprecated_version);
 
+    let child_properties = child_properties::analyze(env, obj.child_properties.as_ref(), class_tid,
+                                                     &mut imports);
+
     //don't `use` yourself
     imports.remove(&name);
 
@@ -135,6 +140,7 @@ pub fn class(env: &Env, obj: &GObject) -> Option<Info> {
         has_functions: has_functions,
         signals: signals,
         trampolines: trampolines,
+        child_properties: child_properties,
     };
 
     Some(info)

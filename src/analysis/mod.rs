@@ -3,6 +3,7 @@ use library::Type;
 
 pub mod bounds;
 pub mod c_type;
+pub mod child_properties;
 pub mod class_hierarchy;
 pub mod conversion_type;
 pub mod ffi_type;
