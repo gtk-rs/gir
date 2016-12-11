@@ -7,7 +7,6 @@ pub struct Builder {
     rust_name: String,
     is_get: bool,
     default_value: String,
-    type_string: String,
     is_ref: bool,
     is_nullable: bool,
     is_like_i32: bool,
@@ -35,11 +34,6 @@ impl Builder {
 
     pub fn default_value(&mut self, value: &str) -> &mut Builder {
         self.default_value = value.into();
-        self
-    }
-
-    pub fn type_string(&mut self, type_: &str) -> &mut Builder {
-        self.type_string = type_.into();
         self
     }
 
@@ -106,7 +100,7 @@ impl Builder {
 
         if !self.is_like_i32 {
             let unwrap = if self.is_nullable { "" } else { ".unwrap()" };
-            chunks.push(Chunk::Custom(format!("value.get::<{}>(){}", self.type_string, unwrap)));
+            chunks.push(Chunk::Custom(format!("value.get(){}", unwrap)));
         }
 
         chunks

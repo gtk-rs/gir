@@ -29,7 +29,6 @@ fn generate_func(w: &mut Write, env: &Env, prop: &ChildProperty, in_trait: bool,
     } else {
         ""
     };
-    let type_string = type_string.into_string();
 
     try!(writeln!(w, ""));
 
@@ -38,7 +37,7 @@ fn generate_func(w: &mut Write, env: &Env, prop: &ChildProperty, in_trait: bool,
         comment_prefix, pub_prefix, decl, decl_suffix));
 
     if !only_declaration {
-        let body = body(prop, &type_string, is_get).to_code(env);
+        let body = body(prop, is_get).to_code(env);
         for s in body {
             try!(writeln!(w, "{}{}{}", tabs(indent), comment_prefix, s));
         }
@@ -76,13 +75,12 @@ fn declaration(env: &Env, prop: &ChildProperty, is_get: bool) -> String {
             set_param, return_str)
 }
 
-fn body(prop: &ChildProperty, type_string: &str, is_get:bool ) -> Chunk {
+fn body(prop: &ChildProperty, is_get:bool ) -> Chunk {
     let mut builder = child_property_body::Builder::new();
     let prop_name = nameutil::signal_to_snake(&*prop.name);
     builder.name(&prop.name)
         .rust_name(&prop_name)
         .is_get(is_get)
-        .type_string(type_string)
         .is_ref(prop.set_in_ref_mode.is_ref())
         .is_nullable(*prop.nullable)
         .is_like_i32(prop.is_like_i32);
