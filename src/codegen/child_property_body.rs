@@ -10,6 +10,7 @@ pub struct Builder {
     type_string: String,
     is_ref: bool,
     is_nullable: bool,
+    is_like_i32: bool,
 }
 
 impl Builder {
@@ -52,6 +53,11 @@ impl Builder {
         self
     }
 
+    pub fn is_like_i32(&mut self, value: bool) -> &mut Builder {
+        self.is_like_i32 = value;
+        self
+    }
+
     pub fn generate(&self) -> Chunk {
         let chunks = if self.is_get { self.chunks_for_get() } else { self.chunks_for_set() };
         Chunk::BlockHalf(chunks)
@@ -81,6 +87,10 @@ impl Builder {
             call: Box::new(ffi_call),
         });
 
+        if self.is_like_i32 {
+            body.push(Chunk::Custom("from_glib(transmute(value.get::<i32>().unwrap()))".into()));
+        }
+
         let unsafe_ = Chunk::Unsafe(body);
 
         let mut chunks = Vec::new();
@@ -94,8 +104,10 @@ impl Builder {
         });
         chunks.push(unsafe_);
 
-        let unwrap = if self.is_nullable { "" } else { ".unwrap()" };
-        chunks.push(Chunk::Custom(format!("value.get::<{}>(){}", self.type_string, unwrap)));
+        if !self.is_like_i32 {
+            let unwrap = if self.is_nullable { "" } else { ".unwrap()" };
+            chunks.push(Chunk::Custom(format!("value.get::<{}>(){}", self.type_string, unwrap)));
+        }
 
         chunks
     }
@@ -128,6 +140,16 @@ impl Builder {
         let unsafe_ = Chunk::Unsafe(body);
 
         let mut chunks = Vec::new();
+
+        if self.is_like_i32 {
+            let value_chunk = Chunk::Custom(format!("{}.to_glib() as i32", self.rust_name));
+            chunks.push(Chunk::Let{
+                name: self.rust_name.clone(),
+                is_mut: false,
+                value: Box::new(value_chunk),
+                type_: None
+            });
+        }
 
         chunks.push(unsafe_);
 

@@ -84,7 +84,8 @@ fn body(prop: &ChildProperty, type_string: &str, is_get:bool ) -> Chunk {
         .is_get(is_get)
         .type_string(type_string)
         .is_ref(prop.set_in_ref_mode.is_ref())
-        .is_nullable(*prop.nullable);
+        .is_nullable(*prop.nullable)
+        .is_like_i32(prop.is_like_i32);
     if let Some(ref default_value) = prop.default_value {
         builder.default_value(&default_value);
     } else {
