@@ -8,6 +8,8 @@ pub struct Builder {
     is_get: bool,
     default_value: String,
     type_string: String,
+    is_ref: bool,
+    is_nullable: bool,
 }
 
 impl Builder {
@@ -37,6 +39,16 @@ impl Builder {
 
     pub fn type_string(&mut self, type_: &str) -> &mut Builder {
         self.type_string = type_.into();
+        self
+    }
+
+    pub fn is_ref(&mut self, value: bool) -> &mut Builder {
+        self.is_ref = value;
+        self
+    }
+
+    pub fn is_nullable(&mut self, value: bool) -> &mut Builder {
+        self.is_nullable = value;
         self
     }
 
@@ -73,7 +85,7 @@ impl Builder {
 
         let mut chunks = Vec::new();
 
-        let default_value_chunk = Chunk::Custom(format!("Value::from(&{})", self.default_value));
+        let default_value_chunk = Chunk::Custom(format!("Value::from({})", self.default_value));
         chunks.push(Chunk::Let{
             name: "value".into(),
             is_mut: true,
@@ -81,7 +93,9 @@ impl Builder {
             type_: None
         });
         chunks.push(unsafe_);
-        chunks.push(Chunk::Custom(format!("value.get::<{}>().unwrap()", self.type_string)));
+
+        let unwrap = if self.is_nullable { "" } else { ".unwrap()" };
+        chunks.push(Chunk::Custom(format!("value.get::<{}>(){}", self.type_string, unwrap)));
 
         chunks
     }
@@ -92,7 +106,8 @@ impl Builder {
         params.push(Chunk::Custom("self.to_glib_none().0".into()));
         params.push(Chunk::Custom("item.to_glib_none().0".into()));
         params.push(Chunk::Custom(format!("\"{}\".to_glib_none().0", self.name)));
-        params.push(Chunk::Custom(format!("Value::from(&{}).to_glib_none().0", self.rust_name)));
+        let ref_str = if self.is_ref { "" } else { "&" };
+        params.push(Chunk::Custom(format!("Value::from({}{}).to_glib_none().0", ref_str, self.rust_name)));
 
         let mut body = Vec::new();
 

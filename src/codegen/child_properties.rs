@@ -1,9 +1,10 @@
 use std::io::{Result, Write};
 
 use analysis::child_properties::ChildProperty;
-use analysis::rust_type::rust_type;
+use analysis::rust_type::{parameter_rust_type,rust_type};
 use chunk::Chunk;
 use env::Env;
+use library;
 use writer::primitives::tabs;
 use nameutil;
 use super::child_property_body;
@@ -32,7 +33,7 @@ fn generate_func(w: &mut Write, env: &Env, prop: &ChildProperty, in_trait: bool,
 
     try!(writeln!(w, ""));
 
-    let decl = declaration(env, prop, &type_string, is_get);
+    let decl = declaration(env, prop, is_get);
     try!(writeln!(w, "{}{}{}{}{}", tabs(indent),
         comment_prefix, pub_prefix, decl, decl_suffix));
 
@@ -46,13 +47,16 @@ fn generate_func(w: &mut Write, env: &Env, prop: &ChildProperty, in_trait: bool,
     Ok(())
 }
 
-fn declaration(env: &Env, prop: &ChildProperty, type_string: &str, is_get: bool) -> String {
+fn declaration(env: &Env, prop: &ChildProperty, is_get: bool) -> String {
     let get_set = if is_get { "get" } else { "set" };
     let prop_name = nameutil::signal_to_snake(&*prop.name);
     let set_param = if is_get {
         "".to_string()
     } else {
-        format!(", {}: {}", prop_name, type_string)
+        let dir = library::ParameterDirection::In;
+        let param_type = parameter_rust_type(env, prop.typ, dir, prop.nullable, prop.set_in_ref_mode)
+            .into_string();
+        format!(", {}: {}", prop_name, param_type)
     };
     let bounds = if let Some(typ) = prop.child_type {
         let child_type = rust_type(env, typ).into_string();
@@ -60,7 +64,14 @@ fn declaration(env: &Env, prop: &ChildProperty, type_string: &str, is_get: bool)
     } else {
         "<T: IsA<Widget>>".to_string()
     };
-    let return_str = if is_get { format!(" -> {}", type_string) } else { "".to_string() };
+    let return_str = if is_get {
+        let dir = library::ParameterDirection::Return;
+        let ret_type = parameter_rust_type(env, prop.typ, dir, prop.nullable, prop.get_out_ref_mode)
+            .into_string();
+        format!(" -> {}", ret_type)
+    } else {
+        "".to_string()
+    };
     format!("fn {}_{}_{}{}(&self, item: &T{}){}", get_set, prop.child_name, prop_name, bounds,
             set_param, return_str)
 }
@@ -71,7 +82,9 @@ fn body(prop: &ChildProperty, type_string: &str, is_get:bool ) -> Chunk {
     builder.name(&prop.name)
         .rust_name(&prop_name)
         .is_get(is_get)
-        .type_string(&type_string);
+        .type_string(type_string)
+        .is_ref(prop.set_in_ref_mode.is_ref())
+        .is_nullable(*prop.nullable);
     if let Some(ref default_value) = prop.default_value {
         builder.default_value(&default_value);
     } else {

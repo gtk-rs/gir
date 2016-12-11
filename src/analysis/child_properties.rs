@@ -1,4 +1,5 @@
 use analysis::imports::Imports;
+use analysis::ref_mode::RefMode;
 use analysis::rust_type::*;
 use config;
 use env::Env;
@@ -11,7 +12,10 @@ pub struct ChildProperty {
     pub typ: library::TypeId,
     pub child_name: String,
     pub child_type: Option<library::TypeId>,
+    pub nullable: library::Nullable,
     pub default_value: Option<String>, //for getter
+    pub get_out_ref_mode: RefMode,
+    pub set_in_ref_mode: RefMode,
 }
 
 pub type ChildProperties = Vec<ChildProperty>;
@@ -63,12 +67,18 @@ fn analyze_property(env: &Env, prop: &config::ChildProperty, child_name: &str,
             let owner_name = rust_type(env, type_tid).into_string();
             error!("No default value for type `{}` of child property `{}` for `{}`", &prop.type_name, name, owner_name);
         }
+        let get_out_ref_mode = RefMode::of(&env.library, typ, library::ParameterDirection::Return);
+        let set_in_ref_mode = RefMode::of(&env.library, typ, library::ParameterDirection::In);
+        let nullable = library::Nullable(set_in_ref_mode.is_ref());
         Some(ChildProperty{
             name: name,
             typ: typ,
             child_name: child_name.to_owned(),
             child_type: child_type,
+            nullable: nullable,
             default_value: default_value,
+            get_out_ref_mode: get_out_ref_mode,
+            set_in_ref_mode: set_in_ref_mode,
         })
     } else {
         let owner_name = rust_type(env, type_tid).into_string();
@@ -85,8 +95,9 @@ fn get_type_default_value(env: &Env, typ: library::TypeId) -> Option<String> {
     match *type_ {
         Type::Fundamental(fund) => {
             match fund {
-                Fundamental::Boolean => some("false"),
-                Fundamental::Int => some("0"),
+                Fundamental::Boolean => some("&false"),
+                Fundamental::Int => some("&0"),
+                Fundamental::Utf8 => some("None::<&str>"),
                 _ => None,
             }
         }
