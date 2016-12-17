@@ -1,6 +1,8 @@
 extern crate case;
 extern crate docopt;
 extern crate env_logger;
+#[macro_use]
+extern crate error_chain;
 extern crate git2;
 #[macro_use]
 extern crate lazy_static;
@@ -14,8 +16,6 @@ extern crate hprof;
 extern crate stripper_lib;
 
 use std::cell::RefCell;
-use std::error::Error;
-use std::process;
 
 use env::Env;
 use library::Library;
@@ -39,15 +39,22 @@ mod traits;
 mod version;
 mod writer;
 
+use self::config::error::*;
+
 #[cfg_attr(test, allow(dead_code))]
 fn main() {
-    if let Err(err) = do_main() {
-        println!("{}", err);
-        process::exit(1);
+    if let Err(ref e) = do_main() {
+        println!("{}", e);
+
+        for e in e.iter().skip(1) {
+            println!("caused by: {}", e);
+        }
+
+        ::std::process::exit(1);
     }
 }
 
-fn do_main() -> Result<(), Box<Error>> {
+fn do_main() -> Result<()> {
     if std::env::var_os("RUST_LOG").is_none() {
         std::env::set_var("RUST_LOG", "gir=warn");
     }
@@ -55,11 +62,17 @@ fn do_main() -> Result<(), Box<Error>> {
 
     let mut cfg = match config::Config::new() {
         Ok(cfg) => cfg,
-        Err(config::error::Error::CommandLine(ref err)) if !err.fatal() => {
-            println!("{}", err);
+        Err(Error(ErrorKind::CommandLine(ref err), _)) => {
+            // Fatal errors processed in same branch
+            // to prevent repeat message in "caused by:"
+            if err.fatal() {
+                println!("error: {}", err);
+            } else {
+                println!("{}", err);
+            }
             return Ok(());
         }
-        Err(err) => return Err(Box::new(err)),
+        Err(err) => return Err(err),
     };
 
     let statistics = Profiler::new("Gir");

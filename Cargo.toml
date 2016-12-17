@@ -15,6 +15,7 @@ xml-rs = "0.2.1"
 toml = "*"
 case = "*"
 env_logger = "*"
+error-chain = { version = "*", default-features = false }
 git2 = "0.4" #locked due 0.6 dependency curl-sys won't builds on appveyor
 lazy_static = "*"
 log = "*"
