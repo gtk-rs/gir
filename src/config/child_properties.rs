@@ -78,3 +78,114 @@ impl Parse for ChildProperties {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::super::parsable::Parse;
+    use super::*;
+    use toml;
+
+    fn toml(input: &str) -> toml::Value {
+        let mut parser = toml::Parser::new(&input);
+        let value = parser.parse();
+        assert!(value.is_some());
+        toml::Value::Table(value.unwrap())
+    }
+
+    #[test]
+    fn child_property_parse() {
+        let toml = toml(r#"
+name = "prop"
+type = "prop_type"
+"#);
+        let child = ChildProperty::parse(&toml, "a").unwrap();
+        assert_eq!("prop", child.name);
+        assert_eq!("prop_type", child.type_name);
+    }
+
+    #[test]
+    fn child_property_parse_not_all() {
+        let tml = toml(r#"
+name = "prop"
+"#);
+        assert!(ChildProperty::parse(&tml, "a").is_none());
+
+        let tml = toml(r#"
+type_name = "prop_type"
+"#);
+        assert!(ChildProperty::parse(&tml, "a").is_none());
+    }
+
+    #[test]
+    fn child_properties_parse() {
+        let toml = toml(r#"
+child_name = "child_name"
+child_type = "child_type"
+[[child_prop]]
+name = "prop"
+type = "prop_type"
+[[child_prop]]
+name = "prop2"
+type = "prop_type2"
+"#);
+        let props = ChildProperties::parse(&toml, "a").unwrap();
+        assert_eq!(Some("child_name".into()), props.child_name);
+        assert_eq!(Some("child_type".into()), props.child_type);
+        assert_eq!(2, props.properties.len());
+        assert_eq!("prop", props.properties[0].name);
+        assert_eq!("prop_type", props.properties[0].type_name);
+        assert_eq!("prop2", props.properties[1].name);
+        assert_eq!("prop_type2", props.properties[1].type_name);
+    }
+
+    #[test]
+    fn child_property_no_parse_without_children() {
+        let toml = toml(r#"
+child_name = "child_name"
+child_type = "child_type"
+"#);
+        let props = ChildProperties::parse(&toml, "a");
+        assert!(props.is_none());
+    }
+
+    #[test]
+    fn child_properties_parse_without_child_type_name() {
+        let toml = toml(r#"
+[[child_prop]]
+name = "prop"
+type = "prop_type"
+"#);
+        let props = ChildProperties::parse(&toml, "a").unwrap();
+        assert_eq!(None, props.child_name);
+        assert_eq!(None, props.child_type);
+        assert_eq!(1, props.properties.len());
+    }
+
+    #[test]
+    fn child_properties_parse_without_child_type() {
+        let toml = toml(r#"
+child_name = "child_name"
+[[child_prop]]
+name = "prop"
+type = "prop_type"
+"#);
+        let props = ChildProperties::parse(&toml, "a").unwrap();
+        assert_eq!(Some("child_name".into()), props.child_name);
+        assert_eq!(None, props.child_type);
+        assert_eq!(1, props.properties.len());
+    }
+
+    #[test]
+    fn child_properties_parse_without_child_name() {
+        let toml = toml(r#"
+child_type = "child_type"
+[[child_prop]]
+name = "prop"
+type = "prop_type"
+"#);
+        let props = ChildProperties::parse(&toml, "a").unwrap();
+        assert_eq!(None, props.child_name);
+        assert_eq!(Some("child_type".into()), props.child_type);
+        assert_eq!(1, props.properties.len());
+    }
+}
