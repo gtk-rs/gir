@@ -15,7 +15,7 @@ xml-rs = "0.2.1"
 toml = "*"
 case = "*"
 env_logger = "*"
-git2 = "*"
+git2 = "0.4" #locked due 0.6 dependency curl-sys won't builds on appveyor
 lazy_static = "*"
 log = "*"
 regex = "*"
@@ -24,7 +24,7 @@ hprof = "*"
 rustdoc-stripper = { git = "https://github.com/GuillaumeGomez/rustdoc-stripper" }
 
 [build-dependencies]
-git2 = "*"
+git2 = "0.4"
 
 [profile.release]
 codegen-units = 4
