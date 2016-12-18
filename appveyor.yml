@@ -1,30 +1,32 @@
 environment:
   matrix:
-    - RUST_VERSION: 1.8.0
+    - RUST: stable
       BITS: 32
-    - RUST_VERSION: 1.8.0
+    - RUST: stable
       BITS: 64
 
 install:
   - IF "%BITS%" == "32" SET ARCH=i686
   - IF "%BITS%" == "64" SET ARCH=x86_64
-  - ps: Start-FileDownload "https://static.rust-lang.org/dist/rust-${env:RUST_VERSION}-${env:ARCH}-pc-windows-gnu.exe" -FileName rust-dist.exe
-  - rust-dist.exe /VERYSILENT /NORESTART /COMPONENTS="Rustc,Gcc,Cargo,Std" /DIR="C:\Rust"
-  - SET PATH=C:\Rust\bin;C:\Program Files\Git\cmd;C:\Program Files\Git\usr\bin
-  - SET PATH=C:\msys64\mingw%BITS%\bin;C:\msys64\usr\bin;%PATH%
+  - ps: Start-FileDownload "https://static.rust-lang.org/dist/channel-rust-stable"
+  - ps: $env:RUST_VERSION = Get-Content channel-rust-stable | select -first 1 | %{$_.split('-')[1]}
+  - if NOT "%RUST%" == "stable" set RUST_VERSION=%RUST%
+  - SET RUST_URL=https://static.rust-lang.org/dist/rust-%RUST_VERSION%-%ARCH%-pc-windows-gnu.exe
+  - SET PATH=C:\Rust\bin;C:\msys64\mingw%BITS%\bin;%PATH%;C:\msys64\usr\bin
   - SET LIBGIT2_SYS_USE_PKG_CONFIG=1
+  - ps: Start-FileDownload $Env:RUST_URL -FileName rust-dist.exe
+  - rust-dist.exe /VERYSILENT /NORESTART /COMPONENTS="Rustc,Gcc,Cargo,Std" /DIR="C:\Rust"
+  - rustc -V
+  - cargo -V
   - pacman --noconfirm -S mingw-w64-%ARCH%-gtk3 mingw-w64-%ARCH%-libgit2
 
 build_script:
   - git clone -q https://github.com/gkoz/gir-files tests/gir-files
-  - rustc -V
   - cargo build --release
   - cargo test --release
-  - ps: >-
-      foreach ($file in Get-ChildItem "tests\sys\gir-*.toml") {
-          cargo run --release -- -c $file
-      }
-  - cd tests\sys\sys_build
+  - cd tests\sys
+  - FOR %%I IN (gir-*.toml) DO cargo run --release -- -c %%I
+  - cd sys_build
   - cargo build
   - cargo build --features v3_16
 
