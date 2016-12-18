@@ -32,6 +32,7 @@ impl FromStr for Version {
     type Err = String;
 
     /// Parse a `Version` from a string.
+    /// Currently always return Ok
     fn from_str(s: &str) -> Result<Version, String> {
         if s.contains('.') {
             let mut parts = s.splitn(4, '.')
