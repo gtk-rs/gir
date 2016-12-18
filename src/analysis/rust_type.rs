@@ -81,6 +81,9 @@ fn rust_type_full(env: &Env, type_id: library::TypeId, nullable: Nullable, ref_m
                 Int => ok("i32"),      //maybe dependent on target system
                 UInt => ok("u32"),     //maybe dependent on target system
 
+                Long => ok("i64"),      //maybe dependent on target system
+                ULong => ok("u64"),     //maybe dependent on target system
+
                 Float => ok("f32"),
                 Double => ok("f64"),
 
