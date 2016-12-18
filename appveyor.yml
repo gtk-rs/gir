@@ -21,13 +21,13 @@ install:
   - pacman --noconfirm -S mingw-w64-%ARCH%-gtk3 mingw-w64-%ARCH%-libgit2
 
 build_script:
-  - git clone -q https://github.com/gkoz/gir-files tests/gir-files
+  - git clone -q https://github.com/gtk-rs/gir-files tests/gir-files
   - cargo build --release
   - cargo test --release
   - cd tests\sys
   - FOR %%I IN (gir-*.toml) DO cargo run --release -- -c %%I
   - cd sys_build
   - cargo build
-  - cargo build --features v3_16
+  - cargo build --features v3_20
 
 test: false
