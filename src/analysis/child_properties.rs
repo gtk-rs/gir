@@ -46,7 +46,7 @@ pub fn analyze(env: &Env, config: Option<&config::ChildProperties>, type_tid: li
     if !properties.is_empty() {
         imports.add("glib::object::IsA", None);
         if let Some(s) = child_type.and_then(|typ| used_rust_type(env, typ).ok()) {
-            imports.add(&s, None);
+            imports.add_used_type(&s, None);
         }
     }
 
@@ -62,10 +62,10 @@ fn analyze_property(env: &Env, prop: &config::ChildProperty, child_name: &str,
 
         imports.add("glib::Value", None);
         if let Ok(s) = used_rust_type(env, typ) {
-            imports.add(&s, None);
+            imports.add_used_type(&s, None);
         }
 
-        let default_value = get_type_default_value(type_);
+        let default_value = get_type_default_value(env, typ, type_);
         if default_value.is_none() {
             let owner_name = rust_type(env, type_tid).into_string();
             error!("No default value for type `{}` of child property `{}` for `{}`", &prop.type_name, name, owner_name);
@@ -95,7 +95,8 @@ fn analyze_property(env: &Env, prop: &config::ChildProperty, child_name: &str,
     }
 }
 
-fn get_type_default_value(type_: &library::Type) -> Option<String> {
+fn get_type_default_value(env: &Env, type_tid: library::TypeId, type_: &library::Type)
+                          -> Option<String> {
     use library::Type;
     use library::Fundamental;
     let some = |s: &str| Some(s.to_string());
@@ -109,6 +110,11 @@ fn get_type_default_value(type_: &library::Type) -> Option<String> {
             }
         }
         Type::Enumeration(_) => some("&0"),
+        Type::Class(..) |
+        Type::Interface(..) => {
+            let type_str = rust_type(env, type_tid).into_string();
+            Some(format!("None::<&{}>", type_str))
+        }
         _ => None,
     }
 }

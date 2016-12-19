@@ -21,17 +21,21 @@ impl Imports {
         }
     }
 
+    pub fn add_used_type(&mut self, used_type: &str, version: Option<Version>) {
+        if let Some(i) = used_type.find("::") {
+            if i == 0 {
+                self.add(&used_type[2..], version);
+            } else {
+                self.add(&used_type[..i], version);
+            }
+        } else {
+            self.add(&used_type, version);
+        }
+    }
+
     pub fn add_used_types(&mut self, used_types: &[String], version: Option<Version>) {
         for s in used_types {
-            if let Some(i) = s.find("::") {
-                if i == 0 {
-                    self.add(&s[2..], version);
-                } else {
-                    self.add(&s[..i], version);
-                }
-            } else {
-                self.add(&s, version);
-            }
+            self.add_used_type(s, version);
         }
     }
 
