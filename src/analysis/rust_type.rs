@@ -81,6 +81,11 @@ fn rust_type_full(env: &Env, type_id: library::TypeId, nullable: Nullable, ref_m
                 Int => ok("i32"),      //maybe dependent on target system
                 UInt => ok("u32"),     //maybe dependent on target system
 
+                Short => ok("libc::c_short"),   //depends of target system
+                UShort => ok("libc::c_ushort"), //depends of target system
+                Long => ok("libc::c_long"),     //depends of target system
+                ULong => ok("libc::c_ulong"),   //depends of target system
+
                 Float => ok("f32"),
                 Double => ok("f64"),
 
@@ -171,6 +176,11 @@ pub fn used_rust_type(env: &Env, type_id: library::TypeId) -> Result {
     use library::Type::*;
     match *env.library.type_(type_id) {
         Fundamental(library::Fundamental::Type) |
+            Fundamental(library::Fundamental::Short) |
+            Fundamental(library::Fundamental::UShort) |
+            Fundamental(library::Fundamental::Long) |
+            Fundamental(library::Fundamental::ULong) |
+            Fundamental(library::Fundamental::Filename) |
             Alias(..) |
             Bitfield(..) |
             Record(..) |
