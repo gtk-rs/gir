@@ -70,11 +70,7 @@ impl Bounds {
         for used in &self.used {
             match used.3 {
                 IsA => imports.add("glib::object::IsA", None),
-                AsRef => if let Some(i) = used.2.find("::") {
-                    imports.add(&used.2[..i], None);
-                } else {
-                    imports.add(&used.2, None);
-                }
+                AsRef => imports.add_used_type(&used.2, None),
             }
         }
    }

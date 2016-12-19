@@ -1,3 +1,4 @@
+mod child_properties;
 pub mod config;
 pub mod error;
 pub mod parameter_matchable;
@@ -12,3 +13,4 @@ pub mod work_mode;
 
 pub use self::config::Config;
 pub use self::work_mode::WorkMode;
+pub use self::child_properties::{ChildProperties, ChildProperty};

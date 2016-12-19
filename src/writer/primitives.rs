@@ -98,7 +98,7 @@ mod tests {
         let expected = ["unsafe {", "    f()", "}"];
         assert_eq!(actual, expected);
     }
-    
+
     #[test]
     fn test_format_block_smart_one_line_inner_separator() {
         let body = vec!["a: &str".into(), "b: &str".into()];

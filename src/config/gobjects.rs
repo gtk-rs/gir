@@ -4,7 +4,8 @@ use std::str::FromStr;
 use toml::Value;
 
 use library::{Library, TypeId};
-use config::parsable::Parsable;
+use config::parsable::{Parsable, Parse};
+use super::child_properties::ChildProperties;
 use super::functions::Functions;
 use super::members::Members;
 use super::signals::Signals;
@@ -60,6 +61,7 @@ pub struct GObject {
     pub cfg_condition: Option<String>,
     pub type_id: Option<TypeId>,
     pub force_trait: bool,
+    pub child_properties: Option<ChildProperties>,
 }
 
 impl Default for GObject {
@@ -75,6 +77,7 @@ impl Default for GObject {
             cfg_condition: None,
             type_id: None,
             force_trait: false,
+            child_properties: None,
         }
     }
 }
@@ -115,6 +118,7 @@ fn parse_object(toml_object: &Value) -> GObject {
     let force_trait = toml_object.lookup("trait")
         .and_then(|v| v.as_bool())
         .unwrap_or(false);
+    let child_properties = ChildProperties::parse(toml_object, &name);
 
     GObject {
         name: name,
@@ -127,6 +131,7 @@ fn parse_object(toml_object: &Value) -> GObject {
         cfg_condition: cfg_condition,
         type_id: None,
         force_trait: force_trait,
+        child_properties: child_properties,
     }
 }
 

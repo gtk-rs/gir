@@ -4,6 +4,8 @@ use env::Env;
 use config::WorkMode;
 use file_saver::*;
 
+mod child_properties;
+mod child_property_body;
 mod doc;
 mod enums;
 mod flags;
