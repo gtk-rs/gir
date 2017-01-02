@@ -21,7 +21,7 @@ pub fn generate(w: &mut Write, env: &Env, analysis: &analysis::record::Info) -> 
         panic!("Missing memory management functions for {}", analysis.full_name);
     }
     try!(writeln!(w, ""));
-    try!(writeln!(w, "impl {} {{", analysis.name));
+    try!(write!(w, "impl {} {{", analysis.name));
 
     for func_analysis in &analysis.functions {
         try!(function::generate(w, env, func_analysis, false, false, 1));
