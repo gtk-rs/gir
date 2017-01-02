@@ -23,6 +23,12 @@ pub enum Visibility {
     Hidden,
 }
 
+impl Visibility {
+    pub fn hidden(&self) -> bool {
+        *self == Visibility::Hidden
+    }
+}
+
 //TODO: change use Parameter to reference?
 #[derive(Debug)]
 pub struct Info {

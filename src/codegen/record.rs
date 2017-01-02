@@ -20,14 +20,17 @@ pub fn generate(w: &mut Write, env: &Env, analysis: &analysis::record::Info) -> 
     } else {
         panic!("Missing memory management functions for {}", analysis.full_name);
     }
-    try!(writeln!(w, ""));
-    try!(writeln!(w, "impl {} {{", analysis.name));
 
-    for func_analysis in &analysis.functions {
-        try!(function::generate(w, env, func_analysis, false, false, 1));
+    if analysis.functions.iter().any(|f| !f.visibility.hidden()) {
+        try!(writeln!(w, ""));
+        try!(write!(w, "impl {} {{", analysis.name));
+
+        for func_analysis in &analysis.functions {
+            try!(function::generate(w, env, func_analysis, false, false, 1));
+        }
+
+        try!(writeln!(w, "}}"));
     }
-
-    try!(writeln!(w, "}}"));
 
     try!(trait_impls::generate(w, &analysis.name, &analysis.functions, &analysis.specials));
 
