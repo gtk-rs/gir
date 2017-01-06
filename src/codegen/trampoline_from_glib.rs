@@ -1,6 +1,5 @@
-use analysis::parameter::Parameter;
 use analysis::rust_type::rust_type;
-use analysis::conversion_type::ConversionType;
+use analysis::trampoline_parameters::Transformation;
 use env::Env;
 use library;
 use traits::*;
@@ -9,15 +8,16 @@ pub trait TrampolineFromGlib {
     fn trampoline_from_glib(&self, env: &Env, need_downcast: bool) -> String;
 }
 
-impl TrampolineFromGlib for Parameter {
+impl TrampolineFromGlib for Transformation {
     fn trampoline_from_glib(&self, env: &Env, need_downcast: bool) -> String {
         use analysis::conversion_type::ConversionType::*;
         let need_type_name = need_downcast || is_need_type_name(env, self.typ);
-        match ConversionType::of(&env.library, self.typ) {
+        match self.conversion_type {
             Direct => self.name.clone(),
             Scalar => format!("from_glib({})", self.name),
-            Pointer => {
-                let (mut left, mut right) = from_glib_xxx(self.transfer);
+            Borrow | Pointer => {
+                let is_borrow = self.conversion_type == Borrow;
+                let (mut left, mut right) = from_glib_xxx(self.transfer, is_borrow);
                 if need_type_name {
                     let type_name = rust_type(env, self.typ).into_string();
                     left = format!("&{}::{}", type_name, left);
@@ -34,9 +34,10 @@ impl TrampolineFromGlib for Parameter {
     }
 }
 
-fn from_glib_xxx(transfer: library::Transfer) -> (String, String) {
+fn from_glib_xxx(transfer: library::Transfer, is_borrow: bool) -> (String, String) {
     use library::Transfer::*;
     match transfer {
+        None if is_borrow => ("from_glib_borrow(".into(), ")".into()),
         None => ("from_glib_none(".into(), ")".into()),
         Full => ("from_glib_full(".into(), ")".into()),
         Container => ("from_glib_container(".into(), ")".into()),

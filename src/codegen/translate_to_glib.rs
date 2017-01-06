@@ -22,6 +22,7 @@ impl TranslateToGlib for chunk::parameter_ffi_call_in::Parameter {
                     format!("{}{}{}{}", left, self.name, self.to_glib_extra, right)
                 }
             }
+            Borrow => "/*Not applicable conversion Borrow*/".to_owned(),
             Unknown => format!("/*Unknown conversion*/{}", self.name),
         }
     }

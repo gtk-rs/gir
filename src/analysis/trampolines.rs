@@ -6,16 +6,15 @@ use parser::is_empty_c_type;
 use super::bounds::{Bounds, BoundType};
 use super::conversion_type::ConversionType;
 use super::ffi_type::used_ffi_type;
-use super::parameter;
-use super::ref_mode::RefMode;
 use super::rust_type::{bounds_rust_type, rust_type, used_rust_type};
+use super::trampoline_parameters::{self, Parameters};
 use traits::IntoString;
 use version::Version;
 
 #[derive(Debug)]
 pub struct Trampoline {
     pub name: String,
-    pub parameters: Vec<parameter::Parameter>,
+    pub parameters: Parameters,
     pub ret: library::Parameter,
     pub bounds: Bounds,
     pub version: Option<Version>,
@@ -37,10 +36,6 @@ pub fn analyze(env: &Env, signal: &library::Signal, type_tid: library::TypeId, i
 
     let name = format!("{}_trampoline", signal_to_snake(&signal.name));
 
-    let owner = env.type_(type_tid);
-
-    let c_type = format!("{}*", owner.get_glib_name().unwrap());
-
     //TODO: move to object.signal.return config
     let inhibit = configured_signals.iter().any(|f| f.inhibit);
     if inhibit {
@@ -52,44 +47,29 @@ pub fn analyze(env: &Env, signal: &library::Signal, type_tid: library::TypeId, i
 
     let mut bounds: Bounds = Default::default();
 
-    let mut parameters: Vec<parameter::Parameter> = Vec::with_capacity(signal.parameters.len() + 1);
-
-    if let Some(s) = used_ffi_type(env, type_tid, &c_type) {
-        used_types.push(s);
+    if in_trait {
+        let type_name = bounds_rust_type(env, type_tid);
+        bounds.add_parameter("this", &type_name.into_string(), BoundType::IsA);
     }
 
-    let this = parameter::Parameter {
-        name: "this".to_owned(),
-        typ: type_tid,
-        c_type: c_type,
-        instance_parameter: false, //true,
-        direction: library::ParameterDirection::In,
-        transfer: library::Transfer::None,
-        caller_allocates: false,
-        nullable: library::Nullable(false),
-        allow_none: false,
-        is_error: false,
-        ref_mode: RefMode::ByRef,
-        to_glib_extra: String::new(),
-    };
-    parameters.push(this);
+    let parameters = trampoline_parameters::analyze(env, &signal.parameters,
+                                                    type_tid, configured_signals);
 
     if in_trait {
         let type_name = bounds_rust_type(env, type_tid);
         bounds.add_parameter("this", &type_name.into_string(), BoundType::IsA);
     }
 
-    for par in &signal.parameters {
-        let analysis = parameter::analyze_for_trampoline(env, par, configured_signals);
 
+    for par in &parameters.rust_parameters {
         if let Ok(s) = used_rust_type(env, par.typ) {
             used_types.push(s);
         }
+    }
+    for par in &parameters.c_parameters {
         if let Some(s) = used_ffi_type(env, par.typ, &par.c_type) {
             used_types.push(s);
         }
-
-        parameters.push(analysis);
     }
 
     let mut ret_nullable = signal.ret.nullable;

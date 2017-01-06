@@ -27,6 +27,7 @@ impl TranslateFromGlib for Mode {
                     _ => trans,
                 }
             }
+            Borrow => ("/*TODO: conversion Borrow*/".into(), String::new()),
             Unknown => ("/*Unknown conversion*/".into(), String::new()),
         }
     }

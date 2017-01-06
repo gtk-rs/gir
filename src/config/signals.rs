@@ -1,3 +1,5 @@
+use std::str::FromStr;
+
 use library::Nullable;
 use super::functions::Return;
 use super::ident::Ident;
@@ -6,10 +8,32 @@ use super::parsable::{Parsable, Parse};
 use toml::Value;
 use version::Version;
 
+#[derive(Clone, Copy, Debug)]
+pub enum TransformationType {
+    None,
+    Borrow, //replace from_glib_none to from_glib_borrow
+    //TODO: configure
+    TreePath, //convert string to TreePath
+}
+
+impl FromStr for TransformationType {
+    type Err = String;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "none" => Ok(TransformationType::None),
+            "borrow" => Ok(TransformationType::Borrow),
+            "treepath" => Ok(TransformationType::TreePath),
+            _ => Err(format!("Wrong transformation \"{}\"", s))
+        }
+    }
+}
+
 #[derive(Clone, Debug)]
 pub struct Parameter {
     pub ident: Ident,
     pub nullable: Option<Nullable>,
+    pub transformation: Option<TransformationType>,
+    pub new_name: Option<String>,
 }
 
 impl Parse for Parameter {
@@ -24,10 +48,22 @@ impl Parse for Parameter {
         let nullable = toml.lookup("nullable")
             .and_then(|val| val.as_bool())
             .map(|b| Nullable(b));
+        let transformation = toml.lookup("transformation")
+            .and_then(|val| val.as_str())
+            .and_then(|s| TransformationType::from_str(s)
+                      .map_err(|err| {
+                          error!("{0}", err);
+                          err
+                      }).ok());
+        let new_name = toml.lookup("new_name")
+            .and_then(|val| val.as_str())
+            .map(|s| s.to_owned());
 
         Some(Parameter{
             ident: ident,
             nullable: nullable,
+            transformation: transformation,
+            new_name: new_name,
         })
     }
 }
