@@ -6,7 +6,7 @@ use nameutil::*;
 
 pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>) {
     info!("Generate records");
-    for record_analysis in &env.analysis.records {
+    for record_analysis in env.analysis.records.values() {
         let obj = &env.config.objects[&record_analysis.full_name];
         if !obj.status.need_generate() {
             continue;

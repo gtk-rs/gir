@@ -6,7 +6,7 @@ use nameutil::*;
 
 pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>, traits: &mut Vec<String>) {
     info!("Generate objects");
-    for class_analysis in &env.analysis.objects {
+    for class_analysis in env.analysis.objects.values() {
         let obj = &env.config.objects[&class_analysis.full_name];
         if !obj.status.need_generate() {
             continue;

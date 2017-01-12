@@ -40,3 +40,26 @@ pub fn analyze(env: &Env, type_id: TypeId, imports: &mut Imports) -> Vec<Statuse
 
     parents
 }
+
+pub fn dependencies(env: &Env, type_id: TypeId) -> Vec<TypeId> {
+    let mut parents = Vec::new();
+    let gobject_id = match env.library.find_type(0, "GObject.Object") {
+        Some(gobject_id) => gobject_id,
+        None => TypeId::tid_none(),
+    };
+
+    for &super_tid in env.class_hierarchy.supertypes(type_id) {
+        // skip GObject, it's inherited implicitly
+        if super_tid == gobject_id {
+            continue
+        }
+
+        let status = env.type_status(&super_tid.full_name(&env.library));
+
+        if status.need_generate() {
+            parents.push(super_tid);
+        }
+    }
+
+    parents
+}
