@@ -8,6 +8,7 @@ use super::*;
 use super::child_properties::ChildProperties;
 use super::imports::Imports;
 use super::info_base::InfoBase;
+use super::signatures::Signatures;
 use traits::*;
 
 #[derive(Default)]
@@ -23,6 +24,7 @@ pub struct Info {
     pub signals: Vec<signals::Info>,
     pub trampolines: trampolines::Trampolines,
     pub child_properties: ChildProperties,
+    pub signatures: Signatures,
 }
 
 impl Info {
@@ -39,7 +41,7 @@ impl Deref for Info {
     }
 }
 
-pub fn class(env: &Env, obj: &GObject) -> Option<Info> {
+pub fn class(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<Info> {
     info!("Analyzing class {}", obj.name);
     let full_name = obj.name.clone();
 
@@ -80,10 +82,11 @@ pub fn class(env: &Env, obj: &GObject) -> Option<Info> {
         imports.add("glib::object::IsA", None);
     }
 
-    let mut trampolines = trampolines::Trampolines::new();
+    let mut trampolines = trampolines::Trampolines::with_capacity(klass.signals.len());
+    let mut signatures = Signatures::with_capacity(klass.functions.len());
 
-    let mut functions =
-        functions::analyze(env, &klass.functions, class_tid, &obj, &mut imports);
+    let mut functions = functions::analyze(env, &klass.functions, class_tid, &obj,
+                                           &mut imports, Some(&mut signatures), Some(deps));
     let specials = special_functions::extract(&mut functions);
     // `copy` will duplicate an object while `clone` just adds a reference
     special_functions::unhide(&mut functions, &specials, special_functions::Type::Copy);
@@ -141,12 +144,13 @@ pub fn class(env: &Env, obj: &GObject) -> Option<Info> {
         signals: signals,
         trampolines: trampolines,
         child_properties: child_properties,
+        signatures: signatures,
     };
 
     Some(info)
 }
 
-pub fn interface(env: &Env, obj: &GObject) -> Option<Info> {
+pub fn interface(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<Info> {
     info!("Analyzing interface {}", obj.name);
     let full_name = obj.name.clone();
 
@@ -171,10 +175,11 @@ pub fn interface(env: &Env, obj: &GObject) -> Option<Info> {
 
     let supertypes = supertypes::analyze(env, iface_tid, &mut imports);
 
-    let mut trampolines = trampolines::Trampolines::new();
+    let mut trampolines = trampolines::Trampolines::with_capacity(iface.signals.len());
+    let mut signatures = Signatures::with_capacity(iface.functions.len());
 
-    let functions =
-        functions::analyze(env, &iface.functions, iface_tid, &obj, &mut imports);
+    let functions = functions::analyze(env, &iface.functions, iface_tid, &obj,
+                                       &mut imports, Some(&mut signatures), Some(deps));
 
     let signals = signals::analyze(env, &iface.signals, iface_tid, true,
                                    &mut trampolines, &obj, &mut imports);
@@ -210,6 +215,7 @@ pub fn interface(env: &Env, obj: &GObject) -> Option<Info> {
         has_methods: has_methods,
         signals: signals,
         trampolines: trampolines,
+        signatures: signatures,
         .. Default::default()
     };
 

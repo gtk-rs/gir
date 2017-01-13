@@ -24,6 +24,7 @@ pub mod return_value;
 pub mod rust_type;
 pub mod safety_assertion_mode;
 pub mod signals;
+pub mod signatures;
 pub mod special_functions;
 pub mod supertypes;
 pub mod symbols;
@@ -59,7 +60,7 @@ pub fn run(env: &mut Env) {
                 new_to_analyze.push((tid, deps.clone()));
                 continue;
             }
-            analyze(env, tid);
+            analyze(env, tid, deps);
             analyzed += 1;
         }
 
@@ -70,7 +71,7 @@ pub fn run(env: &mut Env) {
     }
 }
 
-fn analyze(env: &mut Env, tid: TypeId) {
+fn analyze(env: &mut Env, tid: TypeId, deps: &[TypeId]) {
     let full_name = tid.full_name(&env.library);
     let obj = match env.config.objects.get(&*full_name) {
         Some(obj) => obj,
@@ -78,12 +79,12 @@ fn analyze(env: &mut Env, tid: TypeId) {
     };
     match *env.library.type_(tid) {
         Type::Class(_) => {
-            if let Some(info) = object::class(env, obj) {
+            if let Some(info) = object::class(env, obj, deps) {
                 env.analysis.objects.insert(full_name, info);
             }
         }
         Type::Interface(_) => {
-            if let Some(info) = object::interface(env, obj) {
+            if let Some(info) = object::interface(env, obj, deps) {
                 env.analysis.objects.insert(full_name, info);
             }
         }

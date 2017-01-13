@@ -8,6 +8,7 @@ use analysis::ref_mode::RefMode;
 use analysis::return_value;
 use analysis::rust_type::*;
 use analysis::safety_assertion_mode::SafetyAssertionMode;
+use analysis::signatures::{SignatureParams, Signatures};
 use config;
 use env::Env;
 use library::{self, Nullable, ParameterDirection};
@@ -48,7 +49,9 @@ pub struct Info {
 }
 
 pub fn analyze(env: &Env, functions: &[library::Function], type_tid: library::TypeId,
-               obj: &config::gobjects::GObject, imports: &mut Imports) -> Vec<Info> {
+               obj: &config::gobjects::GObject, imports: &mut Imports,
+               mut signatures: Option<&mut Signatures>,
+               deps: Option<&[library::TypeId]>) -> Vec<Info> {
     let mut funcs = Vec::new();
 
     for func in functions {
@@ -59,14 +62,27 @@ pub fn analyze(env: &Env, functions: &[library::Function], type_tid: library::Ty
         if env.is_totally_deprecated(func.deprecated_version) {
             continue;
         }
-        let info = analyze_function(env, func, type_tid, &configured_functions, imports);
+        let name = nameutil::mangle_keywords(&*func.name).into_owned();
+        let signature_params = SignatureParams::new(func);
+        if func.kind == library::FunctionKind::Method {
+            if let Some(ref deps) = deps {
+                if signature_params.has_in_deps(env, &name, deps) {
+                    continue;
+                }
+            }
+        }
+        if let Some(ref mut signatures) = signatures {
+            signatures.insert(name.clone(), signature_params);
+        }
+
+        let info = analyze_function(env, name, func, type_tid, &configured_functions, imports);
         funcs.push(info);
     }
 
     funcs
 }
 
-fn analyze_function(env: &Env, func: &library::Function, type_tid: library::TypeId,
+fn analyze_function(env: &Env, name: String, func: &library::Function, type_tid: library::TypeId,
                     configured_functions: &[&config::functions::Function],
                     imports: &mut Imports) -> Info {
     let mut commented = false;
@@ -125,7 +141,7 @@ fn analyze_function(env: &Env, func: &library::Function, type_tid: library::Type
     let assertion = SafetyAssertionMode::of(env, &parameters);
 
     Info {
-        name: nameutil::mangle_keywords(&*func.name).into_owned(),
+        name: name,
         glib_name: func.c_identifier.as_ref().unwrap().clone(),
         kind: func.kind,
         visibility: visibility,
