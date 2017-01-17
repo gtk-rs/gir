@@ -118,6 +118,16 @@ pub fn version_condition_string(env: &Env, version: Option<Version>, commented: 
     }
 }
 
+pub fn not_version_condition(w: &mut Write, version: Option<Version>, commented: bool,
+                             indent: usize) -> Result<()> {
+    if let Some(v) = version {
+        let comment = if commented { "//" } else { "" };
+        let s = format!("{}{}#[cfg(not({}))]", tabs(indent), comment, v.to_cfg());
+        try!(writeln!(w, "{}", s));
+    }
+    Ok(())
+}
+
 pub fn cfg_condition(w: &mut Write, cfg_condition: &Option<String>, commented: bool, indent: usize)
                      -> Result<()> {
     let s = cfg_condition_string(cfg_condition, commented, indent);

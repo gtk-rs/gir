@@ -8,7 +8,7 @@ use analysis::ref_mode::RefMode;
 use analysis::return_value;
 use analysis::rust_type::*;
 use analysis::safety_assertion_mode::SafetyAssertionMode;
-use analysis::signatures::{SignatureParams, Signatures};
+use analysis::signatures::{Signature, Signatures};
 use config;
 use env::Env;
 use library::{self, Nullable, ParameterDirection};
@@ -44,6 +44,7 @@ pub struct Info {
     pub outs: out_parameters::Info,
     pub version: Option<Version>,
     pub deprecated_version: Option<Version>,
+    pub not_version: Option<Version>,
     pub cfg_condition: Option<String>,
     pub assertion: SafetyAssertionMode,
 }
@@ -63,11 +64,17 @@ pub fn analyze(env: &Env, functions: &[library::Function], type_tid: library::Ty
             continue;
         }
         let name = nameutil::mangle_keywords(&*func.name).into_owned();
-        let signature_params = SignatureParams::new(func);
+        let signature_params = Signature::new(func);
+        let mut not_version = None;
         if func.kind == library::FunctionKind::Method {
             if let Some(ref deps) = deps {
-                if signature_params.has_in_deps(env, &name, deps) {
-                    continue;
+                let (has, version) = signature_params.has_in_deps(env, &name, deps);
+                if has {
+                    match version {
+                        Some(v) if v > env.config.min_cfg_version =>
+                            not_version = version,
+                        _ => continue,
+                    }
                 }
             }
         }
@@ -75,7 +82,8 @@ pub fn analyze(env: &Env, functions: &[library::Function], type_tid: library::Ty
             signatures.insert(name.clone(), signature_params);
         }
 
-        let info = analyze_function(env, name, func, type_tid, &configured_functions, imports);
+        let mut info = analyze_function(env, name, func, type_tid, &configured_functions, imports);
+        info.not_version = not_version;
         funcs.push(info);
     }
 
@@ -152,6 +160,7 @@ fn analyze_function(env: &Env, name: String, func: &library::Function, type_tid:
         outs: outs,
         version: version,
         deprecated_version: deprecated_version,
+        not_version: None,
         cfg_condition: cfg_condition,
         assertion: assertion,
     }
