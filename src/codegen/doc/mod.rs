@@ -48,7 +48,7 @@ fn generate_doc(mut w: &mut Write, env: &Env) -> Result<()> {
     try!(write_file_name(w, None));
     let mut generators: Vec<(&str, Box<Fn(&mut Write, &Env) -> Result<()>>)> = Vec::new();
 
-    for info in &env.analysis.objects {
+    for info in env.analysis.objects.values() {
         if info.type_id.ns_id == MAIN {
             generators.push((&info.name, Box::new(move |w, e| {
                 create_object_doc(w, e, info)
@@ -56,7 +56,7 @@ fn generate_doc(mut w: &mut Write, env: &Env) -> Result<()> {
         }
     }
 
-    for info in &env.analysis.records {
+    for info in env.analysis.records.values() {
         if info.type_id.ns_id == MAIN {
             generators.push((&info.name, Box::new(move |w, e| {
                 create_record_doc(w, e, info)

@@ -53,7 +53,8 @@ pub fn new(env: &Env, obj: &GObject) -> Option<Info> {
     imports.add("glib::translate::*", None);
     imports.add("ffi", None);
 
-    let mut functions = functions::analyze(env, &record.functions, record_tid, &obj, &mut imports);
+    let mut functions = functions::analyze(env, &record.functions, record_tid, &obj,
+                                           &mut imports, None, None);
     let specials = special_functions::extract(&mut functions);
 
     let (version, deprecated_version) = info_base::versions(env, &obj, &functions, record.version,
@@ -84,7 +85,7 @@ pub fn new(env: &Env, obj: &GObject) -> Option<Info> {
         deprecated_version: deprecated_version,
         cfg_condition: obj.cfg_condition.clone(),
     };
-    
+
     let info = Info {
         base: base,
     };

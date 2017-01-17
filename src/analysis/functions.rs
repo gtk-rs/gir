@@ -8,6 +8,7 @@ use analysis::ref_mode::RefMode;
 use analysis::return_value;
 use analysis::rust_type::*;
 use analysis::safety_assertion_mode::SafetyAssertionMode;
+use analysis::signatures::{Signature, Signatures};
 use config;
 use env::Env;
 use library::{self, Nullable, ParameterDirection};
@@ -43,12 +44,15 @@ pub struct Info {
     pub outs: out_parameters::Info,
     pub version: Option<Version>,
     pub deprecated_version: Option<Version>,
+    pub not_version: Option<Version>,
     pub cfg_condition: Option<String>,
     pub assertion: SafetyAssertionMode,
 }
 
 pub fn analyze(env: &Env, functions: &[library::Function], type_tid: library::TypeId,
-               obj: &config::gobjects::GObject, imports: &mut Imports) -> Vec<Info> {
+               obj: &config::gobjects::GObject, imports: &mut Imports,
+               mut signatures: Option<&mut Signatures>,
+               deps: Option<&[library::TypeId]>) -> Vec<Info> {
     let mut funcs = Vec::new();
 
     for func in functions {
@@ -59,14 +63,34 @@ pub fn analyze(env: &Env, functions: &[library::Function], type_tid: library::Ty
         if env.is_totally_deprecated(func.deprecated_version) {
             continue;
         }
-        let info = analyze_function(env, func, type_tid, &configured_functions, imports);
+        let name = nameutil::mangle_keywords(&*func.name).into_owned();
+        let signature_params = Signature::new(func);
+        let mut not_version = None;
+        if func.kind == library::FunctionKind::Method {
+            if let Some(ref deps) = deps {
+                let (has, version) = signature_params.has_in_deps(env, &name, deps);
+                if has {
+                    match version {
+                        Some(v) if v > env.config.min_cfg_version =>
+                            not_version = version,
+                        _ => continue,
+                    }
+                }
+            }
+        }
+        if let Some(ref mut signatures) = signatures {
+            signatures.insert(name.clone(), signature_params);
+        }
+
+        let mut info = analyze_function(env, name, func, type_tid, &configured_functions, imports);
+        info.not_version = not_version;
         funcs.push(info);
     }
 
     funcs
 }
 
-fn analyze_function(env: &Env, func: &library::Function, type_tid: library::TypeId,
+fn analyze_function(env: &Env, name: String, func: &library::Function, type_tid: library::TypeId,
                     configured_functions: &[&config::functions::Function],
                     imports: &mut Imports) -> Info {
     let mut commented = false;
@@ -125,7 +149,7 @@ fn analyze_function(env: &Env, func: &library::Function, type_tid: library::Type
     let assertion = SafetyAssertionMode::of(env, &parameters);
 
     Info {
-        name: nameutil::mangle_keywords(&*func.name).into_owned(),
+        name: name,
         glib_name: func.c_identifier.as_ref().unwrap().clone(),
         kind: func.kind,
         visibility: visibility,
@@ -136,6 +160,7 @@ fn analyze_function(env: &Env, func: &library::Function, type_tid: library::Type
         outs: outs,
         version: version,
         deprecated_version: deprecated_version,
+        not_version: None,
         cfg_condition: cfg_condition,
         assertion: assertion,
     }
