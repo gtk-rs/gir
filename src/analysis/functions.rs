@@ -129,7 +129,7 @@ fn analyze_function(env: &Env, name: String, func: &library::Function, type_tid:
         }
     }
 
-    let (outs, unsupported_outs) = out_parameters::analyze(env, func);
+    let (outs, unsupported_outs) = out_parameters::analyze(env, func, configured_functions);
     if unsupported_outs {
         warn!("Function {} has unsupported outs", func.c_identifier.as_ref().unwrap_or(&func.name));
         commented = true;

@@ -3,6 +3,7 @@ use std::vec::Vec;
 
 use analysis::imports::Imports;
 use analysis::ref_mode::RefMode;
+use config;
 use env::Env;
 use library::*;
 use super::conversion_type::ConversionType;
@@ -44,7 +45,8 @@ impl Info {
     }
 }
 
-pub fn analyze(env: &Env, func: &Function) -> (Info, bool) {
+pub fn analyze(env: &Env, func: &Function,
+               configured_functions: &[&config::functions::Function]) -> (Info, bool) {
     let mut info: Info = Default::default();
     let mut unsupported_outs = false;
 
@@ -72,7 +74,15 @@ pub fn analyze(env: &Env, func: &Function) -> (Info, bool) {
         info.mode = Mode::None;
     }
     if info.mode == Mode::Combined || info.mode == Mode::Throws(true) {
-        info.params.insert(0, func.ret.clone());
+        let mut ret = func.ret.clone();
+        //TODO: switch to use analyzed returns (it add too many Return<Option<>>)
+        let nullable_override = configured_functions.iter()
+            .filter_map(|f| f.ret.nullable)
+            .next();
+        if let Some(val) = nullable_override {
+            ret.nullable = val;
+        }
+        info.params.insert(0, ret);
     }
 
     (info, unsupported_outs)
