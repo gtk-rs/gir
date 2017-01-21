@@ -269,6 +269,21 @@ pub struct Union {
     pub doc: Option<String>,
 }
 
+pub struct Property {
+    pub name: String,
+    pub readable: bool,
+    pub writable: bool,
+    pub construct: bool,
+    pub construct_only: bool,
+    pub typ: TypeId,
+    pub c_type: Option<String>,
+    pub transfer: Transfer,
+    pub version: Option<Version>,
+    pub deprecated_version: Option<Version>,
+    pub doc: Option<String>,
+    pub doc_deprecated: Option<String>,
+}
+
 #[derive(Clone, Debug)]
 pub struct Parameter {
     pub name: String,
@@ -314,6 +329,7 @@ pub struct Interface {
     pub glib_get_type: String,
     pub functions: Vec<Function>,
     pub signals: Vec<Signal>,
+    pub properties: Vec<Property>,
     pub prerequisites: Vec<TypeId>,
     pub version: Option<Version>,
     pub deprecated_version: Option<Version>,
@@ -328,6 +344,7 @@ pub struct Class {
     pub fields: Vec<Field>,
     pub functions: Vec<Function>,
     pub signals: Vec<Signal>,
+    pub properties: Vec<Property>,
     pub parent: Option<TypeId>,
     pub implements: Vec<TypeId>,
     pub version: Option<Version>,
@@ -558,7 +575,7 @@ impl Namespace {
     fn type_(&self, id: u32) -> &Type {
         self.types[id as usize].as_ref().unwrap()
     }
- 
+
     fn type_mut(&mut self, id: u32) -> &mut Type {
         self.types[id as usize].as_mut().unwrap()
     }
@@ -730,5 +747,5 @@ mod tests {
         assert_eq!(TypeId::tid_none().full_name(&lib), "*.None");
         assert_eq!(TypeId::tid_bool().full_name(&lib), "*.Boolean");
     }
-    
+
 }

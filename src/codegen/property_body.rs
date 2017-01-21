@@ -1,15 +1,17 @@
 use analysis;
+use analysis::properties::PropertyConversion;
 use chunk::Chunk;
 
 #[derive(Default)]
 pub struct Builder {
     name: String,
-    rust_name: String,
+    var_name: String,
     is_get: bool,
+    is_child_property: bool,
     default_value: String,
     is_ref: bool,
     is_nullable: bool,
-    is_like_i32: bool,
+    conversion: PropertyConversion,
 }
 
 impl Builder {
@@ -17,13 +19,20 @@ impl Builder {
         Default::default()
     }
 
+    pub fn new_for_child_property() -> Builder {
+        Builder{
+            is_child_property: true,
+            .. Default::default()
+        }
+    }
+
     pub fn name(&mut self, name: &str) -> &mut Builder {
         self.name = name.into();
         self
     }
 
-    pub fn rust_name(&mut self, name: &str) -> &mut Builder {
-        self.rust_name = name.into();
+    pub fn var_name(&mut self, name: &str) -> &mut Builder {
+        self.var_name = name.into();
         self
     }
 
@@ -47,8 +56,8 @@ impl Builder {
         self
     }
 
-    pub fn is_like_i32(&mut self, value: bool) -> &mut Builder {
-        self.is_like_i32 = value;
+    pub fn conversion(&mut self, value: PropertyConversion) -> &mut Builder {
+        self.conversion = value;
         self
     }
 
@@ -58,10 +67,13 @@ impl Builder {
     }
 
     fn chunks_for_get(&self) -> Vec<Chunk> {
+        use analysis::properties::PropertyConversion::*;
         let mut params = Vec::new();
 
         params.push(Chunk::Custom("self.to_glib_none().0".into()));
-        params.push(Chunk::Custom("item.to_glib_none().0".into()));
+        if self.is_child_property {
+            params.push(Chunk::Custom("item.to_glib_none().0".into()));
+        }
         params.push(Chunk::Custom(format!("\"{}\".to_glib_none().0", self.name)));
         params.push(Chunk::Custom("value.to_glib_none_mut().0".into()));
 
@@ -73,7 +85,7 @@ impl Builder {
             commented: false,
         };
         let ffi_call = Chunk::FfiCall{
-            name: "gtk_container_child_get_property".into(),
+            name: self.get_ffi_func(),
             params: params,
         };
         body.push(Chunk::FfiCallConversion{
@@ -81,8 +93,10 @@ impl Builder {
             call: Box::new(ffi_call),
         });
 
-        if self.is_like_i32 {
-            body.push(Chunk::Custom("from_glib(transmute(value.get::<i32>().unwrap()))".into()));
+        match self.conversion {
+            AsI32 => body.push(Chunk::Custom("from_glib(transmute(value.get::<i32>().unwrap()))".into())),
+            Bitflag => body.push(Chunk::Custom("from_glib(transmute(value.get::<u32>().unwrap()))".into())),
+            _ => (),
         }
 
         let unsafe_ = Chunk::Unsafe(body);
@@ -98,27 +112,33 @@ impl Builder {
         });
         chunks.push(unsafe_);
 
-        if !self.is_like_i32 {
-            let unwrap = if self.is_nullable { "" } else { ".unwrap()" };
-            chunks.push(Chunk::Custom(format!("value.get(){}", unwrap)));
+        match self.conversion {
+            Direct => {
+                let unwrap = if self.is_nullable { "" } else { ".unwrap()" };
+                chunks.push(Chunk::Custom(format!("value.get(){}", unwrap)));
+            }
+            _ => ()
         }
 
         chunks
     }
 
     fn chunks_for_set(&self) -> Vec<Chunk> {
+        use analysis::properties::PropertyConversion::*;
         let mut params = Vec::new();
 
         params.push(Chunk::Custom("self.to_glib_none().0".into()));
-        params.push(Chunk::Custom("item.to_glib_none().0".into()));
+        if self.is_child_property {
+            params.push(Chunk::Custom("item.to_glib_none().0".into()));
+        }
         params.push(Chunk::Custom(format!("\"{}\".to_glib_none().0", self.name)));
         let ref_str = if self.is_ref { "" } else { "&" };
-        params.push(Chunk::Custom(format!("Value::from({}{}).to_glib_none().0", ref_str, self.rust_name)));
+        params.push(Chunk::Custom(format!("Value::from({}{}).to_glib_none().0", ref_str, self.var_name)));
 
         let mut body = Vec::new();
 
         let ffi_call = Chunk::FfiCall{
-            name: "gtk_container_child_set_property".into(),
+            name: self.set_ffi_func(),
             params: params,
         };
         let return_info = analysis::return_value::Info {
@@ -135,18 +155,47 @@ impl Builder {
 
         let mut chunks = Vec::new();
 
-        if self.is_like_i32 {
-            let value_chunk = Chunk::Custom(format!("{}.to_glib() as i32", self.rust_name));
-            chunks.push(Chunk::Let{
-                name: self.rust_name.clone(),
-                is_mut: false,
-                value: Box::new(value_chunk),
-                type_: None
-            });
+        match self.conversion {
+            AsI32 => {
+                let value_chunk = Chunk::Custom(format!("{}.to_glib() as i32", self.var_name));
+                chunks.push(Chunk::Let{
+                    name: self.var_name.clone(),
+                    is_mut: false,
+                    value: Box::new(value_chunk),
+                    type_: None
+                })
+            }
+            Bitflag => {
+                let value_chunk = Chunk::Custom(format!("{}.to_glib().bits() as u32", self.var_name));
+                chunks.push(Chunk::Let{
+                    name: self.var_name.clone(),
+                    is_mut: false,
+                    value: Box::new(value_chunk),
+                    type_: None
+                })
+            }
+            _ => (),
         }
 
         chunks.push(unsafe_);
 
         chunks
     }
+
+    fn get_ffi_func(&self) -> String {
+        if self.is_child_property {
+            "gtk_container_child_get_property".to_owned()
+        } else {
+            "gobject_ffi::g_object_get_property".to_owned()
+        }
+    }
+
+    fn set_ffi_func(&self) -> String {
+        if self.is_child_property {
+            "gtk_container_child_set_property".to_owned()
+        } else {
+            "gobject_ffi::g_object_set_property".to_owned()
+        }
+    }
+
 }

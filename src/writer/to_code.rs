@@ -20,7 +20,11 @@ impl ToCode for Chunk {
             Unsafe(ref chs) => format_block("unsafe {", "}", &chs.to_code(env)),
             FfiCallTODO(ref name) => vec![format!("TODO: call ffi::{}()", name)],
             FfiCall{ref name, ref params} => {
-                let prefix = format!("ffi::{}(", name);
+                let prefix = if name.find("::").is_some() {
+                    format!("{}(", name)
+                } else {
+                    format!("ffi::{}(", name)
+                };
                 //TODO: change to format_block or format_block_smart
                 let s = format_block_one_line(&prefix, ")", &params.to_code(env), "", ", ");
                 vec![s]
