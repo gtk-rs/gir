@@ -17,6 +17,7 @@ pub mod namespaces;
 pub mod object;
 pub mod out_parameters;
 pub mod parameter;
+pub mod properties;
 pub mod record;
 pub mod record_type;
 pub mod ref_mode;

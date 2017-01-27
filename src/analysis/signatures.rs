@@ -26,6 +26,14 @@ impl Signature {
         }
         (false, None)
     }
+
+    pub fn has_by_name(name:&String, signatures: &Signatures) -> (bool, Option<Version>) {
+        if let Some(params) = signatures.get(name) {
+            return (true, params.2);
+        } else {
+            return (false, None);
+        }
+    }
 }
 
 pub type Signatures = HashMap<String, Signature>;

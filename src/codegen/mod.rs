@@ -5,7 +5,6 @@ use config::WorkMode;
 use file_saver::*;
 
 mod child_properties;
-mod child_property_body;
 mod doc;
 mod enums;
 mod flags;
@@ -15,6 +14,8 @@ mod general;
 mod object;
 mod objects;
 mod parameter;
+mod properties;
+mod property_body;
 mod record;
 mod records;
 mod return_value;

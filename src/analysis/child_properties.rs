@@ -1,5 +1,6 @@
 use analysis::imports::Imports;
 use analysis::ref_mode::RefMode;
+use analysis::properties;
 use analysis::rust_type::*;
 use config;
 use env::Env;
@@ -13,7 +14,7 @@ pub struct ChildProperty {
     pub child_name: String,
     pub child_type: Option<library::TypeId>,
     pub nullable: library::Nullable,
-    pub is_like_i32: bool,
+    pub conversion: properties::PropertyConversion,
     pub default_value: Option<String>, //for getter
     pub get_out_ref_mode: RefMode,
     pub set_in_ref_mode: RefMode,
@@ -65,17 +66,20 @@ fn analyze_property(env: &Env, prop: &config::ChildProperty, child_name: &str,
             imports.add_used_type(&s, None);
         }
 
-        let default_value = get_type_default_value(env, typ, type_);
+        let default_value = properties::get_type_default_value(env, typ, type_);
         if default_value.is_none() {
             let owner_name = rust_type(env, type_tid).into_string();
             error!("No default value for type `{}` of child property `{}` for `{}`", &prop.type_name, name, owner_name);
         }
-        let is_like_i32 = get_is_like_i32(type_);
-        if is_like_i32 {
+        let conversion = properties::PropertyConversion::of(type_);
+        if conversion != properties::PropertyConversion::Direct {
             imports.add("std::mem::transmute", None);
         }
         let get_out_ref_mode = RefMode::of(&env.library, typ, library::ParameterDirection::Return);
-        let set_in_ref_mode = RefMode::of(&env.library, typ, library::ParameterDirection::In);
+        let mut set_in_ref_mode = RefMode::of(&env.library, typ, library::ParameterDirection::In);
+        if set_in_ref_mode == RefMode::ByRefMut {
+            set_in_ref_mode = RefMode::ByRef;
+        }
         let nullable = library::Nullable(set_in_ref_mode.is_ref());
         Some(ChildProperty{
             name: name,
@@ -83,7 +87,7 @@ fn analyze_property(env: &Env, prop: &config::ChildProperty, child_name: &str,
             child_name: child_name.to_owned(),
             child_type: child_type,
             nullable: nullable,
-            is_like_i32: is_like_i32,
+            conversion: conversion,
             default_value: default_value,
             get_out_ref_mode: get_out_ref_mode,
             set_in_ref_mode: set_in_ref_mode,
@@ -92,37 +96,5 @@ fn analyze_property(env: &Env, prop: &config::ChildProperty, child_name: &str,
         let owner_name = rust_type(env, type_tid).into_string();
         error!("Bad type `{}` of child property `{}` for `{}`", &prop.type_name, name, owner_name);
         None
-    }
-}
-
-fn get_type_default_value(env: &Env, type_tid: library::TypeId, type_: &library::Type)
-                          -> Option<String> {
-    use library::Type;
-    use library::Fundamental;
-    let some = |s: &str| Some(s.to_string());
-    match *type_ {
-        Type::Fundamental(fund) => {
-            match fund {
-                Fundamental::Boolean => some("&false"),
-                Fundamental::Int => some("&0"),
-                Fundamental::Utf8 => some("None::<&str>"),
-                _ => None,
-            }
-        }
-        Type::Enumeration(_) => some("&0"),
-        Type::Class(..) |
-        Type::Interface(..) => {
-            let type_str = rust_type(env, type_tid).into_string();
-            Some(format!("None::<&{}>", type_str))
-        }
-        _ => None,
-    }
-}
-
-fn get_is_like_i32(type_: &library::Type) -> bool {
-    use library::Type;
-    match *type_ {
-        Type::Enumeration(_) => true,
-        _ => false,
     }
 }

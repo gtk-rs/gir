@@ -8,6 +8,7 @@ use config::parsable::{Parsable, Parse};
 use super::child_properties::ChildProperties;
 use super::functions::Functions;
 use super::members::Members;
+use super::properties::Properties;
 use super::signals::Signals;
 use version::Version;
 
@@ -55,6 +56,7 @@ pub struct GObject {
     pub functions: Functions,
     pub signals: Signals,
     pub members: Members,
+    pub properties: Properties,
     pub status: GStatus,
     pub module_name: Option<String>,
     pub version: Option<Version>,
@@ -71,6 +73,7 @@ impl Default for GObject {
             functions: Functions::new(),
             signals: Signals::new(),
             members: Members::new(),
+            properties: Properties::new(),
             status: Default::default(),
             module_name: None,
             version: None,
@@ -106,6 +109,7 @@ fn parse_object(toml_object: &Value) -> GObject {
     let functions = Functions::parse(toml_object.lookup("function"), &name);
     let signals = Signals::parse(toml_object.lookup("signal"), &name);
     let members = Members::parse(toml_object.lookup("member"), &name);
+    let properties = Properties::parse(toml_object.lookup("property"), &name);
     let module_name = toml_object.lookup("module_name")
         .and_then(|v| v.as_str())
         .map(|s| s.to_owned());
@@ -125,6 +129,7 @@ fn parse_object(toml_object: &Value) -> GObject {
         functions: functions,
         signals: signals,
         members: members,
+        properties: properties,
         status: status,
         module_name: module_name,
         version: version,

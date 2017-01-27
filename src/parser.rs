@@ -179,6 +179,7 @@ impl Library {
             attrs.get("deprecated-version")));
         let mut fns = Vec::new();
         let mut signals = Vec::new();
+        let mut properties = Vec::new();
         let mut impls = Vec::new();
         let mut fields = Vec::new();
         let mut doc = None;
@@ -192,9 +193,11 @@ impl Library {
                         "implements" =>
                             impls.push(try!(self.read_type(parser, ns_id, &name, &attributes)).0),
                         "signal" => try!(self.read_signal_to_vec(parser, ns_id, &attributes, &mut signals)),
+                        "property" => try!(self.read_property_to_vec(parser, ns_id,
+                                                                 &attributes, &mut properties)),
                         "field" =>
                             fields.push(try!(self.read_field(parser, ns_id, &attributes))),
-                        "property" | "virtual-method" => try!(ignore_element(parser)),
+                        "virtual-method" => try!(ignore_element(parser)),
                         "doc" => doc = try!(read_text(parser)),
                         x => return Err(mk_error!(format!("Unexpected element <{}>", x), parser)),
                     }
@@ -213,6 +216,7 @@ impl Library {
                 fields: fields,
                 functions: fns,
                 signals: signals,
+                properties: properties,
                 parent: parent,
                 implements: impls,
                 doc: doc,
@@ -416,6 +420,7 @@ impl Library {
             attrs.get("deprecated-version")));
         let mut fns = Vec::new();
         let mut signals = Vec::new();
+        let mut properties = Vec::new();
         let mut prereqs = Vec::new();
         let mut doc = None;
         loop {
@@ -430,6 +435,8 @@ impl Library {
                                                                            &name, &attributes)).0),
                         "signal" => try!(self.read_signal_to_vec(parser, ns_id,
                                                                  &attributes, &mut signals)),
+                        "property" => try!(self.read_property_to_vec(parser, ns_id,
+                                                                 &attributes, &mut properties)),
                         "doc" => doc = try!(read_text(parser)),
                         _ => try!(ignore_element(parser)),
                     }
@@ -446,6 +453,7 @@ impl Library {
                 glib_get_type : get_type.into(),
                 functions: fns,
                 signals: signals,
+                properties: properties,
                 prerequisites: prereqs,
                 doc: doc,
                 version: version,
@@ -990,6 +998,103 @@ impl Library {
         else {
             Err(mk_error!("Missing <type> element", parser))
         }
+    }
+
+    fn read_property(&mut self, parser: &mut Reader, ns_id: u16,
+                     attrs: &Attributes) -> Result<Option<Property>, Error> {
+        let name = try!(attrs.get("name").ok_or_else(|| mk_error!("Missing property name", parser)));
+        let readable = to_bool(attrs.get("readable").unwrap_or("1"));
+        let writable = to_bool(attrs.get("writable").unwrap_or("none"));
+        let construct = to_bool(attrs.get("construct").unwrap_or("none"));
+        let construct_only = to_bool(attrs.get("construct_only").unwrap_or("none"));
+        let transfer = try!(
+            Transfer::from_str(attrs.get("transfer-ownership").unwrap_or("none"))
+                .map_err(|why| mk_error!(why, parser)));
+        let version = match attrs.get("version") {
+            Some(v) => Some(try!(v.parse().map_err(|why| mk_error!(why, parser)))),
+            None => None,
+        };
+        let deprecated = to_bool(attrs.get("deprecated").unwrap_or("none"));
+        let deprecated_version = if deprecated {
+            match attrs.get("deprecated-version") {
+                Some(v) => Some(try!(v.parse().map_err(|why| mk_error!(why, parser)))),
+                None => None,
+            }
+        } else {
+            None
+        };
+        if let Some(v) = version {
+            self.register_version(ns_id, v);
+        }
+        if let Some(v) = deprecated_version {
+            self.register_version(ns_id, v);
+        }
+        let mut has_empty_type_tag = false;
+        let mut typ = None;
+        let mut doc = None;
+        let mut doc_deprecated = None;
+        loop {
+            let event = try!(parser.next());
+            match event {
+                StartElement { name, attributes, .. } => {
+                    match name.local_name.as_ref() {
+                        "type" | "array" => {
+                            let pos = parser.position();
+                            if typ.is_some() {
+                                return Err(mk_error!("Too many <type> elements", &pos));
+                            }
+                            //defend from <type/>
+                            if attributes.is_empty() && name.local_name == "type" {
+                                try!(ignore_element(parser));
+                                has_empty_type_tag = true;
+                                continue;
+                            }
+                            typ = Some(try!(self.read_type(parser, ns_id, &name, &attributes)));
+                            if let Some((tid, None)) = typ {
+                                typ = Some((tid, Some(EMPTY_CTYPE.to_owned())));
+                            }
+                        }
+                        "doc" => doc = try!(read_text(parser)),
+                        "doc-deprecated" => doc_deprecated = try!(read_text(parser)),
+                        x => return Err(mk_error!(format!("Unexpected element <{}>", x), parser)),
+                    }
+                }
+                EndElement { .. } => break,
+                _ => xml_next!(event, parser),
+            }
+        }
+        if has_empty_type_tag { return Ok(None); }
+
+        if let Some((tid, c_type)) = typ {
+            Ok(Some(Property {
+                name: name.into(),
+                readable: readable,
+                writable: writable,
+                construct: construct,
+                construct_only: construct_only,
+                transfer: transfer,
+                typ: tid,
+                c_type: c_type,
+                version: version,
+                deprecated_version: deprecated_version,
+                doc: doc,
+                doc_deprecated: doc_deprecated,
+            }))
+        }
+        else {
+            Err(mk_error!("Missing <type> element", parser))
+        }
+    }
+
+    fn read_property_to_vec(&mut self, parser: &mut Reader, ns_id: u16,
+                            attrs: &Attributes, properties: &mut Vec<Property>)
+                            -> Result<(), Error> {
+        let s = try!(self.read_property(parser, ns_id, attrs));
+        if let Some(s) = s {
+            properties.push(s);
+        }
+
+        Ok(())
     }
 
     fn read_type(&mut self, parser: &mut Reader, ns_id: u16,

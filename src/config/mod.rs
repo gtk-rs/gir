@@ -8,6 +8,7 @@ pub mod ident;
 pub mod matchable;
 pub mod members;
 pub mod parsable;
+pub mod properties;
 pub mod signals;
 pub mod work_mode;
 
