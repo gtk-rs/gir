@@ -315,6 +315,11 @@ fn generate_fields(env: &Env, struct_name: &str, fields: &[Field]) -> (Vec<Strin
     let mut commented = false;
     let mut truncated = false;
 
+    //TODO: remove after GObject-2.0.gir fixed
+    // Fix for wrong GValue size on i686-pc-windows-gnu due `c:type="gpointer"` in data field
+    // instead guint64
+    let is_gvalue = struct_name == "Value";
+
     for field in fields {
         let is_union = env.library.type_(field.typ).maybe_ref_as::<Union>().is_some();
         let is_bits = field.bits.is_some();
@@ -341,9 +346,12 @@ fn generate_fields(env: &Env, struct_name: &str, fields: &[Field]) -> (Vec<Strin
 
         if let Some(ref c_type) = field.c_type {
             let name = mangle_keywords(&*field.name);
-            let c_type = ffi_type(env, field.typ, c_type);
+            let mut c_type = ffi_type(env, field.typ, c_type);
             if c_type.is_err() {
                 commented = true;
+            }
+            if is_gvalue && field.name == "data" {
+                c_type = Ok("[u64; 2]".to_owned());
             }
             lines.push(format!("\t{}{}: {},", vis, name, c_type.into_string()));
         }
