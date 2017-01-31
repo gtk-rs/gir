@@ -300,6 +300,11 @@ fn generate_records(w: &mut Write, env: &Env, records: &[&Record]) -> Result<()>
             try!(writeln!(w, "{}#[repr(C)]\n{0}pub struct {}(c_void);\n", comment, record.c_type));
         }
         else {
+            if record.name == "Value" {
+                try!(writeln!(w, "#[cfg(target_pointer_width = \"128\")]"));
+                try!(writeln!(w, "const ERROR: () = \"Your pointers are too big.\";"));
+                try!(writeln!(w, ""));
+            }
             try!(writeln!(w, "{}#[repr(C)]\n{0}pub struct {} {{", comment, record.c_type));
             for line in lines {
                 try!(writeln!(w, "{}{}", comment, line));
