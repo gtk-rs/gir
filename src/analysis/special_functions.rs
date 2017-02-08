@@ -50,6 +50,9 @@ pub fn extract(functions: &mut Vec<FuncInfo>) -> Infos {
                 if let Some(par) = func.ret.parameter.as_mut() {
                     *par.nullable = false;
                 }
+                if func.parameters.len() != 1 {
+                    continue;
+                }
             }
             specials.insert(type_, func.glib_name.clone());
         }
