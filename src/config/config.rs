@@ -58,7 +58,6 @@ impl Config {
             None => PathBuf::new(),
         };
 
-        //TODO: add check file existence when stable std::fs::PathExt
         let toml = try!(read_toml(&config_file));
 
         Config::process_options(args, toml, &config_dir)
@@ -176,6 +175,9 @@ impl Config {
 }
 
 fn read_toml<P: AsRef<Path>>(filename: P) -> Result<toml::Value> {
+    if !filename.as_ref().is_file() {
+        bail!("Config \"{}\" don't exists or not file", filename.as_ref().display());
+    }
     let mut input = String::new();
     try!(File::open(&filename)
          .and_then(|mut f| f.read_to_string(&mut input))
