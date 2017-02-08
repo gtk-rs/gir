@@ -94,8 +94,7 @@ fn rust_type_full(env: &Env, type_id: library::TypeId, nullable: Nullable, ref_m
                 Filename => {
                     if ref_mode.is_ref() {
                         ok("std::path::Path")
-                    }
-                    else {
+                    } else {
                         ok("std::path::PathBuf")
                     }
                 }
@@ -103,7 +102,7 @@ fn rust_type_full(env: &Env, type_id: library::TypeId, nullable: Nullable, ref_m
                 Unsupported => err("Unsupported"),
                 _ => err(&format!("Fundamental: {:?}", fund)),
             }
-        },
+        }
         Alias(ref alias) => {
             rust_type_full(env, alias.typ, nullable, ref_mode)
                 .map_any(|_| alias.name.clone())
@@ -213,6 +212,7 @@ pub fn parameter_rust_type(env: &Env, type_id:library::TypeId,
                 rust_type.map_any(|s| format_parameter(s, direction))
             }
         }
+
         Alias(ref alias) => {
             rust_type.and_then(|s| {
                 parameter_rust_type(env, alias.typ, direction, nullable, ref_mode)

@@ -10,6 +10,7 @@ use super::imports::Imports;
 pub enum BoundType {
     IsA,
     AsRef,
+    Into,
 }
 
 #[derive(Debug)]
@@ -17,6 +18,8 @@ pub struct Bounds {
     unused: VecDeque<String>,
     //Vector tuples <parameter name>, <alias>, <type>, <bound type>
     used: Vec<(String, String, String, BoundType)>,
+    // In practice, it could be just a String since we only handle one lifetime.
+    lifetimes: Vec<String>,
 }
 
 impl Default for Bounds {
@@ -24,6 +27,7 @@ impl Default for Bounds {
         Bounds {
             unused: "TUVWXYZ".chars().map(|ch| ch.to_string()).collect(),
             used: Vec::new(),
+            lifetimes: Vec::new(),
         }
     }
 }
@@ -33,6 +37,7 @@ impl Bounds {
         use self::BoundType::*;
         match *env.library.type_(type_id) {
             Type::Fundamental(Fundamental::Filename) => Some(AsRef),
+            Type::Fundamental(Fundamental::Utf8) => Some(Into),
             Type::Class(..) => {
                 if env.class_hierarchy.subtypes(type_id).next().is_some() {
                     Some(IsA)
@@ -50,8 +55,16 @@ impl Bounds {
             _ => String::new(),
         }
     }
-    pub fn add_parameter(&mut self, name: &str, type_str: &str, bound_type: BoundType) -> bool {
-        if self.used.iter().any(|ref n| n.0 == name)  { return false; }
+    pub fn add_parameter(&mut self, name: &str, type_str: &str, bound_type: BoundType,
+                         is_nullable: bool) -> bool {
+        if self.used.iter().any(|ref n| n.0 == name) { return false; }
+        if bound_type == BoundType::Into {
+            if is_nullable == false { return true; }
+            // For now, only one lifetime at a time is handled.
+            if self.lifetimes.len() == 0 {
+                self.lifetimes.push("a".into())
+            }
+        }
         let front = self.unused.pop_front();
         if let Some(alias) = front {
             self.used.push((name.into(), alias.clone(), type_str.into(), bound_type));
@@ -71,14 +84,18 @@ impl Bounds {
             match used.3 {
                 IsA => imports.add("glib::object::IsA", None),
                 AsRef => imports.add_used_type(&used.2, None),
+                Into => {}
             }
         }
-   }
+    }
     pub fn is_empty(&self) -> bool {
         self.used.is_empty()
     }
     pub fn iter(&self) ->  Iter<(String, String, String, BoundType)> {
         self.used.iter()
+    }
+    pub fn iter_lifetimes(&self) -> Iter<String> {
+        self.lifetimes.iter()
     }
 }
 

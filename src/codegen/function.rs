@@ -13,7 +13,7 @@ use writer::primitives::tabs;
 use writer::ToCode;
 
 pub fn generate(w: &mut Write, env: &Env, analysis: &analysis::functions::Info,
-    in_trait: bool, only_declaration: bool, indent: usize) -> Result<()> {
+                in_trait: bool, only_declaration: bool, indent: usize) -> Result<()> {
     let mut commented = false;
     let mut comment_prefix = "";
     let mut pub_prefix = if in_trait { "" } else { "pub " };
@@ -79,11 +79,14 @@ pub fn declaration(env: &Env, analysis: &analysis::functions::Info) -> String {
 fn bounds(bounds: &Bounds) -> String {
     use analysis::bounds::BoundType::*;
     if bounds.is_empty() { return String::new() }
-    let strs: Vec<String> = bounds.iter()
-        .map(|bound| match bound.3 {
-            IsA => format!("{}: IsA<{}>", bound.1, bound.2),
-            AsRef => format!("{}: AsRef<{}>", bound.1, bound.2),
-        })
+    let strs: Vec<String> = bounds.iter_lifetimes()
+        .map(|s| format!("'{}", s))
+        .chain(bounds.iter()
+                     .map(|bound| match bound.3 {
+                         IsA => format!("{}: IsA<{}>", bound.1, bound.2),
+                         AsRef => format!("{}: AsRef<{}>", bound.1, bound.2),
+                         Into => format!("{}: Into<Option<&'a {}>>", bound.1, bound.2),
+                     }))
         .collect();
     format!("<{}>", strs.join(", "))
 }
