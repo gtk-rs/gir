@@ -56,12 +56,6 @@ impl Bounds {
             _ => String::new(),
         }
     }
-    pub fn get_cast(library: &Library, type_id: TypeId, is_nullable: bool) -> String {
-        match *library.type_(type_id) {
-            Type::Fundamental(Fundamental::Utf8) if is_nullable => "Option<&'a str>".to_owned(),
-            _ => String::new(),
-        }
-    }
     pub fn add_parameter(&mut self, name: &str, type_str: &str, bound_type: BoundType,
                          is_nullable: bool) -> bool {
         if self.used.iter().any(|ref n| n.0 == name) { return false; }

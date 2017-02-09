@@ -18,11 +18,7 @@ impl TranslateToGlib for chunk::parameter_ffi_call_in::Parameter {
                 if self.instance_parameter {
                     format!("{}self{}", left, right)
                 } else {
-                    if self.cast.len() == 0 {
-                        format!("{}{}{}{}", left, self.name, self.to_glib_extra, right)
-                    } else {
-                        format!("{}({}{} as {}){}", left, self.name, self.to_glib_extra, self.cast, right)
-                    }
+                    format!("{}{}{}{}", left, self.name, self.to_glib_extra, right)
                 }
             }
             Borrow => "/*Not applicable conversion Borrow*/".to_owned(),
