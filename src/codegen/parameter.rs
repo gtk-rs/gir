@@ -25,7 +25,7 @@ impl ToParameter for Parameter {
                         } else {
                             type_str = format!("&{}{}", mut_str, t)
                         },
-                        BoundType::AsRef  => type_str = t.to_owned(),
+                        BoundType::AsRef | BoundType::Into => type_str = t.to_owned(),
                     }
                 }
                 None => {
@@ -34,7 +34,7 @@ impl ToParameter for Parameter {
                     let type_name = rust_type.into_string();
                     type_str = match ConversionType::of(&env.library, self.typ) {
                         ConversionType::Unknown => format!("/*Unknown conversion*/{}", type_name),
-                        _ => type_name
+                        _ => type_name,
                     }
                 }
             }

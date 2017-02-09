@@ -119,7 +119,8 @@ fn analyze_function(env: &Env, name: String, func: &library::Function, type_tid:
         if !par.instance_parameter && par.direction != ParameterDirection::Out {
             if let Some(bound_type) = Bounds::type_for(env, par.typ) {
                 let type_name = bounds_rust_type(env, par.typ);
-                if !bounds.add_parameter(&par.name, &type_name.into_string(), bound_type) {
+                if !bounds.add_parameter(&par.name, &type_name.into_string(), bound_type,
+                                         *par.nullable) {
                     panic!("Too many parameters upcasts for {}", func.c_identifier.as_ref().unwrap())
                 }
             }

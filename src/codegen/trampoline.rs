@@ -88,7 +88,7 @@ fn func_parameter(env: &Env, par: &RustParameter, bounds: &Bounds,
                     };
                     type_str = format!("&{}{}", mut_str, t)
                 },
-                BoundType::AsRef  => type_str = t.to_owned(),
+                BoundType::AsRef | BoundType::Into => type_str = t.to_owned(),
             }
         }
         None => {

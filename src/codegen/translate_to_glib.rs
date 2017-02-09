@@ -17,8 +17,7 @@ impl TranslateToGlib for chunk::parameter_ffi_call_in::Parameter {
                 let (left, right) = to_glib_xxx(self.transfer, self.ref_mode);
                 if self.instance_parameter {
                     format!("{}self{}", left, right)
-                }
-                else {
+                } else {
                     format!("{}{}{}{}", left, self.name, self.to_glib_extra, right)
                 }
             }
