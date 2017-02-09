@@ -49,9 +49,16 @@ impl Bounds {
             _ => None,
         }
     }
-    pub fn to_glib_extra(library: &Library, type_id: TypeId) -> String {
+    pub fn to_glib_extra(library: &Library, type_id: TypeId, is_nullable: bool) -> String {
         match *library.type_(type_id) {
             Type::Fundamental(Fundamental::Filename) => ".as_ref()".to_owned(),
+            Type::Fundamental(Fundamental::Utf8) if is_nullable => ".into()".to_owned(),
+            _ => String::new(),
+        }
+    }
+    pub fn get_cast(library: &Library, type_id: TypeId, is_nullable: bool) -> String {
+        match *library.type_(type_id) {
+            Type::Fundamental(Fundamental::Utf8) if is_nullable => "Option<&'a str>".to_owned(),
             _ => String::new(),
         }
     }
