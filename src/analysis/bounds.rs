@@ -3,7 +3,7 @@ use std::slice::Iter;
 use std::vec::Vec;
 
 use env::Env;
-use library::{Fundamental, Library, Type, TypeId};
+use library::{Fundamental, Library, Nullable, Type, TypeId};
 use super::imports::Imports;
 
 #[derive(Copy, Clone, Eq, Debug, PartialEq)]
@@ -49,18 +49,19 @@ impl Bounds {
             _ => None,
         }
     }
-    pub fn to_glib_extra(library: &Library, type_id: TypeId, is_nullable: bool) -> String {
+    pub fn to_glib_extra(library: &Library, type_id: TypeId,
+                         nullable: Nullable) -> String {
         match *library.type_(type_id) {
             Type::Fundamental(Fundamental::Filename) => ".as_ref()".to_owned(),
-            Type::Fundamental(Fundamental::Utf8) if is_nullable => ".into()".to_owned(),
+            Type::Fundamental(Fundamental::Utf8) if *nullable => ".into()".to_owned(),
             _ => String::new(),
         }
     }
     pub fn add_parameter(&mut self, name: &str, type_str: &str, bound_type: BoundType,
-                         is_nullable: bool) -> bool {
+                         nullable: Nullable) -> bool {
         if self.used.iter().any(|ref n| n.0 == name) { return false; }
         if bound_type == BoundType::Into {
-            if is_nullable == false { return true; }
+            if *nullable == false { return true; }
             // For now, only one lifetime at a time is handled.
             if self.lifetimes.len() == 0 {
                 self.lifetimes.push("a".into())
@@ -108,23 +109,24 @@ mod tests {
     fn get_new_all() {
         let mut bounds: Bounds = Default::default();
         let typ = BoundType::IsA;
-        assert_eq!(bounds.add_parameter("a", "", typ, false), true);
-        assert_eq!(bounds.add_parameter("a", "", typ, false), false);  //Don't add second time
-        assert_eq!(bounds.add_parameter("b", "", typ, false), true);
-        assert_eq!(bounds.add_parameter("c", "", typ, false), true);
-        assert_eq!(bounds.add_parameter("d", "", typ, false), true);
-        assert_eq!(bounds.add_parameter("e", "", typ, false), true);
-        assert_eq!(bounds.add_parameter("f", "", typ, false), true);
-        assert_eq!(bounds.add_parameter("g", "", typ, false), true);
-        assert_eq!(bounds.add_parameter("h", "", typ, false), false);
+        assert_eq!(bounds.add_parameter("a", "", typ, Nullable(false)), true);
+        // Don't add second time
+        assert_eq!(bounds.add_parameter("a", "", typ, Nullable(false)), false);
+        assert_eq!(bounds.add_parameter("b", "", typ, Nullable(false)), true);
+        assert_eq!(bounds.add_parameter("c", "", typ, Nullable(false)), true);
+        assert_eq!(bounds.add_parameter("d", "", typ, Nullable(false)), true);
+        assert_eq!(bounds.add_parameter("e", "", typ, Nullable(false)), true);
+        assert_eq!(bounds.add_parameter("f", "", typ, Nullable(false)), true);
+        assert_eq!(bounds.add_parameter("g", "", typ, Nullable(false)), true);
+        assert_eq!(bounds.add_parameter("h", "", typ, Nullable(false)), false);
     }
 
     #[test]
     fn get_parameter_alias_info() {
         let mut bounds: Bounds = Default::default();
         let typ = BoundType::IsA;
-        bounds.add_parameter("a", "", typ, false);
-        bounds.add_parameter("b", "", typ, false);
+        bounds.add_parameter("a", "", typ, Nullable(false));
+        bounds.add_parameter("b", "", typ, Nullable(false));
         assert_eq!(bounds.get_parameter_alias_info("a"), Some(("T", typ)));
         assert_eq!(bounds.get_parameter_alias_info("b"), Some(("U", typ)));
         assert_eq!(bounds.get_parameter_alias_info("c"), None);

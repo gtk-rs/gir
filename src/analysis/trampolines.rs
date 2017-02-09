@@ -49,7 +49,8 @@ pub fn analyze(env: &Env, signal: &library::Signal, type_tid: library::TypeId, i
 
     if in_trait {
         let type_name = bounds_rust_type(env, type_tid);
-        bounds.add_parameter("this", &type_name.into_string(), BoundType::IsA, false);
+        bounds.add_parameter("this", &type_name.into_string(), BoundType::IsA,
+                             library::Nullable(false));
     }
 
     let parameters = trampoline_parameters::analyze(env, &signal.parameters,
@@ -57,7 +58,8 @@ pub fn analyze(env: &Env, signal: &library::Signal, type_tid: library::TypeId, i
 
     if in_trait {
         let type_name = bounds_rust_type(env, type_tid);
-        bounds.add_parameter("this", &type_name.into_string(), BoundType::IsA, false);
+        bounds.add_parameter("this", &type_name.into_string(), BoundType::IsA,
+                             library::Nullable(false));
     }
 
 
