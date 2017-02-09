@@ -114,23 +114,23 @@ mod tests {
     fn get_new_all() {
         let mut bounds: Bounds = Default::default();
         let typ = BoundType::IsA;
-        assert_eq!(bounds.add_parameter("a", "", typ), true);
-        assert_eq!(bounds.add_parameter("a", "", typ), false);  //Don't add second time
-        assert_eq!(bounds.add_parameter("b", "", typ), true);
-        assert_eq!(bounds.add_parameter("c", "", typ), true);
-        assert_eq!(bounds.add_parameter("d", "", typ), true);
-        assert_eq!(bounds.add_parameter("e", "", typ), true);
-        assert_eq!(bounds.add_parameter("f", "", typ), true);
-        assert_eq!(bounds.add_parameter("g", "", typ), true);
-        assert_eq!(bounds.add_parameter("h", "", typ), false);
+        assert_eq!(bounds.add_parameter("a", "", typ, false), true);
+        assert_eq!(bounds.add_parameter("a", "", typ, false), false);  //Don't add second time
+        assert_eq!(bounds.add_parameter("b", "", typ, false), true);
+        assert_eq!(bounds.add_parameter("c", "", typ, false), true);
+        assert_eq!(bounds.add_parameter("d", "", typ, false), true);
+        assert_eq!(bounds.add_parameter("e", "", typ, false), true);
+        assert_eq!(bounds.add_parameter("f", "", typ, false), true);
+        assert_eq!(bounds.add_parameter("g", "", typ, false), true);
+        assert_eq!(bounds.add_parameter("h", "", typ, false), false);
     }
 
     #[test]
     fn get_parameter_alias_info() {
         let mut bounds: Bounds = Default::default();
         let typ = BoundType::IsA;
-        bounds.add_parameter("a", "", typ);
-        bounds.add_parameter("b", "", typ);
+        bounds.add_parameter("a", "", typ, false);
+        bounds.add_parameter("b", "", typ, false);
         assert_eq!(bounds.get_parameter_alias_info("a"), Some(("T", typ)));
         assert_eq!(bounds.get_parameter_alias_info("b"), Some(("U", typ)));
         assert_eq!(bounds.get_parameter_alias_info("c"), None);
