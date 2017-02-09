@@ -44,7 +44,7 @@ pub fn analyze(env: &Env, par: &library::Parameter, configured_functions: &[&Fun
         .filter_map(|p| p.nullable)
         .next();
     let nullable = nullable_override.unwrap_or(par.nullable);
-    let to_glib_extra = Bounds::to_glib_extra(&env.library, par.typ, *nullable);
+    let to_glib_extra = Bounds::to_glib_extra(&env.library, par.typ, nullable);
 
     Parameter {
         name: name.into_owned(),
