@@ -3,7 +3,7 @@ use std::slice::Iter;
 use std::vec::Vec;
 
 use env::Env;
-use library::{Fundamental, Library, Nullable, Type, TypeId};
+use library::{Fundamental, Nullable, Type, TypeId};
 use super::imports::Imports;
 
 #[derive(Copy, Clone, Eq, Debug, PartialEq)]
@@ -33,11 +33,11 @@ impl Default for Bounds {
 }
 
 impl Bounds {
-    pub fn type_for(env: &Env, type_id: TypeId) -> Option<BoundType> {
+    pub fn type_for(env: &Env, type_id: TypeId, nullable: Nullable) -> Option<BoundType> {
         use self::BoundType::*;
         match *env.library.type_(type_id) {
             Type::Fundamental(Fundamental::Filename) => Some(AsRef),
-            Type::Fundamental(Fundamental::Utf8) => Some(Into),
+            Type::Fundamental(Fundamental::Utf8) if *nullable => Some(Into),
             Type::Class(..) => {
                 if env.class_hierarchy.subtypes(type_id).next().is_some() {
                     Some(IsA)
@@ -49,19 +49,17 @@ impl Bounds {
             _ => None,
         }
     }
-    pub fn to_glib_extra(library: &Library, type_id: TypeId,
-                         nullable: Nullable) -> String {
-        match *library.type_(type_id) {
-            Type::Fundamental(Fundamental::Filename) => ".as_ref()".to_owned(),
-            Type::Fundamental(Fundamental::Utf8) if *nullable => ".into()".to_owned(),
+    pub fn to_glib_extra(bound_type: BoundType) -> String {
+        use self::BoundType::*;
+        match bound_type {
+            AsRef => ".as_ref()".to_owned(),
+            Into => ".into()".to_owned(),
             _ => String::new(),
         }
     }
-    pub fn add_parameter(&mut self, name: &str, type_str: &str, bound_type: BoundType,
-                         nullable: Nullable) -> bool {
+    pub fn add_parameter(&mut self, name: &str, type_str: &str, bound_type: BoundType) -> bool {
         if self.used.iter().any(|ref n| n.0 == name) { return false; }
         if bound_type == BoundType::Into {
-            if *nullable == false { return true; }
             // For now, only one lifetime at a time is handled.
             if self.lifetimes.len() == 0 {
                 self.lifetimes.push("a".into())
@@ -109,24 +107,24 @@ mod tests {
     fn get_new_all() {
         let mut bounds: Bounds = Default::default();
         let typ = BoundType::IsA;
-        assert_eq!(bounds.add_parameter("a", "", typ, Nullable(false)), true);
+        assert_eq!(bounds.add_parameter("a", "", typ), true);
         // Don't add second time
-        assert_eq!(bounds.add_parameter("a", "", typ, Nullable(false)), false);
-        assert_eq!(bounds.add_parameter("b", "", typ, Nullable(false)), true);
-        assert_eq!(bounds.add_parameter("c", "", typ, Nullable(false)), true);
-        assert_eq!(bounds.add_parameter("d", "", typ, Nullable(false)), true);
-        assert_eq!(bounds.add_parameter("e", "", typ, Nullable(false)), true);
-        assert_eq!(bounds.add_parameter("f", "", typ, Nullable(false)), true);
-        assert_eq!(bounds.add_parameter("g", "", typ, Nullable(false)), true);
-        assert_eq!(bounds.add_parameter("h", "", typ, Nullable(false)), false);
+        assert_eq!(bounds.add_parameter("a", "", typ), false);
+        assert_eq!(bounds.add_parameter("b", "", typ), true);
+        assert_eq!(bounds.add_parameter("c", "", typ), true);
+        assert_eq!(bounds.add_parameter("d", "", typ), true);
+        assert_eq!(bounds.add_parameter("e", "", typ), true);
+        assert_eq!(bounds.add_parameter("f", "", typ), true);
+        assert_eq!(bounds.add_parameter("g", "", typ), true);
+        assert_eq!(bounds.add_parameter("h", "", typ), false);
     }
 
     #[test]
     fn get_parameter_alias_info() {
         let mut bounds: Bounds = Default::default();
         let typ = BoundType::IsA;
-        bounds.add_parameter("a", "", typ, Nullable(false));
-        bounds.add_parameter("b", "", typ, Nullable(false));
+        bounds.add_parameter("a", "", typ);
+        bounds.add_parameter("b", "", typ);
         assert_eq!(bounds.get_parameter_alias_info("a"), Some(("T", typ)));
         assert_eq!(bounds.get_parameter_alias_info("b"), Some(("U", typ)));
         assert_eq!(bounds.get_parameter_alias_info("c"), None);

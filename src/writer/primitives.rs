@@ -61,7 +61,6 @@ pub fn comment_block(body: &[String]) -> Vec<String> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use super::super::defines::*;
 
     #[test]
     fn test_tabs() {
