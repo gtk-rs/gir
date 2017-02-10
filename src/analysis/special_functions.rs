@@ -43,7 +43,7 @@ pub fn extract(functions: &mut Vec<FuncInfo>) -> Infos {
     for func in functions.iter_mut() {
         if let Ok(type_) = Type::from_str(&func.name) {
             if func.visibility != Visibility::Comment {
-                func.visibility = visibility(type_);
+                func.visibility = visibility(type_, func.parameters.len());
             }
             // I assume `to_string` functions never return `NULL`
             if type_ == Type::ToString {
@@ -61,7 +61,7 @@ pub fn extract(functions: &mut Vec<FuncInfo>) -> Infos {
     specials
 }
 
-fn visibility(t: Type) -> Visibility {
+fn visibility(t: Type, args_len: usize) -> Visibility {
     use self::Type::*;
     match t {
         Copy |
@@ -69,8 +69,9 @@ fn visibility(t: Type) -> Visibility {
             Ref |
             Unref => Visibility::Hidden,
         Compare |
-            Equal |
-            ToString => Visibility::Private,
+            Equal => Visibility::Private,
+        ToString if args_len == 1 => Visibility::Private,
+        ToString => Visibility::Public,
     }
 }
 
