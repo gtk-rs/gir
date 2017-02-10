@@ -85,7 +85,7 @@ fn bounds(bounds: &Bounds) -> String {
                      .map(|bound| match bound.3 {
                          IsA => format!("{}: IsA<{}>", bound.1, bound.2),
                          AsRef => format!("{}: AsRef<{}>", bound.1, bound.2),
-                         Into => format!("{}: Into<Option<&'a {}>>", bound.1, bound.2),
+                         Into(l) => format!("{}: Into<Option<&'{} {}>>", bound.1, l, bound.2),
                      }))
         .collect();
     format!("<{}>", strs.join(", "))
