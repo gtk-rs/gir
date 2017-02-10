@@ -23,7 +23,7 @@ pub fn generate(w: &mut Write, env: &Env, analysis: &Trampoline,
     };
 
     let params_str = trampoline_parameters(env, analysis);
-    let func_str = func_string(env, analysis, None::<(&str, &str)>);
+    let func_str = func_string(env, analysis, None);
     let ret_str = trampoline_returns(env, analysis);
 
     try!(version_condition(w, env, analysis.version, false, 0));
@@ -43,7 +43,7 @@ pub fn generate(w: &mut Write, env: &Env, analysis: &Trampoline,
 }
 
 pub fn func_string(env: &Env, analysis: &Trampoline,
-                   bound_replace: Option<(&str, &str)>) -> String {
+                   bound_replace: Option<(char, &str)>) -> String {
     let param_str = func_parameters(env, analysis, bound_replace);
     let return_str = func_returns(env, analysis);
 
@@ -51,7 +51,7 @@ pub fn func_string(env: &Env, analysis: &Trampoline,
 }
 
 fn func_parameters(env: &Env, analysis: &Trampoline,
-                   bound_replace: Option<(&str, &str)>) -> String {
+                   bound_replace: Option<(char, &str)>) -> String {
     let mut param_str = String::with_capacity(100);
 
     for (pos, par) in analysis.parameters.rust_parameters.iter().enumerate() {
@@ -64,7 +64,7 @@ fn func_parameters(env: &Env, analysis: &Trampoline,
 }
 
 fn func_parameter(env: &Env, par: &RustParameter, bounds: &Bounds,
-                  bound_replace: Option<(&str, &str)>) -> String {
+                  bound_replace: Option<(char, &str)>) -> String {
     //TODO: restore mutable support
     //let mut_str = if par.ref_mode == RefMode::ByRefMut { "mut " } else { "" };
     let mut_str = "";
@@ -74,30 +74,29 @@ fn func_parameter(env: &Env, par: &RustParameter, bounds: &Bounds,
         par.ref_mode
     };
 
-    let type_str: String;
     match bounds.get_parameter_alias_info(&par.name) {
         Some((t, bound_type)) => {
             match bound_type {
                 BoundType::IsA => if *par.nullable {
-                    type_str = format!("&Option<{}{}>", mut_str, t)
-                } else {
-                    let t = if let Some((from, to)) = bound_replace {
-                        if from == t { to } else { t }
+                    format!("&Option<{}{}>", mut_str, t)
+                } else if let Some((from, to)) = bound_replace {
+                    if from == t {
+                        format!("&{}{}", mut_str, to)
                     } else {
-                        t
-                    };
-                    type_str = format!("&{}{}", mut_str, t)
+                        format!("&{}{}", mut_str, t)
+                    }
+                } else {
+                    format!("&{}{}", mut_str, t)
                 },
-                BoundType::AsRef | BoundType::Into(_) => type_str = t.to_owned(),
+                BoundType::AsRef | BoundType::Into(_) => t.to_string(),
             }
         }
         None => {
             let rust_type = parameter_rust_type(env, par.typ, par.direction,
                                                 par.nullable, ref_mode);
-            type_str = rust_type.into_string().replace("Option<&", "&Option<");
+            rust_type.into_string().replace("Option<&", "&Option<")
         }
     }
-    type_str
 }
 
 fn func_returns(env: &Env, analysis: &Trampoline) -> String {

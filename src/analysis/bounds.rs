@@ -19,9 +19,9 @@ pub enum BoundType {
 
 #[derive(Debug)]
 pub struct Bounds {
-    unused: VecDeque<String>,
+    unused: VecDeque<char>,
     //Vector tuples <parameter name>, <alias>, <type>, <bound type>
-    used: Vec<(String, String, String, BoundType)>,
+    used: Vec<(String, char, String, BoundType)>,
     unused_lifetimes: VecDeque<char>,
     lifetimes: Vec<char>,
 }
@@ -29,7 +29,7 @@ pub struct Bounds {
 impl Default for Bounds {
     fn default () -> Bounds {
         Bounds {
-            unused: "TUVWXYZ".chars().map(|ch| ch.to_string()).collect(),
+            unused: "TUVWXYZ".chars().collect(),
             used: Vec::new(),
             unused_lifetimes: "abcdefg".chars().collect(),
             lifetimes: Vec::new(),
@@ -86,15 +86,15 @@ impl Bounds {
             }
         }
         if let Some(alias) = self.unused.pop_front() {
-            self.used.push((name.into(), alias.clone(), type_str.into(), bound_type));
+            self.used.push((name.into(), alias, type_str.into(), bound_type));
             true
         } else {
             false
         }
     }
-    pub fn get_parameter_alias_info(&self, name: &str) -> Option<(&str, BoundType)> {
+    pub fn get_parameter_alias_info(&self, name: &str) -> Option<(char, BoundType)> {
         self.used.iter().find(|ref n| n.0 == name)
-            .map(|t| (&*t.1, t.3))
+            .map(|t| (t.1, t.3))
     }
     pub fn update_imports(&self, imports: &mut Imports) {
         //TODO: import with versions
@@ -110,7 +110,7 @@ impl Bounds {
     pub fn is_empty(&self) -> bool {
         self.used.is_empty()
     }
-    pub fn iter(&self) ->  Iter<(String, String, String, BoundType)> {
+    pub fn iter(&self) ->  Iter<(String, char, String, BoundType)> {
         self.used.iter()
     }
     pub fn iter_lifetimes(&self) -> Iter<char> {
@@ -144,8 +144,8 @@ mod tests {
         let typ = BoundType::IsA;
         bounds.add_parameter("a", "", typ);
         bounds.add_parameter("b", "", typ);
-        assert_eq!(bounds.get_parameter_alias_info("a"), Some(("T", typ)));
-        assert_eq!(bounds.get_parameter_alias_info("b"), Some(("U", typ)));
+        assert_eq!(bounds.get_parameter_alias_info("a"), Some(('T', typ)));
+        assert_eq!(bounds.get_parameter_alias_info("b"), Some(('U', typ)));
         assert_eq!(bounds.get_parameter_alias_info("c"), None);
     }
 }
