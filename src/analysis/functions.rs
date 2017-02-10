@@ -106,10 +106,10 @@ fn analyze_function(env: &Env, name: String, func: &library::Function, type_tid:
     let ret = return_value::analyze(env, func, type_tid, configured_functions, &mut used_types);
     commented |= ret.commented;
 
-    let parameters: Vec<parameter::Parameter> =
+    let mut parameters: Vec<parameter::Parameter> =
         func.parameters.iter().map(|par| parameter::analyze(env, par, configured_functions)).collect();
 
-    for (pos, par) in parameters.iter().enumerate() {
+    for (pos, par) in parameters.iter_mut().enumerate() {
         assert!(!par.instance_parameter || pos == 0,
             "Wrong instance parameter in {}", func.c_identifier.as_ref().unwrap());
         if let Ok(s) = used_rust_type(env, par.typ) {
@@ -117,10 +117,11 @@ fn analyze_function(env: &Env, name: String, func: &library::Function, type_tid:
         }
         let type_error = parameter_rust_type(env, par.typ, par.direction, Nullable(false), RefMode::None).is_err();
         if !par.instance_parameter && par.direction != ParameterDirection::Out {
-            if let Some(bound_type) = Bounds::type_for(env, par.typ) {
+            if let Some(bound_type) = Bounds::type_for(env, par.typ, par.nullable) {
+                let to_glib_extra = Bounds::to_glib_extra(bound_type);
+                par.to_glib_extra = to_glib_extra;
                 let type_name = bounds_rust_type(env, par.typ);
-                if !bounds.add_parameter(&par.name, &type_name.into_string(), bound_type,
-                                         par.nullable) {
+                if !bounds.add_parameter(&par.name, &type_name.into_string(), bound_type) {
                     panic!("Too many parameters upcasts for {}", func.c_identifier.as_ref().unwrap())
                 }
             }
