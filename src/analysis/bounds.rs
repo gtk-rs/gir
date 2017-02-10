@@ -3,41 +3,59 @@ use std::slice::Iter;
 use std::vec::Vec;
 
 use env::Env;
-use library::{Fundamental, Nullable, Type, TypeId};
-use super::imports::Imports;
+use analysis::imports::Imports;
+use analysis::parameter::Parameter;
+use analysis::rust_type::bounds_rust_type;
+use library::{Function, Fundamental, Nullable, Type, TypeId, ParameterDirection};
+use traits::IntoString;
 
 #[derive(Copy, Clone, Eq, Debug, PartialEq)]
 pub enum BoundType {
     IsA,
     AsRef,
-    Into,
+    //lifetime
+    Into(char),
 }
 
 #[derive(Debug)]
 pub struct Bounds {
-    unused: VecDeque<String>,
+    unused: VecDeque<char>,
     //Vector tuples <parameter name>, <alias>, <type>, <bound type>
-    used: Vec<(String, String, String, BoundType)>,
-    // In practice, it could be just a String since we only handle one lifetime.
-    lifetimes: Vec<String>,
+    used: Vec<(String, char, String, BoundType)>,
+    unused_lifetimes: VecDeque<char>,
+    lifetimes: Vec<char>,
 }
 
 impl Default for Bounds {
     fn default () -> Bounds {
         Bounds {
-            unused: "TUVWXYZ".chars().map(|ch| ch.to_string()).collect(),
+            unused: "TUVWXYZ".chars().collect(),
             used: Vec::new(),
+            unused_lifetimes: "abcdefg".chars().collect(),
             lifetimes: Vec::new(),
         }
     }
 }
 
 impl Bounds {
-    pub fn type_for(env: &Env, type_id: TypeId, nullable: Nullable) -> Option<BoundType> {
+    pub fn add_for_parameter(&mut self, env: &Env, func: &Function, par: &mut Parameter) {
+        if !par.instance_parameter && par.direction != ParameterDirection::Out {
+            if let Some(bound_type) = Bounds::type_for(env, par.typ, par.nullable) {
+                let to_glib_extra = Bounds::to_glib_extra(bound_type);
+                par.to_glib_extra = to_glib_extra;
+                let type_name = bounds_rust_type(env, par.typ);
+                if !self.add_parameter(&par.name, &type_name.into_string(), bound_type) {
+                    panic!("Too many type constraints for {}", func.c_identifier.as_ref().unwrap())
+                }
+            }
+        }
+    }
+
+    fn type_for(env: &Env, type_id: TypeId, nullable: Nullable) -> Option<BoundType> {
         use self::BoundType::*;
         match *env.library.type_(type_id) {
             Type::Fundamental(Fundamental::Filename) => Some(AsRef),
-            Type::Fundamental(Fundamental::Utf8) if *nullable => Some(Into),
+            Type::Fundamental(Fundamental::Utf8) if *nullable => Some(Into('_')),
             Type::Class(..) => {
                 if env.class_hierarchy.subtypes(type_id).next().is_some() {
                     Some(IsA)
@@ -49,33 +67,34 @@ impl Bounds {
             _ => None,
         }
     }
-    pub fn to_glib_extra(bound_type: BoundType) -> String {
+    fn to_glib_extra(bound_type: BoundType) -> String {
         use self::BoundType::*;
         match bound_type {
             AsRef => ".as_ref()".to_owned(),
-            Into => ".into()".to_owned(),
+            Into(_) => ".into()".to_owned(),
             _ => String::new(),
         }
     }
-    pub fn add_parameter(&mut self, name: &str, type_str: &str, bound_type: BoundType) -> bool {
+    pub fn add_parameter(&mut self, name: &str, type_str: &str, mut bound_type: BoundType) -> bool {
         if self.used.iter().any(|ref n| n.0 == name) { return false; }
-        if bound_type == BoundType::Into {
-            // For now, only one lifetime at a time is handled.
-            if self.lifetimes.len() == 0 {
-                self.lifetimes.push("a".into())
+        if let BoundType::Into(_) = bound_type {
+            if let Some(lifetime) = self.unused_lifetimes.pop_front() {
+                self.lifetimes.push(lifetime);
+                bound_type = BoundType::Into(lifetime);
+            } else {
+                return false;
             }
         }
-        let front = self.unused.pop_front();
-        if let Some(alias) = front {
-            self.used.push((name.into(), alias.clone(), type_str.into(), bound_type));
+        if let Some(alias) = self.unused.pop_front() {
+            self.used.push((name.into(), alias, type_str.into(), bound_type));
             true
         } else {
             false
         }
     }
-    pub fn get_parameter_alias_info(&self, name: &str) -> Option<(&str, BoundType)> {
+    pub fn get_parameter_alias_info(&self, name: &str) -> Option<(char, BoundType)> {
         self.used.iter().find(|ref n| n.0 == name)
-            .map(|t| (&*t.1, t.3))
+            .map(|t| (t.1, t.3))
     }
     pub fn update_imports(&self, imports: &mut Imports) {
         //TODO: import with versions
@@ -84,17 +103,17 @@ impl Bounds {
             match used.3 {
                 IsA => imports.add("glib::object::IsA", None),
                 AsRef => imports.add_used_type(&used.2, None),
-                Into => {}
+                Into(_) => {}
             }
         }
     }
     pub fn is_empty(&self) -> bool {
         self.used.is_empty()
     }
-    pub fn iter(&self) ->  Iter<(String, String, String, BoundType)> {
+    pub fn iter(&self) ->  Iter<(String, char, String, BoundType)> {
         self.used.iter()
     }
-    pub fn iter_lifetimes(&self) -> Iter<String> {
+    pub fn iter_lifetimes(&self) -> Iter<char> {
         self.lifetimes.iter()
     }
 }
@@ -125,8 +144,8 @@ mod tests {
         let typ = BoundType::IsA;
         bounds.add_parameter("a", "", typ);
         bounds.add_parameter("b", "", typ);
-        assert_eq!(bounds.get_parameter_alias_info("a"), Some(("T", typ)));
-        assert_eq!(bounds.get_parameter_alias_info("b"), Some(("U", typ)));
+        assert_eq!(bounds.get_parameter_alias_info("a"), Some(('T', typ)));
+        assert_eq!(bounds.get_parameter_alias_info("b"), Some(('U', typ)));
         assert_eq!(bounds.get_parameter_alias_info("c"), None);
     }
 }
