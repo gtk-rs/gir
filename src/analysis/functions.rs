@@ -11,7 +11,7 @@ use analysis::safety_assertion_mode::SafetyAssertionMode;
 use analysis::signatures::{Signature, Signatures};
 use config;
 use env::Env;
-use library::{self, Nullable, ParameterDirection};
+use library::{self, Nullable};
 use nameutil;
 use traits::*;
 use version::Version;
@@ -115,17 +115,8 @@ fn analyze_function(env: &Env, name: String, func: &library::Function, type_tid:
         if let Ok(s) = used_rust_type(env, par.typ) {
             used_types.push(s);
         }
+        bounds.add_for_parameter(env, func, par);
         let type_error = parameter_rust_type(env, par.typ, par.direction, Nullable(false), RefMode::None).is_err();
-        if !par.instance_parameter && par.direction != ParameterDirection::Out {
-            if let Some(bound_type) = Bounds::type_for(env, par.typ, par.nullable) {
-                let to_glib_extra = Bounds::to_glib_extra(bound_type);
-                par.to_glib_extra = to_glib_extra;
-                let type_name = bounds_rust_type(env, par.typ);
-                if !bounds.add_parameter(&par.name, &type_name.into_string(), bound_type) {
-                    panic!("Too many parameters upcasts for {}", func.c_identifier.as_ref().unwrap())
-                }
-            }
-        }
         if type_error {
             commented = true;
         }

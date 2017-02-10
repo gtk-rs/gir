@@ -3,8 +3,11 @@ use std::slice::Iter;
 use std::vec::Vec;
 
 use env::Env;
-use library::{Fundamental, Nullable, Type, TypeId};
-use super::imports::Imports;
+use analysis::imports::Imports;
+use analysis::parameter::Parameter;
+use analysis::rust_type::bounds_rust_type;
+use library::{Function, Fundamental, Nullable, Type, TypeId, ParameterDirection};
+use traits::IntoString;
 
 #[derive(Copy, Clone, Eq, Debug, PartialEq)]
 pub enum BoundType {
@@ -33,7 +36,20 @@ impl Default for Bounds {
 }
 
 impl Bounds {
-    pub fn type_for(env: &Env, type_id: TypeId, nullable: Nullable) -> Option<BoundType> {
+    pub fn add_for_parameter(&mut self, env: &Env, func: &Function, par: &mut Parameter) {
+        if !par.instance_parameter && par.direction != ParameterDirection::Out {
+            if let Some(bound_type) = Bounds::type_for(env, par.typ, par.nullable) {
+                let to_glib_extra = Bounds::to_glib_extra(bound_type);
+                par.to_glib_extra = to_glib_extra;
+                let type_name = bounds_rust_type(env, par.typ);
+                if !self.add_parameter(&par.name, &type_name.into_string(), bound_type) {
+                    panic!("Too many type constraints for {}", func.c_identifier.as_ref().unwrap())
+                }
+            }
+        }
+    }
+
+    fn type_for(env: &Env, type_id: TypeId, nullable: Nullable) -> Option<BoundType> {
         use self::BoundType::*;
         match *env.library.type_(type_id) {
             Type::Fundamental(Fundamental::Filename) => Some(AsRef),
@@ -49,7 +65,7 @@ impl Bounds {
             _ => None,
         }
     }
-    pub fn to_glib_extra(bound_type: BoundType) -> String {
+    fn to_glib_extra(bound_type: BoundType) -> String {
         use self::BoundType::*;
         match bound_type {
             AsRef => ".as_ref()".to_owned(),
