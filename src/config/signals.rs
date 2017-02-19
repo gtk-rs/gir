@@ -1,11 +1,12 @@
 use std::str::FromStr;
+use toml::Value;
 
 use library::Nullable;
+use super::error::TomlHelper;
 use super::functions::Return;
 use super::ident::Ident;
 use super::parameter_matchable::Functionlike;
 use super::parsable::{Parsable, Parse};
-use toml::Value;
 use version::Version;
 
 #[derive(Clone, Copy, Debug)]
@@ -145,10 +146,9 @@ mod tests {
     use toml;
 
     fn toml(input: &str) -> toml::Value {
-        let mut parser = toml::Parser::new(&input);
-        let value = parser.parse();
-        assert!(value.is_some());
-        toml::Value::Table(value.unwrap())
+        let value = input.parse::<toml::Value>();
+        assert!(value.is_ok());
+        value.unwrap()
     }
 
     #[test]

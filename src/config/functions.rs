@@ -1,4 +1,5 @@
 use library::Nullable;
+use super::error::TomlHelper;
 use super::ident::Ident;
 use super::parameter_matchable::Functionlike;
 use super::parsable::{Parsable, Parse};
@@ -141,17 +142,14 @@ mod tests {
     use version::Version;
 
     fn functions_toml(input: &str) -> toml::Value {
-        let mut parser = toml::Parser::new(&input);
-        let value = parser.parse();
-        assert!(value.is_some());
-        value.unwrap().remove("f").unwrap()
+        let mut value: toml::value::Table = toml::from_str(&input).unwrap();
+        value.remove("f").unwrap()
     }
 
     fn toml(input: &str) -> toml::Value {
-        let mut parser = toml::Parser::new(&input);
-        let value = parser.parse();
-        assert!(value.is_some());
-        toml::Value::Table(value.unwrap())
+        let value = toml::from_str(&input);
+        assert!(value.is_ok());
+        value.unwrap()
     }
 
     #[test]

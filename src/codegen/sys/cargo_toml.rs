@@ -1,7 +1,8 @@
 use std::collections::BTreeMap;
 use std::fs::File;
 use std::io::prelude::*;
-use toml::{self, Parser, Table, Value};
+use toml::{self, Value};
+use toml::value::Table;
 
 use env::Env;
 use file_saver::save_to_file;
@@ -18,8 +19,7 @@ pub fn generate(env: &Env) {
         file.read_to_string(&mut toml_str).unwrap();
     }
     let empty = toml_str.trim().is_empty();
-    let mut parser = Parser::new(&toml_str);
-    let mut root_table = parser.parse().unwrap_or_else(BTreeMap::new);
+    let mut root_table = toml::from_str(&toml_str).unwrap_or_else(|_| Table::new());
 
     if empty {
         fill_empty(&mut root_table, env);
@@ -27,7 +27,7 @@ pub fn generate(env: &Env) {
     fill_in(&mut root_table, env);
 
     save_to_file(&path, env.config.make_backup,
-        |w| w.write_all(toml::encode_str(&root_table).as_bytes()));
+        |w| w.write_all(toml::to_string(&root_table).unwrap().as_bytes()));
 }
 
 fn fill_empty(root: &mut Table, env: &Env) {

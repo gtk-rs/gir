@@ -1,6 +1,8 @@
 use regex::Regex;
 use toml::Value;
 
+use super::error::TomlHelper;
+
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum Ident {
     Name(String),

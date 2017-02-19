@@ -16,7 +16,7 @@ impl<T: Parse + AsRef<Ident>> Parsable for Vec<T> {
 
     fn parse(toml: Option<&Value>, object_name: &str) -> Vec<Self::Item> {
         let mut v = Vec::new();
-        if let Some(configs) = toml.and_then(|val| val.as_slice()) {
+        if let Some(configs) = toml.and_then(|val| val.as_array()) {
             for config in configs {
                 if let Some(item) = T::parse(config, object_name) {
                     v.push(item);

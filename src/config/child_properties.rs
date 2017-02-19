@@ -1,4 +1,6 @@
 use toml::Value;
+
+use super::error::TomlHelper;
 use super::parsable::Parse;
 
 #[derive(Clone, Debug)]
@@ -53,7 +55,7 @@ impl Parse for ChildProperties {
             .map(|s| s.to_owned());
         let mut properties: Vec<ChildProperty> = Vec::new();
         if let Some(configs) = toml_object.lookup("child_prop")
-            .and_then(|val| val.as_slice()) {
+            .and_then(|val| val.as_array()) {
             for config in configs {
                 if let Some(item) = ChildProperty::parse(config, object_name) {
                     properties.push(item);
@@ -86,10 +88,9 @@ mod tests {
     use toml;
 
     fn toml(input: &str) -> toml::Value {
-        let mut parser = toml::Parser::new(&input);
-        let value = parser.parse();
-        assert!(value.is_some());
-        toml::Value::Table(value.unwrap())
+        let value = toml::from_str(&input);
+        assert!(value.is_ok());
+        value.unwrap()
     }
 
     #[test]
