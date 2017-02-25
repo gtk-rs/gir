@@ -5,6 +5,7 @@ use config::parameter_matchable::ParameterMatchable;
 use env::Env;
 use library;
 use nameutil;
+use super::conversion_type::ConversionType;
 use super::ref_mode::RefMode;
 
 #[derive(Clone, Debug)]
@@ -44,14 +45,23 @@ pub fn analyze(env: &Env, par: &library::Parameter, configured_functions: &[&Fun
         .next();
     let nullable = nullable_override.unwrap_or(par.nullable);
 
+    let mut caller_allocates  = par.caller_allocates;
+    let mut transfer = par.transfer;
+    let conversion = ConversionType::of(&env.library, par.typ);
+    if conversion == ConversionType::Direct || conversion == ConversionType::Scalar {
+        //For simply types no reason to have these flags
+        caller_allocates = false;
+        transfer = library::Transfer::None;
+    }
+
     Parameter {
         name: name.into_owned(),
         typ: par.typ,
         c_type: par.c_type.clone(),
         instance_parameter: par.instance_parameter,
         direction: par.direction,
-        transfer: par.transfer,
-        caller_allocates: par.caller_allocates,
+        transfer: transfer,
+        caller_allocates: caller_allocates,
         nullable: nullable,
         allow_none: par.allow_none,
         ref_mode: ref_mode,
