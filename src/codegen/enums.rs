@@ -13,35 +13,49 @@ use traits::*;
 use version::Version;
 
 pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>) {
+    let configs: Vec<&GObject> = env.config.objects.values()
+        .filter(|c| {
+            c.status.need_generate() &&
+                c.type_id.map_or(false, |tid| tid.ns_id == namespaces::MAIN)
+        })
+        .collect();
+    let mut has_get_quark = false;
+    let mut has_any = false;
+    for config in &configs {
+        if let Type::Enumeration(ref enum_) = *env.library.type_(config.type_id.unwrap()) {
+            has_any = true;
+            if get_error_quark_name(enum_).is_some(){
+                has_get_quark = true;
+                break;
+            }
+        }
+    }
+
     let path = root_path.join("enums.rs");
     file_saver::save_to_file(path, env.config.make_backup, |w| {
         try!(general::start_comments(w, &env.config));
         try!(writeln!(w, ""));
         try!(writeln!(w, "use ffi;"));
         if env.namespaces.glib_ns_id == namespaces::MAIN {
-            try!(writeln!(w, "use ffi as glib_ffi;
-use error::ErrorDomain;
-use translate::*;"));
+            if has_get_quark {
+                try!(writeln!(w, "use ffi as glib_ffi;"));
+                try!(writeln!(w, "use error::ErrorDomain;"));
+            }
+            try!(writeln!(w, "use translate::*;"));
         } else {
-            try!(writeln!(w, "use glib_ffi;
-use glib::error::ErrorDomain;
-use glib::translate::*;"));
+            if has_get_quark {
+                try!(writeln!(w, "use glib_ffi;"));
+                try!(writeln!(w, "use glib::error::ErrorDomain;"));
+            }
+            try!(writeln!(w, "use glib::translate::*;"));
         }
         try!(writeln!(w, ""));
 
-
-        let configs = env.config.objects.values()
-            .filter(|c| {
-                c.status.need_generate() &&
-                    c.type_id.map_or(false, |tid| tid.ns_id == namespaces::MAIN)
-            });
-        let mut first = true;
-        for config in configs {
+        if has_any {
+            mod_rs.push("\nmod enums;".into());
+        }
+        for config in &configs {
             if let Type::Enumeration(ref enum_) = *env.library.type_(config.type_id.unwrap()) {
-                if first {
-                    mod_rs.push("\nmod enums;".into());
-                    first = false;
-                }
                 if let Some (cfg) = version_condition_string(env, enum_.version, false, 0) {
                     mod_rs.push(cfg);
                 }
@@ -131,13 +145,7 @@ impl FromGlib<ffi::{ffi_name}> for {name} {{
     }
 }
 "));
-    let error_domain: Option<String> = enum_.functions.iter()
-        .filter(|f| f.name == "quark")
-        .next()
-        .and_then(|f| f.c_identifier.clone())
-        .or_else(|| enum_.error_domain.clone());
-
-    if let Some(ref get_quark) = error_domain {
+    if let Some(ref get_quark) = get_error_quark_name(enum_) {
         let get_quark = get_quark.replace("-", "_");
         let has_failed_member = members.iter().any(|m| m.name == "Failed");
 
@@ -173,4 +181,12 @@ impl FromGlib<ffi::{ffi_name}> for {name} {{
     }
 
     Ok(())
+}
+
+fn get_error_quark_name(enum_: &Enumeration) -> Option<String> {
+    enum_.functions.iter()
+        .filter(|f| f.name == "quark")
+        .next()
+        .and_then(|f| f.c_identifier.clone())
+        .or_else(|| enum_.error_domain.clone())
 }
