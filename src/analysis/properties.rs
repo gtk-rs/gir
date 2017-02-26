@@ -42,29 +42,37 @@ pub fn analyze(env: &Env, props: &[library::Property], type_tid: library::TypeId
 
         let (getter, setter) = analyze_property(env, prop, type_tid, &configured_properties,
                                                 signatures);
+        if getter.is_none() && setter.is_none() {
+            continue;
+        }
+
+        let type_string = rust_type(env, prop.typ);
+        let used_type_string = used_rust_type(env, prop.typ);
         if let Some(prop) = getter {
-            if let Ok(s) = used_rust_type(env, prop.typ) {
+            if let Ok(ref s) = used_type_string {
                 imports.add_used_type(&s, prop.version);
             }
             if prop.conversion != PropertyConversion::Direct {
                 imports.add("std::mem::transmute", prop.version);
             }
-
-            properties.push(prop);
-        }
-        if let Some(prop) = setter {
-            if let Ok(s) = used_rust_type(env, prop.typ) {
-                imports.add_used_type(&s, prop.version);
+            if type_string.is_ok() && prop.default_value.is_some() {
+                imports.add("glib::Value", prop.version);
+                imports.add("gobject_ffi", prop.version);
             }
 
             properties.push(prop);
         }
-    }
+        if let Some(prop) = setter {
+            if let Ok(ref s) = used_type_string {
+                imports.add_used_type(&s, prop.version);
+            }
+            if type_string.is_ok() {
+                imports.add("glib::Value", prop.version);
+                imports.add("gobject_ffi", prop.version);
+            }
 
-    if !properties.is_empty() {
-        imports.add("glib::object::IsA", None);
-        imports.add("glib::Value", None);
-        imports.add("gobject_ffi", None);
+            properties.push(prop);
+        }
     }
 
     properties
