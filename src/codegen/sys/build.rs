@@ -36,7 +36,7 @@ fn find() -> Result<(), Error> {
 
     let ns = env.namespaces.main();
     let regex = Regex::new(r"^lib(.+)\.so.*$").unwrap();
-    let shared_libs: Vec<String> = ns.shared_libs.iter()
+    let shared_libs: Vec<_> = ns.shared_libs.iter()
         .map(|s| regex.replace(s, "\"$1\""))
         .collect();
 

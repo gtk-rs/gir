@@ -1,3 +1,4 @@
+use std::borrow::Cow;
 use std::io::{Result, Write};
 
 use analysis;
@@ -250,7 +251,7 @@ lazy_static! {
     static ref PARAM_NAME: Regex = Regex::new(r"@(\w+)\b").unwrap();
 }
 
-fn fix_param_names(doc: &str, self_name: &Option<String>) -> String {
+fn fix_param_names<'a>(doc: &'a str, self_name: &Option<String>) -> Cow<'a, str> {
     PARAM_NAME.replace_all(doc, |caps: &Captures| {
         if let Some(ref self_name) = *self_name {
             if &caps[1] == self_name {
