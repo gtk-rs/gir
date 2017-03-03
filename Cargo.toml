@@ -10,18 +10,18 @@ build = "build.rs"
 exclude = ["Gir*.toml", "tests/**/*", "*.md"]
 
 [dependencies]
-docopt = "*"
-xml-rs = "*"
-toml = "*"
-case = "*"
-env_logger = "*"
-error-chain = { version = "*", default-features = false }
-git2 = "0.4" #locked due 0.6 dependency curl-sys won't builds on appveyor
-lazy_static = "*"
-log = "*"
-regex = "*"
-time = "*"
-hprof = "*"
+docopt = "0.7"
+xml-rs = "0.4"
+toml = "0.3"
+case = "0.1"
+env_logger = "0.4"
+error-chain = { version = "0.10", default-features = false }
+git2 = "0.4" #due 0.6 dependency curl-sys won't builds on appveyor
+lazy_static = "0.2"
+log = "0.3"
+regex = "0.2"
+time = "0.1"
+hprof = "0.1"
 rustdoc-stripper = { git = "https://github.com/GuillaumeGomez/rustdoc-stripper" }
 
 [build-dependencies]
