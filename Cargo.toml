@@ -11,7 +11,7 @@ exclude = ["Gir*.toml", "tests/**/*", "*.md"]
 
 [dependencies]
 docopt = "*"
-xml-rs = "0.2.1"
+xml-rs = "*"
 toml = "*"
 case = "*"
 env_logger = "*"

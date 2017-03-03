@@ -74,8 +74,7 @@ impl Config {
             ),
             a => a,
         };
-        let work_mode = WorkMode::from_str(work_mode_str)
-            .unwrap_or_else(|e| panic!(e));
+        let work_mode = try!(WorkMode::from_str(work_mode_str));
 
         let girs_dir: PathBuf = match args.get_str("-d") {
             "" => {
