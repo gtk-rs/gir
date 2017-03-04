@@ -89,7 +89,7 @@ fn replace_c_types(entry: &str, symbols: &symbols::Info) -> String {
             .unwrap_or(s.into())
     };
     let out = SYMBOL.replace_all(entry, |caps: &Captures| {
-        format!("{}`{}{}`", &caps[1], lookup(&caps[2]), caps.at(3).unwrap_or(""))
+        format!("{}`{}{}`", &caps[1], lookup(&caps[2]), caps.get(3).map(|m| m.as_str()).unwrap_or(""))
     });
     let out = FUNCTION.replace_all(&out, |caps: &Captures| {
         format!("`{}`", lookup(&caps[1]))
@@ -98,5 +98,5 @@ fn replace_c_types(entry: &str, symbols: &symbols::Info) -> String {
         format!("`{}`", lookup(&caps[0]))
     });
     let out = TAGS.replace_all(&out, "`$0`");
-    SPACES.replace_all(&out, " ")
+    SPACES.replace_all(&out, " ").into_owned()
 }

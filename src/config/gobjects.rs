@@ -4,6 +4,7 @@ use std::str::FromStr;
 use toml::Value;
 
 use library::{Library, TypeId};
+use config::error::TomlHelper;
 use config::parsable::{Parsable, Parse};
 use super::child_properties::ChildProperties;
 use super::functions::Functions;
@@ -90,7 +91,7 @@ pub type GObjects =  BTreeMap<String, GObject>;
 
 pub fn parse_toml(toml_objects: &Value) -> GObjects {
     let mut objects = GObjects::new();
-    for toml_object in toml_objects.as_slice().unwrap() {
+    for toml_object in toml_objects.as_array().unwrap() {
         let gobject = parse_object(toml_object);
         objects.insert(gobject.name.clone(), gobject);
     }
@@ -149,7 +150,7 @@ pub fn parse_status_shorthands(objects: &mut GObjects, toml: &Value) {
 
 fn parse_status_shorthand(objects: &mut GObjects, status: GStatus, toml: &Value) {
     let name = format!("options.{:?}", status).to_ascii_lowercase();
-    toml.lookup(&name).map(|a| a.as_slice().unwrap())
+    toml.lookup(&name).map(|a| a.as_array().unwrap())
         .map(|a| for name_ in a.iter().map(|s| s.as_str().unwrap()) {
         match objects.get(name_) {
             None => {

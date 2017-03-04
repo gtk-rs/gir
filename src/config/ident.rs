@@ -1,11 +1,27 @@
 use regex::Regex;
 use toml::Value;
 
-#[derive(Clone, Debug, Eq, PartialEq)]
+use super::error::TomlHelper;
+
+#[derive(Clone, Debug)]
 pub enum Ident {
     Name(String),
     Pattern(Regex),
 }
+
+impl PartialEq for Ident {
+    fn eq(&self, other: &Ident) -> bool
+    {
+        pub use self::Ident::*;
+        match (self, other) {
+            (&Name(ref s1), &Name(ref s2)) => s1 == s2,
+            (&Pattern(ref r1), &Pattern(ref r2)) => r1.as_str() == r2.as_str(),
+            _ => false,
+        }
+    }
+}
+
+impl Eq for Ident {}
 
 impl Ident {
     pub fn parse(toml: &Value, object_name: &str, what: &str) -> Option<Ident> {

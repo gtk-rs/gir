@@ -82,7 +82,7 @@ fn do_main() -> Result<()> {
     let watcher_loading = statistics.enter("Loading");
 
     let mut library = Library::new(&cfg.library_name);
-    library.read_file(&cfg.girs_dir, &cfg.library_full_name());
+    try!(library.read_file(&cfg.girs_dir, &cfg.library_full_name()));
     library.postprocessing();
 
     cfg.resolve_type_ids(&library);

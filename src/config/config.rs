@@ -58,7 +58,9 @@ impl Config {
             None => PathBuf::new(),
         };
 
-        let toml = try!(read_toml(&config_file));
+        let toml = try!(read_toml(&config_file)
+                        .chain_err(|| ErrorKind::ReadConfig(config_file.clone()))
+        );
 
         Config::process_options(args, toml, &config_dir)
             .chain_err(|| ErrorKind::Options(config_file))
@@ -72,8 +74,7 @@ impl Config {
             ),
             a => a,
         };
-        let work_mode = WorkMode::from_str(work_mode_str)
-            .unwrap_or_else(|e| panic!(e));
+        let work_mode = try!(WorkMode::from_str(work_mode_str));
 
         let girs_dir: PathBuf = match args.get_str("-d") {
             "" => {
@@ -110,7 +111,7 @@ impl Config {
 
         let external_libraries = match toml.lookup("options.external_libraries") {
             Some(a) => {
-                try!(a.as_result_slice("options.external_libraries"))
+                try!(a.as_result_vec("options.external_libraries"))
                     .iter().filter_map(|v| v.as_str().map(String::from))
                     .collect()
             }
@@ -176,24 +177,14 @@ impl Config {
 
 fn read_toml<P: AsRef<Path>>(filename: P) -> Result<toml::Value> {
     if !filename.as_ref().is_file() {
-        bail!("Config \"{}\" don't exists or not file", filename.as_ref().display());
+        bail!("Config don't exists or not file");
     }
     let mut input = String::new();
     try!(File::open(&filename)
          .and_then(|mut f| f.read_to_string(&mut input))
-         .chain_err(|| format!("Failed to read config \"{}\"",
-                               filename.as_ref().display()))
     );
 
-    let mut parser = toml::Parser::new(&input);
-    match parser.parse() {
-        Some(toml) => Ok(toml::Value::Table(toml)),
-        None => {
-            let err = &parser.errors[parser.errors.len() - 1];
-            let (loline, locol) = parser.to_linecol(err.lo);
-            let (hiline, hicol) = parser.to_linecol(err.hi);
-            let s = format!("{}:{}-{}:{} error: {}", loline, locol, hiline, hicol, err.desc);
-            bail!(ErrorKind::Toml(s, filename.as_ref().to_owned()))
-        }
-    }
+    let toml = try!(toml::from_str(&input));
+
+    Ok(toml)
 }

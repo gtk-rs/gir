@@ -1,6 +1,8 @@
+use toml::Value;
+
+use super::error::TomlHelper;
 use super::ident::Ident;
 use super::parsable::Parse;
-use toml::Value;
 use version::Version;
 
 #[derive(Clone, Debug)]
@@ -52,10 +54,9 @@ mod tests {
     use version::Version;
 
     fn toml(input: &str) -> toml::Value {
-        let mut parser = toml::Parser::new(&input);
-        let value = parser.parse();
-        assert!(value.is_some());
-        toml::Value::Table(value.unwrap())
+        let value = toml::from_str(&input);
+        assert!(value.is_ok());
+        value.unwrap()
     }
 
     #[test]
