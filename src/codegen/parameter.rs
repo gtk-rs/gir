@@ -25,7 +25,10 @@ impl ToParameter for Parameter {
                         } else {
                             type_str = format!("&{}{}", mut_str, t)
                         },
-                        BoundType::AsRef | BoundType::Into(_) => type_str = t.to_string(),
+                        BoundType::Into(_, Some(_)) => {
+                            type_str = format!("{}", t)
+                        }
+                        BoundType::AsRef | BoundType::Into(_, None) => type_str = t.to_string(),
                     }
                 }
                 None => {

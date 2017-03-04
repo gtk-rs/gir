@@ -9,12 +9,12 @@ use analysis::rust_type::bounds_rust_type;
 use library::{Function, Fundamental, Nullable, Type, TypeId, ParameterDirection};
 use traits::IntoString;
 
-#[derive(Copy, Clone, Eq, Debug, PartialEq)]
+#[derive(Clone, Eq, Debug, PartialEq)]
 pub enum BoundType {
     IsA,
     AsRef,
-    //lifetime
-    Into(char),
+    // lifetime
+    Into(char, Option<Box<BoundType>>),
 }
 
 #[derive(Clone, Eq, Debug, PartialEq)]
@@ -66,7 +66,7 @@ impl Bounds {
     pub fn add_for_parameter(&mut self, env: &Env, func: &Function, par: &mut Parameter) {
         if !par.instance_parameter && par.direction != ParameterDirection::Out {
             if let Some(bound_type) = Bounds::type_for(env, par.typ, par.nullable) {
-                let to_glib_extra = Bounds::to_glib_extra(bound_type);
+                let to_glib_extra = Bounds::to_glib_extra(bound_type.clone());
                 par.to_glib_extra = to_glib_extra;
                 let type_name = bounds_rust_type(env, par.typ);
                 if !self.add_parameter(&par.name, &type_name.into_string(), bound_type) {
@@ -80,23 +80,33 @@ impl Bounds {
         use self::BoundType::*;
         match *env.library.type_(type_id) {
             Type::Fundamental(Fundamental::Filename) => Some(AsRef),
-            Type::Fundamental(Fundamental::Utf8) if *nullable => Some(Into('_')),
-            Type::Class(..) => {
+            Type::Fundamental(Fundamental::Utf8) if *nullable => Some(Into('_', None)),
+            Type::Class(..) if !*nullable => {
                 if env.class_hierarchy.subtypes(type_id).next().is_some() {
                     Some(IsA)
                 } else {
                     None
                 }
             }
-            Type::Interface(..) => Some(IsA),
-            _ => None,
+            Type::Class(..) => {
+                if env.class_hierarchy.subtypes(type_id).next().is_some() {
+                    Some(Into('_', Some(Box::new(IsA))))
+                } else {
+                    Some(Into('_', None))
+                }
+            }
+            Type::Interface(..) if !*nullable => Some(IsA),
+            Type::Interface(..) => Some(Into('_', Some(Box::new(IsA)))),
+            _ if !*nullable => None,
+            _ => Some(Into('_', None)),
         }
     }
     fn to_glib_extra(bound_type: BoundType) -> String {
         use self::BoundType::*;
         match bound_type {
             AsRef => ".as_ref()".to_owned(),
-            Into(_) => ".into()".to_owned(),
+            Into(_, None) => ".into()".to_owned(),
+            Into(_, Some(x)) => format!(".into(){}", Bounds::to_glib_extra(*x)),
             _ => String::new(),
         }
     }
@@ -105,7 +115,7 @@ impl Bounds {
         if let BoundType::Into(_) = bound_type {
             if let Some(lifetime) = self.unused_lifetimes.pop_front() {
                 self.lifetimes.push(lifetime);
-                bound_type = BoundType::Into(lifetime);
+                bound_type = BoundType::Into(lifetime, x);
             } else {
                 return false;
             }
@@ -133,7 +143,15 @@ impl Bounds {
             match used.bound_type {
                 IsA => imports.add("glib::object::IsA", None),
                 AsRef => imports.add_used_type(&used.type_str, None),
-                Into(_) => {}
+                Into(_, Some(ref x)) => {
+                    match **x {
+                        IsA => imports.add("glib::object::IsA", None),
+                        // This case shouldn't be possible normally.
+                        AsRef => imports.add_used_type(&used.2, None),
+                        _ => {}
+                    }
+                }
+                Into(_, None) => {}
             }
         }
     }

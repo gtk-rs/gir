@@ -85,8 +85,10 @@ fn bounds(bounds: &Bounds) -> String {
                      .map(|bound| match bound.bound_type {
                          IsA => format!("{}: IsA<{}>", bound.alias, bound.type_str),
                          AsRef => format!("{}: AsRef<{}>", bound.alias, bound.type_str),
-                         Into(l) => format!("{}: Into<Option<&'{} {}>>",
-                                            bound.alias, l, bound.type_str),
+                         Into(l, Some(_)) => format!("{}: Into<Option<&'{} IsA<{}>>>",
+                                                     bound.alias, l, bound.type_str),
+                         Into(l, None) => format!("{}: Into<Option<&'{} {}>>",
+                                                  bound.alias, l, bound.type_str),
                      }))
         .collect();
     format!("<{}>", strs.join(", "))
