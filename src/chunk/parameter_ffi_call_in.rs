@@ -11,6 +11,7 @@ pub struct Parameter {
     pub nullable: library::Nullable,
     pub ref_mode: analysis::ref_mode::RefMode,
     pub to_glib_extra: String,
+    pub is_into: bool,
 }
 
 impl<'a> From<&'a analysis::parameter::Parameter> for Parameter {
@@ -24,6 +25,7 @@ impl<'a> From<&'a analysis::parameter::Parameter> for Parameter {
             nullable: orig.nullable,
             ref_mode: orig.ref_mode,
             to_glib_extra: orig.to_glib_extra.clone(),
+            is_into: orig.is_into,
         }
     }
 }

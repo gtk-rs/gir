@@ -27,6 +27,26 @@ pub struct Parameter {
     //filled by functions
     //TODO: Find normal way to do it
     pub to_glib_extra: String,
+    /// `true` if it is a type that can be put into an `Option`.
+    pub is_into: bool,
+}
+
+fn is_into(env: &Env, par: &library::Parameter) -> bool {
+    fn is_into_inner(env: &Env, par: &library::Type) -> bool {
+        match *par {
+            library::Type::Fundamental(fund) => match fund {
+                library::Fundamental::Utf8 |
+                    library::Fundamental::Type => true,
+                _ => false,
+            },
+            library::Type::List(_) |
+              library::Type::SList(_) |
+              library::Type::CArray(_) => false,
+            library::Type::Alias(ref alias) => is_into_inner(env, env.library.type_(alias.typ)),
+            _ => true,
+        }
+    }
+    !par.instance_parameter && is_into_inner(env, env.library.type_(par.typ))
 }
 
 pub fn analyze(env: &Env, par: &library::Parameter, configured_functions: &[&Function]) -> Parameter {
@@ -67,5 +87,6 @@ pub fn analyze(env: &Env, par: &library::Parameter, configured_functions: &[&Fun
         ref_mode: ref_mode,
         is_error: par.is_error,
         to_glib_extra: String::new(),
+        is_into: *nullable && is_into(env, par),
     }
 }

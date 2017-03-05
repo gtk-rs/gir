@@ -27,7 +27,7 @@ impl ToParameter for Parameter {
                             type_str = format!("&{}{}", mut_str, t)
                         },
                         BoundType::Into(_, Some(_)) => {
-                            type_str = format!("{}", t)
+                            type_str = t.to_string()
                         }
                         BoundType::AsRef(_) | BoundType::Into(_, None) => type_str = t.to_string(),
                     }

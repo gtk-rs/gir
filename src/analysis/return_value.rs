@@ -7,7 +7,7 @@ use library::{self, Nullable};
 #[derive(Clone, Debug, Default)]
 pub struct Info {
     pub parameter: Option<library::Parameter>,
-    pub base_tid: Option<library::TypeId>,  //Some only if need downcast
+    pub base_tid: Option<library::TypeId>,  // Some only if need downcast
     pub commented: bool,
 }
 
@@ -66,8 +66,7 @@ pub fn analyze(env: &Env, func: &library::Function, type_tid: library::TypeId,
     }
 }
 
-fn can_be_nullable_return(env: &Env, type_id: library::TypeId) -> bool
-{
+fn can_be_nullable_return(env: &Env, type_id: library::TypeId) -> bool {
     use library::Type::*;
     use library::Fundamental::*;
     match *env.library.type_(type_id) {

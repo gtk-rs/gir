@@ -21,7 +21,7 @@ pub enum BoundType {
 }
 
 impl BoundType {
-    fn set_lifetime(ty_: BoundType, lifetime: char) -> BoundType {
+    fn with_lifetime(ty_: BoundType, lifetime: char) -> BoundType {
         match ty_ {
             BoundType::IsA(_) => BoundType::IsA(Some(lifetime)),
             BoundType::AsRef(_) => BoundType::AsRef(Some(lifetime)),
@@ -64,13 +64,14 @@ impl Bound {
     pub fn get_for_property_setter(env: &Env, var_name:&str, type_id: TypeId,
                                    nullable: Nullable) -> Option<Bound> {
         match Bounds::type_for(env, type_id, nullable) {
-            Some(BoundType::IsA) => {
+            Some(BoundType::IsA(l)) => {
                 let type_str = bounds_rust_type(env, type_id);
-                Some(Bound{
-                    bound_type: BoundType::IsA,
+                Some(Bound {
+                    bound_type: BoundType::IsA(l),
                     parameter_name: var_name.to_owned(),
                     alias: 'T',
                     type_str: type_str.into_string(),
+                    info_for_next_type: false,
                 })
             }
             _ => None,
@@ -125,8 +126,7 @@ impl Bounds {
         use self::BoundType::*;
         match bound_type {
             AsRef(_) => ".as_ref()".to_owned(),
-            Into(_, None) => ".into()".to_owned(),
-            Into(_, Some(x)) => format!(".into(){}", Bounds::to_glib_extra(*x)),
+            Into(_, Some(x)) => Bounds::to_glib_extra(*x),
             _ => String::new(),
         }
     }
@@ -145,9 +145,14 @@ impl Bounds {
         };
         let type_str = if let Some((Some(sub), lifetime)) = sub {
             if let Some(alias) = self.unused.pop_front() {
-                self.used.push((name.into(), alias, type_str.into(),
-                                BoundType::set_lifetime(*sub, lifetime), true));
-                format!("{}", alias)
+                self.used.push(Bound {
+                    bound_type: BoundType::with_lifetime(*sub, lifetime),
+                    parameter_name: name.to_owned(),
+                    alias: alias,
+                    type_str: type_str.to_owned(),
+                    info_for_next_type: true,
+                });
+                alias.to_string()
             } else {
                 return false;
             }
@@ -160,6 +165,7 @@ impl Bounds {
                 parameter_name: name.to_owned(),
                 alias: alias,
                 type_str: type_str.to_owned(),
+                info_for_next_type: false,
             });
             true
         } else {
@@ -167,22 +173,14 @@ impl Bounds {
         }
     }
     pub fn get_parameter_alias_info(&self, name: &str) -> Option<(char, BoundType)> {
-        let mut stop = false;
         self.used.iter()
                  .find(move |ref n| {
-            if stop == true {
-                true
-            } else if n.parameter_name == name {
-                if n.info_for_next_type == false {
-                    true
-                } else {
-                    stop = true;
-                    false
-                }
+            if n.parameter_name == name {
+                !n.info_for_next_type
             } else {
                 false
             }})
-            .map(|t| (t.alias, t.bound_type))
+            .map(|t| (t.alias, t.bound_type.clone()))
     }
     pub fn update_imports(&self, imports: &mut Imports) {
         //TODO: import with versions
@@ -221,26 +219,31 @@ mod tests {
     #[test]
     fn get_new_all() {
         let mut bounds: Bounds = Default::default();
-        let typ = BoundType::IsA;
-        assert_eq!(bounds.add_parameter("a", "", typ), true);
+        let typ = BoundType::IsA(None);
+        assert_eq!(bounds.add_parameter("a", "", typ.clone()), true);
         // Don't add second time
-        assert_eq!(bounds.add_parameter("a", "", typ), false);
-        assert_eq!(bounds.add_parameter("b", "", typ), true);
-        assert_eq!(bounds.add_parameter("c", "", typ), true);
-        assert_eq!(bounds.add_parameter("d", "", typ), true);
-        assert_eq!(bounds.add_parameter("e", "", typ), true);
-        assert_eq!(bounds.add_parameter("f", "", typ), true);
-        assert_eq!(bounds.add_parameter("g", "", typ), true);
-        assert_eq!(bounds.add_parameter("h", "", typ), false);
+        assert_eq!(bounds.add_parameter("a", "", typ.clone()), false);
+        assert_eq!(bounds.add_parameter("b", "", typ.clone()), true);
+        assert_eq!(bounds.add_parameter("c", "", typ.clone()), true);
+        assert_eq!(bounds.add_parameter("d", "", typ.clone()), true);
+        assert_eq!(bounds.add_parameter("e", "", typ.clone()), true);
+        assert_eq!(bounds.add_parameter("f", "", typ.clone()), true);
+        assert_eq!(bounds.add_parameter("g", "", typ.clone()), true);
+        assert_eq!(bounds.add_parameter("h", "", typ.clone()), true);
+        assert_eq!(bounds.add_parameter("h", "", typ.clone()), false);
+        assert_eq!(bounds.add_parameter("i", "", typ.clone()), true);
+        assert_eq!(bounds.add_parameter("j", "", typ.clone()), true);
+        assert_eq!(bounds.add_parameter("k", "", typ.clone()), true);
+        assert_eq!(bounds.add_parameter("l", "", typ), false);
     }
 
     #[test]
     fn get_parameter_alias_info() {
         let mut bounds: Bounds = Default::default();
-        let typ = BoundType::IsA;
-        bounds.add_parameter("a", "", typ);
-        bounds.add_parameter("b", "", typ);
-        assert_eq!(bounds.get_parameter_alias_info("a"), Some(('P', typ)));
+        let typ = BoundType::IsA(None);
+        bounds.add_parameter("a", "", typ.clone());
+        bounds.add_parameter("b", "", typ.clone());
+        assert_eq!(bounds.get_parameter_alias_info("a"), Some(('P', typ.clone())));
         assert_eq!(bounds.get_parameter_alias_info("b"), Some(('Q', typ)));
         assert_eq!(bounds.get_parameter_alias_info("c"), None);
     }
