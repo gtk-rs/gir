@@ -12,14 +12,15 @@ use super::return_value::ToReturnValue;
 use super::trampoline_from_glib::TrampolineFromGlib;
 use super::trampoline_to_glib::TrampolineToGlib;
 use traits::IntoString;
+use consts::TYPE_PARAMETERS_START;
 
 pub fn generate(w: &mut Write, env: &Env, analysis: &Trampoline,
                 in_trait: bool, object_name: &str) -> Result<()> {
     try!(writeln!(w, ""));
     let (bounds, end) = if in_trait {
-        ("<T>", "")
+        (format!("<{}>", TYPE_PARAMETERS_START), "")
     } else {
-        ("", " {")
+        (String::new(), " {")
     };
 
     let params_str = trampoline_parameters(env, analysis);
@@ -30,7 +31,7 @@ pub fn generate(w: &mut Write, env: &Env, analysis: &Trampoline,
     try!(writeln!(w, "unsafe extern \"C\" fn {}{}({}, f: glib_ffi::gpointer){}{}",
                   analysis.name, bounds, params_str, ret_str, end));
     if in_trait {
-        try!(writeln!(w, "where T: IsA<{}> {{", object_name));
+        try!(writeln!(w, "where {}: IsA<{}> {{", TYPE_PARAMETERS_START, object_name));
     }
     try!(writeln!(w, "\tcallback_guard!();"));
     try!(writeln!(w, "\tlet f: &Box_<{}> = transmute(f);", func_str));
@@ -77,7 +78,7 @@ fn func_parameter(env: &Env, par: &RustParameter, bounds: &Bounds,
     match bounds.get_parameter_alias_info(&par.name) {
         Some((t, bound_type)) => {
             match bound_type {
-                BoundType::IsA => if *par.nullable {
+                BoundType::IsA(_) => if *par.nullable {
                     format!("&Option<{}{}>", mut_str, t)
                 } else if let Some((from, to)) = bound_replace {
                     if from == t {
@@ -88,7 +89,7 @@ fn func_parameter(env: &Env, par: &RustParameter, bounds: &Bounds,
                 } else {
                     format!("&{}{}", mut_str, t)
                 },
-                BoundType::AsRef | BoundType::Into(_, _) => t.to_string(),
+                BoundType::AsRef(_) | BoundType::Into(_, _) => t.to_string(),
             }
         }
         None => {

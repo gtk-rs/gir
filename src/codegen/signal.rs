@@ -2,6 +2,7 @@ use std::io::{Result, Write};
 
 use analysis;
 use chunk::Chunk;
+use consts::TYPE_PARAMETERS_START;
 use env::Env;
 use super::general::version_condition;
 use super::signal_body;
@@ -62,7 +63,7 @@ fn function_type_string(env: &Env, analysis: &analysis::signals::Info,
         None => panic!("Internal error: can't find trampoline '{}'", trampoline_name),
     };
 
-    let type_ = func_string(env, trampoline, Some(('T', "Self")));
+    let type_ = func_string(env, trampoline, Some((TYPE_PARAMETERS_START, "Self")));
     Some(type_)
 }
 

@@ -28,6 +28,7 @@ mod analysis;
 mod chunk;
 mod codegen;
 mod config;
+mod consts;
 mod env;
 mod file_saver;
 mod git;
