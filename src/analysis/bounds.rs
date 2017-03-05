@@ -16,8 +16,8 @@ pub enum BoundType {
     IsA(Option<char>),
     // lifetime <- shouldn't be used but just in case...
     AsRef(Option<char>),
-    // lifetime, wrapper type
-    Into(char, Option<Box<BoundType>>),
+    // lifetime (if none, not a reference, like for primitive types), wrapper type
+    Into(Option<char>, Option<Box<BoundType>>),
 }
 
 impl BoundType {
@@ -25,7 +25,7 @@ impl BoundType {
         match ty_ {
             BoundType::IsA(_) => BoundType::IsA(Some(lifetime)),
             BoundType::AsRef(_) => BoundType::AsRef(Some(lifetime)),
-            BoundType::Into(_, x) => BoundType::Into(lifetime, x),
+            BoundType::Into(_, x) => BoundType::Into(Some(lifetime), x),
         }
     }
 }
@@ -96,7 +96,7 @@ impl Bounds {
         use self::BoundType::*;
         match *env.library.type_(type_id) {
             Type::Fundamental(Fundamental::Filename) => Some(AsRef(None)),
-            Type::Fundamental(Fundamental::Utf8) if *nullable => Some(Into('_', None)),
+            Type::Fundamental(Fundamental::Utf8) if *nullable => Some(Into(Some('_'), None)),
             Type::Class(..) if !*nullable => {
                 if env.class_hierarchy.subtypes(type_id).next().is_some() {
                     Some(IsA(None))
@@ -106,15 +106,19 @@ impl Bounds {
             }
             Type::Class(..) => {
                 if env.class_hierarchy.subtypes(type_id).next().is_some() {
-                    Some(Into('_', Some(Box::new(IsA(None)))))
+                    Some(Into(Some('_'), Some(Box::new(IsA(None)))))
                 } else {
-                    Some(Into('_', None))
+                    Some(Into(Some('_'), None))
                 }
             }
             Type::Interface(..) if !*nullable => Some(IsA(None)),
-            Type::Interface(..) => Some(Into('_', Some(Box::new(IsA(None))))),
+            Type::Interface(..) => Some(Into(Some('_'), Some(Box::new(IsA(None))))),
+            Type::List(_) |
+                Type::SList(_) |
+                Type::CArray(_) => None,
+            Type::Fundamental(_) if *nullable => Some(Into(None, None)),
             _ if !*nullable => None,
-            _ => Some(Into('_', None)),
+            _ => Some(Into(Some('_'), None)),
         }
     }
     fn to_glib_extra(bound_type: BoundType) -> String {
@@ -128,10 +132,10 @@ impl Bounds {
     }
     pub fn add_parameter(&mut self, name: &str, type_str: &str, mut bound_type: BoundType) -> bool {
         if self.used.iter().any(|ref n| n.parameter_name == name) { return false; }
-        let sub = if let BoundType::Into(_, x) = bound_type {
+        let sub = if let BoundType::Into(Some(_), x) = bound_type {
             if let Some(lifetime) = self.unused_lifetimes.pop_front() {
                 self.lifetimes.push(lifetime);
-                bound_type = BoundType::Into(lifetime, x.clone());
+                bound_type = BoundType::Into(Some(lifetime), x.clone());
                 Some((x, lifetime))
             } else {
                 return false;

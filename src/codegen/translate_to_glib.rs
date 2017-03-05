@@ -12,7 +12,8 @@ impl TranslateToGlib for chunk::parameter_ffi_call_in::Parameter {
         use analysis::conversion_type::ConversionType::*;
         match ConversionType::of(library, self.typ) {
             Direct => self.name.clone(),
-            Scalar => format!("{}{}", self.name, ".to_glib()"),
+            Scalar => format!("{}{}{}",
+                              self.name, if !*self.nullable { "" } else {".into()" }, ".to_glib()"),
             Pointer => {
                 let (left, right) = to_glib_xxx(self.transfer, self.ref_mode);
                 if self.instance_parameter {
