@@ -42,7 +42,7 @@ pub fn generate(env: &Env) {
     let path =  env.config.target_path.join("docs.md");
     println!("Generating documentation {:?}", path);
     save_to_file(&path, env.config.make_backup,
-        |w| generate_doc(w, &env));
+        |w| generate_doc(w, env));
 }
 
 fn generate_doc(mut w: &mut Write, env: &Env) -> Result<()> {
@@ -71,7 +71,7 @@ fn generate_doc(mut w: &mut Write, env: &Env) -> Result<()> {
                 if !env.config.objects.get(&tid.full_name(&env.library))
                         .map_or(true, |obj| obj.status.ignored()) {
                     generators.push((&enum_.name[..], Box::new(move |w, e| {
-                        create_enum_doc(w, e, &enum_)
+                        create_enum_doc(w, e, enum_)
                     })));
                 }
             }
@@ -225,7 +225,7 @@ fn create_enum_doc(w: &mut Write, env: &Env, enum_: &Enumeration) -> Result<()> 
         Ok(())
     }));
 
-    for member in enum_.members.iter() {
+    for member in &enum_.members {
         let mut sub_ty = TypeStruct { name: member.name.to_camel(), ..member.to_stripper_type()};
 
         if member.doc.is_some() {
@@ -265,9 +265,7 @@ fn fix_param_names<'a>(doc: &'a str, self_name: &Option<String>) -> Cow<'a, str>
 fn create_fn_doc(w: &mut Write, env: &Env, fn_: &Function, parent: Option<Box<TypeStruct>>)
         -> Result<()> {
     if fn_.doc.is_none() && fn_.doc_deprecated.is_none() && fn_.ret.doc.is_none() {
-        if fn_.parameters.iter().all(|p| {
-            p.doc.is_none()
-        }) {
+        if fn_.parameters.iter().all(|p| p.doc.is_none()) {
             return Ok(());
         }
     }
@@ -297,7 +295,7 @@ fn create_fn_doc(w: &mut Write, env: &Env, fn_: &Function, parent: Option<Box<Ty
             try!(writeln!(w, "{}", reformat_doc(&fix_param_names(doc, &self_name), &symbols)));
         }
 
-        for parameter in fn_.parameters.iter() {
+        for parameter in &fn_.parameters {
             if parameter.instance_parameter || parameter.name.is_empty() {
                 continue
             }

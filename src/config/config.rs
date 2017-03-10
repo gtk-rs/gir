@@ -106,7 +106,7 @@ impl Config {
         };
 
         let mut objects = toml.lookup("object").map(|t| gobjects::parse_toml(t))
-            .unwrap_or_else(|| Default::default());
+            .unwrap_or_default();
         gobjects::parse_status_shorthands(&mut objects, &toml);
 
         let external_libraries = match toml.lookup("options.external_libraries") {

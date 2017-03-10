@@ -103,7 +103,7 @@ fn ffi_inner(env: &Env, tid: TypeId, inner: &str) -> Result {
             else {
                 warn!("Type `{}` missing c_type", typ.get_name());
             }
-            fix_name(env, tid, &inner)
+            fix_name(env, tid, inner)
         }
         Type::CArray(inner_tid) => ffi_inner(env, inner_tid, inner),
         Type::FixedArray(inner_tid, size) => {
@@ -112,15 +112,15 @@ fn ffi_inner(env: &Env, tid: TypeId, inner: &str) -> Result {
         }
         Type::Array(..) | Type::PtrArray(..)
                 | Type::List(..) | Type::SList(..) | Type::HashTable(..) => {
-            fix_name(env, tid, &inner)
+            fix_name(env, tid, inner)
         }
         _ => {
             if let Some(glib_name) = env.library.type_(tid).get_glib_name() {
                 if inner != glib_name {
-                    if implements_c_type(env, tid, &inner) {
+                    if implements_c_type(env, tid, inner) {
                         info!("[c:type {} of {} <: {}, fixing]", glib_name,
                             env.library.type_(tid).get_name(), inner);
-                        fix_name(env, tid, &glib_name)
+                        fix_name(env, tid, glib_name)
                     }
                     else {
                         let msg = format!("[c:type mismatch {} != {} of {}]", inner, glib_name,
@@ -130,7 +130,7 @@ fn ffi_inner(env: &Env, tid: TypeId, inner: &str) -> Result {
                     }
                 }
                 else {
-                    fix_name(env, tid, &inner)
+                    fix_name(env, tid, inner)
                 }
             }
             else {

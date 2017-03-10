@@ -30,7 +30,7 @@ pub fn analyze(env: &Env, config: Option<&config::ChildProperties>, type_tid: li
     }
     let config = config.unwrap();
     let child_name = config.child_name.as_ref().map(|s| &s[..]).unwrap_or("child");
-    let child_type = config.child_type.as_ref().and_then(|ref name| env.library.find_type(0, &name));
+    let child_type = config.child_type.as_ref().and_then(|name| env.library.find_type(0, name));
     if config.child_type.is_some() && child_type.is_none() {
         let owner_name = rust_type(env, type_tid).into_string();
         let child_type: &str = config.child_type.as_ref().unwrap();
@@ -39,7 +39,7 @@ pub fn analyze(env: &Env, config: Option<&config::ChildProperties>, type_tid: li
     }
 
     for prop in &config.properties {
-        if let Some(prop) = analyze_property(env, prop, &child_name, child_type, type_tid, imports) {
+        if let Some(prop) = analyze_property(env, prop, child_name, child_type, type_tid, imports) {
             properties.push(prop);
         }
     }

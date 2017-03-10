@@ -185,8 +185,7 @@ impl FromGlib<ffi::{ffi_name}> for {name} {{
 
 fn get_error_quark_name(enum_: &Enumeration) -> Option<String> {
     enum_.functions.iter()
-        .filter(|f| f.name == "quark")
-        .next()
+        .find(|f| f.name == "quark")
         .and_then(|f| f.c_identifier.clone())
         .or_else(|| enum_.error_domain.clone())
 }

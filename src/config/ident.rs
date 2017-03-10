@@ -27,7 +27,7 @@ impl Ident {
     pub fn parse(toml: &Value, object_name: &str, what: &str) -> Option<Ident> {
         match toml.lookup("pattern").and_then(|v| v.as_str()) {
             Some(s) => Regex::new(&format!("^{}$",s))
-                .map(|r| Ident::Pattern(r))
+                .map(Ident::Pattern)
                 .map_err(|e| {
                     error!("Bad pattern `{}` in {} for `{}`: {}", s, what, object_name, e);
                     e

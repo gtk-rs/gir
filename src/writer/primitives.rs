@@ -44,7 +44,7 @@ pub fn format_block_smart_width(prefix: &str, suffix: &str, body: &[String], out
     let mut inner_len = inner_separator.len() * (body.len() - 1);
     //TODO: change to sum()
     for s in body {
-        inner_len = inner_len + s.len();
+        inner_len += s.len();
     }
     if (outer_len + inner_len) > max_width {
         format_block(prefix, suffix, body)

@@ -85,7 +85,7 @@ fn body(prop: &ChildProperty, is_get:bool ) -> Chunk {
         .is_nullable(*prop.nullable)
         .conversion(prop.conversion);
     if let Some(ref default_value) = prop.default_value {
-        builder.default_value(&default_value);
+        builder.default_value(default_value);
     } else {
         builder.default_value("/*Unknown default value*/");
     }

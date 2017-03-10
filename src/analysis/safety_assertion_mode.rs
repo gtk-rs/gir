@@ -22,7 +22,7 @@ impl SafetyAssertionMode {
         if !env.config.generate_safety_asserts {
             return None;
         }
-        if params.len() > 0 && params[0].instance_parameter {
+        if !params.is_empty() && params[0].instance_parameter {
             return None;
         }
         for par in params {

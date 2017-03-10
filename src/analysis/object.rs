@@ -72,7 +72,7 @@ pub fn class(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<Info>
         let child_name = child_tid.full_name(&env.library);
         let status = env.config.objects.get(&child_name)
             .map(|o| o.status)
-            .unwrap_or(Default::default());
+            .unwrap_or_default();
         if status.normal() {
             has_children = true;
             break;
@@ -86,7 +86,7 @@ pub fn class(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<Info>
     let mut trampolines = trampolines::Trampolines::with_capacity(klass.signals.len());
     let mut signatures = Signatures::with_capacity(klass.functions.len());
 
-    let mut functions = functions::analyze(env, &klass.functions, class_tid, &obj,
+    let mut functions = functions::analyze(env, &klass.functions, class_tid, obj,
                                            &mut imports, Some(&mut signatures), Some(deps));
     let specials = special_functions::extract(&mut functions);
     // `copy` will duplicate an object while `clone` just adds a reference
@@ -94,11 +94,11 @@ pub fn class(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<Info>
     special_functions::analyze_imports(&specials, &mut imports);
 
     let signals = signals::analyze(env, &klass.signals, class_tid, has_children,
-                                   &mut trampolines, &obj, &mut imports);
-    let properties = properties::analyze(env, &klass.properties, class_tid, &obj, &mut imports,
-                                         &mut signatures);
+                                   &mut trampolines, obj, &mut imports);
+    let properties = properties::analyze(env, &klass.properties, class_tid, obj, &mut imports,
+                                         &signatures);
 
-    let (version, deprecated_version) = info_base::versions(env, &obj, &functions, klass.version,
+    let (version, deprecated_version) = info_base::versions(env, obj, &functions, klass.version,
          klass.deprecated_version);
 
     let child_properties = child_properties::analyze(env, obj.child_properties.as_ref(), class_tid,
@@ -185,15 +185,15 @@ pub fn interface(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<I
     let mut trampolines = trampolines::Trampolines::with_capacity(iface.signals.len());
     let mut signatures = Signatures::with_capacity(iface.functions.len());
 
-    let functions = functions::analyze(env, &iface.functions, iface_tid, &obj,
+    let functions = functions::analyze(env, &iface.functions, iface_tid, obj,
                                        &mut imports, Some(&mut signatures), Some(deps));
 
     let signals = signals::analyze(env, &iface.signals, iface_tid, true,
-                                   &mut trampolines, &obj, &mut imports);
-    let properties = properties::analyze(env, &iface.properties, iface_tid, &obj, &mut imports,
-                                         &mut signatures);
+                                   &mut trampolines, obj, &mut imports);
+    let properties = properties::analyze(env, &iface.properties, iface_tid, obj, &mut imports,
+                                         &signatures);
 
-    let (version, deprecated_version) = info_base::versions(env, &obj, &functions, iface.version,
+    let (version, deprecated_version) = info_base::versions(env, obj, &functions, iface.version,
          iface.deprecated_version);
 
     //don't `use` yourself

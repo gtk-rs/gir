@@ -56,14 +56,14 @@ fn get_node<'a>(library: &Library, hier: &'a mut HashMap<TypeId, Node>, tid: Typ
 impl Info {
     pub fn subtypes<'a>(&'a self, tid: TypeId) -> Box<Iterator<Item = TypeId> + 'a> {
         match self.hier.get(&tid) {
-            Some(ref node) => Box::new(node.subs.iter().cloned()),
+            Some(node) => Box::new(node.subs.iter().cloned()),
             None => Box::new(iter::empty()),
         }
     }
 
     pub fn supertypes(&self, tid: TypeId) -> &[TypeId] {
         match self.hier.get(&tid) {
-            Some(ref node) => &node.supers,
+            Some(node) => &node.supers,
             None => &[],
         }
     }

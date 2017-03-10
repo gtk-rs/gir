@@ -97,8 +97,8 @@ fn set_string<S: Into<String>>(table: &mut Table, name: &str, new_value: S) {
     table.insert(name.into(), Value::String(new_value.into()));
 }
 
-fn upsert_table<'a, S: Into<String>>(parent: &'a mut Table, name: S) -> &'a mut Table {
-    if let &mut Value::Table(ref mut table) = parent.entry(name.into())
+fn upsert_table<S: Into<String>>(parent: &mut Table, name: S) -> &mut Table {
+    if let Value::Table(ref mut table) = *parent.entry(name.into())
             .or_insert_with(|| Value::Table(BTreeMap::new())) {
         table
     }

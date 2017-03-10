@@ -24,8 +24,7 @@ pub fn generate(w: &mut Write, type_name: &str, functions: &[Info], specials: &I
 
 fn lookup<'a>(functions: &'a [Info], name: &str) -> &'a Info {
     functions.iter()
-        .filter(|f| f.glib_name == name)
-        .next()
+        .find(|f| f.glib_name == name)
         .unwrap()
 }
 

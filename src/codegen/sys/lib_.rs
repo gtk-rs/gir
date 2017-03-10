@@ -87,7 +87,7 @@ fn prepare<T: Ord>(ns: &Namespace) -> Vec<&T>
 where Type: MaybeRef<T> {
     let mut vec: Vec<&T> = Vec::with_capacity(ns.types.len());
     for typ in ns.types.iter().filter_map(|t| t.as_ref()) {
-        if let Some(ref x) = typ.maybe_ref() {
+        if let Some(x) = typ.maybe_ref() {
             vec.push(x);
         }
     }
@@ -126,7 +126,7 @@ fn generate_bitfields(w: &mut Write, env: &Env, items: &[&Bitfield])
         try!(writeln!(w, "bitflags! {{\n\t#[repr(C)]\n\tflags {}: c_uint {{", item.c_type));
         for member in &item.members {
             let member_config = config.as_ref()
-                .map(|c| c.members.matched(&member.name)).unwrap_or(vec![]);
+                .map(|c| c.members.matched(&member.name)).unwrap_or_else(|| vec![]);
             let version = member_config.iter().filter_map(|m| m.version).next();
 
             try!(version_condition(w, env, version, false, 2));
@@ -198,7 +198,7 @@ fn generate_enums(w: &mut Write, env: &Env, items: &[&Enumeration])
         try!(writeln!(w, "pub enum {} {{", item.c_type));
         for member in &item.members {
             let member_config = config.as_ref()
-                .map(|c| c.members.matched(&member.name)).unwrap_or(vec![]);
+                .map(|c| c.members.matched(&member.name)).unwrap_or_else(|| vec![]);
             let is_alias = member_config.iter().any(|m| m.alias);
             let version = member_config.iter().filter_map(|m| m.version).next();
 
@@ -208,7 +208,7 @@ fn generate_enums(w: &mut Write, env: &Env, items: &[&Enumeration])
             try!(version_condition(w, env, version, false, 1));
             try!(writeln!(w, "\t{} = {},",
                           &prepare_enum_member_name(&member.name), member.value));
-            vals.insert(member.value.clone(), (member.name.clone(), version.clone()));
+            vals.insert(member.value.clone(), (member.name.clone(), version));
         }
         try!(writeln!(w, "}}"));
         for member in &item.members {
@@ -331,15 +331,15 @@ fn generate_fields(env: &Env, struct_name: &str, fields: &[Field]) -> (Vec<Strin
         if !truncated && (is_union || is_bits) {
             warn!("Field `{}::{}` not expressible in Rust, truncated",
                   struct_name, field.name);
-            lines.push(format!("\t_truncated_record_marker: c_void,"));
+            lines.push("\t_truncated_record_marker: c_void,".to_owned());
             truncated = true;
         }
         if truncated {
             if is_union {
-                lines.push(format!("\t//union,"));
+                lines.push("\t//union,".to_owned());
             }
             else {
-                let bits = field.bits.map(|n| format!(": {}", n)).unwrap_or("".into());
+                let bits = field.bits.map(|n| format!(": {}", n)).unwrap_or_else(|| "".to_owned());
                 lines.push(
                     format!("\t//{}: {}{},", field.name,
                             field.c_type.as_ref().map(|s| &s[..]).unwrap_or("fn"), bits));
@@ -362,7 +362,7 @@ fn generate_fields(env: &Env, struct_name: &str, fields: &[Field]) -> (Vec<Strin
         }
         else {
             let name = mangle_keywords(&*field.name);
-            if let Some(ref func) =
+            if let Some(func) =
                 env.library.type_(field.typ).maybe_ref_as::<Function>() {
                     let (com, sig) = functions::function_signature(env, func, true);
                     lines.push(format!("\t{}{}: Option<unsafe extern \"C\" fn{}>,", vis, name, sig));

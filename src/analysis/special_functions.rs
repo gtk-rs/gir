@@ -79,8 +79,7 @@ fn visibility(t: Type, args_len: usize) -> Visibility {
 pub fn unhide(functions: &mut Vec<FuncInfo>, specials: &Infos, type_: Type) {
     if let Some(func) = specials.get(&type_) {
         let func = functions.iter_mut()
-            .filter(|f| f.glib_name == *func && f.visibility != Visibility::Comment)
-            .next();
+            .find(|f| f.glib_name == *func && f.visibility != Visibility::Comment);
         if let Some(func) = func {
             func.visibility = Visibility::Public;
         }

@@ -29,7 +29,7 @@ impl Parse for Parameter {
             .unwrap_or(false);
         let nullable = toml.lookup("nullable")
             .and_then(|val| val.as_bool())
-            .map(|b| Nullable(b));
+            .map(Nullable);
 
         Some(Parameter{
             ident: ident,
@@ -57,7 +57,7 @@ impl Return {
         if let Some(v) = toml {
             let nullable = v.lookup("nullable")
                 .and_then(|v| v.as_bool())
-                .map(|b| Nullable(b));
+                .map(Nullable);
             Return {
                 nullable: nullable,
             }

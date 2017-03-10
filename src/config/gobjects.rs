@@ -50,7 +50,7 @@ impl FromStr for GStatus {
     }
 }
 
-/// Info about GObject descendant
+/// Info about `GObject` descendant
 #[derive(Clone, Debug)]
 pub struct GObject {
     pub name: String,
@@ -103,7 +103,8 @@ fn parse_object(toml_object: &Value) -> GObject {
         .as_str().unwrap().into();
 
     let status = match toml_object.lookup("status") {
-        Some(value) => GStatus::from_str(value.as_str().unwrap()).unwrap_or(Default::default()),
+        Some(value) => GStatus::from_str(value.as_str().unwrap())
+            .unwrap_or_else(|_| Default::default()),
         None => Default::default(),
     };
 
@@ -143,7 +144,7 @@ fn parse_object(toml_object: &Value) -> GObject {
 
 pub fn parse_status_shorthands(objects: &mut GObjects, toml: &Value) {
     use self::GStatus::*;
-    for &status in [Manual, Generate, Comment, Ignore].iter() {
+    for &status in &[Manual, Generate, Comment, Ignore] {
         parse_status_shorthand(objects, status, toml);
     }
 }
