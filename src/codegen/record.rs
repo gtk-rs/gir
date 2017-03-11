@@ -50,7 +50,7 @@ pub fn generate_reexports(env: &Env, analysis: &analysis::record::Info, module_n
         cfg.push_str(&s);
         cfg.push('\n');
     };
-    contents.push(format!(""));
+    contents.push("".to_owned());
     contents.push(format!("{}mod {};", cfg, module_name));
     contents.push(format!("{}pub use self::{}::{};", cfg, module_name, analysis.name));
 }

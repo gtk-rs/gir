@@ -48,7 +48,7 @@ impl Parse for Parameter {
         };
         let nullable = toml.lookup("nullable")
             .and_then(|val| val.as_bool())
-            .map(|b| Nullable(b));
+            .map(Nullable);
         let transformation = toml.lookup("transformation")
             .and_then(|val| val.as_str())
             .and_then(|s| TransformationType::from_str(s)

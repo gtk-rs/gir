@@ -29,9 +29,8 @@ macro_rules! mk_error {
 
 macro_rules! xml_next {
     ($event:expr, $pos:expr) => (
-        match $event {
-            EndDocument => bail!(mk_error!("Unexpected end of document", $pos)),
-            _ => (),
+        if let EndDocument = $event {
+            bail!(mk_error!("Unexpected end of document", $pos))
         }
     )
 }
@@ -111,14 +110,14 @@ impl Library {
         let ns_id = self.add_namespace(name);
         self.namespace_mut(ns_id).package_name = package;
         if let Some(s) = attrs.get("shared-library") {
-            self.namespace_mut(ns_id).shared_library = s.split(",").map(String::from).collect();
+            self.namespace_mut(ns_id).shared_library = s.split(',').map(String::from).collect();
         }
         if let Some(s) = attrs.get("identifier-prefixes") {
-            self.namespace_mut(ns_id).identifier_prefixes = s.split(",").map(String::from)
+            self.namespace_mut(ns_id).identifier_prefixes = s.split(',').map(String::from)
                 .collect();
         }
         if let Some(s) = attrs.get("symbol-prefixes") {
-            self.namespace_mut(ns_id).symbol_prefixes = s.split(",").map(String::from).collect();
+            self.namespace_mut(ns_id).symbol_prefixes = s.split(',').map(String::from).collect();
         }
         trace!("Reading {}-{}", name, attrs.get("version").unwrap());
         loop {
@@ -227,7 +226,6 @@ impl Library {
                 doc: doc,
                 version: version,
                 deprecated_version: deprecated_version,
-                .. Class::default()
             });
         self.add_type(ns_id, name, typ);
         Ok(())
@@ -465,7 +463,6 @@ impl Library {
                 doc: doc,
                 version: version,
                 deprecated_version: deprecated_version,
-                .. Interface::default()
             });
         self.add_type(ns_id, name, typ);
         Ok(())

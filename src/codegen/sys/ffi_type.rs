@@ -124,7 +124,7 @@ fn ffi_inner(env: &Env, tid: library::TypeId, mut inner: String) -> Result {
                     if implements_c_type(env, tid, &inner) {
                         info!("[c:type {} of {} <: {}, fixing]", glib_name,
                             env.library.type_(tid).get_name(), inner);
-                        fix_name(env, tid, &glib_name)
+                        fix_name(env, tid, glib_name)
                     }
                     else {
                         let msg = format!("[c:type mismatch {} != {} of {}]", inner, glib_name,

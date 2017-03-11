@@ -29,7 +29,7 @@ impl Imports {
                 self.add(&used_type[..i], version);
             }
         } else {
-            self.add(&used_type, version);
+            self.add(used_type, version);
         }
     }
 
@@ -49,7 +49,7 @@ impl Imports {
             let glib_offset = p.0.find("glib::");
             if let Some(glib_offset) = glib_offset {
                 if glib_offset ==  0 {
-                    Some((p.0.clone(), p.1.clone()))
+                    Some((p.0.clone(), *p.1))
                 } else {
                     None
                 }

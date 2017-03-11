@@ -94,7 +94,7 @@ impl ToCode for Chunk {
                 let value_strings = value.to_code(env);
                 let prefix = "if error.is_null() { Ok(";
                 let suffix = ") } else { Err(from_glib_full(error)) }";
-                let s = format_block_one_line(&prefix, suffix, &value_strings, "", "");
+                let s = format_block_one_line(prefix, suffix, &value_strings, "", "");
                 vec![s]
             }
             AssertInitializedAndInMainThread =>

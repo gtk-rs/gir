@@ -47,10 +47,10 @@ fn normal_generate(env: &Env) {
     enums::generate(env, &root_path, &mut mod_rs);
     flags::generate(env, &root_path, &mut mod_rs);
 
-    generate_mod_rs(env, &root_path, mod_rs, traits);
+    generate_mod_rs(env, &root_path, &mod_rs, &traits);
 }
 
-pub fn generate_mod_rs(env: &Env, root_path: &Path, mod_rs: Vec<String>, traits: Vec<String>) {
+pub fn generate_mod_rs(env: &Env, root_path: &Path, mod_rs: &[String], traits: &[String]) {
     let path = root_path.join("mod.rs");
     save_to_file(path, env.config.make_backup, |w| {
         try!(general::start_comments(w, &env.config));

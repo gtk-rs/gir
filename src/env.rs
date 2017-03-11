@@ -22,7 +22,7 @@ impl Env {
     }
     pub fn type_status(&self, name: &str) -> GStatus {
         self.config.objects.get(name).map(|o| o.status)
-            .unwrap_or(Default::default())
+            .unwrap_or_default()
     }
     pub fn type_status_sys(&self, name: &str) -> GStatus {
         self.config.objects.get(name).map(|o| o.status)

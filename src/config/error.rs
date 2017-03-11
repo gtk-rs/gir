@@ -59,17 +59,17 @@ impl TomlHelper for toml::Value {
     }
     fn as_result_str<'a>(&'a self, option: &'a str) -> Result<&'a str> {
         self.as_str()
-            .ok_or(format!("Invalid `{}` value, expected a string, found {}",
+            .ok_or_else(|| format!("Invalid `{}` value, expected a string, found {}",
                                           option, self.type_str()).into())
     }
     fn as_result_vec<'a>(&'a self, option: &'a str) -> Result<&'a Vec<Self>> {
         self.as_array()
-            .ok_or(format!("Invalid `{}` value, expected a array, found {}",
+            .ok_or_else(|| format!("Invalid `{}` value, expected a array, found {}",
                            option, self.type_str()).into())
     }
     fn as_result_bool<'a>(&'a self, option: &'a str) -> Result<bool> {
         self.as_bool()
-            .ok_or(format!("Invalid `{}` value, expected a boolean, found {}",
+            .ok_or_else(|| format!("Invalid `{}` value, expected a boolean, found {}",
                                           option, self.type_str()).into())
     }
 }

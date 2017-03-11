@@ -57,7 +57,7 @@ pub fn run(env: &mut Env) {
         analyzed = 0;
         let mut new_to_analyze: Vec<(TypeId, Vec<TypeId>)> = Vec::with_capacity(to_analyze.len());
         for &(tid, ref deps) in &to_analyze {
-            if !is_all_deps_analyzed(env, &deps) {
+            if !is_all_deps_analyzed(env, deps) {
                 new_to_analyze.push((tid, deps.clone()));
                 continue;
             }

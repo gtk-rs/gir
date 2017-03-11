@@ -50,7 +50,7 @@ pub fn analyze(env: &Env, props: &[library::Property], type_tid: library::TypeId
         let used_type_string = used_rust_type(env, prop.typ);
         if let Some(prop) = getter {
             if let Ok(ref s) = used_type_string {
-                imports.add_used_type(&s, prop.version);
+                imports.add_used_type(s, prop.version);
             }
             if prop.conversion != PropertyConversion::Direct {
                 imports.add("std::mem::transmute", prop.version);
@@ -64,7 +64,7 @@ pub fn analyze(env: &Env, props: &[library::Property], type_tid: library::TypeId
         }
         if let Some(prop) = setter {
             if let Ok(ref s) = used_type_string {
-                imports.add_used_type(&s, prop.version);
+                imports.add_used_type(s, prop.version);
             }
             if type_string.is_ok() {
                 imports.add("glib::Value", prop.version);

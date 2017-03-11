@@ -21,8 +21,8 @@ pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>, traits: &
         info!("Generating file {:?}", path);
 
         save_to_file(path, env.config.make_backup,
-            |w| super::object::generate(w, env, &class_analysis));
+            |w| super::object::generate(w, env, class_analysis));
 
-        super::object::generate_reexports(env, &class_analysis, &mod_name, mod_rs, traits);
+        super::object::generate_reexports(env, class_analysis, &mod_name, mod_rs, traits);
     }
 }

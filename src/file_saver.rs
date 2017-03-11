@@ -23,9 +23,8 @@ pub fn save_to_file<P, F>(path: P, make_backup: bool, mut closure: F) where
 
 /// Create .bak file
 pub fn create_backup<P: AsRef<Path>>(path: P) -> Result<bool> {
-    match fs::metadata(&path) {
-        Err(_) => return Ok(false),
-        Ok(_) => (),
+    if fs::metadata(&path).is_err() {
+        return Ok(false)
     }
     let new_path = path.as_ref().with_extension("bak");
     fs::rename(path, new_path).map(|_| true)

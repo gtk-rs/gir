@@ -117,7 +117,7 @@ pub fn generate_reexports(env: &Env, analysis: &analysis::object::Info, module_n
     if let Some(cfg) = general::version_condition_string(env, analysis.version, false, 0) {
         cfgs.push(cfg);
     }
-    contents.push(format!(""));
+    contents.push("".to_owned());
     contents.extend_from_slice(&cfgs);
     contents.push(format!("mod {};", module_name));
     contents.extend_from_slice(&cfgs);

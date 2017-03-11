@@ -76,7 +76,7 @@ impl Bounds {
         }
     }
     pub fn add_parameter(&mut self, name: &str, type_str: &str, mut bound_type: BoundType) -> bool {
-        if self.used.iter().any(|ref n| n.0 == name) { return false; }
+        if self.used.iter().any(|n| n.0 == name) { return false; }
         if let BoundType::Into(_) = bound_type {
             if let Some(lifetime) = self.unused_lifetimes.pop_front() {
                 self.lifetimes.push(lifetime);
@@ -93,7 +93,7 @@ impl Bounds {
         }
     }
     pub fn get_parameter_alias_info(&self, name: &str) -> Option<(char, BoundType)> {
-        self.used.iter().find(|ref n| n.0 == name)
+        self.used.iter().find(|n| n.0 == name)
             .map(|t| (t.1, t.3))
     }
     pub fn update_imports(&self, imports: &mut Imports) {

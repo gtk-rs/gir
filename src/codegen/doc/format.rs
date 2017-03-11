@@ -86,7 +86,7 @@ fn replace_c_types(entry: &str, symbols: &symbols::Info) -> String {
     let lookup = |s: &str| -> String {
         symbols.by_c_name(s)
             .map(|s| s.full_rust_name())
-            .unwrap_or(s.into())
+            .unwrap_or_else(|| s.into())
     };
     let out = SYMBOL.replace_all(entry, |caps: &Captures| {
         format!("{}`{}{}`", &caps[1], lookup(&caps[2]), caps.get(3).map(|m| m.as_str()).unwrap_or(""))

@@ -47,7 +47,7 @@ pub fn run(library: &Library, namespaces: &namespaces::Info) -> Info {
     info.insert("FALSE", Symbol { name: "false".into(), ..Default::default() });
     info.insert("TRUE", Symbol { name: "true".into(), ..Default::default() });
 
-    for (ns_id, ref ns) in library.namespaces.iter().enumerate() {
+    for (ns_id, ns) in library.namespaces.iter().enumerate() {
         let ns_id = ns_id as NsId;
         if ns_id == namespaces::INTERNAL {
             continue

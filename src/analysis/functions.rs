@@ -67,7 +67,7 @@ pub fn analyze(env: &Env, functions: &[library::Function], type_tid: library::Ty
         let signature_params = Signature::new(func);
         let mut not_version = None;
         if func.kind == library::FunctionKind::Method {
-            if let Some(ref deps) = deps {
+            if let Some(deps) = deps {
                 let (has, version) = signature_params.has_in_deps(env, &name, deps);
                 if has {
                     match version {

@@ -28,7 +28,7 @@ pub fn generate(w: &mut Write, env: &Env, analysis: &analysis::signals::Info,
     if !only_declaration {
         match function_type_string {
             Some(ref type_) => {
-                let body = body(analysis, &type_, in_trait).to_code(env);
+                let body = body(analysis, type_, in_trait).to_code(env);
                 for s in body {
                     try!(writeln!(w, "{}{}", tabs(indent), s));
                 }
@@ -57,7 +57,7 @@ fn function_type_string(env: &Env, analysis: &analysis::signals::Info,
     }
 
     let trampoline_name = analysis.trampoline_name.as_ref().unwrap();
-    let trampoline = match trampolines.iter().filter(|t| *trampoline_name == t.name).next() {
+    let trampoline = match trampolines.iter().find(|t| *trampoline_name == t.name) {
         Some(trampoline) => trampoline,
         None => panic!("Internal error: can't find trampoline '{}'", trampoline_name),
     };
@@ -77,7 +77,7 @@ fn declaration(analysis: &analysis::signals::Info,
 fn bounds(function_type_string: &Option<String>) -> String {
     match *function_type_string {
         Some(ref type_) => format!("F: {}", type_),
-        _ =>  return "Unsupported or ignored types".to_owned(),
+        _ =>  "Unsupported or ignored types".to_owned(),
     }
 }
 
@@ -86,7 +86,7 @@ fn body(analysis: &analysis::signals::Info, function_type_string: &str,
     let mut builder = signal_body::Builder::new();
 
     builder.signal_name(&analysis.signal_name)
-        .trampoline_name(&analysis.trampoline_name.as_ref().unwrap())
+        .trampoline_name(analysis.trampoline_name.as_ref().unwrap())
         .in_trait(in_trait)
         .function_type_string(function_type_string);
 

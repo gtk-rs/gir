@@ -505,7 +505,7 @@ macro_rules! impl_maybe_ref {
 
         impl MaybeRef<$name> for Type {
             fn maybe_ref(&self) -> Option<&$name> {
-                if let &Type::$name(ref x) = self { Some(x) } else { None }
+                if let Type::$name(ref x) = *self { Some(x) } else { None }
             }
 
             fn to_ref(&self) -> &$name {
@@ -619,11 +619,11 @@ impl Library {
             namespaces: Vec::new(),
             index: HashMap::new(),
         };
-        assert!(library.add_namespace(INTERNAL_NAMESPACE_NAME) == INTERNAL_NAMESPACE);
+        assert_eq!(INTERNAL_NAMESPACE, library.add_namespace(INTERNAL_NAMESPACE_NAME));
         for &(name, t) in &FUNDAMENTAL {
             library.add_type(INTERNAL_NAMESPACE, name, Type::Fundamental(t));
         }
-        assert!(library.add_namespace(main_namespace_name) == MAIN_NAMESPACE);
+        assert_eq!(MAIN_NAMESPACE, library.add_namespace(main_namespace_name));
         library
     }
 

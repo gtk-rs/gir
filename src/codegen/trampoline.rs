@@ -105,7 +105,7 @@ fn func_returns(env: &Env, analysis: &Trampoline) -> String {
     } else if analysis.inhibit {
         " -> Inhibit".into()
     } else {
-        analysis.ret.to_return_value(&env)
+        analysis.ret.to_return_value(env)
     }
 }
 
@@ -140,7 +140,7 @@ fn transformation_vars(w: &mut Write, analysis: &Trampoline) -> Result<()> {
             None => (),
             Borrow => (),
             TreePath => {
-                let c_par = analysis.parameters.c_parameters.get(transform.ind_c).unwrap();
+                let c_par = &analysis.parameters.c_parameters[transform.ind_c];
                 try!(writeln!(w,
                               "\tlet {} = from_glib_full(ffi::gtk_tree_path_new_from_string({}));",
                               transform.name, c_par.name));

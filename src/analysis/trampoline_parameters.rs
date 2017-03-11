@@ -88,9 +88,7 @@ impl Parameters {
     }
 
     pub fn get(&self, ind_rust: usize) -> Option<&Transformation> {
-        self.transformations.iter()
-            .filter(|tr| tr.ind_rust==ind_rust)
-            .next()
+        self.transformations.iter().find(|tr| tr.ind_rust==ind_rust)
     }
 }
 
@@ -161,8 +159,7 @@ fn apply_transformation_type(env: &Env, parameters: &mut Parameters,
         }
         TransformationType::TreePath => {
             let type_ = env.type_(transform.typ);
-            if let &library::Type::Fundamental(library::Fundamental::Utf8) = type_
-            {
+            if let library::Type::Fundamental(library::Fundamental::Utf8) = *type_ {
                 if let Some(type_tid) = env.library.find_type(0, "Gtk.TreePath") {
                     transform.typ = type_tid;
                     transform.conversion_type = ConversionType::Direct;
