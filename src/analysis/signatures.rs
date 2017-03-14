@@ -27,12 +27,20 @@ impl Signature {
         (false, None)
     }
 
-    pub fn has_by_name(name:&String, signatures: &Signatures) -> (bool, Option<Version>) {
+    pub fn has_by_name_and_in_deps(env: &Env, name:&String, signatures: &Signatures,
+                                   deps: &[library::TypeId]) -> (bool, Option<Version>) {
         if let Some(params) = signatures.get(name) {
             return (true, params.2);
-        } else {
-            return (false, None);
         }
+        for tid in deps {
+            let full_name = tid.full_name(&env.library);
+            if let Some(info) = env.analysis.objects.get(&full_name) {
+                if let Some(params) = info.signatures.get(name) {
+                    return (true, params.2);
+                }
+            }
+        }
+        (false, None)
     }
 }
 

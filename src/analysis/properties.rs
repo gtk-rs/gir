@@ -27,8 +27,8 @@ pub struct Property {
 }
 
 pub fn analyze(env: &Env, props: &[library::Property], type_tid: library::TypeId,
-               obj: &GObject, imports: &mut Imports, signatures: &Signatures)
-               -> Vec<Property> {
+               obj: &GObject, imports: &mut Imports, signatures: &Signatures,
+               deps: &[library::TypeId]) -> Vec<Property> {
     let mut properties = Vec::new();
 
     for prop in props {
@@ -41,7 +41,7 @@ pub fn analyze(env: &Env, props: &[library::Property], type_tid: library::TypeId
         if env.is_totally_deprecated(prop.deprecated_version) { continue; }
 
         let (getter, setter) = analyze_property(env, prop, type_tid, &configured_properties,
-                                                signatures);
+                                                signatures, deps);
         if getter.is_none() && setter.is_none() {
             continue;
         }
@@ -80,7 +80,7 @@ pub fn analyze(env: &Env, props: &[library::Property], type_tid: library::TypeId
 
 fn analyze_property(env: &Env, prop: &library::Property, type_tid: library::TypeId,
                     configured_properties: &[&config::properties::Property],
-                    signatures: &Signatures) -> (Option<Property>, Option<Property>) {
+                    signatures: &Signatures, deps: &[library::TypeId]) -> (Option<Property>, Option<Property>) {
     let name = prop.name.clone();
     let type_ = env.type_(prop.typ);
 
@@ -96,19 +96,17 @@ fn analyze_property(env: &Env, prop: &library::Property, type_tid: library::Type
     let mut readable = prop.readable;
     let mut writable = prop.writable;
     if readable {
-        let (has, version) = Signature::has_by_name(&check_get_func_name, signatures);
-        if has {
-            if env.is_totally_deprecated(version) || version <= prop_version {
-                readable = false;
-            }
+        let (has, version) = Signature::has_by_name_and_in_deps(env, &check_get_func_name,
+                                                                signatures, deps);
+        if has && (env.is_totally_deprecated(version) || version <= prop_version) {
+            readable = false;
         }
     }
     if writable {
-        let (has, version) = Signature::has_by_name(&check_set_func_name, signatures);
-        if has {
-            if env.is_totally_deprecated(version) || version <= prop_version {
-                writable = false;
-            }
+        let (has, version) = Signature::has_by_name_and_in_deps(env, &check_set_func_name,
+                                                                signatures, deps);
+        if has && (env.is_totally_deprecated(version) || version <= prop_version) {
+            writable = false;
         }
     }
 

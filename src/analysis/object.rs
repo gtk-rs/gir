@@ -96,7 +96,7 @@ pub fn class(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<Info>
     let signals = signals::analyze(env, &klass.signals, class_tid, has_children,
                                    &mut trampolines, obj, &mut imports);
     let properties = properties::analyze(env, &klass.properties, class_tid, obj, &mut imports,
-                                         &signatures);
+                                         &signatures, deps);
 
     let (version, deprecated_version) = info_base::versions(env, obj, &functions, klass.version,
          klass.deprecated_version);
@@ -191,7 +191,7 @@ pub fn interface(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<I
     let signals = signals::analyze(env, &iface.signals, iface_tid, true,
                                    &mut trampolines, obj, &mut imports);
     let properties = properties::analyze(env, &iface.properties, iface_tid, obj, &mut imports,
-                                         &signatures);
+                                         &signatures, deps);
 
     let (version, deprecated_version) = info_base::versions(env, obj, &functions, iface.version,
          iface.deprecated_version);
