@@ -97,6 +97,7 @@ fn generate_enum(env: &Env, w: &mut Write, enum_: &Enumeration, config: &GObject
     try!(writeln!(w, "#[derive(Clone, Copy, Debug, Eq, PartialEq, Hash)]"));
     try!(writeln!(w, "pub enum {} {{", enum_.name));
     for member in &members {
+        try!(version_condition(w, env, member.version, false, 1));
         try!(writeln!(w, "\t{},", member.name));
     }
     try!(writeln!(w, "{}", "    #[doc(hidden)]
