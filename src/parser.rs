@@ -13,7 +13,7 @@ use library::*;
 use version::Version;
 
 type Reader = EventReader<BufReader<File>>;
-type Attributes = Vec<OwnedAttribute>;
+type Attributes = [OwnedAttribute];
 
 const EMPTY_CTYPE: &'static str = "/*EMPTY*/";
 
@@ -73,7 +73,7 @@ impl Library {
                     match name.local_name.as_ref() {
                         "include" => {
                             if let (Some(lib), Some(ver)) =
-                                (attributes.get("name"), attributes.get("version")) {
+                                (attributes.by_name("name"), attributes.by_name("version")) {
                                 if self.find_namespace(lib).is_none() {
                                     let lib = format!("{}-{}", lib, ver);
                                     try!(self.read_file(dir, &lib));
@@ -84,7 +84,7 @@ impl Library {
                         "package" => {
                             // take the first package element and ignore any other ones
                             if package.is_none() {
-                                package = attributes.get("name").map(|s| s.to_owned());
+                                package = attributes.by_name("name").map(|s| s.to_owned());
                                 if package.is_none() {
                                     bail!(mk_error!("Missing package name", parser));
                                 }
@@ -105,29 +105,29 @@ impl Library {
 
     fn read_namespace(&mut self, parser: &mut Reader, attrs: &Attributes, package: Option<String>)
                       -> Result<()> {
-        let name = try!(attrs.get("name")
+        let name = try!(attrs.by_name("name")
                         .ok_or_else(|| mk_error!("Missing namespace name", parser)));
         let ns_id = self.add_namespace(name);
         self.namespace_mut(ns_id).package_name = package;
-        if let Some(s) = attrs.get("shared-library") {
+        if let Some(s) = attrs.by_name("shared-library") {
             self.namespace_mut(ns_id).shared_library = s.split(',').map(String::from).collect();
         }
-        if let Some(s) = attrs.get("identifier-prefixes") {
+        if let Some(s) = attrs.by_name("identifier-prefixes") {
             self.namespace_mut(ns_id).identifier_prefixes = s.split(',').map(String::from)
                 .collect();
         }
-        if let Some(s) = attrs.get("symbol-prefixes") {
+        if let Some(s) = attrs.by_name("symbol-prefixes") {
             self.namespace_mut(ns_id).symbol_prefixes = s.split(',').map(String::from).collect();
         }
-        trace!("Reading {}-{}", name, attrs.get("version").unwrap());
+        trace!("Reading {}-{}", name, attrs.by_name("version").unwrap());
         loop {
             let event = try!(parser.next());
             match event {
                 StartElement { name, attributes, .. } => {
-                    trace!("<{} name={:?}>", name.local_name, attributes.get("name"));
+                    trace!("<{} name={:?}>", name.local_name, attributes.by_name("name"));
                     match name.local_name.as_ref() {
                         "class" => {
-                            trace!("class {}", attributes.get("name").unwrap());
+                            trace!("class {}", attributes.by_name("name").unwrap());
                             try!(self.read_class(parser, ns_id, &attributes));
                         }
                         "record" => {
@@ -158,7 +158,7 @@ impl Library {
                             try!(self.read_alias(parser, ns_id, &attributes));
                         }
                         _ => {
-                            warn!("<{} name={:?}>", name.local_name, attributes.get("name"));
+                            warn!("<{} name={:?}>", name.local_name, attributes.by_name("name"));
                             try!(ignore_element(parser));
                         }
                     }
@@ -171,14 +171,14 @@ impl Library {
     }
 
     fn read_class(&mut self, parser: &mut Reader, ns_id: u16, attrs: &Attributes) -> Result<()> {
-        let name = try!(attrs.get("name").ok_or_else(|| mk_error!("Missing class name", parser)));
-        let c_type = try!(attrs.get("type").or_else(|| attrs.get("type-name"))
+        let name = try!(attrs.by_name("name").ok_or_else(|| mk_error!("Missing class name", parser)));
+        let c_type = try!(attrs.by_name("type").or_else(|| attrs.by_name("type-name"))
             .ok_or_else(|| mk_error!("Missing c:type/glib:type-name attributes", parser)));
-        let get_type = try!(attrs.get("get-type")
+        let get_type = try!(attrs.by_name("get-type")
             .ok_or_else(|| mk_error!("Missing get-type attribute", parser)));
-        let version = try!(self.parse_version(parser, ns_id, attrs.get("version")));
+        let version = try!(self.parse_version(parser, ns_id, attrs.by_name("version")));
         let deprecated_version = try!(self.parse_version(parser, ns_id,
-            attrs.get("deprecated-version")));
+            attrs.by_name("deprecated-version")));
         let mut fns = Vec::new();
         let mut signals = Vec::new();
         let mut properties = Vec::new();
@@ -211,7 +211,7 @@ impl Library {
             }
         }
 
-        let parent = attrs.get("parent").map(|s| self.find_or_stub_type(ns_id, s));
+        let parent = attrs.by_name("parent").map(|s| self.find_or_stub_type(ns_id, s));
         let typ = Type::Class(
             Class {
                 name: name.into(),
@@ -232,14 +232,14 @@ impl Library {
     }
 
     fn read_record(&mut self, parser: &mut Reader, ns_id: u16, attrs: &Attributes) -> Result<()> {
-        let mut name = try!(attrs.get("name")
+        let mut name = try!(attrs.by_name("name")
                             .ok_or_else(|| mk_error!("Missing record name", parser)));
-        let mut c_type = try!(attrs.get("type")
+        let mut c_type = try!(attrs.by_name("type")
                               .ok_or_else(|| mk_error!("Missing c:type attribute", parser)));
-        let get_type = attrs.get("get-type");
-        let version = try!(self.parse_version(parser, ns_id, attrs.get("version")));
+        let get_type = attrs.by_name("get-type");
+        let version = try!(self.parse_version(parser, ns_id, attrs.by_name("version")));
         let deprecated_version = try!(self.parse_version(parser, ns_id,
-            attrs.get("deprecated-version")));
+            attrs.by_name("deprecated-version")));
         let mut fields = Vec::new();
         let mut fns = Vec::new();
         let mut doc = None;
@@ -271,7 +271,7 @@ impl Library {
             }
         }
 
-        if attrs.get("is-gtype-struct").is_some() {
+        if attrs.by_name("is-gtype-struct").is_some() {
             return Ok(());
         }
 
@@ -309,8 +309,8 @@ impl Library {
 
     fn read_named_union(&mut self, parser: &mut Reader, ns_id: u16, attrs: &Attributes)
                         -> Result<()> {
-        let name = try!(attrs.get("name").ok_or_else(|| mk_error!("Missing union name", parser)));
-        let c_type = attrs.get("type");
+        let name = try!(attrs.by_name("name").ok_or_else(|| mk_error!("Missing union name", parser)));
+        let c_type = attrs.by_name("type");
         let (fields, fns, doc) = try!(self.read_union(parser, ns_id));
         let typ = Type::Union(
             Union {
@@ -355,7 +355,7 @@ impl Library {
 
     fn read_field(&mut self, parser: &mut Reader, ns_id: u16,
                   attrs: &Attributes) -> Result<Field> {
-        let name = try!(attrs.get("name").ok_or_else(|| mk_error!("Missing field name", parser)));
+        let name = try!(attrs.by_name("name").ok_or_else(|| mk_error!("Missing field name", parser)));
         let mut typ = None;
         let mut doc = None;
         loop {
@@ -387,8 +387,8 @@ impl Library {
                 _ => xml_next!(event, parser),
             }
         }
-        let private = attrs.get("private").unwrap_or("") == "1";
-        let bits = attrs.get("bits").and_then(|s| s.parse().ok());
+        let private = attrs.by_name("private").unwrap_or("") == "1";
+        let bits = attrs.by_name("bits").and_then(|s| s.parse().ok());
         if let Some((tid, c_type)) = typ {
             Ok(Field {
                 name: name.into(),
@@ -414,15 +414,15 @@ impl Library {
 
     fn read_interface(&mut self, parser: &mut Reader,
                       ns_id: u16, attrs: &Attributes) -> Result<()> {
-        let name = try!(attrs.get("name")
+        let name = try!(attrs.by_name("name")
                         .ok_or_else(|| mk_error!("Missing interface name", parser)));
-        let c_type = try!(attrs.get("type")
+        let c_type = try!(attrs.by_name("type")
                           .ok_or_else(|| mk_error!("Missing c:type attribute", parser)));
-        let get_type = try!(attrs.get("get-type")
+        let get_type = try!(attrs.by_name("get-type")
             .ok_or_else(|| mk_error!("Missing get-type attribute", parser)));
-        let version = try!(self.parse_version(parser, ns_id, attrs.get("version")));
+        let version = try!(self.parse_version(parser, ns_id, attrs.by_name("version")));
         let deprecated_version = try!(self.parse_version(parser, ns_id,
-            attrs.get("deprecated-version")));
+            attrs.by_name("deprecated-version")));
         let mut fns = Vec::new();
         let mut signals = Vec::new();
         let mut properties = Vec::new();
@@ -470,13 +470,13 @@ impl Library {
 
     fn read_bitfield(&mut self, parser: &mut Reader, ns_id: u16,
                      attrs: &Attributes) -> Result<()> {
-        let name = try!(attrs.get("name")
+        let name = try!(attrs.by_name("name")
                         .ok_or_else(|| mk_error!("Missing bitfield name", parser)));
-        let c_type = try!(attrs.get("type")
+        let c_type = try!(attrs.by_name("type")
                           .ok_or_else(|| mk_error!("Missing c:type attribute", parser)));
-        let version = try!(self.parse_version(parser, ns_id, attrs.get("version")));
+        let version = try!(self.parse_version(parser, ns_id, attrs.by_name("version")));
         let deprecated_version = try!(self.parse_version(parser, ns_id,
-            attrs.get("deprecated-version")));
+            attrs.by_name("deprecated-version")));
         let mut members = Vec::new();
         let mut fns = Vec::new();
         let mut doc = None;
@@ -520,14 +520,14 @@ impl Library {
 
     fn read_enumeration(&mut self, parser: &mut Reader, ns_id: u16,
                         attrs: &Attributes) -> Result<()> {
-        let name = try!(attrs.get("name")
+        let name = try!(attrs.by_name("name")
                         .ok_or_else(|| mk_error!("Missing enumeration name", parser)));
-        let c_type = try!(attrs.get("type")
+        let c_type = try!(attrs.by_name("type")
                           .ok_or_else(|| mk_error!("Missing c:type attribute", parser)));
-        let version = try!(self.parse_version(parser, ns_id, attrs.get("version")));
+        let version = try!(self.parse_version(parser, ns_id, attrs.by_name("version")));
         let deprecated_version = try!(self.parse_version(parser, ns_id,
-            attrs.get("deprecated-version")));
-        let error_domain = attrs.get("error-domain").map(String::from);
+            attrs.by_name("deprecated-version")));
+        let error_domain = attrs.by_name("error-domain").map(String::from);
         let mut members = Vec::new();
         let mut fns = Vec::new();
         let mut doc = None;
@@ -580,14 +580,14 @@ impl Library {
 
     fn read_constant(&mut self, parser: &mut Reader, ns_id: u16,
                      attrs: &Attributes) -> Result<()> {
-        let name = try!(attrs.get("name").ok_or_else(|| mk_error!("Missing constant name", parser)));
-        let c_identifier = try!(attrs.get("type")
+        let name = try!(attrs.by_name("name").ok_or_else(|| mk_error!("Missing constant name", parser)));
+        let c_identifier = try!(attrs.by_name("type")
                                 .ok_or_else(|| mk_error!("Missing c:type attribute", parser)));
-        let value = try!(attrs.get("value")
+        let value = try!(attrs.by_name("value")
                          .ok_or_else(|| mk_error!("Missing constant value", parser)));
-        let version = try!(self.parse_version(parser, ns_id, attrs.get("version")));
+        let version = try!(self.parse_version(parser, ns_id, attrs.by_name("version")));
         let deprecated_version = try!(self.parse_version(parser, ns_id,
-            attrs.get("deprecated-version")));
+            attrs.by_name("deprecated-version")));
         let mut inner = None;
         let mut doc = None;
         let mut doc_deprecated = None;
@@ -641,9 +641,9 @@ impl Library {
 
     fn read_alias(&mut self, parser: &mut Reader, ns_id: u16,
                      attrs: &Attributes) -> Result<()> {
-        let name = try!(attrs.get("name")
+        let name = try!(attrs.by_name("name")
                         .ok_or_else(|| mk_error!("Missing alias name", parser)));
-        let c_identifier = try!(attrs.get("type")
+        let c_identifier = try!(attrs.by_name("type")
                                 .ok_or_else(|| mk_error!("Missing c:type attribute", parser)));
         let mut inner = None;
         let mut doc = None;
@@ -691,16 +691,16 @@ impl Library {
     }
 
     fn read_member(&self, parser: &mut Reader, attrs: &Attributes) -> Result<Member> {
-        let name = try!(attrs.get("name").ok_or_else(|| mk_error!("Missing member name", parser)));
-        let value = try!(attrs.get("value")
+        let name = try!(attrs.by_name("name").ok_or_else(|| mk_error!("Missing member name", parser)));
+        let value = try!(attrs.by_name("value")
                          .ok_or_else(|| mk_error!("Missing member value", parser)));
-        let c_identifier = attrs.get("identifier").map(|x| x.into());
+        let c_identifier = attrs.by_name("identifier").map(|x| x.into());
         let mut doc = None;
         loop {
             let event = try!(parser.next());
             match event {
                 StartElement { name, attributes, .. } => {
-                    match (name.local_name.as_ref(), attributes.get("name")) {
+                    match (name.local_name.as_ref(), attributes.by_name("name")) {
                         /*
                         ("attribute", Some("c:identifier")) => {
                             let value = try!(attributes.get("value")
@@ -726,12 +726,12 @@ impl Library {
 
     fn read_function(&mut self, parser: &mut Reader, ns_id: u16,
                      kind_str: &str, attrs: &Attributes) -> Result<Function> {
-        let name = try!(attrs.get("name").ok_or_else(|| mk_error!("Missing function name", parser)));
-        let c_identifier = attrs.get("identifier").or_else(|| attrs.get("type"));
+        let name = try!(attrs.by_name("name").ok_or_else(|| mk_error!("Missing function name", parser)));
+        let c_identifier = attrs.by_name("identifier").or_else(|| attrs.by_name("type"));
         let kind = try!(FunctionKind::from_str(kind_str).map_err(|why| mk_error!(why, parser)));
-        let version = try!(self.parse_version(parser, ns_id, attrs.get("version")));
+        let version = try!(self.parse_version(parser, ns_id, attrs.by_name("version")));
         let deprecated_version = try!(self.parse_version(parser, ns_id,
-            attrs.get("deprecated-version")));
+            attrs.by_name("deprecated-version")));
         let mut params = Vec::new();
         let mut ret = None;
         let mut doc = None;
@@ -763,7 +763,7 @@ impl Library {
                 _ => xml_next!(event, parser),
             }
         }
-        let throws = attrs.get("throws").unwrap_or("") == "1";
+        let throws = attrs.by_name("throws").unwrap_or("") == "1";
         if throws {
             params.push(Parameter {
                 name: "error".into(),
@@ -809,7 +809,7 @@ impl Library {
 
     fn read_function_if_not_moved(&mut self, parser: &mut Reader, ns_id: u16,
                     kind_str: &str, attrs: &Attributes)  -> Result<Option<Function>> {
-        let moved_to = attrs.get("moved-to").is_some();
+        let moved_to = attrs.by_name("moved-to").is_some();
         if moved_to { try!(ignore_element(parser)); return Ok(None); }
         let pos = parser.position();
         let f = try!(self.read_function(parser, ns_id, kind_str, &attrs));
@@ -822,14 +822,14 @@ impl Library {
 
     fn read_signal(&mut self, parser: &mut Reader, ns_id: u16,
                      attrs: &Attributes) -> Result<Signal> {
-        let name = try!(attrs.get("name").ok_or_else(|| mk_error!("Missing signal name", parser)));
-        let version = match attrs.get("version") {
+        let name = try!(attrs.by_name("name").ok_or_else(|| mk_error!("Missing signal name", parser)));
+        let version = match attrs.by_name("version") {
             Some(v) => Some(try!(v.parse().map_err(|why| mk_error!(why, parser)))),
             None => None,
         };
-        let deprecated = to_bool(attrs.get("deprecated").unwrap_or("none"));
+        let deprecated = to_bool(attrs.by_name("deprecated").unwrap_or("none"));
         let deprecated_version = if deprecated {
-            match attrs.get("deprecated-version") {
+            match attrs.by_name("deprecated-version") {
                 Some(v) => Some(try!(v.parse().map_err(|why| mk_error!(why, parser)))),
                 None => None,
             }
@@ -923,19 +923,19 @@ impl Library {
     fn read_parameter(&mut self, parser: &mut Reader, ns_id: u16,
                       kind_str: &str, attrs: &Attributes,
                       allow_no_ctype: bool) -> Result<Parameter> {
-        let name = attrs.get("name").unwrap_or("");
+        let name = attrs.by_name("name").unwrap_or("");
         let instance_parameter = kind_str == "instance-parameter";
         let transfer = try!(
-            Transfer::from_str(attrs.get("transfer-ownership").unwrap_or("none"))
+            Transfer::from_str(attrs.by_name("transfer-ownership").unwrap_or("none"))
                 .map_err(|why| mk_error!(why, parser)));
-        let nullable = to_bool(attrs.get("nullable").unwrap_or("none"));
-        let allow_none = to_bool(attrs.get("allow-none").unwrap_or("none"));
-        let caller_allocates = to_bool(attrs.get("caller-allocates").unwrap_or("none"));
+        let nullable = to_bool(attrs.by_name("nullable").unwrap_or("none"));
+        let allow_none = to_bool(attrs.by_name("allow-none").unwrap_or("none"));
+        let caller_allocates = to_bool(attrs.by_name("caller-allocates").unwrap_or("none"));
         let direction = try!(
             if kind_str == "return-value" {
                 Ok(ParameterDirection::Return)
             } else {
-                ParameterDirection::from_str(attrs.get("direction").unwrap_or("in"))
+                ParameterDirection::from_str(attrs.by_name("direction").unwrap_or("in"))
                     .map_err(|why| mk_error!(why, parser))
             });
 
@@ -1010,21 +1010,21 @@ impl Library {
 
     fn read_property(&mut self, parser: &mut Reader, ns_id: u16,
                      attrs: &Attributes) -> Result<Option<Property>> {
-        let name = try!(attrs.get("name").ok_or_else(|| mk_error!("Missing property name", parser)));
-        let readable = to_bool(attrs.get("readable").unwrap_or("1"));
-        let writable = to_bool(attrs.get("writable").unwrap_or("none"));
-        let construct = to_bool(attrs.get("construct").unwrap_or("none"));
-        let construct_only = to_bool(attrs.get("construct_only").unwrap_or("none"));
+        let name = try!(attrs.by_name("name").ok_or_else(|| mk_error!("Missing property name", parser)));
+        let readable = to_bool(attrs.by_name("readable").unwrap_or("1"));
+        let writable = to_bool(attrs.by_name("writable").unwrap_or("none"));
+        let construct = to_bool(attrs.by_name("construct").unwrap_or("none"));
+        let construct_only = to_bool(attrs.by_name("construct_only").unwrap_or("none"));
         let transfer = try!(
-            Transfer::from_str(attrs.get("transfer-ownership").unwrap_or("none"))
+            Transfer::from_str(attrs.by_name("transfer-ownership").unwrap_or("none"))
                 .map_err(|why| mk_error!(why, parser)));
-        let version = match attrs.get("version") {
+        let version = match attrs.by_name("version") {
             Some(v) => Some(try!(v.parse().map_err(|why| mk_error!(why, parser)))),
             None => None,
         };
-        let deprecated = to_bool(attrs.get("deprecated").unwrap_or("none"));
+        let deprecated = to_bool(attrs.by_name("deprecated").unwrap_or("none"));
         let deprecated_version = if deprecated {
-            match attrs.get("deprecated-version") {
+            match attrs.by_name("deprecated-version") {
                 Some(v) => Some(try!(v.parse().map_err(|why| mk_error!(why, parser)))),
                 None => None,
             }
@@ -1108,10 +1108,10 @@ impl Library {
     fn read_type(&mut self, parser: &mut Reader, ns_id: u16,
                  name: &OwnedName, attrs: &Attributes) -> Result<(TypeId, Option<String>)> {
         let start_pos = parser.position();
-        let name = try!(attrs.get("name")
+        let name = try!(attrs.by_name("name")
                         .or_else(|| if name.local_name == "array" { Some("array") } else { None })
                         .ok_or_else(|| mk_error!("Missing type name", &start_pos)));
-        let c_type = attrs.get("type").map(|s| s.into());
+        let c_type = attrs.by_name("type").map(|s| s.into());
         let mut inner = Vec::new();
         loop {
             let event = try!(parser.next());
@@ -1138,7 +1138,7 @@ impl Library {
         }
         else {
             let tid = if name == "array" {
-                Type::c_array(self, inner[0], attrs.get("fixed-size").and_then(|n| n.parse().ok()))
+                Type::c_array(self, inner[0], attrs.by_name("fixed-size").and_then(|n| n.parse().ok()))
             }
             else {
                 try!(Type::container(self, name, inner)
@@ -1161,12 +1161,12 @@ impl Library {
     }
 }
 
-trait Get {
-    fn get<'a>(&'a self, name: &str) -> Option<&'a str>;
+trait ByName {
+    fn by_name<'a>(&'a self, name: &str) -> Option<&'a str>;
 }
 
-impl Get for Attributes {
-    fn get<'a>(&'a self, name: &str) -> Option<&'a str> {
+impl ByName for Attributes {
+    fn by_name<'a>(&'a self, name: &str) -> Option<&'a str> {
         for attr in self {
             if attr.name.local_name == name {
                 return Some(&attr.value);
