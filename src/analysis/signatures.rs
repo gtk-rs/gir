@@ -13,7 +13,7 @@ impl Signature {
         Signature(params, func.ret.typ, func.version)
     }
 
-    pub fn has_in_deps(&self, env: &Env, name: &String, deps: &[library::TypeId]) -> (bool, Option<Version>) {
+    pub fn has_in_deps(&self, env: &Env, name: &str, deps: &[library::TypeId]) -> (bool, Option<Version>) {
         for tid in deps {
             let full_name = tid.full_name(&env.library);
             if let Some(info) = env.analysis.objects.get(&full_name) {
@@ -27,7 +27,7 @@ impl Signature {
         (false, None)
     }
 
-    pub fn has_by_name_and_in_deps(env: &Env, name:&String, signatures: &Signatures,
+    pub fn has_by_name_and_in_deps(env: &Env, name:&str, signatures: &Signatures,
                                    deps: &[library::TypeId]) -> (bool, Option<Version>) {
         if let Some(params) = signatures.get(name) {
             return (true, params.2);
