@@ -196,6 +196,10 @@ pub fn interface(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<I
     let (version, deprecated_version) = info_base::versions(env, obj, &functions, iface.version,
          iface.deprecated_version);
 
+    if !properties.is_empty() {
+        imports.add("Object", None);
+    }
+
     //don't `use` yourself
     imports.remove(&name);
 
