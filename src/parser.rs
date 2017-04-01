@@ -1014,7 +1014,7 @@ impl Library {
         let readable = to_bool(attrs.by_name("readable").unwrap_or("1"));
         let writable = to_bool(attrs.by_name("writable").unwrap_or("none"));
         let construct = to_bool(attrs.by_name("construct").unwrap_or("none"));
-        let construct_only = to_bool(attrs.by_name("construct_only").unwrap_or("none"));
+        let construct_only = to_bool(attrs.by_name("construct-only").unwrap_or("none"));
         let transfer = try!(
             Transfer::from_str(attrs.by_name("transfer-ownership").unwrap_or("none"))
                 .map_err(|why| mk_error!(why, parser)));

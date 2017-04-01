@@ -32,7 +32,6 @@ pub fn analyze(env: &Env, props: &[library::Property], type_tid: library::TypeId
     let mut properties = Vec::new();
 
     for prop in props {
-        if prop.construct_only { continue; }
         let configured_properties = obj.properties.matched(&prop.name);
         if configured_properties.iter().any(|f| f.ignore) {
             continue;
@@ -95,6 +94,8 @@ fn analyze_property(env: &Env, prop: &library::Property, type_tid: library::Type
 
     let mut readable = prop.readable;
     let mut writable = prop.writable;
+    if prop.construct_only { writable = false; }
+
     if readable {
         let (has, version) = Signature::has_by_name_and_in_deps(env, &check_get_func_name,
                                                                 signatures, deps);
