@@ -203,6 +203,11 @@ impl Library {
                             fields.push(try!(self.read_field(parser, ns_id, &attributes))),
                         "virtual-method" => try!(ignore_element(parser)),
                         "doc" => doc = try!(read_text(parser)),
+                        "union" => {
+                            let (union_fields, _, doc) = try!(self.read_union(parser, ns_id));
+                            let typ = Type::union(self, union_fields);
+                            fields.push(Field { typ: typ, doc: doc, ..Field::default() });
+                        }
                         x => bail!(mk_error!(format!("Unexpected element <{}>", x), parser)),
                     }
                 }
