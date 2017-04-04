@@ -1,3 +1,4 @@
+use analysis::bounds::Bounds;
 use analysis::imports::Imports;
 use analysis::ref_mode::RefMode;
 use analysis::rust_type::*;
@@ -24,6 +25,7 @@ pub struct Property {
     pub set_in_ref_mode: RefMode,
     pub version: Option<Version>,
     pub deprecated_version: Option<Version>,
+    pub bounds: Bounds,
 }
 
 pub fn analyze(env: &Env, props: &[library::Property], type_tid: library::TypeId,
@@ -68,6 +70,10 @@ pub fn analyze(env: &Env, props: &[library::Property], type_tid: library::TypeId
             if type_string.is_ok() {
                 imports.add("glib::Value", prop.version);
                 imports.add("gobject_ffi", prop.version);
+                if !prop.bounds.is_empty() {
+                    prop.bounds.update_imports(imports);
+                    imports.add("Object", prop.version);
+                }
             }
 
             properties.push(prop);
@@ -138,10 +144,13 @@ fn analyze_property(env: &Env, prop: &library::Property, type_tid: library::Type
             set_in_ref_mode: set_in_ref_mode,
             version: prop_version,
             deprecated_version: prop.deprecated_version,
+            bounds: Default::default(),
         })
     } else { None };
 
     let setter = if writable {
+        let mut bounds: Bounds = Default::default();
+        bounds.add_for_property_setter(env, &var_name, prop.typ, nullable);
         Some(Property{
             name: name.clone(),
             var_name: var_name,
@@ -155,6 +164,7 @@ fn analyze_property(env: &Env, prop: &library::Property, type_tid: library::Type
             set_in_ref_mode: set_in_ref_mode,
             version: prop_version,
             deprecated_version: prop.deprecated_version,
+            bounds: bounds,
         })
     } else { None };
 

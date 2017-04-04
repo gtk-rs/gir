@@ -51,6 +51,17 @@ impl Bounds {
         }
     }
 
+    pub fn add_for_property_setter(&mut self, env: &Env, var_name:&str, type_id: TypeId,
+                                   nullable: Nullable) {
+        match Bounds::type_for(env, type_id, nullable) {
+            Some(BoundType::IsA) => {
+                let type_name = bounds_rust_type(env, type_id);
+                self.add_parameter(var_name, &type_name.into_string(), BoundType::IsA);
+            }
+            _ => (),
+        }
+    }
+
     fn type_for(env: &Env, type_id: TypeId, nullable: Nullable) -> Option<BoundType> {
         use self::BoundType::*;
         match *env.library.type_(type_id) {

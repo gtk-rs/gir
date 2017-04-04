@@ -1,5 +1,6 @@
 use std::io::{Result, Write};
 
+use analysis::bounds::Bounds;
 use analysis::properties::Property;
 use analysis::rust_type::{parameter_rust_type,rust_type};
 use chunk::Chunk;
@@ -49,12 +50,23 @@ fn generate_prop_func(w: &mut Write, env: &Env, prop: &Property, in_trait: bool,
 }
 
 fn declaration(env: &Env, prop: &Property) -> String {
+    let mut bound = String::new();
     let set_param = if prop.is_get {
         "".to_string()
     } else {
         let dir = library::ParameterDirection::In;
-        let param_type = parameter_rust_type(env, prop.typ, dir, prop.nullable, prop.set_in_ref_mode)
-            .into_string();
+        let param_type = match prop.bounds.get_parameter_alias_info(&prop.var_name) {
+            Some((t, _)) => {
+                bound = bounds(&prop.bounds);
+                if *prop.nullable {
+                    format!("Option<&{}>", t)
+                } else {
+                    format!("&{}", t)
+                }
+            }
+            None => parameter_rust_type(env, prop.typ, dir, prop.nullable, prop.set_in_ref_mode)
+                .into_string()
+        };
         format!(", {}: {}", prop.var_name, param_type)
     };
     let return_str = if prop.is_get {
@@ -65,7 +77,19 @@ fn declaration(env: &Env, prop: &Property) -> String {
     } else {
         "".to_string()
     };
-    format!("fn {}(&self{}){}", prop.func_name, set_param, return_str)
+    format!("fn {}{}(&self{}){}", prop.func_name, bound, set_param, return_str)
+}
+
+pub fn bounds(bounds: &Bounds) -> String {
+    use analysis::bounds::BoundType::*;
+    if bounds.is_empty() { return String::new() }
+    let strs: Vec<String> = bounds.iter()
+        .map(|bound| match bound.3 {
+            IsA => format!("{}: IsA<{}> + IsA<Object>", bound.1, bound.2),
+            _ => unreachable!(),
+        })
+        .collect();
+    format!("<{}>", strs.join(", "))
 }
 
 fn body(prop: &Property) -> Chunk {
