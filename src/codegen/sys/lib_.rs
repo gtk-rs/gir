@@ -2,8 +2,6 @@ use std::collections::HashMap;
 use std::io::{Result, Write};
 use case::CaseExt;
 
-use analysis::ref_mode::RefMode;
-use analysis::rust_type::parameter_rust_type;
 use codegen::general::{self, version_condition};
 use env::Env;
 use file_saver::*;
@@ -145,11 +143,8 @@ fn generate_constants(w: &mut Write, env: &Env, constants: &[Constant]) -> Resul
         try!(writeln!(w, "// Constants"));
     }
     for constant in constants {
-        let direction = ParameterDirection::In;
-        let ref_mode = RefMode::of(&env.library, constant.typ, direction);
         let (mut comment, mut type_) =
-            match parameter_rust_type(env, constant.typ, direction,
-                                      Nullable(false), ref_mode) {
+            match ffi_type(env, constant.typ, &constant.c_type) {
                 Ok(x) => ("", x),
                 x @ Err(..) => ("//", x.into_string()),
             };
@@ -158,7 +153,7 @@ fn generate_constants(w: &mut Write, env: &Env, constants: &[Constant]) -> Resul
             comment = "//";
         }
         let mut value = constant.value.clone();
-        if type_ == "&str" {
+        if type_ == "*mut c_char" {
             type_ = "&'static str".into();
             value = format!("r##\"{}\"##", value);
         } else if type_ == "Glyph" && env.config.library_name == "Pango"  {
