@@ -84,8 +84,8 @@ pub fn bounds(bounds: &Bounds) -> String {
     use analysis::bounds::BoundType::*;
     if bounds.is_empty() { return String::new() }
     let strs: Vec<String> = bounds.iter()
-        .map(|bound| match bound.3 {
-            IsA => format!("{}: IsA<{}> + IsA<Object>", bound.1, bound.2),
+        .map(|bound| match bound.bound_type {
+            IsA => format!("{}: IsA<{}> + IsA<Object>", bound.alias, bound.type_str),
             _ => unreachable!(),
         })
         .collect();

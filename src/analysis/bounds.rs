@@ -17,11 +17,18 @@ pub enum BoundType {
     Into(char),
 }
 
+#[derive(Clone, Eq, Debug, PartialEq)]
+pub struct Bound {
+    pub bound_type: BoundType,
+    pub parameter_name: String,
+    pub alias: char,
+    pub type_str: String,
+}
+
 #[derive(Debug)]
 pub struct Bounds {
     unused: VecDeque<char>,
-    //Vector tuples <parameter name>, <alias>, <type>, <bound type>
-    used: Vec<(String, char, String, BoundType)>,
+    used: Vec<Bound>,
     unused_lifetimes: VecDeque<char>,
     lifetimes: Vec<char>,
 }
@@ -87,7 +94,7 @@ impl Bounds {
         }
     }
     pub fn add_parameter(&mut self, name: &str, type_str: &str, mut bound_type: BoundType) -> bool {
-        if self.used.iter().any(|n| n.0 == name) { return false; }
+        if self.used.iter().any(|n| n.parameter_name == name) { return false; }
         if let BoundType::Into(_) = bound_type {
             if let Some(lifetime) = self.unused_lifetimes.pop_front() {
                 self.lifetimes.push(lifetime);
@@ -97,23 +104,28 @@ impl Bounds {
             }
         }
         if let Some(alias) = self.unused.pop_front() {
-            self.used.push((name.into(), alias, type_str.into(), bound_type));
+            self.used.push(Bound{
+                bound_type: bound_type,
+                parameter_name: name.to_owned(),
+                alias: alias,
+                type_str: type_str.to_owned(),
+            });
             true
         } else {
             false
         }
     }
     pub fn get_parameter_alias_info(&self, name: &str) -> Option<(char, BoundType)> {
-        self.used.iter().find(|n| n.0 == name)
-            .map(|t| (t.1, t.3))
+        self.used.iter().find(|n| n.parameter_name == name)
+            .map(|t| (t.alias, t.bound_type))
     }
     pub fn update_imports(&self, imports: &mut Imports) {
         //TODO: import with versions
         use self::BoundType::*;
         for used in &self.used {
-            match used.3 {
+            match used.bound_type {
                 IsA => imports.add("glib::object::IsA", None),
-                AsRef => imports.add_used_type(&used.2, None),
+                AsRef => imports.add_used_type(&used.type_str, None),
                 Into(_) => {}
             }
         }
@@ -121,7 +133,7 @@ impl Bounds {
     pub fn is_empty(&self) -> bool {
         self.used.is_empty()
     }
-    pub fn iter(&self) ->  Iter<(String, char, String, BoundType)> {
+    pub fn iter(&self) ->  Iter<Bound> {
         self.used.iter()
     }
     pub fn iter_lifetimes(&self) -> Iter<char> {

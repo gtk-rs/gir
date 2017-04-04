@@ -82,10 +82,11 @@ fn bounds(bounds: &Bounds) -> String {
     let strs: Vec<String> = bounds.iter_lifetimes()
         .map(|s| format!("'{}", s))
         .chain(bounds.iter()
-                     .map(|bound| match bound.3 {
-                         IsA => format!("{}: IsA<{}>", bound.1, bound.2),
-                         AsRef => format!("{}: AsRef<{}>", bound.1, bound.2),
-                         Into(l) => format!("{}: Into<Option<&'{} {}>>", bound.1, l, bound.2),
+                     .map(|bound| match bound.bound_type {
+                         IsA => format!("{}: IsA<{}>", bound.alias, bound.type_str),
+                         AsRef => format!("{}: AsRef<{}>", bound.alias, bound.type_str),
+                         Into(l) => format!("{}: Into<Option<&'{} {}>>",
+                                            bound.alias, l, bound.type_str),
                      }))
         .collect();
     format!("<{}>", strs.join(", "))
