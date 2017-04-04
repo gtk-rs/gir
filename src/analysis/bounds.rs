@@ -44,6 +44,24 @@ impl Default for Bounds {
     }
 }
 
+impl Bound {
+    pub fn get_for_property_setter(env: &Env, var_name:&str, type_id: TypeId,
+                                   nullable: Nullable) -> Option<Bound> {
+        match Bounds::type_for(env, type_id, nullable) {
+            Some(BoundType::IsA) => {
+                let type_str = bounds_rust_type(env, type_id);
+                Some(Bound{
+                    bound_type: BoundType::IsA,
+                    parameter_name: var_name.to_owned(),
+                    alias: 'T',
+                    type_str: type_str.into_string(),
+                })
+            }
+            _ => None,
+        }
+    }
+}
+
 impl Bounds {
     pub fn add_for_parameter(&mut self, env: &Env, func: &Function, par: &mut Parameter) {
         if !par.instance_parameter && par.direction != ParameterDirection::Out {
@@ -55,17 +73,6 @@ impl Bounds {
                     panic!("Too many type constraints for {}", func.c_identifier.as_ref().unwrap())
                 }
             }
-        }
-    }
-
-    pub fn add_for_property_setter(&mut self, env: &Env, var_name:&str, type_id: TypeId,
-                                   nullable: Nullable) {
-        match Bounds::type_for(env, type_id, nullable) {
-            Some(BoundType::IsA) => {
-                let type_name = bounds_rust_type(env, type_id);
-                self.add_parameter(var_name, &type_name.into_string(), BoundType::IsA);
-            }
-            _ => (),
         }
     }
 
