@@ -174,7 +174,6 @@ pub fn get_type_default_value(env: &Env, type_tid: library::TypeId, type_: &libr
                 Fundamental::Utf8 => some("None::<&str>"),
                 Fundamental::Float => some("&0f32"),
                 Fundamental::Double => some("&0f64"),
-                Fundamental::None => some("&0"),
                 Fundamental::Int8 => some("&0i8"),
                 Fundamental::UInt8 => some("&0u8"),
                 Fundamental::Int16 => some("&0i16"),
