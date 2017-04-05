@@ -155,10 +155,13 @@ fn generate_constants(w: &mut Write, env: &Env, constants: &[Constant]) -> Resul
         let mut value = constant.value.clone();
         if type_ == "*mut c_char" {
             type_ = "&'static str".into();
-            value = format!("r##\"{}\"##", value);
-        } else if type_ == "Glyph" && env.config.library_name == "Pango"  {
-            //Fix single constant alias
-            type_ = "PangoGlyph".into();
+            value = format!("r##\"{}\"##", value)
+        } else if type_ == "gboolean" {
+            if value == "true" {
+                value = "glib::GTRUE".into();
+            } else {
+                value = "glib::GFALSE".into();
+            }
         }
         try!(writeln!(w, "{}pub const {}: {} = {};", comment,
             constant.c_identifier, type_, value));
