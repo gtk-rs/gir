@@ -157,10 +157,11 @@ fn generate_constants(w: &mut Write, env: &Env, constants: &[Constant]) -> Resul
             type_ = "&'static str".into();
             value = format!("r##\"{}\"##", value)
         } else if type_ == "gboolean" {
+            let prefix = if env.config.library_name == "GLib" { "" } else { "glib::" };
             if value == "true" {
-                value = "glib::GTRUE".into();
+                value = format!("{}GTRUE", prefix);
             } else {
-                value = "glib::GFALSE".into();
+                value = format!("{}GFALSE", prefix);
             }
         }
         try!(writeln!(w, "{}pub const {}: {} = {};", comment,
