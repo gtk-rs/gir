@@ -164,8 +164,14 @@ fn generate_constants(w: &mut Write, env: &Env, constants: &[Constant]) -> Resul
                 value = format!("{}GFALSE", prefix);
             }
         }
-        try!(writeln!(w, "{}pub const {}: {} = {};", comment,
-            constant.c_identifier, type_, value));
+
+        if let Some(_) = env.library.type_(constant.typ).maybe_ref_as::<Bitfield>() {
+            try!(writeln!(w, "{}pub const {}: {} = {2} {{ bits: {} }};", comment,
+                constant.c_identifier, type_, value));
+        } else {
+            try!(writeln!(w, "{}pub const {}: {} = {};", comment,
+                constant.c_identifier, type_, value));
+        }
     }
     if !constants.is_empty() {
         try!(writeln!(w, ""));
