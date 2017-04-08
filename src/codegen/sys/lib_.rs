@@ -365,7 +365,7 @@ fn generate_fields(env: &Env, struct_name: &str, fields: &[Field]) -> (Vec<Strin
     // TODO: GLib/GObject special cases until we have proper union support in Rust
     let is_gweakref = env.config.library_name == "GObject" && struct_name == "WeakRef";
 
-    for field in fields {
+    'fields: for field in fields {
         let is_union = env.library.type_(field.typ).maybe_ref_as::<Union>().is_some();
         let is_bits = field.bits.is_some();
         let is_ptr = {
@@ -375,6 +375,26 @@ fn generate_fields(env: &Env, struct_name: &str, fields: &[Field]) -> (Vec<Strin
                  false
              }
         };
+
+        // TODO: Special case for padding unions like used in GStreamer, see e.g.
+        // the padding in GstControlBinding
+        if is_union && !truncated {
+            if let Some(ref union_) = env.library.type_(field.typ).maybe_ref_as::<Union>() {
+                for union_field in &union_.fields {
+                    if union_field.name.contains("reserved") {
+                        if let Some(ref c_type) = union_field.c_type {
+                            let name = mangle_keywords(&*union_field.name);
+                            let c_type = ffi_type(env, union_field.typ, c_type);
+                            if c_type.is_err() {
+                                commented = true;
+                            }
+                            lines.push(format!("\tpub {}: {},", name, c_type.into_string()));
+                            continue 'fields;
+                        }
+                    }
+                }
+            }
+        }
 
         if !is_gweakref && !truncated && !is_ptr && (is_union || is_bits) && !is_union_special_case(&field.c_type) {
             warn!("Field `{}::{}` not expressible in Rust, truncated",
@@ -393,7 +413,7 @@ fn generate_fields(env: &Env, struct_name: &str, fields: &[Field]) -> (Vec<Strin
                     format!("\t//{}: {}{},", field.name,
                             field.c_type.as_ref().map(|s| &s[..]).unwrap_or("fn"), bits));
             };
-            continue;
+            continue 'fields;
         }
 
         if let Some(ref c_type) = field.c_type {
