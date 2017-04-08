@@ -342,7 +342,7 @@ fn generate_fields(env: &Env, struct_name: &str, fields: &[Field]) -> (Vec<Strin
     //TODO: remove after GObject-2.0.gir fixed
     // Fix for wrong GValue size on i686-pc-windows-gnu due `c:type="gpointer"` in data field
     // instead guint64
-    let is_gvalue = struct_name == "Value";
+    let is_gvalue = env.config.library_name == "GObject" && struct_name == "Value";
 
     for field in fields {
         let is_union = env.library.type_(field.typ).maybe_ref_as::<Union>().is_some();
