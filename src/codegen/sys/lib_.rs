@@ -2,6 +2,7 @@ use std::collections::HashMap;
 use std::io::{Result, Write};
 use case::CaseExt;
 
+use analysis::c_type::rustify_pointers;
 use codegen::general::{self, version_condition};
 use env::Env;
 use file_saver::*;
@@ -53,7 +54,7 @@ fn generate_lib(w: &mut Write, env: &Env) -> Result<()>{
     try!(generate_enums(w, env, &enums));
     try!(generate_constants(w, env, &ns.constants));
     try!(generate_bitfields(w, env, &bitfields));
-    try!(generate_unions(w, &unions));
+    try!(generate_unions(w, env, &unions));
     try!(functions::generate_callbacks(w, env, &prepare(ns)));
     try!(generate_records(w, env, &records));
     try!(generate_classes_structs(w, env, &classes));
@@ -243,14 +244,22 @@ fn generate_enums(w: &mut Write, env: &Env, items: &[&Enumeration])
     Ok(())
 }
 
-fn generate_unions(w: &mut Write, items: &[&Union])
+fn generate_unions(w: &mut Write, env: &Env, items: &[&Union])
         -> Result<()> {
     if !items.is_empty() {
         try!(writeln!(w, "// Unions"));
     }
+
     for item in items {
         if let Some(ref c_type) = item.c_type {
-            try!(writeln!(w, "pub type {} = c_void; // union", c_type));
+            // TODO: GLib/GObject special cases until we have proper union support in Rust
+            if env.config.library_name == "GLib" && c_type == "GMutex" {
+                // Two c_uint or a pointer => 64 bits on all
+                // platforms currently supported by GLib
+                try!(writeln!(w, "#[repr(C)]\npub struct {}(u64); // union", c_type));
+            } else {
+                try!(writeln!(w, "pub type {} = c_void; // union", c_type));
+            }
         }
     }
     if !items.is_empty() {
@@ -334,6 +343,15 @@ fn generate_records(w: &mut Write, env: &Env, records: &[&Record]) -> Result<()>
     Ok(())
 }
 
+// TODO: GLib/GObject special cases until we have proper union support in Rust
+fn is_union_special_case(c_type: &Option<String>) -> bool {
+    if let Some(ref c_type) = c_type.as_ref() {
+        c_type.as_str() == "GMutex"
+    } else {
+        false
+    }
+}
+
 fn generate_fields(env: &Env, struct_name: &str, fields: &[Field]) -> (Vec<String>, bool){
     let mut lines = Vec::new();
     let mut commented = false;
@@ -344,15 +362,27 @@ fn generate_fields(env: &Env, struct_name: &str, fields: &[Field]) -> (Vec<Strin
     // instead guint64
     let is_gvalue = env.config.library_name == "GObject" && struct_name == "Value";
 
+    // TODO: GLib/GObject special cases until we have proper union support in Rust
+    let is_gweakref = env.config.library_name == "GObject" && struct_name == "WeakRef";
+
     for field in fields {
         let is_union = env.library.type_(field.typ).maybe_ref_as::<Union>().is_some();
         let is_bits = field.bits.is_some();
-        if !truncated && (is_union || is_bits) {
+        let is_ptr = {
+             if let Some(ref c_type) = field.c_type {
+                 !rustify_pointers(c_type).0.is_empty()
+             } else {
+                 false
+             }
+        };
+
+        if !is_gweakref && !truncated && !is_ptr && (is_union || is_bits) && !is_union_special_case(&field.c_type) {
             warn!("Field `{}::{}` not expressible in Rust, truncated",
                   struct_name, field.name);
             lines.push("\t_truncated_record_marker: c_void,".to_owned());
             truncated = true;
         }
+
         if truncated {
             if is_union {
                 lines.push("\t//union,".to_owned());
@@ -376,6 +406,9 @@ fn generate_fields(env: &Env, struct_name: &str, fields: &[Field]) -> (Vec<Strin
                 c_type = Ok("[u64; 2]".to_owned());
             }
             lines.push(format!("\tpub {}: {},", name, c_type.into_string()));
+        } else if is_gweakref {
+            // union containing a single pointer
+            lines.push(format!("\tpub priv_: gpointer,"));
         }
         else {
             let name = mangle_keywords(&*field.name);
