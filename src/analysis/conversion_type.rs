@@ -47,6 +47,8 @@ impl ConversionType {
                 Filename => ConversionType::Pointer,
                 Type => ConversionType::Scalar,
                 None => ConversionType::Unknown,
+                IntPtr => ConversionType::Direct,
+                UIntPtr => ConversionType::Direct,
                 Unsupported => ConversionType::Unknown,
             },
             Alias(ref alias) => ConversionType::of(library, alias.typ),
