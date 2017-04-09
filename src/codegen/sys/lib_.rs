@@ -366,8 +366,6 @@ fn generate_fields(env: &Env, struct_name: &str, fields: &[Field]) -> (Vec<Strin
             continue;
         }
 
-        let vis = if field.private { "" } else { "pub " };
-
         if let Some(ref c_type) = field.c_type {
             let name = mangle_keywords(&*field.name);
             let mut c_type = ffi_type(env, field.typ, c_type);
@@ -377,14 +375,14 @@ fn generate_fields(env: &Env, struct_name: &str, fields: &[Field]) -> (Vec<Strin
             if is_gvalue && field.name == "data" {
                 c_type = Ok("[u64; 2]".to_owned());
             }
-            lines.push(format!("\t{}{}: {},", vis, name, c_type.into_string()));
+            lines.push(format!("\tpub {}: {},", name, c_type.into_string()));
         }
         else {
             let name = mangle_keywords(&*field.name);
             if let Some(func) =
                 env.library.type_(field.typ).maybe_ref_as::<Function>() {
                     let (com, sig) = functions::function_signature(env, func, true);
-                    lines.push(format!("\t{}{}: Option<unsafe extern \"C\" fn{}>,", vis, name, sig));
+                    lines.push(format!("\tpub {}: Option<unsafe extern \"C\" fn{}>,", name, sig));
                     commented |= com;
                 }
             else if let Some(c_type) = env.library.type_(field.typ).get_glib_name() {
@@ -394,11 +392,11 @@ fn generate_fields(env: &Env, struct_name: &str, fields: &[Field]) -> (Vec<Strin
                 if c_type.is_err() {
                     commented = true;
                 }
-                lines.push(format!("\t{}{}: {},", vis, name, c_type.into_string()));
+                lines.push(format!("\tpub {}: {},", name, c_type.into_string()));
             }
             else {
-                lines.push(format!("\t{}{}: [{:?} {}],",
-                                   vis, name, field.typ, field.typ.full_name(&env.library)));
+                lines.push(format!("\tpub {}: [{:?} {}],",
+                                   name, field.typ, field.typ.full_name(&env.library)));
                 commented = true;
             }
         }
