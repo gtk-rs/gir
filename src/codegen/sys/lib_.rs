@@ -254,9 +254,11 @@ fn generate_unions(w: &mut Write, env: &Env, items: &[&Union])
         if let Some(ref c_type) = item.c_type {
             // TODO: GLib/GObject special cases until we have proper union support in Rust
             if env.config.library_name == "GLib" && c_type == "GMutex" {
-                // Two c_uint or a pointer => 64 bits on all
-                // platforms currently supported by GLib
-                try!(writeln!(w, "#[repr(C)]\npub struct {}(u64); // union", c_type));
+                // Two c_uint or a pointer => 64 bits on all platforms currently
+                // supported by GLib but the alignment is different on 32 bit
+                // platforms (32 bit vs. 64 bits on 64 bit platforms)
+                try!(writeln!(w, "#[cfg(target_pointer_width = \"32\")]\n#[repr(C)]\npub struct {0}([u32; 2]);\n\
+                                  #[cfg(target_pointer_width = \"64\")]\n#[repr(C)]\npub struct {0}(*mut c_void);", c_type));
             } else {
                 try!(writeln!(w, "pub type {} = c_void; // union", c_type));
             }
