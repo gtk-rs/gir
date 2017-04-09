@@ -383,7 +383,7 @@ fn generate_fields(env: &Env, struct_name: &str, fields: &[Field]) -> (Vec<Strin
         if is_union && !truncated {
             if let Some(ref union_) = env.library.type_(field.typ).maybe_ref_as::<Union>() {
                 for union_field in &union_.fields {
-                    if union_field.name.contains("reserved") {
+                    if union_field.name.contains("reserved") || union_field.name.contains("padding") {
                         if let Some(ref c_type) = union_field.c_type {
                             let name = mangle_keywords(&*union_field.name);
                             let c_type = ffi_type(env, union_field.typ, c_type);
