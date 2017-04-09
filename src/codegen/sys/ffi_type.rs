@@ -90,6 +90,8 @@ fn ffi_inner(env: &Env, tid: library::TypeId, mut inner: String) -> Result {
                     "tm" => return Err(TypeError::Unimplemented(inner)),  //TODO: try use time:Tm
                     _ => &*inner,
                 },
+                IntPtr => "intptr_t",
+                UIntPtr => "uintptr_t",
                 Unsupported => return Err(TypeError::Unimplemented(inner)),
                 VarArgs => panic!("Should not reach here"),
             };

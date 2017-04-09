@@ -129,10 +129,12 @@ pub enum Fundamental {
     Utf8,
     Filename,
     Type,
+    IntPtr,
+    UIntPtr,
     Unsupported,
 }
 
-pub const FUNDAMENTAL: [(&'static str, Fundamental); 31] = [
+const FUNDAMENTAL: &'static [(&'static str, Fundamental)] = &[
     ("none", Fundamental::None),
     ("gboolean", Fundamental::Boolean),
     ("gint8", Fundamental::Int8),
@@ -164,6 +166,8 @@ pub const FUNDAMENTAL: [(&'static str, Fundamental); 31] = [
     ("utf8", Fundamental::Utf8),
     ("filename", Fundamental::Filename),
     ("GType", Fundamental::Type),
+    ("gintptr", Fundamental::IntPtr),
+    ("guintptr", Fundamental::UIntPtr),
 ];
 
 #[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq, PartialOrd, Ord)]
@@ -620,7 +624,7 @@ impl Library {
             index: HashMap::new(),
         };
         assert_eq!(INTERNAL_NAMESPACE, library.add_namespace(INTERNAL_NAMESPACE_NAME));
-        for &(name, t) in &FUNDAMENTAL {
+        for &(name, t) in FUNDAMENTAL {
             library.add_type(INTERNAL_NAMESPACE, name, Type::Fundamental(t));
         }
         assert_eq!(MAIN_NAMESPACE, library.add_namespace(main_namespace_name));

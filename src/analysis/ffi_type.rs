@@ -87,6 +87,8 @@ fn ffi_inner(env: &Env, tid: TypeId, inner: &str) -> Result {
                 Utf8 => "libc::c_char",
                 Filename => "libc::c_char",
                 Type => "glib_ffi::GType",
+                IntPtr => "libc::intptr_t",
+                UIntPtr => "libc::uintptr_t",
                 _ => return Err(TypeError::Unimplemented(inner.into())),
             };
             Ok(inner.into())
