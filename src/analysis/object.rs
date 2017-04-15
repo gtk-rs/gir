@@ -218,6 +218,7 @@ pub fn interface(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<I
     };
 
     let has_methods = !base.methods().is_empty();
+    let has_functions = !base.functions().is_empty();
 
     let info = Info {
         base: base,
@@ -226,6 +227,7 @@ pub fn interface(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<I
         supertypes: supertypes,
         has_children: true,
         has_methods: has_methods,
+        has_functions: has_functions,
         signals: signals,
         trampolines: trampolines,
         properties: properties,
