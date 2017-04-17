@@ -84,6 +84,7 @@ generate = [
     "Gtk.SpinButton",
     "Gtk.StatusIcon",
     "Gtk.Statusbar",
+    "Gtk.StyleContext",
     "Gtk.ToggleButton",
     "Gtk.ToggleToolButton",
     "Gtk.ToolButton",
