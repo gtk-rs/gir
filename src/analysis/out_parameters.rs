@@ -50,13 +50,20 @@ pub fn analyze(env: &Env, func: &Function,
     let mut info: Info = Default::default();
     let mut unsupported_outs = false;
 
+    let nullable_override = configured_functions.iter()
+        .filter_map(|f| f.ret.nullable)
+        .next();
     if func.throws {
         let use_ret = use_function_return_for_result(env, &func.ret);
         info.mode = Mode::Throws(use_ret);
     } else if func.ret.typ == TypeId::tid_none() {
         info.mode = Mode::Normal;
     } else if func.ret.typ == TypeId::tid_bool() {
-        info.mode = Mode::Optional;
+        if nullable_override == Some(Nullable(false)) {
+            info.mode = Mode::Combined;
+        } else {
+            info.mode = Mode::Optional;
+        }
     } else {
         info.mode = Mode::Combined;
     }
@@ -76,9 +83,6 @@ pub fn analyze(env: &Env, func: &Function,
     if info.mode == Mode::Combined || info.mode == Mode::Throws(true) {
         let mut ret = func.ret.clone();
         //TODO: switch to use analyzed returns (it add too many Return<Option<>>)
-        let nullable_override = configured_functions.iter()
-            .filter_map(|f| f.ret.nullable)
-            .next();
         if let Some(val) = nullable_override {
             ret.nullable = val;
         }
