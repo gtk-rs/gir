@@ -102,7 +102,7 @@ impl Builder {
         });
 
         match self.conversion {
-            AsI32 => body.push(Chunk::Custom("from_glib(transmute(value.get::<i32>().unwrap()))".into())),
+            AsI32 => body.push(Chunk::Custom("transmute(value.get::<i32>().unwrap())".into())),
             Bitflag => body.push(Chunk::Custom("from_glib(transmute(value.get::<u32>().unwrap()))".into())),
             _ => (),
         }
@@ -175,7 +175,7 @@ impl Builder {
         }
         match self.conversion {
             AsI32 => {
-                let value_chunk = Chunk::Custom(format!("{}.to_glib() as i32", self.var_name));
+                let value_chunk = Chunk::Custom(format!("{} as i32", self.var_name));
                 chunks.push(Chunk::Let{
                     name: self.var_name.clone(),
                     is_mut: false,

@@ -55,7 +55,7 @@ impl ConversionType {
             Bitfield(_) => ConversionType::Scalar,
             Record(_) => ConversionType::Pointer,
             Union(_) => ConversionType::Pointer,
-            Enumeration(_) => ConversionType::Scalar,
+            Enumeration(_) => ConversionType::Direct,
             Interface(_) => ConversionType::Pointer,
             Class(_) => ConversionType::Pointer,
             CArray(_) => ConversionType::Pointer,
