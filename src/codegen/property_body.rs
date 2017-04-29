@@ -84,11 +84,11 @@ impl Builder {
             base_tid: None,
             commented: false,
         };
-        let ffi_call = Chunk::FfiCall{
+        let ffi_call = Chunk::FfiCall {
             name: self.get_ffi_func(),
             params: params,
         };
-        body.push(Chunk::FfiCallConversion{
+        body.push(Chunk::FfiCallConversion {
             ret: return_info,
             call: Box::new(ffi_call),
         });
@@ -137,7 +137,7 @@ impl Builder {
 
         let mut body = Vec::new();
 
-        let ffi_call = Chunk::FfiCall{
+        let ffi_call = Chunk::FfiCall {
             name: self.set_ffi_func(),
             params: params,
         };
@@ -146,7 +146,7 @@ impl Builder {
             base_tid: None,
             commented: false,
         };
-        body.push(Chunk::FfiCallConversion{
+        body.push(Chunk::FfiCallConversion {
             ret: return_info,
             call: Box::new(ffi_call),
         });

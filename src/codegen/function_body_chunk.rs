@@ -1,6 +1,7 @@
 use analysis::conversion_type::ConversionType;
 use analysis::parameter::Parameter as AnalysisParameter;
 use analysis::out_parameters::Mode;
+use analysis::ref_mode::RefMode;
 use analysis::return_value;
 use analysis::rust_type::rust_type;
 use analysis::safety_assertion_mode::SafetyAssertionMode;
@@ -104,6 +105,7 @@ impl Builder {
         let unsafe_ = Chunk::Unsafe(body);
 
         let mut chunks = Vec::new();
+        self.add_into_conversion(&mut chunks);
         self.add_assertion(&mut chunks);
         chunks.push(unsafe_);
         Chunk::BlockHalf(chunks)
@@ -115,6 +117,29 @@ impl Builder {
                 chunks.push(Chunk::AssertSkipInitialized),
             SafetyAssertionMode::InMainThread =>
                 chunks.push(Chunk::AssertInitializedAndInMainThread),
+        }
+    }
+    fn add_into_conversion(&self, chunks: &mut Vec<Chunk>) {
+        for param in self.parameters.iter().filter_map(|x| match *x {
+            Parameter::In { ref parameter } if parameter.is_into => Some(parameter),
+            _ => None,
+        }) {
+            let value = Chunk::Custom(format!("{}.into()", param.name));
+            chunks.push(Chunk::Let {
+                name: param.name.clone(),
+                is_mut: false,
+                value: Box::new(value),
+                type_: None,
+            });
+            if param.ref_mode == RefMode::ByRef {
+                let value = Chunk::Custom(format!("{}.to_glib_none().0", param.name));
+                chunks.push(Chunk::Let {
+                    name: param.name.clone(),
+                    is_mut: false,
+                    value: Box::new(value),
+                    type_: None,
+                });
+            }
         }
     }
     fn generate_call(&self) -> Chunk {
@@ -136,10 +161,10 @@ impl Builder {
         let mut params = Vec::new();
         for par in &self.parameters {
             let chunk = match *par {
-                In { ref parameter } => Chunk::FfiCallParameter{
+                In { ref parameter } => Chunk::FfiCallParameter {
                     par: parameter.clone(),
                 },
-                Out { ref parameter, .. } => Chunk::FfiCallOutParameter{
+                Out { ref parameter, .. } => Chunk::FfiCallOutParameter {
                     par: parameter.clone(),
                 },
             };

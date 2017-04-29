@@ -20,12 +20,16 @@ impl ToParameter for Parameter {
             match bounds.get_parameter_alias_info(&self.name) {
                 Some((t, bound_type)) => {
                     match bound_type {
-                        BoundType::IsA => if *self.nullable {
-                            type_str = format!("Option<&{}{}>", mut_str, t)
+                        BoundType::IsA(_) => if *self.nullable {
+                            // should not happen!
+                            type_str = String::new()
                         } else {
                             type_str = format!("&{}{}", mut_str, t)
                         },
-                        BoundType::AsRef | BoundType::Into(_) => type_str = t.to_string(),
+                        BoundType::Into(_, Some(_)) => {
+                            type_str = t.to_string()
+                        }
+                        BoundType::AsRef(_) | BoundType::Into(_, None) => type_str = t.to_string(),
                     }
                 }
                 None => {

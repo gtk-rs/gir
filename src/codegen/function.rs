@@ -83,10 +83,17 @@ fn bounds(bounds: &Bounds) -> String {
         .map(|s| format!("'{}", s))
         .chain(bounds.iter()
                      .map(|bound| match bound.bound_type {
-                         IsA => format!("{}: IsA<{}>", bound.alias, bound.type_str),
-                         AsRef => format!("{}: AsRef<{}>", bound.alias, bound.type_str),
-                         Into(l) => format!("{}: Into<Option<&'{} {}>>",
-                                            bound.alias, l, bound.type_str),
+                         IsA(Some(lifetime)) => format!("{}: IsA<{}> + '{}",
+                                                        bound.alias, bound.type_str, lifetime),
+                         IsA(None) => format!("{}: IsA<{}>", bound.alias, bound.type_str),
+                         // This case should normally never happened
+                         AsRef(Some(lifetime)) => format!("{}: AsRef<{}> + '{}",
+                                                          bound.alias, bound.type_str, lifetime),
+                         AsRef(None) => format!("{}: AsRef<{}>", bound.alias, bound.type_str),
+                         Into(Some(l), _) => format!("{}: Into<Option<&'{} {}>>",
+                                                     bound.alias, l, bound.type_str),
+                         Into(None, _) => format!("{}: Into<Option<{}>>",
+                                                  bound.alias, bound.type_str),
                      }))
         .collect();
     format!("<{}>", strs.join(", "))
