@@ -184,12 +184,32 @@ pub fn get_type_default_value(env: &Env, type_tid: library::TypeId, type_: &libr
                 Fundamental::Utf8 => some("None::<&str>"),
                 Fundamental::Float => some("&0f32"),
                 Fundamental::Double => some("&0f64"),
+                Fundamental::Int8 => some("&0i8"),
+                Fundamental::UInt8 => some("&0u8"),
+                Fundamental::Int16 => some("&0i16"),
+                Fundamental::UInt16 => some("&0u16"),
+                Fundamental::Int32 => some("&0i32"),
+                Fundamental::UInt32 => some("&0u32"),
+                Fundamental::Int64 => some("&0i64"),
+                Fundamental::UInt64 => some("&0u64"),
+                Fundamental::Char => some("&0i8"),
+                Fundamental::UChar => some("&0u8"),
+                Fundamental::Size => some("&0isize"),
+                Fundamental::SSize => some("&0usize"),
+                Fundamental::Pointer => some("::std::ptr::null_mut()"),
+                /* We are assuming that these will just work by setting them to 0 */
+                Fundamental::Short => some("&0"),
+                Fundamental::UShort => some("&0"),
+                Fundamental::Long => some("&0"),
+                Fundamental::ULong => some("&0"),
+                Fundamental::Type => some("&gobject_sys::G_TYPE_NONE"),
                 _ => None,
             }
         }
         Type::Bitfield(_) => some("&0u32"),
         Type::Enumeration(_) => some("&0"),
         Type::Class(..) |
+        Type::Record(..) |
         Type::Interface(..) => {
             let type_str = rust_type(env, type_tid).into_string();
             Some(format!("None::<&{}>", type_str))
