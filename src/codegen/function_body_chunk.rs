@@ -114,9 +114,9 @@ impl Builder {
         match self.assertion {
             SafetyAssertionMode::None => (),
             SafetyAssertionMode::Skip =>
-                chunks.push(Chunk::AssertSkipInitialized),
+                chunks.insert(0, Chunk::AssertSkipInitialized),
             SafetyAssertionMode::InMainThread =>
-                chunks.push(Chunk::AssertInitializedAndInMainThread),
+                chunks.insert(0, Chunk::AssertInitializedAndInMainThread),
         }
     }
     fn add_into_conversion(&self, chunks: &mut Vec<Chunk>) {
