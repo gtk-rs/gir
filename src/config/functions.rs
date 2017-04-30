@@ -80,6 +80,7 @@ pub struct Function {
     pub cfg_condition: Option<String>,
     pub parameters: Parameters,
     pub ret: Return,
+    pub doc_hidden: bool,
 }
 
 impl Parse for Function {
@@ -102,6 +103,9 @@ impl Parse for Function {
             .map(|s| s.to_owned());
         let parameters = Parameters::parse(toml.lookup("parameter"), object_name);
         let ret = Return::parse(toml.lookup("return"));
+        let doc_hidden = toml.lookup("doc_hidden")
+            .and_then(|val| val.as_bool())
+            .unwrap_or(false);
 
         Some(Function{
             ident: ident,
@@ -110,6 +114,7 @@ impl Parse for Function {
             parameters: parameters,
             ret: ret,
             cfg_condition: cfg_condition,
+            doc_hidden: doc_hidden,
         })
     }
 }

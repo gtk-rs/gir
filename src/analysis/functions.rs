@@ -47,6 +47,7 @@ pub struct Info {
     pub not_version: Option<Version>,
     pub cfg_condition: Option<String>,
     pub assertion: SafetyAssertionMode,
+    pub doc_hidden: bool,
 }
 
 pub fn analyze(env: &Env, functions: &[library::Function], type_tid: library::TypeId,
@@ -102,6 +103,7 @@ fn analyze_function(env: &Env, name: String, func: &library::Function, type_tid:
     let version = env.config.filter_version(version);
     let deprecated_version = func.deprecated_version;
     let cfg_condition = configured_functions.iter().filter_map(|f| f.cfg_condition.clone()).next();
+    let doc_hidden = configured_functions.iter().any(|f| f.doc_hidden);
 
     let ret = return_value::analyze(env, func, type_tid, configured_functions, &mut used_types);
     commented |= ret.commented;
@@ -156,5 +158,6 @@ fn analyze_function(env: &Env, name: String, func: &library::Function, type_tid:
         not_version: None,
         cfg_condition: cfg_condition,
         assertion: assertion,
+        doc_hidden: doc_hidden,
     }
 }

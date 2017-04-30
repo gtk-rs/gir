@@ -7,6 +7,7 @@ use env::Env;
 use library;
 use writer::primitives::tabs;
 use nameutil;
+use super::general::doc_hidden;
 use super::property_body;
 use traits::IntoString;
 use writer::ToCode;
@@ -32,6 +33,7 @@ fn generate_func(w: &mut Write, env: &Env, prop: &ChildProperty, in_trait: bool,
 
     try!(writeln!(w, ""));
 
+    try!(doc_hidden(w, prop.doc_hidden, comment_prefix, indent));
     let decl = declaration(env, prop, is_get);
     try!(writeln!(w, "{}{}{}{}{}", tabs(indent),
         comment_prefix, pub_prefix, decl, decl_suffix));

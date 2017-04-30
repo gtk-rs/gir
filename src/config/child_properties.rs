@@ -7,6 +7,7 @@ use super::parsable::Parse;
 pub struct ChildProperty {
     pub name: String,
     pub type_name: String,
+    pub doc_hidden: bool,
 }
 
 impl Parse for ChildProperty {
@@ -30,10 +31,14 @@ impl Parse for ChildProperty {
             error!("No type for child property `{}` for `{}`", name, object_name);
             return None
         };
+        let doc_hidden = toml.lookup("doc_hidden")
+            .and_then(|val| val.as_bool())
+            .unwrap_or(false);
 
         Some(ChildProperty {
             name: name,
             type_name: type_name,
+            doc_hidden: doc_hidden,
         })
     }
 }

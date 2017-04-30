@@ -148,6 +148,14 @@ pub fn cfg_condition_string(cfg_condition: &Option<String>, commented: bool, ind
     }
 }
 
+pub fn doc_hidden(w: &mut Write, doc_hidden:bool, comment_prefix: &str, indent: usize) -> Result<()> {
+    if doc_hidden {
+        writeln!(w, "{}{}#[doc(hidden)]", tabs(indent), comment_prefix)
+    } else {
+        Ok(())
+    }
+}
+
 pub fn write_vec<T: Display>(w: &mut Write, v: &[T]) -> Result<()> {
     for s in v {
         try!(writeln!(w, "{}", s));
