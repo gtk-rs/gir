@@ -18,6 +18,7 @@ pub struct ChildProperty {
     pub default_value: Option<String>, //for getter
     pub get_out_ref_mode: RefMode,
     pub set_in_ref_mode: RefMode,
+    pub doc_hidden: bool,
 }
 
 pub type ChildProperties = Vec<ChildProperty>;
@@ -60,6 +61,7 @@ fn analyze_property(env: &Env, prop: &config::ChildProperty, child_name: &str,
     let name = prop.name.clone();
     if let Some(typ) = env.library.find_type(0, &prop.type_name) {
         let type_ = env.type_(typ);
+        let doc_hidden = prop.doc_hidden;
 
         imports.add("glib::Value", None);
         if let Ok(s) = used_rust_type(env, typ) {
@@ -91,6 +93,7 @@ fn analyze_property(env: &Env, prop: &config::ChildProperty, child_name: &str,
             default_value: default_value,
             get_out_ref_mode: get_out_ref_mode,
             set_in_ref_mode: set_in_ref_mode,
+            doc_hidden: doc_hidden,
         })
     } else {
         let owner_name = rust_type(env, type_tid).into_string();

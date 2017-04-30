@@ -15,6 +15,7 @@ pub struct Info {
     pub trampoline_name: Result<String, Vec<String>>,
     pub version: Option<Version>,
     pub deprecated_version: Option<Version>,
+    pub doc_hidden: bool,
 }
 
 pub fn analyze(env: &Env, signals: &[library::Signal], type_tid: library::TypeId,
@@ -48,6 +49,7 @@ fn analyze_signal(env: &Env, signal: &library::Signal, type_tid: library::TypeId
     let version = configured_signals.iter().filter_map(|f| f.version).min()
         .or(signal.version);
     let deprecated_version = signal.deprecated_version;
+    let doc_hidden = configured_signals.iter().any(|f| f.doc_hidden);
 
     let connect_name = format!("connect_{}", nameutil::signal_to_snake(&signal.name));
     let trampoline_name = trampolines::analyze(env, signal, type_tid, in_trait, configured_signals,
@@ -71,6 +73,7 @@ fn analyze_signal(env: &Env, signal: &library::Signal, type_tid: library::TypeId
         trampoline_name: trampoline_name,
         version: version,
         deprecated_version: deprecated_version,
+        doc_hidden: doc_hidden,
     };
     Some(info)
 }

@@ -4,7 +4,7 @@ use analysis;
 use chunk::Chunk;
 use consts::TYPE_PARAMETERS_START;
 use env::Env;
-use super::general::version_condition;
+use super::general::{doc_hidden, version_condition};
 use super::signal_body;
 use super::trampoline::func_string;
 use writer::primitives::tabs;
@@ -23,6 +23,7 @@ pub fn generate(w: &mut Write, env: &Env, analysis: &analysis::signals::Info,
 
     try!(writeln!(w, ""));
     try!(version_condition(w, env, analysis.version, commented, indent));
+    try!(doc_hidden(w, analysis.doc_hidden, comment_prefix, indent));
     try!(writeln!(w, "{}{}{}{}{}", tabs(indent), comment_prefix,
                   pub_prefix, declaration, suffix));
 

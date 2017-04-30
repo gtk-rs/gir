@@ -72,6 +72,8 @@ cfg_condition = "mycond"
     version = "3.12"
     # prefixed function with #[cfg(mycond)]
     cfg_condition = "mycond"
+    # prefixed function with #[doc(hidden)]
+    doc_hidden = true
         # override for parameter
         [[object.function.parameter]]
         # filter by name
@@ -91,6 +93,7 @@ cfg_condition = "mycond"
     inhibit = true
     ignore = true
     version = "3.10"
+    doc_hidden = true
         [[object.signal.parameter]]
         name = "path_string"
         # allow to use different names in closure
@@ -120,6 +123,7 @@ child_type = "Gtk.MenuItem"
     [[object.child_prop]]
     name = "position"
     type = "gint"
+    doc_hidden = true
 ```
 
 For enumerations, you can configure the members:

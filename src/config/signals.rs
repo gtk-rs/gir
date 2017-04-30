@@ -87,6 +87,7 @@ pub struct Signal {
     pub version: Option<Version>,
     pub parameters: Parameters,
     pub ret: Return,
+    pub doc_hidden: bool,
 }
 
 impl Parse for Signal {
@@ -110,6 +111,9 @@ impl Parse for Signal {
             .and_then(|s| s.parse().ok());
         let parameters = Parameters::parse(toml.lookup("parameter"), object_name);
         let ret = Return::parse(toml.lookup("return"));
+        let doc_hidden = toml.lookup("doc_hidden")
+            .and_then(|val| val.as_bool())
+            .unwrap_or(false);
 
         Some(Signal{
             ident: ident,
@@ -118,6 +122,7 @@ impl Parse for Signal {
             version: version,
             parameters: parameters,
             ret: ret,
+            doc_hidden: doc_hidden,
         })
     }
 }
