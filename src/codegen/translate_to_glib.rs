@@ -34,11 +34,11 @@ fn to_glib_xxx(transfer: library::Transfer, ref_mode: RefMode,
     match transfer {
         None => match ref_mode {
             RefMode::None => ("", ".to_glib_none_mut().0"),//unreachable!(),
-            RefMode::ByRef if !is_into => ("", ".to_glib_none().0"),
+            RefMode::ByRef if is_into => ("", ".0"),
+            RefMode::ByRef => ("", ".to_glib_none().0"),
             RefMode::ByRefMut => ("", ".to_glib_none_mut().0"),
             RefMode::ByRefImmut => ("mut_override(", ".to_glib_none().0)"),
             RefMode::ByRefFake => ("", ""),//unreachable!(),
-            _ => ("", ""),
         },
         Full => ("", ".to_glib_full()"),
         Container => ("", ".to_glib_container().0"),
