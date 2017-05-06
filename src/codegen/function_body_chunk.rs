@@ -132,7 +132,7 @@ impl Builder {
                 type_: None,
             });
             if param.ref_mode == RefMode::ByRef {
-                let value = Chunk::Custom(format!("{}.to_glib_none().0", param.name));
+                let value = Chunk::Custom(format!("{}.to_glib_none()", param.name));
                 chunks.push(Chunk::Let {
                     name: param.name.clone(),
                     is_mut: false,
