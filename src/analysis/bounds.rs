@@ -64,12 +64,13 @@ impl Bound {
     pub fn get_for_property_setter(env: &Env, var_name:&str, type_id: TypeId,
                                    nullable: Nullable) -> Option<Bound> {
         match Bounds::type_for(env, type_id, nullable) {
-            Some(BoundType::IsA(l)) => {
+            //TODO: match boxed_bound to BoundType::IsA(l)
+            Some(BoundType::Into(_, Some(boxed_bound))) => {
                 let type_str = bounds_rust_type(env, type_id);
                 Some(Bound {
-                    bound_type: BoundType::IsA(l),
+                    bound_type: *boxed_bound.clone(),
                     parameter_name: var_name.to_owned(),
-                    alias: 'T',
+                    alias: TYPE_PARAMETERS_START,
                     type_str: type_str.into_string(),
                     info_for_next_type: false,
                 })
