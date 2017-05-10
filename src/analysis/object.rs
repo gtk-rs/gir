@@ -105,7 +105,7 @@ pub fn class(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<Info>
                                                      &mut imports);
 
     if has_children && !properties.is_empty() {
-        imports.add("Object", None);
+        imports.add("glib", None);
     }
     //don't `use` yourself
     imports.remove(&name);
@@ -197,7 +197,7 @@ pub fn interface(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<I
          iface.deprecated_version);
 
     if !properties.is_empty() {
-        imports.add("Object", None);
+        imports.add("glib", None);
     }
 
     //don't `use` yourself

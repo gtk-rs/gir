@@ -73,7 +73,7 @@ pub fn generate(w: &mut Write, env: &Env, analysis: &analysis::object::Info) -> 
         let mut extra_isa: Vec<&'static str> = Vec::new();
         if !analysis.child_properties.is_empty() { extra_isa.push(" + IsA<Container>"); }
         if analysis.has_signals() || !analysis.properties.is_empty() {
-            extra_isa.push(" + IsA<Object>");
+            extra_isa.push(" + IsA<glib::object::Object>");
         }
         try!(write!(w, "impl<O: IsA<{}>{}> {0}Ext for O {{", analysis.name, extra_isa.join("")));
         for func_analysis in &analysis.methods() {

@@ -56,7 +56,7 @@ fn declaration(env: &Env, prop: &Property) -> String {
     } else {
         let dir = library::ParameterDirection::In;
         let param_type = if let Some(Bound{alias, ref type_str, ..}) = prop.bound {
-            bound = format!("<{}: IsA<{}> + IsA<Object>>", alias, type_str);
+            bound = format!("<{}: IsA<{}> + IsA<glib::object::Object>>", alias, type_str);
             if *prop.nullable {
                 format!("Option<&{}>", alias)
             } else {
