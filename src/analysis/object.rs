@@ -66,7 +66,7 @@ pub fn class(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<Info>
 
     let supertypes = supertypes::analyze(env, class_tid, &mut imports);
 
-    let mut has_children = obj.force_trait;
+    let mut has_children = obj.generate_trait;
 
     for child_tid in env.class_hierarchy.subtypes(class_tid) {
         let child_name = child_tid.full_name(&env.library);
