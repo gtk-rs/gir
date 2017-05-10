@@ -72,7 +72,7 @@ pub fn analyze(env: &Env, props: &[library::Property], type_tid: library::TypeId
                 imports.add("gobject_ffi", prop.version);
                 if prop.bound.is_some() {
                     imports.add("glib::object::IsA", prop.version);
-                    imports.add("Object", prop.version);
+                    imports.add("glib", prop.version);
                 }
             }
 
