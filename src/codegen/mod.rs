@@ -8,6 +8,7 @@ mod child_properties;
 mod doc;
 mod enums;
 mod flags;
+mod alias;
 mod function;
 mod function_body_chunk;
 mod general;
@@ -46,6 +47,7 @@ fn normal_generate(env: &Env) {
     records::generate(env, &root_path, &mut mod_rs);
     enums::generate(env, &root_path, &mut mod_rs);
     flags::generate(env, &root_path, &mut mod_rs);
+    alias::generate(env, &root_path, &mut mod_rs);
 
     generate_mod_rs(env, &root_path, &mod_rs, &traits);
 }
