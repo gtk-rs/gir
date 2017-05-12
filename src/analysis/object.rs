@@ -17,7 +17,7 @@ pub struct Info {
     pub c_type: String,
     pub get_type: String,
     pub supertypes: Vec<general::StatusedTypeId>,
-    pub has_children: bool,
+    pub generate_trait: bool,
     pub has_constructors: bool,
     pub has_methods: bool,
     pub has_functions: bool,
@@ -66,7 +66,7 @@ pub fn class(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<Info>
 
     let supertypes = supertypes::analyze(env, class_tid, &mut imports);
 
-    let mut has_children = obj.generate_trait;
+    let mut generate_trait = obj.generate_trait;
 
     for child_tid in env.class_hierarchy.subtypes(class_tid) {
         let child_name = child_tid.full_name(&env.library);
@@ -74,12 +74,12 @@ pub fn class(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<Info>
             .map(|o| o.status)
             .unwrap_or_default();
         if status.normal() {
-            has_children = true;
+            generate_trait = true;
             break;
         }
     }
 
-    if has_children {
+    if generate_trait {
         imports.add("glib::object::IsA", None);
     }
 
@@ -93,7 +93,7 @@ pub fn class(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<Info>
     special_functions::unhide(&mut functions, &specials, special_functions::Type::Copy);
     special_functions::analyze_imports(&specials, &mut imports);
 
-    let signals = signals::analyze(env, &klass.signals, class_tid, has_children,
+    let signals = signals::analyze(env, &klass.signals, class_tid, generate_trait,
                                    &mut trampolines, obj, &mut imports);
     let properties = properties::analyze(env, &klass.properties, class_tid, obj, &mut imports,
                                          &signatures, deps);
@@ -104,7 +104,7 @@ pub fn class(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<Info>
     let child_properties = child_properties::analyze(env, obj.child_properties.as_ref(), class_tid,
                                                      &mut imports);
 
-    if has_children && !properties.is_empty() {
+    if generate_trait && !properties.is_empty() {
         imports.add("glib", None);
     }
     //don't `use` yourself
@@ -125,7 +125,7 @@ pub fn class(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<Info>
     };
 
     // patch up trait methods in the symbol table
-    if has_children {
+    if generate_trait {
         let mut symbols = env.symbols.borrow_mut();
         for func in base.methods() {
             if let Some(symbol) = symbols.by_c_name_mut(&func.glib_name) {
@@ -143,7 +143,7 @@ pub fn class(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<Info>
         c_type: klass.c_type.clone(),
         get_type: klass.glib_get_type.clone(),
         supertypes: supertypes,
-        has_children: has_children,
+        generate_trait: generate_trait,
         has_constructors: has_constructors,
         has_methods: has_methods,
         has_functions: has_functions,
@@ -225,7 +225,7 @@ pub fn interface(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<I
         c_type: iface.c_type.clone(),
         get_type: iface.glib_get_type.clone(),
         supertypes: supertypes,
-        has_children: true,
+        generate_trait: true,
         has_methods: has_methods,
         has_functions: has_functions,
         signals: signals,

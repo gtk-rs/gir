@@ -91,7 +91,7 @@ fn create_object_doc(w: &mut Write, env: &Env, info: &analysis::object::Info) ->
     let symbols = env.symbols.borrow();
     let ty = TypeStruct::new(SType::Struct, &info.name);
     let ty_ext = TypeStruct::new(SType::Trait, &format!("{}Ext", info.name));
-    let has_trait = info.has_children;
+    let has_trait = info.generate_trait;
     let doc;
     let functions: &[Function];
 
