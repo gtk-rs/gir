@@ -32,7 +32,7 @@ pub fn generate(w: &mut Write, env: &Env, analysis: &analysis::record::Info) -> 
         try!(writeln!(w, "}}"));
     }
 
-    try!(trait_impls::generate(w, &analysis.name, &analysis.functions, &analysis.specials));
+    try!(trait_impls::generate(w, &analysis.name, &analysis.functions, &analysis.specials, false));
 
     Ok(())
 }

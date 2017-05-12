@@ -50,7 +50,7 @@ pub fn generate(w: &mut Write, env: &Env, analysis: &analysis::object::Info) -> 
         try!(writeln!(w, "}}"));
     }
 
-    try!(trait_impls::generate(w, &analysis.name, &analysis.functions, &analysis.specials));
+    try!(trait_impls::generate(w, &analysis.name, &analysis.functions, &analysis.specials, generate_trait(analysis)));
 
     if generate_trait(analysis) {
         try!(writeln!(w, ""));
