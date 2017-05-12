@@ -101,11 +101,11 @@ pub fn generate(w: &mut Write, env: &Env, analysis: &analysis::object::Info) -> 
 }
 
 fn generate_inherent(analysis: &analysis::object::Info) -> bool {
-    analysis.has_constructors || analysis.has_functions || !analysis.generate_trait
+    analysis.has_constructors || analysis.has_functions || !generate_trait(analysis)
 }
 
 fn generate_trait(analysis: &analysis::object::Info) -> bool {
-    analysis.generate_trait
+    analysis.generate_trait && (analysis.has_methods || !analysis.properties.is_empty() || !analysis.child_properties.is_empty() || !analysis.signals.is_empty())
 }
 
 pub fn generate_reexports(env: &Env, analysis: &analysis::object::Info, module_name: &str,
