@@ -105,7 +105,7 @@ fn generate_inherent(analysis: &analysis::object::Info) -> bool {
 }
 
 fn generate_trait(analysis: &analysis::object::Info) -> bool {
-    analysis.generate_trait && (analysis.has_methods || !analysis.properties.is_empty() || !analysis.child_properties.is_empty() || !analysis.signals.is_empty())
+    analysis.generate_trait
 }
 
 pub fn generate_reexports(env: &Env, analysis: &analysis::object::Info, module_name: &str,
