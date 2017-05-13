@@ -68,14 +68,18 @@ pub fn class(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<Info>
 
     let mut generate_trait = obj.generate_trait;
 
-    for child_tid in env.class_hierarchy.subtypes(class_tid) {
-        let child_name = child_tid.full_name(&env.library);
-        let status = env.config.objects.get(&child_name)
-            .map(|o| o.status)
-            .unwrap_or_default();
-        if status.normal() {
-            generate_trait = true;
-            break;
+    // Sanity check the user's configuration. It's unlikely that not generating
+    // a trait is wanted if there are subtypes in this very crate
+    if !generate_trait {
+        for child_tid in env.class_hierarchy.subtypes(class_tid) {
+            let child_name = child_tid.full_name(&env.library);
+            let status = env.config.objects.get(&child_name)
+                .map(|o| o.status)
+                .unwrap_or_default();
+            if status.normal() {
+                error!("Not generating trait for {} although subtypes exist", full_name);
+                break;
+            }
         }
     }
 
