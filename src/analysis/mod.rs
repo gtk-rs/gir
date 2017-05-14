@@ -1,6 +1,7 @@
 use std::collections::BTreeMap;
 
 use env::Env;
+use library;
 use library::{Type, TypeId};
 
 pub mod bounds;
@@ -36,6 +37,7 @@ pub mod trampolines;
 pub struct Analysis {
     pub objects: BTreeMap<String, object::Info>,
     pub records: BTreeMap<String, record::Info>,
+    pub global_functions: Option<info_base::InfoBase>,
 }
 
 pub fn run(env: &mut Env) {
@@ -69,7 +71,44 @@ pub fn run(env: &mut Env) {
     }
     if !to_analyze.is_empty() {
         error!("Not analyzed {} objects due unfinished dependencies", to_analyze.len());
+        return;
     }
+
+    // Analyze free functions as the last step once all types are analyzed
+    analyze_global_functions(env);
+}
+
+fn analyze_global_functions(env: &mut Env) {
+    let ns = env.library.namespace(library::MAIN_NAMESPACE);
+
+    let full_name = format!("{}.*", ns.name);
+
+    let obj = match env.config.objects.get(&*full_name) {
+        Some(obj) if obj.status.need_generate() => obj,
+        _ => return,
+    };
+
+    let functions: Vec<_> = ns.functions.iter().filter(|f| f.kind == library::FunctionKind::Global).collect();
+    if functions.is_empty() {
+        return;
+    }
+
+    let mut imports = imports::Imports::new();
+    imports.add("glib::translate::*", None);
+    imports.add("ffi", None);
+
+    let functions = functions::analyze(env, &functions, TypeId::tid_none(), &obj, &mut imports, None, None);
+
+    imports.clean_glib(env);
+
+    env.analysis.global_functions = Some(info_base::InfoBase {
+        full_name: full_name,
+        type_id: TypeId::tid_none(),
+        name: "*".into(),
+        functions: functions,
+        imports: imports,
+        ..Default::default()
+    });
 }
 
 fn analyze(env: &mut Env, tid: TypeId, deps: &[TypeId]) {

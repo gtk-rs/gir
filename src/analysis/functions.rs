@@ -15,6 +15,7 @@ use library::{self, Nullable};
 use nameutil;
 use traits::*;
 use version::Version;
+use std::borrow::Borrow;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Visibility {
@@ -50,13 +51,14 @@ pub struct Info {
     pub doc_hidden: bool,
 }
 
-pub fn analyze(env: &Env, functions: &[library::Function], type_tid: library::TypeId,
+pub fn analyze<F: Borrow<library::Function>>(env: &Env, functions: &[F], type_tid: library::TypeId,
                obj: &config::gobjects::GObject, imports: &mut Imports,
                mut signatures: Option<&mut Signatures>,
                deps: Option<&[library::TypeId]>) -> Vec<Info> {
     let mut funcs = Vec::new();
 
     for func in functions {
+        let func = func.borrow();
         let configured_functions = obj.functions.matched(&func.name);
         if configured_functions.iter().any(|f| f.ignore) {
             continue;
