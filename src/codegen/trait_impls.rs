@@ -28,17 +28,33 @@ fn lookup<'a>(functions: &'a [Info], name: &str) -> &'a Info {
         .unwrap()
 }
 
+fn generate_call(type_name: &str, func_name: &str, args: &[&str], in_trait: bool) -> String {
+    let mut args_string = String::new();
+
+    if in_trait {
+        args_string.push_str("self");
+    }
+
+    if !args.is_empty() {
+        if in_trait {
+            args_string.push_str(", ");
+        }
+        args_string.push_str(&args.join(", "));
+    }
+
+    if in_trait {
+        format!("{type_name}Ext::{func_name}({args})",
+                type_name = type_name, func_name = func_name, args = args_string)
+    } else {
+        format!("self.{func_name}({args})",
+                func_name = func_name, args = args_string)
+    }
+}
+
 fn generate_display(w: &mut Write, type_name: &str, func: &Info, in_trait: bool) -> Result<()> {
     use analysis::out_parameters::Mode;
 
-    let call = if in_trait {
-        format!("{type_name}Ext::{func_name}(self)",
-                type_name = type_name, func_name = func.name)
-    } else {
-        format!("self.{func_name}()",
-                func_name = func.name)
-    };
-
+    let call = generate_call(type_name, &func.name, &[], in_trait);
     let body = if let Mode::Throws(_) = func.outs.mode {
         format!("if let Ok(val) = {} {{
             write!(f, \"{{}}\", val)
@@ -48,6 +64,7 @@ fn generate_display(w: &mut Write, type_name: &str, func: &Info, in_trait: bool)
     } else {
         format!("write!(f, \"{{}}\", {})", call)
     };
+
     writeln!(w, "
 impl fmt::Display for {type_name} {{
     #[inline]
@@ -58,13 +75,7 @@ impl fmt::Display for {type_name} {{
 }
 
 fn generate_eq(w: &mut Write, type_name: &str, func: &Info, in_trait: bool) -> Result<()> {
-    let call = if in_trait {
-        format!("{type_name}Ext::{func_name}(self, other)",
-                type_name = type_name, func_name = func.name)
-    } else {
-        format!("self.{func_name}(other)",
-                func_name = func.name)
-    };
+    let call = generate_call(type_name, &func.name, &["other"], in_trait);
 
     writeln!(w, "
 impl PartialEq for {type_name} {{
@@ -78,13 +89,7 @@ impl Eq for {type_name} {{}}", type_name = type_name, call = call)
 }
 
 fn generate_eq_compare(w: &mut Write, type_name: &str, func: &Info, in_trait: bool) -> Result<()> {
-    let call = if in_trait {
-        format!("{type_name}Ext::{func_name}(self, other)",
-                type_name = type_name, func_name = func.name)
-    } else {
-        format!("self.{func_name}(other)",
-                func_name = func.name)
-    };
+    let call = generate_call(type_name, &func.name, &["other"], in_trait);
 
     writeln!(w, "
 impl PartialEq for {type_name} {{
@@ -98,13 +103,7 @@ impl Eq for {type_name} {{}}", type_name = type_name, call = call)
 }
 
 fn generate_ord(w: &mut Write, type_name: &str, func: &Info, in_trait: bool) -> Result<()> {
-    let call = if in_trait {
-        format!("{type_name}Ext::{func_name}(self, other)",
-                type_name = type_name, func_name = func.name)
-    } else {
-        format!("self.{func_name}(other)",
-                func_name = func.name)
-    };
+    let call = generate_call(type_name, &func.name, &["other"], in_trait);
 
     writeln!(w, "
 impl PartialOrd for {type_name} {{
