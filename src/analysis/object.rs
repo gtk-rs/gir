@@ -42,6 +42,20 @@ impl Deref for Info {
     }
 }
 
+pub fn has_known_subtypes(env: &Env, class_tid: library::TypeId) -> bool {
+    for child_tid in env.class_hierarchy.subtypes(class_tid) {
+        let child_name = child_tid.full_name(&env.library);
+        let status = env.config.objects.get(&child_name)
+            .map(|o| o.status)
+            .unwrap_or_default();
+        if status.normal() {
+            return true;
+        }
+    }
+
+    false
+}
+
 pub fn class(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<Info> {
     info!("Analyzing class {}", obj.name);
     let full_name = obj.name.clone();
@@ -70,17 +84,8 @@ pub fn class(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<Info>
 
     // Sanity check the user's configuration. It's unlikely that not generating
     // a trait is wanted if there are subtypes in this very crate
-    if !generate_trait {
-        for child_tid in env.class_hierarchy.subtypes(class_tid) {
-            let child_name = child_tid.full_name(&env.library);
-            let status = env.config.objects.get(&child_name)
-                .map(|o| o.status)
-                .unwrap_or_default();
-            if status.normal() {
-                error!("Not generating trait for {} although subtypes exist", full_name);
-                break;
-            }
-        }
+    if !generate_trait && has_known_subtypes(env, class_tid) {
+        error!("Not generating trait for {} although subtypes exist", full_name);
     }
 
     let mut trampolines = trampolines::Trampolines::with_capacity(klass.signals.len());
