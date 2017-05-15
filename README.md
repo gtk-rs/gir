@@ -53,8 +53,8 @@ name = "Gtk.SomeClass"
 status = "generate"
 # replace the parameter name for the child in child properties (instead "child")
 child_name = "item"
-# force trait SomeClassExt generation even if class has no children
-trait = true
+# don't generate trait SomeClassExt for this object, but implement all functions in impl SomeClass
+trait = false
 # allow rename result file
 module_name = "soome_class"
 # prefixed object in mod.rs with #[cfg(mycond)]
