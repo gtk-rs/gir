@@ -45,6 +45,7 @@ impl Imports {
 
     pub fn clean_glib(&mut self, env: &Env) {
         if env.namespaces.glib_ns_id != namespaces::MAIN { return; }
+        self.remove("glib");
         let glibs: Vec<(String, Option<Version>)> = self.map.iter().filter_map(|p| {
             let glib_offset = p.0.find("glib::");
             if let Some(glib_offset) = glib_offset {
