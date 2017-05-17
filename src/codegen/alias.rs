@@ -34,9 +34,7 @@ pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>) {
         try!(general::start_comments(w, &env.config));
         try!(writeln!(w, ""));
 
-        if has_any {
-            mod_rs.push("\nmod alias;".into());
-        }
+        mod_rs.push("\nmod alias;".into());
         for config in &configs {
             if let Type::Alias(ref alias) = *env.library.type_(config.type_id.unwrap()) {
                 mod_rs.push(format!("pub use self::alias::{};", alias.name));
