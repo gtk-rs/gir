@@ -11,6 +11,7 @@ mod flags;
 mod alias;
 mod function;
 mod function_body_chunk;
+mod functions;
 mod general;
 mod object;
 mod objects;
@@ -48,6 +49,7 @@ fn normal_generate(env: &Env) {
     enums::generate(env, &root_path, &mut mod_rs);
     flags::generate(env, &root_path, &mut mod_rs);
     alias::generate(env, &root_path, &mut mod_rs);
+    functions::generate(env, &root_path, &mut mod_rs);
 
     generate_mod_rs(env, &root_path, &mod_rs, &traits);
 }
