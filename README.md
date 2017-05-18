@@ -41,7 +41,7 @@ generate = ["Gtk.Widget", "Gtk.Window"]
 manual = ["Gtk.Button"]
 ```
 
-So in here, both `GtkWidget` and `GtkWindow` will be fully generated and functions/methods using `GtkButton` will be uncommented.
+So in here, both `GtkWidget` and `GtkWindow` will be fully generated and functions/methods using `GtkButton` will be uncommented. To generate code for all global functions, add `Gtk.*` to the `generate` array.
 
 Sometimes Gir understands the object definition incorrectly or the `.gir` file contains incomplete or wrong definition, to fix it, you can use the full object configuration:
 
@@ -141,6 +141,21 @@ status = "generate"
     # define starting version when member added
     version = "3.18"
 ```
+
+For global functions, the members can be configured by configuring the `Gtk.*` object:
+
+```toml
+[[object]]
+name = "Gtk.*"
+status = "generate"
+    [[object.member]]
+    name = "stock_list_ids"
+    # allows to ignore global functions
+    ignore = true
+```
+
+Note that you must not place `Gtk.*` into the `generate` array and
+additionally configure its members.
 
 ### Generation
 
