@@ -3,7 +3,7 @@ use std::collections::BTreeMap;
 use std::str::FromStr;
 use toml::Value;
 
-use library::{Library, TypeId};
+use library::{Library, TypeId, MAIN_NAMESPACE};
 use config::error::TomlHelper;
 use config::parsable::{Parsable, Parse};
 use super::child_properties::ChildProperties;
@@ -167,9 +167,12 @@ fn parse_status_shorthand(objects: &mut GObjects, status: GStatus, toml: &Value)
 }
 
 pub fn resolve_type_ids(objects: &mut GObjects, library: &Library) {
+    let ns = library.namespace(MAIN_NAMESPACE);
+    let global_functions_name = format!("{}.*", ns.name);
+
     for (name, object) in objects.iter_mut() {
         let type_id = library.find_type(0, name);
-        if type_id.is_none() {
+        if type_id.is_none() && name != &global_functions_name {
             warn!("Configured object `{}` missing from the library", name);
         }
         object.type_id = type_id;

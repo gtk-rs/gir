@@ -98,6 +98,7 @@ fn rust_type_full(env: &Env, type_id: library::TypeId, nullable: Nullable, ref_m
                         ok("std::path::PathBuf")
                     }
                 }
+                Type if env.namespaces.glib_ns_id == library::MAIN_NAMESPACE => ok("types::Type"),
                 Type => ok("glib::types::Type"),
                 Unsupported => err("Unsupported"),
                 _ => err(&format!("Fundamental: {:?}", fund)),

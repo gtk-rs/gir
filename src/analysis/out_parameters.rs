@@ -94,12 +94,13 @@ pub fn analyze(env: &Env, func: &Function,
 
 pub fn analyze_imports(env: &Env, func: &Function, imports: &mut Imports) {
     for par in &func.parameters {
-        if par.direction == ParameterDirection::Out && !par.caller_allocates {
+        if par.direction == ParameterDirection::Out {
             match *env.library.type_(par.typ) {
                 Type::Fundamental(..) |
                     Type::Bitfield(..) |
                     Type::Enumeration(..) => imports.add("std::mem", func.version),
-                _ => imports.add("std::ptr".into(), func.version),
+                _ if !par.caller_allocates => imports.add("std::ptr".into(), func.version),
+                _ => (),
             }
         }
     }
