@@ -107,7 +107,7 @@ fn analyze_function(env: &Env, name: String, func: &library::Function, type_tid:
     let cfg_condition = configured_functions.iter().filter_map(|f| f.cfg_condition.clone()).next();
     let doc_hidden = configured_functions.iter().any(|f| f.doc_hidden);
 
-    let ret = return_value::analyze(env, func, type_tid, configured_functions, &mut used_types);
+    let ret = return_value::analyze(env, func, type_tid, configured_functions, &mut used_types, imports);
     commented |= ret.commented;
 
     let mut parameters: Vec<parameter::Parameter> =

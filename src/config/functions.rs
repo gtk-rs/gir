@@ -50,6 +50,7 @@ pub type Parameters = Vec<Parameter>;
 #[derive(Clone, Debug)]
 pub struct Return {
     pub nullable: Option<Nullable>,
+    pub bool_return_is_error: bool,
 }
 
 impl Return {
@@ -58,12 +59,17 @@ impl Return {
             let nullable = v.lookup("nullable")
                 .and_then(|v| v.as_bool())
                 .map(Nullable);
+            let bool_return_is_error = v.lookup("bool_return_is_error")
+                .and_then(|v| v.as_bool())
+                .unwrap_or(false);
             Return {
                 nullable: nullable,
+                bool_return_is_error: bool_return_is_error,
             }
         } else {
             Return {
                 nullable: None,
+                bool_return_is_error: false,
             }
         }
 
@@ -92,6 +98,7 @@ impl Parse for Function {
                 return None
             }
         };
+
         let ignore = toml.lookup("ignore")
             .and_then(|val| val.as_bool())
             .unwrap_or(false);

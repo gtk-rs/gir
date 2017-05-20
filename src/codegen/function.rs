@@ -3,6 +3,7 @@ use std::io::{Result, Write};
 use analysis;
 use analysis::bounds::Bounds;
 use analysis::functions::Visibility;
+use analysis::namespaces;
 use chunk::{ffi_function_todo, Chunk};
 use env::Env;
 use super::function_body_chunk;
@@ -58,6 +59,12 @@ pub fn declaration(env: &Env, analysis: &analysis::functions::Info) -> String {
     let outs_as_return = !analysis.outs.is_empty();
     let return_str = if outs_as_return {
         out_parameters_as_return(env, analysis)
+    } else if let Some(_) = analysis.ret.bool_return_is_error {
+        if env.namespaces.glib_ns_id == namespaces::MAIN {
+            " -> Result<(), error::BoolError>".into()
+        } else {
+            " -> Result<(), glib::error::BoolError>".into()
+        }
     } else {
         analysis.ret.to_return_value(env)
     };
