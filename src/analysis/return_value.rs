@@ -1,19 +1,22 @@
 use analysis::ref_mode::RefMode;
 use analysis::rust_type::*;
+use analysis::imports::Imports;
+use analysis::namespaces;
 use config;
 use env::Env;
-use library::{self, Nullable};
+use library::{self, Nullable, TypeId};
 
 #[derive(Clone, Debug, Default)]
 pub struct Info {
     pub parameter: Option<library::Parameter>,
     pub base_tid: Option<library::TypeId>,  // Some only if need downcast
     pub commented: bool,
+    pub bool_return_is_error: Option<String>,
 }
 
 pub fn analyze(env: &Env, func: &library::Function, type_tid: library::TypeId,
                configured_functions: &[&config::functions::Function],
-               used_types: &mut Vec<String>) -> Info {
+               used_types: &mut Vec<String>, imports: &mut Imports) -> Info {
 
     let mut parameter = if func.ret.typ == Default::default() { None } else {
         if let Ok(s) = used_rust_type(env, func.ret.typ) {
@@ -41,6 +44,19 @@ pub fn analyze(env: &Env, func: &library::Function, type_tid: library::TypeId,
         parameter_rust_type(env, func.ret.typ, func.ret.direction, Nullable(false), RefMode::None).is_err()
     };
 
+    let bool_return_is_error = configured_functions.iter().filter_map(|f| f.ret.bool_return_is_error.as_ref()).next();
+    let bool_return_error_message = bool_return_is_error.and_then(|m| {
+        if func.ret.typ != TypeId::tid_bool() {
+            error!("Ignoring bool_return_is_error configuration for non-bool returning function {}", func.name);
+            None
+        } else {
+            let ns = if env.namespaces.glib_ns_id == namespaces::MAIN { "error" } else { "glib" };
+            imports.add(ns, None);
+
+            Some(m.clone())
+        }
+    });
+
     let mut base_tid = None;
 
     if func.kind == library::FunctionKind::Constructor {
@@ -63,6 +79,7 @@ pub fn analyze(env: &Env, func: &library::Function, type_tid: library::TypeId,
         parameter: parameter,
         base_tid: base_tid,
         commented: commented,
+        bool_return_is_error: bool_return_error_message,
     }
 }
 

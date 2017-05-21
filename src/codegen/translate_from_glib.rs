@@ -1,4 +1,5 @@
 use analysis;
+use analysis::namespaces;
 use analysis::rust_type::rust_type;
 use analysis::conversion_type::ConversionType;
 use chunk::conversion_from_glib::Mode;
@@ -40,6 +41,7 @@ impl TranslateFromGlib for analysis::return_value::Info {
                 Some(tid) => {
                     let rust_type = rust_type(env, tid);
                     let from_glib_xxx = from_glib_xxx(par.transfer);
+
                     let prefix = if *par.nullable {
                         format!("Option::<{}>::{}", rust_type.into_string(), from_glib_xxx.0)
                     } else {
@@ -54,6 +56,13 @@ impl TranslateFromGlib for analysis::return_value::Info {
                         prefix,
                         format!("{}.{}", from_glib_xxx.1, suffix_function)
                     )
+                }
+                None if self.bool_return_is_error.is_some() =>  {
+                    if env.namespaces.glib_ns_id == namespaces::MAIN {
+                        ("error::BoolError::from_glib(".into(), format!(", \"{}\")", self.bool_return_is_error.as_ref().unwrap()))
+                    } else {
+                        ("glib::error::BoolError::from_glib(".into(), format!(", \"{}\")", self.bool_return_is_error.as_ref().unwrap()))
+                    }
                 }
                 None => Mode::from(par).translate_from_glib_as_function(env),
             },
