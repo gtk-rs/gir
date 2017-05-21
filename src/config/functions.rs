@@ -50,7 +50,7 @@ pub type Parameters = Vec<Parameter>;
 #[derive(Clone, Debug)]
 pub struct Return {
     pub nullable: Option<Nullable>,
-    pub bool_return_is_error: bool,
+    pub bool_return_is_error: Option<String>,
 }
 
 impl Return {
@@ -60,8 +60,8 @@ impl Return {
                 .and_then(|v| v.as_bool())
                 .map(Nullable);
             let bool_return_is_error = v.lookup("bool_return_is_error")
-                .and_then(|v| v.as_bool())
-                .unwrap_or(false);
+                .and_then(|v| v.as_str())
+                .map(|m| m.to_owned());
             Return {
                 nullable: nullable,
                 bool_return_is_error: bool_return_is_error,
@@ -69,7 +69,7 @@ impl Return {
         } else {
             Return {
                 nullable: None,
-                bool_return_is_error: false,
+                bool_return_is_error: None,
             }
         }
 

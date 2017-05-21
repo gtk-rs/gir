@@ -44,17 +44,18 @@ pub fn analyze(env: &Env, func: &library::Function, type_tid: library::TypeId,
         parameter_rust_type(env, func.ret.typ, func.ret.direction, Nullable(false), RefMode::None).is_err()
     };
 
-    let mut bool_return_is_error = !configured_functions.is_empty() && configured_functions.iter().any(|f| f.ret.bool_return_is_error);
-    if bool_return_is_error && func.ret.typ != TypeId::tid_bool() {
-        error!("Ignoring bool_return_is_error configuration for non-bool returning function {}", func.name);
-        bool_return_is_error = false;
-    } else if bool_return_is_error {
-        if env.namespaces.glib_ns_id == namespaces::MAIN {
-            imports.add("error", None);
+    let bool_return_is_error = configured_functions.iter().filter_map(|f| f.ret.bool_return_is_error.as_ref()).next();
+    let bool_return_error_message = bool_return_is_error.and_then(|m| {
+        if func.ret.typ != TypeId::tid_bool() {
+            error!("Ignoring bool_return_is_error configuration for non-bool returning function {}", func.name);
+            None
         } else {
-            imports.add("glib", None);
+            let ns = if env.namespaces.glib_ns_id == namespaces::MAIN { "error" } else { "glib" };
+            imports.add(ns, None);
+
+            Some(m.clone())
         }
-    }
+    });
 
     let mut base_tid = None;
 
@@ -78,7 +79,7 @@ pub fn analyze(env: &Env, func: &library::Function, type_tid: library::TypeId,
         parameter: parameter,
         base_tid: base_tid,
         commented: commented,
-        bool_return_is_error: if bool_return_is_error { Some(func.c_identifier.as_ref().unwrap().clone()) } else { None },
+        bool_return_is_error: bool_return_error_message,
     }
 }
 
