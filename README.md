@@ -87,6 +87,9 @@ cfg_condition = "mycond"
         name = "website_label"
         # allow to remove/add Option<> to return value
         nullable = true
+        # convert bool return types to Result<(), glib::BoolError> with
+        # the given error message on failure
+        bool_return_is_error = "Function failed doing what it is supposed to do"
     [[object.signal]]
     name = "activate-link"
     # replace trampoline bool return type with `Inhibit`
