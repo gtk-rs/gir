@@ -72,11 +72,13 @@ pub fn declaration(env: &Env, analysis: &analysis::functions::Info) -> String {
 
     let bounds = bounds(&analysis.bounds);
 
+    let mut skipped = 0;
     for (pos, par) in analysis.parameters.iter().enumerate() {
         if outs_as_return && analysis.outs.iter().any(|p| p.name==par.name) {
+            skipped += 1;
             continue;
         }
-        if pos > 0 { param_str.push_str(", ") }
+        if pos > skipped { param_str.push_str(", ") }
         let s = par.to_parameter(env, &analysis.bounds);
         param_str.push_str(&s);
     }
