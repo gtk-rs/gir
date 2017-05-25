@@ -87,6 +87,7 @@ pub struct Function {
     pub parameters: Parameters,
     pub ret: Return,
     pub doc_hidden: bool,
+    pub is_windows_utf8: bool,
 }
 
 impl Parse for Function {
@@ -113,6 +114,9 @@ impl Parse for Function {
         let doc_hidden = toml.lookup("doc_hidden")
             .and_then(|val| val.as_bool())
             .unwrap_or(false);
+        let is_windows_utf8 = toml.lookup("is_windows_utf8")
+            .and_then(|val| val.as_bool())
+            .unwrap_or(false);
 
         Some(Function{
             ident: ident,
@@ -122,6 +126,7 @@ impl Parse for Function {
             ret: ret,
             cfg_condition: cfg_condition,
             doc_hidden: doc_hidden,
+            is_windows_utf8: is_windows_utf8,
         })
     }
 }

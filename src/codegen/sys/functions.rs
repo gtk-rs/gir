@@ -1,7 +1,7 @@
-use std::collections::HashMap;
 use std::io::{Result, Write};
 
 use codegen::general::version_condition;
+use config::gobjects::GObject;
 use env::Env;
 use library;
 use nameutil;
@@ -11,11 +11,17 @@ use traits::*;
 //used as glib:get-type in GLib-2.0.gir
 const INTERN: &'static str= "intern";
 
+lazy_static! {
+    static ref DEFAULT_OBJ: GObject = Default::default();
+}
+
 pub fn generate_records_funcs(w: &mut Write, env: &Env, records: &[&library::Record]) -> Result<()> {
     let intern_str = INTERN.to_string();
     for record in records {
+        let name = format!("{}.{}", env.config.library_name, record.name);
+        let obj = env.config.objects.get(&name).unwrap_or(&DEFAULT_OBJ);
         let glib_get_type = record.glib_get_type.as_ref().unwrap_or(&intern_str);
-        try!(generate_object_funcs(w, env, &record.c_type,
+        try!(generate_object_funcs(w, env, obj, &record.c_type,
             glib_get_type, &record.functions));
     }
 
@@ -24,7 +30,9 @@ pub fn generate_records_funcs(w: &mut Write, env: &Env, records: &[&library::Rec
 
 pub fn generate_classes_funcs(w: &mut Write, env: &Env, classes: &[&library::Class]) -> Result<()> {
     for klass in classes {
-        try!(generate_object_funcs(w, env, &klass.c_type,
+        let name = format!("{}.{}", env.config.library_name, klass.name);
+        let obj = env.config.objects.get(&name).unwrap_or(&DEFAULT_OBJ);
+        try!(generate_object_funcs(w, env, obj, &klass.c_type,
             &klass.glib_get_type, &klass.functions));
     }
 
@@ -34,7 +42,10 @@ pub fn generate_classes_funcs(w: &mut Write, env: &Env, classes: &[&library::Cla
 pub fn generate_bitfields_funcs(w: &mut Write, env: &Env, bitfields: &[&library::Bitfield])
         -> Result<()> {
     for bitfield in bitfields {
-        try!(generate_object_funcs(w, env, &bitfield.c_type, INTERN, &bitfield.functions));
+        let name = format!("{}.{}", env.config.library_name, bitfield.name);
+        let obj = env.config.objects.get(&name).unwrap_or(&DEFAULT_OBJ);
+        try!(generate_object_funcs(w, env, obj, &bitfield.c_type, INTERN,
+                                   &bitfield.functions));
     }
 
     Ok(())
@@ -43,7 +54,9 @@ pub fn generate_bitfields_funcs(w: &mut Write, env: &Env, bitfields: &[&library:
 pub fn generate_enums_funcs(w: &mut Write, env: &Env, enums: &[&library::Enumeration])
         -> Result<()> {
     for en in enums {
-        try!(generate_object_funcs(w, env, &en.c_type, INTERN, &en.functions));
+        let name = format!("{}.{}", env.config.library_name, en.name);
+        let obj = env.config.objects.get(&name).unwrap_or(&DEFAULT_OBJ);
+        try!(generate_object_funcs(w, env, obj, &en.c_type, INTERN, &en.functions));
     }
 
     Ok(())
@@ -55,7 +68,9 @@ pub fn generate_unions_funcs(w: &mut Write, env: &Env, unions: &[&library::Union
             Some(ref x) => x,
             None => return Ok(()),
         };
-        try!(generate_object_funcs(w, env, c_type, INTERN, &union.functions));
+        let name = format!("{}.{}", env.config.library_name, union.name);
+        let obj = env.config.objects.get(&name).unwrap_or(&DEFAULT_OBJ);
+        try!(generate_object_funcs(w, env, obj, c_type, INTERN, &union.functions));
     }
 
     Ok(())
@@ -63,7 +78,9 @@ pub fn generate_unions_funcs(w: &mut Write, env: &Env, unions: &[&library::Union
 
 pub fn generate_interfaces_funcs(w: &mut Write, env: &Env, interfaces: &[&library::Interface]) -> Result<()> {
     for interface in interfaces {
-        try!(generate_object_funcs(w, env,  &interface.c_type,
+        let name = format!("{}.{}", env.config.library_name, interface.name);
+        let obj = env.config.objects.get(&name).unwrap_or(&DEFAULT_OBJ);
+        try!(generate_object_funcs(w, env, obj, &interface.c_type,
             &interface.glib_get_type, &interface.functions));
     }
 
@@ -71,10 +88,12 @@ pub fn generate_interfaces_funcs(w: &mut Write, env: &Env, interfaces: &[&librar
 }
 
 pub fn generate_other_funcs(w: &mut Write, env: &Env, functions: &[library::Function]) -> Result<()> {
-    generate_object_funcs(w, env,  "Other functions", INTERN, functions)
+    let name = format!("{}.*", env.config.library_name);
+    let obj = env.config.objects.get(&name).unwrap_or(&DEFAULT_OBJ);
+    generate_object_funcs(w, env, obj, "Other functions", INTERN, functions)
 }
 
-fn generate_object_funcs(w: &mut Write, env: &Env, c_type: &str,
+fn generate_object_funcs(w: &mut Write, env: &Env, obj: &GObject, c_type: &str,
     glib_get_type: &str, functions: &[library::Function]) -> Result<()> {
     let write_get_type = glib_get_type != INTERN;
     if write_get_type || !functions.is_empty() {
@@ -88,36 +107,26 @@ fn generate_object_funcs(w: &mut Write, env: &Env, c_type: &str,
     }
 
     for func in functions {
+        let configured_functions = obj.functions.matched(&func.name);
+        if configured_functions.iter().any(|f| f.ignore) {
+            continue;
+        }
+        let is_windows_utf8 = configured_functions.iter().any(|f| f.is_windows_utf8);
+
         let (commented, sig) = function_signature(env, func, false);
         let comment = if commented { "//" } else { "" };
         try!(version_condition(w, env, func.version, commented, 1));
         let name = func.c_identifier.as_ref().unwrap();
         // since we work with gir-files from Linux, some function names need to be adjusted
-        if let Some(win_name) = RENAME_ON_WINDOWS.get(&name[..]) {
+        if is_windows_utf8 {
             try!(writeln!(w, "    {}#[cfg(windows)]", comment));
-            try!(writeln!(w, "    {}pub fn {}{};", comment, win_name, sig));
+            try!(writeln!(w, "    {}pub fn {}_utf8{};", comment, name, sig));
             try!(version_condition(w, env, func.version, commented, 1));
-            try!(writeln!(w, "    {}#[cfg(not(windows))]", comment));
         }
         try!(writeln!(w, "    {}pub fn {}{};", comment, name, sig));
     }
 
     Ok(())
-}
-
-lazy_static! {
-    static ref RENAME_ON_WINDOWS: HashMap<&'static str, &'static str> = {
-        let mut map = HashMap::new();
-        [
-            ("gdk_pixbuf_new_from_file", "gdk_pixbuf_new_from_file_utf8"),
-            ("gdk_pixbuf_new_from_file_at_size", "gdk_pixbuf_new_from_file_at_size_utf8"),
-            ("gdk_pixbuf_new_from_file_at_scale", "gdk_pixbuf_new_from_file_at_scale_utf8"),
-            ("gdk_pixbuf_save", "gdk_pixbuf_save_utf8"),
-            ("gdk_pixbuf_savev", "gdk_pixbuf_savev_utf8"),
-            ("gdk_pixbuf_animation_new_from_file", "gdk_pixbuf_animation_new_from_file_utf8"),
-        ].iter().map(|&(k, v)| map.insert(k, v)).count();
-        map
-    };
 }
 
 pub fn generate_callbacks(w: &mut Write, env: &Env, callbacks: &[&library::Function]) -> Result<()> {
