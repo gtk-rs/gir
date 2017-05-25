@@ -18,6 +18,17 @@ ignore = ["Gtk.Widget", "Gtk.Window"]
 
 And that's all! Neither `GtkWidget` nor `GtkWindow` (alongside with their functions) will be generated.
 
+Also you can mark some functions that it has suffix `_utf8` on Windows:
+
+```toml
+[[object]]
+name = "GdkPixbuf.PixbufAnimation"
+status = "generate"
+    [[object.function]]
+    name = "new_from_file"
+    is_windows_utf8 = true
+```
+
 ### Generation
 
 When you're ready, let's generate the FFI part:
