@@ -382,7 +382,7 @@ impl Library {
                             }
                             let f =
                                 try!(self.read_function(parser, ns_id, "callback", &attributes));
-                            typ = Some((Type::function(self, f), None));
+                            typ = Some((Type::function(self, f), None, None));
                         }
                         "doc" => doc = try!(read_text(parser)),
                         x => bail!(mk_error!(format!("Unexpected element <{}>", x), parser)),
@@ -394,13 +394,14 @@ impl Library {
         }
         let private = attrs.by_name("private").unwrap_or("") == "1";
         let bits = attrs.by_name("bits").and_then(|s| s.parse().ok());
-        if let Some((tid, c_type)) = typ {
+        if let Some((tid, c_type, array_length)) = typ {
             Ok(Field {
                 name: name.into(),
                 typ: tid,
                 c_type: c_type,
                 private: private,
                 bits: bits,
+                array_length: array_length,
                 doc: doc,
             })
         }
@@ -606,10 +607,10 @@ impl Library {
                                 bail!(mk_error!("Too many <type> elements", parser));
                             }
                             let pos = parser.position();
-                            let (typ, c_type) =
+                            let (typ, c_type, array_length) =
                                 try!(self.read_type(parser, ns_id, &name, &attributes));
                             if let Some(c_type) = c_type {
-                                inner = Some((typ, c_type));
+                                inner = Some((typ, c_type, array_length));
                             }
                             else{
                                 bail!(mk_error!("Missing constant's c:type", &pos));
@@ -624,7 +625,7 @@ impl Library {
                 _ => xml_next!(event, parser),
             }
         }
-        if let Some((typ, c_type)) = inner {
+        if let Some((typ, c_type, _array_length)) = inner {
             self.add_constant(ns_id,
                 Constant {
                     name: name.into(),
@@ -662,10 +663,10 @@ impl Library {
                                 bail!(mk_error!("Too many <type> elements", parser));
                             }
                             let pos = parser.position();
-                            let (typ, c_type) =
+                            let (typ, c_type, array_length) =
                                 try!(self.read_type(parser, ns_id, &name, &attributes));
                             if let Some(c_type) = c_type {
-                                inner = Some((typ, c_type));
+                                inner = Some((typ, c_type, array_length));
                             } else {
                                 bail!(mk_error!("Missing alias target's c:type", &pos));
                             }
@@ -678,7 +679,7 @@ impl Library {
                 _ => xml_next!(event, parser),
             }
         }
-        if let Some((typ, c_type)) = inner {
+        if let Some((typ, c_type, _array_length)) = inner {
             let typ = Type::Alias(
                 Alias {
                     name: name.into(),
@@ -779,6 +780,7 @@ impl Library {
                 transfer: Transfer::Full,
                 caller_allocates: false,
                 nullable: Nullable(true),
+                array_length: None,
                 allow_none: true,
                 is_error: true,
                 doc: None,
@@ -958,9 +960,9 @@ impl Library {
                                 bail!(mk_error!("Too many <type> elements", &pos));
                             }
                             typ = Some(try!(self.read_type(parser, ns_id, &name, &attributes)));
-                            if let Some((tid, None)) = typ {
+                            if let Some((tid, None, _)) = typ {
                                 if allow_no_ctype {
-                                    typ = Some((tid, Some(EMPTY_CTYPE.to_owned())));
+                                    typ = Some((tid, Some(EMPTY_CTYPE.to_owned()), None));
                                 } else {
                                     bail!(mk_error!("Missing c:type attribute", &pos));
                                 }
@@ -978,7 +980,7 @@ impl Library {
                 _ => xml_next!(event, parser),
             }
         }
-        if let Some((tid, c_type)) = typ {
+        if let Some((tid, c_type, array_length)) = typ {
             Ok(Parameter {
                 name: name.into(),
                 typ: tid,
@@ -989,6 +991,7 @@ impl Library {
                 caller_allocates: caller_allocates,
                 nullable: Nullable(nullable),
                 allow_none: allow_none,
+                array_length: array_length,
                 is_error: false,
                 doc: doc,
             })
@@ -1004,6 +1007,7 @@ impl Library {
                 caller_allocates: false,
                 nullable: Nullable(false),
                 allow_none: allow_none,
+                array_length: None,
                 is_error: false,
                 doc: doc,
             })
@@ -1063,8 +1067,8 @@ impl Library {
                                 continue;
                             }
                             typ = Some(try!(self.read_type(parser, ns_id, &name, &attributes)));
-                            if let Some((tid, None)) = typ {
-                                typ = Some((tid, Some(EMPTY_CTYPE.to_owned())));
+                            if let Some((tid, None, _)) = typ {
+                                typ = Some((tid, Some(EMPTY_CTYPE.to_owned()), None));
                             }
                         }
                         "doc" => doc = try!(read_text(parser)),
@@ -1078,7 +1082,7 @@ impl Library {
         }
         if has_empty_type_tag { return Ok(None); }
 
-        if let Some((tid, c_type)) = typ {
+        if let Some((tid, c_type, _array_length)) = typ {
             Ok(Some(Property {
                 name: name.into(),
                 readable: readable,
@@ -1111,12 +1115,13 @@ impl Library {
     }
 
     fn read_type(&mut self, parser: &mut Reader, ns_id: u16,
-                 name: &OwnedName, attrs: &Attributes) -> Result<(TypeId, Option<String>)> {
+                 name: &OwnedName, attrs: &Attributes) -> Result<(TypeId, Option<String>, Option<u32>)> {
         let start_pos = parser.position();
         let name = try!(attrs.by_name("name")
                         .or_else(|| if name.local_name == "array" { Some("array") } else { None })
                         .ok_or_else(|| mk_error!("Missing type name", &start_pos)));
         let c_type = attrs.by_name("type").map(|s| s.into());
+        let array_length = attrs.by_name("length").and_then(|s| s.parse().ok());
         let mut inner = Vec::new();
         loop {
             let event = try!(parser.next());
@@ -1138,7 +1143,7 @@ impl Library {
                 bail!(mk_error!("Missing element type", &start_pos))
             }
             else {
-                Ok((self.find_or_stub_type(ns_id, name), c_type))
+                Ok((self.find_or_stub_type(ns_id, name), c_type, array_length))
             }
         }
         else {
@@ -1149,7 +1154,7 @@ impl Library {
                 try!(Type::container(self, name, inner)
                                .ok_or_else(|| mk_error!("Unknown container type", &start_pos)))
             };
-            Ok((tid, c_type))
+            Ok((tid, c_type, array_length))
         }
     }
 
