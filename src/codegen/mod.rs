@@ -9,7 +9,7 @@ mod doc;
 mod enums;
 mod flags;
 mod alias;
-mod function;
+pub mod function;
 mod function_body_chunk;
 mod functions;
 mod general;

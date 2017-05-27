@@ -195,7 +195,7 @@ pub fn used_rust_type(env: &Env, type_id: library::TypeId) -> Result {
     }
 }
 
-pub fn parameter_rust_type(env: &Env, type_id:library::TypeId,
+pub fn parameter_rust_type(env: &Env, type_id: library::TypeId,
                            direction: library::ParameterDirection, nullable: Nullable,
                            ref_mode: RefMode) -> Result {
     use library::Type::*;

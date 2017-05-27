@@ -21,7 +21,7 @@ pub fn generate(w: &mut Write, env: &Env, prop: &ChildProperty, in_trait: bool,
 }
 
 fn generate_func(w: &mut Write, env: &Env, prop: &ChildProperty, in_trait: bool,
-                     only_declaration: bool, indent: usize, is_get: bool) -> Result<()> {
+                 only_declaration: bool, indent: usize, is_get: bool) -> Result<()> {
     let pub_prefix = if in_trait { "" } else { "pub " };
     let decl_suffix = if only_declaration { ";" } else { " {" };
     let type_string = rust_type(env, prop.typ);
@@ -36,7 +36,7 @@ fn generate_func(w: &mut Write, env: &Env, prop: &ChildProperty, in_trait: bool,
     try!(doc_hidden(w, prop.doc_hidden, comment_prefix, indent));
     let decl = declaration(env, prop, is_get);
     try!(writeln!(w, "{}{}{}{}{}", tabs(indent),
-        comment_prefix, pub_prefix, decl, decl_suffix));
+         comment_prefix, pub_prefix, decl, decl_suffix));
 
     if !only_declaration {
         let body = body(prop, is_get).to_code(env);
@@ -51,20 +51,16 @@ fn generate_func(w: &mut Write, env: &Env, prop: &ChildProperty, in_trait: bool,
 fn declaration(env: &Env, prop: &ChildProperty, is_get: bool) -> String {
     let get_set = if is_get { "get" } else { "set" };
     let prop_name = nameutil::signal_to_snake(&*prop.name);
-    let set_param = if is_get {
-        "".to_string()
-    } else {
-        let dir = library::ParameterDirection::In;
-        let param_type = parameter_rust_type(env, prop.typ, dir, prop.nullable, prop.set_in_ref_mode)
-            .into_string();
-        format!(", {}: {}", prop_name, param_type)
-    };
-    let bounds = if let Some(typ) = prop.child_type {
+    let func_name = format!("{}_{}_{}", get_set, prop.child_name, prop_name);
+    let mut bounds = if let Some(typ) = prop.child_type {
         let child_type = rust_type(env, typ).into_string();
-        format!("<T: IsA<{}> + IsA<Widget>>", child_type)
+        format!("T: IsA<{}> + IsA<Widget>", child_type)
     } else {
-        "<T: IsA<Widget>>".to_string()
+        "T: IsA<Widget>".to_string()
     };
+    if !is_get && !prop.bounds.is_empty() {
+        bounds = format!("{}, {}", prop.bounds, bounds);
+    }
     let return_str = if is_get {
         let dir = library::ParameterDirection::Return;
         let ret_type = parameter_rust_type(env, prop.typ, dir, prop.nullable, prop.get_out_ref_mode)
@@ -73,19 +69,22 @@ fn declaration(env: &Env, prop: &ChildProperty, is_get: bool) -> String {
     } else {
         "".to_string()
     };
-    format!("fn {}_{}_{}{}(&self, item: &T{}){}", get_set, prop.child_name, prop_name, bounds,
-            set_param, return_str)
+    format!("fn {}<{}>(&self, item: &T{}){}",
+            func_name, bounds,
+            if is_get { "".to_owned() } else { format!(", {}", prop.set_params) },
+            return_str)
 }
 
-fn body(prop: &ChildProperty, is_get:bool ) -> Chunk {
+fn body(prop: &ChildProperty, is_get: bool) -> Chunk {
     let mut builder = property_body::Builder::new_for_child_property();
     let prop_name = nameutil::signal_to_snake(&*prop.name);
     builder.name(&prop.name)
-        .var_name(&prop_name)
-        .is_get(is_get)
-        .is_ref(prop.set_in_ref_mode.is_ref())
-        .is_nullable(*prop.nullable)
-        .conversion(prop.conversion);
+           .var_name(&prop_name)
+           .is_get(is_get)
+           .is_ref(prop.set_in_ref_mode.is_ref())
+           .is_nullable(*prop.nullable)
+           .is_into(prop.is_into)
+           .conversion(prop.conversion);
     if let Some(ref default_value) = prop.default_value {
         builder.default_value(default_value);
     } else {

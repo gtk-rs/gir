@@ -11,6 +11,7 @@ pub struct Builder {
     default_value: String,
     is_ref: bool,
     is_nullable: bool,
+    is_into: bool,
     conversion: PropertyConversion,
 }
 
@@ -53,6 +54,11 @@ impl Builder {
 
     pub fn is_nullable(&mut self, value: bool) -> &mut Builder {
         self.is_nullable = value;
+        self
+    }
+
+    pub fn is_into(&mut self, is_into: bool) -> &mut Builder {
+        self.is_into = is_into;
         self
     }
 
@@ -157,6 +163,15 @@ impl Builder {
 
         let mut chunks = Vec::new();
 
+        if self.is_into {
+            let value = Chunk::Custom(format!("{}.into()", self.var_name));
+            chunks.push(Chunk::Let {
+                name: self.var_name.clone(),
+                is_mut: false,
+                value: Box::new(value),
+                type_: None,
+            });
+        }
         match self.conversion {
             AsI32 => {
                 let value_chunk = Chunk::Custom(format!("{}.to_glib() as i32", self.var_name));
