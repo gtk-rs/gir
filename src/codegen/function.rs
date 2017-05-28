@@ -86,7 +86,7 @@ pub fn declaration(env: &Env, analysis: &analysis::functions::Info) -> String {
     format!("fn {}{}({}){}", analysis.name, bounds, param_str, return_str)
 }
 
-fn bounds(bounds: &Bounds) -> String {
+pub fn bounds(bounds: &Bounds) -> String {
     use analysis::bounds::BoundType::*;
     if bounds.is_empty() { return String::new() }
     let strs: Vec<String> = bounds.iter_lifetimes()

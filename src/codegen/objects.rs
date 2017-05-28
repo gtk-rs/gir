@@ -4,7 +4,8 @@ use env::Env;
 use file_saver::*;
 use nameutil::*;
 
-pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>, traits: &mut Vec<String>) {
+pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>,
+                traits: &mut Vec<String>) {
     info!("Generate objects");
     for class_analysis in env.analysis.objects.values() {
         let obj = &env.config.objects[&class_analysis.full_name];
@@ -21,7 +22,7 @@ pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>, traits: &
         info!("Generating file {:?}", path);
 
         save_to_file(path, env.config.make_backup,
-            |w| super::object::generate(w, env, class_analysis));
+            |ref mut w| super::object::generate(w, env, class_analysis));
 
         super::object::generate_reexports(env, class_analysis, &mod_name, mod_rs, traits);
     }

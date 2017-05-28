@@ -21,6 +21,13 @@ pub enum BoundType {
 }
 
 impl BoundType {
+    pub fn is_into(&self) -> bool {
+        match *self {
+            BoundType::Into(_, _) => true,
+            _ => false,
+        }
+    }
+
     fn with_lifetime(ty_: BoundType, lifetime: char) -> BoundType {
         match ty_ {
             BoundType::IsA(_) => BoundType::IsA(Some(lifetime)),
@@ -39,7 +46,7 @@ pub struct Bound {
     pub info_for_next_type: bool,
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct Bounds {
     unused: VecDeque<char>,
     used: Vec<Bound>,
@@ -61,7 +68,7 @@ impl Default for Bounds {
 }
 
 impl Bound {
-    pub fn get_for_property_setter(env: &Env, var_name:&str, type_id: TypeId,
+    pub fn get_for_property_setter(env: &Env, var_name: &str, type_id: TypeId,
                                    nullable: Nullable) -> Option<Bound> {
         match Bounds::type_for(env, type_id, nullable) {
             //TODO: match boxed_bound to BoundType::IsA(l)
@@ -94,7 +101,7 @@ impl Bounds {
         }
     }
 
-    fn type_for(env: &Env, type_id: TypeId, nullable: Nullable) -> Option<BoundType> {
+    pub fn type_for(env: &Env, type_id: TypeId, nullable: Nullable) -> Option<BoundType> {
         use self::BoundType::*;
         match *env.library.type_(type_id) {
             Type::Fundamental(Fundamental::Filename) => Some(AsRef(None)),

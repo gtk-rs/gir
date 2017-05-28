@@ -1,10 +1,13 @@
+use analysis::bounds::Bounds;
 use analysis::imports::Imports;
 use analysis::ref_mode::RefMode;
 use analysis::properties;
 use analysis::rust_type::*;
+use codegen::function;
 use config;
 use env::Env;
 use library;
+use nameutil;
 use traits::*;
 
 #[derive(Clone, Debug)]
@@ -15,10 +18,14 @@ pub struct ChildProperty {
     pub child_type: Option<library::TypeId>,
     pub nullable: library::Nullable,
     pub conversion: properties::PropertyConversion,
-    pub default_value: Option<String>, //for getter
+    pub default_value: Option<String>, // for getter
     pub get_out_ref_mode: RefMode,
     pub set_in_ref_mode: RefMode,
     pub doc_hidden: bool,
+    pub set_params: String,
+    pub bounds: String,
+    pub is_into: bool,
+    pub to_glib_extra: String,
 }
 
 pub type ChildProperties = Vec<ChildProperty>;
@@ -60,6 +67,7 @@ fn analyze_property(env: &Env, prop: &config::ChildProperty, child_name: &str,
                     imports: &mut Imports) -> Option<ChildProperty> {
     let name = prop.name.clone();
     if let Some(typ) = env.library.find_type(0, &prop.type_name) {
+        let prop_name = nameutil::signal_to_snake(&*prop.name);
         let type_ = env.type_(typ);
         let doc_hidden = prop.doc_hidden;
 
@@ -71,7 +79,8 @@ fn analyze_property(env: &Env, prop: &config::ChildProperty, child_name: &str,
         let default_value = properties::get_type_default_value(env, typ, type_);
         if default_value.is_none() {
             let owner_name = rust_type(env, type_tid).into_string();
-            error!("No default value for type `{}` of child property `{}` for `{}`", &prop.type_name, name, owner_name);
+            error!("No default value for type `{}` of child property `{}` for `{}`",
+                   &prop.type_name, name, owner_name);
         }
         let conversion = properties::PropertyConversion::of(type_);
         if conversion != properties::PropertyConversion::Direct {
@@ -83,6 +92,25 @@ fn analyze_property(env: &Env, prop: &config::ChildProperty, child_name: &str,
             set_in_ref_mode = RefMode::ByRef;
         }
         let nullable = library::Nullable(set_in_ref_mode.is_ref());
+
+        let mut is_into = false;
+        let mut bounds_str = String::new();
+        let dir = library::ParameterDirection::In;
+        let set_params = if let Some(bound) = Bounds::type_for(env, typ, nullable) {
+            is_into = bound.is_into();
+            let r_type = bounds_rust_type(env, typ).into_string();
+            let mut bounds = Bounds::default();
+            bounds.add_parameter("P", &r_type, bound);
+            let s_bounds = function::bounds(&bounds);
+            // Because the bounds won't necessarily be added into the final function, we
+            // only keep the "inner" part to make the string computation easier. So
+            // `<T: X>` becomes `T: X`.
+            bounds_str.push_str(&s_bounds[1..s_bounds.len() - 1]);
+            format!("{}: {}", prop_name, bounds.iter().last().unwrap().alias)
+        } else {
+            format!("{}: {}", prop_name, parameter_rust_type(env, typ, dir, nullable,
+                                                             set_in_ref_mode).into_string())
+        };
         Some(ChildProperty{
             name: name,
             typ: typ,
@@ -94,6 +122,10 @@ fn analyze_property(env: &Env, prop: &config::ChildProperty, child_name: &str,
             get_out_ref_mode: get_out_ref_mode,
             set_in_ref_mode: set_in_ref_mode,
             doc_hidden: doc_hidden,
+            set_params: set_params,
+            bounds: bounds_str,
+            is_into: is_into,
+            to_glib_extra: String::new(),
         })
     } else {
         let owner_name = rust_type(env, type_tid).into_string();
