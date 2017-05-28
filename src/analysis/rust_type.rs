@@ -86,6 +86,9 @@ fn rust_type_full(env: &Env, type_id: library::TypeId, nullable: Nullable, ref_m
                 Long => ok("libc::c_long"),     //depends of target system
                 ULong => ok("libc::c_ulong"),   //depends of target system
 
+                Size => ok("usize"),     //depends of target system
+                SSize => ok("isize"),    //depends of target system
+
                 Float => ok("f32"),
                 Double => ok("f64"),
 
