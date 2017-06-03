@@ -34,7 +34,7 @@ status = "generate"
 When you're ready, let's generate the FFI part:
 
 ```shell
-cargo run --release -c YourSysGirFile.toml -d ../gir-files -m sys -o the-output-directory-sys
+cargo run --release -- -c YourSysGirFile.toml -d ../gir-files -m sys -o the-output-directory-sys
 ```
 
 The generated files will be placed in `the-output-directory-sys`. You now have the sys part of your binding!
