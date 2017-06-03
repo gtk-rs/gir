@@ -35,12 +35,13 @@ fn find() -> Result<(), Error> {
 "##));
 
     let ns = env.namespaces.main();
-    let regex = Regex::new(r"^lib(.+)\.so.*$").unwrap();
+    let regex = Regex::new(r"^lib(.+)\.so.*$").expect("Regex failed");
     let shared_libs: Vec<_> = ns.shared_libs.iter()
         .map(|s| regex.replace(s, "\"$1\""))
         .collect();
 
-    try!(writeln!(w, "\tlet package_name = \"{}\";", ns.package_name.as_ref().unwrap()));
+    try!(writeln!(w, "\tlet package_name = \"{}\";",
+                  ns.package_name.as_ref().expect("Package name doesn't exist")));
     try!(writeln!(w, "\tlet shared_libs = [{}];", shared_libs.join(", ")));
     try!(write!(w, "\tlet version = "));
     let versions = ns.versions.iter()
@@ -62,7 +63,7 @@ r##"
         return Ok(())
     }
 
-    let target = env::var("TARGET").unwrap();
+    let target = env::var("TARGET").expect("TARGET environment variable doesn't exist");
     let hardcode_shared_libs = target.contains("windows");
 
     let mut config = Config::new();
@@ -77,7 +78,8 @@ r##"
                     println!("cargo:rustc-link-lib=dylib={}", lib_);
                 }
                 for path in library.link_paths.iter() {
-                    println!("cargo:rustc-link-search=native={}", path.to_str().unwrap());
+                    println!("cargo:rustc-link-search=native={}",
+                             path.to_str().expect("library path doesn't exist"));
                 }
             }
             Ok(())
