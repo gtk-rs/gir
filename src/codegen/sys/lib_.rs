@@ -122,7 +122,7 @@ fn generate_bitfields(w: &mut Write, env: &Env, items: &[&Bitfield])
         let full_name = format!("{}.{}", env.namespaces.main().name, item.name);
         let config = env.config.objects.get(&full_name);
 
-        try!(writeln!(w, "bitflags! {{\n\t#[repr(C)]\n\tpub flags {}: c_uint {{", item.c_type));
+        try!(writeln!(w, "bitflags! {{\n\t#[repr(C)]\n\tpub struct {}: c_uint {{", item.c_type));
         for member in &item.members {
             let member_config = config.as_ref()
                 .map(|c| c.members.matched(&member.name)).unwrap_or_else(|| vec![]);
@@ -130,7 +130,7 @@ fn generate_bitfields(w: &mut Write, env: &Env, items: &[&Bitfield])
 
             try!(version_condition(w, env, version, false, 2));
             let val: i64 = member.value.parse().unwrap();
-            try!(writeln!(w, "\t\tconst {} = {},", member.c_identifier, val as u32));
+            try!(writeln!(w, "\t\tconst {} = {};", member.c_identifier, val as u32));
         }
         try!(writeln!(w, "\t}}\n}}"));
         try!(writeln!(w, ""));
