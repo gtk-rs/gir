@@ -10,9 +10,9 @@ build = "build.rs"
 exclude = ["Gir*.toml", "tests/**/*", "*.md"]
 
 [dependencies]
-docopt = "0.7"
-xml-rs = "0.4"
-toml = "0.3"
+docopt = "0.8"
+xml-rs = "0.6"
+toml = "0.4"
 case = "0.1"
 env_logger = "0.4"
 error-chain = { version = "0.10", default-features = false }
