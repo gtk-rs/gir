@@ -15,6 +15,7 @@ pub struct Builder {
     conversion: PropertyConversion,
 }
 
+#[cfg_attr(feature = "cargo-clippy", allow(wrong_self_convention))]
 impl Builder {
     pub fn new() -> Builder {
         Default::default()

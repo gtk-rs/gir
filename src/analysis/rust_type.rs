@@ -271,14 +271,5 @@ fn format_parameter(rust_type: String, direction: library::ParameterDirection) -
 
 //TODO: remove
 fn implemented_in_main_namespace(library: &library::Library, type_id: library::TypeId) -> bool {
-    match &*type_id.full_name(library) {
-        "GLib.Error" => return true,
-        _ => (),
-    }
-    if library.namespace(library::MAIN_NAMESPACE).name != "Gtk" {
-        return false;
-    }
-    match &*type_id.full_name(library) {
-        _ => false,
-    }
+    type_id.full_name(library) == "GLib.Error"
 }
