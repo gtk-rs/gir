@@ -55,6 +55,7 @@ pub struct Bounds {
 }
 
 impl Default for Bounds {
+    #[cfg_attr(feature = "cargo-clippy", allow(char_lit_as_u8))]
     fn default () -> Bounds {
         Bounds {
             unused: (TYPE_PARAMETERS_START as u8..).take_while(|x| *x <= 'Z' as u8)
@@ -91,8 +92,7 @@ impl Bounds {
     pub fn add_for_parameter(&mut self, env: &Env, func: &Function, par: &mut Parameter) {
         if !par.instance_parameter && par.direction != ParameterDirection::Out {
             if let Some(bound_type) = Bounds::type_for(env, par.typ, par.nullable) {
-                let to_glib_extra = Bounds::to_glib_extra(bound_type.clone());
-                par.to_glib_extra = to_glib_extra;
+                par.to_glib_extra = Bounds::get_to_glib_extra(bound_type.clone());
                 let type_name = bounds_rust_type(env, par.typ);
                 if !self.add_parameter(&par.name, &type_name.into_string(), bound_type) {
                     panic!("Too many type constraints for {}", func.c_identifier.as_ref().unwrap())
@@ -130,16 +130,16 @@ impl Bounds {
             _ => Some(Into(Some('_'), None)),
         }
     }
-    fn to_glib_extra(bound_type: BoundType) -> String {
+    fn get_to_glib_extra(bound_type: BoundType) -> String {
         use self::BoundType::*;
         match bound_type {
             AsRef(_) => ".as_ref()".to_owned(),
-            Into(_, Some(x)) => Bounds::to_glib_extra(*x),
+            Into(_, Some(x)) => Bounds::get_to_glib_extra(*x),
             _ => String::new(),
         }
     }
     pub fn add_parameter(&mut self, name: &str, type_str: &str, mut bound_type: BoundType) -> bool {
-        if self.used.iter().any(|ref n| n.parameter_name == name) { return false; }
+        if self.used.iter().any(|n| n.parameter_name == name) { return false; }
         let sub = if let BoundType::Into(Some(_), x) = bound_type {
             if let Some(lifetime) = self.unused_lifetimes.pop_front() {
                 self.lifetimes.push(lifetime);
@@ -182,7 +182,7 @@ impl Bounds {
     }
     pub fn get_parameter_alias_info(&self, name: &str) -> Option<(char, BoundType)> {
         self.used.iter()
-                 .find(move |ref n| {
+                 .find(move |n| {
             if n.parameter_name == name {
                 !n.info_for_next_type
             } else {

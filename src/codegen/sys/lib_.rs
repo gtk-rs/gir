@@ -166,7 +166,7 @@ fn generate_constants(w: &mut Write, env: &Env, constants: &[Constant]) -> Resul
             }
         }
 
-        if let Some(_) = env.library.type_(constant.typ).maybe_ref_as::<Bitfield>() {
+        if env.library.type_(constant.typ).maybe_ref_as::<Bitfield>().is_some() {
             try!(writeln!(w, "{}pub const {}: {} = {2} {{ bits: {} }};", comment,
                 constant.c_identifier, type_, value));
         } else {
@@ -347,7 +347,7 @@ fn generate_records(w: &mut Write, env: &Env, records: &[&Record]) -> Result<()>
 
 // TODO: GLib/GObject special cases until we have proper union support in Rust
 fn is_union_special_case(c_type: &Option<String>) -> bool {
-    if let Some(ref c_type) = c_type.as_ref() {
+    if let Some(c_type) = c_type.as_ref() {
         c_type.as_str() == "GMutex"
     } else {
         false
@@ -381,7 +381,7 @@ fn generate_fields(env: &Env, struct_name: &str, fields: &[Field]) -> (Vec<Strin
         // TODO: Special case for padding unions like used in GStreamer, see e.g.
         // the padding in GstControlBinding
         if is_union && !truncated {
-            if let Some(ref union_) = env.library.type_(field.typ).maybe_ref_as::<Union>() {
+            if let Some(union_) = env.library.type_(field.typ).maybe_ref_as::<Union>() {
                 for union_field in &union_.fields {
                     if union_field.name.contains("reserved") || union_field.name.contains("padding") {
                         if let Some(ref c_type) = union_field.c_type {
@@ -430,7 +430,7 @@ fn generate_fields(env: &Env, struct_name: &str, fields: &[Field]) -> (Vec<Strin
             lines.push(format!("\tpub {}: {},", name, c_type.into_string()));
         } else if is_gweakref {
             // union containing a single pointer
-            lines.push(format!("\tpub priv_: gpointer,"));
+            lines.push("\tpub priv_: gpointer,".to_owned());
         }
         else {
             let name = mangle_keywords(&*field.name);

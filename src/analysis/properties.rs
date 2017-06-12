@@ -99,8 +99,7 @@ fn analyze_property(env: &Env, prop: &library::Property, type_tid: library::Type
     let check_set_func_name = format!("set_{}", name_for_func);
 
     let mut readable = prop.readable;
-    let mut writable = prop.writable;
-    if prop.construct_only { writable = false; }
+    let mut writable = if prop.construct_only { false } else { prop.writable };
 
     if readable {
         let (has, version) = Signature::has_by_name_and_in_deps(env, &check_get_func_name,

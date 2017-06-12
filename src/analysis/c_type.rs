@@ -10,7 +10,7 @@ pub fn rustify_pointers(c_type: &str) -> (String, String) {
     let end = [
         input.find(" const"),
         input.find("*const"),
-        input.find("*"),
+        input.find('*'),
         Some(input.len()),
     ].iter().filter_map(|&x| x).min().unwrap();
     let inner = input[..end].trim().into();

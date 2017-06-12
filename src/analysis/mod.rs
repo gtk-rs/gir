@@ -97,7 +97,7 @@ fn analyze_global_functions(env: &mut Env) {
     imports.add("glib::translate::*", None);
     imports.add("ffi", None);
 
-    let functions = functions::analyze(env, &functions, TypeId::tid_none(), &obj, &mut imports, None, None);
+    let functions = functions::analyze(env, &functions, TypeId::tid_none(), obj, &mut imports, None, None);
 
     imports.clean_glib(env);
 

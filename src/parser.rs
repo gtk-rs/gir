@@ -47,9 +47,9 @@ impl Library {
             try!(match event {
                 Ok(StartElement { name: OwnedName { ref local_name,
                                                     namespace: Some(ref namespace), .. }, .. })
-                    if local_name == &"repository"
-                    && namespace == &"http://www.gtk.org/introspection/core/1.0" => {
-                        match self.read_repository(&dir, &mut parser) {
+                    if local_name == "repository"
+                    && namespace == "http://www.gtk.org/introspection/core/1.0" => {
+                        match self.read_repository(dir, &mut parser) {
                             // To prevent repeat message in "caused by:" for each file
                             e @ Err(Error(ErrorKind::Msg(_), _)) => return e,
                             Err(e) => Err(e),
@@ -411,7 +411,7 @@ impl Library {
 
     fn read_named_callback(&mut self, parser: &mut Reader, ns_id: u16,
                      attrs: &Attributes) -> Result<()> {
-        try!(self.read_function_if_not_moved(parser, ns_id, "callback", &attrs))
+        try!(self.read_function_if_not_moved(parser, ns_id, "callback", attrs))
             .map(|func| self.add_type(ns_id, &func.name.clone(), Type::Function(func)));
 
         Ok(())
@@ -817,7 +817,7 @@ impl Library {
         let moved_to = attrs.by_name("moved-to").is_some();
         if moved_to { try!(ignore_element(parser)); return Ok(None); }
         let pos = parser.position();
-        let f = try!(self.read_function(parser, ns_id, kind_str, &attrs));
+        let f = try!(self.read_function(parser, ns_id, kind_str, attrs));
         if f.c_identifier.is_none() {
             bail!(mk_error!("Missing c:identifier attribute", &pos));
         }

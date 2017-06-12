@@ -168,7 +168,7 @@ fn create_object_doc(w: &mut Write, env: &Env, info: &analysis::object::Info) ->
         else {
             ty.clone()
         };
-        try!(create_fn_doc(w, env, &function, Some(Box::new(ty))));
+        try!(create_fn_doc(w, env, function, Some(Box::new(ty))));
     }
     Ok(())
 }
@@ -201,7 +201,7 @@ fn create_record_doc(w: &mut Write, env: &Env, info: &analysis::record::Info) ->
 
     let ty = TypeStruct { ty: SType::Impl, ..ty };
     for function in &record.functions {
-        try!(create_fn_doc(w, env, &function, Some(Box::new(ty.clone()))));
+        try!(create_fn_doc(w, env, function, Some(Box::new(ty.clone()))));
     }
     Ok(())
 }

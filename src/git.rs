@@ -21,5 +21,5 @@ fn dirty(repo: &Repository) -> bool {
     repo.statuses(
         Some(StatusOptions::new().include_ignored(false).include_untracked(false)
              .include_unmodified(false)))
-        .ok().map(|s| s.len() != 0).unwrap_or(false)
+        .ok().map(|s| !s.is_empty()).unwrap_or(false)
 }
