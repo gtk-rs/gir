@@ -52,7 +52,7 @@ impl ConversionType {
                 Unsupported => ConversionType::Unknown,
             },
             Alias(ref alias) => ConversionType::of(library, alias.typ),
-            Bitfield(_) => ConversionType::Scalar,
+            Bitfield(_) => ConversionType::Direct,
             Record(_) => ConversionType::Pointer,
             Union(_) => ConversionType::Pointer,
             Enumeration(_) => ConversionType::Direct,
