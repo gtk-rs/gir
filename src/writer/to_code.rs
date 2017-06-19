@@ -65,6 +65,7 @@ impl ToCode for Chunk {
                 let s = format!("{}::uninitialized()", name);
                 vec![s]
             }
+            NullPtr => vec!["ptr::null()".into()],
             NullMutPtr => vec!["ptr::null_mut()".into()],
             Custom(ref string) => vec![string.clone()],
             Tuple(ref chs, mode) => {

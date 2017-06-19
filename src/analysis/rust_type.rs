@@ -202,16 +202,8 @@ pub fn parameter_rust_type(env: &Env, type_id: library::TypeId,
     let type_ = env.library.type_(type_id);
     let rust_type = rust_type_full(env, type_id, nullable, ref_mode);
     match *type_ {
-        Fundamental(fund) => {
-            if fund == library::Fundamental::Utf8 || fund == library::Fundamental::Filename {
-                match direction {
-                    library::ParameterDirection::In |
-                        library::ParameterDirection::Return => rust_type,
-                    _ => Err(TypeError::Unimplemented(into_inner(rust_type))),
-                }
-            } else {
-                rust_type.map_any(|s| format_parameter(s, direction))
-            }
+        Fundamental(..) => {
+            rust_type.map_any(|s| format_parameter(s, direction))
         }
 
         Alias(ref alias) => {
