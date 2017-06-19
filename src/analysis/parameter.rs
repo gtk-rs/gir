@@ -20,6 +20,7 @@ pub struct Parameter {
     pub caller_allocates: bool,
     pub nullable: library::Nullable,
     pub allow_none: bool,
+    pub array_length: Option<u32>,
     pub is_error: bool,
 
     //analysis fields
@@ -84,6 +85,7 @@ pub fn analyze(env: &Env, par: &library::Parameter, configured_functions: &[&Fun
         caller_allocates: caller_allocates,
         nullable: nullable,
         allow_none: par.allow_none,
+        array_length: par.array_length,
         ref_mode: ref_mode,
         is_error: par.is_error,
         to_glib_extra: String::new(),

@@ -36,12 +36,12 @@ impl ToReturnValue for analysis::return_value::Info {
 pub fn out_parameter_as_return_parts(analysis: &analysis::functions::Info)
                                      -> (&'static str, &'static str) {
     use analysis::out_parameters::Mode::*;
-    let is_tuple = analysis.outs.len() > 1;
+    let num_outs = analysis.outs.iter().filter(|p| p.array_length.is_none()).count();
     match analysis.outs.mode {
         Normal |
-            Combined => if is_tuple { ("(", ")") } else { ("", "") },
-        Optional => if is_tuple { ("Option<(", ")>") } else { ("Option<", ">") },
-        Throws(..) => if analysis.outs.len() == 1 + 1 {
+            Combined => if num_outs > 1 { ("(", ")") } else { ("", "") },
+        Optional => if num_outs > 1 { ("Option<(", ")>") } else { ("Option<", ">") },
+        Throws(..) => if num_outs == 1 + 1 {
             //if only one parameter except "glib::Error"
             ("Result<", ", Error>")
         } else {
@@ -56,8 +56,22 @@ pub fn out_parameters_as_return(env: &Env, analysis: &analysis::functions::Info)
     let mut return_str = String::with_capacity(100);
     return_str.push_str(" -> ");
     return_str.push_str(prefix);
+
+    let array_lengths: Vec<_> = analysis.outs.iter()
+                                              .filter_map(|p| p.array_length)
+                                              .collect();
+
+    let mut skip = 0;
     for (pos, par) in analysis.outs.iter().filter(|par| !par.is_error).enumerate() {
-        if pos > 0 { return_str.push_str(", ") }
+        use analysis::out_parameters::Mode;
+
+        // The actual return value was inserted at position 0
+        let pos_offset = if analysis.outs.mode == Mode::Combined || analysis.outs.mode == Mode::Throws(true) { 1 } else { 0 };
+        if pos >= pos_offset && array_lengths.contains(&((pos - pos_offset) as u32)) {
+            skip += 1;
+            continue;
+        }
+        if pos > skip { return_str.push_str(", ") }
         let s = out_parameter_as_return(par, env);
         return_str.push_str(&s);
     }
