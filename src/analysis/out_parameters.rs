@@ -39,10 +39,6 @@ impl Info {
     pub fn iter(&self) -> Iter<Parameter> {
         self.params.iter()
     }
-
-    pub fn len(&self) -> usize {
-        self.params.len()
-    }
 }
 
 pub fn analyze(env: &Env, func: &Function,

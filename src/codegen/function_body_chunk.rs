@@ -96,7 +96,7 @@ impl Builder {
         };
         let array_length = array_length.map(|p| (p.name.clone(), rust_type(env, p.typ).unwrap()));
         self.parameters.push(Parameter::Out {
-            parameter:  parameter_ffi_call_out::Parameter::new(parameter, array_length),
+            parameter: parameter_ffi_call_out::Parameter::new(parameter, array_length),
             mem_mode: mem_mode,
         });
         self.outs_as_return = true;

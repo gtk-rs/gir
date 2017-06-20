@@ -82,4 +82,3 @@ fn from_glib_xxx(transfer: library::Transfer, array_length: &Option<(String, Str
         (Transfer::Container, &Some((ref array_length_name, _))) => ("from_glib_container_num(".into(), format!(", {} as usize)", array_length_name)),
     }
 }
-
