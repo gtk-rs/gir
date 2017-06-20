@@ -9,6 +9,7 @@ use chunk::{Chunk, TupleMode};
 use chunk::parameter_ffi_call_in;
 use chunk::parameter_ffi_call_out;
 use env::Env;
+use library;
 
 #[derive(Clone)]
 enum Parameter {
@@ -26,6 +27,7 @@ enum OutMemMode {
     Uninitialized,
     UninitializedNamed(String),
     NullPtr,
+    NullMutPtr,
 }
 
 use self::Parameter::*;
@@ -69,7 +71,18 @@ impl Builder {
                 if parameter.caller_allocates {
                     UninitializedNamed(rust_type(env, parameter.typ).unwrap())
                 } else {
-                    NullPtr
+                    use library::Type::*;
+                    let type_ = env.library.type_(parameter.typ);
+                    match *type_ {
+                        Fundamental(fund) if fund == library::Fundamental::Utf8 || fund == library::Fundamental::Filename => {
+                            if parameter.transfer == library::Transfer::Full {
+                                NullMutPtr
+                            } else {
+                                NullPtr
+                            }
+                        },
+                        _ => NullMutPtr,
+                    }
                 }
             }
             _ => Uninitialized,
@@ -210,7 +223,8 @@ impl Builder {
         match *mem_mode {
             Uninitialized => Chunk::Uninitialized,
             UninitializedNamed(ref name) => Chunk::UninitializedNamed{ name: name.clone() },
-            NullPtr => Chunk::NullMutPtr,
+            NullPtr => Chunk::NullPtr,
+            NullMutPtr => Chunk::NullMutPtr,
         }
     }
     fn generate_out_return(&self) -> Option<Chunk> {

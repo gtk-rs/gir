@@ -19,6 +19,7 @@ pub enum Chunk {
     Let{name: String, is_mut: bool, value: Box<Chunk>, type_: Option<Box<Chunk>>},
     Uninitialized,
     UninitializedNamed{name: String},
+    NullPtr,
     NullMutPtr,
     Custom(String),
     Tuple(Vec<Chunk>, TupleMode),
