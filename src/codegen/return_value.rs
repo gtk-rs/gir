@@ -63,14 +63,18 @@ pub fn out_parameters_as_return(env: &Env, analysis: &analysis::functions::Info)
 
     let mut skip = 0;
     for (pos, par) in analysis.outs.iter().filter(|par| !par.is_error).enumerate() {
-        use analysis::out_parameters::Mode;
-
-        // The actual return value was inserted at position 0
-        let pos_offset = if analysis.outs.mode == Mode::Combined || analysis.outs.mode == Mode::Throws(true) { 1 } else { 0 };
-        if pos >= pos_offset && array_lengths.contains(&((pos - pos_offset) as u32)) {
-            skip += 1;
-            continue;
+        // The actual return value is inserted with an empty name at position 0
+        if !par.name.is_empty() {
+            let pos_offset = if analysis.kind == library::FunctionKind::Method { 1 } else { 0 };
+            let param_pos = analysis.parameters.iter().enumerate()
+                                                      .filter_map(|(pos, orig_par)| if orig_par.name == par.name { Some(pos) } else { None })
+                                                      .next().unwrap();
+            if param_pos >= pos_offset && array_lengths.contains(&((param_pos - pos_offset) as u32)) {
+                skip += 1;
+                continue;
+            }
         }
+
         if pos > skip { return_str.push_str(", ") }
         let s = out_parameter_as_return(par, env);
         return_str.push_str(&s);
