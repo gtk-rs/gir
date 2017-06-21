@@ -5,6 +5,7 @@ use library::{self, ParameterDirection};
 use analysis::conversion_type::ConversionType;
 use analysis::rust_type::parameter_rust_type;
 use traits::*;
+use nameutil;
 
 pub trait ToReturnValue {
     fn to_return_value(&self, env: &Env) -> String;
@@ -66,8 +67,9 @@ pub fn out_parameters_as_return(env: &Env, analysis: &analysis::functions::Info)
         // The actual return value is inserted with an empty name at position 0
         if !par.name.is_empty() {
             let pos_offset = if analysis.kind == library::FunctionKind::Method { 1 } else { 0 };
+            let mangled_par_name = nameutil::mangle_keywords(par.name.as_str());
             let param_pos = analysis.parameters.iter().enumerate()
-                                                      .filter_map(|(pos, orig_par)| if orig_par.name == par.name { Some(pos) } else { None })
+                                                      .filter_map(|(pos, orig_par)| if orig_par.name == mangled_par_name { Some(pos) } else { None } )
                                                       .next().unwrap();
             if param_pos >= pos_offset && array_lengths.contains(&((param_pos - pos_offset) as u32)) {
                 skip += 1;
