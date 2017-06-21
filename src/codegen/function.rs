@@ -131,7 +131,7 @@ pub fn body_chunk(env: &Env, analysis: &analysis::functions::Info) -> Chunk {
     let ret_array_length = if let Some(pos) = analysis.ret.parameter.as_ref().and_then(|p| p.array_length) {
         // The first parameter is &self in case of methods
         let pos_offset = if analysis.kind == library::FunctionKind::Method { 1 } else { 0 };
-        analysis.parameters.iter().nth((pos + pos_offset) as usize)
+        analysis.parameters.get((pos + pos_offset) as usize)
     } else {
         None
     };
@@ -148,7 +148,7 @@ pub fn body_chunk(env: &Env, analysis: &analysis::functions::Info) -> Chunk {
                 use analysis::out_parameters::Mode;
                 // The actual return value was inserted at position 0
                 let pos_offset = if analysis.outs.mode == Mode::Combined || analysis.outs.mode == Mode::Throws(true) { 1 } else { 0 };
-                analysis.parameters.iter().nth((pos + pos_offset) as usize)
+                analysis.parameters.get((pos + pos_offset) as usize)
             } else {
                 None
             };
@@ -158,7 +158,7 @@ pub fn body_chunk(env: &Env, analysis: &analysis::functions::Info) -> Chunk {
             let array_length = if let Some(pos) = par.array_length {
                 // The first parameter is &self in case of methods
                 let pos_offset = if analysis.kind == library::FunctionKind::Method { 1 } else { 0 };
-                analysis.parameters.iter().nth((pos + pos_offset) as usize)
+                analysis.parameters.get((pos + pos_offset) as usize)
             } else {
                 None
             };
