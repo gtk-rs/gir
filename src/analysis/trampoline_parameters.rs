@@ -26,8 +26,8 @@ pub struct CParameter {
 
 #[derive(Clone, Debug)]
 pub struct Transformation {
-    pub ind_c: usize,     //index in `Vec<CParameter>`
-    pub ind_rust: usize,  //index in `Vec<RustParameter>`
+    pub ind_c: usize, //index in `Vec<CParameter>`
+    pub ind_rust: usize, //index in `Vec<RustParameter>`
     pub transformation: TransformationType,
     pub name: String,
     pub typ: library::TypeId,
@@ -52,11 +52,17 @@ impl Parameters {
         }
     }
 
-    fn prepare_transformation(&mut self, type_tid: library::TypeId, name: String,
-                              c_type: String, direction: library::ParameterDirection,
-                              transfer: library::Transfer, nullable: library::Nullable,
-                              ref_mode: RefMode, conversion_type: ConversionType)
-                              -> Transformation {
+    fn prepare_transformation(
+        &mut self,
+        type_tid: library::TypeId,
+        name: String,
+        c_type: String,
+        direction: library::ParameterDirection,
+        transfer: library::Transfer,
+        nullable: library::Nullable,
+        ref_mode: RefMode,
+        conversion_type: ConversionType,
+    ) -> Transformation {
         let c_par = CParameter {
             name: name.clone(),
             typ: type_tid,
@@ -88,23 +94,33 @@ impl Parameters {
     }
 
     pub fn get(&self, ind_rust: usize) -> Option<&Transformation> {
-        self.transformations.iter().find(|tr| tr.ind_rust==ind_rust)
+        self.transformations
+            .iter()
+            .find(|tr| tr.ind_rust == ind_rust)
     }
 }
 
-pub fn analyze(env: &Env, signal_parameters: &[library::Parameter], type_tid: library::TypeId,
-               configured_signals: &[&config::signals::Signal]) -> Parameters {
+pub fn analyze(
+    env: &Env,
+    signal_parameters: &[library::Parameter],
+    type_tid: library::TypeId,
+    configured_signals: &[&config::signals::Signal],
+) -> Parameters {
     let mut parameters = Parameters::new(signal_parameters.len() + 1);
 
     let owner = env.type_(type_tid);
     let c_type = format!("{}*", owner.get_glib_name().unwrap());
 
-    let transform = parameters.prepare_transformation(type_tid, "this".to_owned(), c_type,
-                                                      library::ParameterDirection::In,
-                                                      library::Transfer::None,
-                                                      library::Nullable(false),
-                                                      RefMode::ByRef,
-                                                      ConversionType::Pointer);
+    let transform = parameters.prepare_transformation(
+        type_tid,
+        "this".to_owned(),
+        c_type,
+        library::ParameterDirection::In,
+        library::Transfer::None,
+        library::Nullable(false),
+        RefMode::ByRef,
+        ConversionType::Pointer,
+    );
     parameters.transformations.push(transform);
 
     for par in signal_parameters {
@@ -112,23 +128,36 @@ pub fn analyze(env: &Env, signal_parameters: &[library::Parameter], type_tid: li
 
         let ref_mode = RefMode::without_unneeded_mut(&env.library, par, false);
 
-        let nullable_override = configured_signals.matched_parameters(&name).iter()
+        let nullable_override = configured_signals
+            .matched_parameters(&name)
+            .iter()
             .filter_map(|p| p.nullable)
             .next();
         let nullable = nullable_override.unwrap_or(par.nullable);
 
         let conversion_type = ConversionType::of(&env.library, par.typ);
 
-        let new_name = configured_signals.matched_parameters(&name).iter()
+        let new_name = configured_signals
+            .matched_parameters(&name)
+            .iter()
             .filter_map(|p| p.new_name.clone())
             .next();
-        let transformation_override = configured_signals.matched_parameters(&name).iter()
+        let transformation_override = configured_signals
+            .matched_parameters(&name)
+            .iter()
             .filter_map(|p| p.transformation)
             .next();
 
-        let mut transform = parameters.prepare_transformation(par.typ, name, par.c_type.clone(),
-                                                              par.direction, par.transfer,
-                                                              nullable, ref_mode, conversion_type);
+        let mut transform = parameters.prepare_transformation(
+            par.typ,
+            name,
+            par.c_type.clone(),
+            par.direction,
+            par.transfer,
+            nullable,
+            ref_mode,
+            conversion_type,
+        );
 
         if let Some(new_name) = new_name {
             transform.name = new_name;
@@ -143,9 +172,12 @@ pub fn analyze(env: &Env, signal_parameters: &[library::Parameter], type_tid: li
     parameters
 }
 
-fn apply_transformation_type(env: &Env, parameters: &mut Parameters,
-                             transform: &mut Transformation,
-                             transformation_type: TransformationType) {
+fn apply_transformation_type(
+    env: &Env,
+    parameters: &mut Parameters,
+    transform: &mut Transformation,
+    transformation_type: TransformationType,
+) {
     transform.transformation = transformation_type;
     match transformation_type {
         TransformationType::None => (),
@@ -153,8 +185,10 @@ fn apply_transformation_type(env: &Env, parameters: &mut Parameters,
             if transform.conversion_type == ConversionType::Pointer {
                 transform.conversion_type = ConversionType::Borrow;
             } else {
-                error!("Wrong conversion_type for borrow transformation {:?}",
-                       transform.conversion_type);
+                error!(
+                    "Wrong conversion_type for borrow transformation {:?}",
+                    transform.conversion_type
+                );
             }
         }
         TransformationType::TreePath => {
@@ -163,17 +197,18 @@ fn apply_transformation_type(env: &Env, parameters: &mut Parameters,
                 if let Some(type_tid) = env.library.find_type(0, "Gtk.TreePath") {
                     transform.typ = type_tid;
                     transform.conversion_type = ConversionType::Direct;
-                    if let Some(rust_par) = parameters.rust_parameters
-                        .get_mut(transform.ind_rust) {
-                            rust_par.typ = type_tid;
-                            rust_par.ref_mode = RefMode::None;
-                        }
+                    if let Some(rust_par) = parameters.rust_parameters.get_mut(transform.ind_rust) {
+                        rust_par.typ = type_tid;
+                        rust_par.ref_mode = RefMode::None;
+                    }
                 } else {
                     error!("Type Gtk.TreePath not found for treepath transformation");
                 }
             } else {
-                error!("Wrong parameter type for treepath transformation {:?}",
-                       transform.typ);
+                error!(
+                    "Wrong parameter type for treepath transformation {:?}",
+                    transform.typ
+                );
             }
         }
     }

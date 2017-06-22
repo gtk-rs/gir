@@ -7,7 +7,7 @@ pub struct Untabber {
 
 impl Untabber {
     pub fn new(orig: Box<Write>) -> Untabber {
-        Untabber{ orig: orig }
+        Untabber { orig: orig }
     }
 }
 

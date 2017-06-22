@@ -41,12 +41,16 @@ impl Info {
     }
 }
 
-pub fn analyze(env: &Env, func: &Function,
-               configured_functions: &[&config::functions::Function]) -> (Info, bool) {
+pub fn analyze(
+    env: &Env,
+    func: &Function,
+    configured_functions: &[&config::functions::Function],
+) -> (Info, bool) {
     let mut info: Info = Default::default();
     let mut unsupported_outs = false;
 
-    let nullable_override = configured_functions.iter()
+    let nullable_override = configured_functions
+        .iter()
         .filter_map(|f| f.ret.nullable)
         .next();
     if func.throws {
@@ -65,7 +69,9 @@ pub fn analyze(env: &Env, func: &Function,
     }
 
     for par in &func.parameters {
-        if par.direction != ParameterDirection::Out { continue; }
+        if par.direction != ParameterDirection::Out {
+            continue;
+        }
         if can_as_return(env, par) {
             info.params.push(par.clone());
         } else {
@@ -93,8 +99,11 @@ pub fn analyze_imports(env: &Env, func: &Function, imports: &mut Imports) {
         if par.direction == ParameterDirection::Out {
             match *env.library.type_(par.typ) {
                 Type::Bitfield(..) |
-                    Type::Enumeration(..) => imports.add("std::mem", func.version),
-                Type::Fundamental(fund) if fund != Fundamental::Utf8 && fund != Fundamental::Filename => imports.add("std::mem", func.version),
+                Type::Enumeration(..) => imports.add("std::mem", func.version),
+                Type::Fundamental(fund)
+                    if fund != Fundamental::Utf8 && fund != Fundamental::Filename => {
+                    imports.add("std::mem", func.version)
+                }
                 _ if !par.caller_allocates => imports.add("std::ptr".into(), func.version),
                 _ => (),
             }
@@ -107,16 +116,27 @@ fn can_as_return(env: &Env, par: &Parameter) -> bool {
     match ConversionType::of(&env.library, par.typ) {
         Direct => true,
         Scalar => true,
-        Pointer => parameter_rust_type(env, par.typ, ParameterDirection::Out, Nullable(false),
-                                       RefMode::None).is_ok(),
+        Pointer => {
+            parameter_rust_type(
+                env,
+                par.typ,
+                ParameterDirection::Out,
+                Nullable(false),
+                RefMode::None,
+            ).is_ok()
+        }
         Borrow => false,
         Unknown => false,
     }
 }
 
 fn use_function_return_for_result(env: &Env, ret: &Parameter) -> bool {
-    if ret.typ == Default::default() { return false; }
-    if ret.typ.ns_id != INTERNAL_NAMESPACE { return true; }
+    if ret.typ == Default::default() {
+        return false;
+    }
+    if ret.typ.ns_id != INTERNAL_NAMESPACE {
+        return true;
+    }
     let type_ = env.type_(ret.typ);
     match &*type_.get_name() {
         "UInt" => false,

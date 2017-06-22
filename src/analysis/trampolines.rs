@@ -23,14 +23,23 @@ pub struct Trampoline {
 
 pub type Trampolines = Vec<Trampoline>;
 
-pub fn analyze(env: &Env, signal: &library::Signal, type_tid: library::TypeId, in_trait: bool,
-               configured_signals: &[&config::signals::Signal],
-               trampolines: &mut Trampolines, used_types: &mut Vec<String>,
-               version: Option<Version>) -> Result<String, Vec<String>> {
+pub fn analyze(
+    env: &Env,
+    signal: &library::Signal,
+    type_tid: library::TypeId,
+    in_trait: bool,
+    configured_signals: &[&config::signals::Signal],
+    trampolines: &mut Trampolines,
+    used_types: &mut Vec<String>,
+    version: Option<Version>,
+) -> Result<String, Vec<String>> {
     let errors = closure_errors(env, signal);
     if !errors.is_empty() {
-        warn!("Can't generate {} trampoline for signal '{}'", type_tid.full_name(&env.library),
-              signal.name);
+        warn!(
+            "Can't generate {} trampoline for signal '{}'",
+            type_tid.full_name(&env.library),
+            signal.name
+        );
         return Err(errors);
     }
 
@@ -52,8 +61,8 @@ pub fn analyze(env: &Env, signal: &library::Signal, type_tid: library::TypeId, i
         bounds.add_parameter("this", &type_name.into_string(), BoundType::IsA(None));
     }
 
-    let parameters = trampoline_parameters::analyze(env, &signal.parameters,
-                                                    type_tid, configured_signals);
+    let parameters =
+        trampoline_parameters::analyze(env, &signal.parameters, type_tid, configured_signals);
 
     if in_trait {
         let type_name = bounds_rust_type(env, type_tid);
@@ -82,7 +91,8 @@ pub fn analyze(env: &Env, signal: &library::Signal, type_tid: library::TypeId, i
             used_types.push(s);
         }
 
-        let nullable_override = configured_signals.iter()
+        let nullable_override = configured_signals
+            .iter()
             .filter_map(|f| f.ret.nullable)
             .next();
         if let Some(nullable) = nullable_override {
@@ -92,7 +102,7 @@ pub fn analyze(env: &Env, signal: &library::Signal, type_tid: library::TypeId, i
 
     let ret = library::Parameter {
         nullable: ret_nullable,
-        .. signal.ret.clone()
+        ..signal.ret.clone()
     };
 
     let trampoline = Trampoline {
@@ -111,14 +121,21 @@ fn closure_errors(env: &Env, signal: &library::Signal) -> Vec<String> {
     let mut errors: Vec<String> = Vec::new();
     for par in &signal.parameters {
         if let Some(error) = type_error(env, par) {
-            errors.push(format!("{} {}: {}", error, par.name,
-                                par.typ.full_name(&env.library)));
+            errors.push(format!(
+                "{} {}: {}",
+                error,
+                par.name,
+                par.typ.full_name(&env.library)
+            ));
         }
     }
     if signal.ret.typ != Default::default() {
         if let Some(error) = type_error(env, &signal.ret) {
-            errors.push(format!("{} return value {}", error,
-                                signal.ret.typ.full_name(&env.library)));
+            errors.push(format!(
+                "{} return value {}",
+                error,
+                signal.ret.typ.full_name(&env.library)
+            ));
         }
     }
     errors

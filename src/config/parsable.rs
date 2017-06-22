@@ -1,7 +1,7 @@
 use super::ident::Ident;
 use toml::Value;
 
-pub trait Parse : Sized {
+pub trait Parse: Sized {
     fn parse(toml: &Value, name: &str) -> Option<Self>;
 }
 

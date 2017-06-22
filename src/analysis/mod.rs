@@ -70,7 +70,10 @@ pub fn run(env: &mut Env) {
         to_analyze = new_to_analyze;
     }
     if !to_analyze.is_empty() {
-        error!("Not analyzed {} objects due unfinished dependencies", to_analyze.len());
+        error!(
+            "Not analyzed {} objects due unfinished dependencies",
+            to_analyze.len()
+        );
         return;
     }
 
@@ -88,7 +91,10 @@ fn analyze_global_functions(env: &mut Env) {
         _ => return,
     };
 
-    let functions: Vec<_> = ns.functions.iter().filter(|f| f.kind == library::FunctionKind::Global).collect();
+    let functions: Vec<_> = ns.functions
+        .iter()
+        .filter(|f| f.kind == library::FunctionKind::Global)
+        .collect();
     if functions.is_empty() {
         return;
     }
@@ -97,7 +103,15 @@ fn analyze_global_functions(env: &mut Env) {
     imports.add("glib::translate::*", None);
     imports.add("ffi", None);
 
-    let functions = functions::analyze(env, &functions, TypeId::tid_none(), obj, &mut imports, None, None);
+    let functions = functions::analyze(
+        env,
+        &functions,
+        TypeId::tid_none(),
+        obj,
+        &mut imports,
+        None,
+        None,
+    );
 
     imports.clean_glib(env);
 
@@ -137,12 +151,11 @@ fn analyze(env: &mut Env, tid: TypeId, deps: &[TypeId]) {
     }
 }
 
-fn is_all_deps_analyzed(env: &mut Env, deps: &[TypeId]) -> bool
-{
+fn is_all_deps_analyzed(env: &mut Env, deps: &[TypeId]) -> bool {
     for tid in deps {
         let full_name = tid.full_name(&env.library);
         if !env.analysis.objects.contains_key(&full_name) {
-            return false
+            return false;
         }
     }
     true

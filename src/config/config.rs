@@ -45,8 +45,7 @@ pub struct Config {
 
 impl Config {
     pub fn new() -> Result<Config> {
-        let args = try!(Docopt::new(USAGE)
-            .and_then(|dopt| dopt.parse()));
+        let args = try!(Docopt::new(USAGE).and_then(|dopt| dopt.parse()));
 
         let config_file: PathBuf = match args.get_str("-c") {
             "" => "Gir.toml",
@@ -58,28 +57,27 @@ impl Config {
             None => PathBuf::new(),
         };
 
-        let toml = try!(read_toml(&config_file)
-                        .chain_err(|| ErrorKind::ReadConfig(config_file.clone()))
-        );
+        let toml =
+            try!(read_toml(&config_file).chain_err(|| ErrorKind::ReadConfig(config_file.clone())));
 
         Config::process_options(args, toml, &config_dir)
             .chain_err(|| ErrorKind::Options(config_file))
     }
 
-    fn process_options(args: docopt::ArgvMap, toml: toml::Value, config_dir: &Path)
-                       -> Result<Config> {
+    fn process_options(
+        args: docopt::ArgvMap,
+        toml: toml::Value,
+        config_dir: &Path,
+    ) -> Result<Config> {
         let work_mode_str = match args.get_str("-m") {
-            "" => try!(toml.lookup_str("options.work_mode",
-                                       "No options.work_mode")
-            ),
+            "" => try!(toml.lookup_str("options.work_mode", "No options.work_mode")),
             a => a,
         };
         let work_mode = try!(WorkMode::from_str(work_mode_str));
 
         let girs_dir: PathBuf = match args.get_str("-d") {
             "" => {
-                let path = try!(toml.lookup_str("options.girs_dir",
-                                                "No options.girs_dir"));
+                let path = try!(toml.lookup_str("options.girs_dir", "No options.girs_dir"));
                 config_dir.join(path)
             }
             a => a.into(),
@@ -88,40 +86,42 @@ impl Config {
 
         let (library_name, library_version) =
             match (args.get_str("<library>"), args.get_str("<version>")) {
-            ("", "") => (
-                try!(toml.lookup_str("options.library", "No options.library")),
-                try!(toml.lookup_str("options.version", "No options.version"))
-            ),
-            ("", _) | (_, "") => bail!("Library and version can not be specified separately"),
-            (a, b) => (a, b)
-        };
+                ("", "") => (
+                    try!(toml.lookup_str("options.library", "No options.library")),
+                    try!(toml.lookup_str("options.version", "No options.version")),
+                ),
+                ("", _) | (_, "") => bail!("Library and version can not be specified separately"),
+                (a, b) => (a, b),
+            };
 
         let target_path: PathBuf = match args.get_str("-o") {
             "" => {
-                let path = try!(toml.lookup_str("options.target_path",
-                    "No target path specified"));
+                let path = try!(toml.lookup_str(
+                    "options.target_path",
+                    "No target path specified",
+                ));
                 config_dir.join(path)
             }
-            a => a.into()
+            a => a.into(),
         };
 
-        let mut objects = toml.lookup("object").map(|t| gobjects::parse_toml(t))
+        let mut objects = toml.lookup("object")
+            .map(|t| gobjects::parse_toml(t))
             .unwrap_or_default();
         gobjects::parse_status_shorthands(&mut objects, &toml);
 
         let external_libraries = match toml.lookup("options.external_libraries") {
             Some(a) => {
                 try!(a.as_result_vec("options.external_libraries"))
-                    .iter().filter_map(|v| v.as_str().map(String::from))
+                    .iter()
+                    .filter_map(|v| v.as_str().map(String::from))
                     .collect()
             }
             None => Vec::new(),
         };
 
         let min_cfg_version = match toml.lookup("options.min_cfg_version") {
-            Some(v) => {
-                try!(try!(v.as_result_str("options.min_cfg_version")).parse())
-            }
+            Some(v) => try!(try!(v.as_result_str("options.min_cfg_version")).parse()),
             None => Default::default(),
         };
 
@@ -129,12 +129,12 @@ impl Config {
 
         let generate_safety_asserts = match toml.lookup("options.generate_safety_asserts") {
             Some(v) => try!(v.as_result_bool("options.generate_safety_asserts")),
-            None => false
+            None => false,
         };
 
         let deprecate_by_min_version = match toml.lookup("options.deprecate_by_min_version") {
             Some(v) => try!(v.as_result_bool("options.deprecate_by_min_version")),
-            None => false
+            None => false,
         };
 
         let show_statistics = args.get_bool("-s");
@@ -161,12 +161,10 @@ impl Config {
     }
 
     pub fn filter_version(&self, version: Option<Version>) -> Option<Version> {
-        version.and_then(|v| {
-            if v > self.min_cfg_version {
-                Some(v)
-            } else {
-                None
-            }
+        version.and_then(|v| if v > self.min_cfg_version {
+            Some(v)
+        } else {
+            None
         })
     }
 
@@ -180,9 +178,7 @@ fn read_toml<P: AsRef<Path>>(filename: P) -> Result<toml::Value> {
         bail!("Config don't exists or not file");
     }
     let mut input = String::new();
-    try!(File::open(&filename)
-         .and_then(|mut f| f.read_to_string(&mut input))
-    );
+    try!(File::open(&filename).and_then(|mut f| f.read_to_string(&mut input)));
 
     let toml = try!(toml::from_str(&input));
 

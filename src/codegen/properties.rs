@@ -2,7 +2,7 @@ use std::io::{Result, Write};
 
 use analysis::bounds::Bound;
 use analysis::properties::Property;
-use analysis::rust_type::{parameter_rust_type,rust_type};
+use analysis::rust_type::{parameter_rust_type, rust_type};
 use chunk::Chunk;
 use env::Env;
 use super::general::version_condition;
@@ -12,32 +12,54 @@ use super::property_body;
 use traits::IntoString;
 use writer::ToCode;
 
-pub fn generate(w: &mut Write, env: &Env, prop: &Property, in_trait: bool,
-                only_declaration: bool, indent: usize) -> Result<()> {
-    try!(generate_prop_func(w, env, prop, in_trait, only_declaration, indent));
+pub fn generate(
+    w: &mut Write,
+    env: &Env,
+    prop: &Property,
+    in_trait: bool,
+    only_declaration: bool,
+    indent: usize,
+) -> Result<()> {
+    try!(generate_prop_func(
+        w,
+        env,
+        prop,
+        in_trait,
+        only_declaration,
+        indent,
+    ));
 
     Ok(())
 }
 
-fn generate_prop_func(w: &mut Write, env: &Env, prop: &Property, in_trait: bool,
-                     only_declaration: bool, indent: usize) -> Result<()> {
+fn generate_prop_func(
+    w: &mut Write,
+    env: &Env,
+    prop: &Property,
+    in_trait: bool,
+    only_declaration: bool,
+    indent: usize,
+) -> Result<()> {
     let pub_prefix = if in_trait { "" } else { "pub " };
     let decl_suffix = if only_declaration { ";" } else { " {" };
     let type_string = rust_type(env, prop.typ);
     let commented = type_string.is_err() || (prop.default_value.is_none() && prop.is_get);
 
-    let comment_prefix = if commented {
-        "//"
-    } else {
-        ""
-    };
+    let comment_prefix = if commented { "//" } else { "" };
 
     try!(writeln!(w, ""));
 
     let decl = declaration(env, prop);
     try!(version_condition(w, env, prop.version, commented, indent));
-    try!(writeln!(w, "{}{}{}{}{}", tabs(indent),
-        comment_prefix, pub_prefix, decl, decl_suffix));
+    try!(writeln!(
+        w,
+        "{}{}{}{}{}",
+        tabs(indent),
+        comment_prefix,
+        pub_prefix,
+        decl,
+        decl_suffix
+    ));
 
     if !only_declaration {
         let body = body(prop).to_code(env);
@@ -55,7 +77,12 @@ fn declaration(env: &Env, prop: &Property) -> String {
         "".to_string()
     } else {
         let dir = library::ParameterDirection::In;
-        let param_type = if let Some(Bound{alias, ref type_str, ..}) = prop.bound {
+        let param_type = if let Some(Bound {
+            alias,
+            ref type_str,
+            ..
+        }) = prop.bound
+        {
             bound = format!("<{}: IsA<{}> + IsA<glib::object::Object>>", alias, type_str);
             if *prop.nullable {
                 format!("Option<&{}>", alias)
@@ -70,18 +97,26 @@ fn declaration(env: &Env, prop: &Property) -> String {
     };
     let return_str = if prop.is_get {
         let dir = library::ParameterDirection::Return;
-        let ret_type = parameter_rust_type(env, prop.typ, dir, prop.nullable, prop.get_out_ref_mode)
-            .into_string();
+        let ret_type =
+            parameter_rust_type(env, prop.typ, dir, prop.nullable, prop.get_out_ref_mode)
+                .into_string();
         format!(" -> {}", ret_type)
     } else {
         "".to_string()
     };
-    format!("fn {}{}(&self{}){}", prop.func_name, bound, set_param, return_str)
+    format!(
+        "fn {}{}(&self{}){}",
+        prop.func_name,
+        bound,
+        set_param,
+        return_str
+    )
 }
 
 fn body(prop: &Property) -> Chunk {
     let mut builder = property_body::Builder::new();
-    builder.name(&prop.name)
+    builder
+        .name(&prop.name)
         .var_name(&prop.var_name)
         .is_get(prop.is_get)
         .is_ref(prop.set_in_ref_mode.is_ref())

@@ -20,8 +20,11 @@ impl Parse for Parameter {
         let ident = match Ident::parse(toml, object_name, "function parameter") {
             Some(ident) => ident,
             None => {
-                error!("No 'name' or 'pattern' given for parameter for object {}", object_name);
-                return None
+                error!(
+                    "No 'name' or 'pattern' given for parameter for object {}",
+                    object_name
+                );
+                return None;
             }
         };
         let constant = toml.lookup("const")
@@ -31,7 +34,7 @@ impl Parse for Parameter {
             .and_then(|val| val.as_bool())
             .map(Nullable);
 
-        Some(Parameter{
+        Some(Parameter {
             ident: ident,
             constant: constant,
             nullable: nullable,
@@ -56,9 +59,7 @@ pub struct Return {
 impl Return {
     pub fn parse(toml: Option<&Value>) -> Return {
         if let Some(v) = toml {
-            let nullable = v.lookup("nullable")
-                .and_then(|v| v.as_bool())
-                .map(Nullable);
+            let nullable = v.lookup("nullable").and_then(|v| v.as_bool()).map(Nullable);
             let bool_return_is_error = v.lookup("bool_return_is_error")
                 .and_then(|v| v.as_str())
                 .map(|m| m.to_owned());
@@ -95,8 +96,11 @@ impl Parse for Function {
         let ident = match Ident::parse(toml, object_name, "function") {
             Some(ident) => ident,
             None => {
-                error!("No 'name' or 'pattern' given for function for object {}", object_name);
-                return None
+                error!(
+                    "No 'name' or 'pattern' given for function for object {}",
+                    object_name
+                );
+                return None;
             }
         };
 
@@ -118,7 +122,7 @@ impl Parse for Function {
             .and_then(|val| val.as_bool())
             .unwrap_or(false);
 
-        Some(Function{
+        Some(Function {
             ident: ident,
             ignore: ignore,
             version: version,
@@ -171,10 +175,12 @@ mod tests {
 
     #[test]
     fn function_parse_ignore() {
-        let toml = toml(r#"
+        let toml = toml(
+            r#"
 name = "func1"
 ignore = true
-"#);
+"#,
+        );
         let f = Function::parse(&toml, "a").unwrap();
         assert_eq!(f.ident, Ident::Name("func1".into()));
         assert_eq!(f.ignore, true);
@@ -182,64 +188,77 @@ ignore = true
 
     #[test]
     fn function_parse_version_default() {
-        let toml = toml(r#"
+        let toml = toml(
+            r#"
 name = "func1"
-"#);
+"#,
+        );
         let f = Function::parse(&toml, "a").unwrap();
         assert_eq!(f.version, None);
     }
 
     #[test]
     fn function_parse_version() {
-        let toml = toml(r#"
+        let toml = toml(
+            r#"
 name = "func1"
 version = "3.20"
-"#);
+"#,
+        );
         let f = Function::parse(&toml, "a").unwrap();
         assert_eq!(f.version, Some(Version::Full(3, 20, 0)));
     }
 
     #[test]
     fn function_parse_cfg_condition_default() {
-        let toml = toml(r#"
+        let toml = toml(
+            r#"
 name = "func1"
-"#);
+"#,
+        );
         let f = Function::parse(&toml, "a").unwrap();
         assert_eq!(f.cfg_condition, None);
     }
 
     #[test]
     fn function_parse_cfg_condition() {
-        let toml = toml(r#"
+        let toml = toml(
+            r#"
 name = "func1"
 cfg_condition = 'unix'
-"#);
+"#,
+        );
         let f = Function::parse(&toml, "a").unwrap();
         assert_eq!(f.cfg_condition, Some("unix".to_string()));
     }
 
     #[test]
     fn function_parse_return_nullable_default1() {
-        let toml = toml(r#"
+        let toml = toml(
+            r#"
 name = "func1"
-"#);
+"#,
+        );
         let f = Function::parse(&toml, "a").unwrap();
         assert_eq!(f.ret.nullable, None);
     }
 
     #[test]
     fn function_parse_return_nullable_default2() {
-        let toml = toml(r#"
+        let toml = toml(
+            r#"
 name = "func1"
 [return]
-"#);
+"#,
+        );
         let f = Function::parse(&toml, "a").unwrap();
         assert_eq!(f.ret.nullable, None);
     }
 
     #[test]
     fn function_parse_parameters() {
-        let toml = toml(r#"
+        let toml = toml(
+            r#"
 name = "func1"
 [[parameter]]
 name = "par1"
@@ -254,7 +273,8 @@ nullable = true
 [[parameter]]
 pattern = "par4"
 const = true
-"#);
+"#,
+        );
         let f = Function::parse(&toml, "a").unwrap();
         let pars = f.parameters;
         assert_eq!(pars.len(), 4);
@@ -277,22 +297,26 @@ const = true
 
     #[test]
     fn function_parse_return_nullable_false() {
-        let toml = toml(r#"
+        let toml = toml(
+            r#"
 name = "func1"
 [return]
 nullable = false
-"#);
+"#,
+        );
         let f = Function::parse(&toml, "a").unwrap();
         assert_eq!(f.ret.nullable, Some(Nullable(false)));
     }
 
     #[test]
     fn function_parse_return_nullable_true() {
-        let toml = toml(r#"
+        let toml = toml(
+            r#"
 name = "func1"
 [return]
 nullable = true
-"#);
+"#,
+        );
         let f = Function::parse(&toml, "a").unwrap();
         assert_eq!(f.ret.nullable, Some(Nullable(true)));
     }
@@ -305,7 +329,8 @@ nullable = true
 
     #[test]
     fn functions_parse_ident() {
-        let toml = functions_toml(r#"
+        let toml = functions_toml(
+            r#"
 [[f]]
 name = "func1"
 [[f]]
@@ -316,7 +341,8 @@ name = "func2"
 pattern = 'func3\w+'
 [[f]]
 pattern = 'bad_func4[\w+'
-"#);
+"#,
+        );
         let fns = Functions::parse(Some(&toml), "a");
         assert_eq!(fns.len(), 3);
         assert_eq!(fns[0].ident, Ident::Name("func1".into()));
@@ -329,7 +355,8 @@ pattern = 'bad_func4[\w+'
 
     #[test]
     fn functions_parse_matches() {
-        let toml = functions_toml(r#"
+        let toml = functions_toml(
+            r#"
 [[f]]
 name = "func1"
 [[f]]
@@ -338,7 +365,8 @@ name = "f1.5"
 name = "func2"
 [[f]]
 pattern = 'func\d+'
-"#);
+"#,
+        );
         let fns = Functions::parse(Some(&toml), "a");
         assert_eq!(fns.len(), 4);
 
@@ -351,7 +379,8 @@ pattern = 'func\d+'
 
     #[test]
     fn functions_parse_matched_parameters() {
-        let toml = functions_toml(r#"
+        let toml = functions_toml(
+            r#"
 [[f]]
 name = "func"
 [[f.parameter]]
@@ -368,7 +397,8 @@ name="par2"
 name="par3"
 [[f.parameter]]
 pattern='par\d+'
-"#);
+"#,
+        );
         let fns = Functions::parse(Some(&toml), "a");
         assert_eq!(fns.len(), 2);
         let m = fns.matched("func");

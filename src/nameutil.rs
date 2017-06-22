@@ -16,12 +16,14 @@ pub fn split_namespace_name(name: &str) -> (Option<&str>, &str) {
 
 /// Strip the longest of the prefixes from an upper-case name (G_|FOO_BAR)
 pub fn strip_prefix_uppercase<'a, S>(prefixes: &[S], name: &'a str) -> &'a str
-where S: AsRef<str> {
+where
+    S: AsRef<str>,
+{
     let mut cut = 0;
     for prefix in prefixes {
         let prefix = prefix.as_ref();
         if prefix.len() + 1 <= cut {
-            continue
+            continue;
         }
         let prefix_upper = format!("{}_", prefix.to_uppercase());
         if name.starts_with(&prefix_upper) {
@@ -53,8 +55,7 @@ pub fn crate_name(name: &str) -> String {
     let name = name.to_snake();
     if name.starts_with("g_") {
         format!("g{}", &name[2..])
-    }
-    else {
+    } else {
         name
     }
 }
@@ -68,8 +69,7 @@ pub fn mangle_keywords<'a, S: Into<Cow<'a, str>>>(name: S) -> Cow<'a, str> {
     let name = name.into();
     if let Some(s) = KEYWORDS.get(&*name) {
         s.clone().into()
-    }
-    else {
+    } else {
         name
     }
 }
@@ -91,7 +91,10 @@ lazy_static! {
 }
 
 pub fn signal_to_snake(signal: &str) -> String {
-    signal.chars().map(|ch| if ch == '-' { '_' } else { ch }).collect()
+    signal
+        .chars()
+        .map(|ch| if ch == '-' { '_' } else { ch })
+        .collect()
 }
 
 #[cfg(test)]
@@ -136,8 +139,11 @@ mod tests {
 
     #[test]
     fn file_name_sys_works() {
-        let expected: String = PathBuf::from("src").join("funcs.rs")
-            .to_str().unwrap().into();
+        let expected: String = PathBuf::from("src")
+            .join("funcs.rs")
+            .to_str()
+            .unwrap()
+            .into();
         assert_eq!(file_name_sys("funcs"), expected);
     }
 

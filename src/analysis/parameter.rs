@@ -35,14 +35,16 @@ pub struct Parameter {
 fn is_into(env: &Env, par: &library::Parameter) -> bool {
     fn is_into_inner(env: &Env, par: &library::Type) -> bool {
         match *par {
-            library::Type::Fundamental(fund) => match fund {
-                library::Fundamental::Utf8 |
+            library::Type::Fundamental(fund) => {
+                match fund {
+                    library::Fundamental::Utf8 |
                     library::Fundamental::Type => true,
-                _ => false,
-            },
+                    _ => false,
+                }
+            }
             library::Type::List(_) |
-              library::Type::SList(_) |
-              library::Type::CArray(_) => false,
+            library::Type::SList(_) |
+            library::Type::CArray(_) => false,
             library::Type::Alias(ref alias) => is_into_inner(env, env.library.type_(alias.typ)),
             _ => true,
         }
@@ -50,23 +52,31 @@ fn is_into(env: &Env, par: &library::Parameter) -> bool {
     !par.instance_parameter && is_into_inner(env, env.library.type_(par.typ))
 }
 
-pub fn analyze(env: &Env, par: &library::Parameter, configured_functions: &[&Function]) -> Parameter {
+pub fn analyze(
+    env: &Env,
+    par: &library::Parameter,
+    configured_functions: &[&Function],
+) -> Parameter {
     let name = if par.instance_parameter {
         Cow::Borrowed(&*par.name)
     } else {
         nameutil::mangle_keywords(&*par.name)
     };
 
-    let immutable = configured_functions.matched_parameters(&name)
-        .iter().any(|p| p.constant);
+    let immutable = configured_functions
+        .matched_parameters(&name)
+        .iter()
+        .any(|p| p.constant);
     let ref_mode = RefMode::without_unneeded_mut(&env.library, par, immutable);
 
-    let nullable_override = configured_functions.matched_parameters(&name).iter()
+    let nullable_override = configured_functions
+        .matched_parameters(&name)
+        .iter()
         .filter_map(|p| p.nullable)
         .next();
     let nullable = nullable_override.unwrap_or(par.nullable);
 
-    let mut caller_allocates  = par.caller_allocates;
+    let mut caller_allocates = par.caller_allocates;
     let mut transfer = par.transfer;
     let conversion = ConversionType::of(&env.library, par.typ);
     if conversion == ConversionType::Direct || conversion == ConversionType::Scalar {

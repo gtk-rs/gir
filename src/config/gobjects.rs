@@ -15,7 +15,7 @@ use version::Version;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum GStatus {
-    Manual,     //already generated
+    Manual, //already generated
     Generate,
     Comment,
     Ignore,
@@ -34,7 +34,9 @@ impl GStatus {
 }
 
 impl Default for GStatus {
-    fn default() -> GStatus { GStatus::Ignore }
+    fn default() -> GStatus {
+        GStatus::Ignore
+    }
 }
 
 impl FromStr for GStatus {
@@ -45,7 +47,7 @@ impl FromStr for GStatus {
             "generate" => Ok(GStatus::Generate),
             "comment" => Ok(GStatus::Comment),
             "ignore" => Ok(GStatus::Ignore),
-            _ => Err("Wrong object status".into())
+            _ => Err("Wrong object status".into()),
         }
     }
 }
@@ -87,7 +89,7 @@ impl Default for GObject {
 }
 
 //TODO: ?change to HashMap<String, GStatus>
-pub type GObjects =  BTreeMap<String, GObject>;
+pub type GObjects = BTreeMap<String, GObject>;
 
 pub fn parse_toml(toml_objects: &Value) -> GObjects {
     let mut objects = GObjects::new();
@@ -99,12 +101,17 @@ pub fn parse_toml(toml_objects: &Value) -> GObjects {
 }
 
 fn parse_object(toml_object: &Value) -> GObject {
-    let name: String = toml_object.lookup("name").expect("Object name not defined")
-        .as_str().unwrap().into();
+    let name: String = toml_object
+        .lookup("name")
+        .expect("Object name not defined")
+        .as_str()
+        .unwrap()
+        .into();
 
     let status = match toml_object.lookup("status") {
-        Some(value) => GStatus::from_str(value.as_str().unwrap())
-            .unwrap_or_else(|_| Default::default()),
+        Some(value) => {
+            GStatus::from_str(value.as_str().unwrap()).unwrap_or_else(|_| Default::default())
+        }
         None => Default::default(),
     };
 
@@ -112,16 +119,20 @@ fn parse_object(toml_object: &Value) -> GObject {
     let signals = Signals::parse(toml_object.lookup("signal"), &name);
     let members = Members::parse(toml_object.lookup("member"), &name);
     let properties = Properties::parse(toml_object.lookup("property"), &name);
-    let module_name = toml_object.lookup("module_name")
+    let module_name = toml_object
+        .lookup("module_name")
         .and_then(|v| v.as_str())
         .map(|s| s.to_owned());
-    let version = toml_object.lookup("version")
+    let version = toml_object
+        .lookup("version")
         .and_then(|v| v.as_str())
         .and_then(|s| s.parse().ok());
-    let cfg_condition = toml_object.lookup("cfg_condition")
+    let cfg_condition = toml_object
+        .lookup("cfg_condition")
         .and_then(|v| v.as_str())
         .map(|s| s.to_owned());
-    let generate_trait = toml_object.lookup("trait")
+    let generate_trait = toml_object
+        .lookup("trait")
         .and_then(|v| v.as_bool())
         .unwrap_or(true);
     let child_properties = ChildProperties::parse(toml_object, &name);
@@ -151,19 +162,23 @@ pub fn parse_status_shorthands(objects: &mut GObjects, toml: &Value) {
 
 fn parse_status_shorthand(objects: &mut GObjects, status: GStatus, toml: &Value) {
     let name = format!("options.{:?}", status).to_ascii_lowercase();
-    toml.lookup(&name).map(|a| a.as_array().unwrap())
-        .map(|a| for name_ in a.iter().map(|s| s.as_str().unwrap()) {
-        match objects.get(name_) {
-            None => {
-                objects.insert(name_.into(), GObject {
-                    name: name_.into(),
-                    status: status,
-                    .. Default::default()
-                });
-            },
-            Some(_) => panic!("Bad name in {}: {} already defined", name, name_),
-        }
-    });
+    toml.lookup(&name).map(|a| a.as_array().unwrap()).map(
+        |a| for name_ in a.iter().map(|s| s.as_str().unwrap()) {
+            match objects.get(name_) {
+                None => {
+                    objects.insert(
+                        name_.into(),
+                        GObject {
+                            name: name_.into(),
+                            status: status,
+                            ..Default::default()
+                        },
+                    );
+                }
+                Some(_) => panic!("Bad name in {}: {} already defined", name, name_),
+            }
+        },
+    );
 }
 
 pub fn resolve_type_ids(objects: &mut GObjects, library: &Library) {

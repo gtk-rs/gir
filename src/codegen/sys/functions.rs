@@ -9,20 +9,30 @@ use super::ffi_type::*;
 use traits::*;
 
 //used as glib:get-type in GLib-2.0.gir
-const INTERN: &'static str= "intern";
+const INTERN: &'static str = "intern";
 
 lazy_static! {
     static ref DEFAULT_OBJ: GObject = Default::default();
 }
 
-pub fn generate_records_funcs(w: &mut Write, env: &Env, records: &[&library::Record]) -> Result<()> {
+pub fn generate_records_funcs(
+    w: &mut Write,
+    env: &Env,
+    records: &[&library::Record],
+) -> Result<()> {
     let intern_str = INTERN.to_string();
     for record in records {
         let name = format!("{}.{}", env.config.library_name, record.name);
         let obj = env.config.objects.get(&name).unwrap_or(&DEFAULT_OBJ);
         let glib_get_type = record.glib_get_type.as_ref().unwrap_or(&intern_str);
-        try!(generate_object_funcs(w, env, obj, &record.c_type,
-            glib_get_type, &record.functions));
+        try!(generate_object_funcs(
+            w,
+            env,
+            obj,
+            &record.c_type,
+            glib_get_type,
+            &record.functions,
+        ));
     }
 
     Ok(())
@@ -32,31 +42,56 @@ pub fn generate_classes_funcs(w: &mut Write, env: &Env, classes: &[&library::Cla
     for klass in classes {
         let name = format!("{}.{}", env.config.library_name, klass.name);
         let obj = env.config.objects.get(&name).unwrap_or(&DEFAULT_OBJ);
-        try!(generate_object_funcs(w, env, obj, &klass.c_type,
-            &klass.glib_get_type, &klass.functions));
+        try!(generate_object_funcs(
+            w,
+            env,
+            obj,
+            &klass.c_type,
+            &klass.glib_get_type,
+            &klass.functions,
+        ));
     }
 
     Ok(())
 }
 
-pub fn generate_bitfields_funcs(w: &mut Write, env: &Env, bitfields: &[&library::Bitfield])
-        -> Result<()> {
+pub fn generate_bitfields_funcs(
+    w: &mut Write,
+    env: &Env,
+    bitfields: &[&library::Bitfield],
+) -> Result<()> {
     for bitfield in bitfields {
         let name = format!("{}.{}", env.config.library_name, bitfield.name);
         let obj = env.config.objects.get(&name).unwrap_or(&DEFAULT_OBJ);
-        try!(generate_object_funcs(w, env, obj, &bitfield.c_type, INTERN,
-                                   &bitfield.functions));
+        try!(generate_object_funcs(
+            w,
+            env,
+            obj,
+            &bitfield.c_type,
+            INTERN,
+            &bitfield.functions,
+        ));
     }
 
     Ok(())
 }
 
-pub fn generate_enums_funcs(w: &mut Write, env: &Env, enums: &[&library::Enumeration])
-        -> Result<()> {
+pub fn generate_enums_funcs(
+    w: &mut Write,
+    env: &Env,
+    enums: &[&library::Enumeration],
+) -> Result<()> {
     for en in enums {
         let name = format!("{}.{}", env.config.library_name, en.name);
         let obj = env.config.objects.get(&name).unwrap_or(&DEFAULT_OBJ);
-        try!(generate_object_funcs(w, env, obj, &en.c_type, INTERN, &en.functions));
+        try!(generate_object_funcs(
+            w,
+            env,
+            obj,
+            &en.c_type,
+            INTERN,
+            &en.functions,
+        ));
     }
 
     Ok(())
@@ -70,37 +105,70 @@ pub fn generate_unions_funcs(w: &mut Write, env: &Env, unions: &[&library::Union
         };
         let name = format!("{}.{}", env.config.library_name, union.name);
         let obj = env.config.objects.get(&name).unwrap_or(&DEFAULT_OBJ);
-        try!(generate_object_funcs(w, env, obj, c_type, INTERN, &union.functions));
+        try!(generate_object_funcs(
+            w,
+            env,
+            obj,
+            c_type,
+            INTERN,
+            &union.functions,
+        ));
     }
 
     Ok(())
 }
 
-pub fn generate_interfaces_funcs(w: &mut Write, env: &Env, interfaces: &[&library::Interface]) -> Result<()> {
+pub fn generate_interfaces_funcs(
+    w: &mut Write,
+    env: &Env,
+    interfaces: &[&library::Interface],
+) -> Result<()> {
     for interface in interfaces {
         let name = format!("{}.{}", env.config.library_name, interface.name);
         let obj = env.config.objects.get(&name).unwrap_or(&DEFAULT_OBJ);
-        try!(generate_object_funcs(w, env, obj, &interface.c_type,
-            &interface.glib_get_type, &interface.functions));
+        try!(generate_object_funcs(
+            w,
+            env,
+            obj,
+            &interface.c_type,
+            &interface.glib_get_type,
+            &interface.functions,
+        ));
     }
 
     Ok(())
 }
 
-pub fn generate_other_funcs(w: &mut Write, env: &Env, functions: &[library::Function]) -> Result<()> {
+pub fn generate_other_funcs(
+    w: &mut Write,
+    env: &Env,
+    functions: &[library::Function],
+) -> Result<()> {
     let name = format!("{}.*", env.config.library_name);
     let obj = env.config.objects.get(&name).unwrap_or(&DEFAULT_OBJ);
     generate_object_funcs(w, env, obj, "Other functions", INTERN, functions)
 }
 
-fn generate_object_funcs(w: &mut Write, env: &Env, obj: &GObject, c_type: &str,
-    glib_get_type: &str, functions: &[library::Function]) -> Result<()> {
+fn generate_object_funcs(
+    w: &mut Write,
+    env: &Env,
+    obj: &GObject,
+    c_type: &str,
+    glib_get_type: &str,
+    functions: &[library::Function],
+) -> Result<()> {
     let write_get_type = glib_get_type != INTERN;
     if write_get_type || !functions.is_empty() {
         try!(writeln!(w, ""));
-        try!(writeln!(w, "    //========================================================================="));
+        try!(writeln!(
+            w,
+            "    //========================================================================="
+        ));
         try!(writeln!(w, "    // {}", c_type));
-        try!(writeln!(w, "    //========================================================================="));
+        try!(writeln!(
+            w,
+            "    //========================================================================="
+        ));
     }
     if write_get_type {
         try!(writeln!(w, "    pub fn {}() -> GType;", glib_get_type));
@@ -129,15 +197,24 @@ fn generate_object_funcs(w: &mut Write, env: &Env, obj: &GObject, c_type: &str,
     Ok(())
 }
 
-pub fn generate_callbacks(w: &mut Write, env: &Env, callbacks: &[&library::Function]) -> Result<()> {
+pub fn generate_callbacks(
+    w: &mut Write,
+    env: &Env,
+    callbacks: &[&library::Function],
+) -> Result<()> {
     if !callbacks.is_empty() {
         try!(writeln!(w, "// Callbacks"));
     }
     for func in callbacks {
         let (commented, sig) = function_signature(env, func, true);
         let comment = if commented { "//" } else { "" };
-        try!(writeln!(w, "{}pub type {} = Option<unsafe extern \"C\" fn{}>;",
-                      comment, func.c_identifier.as_ref().unwrap(), sig));
+        try!(writeln!(
+            w,
+            "{}pub type {} = Option<unsafe extern \"C\" fn{}>;",
+            comment,
+            func.c_identifier.as_ref().unwrap(),
+            sig
+        ));
     }
     if !callbacks.is_empty() {
         try!(writeln!(w, ""));
@@ -153,14 +230,21 @@ pub fn function_signature(env: &Env, func: &library::Function, bare: bool) -> (b
     for par in &func.parameters {
         let (c, par_str) = function_parameter(env, par, bare);
         parameter_strs.push(par_str);
-        if c { commented = true; }
+        if c {
+            commented = true;
+        }
     }
 
-    (commented, format!("({}){}", parameter_strs.join(", "), ret_str))
+    (
+        commented,
+        format!("({}){}", parameter_strs.join(", "), ret_str),
+    )
 }
 
 fn function_return_value(env: &Env, func: &library::Function) -> (bool, String) {
-    if func.ret.typ == Default::default() { return (false, String::new()) }
+    if func.ret.typ == Default::default() {
+        return (false, String::new());
+    }
     let ffi_type = ffi_type(env, func.ret.typ, &func.ret.c_type);
     let commented = ffi_type.is_err();
     (commented, format!(" -> {}", ffi_type.into_string()))
@@ -174,9 +258,12 @@ fn function_parameter(env: &Env, par: &library::Parameter, bare: bool) -> (bool,
     let commented = ffi_type.is_err();
     let res = if bare {
         ffi_type.into_string()
-    }
-    else {
-        format!("{}: {}", nameutil::mangle_keywords(&*par.name), ffi_type.into_string())
+    } else {
+        format!(
+            "{}: {}",
+            nameutil::mangle_keywords(&*par.name),
+            ffi_type.into_string()
+        )
     };
     (commented, res)
 }

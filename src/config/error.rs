@@ -25,7 +25,10 @@ error_chain! {
     }
 }
 
-pub trait TomlHelper where Self: Sized {
+pub trait TomlHelper
+where
+    Self: Sized,
+{
     fn lookup<'a>(&'a self, option: &str) -> Option<&'a toml::Value>;
     fn lookup_str<'a>(&'a self, option: &'a str, err: &str) -> Result<&'a str>;
     fn lookup_vec<'a>(&'a self, option: &'a str, err: &str) -> Result<&'a Vec<Self>>;
@@ -58,18 +61,30 @@ impl TomlHelper for toml::Value {
         value.as_result_vec(option)
     }
     fn as_result_str<'a>(&'a self, option: &'a str) -> Result<&'a str> {
-        self.as_str()
-            .ok_or_else(|| format!("Invalid `{}` value, expected a string, found {}",
-                                          option, self.type_str()).into())
+        self.as_str().ok_or_else(|| {
+            format!(
+                "Invalid `{}` value, expected a string, found {}",
+                option,
+                self.type_str()
+            ).into()
+        })
     }
     fn as_result_vec<'a>(&'a self, option: &'a str) -> Result<&'a Vec<Self>> {
-        self.as_array()
-            .ok_or_else(|| format!("Invalid `{}` value, expected a array, found {}",
-                           option, self.type_str()).into())
+        self.as_array().ok_or_else(|| {
+            format!(
+                "Invalid `{}` value, expected a array, found {}",
+                option,
+                self.type_str()
+            ).into()
+        })
     }
     fn as_result_bool<'a>(&'a self, option: &'a str) -> Result<bool> {
-        self.as_bool()
-            .ok_or_else(|| format!("Invalid `{}` value, expected a boolean, found {}",
-                                          option, self.type_str()).into())
+        self.as_bool().ok_or_else(|| {
+            format!(
+                "Invalid `{}` value, expected a boolean, found {}",
+                option,
+                self.type_str()
+            ).into()
+        })
     }
 }

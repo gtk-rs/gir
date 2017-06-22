@@ -2,13 +2,15 @@ use std::str::FromStr;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum WorkMode {
-    Normal,     // generate widgets etc.
-    Sys,        // generate -sys with ffi
-    Doc,        // generate documentation file
+    Normal, // generate widgets etc.
+    Sys, // generate -sys with ffi
+    Doc, // generate documentation file
 }
 
 impl Default for WorkMode {
-    fn default() -> WorkMode { WorkMode::Normal }
+    fn default() -> WorkMode {
+        WorkMode::Normal
+    }
 }
 
 impl FromStr for WorkMode {
@@ -18,7 +20,7 @@ impl FromStr for WorkMode {
             "normal" => Ok(WorkMode::Normal),
             "sys" => Ok(WorkMode::Sys),
             "doc" => Ok(WorkMode::Doc),
-            _ => Err("Wrong work mode".into())
+            _ => Err("Wrong work mode".into()),
         }
     }
 }

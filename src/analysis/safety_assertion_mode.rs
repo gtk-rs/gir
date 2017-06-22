@@ -27,8 +27,8 @@ impl SafetyAssertionMode {
         }
         for par in params {
             match *env.library.type_(par.typ) {
-                Class(..) | Interface(..) if !*par.nullable && par.typ.ns_id == library::MAIN_NAMESPACE
-                    => return Skip,
+                Class(..) | Interface(..)
+                    if !*par.nullable && par.typ.ns_id == library::MAIN_NAMESPACE => return Skip,
                 _ => (),
             }
         }

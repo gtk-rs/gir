@@ -18,9 +18,15 @@ pub struct Info {
     pub doc_hidden: bool,
 }
 
-pub fn analyze(env: &Env, signals: &[library::Signal], type_tid: library::TypeId,
-               in_trait: bool, trampolines: &mut trampolines::Trampolines,
-               obj: &GObject, imports: &mut Imports) -> Vec<Info> {
+pub fn analyze(
+    env: &Env,
+    signals: &[library::Signal],
+    type_tid: library::TypeId,
+    in_trait: bool,
+    trampolines: &mut trampolines::Trampolines,
+    obj: &GObject,
+    imports: &mut Imports,
+) -> Vec<Info> {
     let mut sns = Vec::new();
 
     for signal in signals {
@@ -32,7 +38,15 @@ pub fn analyze(env: &Env, signals: &[library::Signal], type_tid: library::TypeId
             continue;
         }
 
-        let info = analyze_signal(env, signal, type_tid, in_trait, &configured_signals, trampolines, imports);
+        let info = analyze_signal(
+            env,
+            signal,
+            type_tid,
+            in_trait,
+            &configured_signals,
+            trampolines,
+            imports,
+        );
         if let Some(info) = info {
             sns.push(info);
         }
@@ -41,19 +55,35 @@ pub fn analyze(env: &Env, signals: &[library::Signal], type_tid: library::TypeId
     sns
 }
 
-fn analyze_signal(env: &Env, signal: &library::Signal, type_tid: library::TypeId,
-                  in_trait: bool, configured_signals: &[&config::signals::Signal],
-                  trampolines: &mut trampolines::Trampolines,
-                  imports: &mut Imports) -> Option<Info> {
+fn analyze_signal(
+    env: &Env,
+    signal: &library::Signal,
+    type_tid: library::TypeId,
+    in_trait: bool,
+    configured_signals: &[&config::signals::Signal],
+    trampolines: &mut trampolines::Trampolines,
+    imports: &mut Imports,
+) -> Option<Info> {
     let mut used_types: Vec<String> = Vec::with_capacity(4);
-    let version = configured_signals.iter().filter_map(|f| f.version).min()
+    let version = configured_signals
+        .iter()
+        .filter_map(|f| f.version)
+        .min()
         .or(signal.version);
     let deprecated_version = signal.deprecated_version;
     let doc_hidden = configured_signals.iter().any(|f| f.doc_hidden);
 
     let connect_name = format!("connect_{}", nameutil::signal_to_snake(&signal.name));
-    let trampoline_name = trampolines::analyze(env, signal, type_tid, in_trait, configured_signals,
-                                               trampolines, &mut used_types, version);
+    let trampoline_name = trampolines::analyze(
+        env,
+        signal,
+        type_tid,
+        in_trait,
+        configured_signals,
+        trampolines,
+        &mut used_types,
+        version,
+    );
 
     if trampoline_name.is_ok() {
         imports.add_used_types(&used_types, version);

@@ -56,11 +56,12 @@ pub struct Bounds {
 
 impl Default for Bounds {
     #[cfg_attr(feature = "cargo-clippy", allow(char_lit_as_u8))]
-    fn default () -> Bounds {
+    fn default() -> Bounds {
         Bounds {
-            unused: (TYPE_PARAMETERS_START as u8..).take_while(|x| *x <= 'Z' as u8)
-                                                   .map(|x| x as char)
-                                                   .collect(),
+            unused: (TYPE_PARAMETERS_START as u8..)
+                .take_while(|x| *x <= 'Z' as u8)
+                .map(|x| x as char)
+                .collect(),
             used: Vec::new(),
             unused_lifetimes: "abcdefg".chars().collect(),
             lifetimes: Vec::new(),
@@ -69,8 +70,12 @@ impl Default for Bounds {
 }
 
 impl Bound {
-    pub fn get_for_property_setter(env: &Env, var_name: &str, type_id: TypeId,
-                                   nullable: Nullable) -> Option<Bound> {
+    pub fn get_for_property_setter(
+        env: &Env,
+        var_name: &str,
+        type_id: TypeId,
+        nullable: Nullable,
+    ) -> Option<Bound> {
         match Bounds::type_for(env, type_id, nullable) {
             //TODO: match boxed_bound to BoundType::IsA(l)
             Some(BoundType::Into(_, Some(boxed_bound))) => {
@@ -95,7 +100,10 @@ impl Bounds {
                 par.to_glib_extra = Bounds::get_to_glib_extra(bound_type.clone());
                 let type_name = bounds_rust_type(env, par.typ);
                 if !self.add_parameter(&par.name, &type_name.into_string(), bound_type) {
-                    panic!("Too many type constraints for {}", func.c_identifier.as_ref().unwrap())
+                    panic!(
+                        "Too many type constraints for {}",
+                        func.c_identifier.as_ref().unwrap()
+                    )
                 }
             }
         }
@@ -122,9 +130,7 @@ impl Bounds {
             }
             Type::Interface(..) if !*nullable => Some(IsA(None)),
             Type::Interface(..) => Some(Into(Some('_'), Some(Box::new(IsA(None))))),
-            Type::List(_) |
-                Type::SList(_) |
-                Type::CArray(_) => None,
+            Type::List(_) | Type::SList(_) | Type::CArray(_) => None,
             Type::Fundamental(_) if *nullable => Some(Into(None, None)),
             _ if !*nullable => None,
             _ => Some(Into(Some('_'), None)),
@@ -139,7 +145,9 @@ impl Bounds {
         }
     }
     pub fn add_parameter(&mut self, name: &str, type_str: &str, mut bound_type: BoundType) -> bool {
-        if self.used.iter().any(|n| n.parameter_name == name) { return false; }
+        if self.used.iter().any(|n| n.parameter_name == name) {
+            return false;
+        }
         let sub = if let BoundType::Into(Some(_), x) = bound_type {
             if let Some(lifetime) = self.unused_lifetimes.pop_front() {
                 self.lifetimes.push(lifetime);
@@ -181,13 +189,13 @@ impl Bounds {
         }
     }
     pub fn get_parameter_alias_info(&self, name: &str) -> Option<(char, BoundType)> {
-        self.used.iter()
-                 .find(move |n| {
-            if n.parameter_name == name {
+        self.used
+            .iter()
+            .find(move |n| if n.parameter_name == name {
                 !n.info_for_next_type
             } else {
                 false
-            }})
+            })
             .map(|t| (t.alias, t.bound_type.clone()))
     }
     pub fn update_imports(&self, imports: &mut Imports) {
@@ -212,7 +220,7 @@ impl Bounds {
     pub fn is_empty(&self) -> bool {
         self.used.is_empty()
     }
-    pub fn iter(&self) ->  Iter<Bound> {
+    pub fn iter(&self) -> Iter<Bound> {
         self.used.iter()
     }
     pub fn iter_lifetimes(&self) -> Iter<char> {
@@ -251,7 +259,10 @@ mod tests {
         let typ = BoundType::IsA(None);
         bounds.add_parameter("a", "", typ.clone());
         bounds.add_parameter("b", "", typ.clone());
-        assert_eq!(bounds.get_parameter_alias_info("a"), Some(('P', typ.clone())));
+        assert_eq!(
+            bounds.get_parameter_alias_info("a"),
+            Some(('P', typ.clone()))
+        );
         assert_eq!(bounds.get_parameter_alias_info("b"), Some(('Q', typ)));
         assert_eq!(bounds.get_parameter_alias_info("c"), None);
     }

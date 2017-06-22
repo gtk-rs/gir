@@ -17,14 +17,13 @@ use version::Version;
 pub fn generate(env: &Env) {
     println!("generating sys for {}", env.config.library_name);
 
-    let path =  env.config.target_path.join(file_name_sys("lib"));
+    let path = env.config.target_path.join(file_name_sys("lib"));
 
     println!("Generating file {:?}", path);
-    save_to_file(&path, env.config.make_backup,
-        |w| generate_lib(w, env));
+    save_to_file(&path, env.config.make_backup, |w| generate_lib(w, env));
 }
 
-fn generate_lib(w: &mut Write, env: &Env) -> Result<()>{
+fn generate_lib(w: &mut Write, env: &Env) -> Result<()> {
     try!(general::start_comments(w, &env.config));
     try!(statics::begin(w));
 
@@ -74,16 +73,22 @@ fn generate_lib(w: &mut Write, env: &Env) -> Result<()>{
     Ok(())
 }
 
-fn generate_extern_crates(w: &mut Write, env: &Env) -> Result<()>{
+fn generate_extern_crates(w: &mut Write, env: &Env) -> Result<()> {
     for library_name in &env.config.external_libraries {
-        try!(writeln!(w, "extern crate {0}_sys as {0};", crate_name(library_name)));
+        try!(writeln!(
+            w,
+            "extern crate {0}_sys as {0};",
+            crate_name(library_name)
+        ));
     }
 
     Ok(())
 }
 
 fn prepare<T: Ord>(ns: &Namespace) -> Vec<&T>
-where Type: MaybeRef<T> {
+where
+    Type: MaybeRef<T>,
+{
     let mut vec: Vec<&T> = Vec::with_capacity(ns.types.len());
     for typ in ns.types.iter().filter_map(|t| t.as_ref()) {
         if let Some(x) = typ.maybe_ref() {
@@ -94,8 +99,7 @@ where Type: MaybeRef<T> {
     vec
 }
 
-fn generate_aliases(w: &mut Write, env: &Env, items: &[&Alias])
-        -> Result<()> {
+fn generate_aliases(w: &mut Write, env: &Env, items: &[&Alias]) -> Result<()> {
     if !items.is_empty() {
         try!(writeln!(w, "// Aliases"));
     }
@@ -104,7 +108,13 @@ fn generate_aliases(w: &mut Write, env: &Env, items: &[&Alias])
             Ok(x) => ("", x),
             x @ Err(..) => ("//", x.into_string()),
         };
-        try!(writeln!(w, "{}pub type {} = {};", comment, item.c_identifier, c_type));
+        try!(writeln!(
+            w,
+            "{}pub type {} = {};",
+            comment,
+            item.c_identifier,
+            c_type
+        ));
     }
     if !items.is_empty() {
         try!(writeln!(w, ""));
@@ -113,8 +123,7 @@ fn generate_aliases(w: &mut Write, env: &Env, items: &[&Alias])
     Ok(())
 }
 
-fn generate_bitfields(w: &mut Write, env: &Env, items: &[&Bitfield])
-        -> Result<()> {
+fn generate_bitfields(w: &mut Write, env: &Env, items: &[&Bitfield]) -> Result<()> {
     if !items.is_empty() {
         try!(writeln!(w, "// Flags"));
     }
@@ -122,15 +131,26 @@ fn generate_bitfields(w: &mut Write, env: &Env, items: &[&Bitfield])
         let full_name = format!("{}.{}", env.namespaces.main().name, item.name);
         let config = env.config.objects.get(&full_name);
 
-        try!(writeln!(w, "bitflags! {{\n\t#[repr(C)]\n\tpub struct {}: c_uint {{", item.c_type));
+        try!(writeln!(
+            w,
+            "bitflags! {{\n\t#[repr(C)]\n\tpub struct {}: c_uint {{",
+            item.c_type
+        ));
         for member in &item.members {
-            let member_config = config.as_ref()
-                .map(|c| c.members.matched(&member.name)).unwrap_or_else(|| vec![]);
+            let member_config = config
+                .as_ref()
+                .map(|c| c.members.matched(&member.name))
+                .unwrap_or_else(|| vec![]);
             let version = member_config.iter().filter_map(|m| m.version).next();
 
             try!(version_condition(w, env, version, false, 2));
             let val: i64 = member.value.parse().unwrap();
-            try!(writeln!(w, "\t\tconst {} = {};", member.c_identifier, val as u32));
+            try!(writeln!(
+                w,
+                "\t\tconst {} = {};",
+                member.c_identifier,
+                val as u32
+            ));
         }
         try!(writeln!(w, "\t}}\n}}"));
         try!(writeln!(w, ""));
@@ -144,21 +164,28 @@ fn generate_constants(w: &mut Write, env: &Env, constants: &[Constant]) -> Resul
         try!(writeln!(w, "// Constants"));
     }
     for constant in constants {
-        let (mut comment, mut type_) =
-            match ffi_type(env, constant.typ, &constant.c_type) {
-                Ok(x) => ("", x),
-                x @ Err(..) => ("//", x.into_string()),
-            };
-        if env.type_status_sys(&format!("{}.{}", env.config.library_name,
-            constant.name)).ignored() {
+        let (mut comment, mut type_) = match ffi_type(env, constant.typ, &constant.c_type) {
+            Ok(x) => ("", x),
+            x @ Err(..) => ("//", x.into_string()),
+        };
+        if env.type_status_sys(&format!("{}.{}", env.config.library_name, constant.name))
+            .ignored()
+        {
             comment = "//";
         }
         let mut value = constant.value.clone();
         if type_ == "*mut c_char" {
             type_ = "*const c_char".into();
-            value = format!("b\"{}\\0\" as *const u8 as *const c_char", escape_string(&value));
+            value = format!(
+                "b\"{}\\0\" as *const u8 as *const c_char",
+                escape_string(&value)
+            );
         } else if type_ == "gboolean" {
-            let prefix = if env.config.library_name == "GLib" { "" } else { "glib::" };
+            let prefix = if env.config.library_name == "GLib" {
+                ""
+            } else {
+                "glib::"
+            };
             if value == "true" {
                 value = format!("{}GTRUE", prefix);
             } else {
@@ -166,12 +193,28 @@ fn generate_constants(w: &mut Write, env: &Env, constants: &[Constant]) -> Resul
             }
         }
 
-        if env.library.type_(constant.typ).maybe_ref_as::<Bitfield>().is_some() {
-            try!(writeln!(w, "{}pub const {}: {} = {2} {{ bits: {} }};", comment,
-                constant.c_identifier, type_, value));
+        if env.library
+            .type_(constant.typ)
+            .maybe_ref_as::<Bitfield>()
+            .is_some()
+        {
+            try!(writeln!(
+                w,
+                "{}pub const {}: {} = {2} {{ bits: {} }};",
+                comment,
+                constant.c_identifier,
+                type_,
+                value
+            ));
         } else {
-            try!(writeln!(w, "{}pub const {}: {} = {};", comment,
-                constant.c_identifier, type_, value));
+            try!(writeln!(
+                w,
+                "{}pub const {}: {} = {};",
+                comment,
+                constant.c_identifier,
+                type_,
+                value
+            ));
         }
     }
     if !constants.is_empty() {
@@ -183,28 +226,32 @@ fn generate_constants(w: &mut Write, env: &Env, constants: &[Constant]) -> Resul
 
 fn escape_string(s: &str) -> String {
     let mut es = String::with_capacity(s.len() * 2);
-    let _ = s.chars().map(|c| {
-        match c {
+    let _ = s.chars()
+        .map(|c| match c {
             '\'' | '\"' | '\\' => {
                 es.push('\\');
                 es.push(c)
             }
             _ => es.push(c),
-        }
-    }).count();
+        })
+        .count();
     es
 }
 
-fn generate_enums(w: &mut Write, env: &Env, items: &[&Enumeration])
-        -> Result<()> {
+fn generate_enums(w: &mut Write, env: &Env, items: &[&Enumeration]) -> Result<()> {
     if !items.is_empty() {
         try!(writeln!(w, "// Enums"));
     }
     for item in items {
         if item.members.len() == 1 {
             try!(writeln!(w, "pub type {} = c_int;", item.name));
-            try!(writeln!(w, "pub const {}: {} = {};",
-                          item.members[0].c_identifier, item.name, item.members[0].value));
+            try!(writeln!(
+                w,
+                "pub const {}: {} = {};",
+                item.members[0].c_identifier,
+                item.name,
+                item.members[0].value
+            ));
             try!(writeln!(w, "pub type {} = {};", item.c_type, item.name));
             try!(writeln!(w, ""));
             continue;
@@ -214,11 +261,16 @@ fn generate_enums(w: &mut Write, env: &Env, items: &[&Enumeration])
         let config = env.config.objects.get(&full_name);
 
         let mut vals: HashMap<String, (String, Option<Version>)> = HashMap::new();
-        try!(writeln!(w, "#[derive(Clone, Copy, Debug, Eq, PartialEq)]\n#[repr(C)]"));
+        try!(writeln!(
+            w,
+            "#[derive(Clone, Copy, Debug, Eq, PartialEq)]\n#[repr(C)]"
+        ));
         try!(writeln!(w, "pub enum {} {{", item.c_type));
         for member in &item.members {
-            let member_config = config.as_ref()
-                .map(|c| c.members.matched(&member.name)).unwrap_or_else(|| vec![]);
+            let member_config = config
+                .as_ref()
+                .map(|c| c.members.matched(&member.name))
+                .unwrap_or_else(|| vec![]);
             let is_alias = member_config.iter().any(|m| m.alias);
             let version = member_config.iter().filter_map(|m| m.version).next();
 
@@ -226,16 +278,25 @@ fn generate_enums(w: &mut Write, env: &Env, items: &[&Enumeration])
                 continue;
             }
             try!(version_condition(w, env, version, false, 1));
-            try!(writeln!(w, "\t{} = {},",
-                          &prepare_enum_member_name(&member.name), member.value));
+            try!(writeln!(
+                w,
+                "\t{} = {},",
+                &prepare_enum_member_name(&member.name),
+                member.value
+            ));
             vals.insert(member.value.clone(), (member.name.clone(), version));
         }
         try!(writeln!(w, "}}"));
         for member in &item.members {
             if let Some(&(ref value, version)) = vals.get(&member.value) {
                 try!(version_condition(w, env, version, false, 0));
-                try!(writeln!(w, "pub const {}: {} = {1}::{};", member.c_identifier, item.c_type,
-                          &prepare_enum_member_name(value)));
+                try!(writeln!(
+                    w,
+                    "pub const {}: {} = {1}::{};",
+                    member.c_identifier,
+                    item.c_type,
+                    &prepare_enum_member_name(value)
+                ));
             }
         }
         try!(writeln!(w, ""));
@@ -244,8 +305,7 @@ fn generate_enums(w: &mut Write, env: &Env, items: &[&Enumeration])
     Ok(())
 }
 
-fn generate_unions(w: &mut Write, env: &Env, items: &[&Union])
-        -> Result<()> {
+fn generate_unions(w: &mut Write, env: &Env, items: &[&Union]) -> Result<()> {
     if !items.is_empty() {
         try!(writeln!(w, "// Unions"));
     }
@@ -257,8 +317,12 @@ fn generate_unions(w: &mut Write, env: &Env, items: &[&Union])
                 // Two c_uint or a pointer => 64 bits on all platforms currently
                 // supported by GLib but the alignment is different on 32 bit
                 // platforms (32 bit vs. 64 bits on 64 bit platforms)
-                try!(writeln!(w, "#[cfg(target_pointer_width = \"32\")]\n#[repr(C)]\npub struct {0}([u32; 2]);\n\
-                                  #[cfg(target_pointer_width = \"64\")]\n#[repr(C)]\npub struct {0}(*mut c_void);", c_type));
+                try!(writeln!(
+                    w,
+                    "#[cfg(target_pointer_width = \"32\")]\n#[repr(C)]\npub struct {0}([u32; 2]);\n\
+                     #[cfg(target_pointer_width = \"64\")]\n#[repr(C)]\npub struct {0}(*mut c_void);",
+                    c_type
+                ));
             } else {
                 try!(writeln!(w, "pub type {} = c_void; // union", c_type));
             }
@@ -289,10 +353,19 @@ fn generate_classes_structs(w: &mut Write, env: &Env, classes: &[&Class]) -> Res
 
         let comment = if commented { "//" } else { "" };
         if lines.is_empty() {
-            try!(writeln!(w, "{comment}#[repr(C)]\n{comment}pub struct {name}(c_void);\n", comment=comment, name=klass.c_type));
-        }
-        else {
-            try!(writeln!(w, "{comment}#[repr(C)]\n{comment}pub struct {name} {{", comment=comment, name=klass.c_type));
+            try!(writeln!(
+                w,
+                "{comment}#[repr(C)]\n{comment}pub struct {name}(c_void);\n",
+                comment = comment,
+                name = klass.c_type
+            ));
+        } else {
+            try!(writeln!(
+                w,
+                "{comment}#[repr(C)]\n{comment}pub struct {name} {{",
+                comment = comment,
+                name = klass.c_type
+            ));
 
             for line in lines {
                 try!(writeln!(w, "{}{}", comment, line));
@@ -309,7 +382,11 @@ fn generate_interfaces_structs(w: &mut Write, interfaces: &[&Interface]) -> Resu
         try!(writeln!(w, "// Interfaces"));
     }
     for interface in interfaces {
-        try!(writeln!(w, "#[repr(C)]\npub struct {}(c_void);", interface.c_type));
+        try!(writeln!(
+            w,
+            "#[repr(C)]\npub struct {}(c_void);",
+            interface.c_type
+        ));
     }
     if !interfaces.is_empty() {
         try!(writeln!(w, ""));
@@ -327,15 +404,27 @@ fn generate_records(w: &mut Write, env: &Env, records: &[&Record]) -> Result<()>
 
         let comment = if commented { "//" } else { "" };
         if lines.is_empty() {
-            try!(writeln!(w, "{}#[repr(C)]\n{0}pub struct {}(c_void);\n", comment, record.c_type));
-        }
-        else {
+            try!(writeln!(
+                w,
+                "{}#[repr(C)]\n{0}pub struct {}(c_void);\n",
+                comment,
+                record.c_type
+            ));
+        } else {
             if record.name == "Value" {
                 try!(writeln!(w, "#[cfg(target_pointer_width = \"128\")]"));
-                try!(writeln!(w, "const ERROR: () = \"Your pointers are too big.\";"));
+                try!(writeln!(
+                    w,
+                    "const ERROR: () = \"Your pointers are too big.\";"
+                ));
                 try!(writeln!(w, ""));
             }
-            try!(writeln!(w, "{}#[repr(C)]\n{0}pub struct {} {{", comment, record.c_type));
+            try!(writeln!(
+                w,
+                "{}#[repr(C)]\n{0}pub struct {} {{",
+                comment,
+                record.c_type
+            ));
             for line in lines {
                 try!(writeln!(w, "{}{}", comment, line));
             }
@@ -354,7 +443,7 @@ fn is_union_special_case(c_type: &Option<String>) -> bool {
     }
 }
 
-fn generate_fields(env: &Env, struct_name: &str, fields: &[Field]) -> (Vec<String>, bool){
+fn generate_fields(env: &Env, struct_name: &str, fields: &[Field]) -> (Vec<String>, bool) {
     let mut lines = Vec::new();
     let mut commented = false;
     let mut truncated = false;
@@ -368,14 +457,17 @@ fn generate_fields(env: &Env, struct_name: &str, fields: &[Field]) -> (Vec<Strin
     let is_gweakref = env.config.library_name == "GObject" && struct_name == "WeakRef";
 
     'fields: for field in fields {
-        let is_union = env.library.type_(field.typ).maybe_ref_as::<Union>().is_some();
+        let is_union = env.library
+            .type_(field.typ)
+            .maybe_ref_as::<Union>()
+            .is_some();
         let is_bits = field.bits.is_some();
         let is_ptr = {
-             if let Some(ref c_type) = field.c_type {
-                 !rustify_pointers(c_type).0.is_empty()
-             } else {
-                 false
-             }
+            if let Some(ref c_type) = field.c_type {
+                !rustify_pointers(c_type).0.is_empty()
+            } else {
+                false
+            }
         };
 
         // TODO: Special case for padding unions like used in GStreamer, see e.g.
@@ -383,7 +475,9 @@ fn generate_fields(env: &Env, struct_name: &str, fields: &[Field]) -> (Vec<Strin
         if is_union && !truncated {
             if let Some(union_) = env.library.type_(field.typ).maybe_ref_as::<Union>() {
                 for union_field in &union_.fields {
-                    if union_field.name.contains("reserved") || union_field.name.contains("padding") {
+                    if union_field.name.contains("reserved") ||
+                        union_field.name.contains("padding")
+                    {
                         if let Some(ref c_type) = union_field.c_type {
                             let name = mangle_keywords(&*union_field.name);
                             let c_type = ffi_type(env, union_field.typ, c_type);
@@ -398,9 +492,14 @@ fn generate_fields(env: &Env, struct_name: &str, fields: &[Field]) -> (Vec<Strin
             }
         }
 
-        if !is_gweakref && !truncated && !is_ptr && (is_union || is_bits) && !is_union_special_case(&field.c_type) {
-            warn!("Field `{}::{}` not expressible in Rust, truncated",
-                  struct_name, field.name);
+        if !is_gweakref && !truncated && !is_ptr && (is_union || is_bits) &&
+            !is_union_special_case(&field.c_type)
+        {
+            warn!(
+                "Field `{}::{}` not expressible in Rust, truncated",
+                struct_name,
+                field.name
+            );
             lines.push("\t_truncated_record_marker: c_void,".to_owned());
             truncated = true;
         }
@@ -408,12 +507,17 @@ fn generate_fields(env: &Env, struct_name: &str, fields: &[Field]) -> (Vec<Strin
         if truncated {
             if is_union {
                 lines.push("\t//union,".to_owned());
-            }
-            else {
-                let bits = field.bits.map(|n| format!(": {}", n)).unwrap_or_else(|| "".to_owned());
-                lines.push(
-                    format!("\t//{}: {}{},", field.name,
-                            field.c_type.as_ref().map(|s| &s[..]).unwrap_or("fn"), bits));
+            } else {
+                let bits = field
+                    .bits
+                    .map(|n| format!(": {}", n))
+                    .unwrap_or_else(|| "".to_owned());
+                lines.push(format!(
+                    "\t//{}: {}{},",
+                    field.name,
+                    field.c_type.as_ref().map(|s| &s[..]).unwrap_or("fn"),
+                    bits
+                ));
             };
             continue 'fields;
         }
@@ -431,27 +535,35 @@ fn generate_fields(env: &Env, struct_name: &str, fields: &[Field]) -> (Vec<Strin
         } else if is_gweakref {
             // union containing a single pointer
             lines.push("\tpub priv_: gpointer,".to_owned());
-        }
-        else {
+        } else {
             let name = mangle_keywords(&*field.name);
-            if let Some(func) =
-                env.library.type_(field.typ).maybe_ref_as::<Function>() {
-                    let (com, sig) = functions::function_signature(env, func, true);
-                    lines.push(format!("\tpub {}: Option<unsafe extern \"C\" fn{}>,", name, sig));
-                    commented |= com;
-                }
-            else if let Some(c_type) = env.library.type_(field.typ).get_glib_name() {
-                warn!("Field `{}::{}` missing c:type assumed `{}`",
-                      struct_name, field.name, c_type);
+            if let Some(func) = env.library.type_(field.typ).maybe_ref_as::<Function>() {
+                let (com, sig) = functions::function_signature(env, func, true);
+                lines.push(format!(
+                    "\tpub {}: Option<unsafe extern \"C\" fn{}>,",
+                    name,
+                    sig
+                ));
+                commented |= com;
+            } else if let Some(c_type) = env.library.type_(field.typ).get_glib_name() {
+                warn!(
+                    "Field `{}::{}` missing c:type assumed `{}`",
+                    struct_name,
+                    field.name,
+                    c_type
+                );
                 let c_type = ffi_type(env, field.typ, c_type);
                 if c_type.is_err() {
                     commented = true;
                 }
                 lines.push(format!("\tpub {}: {},", name, c_type.into_string()));
-            }
-            else {
-                lines.push(format!("\tpub {}: [{:?} {}],",
-                                   name, field.typ, field.typ.full_name(&env.library)));
+            } else {
+                lines.push(format!(
+                    "\tpub {}: [{:?} {}],",
+                    name,
+                    field.typ,
+                    field.typ.full_name(&env.library)
+                ));
                 commented = true;
             }
         }

@@ -64,12 +64,8 @@ pub fn extract(functions: &mut Vec<FuncInfo>) -> Infos {
 fn visibility(t: Type, args_len: usize) -> Visibility {
     use self::Type::*;
     match t {
-        Copy |
-            Free |
-            Ref |
-            Unref => Visibility::Hidden,
-        Compare |
-            Equal => Visibility::Private,
+        Copy | Free | Ref | Unref => Visibility::Hidden,
+        Compare | Equal => Visibility::Private,
         ToString if args_len == 1 => Visibility::Private,
         ToString => Visibility::Public,
     }
@@ -78,8 +74,9 @@ fn visibility(t: Type, args_len: usize) -> Visibility {
 // Some special functions (e.g. `copy` on refcounted types) should be exposed
 pub fn unhide(functions: &mut Vec<FuncInfo>, specials: &Infos, type_: Type) {
     if let Some(func) = specials.get(&type_) {
-        let func = functions.iter_mut()
-            .find(|f| f.glib_name == *func && f.visibility != Visibility::Comment);
+        let func = functions.iter_mut().find(|f| {
+            f.glib_name == *func && f.visibility != Visibility::Comment
+        });
         if let Some(func) = func {
             func.visibility = Visibility::Public;
         }

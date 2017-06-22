@@ -19,22 +19,22 @@ pub fn run(library: &Library) -> Info {
     Info { hier: hier }
 }
 
-fn get_node<'a>(library: &Library, hier: &'a mut HashMap<TypeId, Node>, tid: TypeId)
-        -> Option<&'a mut Node> {
+fn get_node<'a>(
+    library: &Library,
+    hier: &'a mut HashMap<TypeId, Node>,
+    tid: TypeId,
+) -> Option<&'a mut Node> {
     if hier.contains_key(&tid) {
-        return hier.get_mut(&tid)
+        return hier.get_mut(&tid);
     }
 
     let direct_supers: Vec<TypeId> = match *library.type_(tid) {
-        Type::Class(Class { ref parent, ref implements, .. }) => {
-            parent.iter()
-                .chain(implements.iter())
-                .cloned()
-                .collect()
-        }
-        Type::Interface(Interface { ref prerequisites, .. }) => {
-            prerequisites.clone()
-        }
+        Type::Class(Class {
+            ref parent,
+            ref implements,
+            ..
+        }) => parent.iter().chain(implements.iter()).cloned().collect(),
+        Type::Interface(Interface { ref prerequisites, .. }) => prerequisites.clone(),
         _ => return None,
     };
 
@@ -49,7 +49,13 @@ fn get_node<'a>(library: &Library, hier: &'a mut HashMap<TypeId, Node>, tid: Typ
         }
     }
 
-    hier.insert(tid, Node { supers: supers, subs: HashSet::new() });
+    hier.insert(
+        tid,
+        Node {
+            supers: supers,
+            subs: HashSet::new(),
+        },
+    );
     hier.get_mut(&tid)
 }
 

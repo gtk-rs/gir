@@ -30,15 +30,26 @@ pub struct ChildProperty {
 
 pub type ChildProperties = Vec<ChildProperty>;
 
-pub fn analyze(env: &Env, config: Option<&config::ChildProperties>, type_tid: library::TypeId,
-               imports: &mut Imports) -> ChildProperties {
+pub fn analyze(
+    env: &Env,
+    config: Option<&config::ChildProperties>,
+    type_tid: library::TypeId,
+    imports: &mut Imports,
+) -> ChildProperties {
     let mut properties = Vec::new();
     if config.is_none() {
         return properties;
     }
     let config = config.unwrap();
-    let child_name = config.child_name.as_ref().map(|s| &s[..]).unwrap_or("child");
-    let child_type = config.child_type.as_ref().and_then(|name| env.library.find_type(0, name));
+    let child_name = config
+        .child_name
+        .as_ref()
+        .map(|s| &s[..])
+        .unwrap_or("child");
+    let child_type = config
+        .child_type
+        .as_ref()
+        .and_then(|name| env.library.find_type(0, name));
     if config.child_type.is_some() && child_type.is_none() {
         let owner_name = rust_type(env, type_tid).into_string();
         let child_type: &str = config.child_type.as_ref().unwrap();
@@ -62,9 +73,14 @@ pub fn analyze(env: &Env, config: Option<&config::ChildProperties>, type_tid: li
     properties
 }
 
-fn analyze_property(env: &Env, prop: &config::ChildProperty, child_name: &str,
-                    child_type: Option<library::TypeId>, type_tid: library::TypeId,
-                    imports: &mut Imports) -> Option<ChildProperty> {
+fn analyze_property(
+    env: &Env,
+    prop: &config::ChildProperty,
+    child_name: &str,
+    child_type: Option<library::TypeId>,
+    type_tid: library::TypeId,
+    imports: &mut Imports,
+) -> Option<ChildProperty> {
     let name = prop.name.clone();
     if let Some(typ) = env.library.find_type(0, &prop.type_name) {
         let prop_name = nameutil::signal_to_snake(&*prop.name);
@@ -79,8 +95,12 @@ fn analyze_property(env: &Env, prop: &config::ChildProperty, child_name: &str,
         let default_value = properties::get_type_default_value(env, typ, type_);
         if default_value.is_none() {
             let owner_name = rust_type(env, type_tid).into_string();
-            error!("No default value for type `{}` of child property `{}` for `{}`",
-                   &prop.type_name, name, owner_name);
+            error!(
+                "No default value for type `{}` of child property `{}` for `{}`",
+                &prop.type_name,
+                name,
+                owner_name
+            );
         }
         let conversion = properties::PropertyConversion::of(type_);
         if conversion != properties::PropertyConversion::Direct {
@@ -108,10 +128,13 @@ fn analyze_property(env: &Env, prop: &config::ChildProperty, child_name: &str,
             bounds_str.push_str(&s_bounds[1..s_bounds.len() - 1]);
             format!("{}: {}", prop_name, bounds.iter().last().unwrap().alias)
         } else {
-            format!("{}: {}", prop_name, parameter_rust_type(env, typ, dir, nullable,
-                                                             set_in_ref_mode).into_string())
+            format!(
+                "{}: {}",
+                prop_name,
+                parameter_rust_type(env, typ, dir, nullable, set_in_ref_mode).into_string()
+            )
         };
-        Some(ChildProperty{
+        Some(ChildProperty {
             name: name,
             typ: typ,
             child_name: child_name.to_owned(),
@@ -129,7 +152,12 @@ fn analyze_property(env: &Env, prop: &config::ChildProperty, child_name: &str,
         })
     } else {
         let owner_name = rust_type(env, type_tid).into_string();
-        error!("Bad type `{}` of child property `{}` for `{}`", &prop.type_name, name, owner_name);
+        error!(
+            "Bad type `{}` of child property `{}` for `{}`",
+            &prop.type_name,
+            name,
+            owner_name
+        );
         None
     }
 }

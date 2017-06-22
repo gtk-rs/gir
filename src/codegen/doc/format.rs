@@ -1,10 +1,10 @@
 use analysis::symbols;
 use regex::{Captures, Regex};
 
-const LANGUAGE_SEP_BEGIN : &'static str = "<!-- language=\"";
-const LANGUAGE_SEP_END : &'static str = "\" -->";
-const LANGUAGE_BLOCK_BEGIN : &'static str = "|[";
-const LANGUAGE_BLOCK_END : &'static str = "\n]|";
+const LANGUAGE_SEP_BEGIN: &'static str = "<!-- language=\"";
+const LANGUAGE_SEP_END: &'static str = "\" -->";
+const LANGUAGE_BLOCK_BEGIN: &'static str = "|[";
+const LANGUAGE_BLOCK_END: &'static str = "\n]|";
 
 pub fn reformat_doc(input: &str, symbols: &symbols::Info) -> String {
     code_blocks_transformation(input, symbols)
@@ -24,8 +24,9 @@ fn code_blocks_transformation(mut input: &str, symbols: &symbols::Info) -> Strin
         input = match try_split(input, LANGUAGE_BLOCK_BEGIN) {
             (before, Some(after)) => {
                 out.push_str(&format(before, symbols));
-                if let (before, Some(after)) = try_split(get_language(after, &mut out),
-                                                         LANGUAGE_BLOCK_END) {
+                if let (before, Some(after)) =
+                    try_split(get_language(after, &mut out), LANGUAGE_BLOCK_END)
+                {
                     out.push_str(before);
                     out.push_str("\n```");
                     after
@@ -35,7 +36,7 @@ fn code_blocks_transformation(mut input: &str, symbols: &symbols::Info) -> Strin
             }
             (before, None) => {
                 out.push_str(&format(before, symbols));
-                return out
+                return out;
             }
         };
     }
@@ -45,7 +46,7 @@ fn get_language<'a>(entry: &'a str, out: &mut String) -> &'a str {
     if let (_, Some(after)) = try_split(entry, LANGUAGE_SEP_BEGIN) {
         if let (before, Some(after)) = try_split(after, LANGUAGE_SEP_END) {
             out.push_str(&format!("\n```{}", before));
-            return after
+            return after;
         }
     }
     out.push_str("\n```text");
@@ -84,19 +85,21 @@ fn format(mut input: &str, symbols: &symbols::Info) -> String {
 
 fn replace_c_types(entry: &str, symbols: &symbols::Info) -> String {
     let lookup = |s: &str| -> String {
-        symbols.by_c_name(s)
+        symbols
+            .by_c_name(s)
             .map(|s| s.full_rust_name())
             .unwrap_or_else(|| s.into())
     };
     let out = SYMBOL.replace_all(entry, |caps: &Captures| {
-        format!("{}`{}{}`", &caps[1], lookup(&caps[2]), caps.get(3).map(|m| m.as_str()).unwrap_or(""))
+        format!(
+            "{}`{}{}`",
+            &caps[1],
+            lookup(&caps[2]),
+            caps.get(3).map(|m| m.as_str()).unwrap_or("")
+        )
     });
-    let out = FUNCTION.replace_all(&out, |caps: &Captures| {
-        format!("`{}`", lookup(&caps[1]))
-    });
-    let out = GDK_GTK.replace_all(&out, |caps: &Captures| {
-        format!("`{}`", lookup(&caps[0]))
-    });
+    let out = FUNCTION.replace_all(&out, |caps: &Captures| format!("`{}`", lookup(&caps[1])));
+    let out = GDK_GTK.replace_all(&out, |caps: &Captures| format!("`{}`", lookup(&caps[0])));
     let out = TAGS.replace_all(&out, "`$0`");
     SPACES.replace_all(&out, " ").into_owned()
 }

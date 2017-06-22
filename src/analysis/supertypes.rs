@@ -14,12 +14,12 @@ pub fn analyze(env: &Env, type_id: TypeId, imports: &mut Imports) -> Vec<Statuse
     for &super_tid in env.class_hierarchy.supertypes(type_id) {
         // skip GObject, it's inherited implicitly
         if super_tid == gobject_id {
-            continue
+            continue;
         }
 
         let status = env.type_status(&super_tid.full_name(&env.library));
 
-        parents.push(StatusedTypeId{
+        parents.push(StatusedTypeId {
             type_id: super_tid,
             name: env.library.type_(super_tid).get_name(),
             status: status,
@@ -51,7 +51,7 @@ pub fn dependencies(env: &Env, type_id: TypeId) -> Vec<TypeId> {
     for &super_tid in env.class_hierarchy.supertypes(type_id) {
         // skip GObject, it's inherited implicitly
         if super_tid == gobject_id {
-            continue
+            continue;
         }
 
         let status = env.type_status(&super_tid.full_name(&env.library));
