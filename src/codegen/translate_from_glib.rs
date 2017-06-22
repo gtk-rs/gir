@@ -8,17 +8,17 @@ use library;
 use traits::*;
 
 pub trait TranslateFromGlib {
-    fn translate_from_glib_as_function(&self, env: &Env) -> (String, String);
+    fn translate_from_glib_as_function(&self, env: &Env, array_length: &Option<(String, String)>) -> (String, String);
 }
 
 impl TranslateFromGlib for Mode {
-    fn translate_from_glib_as_function(&self, env: &Env) -> (String, String) {
+    fn translate_from_glib_as_function(&self, env: &Env, array_length: &Option<(String, String)>) -> (String, String) {
         use analysis::conversion_type::ConversionType::*;
         match ConversionType::of(&env.library, self.typ) {
             Direct => (String::new(), String::new()),
             Scalar => ("from_glib(".into(), ")".into()),
             Pointer => {
-                let trans = from_glib_xxx(self.transfer);
+                let trans = from_glib_xxx(self.transfer, array_length);
                 match *env.type_(self.typ) {
                     library::Type::List(..) |
                         library::Type::SList(..) |
@@ -35,12 +35,12 @@ impl TranslateFromGlib for Mode {
 }
 
 impl TranslateFromGlib for analysis::return_value::Info {
-    fn translate_from_glib_as_function(&self, env: &Env) -> (String, String) {
+    fn translate_from_glib_as_function(&self, env: &Env, array_length: &Option<(String, String)>) -> (String, String) {
         match self.parameter {
             Some(ref par) => match self.base_tid {
                 Some(tid) => {
                     let rust_type = rust_type(env, tid);
-                    let from_glib_xxx = from_glib_xxx(par.transfer);
+                    let from_glib_xxx = from_glib_xxx(par.transfer, &None);
 
                     let prefix = if *par.nullable {
                         format!("Option::<{}>::{}", rust_type.into_string(), from_glib_xxx.0)
@@ -64,18 +64,21 @@ impl TranslateFromGlib for analysis::return_value::Info {
                         ("glib::error::BoolError::from_glib(".into(), format!(", \"{}\")", self.bool_return_is_error.as_ref().unwrap()))
                     }
                 }
-                None => Mode::from(par).translate_from_glib_as_function(env),
+                None => Mode::from(par).translate_from_glib_as_function(env, array_length),
             },
             None => (String::new(), ";".into())
         }
     }
 }
 
-fn from_glib_xxx(transfer: library::Transfer) -> (String, String) {
-    use library::Transfer::*;
-    match transfer {
-        None => ("from_glib_none(".into(), ")".into()),
-        Full => ("from_glib_full(".into(), ")".into()),
-        Container => ("from_glib_container(".into(), ")".into()),
+fn from_glib_xxx(transfer: library::Transfer, array_length: &Option<(String, String)>) -> (String, String) {
+    use library::Transfer;
+    match (transfer, array_length) {
+        (Transfer::None, &None) => ("from_glib_none(".into(), ")".into()),
+        (Transfer::Full, &None) => ("from_glib_full(".into(), ")".into()),
+        (Transfer::Container, &None) => ("from_glib_container(".into(), ")".into()),
+        (Transfer::None, &Some((ref array_length_name, _))) => ("from_glib_none_num(".into(), format!(", {} as usize)", array_length_name)),
+        (Transfer::Full, &Some((ref array_length_name, _))) => ("from_glib_full_num(".into(), format!(", {} as usize)", array_length_name)),
+        (Transfer::Container, &Some((ref array_length_name, _))) => ("from_glib_container_num(".into(), format!(", {} as usize)", array_length_name)),
     }
 }

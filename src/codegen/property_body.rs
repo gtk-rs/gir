@@ -98,6 +98,7 @@ impl Builder {
         };
         body.push(Chunk::FfiCallConversion {
             ret: return_info,
+            array_length: None,
             call: Box::new(ffi_call),
         });
 
@@ -157,6 +158,7 @@ impl Builder {
         };
         body.push(Chunk::FfiCallConversion {
             ret: return_info,
+            array_length: None,
             call: Box::new(ffi_call),
         });
 

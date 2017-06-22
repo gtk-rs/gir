@@ -261,6 +261,7 @@ pub struct Field {
     pub c_type: Option<String>,
     pub private: bool,
     pub bits: Option<u8>,
+    pub array_length: Option<u32>,
     pub doc: Option<String>,
 }
 
@@ -299,6 +300,7 @@ pub struct Parameter {
     pub caller_allocates: bool,
     pub nullable: Nullable,
     pub allow_none: bool,
+    pub array_length: Option<u32>,
     pub is_error: bool,
     pub doc: Option<String>,
 }
