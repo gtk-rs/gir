@@ -1,7 +1,7 @@
 use std::io::{Result, Write};
 
 use analysis::child_properties::ChildProperty;
-use analysis::rust_type::{parameter_rust_type,rust_type};
+use analysis::rust_type::{parameter_rust_type, rust_type};
 use chunk::Chunk;
 use env::Env;
 use library;
@@ -12,16 +12,45 @@ use super::property_body;
 use traits::IntoString;
 use writer::ToCode;
 
-pub fn generate(w: &mut Write, env: &Env, prop: &ChildProperty, in_trait: bool,
-                only_declaration: bool, indent: usize) -> Result<()> {
-    try!(generate_func(w, env, prop, in_trait, only_declaration, indent, true));
-    try!(generate_func(w, env, prop, in_trait, only_declaration, indent, false));
+pub fn generate(
+    w: &mut Write,
+    env: &Env,
+    prop: &ChildProperty,
+    in_trait: bool,
+    only_declaration: bool,
+    indent: usize,
+) -> Result<()> {
+    try!(generate_func(
+        w,
+        env,
+        prop,
+        in_trait,
+        only_declaration,
+        indent,
+        true,
+    ));
+    try!(generate_func(
+        w,
+        env,
+        prop,
+        in_trait,
+        only_declaration,
+        indent,
+        false,
+    ));
 
     Ok(())
 }
 
-fn generate_func(w: &mut Write, env: &Env, prop: &ChildProperty, in_trait: bool,
-                 only_declaration: bool, indent: usize, is_get: bool) -> Result<()> {
+fn generate_func(
+    w: &mut Write,
+    env: &Env,
+    prop: &ChildProperty,
+    in_trait: bool,
+    only_declaration: bool,
+    indent: usize,
+    is_get: bool,
+) -> Result<()> {
     let pub_prefix = if in_trait { "" } else { "pub " };
     let decl_suffix = if only_declaration { ";" } else { " {" };
     let type_string = rust_type(env, prop.typ);
@@ -35,8 +64,15 @@ fn generate_func(w: &mut Write, env: &Env, prop: &ChildProperty, in_trait: bool,
 
     try!(doc_hidden(w, prop.doc_hidden, comment_prefix, indent));
     let decl = declaration(env, prop, is_get);
-    try!(writeln!(w, "{}{}{}{}{}", tabs(indent),
-         comment_prefix, pub_prefix, decl, decl_suffix));
+    try!(writeln!(
+        w,
+        "{}{}{}{}{}",
+        tabs(indent),
+        comment_prefix,
+        pub_prefix,
+        decl,
+        decl_suffix
+    ));
 
     if !only_declaration {
         let body = body(prop, is_get).to_code(env);
@@ -63,28 +99,37 @@ fn declaration(env: &Env, prop: &ChildProperty, is_get: bool) -> String {
     }
     let return_str = if is_get {
         let dir = library::ParameterDirection::Return;
-        let ret_type = parameter_rust_type(env, prop.typ, dir, prop.nullable, prop.get_out_ref_mode)
-            .into_string();
+        let ret_type =
+            parameter_rust_type(env, prop.typ, dir, prop.nullable, prop.get_out_ref_mode)
+                .into_string();
         format!(" -> {}", ret_type)
     } else {
         "".to_string()
     };
-    format!("fn {}<{}>(&self, item: &T{}){}",
-            func_name, bounds,
-            if is_get { "".to_owned() } else { format!(", {}", prop.set_params) },
-            return_str)
+    format!(
+        "fn {}<{}>(&self, item: &T{}){}",
+        func_name,
+        bounds,
+        if is_get {
+            "".to_owned()
+        } else {
+            format!(", {}", prop.set_params)
+        },
+        return_str
+    )
 }
 
 fn body(prop: &ChildProperty, is_get: bool) -> Chunk {
     let mut builder = property_body::Builder::new_for_child_property();
     let prop_name = nameutil::signal_to_snake(&*prop.name);
-    builder.name(&prop.name)
-           .var_name(&prop_name)
-           .is_get(is_get)
-           .is_ref(prop.set_in_ref_mode.is_ref())
-           .is_nullable(*prop.nullable)
-           .is_into(prop.is_into)
-           .conversion(prop.conversion);
+    builder
+        .name(&prop.name)
+        .var_name(&prop_name)
+        .is_get(is_get)
+        .is_ref(prop.set_in_ref_mode.is_ref())
+        .is_nullable(*prop.nullable)
+        .is_into(prop.is_into)
+        .conversion(prop.conversion);
     if let Some(ref default_value) = prop.default_value {
         builder.default_value(default_value);
     } else {

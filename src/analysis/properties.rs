@@ -28,9 +28,15 @@ pub struct Property {
     pub bound: Option<Bound>,
 }
 
-pub fn analyze(env: &Env, props: &[library::Property], type_tid: library::TypeId,
-               obj: &GObject, imports: &mut Imports, signatures: &Signatures,
-               deps: &[library::TypeId]) -> Vec<Property> {
+pub fn analyze(
+    env: &Env,
+    props: &[library::Property],
+    type_tid: library::TypeId,
+    obj: &GObject,
+    imports: &mut Imports,
+    signatures: &Signatures,
+    deps: &[library::TypeId],
+) -> Vec<Property> {
     let mut properties = Vec::new();
 
     for prop in props {
@@ -39,10 +45,18 @@ pub fn analyze(env: &Env, props: &[library::Property], type_tid: library::TypeId
             continue;
         }
 
-        if env.is_totally_deprecated(prop.deprecated_version) { continue; }
+        if env.is_totally_deprecated(prop.deprecated_version) {
+            continue;
+        }
 
-        let (getter, setter) = analyze_property(env, prop, type_tid, &configured_properties,
-                                                signatures, deps);
+        let (getter, setter) = analyze_property(
+            env,
+            prop,
+            type_tid,
+            &configured_properties,
+            signatures,
+            deps,
+        );
         if getter.is_none() && setter.is_none() {
             continue;
         }
@@ -83,13 +97,21 @@ pub fn analyze(env: &Env, props: &[library::Property], type_tid: library::TypeId
     properties
 }
 
-fn analyze_property(env: &Env, prop: &library::Property, type_tid: library::TypeId,
-                    configured_properties: &[&config::properties::Property],
-                    signatures: &Signatures, deps: &[library::TypeId]) -> (Option<Property>, Option<Property>) {
+fn analyze_property(
+    env: &Env,
+    prop: &library::Property,
+    type_tid: library::TypeId,
+    configured_properties: &[&config::properties::Property],
+    signatures: &Signatures,
+    deps: &[library::TypeId],
+) -> (Option<Property>, Option<Property>) {
     let name = prop.name.clone();
     let type_ = env.type_(prop.typ);
 
-    let prop_version = configured_properties.iter().filter_map(|f| f.version).min()
+    let prop_version = configured_properties
+        .iter()
+        .filter_map(|f| f.version)
+        .min()
         .or(prop.version);
     let name_for_func = nameutil::signal_to_snake(&name);
     let var_name = nameutil::mangle_keywords(&*name_for_func).into_owned();
@@ -99,18 +121,22 @@ fn analyze_property(env: &Env, prop: &library::Property, type_tid: library::Type
     let check_set_func_name = format!("set_{}", name_for_func);
 
     let mut readable = prop.readable;
-    let mut writable = if prop.construct_only { false } else { prop.writable };
+    let mut writable = if prop.construct_only {
+        false
+    } else {
+        prop.writable
+    };
 
     if readable {
-        let (has, version) = Signature::has_by_name_and_in_deps(env, &check_get_func_name,
-                                                                signatures, deps);
+        let (has, version) =
+            Signature::has_by_name_and_in_deps(env, &check_get_func_name, signatures, deps);
         if has && (env.is_totally_deprecated(version) || version <= prop_version) {
             readable = false;
         }
     }
     if writable {
-        let (has, version) = Signature::has_by_name_and_in_deps(env, &check_set_func_name,
-                                                                signatures, deps);
+        let (has, version) =
+            Signature::has_by_name_and_in_deps(env, &check_set_func_name, signatures, deps);
         if has && (env.is_totally_deprecated(version) || version <= prop_version) {
             writable = false;
         }
@@ -120,7 +146,11 @@ fn analyze_property(env: &Env, prop: &library::Property, type_tid: library::Type
     if default_value.is_none() && readable {
         readable = false;
         let owner_name = rust_type(env, type_tid).into_string();
-        error!("No default value for getter of property `{}` for `{}`", name, owner_name);
+        error!(
+            "No default value for getter of property `{}` for `{}`",
+            name,
+            owner_name
+        );
     }
     let conversion = PropertyConversion::of(type_);
     let get_out_ref_mode = RefMode::of(&env.library, prop.typ, library::ParameterDirection::Return);
@@ -130,7 +160,7 @@ fn analyze_property(env: &Env, prop: &library::Property, type_tid: library::Type
     }
     let nullable = library::Nullable(set_in_ref_mode.is_ref());
     let getter = if readable {
-        Some(Property{
+        Some(Property {
             name: name.clone(),
             var_name: String::new(),
             typ: prop.typ,
@@ -145,11 +175,13 @@ fn analyze_property(env: &Env, prop: &library::Property, type_tid: library::Type
             deprecated_version: prop.deprecated_version,
             bound: None,
         })
-    } else { None };
+    } else {
+        None
+    };
 
     let setter = if writable {
         let bound = Bound::get_for_property_setter(env, &var_name, prop.typ, nullable);
-        Some(Property{
+        Some(Property {
             name: name.clone(),
             var_name: var_name,
             typ: prop.typ,
@@ -164,13 +196,18 @@ fn analyze_property(env: &Env, prop: &library::Property, type_tid: library::Type
             deprecated_version: prop.deprecated_version,
             bound: bound,
         })
-    } else { None };
+    } else {
+        None
+    };
 
     (getter, setter)
 }
 
-pub fn get_type_default_value(env: &Env, type_tid: library::TypeId, type_: &library::Type)
-                          -> Option<String> {
+pub fn get_type_default_value(
+    env: &Env,
+    type_tid: library::TypeId,
+    type_: &library::Type,
+) -> Option<String> {
     use library::Type;
     use library::Fundamental;
     let some = |s: &str| Some(s.to_string());

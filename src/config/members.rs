@@ -18,8 +18,11 @@ impl Parse for Member {
         let ident = match Ident::parse(toml, object_name, "member") {
             Some(ident) => ident,
             None => {
-                error!("No 'name' or 'pattern' given for member for object {}", object_name);
-                return None
+                error!(
+                    "No 'name' or 'pattern' given for member for object {}",
+                    object_name
+                );
+                return None;
             }
         };
         let alias = toml.lookup("alias")
@@ -29,7 +32,7 @@ impl Parse for Member {
             .and_then(|v| v.as_str())
             .and_then(|s| s.parse().ok());
 
-        Some(Member{
+        Some(Member {
             ident: ident,
             alias: alias,
             version: version,
@@ -61,10 +64,12 @@ mod tests {
 
     #[test]
     fn member_parse_alias() {
-        let toml = toml(r#"
+        let toml = toml(
+            r#"
 name = "name1"
 alias = true
-"#);
+"#,
+        );
         let f = Member::parse(&toml, "a").unwrap();
         assert_eq!(f.ident, Ident::Name("name1".into()));
         assert_eq!(f.alias, true);
@@ -72,19 +77,23 @@ alias = true
 
     #[test]
     fn member_parse_version_default() {
-        let toml = toml(r#"
+        let toml = toml(
+            r#"
 name = "name1"
-"#);
+"#,
+        );
         let f = Member::parse(&toml, "a").unwrap();
         assert_eq!(f.version, None);
     }
 
     #[test]
     fn member_parse_version() {
-        let toml = toml(r#"
+        let toml = toml(
+            r#"
 name = "name1"
 version = "3.20"
-"#);
+"#,
+        );
         let f = Member::parse(&toml, "a").unwrap();
         assert_eq!(f.version, Some(Version::Full(3, 20, 0)));
     }

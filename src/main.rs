@@ -94,7 +94,7 @@ fn do_main() -> Result<()> {
     let symbols = analysis::symbols::run(&library, &namespaces);
     let class_hierarchy = analysis::class_hierarchy::run(&library);
 
-    let mut env = Env{
+    let mut env = Env {
         library: library,
         config: cfg,
         namespaces: namespaces,

@@ -39,8 +39,11 @@ impl FromStr for Version {
                 .map(|s| s.parse())
                 .take_while(Result::is_ok)
                 .map(Result::unwrap);
-            Ok(Version::Full(parts.next().unwrap_or(0),
-                             parts.next().unwrap_or(0), parts.next().unwrap_or(0)))
+            Ok(Version::Full(
+                parts.next().unwrap_or(0),
+                parts.next().unwrap_or(0),
+                parts.next().unwrap_or(0),
+            ))
         } else {
             let val = s.parse::<u16>();
             Ok(Version::Short(val.unwrap_or(0)))

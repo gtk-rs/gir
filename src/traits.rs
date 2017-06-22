@@ -28,6 +28,10 @@ pub trait MaybeRef<T> {
 }
 
 pub trait MaybeRefAs {
-    fn maybe_ref_as<T>(&self) -> Option<&T> where Self: MaybeRef<T>;
-    fn to_ref_as<T>(&self) -> &T where Self: MaybeRef<T>;
+    fn maybe_ref_as<T>(&self) -> Option<&T>
+    where
+        Self: MaybeRef<T>;
+    fn to_ref_as<T>(&self) -> &T
+    where
+        Self: MaybeRef<T>;
 }

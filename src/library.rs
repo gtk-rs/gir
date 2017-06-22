@@ -134,41 +134,42 @@ pub enum Fundamental {
     Unsupported,
 }
 
-const FUNDAMENTAL: &'static [(&'static str, Fundamental)] = &[
-    ("none", Fundamental::None),
-    ("gboolean", Fundamental::Boolean),
-    ("gint8", Fundamental::Int8),
-    ("guint8", Fundamental::UInt8),
-    ("gint16", Fundamental::Int16),
-    ("guint16", Fundamental::UInt16),
-    ("gint32", Fundamental::Int32),
-    ("guint32", Fundamental::UInt32),
-    ("gint64", Fundamental::Int64),
-    ("guint64", Fundamental::UInt64),
-    ("gchar", Fundamental::Char),
-    ("guchar", Fundamental::UChar),
-    ("gshort", Fundamental::Short),
-    ("gushort", Fundamental::UShort),
-    ("gint", Fundamental::Int),
-    ("guint", Fundamental::UInt),
-    ("glong", Fundamental::Long),
-    ("gulong", Fundamental::ULong),
-    ("gsize", Fundamental::Size),
-    ("gssize", Fundamental::SSize),
-    ("gfloat", Fundamental::Float),
-    ("gdouble", Fundamental::Double),
-    ("long double", Fundamental::Unsupported),
-    ("gunichar", Fundamental::UniChar),
-    ("gconstpointer", Fundamental::Pointer),
-    ("gpointer", Fundamental::Pointer),
-    ("va_list", Fundamental::Unsupported),
-    ("varargs", Fundamental::VarArgs),
-    ("utf8", Fundamental::Utf8),
-    ("filename", Fundamental::Filename),
-    ("GType", Fundamental::Type),
-    ("gintptr", Fundamental::IntPtr),
-    ("guintptr", Fundamental::UIntPtr),
-];
+const FUNDAMENTAL: &'static [(&'static str, Fundamental)] =
+    &[
+        ("none", Fundamental::None),
+        ("gboolean", Fundamental::Boolean),
+        ("gint8", Fundamental::Int8),
+        ("guint8", Fundamental::UInt8),
+        ("gint16", Fundamental::Int16),
+        ("guint16", Fundamental::UInt16),
+        ("gint32", Fundamental::Int32),
+        ("guint32", Fundamental::UInt32),
+        ("gint64", Fundamental::Int64),
+        ("guint64", Fundamental::UInt64),
+        ("gchar", Fundamental::Char),
+        ("guchar", Fundamental::UChar),
+        ("gshort", Fundamental::Short),
+        ("gushort", Fundamental::UShort),
+        ("gint", Fundamental::Int),
+        ("guint", Fundamental::UInt),
+        ("glong", Fundamental::Long),
+        ("gulong", Fundamental::ULong),
+        ("gsize", Fundamental::Size),
+        ("gssize", Fundamental::SSize),
+        ("gfloat", Fundamental::Float),
+        ("gdouble", Fundamental::Double),
+        ("long double", Fundamental::Unsupported),
+        ("gunichar", Fundamental::UniChar),
+        ("gconstpointer", Fundamental::Pointer),
+        ("gpointer", Fundamental::Pointer),
+        ("va_list", Fundamental::Unsupported),
+        ("varargs", Fundamental::VarArgs),
+        ("utf8", Fundamental::Utf8),
+        ("filename", Fundamental::Filename),
+        ("GType", Fundamental::Type),
+        ("gintptr", Fundamental::IntPtr),
+        ("guintptr", Fundamental::UIntPtr),
+    ];
 
 #[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct TypeId {
@@ -432,7 +433,9 @@ impl Type {
             CArray(type_id) => format!("CArray {:?}", type_id),
             FixedArray(type_id, size) => format!("FixedArray {:?}; {}", type_id, size),
             PtrArray(type_id) => format!("PtrArray {:?}", type_id),
-            HashTable(key_type_id, value_type_id) => format!("HashTable {:?}/{:?}", key_type_id, value_type_id),
+            HashTable(key_type_id, value_type_id) => {
+                format!("HashTable {:?}/{:?}", key_type_id, value_type_id)
+            }
             List(type_id) => format!("List {:?}", type_id),
             SList(type_id) => format!("SList {:?}", type_id),
         }
@@ -455,11 +458,17 @@ impl Type {
 
     pub fn c_array(library: &mut Library, inner: TypeId, size: Option<u16>) -> TypeId {
         if let Some(size) = size {
-            library.add_type(INTERNAL_NAMESPACE, &format!("[#{:?}; {}]", inner, size),
-                             Type::FixedArray(inner, size))
-        }
-        else {
-            library.add_type(INTERNAL_NAMESPACE, &format!("[#{:?}]", inner), Type::CArray(inner))
+            library.add_type(
+                INTERNAL_NAMESPACE,
+                &format!("[#{:?}; {}]", inner, size),
+                Type::FixedArray(inner, size),
+            )
+        } else {
+            library.add_type(
+                INTERNAL_NAMESPACE,
+                &format!("[#{:?}]", inner),
+                Type::CArray(inner),
+            )
         }
     }
 
@@ -476,7 +485,10 @@ impl Type {
             ("GLib.HashTable", 2) => {
                 let k_tid = inner.remove(0);
                 let v_tid = inner.remove(0);
-                Some((format!("HashTable(#{:?}, #{:?})", k_tid, v_tid), Type::HashTable(k_tid, v_tid)))
+                Some((
+                    format!("HashTable(#{:?}, #{:?})", k_tid, v_tid),
+                    Type::HashTable(k_tid, v_tid),
+                ))
             }
             ("GLib.List", 1) => {
                 let tid = inner.remove(0);
@@ -487,7 +499,9 @@ impl Type {
                 Some((format!("SList(#{:?})", tid), Type::SList(tid)))
             }
             _ => None,
-        }.map(|(name, typ)| library.add_type(INTERNAL_NAMESPACE, &name, typ))
+        }.map(|(name, typ)| {
+            library.add_type(INTERNAL_NAMESPACE, &name, typ)
+        })
     }
 
     pub fn function(library: &mut Library, func: Function) -> TypeId {
@@ -499,7 +513,10 @@ impl Type {
 
     pub fn union(library: &mut Library, fields: Vec<Field>) -> TypeId {
         let field_tids: Vec<TypeId> = fields.iter().map(|f| f.typ).collect();
-        let typ = Type::Union(Union { fields: fields, .. Union::default() });
+        let typ = Type::Union(Union {
+            fields: fields,
+            ..Union::default()
+        });
         library.add_type(INTERNAL_NAMESPACE, &format!("#{:?}", field_tids), typ)
     }
 }
@@ -536,11 +553,17 @@ impl_maybe_ref!(
 );
 
 impl<U> MaybeRefAs for U {
-    fn maybe_ref_as<T>(&self) -> Option<&T> where Self: MaybeRef<T> {
+    fn maybe_ref_as<T>(&self) -> Option<&T>
+    where
+        Self: MaybeRef<T>,
+    {
         self.maybe_ref()
     }
 
-    fn to_ref_as<T>(&self) -> &T where Self: MaybeRef<T> {
+    fn to_ref_as<T>(&self) -> &T
+    where
+        Self: MaybeRef<T>,
+    {
         self.to_ref()
     }
 }
@@ -566,7 +589,7 @@ impl Namespace {
     fn new(name: &str) -> Namespace {
         Namespace {
             name: name.into(),
-            .. Namespace::default()
+            ..Namespace::default()
         }
     }
 
@@ -587,13 +610,13 @@ impl Namespace {
     }
 
     fn add_type(&mut self, name: &str, typ: Option<Type>) -> u32 {
-        let glib_name = typ.as_ref().and_then(|t| t.get_glib_name())
+        let glib_name = typ.as_ref()
+            .and_then(|t| t.get_glib_name())
             .map(|s| s.to_string());
         let id = if let Some(id) = self.find_type(name) {
             self.types[id as usize] = typ;
             id
-        }
-        else {
+        } else {
             let id = self.types.len() as u32;
             self.types.push(typ);
             self.index.insert(name.into(), id);
@@ -625,7 +648,10 @@ impl Library {
             namespaces: Vec::new(),
             index: HashMap::new(),
         };
-        assert_eq!(INTERNAL_NAMESPACE, library.add_namespace(INTERNAL_NAMESPACE_NAME));
+        assert_eq!(
+            INTERNAL_NAMESPACE,
+            library.add_namespace(INTERNAL_NAMESPACE_NAME)
+        );
         for &(name, t) in FUNDAMENTAL {
             library.add_type(INTERNAL_NAMESPACE, name, Type::Fundamental(t));
         }
@@ -648,8 +674,7 @@ impl Library {
     pub fn add_namespace(&mut self, name: &str) -> u16 {
         if let Some(&id) = self.index.get(name) {
             id
-        }
-        else {
+        } else {
             let id = self.namespaces.len() as u16;
             self.namespaces.push(Namespace::new(name));
             self.index.insert(name.into(), id);
@@ -666,7 +691,10 @@ impl Library {
     }
 
     pub fn add_type(&mut self, ns_id: u16, name: &str, typ: Type) -> TypeId {
-        TypeId { ns_id: ns_id, id: self.namespace_mut(ns_id).add_type(name, Some(typ)) }
+        TypeId {
+            ns_id: ns_id,
+            id: self.namespace_mut(ns_id).add_type(name, Some(typ)),
+        }
     }
 
     pub fn find_type(&self, current_ns_id: u16, name: &str) -> Option<TypeId> {
@@ -677,16 +705,24 @@ impl Library {
 
         if let Some(ns) = ns {
             self.find_namespace(ns).and_then(|ns_id| {
-                self.namespace(ns_id).find_type(name).map(|id| TypeId { ns_id: ns_id, id: id })
+                self.namespace(ns_id).find_type(name).map(|id| {
+                    TypeId {
+                        ns_id: ns_id,
+                        id: id,
+                    }
+                })
             })
-        }
-        else if let Some(id) = self.namespace(current_ns_id).find_type(name) {
-            Some(TypeId { ns_id: current_ns_id, id: id })
-        }
-        else if let Some(id) = self.namespace(INTERNAL_NAMESPACE).find_type(name) {
-            Some(TypeId { ns_id: INTERNAL_NAMESPACE, id: id })
-        }
-        else {
+        } else if let Some(id) = self.namespace(current_ns_id).find_type(name) {
+            Some(TypeId {
+                ns_id: current_ns_id,
+                id: id,
+            })
+        } else if let Some(id) = self.namespace(INTERNAL_NAMESPACE).find_type(name) {
+            Some(TypeId {
+                ns_id: INTERNAL_NAMESPACE,
+                id: id,
+            })
+        } else {
             None
         }
     }
@@ -699,14 +735,22 @@ impl Library {
         let (ns, name) = split_namespace_name(name);
 
         if let Some(ns) = ns {
-            let ns_id = self.find_namespace(ns).unwrap_or_else(|| self.add_namespace(ns));
+            let ns_id = self.find_namespace(ns)
+                .unwrap_or_else(|| self.add_namespace(ns));
             let ns = self.namespace_mut(ns_id);
-            let id = ns.find_type(name).unwrap_or_else(|| ns.add_type(name, None));
-            return TypeId { ns_id: ns_id, id: id };
+            let id = ns.find_type(name)
+                .unwrap_or_else(|| ns.add_type(name, None));
+            return TypeId {
+                ns_id: ns_id,
+                id: id,
+            };
         }
 
         let id = self.namespace_mut(current_ns_id).add_type(name, None);
-        TypeId { ns_id: current_ns_id, id: id }
+        TypeId {
+            ns_id: current_ns_id,
+            id: id,
+        }
     }
 
     pub fn type_(&self, tid: TypeId) -> &Type {
@@ -722,23 +766,29 @@ impl Library {
     }
 
     pub fn types<'a>(&'a self) -> Box<Iterator<Item = (TypeId, &Type)> + 'a> {
-        Box::new(self.namespaces.iter().enumerate()
-            .flat_map(|(ns_id, ns)| {
-                ns.types.iter().enumerate()
-                    .filter_map(move |(id, type_)| {
-                        let tid = TypeId { ns_id: ns_id as u16, id: id as u32 };
-                        type_.as_ref().map(|t| (tid, t))
-                    })
-            }))
+        Box::new(self.namespaces.iter().enumerate().flat_map(|(ns_id, ns)| {
+            ns.types.iter().enumerate().filter_map(move |(id, type_)| {
+                let tid = TypeId {
+                    ns_id: ns_id as u16,
+                    id: id as u32,
+                };
+                type_.as_ref().map(|t| (tid, t))
+            })
+        }))
     }
 
     /// Types from a single namespace in alphabetical order.
     pub fn namespace_types<'a>(&'a self, ns_id: u16) -> Box<Iterator<Item = (TypeId, &Type)> + 'a> {
         let ns = self.namespace(ns_id);
-        Box::new(ns.index.values()
-            .map(move |&id| {
-                (TypeId { ns_id: ns_id, id: id }, ns.types[id as usize].as_ref().unwrap())
-            }))
+        Box::new(ns.index.values().map(move |&id| {
+            (
+                TypeId {
+                    ns_id: ns_id,
+                    id: id,
+                },
+                ns.types[id as usize].as_ref().unwrap(),
+            )
+        }))
     }
 }
 

@@ -14,8 +14,14 @@ use writer::primitives::tabs;
 use writer::ToCode;
 use library;
 
-pub fn generate(w: &mut Write, env: &Env, analysis: &analysis::functions::Info,
-                in_trait: bool, only_declaration: bool, indent: usize) -> Result<()> {
+pub fn generate(
+    w: &mut Write,
+    env: &Env,
+    analysis: &analysis::functions::Info,
+    in_trait: bool,
+    only_declaration: bool,
+    indent: usize,
+) -> Result<()> {
     let mut commented = false;
     let mut comment_prefix = "";
     let mut pub_prefix = if in_trait { "" } else { "pub " };
@@ -27,9 +33,11 @@ pub fn generate(w: &mut Write, env: &Env, analysis: &analysis::functions::Info,
         }
         Visibility::Private => {
             if in_trait {
-                warn!("Generating trait method for private function {}", analysis.glib_name);
-            }
-            else {
+                warn!(
+                    "Generating trait method for private function {}",
+                    analysis.glib_name
+                );
+            } else {
                 pub_prefix = "";
             }
         }
@@ -40,11 +48,29 @@ pub fn generate(w: &mut Write, env: &Env, analysis: &analysis::functions::Info,
 
     try!(writeln!(w, ""));
     try!(cfg_condition(w, &analysis.cfg_condition, commented, indent));
-    try!(version_condition(w, env, analysis.version, commented, indent));
-    try!(not_version_condition(w, analysis.not_version, commented, indent));
+    try!(version_condition(
+        w,
+        env,
+        analysis.version,
+        commented,
+        indent,
+    ));
+    try!(not_version_condition(
+        w,
+        analysis.not_version,
+        commented,
+        indent,
+    ));
     try!(doc_hidden(w, analysis.doc_hidden, comment_prefix, indent));
-    try!(writeln!(w, "{}{}{}{}{}", tabs(indent),
-        comment_prefix, pub_prefix, declaration, suffix));
+    try!(writeln!(
+        w,
+        "{}{}{}{}{}",
+        tabs(indent),
+        comment_prefix,
+        pub_prefix,
+        declaration,
+        suffix
+    ));
 
     if !only_declaration {
         let body = body_chunk(env, analysis).to_code(env);
@@ -73,51 +99,69 @@ pub fn declaration(env: &Env, analysis: &analysis::functions::Info) -> String {
 
     let bounds = bounds(&analysis.bounds);
 
-    let array_lengths: Vec<_> = analysis.parameters.iter()
-                                                    .filter_map(|p| p.array_length)
-                                                    .collect();
+    let array_lengths: Vec<_> = analysis
+        .parameters
+        .iter()
+        .filter_map(|p| p.array_length)
+        .collect();
 
     let mut skipped = 0;
     for (pos, par) in analysis.parameters.iter().enumerate() {
-        if outs_as_return && analysis.outs.iter().any(|p| p.name==par.name) {
+        if outs_as_return && analysis.outs.iter().any(|p| p.name == par.name) {
             skipped += 1;
             continue;
         }
 
         // The first parameter is &self in case of methods
-        let pos_offset = if analysis.kind == library::FunctionKind::Method { 1 } else { 0 };
+        let pos_offset = if analysis.kind == library::FunctionKind::Method {
+            1
+        } else {
+            0
+        };
         if pos >= pos_offset && array_lengths.contains(&((pos - pos_offset) as u32)) {
             skipped += 1;
             continue;
         }
 
-        if pos > skipped { param_str.push_str(", ") }
+        if pos > skipped {
+            param_str.push_str(", ")
+        }
         let s = par.to_parameter(env, &analysis.bounds);
         param_str.push_str(&s);
     }
 
-    format!("fn {}{}({}){}", analysis.name, bounds, param_str, return_str)
+    format!(
+        "fn {}{}({}){}",
+        analysis.name,
+        bounds,
+        param_str,
+        return_str
+    )
 }
 
 pub fn bounds(bounds: &Bounds) -> String {
     use analysis::bounds::BoundType::*;
-    if bounds.is_empty() { return String::new() }
-    let strs: Vec<String> = bounds.iter_lifetimes()
+    if bounds.is_empty() {
+        return String::new();
+    }
+    let strs: Vec<String> = bounds
+        .iter_lifetimes()
         .map(|s| format!("'{}", s))
-        .chain(bounds.iter()
-                     .map(|bound| match bound.bound_type {
-                         IsA(Some(lifetime)) => format!("{}: IsA<{}> + '{}",
-                                                        bound.alias, bound.type_str, lifetime),
-                         IsA(None) => format!("{}: IsA<{}>", bound.alias, bound.type_str),
-                         // This case should normally never happened
-                         AsRef(Some(lifetime)) => format!("{}: AsRef<{}> + '{}",
-                                                          bound.alias, bound.type_str, lifetime),
-                         AsRef(None) => format!("{}: AsRef<{}>", bound.alias, bound.type_str),
-                         Into(Some(l), _) => format!("{}: Into<Option<&'{} {}>>",
-                                                     bound.alias, l, bound.type_str),
-                         Into(None, _) => format!("{}: Into<Option<{}>>",
-                                                  bound.alias, bound.type_str),
-                     }))
+        .chain(bounds.iter().map(|bound| match bound.bound_type {
+            IsA(Some(lifetime)) => {
+                format!("{}: IsA<{}> + '{}", bound.alias, bound.type_str, lifetime)
+            }
+            IsA(None) => format!("{}: IsA<{}>", bound.alias, bound.type_str),
+            // This case should normally never happened
+            AsRef(Some(lifetime)) => {
+                format!("{}: AsRef<{}> + '{}", bound.alias, bound.type_str, lifetime)
+            }
+            AsRef(None) => format!("{}: AsRef<{}>", bound.alias, bound.type_str),
+            Into(Some(l), _) => {
+                format!("{}: Into<Option<&'{} {}>>", bound.alias, l, bound.type_str)
+            }
+            Into(None, _) => format!("{}: Into<Option<{}>>", bound.alias, bound.type_str),
+        }))
         .collect();
     format!("<{}>", strs.join(", "))
 }
@@ -128,26 +172,38 @@ pub fn body_chunk(env: &Env, analysis: &analysis::functions::Info) -> Chunk {
     }
 
     let outs_as_return = !analysis.outs.is_empty();
-    let ret_array_length = if let Some(pos) = analysis.ret.parameter.as_ref().and_then(|p| p.array_length) {
-        // The first parameter is &self in case of methods
-        let pos_offset = if analysis.kind == library::FunctionKind::Method { 1 } else { 0 };
-        analysis.parameters.get((pos + pos_offset) as usize)
-    } else {
-        None
-    };
+    let ret_array_length =
+        if let Some(pos) = analysis.ret.parameter.as_ref().and_then(|p| p.array_length) {
+            // The first parameter is &self in case of methods
+            let pos_offset = if analysis.kind == library::FunctionKind::Method {
+                1
+            } else {
+                0
+            };
+            analysis.parameters.get((pos + pos_offset) as usize)
+        } else {
+            None
+        };
 
     let mut builder = function_body_chunk::Builder::new();
-    builder.glib_name(&analysis.glib_name)
+    builder
+        .glib_name(&analysis.glib_name)
         .assertion(analysis.assertion)
         .ret(env, &analysis.ret, ret_array_length)
         .outs_mode(analysis.outs.mode);
 
     for par in &analysis.parameters {
-        if outs_as_return && analysis.outs.iter().any(|p| p.name==par.name) {
+        if outs_as_return && analysis.outs.iter().any(|p| p.name == par.name) {
             let array_length = if let Some(pos) = par.array_length {
                 use analysis::out_parameters::Mode;
                 // The actual return value was inserted at position 0
-                let pos_offset = if analysis.outs.mode == Mode::Combined || analysis.outs.mode == Mode::Throws(true) { 1 } else { 0 };
+                let pos_offset = if analysis.outs.mode == Mode::Combined ||
+                    analysis.outs.mode == Mode::Throws(true)
+                {
+                    1
+                } else {
+                    0
+                };
                 analysis.parameters.get((pos + pos_offset) as usize)
             } else {
                 None
@@ -157,7 +213,11 @@ pub fn body_chunk(env: &Env, analysis: &analysis::functions::Info) -> Chunk {
         } else {
             let array_length = if let Some(pos) = par.array_length {
                 // The first parameter is &self in case of methods
-                let pos_offset = if analysis.kind == library::FunctionKind::Method { 1 } else { 0 };
+                let pos_offset = if analysis.kind == library::FunctionKind::Method {
+                    1
+                } else {
+                    0
+                };
                 analysis.parameters.get((pos + pos_offset) as usize)
             } else {
                 None

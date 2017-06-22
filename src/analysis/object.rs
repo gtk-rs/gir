@@ -45,7 +45,9 @@ impl Deref for Info {
 pub fn has_known_subtypes(env: &Env, class_tid: library::TypeId) -> bool {
     for child_tid in env.class_hierarchy.subtypes(class_tid) {
         let child_name = child_tid.full_name(&env.library);
-        let status = env.config.objects.get(&child_name)
+        let status = env.config
+            .objects
+            .get(&child_name)
             .map(|o| o.status)
             .unwrap_or_default();
         if status.normal() {
@@ -85,44 +87,78 @@ pub fn class(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<Info>
     // Sanity check the user's configuration. It's unlikely that not generating
     // a trait is wanted if there are subtypes in this very crate
     if !generate_trait && has_known_subtypes(env, class_tid) {
-        error!("Not generating trait for {} although subtypes exist", full_name);
+        error!(
+            "Not generating trait for {} although subtypes exist",
+            full_name
+        );
     }
 
     let mut trampolines = trampolines::Trampolines::with_capacity(klass.signals.len());
     let mut signatures = Signatures::with_capacity(klass.functions.len());
 
-    let mut functions = functions::analyze(env, &klass.functions, class_tid, obj,
-                                           &mut imports, Some(&mut signatures), Some(deps));
+    let mut functions = functions::analyze(
+        env,
+        &klass.functions,
+        class_tid,
+        obj,
+        &mut imports,
+        Some(&mut signatures),
+        Some(deps),
+    );
     let specials = special_functions::extract(&mut functions);
     // `copy` will duplicate an object while `clone` just adds a reference
     special_functions::unhide(&mut functions, &specials, special_functions::Type::Copy);
     special_functions::analyze_imports(&specials, &mut imports);
 
-    let signals = signals::analyze(env, &klass.signals, class_tid, generate_trait,
-                                   &mut trampolines, obj, &mut imports);
-    let properties = properties::analyze(env, &klass.properties, class_tid, obj, &mut imports,
-                                         &signatures, deps);
+    let signals = signals::analyze(
+        env,
+        &klass.signals,
+        class_tid,
+        generate_trait,
+        &mut trampolines,
+        obj,
+        &mut imports,
+    );
+    let properties = properties::analyze(
+        env,
+        &klass.properties,
+        class_tid,
+        obj,
+        &mut imports,
+        &signatures,
+        deps,
+    );
 
-    let (version, deprecated_version) = info_base::versions(env, obj, &functions, klass.version,
-         klass.deprecated_version);
+    let (version, deprecated_version) = info_base::versions(
+        env,
+        obj,
+        &functions,
+        klass.version,
+        klass.deprecated_version,
+    );
 
-    let child_properties = child_properties::analyze(env, obj.child_properties.as_ref(), class_tid,
-                                                     &mut imports);
+    let child_properties =
+        child_properties::analyze(env, obj.child_properties.as_ref(), class_tid, &mut imports);
 
-    let has_methods = functions.iter()
-            .any(|f| f.kind == library::FunctionKind::Method);
+    let has_methods = functions
+        .iter()
+        .any(|f| f.kind == library::FunctionKind::Method);
     let has_signals = signals.iter().any(|s| s.trampoline_name.is_ok());
 
     // There's no point in generating a trait if there are no signals, methods, properties
     // and child properties: it would be empty
-    if generate_trait && !has_signals && !has_methods && properties.is_empty() && child_properties.is_empty() {
+    if generate_trait && !has_signals && !has_methods && properties.is_empty() &&
+        child_properties.is_empty()
+    {
         generate_trait = false;
     }
 
     if generate_trait && (!properties.is_empty() || has_signals) {
         imports.add("glib", None);
     }
-    if generate_trait && (has_methods || !properties.is_empty() || !child_properties.is_empty() || has_signals) {
+    if generate_trait &&
+        (has_methods || !properties.is_empty() || !child_properties.is_empty() || has_signals)
+    {
         imports.add("glib::object::IsA", None);
     }
 
@@ -203,16 +239,42 @@ pub fn interface(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<I
     let mut trampolines = trampolines::Trampolines::with_capacity(iface.signals.len());
     let mut signatures = Signatures::with_capacity(iface.functions.len());
 
-    let functions = functions::analyze(env, &iface.functions, iface_tid, obj,
-                                       &mut imports, Some(&mut signatures), Some(deps));
+    let functions = functions::analyze(
+        env,
+        &iface.functions,
+        iface_tid,
+        obj,
+        &mut imports,
+        Some(&mut signatures),
+        Some(deps),
+    );
 
-    let signals = signals::analyze(env, &iface.signals, iface_tid, true,
-                                   &mut trampolines, obj, &mut imports);
-    let properties = properties::analyze(env, &iface.properties, iface_tid, obj, &mut imports,
-                                         &signatures, deps);
+    let signals = signals::analyze(
+        env,
+        &iface.signals,
+        iface_tid,
+        true,
+        &mut trampolines,
+        obj,
+        &mut imports,
+    );
+    let properties = properties::analyze(
+        env,
+        &iface.properties,
+        iface_tid,
+        obj,
+        &mut imports,
+        &signatures,
+        deps,
+    );
 
-    let (version, deprecated_version) = info_base::versions(env, obj, &functions, iface.version,
-         iface.deprecated_version);
+    let (version, deprecated_version) = info_base::versions(
+        env,
+        obj,
+        &functions,
+        iface.version,
+        iface.deprecated_version,
+    );
 
     if !properties.is_empty() {
         imports.add("glib", None);
@@ -250,7 +312,7 @@ pub fn interface(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<I
         trampolines: trampolines,
         properties: properties,
         signatures: signatures,
-        .. Default::default()
+        ..Default::default()
     };
 
     Some(info)

@@ -25,7 +25,9 @@ impl Deref for Info {
 impl Info {
     //TODO: add test in tests/ for panic
     pub fn type_<'a>(&self, library: &'a library::Library) -> &'a library::Record {
-        let type_ = library.type_(self.type_id).maybe_ref()
+        let type_ = library
+            .type_(self.type_id)
+            .maybe_ref()
             .unwrap_or_else(|| panic!("{} is not a record.", self.full_name));
         type_
     }
@@ -53,12 +55,24 @@ pub fn new(env: &Env, obj: &GObject) -> Option<Info> {
     imports.add("glib::translate::*", None);
     imports.add("ffi", None);
 
-    let mut functions = functions::analyze(env, &record.functions, record_tid, obj,
-                                           &mut imports, None, None);
+    let mut functions = functions::analyze(
+        env,
+        &record.functions,
+        record_tid,
+        obj,
+        &mut imports,
+        None,
+        None,
+    );
     let specials = special_functions::extract(&mut functions);
 
-    let (version, deprecated_version) = info_base::versions(env, obj, &functions, record.version,
-         record.deprecated_version);
+    let (version, deprecated_version) = info_base::versions(
+        env,
+        obj,
+        &functions,
+        record.version,
+        record.deprecated_version,
+    );
 
     let is_shared = specials.get(&special_functions::Type::Ref).is_some() &&
         specials.get(&special_functions::Type::Unref).is_some();
@@ -86,9 +100,7 @@ pub fn new(env: &Env, obj: &GObject) -> Option<Info> {
         cfg_condition: obj.cfg_condition.clone(),
     };
 
-    let info = Info {
-        base: base,
-    };
+    let info = Info { base: base };
 
     Some(info)
 }

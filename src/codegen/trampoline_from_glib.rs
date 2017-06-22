@@ -29,7 +29,7 @@ impl TrampolineFromGlib for Transformation {
                 }
                 format!("{}{}{}", left, self.name, right)
             }
-            Unknown => format!("/*Unknown conversion*/{}", self.name)
+            Unknown => format!("/*Unknown conversion*/{}", self.name),
         }
     }
 }

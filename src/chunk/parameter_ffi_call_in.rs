@@ -16,7 +16,10 @@ pub struct Parameter {
 }
 
 impl Parameter {
-    pub fn new(orig: &analysis::parameter::Parameter, array_length: Option<(String, String)>) -> Parameter {
+    pub fn new(
+        orig: &analysis::parameter::Parameter,
+        array_length: Option<(String, String)>,
+    ) -> Parameter {
         Parameter {
             name: orig.name.clone(),
             typ: orig.typ,

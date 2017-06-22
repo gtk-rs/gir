@@ -10,6 +10,8 @@ impl<T: AsRef<Ident>> Matchable for [T] {
     type Item = T;
 
     fn matched(&self, name: &str) -> Vec<&Self::Item> {
-        self.iter().filter(|item| item.as_ref().is_match(name)).collect()
+        self.iter()
+            .filter(|item| item.as_ref().is_match(name))
+            .collect()
     }
 }

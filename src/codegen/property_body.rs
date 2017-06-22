@@ -22,9 +22,9 @@ impl Builder {
     }
 
     pub fn new_for_child_property() -> Builder {
-        Builder{
+        Builder {
             is_child_property: true,
-            .. Default::default()
+            ..Default::default()
         }
     }
 
@@ -69,7 +69,11 @@ impl Builder {
     }
 
     pub fn generate(&self) -> Chunk {
-        let chunks = if self.is_get { self.chunks_for_get() } else { self.chunks_for_set() };
+        let chunks = if self.is_get {
+            self.chunks_for_get()
+        } else {
+            self.chunks_for_set()
+        };
         Chunk::BlockHalf(chunks)
     }
 
@@ -103,8 +107,16 @@ impl Builder {
         });
 
         match self.conversion {
-            AsI32 => body.push(Chunk::Custom("from_glib(transmute(value.get::<i32>().unwrap()))".into())),
-            Bitflag => body.push(Chunk::Custom("from_glib(transmute(value.get::<u32>().unwrap()))".into())),
+            AsI32 => {
+                body.push(Chunk::Custom(
+                    "from_glib(transmute(value.get::<i32>().unwrap()))".into(),
+                ))
+            }
+            Bitflag => {
+                body.push(Chunk::Custom(
+                    "from_glib(transmute(value.get::<u32>().unwrap()))".into(),
+                ))
+            }
             _ => (),
         }
 
@@ -113,11 +125,11 @@ impl Builder {
         let mut chunks = Vec::new();
 
         let default_value_chunk = Chunk::Custom(format!("Value::from({})", self.default_value));
-        chunks.push(Chunk::Let{
+        chunks.push(Chunk::Let {
             name: "value".into(),
             is_mut: true,
             value: Box::new(default_value_chunk),
-            type_: None
+            type_: None,
         });
         chunks.push(unsafe_);
 
@@ -126,7 +138,7 @@ impl Builder {
                 let unwrap = if self.is_nullable { "" } else { ".unwrap()" };
                 chunks.push(Chunk::Custom(format!("value.get(){}", unwrap)));
             }
-            _ => ()
+            _ => (),
         }
 
         chunks
@@ -142,7 +154,11 @@ impl Builder {
         }
         params.push(Chunk::Custom(format!("\"{}\".to_glib_none().0", self.name)));
         let ref_str = if self.is_ref { "" } else { "&" };
-        params.push(Chunk::Custom(format!("Value::from({}{}).to_glib_none().0", ref_str, self.var_name)));
+        params.push(Chunk::Custom(format!(
+            "Value::from({}{}).to_glib_none().0",
+            ref_str,
+            self.var_name
+        )));
 
         let mut body = Vec::new();
 
@@ -178,20 +194,21 @@ impl Builder {
         match self.conversion {
             AsI32 => {
                 let value_chunk = Chunk::Custom(format!("{}.to_glib() as i32", self.var_name));
-                chunks.push(Chunk::Let{
+                chunks.push(Chunk::Let {
                     name: self.var_name.clone(),
                     is_mut: false,
                     value: Box::new(value_chunk),
-                    type_: None
+                    type_: None,
                 })
             }
             Bitflag => {
-                let value_chunk = Chunk::Custom(format!("{}.to_glib().bits() as u32", self.var_name));
-                chunks.push(Chunk::Let{
+                let value_chunk =
+                    Chunk::Custom(format!("{}.to_glib().bits() as u32", self.var_name));
+                chunks.push(Chunk::Let {
                     name: self.var_name.clone(),
                     is_mut: false,
                     value: Box::new(value_chunk),
-                    type_: None
+                    type_: None,
                 })
             }
             _ => (),
@@ -217,5 +234,4 @@ impl Builder {
             "gobject_ffi::g_object_set_property".to_owned()
         }
     }
-
 }

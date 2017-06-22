@@ -10,7 +10,10 @@ use nameutil::crate_name;
 use version::Version;
 
 pub fn generate(env: &Env) {
-    println!("manipulating sys Cargo.toml for {}", env.config.library_name);
+    println!(
+        "manipulating sys Cargo.toml for {}",
+        env.config.library_name
+    );
 
     let path = env.config.target_path.join("Cargo.toml");
 
@@ -26,8 +29,9 @@ pub fn generate(env: &Env) {
     }
     fill_in(&mut root_table, env);
 
-    save_to_file(&path, env.config.make_backup,
-        |w| w.write_all(toml::to_string(&root_table).unwrap().as_bytes()));
+    save_to_file(&path, env.config.make_backup, |w| {
+        w.write_all(toml::to_string(&root_table).unwrap().as_bytes())
+    });
 }
 
 fn fill_empty(root: &mut Table, env: &Env) {
@@ -47,8 +51,7 @@ fn fill_empty(root: &mut Table, env: &Env) {
 
     let deps = upsert_table(root, "dependencies");
     for ext_lib in &env.config.external_libraries {
-        let ext_package = format!("{}_sys", crate_name(ext_lib))
-            .replace("_", "-");
+        let ext_package = format!("{}_sys", crate_name(ext_lib)).replace("_", "-");
         let dep = upsert_table(deps, &*ext_package);
         set_string(dep, "path", format!("../{}", ext_package));
         set_string(dep, "version", "0.2.0");
@@ -77,12 +80,14 @@ fn fill_in(root: &mut Table, env: &Env) {
     {
         let features = upsert_table(root, "features");
         features.clear();
-        let versions = env.namespaces.main().versions.iter()
+        let versions = env.namespaces
+            .main()
+            .versions
+            .iter()
             .filter(|&&v| v > env.config.min_cfg_version);
         versions.fold(None::<Version>, |prev, &version| {
-            let prev_array: Vec<Value> = prev.iter()
-                .map(|v| Value::String(v.to_feature()))
-                .collect();
+            let prev_array: Vec<Value> =
+                prev.iter().map(|v| Value::String(v.to_feature())).collect();
             features.insert(version.to_feature(), Value::Array(prev_array));
             Some(version)
         });
@@ -98,11 +103,13 @@ fn set_string<S: Into<String>>(table: &mut Table, name: &str, new_value: S) {
 }
 
 fn upsert_table<S: Into<String>>(parent: &mut Table, name: S) -> &mut Table {
-    if let Value::Table(ref mut table) = *parent.entry(name.into())
-            .or_insert_with(|| Value::Table(BTreeMap::new())) {
+    if let Value::Table(ref mut table) =
+        *parent
+            .entry(name.into())
+            .or_insert_with(|| Value::Table(BTreeMap::new()))
+    {
         table
-    }
-    else {
+    } else {
         unreachable!()
     }
 }

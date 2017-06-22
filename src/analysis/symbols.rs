@@ -43,14 +43,32 @@ pub fn run(library: &Library, namespaces: &namespaces::Info) -> Info {
         c_name_index: HashMap::new(),
     };
 
-    info.insert("NULL", Symbol { name: "None".into(), ..Default::default() });
-    info.insert("FALSE", Symbol { name: "false".into(), ..Default::default() });
-    info.insert("TRUE", Symbol { name: "true".into(), ..Default::default() });
+    info.insert(
+        "NULL",
+        Symbol {
+            name: "None".into(),
+            ..Default::default()
+        },
+    );
+    info.insert(
+        "FALSE",
+        Symbol {
+            name: "false".into(),
+            ..Default::default()
+        },
+    );
+    info.insert(
+        "TRUE",
+        Symbol {
+            name: "true".into(),
+            ..Default::default()
+        },
+    );
 
     for (ns_id, ns) in library.namespaces.iter().enumerate() {
         let ns_id = ns_id as NsId;
         if ns_id == namespaces::INTERNAL {
-            continue
+            continue;
         }
 
         let crate_name = if ns_id == namespaces::MAIN {
@@ -65,7 +83,7 @@ pub fn run(library: &Library, namespaces: &namespaces::Info) -> Info {
                 name: typ.get_name(),
                 ..Default::default()
             };
-            
+
             match *typ {
                 Type::Alias(Alias { ref c_identifier, .. }) => {
                     info.insert(c_identifier, symbol);
@@ -75,15 +93,15 @@ pub fn run(library: &Library, namespaces: &namespaces::Info) -> Info {
                     ref c_type,
                     ref members,
                     ref functions,
-                        ..
+                    ..
                 }) |
-                    Type::Bitfield(Bitfield {
-                        ref name,
-                        ref c_type,
-                        ref members,
-                        ref functions,
-                        ..
-                    }) => {
+                Type::Bitfield(Bitfield {
+                    ref name,
+                    ref c_type,
+                    ref members,
+                    ref functions,
+                    ..
+                }) => {
                     info.insert(c_type, symbol);
                     for member in members {
                         let symbol = Symbol {
@@ -102,9 +120,24 @@ pub fn run(library: &Library, namespaces: &namespaces::Info) -> Info {
                         info.insert(func.c_identifier.as_ref().unwrap(), symbol);
                     }
                 }
-                Type::Record(Record { ref name, ref c_type, ref functions, .. }) |
-                    Type::Class(Class { ref name, ref c_type, ref functions, .. }) |
-                    Type::Interface(Interface { ref name, ref c_type, ref functions, .. }) => {
+                Type::Record(Record {
+                    ref name,
+                    ref c_type,
+                    ref functions,
+                    ..
+                }) |
+                Type::Class(Class {
+                    ref name,
+                    ref c_type,
+                    ref functions,
+                    ..
+                }) |
+                Type::Interface(Interface {
+                    ref name,
+                    ref c_type,
+                    ref functions,
+                    ..
+                }) => {
                     info.insert(c_type, symbol);
                     for func in functions {
                         let symbol = Symbol {
@@ -115,7 +148,7 @@ pub fn run(library: &Library, namespaces: &namespaces::Info) -> Info {
                         info.insert(func.c_identifier.as_ref().unwrap(), symbol);
                     }
                 }
-                _ => { }
+                _ => {}
             }
         }
     }
@@ -125,7 +158,9 @@ pub fn run(library: &Library, namespaces: &namespaces::Info) -> Info {
 
 impl Info {
     pub fn by_c_name(&self, name: &str) -> Option<&Symbol> {
-        self.c_name_index.get(name).map(|&id| &self.symbols[id as usize])
+        self.c_name_index
+            .get(name)
+            .map(|&id| &self.symbols[id as usize])
     }
 
     pub fn by_c_name_mut(&mut self, name: &str) -> Option<&mut Symbol> {

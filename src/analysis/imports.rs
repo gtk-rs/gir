@@ -44,20 +44,25 @@ impl Imports {
     }
 
     pub fn clean_glib(&mut self, env: &Env) {
-        if env.namespaces.glib_ns_id != namespaces::MAIN { return; }
+        if env.namespaces.glib_ns_id != namespaces::MAIN {
+            return;
+        }
         self.remove("glib");
-        let glibs: Vec<(String, Option<Version>)> = self.map.iter().filter_map(|p| {
-            let glib_offset = p.0.find("glib::");
-            if let Some(glib_offset) = glib_offset {
-                if glib_offset ==  0 {
-                    Some((p.0.clone(), *p.1))
+        let glibs: Vec<(String, Option<Version>)> = self.map
+            .iter()
+            .filter_map(|p| {
+                let glib_offset = p.0.find("glib::");
+                if let Some(glib_offset) = glib_offset {
+                    if glib_offset == 0 {
+                        Some((p.0.clone(), *p.1))
+                    } else {
+                        None
+                    }
                 } else {
                     None
                 }
-            } else {
-                None
-            }
-        }).collect();
+            })
+            .collect();
         for p in glibs {
             self.remove(&p.0);
             self.add(&p.0[6..], p.1);

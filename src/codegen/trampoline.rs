@@ -14,8 +14,13 @@ use super::trampoline_to_glib::TrampolineToGlib;
 use traits::IntoString;
 use consts::TYPE_PARAMETERS_START;
 
-pub fn generate(w: &mut Write, env: &Env, analysis: &Trampoline,
-                in_trait: bool, object_name: &str) -> Result<()> {
+pub fn generate(
+    w: &mut Write,
+    env: &Env,
+    analysis: &Trampoline,
+    in_trait: bool,
+    object_name: &str,
+) -> Result<()> {
     try!(writeln!(w, ""));
     let (bounds, end) = if in_trait {
         (format!("<{}>", TYPE_PARAMETERS_START), "")
@@ -28,10 +33,22 @@ pub fn generate(w: &mut Write, env: &Env, analysis: &Trampoline,
     let ret_str = trampoline_returns(env, analysis);
 
     try!(version_condition(w, env, analysis.version, false, 0));
-    try!(writeln!(w, "unsafe extern \"C\" fn {}{}({}, f: glib_ffi::gpointer){}{}",
-                  analysis.name, bounds, params_str, ret_str, end));
+    try!(writeln!(
+        w,
+        "unsafe extern \"C\" fn {}{}({}, f: glib_ffi::gpointer){}{}",
+        analysis.name,
+        bounds,
+        params_str,
+        ret_str,
+        end
+    ));
     if in_trait {
-        try!(writeln!(w, "where {}: IsA<{}> {{", TYPE_PARAMETERS_START, object_name));
+        try!(writeln!(
+            w,
+            "where {}: IsA<{}> {{",
+            TYPE_PARAMETERS_START,
+            object_name
+        ));
     }
     try!(writeln!(w, "\tcallback_guard!();"));
     try!(writeln!(w, "\tlet f: &Box_<{}> = transmute(f);", func_str));
@@ -43,20 +60,28 @@ pub fn generate(w: &mut Write, env: &Env, analysis: &Trampoline,
     Ok(())
 }
 
-pub fn func_string(env: &Env, analysis: &Trampoline,
-                   bound_replace: Option<(char, &str)>) -> String {
+pub fn func_string(
+    env: &Env,
+    analysis: &Trampoline,
+    bound_replace: Option<(char, &str)>,
+) -> String {
     let param_str = func_parameters(env, analysis, bound_replace);
     let return_str = func_returns(env, analysis);
 
     format!("Fn({}){} + 'static", param_str, return_str)
 }
 
-fn func_parameters(env: &Env, analysis: &Trampoline,
-                   bound_replace: Option<(char, &str)>) -> String {
+fn func_parameters(
+    env: &Env,
+    analysis: &Trampoline,
+    bound_replace: Option<(char, &str)>,
+) -> String {
     let mut param_str = String::with_capacity(100);
 
     for (pos, par) in analysis.parameters.rust_parameters.iter().enumerate() {
-        if pos > 0 { param_str.push_str(", ") }
+        if pos > 0 {
+            param_str.push_str(", ")
+        }
         let s = func_parameter(env, par, &analysis.bounds, bound_replace);
         param_str.push_str(&s);
     }
@@ -64,8 +89,12 @@ fn func_parameters(env: &Env, analysis: &Trampoline,
     param_str
 }
 
-fn func_parameter(env: &Env, par: &RustParameter, bounds: &Bounds,
-                  bound_replace: Option<(char, &str)>) -> String {
+fn func_parameter(
+    env: &Env,
+    par: &RustParameter,
+    bounds: &Bounds,
+    bound_replace: Option<(char, &str)>,
+) -> String {
     //TODO: restore mutable support
     //let mut_str = if par.ref_mode == RefMode::ByRefMut { "mut " } else { "" };
     let mut_str = "";
@@ -78,23 +107,26 @@ fn func_parameter(env: &Env, par: &RustParameter, bounds: &Bounds,
     match bounds.get_parameter_alias_info(&par.name) {
         Some((t, bound_type)) => {
             match bound_type {
-                BoundType::IsA(_) => if *par.nullable {
-                    format!("&Option<{}{}>", mut_str, t)
-                } else if let Some((from, to)) = bound_replace {
-                    if from == t {
-                        format!("&{}{}", mut_str, to)
+                BoundType::IsA(_) => {
+                    if *par.nullable {
+                        format!("&Option<{}{}>", mut_str, t)
+                    } else if let Some((from, to)) = bound_replace {
+                        if from == t {
+                            format!("&{}{}", mut_str, to)
+                        } else {
+                            format!("&{}{}", mut_str, t)
+                        }
                     } else {
                         format!("&{}{}", mut_str, t)
                     }
-                } else {
-                    format!("&{}{}", mut_str, t)
-                },
-                BoundType::AsRef(_) | BoundType::Into(_, _) => t.to_string(),
+                }
+                BoundType::AsRef(_) |
+                BoundType::Into(_, _) => t.to_string(),
             }
         }
         None => {
-            let rust_type = parameter_rust_type(env, par.typ, par.direction,
-                                                par.nullable, ref_mode);
+            let rust_type =
+                parameter_rust_type(env, par.typ, par.direction, par.nullable, ref_mode);
             rust_type.into_string().replace("Option<&", "&Option<")
         }
     }
@@ -142,9 +174,12 @@ fn transformation_vars(w: &mut Write, analysis: &Trampoline) -> Result<()> {
             Borrow => (),
             TreePath => {
                 let c_par = &analysis.parameters.c_parameters[transform.ind_c];
-                try!(writeln!(w,
-                              "\tlet {} = from_glib_full(ffi::gtk_tree_path_new_from_string({}));",
-                              transform.name, c_par.name));
+                try!(writeln!(
+                    w,
+                    "\tlet {} = from_glib_full(ffi::gtk_tree_path_new_from_string({}));",
+                    transform.name,
+                    c_par.name
+                ));
             }
         }
     }
@@ -174,7 +209,7 @@ fn trampoline_call_parameters(env: &Env, analysis: &Trampoline, in_trait: bool) 
         };
         let par_str = transformation.trampoline_from_glib(env, need_downcast);
         parameter_strs.push(par_str);
-        need_downcast = false;  //Only downcast first parameter
+        need_downcast = false; //Only downcast first parameter
     }
 
     parameter_strs.join(", ")

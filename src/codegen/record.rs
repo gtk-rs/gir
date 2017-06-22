@@ -5,20 +5,41 @@ use analysis::special_functions::Type;
 use env::Env;
 use super::{function, general, trait_impls};
 
-pub fn generate(w: &mut Write, env: &Env, analysis: &analysis::record::Info) -> Result<()>{
+pub fn generate(w: &mut Write, env: &Env, analysis: &analysis::record::Info) -> Result<()> {
     let type_ = analysis.type_(&env.library);
 
     try!(general::start_comments(w, &env.config));
     try!(general::uses(w, env, &analysis.imports));
 
-    if let (Some(ref_fn), Some(unref_fn)) = (analysis.specials.get(&Type::Ref),
-                                             analysis.specials.get(&Type::Unref)) {
-        try!(general::define_shared_type(w, &analysis.name, &type_.c_type, ref_fn, unref_fn));
-    } else if let (Some(copy_fn), Some(free_fn)) = (analysis.specials.get(&Type::Copy),
-                                                    analysis.specials.get(&Type::Free)) {
-        try!(general::define_boxed_type(w, &analysis.name, &type_.c_type, copy_fn, free_fn));
+    if let (Some(ref_fn), Some(unref_fn)) =
+        (
+            analysis.specials.get(&Type::Ref),
+            analysis.specials.get(&Type::Unref),
+        ) {
+        try!(general::define_shared_type(
+            w,
+            &analysis.name,
+            &type_.c_type,
+            ref_fn,
+            unref_fn,
+        ));
+    } else if let (Some(copy_fn), Some(free_fn)) =
+        (
+            analysis.specials.get(&Type::Copy),
+            analysis.specials.get(&Type::Free),
+        ) {
+        try!(general::define_boxed_type(
+            w,
+            &analysis.name,
+            &type_.c_type,
+            copy_fn,
+            free_fn,
+        ));
     } else {
-        panic!("Missing memory management functions for {}", analysis.full_name);
+        panic!(
+            "Missing memory management functions for {}",
+            analysis.full_name
+        );
     }
 
     if analysis.functions.iter().any(|f| !f.visibility.hidden()) {
@@ -32,13 +53,23 @@ pub fn generate(w: &mut Write, env: &Env, analysis: &analysis::record::Info) -> 
         try!(writeln!(w, "}}"));
     }
 
-    try!(trait_impls::generate(w, &analysis.name, &analysis.functions, &analysis.specials, false));
+    try!(trait_impls::generate(
+        w,
+        &analysis.name,
+        &analysis.functions,
+        &analysis.specials,
+        false,
+    ));
 
     Ok(())
 }
 
-pub fn generate_reexports(env: &Env, analysis: &analysis::record::Info, module_name: &str,
-                          contents: &mut Vec<String>) {
+pub fn generate_reexports(
+    env: &Env,
+    analysis: &analysis::record::Info,
+    module_name: &str,
+    contents: &mut Vec<String>,
+) {
     let cfg_condition = general::cfg_condition_string(&analysis.cfg_condition, false, 0);
     let version_cfg = general::version_condition_string(env, analysis.version, false, 0);
     let mut cfg = String::new();
@@ -52,5 +83,10 @@ pub fn generate_reexports(env: &Env, analysis: &analysis::record::Info, module_n
     };
     contents.push("".to_owned());
     contents.push(format!("{}mod {};", cfg, module_name));
-    contents.push(format!("{}pub use self::{}::{};", cfg, module_name, analysis.name));
+    contents.push(format!(
+        "{}pub use self::{}::{};",
+        cfg,
+        module_name,
+        analysis.name
+    ));
 }

@@ -48,7 +48,7 @@ impl Builder {
 
     fn let_func(&self) -> Chunk {
         let type_ = format!("Box_<Box_<{}>>", self.function_type_string);
-        Chunk::Let{
+        Chunk::Let {
             name: "f".to_owned(),
             is_mut: false,
             value: Box::new(Chunk::Custom("Box_::new(Box_::new(f))".to_owned())),
@@ -57,7 +57,7 @@ impl Builder {
     }
 
     fn connect(&self) -> Chunk {
-        Chunk::Connect{
+        Chunk::Connect {
             signal: self.signal_name.clone(),
             trampoline: self.trampoline_name.clone(),
             in_trait: self.in_trait,

@@ -24,7 +24,7 @@ impl FromStr for TransformationType {
             "none" => Ok(TransformationType::None),
             "borrow" => Ok(TransformationType::Borrow),
             "treepath" => Ok(TransformationType::TreePath),
-            _ => Err(format!("Wrong transformation \"{}\"", s))
+            _ => Err(format!("Wrong transformation \"{}\"", s)),
         }
     }
 }
@@ -42,8 +42,11 @@ impl Parse for Parameter {
         let ident = match Ident::parse(toml, object_name, "signal parameter") {
             Some(ident) => ident,
             None => {
-                error!("No 'name' or 'pattern' given for parameter for object {}", object_name);
-                return None
+                error!(
+                    "No 'name' or 'pattern' given for parameter for object {}",
+                    object_name
+                );
+                return None;
             }
         };
         let nullable = toml.lookup("nullable")
@@ -51,16 +54,19 @@ impl Parse for Parameter {
             .map(Nullable);
         let transformation = toml.lookup("transformation")
             .and_then(|val| val.as_str())
-            .and_then(|s| TransformationType::from_str(s)
-                      .map_err(|err| {
-                          error!("{0}", err);
-                          err
-                      }).ok());
+            .and_then(|s| {
+                TransformationType::from_str(s)
+                    .map_err(|err| {
+                        error!("{0}", err);
+                        err
+                    })
+                    .ok()
+            });
         let new_name = toml.lookup("new_name")
             .and_then(|val| val.as_str())
             .map(|s| s.to_owned());
 
-        Some(Parameter{
+        Some(Parameter {
             ident: ident,
             nullable: nullable,
             transformation: transformation,
@@ -95,8 +101,11 @@ impl Parse for Signal {
         let ident = match Ident::parse(toml, object_name, "signal") {
             Some(ident) => ident,
             None => {
-                error!("No 'name' or 'pattern' given for signal for object {}", object_name);
-                return None
+                error!(
+                    "No 'name' or 'pattern' given for signal for object {}",
+                    object_name
+                );
+                return None;
             }
         };
         let ignore = toml.lookup("ignore")
@@ -115,7 +124,7 @@ impl Parse for Signal {
             .and_then(|val| val.as_bool())
             .unwrap_or(false);
 
-        Some(Signal{
+        Some(Signal {
             ident: ident,
             ignore: ignore,
             inhibit: inhibit,
@@ -158,9 +167,11 @@ mod tests {
 
     #[test]
     fn signal_parse_default() {
-        let toml = toml(r#"
+        let toml = toml(
+            r#"
 name = "signal1"
-"#);
+"#,
+        );
         let f = Signal::parse(&toml, "a").unwrap();
         assert_eq!(f.ident, Ident::Name("signal1".into()));
         assert_eq!(f.ignore, false);
@@ -168,10 +179,12 @@ name = "signal1"
 
     #[test]
     fn signal_parse_ignore() {
-        let toml = toml(r#"
+        let toml = toml(
+            r#"
 name = "signal1"
 ignore = true
-"#);
+"#,
+        );
         let f = Signal::parse(&toml, "a").unwrap();
         assert_eq!(f.ignore, true);
     }

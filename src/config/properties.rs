@@ -19,8 +19,11 @@ impl Parse for Property {
         let ident = match Ident::parse(toml, object_name, "property") {
             Some(ident) => ident,
             None => {
-                error!("No 'name' or 'pattern' given for property for object {}", object_name);
-                return None
+                error!(
+                    "No 'name' or 'pattern' given for property for object {}",
+                    object_name
+                );
+                return None;
             }
         };
         let ignore = toml.lookup("ignore")
@@ -30,7 +33,7 @@ impl Parse for Property {
             .and_then(|v| v.as_str())
             .and_then(|s| s.parse().ok());
 
-        Some(Property{
+        Some(Property {
             ident: ident,
             ignore: ignore,
             version: version,
@@ -68,10 +71,12 @@ mod tests {
 
     #[test]
     fn property_parse_ignore() {
-        let toml = toml(r#"
+        let toml = toml(
+            r#"
 name = "prop1"
 ignore = true
-"#);
+"#,
+        );
         let p = Property::parse(&toml, "a").unwrap();
         assert_eq!(p.ident, Ident::Name("prop1".into()));
         assert_eq!(p.ignore, true);
@@ -79,19 +84,23 @@ ignore = true
 
     #[test]
     fn property_parse_version_default() {
-        let toml = toml(r#"
+        let toml = toml(
+            r#"
 name = "prop1"
-"#);
+"#,
+        );
         let p = Property::parse(&toml, "a").unwrap();
         assert_eq!(p.version, None);
     }
 
     #[test]
     fn property_parse_version() {
-        let toml = toml(r#"
+        let toml = toml(
+            r#"
 name = "prop1"
 version = "3.20"
-"#);
+"#,
+        );
         let p = Property::parse(&toml, "a").unwrap();
         assert_eq!(p.version, Some(Version::Full(3, 20, 0)));
     }
@@ -104,7 +113,8 @@ version = "3.20"
 
     #[test]
     fn properties_parse_matches() {
-        let toml = properties_toml(r#"
+        let toml = properties_toml(
+            r#"
 [[f]]
 name = "prop1"
 [[f]]
@@ -113,7 +123,8 @@ name = "p1.5"
 name = "prop2"
 [[f]]
 pattern = 'prop\d+'
-"#);
+"#,
+        );
         let props = Properties::parse(Some(&toml), "a");
         assert_eq!(props.len(), 4);
 

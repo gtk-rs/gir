@@ -51,10 +51,15 @@ pub struct Info {
     pub doc_hidden: bool,
 }
 
-pub fn analyze<F: Borrow<library::Function>>(env: &Env, functions: &[F], type_tid: library::TypeId,
-               obj: &config::gobjects::GObject, imports: &mut Imports,
-               mut signatures: Option<&mut Signatures>,
-               deps: Option<&[library::TypeId]>) -> Vec<Info> {
+pub fn analyze<F: Borrow<library::Function>>(
+    env: &Env,
+    functions: &[F],
+    type_tid: library::TypeId,
+    obj: &config::gobjects::GObject,
+    imports: &mut Imports,
+    mut signatures: Option<&mut Signatures>,
+    deps: Option<&[library::TypeId]>,
+) -> Vec<Info> {
     let mut funcs = Vec::new();
 
     for func in functions {
@@ -74,8 +79,7 @@ pub fn analyze<F: Borrow<library::Function>>(env: &Env, functions: &[F], type_ti
                 let (has, version) = signature_params.has_in_deps(env, &name, deps);
                 if has {
                     match version {
-                        Some(v) if v > env.config.min_cfg_version =>
-                            not_version = version,
+                        Some(v) if v > env.config.min_cfg_version => not_version = version,
                         _ => continue,
                     }
                 }
@@ -93,34 +97,59 @@ pub fn analyze<F: Borrow<library::Function>>(env: &Env, functions: &[F], type_ti
     funcs
 }
 
-fn analyze_function(env: &Env, name: String, func: &library::Function, type_tid: library::TypeId,
-                    configured_functions: &[&config::functions::Function],
-                    imports: &mut Imports) -> Info {
+fn analyze_function(
+    env: &Env,
+    name: String,
+    func: &library::Function,
+    type_tid: library::TypeId,
+    configured_functions: &[&config::functions::Function],
+    imports: &mut Imports,
+) -> Info {
     let mut commented = false;
     let mut bounds: Bounds = Default::default();
     let mut used_types: Vec<String> = Vec::with_capacity(4);
 
-    let version = configured_functions.iter().filter_map(|f| f.version).min()
+    let version = configured_functions
+        .iter()
+        .filter_map(|f| f.version)
+        .min()
         .or(func.version);
     let version = env.config.filter_version(version);
     let deprecated_version = func.deprecated_version;
-    let cfg_condition = configured_functions.iter().filter_map(|f| f.cfg_condition.clone()).next();
+    let cfg_condition = configured_functions
+        .iter()
+        .filter_map(|f| f.cfg_condition.clone())
+        .next();
     let doc_hidden = configured_functions.iter().any(|f| f.doc_hidden);
 
-    let ret = return_value::analyze(env, func, type_tid, configured_functions, &mut used_types, imports);
+    let ret = return_value::analyze(
+        env,
+        func,
+        type_tid,
+        configured_functions,
+        &mut used_types,
+        imports,
+    );
     commented |= ret.commented;
 
-    let mut parameters: Vec<parameter::Parameter> =
-        func.parameters.iter().map(|par| parameter::analyze(env, par, configured_functions)).collect();
+    let mut parameters: Vec<parameter::Parameter> = func.parameters
+        .iter()
+        .map(|par| parameter::analyze(env, par, configured_functions))
+        .collect();
 
     for (pos, par) in parameters.iter_mut().enumerate() {
-        assert!(!par.instance_parameter || pos == 0,
-            "Wrong instance parameter in {}", func.c_identifier.as_ref().unwrap());
+        assert!(
+            !par.instance_parameter || pos == 0,
+            "Wrong instance parameter in {}",
+            func.c_identifier.as_ref().unwrap()
+        );
         if let Ok(s) = used_rust_type(env, par.typ) {
             used_types.push(s);
         }
         bounds.add_for_parameter(env, func, par);
-        let type_error = parameter_rust_type(env, par.typ, par.direction, Nullable(false), RefMode::None).is_err();
+        let type_error =
+            parameter_rust_type(env, par.typ, par.direction, Nullable(false), RefMode::None)
+                .is_err();
         if type_error {
             commented = true;
         }
@@ -128,7 +157,10 @@ fn analyze_function(env: &Env, name: String, func: &library::Function, type_tid:
 
     let (outs, unsupported_outs) = out_parameters::analyze(env, func, configured_functions);
     if unsupported_outs {
-        warn!("Function {} has unsupported outs", func.c_identifier.as_ref().unwrap_or(&func.name));
+        warn!(
+            "Function {} has unsupported outs",
+            func.c_identifier.as_ref().unwrap_or(&func.name)
+        );
         commented = true;
     } else if !outs.is_empty() && !commented {
         out_parameters::analyze_imports(env, func, imports);
@@ -142,7 +174,11 @@ fn analyze_function(env: &Env, name: String, func: &library::Function, type_tid:
         bounds.update_imports(imports);
     }
 
-    let visibility = if commented { Visibility::Comment } else { Visibility::Public };
+    let visibility = if commented {
+        Visibility::Comment
+    } else {
+        Visibility::Public
+    };
     let assertion = SafetyAssertionMode::of(env, &parameters);
 
     Info {

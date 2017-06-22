@@ -39,10 +39,9 @@ impl_to_stripper_type!(Function, Fn);
 impl_to_stripper_type!(Class, Struct);
 
 pub fn generate(env: &Env) {
-    let path =  env.config.target_path.join("docs.md");
+    let path = env.config.target_path.join("docs.md");
     println!("Generating documentation {:?}", path);
-    save_to_file(&path, env.config.make_backup,
-        |w| generate_doc(w, env));
+    save_to_file(&path, env.config.make_backup, |w| generate_doc(w, env));
 }
 
 fn generate_doc(mut w: &mut Write, env: &Env) -> Result<()> {
@@ -51,28 +50,34 @@ fn generate_doc(mut w: &mut Write, env: &Env) -> Result<()> {
 
     for info in env.analysis.objects.values() {
         if info.type_id.ns_id == MAIN {
-            generators.push((&info.name, Box::new(move |w, e| {
-                create_object_doc(w, e, info)
-            })));
+            generators.push((
+                &info.name,
+                Box::new(move |w, e| create_object_doc(w, e, info)),
+            ));
         }
     }
 
     for info in env.analysis.records.values() {
         if info.type_id.ns_id == MAIN {
-            generators.push((&info.name, Box::new(move |w, e| {
-                create_record_doc(w, e, info)
-            })));
+            generators.push((
+                &info.name,
+                Box::new(move |w, e| create_record_doc(w, e, info)),
+            ));
         }
     }
 
     for (tid, type_) in env.library.namespace_types(MAIN) {
         match *type_ {
             LType::Enumeration(ref enum_) => {
-                if !env.config.objects.get(&tid.full_name(&env.library))
-                        .map_or(true, |obj| obj.status.ignored()) {
-                    generators.push((&enum_.name[..], Box::new(move |w, e| {
-                        create_enum_doc(w, e, enum_)
-                    })));
+                if !env.config
+                    .objects
+                    .get(&tid.full_name(&env.library))
+                    .map_or(true, |obj| obj.status.ignored())
+                {
+                    generators.push((
+                        &enum_.name[..],
+                        Box::new(move |w, e| create_enum_doc(w, e, enum_)),
+                    ));
                 }
             }
             _ => {}
@@ -121,11 +126,18 @@ fn create_object_doc(w: &mut Write, env: &Env, info: &analysis::object::Info) ->
         }
 
         let impl_self = if has_trait { Some(info.type_id) } else { None };
-        let implements = impl_self.iter()
+        let implements = impl_self
+            .iter()
             .chain(env.class_hierarchy.supertypes(info.type_id))
-            .filter(|&tid| !env.type_status(&tid.full_name(&env.library)).ignored())
-            .map(|&tid| format!("[`{name}Ext`](trait.{name}Ext.html)",
-                                name = env.library.type_(tid).get_name()))
+            .filter(|&tid| {
+                !env.type_status(&tid.full_name(&env.library)).ignored()
+            })
+            .map(|&tid| {
+                format!(
+                    "[`{name}Ext`](trait.{name}Ext.html)",
+                    name = env.library.type_(tid).get_name()
+                )
+            })
             .collect::<Vec<_>>();
         if !implements.is_empty() {
             try!(writeln!(w, "\n# Implements\n"));
@@ -145,11 +157,18 @@ fn create_object_doc(w: &mut Write, env: &Env, info: &analysis::object::Info) ->
                 try!(writeln!(w, "\nFeature: `{}`", version.to_feature()));
             }
 
-            let mut implementors = Some(info.type_id).into_iter()
+            let mut implementors = Some(info.type_id)
+                .into_iter()
                 .chain(env.class_hierarchy.subtypes(info.type_id))
-                .filter(|&tid| !env.type_status(&tid.full_name(&env.library)).ignored())
-                .map(|tid| format!("[`{name}`](struct.{name}.html)",
-                                    name = env.library.type_(tid).get_name()))
+                .filter(|&tid| {
+                    !env.type_status(&tid.full_name(&env.library)).ignored()
+                })
+                .map(|tid| {
+                    format!(
+                        "[`{name}`](struct.{name}.html)",
+                        name = env.library.type_(tid).get_name()
+                    )
+                })
                 .collect::<Vec<_>>();
             implementors.sort();
 
@@ -159,13 +178,15 @@ fn create_object_doc(w: &mut Write, env: &Env, info: &analysis::object::Info) ->
         }));
     }
 
-    let ty = TypeStruct { ty: SType::Impl, ..ty };
+    let ty = TypeStruct {
+        ty: SType::Impl,
+        ..ty
+    };
 
     for function in functions {
         let ty = if has_trait && function.parameters.iter().any(|p| p.instance_parameter) {
             ty_ext.clone()
-        }
-        else {
+        } else {
             ty.clone()
         };
         try!(create_fn_doc(w, env, function, Some(Box::new(ty))));
@@ -199,7 +220,10 @@ fn create_record_doc(w: &mut Write, env: &Env, info: &analysis::record::Info) ->
         Ok(())
     }));
 
-    let ty = TypeStruct { ty: SType::Impl, ..ty };
+    let ty = TypeStruct {
+        ty: SType::Impl,
+        ..ty
+    };
     for function in &record.functions {
         try!(create_fn_doc(w, env, function, Some(Box::new(ty.clone()))));
     }
@@ -226,7 +250,10 @@ fn create_enum_doc(w: &mut Write, env: &Env, enum_: &Enumeration) -> Result<()> 
     }));
 
     for member in &enum_.members {
-        let mut sub_ty = TypeStruct { name: member.name.to_camel(), ..member.to_stripper_type()};
+        let mut sub_ty = TypeStruct {
+            name: member.name.to_camel(),
+            ..member.to_stripper_type()
+        };
 
         if member.doc.is_some() {
             sub_ty.parent = Some(Box::new(ty.clone()));
@@ -255,15 +282,19 @@ fn fix_param_names<'a>(doc: &'a str, self_name: &Option<String>) -> Cow<'a, str>
     PARAM_NAME.replace_all(doc, |caps: &Captures| {
         if let Some(ref self_name) = *self_name {
             if &caps[1] == self_name {
-                return "@self".into()
+                return "@self".into();
             }
         }
         format!("@{}", nameutil::mangle_keywords(&caps[1]))
     })
 }
 
-fn create_fn_doc(w: &mut Write, env: &Env, fn_: &Function, parent: Option<Box<TypeStruct>>)
-        -> Result<()> {
+fn create_fn_doc(
+    w: &mut Write,
+    env: &Env,
+    fn_: &Function,
+    parent: Option<Box<TypeStruct>>,
+) -> Result<()> {
     if fn_.doc.is_none() && fn_.doc_deprecated.is_none() && fn_.ret.doc.is_none() {
         if fn_.parameters.iter().all(|p| p.doc.is_none()) {
             return Ok(());
@@ -271,15 +302,23 @@ fn create_fn_doc(w: &mut Write, env: &Env, fn_: &Function, parent: Option<Box<Ty
     }
 
     let symbols = env.symbols.borrow();
-    let ty = TypeStruct { parent: parent, ..fn_.to_stripper_type() };
+    let ty = TypeStruct {
+        parent: parent,
+        ..fn_.to_stripper_type()
+    };
 
-    let self_name: Option<String> = fn_.parameters.iter()
+    let self_name: Option<String> = fn_.parameters
+        .iter()
         .find(|p| p.instance_parameter)
         .map(|p| p.name.clone());
 
     write_item_doc(w, &ty, |w| {
         if let Some(ref doc) = fn_.doc {
-            try!(writeln!(w, "{}", reformat_doc(&fix_param_names(doc, &self_name), &symbols)));
+            try!(writeln!(
+                w,
+                "{}",
+                reformat_doc(&fix_param_names(doc, &self_name), &symbols)
+            ));
         }
         if let Some(version) = fn_.version {
             if version > env.config.min_cfg_version {
@@ -292,22 +331,38 @@ fn create_fn_doc(w: &mut Write, env: &Env, fn_: &Function, parent: Option<Box<Ty
             try!(writeln!(w, "\n# Deprecated\n"));
         }
         if let Some(ref doc) = fn_.doc_deprecated {
-            try!(writeln!(w, "{}", reformat_doc(&fix_param_names(doc, &self_name), &symbols)));
+            try!(writeln!(
+                w,
+                "{}",
+                reformat_doc(&fix_param_names(doc, &self_name), &symbols)
+            ));
         }
 
         for parameter in &fn_.parameters {
             if parameter.instance_parameter || parameter.name.is_empty() {
-                continue
+                continue;
             }
             if let Some(ref doc) = parameter.doc {
-                try!(writeln!(w, "## `{}`", nameutil::mangle_keywords(&parameter.name[..])));
-                try!(writeln!(w, "{}", reformat_doc(&fix_param_names(doc, &self_name), &symbols)));
+                try!(writeln!(
+                    w,
+                    "## `{}`",
+                    nameutil::mangle_keywords(&parameter.name[..])
+                ));
+                try!(writeln!(
+                    w,
+                    "{}",
+                    reformat_doc(&fix_param_names(doc, &self_name), &symbols)
+                ));
             }
         }
 
         if let Some(ref doc) = fn_.ret.doc {
             try!(writeln!(w, "\n# Returns\n"));
-            try!(writeln!(w, "{}", reformat_doc(&fix_param_names(doc, &self_name), &symbols)));
+            try!(writeln!(
+                w,
+                "{}",
+                reformat_doc(&fix_param_names(doc, &self_name), &symbols)
+            ));
         }
         Ok(())
     })

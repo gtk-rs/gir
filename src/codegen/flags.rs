@@ -24,11 +24,9 @@ pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>) {
         }
         try!(writeln!(w, ""));
 
-        let configs = env.config.objects.values()
-            .filter(|c| {
-                c.status.need_generate() &&
-                    c.type_id.map_or(false, |tid| tid.ns_id == namespaces::MAIN)
-            });
+        let configs = env.config.objects.values().filter(|c| {
+            c.status.need_generate() && c.type_id.map_or(false, |tid| tid.ns_id == namespaces::MAIN)
+        });
         let mut first = true;
         for config in configs {
             if let Type::Bitfield(ref flags) = *env.library.type_(config.type_id.unwrap()) {
@@ -36,7 +34,7 @@ pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>) {
                     mod_rs.push("\nmod flags;".into());
                     first = false;
                 }
-                if let Some (cfg) = version_condition_string(env, flags.version, false, 0) {
+                if let Some(cfg) = version_condition_string(env, flags.version, false, 0) {
                     mod_rs.push(cfg);
                 }
                 mod_rs.push(format!("pub use self::flags::{};", flags.name));
@@ -48,33 +46,49 @@ pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>) {
     });
 }
 
-fn generate_flags(env: &Env, w: &mut Write, mod_rs: &mut Vec<String>, flags: &Bitfield,
-                  config: &GObject) -> Result<()> {
+fn generate_flags(
+    env: &Env,
+    w: &mut Write,
+    mod_rs: &mut Vec<String>,
+    flags: &Bitfield,
+    config: &GObject,
+) -> Result<()> {
     try!(version_condition(w, env, flags.version, false, 0));
     try!(writeln!(w, "bitflags! {{"));
     try!(writeln!(w, "    pub struct {}: u32 {{", flags.name));
     for member in &flags.members {
-        let name = strip_prefix_uppercase(&env.library.namespace(namespaces::MAIN).symbol_prefixes,
-            &member.c_identifier);
+        let name = strip_prefix_uppercase(
+            &env.library.namespace(namespaces::MAIN).symbol_prefixes,
+            &member.c_identifier,
+        );
         let val: i64 = member.value.parse().unwrap();
         let member_config = config.members.matched(&member.name);
         let version = member_config.iter().filter_map(|m| m.version).next();
         try!(version_condition(w, env, version, false, 2));
         try!(writeln!(w, "\t\tconst {} = {};", name, val as u32));
-        if let Some(cfg) = version_condition_string(env,
-                cmp::max(flags.version, version), false, 0) {
+        if let Some(cfg) = version_condition_string(
+            env,
+            cmp::max(flags.version, version),
+            false,
+            0,
+        ) {
             mod_rs.push(cfg);
         }
         mod_rs.push(format!("pub use self::flags::{};", name));
     }
 
-    try!(writeln!(w, "{}",
-"    }
+    try!(writeln!(
+        w,
+        "{}",
+        "    }
 }
-"));
+"
+    ));
 
     try!(version_condition(w, env, flags.version, false, 0));
-    try!(writeln!(w, "#[doc(hidden)]
+    try!(writeln!(
+        w,
+        "#[doc(hidden)]
 impl ToGlib for {name} {{
     type GlibType = ffi::{ffi_name};
 
@@ -82,7 +96,10 @@ impl ToGlib for {name} {{
         ffi::{ffi_name}::from_bits_truncate(self.bits())
     }}
 }}
-", name = flags.name, ffi_name = flags.c_type));
+",
+        name = flags.name,
+        ffi_name = flags.c_type
+    ));
 
     let assert = if env.config.generate_safety_asserts {
         "skip_assert_initialized!();\n\t\t"
@@ -91,13 +108,19 @@ impl ToGlib for {name} {{
     };
 
     try!(version_condition(w, env, flags.version, false, 0));
-    try!(writeln!(w, "#[doc(hidden)]
+    try!(writeln!(
+        w,
+        "#[doc(hidden)]
 impl FromGlib<ffi::{ffi_name}> for {name} {{
     fn from_glib(value: ffi::{ffi_name}) -> {name} {{
         {assert}{name}::from_bits_truncate(value.bits())
     }}
 }}
-", name = flags.name, ffi_name = flags.c_type, assert = assert));
+",
+        name = flags.name,
+        ffi_name = flags.c_type,
+        assert = assert
+    ));
 
     Ok(())
 }

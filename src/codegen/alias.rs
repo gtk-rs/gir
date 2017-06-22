@@ -11,10 +11,11 @@ use std::path::Path;
 use traits::*;
 
 pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>) {
-    let configs: Vec<&GObject> = env.config.objects.values()
+    let configs: Vec<&GObject> = env.config
+        .objects
+        .values()
         .filter(|c| {
-            c.status.need_generate() &&
-                c.type_id.map_or(false, |tid| tid.ns_id == namespaces::MAIN)
+            c.status.need_generate() && c.type_id.map_or(false, |tid| tid.ns_id == namespaces::MAIN)
         })
         .collect();
     let mut has_any = false;
@@ -52,4 +53,3 @@ fn generate_alias(env: &Env, w: &mut Write, alias: &Alias, _: &GObject) -> Resul
 
     Ok(())
 }
-

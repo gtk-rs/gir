@@ -12,11 +12,21 @@ pub fn rustify_pointers(c_type: &str) -> (String, String) {
         input.find("*const"),
         input.find('*'),
         Some(input.len()),
-    ].iter().filter_map(|&x| x).min().unwrap();
+    ].iter()
+        .filter_map(|&x| x)
+        .min()
+        .unwrap();
     let inner = input[..end].trim().into();
 
-    let mut ptrs: Vec<_> = input[end..].rsplit('*').skip(1)
-        .map(|s| if s.contains("const") { "*const" } else { "*mut" }).collect();
+    let mut ptrs: Vec<_> = input[end..]
+        .rsplit('*')
+        .skip(1)
+        .map(|s| if s.contains("const") {
+            "*const"
+        } else {
+            "*mut"
+        })
+        .collect();
     if let (true, Some(p)) = (leading_const, ptrs.last_mut()) {
         *p = "*const";
     }
@@ -32,8 +42,12 @@ pub fn is_mut_ptr(c_type: &str) -> bool {
 }
 
 pub fn implements_c_type(env: &Env, tid: TypeId, c_type: &str) -> bool {
-    env.class_hierarchy.supertypes(tid).iter()
-        .any(|&super_tid| env.library.type_(super_tid).get_glib_name() == Some(c_type))
+    env.class_hierarchy
+        .supertypes(tid)
+        .iter()
+        .any(|&super_tid| {
+            env.library.type_(super_tid).get_glib_name() == Some(c_type)
+        })
 }
 
 #[cfg(test)]
@@ -54,8 +68,14 @@ mod tests {
         assert_eq!(rustify_ptr(" char * * "), s("*mut *mut", "char"));
         assert_eq!(rustify_ptr("const char**"), s("*mut *const", "char"));
         assert_eq!(rustify_ptr("char const**"), s("*mut *const", "char"));
-        assert_eq!(rustify_ptr("const char* const*"), s("*const *const", "char"));
-        assert_eq!(rustify_ptr("char const * const *"), s("*const *const", "char"));
+        assert_eq!(
+            rustify_ptr("const char* const*"),
+            s("*const *const", "char")
+        );
+        assert_eq!(
+            rustify_ptr("char const * const *"),
+            s("*const *const", "char")
+        );
         assert_eq!(rustify_ptr("char* const*"), s("*const *mut", "char"));
 
         assert_eq!(rustify_ptr("GtkWidget*"), s("*mut", "GtkWidget"));

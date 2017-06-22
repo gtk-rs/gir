@@ -12,7 +12,11 @@ pub trait ToParameter {
 
 impl ToParameter for Parameter {
     fn to_parameter(&self, env: &Env, bounds: &Bounds) -> String {
-        let mut_str = if self.ref_mode == RefMode::ByRefMut { "mut " } else { "" };
+        let mut_str = if self.ref_mode == RefMode::ByRefMut {
+            "mut "
+        } else {
+            ""
+        };
         if self.instance_parameter {
             format!("&{}self", mut_str)
         } else {
@@ -20,21 +24,27 @@ impl ToParameter for Parameter {
             match bounds.get_parameter_alias_info(&self.name) {
                 Some((t, bound_type)) => {
                     match bound_type {
-                        BoundType::IsA(_) => if *self.nullable {
-                            // should not happen!
-                            type_str = String::new()
-                        } else {
-                            type_str = format!("&{}{}", mut_str, t)
-                        },
-                        BoundType::Into(_, Some(_)) => {
-                            type_str = t.to_string()
+                        BoundType::IsA(_) => {
+                            if *self.nullable {
+                                // should not happen!
+                                type_str = String::new()
+                            } else {
+                                type_str = format!("&{}{}", mut_str, t)
+                            }
                         }
-                        BoundType::AsRef(_) | BoundType::Into(_, None) => type_str = t.to_string(),
+                        BoundType::Into(_, Some(_)) => type_str = t.to_string(),
+                        BoundType::AsRef(_) |
+                        BoundType::Into(_, None) => type_str = t.to_string(),
                     }
                 }
                 None => {
-                    let rust_type = parameter_rust_type(env, self.typ, self.direction,
-                                                        self.nullable, self.ref_mode);
+                    let rust_type = parameter_rust_type(
+                        env,
+                        self.typ,
+                        self.direction,
+                        self.nullable,
+                        self.ref_mode,
+                    );
                     let type_name = rust_type.into_string();
                     type_str = match ConversionType::of(&env.library, self.typ) {
                         ConversionType::Unknown => format!("/*Unknown conversion*/{}", type_name),
