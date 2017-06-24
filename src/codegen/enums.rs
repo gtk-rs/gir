@@ -50,6 +50,7 @@ pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>) {
             }
             try!(writeln!(w, "use glib::translate::*;"));
         }
+        try!(writeln!(w, "use std;"));
         try!(writeln!(w, ""));
 
         if has_any {
@@ -73,6 +74,7 @@ fn generate_enum(env: &Env, w: &mut Write, enum_: &Enumeration, config: &GObject
     struct Member {
         name: String,
         c_name: String,
+        value: String,
         version: Option<Version>,
     }
 
@@ -90,6 +92,7 @@ fn generate_enum(env: &Env, w: &mut Write, enum_: &Enumeration, config: &GObject
         members.push(Member {
             name: member.name.to_camel(),
             c_name: member.c_identifier.clone(),
+            value: member.value.clone(),
             version: version,
         });
     }
@@ -108,7 +111,7 @@ fn generate_enum(env: &Env, w: &mut Write, enum_: &Enumeration, config: &GObject
         w,
         "{}",
         "    #[doc(hidden)]
-    __Nonexhaustive(()),
+    __Unknown(i32),
 }
 "
     ));
@@ -137,7 +140,7 @@ impl ToGlib for {name} {{
     }
     try!(writeln!(
         w,
-        "\t\t\t{}::__Nonexhaustive(_) => panic!(),",
+        "\t\t\t{}::__Unknown(value) => unsafe{{std::mem::transmute(value)}}",
         enum_.name
     ));
     try!(writeln!(
@@ -161,7 +164,7 @@ impl ToGlib for {name} {{
         "#[doc(hidden)]
 impl FromGlib<ffi::{ffi_name}> for {name} {{
     fn from_glib(value: ffi::{ffi_name}) -> Self {{
-        {assert}match value {{",
+        {assert}match value as i32 {{",
         name = enum_.name,
         ffi_name = enum_.c_type,
         assert = assert
@@ -170,19 +173,17 @@ impl FromGlib<ffi::{ffi_name}> for {name} {{
         try!(version_condition(w, env, member.version, false, 3));
         try!(writeln!(
             w,
-            "\t\t\tffi::{} => {}::{},",
-            member.c_name,
+            "\t\t\t{} => {}::{},",
+            member.value,
             enum_.name,
             member.name
         ));
     }
-    if members.len() == 1 {
-        try!(writeln!(
-            w,
-            "\t\t\t_ => {}::__Nonexhaustive(()),",
-            enum_.name
-        ));
-    }
+    try!(writeln!(
+        w,
+        "\t\t\tvalue => {}::__Unknown(value),",
+        enum_.name
+    ));
     try!(writeln!(
         w,
         "{}",
@@ -218,8 +219,8 @@ impl FromGlib<ffi::{ffi_name}> for {name} {{
             try!(version_condition(w, env, member.version, false, 3));
             try!(writeln!(
                 w,
-                "\t\t\tx if x == ffi::{} as i32 => Some({}::{}),",
-                member.c_name,
+                "\t\t\t{} => Some({}::{}),",
+                member.value,
                 enum_.name,
                 member.name
             ));
@@ -229,7 +230,7 @@ impl FromGlib<ffi::{ffi_name}> for {name} {{
         } else {
             try!(writeln!(
                 w,
-                "\t\t\t_ => Some({}::__Nonexhaustive(())),",
+                "\t\t\tvalue => Some({}::__Unknown(value)),",
                 enum_.name
             ));
         }
