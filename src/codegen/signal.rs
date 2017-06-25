@@ -1,6 +1,7 @@
 use std::io::{Result, Write};
 
 use analysis;
+use library;
 use chunk::Chunk;
 use consts::TYPE_PARAMETERS_START;
 use env::Env;
@@ -18,12 +19,13 @@ pub fn generate(
     in_trait: bool,
     only_declaration: bool,
     indent: usize,
+    concurrency: library::Concurrency,
 ) -> Result<()> {
     let commented = analysis.trampoline_name.is_err();
     let comment_prefix = if commented { "//" } else { "" };
     let pub_prefix = if in_trait { "" } else { "pub " };
 
-    let function_type_string = function_type_string(env, analysis, trampolines);
+    let function_type_string = function_type_string(env, analysis, trampolines, concurrency);
     let declaration = declaration(analysis, &function_type_string);
     let suffix = if only_declaration { ";" } else { " {" };
 
@@ -79,6 +81,7 @@ fn function_type_string(
     env: &Env,
     analysis: &analysis::signals::Info,
     trampolines: &analysis::trampolines::Trampolines,
+    concurrency: library::Concurrency,
 ) -> Option<String> {
     if analysis.trampoline_name.is_err() {
         return None;
@@ -95,7 +98,12 @@ fn function_type_string(
         }
     };
 
-    let type_ = func_string(env, trampoline, Some((TYPE_PARAMETERS_START, "Self")));
+    let type_ = func_string(
+        env,
+        trampoline,
+        Some((TYPE_PARAMETERS_START, "Self")),
+        concurrency,
+    );
     Some(type_)
 }
 

@@ -1,6 +1,7 @@
 use std::io::{Result, Write};
 
 use analysis;
+use library;
 use analysis::special_functions::Type;
 use env::Env;
 use super::{function, general, trait_impls};
@@ -60,6 +61,25 @@ pub fn generate(w: &mut Write, env: &Env, analysis: &analysis::record::Info) -> 
         &analysis.specials,
         false,
     ));
+
+    if analysis.concurrency != library::Concurrency::None {
+        try!(writeln!(w, ""));
+    }
+
+    match analysis.concurrency {
+        library::Concurrency::Send |
+        library::Concurrency::SendSync => {
+            try!(writeln!(w, "unsafe impl Send for {} {{}}", analysis.name));
+        }
+        _ => (),
+    }
+
+    match analysis.concurrency {
+        library::Concurrency::SendSync => {
+            try!(writeln!(w, "unsafe impl Sync for {} {{}}", analysis.name));
+        }
+        _ => (),
+    }
 
     Ok(())
 }

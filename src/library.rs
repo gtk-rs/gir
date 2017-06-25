@@ -99,6 +99,32 @@ impl FromStr for FunctionKind {
     }
 }
 
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum Concurrency {
+    None,
+    Send,
+    SendSync,
+}
+
+impl FromStr for Concurrency {
+    type Err = String;
+    fn from_str(name: &str) -> Result<Concurrency, String> {
+        use self::Concurrency::*;
+        match name {
+            "none" => Ok(None),
+            "send" => Ok(Send),
+            "send+sync" => Ok(SendSync),
+            _ => Err("Unknown concurrency kind".into()),
+        }
+    }
+}
+
+impl Default for Concurrency {
+    fn default() -> Concurrency {
+        Concurrency::None
+    }
+}
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Fundamental {
     None,
