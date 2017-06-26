@@ -171,6 +171,30 @@ status = "generate"
 Note that you must not place `Gtk.*` into the `generate` array and
 additionally configure its members.
 
+In various cases, GObjects or boxed types can be used from multiple threads
+and have certain concurrency guarantees. This can be configured with the
+`concurrency` setting at the top-level options or per object. It will
+automatically implement the `Send` and `Sync` traits for the resulting object
+and set appropriate trait bounds for signal callbacks. The default is `none`,
+and apart from that `send` and `send+sync` are supported.
+
+```toml
+[[object]]
+# object's fullname
+name = "Gtk.SomeClass"
+# can be also "manual" and "ignore" but it's simpler to just put the object in the same array
+status = "generate"
+# concurrency of the object, default is set in the top-level options or
+# otherwise "none". Valid values are "none", "send" and "send+sync"
+concurrency = "send+sync"
+```
+
+Note that `send` is only valid for types that are either not reference counted
+(i.e. `clone()` copies the object) or that are read-only (i.e. no API for
+mutating the object exists). `send+sync` is valid if the type can be sent to
+different threads and all API allows simultaneous calls from different threads
+due to internal locking via e.g. a mutex.
+
 ### Generation
 
 To generate the Rust-user API level, The command is very similar to the previous one. It's better to not put this output in the same directory as where the FFI files are. Just run:
