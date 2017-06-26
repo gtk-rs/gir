@@ -3,6 +3,7 @@ use std::collections::BTreeMap;
 use std::str::FromStr;
 use toml::Value;
 
+use library;
 use library::{Library, TypeId, MAIN_NAMESPACE};
 use config::error::TomlHelper;
 use config::parsable::{Parsable, Parse};
@@ -67,6 +68,7 @@ pub struct GObject {
     pub type_id: Option<TypeId>,
     pub generate_trait: bool,
     pub child_properties: Option<ChildProperties>,
+    pub concurrency: library::Concurrency,
 }
 
 impl Default for GObject {
@@ -84,6 +86,7 @@ impl Default for GObject {
             type_id: None,
             generate_trait: true,
             child_properties: None,
+            concurrency: Default::default(),
         }
     }
 }
@@ -91,16 +94,16 @@ impl Default for GObject {
 //TODO: ?change to HashMap<String, GStatus>
 pub type GObjects = BTreeMap<String, GObject>;
 
-pub fn parse_toml(toml_objects: &Value) -> GObjects {
+pub fn parse_toml(toml_objects: &Value, concurrency: library::Concurrency) -> GObjects {
     let mut objects = GObjects::new();
     for toml_object in toml_objects.as_array().unwrap() {
-        let gobject = parse_object(toml_object);
+        let gobject = parse_object(toml_object, concurrency);
         objects.insert(gobject.name.clone(), gobject);
     }
     objects
 }
 
-fn parse_object(toml_object: &Value) -> GObject {
+fn parse_object(toml_object: &Value, concurrency: library::Concurrency) -> GObject {
     let name: String = toml_object
         .lookup("name")
         .expect("Object name not defined")
@@ -135,6 +138,11 @@ fn parse_object(toml_object: &Value) -> GObject {
         .lookup("trait")
         .and_then(|v| v.as_bool())
         .unwrap_or(true);
+    let concurrency = toml_object
+        .lookup("concurrency")
+        .and_then(|v| v.as_str())
+        .and_then(|v| v.parse().ok())
+        .unwrap_or(concurrency);
     let child_properties = ChildProperties::parse(toml_object, &name);
 
     GObject {
@@ -150,17 +158,27 @@ fn parse_object(toml_object: &Value) -> GObject {
         type_id: None,
         generate_trait: generate_trait,
         child_properties: child_properties,
+        concurrency: concurrency,
     }
 }
 
-pub fn parse_status_shorthands(objects: &mut GObjects, toml: &Value) {
+pub fn parse_status_shorthands(
+    objects: &mut GObjects,
+    toml: &Value,
+    concurrency: library::Concurrency,
+) {
     use self::GStatus::*;
     for &status in &[Manual, Generate, Comment, Ignore] {
-        parse_status_shorthand(objects, status, toml);
+        parse_status_shorthand(objects, status, toml, concurrency);
     }
 }
 
-fn parse_status_shorthand(objects: &mut GObjects, status: GStatus, toml: &Value) {
+fn parse_status_shorthand(
+    objects: &mut GObjects,
+    status: GStatus,
+    toml: &Value,
+    concurrency: library::Concurrency,
+) {
     let name = format!("options.{:?}", status).to_ascii_lowercase();
     toml.lookup(&name).map(|a| a.as_array().unwrap()).map(
         |a| for name_ in a.iter().map(|s| s.as_str().unwrap()) {
@@ -171,6 +189,7 @@ fn parse_status_shorthand(objects: &mut GObjects, status: GStatus, toml: &Value)
                         GObject {
                             name: name_.into(),
                             status: status,
+                            concurrency: concurrency,
                             ..Default::default()
                         },
                     );

@@ -6,6 +6,7 @@ use std::str::FromStr;
 use toml;
 
 use git::repo_hash;
+use library;
 use library::Library;
 use super::WorkMode;
 use super::gobjects;
@@ -41,6 +42,7 @@ pub struct Config {
     pub generate_safety_asserts: bool,
     pub deprecate_by_min_version: bool,
     pub show_statistics: bool,
+    pub concurrency: library::Concurrency,
 }
 
 impl Config {
@@ -105,10 +107,17 @@ impl Config {
             a => a.into(),
         };
 
+        let concurrency = match toml.lookup("options.concurrency") {
+            Some(v) => try!(try!(v.as_result_str("options.concurrency")).parse()),
+            None => Default::default(),
+        };
+
+        // options.concurrency is the default of all objects if nothing
+        // else is configured
         let mut objects = toml.lookup("object")
-            .map(|t| gobjects::parse_toml(t))
+            .map(|t| gobjects::parse_toml(t, concurrency))
             .unwrap_or_default();
-        gobjects::parse_status_shorthands(&mut objects, &toml);
+        gobjects::parse_status_shorthands(&mut objects, &toml, concurrency);
 
         let external_libraries = match toml.lookup("options.external_libraries") {
             Some(a) => {
@@ -153,6 +162,7 @@ impl Config {
             generate_safety_asserts: generate_safety_asserts,
             deprecate_by_min_version: deprecate_by_min_version,
             show_statistics: show_statistics,
+            concurrency: concurrency,
         })
     }
 

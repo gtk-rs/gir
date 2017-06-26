@@ -177,6 +177,7 @@ pub fn class(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<Info>
         version: version,
         deprecated_version: deprecated_version,
         cfg_condition: obj.cfg_condition.clone(),
+        concurrency: obj.concurrency,
     };
 
     // patch up trait methods in the symbol table
@@ -295,6 +296,7 @@ pub fn interface(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<I
         version: version,
         deprecated_version: deprecated_version,
         cfg_condition: obj.cfg_condition.clone(),
+        concurrency: obj.concurrency,
     };
 
     let has_methods = !base.methods().is_empty();

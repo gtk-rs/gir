@@ -98,6 +98,7 @@ pub fn new(env: &Env, obj: &GObject) -> Option<Info> {
         version: version,
         deprecated_version: deprecated_version,
         cfg_condition: obj.cfg_condition.clone(),
+        concurrency: obj.concurrency,
     };
 
     let info = Info { base: base };

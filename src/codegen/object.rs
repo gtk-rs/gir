@@ -1,6 +1,7 @@
 use std::io::{Result, Write};
 
 use analysis;
+use library;
 use env::Env;
 use super::child_properties;
 use super::function;
@@ -64,6 +65,7 @@ pub fn generate(w: &mut Write, env: &Env, analysis: &analysis::object::Info) -> 
                     false,
                     false,
                     1,
+                    analysis.concurrency,
                 ));
             }
         }
@@ -78,6 +80,25 @@ pub fn generate(w: &mut Write, env: &Env, analysis: &analysis::object::Info) -> 
         &analysis.specials,
         generate_trait(analysis),
     ));
+
+    if analysis.concurrency != library::Concurrency::None {
+        try!(writeln!(w, ""));
+    }
+
+    match analysis.concurrency {
+        library::Concurrency::Send |
+        library::Concurrency::SendSync => {
+            try!(writeln!(w, "unsafe impl Send for {} {{}}", analysis.name));
+        }
+        _ => (),
+    }
+
+    match analysis.concurrency {
+        library::Concurrency::SendSync => {
+            try!(writeln!(w, "unsafe impl Sync for {} {{}}", analysis.name));
+        }
+        _ => (),
+    }
 
     if generate_trait(analysis) {
         try!(writeln!(w, ""));
@@ -107,6 +128,7 @@ pub fn generate(w: &mut Write, env: &Env, analysis: &analysis::object::Info) -> 
                 true,
                 true,
                 1,
+                analysis.concurrency,
             ));
         }
         try!(writeln!(w, "}}"));
@@ -125,6 +147,7 @@ pub fn generate(w: &mut Write, env: &Env, analysis: &analysis::object::Info) -> 
             analysis.name,
             extra_isa.join("")
         ));
+
         for func_analysis in &analysis.methods() {
             try!(function::generate(w, env, func_analysis, true, false, 1));
         }
@@ -150,6 +173,7 @@ pub fn generate(w: &mut Write, env: &Env, analysis: &analysis::object::Info) -> 
                 true,
                 false,
                 1,
+                analysis.concurrency,
             ));
         }
         try!(writeln!(w, "}}"));
@@ -163,6 +187,7 @@ pub fn generate(w: &mut Write, env: &Env, analysis: &analysis::object::Info) -> 
                 trampoline,
                 generate_trait(analysis),
                 &analysis.name,
+                analysis.concurrency,
             ));
         }
     }

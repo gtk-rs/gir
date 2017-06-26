@@ -18,6 +18,7 @@ pub struct InfoBase {
     pub version: Option<Version>,
     pub deprecated_version: Option<Version>,
     pub cfg_condition: Option<String>,
+    pub concurrency: library::Concurrency,
 }
 
 impl InfoBase {
