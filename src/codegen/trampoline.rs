@@ -121,7 +121,7 @@ fn func_parameter(
                     }
                 }
                 BoundType::AsRef(_) |
-                BoundType::Into(_, _) => t.to_string(),
+                BoundType::Into(_, _, _) => t.to_string(),
             }
         }
         None => {

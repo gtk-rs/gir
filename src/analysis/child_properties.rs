@@ -116,7 +116,8 @@ fn analyze_property(
         let mut is_into = false;
         let mut bounds_str = String::new();
         let dir = library::ParameterDirection::In;
-        let set_params = if let Some(bound) = Bounds::type_for(env, typ, nullable) {
+        let set_params = if let Some(bound) = Bounds::type_for(env, typ, nullable,
+                                                               set_in_ref_mode.is_ref_mut()) {
             is_into = bound.is_into();
             let r_type = bounds_rust_type(env, typ).into_string();
             let mut bounds = Bounds::default();

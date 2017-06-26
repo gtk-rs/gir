@@ -23,10 +23,10 @@ pub struct Parameter {
     pub array_length: Option<u32>,
     pub is_error: bool,
 
-    //analysis fields
+    // analysis fields
     pub ref_mode: RefMode,
-    //filled by functions
-    //TODO: Find normal way to do it
+    // filled by functions
+    // TODO: Find normal way to do it
     pub to_glib_extra: String,
     /// `true` if it is a type that can be put into an `Option`.
     pub is_into: bool,
@@ -80,7 +80,7 @@ pub fn analyze(
     let mut transfer = par.transfer;
     let conversion = ConversionType::of(&env.library, par.typ);
     if conversion == ConversionType::Direct || conversion == ConversionType::Scalar {
-        //For simply types no reason to have these flags
+        // For simple types no reason to have these flags.
         caller_allocates = false;
         transfer = library::Transfer::None;
     }
