@@ -446,7 +446,7 @@ impl Type {
     pub fn get_name(&self) -> String {
         use self::Type::*;
         match *self {
-            Fundamental(fund) => format!("{:?}", fund).into(),
+            Fundamental(fund) => format!("{:?}", fund),
             Alias(ref alias) => alias.name.clone(),
             Enumeration(ref enum_) => enum_.name.clone(),
             Bitfield(ref bit_field) => bit_field.name.clone(),

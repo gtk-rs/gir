@@ -7,7 +7,7 @@ pub enum RefMode {
     None,
     ByRef,
     ByRefMut,
-    ByRefImmut, //immutable reference with mutable pointer in ffi
+    ByRefImmut, // immutable reference with mutable pointer in ffi
     ByRefFake,
 }
 
@@ -83,6 +83,17 @@ impl RefMode {
             ByRefMut => true,
             ByRefImmut => true,
             ByRefFake => true,
+        }
+    }
+
+    pub fn is_ref_mut(&self) -> bool {
+        use self::RefMode::*;
+        match *self {
+            None => false,
+            ByRef => false,
+            ByRefMut => true,
+            ByRefImmut => false,
+            ByRefFake => false,
         }
     }
 }

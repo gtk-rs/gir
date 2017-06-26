@@ -167,7 +167,7 @@ impl Builder {
             let value = Chunk::Custom(format!("{}.into()", param.name));
             chunks.push(Chunk::Let {
                 name: param.name.clone(),
-                is_mut: false,
+                is_mut: param.ref_mode.is_ref_mut(),
                 value: Box::new(value),
                 type_: None,
             });

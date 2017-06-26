@@ -12,6 +12,7 @@ pub struct Builder {
     is_ref: bool,
     is_nullable: bool,
     is_into: bool,
+    is_mutable: bool,
     conversion: PropertyConversion,
 }
 
@@ -60,6 +61,11 @@ impl Builder {
 
     pub fn is_into(&mut self, is_into: bool) -> &mut Builder {
         self.is_into = is_into;
+        self
+    }
+
+    pub fn is_mutable(&mut self, is_mutable: bool) -> &mut Builder {
+        self.is_mutable = is_mutable;
         self
     }
 
@@ -186,7 +192,7 @@ impl Builder {
             let value = Chunk::Custom(format!("{}.into()", self.var_name));
             chunks.push(Chunk::Let {
                 name: self.var_name.clone(),
-                is_mut: false,
+                is_mut: self.is_mutable,
                 value: Box::new(value),
                 type_: None,
             });
