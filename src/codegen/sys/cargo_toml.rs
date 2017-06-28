@@ -42,6 +42,7 @@ fn fill_empty(root: &mut Table, env: &Env) {
         let package = upsert_table(root, "package");
         set_string(package, "name", package_name);
         set_string(package, "version", "0.2.0");
+        set_string(package, "links", crate_name(&env.config.library_name));
     }
 
     {
@@ -62,7 +63,6 @@ fn fill_in(root: &mut Table, env: &Env) {
     {
         let package = upsert_table(root, "package");
         set_string(package, "build", "build.rs");
-        set_string(package, "links", crate_name(&env.config.library_name));
         //set_string(package, "version", "0.2.0");
     }
 
