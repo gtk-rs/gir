@@ -42,6 +42,7 @@ fn fill_empty(root: &mut Table, env: &Env) {
         let package = upsert_table(root, "package");
         set_string(package, "name", package_name);
         set_string(package, "version", "0.2.0");
+        set_string(package, "links", crate_name(&env.config.library_name));
     }
 
     {
@@ -51,7 +52,7 @@ fn fill_empty(root: &mut Table, env: &Env) {
 
     let deps = upsert_table(root, "dependencies");
     for ext_lib in &env.config.external_libraries {
-        let ext_package = format!("{}_sys", crate_name(ext_lib)).replace("_", "-");
+        let ext_package = format!("{}-sys", ext_lib.crate_name);
         let dep = upsert_table(deps, &*ext_package);
         set_string(dep, "path", format!("../{}", ext_package));
         set_string(dep, "version", "0.2.0");
@@ -62,7 +63,6 @@ fn fill_in(root: &mut Table, env: &Env) {
     {
         let package = upsert_table(root, "package");
         set_string(package, "build", "build.rs");
-        set_string(package, "links", crate_name(&env.config.library_name));
         //set_string(package, "version", "0.2.0");
     }
 

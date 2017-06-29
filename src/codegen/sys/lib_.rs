@@ -4,6 +4,7 @@ use case::CaseExt;
 
 use analysis::c_type::rustify_pointers;
 use codegen::general::{self, version_condition};
+use config::ExternalLibrary;
 use env::Env;
 use file_saver::*;
 use library::*;
@@ -74,15 +75,19 @@ fn generate_lib(w: &mut Write, env: &Env) -> Result<()> {
 }
 
 fn generate_extern_crates(w: &mut Write, env: &Env) -> Result<()> {
-    for library_name in &env.config.external_libraries {
-        try!(writeln!(
-            w,
-            "extern crate {0}_sys as {0};",
-            crate_name(library_name)
-        ));
+    for library in &env.config.external_libraries {
+        try!(w.write_all(get_extern_crate_string(library).as_bytes()));
     }
 
     Ok(())
+}
+
+fn get_extern_crate_string(library: &ExternalLibrary) -> String {
+    format!(
+        "extern crate {}_sys as {};\n",
+        library.crate_name.replace("-", "_"),
+        crate_name(&library.namespace)
+    )
 }
 
 fn prepare<T: Ord>(ns: &Namespace) -> Vec<&T>
@@ -569,4 +574,39 @@ fn generate_fields(env: &Env, struct_name: &str, fields: &[Field]) -> (Vec<Strin
         }
     }
     (lines, commented)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_get_extern_crate_string() {
+        let lib = ExternalLibrary {
+            namespace: "Gdk".to_owned(),
+            crate_name: "gdk".to_owned(),
+        };
+        assert_eq!(
+            get_extern_crate_string(&lib),
+            "extern crate gdk_sys as gdk;\n".to_owned()
+        );
+
+        let lib = ExternalLibrary {
+            namespace: "GdkPixbuf".to_owned(),
+            crate_name: "gdk_pixbuf".to_owned(),
+        };
+        assert_eq!(
+            get_extern_crate_string(&lib),
+            "extern crate gdk_pixbuf_sys as gdk_pixbuf;\n".to_owned()
+        );
+
+        let lib = ExternalLibrary {
+            namespace: "GdkPixbuf".to_owned(),
+            crate_name: "some-crate".to_owned(),
+        };
+        assert_eq!(
+            get_extern_crate_string(&lib),
+            "extern crate some_crate_sys as gdk_pixbuf;\n".to_owned()
+        );
+    }
 }

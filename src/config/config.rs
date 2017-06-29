@@ -8,6 +8,7 @@ use toml;
 use git::repo_hash;
 use library;
 use library::Library;
+use super::external_libraries::{ExternalLibrary, read_external_libraries};
 use super::WorkMode;
 use super::gobjects;
 use super::error::*;
@@ -35,7 +36,7 @@ pub struct Config {
     pub library_name: String,
     pub library_version: String,
     pub target_path: PathBuf,
-    pub external_libraries: Vec<String>,
+    pub external_libraries: Vec<ExternalLibrary>,
     pub objects: gobjects::GObjects,
     pub min_cfg_version: Version,
     pub make_backup: bool,
@@ -119,15 +120,7 @@ impl Config {
             .unwrap_or_default();
         gobjects::parse_status_shorthands(&mut objects, &toml, concurrency);
 
-        let external_libraries = match toml.lookup("options.external_libraries") {
-            Some(a) => {
-                try!(a.as_result_vec("options.external_libraries"))
-                    .iter()
-                    .filter_map(|v| v.as_str().map(String::from))
-                    .collect()
-            }
-            None => Vec::new(),
-        };
+        let external_libraries = try!(read_external_libraries(&toml));
 
         let min_cfg_version = match toml.lookup("options.min_cfg_version") {
             Some(v) => try!(try!(v.as_result_str("options.min_cfg_version")).parse()),
