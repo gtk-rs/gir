@@ -524,37 +524,37 @@ fn generate_fields(env: &Env, struct_name: &str, fields: &[Field]) -> (Vec<Strin
             }
         }
 
-        
-        if !is_gweakref && !truncated && !is_ptr &&
-            !cfg!(feature = "use_unions") &&
-            (is_union || is_bits) &&
-            !is_union_special_case(&field.c_type)
-        {
-            warn!(
-                "Field `{}::{}` not expressible in Rust, truncated",
-                struct_name,
-                field.name
-            );
-            lines.push("\t_truncated_record_marker: c_void,".to_owned());
-            truncated = true;
-        }
+        if !cfg!(feature = "use_unions") {
+            if !is_gweakref && !truncated && !is_ptr &&
+                (is_union || is_bits) &&
+                !is_union_special_case(&field.c_type)
+            {
+                warn!(
+                    "Field `{}::{}` not expressible in Rust, truncated",
+                    struct_name,
+                    field.name
+                );
+                lines.push("\t_truncated_record_marker: c_void,".to_owned());
+                truncated = true;
+            }
 
-        if truncated {
-            if is_union {
-                lines.push("\t//union,".to_owned());
-            } else {
-                let bits = field
-                    .bits
-                    .map(|n| format!(": {}", n))
-                    .unwrap_or_else(|| "".to_owned());
-                lines.push(format!(
-                    "\t//{}: {}{},",
-                    field.name,
-                    field.c_type.as_ref().map(|s| &s[..]).unwrap_or("fn"),
-                    bits
-                ));
-            };
-            continue 'fields;
+            if truncated {
+                if is_union {
+                    lines.push("\t//union,".to_owned());
+                } else {
+                    let bits = field
+                        .bits
+                        .map(|n| format!(": {}", n))
+                        .unwrap_or_else(|| "".to_owned());
+                    lines.push(format!(
+                        "\t//{}: {}{},",
+                        field.name,
+                        field.c_type.as_ref().map(|s| &s[..]).unwrap_or("fn"),
+                        bits
+                    ));
+                };
+                continue 'fields;
+            }
         }
 
         if let Some(ref c_type) = field.c_type {
@@ -563,13 +563,17 @@ fn generate_fields(env: &Env, struct_name: &str, fields: &[Field]) -> (Vec<Strin
             if c_type.is_err() {
                 commented = true;
             }
-            if is_gvalue && field.name == "data" {
-                c_type = Ok("[u64; 2]".to_owned());
+            if !cfg!(feature = "use_unions") {
+                if is_gvalue && field.name == "data" {
+                    c_type = Ok("[u64; 2]".to_owned());
+                }
             }
             lines.push(format!("\tpub {}: {},", name, c_type.into_string()));
         } else if is_gweakref {
-            // union containing a single pointer
-            lines.push("\tpub priv_: gpointer,".to_owned());
+            if !cfg!(feature = "use_unions") {
+                // union containing a single pointer
+                lines.push("\tpub priv_: gpointer,".to_owned());
+            }
         } else {
             let name = mangle_keywords(&*field.name);
             if let Some(func) = env.library.type_(field.typ).maybe_ref_as::<Function>() {
