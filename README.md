@@ -204,3 +204,22 @@ cargo run --release -- -c YourGirFile.toml -d ../gir-files -o the-output-directo
 ```
 
 Now it should be done. Just go to the output directory (so `the-output-directory/auto` in our case) and try to build using `cargo build`. Don't forget to update your dependencies in both projects: nothing much to do in the FFI/sys one but the Rust-user API level will need to have a dependency over the FFI/sys one.
+
+## Nightly Rust Only Features
+
+### Unions
+
+By default union generation is disabled except for some special cases due to unions not yet being a stable feature. However if you are using *nightly* rust, then you can enable union generation using `cargo run --release --features "use_unions"`.
+
+Keep in mind that to access union members, you are required to use `unsafe` blocks, for example;
+
+```
+union myUnion {
+    test : u32
+}
+
+let testUnion = myUnion { test : 42 };
+unsafe { println!("{}", myUnion.test };
+```
+
+This is required as the rust compiler can not guarantee the safety of the union, or that the member being addressed exsits. The union RFC is [here](https://github.com/tbu-/rust-rfcs/blob/master/text/1444-union.md) and the tracking issue is [here](https://github.com/rust-lang/rust/issues/32836).
