@@ -93,6 +93,7 @@ fn ffi_inner(env: &Env, tid: TypeId, inner: &str) -> Result {
             };
             Ok(inner.into())
         }
+        Type::Union(..) |
         Type::Record(..) |
         Type::Alias(..) |
         Type::Function(..) => {

@@ -3,8 +3,13 @@ use std::io::{Result, Write};
 use super::super::general::write_vec;
 
 pub fn begin(w: &mut Write) -> Result<()> {
+    #[cfg(feature = "use_unions")]
+    let u = "#![feature(untagged_unions)]";
+    #[cfg(not(feature = "use_unions"))]
+    let u = "";
+
     let v = vec![
-        "",
+        u,
         "#![allow(non_camel_case_types, non_upper_case_globals)]",
         "",
         "extern crate libc;",
