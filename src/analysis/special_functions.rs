@@ -25,7 +25,7 @@ impl FromStr for Type {
             "compare" => Ok(Compare),
             "copy" => Ok(Copy),
             "equal" => Ok(Equal),
-            "free" => Ok(Free),
+            "free" | "destroy" => Ok(Free),
             "is_equal" => Ok(Equal),
             "ref" | "ref_" => Ok(Ref),
             "to_string" => Ok(ToString),
@@ -35,27 +35,53 @@ impl FromStr for Type {
     }
 }
 
-pub type Infos = BTreeMap<Type, String>; //Type => glib_name
+pub type Infos = BTreeMap<Type, String>; // Type => glib_name
+
+fn update_func(func: &mut FuncInfo, type_: Type) -> bool {
+    if func.visibility != Visibility::Comment {
+        func.visibility = visibility(type_, func.parameters.len());
+    }
+    // I assume `to_string` functions never return `NULL`
+    if type_ == Type::ToString {
+        if let Some(par) = func.ret.parameter.as_mut() {
+            *par.nullable = false;
+        }
+        if func.parameters.len() != 1 {
+            return false;
+        }
+    }
+    true
+}
 
 pub fn extract(functions: &mut Vec<FuncInfo>) -> Infos {
     let mut specials = BTreeMap::new();
+    let mut has_copy = false;
+    let mut has_free = false;
+    let mut destroy = None;
 
-    for func in functions.iter_mut() {
+    for (pos, func) in functions.iter_mut().enumerate() {
         if let Ok(type_) = Type::from_str(&func.name) {
-            if func.visibility != Visibility::Comment {
-                func.visibility = visibility(type_, func.parameters.len());
+            if func.name == "destroy" {
+                destroy = Some((func.glib_name.clone(), pos));
+                continue;
             }
-            // I assume `to_string` functions never return `NULL`
-            if type_ == Type::ToString {
-                if let Some(par) = func.ret.parameter.as_mut() {
-                    *par.nullable = false;
-                }
-                if func.parameters.len() != 1 {
-                    continue;
-                }
+            if !update_func(func, type_) {
+                continue;
+            }
+            if func.name == "copy" {
+                has_copy = true;
+            } else if func.name == "free" {
+                has_free = true;
             }
             specials.insert(type_, func.glib_name.clone());
         }
+    }
+
+    if destroy.is_some() && has_copy && !has_free {
+        let (glib_name, pos) = destroy.unwrap();
+        let ty_ = Type::from_str("destroy").unwrap();
+        update_func(&mut functions[pos], ty_);
+        specials.insert(ty_, glib_name);
     }
 
     specials
