@@ -34,6 +34,9 @@ pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>) {
     file_saver::save_to_file(path, env.config.make_backup, |w| {
         try!(general::start_comments(w, &env.config));
         try!(writeln!(w, ""));
+        try!(writeln!(w, "#[allow(unused_imports)]"));
+        try!(writeln!(w, "use auto::*;"));
+        try!(writeln!(w, ""));
 
         mod_rs.push("\nmod alias;".into());
         for config in &configs {
