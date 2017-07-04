@@ -524,7 +524,7 @@ fn generate_fields(env: &Env, struct_name: &str, fields: &[Field]) -> (Vec<Strin
             }
         }
 
-        if !cfg!(feature = "use_unions") {
+        if !cfg!(feature = "use_unions") || is_bits {
             if !is_gweakref && !truncated && !is_ptr &&
                 (is_union || is_bits) &&
                 !is_union_special_case(&field.c_type)
@@ -569,11 +569,9 @@ fn generate_fields(env: &Env, struct_name: &str, fields: &[Field]) -> (Vec<Strin
                 }
             }
             lines.push(format!("\tpub {}: {},", name, c_type.into_string()));
-        } else if is_gweakref {
-            if !cfg!(feature = "use_unions") {
-                // union containing a single pointer
-                lines.push("\tpub priv_: gpointer,".to_owned());
-            }
+        } else if is_gweakref && !cfg!(feature = "use_unions") {
+            // union containing a single pointer
+            lines.push("\tpub priv_: gpointer,".to_owned());
         } else {
             let name = mangle_keywords(&*field.name);
             if let Some(func) = env.library.type_(field.typ).maybe_ref_as::<Function>() {
