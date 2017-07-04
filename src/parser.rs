@@ -152,7 +152,7 @@ impl Library {
                             try!(self.read_class(parser, ns_id, &attributes));
                         }
                         "record" => {
-                            try!(self.read_record(parser, ns_id, &attributes));
+                            try!(self.read_record_start(parser, ns_id, &attributes));
                         }
                         "union" => {
                             try!(self.read_named_union(parser, ns_id, &attributes));
@@ -265,7 +265,7 @@ impl Library {
                         "virtual-method" => try!(ignore_element(parser)),
                         "doc" => doc = try!(read_text(parser)),
                         "union" => {
-                            let (union_fields, _, doc) = try!(self.read_union(parser, ns_id));
+                            let (union_fields, _, doc) = try!(self.read_union(parser, ns_id, attrs));
                             let typ = Type::union(self, union_fields);
                             fields.push(Field {
                                 typ: typ,
@@ -302,7 +302,8 @@ impl Library {
         Ok(())
     }
 
-    fn read_record(&mut self, parser: &mut Reader, ns_id: u16, attrs: &Attributes) -> Result<()> {
+    fn read_record_start(&mut self, parser: &mut Reader, ns_id: u16, attrs: &Attributes)
+                                                                            -> Result<()> {
         let mut name = try!(
             attrs
                 .by_name("name")
@@ -313,7 +314,66 @@ impl Library {
                 .by_name("type")
                 .ok_or_else(|| mk_error!("Missing c:type attribute", parser))
         );
-        let get_type = attrs.by_name("get-type");
+        
+        if attrs.by_name("is-gtype-struct").is_some() {
+            return Ok(());
+        }
+
+        if name == "Atom" && self.namespace(ns_id).name == "Gdk" {
+            // the gir definitions don't reflect the following correctly
+            // typedef struct _GdkAtom *GdkAtom;
+            name = "Atom_";
+            c_type = "GdkAtom_";
+            let tid = self.find_or_stub_type(ns_id, "Gdk.Atom_");
+            self.add_type(
+                ns_id,
+                "Atom",
+                Type::Alias(Alias {
+                    name: "Atom".into(),
+                    c_identifier: "GdkAtom".into(),
+                    typ: tid,
+                    target_c_type: "GdkAtom_*".into(),
+                    doc: None, //TODO: temporary
+                }),
+            );
+        }
+
+        let (name, c_type, get_type, fields, fns, version, deprecated_version,
+            doc, doc_deprecated) = try!(self.read_record(parser, ns_id, attrs));
+
+        let typ = Type::Record(Record {
+            name: name.into(),
+            c_type: c_type.into(),
+            glib_get_type: get_type.map(|s| s.into()),
+            fields: fields,
+            functions: fns,
+            version: version,
+            deprecated_version: deprecated_version,
+            doc: doc,
+            doc_deprecated: doc_deprecated,
+        });
+
+        self.add_type(ns_id, &name, typ);
+        Ok(())
+    }
+    
+    fn read_record(&mut self, parser: &mut Reader, ns_id: u16, attrs: &Attributes)
+        -> Result<(String, String, Option<String>, Vec<Field>, Vec<Function>,
+            Option<Version>, Option<Version>, Option<String>, Option<String>)> {
+        let mut name = try!(
+            attrs
+                .by_name("name")
+                .ok_or_else(|| mk_error!("Missing record name", parser))
+        );
+        let mut c_type = try!(
+            attrs
+                .by_name("type")
+                .ok_or_else(|| mk_error!("Missing c:type attribute", parser))
+        );
+        let get_type = match attrs.by_name("get-type") {
+            Some(s) => Some(s.to_string()),
+            None => None
+        };
         let version = try!(self.parse_version(parser, ns_id, attrs.by_name("version")));
         let deprecated_version = try!(self.parse_version(
             parser,
@@ -341,7 +401,7 @@ impl Library {
                             ))
                         }
                         "union" => {
-                            let (union_fields, _, doc) = try!(self.read_union(parser, ns_id));
+                            let (union_fields, _, doc) = try!(self.read_union(parser, ns_id, attrs));
                             let typ = Type::union(self, union_fields);
                             fields.push(Field {
                                 typ: typ,
@@ -361,58 +421,19 @@ impl Library {
                 _ => xml_next!(event, parser),
             }
         }
-
-        if attrs.by_name("is-gtype-struct").is_some() {
-            return Ok(());
-        }
-
-        if name == "Atom" && self.namespace(ns_id).name == "Gdk" {
-            // the gir definitions don't reflect the following correctly
-            // typedef struct _GdkAtom *GdkAtom;
-            name = "Atom_";
-            c_type = "GdkAtom_";
-            let tid = self.find_or_stub_type(ns_id, "Gdk.Atom_");
-            self.add_type(
-                ns_id,
-                "Atom",
-                Type::Alias(Alias {
-                    name: "Atom".into(),
-                    c_identifier: "GdkAtom".into(),
-                    typ: tid,
-                    target_c_type: "GdkAtom_*".into(),
-                    doc: doc.clone(),
-                }),
-            );
-        }
-
-        let typ = Type::Record(Record {
-            name: name.into(),
-            c_type: c_type.into(),
-            glib_get_type: get_type.map(|s| s.into()),
-            fields: fields,
-            functions: fns,
-            version: version,
-            deprecated_version: deprecated_version,
-            doc: doc,
-            doc_deprecated: doc_deprecated,
-        });
-        self.add_type(ns_id, name, typ);
-        Ok(())
+        Ok((name.into(), c_type.into(), get_type, fields,
+            fns, version, deprecated_version, doc, doc_deprecated))
     }
 
-    fn read_named_union(
-        &mut self,
-        parser: &mut Reader,
-        ns_id: u16,
-        attrs: &Attributes,
-    ) -> Result<()> {
+    fn read_named_union( &mut self, parser: &mut Reader, ns_id: u16, attrs: &Attributes)
+        -> Result<()> {
         let name = try!(
             attrs
                 .by_name("name")
                 .ok_or_else(|| mk_error!("Missing union name", parser))
         );
         let c_type = attrs.by_name("type");
-        let (fields, fns, doc) = try!(self.read_union(parser, ns_id));
+        let (fields, fns, doc) = try!(self.read_union(parser, ns_id, attrs));
         let typ = Type::Union(Union {
             name: name.into(),
             c_type: c_type.map(|s| s.into()),
@@ -424,11 +445,8 @@ impl Library {
         Ok(())
     }
 
-    fn read_union(
-        &mut self,
-        parser: &mut Reader,
-        ns_id: u16,
-    ) -> Result<(Vec<Field>, Vec<Function>, Option<String>)> {
+    fn read_union(&mut self, parser: &mut Reader, ns_id: u16, attrs: &Attributes) 
+        -> Result<(Vec<Field>, Vec<Function>, Option<String>)> {
         let mut fields = Vec::new();
         let mut fns = Vec::new();
         let mut doc = None;
@@ -451,7 +469,15 @@ impl Library {
                                 &mut fns,
                             ))
                         }
-                        "record" => try!(ignore_element(parser)),
+                        "record" => {
+                            let (fields, _, doc) = try!(self.read_record(parser, ns_id, attrs));
+                            let typ = Type::record(self, fields);
+                            fields.push(Field {
+                                typ: typ,
+                                doc: doc,
+                                ..Field::default()
+                            });
+                        },
                         "doc" => doc = try!(read_text(parser)),
                         x => bail!(mk_error!(format!("Unexpected element <{}>", x), parser)),
                     }

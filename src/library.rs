@@ -269,6 +269,7 @@ pub struct Bitfield {
     pub doc_deprecated: Option<String>,
 }
 
+#[derive(Default)]
 pub struct Record {
     pub name: String,
     pub c_type: String,
@@ -542,6 +543,15 @@ impl Type {
         let typ = Type::Union(Union {
             fields: fields,
             ..Union::default()
+        });
+        library.add_type(INTERNAL_NAMESPACE, &format!("#{:?}", field_tids), typ)
+    }
+    
+    pub fn record(library: &mut Library, fields: Vec<Field>) -> TypeId {
+        let field_tids: Vec<TypeId> = fields.iter().map(|f| f.typ).collect();
+        let typ = Type::Record(Record {
+            fields: fields,
+            ..Record::default()
         });
         library.add_type(INTERNAL_NAMESPACE, &format!("#{:?}", field_tids), typ)
     }
