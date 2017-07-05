@@ -317,19 +317,46 @@ fn generate_unions(w: &mut Write, env: &Env, items: &[&Union]) -> Result<()> {
 
     for item in items {
         if let Some(ref c_type) = item.c_type {
-            // TODO: GLib/GObject special cases until we have proper union support in Rust
-            if env.config.library_name == "GLib" && c_type == "GMutex" {
-                // Two c_uint or a pointer => 64 bits on all platforms currently
-                // supported by GLib but the alignment is different on 32 bit
-                // platforms (32 bit vs. 64 bits on 64 bit platforms)
-                try!(writeln!(
-                    w,
-                    "#[cfg(target_pointer_width = \"32\")]\n#[repr(C)]\npub struct {0}([u32; 2]);\n\
-                     #[cfg(target_pointer_width = \"64\")]\n#[repr(C)]\npub struct {0}(*mut c_void);",
-                    c_type
-                ));
-            } else {
-                try!(writeln!(w, "pub type {} = c_void; // union", c_type));
+            if cfg!(feature = "use_unions") {
+                let (lines, commented) = generate_fields(env, &item.name, &item.fields);
+                
+                let comment = if commented { "//" } else { "" };
+                if lines.is_empty() {
+                    try!(writeln!(
+                        w,
+                        "{comment}#[repr(C)]\n{comment}pub union {name}(c_void);\n",
+                        comment = comment,
+                        name = c_type
+                    ));
+                } else {
+                    try!(writeln!(
+                        w,
+                        "{comment}#[repr(C)]\n{comment}pub union {name} {{",
+                        comment = comment,
+                        name = c_type
+                    ));
+
+                    for line in lines {
+                        try!(writeln!(w, "{}{}", comment, line));
+                    }
+                    try!(writeln!(w, "{}}}\n", comment));
+                }
+            }
+            if !cfg!(feature = "use_unions") {
+                // TODO: GLib/GObject special cases until we have proper union support in Rust
+                if env.config.library_name == "GLib" && c_type == "GMutex" {
+                    // Two c_uint or a pointer => 64 bits on all platforms currently
+                    // supported by GLib but the alignment is different on 32 bit
+                    // platforms (32 bit vs. 64 bits on 64 bit platforms)
+                    try!(writeln!(
+                        w,
+                        "#[cfg(target_pointer_width = \"32\")]\n#[repr(C)]\npub struct {0}([u32; 2]);\n\
+                         #[cfg(target_pointer_width = \"64\")]\n#[repr(C)]\npub struct {0}(*mut c_void);",
+                        c_type
+                    ));
+                } else {
+                    try!(writeln!(w, "pub type {} = c_void; // union", c_type));
+                }
             }
         }
     }
@@ -497,34 +524,37 @@ fn generate_fields(env: &Env, struct_name: &str, fields: &[Field]) -> (Vec<Strin
             }
         }
 
-        if !is_gweakref && !truncated && !is_ptr && (is_union || is_bits) &&
-            !is_union_special_case(&field.c_type)
-        {
-            warn!(
-                "Field `{}::{}` not expressible in Rust, truncated",
-                struct_name,
-                field.name
-            );
-            lines.push("\t_truncated_record_marker: c_void,".to_owned());
-            truncated = true;
-        }
+        if !cfg!(feature = "use_unions") || is_bits {
+            if !is_gweakref && !truncated && !is_ptr &&
+                (is_union || is_bits) &&
+                !is_union_special_case(&field.c_type)
+            {
+                warn!(
+                    "Field `{}::{}` not expressible in Rust, truncated",
+                    struct_name,
+                    field.name
+                );
+                lines.push("\t_truncated_record_marker: c_void,".to_owned());
+                truncated = true;
+            }
 
-        if truncated {
-            if is_union {
-                lines.push("\t//union,".to_owned());
-            } else {
-                let bits = field
-                    .bits
-                    .map(|n| format!(": {}", n))
-                    .unwrap_or_else(|| "".to_owned());
-                lines.push(format!(
-                    "\t//{}: {}{},",
-                    field.name,
-                    field.c_type.as_ref().map(|s| &s[..]).unwrap_or("fn"),
-                    bits
-                ));
-            };
-            continue 'fields;
+            if truncated {
+                if is_union {
+                    lines.push("\t//union,".to_owned());
+                } else {
+                    let bits = field
+                        .bits
+                        .map(|n| format!(": {}", n))
+                        .unwrap_or_else(|| "".to_owned());
+                    lines.push(format!(
+                        "\t//{}: {}{},",
+                        field.name,
+                        field.c_type.as_ref().map(|s| &s[..]).unwrap_or("fn"),
+                        bits
+                    ));
+                };
+                continue 'fields;
+            }
         }
 
         if let Some(ref c_type) = field.c_type {
@@ -533,11 +563,13 @@ fn generate_fields(env: &Env, struct_name: &str, fields: &[Field]) -> (Vec<Strin
             if c_type.is_err() {
                 commented = true;
             }
-            if is_gvalue && field.name == "data" {
-                c_type = Ok("[u64; 2]".to_owned());
+            if !cfg!(feature = "use_unions") {
+                if is_gvalue && field.name == "data" {
+                    c_type = Ok("[u64; 2]".to_owned());
+                }
             }
             lines.push(format!("\tpub {}: {},", name, c_type.into_string()));
-        } else if is_gweakref {
+        } else if is_gweakref && !cfg!(feature = "use_unions") {
             // union containing a single pointer
             lines.push("\tpub priv_: gpointer,".to_owned());
         } else {
