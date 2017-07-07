@@ -537,6 +537,7 @@ impl Type {
         library.add_type(INTERNAL_NAMESPACE, &format!("fn<#{:?}>", param_tids), typ)
     }
 
+    #[cfg(not(feature = "use_unions"))]
     pub fn union(library: &mut Library, fields: Vec<Field>) -> TypeId {
         let field_tids: Vec<TypeId> = fields.iter().map(|f| f.typ).collect();
         let typ = Type::Union(Union {
@@ -544,6 +545,38 @@ impl Type {
             ..Union::default()
         });
         library.add_type(INTERNAL_NAMESPACE, &format!("#{:?}", field_tids), typ)
+    }
+
+    #[cfg(feature = "use_unions")]
+    pub fn union(library: &mut Library, u: Union, ns_id: u16) -> TypeId {
+        let fields = u.fields;
+        let field_tids: Vec<TypeId> = fields.iter().map(|f| f.typ).collect();
+        let typ = Type::Union(Union {
+            name            : u.name,
+            c_type          : u.c_type,
+            fields          : fields,
+            functions       : u.functions,
+            doc             : u.doc,
+        });
+        library.add_type(ns_id, &format!("#{:?}", field_tids), typ)
+    }
+
+    #[cfg(feature = "use_unions")]
+    pub fn record(library: &mut Library, r: Record, ns_id: u16) -> TypeId {
+        let fields = r.fields;
+        let field_tids: Vec<TypeId> = fields.iter().map(|f| f.typ).collect();
+        let typ = Type::Record(Record {
+            name            : r.name,
+            c_type          : r.c_type,
+            glib_get_type   : r.glib_get_type,
+            fields          : fields,
+            functions       : r.functions,
+            version         : r.version,
+            deprecated_version: r.deprecated_version,
+            doc             : r.doc,
+            doc_deprecated  : r.doc_deprecated,
+        });
+        library.add_type(ns_id, &format!("#{:?}", field_tids), typ)
     }
 }
 

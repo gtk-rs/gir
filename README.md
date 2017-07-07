@@ -1,16 +1,26 @@
 # GIR
 
-The `GIR` is used to generate both sys level and Rust-user API level.
+The `GIR` is used to generate both the sys level crate and a safe API crate to use the sys level (FFI) crate.
 
 ## Generate FFI (sys level)
 
-You first need to get the Gir file corresponding to the project you want to bind. You can get them from [here](https://github.com/gtk-rs/gir-files) or directly on [ubuntu website](http://packages.ubuntu.com/) (for example: http://packages.ubuntu.com/zesty/amd64/libgtk-3-dev).
+Using `gir` requires both a `*.toml` and a `*.gir` for generation of the bindings.
 
-Then you need to write a TOML file (let's call it YourSysGirFile.toml) that you'll pass to gir (you can take a look to [gtk-rs/sys/gir-gtk.toml](https://github.com/gtk-rs/sys/blob/master/conf/gir-gtk.toml) to see an example).
+The `*.gir` you need will correspond to the project you want to generate bindings for. You can get them from [here](https://github.com/gtk-rs/gir-files) or directly on [ubuntu website](http://packages.ubuntu.com/) (for example: http://packages.ubuntu.com/zesty/amd64/libgtk-3-dev).
 
-### TOML file
+The `*.toml` is what is used to pass various settings and options to gir for use when generating the bindings - you will likely need to write one to suit your needs, for an example you can take a look to [gtk-rs/sys/gir-gtk.toml](https://github.com/gtk-rs/sys/blob/master/conf/gir-gtk.toml).
 
-In FFI mode, Gir generates as much as it can. So in this mode, the TOML file is mostly used to ignore some objects. To do so, you need to add its fullname to an `ignore` array. Example:
+## `gir` Modes
+
+There are two main modes of generation for `gir`; *FFI* and *API*.
+
+The *FFI* mode is what creates the low-level FFI bindings from the supplied `*.gir` file - these are essentially direct calls in to the related C library and are typically unsafe. The resulting crate is typically appended with `-sys`.
+
+The *API* mode generates another crate for a layer on top of these unsafe (*sys*) bindings which makes them safe for use in general Rust.
+
+### The FFI mode TOML config
+
+In FFI (`-m sys`) mode, Gir generates as much as it can. So in this mode, the TOML file is mostly used to ignore some objects. To do so, you need to add its fullname to an `ignore` array. Example:
 
 ```toml
 ignore = ["Gtk.Widget", "Gtk.Window"]
@@ -29,7 +39,7 @@ status = "generate"
     is_windows_utf8 = true
 ```
 
-### Generation
+### Generation in FFI mode
 
 When you're ready, let's generate the FFI part:
 
@@ -39,13 +49,11 @@ cargo run --release -- -c YourSysGirFile.toml -d ../gir-files -m sys -o the-outp
 
 The generated files will be placed in `the-output-directory-sys`. You now have the sys part of your binding!
 
-## Generate the Rust-user API level
+## The API mode TOML config
 
-You'll now have to write another GIR file (take a look to [gtk/Gir.toml](https://github.com/gtk-rs/gtk/blob/master/Gir.toml) for an example).
+This mode requires you to write another TOML file. [gtk/Gir.toml](https://github.com/gtk-rs/gtk/blob/master/Gir.toml) is a good example.
 
-### TOML file
-
-At the opposite of the FFI mode, this one only generates the specified objects. You can either add the object's fullname to the `generate` array or add it to the `manual` array (but in this case, it won't be generated, just used in other functions/methods instead of generating an "ignored" argument). Example:
+This mode generates only the specified objects. You can either add the object's fullname to the `generate` array or add it to the `manual` array (but in this case, it won't be generated, just used in other functions/methods instead of generating an "ignored" argument). Example:
 
 ```toml
 generate = ["Gtk.Widget", "Gtk.Window"]
@@ -54,7 +62,7 @@ manual = ["Gtk.Button"]
 
 So in here, both `GtkWidget` and `GtkWindow` will be fully generated and functions/methods using `GtkButton` will be uncommented. To generate code for all global functions, add `Gtk.*` to the `generate` array.
 
-Sometimes Gir understands the object definition incorrectly or the `.gir` file contains incomplete or wrong definition, to fix it, you can use the full object configuration:
+Sometimes Gir understands the object definition incorrectly or the `.gir` file contains an incomplete or wrong definition, to fix it, you can use the full object configuration:
 
 ```toml
 [[object]]
@@ -124,7 +132,7 @@ cfg_condition = "mycond"
     ignore = true
 ```
 
-Since there is no child properties in `.gir` files, it needs to be added for classes manually:
+Since there are no child properties in `.gir` files, it needs to be added for classes manually:
 
 ```toml
 [[object]]
@@ -195,7 +203,7 @@ mutating the object exists). `send+sync` is valid if the type can be sent to
 different threads and all API allows simultaneous calls from different threads
 due to internal locking via e.g. a mutex.
 
-### Generation
+### Generation in API mode
 
 To generate the Rust-user API level, The command is very similar to the previous one. It's better to not put this output in the same directory as where the FFI files are. Just run:
 
@@ -204,3 +212,22 @@ cargo run --release -- -c YourGirFile.toml -d ../gir-files -o the-output-directo
 ```
 
 Now it should be done. Just go to the output directory (so `the-output-directory/auto` in our case) and try to build using `cargo build`. Don't forget to update your dependencies in both projects: nothing much to do in the FFI/sys one but the Rust-user API level will need to have a dependency over the FFI/sys one.
+
+## Nightly Rust Only Features
+
+### Unions
+
+By default union generation is disabled except for some special cases due to unions not yet being a stable feature. However if you are using *nightly* rust, then you can enable union generation using `cargo run --release --features "use_unions"`.
+
+Keep in mind that to access union members, you are required to use `unsafe` blocks, for example;
+
+```
+union myUnion {
+    test : u32
+}
+
+let testUnion = myUnion { test : 42 };
+unsafe { println!("{}", myUnion.test };
+```
+
+This is required as the rust compiler can not guarantee the safety of the union, or that the member being addressed exsits. The union RFC is [here](https://github.com/tbu-/rust-rfcs/blob/master/text/1444-union.md) and the tracking issue is [here](https://github.com/rust-lang/rust/issues/32836).
