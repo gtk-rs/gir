@@ -1,31 +1,32 @@
-use library::{self, Function, Parameter, Type};
+use library::{self, Function, Parameter, Type, MAIN_NAMESPACE};
 use Library;
 use version::Version;
 
 pub fn check_function_real_version(library: &mut Library) {
     // In order to avoid the borrow checker to annoy us...
     let library2 = library as *const Library;
-    for namespace in &mut library.namespaces {
-        for typ in &mut namespace.types {
-            match *typ {
-                Some(Type::Class(ref mut c)) => update_function_version(&mut c.functions, library2),
-                Some(Type::Interface(ref mut i)) => update_function_version(&mut i.functions,
-                                                                            library2),
-                Some(Type::Union(ref mut u)) => update_function_version(&mut u.functions, library2),
-                Some(Type::Record(ref mut r)) => update_function_version(&mut r.functions,
-                                                                         library2),
-                Some(Type::Bitfield(ref mut b)) => update_function_version(&mut b.functions,
-                                                                           library2),
-                Some(Type::Enumeration(ref mut e)) => update_function_version(&mut e.functions,
-                                                                              library2),
-                _ => {}
-            }
+    for typ in &mut library.namespace_mut(MAIN_NAMESPACE).types {
+        match *typ {
+            Some(Type::Class(ref mut c)) => update_function_version(&mut c.functions, library2),
+            Some(Type::Interface(ref mut i)) => update_function_version(&mut i.functions,
+                                                                        library2),
+            Some(Type::Union(ref mut u)) => update_function_version(&mut u.functions, library2),
+            Some(Type::Record(ref mut r)) => update_function_version(&mut r.functions,
+                                                                     library2),
+            Some(Type::Bitfield(ref mut b)) => update_function_version(&mut b.functions,
+                                                                       library2),
+            Some(Type::Enumeration(ref mut e)) => update_function_version(&mut e.functions,
+                                                                          library2),
+            _ => {}
         }
-        update_function_version(&mut namespace.functions, library2);
     }
+    update_function_version(&mut library.namespace_mut(MAIN_NAMESPACE).functions, library2);
 }
 
 fn check_versions(param: &Parameter, current_version: &mut Option<Version>, lib: *const Library) {
+    if param.typ.ns_id != MAIN_NAMESPACE {
+        return;
+    }
     let ty_version = match *unsafe { (*lib).type_(param.typ) } {
         library::Type::Class(ref c) => c.version,
         library::Type::Enumeration(ref c) => c.version,
