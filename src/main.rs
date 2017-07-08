@@ -40,6 +40,7 @@ mod library_postprocessing;
 mod nameutil;
 mod parser;
 mod traits;
+mod update_version;
 mod version;
 mod writer;
 
@@ -90,6 +91,7 @@ fn do_main() -> Result<()> {
     library.postprocessing();
 
     cfg.resolve_type_ids(&library);
+    update_version::check_function_real_version(&mut library);
     let namespaces = analysis::namespaces::run(&library);
     let symbols = analysis::symbols::run(&library, &namespaces);
     let class_hierarchy = analysis::class_hierarchy::run(&library);

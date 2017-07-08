@@ -219,6 +219,7 @@ impl TypeId {
     }
 }
 
+#[derive(Debug)]
 pub struct Alias {
     pub name: String,
     pub c_identifier: String,
@@ -227,6 +228,7 @@ pub struct Alias {
     pub doc: Option<String>,
 }
 
+#[derive(Debug)]
 pub struct Constant {
     pub name: String,
     pub c_identifier: String,
@@ -239,6 +241,7 @@ pub struct Constant {
     pub doc_deprecated: Option<String>,
 }
 
+#[derive(Debug)]
 pub struct Member {
     pub name: String,
     pub c_identifier: String,
@@ -246,6 +249,7 @@ pub struct Member {
     pub doc: Option<String>,
 }
 
+#[derive(Debug)]
 pub struct Enumeration {
     pub name: String,
     pub c_type: String,
@@ -258,6 +262,7 @@ pub struct Enumeration {
     pub error_domain: Option<String>,
 }
 
+#[derive(Debug)]
 pub struct Bitfield {
     pub name: String,
     pub c_type: String,
@@ -269,6 +274,7 @@ pub struct Bitfield {
     pub doc_deprecated: Option<String>,
 }
 
+#[derive(Debug)]
 pub struct Record {
     pub name: String,
     pub c_type: String,
@@ -281,7 +287,7 @@ pub struct Record {
     pub doc_deprecated: Option<String>,
 }
 
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct Field {
     pub name: String,
     pub typ: TypeId,
@@ -292,7 +298,7 @@ pub struct Field {
     pub doc: Option<String>,
 }
 
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct Union {
     pub name: String,
     pub c_type: Option<String>,
@@ -301,6 +307,7 @@ pub struct Union {
     pub doc: Option<String>,
 }
 
+#[derive(Debug)]
 pub struct Property {
     pub name: String,
     pub readable: bool,
@@ -332,6 +339,7 @@ pub struct Parameter {
     pub doc: Option<String>,
 }
 
+#[derive(Debug)]
 pub struct Function {
     pub name: String,
     pub c_identifier: Option<String>,
@@ -345,6 +353,7 @@ pub struct Function {
     pub doc_deprecated: Option<String>,
 }
 
+#[derive(Debug)]
 pub struct Signal {
     pub name: String,
     pub parameters: Vec<Parameter>,
@@ -355,7 +364,7 @@ pub struct Signal {
     pub doc_deprecated: Option<String>,
 }
 
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct Interface {
     pub name: String,
     pub c_type: String,
@@ -369,7 +378,7 @@ pub struct Interface {
     pub doc: Option<String>,
 }
 
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct Class {
     pub name: String,
     pub c_type: String,
@@ -423,6 +432,7 @@ impl_lexical_ord!(
     Union => c_type,
 );
 
+#[derive(Debug)]
 pub enum Type {
     Fundamental(Fundamental),
     Alias(Alias),
