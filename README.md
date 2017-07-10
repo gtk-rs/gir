@@ -2,7 +2,7 @@
 
 The `GIR` is used to generate both the sys level crate and a safe API crate to use the sys level (FFI) crate.
 
-## Generate FFI (sys level)
+## Introduction to `gir` generation
 
 Using `gir` requires both a `*.toml` and a `*.gir` for generation of the bindings.
 
@@ -10,9 +10,13 @@ The `*.gir` you need will correspond to the project you want to generate binding
 
 The `*.toml` is what is used to pass various settings and options to gir for use when generating the bindings - you will likely need to write one to suit your needs, for an example you can take a look to [gtk-rs/sys/gir-gtk.toml](https://github.com/gtk-rs/sys/blob/master/conf/gir-gtk.toml).
 
+Keep it in mind that since `gir` is still under development, it generates warnings when running. As long as it's not errors, it's fine. However, if something you asked to be generated wasn't, you should definitely take a look to the warnings to see what failed.
+
 ## `gir` Modes
 
 There are two main modes of generation for `gir`; *FFI* and *API*.
+
+There is also a third one used for documentation generation: *doc*.
 
 The *FFI* mode is what creates the low-level FFI bindings from the supplied `*.gir` file - these are essentially direct calls in to the related C library and are typically unsafe. The resulting crate is typically appended with `-sys`.
 
@@ -20,7 +24,7 @@ The *API* mode generates another crate for a layer on top of these unsafe (*sys*
 
 ### The FFI mode TOML config
 
-In FFI (`-m sys`) mode, Gir generates as much as it can. So in this mode, the TOML file is mostly used to ignore some objects. To do so, you need to add its fullname to an `ignore` array. Example:
+In FFI (`-m sys`) mode, `gir` generates as much as it can. So in this mode, the TOML file is mostly used to ignore some objects. To do so, you need to add its fullname to an `ignore` array. Example:
 
 ```toml
 ignore = ["Gtk.Widget", "Gtk.Window"]
@@ -28,7 +32,7 @@ ignore = ["Gtk.Widget", "Gtk.Window"]
 
 And that's all! Neither `GtkWidget` nor `GtkWindow` (alongside with their functions) will be generated.
 
-Also you can mark some functions that it has suffix `_utf8` on Windows:
+Also you can mark some functions that has suffix `_utf8` on Windows:
 
 ```toml
 [[object]]
@@ -41,13 +45,15 @@ status = "generate"
 
 ### Generation in FFI mode
 
-When you're ready, let's generate the FFI part:
+When you're ready, let's generate the FFI part. In the command we'll execute, `../gir-files` is where we cloned the [gir-files repository](https://github.com/gtk-rs/gir-files). You need to put your Gir file in this repository as well to make your like easier. Then let's run the command:
 
 ```shell
 cargo run --release -- -c YourSysGirFile.toml -d ../gir-files -m sys -o the-output-directory-sys
 ```
 
-The generated files will be placed in `the-output-directory-sys`. You now have the sys part of your binding!
+The generated files will be placed in `the-output-directory-sys`. Just take care about the dependencies and the crate's name generated in the `Cargo.toml` file (update them if they don't work as expected).
+
+You now have the sys part of your binding!
 
 ## The API mode TOML config
 
@@ -212,6 +218,23 @@ cargo run --release -- -c YourGirFile.toml -d ../gir-files -o the-output-directo
 ```
 
 Now it should be done. Just go to the output directory (so `the-output-directory/auto` in our case) and try to build using `cargo build`. Don't forget to update your dependencies in both projects: nothing much to do in the FFI/sys one but the Rust-user API level will need to have a dependency over the FFI/sys one.
+
+### Generating documentation
+
+And finally the last feature! Just run the following command (note the `-m doc` at the end):
+
+```shell
+cargo run --release -- -c YourGirFile.toml -d ../gir-files -o the-output-directory -m doc
+```
+
+It'll generate a `docs.md` if everything went fine. That's where all this crate's documentation is. If you want to put it back into your crate's source code like "normal" doc comments, run:
+
+```shell
+> cargo install rustdoc-stripper
+> rustdoc-stripper -g -o docs.md
+```
+
+And now your crate should be completely documented as expected!
 
 ## Nightly Rust Only Features
 
