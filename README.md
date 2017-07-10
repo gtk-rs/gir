@@ -219,6 +219,12 @@ cargo run --release -- -c YourGirFile.toml -d ../gir-files -o the-output-directo
 
 Now it should be done. Just go to the output directory (so `the-output-directory/auto` in our case) and try to build using `cargo build`. Don't forget to update your dependencies in both projects: nothing much to do in the FFI/sys one but the Rust-user API level will need to have a dependency over the FFI/sys one.
 
+Now, at your crate entry point (generally `lib.rs`), add the following to include all generated files:
+
+```rust
+pub use auto::*;
+```
+
 ### Generating documentation
 
 And finally the last feature! Just run the following command (note the `-m doc` at the end):
