@@ -1,6 +1,8 @@
 use library;
+use env;
 use super::c_type::is_mut_ptr;
 use super::record_type::RecordType;
+use config::gobjects::GObject;
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
 pub enum RefMode {
@@ -14,10 +16,18 @@ pub enum RefMode {
 impl RefMode {
     #[inline]
     pub fn of(
-        library: &library::Library,
+        env: &env::Env,
         tid: library::TypeId,
         direction: library::ParameterDirection,
     ) -> RefMode {
+        let library = &env.library;
+
+        if let Some(&GObject { ref_mode: Some(ref_mode), .. }) =
+            env.config.objects.get(&tid.full_name(&env.library))
+        {
+            return ref_mode;
+        }
+
         use library::Type::*;
         match *library.type_(tid) {
             Fundamental(library::Fundamental::Utf8) |
@@ -51,17 +61,17 @@ impl RefMode {
                     RefMode::None
                 }
             }
-            Alias(ref alias) => RefMode::of(library, alias.typ, direction),
+            Alias(ref alias) => RefMode::of(env, alias.typ, direction),
             _ => RefMode::None,
         }
     }
 
     pub fn without_unneeded_mut(
-        library: &library::Library,
+        env: &env::Env,
         par: &library::Parameter,
         immutable: bool,
     ) -> RefMode {
-        let ref_mode = RefMode::of(library, par.typ, par.direction);
+        let ref_mode = RefMode::of(env, par.typ, par.direction);
         if ref_mode == RefMode::ByRefMut {
             if !is_mut_ptr(&*par.c_type) {
                 RefMode::ByRef
