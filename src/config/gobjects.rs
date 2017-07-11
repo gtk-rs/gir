@@ -13,6 +13,7 @@ use super::members::Members;
 use super::properties::Properties;
 use super::signals::Signals;
 use version::Version;
+use analysis::ref_mode;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum GStatus {
@@ -69,6 +70,7 @@ pub struct GObject {
     pub generate_trait: bool,
     pub child_properties: Option<ChildProperties>,
     pub concurrency: library::Concurrency,
+    pub ref_mode: Option<ref_mode::RefMode>,
 }
 
 impl Default for GObject {
@@ -87,6 +89,7 @@ impl Default for GObject {
             generate_trait: true,
             child_properties: None,
             concurrency: Default::default(),
+            ref_mode: None,
         }
     }
 }
@@ -101,6 +104,17 @@ pub fn parse_toml(toml_objects: &Value, concurrency: library::Concurrency) -> GO
         objects.insert(gobject.name.clone(), gobject);
     }
     objects
+}
+
+fn ref_mode_from_str(ref_mode: &str) -> Option<ref_mode::RefMode> {
+    match ref_mode {
+        "none" => Some(ref_mode::RefMode::None),
+        "ref" => Some(ref_mode::RefMode::ByRef),
+        "ref-mut" => Some(ref_mode::RefMode::ByRefMut),
+        "ref-immut" => Some(ref_mode::RefMode::ByRefImmut),
+        "ref-fake" => Some(ref_mode::RefMode::ByRefFake),
+        _ => None,
+    }
 }
 
 fn parse_object(toml_object: &Value, concurrency: library::Concurrency) -> GObject {
@@ -143,7 +157,17 @@ fn parse_object(toml_object: &Value, concurrency: library::Concurrency) -> GObje
         .and_then(|v| v.as_str())
         .and_then(|v| v.parse().ok())
         .unwrap_or(concurrency);
+    let ref_mode = toml_object
+        .lookup("ref_mode")
+        .and_then(|v| v.as_str())
+        .and_then(ref_mode_from_str);
     let child_properties = ChildProperties::parse(toml_object, &name);
+
+    if status != GStatus::Manual {
+        if ref_mode != None {
+            warn!("ref_mode configuration used for non-manual object {}", name);
+        }
+    }
 
     GObject {
         name: name,
@@ -159,6 +183,7 @@ fn parse_object(toml_object: &Value, concurrency: library::Concurrency) -> GObje
         generate_trait: generate_trait,
         child_properties: child_properties,
         concurrency: concurrency,
+        ref_mode: ref_mode,
     }
 }
 

@@ -126,7 +126,7 @@ pub fn analyze(
     for par in signal_parameters {
         let name = nameutil::mangle_keywords(&*par.name).into_owned();
 
-        let ref_mode = RefMode::without_unneeded_mut(&env.library, par, false);
+        let ref_mode = RefMode::without_unneeded_mut(env, par, false);
 
         let nullable_override = configured_signals
             .matched_parameters(&name)

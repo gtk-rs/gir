@@ -67,7 +67,7 @@ pub fn analyze(
         .matched_parameters(&name)
         .iter()
         .any(|p| p.constant);
-    let ref_mode = RefMode::without_unneeded_mut(&env.library, par, immutable);
+    let ref_mode = RefMode::without_unneeded_mut(env, par, immutable);
 
     let nullable_override = configured_functions
         .matched_parameters(&name)

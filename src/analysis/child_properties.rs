@@ -106,8 +106,8 @@ fn analyze_property(
         if conversion != properties::PropertyConversion::Direct {
             imports.add("std::mem::transmute", None);
         }
-        let get_out_ref_mode = RefMode::of(&env.library, typ, library::ParameterDirection::Return);
-        let mut set_in_ref_mode = RefMode::of(&env.library, typ, library::ParameterDirection::In);
+        let get_out_ref_mode = RefMode::of(env, typ, library::ParameterDirection::Return);
+        let mut set_in_ref_mode = RefMode::of(env, typ, library::ParameterDirection::In);
         if set_in_ref_mode == RefMode::ByRefMut {
             set_in_ref_mode = RefMode::ByRef;
         }

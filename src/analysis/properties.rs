@@ -153,8 +153,8 @@ fn analyze_property(
         );
     }
     let conversion = PropertyConversion::of(type_);
-    let get_out_ref_mode = RefMode::of(&env.library, prop.typ, library::ParameterDirection::Return);
-    let mut set_in_ref_mode = RefMode::of(&env.library, prop.typ, library::ParameterDirection::In);
+    let get_out_ref_mode = RefMode::of(env, prop.typ, library::ParameterDirection::Return);
+    let mut set_in_ref_mode = RefMode::of(env, prop.typ, library::ParameterDirection::In);
     if set_in_ref_mode == RefMode::ByRefMut {
         set_in_ref_mode = RefMode::ByRef;
     }
