@@ -72,7 +72,6 @@ pub fn analyze(
             }
             if type_string.is_ok() && prop.default_value.is_some() {
                 imports.add("glib::Value", prop.version);
-                imports.add("gobject_ffi", prop.version);
             }
 
             properties.push(prop);
@@ -83,11 +82,11 @@ pub fn analyze(
             }
             if type_string.is_ok() {
                 imports.add("glib::Value", prop.version);
-                imports.add("gobject_ffi", prop.version);
-                if prop.bound.is_some() {
-                    imports.add("glib::object::IsA", prop.version);
-                    imports.add("glib", prop.version);
-                }
+            }
+
+            if prop.bound.is_some() {
+                imports.add("glib", prop.version);
+                imports.add("glib::object::IsA", prop.version);
             }
 
             properties.push(prop);
