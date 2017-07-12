@@ -83,7 +83,16 @@ fn declaration(env: &Env, prop: &Property) -> String {
             ..
         }) = prop.bound
         {
-            bound = format!("<{}: IsA<{}> + IsA<glib::object::Object>>", alias, type_str);
+            let value_bound = if !prop.is_get {
+                if *prop.nullable {
+                    " + glib::value::SetValueOptional"
+                } else {
+                    " + glib::value::SetValue"
+                }
+            } else {
+                ""
+            };
+            bound = format!("<{}: IsA<{}> + IsA<glib::object::Object>{}>", alias, type_str, value_bound);
             if *prop.nullable {
                 format!("Option<&{}>", alias)
             } else {

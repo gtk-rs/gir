@@ -79,6 +79,7 @@ pub fn class(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<Info>
     let mut imports = Imports::new();
     imports.add("glib::translate::*", None);
     imports.add("ffi", None);
+    imports.add("gobject_ffi", None);
 
     let supertypes = supertypes::analyze(env, class_tid, &mut imports);
 
@@ -234,6 +235,7 @@ pub fn interface(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<I
     imports.add("glib::translate::*", None);
     imports.add("ffi", None);
     imports.add("glib::object::IsA", None);
+    imports.add("gobject_ffi", None);
 
     let supertypes = supertypes::analyze(env, iface_tid, &mut imports);
 
