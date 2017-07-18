@@ -795,6 +795,7 @@ impl Library {
                 .by_name("type")
                 .ok_or_else(|| mk_error!("Missing c:type attribute", parser))
         );
+        let get_type = attrs.by_name("get-type").map(|s| s.into());
         let version = try!(self.parse_version(parser, ns_id, attrs.by_name("version")));
         let deprecated_version = try!(self.parse_version(
             parser,
@@ -843,6 +844,7 @@ impl Library {
             deprecated_version: deprecated_version,
             doc: doc,
             doc_deprecated: doc_deprecated,
+            glib_get_type: get_type,
         });
         self.add_type(ns_id, name, typ);
         Ok(())
@@ -864,6 +866,7 @@ impl Library {
                 .by_name("type")
                 .ok_or_else(|| mk_error!("Missing c:type attribute", parser))
         );
+        let get_type = attrs.by_name("get-type").map(|s| s.into());
         let version = try!(self.parse_version(parser, ns_id, attrs.by_name("version")));
         let deprecated_version = try!(self.parse_version(
             parser,
@@ -914,6 +917,7 @@ impl Library {
             doc: doc,
             doc_deprecated: doc_deprecated,
             error_domain: error_domain,
+            glib_get_type: get_type,
         });
         self.add_type(ns_id, name, typ);
         Ok(())

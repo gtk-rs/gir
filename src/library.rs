@@ -260,6 +260,7 @@ pub struct Enumeration {
     pub doc: Option<String>,
     pub doc_deprecated: Option<String>,
     pub error_domain: Option<String>,
+    pub glib_get_type: Option<String>,
 }
 
 #[derive(Debug)]
@@ -272,6 +273,7 @@ pub struct Bitfield {
     pub deprecated_version: Option<Version>,
     pub doc: Option<String>,
     pub doc_deprecated: Option<String>,
+    pub glib_get_type: Option<String>,
 }
 
 #[derive(Debug)]

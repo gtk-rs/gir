@@ -22,11 +22,18 @@ pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>) {
         .collect();
     let mut has_get_quark = false;
     let mut has_any = false;
+    let mut has_get_type = false;
     for config in &configs {
         if let Type::Enumeration(ref enum_) = *env.library.type_(config.type_id.unwrap()) {
             has_any = true;
             if get_error_quark_name(enum_).is_some() {
                 has_get_quark = true;
+            }
+            if enum_.glib_get_type.is_some() {
+                has_get_type = true;
+            }
+
+            if has_get_type && has_get_quark {
                 break;
             }
         }
@@ -42,11 +49,26 @@ pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>) {
                 try!(writeln!(w, "use ffi as glib_ffi;"));
                 try!(writeln!(w, "use error::ErrorDomain;"));
             }
+            if has_get_type {
+                try!(writeln!(w, "use Type;"));
+                try!(writeln!(w, "use StaticType;"));
+                try!(writeln!(w, "use Value;"));
+                try!(writeln!(w, "use SetValue;"));
+                try!(writeln!(w, "use FromValue;"));
+                try!(writeln!(w, "use FromValueOptional;"));
+                try!(writeln!(w, "use gobject_ffi;"));
+            }
             try!(writeln!(w, "use translate::*;"));
         } else {
             if has_get_quark {
                 try!(writeln!(w, "use glib_ffi;"));
                 try!(writeln!(w, "use glib::error::ErrorDomain;"));
+            }
+            if has_get_type {
+                try!(writeln!(w, "use glib::Type;"));
+                try!(writeln!(w, "use glib::StaticType;"));
+                try!(writeln!(w, "use glib::value::{{Value, SetValue, FromValue, FromValueOptional}};"));
+                try!(writeln!(w, "use gobject_ffi;"));
             }
             try!(writeln!(w, "use glib::translate::*;"));
         }
@@ -243,6 +265,66 @@ impl FromGlib<ffi::{ffi_name}> for {name} {{
 }
 "
         ));
+    }
+
+    if let Some(ref get_type) = enum_.glib_get_type {
+        try!(version_condition(w, env, enum_.version, false, 0));
+        try!(writeln!(
+            w,
+            "impl StaticType for {name} {{
+    fn static_type() -> Type {{
+        unsafe {{ from_glib(ffi::{get_type}()) }}
+    }}
+}}",
+            name = enum_.name,
+            get_type = get_type
+        ));
+        try!(writeln!(
+            w,
+            ""));
+
+        try!(version_condition(w, env, enum_.version, false, 0));
+        try!(writeln!(
+            w,
+            "impl<'a> FromValueOptional<'a> for {name} {{
+    unsafe fn from_value_optional(value: &Value) -> Option<Self> {{
+        Some(FromValue::from_value(value))
+    }}
+}}",
+            name = enum_.name,
+        ));
+        try!(writeln!(
+            w,
+            ""));
+
+        try!(version_condition(w, env, enum_.version, false, 0));
+        try!(writeln!(
+            w,
+            "impl<'a> FromValue<'a> for {name} {{
+    unsafe fn from_value(value: &Value) -> Self {{
+        from_glib(std::mem::transmute::<i32, ffi::{ffi_name}>(gobject_ffi::g_value_get_enum(value.to_glib_none().0)))
+    }}
+}}",
+            name = enum_.name,
+            ffi_name = enum_.c_type,
+        ));
+        try!(writeln!(
+            w,
+            ""));
+
+        try!(version_condition(w, env, enum_.version, false, 0));
+        try!(writeln!(
+            w,
+            "impl SetValue for {name} {{
+    unsafe fn set_value(value: &mut Value, this: &Self) {{
+        gobject_ffi::g_value_set_enum(value.to_glib_none_mut().0, this.to_glib() as i32)
+    }}
+}}",
+            name = enum_.name,
+        ));
+        try!(writeln!(
+            w,
+            ""));
     }
 
     Ok(())
