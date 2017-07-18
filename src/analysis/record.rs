@@ -12,6 +12,7 @@ use traits::*;
 #[derive(Default)]
 pub struct Info {
     pub base: InfoBase,
+    pub glib_get_type: Option<String>,
 }
 
 impl Deref for Info {
@@ -57,6 +58,9 @@ pub fn new(env: &Env, obj: &GObject) -> Option<Info> {
     imports.add("glib_ffi", None);
     imports.add("std::mem", None);
     imports.add("std::ptr", None);
+    if let Some(_) = record.glib_get_type {
+        imports.add("gobject_ffi", None);
+    }
 
     let mut functions = functions::analyze(
         env,
@@ -104,7 +108,7 @@ pub fn new(env: &Env, obj: &GObject) -> Option<Info> {
         concurrency: obj.concurrency,
     };
 
-    let info = Info { base: base };
+    let info = Info { base: base, glib_get_type: record.glib_get_type.clone() };
 
     Some(info)
 }

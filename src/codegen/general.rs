@@ -105,6 +105,7 @@ pub fn define_boxed_type(
     glib_name: &str,
     copy_fn: &str,
     free_fn: &str,
+    get_type_fn: &Option<String>,
 ) -> Result<()> {
     try!(writeln!(w, ""));
     try!(writeln!(w, "glib_wrapper! {{"));
@@ -122,6 +123,9 @@ pub fn define_boxed_type(
         copy_fn
     ));
     try!(writeln!(w, "\t\tfree => |ptr| ffi::{}(ptr),", free_fn));
+    if let Some(ref get_type_fn) = *get_type_fn {
+        try!(writeln!(w, "\t\tget_type => || ffi::{}(),", get_type_fn));
+    }
     try!(writeln!(w, "\t}}"));
     try!(writeln!(w, "}}"));
 
@@ -134,6 +138,7 @@ pub fn define_shared_type(
     glib_name: &str,
     ref_fn: &str,
     unref_fn: &str,
+    get_type_fn: &Option<String>,
 ) -> Result<()> {
     try!(writeln!(w, ""));
     try!(writeln!(w, "glib_wrapper! {{"));
@@ -147,6 +152,9 @@ pub fn define_shared_type(
     try!(writeln!(w, "\tmatch fn {{"));
     try!(writeln!(w, "\t\tref => |ptr| ffi::{}(ptr),", ref_fn));
     try!(writeln!(w, "\t\tunref => |ptr| ffi::{}(ptr),", unref_fn));
+    if let Some(ref get_type_fn) = *get_type_fn {
+        try!(writeln!(w, "\t\tget_type => || ffi::{}(),", get_type_fn));
+    }
     try!(writeln!(w, "\t}}"));
     try!(writeln!(w, "}}"));
 
