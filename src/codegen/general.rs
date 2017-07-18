@@ -26,7 +26,11 @@ pub fn uses(w: &mut Write, env: &Env, imports: &Imports) -> Result<()> {
     try!(writeln!(w, ""));
     for (name, &version) in imports.iter() {
         try!(version_condition(w, env, version, false, 0));
-        try!(writeln!(w, "use {};", name));
+        if env.namespaces.glib_ns_id == namespaces::MAIN && name == "glib_ffi" {
+            try!(writeln!(w, "use ffi as {};", name));
+        } else {
+            try!(writeln!(w, "use {};", name));
+        }
     }
 
     Ok(())

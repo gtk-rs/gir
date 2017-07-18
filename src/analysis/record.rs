@@ -54,6 +54,9 @@ pub fn new(env: &Env, obj: &GObject) -> Option<Info> {
     let mut imports = Imports::new();
     imports.add("glib::translate::*", None);
     imports.add("ffi", None);
+    imports.add("glib_ffi", None);
+    imports.add("std::mem", None);
+    imports.add("std::ptr", None);
 
     let mut functions = functions::analyze(
         env,
