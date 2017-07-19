@@ -73,8 +73,8 @@ pub fn versions(
         .map(|f| f.deprecated_version)
         .min()
         .unwrap_or(None);
-    let deprecated_version = deprecated_version
-        .or_else(|| fn_deprecated_min.and(fn_deprecated_max));
+    let deprecated_version =
+        deprecated_version.or_else(|| fn_deprecated_min.and(fn_deprecated_max));
 
     (version, deprecated_version)
 }

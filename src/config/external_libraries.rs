@@ -36,7 +36,10 @@ pub fn read_external_libraries(toml: &toml::Value) -> Result<Vec<ExternalLibrary
                 };
                 external_libraries.push(lib);
             } else {
-                bail!("For external library \"{}\" namespace must be string", crate_name);
+                bail!(
+                    "For external library \"{}\" namespace must be string",
+                    crate_name
+                );
             }
 
         }

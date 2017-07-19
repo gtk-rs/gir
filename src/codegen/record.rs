@@ -12,11 +12,10 @@ pub fn generate(w: &mut Write, env: &Env, analysis: &analysis::record::Info) -> 
     try!(general::start_comments(w, &env.config));
     try!(general::uses(w, env, &analysis.imports));
 
-    if let (Some(ref_fn), Some(unref_fn)) =
-        (
-            analysis.specials.get(&Type::Ref),
-            analysis.specials.get(&Type::Unref),
-        ) {
+    if let (Some(ref_fn), Some(unref_fn)) = (
+        analysis.specials.get(&Type::Ref),
+        analysis.specials.get(&Type::Unref),
+    ) {
         try!(general::define_shared_type(
             w,
             &analysis.name,
@@ -25,11 +24,10 @@ pub fn generate(w: &mut Write, env: &Env, analysis: &analysis::record::Info) -> 
             unref_fn,
             &analysis.glib_get_type,
         ));
-    } else if let (Some(copy_fn), Some(free_fn)) =
-        (
-            analysis.specials.get(&Type::Copy),
-            analysis.specials.get(&Type::Free),
-        ) {
+    } else if let (Some(copy_fn), Some(free_fn)) = (
+        analysis.specials.get(&Type::Copy),
+        analysis.specials.get(&Type::Free),
+    ) {
         try!(general::define_boxed_type(
             w,
             &analysis.name,
@@ -69,8 +67,7 @@ pub fn generate(w: &mut Write, env: &Env, analysis: &analysis::record::Info) -> 
     }
 
     match analysis.concurrency {
-        library::Concurrency::Send |
-        library::Concurrency::SendSync => {
+        library::Concurrency::Send | library::Concurrency::SendSync => {
             try!(writeln!(w, "unsafe impl Send for {} {{}}", analysis.name));
         }
         _ => (),

@@ -11,7 +11,9 @@ pub struct Imports {
 
 impl Imports {
     pub fn new() -> Imports {
-        Imports { map: BTreeMap::new() }
+        Imports {
+            map: BTreeMap::new(),
+        }
     }
 
     pub fn add(&mut self, name: &str, version: Option<Version>) {

@@ -220,8 +220,12 @@ impl Builder {
         let mut params = Vec::new();
         for par in &self.parameters {
             let chunk = match *par {
-                In { ref parameter } => Chunk::FfiCallParameter { par: parameter.clone() },
-                Out { ref parameter, .. } => Chunk::FfiCallOutParameter { par: parameter.clone() },
+                In { ref parameter } => Chunk::FfiCallParameter {
+                    par: parameter.clone(),
+                },
+                Out { ref parameter, .. } => Chunk::FfiCallOutParameter {
+                    par: parameter.clone(),
+                },
             };
             params.push(chunk);
         }
@@ -241,7 +245,11 @@ impl Builder {
         self.parameters
             .iter()
             .filter_map(|par| if let Out { ref parameter, .. } = *par {
-                if parameter.is_error { None } else { Some(par) }
+                if parameter.is_error {
+                    None
+                } else {
+                    Some(par)
+                }
             } else {
                 None
             })
@@ -292,12 +300,14 @@ impl Builder {
                 if self.parameters.iter().any(|other_par| match *other_par {
                     Parameter::In {
                         parameter: parameter_ffi_call_in::Parameter {
-                            array_length: Some((ref name, _)), ..
+                            array_length: Some((ref name, _)),
+                            ..
                         },
                     } |
                     Parameter::Out {
                         parameter: parameter_ffi_call_out::Parameter {
-                            array_length: Some((ref name, _)), ..
+                            array_length: Some((ref name, _)),
+                            ..
                         },
                         ..
                     } => name == &parameter.name,
@@ -408,7 +418,9 @@ impl Builder {
                 } else {
                     panic!("Return is not Tuple")
                 }
-                ret = Chunk::ErrorResultReturn { value: Box::new(ret) };
+                ret = Chunk::ErrorResultReturn {
+                    value: Box::new(ret),
+                };
                 (call, Some(ret))
             }
         }

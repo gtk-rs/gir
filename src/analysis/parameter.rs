@@ -37,14 +37,11 @@ fn is_into(env: &Env, par: &library::Parameter) -> bool {
         match *par {
             library::Type::Fundamental(fund) => {
                 match fund {
-                    library::Fundamental::Utf8 |
-                    library::Fundamental::Type => true,
+                    library::Fundamental::Utf8 | library::Fundamental::Type => true,
                     _ => false,
                 }
             }
-            library::Type::List(_) |
-            library::Type::SList(_) |
-            library::Type::CArray(_) => false,
+            library::Type::List(_) | library::Type::SList(_) | library::Type::CArray(_) => false,
             library::Type::Alias(ref alias) => is_into_inner(env, env.library.type_(alias.typ)),
             _ => true,
         }

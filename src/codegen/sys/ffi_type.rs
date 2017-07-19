@@ -24,9 +24,14 @@ pub fn ffi_type(env: &Env, tid: library::TypeId, c_type: &str) -> Result {
                         ffi_inner(env, c_tid, c_type.into())
                             .map_any(|s| format!("[{}; {}]", s, size))
                     }
-                    Type::Class(Class { c_type: ref expected, .. }) |
-                    Type::Interface(Interface { c_type: ref expected, .. })
-                        if c_type == "gpointer" => {
+                    Type::Class(Class {
+                        c_type: ref expected,
+                        ..
+                    }) |
+                    Type::Interface(Interface {
+                        c_type: ref expected,
+                        ..
+                    }) if c_type == "gpointer" => {
                         info!("[c:type `gpointer` instead of `*mut {}`, fixing]", expected);
                         ffi_inner(env, tid, expected.clone()).map_any(|s| format!("*mut {}", s))
                     }
@@ -99,9 +104,7 @@ fn ffi_inner(env: &Env, tid: library::TypeId, mut inner: String) -> Result {
             };
             Ok(inner.into())
         }
-        Type::Record(..) |
-        Type::Alias(..) |
-        Type::Function(..) => {
+        Type::Record(..) | Type::Alias(..) | Type::Function(..) => {
             if let Some(declared_c_type) = typ.get_glib_name() {
                 if declared_c_type != inner {
                     let msg = format!(
