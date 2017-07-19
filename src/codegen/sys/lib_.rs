@@ -138,7 +138,7 @@ fn generate_bitfields(w: &mut Write, env: &Env, items: &[&Bitfield]) -> Result<(
             try!(writeln!(
                 w,
                 "extern \"C\" {{
-  pub fn {}() -> GType;
+    pub fn {}() -> GType;
 }}",
                 get_type
             ));
@@ -264,7 +264,7 @@ fn generate_enums(w: &mut Write, env: &Env, items: &[&Enumeration]) -> Result<()
             try!(writeln!(
                 w,
                 "extern \"C\" {{
-  pub fn {}() -> GType;
+    pub fn {}() -> GType;
 }}",
                 get_type
             ));
