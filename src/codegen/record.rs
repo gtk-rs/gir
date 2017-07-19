@@ -23,6 +23,7 @@ pub fn generate(w: &mut Write, env: &Env, analysis: &analysis::record::Info) -> 
             &type_.c_type,
             ref_fn,
             unref_fn,
+            &analysis.glib_get_type,
         ));
     } else if let (Some(copy_fn), Some(free_fn)) =
         (
@@ -35,6 +36,7 @@ pub fn generate(w: &mut Write, env: &Env, analysis: &analysis::record::Info) -> 
             &type_.c_type,
             copy_fn,
             free_fn,
+            &analysis.glib_get_type,
         ));
     } else {
         panic!(
