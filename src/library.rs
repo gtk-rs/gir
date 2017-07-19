@@ -160,42 +160,41 @@ pub enum Fundamental {
     Unsupported,
 }
 
-const FUNDAMENTAL: &'static [(&'static str, Fundamental)] =
-    &[
-        ("none", Fundamental::None),
-        ("gboolean", Fundamental::Boolean),
-        ("gint8", Fundamental::Int8),
-        ("guint8", Fundamental::UInt8),
-        ("gint16", Fundamental::Int16),
-        ("guint16", Fundamental::UInt16),
-        ("gint32", Fundamental::Int32),
-        ("guint32", Fundamental::UInt32),
-        ("gint64", Fundamental::Int64),
-        ("guint64", Fundamental::UInt64),
-        ("gchar", Fundamental::Char),
-        ("guchar", Fundamental::UChar),
-        ("gshort", Fundamental::Short),
-        ("gushort", Fundamental::UShort),
-        ("gint", Fundamental::Int),
-        ("guint", Fundamental::UInt),
-        ("glong", Fundamental::Long),
-        ("gulong", Fundamental::ULong),
-        ("gsize", Fundamental::Size),
-        ("gssize", Fundamental::SSize),
-        ("gfloat", Fundamental::Float),
-        ("gdouble", Fundamental::Double),
-        ("long double", Fundamental::Unsupported),
-        ("gunichar", Fundamental::UniChar),
-        ("gconstpointer", Fundamental::Pointer),
-        ("gpointer", Fundamental::Pointer),
-        ("va_list", Fundamental::Unsupported),
-        ("varargs", Fundamental::VarArgs),
-        ("utf8", Fundamental::Utf8),
-        ("filename", Fundamental::Filename),
-        ("GType", Fundamental::Type),
-        ("gintptr", Fundamental::IntPtr),
-        ("guintptr", Fundamental::UIntPtr),
-    ];
+const FUNDAMENTAL: &'static [(&'static str, Fundamental)] = &[
+    ("none", Fundamental::None),
+    ("gboolean", Fundamental::Boolean),
+    ("gint8", Fundamental::Int8),
+    ("guint8", Fundamental::UInt8),
+    ("gint16", Fundamental::Int16),
+    ("guint16", Fundamental::UInt16),
+    ("gint32", Fundamental::Int32),
+    ("guint32", Fundamental::UInt32),
+    ("gint64", Fundamental::Int64),
+    ("guint64", Fundamental::UInt64),
+    ("gchar", Fundamental::Char),
+    ("guchar", Fundamental::UChar),
+    ("gshort", Fundamental::Short),
+    ("gushort", Fundamental::UShort),
+    ("gint", Fundamental::Int),
+    ("guint", Fundamental::UInt),
+    ("glong", Fundamental::Long),
+    ("gulong", Fundamental::ULong),
+    ("gsize", Fundamental::Size),
+    ("gssize", Fundamental::SSize),
+    ("gfloat", Fundamental::Float),
+    ("gdouble", Fundamental::Double),
+    ("long double", Fundamental::Unsupported),
+    ("gunichar", Fundamental::UniChar),
+    ("gconstpointer", Fundamental::Pointer),
+    ("gpointer", Fundamental::Pointer),
+    ("va_list", Fundamental::Unsupported),
+    ("varargs", Fundamental::VarArgs),
+    ("utf8", Fundamental::Utf8),
+    ("filename", Fundamental::Filename),
+    ("GType", Fundamental::Type),
+    ("gintptr", Fundamental::IntPtr),
+    ("guintptr", Fundamental::UIntPtr),
+];
 
 #[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct TypeId {
@@ -564,11 +563,11 @@ impl Type {
         let fields = u.fields;
         let field_tids: Vec<TypeId> = fields.iter().map(|f| f.typ).collect();
         let typ = Type::Union(Union {
-            name            : u.name,
-            c_type          : u.c_type,
-            fields          : fields,
-            functions       : u.functions,
-            doc             : u.doc,
+            name: u.name,
+            c_type: u.c_type,
+            fields: fields,
+            functions: u.functions,
+            doc: u.doc,
         });
         library.add_type(ns_id, &format!("#{:?}", field_tids), typ)
     }
@@ -578,15 +577,15 @@ impl Type {
         let fields = r.fields;
         let field_tids: Vec<TypeId> = fields.iter().map(|f| f.typ).collect();
         let typ = Type::Record(Record {
-            name            : r.name,
-            c_type          : r.c_type,
-            glib_get_type   : r.glib_get_type,
-            fields          : fields,
-            functions       : r.functions,
-            version         : r.version,
+            name: r.name,
+            c_type: r.c_type,
+            glib_get_type: r.glib_get_type,
+            fields: fields,
+            functions: r.functions,
+            version: r.version,
             deprecated_version: r.deprecated_version,
-            doc             : r.doc,
-            doc_deprecated  : r.doc_deprecated,
+            doc: r.doc,
+            doc_deprecated: r.doc_deprecated,
         });
         library.add_type(ns_id, &format!("#{:?}", field_tids), typ)
     }

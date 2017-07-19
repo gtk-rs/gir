@@ -22,8 +22,10 @@ impl RefMode {
     ) -> RefMode {
         let library = &env.library;
 
-        if let Some(&GObject { ref_mode: Some(ref_mode), .. }) =
-            env.config.objects.get(&tid.full_name(&env.library))
+        if let Some(&GObject {
+            ref_mode: Some(ref_mode),
+            ..
+        }) = env.config.objects.get(&tid.full_name(&env.library))
         {
             return ref_mode;
         }

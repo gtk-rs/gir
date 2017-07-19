@@ -33,8 +33,7 @@ impl ToParameter for Parameter {
                             }
                         }
                         BoundType::Into(_, Some(_)) => type_str = t.to_string(),
-                        BoundType::AsRef(_) |
-                        BoundType::Into(_, None) => type_str = t.to_string(),
+                        BoundType::AsRef(_) | BoundType::Into(_, None) => type_str = t.to_string(),
                     }
                 }
                 None => {

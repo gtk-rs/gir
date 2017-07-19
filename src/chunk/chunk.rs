@@ -7,7 +7,7 @@ use super::parameter_ffi_call_out;
 
 pub enum Chunk {
     Comment(Vec<Chunk>),
-    BlockHalf(Vec<Chunk>), //Block without open bracket, temporary
+    BlockHalf(Vec<Chunk>),   //Block without open bracket, temporary
     UnsafeSmart(Vec<Chunk>), //TODO: remove (will change generated results)
     Unsafe(Vec<Chunk>),
     FfiCallTODO(String),
@@ -59,5 +59,5 @@ pub fn chunks(ch: Chunk) -> Vec<Chunk> {
 pub enum TupleMode {
     Auto, // "", "1", "(1,2)"
     WithUnit, // "()", "1", "(1,2)"
-              //Simple,    // "()", "(1)", "(1,2)"
+          //Simple,    // "()", "(1)", "(1,2)"
 }

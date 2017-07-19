@@ -44,7 +44,13 @@ pub fn out_parameter_as_return_parts(
         .filter(|p| p.array_length.is_none())
         .count();
     match analysis.outs.mode {
-        Normal | Combined => if num_outs > 1 { ("(", ")") } else { ("", "") },
+        Normal | Combined => {
+            if num_outs > 1 {
+                ("(", ")")
+            } else {
+                ("", "")
+            }
+        }
         Optional => {
             if num_outs > 1 {
                 ("Option<(", ")>")

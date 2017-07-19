@@ -238,9 +238,7 @@ pub fn get_type_default_value(
         }
         Type::Bitfield(_) => some("&0u32"),
         Type::Enumeration(_) => some("&0"),
-        Type::Class(..) |
-        Type::Record(..) |
-        Type::Interface(..) => {
+        Type::Class(..) | Type::Record(..) | Type::Interface(..) => {
             let type_str = rust_type(env, type_tid).into_string();
             Some(format!("None::<&{}>", type_str))
         }

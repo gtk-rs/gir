@@ -67,7 +67,10 @@ pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>) {
             if has_get_type {
                 try!(writeln!(w, "use glib::Type;"));
                 try!(writeln!(w, "use glib::StaticType;"));
-                try!(writeln!(w, "use glib::value::{{Value, SetValue, FromValue, FromValueOptional}};"));
+                try!(writeln!(
+                    w,
+                    "use glib::value::{{Value, SetValue, FromValue, FromValueOptional}};"
+                ));
                 try!(writeln!(w, "use gobject_ffi;"));
             }
             try!(writeln!(w, "use glib::translate::*;"));
@@ -279,9 +282,7 @@ impl FromGlib<ffi::{ffi_name}> for {name} {{
             name = enum_.name,
             get_type = get_type
         ));
-        try!(writeln!(
-            w,
-            ""));
+        try!(writeln!(w, ""));
 
         try!(version_condition(w, env, enum_.version, false, 0));
         try!(writeln!(
@@ -293,9 +294,7 @@ impl FromGlib<ffi::{ffi_name}> for {name} {{
 }}",
             name = enum_.name,
         ));
-        try!(writeln!(
-            w,
-            ""));
+        try!(writeln!(w, ""));
 
         try!(version_condition(w, env, enum_.version, false, 0));
         try!(writeln!(
@@ -308,9 +307,7 @@ impl FromGlib<ffi::{ffi_name}> for {name} {{
             name = enum_.name,
             ffi_name = enum_.c_type,
         ));
-        try!(writeln!(
-            w,
-            ""));
+        try!(writeln!(w, ""));
 
         try!(version_condition(w, env, enum_.version, false, 0));
         try!(writeln!(
@@ -322,9 +319,7 @@ impl FromGlib<ffi::{ffi_name}> for {name} {{
 }}",
             name = enum_.name,
         ));
-        try!(writeln!(
-            w,
-            ""));
+        try!(writeln!(w, ""));
     }
 
     Ok(())

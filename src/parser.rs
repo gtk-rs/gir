@@ -78,7 +78,9 @@ impl Library {
         loop {
             let event = try!(parser.next());
             match event {
-                StartElement { name, attributes, .. } => {
+                StartElement {
+                    name, attributes, ..
+                } => {
                     match name.local_name.as_ref() {
                         "include" => {
                             if let (Some(lib), Some(ver)) =
@@ -140,7 +142,9 @@ impl Library {
         loop {
             let event = try!(parser.next());
             match event {
-                StartElement { name, attributes, .. } => {
+                StartElement {
+                    name, attributes, ..
+                } => {
                     trace!(
                         "<{} name={:?}>",
                         name.local_name,
@@ -229,11 +233,11 @@ impl Library {
         loop {
             let event = try!(parser.next());
             match event {
-                StartElement { name, attributes, .. } => {
+                StartElement {
+                    name, attributes, ..
+                } => {
                     match name.local_name.as_ref() {
-                        kind @ "constructor" |
-                        kind @ "function" |
-                        kind @ "method" => {
+                        kind @ "constructor" | kind @ "function" | kind @ "method" => {
                             try!(self.read_function_to_vec(
                                 parser,
                                 ns_id,
@@ -269,7 +273,8 @@ impl Library {
                             {
                                 use self::Type::*;
                                 if let Union(u) =
-                                        try!(self.read_union_unsafe(parser, ns_id, attrs)) {
+                                    try!(self.read_union_unsafe(parser, ns_id, attrs))
+                                {
                                     let u_doc = u.doc.clone();
                                     let type_id = Type::union(self, u, ns_id);
                                     fields.push(Field {
@@ -319,8 +324,12 @@ impl Library {
         Ok(())
     }
 
-    fn read_record_start(&mut self, parser: &mut Reader,
-                         ns_id: u16, attrs: &Attributes) -> Result<()> {
+    fn read_record_start(
+        &mut self,
+        parser: &mut Reader,
+        ns_id: u16,
+        attrs: &Attributes,
+    ) -> Result<()> {
 
         if let Some(typ) = try!(self.read_record(parser, ns_id, attrs)) {
             let name = typ.get_name().clone();
@@ -329,8 +338,12 @@ impl Library {
         Ok(())
     }
 
-    fn read_record(&mut self, parser: &mut Reader, ns_id: u16, attrs: &Attributes)
-        -> Result<Option<Type>> {
+    fn read_record(
+        &mut self,
+        parser: &mut Reader,
+        ns_id: u16,
+        attrs: &Attributes,
+    ) -> Result<Option<Type>> {
         let mut name = try!(
             attrs
                 .by_name("name")
@@ -343,7 +356,7 @@ impl Library {
         );
         let get_type = match attrs.by_name("get-type") {
             Some(s) => Some(s.to_string()),
-            None => None
+            None => None,
         };
         let version = try!(self.parse_version(parser, ns_id, attrs.by_name("version")));
         let deprecated_version = try!(self.parse_version(
@@ -360,11 +373,11 @@ impl Library {
         loop {
             let event = try!(parser.next());
             match event {
-                StartElement { name, attributes, .. } => {
+                StartElement {
+                    name, attributes, ..
+                } => {
                     match name.local_name.as_ref() {
-                        kind @ "constructor" |
-                        kind @ "function" |
-                        kind @ "method" => {
+                        kind @ "constructor" | kind @ "function" | kind @ "method" => {
                             try!(self.read_function_to_vec(
                                 parser,
                                 ns_id,
@@ -378,17 +391,19 @@ impl Library {
                             {
                                 use self::Type::*;
                                 if let Union(mut u) =
-                                        try!(self.read_union_unsafe(parser, ns_id, attrs)) {
+                                    try!(self.read_union_unsafe(parser, ns_id, attrs))
+                                {
                                     // A nested union->struct->union typically has no c_type
                                     // so we iterate over fields to find it. These fields are
                                     // within the nested union->struct if found
                                     let mut nested = true;
                                     for f in &mut u.fields {
                                         if f.c_type.is_none() ||
-                                                c_type == u.c_type.as_ref().unwrap() {
+                                            c_type == u.c_type.as_ref().unwrap()
+                                        {
                                             nested = true;
-                                            u.name = format!("{}_u{}",c_type,union_count);
-                                            u.c_type = Some(format!("{}_u{}",c_type,union_count));
+                                            u.name = format!("{}_u{}", c_type, union_count);
+                                            u.c_type = Some(format!("{}_u{}", c_type, union_count));
                                         }
                                     }
                                     let ctype = u.c_type.clone();
@@ -477,8 +492,12 @@ impl Library {
         Ok(Some(typ))
     }
 
-    fn read_named_union(&mut self, parser: &mut Reader,
-                        ns_id: u16, attrs: &Attributes) -> Result<()> {
+    fn read_named_union(
+        &mut self,
+        parser: &mut Reader,
+        ns_id: u16,
+        attrs: &Attributes,
+    ) -> Result<()> {
         let name = try!(
             attrs
                 .by_name("name")
@@ -514,8 +533,12 @@ impl Library {
     }
 
     #[cfg(feature = "use_unions")]
-    fn read_union_unsafe(&mut self, parser: &mut Reader, ns_id: u16, attrs: &Attributes)
-        -> Result<Type> {
+    fn read_union_unsafe(
+        &mut self,
+        parser: &mut Reader,
+        ns_id: u16,
+        attrs: &Attributes,
+    ) -> Result<Type> {
         let name = try!(
             attrs
                 .by_name("name")
@@ -530,15 +553,15 @@ impl Library {
         loop {
             let event = try!(parser.next());
             match event {
-                StartElement { name, attributes, .. } => {
+                StartElement {
+                    name, attributes, ..
+                } => {
                     match name.local_name.as_ref() {
                         "field" => {
                             let f = try!(self.read_field(parser, ns_id, &attributes));
                             fields.push(f);
                         }
-                        kind @ "constructor" |
-                        kind @ "function" |
-                        kind @ "method" => {
+                        kind @ "constructor" | kind @ "function" | kind @ "method" => {
                             try!(self.read_function_to_vec(
                                 parser,
                                 ns_id,
@@ -550,9 +573,10 @@ impl Library {
                         "record" => {
                             use self::Type::*;
                             if let Some(Record(mut r)) =
-                                    try!(self.read_record(parser, ns_id, attrs)) {
-                                r.name = format!("{}_s{}",c_type, struct_count);
-                                r.c_type = format!("{}_s{}",c_type, struct_count);
+                                try!(self.read_record(parser, ns_id, attrs))
+                            {
+                                r.name = format!("{}_s{}", c_type, struct_count);
+                                r.c_type = format!("{}_s{}", c_type, struct_count);
                                 let r_doc = r.doc.clone();
                                 let type_id = Type::record(self, r, ns_id);
                                 fields.push(Field {
@@ -563,7 +587,7 @@ impl Library {
                                 });
                                 struct_count += 1;
                             };
-                        },
+                        }
                         "doc" => doc = try!(read_text(parser)),
                         x => bail!(mk_error!(format!("Unexpected element <{}>", x), parser)),
                     }
@@ -584,22 +608,25 @@ impl Library {
     }
 
     #[cfg(not(feature = "use_unions"))]
-    fn read_union(&mut self, parser: &mut Reader, ns_id: u16)
-                    -> Result<(Vec<Field>, Vec<Function>, Option<String>)> {
+    fn read_union(
+        &mut self,
+        parser: &mut Reader,
+        ns_id: u16,
+    ) -> Result<(Vec<Field>, Vec<Function>, Option<String>)> {
         let mut fields = Vec::new();
         let mut fns = Vec::new();
         let mut doc = None;
         loop {
             let event = try!(parser.next());
             match event {
-                StartElement { name, attributes, .. } => {
+                StartElement {
+                    name, attributes, ..
+                } => {
                     match name.local_name.as_ref() {
                         "field" => {
                             fields.push(try!(self.read_field(parser, ns_id, &attributes)));
                         }
-                        kind @ "constructor" |
-                        kind @ "function" |
-                        kind @ "method" => {
+                        kind @ "constructor" | kind @ "function" | kind @ "method" => {
                             try!(self.read_function_to_vec(
                                 parser,
                                 ns_id,
@@ -631,7 +658,9 @@ impl Library {
         loop {
             let event = try!(parser.next());
             match event {
-                StartElement { name, attributes, .. } => {
+                StartElement {
+                    name, attributes, ..
+                } => {
                     match name.local_name.as_ref() {
                         "type" | "array" => {
                             let pos = parser.position();
@@ -727,11 +756,11 @@ impl Library {
         loop {
             let event = try!(parser.next());
             match event {
-                StartElement { name, attributes, .. } => {
+                StartElement {
+                    name, attributes, ..
+                } => {
                     match name.local_name.as_ref() {
-                        kind @ "constructor" |
-                        kind @ "function" |
-                        kind @ "method" => {
+                        kind @ "constructor" | kind @ "function" | kind @ "method" => {
                             try!(self.read_function_to_vec(
                                 parser,
                                 ns_id,
@@ -809,14 +838,14 @@ impl Library {
         loop {
             let event = try!(parser.next());
             match event {
-                StartElement { name, attributes, .. } => {
+                StartElement {
+                    name, attributes, ..
+                } => {
                     match name.local_name.as_ref() {
                         "member" => {
                             members.push(try!(self.read_member(parser, &attributes)));
                         }
-                        kind @ "constructor" |
-                        kind @ "function" |
-                        kind @ "method" => {
+                        kind @ "constructor" | kind @ "function" | kind @ "method" => {
                             try!(self.read_function_to_vec(
                                 parser,
                                 ns_id,
@@ -881,14 +910,14 @@ impl Library {
         loop {
             let event = try!(parser.next());
             match event {
-                StartElement { name, attributes, .. } => {
+                StartElement {
+                    name, attributes, ..
+                } => {
                     match name.local_name.as_ref() {
                         "member" => {
                             members.push(try!(self.read_member(parser, &attributes)));
                         }
-                        kind @ "constructor" |
-                        kind @ "function" |
-                        kind @ "method" => {
+                        kind @ "constructor" | kind @ "function" | kind @ "method" => {
                             try!(self.read_function_to_vec(
                                 parser,
                                 ns_id,
@@ -967,7 +996,9 @@ impl Library {
         loop {
             let event = try!(parser.next());
             match event {
-                StartElement { name, attributes, .. } => {
+                StartElement {
+                    name, attributes, ..
+                } => {
                     match name.local_name.as_ref() {
                         "type" | "array" => {
                             if inner.is_some() {
@@ -1028,7 +1059,9 @@ impl Library {
         loop {
             let event = try!(parser.next());
             match event {
-                StartElement { name, attributes, .. } => {
+                StartElement {
+                    name, attributes, ..
+                } => {
                     match name.local_name.as_ref() {
                         "type" | "array" => {
                             if inner.is_some() {
@@ -1082,7 +1115,9 @@ impl Library {
         loop {
             let event = try!(parser.next());
             match event {
-                StartElement { name, attributes, .. } => {
+                StartElement {
+                    name, attributes, ..
+                } => {
                     match (name.local_name.as_ref(), attributes.by_name("name")) {
                         /*
                         ("attribute", Some("c:identifier")) => {
@@ -1136,7 +1171,9 @@ impl Library {
         loop {
             let event = try!(parser.next());
             match event {
-                StartElement { name, attributes, .. } => {
+                StartElement {
+                    name, attributes, ..
+                } => {
                     match name.local_name.as_ref() {
                         "parameters" => {
                             //params.append(&mut try!(self.read_parameters(parser, ns_id)));
@@ -1279,7 +1316,9 @@ impl Library {
         loop {
             let event = try!(parser.next());
             match event {
-                StartElement { name, attributes, .. } => {
+                StartElement {
+                    name, attributes, ..
+                } => {
                     match name.local_name.as_ref() {
                         "parameters" => {
                             try!(self.read_parameters(parser, ns_id, true))
@@ -1346,10 +1385,11 @@ impl Library {
         loop {
             let event = try!(parser.next());
             match event {
-                StartElement { name, attributes, .. } => {
+                StartElement {
+                    name, attributes, ..
+                } => {
                     match name.local_name.as_ref() {
-                        kind @ "parameter" |
-                        kind @ "instance-parameter" => {
+                        kind @ "parameter" | kind @ "instance-parameter" => {
                             let param = try!(self.read_parameter(
                                 parser,
                                 ns_id,
@@ -1399,7 +1439,9 @@ impl Library {
         loop {
             let event = try!(parser.next());
             match event {
-                StartElement { name, attributes, .. } => {
+                StartElement {
+                    name, attributes, ..
+                } => {
                     match name.local_name.as_ref() {
                         "type" | "array" => {
                             let pos = parser.position();
@@ -1507,7 +1549,9 @@ impl Library {
         loop {
             let event = try!(parser.next());
             match event {
-                StartElement { name, attributes, .. } => {
+                StartElement {
+                    name, attributes, ..
+                } => {
                     match name.local_name.as_ref() {
                         "type" | "array" => {
                             let pos = parser.position();
@@ -1597,7 +1641,9 @@ impl Library {
         loop {
             let event = try!(parser.next());
             match event {
-                StartElement { name, attributes, .. } => {
+                StartElement {
+                    name, attributes, ..
+                } => {
                     match name.local_name.as_ref() {
                         "type" | "array" => {
                             inner.push(try!(self.read_type(parser, ns_id, &name, &attributes)).0);

@@ -135,9 +135,13 @@ fn generate_bitfields(w: &mut Write, env: &Env, items: &[&Bitfield]) -> Result<(
     }
     for item in items {
         if let Some(ref get_type) = item.glib_get_type {
-            try!(writeln!(w, "extern \"C\" {{
+            try!(writeln!(
+                w,
+                "extern \"C\" {{
   pub fn {}() -> GType;
-}}", get_type));
+}}",
+                get_type
+            ));
             try!(writeln!(w, ""));
         }
 
@@ -257,9 +261,13 @@ fn generate_enums(w: &mut Write, env: &Env, items: &[&Enumeration]) -> Result<()
     }
     for item in items {
         if let Some(ref get_type) = item.glib_get_type {
-            try!(writeln!(w, "extern \"C\" {{
+            try!(writeln!(
+                w,
+                "extern \"C\" {{
   pub fn {}() -> GType;
-}}", get_type));
+}}",
+                get_type
+            ));
             try!(writeln!(w, ""));
         }
 
@@ -548,8 +556,7 @@ fn generate_fields(env: &Env, struct_name: &str, fields: &[Field]) -> (Vec<Strin
         }
 
         if !cfg!(feature = "use_unions") || (is_bits && !truncated) {
-            if !is_gweakref && !truncated && !is_ptr &&
-                (is_union || is_bits) &&
+            if !is_gweakref && !truncated && !is_ptr && (is_union || is_bits) &&
                 !is_union_special_case(&field.c_type)
             {
                 warn!(

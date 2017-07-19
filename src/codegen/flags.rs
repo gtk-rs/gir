@@ -14,9 +14,14 @@ use traits::*;
 pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>) {
     let path = root_path.join("flags.rs");
     file_saver::save_to_file(path, env.config.make_backup, |w| {
-        let configs: Vec<&GObject> = env.config.objects.values().filter(|c| {
-            c.status.need_generate() && c.type_id.map_or(false, |tid| tid.ns_id == namespaces::MAIN)
-        }).collect();
+        let configs: Vec<&GObject> = env.config
+            .objects
+            .values()
+            .filter(|c| {
+                c.status.need_generate() &&
+                    c.type_id.map_or(false, |tid| tid.ns_id == namespaces::MAIN)
+            })
+            .collect();
 
         let mut has_get_type = false;
         for config in &configs {
@@ -46,7 +51,10 @@ pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>) {
             if has_get_type {
                 try!(writeln!(w, "use glib::Type;"));
                 try!(writeln!(w, "use glib::StaticType;"));
-                try!(writeln!(w, "use glib::value::{{Value, SetValue, FromValue, FromValueOptional}};"));
+                try!(writeln!(
+                    w,
+                    "use glib::value::{{Value, SetValue, FromValue, FromValueOptional}};"
+                ));
                 try!(writeln!(w, "use gobject_ffi;"));
             }
             try!(writeln!(w, "use glib::translate::*;"));
@@ -92,12 +100,9 @@ fn generate_flags(
         let version = member_config.iter().filter_map(|m| m.version).next();
         try!(version_condition(w, env, version, false, 2));
         try!(writeln!(w, "\t\tconst {} = {};", name, val as u32));
-        if let Some(cfg) = version_condition_string(
-            env,
-            cmp::max(flags.version, version),
-            false,
-            0,
-        ) {
+        if let Some(cfg) =
+            version_condition_string(env, cmp::max(flags.version, version), false, 0)
+        {
             mod_rs.push(cfg);
         }
         mod_rs.push(format!("pub use self::flags::{};", name));
@@ -160,9 +165,7 @@ impl FromGlib<ffi::{ffi_name}> for {name} {{
             name = flags.name,
             get_type = get_type
         ));
-        try!(writeln!(
-            w,
-            ""));
+        try!(writeln!(w, ""));
 
         try!(version_condition(w, env, flags.version, false, 0));
         try!(writeln!(
@@ -174,9 +177,7 @@ impl FromGlib<ffi::{ffi_name}> for {name} {{
 }}",
             name = flags.name,
         ));
-        try!(writeln!(
-            w,
-            ""));
+        try!(writeln!(w, ""));
 
         try!(version_condition(w, env, flags.version, false, 0));
         try!(writeln!(
@@ -189,9 +190,7 @@ impl FromGlib<ffi::{ffi_name}> for {name} {{
             name = flags.name,
             ffi_name = flags.c_type,
         ));
-        try!(writeln!(
-            w,
-            ""));
+        try!(writeln!(w, ""));
 
         try!(version_condition(w, env, flags.version, false, 0));
         try!(writeln!(
@@ -204,9 +203,7 @@ impl FromGlib<ffi::{ffi_name}> for {name} {{
             name = flags.name,
         ));
 
-        try!(writeln!(
-            w,
-            ""));
+        try!(writeln!(w, ""));
     }
 
     Ok(())

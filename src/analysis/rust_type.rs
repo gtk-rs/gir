@@ -18,10 +18,7 @@ pub type Result = result::Result<String, TypeError>;
 fn into_inner(res: Result) -> String {
     use self::TypeError::*;
     match res {
-        Ok(s) |
-        Err(Ignored(s)) |
-        Err(Mismatch(s)) |
-        Err(Unimplemented(s)) => s,
+        Ok(s) | Err(Ignored(s)) | Err(Mismatch(s)) | Err(Unimplemented(s)) => s,
     }
 }
 
@@ -136,9 +133,7 @@ fn rust_type_full(
                 Ok(name)
             }
         }
-        List(inner_tid) |
-        SList(inner_tid) |
-        CArray(inner_tid)
+        List(inner_tid) | SList(inner_tid) | CArray(inner_tid)
             if ConversionType::of(&env.library, inner_tid) == ConversionType::Pointer => {
             skip_option = true;
             let inner_ref_mode = match *env.library.type_(inner_tid) {
@@ -201,9 +196,7 @@ pub fn used_rust_type(env: &Env, type_id: library::TypeId) -> Result {
         Class(..) |
         Enumeration(..) |
         Interface(..) => rust_type(env, type_id),
-        List(inner_tid) |
-        SList(inner_tid) |
-        CArray(inner_tid) => used_rust_type(env, inner_tid),
+        List(inner_tid) | SList(inner_tid) | CArray(inner_tid) => used_rust_type(env, inner_tid),
         _ => Err(TypeError::Ignored("Don't need use".to_owned())),
     }
 }
@@ -263,8 +256,7 @@ pub fn parameter_rust_type(
 
         List(..) | SList(..) | CArray(..) => {
             match direction {
-                library::ParameterDirection::In |
-                library::ParameterDirection::Return => rust_type,
+                library::ParameterDirection::In | library::ParameterDirection::Return => rust_type,
                 _ => Err(TypeError::Unimplemented(into_inner(rust_type))),
             }
         }

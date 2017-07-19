@@ -85,7 +85,9 @@ pub fn run(library: &Library, namespaces: &namespaces::Info) -> Info {
             };
 
             match *typ {
-                Type::Alias(Alias { ref c_identifier, .. }) => {
+                Type::Alias(Alias {
+                    ref c_identifier, ..
+                }) => {
                     info.insert(c_identifier, symbol);
                 }
                 Type::Enumeration(Enumeration {

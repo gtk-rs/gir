@@ -34,7 +34,9 @@ fn get_node<'a>(
             ref implements,
             ..
         }) => parent.iter().chain(implements.iter()).cloned().collect(),
-        Type::Interface(Interface { ref prerequisites, .. }) => prerequisites.clone(),
+        Type::Interface(Interface {
+            ref prerequisites, ..
+        }) => prerequisites.clone(),
         _ => return None,
     };
 

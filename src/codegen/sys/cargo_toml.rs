@@ -103,10 +103,9 @@ fn set_string<S: Into<String>>(table: &mut Table, name: &str, new_value: S) {
 }
 
 fn upsert_table<S: Into<String>>(parent: &mut Table, name: S) -> &mut Table {
-    if let Value::Table(ref mut table) =
-        *parent
-            .entry(name.into())
-            .or_insert_with(|| Value::Table(BTreeMap::new()))
+    if let Value::Table(ref mut table) = *parent
+        .entry(name.into())
+        .or_insert_with(|| Value::Table(BTreeMap::new()))
     {
         table
     } else {

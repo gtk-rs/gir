@@ -86,8 +86,7 @@ pub fn generate(w: &mut Write, env: &Env, analysis: &analysis::object::Info) -> 
     }
 
     match analysis.concurrency {
-        library::Concurrency::Send |
-        library::Concurrency::SendSync => {
+        library::Concurrency::Send | library::Concurrency::SendSync => {
             try!(writeln!(w, "unsafe impl Send for {} {{}}", analysis.name));
         }
         _ => (),
