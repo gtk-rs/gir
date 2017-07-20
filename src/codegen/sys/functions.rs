@@ -66,15 +66,17 @@ pub fn generate_bitfields_funcs(
     env: &Env,
     bitfields: &[&library::Bitfield],
 ) -> Result<()> {
+    let intern_str = INTERN.to_string();
     for bitfield in bitfields {
         let name = format!("{}.{}", env.config.library_name, bitfield.name);
         let obj = env.config.objects.get(&name).unwrap_or(&DEFAULT_OBJ);
+        let glib_get_type = bitfield.glib_get_type.as_ref().unwrap_or(&intern_str);
         try!(generate_object_funcs(
             w,
             env,
             obj,
             &bitfield.c_type,
-            INTERN,
+            &glib_get_type,
             &bitfield.functions,
         ));
     }
@@ -87,15 +89,17 @@ pub fn generate_enums_funcs(
     env: &Env,
     enums: &[&library::Enumeration],
 ) -> Result<()> {
+    let intern_str = INTERN.to_string();
     for en in enums {
         let name = format!("{}.{}", env.config.library_name, en.name);
         let obj = env.config.objects.get(&name).unwrap_or(&DEFAULT_OBJ);
+        let glib_get_type = en.glib_get_type.as_ref().unwrap_or(&intern_str);
         try!(generate_object_funcs(
             w,
             env,
             obj,
             &en.c_type,
-            INTERN,
+            &glib_get_type,
             &en.functions,
         ));
     }
