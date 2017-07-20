@@ -76,7 +76,7 @@ pub fn generate_bitfields_funcs(
             env,
             obj,
             &bitfield.c_type,
-            &glib_get_type,
+            glib_get_type,
             &bitfield.functions,
         ));
     }
@@ -99,7 +99,7 @@ pub fn generate_enums_funcs(
             env,
             obj,
             &en.c_type,
-            &glib_get_type,
+            glib_get_type,
             &en.functions,
         ));
     }
@@ -122,7 +122,7 @@ pub fn generate_unions_funcs(w: &mut Write, env: &Env, unions: &[&library::Union
             env,
             obj,
             c_type,
-            &glib_get_type,
+            glib_get_type,
             &union.functions,
         ));
     }
