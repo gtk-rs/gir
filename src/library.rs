@@ -275,7 +275,7 @@ pub struct Bitfield {
     pub glib_get_type: Option<String>,
 }
 
-#[derive(Debug)]
+#[derive(Default, Debug)]
 pub struct Record {
     pub name: String,
     pub c_type: String,

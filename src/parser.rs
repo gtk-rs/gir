@@ -371,8 +371,9 @@ impl Library {
                             ))
                         }
                         "union" => {
-                            use self::Type::*;
-                            if let Union(mut u) = try!(self.read_union(parser, ns_id, attrs)) {
+                            if let Type::Union(mut u) =
+                                try!(self.read_union(parser, ns_id, attrs))
+                            {
                                 // A nested union->struct->union typically has no c_type
                                 // so we iterate over fields to find it. These fields are
                                 // within the nested union->struct if found
@@ -380,14 +381,17 @@ impl Library {
                                 for f in &mut u.fields {
                                     if f.c_type.is_none() || c_type == u.c_type.as_ref().unwrap() {
                                         nested = true;
-                                        #[cfg(feature = "use_unions")]
-                                        {
-                                            u.name = format!("{}_u{}", c_type, union_count);
-                                            u.c_type = Some(format!("{}_u{}", c_type, union_count));
-                                        }
+                                        break;
                                     }
                                 }
-                                let ctype = u.c_type.clone();
+                                if nested {
+                                    u = Union {
+                                        name: format!("{}_u{}", c_type, union_count),
+                                        c_type: Some(format!("{}_u{}", c_type, union_count)),
+                                        fields: u.fields,
+                                        ..Default::default()
+                                    };
+                                }
                                 let u_doc = u.doc.clone();
 
                                 #[cfg(not(feature = "use_unions"))]
@@ -403,6 +407,8 @@ impl Library {
                                         continue;
                                     }
                                 }
+
+                                let ctype = u.c_type.clone();
 
                                 let type_id = Type::union(self, u, ns_id);
                                 if nested {
@@ -537,22 +543,27 @@ impl Library {
                         "record" => {
                             #[cfg(feature = "use_unions")]
                             {
-                                use self::Type::*;
-                                if let Some(Record(mut r)) =
-                                    try!(self.read_record(parser, ns_id, attrs))
-                                {
-                                    r.name = format!("{}_s{}", c_type, struct_count);
-                                    r.c_type = format!("{}_s{}", c_type, struct_count);
-                                    let r_doc = r.doc.clone();
-                                    let type_id = Type::record(self, r, ns_id);
-                                    fields.push(Field {
-                                        name: format!("s{}", struct_count),
-                                        typ: type_id,
-                                        doc: r_doc,
-                                        ..Field::default()
-                                    });
-                                    struct_count += 1;
-                                }
+                                let mut r = match try!(self.read_record(parser, ns_id, attrs)) {
+                                    Some(Type::Record(r)) => r,
+                                    _ => continue,
+                                };
+
+                                r = Record {
+                                    name: format!("{}_s{}", c_type, struct_count),
+                                    c_type: format!("{}_s{}", c_type, struct_count),
+                                    fields: r.fields,
+                                    ..Default::default()
+                                };
+
+                                let r_doc = r.doc.clone();
+                                let type_id = Type::record(self, r, ns_id);
+                                fields.push(Field {
+                                    name: format!("s{}", struct_count),
+                                    typ: type_id,
+                                    doc: r_doc,
+                                    ..Field::default()
+                                });
+                                struct_count += 1;
                             }
                             #[cfg(not(feature = "use_unions"))]
                             {
