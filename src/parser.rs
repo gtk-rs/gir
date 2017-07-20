@@ -37,11 +37,11 @@ macro_rules! xml_next {
 
 impl Library {
     pub fn read_file(&mut self, dir: &Path, lib: &str) -> Result<()> {
-        let name = make_file_name(dir, lib);
-        let display_name = name.display();
-        let file = try!(
-            File::open(&name).chain_err(|| format!("Can't read file {}", name.to_string_lossy()))
-        );
+        let file_name = make_file_name(dir, lib);
+        let display_name = file_name.display();
+        let file = try!(File::open(&file_name).chain_err(|| {
+            format!("Can't read file {}", display_name)
+        }));
         let mut parser = EventReader::new(BufReader::new(file));
         loop {
             let event = parser.next();
@@ -121,12 +121,12 @@ impl Library {
         attrs: &Attributes,
         package: Option<String>,
     ) -> Result<()> {
-        let name = try!(
+        let ns_name = try!(
             attrs
                 .by_name("name")
                 .ok_or_else(|| mk_error!("Missing namespace name", parser))
         );
-        let ns_id = self.add_namespace(name);
+        let ns_id = self.add_namespace(ns_name);
         self.namespace_mut(ns_id).package_name = package;
         if let Some(s) = attrs.by_name("shared-library") {
             self.namespace_mut(ns_id).shared_library = s.split(',').map(String::from).collect();
@@ -138,7 +138,7 @@ impl Library {
         if let Some(s) = attrs.by_name("symbol-prefixes") {
             self.namespace_mut(ns_id).symbol_prefixes = s.split(',').map(String::from).collect();
         }
-        trace!("Reading {}-{}", name, attrs.by_name("version").unwrap());
+        trace!("Reading {}-{}", ns_name, attrs.by_name("version").unwrap());
         loop {
             let event = try!(parser.next());
             match event {
@@ -200,7 +200,7 @@ impl Library {
     }
 
     fn read_class(&mut self, parser: &mut Reader, ns_id: u16, attrs: &Attributes) -> Result<()> {
-        let name = try!(
+        let class_name = try!(
             attrs
                 .by_name("name")
                 .ok_or_else(|| mk_error!("Missing class name", parser))
@@ -270,7 +270,7 @@ impl Library {
                         "doc" => doc = try!(read_text(parser)),
                         "union" => {
                             use self::Type::*;
-                            if let Union(u) = try!(self.read_union(parser, ns_id, attrs)) {
+                            if let Union(u) = try!(self.read_union(parser, ns_id, &attributes)) {
                                 let u_doc = u.doc.clone();
                                 let type_id = Type::union(self, u, ns_id);
                                 fields.push(Field {
@@ -292,7 +292,7 @@ impl Library {
             .by_name("parent")
             .map(|s| self.find_or_stub_type(ns_id, s));
         let typ = Type::Class(Class {
-            name: name.into(),
+            name: class_name.into(),
             c_type: c_type.into(),
             glib_get_type: get_type.into(),
             fields: fields,
@@ -305,7 +305,7 @@ impl Library {
             version: version,
             deprecated_version: deprecated_version,
         });
-        self.add_type(ns_id, name, typ);
+        self.add_type(ns_id, class_name, typ);
         Ok(())
     }
 
@@ -329,7 +329,7 @@ impl Library {
         ns_id: u16,
         attrs: &Attributes,
     ) -> Result<Option<Type>> {
-        let mut name = try!(
+        let mut record_name = try!(
             attrs
                 .by_name("name")
                 .ok_or_else(|| mk_error!("Missing union name", parser))
@@ -372,7 +372,7 @@ impl Library {
                         }
                         "union" => {
                             if let Type::Union(mut u) =
-                                try!(self.read_union(parser, ns_id, attrs))
+                                try!(self.read_union(parser, ns_id, &attributes))
                             {
                                 // A nested union->struct->union typically has no c_type
                                 // so we iterate over fields to find it. These fields are
@@ -449,10 +449,10 @@ impl Library {
             return Ok(None);
         }
 
-        if name == "Atom" && self.namespace(ns_id).name == "Gdk" {
+        if record_name == "Atom" && self.namespace(ns_id).name == "Gdk" {
             // the gir definitions don't reflect the following correctly
             // typedef struct _GdkAtom *GdkAtom;
-            name = "Atom_";
+            record_name = "Atom_";
             c_type = "GdkAtom_";
             let tid = self.find_or_stub_type(ns_id, "Gdk.Atom_");
             self.add_type(
@@ -469,7 +469,7 @@ impl Library {
         }
 
         let typ = Type::Record(Record {
-            name: name.into(),
+            name: record_name.into(),
             c_type: c_type.into(),
             glib_get_type: get_type.map(|s| s.into()),
             fields: fields,
@@ -489,28 +489,24 @@ impl Library {
         ns_id: u16,
         attrs: &Attributes,
     ) -> Result<()> {
-        let name = try!(
+        // Require a name here
+        try!(
             attrs
                 .by_name("name")
                 .ok_or_else(|| mk_error!("Missing union name", parser))
         );
-        let c_type = attrs.by_name("type");
         if let Type::Union(u) = try!(self.read_union(parser, ns_id, attrs)) {
-            let typ = Type::Union(Union {
-                name: name.into(),
-                c_type: c_type.map(|s| s.into()),
-                ..u
-            });
-            self.add_type(ns_id, name, typ);
+            let union_name = u.name.clone();
+            self.add_type(ns_id, &union_name, Type::Union(u));
         }
         Ok(())
     }
 
     fn read_union(&mut self, parser: &mut Reader, ns_id: u16, attrs: &Attributes) -> Result<Type> {
-        let name = try!(
+        let union_name = try!(
             attrs
                 .by_name("name")
-                .ok_or_else(|| mk_error!("Missing record name", parser))
+                .ok_or_else(|| mk_error!("Missing union name", parser))
         );
         let c_type = attrs.by_name("type").unwrap_or("");
         let get_type = attrs.by_name("get-type").map(|s| s.into());
@@ -580,7 +576,7 @@ impl Library {
         }
 
         let typ = Type::Union(Union {
-            name: name.into(),
+            name: union_name.into(),
             c_type: Some(c_type.into()),
             glib_get_type: get_type,
             fields: fields,
@@ -591,7 +587,7 @@ impl Library {
     }
 
     fn read_field(&mut self, parser: &mut Reader, ns_id: u16, attrs: &Attributes) -> Result<Field> {
-        let name = try!(
+        let field_name = try!(
             attrs
                 .by_name("name")
                 .ok_or_else(|| mk_error!("Missing field name", parser))
@@ -633,7 +629,7 @@ impl Library {
         let bits = attrs.by_name("bits").and_then(|s| s.parse().ok());
         if let Some((tid, c_type, array_length)) = typ {
             Ok(Field {
-                name: name.into(),
+                name: field_name.into(),
                 typ: tid,
                 c_type: c_type,
                 private: private,
@@ -670,7 +666,7 @@ impl Library {
         ns_id: u16,
         attrs: &Attributes,
     ) -> Result<()> {
-        let name = try!(
+        let interface_name = try!(
             attrs
                 .by_name("name")
                 .ok_or_else(|| mk_error!("Missing interface name", parser))
@@ -741,7 +737,7 @@ impl Library {
         }
 
         let typ = Type::Interface(Interface {
-            name: name.into(),
+            name: interface_name.into(),
             c_type: c_type.into(),
             glib_get_type: get_type.into(),
             functions: fns,
@@ -752,12 +748,12 @@ impl Library {
             version: version,
             deprecated_version: deprecated_version,
         });
-        self.add_type(ns_id, name, typ);
+        self.add_type(ns_id, interface_name, typ);
         Ok(())
     }
 
     fn read_bitfield(&mut self, parser: &mut Reader, ns_id: u16, attrs: &Attributes) -> Result<()> {
-        let name = try!(
+        let bitfield_name = try!(
             attrs
                 .by_name("name")
                 .ok_or_else(|| mk_error!("Missing bitfield name", parser))
@@ -808,7 +804,7 @@ impl Library {
         }
 
         let typ = Type::Bitfield(Bitfield {
-            name: name.into(),
+            name: bitfield_name.into(),
             c_type: c_type.into(),
             members: members,
             functions: fns,
@@ -818,7 +814,7 @@ impl Library {
             doc_deprecated: doc_deprecated,
             glib_get_type: get_type,
         });
-        self.add_type(ns_id, name, typ);
+        self.add_type(ns_id, bitfield_name, typ);
         Ok(())
     }
 
@@ -828,7 +824,7 @@ impl Library {
         ns_id: u16,
         attrs: &Attributes,
     ) -> Result<()> {
-        let name = try!(
+        let enum_name = try!(
             attrs
                 .by_name("name")
                 .ok_or_else(|| mk_error!("Missing enumeration name", parser))
@@ -880,7 +876,7 @@ impl Library {
         }
 
         let typ = Type::Enumeration(Enumeration {
-            name: name.into(),
+            name: enum_name.into(),
             c_type: c_type.into(),
             members: members,
             functions: fns,
@@ -891,7 +887,7 @@ impl Library {
             error_domain: error_domain,
             glib_get_type: get_type,
         });
-        self.add_type(ns_id, name, typ);
+        self.add_type(ns_id, enum_name, typ);
         Ok(())
     }
 
@@ -912,7 +908,7 @@ impl Library {
     }
 
     fn read_constant(&mut self, parser: &mut Reader, ns_id: u16, attrs: &Attributes) -> Result<()> {
-        let name = try!(
+        let const_name = try!(
             attrs
                 .by_name("name")
                 .ok_or_else(|| mk_error!("Missing constant name", parser))
@@ -969,7 +965,7 @@ impl Library {
             self.add_constant(
                 ns_id,
                 Constant {
-                    name: name.into(),
+                    name: const_name.into(),
                     c_identifier: c_identifier.into(),
                     typ: typ,
                     c_type: c_type.into(),
@@ -987,7 +983,7 @@ impl Library {
     }
 
     fn read_alias(&mut self, parser: &mut Reader, ns_id: u16, attrs: &Attributes) -> Result<()> {
-        let name = try!(
+        let alias_name = try!(
             attrs
                 .by_name("name")
                 .ok_or_else(|| mk_error!("Missing alias name", parser))
@@ -1029,13 +1025,13 @@ impl Library {
         }
         if let Some((typ, c_type, _array_length)) = inner {
             let typ = Type::Alias(Alias {
-                name: name.into(),
+                name: alias_name.into(),
                 c_identifier: c_identifier.into(),
                 typ: typ,
                 target_c_type: c_type.into(),
                 doc: doc,
             });
-            self.add_type(ns_id, name, typ);
+            self.add_type(ns_id, alias_name, typ);
             Ok(())
         } else {
             bail!(mk_error!("Missing <type> element", parser))
@@ -1043,7 +1039,7 @@ impl Library {
     }
 
     fn read_member(&self, parser: &mut Reader, attrs: &Attributes) -> Result<Member> {
-        let name = try!(
+        let member_name = try!(
             attrs
                 .by_name("name")
                 .ok_or_else(|| mk_error!("Missing member name", parser))
@@ -1078,10 +1074,10 @@ impl Library {
             }
         }
         Ok(Member {
-            name: name.into(),
+            name: member_name.into(),
             value: value.into(),
             doc: doc,
-            c_identifier: c_identifier.unwrap_or_else(|| name.into()),
+            c_identifier: c_identifier.unwrap_or_else(|| member_name.into()),
         })
     }
 
@@ -1092,7 +1088,7 @@ impl Library {
         kind_str: &str,
         attrs: &Attributes,
     ) -> Result<Function> {
-        let name = try!(
+        let fn_name = try!(
             attrs
                 .by_name("name")
                 .ok_or_else(|| mk_error!("Missing function name", parser))
@@ -1166,7 +1162,7 @@ impl Library {
         }
         if let Some(ret) = ret {
             Ok(Function {
-                name: name.into(),
+                name: fn_name.into(),
                 c_identifier: c_identifier.map(|s| s.into()),
                 kind: kind,
                 parameters: params,
@@ -1227,7 +1223,7 @@ impl Library {
         ns_id: u16,
         attrs: &Attributes,
     ) -> Result<Signal> {
-        let name = try!(
+        let signal_name = try!(
             attrs
                 .by_name("name")
                 .ok_or_else(|| mk_error!("Missing signal name", parser))
@@ -1292,7 +1288,7 @@ impl Library {
         }
         if let Some(ret) = ret {
             Ok(Signal {
-                name: name.into(),
+                name: signal_name.into(),
                 parameters: params,
                 ret: ret,
                 version: version,
@@ -1360,7 +1356,7 @@ impl Library {
         attrs: &Attributes,
         allow_no_ctype: bool,
     ) -> Result<Parameter> {
-        let name = attrs.by_name("name").unwrap_or("");
+        let param_name = attrs.by_name("name").unwrap_or("");
         let instance_parameter = kind_str == "instance-parameter";
         let transfer = try!(
             Transfer::from_str(attrs.by_name("transfer-ownership").unwrap_or("none"))
@@ -1414,7 +1410,7 @@ impl Library {
         }
         if let Some((tid, c_type, array_length)) = typ {
             Ok(Parameter {
-                name: name.into(),
+                name: param_name.into(),
                 typ: tid,
                 c_type: c_type.unwrap(),
                 instance_parameter: instance_parameter,
@@ -1453,7 +1449,7 @@ impl Library {
         ns_id: u16,
         attrs: &Attributes,
     ) -> Result<Option<Property>> {
-        let name = try!(
+        let prop_name = try!(
             attrs
                 .by_name("name")
                 .ok_or_else(|| mk_error!("Missing property name", parser))
@@ -1527,7 +1523,7 @@ impl Library {
 
         if let Some((tid, c_type, _array_length)) = typ {
             Ok(Some(Property {
-                name: name.into(),
+                name: prop_name.into(),
                 readable: readable,
                 writable: writable,
                 construct: construct,
@@ -1568,7 +1564,7 @@ impl Library {
         attrs: &Attributes,
     ) -> Result<(TypeId, Option<String>, Option<u32>)> {
         let start_pos = parser.position();
-        let name = try!(
+        let type_name = try!(
             attrs
                 .by_name("name")
                 .or_else(|| if name.local_name == "array" {
@@ -1598,14 +1594,18 @@ impl Library {
                 _ => xml_next!(event, parser),
             }
         }
-        if inner.is_empty() || name == "GLib.ByteArray" {
-            if name == "array" {
+        if inner.is_empty() || type_name == "GLib.ByteArray" {
+            if type_name == "array" {
                 bail!(mk_error!("Missing element type", &start_pos))
             } else {
-                Ok((self.find_or_stub_type(ns_id, name), c_type, array_length))
+                Ok((
+                    self.find_or_stub_type(ns_id, type_name),
+                    c_type,
+                    array_length,
+                ))
             }
         } else {
-            let tid = if name == "array" {
+            let tid = if type_name == "array" {
                 Type::c_array(
                     self,
                     inner[0],
@@ -1613,7 +1613,7 @@ impl Library {
                 )
             } else {
                 try!(
-                    Type::container(self, name, inner)
+                    Type::container(self, type_name, inner)
                         .ok_or_else(|| mk_error!("Unknown container type", &start_pos))
                 )
             };
