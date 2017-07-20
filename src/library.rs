@@ -303,6 +303,7 @@ pub struct Field {
 pub struct Union {
     pub name: String,
     pub c_type: Option<String>,
+    pub glib_get_type: Option<String>,
     pub fields: Vec<Field>,
     pub functions: Vec<Function>,
     pub doc: Option<String>,

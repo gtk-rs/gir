@@ -493,9 +493,7 @@ impl Library {
             let typ = Type::Union(Union {
                 name: name.into(),
                 c_type: c_type.map(|s| s.into()),
-                fields: u.fields,
-                functions: u.functions,
-                doc: u.doc,
+                ..u
             });
             self.add_type(ns_id, name, typ);
         }
@@ -509,6 +507,7 @@ impl Library {
                 .ok_or_else(|| mk_error!("Missing record name", parser))
         );
         let c_type = attrs.by_name("type").unwrap_or("");
+        let get_type = attrs.by_name("get-type").map(|s| s.into());
 
         let mut fields = Vec::new();
         let mut fns = Vec::new();
@@ -572,6 +571,7 @@ impl Library {
         let typ = Type::Union(Union {
             name: name.into(),
             c_type: Some(c_type.into()),
+            glib_get_type: get_type,
             fields: fields,
             functions: fns,
             doc: doc,
