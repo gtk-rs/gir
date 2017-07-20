@@ -565,19 +565,19 @@ fn generate_fields(env: &Env, struct_name: &str, fields: &[Field]) -> (Vec<Strin
             continue 'fields;
         }
 
-        if let Some(ref c_type) = field.c_type {
+        if is_gweakref && !cfg!(feature = "use_unions") {
+            // union containing a single pointer
+            lines.push("\tpub priv_: gpointer,".to_owned());
+        } else if let Some(ref c_type) = field.c_type {
             let name = mangle_keywords(&*field.name);
             let mut c_type = ffi_type(env, field.typ, c_type);
             if c_type.is_err() {
                 commented = true;
             }
-            if is_gvalue && field.name == "data" {
+            if !cfg!(feature = "use_unions") && is_gvalue && field.name == "data" {
                 c_type = Ok("[u64; 2]".to_owned());
             }
             lines.push(format!("\tpub {}: {},", name, c_type.into_string()));
-        } else if is_gweakref && !cfg!(feature = "use_unions") {
-            // union containing a single pointer
-            lines.push("\tpub priv_: gpointer,".to_owned());
         } else {
             let name = mangle_keywords(&*field.name);
             if let Some(func) = env.library.type_(field.typ).maybe_ref_as::<Function>() {

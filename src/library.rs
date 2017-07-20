@@ -555,7 +555,6 @@ impl Type {
         library.add_type(ns_id, &format!("#{:?}", field_tids), typ)
     }
 
-    #[cfg(feature = "use_unions")]
     pub fn record(library: &mut Library, r: Record, ns_id: u16) -> TypeId {
         let fields = r.fields;
         let field_tids: Vec<TypeId> = fields.iter().map(|f| f.typ).collect();
