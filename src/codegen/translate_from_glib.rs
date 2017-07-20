@@ -31,7 +31,7 @@ impl TranslateFromGlib for Mode {
                     library::Type::List(..) |
                     library::Type::SList(..) |
                     library::Type::CArray(..) => {
-                        if let &Some(_) = array_length {
+                        if array_length.is_some() {
                             (format!("FromGlibContainer::{}", trans.0), trans.1)
                         } else {
                             (format!("FromGlibPtrContainer::{}", trans.0), trans.1)
