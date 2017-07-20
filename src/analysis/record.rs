@@ -108,7 +108,10 @@ pub fn new(env: &Env, obj: &GObject) -> Option<Info> {
         concurrency: obj.concurrency,
     };
 
-    let info = Info { base: base, glib_get_type: record.glib_get_type.clone() };
+    let info = Info {
+        base: base,
+        glib_get_type: record.glib_get_type.clone(),
+    };
 
     Some(info)
 }
