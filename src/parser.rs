@@ -269,28 +269,13 @@ impl Library {
                         "virtual-method" => try!(ignore_element(parser)),
                         "doc" => doc = try!(read_text(parser)),
                         "union" => {
-                            #[cfg(feature = "use_unions")]
-                            {
-                                use self::Type::*;
-                                if let Union(u) =
-                                    try!(self.read_union_unsafe(parser, ns_id, attrs))
-                                {
-                                    let u_doc = u.doc.clone();
-                                    let type_id = Type::union(self, u, ns_id);
-                                    fields.push(Field {
-                                        typ: type_id,
-                                        doc: u_doc,
-                                        ..Field::default()
-                                    });
-                                };
-                            }
-                            #[cfg(not(feature = "use_unions"))]
-                            {
-                                let (union_fields, _, doc) = try!(self.read_union(parser, ns_id));
-                                let typ = Type::union(self, union_fields);
+                            use self::Type::*;
+                            if let Union(u) = try!(self.read_union(parser, ns_id, attrs)) {
+                                let u_doc = u.doc.clone();
+                                let type_id = Type::union(self, u, ns_id);
                                 fields.push(Field {
-                                    typ: typ,
-                                    doc: doc,
+                                    typ: type_id,
+                                    doc: u_doc,
                                     ..Field::default()
                                 });
                             }
@@ -368,7 +353,6 @@ impl Library {
         let mut fns = Vec::new();
         let mut doc = None;
         let mut doc_deprecated = None;
-        #[cfg(feature = "use_unions")]
         let mut union_count = 1;
         loop {
             let event = try!(parser.next());
@@ -387,56 +371,63 @@ impl Library {
                             ))
                         }
                         "union" => {
-                            #[cfg(feature = "use_unions")]
+                            if let Type::Union(mut u) =
+                                try!(self.read_union(parser, ns_id, attrs))
                             {
-                                use self::Type::*;
-                                if let Union(mut u) =
-                                    try!(self.read_union_unsafe(parser, ns_id, attrs))
+                                // A nested union->struct->union typically has no c_type
+                                // so we iterate over fields to find it. These fields are
+                                // within the nested union->struct if found
+                                let mut nested = true;
+                                for f in &mut u.fields {
+                                    if f.c_type.is_none() || c_type == u.c_type.as_ref().unwrap() {
+                                        nested = true;
+                                        break;
+                                    }
+                                }
+                                if nested {
+                                    u = Union {
+                                        name: format!("{}_u{}", c_type, union_count),
+                                        c_type: Some(format!("{}_u{}", c_type, union_count)),
+                                        fields: u.fields,
+                                        ..Default::default()
+                                    };
+                                }
+                                let u_doc = u.doc.clone();
+
+                                #[cfg(not(feature = "use_unions"))]
                                 {
-                                    // A nested union->struct->union typically has no c_type
-                                    // so we iterate over fields to find it. These fields are
-                                    // within the nested union->struct if found
-                                    let mut nested = true;
-                                    for f in &mut u.fields {
-                                        if f.c_type.is_none() ||
-                                            c_type == u.c_type.as_ref().unwrap()
-                                        {
-                                            nested = true;
-                                            u.name = format!("{}_u{}", c_type, union_count);
-                                            u.c_type = Some(format!("{}_u{}", c_type, union_count));
-                                        }
-                                    }
-                                    let ctype = u.c_type.clone();
-                                    let u_doc = u.doc.clone();
-                                    let type_id = Type::union(self, u, ns_id);
                                     if nested {
-                                        fields.push(Field {
-                                            name: format!("u{}", union_count),
-                                            typ: type_id,
-                                            doc: u_doc,
-                                            c_type: ctype,
-                                            ..Field::default()
-                                        });
-                                    } else {
+                                        u.c_type = None;
+                                        let type_id = Type::union(self, u, INTERNAL_NAMESPACE);
                                         fields.push(Field {
                                             typ: type_id,
                                             doc: u_doc,
-                                            c_type: ctype,
                                             ..Field::default()
                                         });
+                                        continue;
                                     }
-                                    union_count += 1;
-                                };
-                            }
-                            #[cfg(not(feature = "use_unions"))]
-                            {
-                                let (union_fields, _, doc) = try!(self.read_union(parser, ns_id));
-                                let typ = Type::union(self, union_fields);
-                                fields.push(Field {
-                                    typ: typ,
-                                    doc: doc,
-                                    ..Field::default()
-                                });
+                                }
+
+                                let ctype = u.c_type.clone();
+
+                                let type_id = Type::union(self, u, ns_id);
+                                if nested {
+                                    fields.push(Field {
+                                        name: format!("u{}", union_count),
+                                        typ: type_id,
+                                        doc: u_doc,
+                                        c_type: ctype,
+                                        ..Field::default()
+                                    });
+                                } else {
+                                    fields.push(Field {
+                                        typ: type_id,
+                                        doc: u_doc,
+                                        c_type: ctype,
+                                        ..Field::default()
+                                    });
+                                }
+                                union_count += 1;
                             }
                         }
                         "field" => {
@@ -504,51 +495,30 @@ impl Library {
                 .ok_or_else(|| mk_error!("Missing union name", parser))
         );
         let c_type = attrs.by_name("type");
-        #[cfg(feature = "use_unions")]
-        {
-            if let Type::Union(u) = try!(self.read_union_unsafe(parser, ns_id, attrs)) {
-                let typ = Type::Union(Union {
-                    name: name.into(),
-                    c_type: c_type.map(|s| s.into()),
-                    fields: u.fields,
-                    functions: u.functions,
-                    doc: u.doc,
-                });
-                self.add_type(ns_id, name, typ);
-            }
-        }
-        #[cfg(not(feature = "use_unions"))]
-        {
-            let (fields, fns, doc) = try!(self.read_union(parser, ns_id));
+        if let Type::Union(u) = try!(self.read_union(parser, ns_id, attrs)) {
             let typ = Type::Union(Union {
                 name: name.into(),
                 c_type: c_type.map(|s| s.into()),
-                fields: fields,
-                functions: fns,
-                doc: doc,
+                ..u
             });
             self.add_type(ns_id, name, typ);
         }
         Ok(())
     }
 
-    #[cfg(feature = "use_unions")]
-    fn read_union_unsafe(
-        &mut self,
-        parser: &mut Reader,
-        ns_id: u16,
-        attrs: &Attributes,
-    ) -> Result<Type> {
+    fn read_union(&mut self, parser: &mut Reader, ns_id: u16, attrs: &Attributes) -> Result<Type> {
         let name = try!(
             attrs
                 .by_name("name")
                 .ok_or_else(|| mk_error!("Missing record name", parser))
         );
         let c_type = attrs.by_name("type").unwrap_or("");
+        let get_type = attrs.by_name("get-type").map(|s| s.into());
 
         let mut fields = Vec::new();
         let mut fns = Vec::new();
         let mut doc = None;
+        #[cfg(feature = "use_unions")]
         let mut struct_count = 1;
         loop {
             let event = try!(parser.next());
@@ -571,12 +541,20 @@ impl Library {
                             ))
                         }
                         "record" => {
-                            use self::Type::*;
-                            if let Some(Record(mut r)) =
-                                try!(self.read_record(parser, ns_id, attrs))
+                            #[cfg(feature = "use_unions")]
                             {
-                                r.name = format!("{}_s{}", c_type, struct_count);
-                                r.c_type = format!("{}_s{}", c_type, struct_count);
+                                let mut r = match try!(self.read_record(parser, ns_id, attrs)) {
+                                    Some(Type::Record(r)) => r,
+                                    _ => continue,
+                                };
+
+                                r = Record {
+                                    name: format!("{}_s{}", c_type, struct_count),
+                                    c_type: format!("{}_s{}", c_type, struct_count),
+                                    fields: r.fields,
+                                    ..Default::default()
+                                };
+
                                 let r_doc = r.doc.clone();
                                 let type_id = Type::record(self, r, ns_id);
                                 fields.push(Field {
@@ -586,7 +564,11 @@ impl Library {
                                     ..Field::default()
                                 });
                                 struct_count += 1;
-                            };
+                            }
+                            #[cfg(not(feature = "use_unions"))]
+                            {
+                                try!(ignore_element(parser))
+                            }
                         }
                         "doc" => doc = try!(read_text(parser)),
                         x => bail!(mk_error!(format!("Unexpected element <{}>", x), parser)),
@@ -600,51 +582,12 @@ impl Library {
         let typ = Type::Union(Union {
             name: name.into(),
             c_type: Some(c_type.into()),
+            glib_get_type: get_type,
             fields: fields,
             functions: fns,
             doc: doc,
         });
         Ok(typ)
-    }
-
-    #[cfg(not(feature = "use_unions"))]
-    fn read_union(
-        &mut self,
-        parser: &mut Reader,
-        ns_id: u16,
-    ) -> Result<(Vec<Field>, Vec<Function>, Option<String>)> {
-        let mut fields = Vec::new();
-        let mut fns = Vec::new();
-        let mut doc = None;
-        loop {
-            let event = try!(parser.next());
-            match event {
-                StartElement {
-                    name, attributes, ..
-                } => {
-                    match name.local_name.as_ref() {
-                        "field" => {
-                            fields.push(try!(self.read_field(parser, ns_id, &attributes)));
-                        }
-                        kind @ "constructor" | kind @ "function" | kind @ "method" => {
-                            try!(self.read_function_to_vec(
-                                parser,
-                                ns_id,
-                                kind,
-                                &attributes,
-                                &mut fns,
-                            ))
-                        }
-                        "record" => try!(ignore_element(parser)),
-                        "doc" => doc = try!(read_text(parser)),
-                        x => bail!(mk_error!(format!("Unexpected element <{}>", x), parser)),
-                    }
-                }
-                EndElement { .. } => break,
-                _ => xml_next!(event, parser),
-            }
-        }
-        Ok((fields, fns, doc))
     }
 
     fn read_field(&mut self, parser: &mut Reader, ns_id: u16, attrs: &Attributes) -> Result<Field> {

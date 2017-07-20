@@ -134,17 +134,6 @@ fn generate_bitfields(w: &mut Write, env: &Env, items: &[&Bitfield]) -> Result<(
         try!(writeln!(w, "// Flags"));
     }
     for item in items {
-        if let Some(ref get_type) = item.glib_get_type {
-            try!(writeln!(
-                w,
-                "extern \"C\" {{
-    pub fn {}() -> GType;
-}}",
-                get_type
-            ));
-            try!(writeln!(w, ""));
-        }
-
         let full_name = format!("{}.{}", env.namespaces.main().name, item.name);
         let config = env.config.objects.get(&full_name);
 
@@ -260,17 +249,6 @@ fn generate_enums(w: &mut Write, env: &Env, items: &[&Enumeration]) -> Result<()
         try!(writeln!(w, "// Enums"));
     }
     for item in items {
-        if let Some(ref get_type) = item.glib_get_type {
-            try!(writeln!(
-                w,
-                "extern \"C\" {{
-    pub fn {}() -> GType;
-}}",
-                get_type
-            ));
-            try!(writeln!(w, ""));
-        }
-
         if item.members.len() == 1 {
             try!(writeln!(w, "pub type {} = c_int;", item.name));
             try!(writeln!(
