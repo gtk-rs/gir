@@ -39,9 +39,9 @@ impl Library {
     pub fn read_file(&mut self, dir: &Path, lib: &str) -> Result<()> {
         let file_name = make_file_name(dir, lib);
         let display_name = file_name.display();
-        let file = try!(File::open(&file_name).chain_err(|| {
-            format!("Can't read file {}", display_name)
-        }));
+        let file = try!(
+            File::open(&file_name).chain_err(|| { format!("Can't read file {}", display_name) })
+        );
         let mut parser = EventReader::new(BufReader::new(file));
         loop {
             let event = parser.next();
@@ -277,11 +277,16 @@ impl Library {
                                 Some(&class_name),
                                 Some(&c_type)
                             )) {
-                                let field_name = u.name.clone();
+                                let field_name =
+                                    if let Some(field_name) = attributes.by_name("name") {
+                                        field_name.into()
+                                    } else {
+                                        format!("u{}", union_count)
+                                    };
 
                                 u = Union {
-                                    name: format!("{}_u{}", class_name, union_count),
-                                    c_type: Some(format!("{}_u{}", c_type, union_count)),
+                                    name: format!("{}_{}", class_name, field_name),
+                                    c_type: Some(format!("{}_{}", c_type, field_name)),
                                     ..u
                                 };
 
@@ -398,28 +403,37 @@ impl Library {
                                 Some(&record_name),
                                 Some(&c_type)
                             )) {
-                                let mut field_name = String::new();
-                                println!("ATTR{}: {:?}", union_count, attributes);
-                                for attr in &attributes {
-                                    match attr.name.local_name.as_ref() {
-                                        "name" => field_name = attr.value.clone(),
-                                        _ => {},
-                                    }
-                                    break;
-                                }
+                                let field_name =
+                                    if let Some(field_name) = attributes.by_name("name") {
+                                        field_name.into()
+                                    } else {
+                                        format!("u{}", union_count)
+                                    };
 
                                 u = Union {
                                     name: format!(
-                                        "{}_{}{}",
-                                        parent_name_prefix.unwrap_or(record_name),
-                                        field_name,
-                                        union_count
+                                        "{}{}_{}",
+                                        parent_name_prefix
+                                            .map(|s| {
+                                                let mut s = String::from(s);
+                                                s.push('_');
+                                                s
+                                            })
+                                            .unwrap_or("".into()),
+                                        record_name,
+                                        field_name
                                     ),
                                     c_type: Some(format!(
-                                        "{}_{}{}",
-                                        parent_ctype_prefix.unwrap_or(c_type),
-                                        field_name,
-                                        union_count
+                                        "{}{}_{}",
+                                        parent_ctype_prefix
+                                            .map(|s| {
+                                                let mut s = String::from(s);
+                                                s.push('_');
+                                                s
+                                            })
+                                            .unwrap_or("".into()),
+                                        c_type,
+                                        field_name
                                     )),
                                     ..u
                                 };
@@ -440,8 +454,8 @@ impl Library {
                         "field" => {
                             if let Ok(mut f) = self.read_field(parser, ns_id, &attributes) {
                                 // Workaround for wrong GValue c:type
-                                if c_type == "Value" {
-                                    f.c_type = Some("GValue_u1".into());
+                                if c_type == "GValue" && f.name == "data" {
+                                    f.c_type = Some("GValue_data".into());
                                 }
                                 fields.push(f);
                             }
@@ -507,9 +521,10 @@ impl Library {
                 .ok_or_else(|| mk_error!("Missing union name", parser))
         );
         if let Type::Union(mut u) = try!(self.read_union(parser, ns_id, attrs, None, None)) {
+            assert_ne!(u.name, "");
             // Workaround for missing c:type
             if u.name == "_Value__data__union" {
-                u.c_type = Some("GValue_u1".into());
+                u.c_type = Some("GValue_data".into());
             } else if u.c_type.is_none() {
                 return Err(mk_error!("Missing union c:type", parser).into());
             }
@@ -527,11 +542,7 @@ impl Library {
         parent_name_prefix: Option<&str>,
         parent_ctype_prefix: Option<&str>,
     ) -> Result<Type> {
-        let union_name = try!(
-            attrs
-                .by_name("name")
-                .ok_or_else(|| mk_error!("Missing union name", parser))
-        );
+        let union_name = attrs.by_name("name").unwrap_or("");
         let c_type = attrs.by_name("type").unwrap_or("");
         let get_type = attrs.by_name("get-type").map(|s| s.into());
 
@@ -571,27 +582,36 @@ impl Library {
                                 _ => continue,
                             };
 
-                            let mut field_name = String::new();
-                            for attr in &attributes {
-                                match attr.name.local_name.as_ref() {
-                                    "name" => field_name = attr.value.clone(),
-                                    _ => {},
-                                }
-                                break;
-                            }
+                            let field_name = if let Some(field_name) = attributes.by_name("name") {
+                                field_name.into()
+                            } else {
+                                format!("s{}", struct_count)
+                            };
 
                             r = Record {
                                 name: format!(
-                                    "{}_{}{}",
-                                    parent_name_prefix.unwrap_or(union_name),
-                                    field_name,
-                                    struct_count
+                                    "{}{}_{}",
+                                    parent_name_prefix
+                                        .map(|s| {
+                                            let mut s = String::from(s);
+                                            s.push('_');
+                                            s
+                                        })
+                                        .unwrap_or("".into()),
+                                    union_name,
+                                    field_name
                                 ),
                                 c_type: format!(
-                                    "{}_{}{}",
-                                    parent_ctype_prefix.unwrap_or(c_type),
-                                    field_name,
-                                    struct_count
+                                    "{}{}_{}",
+                                    parent_ctype_prefix
+                                        .map(|s| {
+                                            let mut s = String::from(s);
+                                            s.push('_');
+                                            s
+                                        })
+                                        .unwrap_or("".into()),
+                                    c_type,
+                                    field_name
                                 ),
                                 ..r
                             };
@@ -606,6 +626,7 @@ impl Library {
                                 c_type: Some(ctype),
                                 ..Field::default()
                             });
+
                             struct_count += 1;
                         }
                         "doc" => doc = try!(read_text(parser)),
