@@ -415,20 +415,19 @@ impl Library {
                                         "name" => field_name = attr.value.clone(),
                                         _ => {},
                                     }
+                                    break;
                                 }
 
                                 u = Union {
                                     name: format!(
-                                        "{}{}_{}{}",
-                                        parent_name_prefix.unwrap_or(""),
-                                        record_name,
+                                        "{}_{}{}",
+                                        parent_name_prefix.unwrap_or(record_name),
                                         field_name,
                                         union_count
                                     ),
                                     c_type: Some(format!(
-                                        "{}{}_{}{}",
-                                        parent_ctype_prefix.unwrap_or(""),
-                                        c_type,
+                                        "{}_{}{}",
+                                        parent_ctype_prefix.unwrap_or(c_type),
                                         field_name,
                                         union_count
                                     )),
@@ -599,18 +598,19 @@ impl Library {
                                     "name" => field_name = attr.value.clone(),
                                     _ => {},
                                 }
+                                break;
                             }
 
                             r = Record {
                                 name: format!(
                                     "{}_{}{}",
-                                    parent_name_prefix.unwrap_or(""),
+                                    parent_name_prefix.unwrap_or(union_name),
                                     field_name,
                                     struct_count
                                 ),
                                 c_type: format!(
                                     "{}_{}{}",
-                                    parent_ctype_prefix.unwrap_or(""),
+                                    parent_ctype_prefix.unwrap_or(c_type),
                                     field_name,
                                     struct_count
                                 ),
