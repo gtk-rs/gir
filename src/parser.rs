@@ -277,11 +277,30 @@ impl Library {
                                 Some(&class_name),
                                 Some(&c_type)
                             )) {
-                                let field_name = u.name.clone();
+                                let mut field_name = String::new();
+                                for attr in &attributes {
+                                    match attr.name.local_name.as_ref() {
+                                        "name" => {
+                                            field_name = attr.value.clone();
+                                            break;
+                                        }
+                                        _ => {},
+                                    }
+                                }
 
                                 u = Union {
-                                    name: format!("{}_u{}", class_name, union_count),
-                                    c_type: Some(format!("{}_u{}", c_type, union_count)),
+                                    name: format!(
+                                        "{}_{}{}",
+                                        class_name,
+                                        field_name,
+                                        union_count
+                                    ),
+                                    c_type: Some(format!(
+                                        "{}_{}{}",
+                                        c_type,
+                                        field_name,
+                                        union_count
+                                    )),
                                     ..u
                                 };
 
@@ -298,6 +317,10 @@ impl Library {
                                         Type::union(self, u, ns_id)
                                     }
                                 };
+
+                                if field_name == "" {
+                                    field_name = format!("u{}", union_count);
+                                }
 
                                 fields.push(Field {
                                     name: field_name,
@@ -412,22 +435,26 @@ impl Library {
                                 let mut field_name = String::new();
                                 for attr in &attributes {
                                     match attr.name.local_name.as_ref() {
-                                        "name" => field_name = attr.value.clone(),
+                                        "name" => {
+                                            field_name = attr.value.clone();
+                                            break;
+                                        }
                                         _ => {},
                                     }
-                                    break;
                                 }
 
                                 u = Union {
                                     name: format!(
-                                        "{}_{}{}",
-                                        parent_name_prefix.unwrap_or(record_name),
+                                        "{}{}_{}{}",
+                                        parent_name_prefix.unwrap_or(""),
+                                        record_name,
                                         field_name,
                                         union_count
                                     ),
                                     c_type: Some(format!(
-                                        "{}_{}{}",
-                                        parent_ctype_prefix.unwrap_or(c_type),
+                                        "{}{}_{}{}",
+                                        parent_ctype_prefix.unwrap_or(""),
+                                        c_type,
                                         field_name,
                                         union_count
                                     )),
@@ -448,6 +475,10 @@ impl Library {
                                     }
                                 };
 
+                                if field_name == "" {
+                                    field_name = format!("u{}", union_count);
+                                }
+
                                 fields.push(Field {
                                     name: field_name,
                                     typ: type_id,
@@ -461,7 +492,7 @@ impl Library {
                         "field" => {
                             if let Ok(mut f) = self.read_field(parser, ns_id, &attributes) {
                                 // Workaround for wrong GValue c:type
-                                if c_type == "Value" {
+                                if c_type == "GValue" && f.name == "data" {
                                     f.c_type = Some("GValue_u1".into());
                                 }
                                 fields.push(f);
@@ -528,6 +559,7 @@ impl Library {
                 .ok_or_else(|| mk_error!("Missing union name", parser))
         );
         if let Type::Union(mut u) = try!(self.read_union(parser, ns_id, attrs, None, None)) {
+            assert_ne!(u.name, "");
             // Workaround for missing c:type
             if u.name == "_Value__data__union" {
                 u.c_type = Some("GValue_u1".into());
@@ -548,11 +580,7 @@ impl Library {
         parent_name_prefix: Option<&str>,
         parent_ctype_prefix: Option<&str>,
     ) -> Result<Type> {
-        let union_name = try!(
-            attrs
-                .by_name("name")
-                .ok_or_else(|| mk_error!("Missing union name", parser))
-        );
+        let union_name = attrs.by_name("name").unwrap_or("");
         let c_type = attrs.by_name("type").unwrap_or("");
         let get_type = attrs.by_name("get-type").map(|s| s.into());
 
@@ -595,22 +623,26 @@ impl Library {
                             let mut field_name = String::new();
                             for attr in &attributes {
                                 match attr.name.local_name.as_ref() {
-                                    "name" => field_name = attr.value.clone(),
+                                    "name" => {
+                                        field_name = attr.value.clone();
+                                        break;
+                                    }
                                     _ => {},
                                 }
-                                break;
                             }
 
                             r = Record {
                                 name: format!(
-                                    "{}_{}{}",
-                                    parent_name_prefix.unwrap_or(union_name),
+                                    "{}{}_{}{}",
+                                    parent_name_prefix.unwrap_or(""),
+                                    union_name,
                                     field_name,
                                     struct_count
                                 ),
                                 c_type: format!(
-                                    "{}_{}{}",
-                                    parent_ctype_prefix.unwrap_or(c_type),
+                                    "{}{}_{}{}",
+                                    parent_ctype_prefix.unwrap_or(""),
+                                    c_type,
                                     field_name,
                                     struct_count
                                 ),
@@ -631,6 +663,9 @@ impl Library {
                                 }
                             };
 
+                            if field_name == "" {
+                                field_name = format!("s{}", struct_count);
+                            }
 
                             fields.push(Field {
                                 name: field_name,
