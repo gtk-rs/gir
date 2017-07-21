@@ -283,7 +283,7 @@ And now your crate should be completely documented as expected!
 
 ### Unions
 
-By default union generation is disabled except for some special cases due to unions not yet being a stable feature. However if you are using *nightly* rust, then you can enable union generation using `cargo run --release --features "use_unions"`.
+`unions` are stable only in rustc 1.19 or later; this means that gir requires a minimum rustc version of 1.19
 
 Keep in mind that to access union members, you are required to use `unsafe` blocks, for example;
 
