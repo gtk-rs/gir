@@ -7,6 +7,17 @@ use toml::Value;
 use version::Version;
 
 #[derive(Clone, Debug)]
+pub enum TransformationType {
+    ToGlib, //apply translate_to_glib in ffi_call
+    //TODO: configure
+    Length {
+        array_name: String,
+        array_length_name: String,
+        array_length_type: String,
+    },
+}
+
+#[derive(Clone, Debug)]
 pub struct Parameter {
     pub ident: Ident,
     //true - parameter don't changed in ffi function,

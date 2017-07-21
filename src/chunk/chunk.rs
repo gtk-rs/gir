@@ -17,7 +17,7 @@ pub enum Chunk {
     //TODO: separate without return_value::Info
     FfiCallConversion {
         ret: return_value::Info,
-        array_length: Option<(String, String)>,
+        array_length_name: Option<String>,
         call: Box<Chunk>,
     },
     Let {
@@ -34,7 +34,7 @@ pub enum Chunk {
     Tuple(Vec<Chunk>, TupleMode),
     FromGlibConversion {
         mode: conversion_from_glib::Mode,
-        array_length: Option<(String, String)>,
+        array_length_name: Option<String>,
         value: Box<Chunk>,
     },
     OptionalReturn {

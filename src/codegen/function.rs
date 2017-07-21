@@ -12,7 +12,6 @@ use super::parameter::ToParameter;
 use super::return_value::{out_parameters_as_return, ToReturnValue};
 use writer::primitives::tabs;
 use writer::ToCode;
-use library;
 
 pub fn generate(
     w: &mut Write,
@@ -99,34 +98,12 @@ pub fn declaration(env: &Env, analysis: &analysis::functions::Info) -> String {
 
     let bounds = bounds(&analysis.bounds);
 
-    let array_lengths: Vec<_> = analysis
-        .parameters
-        .iter()
-        .filter_map(|p| p.array_length)
-        .collect();
-
-    let mut skipped = 0;
-    for (pos, par) in analysis.parameters.iter().enumerate() {
-        if outs_as_return && analysis.outs.iter().any(|p| p.name == par.name) {
-            skipped += 1;
-            continue;
-        }
-
-        // The first parameter is &self in case of methods
-        let pos_offset = if analysis.kind == library::FunctionKind::Method {
-            1
-        } else {
-            0
-        };
-        if pos >= pos_offset && array_lengths.contains(&((pos - pos_offset) as u32)) {
-            skipped += 1;
-            continue;
-        }
-
-        if pos > skipped {
+    for (pos, par) in analysis.parameters.rust_parameters.iter().enumerate() {
+        if pos > 0 {
             param_str.push_str(", ")
         }
-        let s = par.to_parameter(env, &analysis.bounds);
+        let c_par = &analysis.parameters.c_parameters[par.ind_c];
+        let s = c_par.to_parameter(env, &analysis.bounds);
         param_str.push_str(&s);
     }
 
@@ -172,58 +149,20 @@ pub fn body_chunk(env: &Env, analysis: &analysis::functions::Info) -> Chunk {
     }
 
     let outs_as_return = !analysis.outs.is_empty();
-    let ret_array_length =
-        if let Some(pos) = analysis.ret.parameter.as_ref().and_then(|p| p.array_length) {
-            // The first parameter is &self in case of methods
-            let pos_offset = if analysis.kind == library::FunctionKind::Method {
-                1
-            } else {
-                0
-            };
-            analysis.parameters.get((pos + pos_offset) as usize)
-        } else {
-            None
-        };
 
     let mut builder = function_body_chunk::Builder::new();
     builder
         .glib_name(&analysis.glib_name)
         .assertion(analysis.assertion)
-        .ret(env, &analysis.ret, ret_array_length)
+        .ret(&analysis.ret)
+        .transformations(&analysis.parameters.transformations)
         .outs_mode(analysis.outs.mode);
 
-    for par in &analysis.parameters {
+    for par in &analysis.parameters.c_parameters {
         if outs_as_return && analysis.outs.iter().any(|p| p.name == par.name) {
-            let array_length = if let Some(pos) = par.array_length {
-                use analysis::out_parameters::Mode;
-                // The actual return value was inserted at position 0
-                let pos_offset = if analysis.outs.mode == Mode::Combined ||
-                    analysis.outs.mode == Mode::Throws(true)
-                {
-                    1
-                } else {
-                    0
-                };
-                analysis.parameters.get((pos + pos_offset) as usize)
-            } else {
-                None
-            };
-
-            builder.out_parameter(env, par, array_length);
+            builder.out_parameter(env, par);
         } else {
-            let array_length = if let Some(pos) = par.array_length {
-                // The first parameter is &self in case of methods
-                let pos_offset = if analysis.kind == library::FunctionKind::Method {
-                    1
-                } else {
-                    0
-                };
-                analysis.parameters.get((pos + pos_offset) as usize)
-            } else {
-                None
-            };
-
-            builder.parameter(env, par, array_length);
+            builder.parameter(par);
         }
     }
 

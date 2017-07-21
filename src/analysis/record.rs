@@ -58,7 +58,7 @@ pub fn new(env: &Env, obj: &GObject) -> Option<Info> {
     imports.add("glib_ffi", None);
     imports.add("std::mem", None);
     imports.add("std::ptr", None);
-    if let Some(_) = record.glib_get_type {
+    if record.glib_get_type.is_some() {
         imports.add("gobject_ffi", None);
     }
 

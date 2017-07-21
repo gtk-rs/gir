@@ -1,9 +1,9 @@
 use std::vec::Vec;
 
 use analysis::bounds::Bounds;
+use analysis::function_parameters::{self, Parameters};
 use analysis::imports::Imports;
 use analysis::out_parameters;
-use analysis::parameter;
 use analysis::ref_mode::RefMode;
 use analysis::return_value;
 use analysis::rust_type::*;
@@ -31,7 +31,6 @@ impl Visibility {
     }
 }
 
-//TODO: change use Parameter to reference?
 #[derive(Debug)]
 pub struct Info {
     pub name: String,
@@ -39,7 +38,7 @@ pub struct Info {
     pub kind: library::FunctionKind,
     pub visibility: Visibility,
     pub type_name: Result,
-    pub parameters: Vec<parameter::Parameter>,
+    pub parameters: Parameters,
     pub ret: return_value::Info,
     pub bounds: Bounds,
     pub outs: out_parameters::Info,
@@ -132,12 +131,12 @@ fn analyze_function(
     );
     commented |= ret.commented;
 
-    let mut parameters: Vec<parameter::Parameter> = func.parameters
-        .iter()
-        .map(|par| parameter::analyze(env, par, configured_functions))
-        .collect();
+    let is_method = func.kind == library::FunctionKind::Method;
+    let mut parameters =
+        function_parameters::analyze(env, &func.parameters, configured_functions, is_method);
+    parameters.analyze_return(env, &ret.parameter, is_method);
 
-    for (pos, par) in parameters.iter_mut().enumerate() {
+    for (pos, par) in parameters.c_parameters.iter_mut().enumerate() {
         assert!(
             !par.instance_parameter || pos == 0,
             "Wrong instance parameter in {}",
@@ -179,7 +178,7 @@ fn analyze_function(
     } else {
         Visibility::Public
     };
-    let assertion = SafetyAssertionMode::of(env, &parameters);
+    let assertion = SafetyAssertionMode::of(env, is_method, &parameters);
 
     Info {
         name: name,

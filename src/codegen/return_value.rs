@@ -82,18 +82,19 @@ pub fn out_parameters_as_return(env: &Env, analysis: &analysis::functions::Info)
         .filter_map(|p| p.array_length)
         .collect();
 
+    let pos_offset = if analysis.kind == library::FunctionKind::Method {
+        1
+    } else {
+        0
+    };
     let mut skip = 0;
     for (pos, par) in analysis.outs.iter().filter(|par| !par.is_error).enumerate() {
         // The actual return value is inserted with an empty name at position 0
         if !par.name.is_empty() {
-            let pos_offset = if analysis.kind == library::FunctionKind::Method {
-                1
-            } else {
-                0
-            };
             let mangled_par_name = nameutil::mangle_keywords(par.name.as_str());
             let param_pos = analysis
                 .parameters
+                .c_parameters
                 .iter()
                 .enumerate()
                 .filter_map(|(pos, orig_par)| if orig_par.name == mangled_par_name {
