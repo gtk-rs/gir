@@ -285,14 +285,7 @@ impl Library {
                         let ctype = u.c_type.clone();
 
                         let type_id = {
-                            #[cfg(not(feature = "use_unions"))]
-                            {
-                                Type::union(self, u, INTERNAL_NAMESPACE)
-                            }
-                            #[cfg(feature = "use_unions")]
-                            {
-                                Type::union(self, u, ns_id)
-                            }
+                            Type::union(self, u, ns_id)
                         };
 
                         fields.push(Field {
@@ -340,7 +333,7 @@ impl Library {
         ns_id: u16,
         attrs: &Attributes,
     ) -> Result<()> {
-        if let Some(typ) = try!(self.read_record(parser, ns_id, attrs, None, None)) {
+        if let Some(typ) = try!(self.read_record(parser, ns_id, attrs, None, None, false)) {
             let name = typ.get_name().clone();
             self.add_type(ns_id, &name, typ);
         }
@@ -354,6 +347,7 @@ impl Library {
         attrs: &Attributes,
         parent_name_prefix: Option<&str>,
         parent_ctype_prefix: Option<&str>,
+        derive_copy: bool,
     ) -> Result<Option<Type>> {
         let mut record_name = try!(
             attrs
@@ -436,14 +430,7 @@ impl Library {
                             let ctype = u.c_type.clone();
 
                             let type_id = {
-                                #[cfg(not(feature = "use_unions"))]
-                                {
-                                    Type::union(self, u, INTERNAL_NAMESPACE)
-                                }
-                                #[cfg(feature = "use_unions")]
-                                {
-                                    Type::union(self, u, ns_id)
-                                }
+                                Type::union(self, u, ns_id)
                             };
 
                             fields.push(Field {
@@ -504,6 +491,7 @@ impl Library {
             deprecated_version: deprecated_version,
             doc: doc,
             doc_deprecated: doc_deprecated,
+            derive_copy: derive_copy,
         });
 
         Ok(Some(typ))
@@ -570,7 +558,8 @@ impl Library {
                             ns_id,
                             attrs,
                             parent_name_prefix,
-                            parent_ctype_prefix
+                            parent_ctype_prefix,
+                            true
                         )) {
                             Some(Type::Record(r)) => r,
                             _ => continue,
@@ -614,14 +603,7 @@ impl Library {
                         let ctype = r.c_type.clone();
 
                         let type_id = {
-                            #[cfg(not(feature = "use_unions"))]
-                            {
-                                Type::record(self, r, INTERNAL_NAMESPACE)
-                            }
-                            #[cfg(feature = "use_unions")]
-                            {
-                                Type::record(self, r, ns_id)
-                            }
+                            Type::record(self, r, ns_id)
                         };
 
                         fields.push(Field {

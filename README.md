@@ -309,11 +309,9 @@ It'll generate a `docs.md` if everything went fine. That's where all this crate'
 
 And now your crate should be completely documented as expected!
 
-## Nightly Rust Only Features
-
 ### Unions
 
-By default union generation is disabled except for some special cases due to unions not yet being a stable feature. However if you are using *nightly* rust, then you can enable union generation using `cargo run --release --features "use_unions"`.
+`gir` now has the ability to generate c-like unions using newly stabilised `union` in rustc 1.19. As such this means `gir` requires a minimum version rustc of 1.19
 
 Keep in mind that to access union members, you are required to use `unsafe` blocks, for example;
 
