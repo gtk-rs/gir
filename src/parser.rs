@@ -40,7 +40,7 @@ impl Library {
         let file_name = make_file_name(dir, lib);
         let display_name = file_name.display();
         let file = try!(File::open(&file_name).chain_err(|| {
-            format!("Can't read file {}", file_name.to_string_lossy())
+            format!("Can't read file {}", display_name)
         }));
         let mut parser = EventReader::new(BufReader::new(file));
         loop {
@@ -1298,7 +1298,7 @@ impl Library {
         ns_id: u16,
         attrs: &Attributes,
     ) -> Result<Signal> {
-        let sig_name = try!(
+        let signal_name = try!(
             attrs
                 .by_name("name")
                 .ok_or_else(|| mk_error!("Missing signal name", parser))
@@ -1363,7 +1363,7 @@ impl Library {
         }
         if let Some(ret) = ret {
             Ok(Signal {
-                name: sig_name.into(),
+                name: signal_name.into(),
                 parameters: params,
                 ret: ret,
                 version: version,
@@ -1639,7 +1639,7 @@ impl Library {
         attrs: &Attributes,
     ) -> Result<(TypeId, Option<String>, Option<u32>)> {
         let start_pos = parser.position();
-        let typ_name = try!(
+        let type_name = try!(
             attrs
                 .by_name("name")
                 .or_else(|| if name.local_name == "array" {
@@ -1669,18 +1669,18 @@ impl Library {
                 _ => xml_next!(event, parser),
             }
         }
-        if inner.is_empty() || typ_name == "GLib.ByteArray" {
-            if typ_name == "array" {
+        if inner.is_empty() || type_name == "GLib.ByteArray" {
+            if type_name == "array" {
                 bail!(mk_error!("Missing element type", &start_pos))
             } else {
                 Ok((
-                    self.find_or_stub_type(ns_id, typ_name),
+                    self.find_or_stub_type(ns_id, type_name),
                     c_type,
                     array_length,
                 ))
             }
         } else {
-            let tid = if typ_name == "array" {
+            let tid = if type_name == "array" {
                 Type::c_array(
                     self,
                     inner[0],
@@ -1688,7 +1688,7 @@ impl Library {
                 )
             } else {
                 try!(
-                    Type::container(self, typ_name, inner)
+                    Type::container(self, type_name, inner)
                         .ok_or_else(|| mk_error!("Unknown container type", &start_pos))
                 )
             };
