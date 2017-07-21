@@ -39,9 +39,9 @@ impl Library {
     pub fn read_file(&mut self, dir: &Path, lib: &str) -> Result<()> {
         let file_name = make_file_name(dir, lib);
         let display_name = file_name.display();
-        let file = try!(File::open(&file_name).chain_err(|| {
-            format!("Can't read file {}", display_name)
-        }));
+        let file = try!(
+            File::open(&file_name).chain_err(|| { format!("Can't read file {}", display_name) })
+        );
         let mut parser = EventReader::new(BufReader::new(file));
         loop {
             let event = parser.next();
@@ -277,30 +277,16 @@ impl Library {
                                 Some(&class_name),
                                 Some(&c_type)
                             )) {
-                                let mut field_name = String::new();
-                                for attr in &attributes {
-                                    match attr.name.local_name.as_ref() {
-                                        "name" => {
-                                            field_name = attr.value.clone();
-                                            break;
-                                        }
-                                        _ => {},
-                                    }
-                                }
+                                let field_name =
+                                    if let Some(field_name) = attributes.by_name("name") {
+                                        field_name.into()
+                                    } else {
+                                        format!("u{}", union_count)
+                                    };
 
                                 u = Union {
-                                    name: format!(
-                                        "{}_{}{}",
-                                        class_name,
-                                        field_name,
-                                        union_count
-                                    ),
-                                    c_type: Some(format!(
-                                        "{}_{}{}",
-                                        c_type,
-                                        field_name,
-                                        union_count
-                                    )),
+                                    name: format!("{}_{}", class_name, field_name),
+                                    c_type: Some(format!("{}_{}", c_type, field_name)),
                                     ..u
                                 };
 
@@ -317,10 +303,6 @@ impl Library {
                                         Type::union(self, u, ns_id)
                                     }
                                 };
-
-                                if field_name == "" {
-                                    field_name = format!("u{}", union_count);
-                                }
 
                                 fields.push(Field {
                                     name: field_name,
@@ -432,31 +414,37 @@ impl Library {
                                 Some(&record_name),
                                 Some(&c_type)
                             )) {
-                                let mut field_name = String::new();
-                                for attr in &attributes {
-                                    match attr.name.local_name.as_ref() {
-                                        "name" => {
-                                            field_name = attr.value.clone();
-                                            break;
-                                        }
-                                        _ => {},
-                                    }
-                                }
+                                let field_name =
+                                    if let Some(field_name) = attributes.by_name("name") {
+                                        field_name.into()
+                                    } else {
+                                        format!("u{}", union_count)
+                                    };
 
                                 u = Union {
                                     name: format!(
-                                        "{}{}_{}{}",
-                                        parent_name_prefix.unwrap_or(""),
+                                        "{}{}_{}",
+                                        parent_name_prefix
+                                            .map(|s| {
+                                                let mut s = String::from(s);
+                                                s.push('_');
+                                                s
+                                            })
+                                            .unwrap_or("".into()),
                                         record_name,
-                                        field_name,
-                                        union_count
+                                        field_name
                                     ),
                                     c_type: Some(format!(
-                                        "{}{}_{}{}",
-                                        parent_ctype_prefix.unwrap_or(""),
+                                        "{}{}_{}",
+                                        parent_ctype_prefix
+                                            .map(|s| {
+                                                let mut s = String::from(s);
+                                                s.push('_');
+                                                s
+                                            })
+                                            .unwrap_or("".into()),
                                         c_type,
-                                        field_name,
-                                        union_count
+                                        field_name
                                     )),
                                     ..u
                                 };
@@ -475,10 +463,6 @@ impl Library {
                                     }
                                 };
 
-                                if field_name == "" {
-                                    field_name = format!("u{}", union_count);
-                                }
-
                                 fields.push(Field {
                                     name: field_name,
                                     typ: type_id,
@@ -493,7 +477,7 @@ impl Library {
                             if let Ok(mut f) = self.read_field(parser, ns_id, &attributes) {
                                 // Workaround for wrong GValue c:type
                                 if c_type == "GValue" && f.name == "data" {
-                                    f.c_type = Some("GValue_u1".into());
+                                    f.c_type = Some("GValue_data".into());
                                 }
                                 fields.push(f);
                             }
@@ -562,7 +546,7 @@ impl Library {
             assert_ne!(u.name, "");
             // Workaround for missing c:type
             if u.name == "_Value__data__union" {
-                u.c_type = Some("GValue_u1".into());
+                u.c_type = Some("GValue_data".into());
             } else if u.c_type.is_none() {
                 return Err(mk_error!("Missing union c:type", parser).into());
             }
@@ -620,31 +604,36 @@ impl Library {
                                 _ => continue,
                             };
 
-                            let mut field_name = String::new();
-                            for attr in &attributes {
-                                match attr.name.local_name.as_ref() {
-                                    "name" => {
-                                        field_name = attr.value.clone();
-                                        break;
-                                    }
-                                    _ => {},
-                                }
-                            }
+                            let field_name = if let Some(field_name) = attributes.by_name("name") {
+                                field_name.into()
+                            } else {
+                                format!("s{}", struct_count)
+                            };
 
                             r = Record {
                                 name: format!(
-                                    "{}{}_{}{}",
-                                    parent_name_prefix.unwrap_or(""),
+                                    "{}{}_{}",
+                                    parent_name_prefix
+                                        .map(|s| {
+                                            let mut s = String::from(s);
+                                            s.push('_');
+                                            s
+                                        })
+                                        .unwrap_or("".into()),
                                     union_name,
-                                    field_name,
-                                    struct_count
+                                    field_name
                                 ),
                                 c_type: format!(
-                                    "{}{}_{}{}",
-                                    parent_ctype_prefix.unwrap_or(""),
+                                    "{}{}_{}",
+                                    parent_ctype_prefix
+                                        .map(|s| {
+                                            let mut s = String::from(s);
+                                            s.push('_');
+                                            s
+                                        })
+                                        .unwrap_or("".into()),
                                     c_type,
-                                    field_name,
-                                    struct_count
+                                    field_name
                                 ),
                                 ..r
                             };
@@ -663,10 +652,6 @@ impl Library {
                                 }
                             };
 
-                            if field_name == "" {
-                                field_name = format!("s{}", struct_count);
-                            }
-
                             fields.push(Field {
                                 name: field_name,
                                 typ: type_id,
@@ -674,6 +659,7 @@ impl Library {
                                 c_type: Some(ctype),
                                 ..Field::default()
                             });
+
                             struct_count += 1;
                         }
                         "doc" => doc = try!(read_text(parser)),
