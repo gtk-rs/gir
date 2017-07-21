@@ -288,20 +288,9 @@ impl Library {
                                 let u_doc = u.doc.clone();
                                 let ctype = u.c_type.clone();
 
-                                let type_id = {
-                                    #[cfg(not(feature = "use_unions"))]
-                                    {
-                                        Type::union(self, u, INTERNAL_NAMESPACE)
-                                    }
-                                    #[cfg(feature = "use_unions")]
-                                    {
-                                        Type::union(self, u, ns_id)
-                                    }
-                                };
-
                                 fields.push(Field {
                                     name: field_name,
-                                    typ: type_id,
+                                    typ: Type::union(self, u, ns_id),
                                     doc: u_doc,
                                     c_type: ctype,
                                     ..Field::default()
@@ -410,6 +399,7 @@ impl Library {
                                 Some(&c_type)
                             )) {
                                 let mut field_name = String::new();
+                                println!("ATTR{}: {:?}", union_count, attributes);
                                 for attr in &attributes {
                                     match attr.name.local_name.as_ref() {
                                         "name" => field_name = attr.value.clone(),
@@ -437,20 +427,9 @@ impl Library {
                                 let u_doc = u.doc.clone();
                                 let ctype = u.c_type.clone();
 
-                                let type_id = {
-                                    #[cfg(not(feature = "use_unions"))]
-                                    {
-                                        Type::union(self, u, INTERNAL_NAMESPACE)
-                                    }
-                                    #[cfg(feature = "use_unions")]
-                                    {
-                                        Type::union(self, u, ns_id)
-                                    }
-                                };
-
                                 fields.push(Field {
                                     name: field_name,
-                                    typ: type_id,
+                                    typ: Type::union(self, u, ns_id),
                                     doc: u_doc,
                                     c_type: ctype,
                                     ..Field::default()
@@ -620,21 +599,9 @@ impl Library {
                             let r_doc = r.doc.clone();
                             let ctype = r.c_type.clone();
 
-                            let type_id = {
-                                #[cfg(not(feature = "use_unions"))]
-                                {
-                                    Type::record(self, r, INTERNAL_NAMESPACE)
-                                }
-                                #[cfg(feature = "use_unions")]
-                                {
-                                    Type::record(self, r, ns_id)
-                                }
-                            };
-
-
                             fields.push(Field {
                                 name: field_name,
-                                typ: type_id,
+                                typ: Type::record(self, r, ns_id),
                                 doc: r_doc,
                                 c_type: Some(ctype),
                                 ..Field::default()
