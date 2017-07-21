@@ -363,7 +363,7 @@ impl Library {
         let mut record_name = try!(
             attrs
                 .by_name("name")
-                .ok_or_else(|| mk_error!("Missing union name", parser))
+                .ok_or_else(|| mk_error!("Missing record name", parser))
         );
         let mut c_type = try!(
             attrs
@@ -409,19 +409,27 @@ impl Library {
                                 Some(&record_name),
                                 Some(&c_type)
                             )) {
-                                let field_name = u.name.clone();
+                                let mut field_name = String::new();
+                                for attr in &attributes {
+                                    match attr.name.local_name.as_ref() {
+                                        "name" => field_name = attr.value.clone(),
+                                        _ => {},
+                                    }
+                                }
 
                                 u = Union {
                                     name: format!(
-                                        "{}{}_u{}",
+                                        "{}{}_{}{}",
                                         parent_name_prefix.unwrap_or(""),
                                         record_name,
+                                        field_name,
                                         union_count
                                     ),
                                     c_type: Some(format!(
-                                        "{}{}_u{}",
+                                        "{}{}_{}{}",
                                         parent_ctype_prefix.unwrap_or(""),
                                         c_type,
+                                        field_name,
                                         union_count
                                     )),
                                     ..u
@@ -585,19 +593,25 @@ impl Library {
                                 _ => continue,
                             };
 
-                            let field_name = r.name.clone();
+                            let mut field_name = String::new();
+                            for attr in &attributes {
+                                match attr.name.local_name.as_ref() {
+                                    "name" => field_name = attr.value.clone(),
+                                    _ => {},
+                                }
+                            }
 
                             r = Record {
                                 name: format!(
-                                    "{}{}_s{}",
+                                    "{}_{}{}",
                                     parent_name_prefix.unwrap_or(""),
-                                    union_name,
+                                    field_name,
                                     struct_count
                                 ),
                                 c_type: format!(
-                                    "{}{}_s{}",
+                                    "{}_{}{}",
                                     parent_ctype_prefix.unwrap_or(""),
-                                    c_type,
+                                    field_name,
                                     struct_count
                                 ),
                                 ..r
