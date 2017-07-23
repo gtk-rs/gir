@@ -163,7 +163,15 @@ pub fn analyze(
             library::ParameterDirection::Out => !can_as_return(env, par),
         };
 
-        if let Some(array_name) = array_lengths.get(&(pos as u32)) {
+        let mut array_name = configured_functions
+            .matched_parameters(&name)
+            .iter()
+            .filter_map(|p| p.length_of.as_ref())
+            .next();
+        if array_name.is_none() {
+            array_name = array_lengths.get(&(pos as u32))
+        }
+        if let Some(array_name) = array_name {
             add_rust_parameter = false;
 
             let transformation = Transformation {

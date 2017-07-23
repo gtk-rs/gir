@@ -13,6 +13,7 @@ pub struct Parameter {
     //false(default) - parameter can be changed in ffi function
     pub constant: bool,
     pub nullable: Option<Nullable>,
+    pub length_of: Option<String>,
 }
 
 impl Parse for Parameter {
@@ -33,11 +34,16 @@ impl Parse for Parameter {
         let nullable = toml.lookup("nullable")
             .and_then(|val| val.as_bool())
             .map(Nullable);
+        let length_of = toml.lookup("length_of")
+            .and_then(|val| val.as_str())
+            .map(|s| if s == "return" { "" } else { s })
+            .map(ToOwned::to_owned);
 
         Some(Parameter {
             ident: ident,
             constant: constant,
             nullable: nullable,
+            length_of: length_of,
         })
     }
 }
