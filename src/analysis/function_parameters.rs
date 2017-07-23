@@ -34,8 +34,6 @@ pub struct CParameter {
 
     //analysis fields
     pub ref_mode: RefMode,
-    /// `true` if it is a type that can be put into an `Option`.
-    pub is_into: bool,
 }
 
 #[derive(Clone, Debug)]
@@ -52,10 +50,11 @@ pub enum TransformationType {
         ref_mode: RefMode,
         //filled by functions
         to_glib_extra: String,
-        is_into: bool,
     },
+    ToGlibStash { name: String },
     ToGlibBorrow,
     ToGlibUnknown { name: String },
+    Into { name: String, with_stash: bool },
     Length {
         array_name: String,
         array_length_name: String,
@@ -70,6 +69,7 @@ impl TransformationType {
             ToGlibDirect { .. } |
             ToGlibScalar { .. } |
             ToGlibPointer { .. } |
+            ToGlibStash { .. } |
             ToGlibBorrow |
             ToGlibUnknown { .. } => true,
             _ => false,
@@ -203,19 +203,6 @@ pub fn analyze(
             .filter_map(|p| p.nullable)
             .next();
         let nullable = nullable_override.unwrap_or(par.nullable);
-        let is_into = *nullable && is_into(env, par);
-
-        if add_rust_parameter {
-            let rust_par = RustParameter {
-                name: name.clone(),
-                typ: par.typ,
-                ind_c: ind_c,
-                allow_none: par.allow_none,
-            };
-            parameters.rust_parameters.push(rust_par);
-        } else {
-            ind_rust = None;
-        }
 
         let c_par = CParameter {
             name: name.clone(),
@@ -228,9 +215,43 @@ pub fn analyze(
             nullable: nullable,
             ref_mode: ref_mode,
             is_error: par.is_error,
-            is_into: is_into,
         };
         parameters.c_parameters.push(c_par);
+
+        if add_rust_parameter {
+            let rust_par = RustParameter {
+                name: name.clone(),
+                typ: par.typ,
+                ind_c: ind_c,
+                allow_none: par.allow_none,
+            };
+            parameters.rust_parameters.push(rust_par);
+
+            if *nullable && is_into(env, par) {
+                let with_stash = ref_mode == RefMode::ByRef;
+                let transformation = Transformation {
+                    ind_c: ind_c,
+                    ind_rust: ind_rust,
+                    transformation_type: TransformationType::Into {
+                        name: name.clone(),
+                        with_stash: with_stash,
+                    },
+                };
+                parameters.transformations.push(transformation);
+
+                if with_stash {
+                    parameters.transformations.push(Transformation {
+                        ind_c: ind_c,
+                        ind_rust: ind_rust,
+                        transformation_type: TransformationType::ToGlibStash { name: name },
+                    });
+
+                    continue;
+                }
+            }
+        } else {
+            ind_rust = None;
+        }
 
         let transformation_type = match ConversionType::of(&env.library, par.typ) {
             ConversionType::Direct => TransformationType::ToGlibDirect { name: name },
@@ -244,7 +265,6 @@ pub fn analyze(
                 transfer: transfer,
                 ref_mode: ref_mode,
                 to_glib_extra: String::new(),
-                is_into: is_into,
             },
             ConversionType::Borrow => TransformationType::ToGlibBorrow,
             ConversionType::Unknown => TransformationType::ToGlibUnknown { name: name },

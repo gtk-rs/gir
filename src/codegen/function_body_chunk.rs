@@ -2,19 +2,19 @@ use analysis::conversion_type::ConversionType;
 use analysis::function_parameters::CParameter as AnalysisCParameter;
 use analysis::function_parameters::{Transformation, TransformationType};
 use analysis::out_parameters::Mode;
-use analysis::ref_mode::RefMode;
 use analysis::return_value;
 use analysis::rust_type::rust_type;
 use analysis::safety_assertion_mode::SafetyAssertionMode;
 use chunk::{Chunk, TupleMode};
-use chunk::parameter_ffi_call_in;
 use chunk::parameter_ffi_call_out;
 use env::Env;
 use library;
 
 #[derive(Clone)]
 enum Parameter {
-    In { parameter: parameter_ffi_call_in::Parameter, },
+    //Used to separate in and out parameters in `add_in_array_lengths`
+    // and `generate_func_parameters`
+    In,
     Out {
         parameter: parameter_ffi_call_out::Parameter,
         mem_mode: OutMemMode,
@@ -63,10 +63,8 @@ impl Builder {
         self.ret = ReturnValue { ret: ret.clone() };
         self
     }
-    pub fn parameter(&mut self, parameter: &AnalysisCParameter) -> &mut Builder {
-        self.parameters.push(Parameter::In {
-            parameter: parameter_ffi_call_in::Parameter::new(parameter),
-        });
+    pub fn parameter(&mut self) -> &mut Builder {
+        self.parameters.push(Parameter::In);
         self
     }
     pub fn out_parameter(&mut self, env: &Env, parameter: &AnalysisCParameter) -> &mut Builder {
@@ -147,25 +145,28 @@ impl Builder {
         }
     }
     fn add_into_conversion(&self, chunks: &mut Vec<Chunk>) {
-        for param in self.parameters.iter().filter_map(|x| match *x {
-            Parameter::In { ref parameter } if parameter.is_into => Some(parameter),
-            _ => None,
-        }) {
-            let value = Chunk::Custom(format!("{}.into()", param.name));
-            chunks.push(Chunk::Let {
-                name: param.name.clone(),
-                is_mut: false,
-                value: Box::new(value),
-                type_: None,
-            });
-            if param.ref_mode == RefMode::ByRef {
-                let value = Chunk::Custom(format!("{}.to_glib_none()", param.name));
+        for trans in &self.transformations {
+            if let TransformationType::Into {
+                ref name,
+                with_stash,
+            } = trans.transformation_type
+            {
+                let value = Chunk::Custom(format!("{}.into()", name));
                 chunks.push(Chunk::Let {
-                    name: param.name.clone(),
+                    name: name.clone(),
                     is_mut: false,
                     value: Box::new(value),
                     type_: None,
                 });
+                if with_stash {
+                    let value = Chunk::Custom(format!("{}.to_glib_none()", name));
+                    chunks.push(Chunk::Let {
+                        name: name.clone(),
+                        is_mut: false,
+                        value: Box::new(value),
+                        type_: None,
+                    });
+                }
             }
         }
     }
@@ -178,7 +179,7 @@ impl Builder {
                 ref array_length_type,
             } = trans.transformation_type
             {
-                if let In { .. } = self.parameters[trans.ind_c] {
+                if let In = self.parameters[trans.ind_c] {
                     let value =
                         Chunk::Custom(format!("{}.len() as {}", array_name, array_length_type));
                     chunks.push(Chunk::Let {
@@ -215,7 +216,7 @@ impl Builder {
             }
             let par = &self.parameters[trans.ind_c];
             let chunk = match *par {
-                In { .. } => Chunk::FfiCallParameter {
+                In => Chunk::FfiCallParameter {
                     transformation_type: trans.transformation_type.clone(),
                 },
                 Out { ref parameter, .. } => Chunk::FfiCallOutParameter {

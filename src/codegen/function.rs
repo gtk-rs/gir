@@ -162,7 +162,7 @@ pub fn body_chunk(env: &Env, analysis: &analysis::functions::Info) -> Chunk {
         if outs_as_return && analysis.outs.iter().any(|p| p.name == par.name) {
             builder.out_parameter(env, par);
         } else {
-            builder.parameter(par);
+            builder.parameter();
         }
     }
 
