@@ -66,20 +66,14 @@ impl Parameters {
         }
     }
 
-    pub fn analyze_return(
-        &mut self,
-        env: &Env,
-        ret: &Option<library::Parameter>,
-        for_method: bool,
-    ) {
+    pub fn analyze_return(&mut self, env: &Env, ret: &Option<library::Parameter>) {
         let array_length = if let Some(array_length) = ret.as_ref().and_then(|r| r.array_length) {
             array_length
         } else {
             return;
         };
 
-        let pos_diff = if for_method { 1 } else { 0 };
-        let ind_c = (array_length + pos_diff) as usize;
+        let ind_c = array_length as usize;
 
         let par = if let Some(par) = self.c_parameters.get(ind_c) {
             par
@@ -100,16 +94,13 @@ pub fn analyze(
     env: &Env,
     function_parameters: &[library::Parameter],
     configured_functions: &[&config::functions::Function],
-    for_method: bool,
 ) -> Parameters {
     let mut parameters = Parameters::new(function_parameters.len());
-    let pos_diff = if for_method { 1 } else { 0 };
 
     //Map: length agrument position => array name
     let array_lengths: HashMap<u32, String> = function_parameters
         .iter()
         .filter_map(|p| p.array_length.map(|pos| (pos, p.name.clone())))
-        .map(|p| (p.0 + pos_diff, p.1))
         .collect();
 
     for (pos, par) in function_parameters.iter().enumerate() {
@@ -128,18 +119,15 @@ pub fn analyze(
             library::ParameterDirection::Out => !can_as_return(env, par),
         };
 
-        {
-            let pos = pos as u32;
-            if let Some(array_name) = array_lengths.get(&pos) {
-                add_rust_parameter = false;
+        if let Some(array_name) = array_lengths.get(&(pos as u32)) {
+            add_rust_parameter = false;
 
-                let transformation = Transformation {
-                    ind_c: ind_c,
-                    ind_rust: None,
-                    transformation_type: get_length_type(env, array_name, &par.name, par.typ),
-                };
-                parameters.transformations.push(transformation);
-            }
+            let transformation = Transformation {
+                ind_c: ind_c,
+                ind_rust: None,
+                transformation_type: get_length_type(env, array_name, &par.name, par.typ),
+            };
+            parameters.transformations.push(transformation);
         }
 
         let mut caller_allocates = par.caller_allocates;

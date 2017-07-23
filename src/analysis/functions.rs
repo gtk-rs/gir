@@ -131,10 +131,8 @@ fn analyze_function(
     );
     commented |= ret.commented;
 
-    let is_method = func.kind == library::FunctionKind::Method;
-    let mut parameters =
-        function_parameters::analyze(env, &func.parameters, configured_functions, is_method);
-    parameters.analyze_return(env, &ret.parameter, is_method);
+    let mut parameters = function_parameters::analyze(env, &func.parameters, configured_functions);
+    parameters.analyze_return(env, &ret.parameter);
 
     for (pos, par) in parameters.c_parameters.iter_mut().enumerate() {
         assert!(
@@ -178,6 +176,7 @@ fn analyze_function(
     } else {
         Visibility::Public
     };
+    let is_method = func.kind == library::FunctionKind::Method;
     let assertion = SafetyAssertionMode::of(env, is_method, &parameters);
 
     Info {
