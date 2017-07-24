@@ -11,8 +11,6 @@ use super::ref_mode::RefMode;
 use super::out_parameters::can_as_return;
 use traits::IntoString;
 
-pub use config::functions::TransformationType;
-
 //TODO: remove unused fields
 #[derive(Clone, Debug)]
 pub struct RustParameter {
@@ -36,11 +34,57 @@ pub struct CParameter {
 
     //analysis fields
     pub ref_mode: RefMode,
-    //filled by functions
-    //TODO: Find normal way to do it
-    pub to_glib_extra: String,
     /// `true` if it is a type that can be put into an `Option`.
     pub is_into: bool,
+}
+
+#[derive(Clone, Debug)]
+pub enum TransformationType {
+    ToGlibDirect { name: String },
+    ToGlibScalar {
+        name: String,
+        nullable: library::Nullable,
+    },
+    ToGlibPointer {
+        name: String,
+        instance_parameter: bool,
+        transfer: library::Transfer,
+        ref_mode: RefMode,
+        //filled by functions
+        to_glib_extra: String,
+        is_into: bool,
+    },
+    ToGlibBorrow,
+    ToGlibUnknown { name: String },
+    Length {
+        array_name: String,
+        array_length_name: String,
+        array_length_type: String,
+    },
+}
+
+impl TransformationType {
+    pub fn is_to_glib(&self) -> bool {
+        use self::TransformationType::*;
+        match *self {
+            ToGlibDirect { .. } |
+            ToGlibScalar { .. } |
+            ToGlibPointer { .. } |
+            ToGlibBorrow |
+            ToGlibUnknown { .. } => true,
+            _ => false,
+        }
+    }
+
+    pub fn set_to_glib_extra(&mut self, to_glib_extra_: &str) {
+        if let TransformationType::ToGlibPointer {
+            ref mut to_glib_extra,
+            ..
+        } = *self
+        {
+            *to_glib_extra = to_glib_extra_.to_owned();
+        }
+    }
 }
 
 #[derive(Clone, Debug)]
@@ -151,6 +195,7 @@ pub fn analyze(
             .filter_map(|p| p.nullable)
             .next();
         let nullable = nullable_override.unwrap_or(par.nullable);
+        let is_into = *nullable && is_into(env, par);
 
         if add_rust_parameter {
             let rust_par = RustParameter {
@@ -175,15 +220,32 @@ pub fn analyze(
             nullable: nullable,
             ref_mode: ref_mode,
             is_error: par.is_error,
-            to_glib_extra: String::new(),
-            is_into: *nullable && is_into(env, par),
+            is_into: is_into,
         };
         parameters.c_parameters.push(c_par);
+
+        let transformation_type = match ConversionType::of(&env.library, par.typ) {
+            ConversionType::Direct => TransformationType::ToGlibDirect { name: name },
+            ConversionType::Scalar => TransformationType::ToGlibScalar {
+                name: name,
+                nullable: nullable,
+            },
+            ConversionType::Pointer => TransformationType::ToGlibPointer {
+                name: name,
+                instance_parameter: par.instance_parameter,
+                transfer: transfer,
+                ref_mode: ref_mode,
+                to_glib_extra: String::new(),
+                is_into: is_into,
+            },
+            ConversionType::Borrow => TransformationType::ToGlibBorrow,
+            ConversionType::Unknown => TransformationType::ToGlibUnknown { name: name },
+        };
 
         let transformation = Transformation {
             ind_c: ind_c,
             ind_rust: ind_rust,
-            transformation_type: TransformationType::ToGlib,
+            transformation_type: transformation_type,
         };
         parameters.transformations.push(transformation);
     }

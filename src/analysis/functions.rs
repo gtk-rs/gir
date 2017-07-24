@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::vec::Vec;
 
 use analysis::bounds::Bounds;
@@ -106,6 +107,7 @@ fn analyze_function(
 ) -> Info {
     let mut commented = false;
     let mut bounds: Bounds = Default::default();
+    let mut to_glib_extras = HashMap::<usize, String>::new();
     let mut used_types: Vec<String> = Vec::with_capacity(4);
 
     let version = configured_functions
@@ -134,7 +136,7 @@ fn analyze_function(
     let mut parameters = function_parameters::analyze(env, &func.parameters, configured_functions);
     parameters.analyze_return(env, &ret.parameter);
 
-    for (pos, par) in parameters.c_parameters.iter_mut().enumerate() {
+    for (pos, par) in parameters.c_parameters.iter().enumerate() {
         assert!(
             !par.instance_parameter || pos == 0,
             "Wrong instance parameter in {}",
@@ -143,7 +145,9 @@ fn analyze_function(
         if let Ok(s) = used_rust_type(env, par.typ) {
             used_types.push(s);
         }
-        bounds.add_for_parameter(env, func, par);
+        if let Some(to_glib_extra) = bounds.add_for_parameter(env, func, par) {
+            to_glib_extras.insert(pos, to_glib_extra);
+        }
         let type_error =
             parameter_rust_type(env, par.typ, par.direction, Nullable(false), RefMode::None)
                 .is_err();
@@ -164,6 +168,14 @@ fn analyze_function(
     }
 
     if !commented {
+        for transformation in &mut parameters.transformations {
+            if let Some(to_glib_extra) = to_glib_extras.get(&transformation.ind_c) {
+                transformation
+                    .transformation_type
+                    .set_to_glib_extra(to_glib_extra);
+            }
+        }
+
         imports.add_used_types(&used_types, version);
         if ret.base_tid.is_some() {
             imports.add("glib::object::Downcast", None);

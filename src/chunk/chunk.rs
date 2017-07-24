@@ -1,8 +1,8 @@
 use std::vec::Vec;
 
+use analysis::function_parameters::TransformationType;
 use analysis::return_value;
 use super::conversion_from_glib;
-use super::parameter_ffi_call_in;
 use super::parameter_ffi_call_out;
 
 pub enum Chunk {
@@ -12,7 +12,7 @@ pub enum Chunk {
     Unsafe(Vec<Chunk>),
     FfiCallTODO(String),
     FfiCall { name: String, params: Vec<Chunk> },
-    FfiCallParameter { par: parameter_ffi_call_in::Parameter, },
+    FfiCallParameter { transformation_type: TransformationType, },
     FfiCallOutParameter { par: parameter_ffi_call_out::Parameter, },
     //TODO: separate without return_value::Info
     FfiCallConversion {

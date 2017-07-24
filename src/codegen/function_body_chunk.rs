@@ -210,18 +210,19 @@ impl Builder {
     fn generate_func_parameters(&self) -> Vec<Chunk> {
         let mut params = Vec::new();
         for trans in &self.transformations {
-            if let TransformationType::ToGlib = trans.transformation_type {
-                let par = &self.parameters[trans.ind_c];
-                let chunk = match *par {
-                    In { ref parameter } => Chunk::FfiCallParameter {
-                        par: parameter.clone(),
-                    },
-                    Out { ref parameter, .. } => Chunk::FfiCallOutParameter {
-                        par: parameter.clone(),
-                    },
-                };
-                params.push(chunk);
+            if !trans.transformation_type.is_to_glib() {
+                continue;
             }
+            let par = &self.parameters[trans.ind_c];
+            let chunk = match *par {
+                In { .. } => Chunk::FfiCallParameter {
+                    transformation_type: trans.transformation_type.clone(),
+                },
+                Out { ref parameter, .. } => Chunk::FfiCallOutParameter {
+                    par: parameter.clone(),
+                },
+            };
+            params.push(chunk);
         }
         params
     }
