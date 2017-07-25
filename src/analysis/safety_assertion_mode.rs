@@ -1,4 +1,4 @@
-use analysis::parameter::Parameter;
+use analysis::function_parameters::Parameters;
 use env::Env;
 use library;
 
@@ -16,19 +16,22 @@ impl Default for SafetyAssertionMode {
 }
 
 impl SafetyAssertionMode {
-    pub fn of(env: &Env, params: &[Parameter]) -> SafetyAssertionMode {
+    pub fn of(env: &Env, is_method: bool, params: &Parameters) -> SafetyAssertionMode {
         use self::SafetyAssertionMode::*;
         use library::Type::*;
         if !env.config.generate_safety_asserts {
             return None;
         }
-        if !params.is_empty() && params[0].instance_parameter {
+        if is_method {
             return None;
         }
-        for par in params {
-            match *env.library.type_(par.typ) {
+        for par in &params.rust_parameters {
+            let c_par = &params.c_parameters[par.ind_c];
+            match *env.library.type_(c_par.typ) {
                 Class(..) | Interface(..)
-                    if !*par.nullable && par.typ.ns_id == library::MAIN_NAMESPACE => return Skip,
+                    if !*c_par.nullable && c_par.typ.ns_id == library::MAIN_NAMESPACE => {
+                    return Skip
+                }
                 _ => (),
             }
         }

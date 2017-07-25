@@ -1,19 +1,20 @@
 use analysis::conversion_type::ConversionType;
-use analysis::parameter::Parameter as AnalysisParameter;
+use analysis::function_parameters::CParameter as AnalysisCParameter;
+use analysis::function_parameters::{Transformation, TransformationType};
 use analysis::out_parameters::Mode;
-use analysis::ref_mode::RefMode;
 use analysis::return_value;
 use analysis::rust_type::rust_type;
 use analysis::safety_assertion_mode::SafetyAssertionMode;
 use chunk::{Chunk, TupleMode};
-use chunk::parameter_ffi_call_in;
 use chunk::parameter_ffi_call_out;
 use env::Env;
 use library;
 
 #[derive(Clone)]
 enum Parameter {
-    In { parameter: parameter_ffi_call_in::Parameter, },
+    //Used to separate in and out parameters in `add_in_array_lengths`
+    // and `generate_func_parameters`
+    In,
     Out {
         parameter: parameter_ffi_call_out::Parameter,
         mem_mode: OutMemMode,
@@ -31,7 +32,6 @@ enum OutMemMode {
 #[derive(Clone, Default)]
 struct ReturnValue {
     pub ret: return_value::Info,
-    pub array_length: Option<(String, String)>,
 }
 
 use self::Parameter::*;
@@ -40,6 +40,7 @@ use self::Parameter::*;
 pub struct Builder {
     glib_name: String,
     parameters: Vec<Parameter>,
+    transformations: Vec<Transformation>,
     ret: ReturnValue,
     outs_as_return: bool,
     outs_mode: Mode,
@@ -58,36 +59,15 @@ impl Builder {
         self.assertion = assertion;
         self
     }
-    pub fn ret(
-        &mut self,
-        env: &Env,
-        ret: &return_value::Info,
-        array_length: Option<&AnalysisParameter>,
-    ) -> &mut Builder {
-        self.ret = ReturnValue {
-            ret: ret.clone(),
-            array_length: array_length.map(|p| (p.name.clone(), rust_type(env, p.typ).unwrap())),
-        };
+    pub fn ret(&mut self, ret: &return_value::Info) -> &mut Builder {
+        self.ret = ReturnValue { ret: ret.clone() };
         self
     }
-    pub fn parameter(
-        &mut self,
-        env: &Env,
-        parameter: &AnalysisParameter,
-        array_length: Option<&AnalysisParameter>,
-    ) -> &mut Builder {
-        let array_length = array_length.map(|p| (p.name.clone(), rust_type(env, p.typ).unwrap()));
-        self.parameters.push(Parameter::In {
-            parameter: parameter_ffi_call_in::Parameter::new(parameter, array_length),
-        });
+    pub fn parameter(&mut self) -> &mut Builder {
+        self.parameters.push(Parameter::In);
         self
     }
-    pub fn out_parameter(
-        &mut self,
-        env: &Env,
-        parameter: &AnalysisParameter,
-        array_length: Option<&AnalysisParameter>,
-    ) -> &mut Builder {
+    pub fn out_parameter(&mut self, env: &Env, parameter: &AnalysisCParameter) -> &mut Builder {
         use self::OutMemMode::*;
         let mem_mode = match ConversionType::of(&env.library, parameter.typ) {
             ConversionType::Pointer => {
@@ -112,14 +92,19 @@ impl Builder {
             }
             _ => Uninitialized,
         };
-        let array_length = array_length.map(|p| (p.name.clone(), rust_type(env, p.typ).unwrap()));
         self.parameters.push(Parameter::Out {
-            parameter: parameter_ffi_call_out::Parameter::new(parameter, array_length),
+            parameter: parameter_ffi_call_out::Parameter::new(parameter),
             mem_mode: mem_mode,
         });
         self.outs_as_return = true;
         self
     }
+
+    pub fn transformations(&mut self, transformations: &[Transformation]) -> &mut Builder {
+        self.transformations = transformations.to_owned();
+        self
+    }
+
     pub fn outs_mode(&mut self, mode: Mode) -> &mut Builder {
         self.outs_mode = mode;
         self
@@ -160,42 +145,50 @@ impl Builder {
         }
     }
     fn add_into_conversion(&self, chunks: &mut Vec<Chunk>) {
-        for param in self.parameters.iter().filter_map(|x| match *x {
-            Parameter::In { ref parameter } if parameter.is_into => Some(parameter),
-            _ => None,
-        }) {
-            let value = Chunk::Custom(format!("{}.into()", param.name));
-            chunks.push(Chunk::Let {
-                name: param.name.clone(),
-                is_mut: false,
-                value: Box::new(value),
-                type_: None,
-            });
-            if param.ref_mode == RefMode::ByRef {
-                let value = Chunk::Custom(format!("{}.to_glib_none()", param.name));
+        for trans in &self.transformations {
+            if let TransformationType::Into {
+                ref name,
+                with_stash,
+            } = trans.transformation_type
+            {
+                let value = Chunk::Custom(format!("{}.into()", name));
                 chunks.push(Chunk::Let {
-                    name: param.name.clone(),
+                    name: name.clone(),
                     is_mut: false,
                     value: Box::new(value),
                     type_: None,
                 });
+                if with_stash {
+                    let value = Chunk::Custom(format!("{}.to_glib_none()", name));
+                    chunks.push(Chunk::Let {
+                        name: name.clone(),
+                        is_mut: false,
+                        value: Box::new(value),
+                        type_: None,
+                    });
+                }
             }
         }
     }
 
     fn add_in_array_lengths(&self, chunks: &mut Vec<Chunk>) {
-        for param in self.parameters.iter().filter_map(|x| match *x {
-            Parameter::In { ref parameter } => Some(parameter),
-            _ => None,
-        }) {
-            if let Some((ref array_length_name, ref array_length_typ)) = param.array_length {
-                let value = Chunk::Custom(format!("{}.len() as {}", param.name, array_length_typ));
-                chunks.push(Chunk::Let {
-                    name: array_length_name.clone(),
-                    is_mut: false,
-                    value: Box::new(value),
-                    type_: None,
-                });
+        for trans in &self.transformations {
+            if let TransformationType::Length {
+                ref array_name,
+                ref array_length_name,
+                ref array_length_type,
+            } = trans.transformation_type
+            {
+                if let In = self.parameters[trans.ind_c] {
+                    let value =
+                        Chunk::Custom(format!("{}.len() as {}", array_name, array_length_type));
+                    chunks.push(Chunk::Let {
+                        name: array_length_name.clone(),
+                        is_mut: false,
+                        value: Box::new(value),
+                        type_: None,
+                    });
+                }
             }
         }
     }
@@ -209,19 +202,22 @@ impl Builder {
         func
     }
     fn generate_call_conversion(&self, call: Chunk) -> Chunk {
-        let conv = Chunk::FfiCallConversion {
+        Chunk::FfiCallConversion {
             ret: self.ret.ret.clone(),
-            array_length: self.ret.array_length.clone(),
+            array_length_name: self.find_array_length_name(""),
             call: Box::new(call),
-        };
-        conv
+        }
     }
     fn generate_func_parameters(&self) -> Vec<Chunk> {
         let mut params = Vec::new();
-        for par in &self.parameters {
+        for trans in &self.transformations {
+            if !trans.transformation_type.is_to_glib() {
+                continue;
+            }
+            let par = &self.parameters[trans.ind_c];
             let chunk = match *par {
-                In { ref parameter } => Chunk::FfiCallParameter {
-                    par: parameter.clone(),
+                In => Chunk::FfiCallParameter {
+                    transformation_type: trans.transformation_type.clone(),
                 },
                 Out { ref parameter, .. } => Chunk::FfiCallOutParameter {
                     par: parameter.clone(),
@@ -295,31 +291,16 @@ impl Builder {
                 ref mem_mode,
             } = *par
             {
-                // Omit out parameters that are array-length for another out parameter/return value
-                // These are handled in the conversion via from_glib_X_n()
-                if self.parameters.iter().any(|other_par| match *other_par {
-                    Parameter::In {
-                        parameter: parameter_ffi_call_in::Parameter {
-                            array_length: Some((ref name, _)),
+                if self.transformations.iter().any(
+                    |tr| match tr.transformation_type {
+                        TransformationType::Length {
+                            ref array_length_name,
                             ..
-                        },
-                    } |
-                    Parameter::Out {
-                        parameter: parameter_ffi_call_out::Parameter {
-                            array_length: Some((ref name, _)),
-                            ..
-                        },
-                        ..
-                    } => name == &parameter.name,
-                    _ => false,
-                }) {
+                        } if array_length_name == &parameter.name => true,
+                        _ => false,
+                    },
+                ) {
                     continue;
-                }
-
-                if let Some((ref array_length_name, _)) = self.ret.array_length {
-                    if array_length_name == &parameter.name {
-                        continue;
-                    }
                 }
 
                 chs.push(self.out_parameter_to_return(parameter, mem_mode));
@@ -339,7 +320,7 @@ impl Builder {
         } else {
             Chunk::FromGlibConversion {
                 mode: parameter.into(),
-                array_length: parameter.array_length.clone(),
+                array_length_name: self.find_array_length_name(&parameter.name),
                 value: Box::new(value),
             }
         }
@@ -378,16 +359,17 @@ impl Builder {
             }
             Throws(use_ret) => {
                 //extracting original FFI function call
-                let (boxed_call, array_length, ret_info) = if let Chunk::FfiCallConversion {
-                    call: inner,
-                    array_length,
-                    ret: ret_info,
-                } = call
-                {
-                    (inner, array_length, ret_info)
-                } else {
-                    panic!("Call without Chunk::FfiCallConversion")
-                };
+                let (boxed_call, array_length_name, ret_info) =
+                    if let Chunk::FfiCallConversion {
+                        call: inner,
+                        array_length_name,
+                        ret: ret_info,
+                    } = call
+                    {
+                        (inner, array_length_name, ret_info)
+                    } else {
+                        panic!("Call without Chunk::FfiCallConversion")
+                    };
                 let call = if use_ret {
                     Chunk::Let {
                         name: "ret".into(),
@@ -410,7 +392,7 @@ impl Builder {
                         let val = Chunk::Custom("ret".into());
                         let conv = Chunk::FfiCallConversion {
                             call: Box::new(val),
-                            array_length: array_length,
+                            array_length_name: array_length_name,
                             ret: ret_info,
                         };
                         vec.insert(0, conv);
@@ -424,5 +406,27 @@ impl Builder {
                 (call, Some(ret))
             }
         }
+    }
+
+    fn find_array_length_name(&self, array_name_: &str) -> Option<String> {
+        self.transformations
+            .iter()
+            .filter_map(|tr| {
+                if let TransformationType::Length {
+                    ref array_name,
+                    ref array_length_name,
+                    ..
+                } = tr.transformation_type
+                {
+                    if array_name == array_name_ {
+                        Some(array_length_name.clone())
+                    } else {
+                        None
+                    }
+                } else {
+                    None
+                }
+            })
+            .next()
     }
 }

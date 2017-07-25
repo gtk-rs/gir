@@ -107,6 +107,9 @@ cfg_condition = "mycond"
         nullable = true
         # allow to make parameter immutable
         const = true
+        # parameter is calculated as length of string or array and removed from function declaration
+        #  ( for length of return value use "return" )
+        length_of = "str"
         # override for return value
         [[object.function.return]]
         # allow to remove/add Option<> to return value

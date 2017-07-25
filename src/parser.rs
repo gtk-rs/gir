@@ -1193,6 +1193,7 @@ impl Library {
             .by_name("identifier")
             .or_else(|| attrs.by_name("type"));
         let kind = try!(FunctionKind::from_str(kind_str).map_err(|why| mk_error!(why, parser)));
+        let is_method = kind == FunctionKind::Method;
         let version = try!(self.parse_version(parser, ns_id, attrs.by_name("version")));
         let deprecated_version = try!(self.parse_version(
             parser,
@@ -1212,7 +1213,7 @@ impl Library {
                     match name.local_name.as_ref() {
                         "parameters" => {
                             //params.append(&mut try!(self.read_parameters(parser, ns_id)));
-                            try!(self.read_parameters(parser, ns_id, false))
+                            try!(self.read_parameters(parser, ns_id, false, is_method))
                                 .into_iter()
                                 .map(|p| params.push(p))
                                 .count();
@@ -1227,6 +1228,7 @@ impl Library {
                                 "return-value",
                                 &attributes,
                                 false,
+                                is_method
                             )));
                         }
                         "doc" => doc = try!(read_text(parser)),
@@ -1356,7 +1358,7 @@ impl Library {
                 } => {
                     match name.local_name.as_ref() {
                         "parameters" => {
-                            try!(self.read_parameters(parser, ns_id, true))
+                            try!(self.read_parameters(parser, ns_id, true, false))
                                 .into_iter()
                                 .map(|p| params.push(p))
                                 .count();
@@ -1371,6 +1373,7 @@ impl Library {
                                 "return-value",
                                 &attributes,
                                 true,
+                                false
                             )));
                         }
                         "doc" => doc = try!(read_text(parser)),
@@ -1415,6 +1418,7 @@ impl Library {
         parser: &mut Reader,
         ns_id: u16,
         allow_no_ctype: bool,
+        for_method: bool,
     ) -> Result<Vec<Parameter>> {
         let mut params = Vec::new();
         loop {
@@ -1431,6 +1435,7 @@ impl Library {
                                 kind,
                                 &attributes,
                                 allow_no_ctype,
+                                for_method
                             ));
                             params.push(param);
                         }
@@ -1451,6 +1456,7 @@ impl Library {
         kind_str: &str,
         attrs: &Attributes,
         allow_no_ctype: bool,
+        for_method: bool,
     ) -> Result<Parameter> {
         let param_name = attrs.by_name("name").unwrap_or("");
         let instance_parameter = kind_str == "instance-parameter";
@@ -1504,7 +1510,10 @@ impl Library {
                 _ => xml_next!(event, parser),
             }
         }
-        if let Some((tid, c_type, array_length)) = typ {
+        if let Some((tid, c_type, mut array_length)) = typ {
+            if for_method {
+                array_length = array_length.map(|l| l + 1);
+            }
             Ok(Parameter {
                 name: param_name.into(),
                 typ: tid,

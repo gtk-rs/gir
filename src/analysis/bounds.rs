@@ -5,7 +5,7 @@ use std::vec::Vec;
 use consts::TYPE_PARAMETERS_START;
 use env::Env;
 use analysis::imports::Imports;
-use analysis::parameter::Parameter;
+use analysis::function_parameters::CParameter;
 use analysis::rust_type::bounds_rust_type;
 use library::{Function, Fundamental, Nullable, Type, TypeId, ParameterDirection};
 use traits::IntoString;
@@ -94,10 +94,16 @@ impl Bound {
 }
 
 impl Bounds {
-    pub fn add_for_parameter(&mut self, env: &Env, func: &Function, par: &mut Parameter) {
+    pub fn add_for_parameter(
+        &mut self,
+        env: &Env,
+        func: &Function,
+        par: &CParameter,
+    ) -> Option<String> {
+        let mut ret = None;
         if !par.instance_parameter && par.direction != ParameterDirection::Out {
             if let Some(bound_type) = Bounds::type_for(env, par.typ, par.nullable) {
-                par.to_glib_extra = Bounds::get_to_glib_extra(bound_type.clone());
+                ret = Some(Bounds::get_to_glib_extra(&bound_type));
                 let type_name = bounds_rust_type(env, par.typ);
                 if !self.add_parameter(&par.name, &type_name.into_string(), bound_type) {
                     panic!(
@@ -107,6 +113,7 @@ impl Bounds {
                 }
             }
         }
+        ret
     }
 
     pub fn type_for(env: &Env, type_id: TypeId, nullable: Nullable) -> Option<BoundType> {
@@ -136,11 +143,11 @@ impl Bounds {
             _ => Some(Into(Some('_'), None)),
         }
     }
-    fn get_to_glib_extra(bound_type: BoundType) -> String {
+    fn get_to_glib_extra(bound_type: &BoundType) -> String {
         use self::BoundType::*;
-        match bound_type {
+        match *bound_type {
             AsRef(_) => ".as_ref()".to_owned(),
-            Into(_, Some(x)) => Bounds::get_to_glib_extra(*x),
+            Into(_, Some(ref x)) => Bounds::get_to_glib_extra(x),
             _ => String::new(),
         }
     }

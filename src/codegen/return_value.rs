@@ -86,14 +86,10 @@ pub fn out_parameters_as_return(env: &Env, analysis: &analysis::functions::Info)
     for (pos, par) in analysis.outs.iter().filter(|par| !par.is_error).enumerate() {
         // The actual return value is inserted with an empty name at position 0
         if !par.name.is_empty() {
-            let pos_offset = if analysis.kind == library::FunctionKind::Method {
-                1
-            } else {
-                0
-            };
             let mangled_par_name = nameutil::mangle_keywords(par.name.as_str());
             let param_pos = analysis
                 .parameters
+                .c_parameters
                 .iter()
                 .enumerate()
                 .filter_map(|(pos, orig_par)| if orig_par.name == mangled_par_name {
@@ -103,9 +99,7 @@ pub fn out_parameters_as_return(env: &Env, analysis: &analysis::functions::Info)
                 })
                 .next()
                 .unwrap();
-            if param_pos >= pos_offset &&
-                array_lengths.contains(&((param_pos - pos_offset) as u32))
-            {
+            if array_lengths.contains(&(param_pos as u32)) {
                 skip += 1;
                 continue;
             }

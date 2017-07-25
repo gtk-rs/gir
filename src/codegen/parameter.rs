@@ -1,7 +1,7 @@
 use env::Env;
 use analysis::bounds::{Bounds, BoundType};
 use analysis::conversion_type::ConversionType;
-use analysis::parameter::Parameter;
+use analysis::function_parameters::CParameter;
 use analysis::ref_mode::RefMode;
 use analysis::rust_type::parameter_rust_type;
 use traits::*;
@@ -10,7 +10,7 @@ pub trait ToParameter {
     fn to_parameter(&self, env: &Env, bounds: &Bounds) -> String;
 }
 
-impl ToParameter for Parameter {
+impl ToParameter for CParameter {
     fn to_parameter(&self, env: &Env, bounds: &Bounds) -> String {
         let mut_str = if self.ref_mode == RefMode::ByRefMut {
             "mut "

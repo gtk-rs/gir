@@ -39,14 +39,14 @@ pub type Infos = BTreeMap<Type, String>; // Type => glib_name
 
 fn update_func(func: &mut FuncInfo, type_: Type) -> bool {
     if func.visibility != Visibility::Comment {
-        func.visibility = visibility(type_, func.parameters.len());
+        func.visibility = visibility(type_, func.parameters.c_parameters.len());
     }
     // I assume `to_string` functions never return `NULL`
     if type_ == Type::ToString {
         if let Some(par) = func.ret.parameter.as_mut() {
             *par.nullable = false;
         }
-        if func.parameters.len() != 1 {
+        if func.visibility != Visibility::Private {
             return false;
         }
     }

@@ -1,50 +1,52 @@
-use analysis::conversion_type::ConversionType;
+use analysis::function_parameters::TransformationType;
 use analysis::ref_mode::RefMode;
-use chunk;
-use library;
+use library::Transfer;
 
 pub trait TranslateToGlib {
-    fn translate_to_glib(&self, library: &library::Library) -> String;
+    fn translate_to_glib(&self) -> String;
 }
 
-impl TranslateToGlib for chunk::parameter_ffi_call_in::Parameter {
-    fn translate_to_glib(&self, library: &library::Library) -> String {
-        use analysis::conversion_type::ConversionType::*;
-        match ConversionType::of(library, self.typ) {
-            Direct => self.name.clone(),
-            Scalar => {
+impl TranslateToGlib for TransformationType {
+    fn translate_to_glib(&self) -> String {
+        use self::TransformationType::*;
+        match *self {
+            ToGlibDirect { ref name } => name.clone(),
+            ToGlibScalar { ref name, nullable } => {
                 format!(
                     "{}{}{}",
-                    self.name,
-                    if !*self.nullable { "" } else { ".into()" },
+                    name,
+                    if !*nullable { "" } else { ".into()" },
                     ".to_glib()"
                 )
             }
-            Pointer => {
-                let (left, right) = to_glib_xxx(self.transfer, self.ref_mode, self.is_into);
-                if self.instance_parameter {
+            ToGlibPointer {
+                ref name,
+                instance_parameter,
+                transfer,
+                ref_mode,
+                ref to_glib_extra,
+            } => {
+                let (left, right) = to_glib_xxx(transfer, ref_mode);
+                if instance_parameter {
                     format!("{}self{}", left, right)
                 } else {
-                    format!("{}{}{}{}", left, self.name, self.to_glib_extra, right)
+                    format!("{}{}{}{}", left, name, to_glib_extra, right)
                 }
             }
-            Borrow => "/*Not applicable conversion Borrow*/".to_owned(),
-            Unknown => format!("/*Unknown conversion*/{}", self.name),
+            ToGlibStash { ref name } => format!("{}.0", name),
+            ToGlibBorrow => "/*Not applicable conversion Borrow*/".to_owned(),
+            ToGlibUnknown { ref name } => format!("/*Unknown conversion*/{}", name),
+            _ => unreachable!("Unexpected transformation type {:?}", self),
         }
     }
 }
 
-fn to_glib_xxx(
-    transfer: library::Transfer,
-    ref_mode: RefMode,
-    is_into: bool,
-) -> (&'static str, &'static str) {
-    use library::Transfer::*;
+fn to_glib_xxx(transfer: Transfer, ref_mode: RefMode) -> (&'static str, &'static str) {
+    use self::Transfer::*;
     match transfer {
         None => {
             match ref_mode {
                 RefMode::None => ("", ".to_glib_none_mut().0"),//unreachable!(),
-                RefMode::ByRef if is_into => ("", ".0"),
                 RefMode::ByRef => ("", ".to_glib_none().0"),
                 RefMode::ByRefMut => ("", ".to_glib_none_mut().0"),
                 RefMode::ByRefImmut => ("mut_override(", ".to_glib_none().0)"),

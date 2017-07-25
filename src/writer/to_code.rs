@@ -34,8 +34,10 @@ impl ToCode for Chunk {
                 let s = format_block_one_line(&prefix, ")", &params.to_code(env), "", ", ");
                 vec![s]
             }
-            FfiCallParameter { ref par } => {
-                let s = par.translate_to_glib(&env.library);
+            FfiCallParameter {
+                ref transformation_type,
+            } => {
+                let s = transformation_type.translate_to_glib();
                 vec![s]
             }
             FfiCallOutParameter { ref par } => {
@@ -48,11 +50,12 @@ impl ToCode for Chunk {
             }
             FfiCallConversion {
                 ref ret,
-                ref array_length,
+                ref array_length_name,
                 ref call,
             } => {
                 let call_strings = call.to_code(env);
-                let (prefix, suffix) = ret.translate_from_glib_as_function(env, array_length);
+                let (prefix, suffix) =
+                    ret.translate_from_glib_as_function(env, array_length_name.as_ref());
                 let s = format_block_one_line(&prefix, &suffix, &call_strings, "", "");
                 vec![s]
             }
@@ -94,11 +97,12 @@ impl ToCode for Chunk {
             }
             FromGlibConversion {
                 ref mode,
-                ref array_length,
+                ref array_length_name,
                 ref value,
             } => {
                 let value_strings = value.to_code(env);
-                let (prefix, suffix) = mode.translate_from_glib_as_function(env, array_length);
+                let (prefix, suffix) =
+                    mode.translate_from_glib_as_function(env, array_length_name.as_ref());
                 let s = format_block_one_line(&prefix, &suffix, &value_strings, "", "");
                 vec![s]
             }
