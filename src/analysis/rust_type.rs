@@ -288,9 +288,17 @@ pub fn parameter_rust_type(
             }
         }
 
-        List(..) | SList(..) | CArray(..) => {
+        List(..) | SList(..) => {
             match direction {
                 library::ParameterDirection::In | library::ParameterDirection::Return => rust_type,
+                _ => Err(TypeError::Unimplemented(into_inner(rust_type))),
+            }
+        }
+        CArray(..) => {
+            match direction {
+                library::ParameterDirection::In |
+                library::ParameterDirection::Out |
+                library::ParameterDirection::Return => rust_type,
                 _ => Err(TypeError::Unimplemented(into_inner(rust_type))),
             }
         }
