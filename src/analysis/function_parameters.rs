@@ -138,6 +138,7 @@ pub fn analyze(
     env: &Env,
     function_parameters: &[library::Parameter],
     configured_functions: &[&config::functions::Function],
+    disable_length_detect: bool,
 ) -> Parameters {
     let mut parameters = Parameters::new(function_parameters.len());
 
@@ -170,6 +171,9 @@ pub fn analyze(
             .next();
         if array_name.is_none() {
             array_name = array_lengths.get(&(pos as u32))
+        }
+        if array_name.is_none() && !disable_length_detect {
+            array_name = detect_length(env, pos, par, function_parameters);
         }
         if let Some(array_name) = array_name {
             add_rust_parameter = false;
@@ -284,12 +288,10 @@ pub fn analyze(
 fn is_into(env: &Env, par: &library::Parameter) -> bool {
     fn is_into_inner(env: &Env, par: &library::Type) -> bool {
         match *par {
-            library::Type::Fundamental(fund) => {
-                match fund {
-                    library::Fundamental::Utf8 | library::Fundamental::Type => true,
-                    _ => false,
-                }
-            }
+            library::Type::Fundamental(fund) => match fund {
+                library::Fundamental::Utf8 | library::Fundamental::Type => true,
+                _ => false,
+            },
             library::Type::List(_) | library::Type::SList(_) | library::Type::CArray(_) => false,
             library::Type::Alias(ref alias) => is_into_inner(env, env.library.type_(alias.typ)),
             _ => true,
@@ -309,5 +311,65 @@ fn get_length_type(
         array_name: array_name.to_string(),
         array_length_name: length_name.to_string(),
         array_length_type: array_length_type,
+    }
+}
+
+fn detect_length<'a>(
+    env: &Env,
+    pos: usize,
+    par: &library::Parameter,
+    parameters: &'a [library::Parameter],
+) -> Option<&'a String> {
+    if !is_length(par) {
+        return None;
+    }
+
+    let array = parameters.get(pos - 1).and_then(
+        |p| if has_length(env, p.typ) {
+            Some(p)
+        } else {
+            None
+        },
+    );
+    array.map(|p| &p.name)
+}
+
+fn is_length(par: &library::Parameter) -> bool {
+    if par.direction != library::ParameterDirection::In {
+        return false;
+    }
+
+    let len = par.name.len();
+    if len >= 3 && &par.name[len - 3..len] == "len" {
+        return true;
+    }
+    if par.name.find("length").is_some() {
+        return true;
+    }
+
+    false
+}
+
+fn has_length(env: &Env, typ: library::TypeId) -> bool {
+    use library::Type;
+    let typ = env.library.type_(typ);
+    match *typ {
+        Type::Fundamental(fund) => {
+            use library::Fundamental::*;
+            match fund {
+                Utf8 => true,
+                Filename => true,
+                _ => false,
+            }
+        }
+        Type::CArray(..) |
+        Type::FixedArray(..) |
+        Type::Array(..) |
+        Type::PtrArray(..) |
+        Type::List(..) |
+        Type::SList(..) |
+        Type::HashTable(..) => true,
+        Type::Alias(ref alias) => has_length(env, alias.typ),
+        _ => false,
     }
 }

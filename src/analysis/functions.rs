@@ -122,6 +122,7 @@ fn analyze_function(
         .filter_map(|f| f.cfg_condition.clone())
         .next();
     let doc_hidden = configured_functions.iter().any(|f| f.doc_hidden);
+    let disable_length_detect = configured_functions.iter().any(|f| f.disable_length_detect);
 
     let ret = return_value::analyze(
         env,
@@ -133,7 +134,12 @@ fn analyze_function(
     );
     commented |= ret.commented;
 
-    let mut parameters = function_parameters::analyze(env, &func.parameters, configured_functions);
+    let mut parameters = function_parameters::analyze(
+        env,
+        &func.parameters,
+        configured_functions,
+        disable_length_detect,
+    );
     parameters.analyze_return(env, &ret.parameter);
 
     for (pos, par) in parameters.c_parameters.iter().enumerate() {
