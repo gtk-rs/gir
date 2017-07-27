@@ -147,6 +147,40 @@ fn rust_type_full(
                     format!("Vec<{}>", s)
                 })
         }
+        CArray(inner_tid) if ConversionType::of(&env.library, inner_tid) == ConversionType::Direct => {
+            if let Fundamental(fund) = *env.library.type_(inner_tid) {
+                let array_type = match fund {
+                    Int8 => Some("i8"),
+                    UInt8 => Some("u8"),
+                    Int16 => Some("i16"),
+                    UInt16 => Some("u16"),
+                    Int32 => Some("i32"),
+                    UInt32 => Some("u32"),
+                    Int64 => Some("i64"),
+                    UInt64 => Some("u64"),
+
+                    Int => Some("i32"),      //maybe dependent on target system
+                    UInt => Some("u32"),     //maybe dependent on target system
+
+                    Float => Some("f32"),
+                    Double => Some("f64"),
+                    _ => Option::None,
+                };
+
+                if let Some(s) = array_type {
+                    skip_option = true;
+                    if ref_mode.is_ref() {
+                        Ok(format!("[{}]", s))
+                    } else {
+                        Ok(format!("Vec<{}>", s))
+                    }
+                } else {
+                    Err(TypeError::Unimplemented(type_.get_name().to_owned()))
+                }
+            } else {
+                Err(TypeError::Unimplemented(type_.get_name().to_owned()))
+            }
+        }
         _ => Err(TypeError::Unimplemented(type_.get_name().to_owned())),
     };
 
