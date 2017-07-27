@@ -176,12 +176,13 @@ pub fn analyze(
             array_name = detect_length(env, pos, par, function_parameters);
         }
         if let Some(array_name) = array_name {
+            let array_name = nameutil::mangle_keywords(&array_name[..]);
             add_rust_parameter = false;
 
             let transformation = Transformation {
                 ind_c: ind_c,
                 ind_rust: None,
-                transformation_type: get_length_type(env, array_name, &par.name, par.typ),
+                transformation_type: get_length_type(env, &array_name, &par.name, par.typ),
             };
             parameters.transformations.push(transformation);
         }
