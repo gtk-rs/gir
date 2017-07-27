@@ -95,6 +95,7 @@ pub struct Function {
     pub ret: Return,
     pub doc_hidden: bool,
     pub is_windows_utf8: bool,
+    pub disable_length_detect: bool,
 }
 
 impl Parse for Function {
@@ -127,6 +128,9 @@ impl Parse for Function {
         let is_windows_utf8 = toml.lookup("is_windows_utf8")
             .and_then(|val| val.as_bool())
             .unwrap_or(false);
+        let disable_length_detect = toml.lookup("disable_length_detect")
+            .and_then(|val| val.as_bool())
+            .unwrap_or(false);
 
         Some(Function {
             ident: ident,
@@ -137,6 +141,7 @@ impl Parse for Function {
             cfg_condition: cfg_condition,
             doc_hidden: doc_hidden,
             is_windows_utf8: is_windows_utf8,
+            disable_length_detect: disable_length_detect,
         })
     }
 }

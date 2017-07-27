@@ -99,6 +99,8 @@ cfg_condition = "mycond"
     cfg_condition = "mycond"
     # prefixed function with #[doc(hidden)]
     doc_hidden = true
+    # disable length_of autodetection
+    disable_length_detect = true
         # override for parameter
         [[object.function.parameter]]
         # filter by name

@@ -138,6 +138,7 @@ pub fn analyze(
     env: &Env,
     function_parameters: &[library::Parameter],
     configured_functions: &[&config::functions::Function],
+    disable_length_detect: bool,
 ) -> Parameters {
     let mut parameters = Parameters::new(function_parameters.len());
 
@@ -171,7 +172,7 @@ pub fn analyze(
         if array_name.is_none() {
             array_name = array_lengths.get(&(pos as u32))
         }
-        if array_name.is_none() {
+        if array_name.is_none() && !disable_length_detect {
             array_name = detect_length(env, pos, par, function_parameters);
         }
         if let Some(array_name) = array_name {
@@ -338,7 +339,8 @@ fn is_length(par: &library::Parameter) -> bool {
         return false;
     }
 
-    if par.name.len() >= 3 && &par.name[0..3] == "len" {
+    let len = par.name.len();
+    if len >= 3 && &par.name[len - 3..len] == "len" {
         return true;
     }
     if par.name.find("length").is_some() {
