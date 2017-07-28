@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use std::vec::Vec;
 
 use analysis::bounds::Bounds;
-use analysis::function_parameters::{self, Parameters};
+use analysis::function_parameters::{self, Parameters, TransformationType};
 use analysis::imports::Imports;
 use analysis::out_parameters;
 use analysis::ref_mode::RefMode;
@@ -12,7 +12,7 @@ use analysis::safety_assertion_mode::SafetyAssertionMode;
 use analysis::signatures::{Signature, Signatures};
 use config;
 use env::Env;
-use library::{self, Nullable};
+use library::{self, Nullable, Type};
 use nameutil;
 use traits::*;
 use version::Version;
@@ -160,6 +160,30 @@ fn analyze_function(
         if type_error {
             commented = true;
         }
+    }
+
+    for par in &parameters.rust_parameters {
+        // Disallow fundamental arrays without length
+        match *env.library.type_(par.typ) {
+            Type::CArray(inner_tid) => {
+                use super::conversion_type::ConversionType;
+                match *env.library.type_(inner_tid) {
+                    Type::Fundamental(..) if ConversionType::of(&env.library, inner_tid) == ConversionType::Direct => {
+                        if parameters.transformations.iter().find(|t|
+                            if let TransformationType::Length { ref array_name, .. } = t.transformation_type {
+                                array_name == &par.name
+                            } else {
+                                false
+                            }
+                        ).is_none() {
+                            commented = true;
+                        }
+                    },
+                    _ => (),
+                }
+            },
+            _ => (),
+        };
     }
 
     let (outs, unsupported_outs) = out_parameters::analyze(env, func, configured_functions);
