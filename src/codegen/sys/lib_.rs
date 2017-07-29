@@ -343,7 +343,7 @@ fn generate_unions(w: &mut Write, env: &Env, items: &[&Union]) -> Result<()> {
             if lines.is_empty() {
                 try!(writeln!(
                     w,
-                    "{0}#[repr(C)]\n{0}#[derive(Copy,Clone)]\n{0}pub union {1}(c_void);\n",
+                    "{0}#[repr(C)]\n{0}pub union {1}(c_void);\n",
                     comment,
                     c_type
                 ));
@@ -631,12 +631,9 @@ fn generate_fields(env: &Env, struct_name: &str, fields: &[Field]) -> (Vec<Strin
             lines.push("\tpub priv_: gpointer,".to_owned());
         } else if let Some(ref c_type) = field.c_type {
             let name = mangle_keywords(&*field.name);
-            let mut c_type = ffi_type(env, field.typ, c_type);
+            let c_type = ffi_type(env, field.typ, c_type);
             if c_type.is_err() {
                 commented = true;
-            }
-            if is_gvalue && field.name == "data" {
-                c_type = Ok("[u64; 2]".to_owned());
             }
             lines.push(format!("\tpub {}: {},", name, c_type.into_string()));
         } else {
