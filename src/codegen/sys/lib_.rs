@@ -343,16 +343,16 @@ fn generate_unions(w: &mut Write, env: &Env, items: &[&Union]) -> Result<()> {
             if lines.is_empty() {
                 try!(writeln!(
                     w,
-                    "{comment}#[repr(C)]\n{comment}pub union {name}(c_void);\n",
-                    comment = comment,
-                    name = c_type
+                    "{0}#[repr(C)]\n{0}#[derive(Copy,Clone)]\n{0}pub union {1}(c_void);\n",
+                    comment,
+                    c_type
                 ));
             } else {
                 try!(writeln!(
                     w,
-                    "{comment}#[repr(C)]\n{comment}pub union {name} {{",
-                    comment = comment,
-                    name = c_type
+                    "{0}#[repr(C)]\n{0}#[derive(Copy,Clone)]\n{0}pub union {1} {{",
+                    comment,
+                    c_type
                 ));
 
                 for line in lines {
@@ -498,7 +498,7 @@ fn generate_records(w: &mut Write, env: &Env, records: &[&Record]) -> Result<()>
         if lines.is_empty() {
             try!(writeln!(
                 w,
-                "{}#[repr(C)]\n{0}pub struct {}(c_void);\n",
+                "{0}#[repr(C)]\n{0}#[derive(Copy,Clone)]\n{0}pub struct {1}(u8);\n",
                 comment,
                 record.c_type
             ));

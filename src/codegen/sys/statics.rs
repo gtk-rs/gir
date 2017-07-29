@@ -47,7 +47,7 @@ pub fn only_for_glib(w: &mut Write) -> Result<()> {
         "pub type gpointer = *mut c_void;",
         "",
         "#[repr(C)]",
-        "#[derive(Debug)]",
+        "#[derive(Copy,Clone,Debug)]",
         "pub struct Volatile<T>(T);",
         "",
     ];

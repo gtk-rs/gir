@@ -287,7 +287,6 @@ pub struct Record {
     pub deprecated_version: Option<Version>,
     pub doc: Option<String>,
     pub doc_deprecated: Option<String>,
-    pub derive_copy: bool,
 }
 
 #[derive(Default, Debug)]
@@ -576,7 +575,6 @@ impl Type {
             deprecated_version: r.deprecated_version,
             doc: r.doc,
             doc_deprecated: r.doc_deprecated,
-            derive_copy: r.derive_copy,
         });
         library.add_type(ns_id, &format!("#{:?}", field_tids), typ)
     }

@@ -333,7 +333,7 @@ impl Library {
         ns_id: u16,
         attrs: &Attributes,
     ) -> Result<()> {
-        if let Some(typ) = try!(self.read_record(parser, ns_id, attrs, None, None, false)) {
+        if let Some(typ) = try!(self.read_record(parser, ns_id, attrs, None, None)) {
             let name = typ.get_name().clone();
             self.add_type(ns_id, &name, typ);
         }
@@ -347,7 +347,6 @@ impl Library {
         attrs: &Attributes,
         parent_name_prefix: Option<&str>,
         parent_ctype_prefix: Option<&str>,
-        derive_copy: bool,
     ) -> Result<Option<Type>> {
         let mut record_name = try!(
             attrs
@@ -491,7 +490,6 @@ impl Library {
             deprecated_version: deprecated_version,
             doc: doc,
             doc_deprecated: doc_deprecated,
-            derive_copy: derive_copy,
         });
 
         Ok(Some(typ))
@@ -549,9 +547,15 @@ impl Library {
                         let f = try!(self.read_field(parser, ns_id, &attributes));
                         fields.push(f);
                     }
-                    kind @ "constructor" | kind @ "function" | kind @ "method" => try!(
-                        self.read_function_to_vec(parser, ns_id, kind, &attributes, &mut fns,)
-                    ),
+                    kind @ "constructor" | kind @ "function" | kind @ "method" => {
+                        try!(self.read_function_to_vec(
+                            parser,
+                            ns_id,
+                            kind,
+                            &attributes,
+                            &mut fns,
+                        ))
+                    }
                     "record" => {
                         let mut r = match try!(self.read_record(
                             parser,
@@ -559,7 +563,6 @@ impl Library {
                             attrs,
                             parent_name_prefix,
                             parent_ctype_prefix,
-                            true
                         )) {
                             Some(Type::Record(r)) => r,
                             _ => continue,
@@ -580,7 +583,7 @@ impl Library {
                                         s.push('_');
                                         s
                                     })
-                                    .unwrap_or_else(String::new),
+                                    .unwrap_or("".into()),
                                 union_name,
                                 field_name
                             ),
@@ -592,7 +595,7 @@ impl Library {
                                         s.push('_');
                                         s
                                     })
-                                    .unwrap_or_else(String::new),
+                                    .unwrap_or("".into()),
                                 c_type,
                                 field_name
                             ),
@@ -602,13 +605,9 @@ impl Library {
                         let r_doc = r.doc.clone();
                         let ctype = r.c_type.clone();
 
-                        let type_id = {
-                            Type::record(self, r, ns_id)
-                        };
-
                         fields.push(Field {
                             name: field_name,
-                            typ: type_id,
+                            typ: Type::record(self, r, ns_id),
                             doc: r_doc,
                             c_type: Some(ctype),
                             ..Field::default()
