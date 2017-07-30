@@ -17,7 +17,7 @@ use analysis::ref_mode;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum GStatus {
-    Manual, //already generated
+    Manual, // already generated
     Generate,
     Comment,
     Ignore,
@@ -49,7 +49,7 @@ impl FromStr for GStatus {
             "generate" => Ok(GStatus::Generate),
             "comment" => Ok(GStatus::Comment),
             "ignore" => Ok(GStatus::Ignore),
-            _ => Err("Wrong object status".into()),
+            e => Err(format!("Wrong object status: \"{}\"", e)),
         }
     }
 }
@@ -124,6 +124,11 @@ fn parse_object(toml_object: &Value, concurrency: library::Concurrency) -> GObje
         .as_str()
         .unwrap()
         .into();
+    // Also checks for ChildProperties
+    toml_object.check_unwanted(&["name", "status", "function", "signal", "member", "property",
+                                 "module_name", "version", "concurrency", "ref_mode", "child_prop",
+                                 "child_name", "child_type"],
+                               &format!("object {}", name));
 
     let status = match toml_object.lookup("status") {
         Some(value) => {
