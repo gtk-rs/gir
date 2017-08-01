@@ -180,7 +180,7 @@ For global functions, the members can be configured by configuring the `Gtk.*` o
 [[object]]
 name = "Gtk.*"
 status = "generate"
-    [[object.member]]
+    [[object.function]]
     name = "stock_list_ids"
     # allows to ignore global functions
     ignore = true
