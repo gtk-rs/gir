@@ -54,6 +54,15 @@ pub fn generate(w: &mut Write, env: &Env, analysis: &analysis::record::Info) -> 
         try!(writeln!(w, "}}"));
     }
 
+    if analysis.functions.iter().any(|f| !f.visibility.hidden() && f.name == "new" && f.parameters.rust_parameters.is_empty()) {
+        try!(writeln!(w, ""));
+        try!(writeln!(w, "impl Default for {} {{", analysis.name));
+        try!(writeln!(w, "    fn default() -> Self {{"));
+        try!(writeln!(w, "        Self::new()"));
+        try!(writeln!(w, "    }}"));
+        try!(writeln!(w, "}}"));
+    }
+
     try!(trait_impls::generate(
         w,
         &analysis.name,

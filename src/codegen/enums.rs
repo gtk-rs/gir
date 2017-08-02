@@ -187,6 +187,7 @@ impl ToGlib for {name} {{
     try!(writeln!(
         w,
         "#[doc(hidden)]
+#[cfg_attr(feature = \"cargo-clippy\", allow(unreadable_literal))]
 impl FromGlib<ffi::{ffi_name}> for {name} {{
     fn from_glib(value: ffi::{ffi_name}) -> Self {{
         {assert}match value as i32 {{",
@@ -221,10 +222,17 @@ impl FromGlib<ffi::{ffi_name}> for {name} {{
         let get_quark = get_quark.replace("-", "_");
         let has_failed_member = members.iter().any(|m| m.name == "Failed");
 
+        let clippy = if has_failed_member {
+            "#[cfg_attr(feature = \"cargo-clippy\", allow(match_same_arms))]\n\t\t"
+        } else {
+            ""
+        };
+
         try!(version_condition(w, env, enum_.version, false, 0));
         try!(writeln!(
             w,
-            "impl ErrorDomain for {name} {{
+            "#[cfg_attr(feature = \"cargo-clippy\", allow(unreadable_literal))]
+impl ErrorDomain for {name} {{
     fn domain() -> glib_ffi::GQuark {{
         {assert}unsafe {{ ffi::{get_quark}() }}
     }}
@@ -234,10 +242,11 @@ impl FromGlib<ffi::{ffi_name}> for {name} {{
     }}
 
     fn from(code: i32) -> Option<Self> {{
-        {assert}match code {{",
+        {assert}{clippy}match code {{",
             name = enum_.name,
             get_quark = get_quark,
-            assert = assert
+            assert = assert,
+            clippy = clippy,
         ));
 
         for member in &members {

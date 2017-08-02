@@ -99,6 +99,7 @@ fn generate_flags(
         let member_config = config.members.matched(&member.name);
         let version = member_config.iter().filter_map(|m| m.version).next();
         try!(version_condition(w, env, version, false, 2));
+        try!(writeln!(w, "\t\t#[cfg_attr(feature = \"cargo-clippy\", allow(unreadable_literal))]"));
         try!(writeln!(w, "\t\tconst {} = {};", name, val as u32));
         if let Some(cfg) =
             version_condition_string(env, cmp::max(flags.version, version), false, 0)
