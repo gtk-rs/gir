@@ -61,6 +61,11 @@ pub fn generate(
         indent,
     ));
     try!(doc_hidden(w, analysis.doc_hidden, comment_prefix, indent));
+
+    if !commented && analysis.parameters.rust_parameters.len() > 7 {
+        try!(writeln!(w, "{}#[cfg_attr(feature = \"cargo-clippy\", allow(too_many_arguments))]", tabs(indent)));
+    }
+
     try!(writeln!(
         w,
         "{}{}{}{}{}",
