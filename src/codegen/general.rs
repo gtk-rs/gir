@@ -1,6 +1,7 @@
 use std::fmt::Display;
 use std::io::{Result, Write};
 
+use analysis;
 use analysis::general::StatusedTypeId;
 use analysis::imports::Imports;
 use analysis::namespaces;
@@ -247,5 +248,18 @@ pub fn write_vec<T: Display>(w: &mut Write, v: &[T]) -> Result<()> {
     for s in v {
         try!(writeln!(w, "{}", s));
     }
+    Ok(())
+}
+
+pub fn declare_default_from_new(w: &mut Write, name: &str, functions: &[analysis::functions::Info]) -> Result<()> {
+    if functions.iter().any(|f| !f.visibility.hidden() && f.name == "new" && f.parameters.rust_parameters.is_empty()) {
+        try!(writeln!(w, ""));
+        try!(writeln!(w, "impl Default for {} {{", name));
+        try!(writeln!(w, "    fn default() -> Self {{"));
+        try!(writeln!(w, "        Self::new()"));
+        try!(writeln!(w, "    }}"));
+        try!(writeln!(w, "}}"));
+    }
+
     Ok(())
 }
