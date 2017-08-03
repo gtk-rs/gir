@@ -21,6 +21,16 @@ pub fn generate(
     indent: usize,
     concurrency: library::Concurrency,
 ) -> Result<()> {
+    // TODO: Add support for action signals.
+    // These work the other way around than normal signals: We are supposed to emit them from
+    // outside the object instead of connecting to it by using g_signal_emit*(). It basically is
+    // like a dynamic function call.
+    // The object itself is connected to the signal and waiting for us to emit it, to do something.
+    if analysis.is_action {
+        warn!("Ignoring action signal {}::{} - action signals are unsupported currently", analysis.object_name, analysis.signal_name);
+        return Ok(());
+    }
+
     let commented = analysis.trampoline_name.is_err();
     let comment_prefix = if commented { "//" } else { "" };
     let pub_prefix = if in_trait { "" } else { "pub " };
