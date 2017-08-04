@@ -1,4 +1,5 @@
 use config;
+use config::gobjects::GObject;
 use env::Env;
 use library;
 use nameutil::signal_to_snake;
@@ -19,6 +20,7 @@ pub struct Trampoline {
     pub bounds: Bounds,
     pub version: Option<Version>,
     pub inhibit: bool,
+    pub concurrency: library::Concurrency,
 }
 
 pub type Trampolines = Vec<Trampoline>;
@@ -30,6 +32,7 @@ pub fn analyze(
     in_trait: bool,
     configured_signals: &[&config::signals::Signal],
     trampolines: &mut Trampolines,
+    obj: &GObject,
     used_types: &mut Vec<String>,
     version: Option<Version>,
 ) -> Result<String, Vec<String>> {
@@ -100,6 +103,12 @@ pub fn analyze(
         }
     }
 
+    let concurrency = configured_signals
+            .iter()
+            .map(|f| f.concurrency)
+            .next()
+            .unwrap_or(obj.concurrency);
+
     let ret = library::Parameter {
         nullable: ret_nullable,
         ..signal.ret.clone()
@@ -112,6 +121,7 @@ pub fn analyze(
         bounds: bounds,
         version: version,
         inhibit: inhibit,
+        concurrency: concurrency,
     };
     trampolines.push(trampoline);
     Ok(name)

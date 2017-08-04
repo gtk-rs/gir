@@ -65,7 +65,6 @@ pub fn generate(w: &mut Write, env: &Env, analysis: &analysis::object::Info) -> 
                     false,
                     false,
                     1,
-                    analysis.concurrency,
                 ));
             }
         }
@@ -129,7 +128,6 @@ pub fn generate(w: &mut Write, env: &Env, analysis: &analysis::object::Info) -> 
                 true,
                 true,
                 1,
-                analysis.concurrency,
             ));
         }
         try!(writeln!(w, "}}"));
@@ -174,7 +172,6 @@ pub fn generate(w: &mut Write, env: &Env, analysis: &analysis::object::Info) -> 
                 true,
                 false,
                 1,
-                analysis.concurrency,
             ));
         }
         try!(writeln!(w, "}}"));
@@ -188,7 +185,6 @@ pub fn generate(w: &mut Write, env: &Env, analysis: &analysis::object::Info) -> 
                 trampoline,
                 generate_trait(analysis),
                 &analysis.name,
-                analysis.concurrency,
             ));
         }
     }
