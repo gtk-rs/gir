@@ -21,7 +21,6 @@ pub fn generate(
     analysis: &Trampoline,
     in_trait: bool,
     object_name: &str,
-    concurrency: library::Concurrency,
 ) -> Result<()> {
     try!(writeln!(w, ""));
     let (bounds, end) = if in_trait {
@@ -31,7 +30,7 @@ pub fn generate(
     };
 
     let params_str = trampoline_parameters(env, analysis);
-    let func_str = func_string(env, analysis, None, concurrency);
+    let func_str = func_string(env, analysis, None);
     let ret_str = trampoline_returns(env, analysis);
 
     try!(version_condition(w, env, analysis.version, false, 0));
@@ -66,12 +65,11 @@ pub fn func_string(
     env: &Env,
     analysis: &Trampoline,
     bound_replace: Option<(char, &str)>,
-    concurrency: library::Concurrency,
 ) -> String {
     let param_str = func_parameters(env, analysis, bound_replace);
     let return_str = func_returns(env, analysis);
 
-    let concurrency_str = match concurrency {
+    let concurrency_str = match analysis.concurrency {
         // If an object can be Send to other threads, this means that
         // our callback will be called from whatever thread the object
         // is sent to. But it will only be ever owned by a single thread

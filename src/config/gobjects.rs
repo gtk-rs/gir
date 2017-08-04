@@ -11,7 +11,7 @@ use super::child_properties::ChildProperties;
 use super::functions::Functions;
 use super::members::Members;
 use super::properties::Properties;
-use super::signals::Signals;
+use super::signals::{Signals, Signal};
 use version::Version;
 use analysis::ref_mode;
 
@@ -133,7 +133,18 @@ fn parse_object(toml_object: &Value, concurrency: library::Concurrency) -> GObje
     };
 
     let functions = Functions::parse(toml_object.lookup("function"), &name);
-    let signals = Signals::parse(toml_object.lookup("signal"), &name);
+    let signals = {
+        let mut v = Vec::new();
+        if let Some(configs) = toml_object.lookup("signal").and_then(|val| val.as_array()) {
+            for config in configs {
+                if let Some(item) = Signal::parse(config, &name, concurrency) {
+                    v.push(item);
+                }
+            }
+        }
+
+        v
+    };
     let members = Members::parse(toml_object.lookup("member"), &name);
     let properties = Properties::parse(toml_object.lookup("property"), &name);
     let module_name = toml_object

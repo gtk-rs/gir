@@ -45,6 +45,7 @@ pub fn analyze(
             in_trait,
             &configured_signals,
             trampolines,
+            obj,
             imports,
         );
         if let Some(info) = info {
@@ -62,6 +63,7 @@ fn analyze_signal(
     in_trait: bool,
     configured_signals: &[&config::signals::Signal],
     trampolines: &mut trampolines::Trampolines,
+    obj: &GObject,
     imports: &mut Imports,
 ) -> Option<Info> {
     let mut used_types: Vec<String> = Vec::with_capacity(4);
@@ -81,6 +83,7 @@ fn analyze_signal(
         in_trait,
         configured_signals,
         trampolines,
+        obj,
         &mut used_types,
         version,
     );

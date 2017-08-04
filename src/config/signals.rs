@@ -1,6 +1,7 @@
 use std::str::FromStr;
 use toml::Value;
 
+use library;
 use library::Nullable;
 use super::error::TomlHelper;
 use super::functions::Return;
@@ -93,11 +94,12 @@ pub struct Signal {
     pub version: Option<Version>,
     pub parameters: Parameters,
     pub ret: Return,
+    pub concurrency: library::Concurrency,
     pub doc_hidden: bool,
 }
 
-impl Parse for Signal {
-    fn parse(toml: &Value, object_name: &str) -> Option<Signal> {
+impl Signal {
+    pub fn parse(toml: &Value, object_name: &str, concurrency: library::Concurrency) -> Option<Signal> {
         let ident = match Ident::parse(toml, object_name, "signal") {
             Some(ident) => ident,
             None => {
@@ -120,6 +122,13 @@ impl Parse for Signal {
             .and_then(|s| s.parse().ok());
         let parameters = Parameters::parse(toml.lookup("parameter"), object_name);
         let ret = Return::parse(toml.lookup("return"));
+
+        let concurrency = toml
+            .lookup("concurrency")
+            .and_then(|v| v.as_str())
+            .and_then(|v| v.parse().ok())
+            .unwrap_or(concurrency);
+
         let doc_hidden = toml.lookup("doc_hidden")
             .and_then(|val| val.as_bool())
             .unwrap_or(false);
@@ -131,6 +140,7 @@ impl Parse for Signal {
             version: version,
             parameters: parameters,
             ret: ret,
+            concurrency: concurrency,
             doc_hidden: doc_hidden,
         })
     }
@@ -155,7 +165,6 @@ pub type Signals = Vec<Signal>;
 #[cfg(test)]
 mod tests {
     use super::super::ident::Ident;
-    use super::super::parsable::Parse;
     use super::*;
     use toml;
 
@@ -172,7 +181,7 @@ mod tests {
 name = "signal1"
 "#,
         );
-        let f = Signal::parse(&toml, "a").unwrap();
+        let f = Signal::parse(&toml, "a", Default::default()).unwrap();
         assert_eq!(f.ident, Ident::Name("signal1".into()));
         assert_eq!(f.ignore, false);
     }
@@ -185,7 +194,7 @@ name = "signal1"
 ignore = true
 "#,
         );
-        let f = Signal::parse(&toml, "a").unwrap();
+        let f = Signal::parse(&toml, "a", Default::default()).unwrap();
         assert_eq!(f.ignore, true);
     }
 }
