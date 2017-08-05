@@ -251,9 +251,17 @@ pub fn write_vec<T: Display>(w: &mut Write, v: &[T]) -> Result<()> {
     Ok(())
 }
 
-pub fn declare_default_from_new(w: &mut Write, name: &str, functions: &[analysis::functions::Info]) -> Result<()> {
-    if functions.iter().any(|f| !f.visibility.hidden() && f.name == "new" && f.parameters.rust_parameters.is_empty()) {
+pub fn declare_default_from_new(
+    w: &mut Write,
+    env: &Env,
+    name: &str,
+    functions: &[analysis::functions::Info],
+) -> Result<()> {
+    if let Some(func) = functions.iter().find(|f| {
+        !f.visibility.hidden() && f.name == "new" && f.parameters.rust_parameters.is_empty()
+    }) {
         try!(writeln!(w, ""));
+        try!(version_condition(w, env, func.version, false, 0));
         try!(writeln!(w, "impl Default for {} {{", name));
         try!(writeln!(w, "    fn default() -> Self {{"));
         try!(writeln!(w, "        Self::new()"));

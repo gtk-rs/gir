@@ -54,7 +54,12 @@ pub fn generate(w: &mut Write, env: &Env, analysis: &analysis::record::Info) -> 
         try!(writeln!(w, "}}"));
     }
 
-    try!(general::declare_default_from_new(w, &analysis.name, &analysis.functions));
+    try!(general::declare_default_from_new(
+        w,
+        env,
+        &analysis.name,
+        &analysis.functions
+    ));
 
     try!(trait_impls::generate(
         w,
