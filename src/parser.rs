@@ -54,9 +54,8 @@ impl Library {
                             ..
                         },
                         ..
-                    })
-                        if local_name == "repository" &&
-                               namespace == "http://www.gtk.org/introspection/core/1.0" => {
+                    }) if local_name == "repository" &&
+                          namespace == "http://www.gtk.org/introspection/core/1.0" => {
                         match self.read_repository(dir, &mut parser) {
                             // To prevent repeat message in "caused by:" for each file
                             e @ Err(Error(ErrorKind::Msg(_), _)) => return e,
