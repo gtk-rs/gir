@@ -84,7 +84,7 @@ pub fn generate(w: &mut Write, env: &Env, analysis: &analysis::object::Info) -> 
         &analysis.name,
         &analysis.functions,
         &analysis.specials,
-        generate_trait(analysis),
+        if generate_trait(analysis) { Some(&analysis.trait_name) } else { None },
     ));
 
     if analysis.concurrency != library::Concurrency::None {
@@ -107,7 +107,7 @@ pub fn generate(w: &mut Write, env: &Env, analysis: &analysis::object::Info) -> 
 
     if generate_trait(analysis) {
         try!(writeln!(w, ""));
-        try!(write!(w, "pub trait {}Ext {{", analysis.name));
+        try!(write!(w, "pub trait {} {{", analysis.trait_name));
         for func_analysis in &analysis.methods() {
             try!(function::generate(w, env, func_analysis, true, true, 1));
         }
@@ -147,9 +147,10 @@ pub fn generate(w: &mut Write, env: &Env, analysis: &analysis::object::Info) -> 
         }
         try!(write!(
             w,
-            "impl<O: IsA<{}>{}> {0}Ext for O {{",
+            "impl<O: IsA<{}>{}> {} for O {{",
             analysis.name,
-            extra_isa.join("")
+            extra_isa.join(""),
+            analysis.trait_name,
         ));
 
         for func_analysis in &analysis.methods() {
@@ -227,13 +228,13 @@ pub fn generate_reexports(
     if generate_trait(analysis) {
         contents.extend_from_slice(&cfgs);
         contents.push(format!(
-            "pub use self::{}::{}Ext;",
+            "pub use self::{}::{};",
             module_name,
-            analysis.name
+            analysis.trait_name
         ));
         for cfg in &cfgs {
             traits.push(format!("\t{}", cfg));
         }
-        traits.push(format!("\tpub use super::{}Ext;", analysis.name));
+        traits.push(format!("\tpub use super::{};", analysis.trait_name));
     }
 }

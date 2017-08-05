@@ -68,6 +68,7 @@ pub struct GObject {
     pub cfg_condition: Option<String>,
     pub type_id: Option<TypeId>,
     pub generate_trait: bool,
+    pub trait_name: Option<String>,
     pub child_properties: Option<ChildProperties>,
     pub concurrency: library::Concurrency,
     pub ref_mode: Option<ref_mode::RefMode>,
@@ -87,6 +88,7 @@ impl Default for GObject {
             cfg_condition: None,
             type_id: None,
             generate_trait: true,
+            trait_name: None,
             child_properties: None,
             concurrency: Default::default(),
             ref_mode: None,
@@ -168,6 +170,10 @@ fn parse_object(toml_object: &Value, concurrency: library::Concurrency) -> GObje
         .lookup("trait")
         .and_then(|v| v.as_bool())
         .unwrap_or(true);
+    let trait_name = toml_object
+        .lookup("trait_name")
+        .and_then(|v| v.as_str())
+        .map(|s| s.to_owned());
     let concurrency = toml_object
         .lookup("concurrency")
         .and_then(|v| v.as_str())
@@ -197,6 +203,7 @@ fn parse_object(toml_object: &Value, concurrency: library::Concurrency) -> GObje
         cfg_condition: cfg_condition,
         type_id: None,
         generate_trait: generate_trait,
+        trait_name: trait_name,
         child_properties: child_properties,
         concurrency: concurrency,
         ref_mode: ref_mode,
