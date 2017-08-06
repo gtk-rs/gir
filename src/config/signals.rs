@@ -114,7 +114,7 @@ impl Signal {
             }
         };
         toml.check_unwanted(&["ignore", "inhibit", "version", "parameter", "return", "doc_hidden",
-                              "name", "pattern"],
+                              "name", "pattern", "concurrency"],
                             &format!("signal {}", object_name));
 
         let ignore = toml.lookup("ignore")

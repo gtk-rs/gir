@@ -66,7 +66,7 @@ pub fn generate(w: &mut Write, env: &Env, analysis: &analysis::record::Info) -> 
         &analysis.name,
         &analysis.functions,
         &analysis.specials,
-        false,
+        None,
     ));
 
     if analysis.concurrency != library::Concurrency::None {

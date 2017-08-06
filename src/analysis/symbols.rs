@@ -25,9 +25,8 @@ impl Symbol {
         ret
     }
 
-    pub fn make_trait_method(&mut self) {
-        let name = self.owner_name.take();
-        self.owner_name = name.map(|s| format!("{}Ext", s));
+    pub fn make_trait_method(&mut self, trait_name: &str) {
+        self.owner_name = Some(trait_name.into());
     }
 }
 

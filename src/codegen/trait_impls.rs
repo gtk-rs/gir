@@ -7,7 +7,7 @@ pub fn generate(
     type_name: &str,
     functions: &[Info],
     specials: &Infos,
-    in_trait: bool,
+    trait_name: Option<&str>,
 ) -> Result<()> {
     for (type_, name) in specials.iter() {
         match *type_ {
@@ -17,25 +17,25 @@ pub fn generate(
                         w,
                         type_name,
                         lookup(functions, name),
-                        in_trait,
+                        trait_name,
                     ));
                 }
                 try!(generate_ord(
                     w,
                     type_name,
                     lookup(functions, name),
-                    in_trait,
+                    trait_name,
                 ));
             }
             Type::Equal => {
-                try!(generate_eq(w, type_name, lookup(functions, name), in_trait));
+                try!(generate_eq(w, type_name, lookup(functions, name), trait_name));
             }
             Type::ToString => {
                 try!(generate_display(
                     w,
                     type_name,
                     lookup(functions, name),
-                    in_trait,
+                    trait_name,
                 ))
             }
             _ => {}
@@ -48,8 +48,9 @@ fn lookup<'a>(functions: &'a [Info], name: &str) -> &'a Info {
     functions.iter().find(|f| f.glib_name == name).unwrap()
 }
 
-fn generate_call(type_name: &str, func_name: &str, args: &[&str], in_trait: bool) -> String {
+fn generate_call(func_name: &str, args: &[&str], trait_name: Option<&str>) -> String {
     let mut args_string = String::new();
+    let in_trait = trait_name.is_some();
 
     if in_trait {
         args_string.push_str("self");
@@ -62,10 +63,10 @@ fn generate_call(type_name: &str, func_name: &str, args: &[&str], in_trait: bool
         args_string.push_str(&args.join(", "));
     }
 
-    if in_trait {
+    if let Some(trait_name) = trait_name {
         format!(
-            "{type_name}Ext::{func_name}({args})",
-            type_name = type_name,
+            "{trait_name}::{func_name}({args})",
+            trait_name = trait_name,
             func_name = func_name,
             args = args_string
         )
@@ -78,10 +79,10 @@ fn generate_call(type_name: &str, func_name: &str, args: &[&str], in_trait: bool
     }
 }
 
-fn generate_display(w: &mut Write, type_name: &str, func: &Info, in_trait: bool) -> Result<()> {
+fn generate_display(w: &mut Write, type_name: &str, func: &Info, trait_name: Option<&str>) -> Result<()> {
     use analysis::out_parameters::Mode;
 
-    let call = generate_call(type_name, &func.name, &[], in_trait);
+    let call = generate_call(&func.name, &[], trait_name);
     let body = if let Mode::Throws(_) = func.outs.mode {
         format!(
             "if let Ok(val) = {} {{
@@ -109,8 +110,8 @@ impl fmt::Display for {type_name} {{
     )
 }
 
-fn generate_eq(w: &mut Write, type_name: &str, func: &Info, in_trait: bool) -> Result<()> {
-    let call = generate_call(type_name, &func.name, &["other"], in_trait);
+fn generate_eq(w: &mut Write, type_name: &str, func: &Info, trait_name: Option<&str>) -> Result<()> {
+    let call = generate_call(&func.name, &["other"], trait_name);
 
     writeln!(
         w,
@@ -128,8 +129,8 @@ impl Eq for {type_name} {{}}",
     )
 }
 
-fn generate_eq_compare(w: &mut Write, type_name: &str, func: &Info, in_trait: bool) -> Result<()> {
-    let call = generate_call(type_name, &func.name, &["other"], in_trait);
+fn generate_eq_compare(w: &mut Write, type_name: &str, func: &Info, trait_name: Option<&str>) -> Result<()> {
+    let call = generate_call(&func.name, &["other"], trait_name);
 
     writeln!(
         w,
@@ -147,8 +148,8 @@ impl Eq for {type_name} {{}}",
     )
 }
 
-fn generate_ord(w: &mut Write, type_name: &str, func: &Info, in_trait: bool) -> Result<()> {
-    let call = generate_call(type_name, &func.name, &["other"], in_trait);
+fn generate_ord(w: &mut Write, type_name: &str, func: &Info, trait_name: Option<&str>) -> Result<()> {
+    let call = generate_call(&func.name, &["other"], trait_name);
 
     writeln!(
         w,

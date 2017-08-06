@@ -18,6 +18,7 @@ pub struct Info {
     pub get_type: String,
     pub supertypes: Vec<general::StatusedTypeId>,
     pub generate_trait: bool,
+    pub trait_name: String,
     pub has_constructors: bool,
     pub has_methods: bool,
     pub has_functions: bool,
@@ -87,6 +88,7 @@ pub fn class(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<Info>
     let supertypes = supertypes::analyze(env, class_tid, &mut imports);
 
     let mut generate_trait = obj.generate_trait;
+    let trait_name = obj.trait_name.as_ref().map(|s| s.clone()).unwrap_or(format!("{}Ext", name));
 
     // Sanity check the user's configuration. It's unlikely that not generating
     // a trait is wanted if there are subtypes in this very crate
@@ -189,7 +191,7 @@ pub fn class(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<Info>
         let mut symbols = env.symbols.borrow_mut();
         for func in base.methods() {
             if let Some(symbol) = symbols.by_c_name_mut(&func.glib_name) {
-                symbol.make_trait_method();
+                symbol.make_trait_method(&trait_name);
             }
         }
     }
@@ -203,6 +205,7 @@ pub fn class(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<Info>
         get_type: klass.glib_get_type.clone(),
         supertypes: supertypes,
         generate_trait: generate_trait,
+        trait_name: trait_name,
         has_constructors: has_constructors,
         has_methods: has_methods,
         has_functions: has_functions,
@@ -244,6 +247,8 @@ pub fn interface(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<I
     imports.add("std::ptr", None);
 
     let supertypes = supertypes::analyze(env, iface_tid, &mut imports);
+
+    let trait_name = obj.trait_name.as_ref().map(|s| s.clone()).unwrap_or(format!("{}Ext", name));
 
     let mut trampolines = trampolines::Trampolines::with_capacity(iface.signals.len());
     let mut signatures = Signatures::with_capacity(iface.functions.len());
@@ -316,6 +321,7 @@ pub fn interface(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<I
         get_type: iface.glib_get_type.clone(),
         supertypes: supertypes,
         generate_trait: true,
+        trait_name: trait_name,
         has_methods: has_methods,
         has_functions: has_functions,
         signals: signals,
