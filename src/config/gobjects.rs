@@ -129,7 +129,7 @@ fn parse_object(toml_object: &Value, concurrency: library::Concurrency) -> GObje
     // Also checks for ChildProperties
     toml_object.check_unwanted(&["name", "status", "function", "signal", "member", "property",
                                  "module_name", "version", "concurrency", "ref_mode", "child_prop",
-                                 "child_name", "child_type"],
+                                 "child_name", "child_type", "trait", "trait_name", "cfg_condition"],
                                &format!("object {}", name));
 
     let status = match toml_object.lookup("status") {
