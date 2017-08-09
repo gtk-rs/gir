@@ -11,6 +11,7 @@ pub struct Member {
     // some enum variants have multiple names
     pub alias: bool,
     pub version: Option<Version>,
+    pub ignore: bool,
 }
 
 impl Parse for Member {
@@ -26,7 +27,7 @@ impl Parse for Member {
             }
         };
 
-        toml.check_unwanted(&["alias", "version", "name", "pattern"],
+        toml.check_unwanted(&["alias", "version", "name", "pattern", "ignore"],
                             &format!("member {}", object_name));
 
         let alias = toml.lookup("alias")
@@ -36,10 +37,15 @@ impl Parse for Member {
             .and_then(|v| v.as_str())
             .and_then(|s| s.parse().ok());
 
+        let ignore = toml.lookup("ignore")
+            .and_then(|val| val.as_bool())
+            .unwrap_or(false);
+
         Some(Member {
             ident: ident,
             alias: alias,
             version: version,
+            ignore: ignore,
         })
     }
 }
