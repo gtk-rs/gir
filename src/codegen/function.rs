@@ -7,7 +7,9 @@ use analysis::namespaces;
 use chunk::{ffi_function_todo, Chunk};
 use env::Env;
 use super::function_body_chunk;
-use super::general::{cfg_condition, doc_hidden, not_version_condition, version_condition};
+use super::general::{
+    cfg_condition, doc_hidden, not_version_condition, target_os, version_condition,
+};
 use super::parameter::ToParameter;
 use super::return_value::{out_parameters_as_return, ToReturnValue};
 use writer::primitives::tabs;
@@ -46,6 +48,7 @@ pub fn generate(
     let suffix = if only_declaration { ";" } else { " {" };
 
     try!(writeln!(w, ""));
+    try!(target_os(w, &analysis.target_os, commented, indent));
     try!(cfg_condition(w, &analysis.cfg_condition, commented, indent));
     try!(version_condition(
         w,

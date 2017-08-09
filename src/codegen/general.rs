@@ -231,6 +231,22 @@ pub fn cfg_condition_string(
     }
 }
 
+pub fn target_os(
+    w: &mut Write,
+    target_os: &Option<String>,
+    commented: bool,
+    indent: usize,
+) -> Result<()> {
+    match target_os.as_ref() {
+        Some(v) => {
+            let comment = if commented { "//" } else { "" };
+            try!(writeln!(w, "{}{}#[cfg(target_os = \"{}\")]", tabs(indent), comment, v));
+            Ok(())
+        }
+        None => Ok(()),
+    }
+}
+
 pub fn doc_hidden(
     w: &mut Write,
     doc_hidden: bool,
