@@ -68,7 +68,7 @@ pub fn analyze<F: Borrow<library::Function>>(
         if configured_functions.iter().any(|f| f.ignore) {
             continue;
         }
-        if env.is_totally_deprecated(func.deprecated_version) {
+        if env.is_totally_deprecated(func.deprecated_version) || !func.introspectable {
             continue;
         }
         let name = nameutil::mangle_keywords(&*func.name).into_owned();

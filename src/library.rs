@@ -252,6 +252,7 @@ pub struct Member {
 pub struct Enumeration {
     pub name: String,
     pub c_type: String,
+    pub introspectable: bool,
     pub members: Vec<Member>,
     pub functions: Vec<Function>,
     pub version: Option<Version>,
@@ -266,6 +267,7 @@ pub struct Enumeration {
 pub struct Bitfield {
     pub name: String,
     pub c_type: String,
+    pub introspectable: bool,
     pub members: Vec<Member>,
     pub functions: Vec<Function>,
     pub version: Option<Version>,
@@ -280,6 +282,7 @@ pub struct Record {
     pub name: String,
     pub c_type: String,
     pub glib_get_type: Option<String>,
+    pub introspectable: bool,
     pub fields: Vec<Field>,
     pub functions: Vec<Function>,
     pub version: Option<Version>,
@@ -304,6 +307,7 @@ pub struct Union {
     pub name: String,
     pub c_type: Option<String>,
     pub glib_get_type: Option<String>,
+    pub introspectable: bool,
     pub fields: Vec<Field>,
     pub functions: Vec<Function>,
     pub doc: Option<String>,
@@ -319,6 +323,7 @@ pub struct Property {
     pub typ: TypeId,
     pub c_type: Option<String>,
     pub transfer: Transfer,
+    pub introspectable: bool,
     pub version: Option<Version>,
     pub deprecated_version: Option<Version>,
     pub doc: Option<String>,
@@ -346,6 +351,7 @@ pub struct Function {
     pub name: String,
     pub c_identifier: Option<String>,
     pub kind: FunctionKind,
+    pub introspectable: bool,
     pub parameters: Vec<Parameter>,
     pub ret: Parameter,
     pub throws: bool,
@@ -360,6 +366,7 @@ pub struct Signal {
     pub name: String,
     pub parameters: Vec<Parameter>,
     pub ret: Parameter,
+    pub introspectable: bool,
     pub version: Option<Version>,
     pub deprecated_version: Option<Version>,
     pub doc: Option<String>,
@@ -371,6 +378,7 @@ pub struct Interface {
     pub name: String,
     pub c_type: String,
     pub glib_get_type: String,
+    pub introspectable: bool,
     pub functions: Vec<Function>,
     pub signals: Vec<Signal>,
     pub properties: Vec<Property>,
@@ -385,6 +393,7 @@ pub struct Class {
     pub name: String,
     pub c_type: String,
     pub glib_get_type: String,
+    pub introspectable: bool,
     pub fields: Vec<Field>,
     pub functions: Vec<Function>,
     pub signals: Vec<Signal>,
@@ -556,19 +565,8 @@ impl Type {
     }
 
     pub fn record(library: &mut Library, r: Record, ns_id: u16) -> TypeId {
-        let fields = r.fields;
-        let field_tids: Vec<TypeId> = fields.iter().map(|f| f.typ).collect();
-        let typ = Type::Record(Record {
-            name: r.name,
-            c_type: r.c_type,
-            glib_get_type: r.glib_get_type,
-            fields: fields,
-            functions: r.functions,
-            version: r.version,
-            deprecated_version: r.deprecated_version,
-            doc: r.doc,
-            doc_deprecated: r.doc_deprecated,
-        });
+        let field_tids: Vec<TypeId> = r.fields.iter().map(|f| f.typ).collect();
+        let typ = Type::Record(r);
         library.add_type(ns_id, &format!("#{:?}", field_tids), typ)
     }
 }

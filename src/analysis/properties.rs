@@ -45,7 +45,7 @@ pub fn analyze(
             continue;
         }
 
-        if env.is_totally_deprecated(prop.deprecated_version) {
+        if env.is_totally_deprecated(prop.deprecated_version) || !prop.introspectable {
             continue;
         }
 

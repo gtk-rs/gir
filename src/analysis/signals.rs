@@ -34,7 +34,7 @@ pub fn analyze(
         if configured_signals.iter().any(|f| f.ignore) {
             continue;
         }
-        if env.is_totally_deprecated(signal.deprecated_version) {
+        if env.is_totally_deprecated(signal.deprecated_version) || !signal.introspectable {
             continue;
         }
 
