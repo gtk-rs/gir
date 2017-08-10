@@ -217,6 +217,7 @@ impl Library {
                 .by_name("get-type")
                 .ok_or_else(|| mk_error!("Missing get-type attribute", parser))
         );
+        let introspectable = to_bool(attrs.by_name("introspectable").unwrap_or("1"));
         let version = try!(self.parse_version(parser, ns_id, attrs.by_name("version")));
         let deprecated_version = try!(self.parse_version(
             parser,
@@ -328,6 +329,7 @@ impl Library {
             name: class_name.into(),
             c_type: c_type.into(),
             glib_get_type: get_type.into(),
+            introspectable: introspectable,
             fields: fields,
             functions: fns,
             signals: signals,
@@ -378,6 +380,7 @@ impl Library {
             Some(s) => Some(s.to_string()),
             None => None,
         };
+        let introspectable = to_bool(attrs.by_name("introspectable").unwrap_or("1"));
         let version = try!(self.parse_version(parser, ns_id, attrs.by_name("version")));
         let deprecated_version = try!(self.parse_version(
             parser,
@@ -518,6 +521,7 @@ impl Library {
             name: record_name.into(),
             c_type: c_type.into(),
             glib_get_type: get_type.map(|s| s.into()),
+            introspectable: introspectable,
             fields: fields,
             functions: fns,
             version: version,
@@ -566,6 +570,7 @@ impl Library {
         let union_name = attrs.by_name("name").unwrap_or("");
         let c_type = attrs.by_name("type").unwrap_or("");
         let get_type = attrs.by_name("get-type").map(|s| s.into());
+        let introspectable = to_bool(attrs.by_name("introspectable").unwrap_or("1"));
 
         let mut fields = Vec::new();
         let mut fns = Vec::new();
@@ -674,6 +679,7 @@ impl Library {
             name: union_name.into(),
             c_type: Some(c_type.into()),
             glib_get_type: get_type,
+            introspectable: introspectable,
             fields: fields,
             functions: fns,
             doc: doc,
@@ -776,6 +782,7 @@ impl Library {
                 .by_name("get-type")
                 .ok_or_else(|| mk_error!("Missing get-type attribute", parser))
         );
+        let introspectable = to_bool(attrs.by_name("introspectable").unwrap_or("1"));
         let version = try!(self.parse_version(parser, ns_id, attrs.by_name("version")));
         let deprecated_version = try!(self.parse_version(
             parser,
@@ -835,6 +842,7 @@ impl Library {
             name: interface_name.into(),
             c_type: c_type.into(),
             glib_get_type: get_type.into(),
+            introspectable: introspectable,
             functions: fns,
             signals: signals,
             properties: properties,
@@ -859,6 +867,7 @@ impl Library {
                 .ok_or_else(|| mk_error!("Missing c:type attribute", parser))
         );
         let get_type = attrs.by_name("get-type").map(|s| s.into());
+        let introspectable = to_bool(attrs.by_name("introspectable").unwrap_or("1"));
         let version = try!(self.parse_version(parser, ns_id, attrs.by_name("version")));
         let deprecated_version = try!(self.parse_version(
             parser,
@@ -901,6 +910,7 @@ impl Library {
         let typ = Type::Bitfield(Bitfield {
             name: bitfield_name.into(),
             c_type: c_type.into(),
+            introspectable: introspectable,
             members: members,
             functions: fns,
             version: version,
@@ -930,6 +940,7 @@ impl Library {
                 .ok_or_else(|| mk_error!("Missing c:type attribute", parser))
         );
         let get_type = attrs.by_name("get-type").map(|s| s.into());
+        let introspectable = to_bool(attrs.by_name("introspectable").unwrap_or("1"));
         let version = try!(self.parse_version(parser, ns_id, attrs.by_name("version")));
         let deprecated_version = try!(self.parse_version(
             parser,
@@ -973,6 +984,7 @@ impl Library {
         let typ = Type::Enumeration(Enumeration {
             name: enum_name.into(),
             c_type: c_type.into(),
+            introspectable: introspectable,
             members: members,
             functions: fns,
             version: version,
@@ -1193,6 +1205,7 @@ impl Library {
             .or_else(|| attrs.by_name("type"));
         let kind = try!(FunctionKind::from_str(kind_str).map_err(|why| mk_error!(why, parser)));
         let is_method = kind == FunctionKind::Method;
+        let introspectable = to_bool(attrs.by_name("introspectable").unwrap_or("1"));
         let version = try!(self.parse_version(parser, ns_id, attrs.by_name("version")));
         let deprecated_version = try!(self.parse_version(
             parser,
@@ -1261,6 +1274,7 @@ impl Library {
             Ok(Function {
                 name: fn_name.into(),
                 c_identifier: c_identifier.map(|s| s.into()),
+                introspectable: introspectable,
                 kind: kind,
                 parameters: params,
                 ret: ret,
@@ -1325,6 +1339,7 @@ impl Library {
                 .by_name("name")
                 .ok_or_else(|| mk_error!("Missing signal name", parser))
         );
+        let introspectable = to_bool(attrs.by_name("introspectable").unwrap_or("1"));
         let version = match attrs.by_name("version") {
             Some(v) => Some(try!(v.parse().map_err(|why| mk_error!(why, parser)))),
             None => None,
@@ -1387,6 +1402,7 @@ impl Library {
         if let Some(ret) = ret {
             Ok(Signal {
                 name: signal_name.into(),
+                introspectable: introspectable,
                 parameters: params,
                 ret: ret,
                 version: version,
@@ -1566,6 +1582,7 @@ impl Library {
             Transfer::from_str(attrs.by_name("transfer-ownership").unwrap_or("none"))
                 .map_err(|why| mk_error!(why, parser))
         );
+        let introspectable = to_bool(attrs.by_name("introspectable").unwrap_or("1"));
         let version = match attrs.by_name("version") {
             Some(v) => Some(try!(v.parse().map_err(|why| mk_error!(why, parser)))),
             None => None,
@@ -1635,6 +1652,7 @@ impl Library {
                 transfer: transfer,
                 typ: tid,
                 c_type: c_type,
+                introspectable: introspectable,
                 version: version,
                 deprecated_version: deprecated_version,
                 doc: doc,
