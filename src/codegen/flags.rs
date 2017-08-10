@@ -91,12 +91,17 @@ fn generate_flags(
     try!(writeln!(w, "bitflags! {{"));
     try!(writeln!(w, "    pub struct {}: u32 {{", flags.name));
     for member in &flags.members {
+        let member_config = config.members.matched(&member.name);
+        let ignore = member_config.iter().any(|m| m.ignore);
+        if ignore {
+            continue;
+        }
+
         let name = strip_prefix_uppercase(
             &env.library.namespace(namespaces::MAIN).symbol_prefixes,
             &member.c_identifier,
         );
         let val: i64 = member.value.parse().unwrap();
-        let member_config = config.members.matched(&member.name);
         let version = member_config.iter().filter_map(|m| m.version).next();
         try!(version_condition(w, env, version, false, 2));
         try!(writeln!(w, "\t\tconst {} = {};", name, val as u32));
