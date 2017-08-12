@@ -39,7 +39,7 @@ impl_to_stripper_type!(Function, Fn);
 impl_to_stripper_type!(Class, Struct);
 
 pub fn generate(env: &Env) {
-    let path = env.config.target_path.join("docs.md");
+    let path = env.config.target_path.join("vendor.md");
     println!("Generating documentation {:?}", path);
     save_to_file(&path, env.config.make_backup, |w| generate_doc(w, env));
 }
