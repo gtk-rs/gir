@@ -27,7 +27,11 @@ impl RefMode {
             ..
         }) = env.config.objects.get(&tid.full_name(&env.library))
         {
-            return ref_mode;
+            if direction == library::ParameterDirection::In {
+                return ref_mode;
+            } else {
+                return RefMode::None;
+            }
         }
 
         use library::Type::*;

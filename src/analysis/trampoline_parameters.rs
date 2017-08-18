@@ -44,7 +44,7 @@ pub struct Parameters {
 }
 
 impl Parameters {
-    fn new(capacity: usize) -> Parameters {
+    pub fn new(capacity: usize) -> Parameters {
         Parameters {
             rust_parameters: Vec::with_capacity(capacity),
             c_parameters: Vec::with_capacity(capacity),
@@ -52,7 +52,7 @@ impl Parameters {
         }
     }
 
-    fn prepare_transformation(
+    pub fn prepare_transformation(
         &mut self,
         type_tid: library::TypeId,
         name: String,

@@ -162,6 +162,11 @@ fn func_returns(env: &Env, analysis: &Trampoline) -> String {
 }
 
 fn trampoline_parameters(env: &Env, analysis: &Trampoline) -> String {
+    if analysis.is_notify {
+        return format!("{}, _param_spec: glib_ffi::gpointer",
+            trampoline_parameter(env, &analysis.parameters.c_parameters[0]));
+    }
+
     let mut parameter_strs: Vec<String> = Vec::new();
     for par in &analysis.parameters.c_parameters {
         let par_str = trampoline_parameter(env, par);
