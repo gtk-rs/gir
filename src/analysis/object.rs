@@ -23,6 +23,7 @@ pub struct Info {
     pub has_methods: bool,
     pub has_functions: bool,
     pub signals: Vec<signals::Info>,
+    pub notify_signals: Vec<signals::Info>,
     pub trampolines: trampolines::Trampolines,
     pub properties: Vec<properties::Property>,
     pub child_properties: ChildProperties,
@@ -31,7 +32,8 @@ pub struct Info {
 
 impl Info {
     pub fn has_signals(&self) -> bool {
-        self.signals.iter().any(|s| s.trampoline_name.is_ok())
+        self.signals.iter().any(|s| s.trampoline_name.is_ok()) ||
+        self.notify_signals.iter().any(|s| s.trampoline_name.is_ok())
     }
 }
 
@@ -99,7 +101,7 @@ pub fn class(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<Info>
         );
     }
 
-    let mut trampolines = trampolines::Trampolines::with_capacity(klass.signals.len());
+    let mut trampolines = trampolines::Trampolines::with_capacity(klass.signals.len() + klass.properties.len());
     let mut signatures = Signatures::with_capacity(klass.functions.len());
 
     let mut functions = functions::analyze(
@@ -125,10 +127,12 @@ pub fn class(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<Info>
         obj,
         &mut imports,
     );
-    let properties = properties::analyze(
+    let (properties, notify_signals) = properties::analyze(
         env,
         &klass.properties,
         class_tid,
+        generate_trait,
+        &mut trampolines,
         obj,
         &mut imports,
         &signatures,
@@ -149,7 +153,8 @@ pub fn class(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<Info>
     let has_methods = functions
         .iter()
         .any(|f| f.kind == library::FunctionKind::Method);
-    let has_signals = signals.iter().any(|s| s.trampoline_name.is_ok());
+    let has_signals = signals.iter().any(|s| s.trampoline_name.is_ok()) ||
+                      notify_signals.iter().any(|s| s.trampoline_name.is_ok());
 
     // There's no point in generating a trait if there are no signals, methods, properties
     // and child properties: it would be empty
@@ -210,6 +215,7 @@ pub fn class(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<Info>
         has_methods: has_methods,
         has_functions: has_functions,
         signals: signals,
+        notify_signals: notify_signals,
         trampolines: trampolines,
         properties: properties,
         child_properties: child_properties,
@@ -272,10 +278,12 @@ pub fn interface(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<I
         obj,
         &mut imports,
     );
-    let properties = properties::analyze(
+    let (properties, notify_signals) = properties::analyze(
         env,
         &iface.properties,
         iface_tid,
+        true,
+        &mut trampolines,
         obj,
         &mut imports,
         &signatures,
@@ -325,6 +333,7 @@ pub fn interface(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<I
         has_methods: has_methods,
         has_functions: has_functions,
         signals: signals,
+        notify_signals: notify_signals,
         trampolines: trampolines,
         properties: properties,
         signatures: signatures,

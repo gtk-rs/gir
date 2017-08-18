@@ -3,6 +3,8 @@ use analysis::imports::Imports;
 use analysis::ref_mode::RefMode;
 use analysis::rust_type::*;
 use analysis::signatures::{Signature, Signatures};
+use analysis::signals;
+use analysis::trampolines;
 use config;
 use config::gobjects::GObject;
 use env::Env;
@@ -32,12 +34,15 @@ pub fn analyze(
     env: &Env,
     props: &[library::Property],
     type_tid: library::TypeId,
+    generate_trait: bool,
+    trampolines: &mut trampolines::Trampolines,
     obj: &GObject,
     imports: &mut Imports,
     signatures: &Signatures,
     deps: &[library::TypeId],
-) -> Vec<Property> {
+) -> (Vec<Property>, Vec<signals::Info>) {
     let mut properties = Vec::new();
+    let mut notify_signals = Vec::new();
 
     for prop in props {
         let configured_properties = obj.properties.matched(&prop.name);
@@ -49,14 +54,23 @@ pub fn analyze(
             continue;
         }
 
-        let (getter, setter) = analyze_property(
+        let (getter, setter, notify_signal) = analyze_property(
             env,
             prop,
             type_tid,
             &configured_properties,
+            generate_trait,
+            trampolines,
+            obj,
+            imports,
             signatures,
             deps,
         );
+
+        if let Some(notify_signal) = notify_signal {
+            notify_signals.push(notify_signal);
+        }
+
         if getter.is_none() && setter.is_none() {
             continue;
         }
@@ -93,7 +107,7 @@ pub fn analyze(
         }
     }
 
-    properties
+    (properties, notify_signals)
 }
 
 fn analyze_property(
@@ -101,9 +115,13 @@ fn analyze_property(
     prop: &library::Property,
     type_tid: library::TypeId,
     configured_properties: &[&config::properties::Property],
+    generate_trait: bool,
+    trampolines: &mut trampolines::Trampolines,
+    obj: &GObject,
+    imports: &mut Imports,
     signatures: &Signatures,
     deps: &[library::TypeId],
-) -> (Option<Property>, Option<Property>) {
+) -> (Option<Property>, Option<Property>, Option<signals::Info>) {
     let name = prop.name.clone();
     let type_ = env.type_(prop.typ);
 
@@ -199,7 +217,64 @@ fn analyze_property(
         None
     };
 
-    (getter, setter)
+    let mut used_types: Vec<String> = Vec::with_capacity(4);
+    let trampoline_name = trampolines::analyze(
+        env,
+        &library::Signal {
+            name: format!("notify::{}", name),
+            parameters: Vec::new(),
+            ret: library::Parameter {
+                name: "".into(),
+                typ: env.library.find_type(library::INTERNAL_NAMESPACE, "none").unwrap(),
+                c_type: "none".into(),
+                instance_parameter: false,
+                direction: library::ParameterDirection::Return,
+                transfer: library::Transfer::None,
+                caller_allocates: false,
+                nullable: library::Nullable(false),
+                allow_none: false,
+                array_length: None,
+                is_error: false,
+                doc: None,
+            },
+            version: prop_version,
+            deprecated_version: prop.deprecated_version,
+            doc: None,
+            doc_deprecated: None,
+        },
+        type_tid,
+        generate_trait,
+        &[],
+        trampolines,
+        obj,
+        &mut used_types,
+        prop_version,
+    );
+
+    let notify_signal = if trampoline_name.is_ok() {
+        imports.add_used_types(&used_types, prop_version);
+        if generate_trait {
+            imports.add("glib", prop_version);
+            imports.add("glib::object::Downcast", prop_version);
+        }
+        imports.add("glib::signal::connect", prop_version);
+        imports.add("std::mem::transmute", prop_version);
+        imports.add("std::boxed::Box as Box_", prop_version);
+        imports.add("glib_ffi", prop_version);
+
+        Some(signals::Info {
+            connect_name: format!("connect_property_{}_notify", name_for_func),
+            signal_name: format!("notify::{}", name),
+            trampoline_name: trampoline_name,
+            version: prop_version,
+            deprecated_version: prop.deprecated_version,
+            doc_hidden: false,
+        })
+    } else {
+        None
+    };
+
+    (getter, setter, notify_signal)
 }
 
 pub fn get_type_default_value(

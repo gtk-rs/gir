@@ -92,6 +92,7 @@ lazy_static! {
 
 pub fn signal_to_snake(signal: &str) -> String {
     signal
+        .replace("::", "_")
         .chars()
         .map(|ch| if ch == '-' { '_' } else { ch })
         .collect()

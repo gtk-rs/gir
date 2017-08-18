@@ -56,7 +56,7 @@ pub fn generate(w: &mut Write, env: &Env, analysis: &analysis::object::Info) -> 
         }
 
         if !generate_trait(analysis) {
-            for signal_analysis in &analysis.signals {
+            for signal_analysis in analysis.signals.iter().chain(analysis.notify_signals.iter()) {
                 try!(signal::generate(
                     w,
                     env,
@@ -124,7 +124,7 @@ pub fn generate(w: &mut Write, env: &Env, analysis: &analysis::object::Info) -> 
                 1,
             ));
         }
-        for signal_analysis in &analysis.signals {
+        for signal_analysis in analysis.signals.iter().chain(analysis.notify_signals.iter()) {
             try!(signal::generate(
                 w,
                 env,
@@ -169,7 +169,7 @@ pub fn generate(w: &mut Write, env: &Env, analysis: &analysis::object::Info) -> 
                 1,
             ));
         }
-        for signal_analysis in &analysis.signals {
+        for signal_analysis in analysis.signals.iter().chain(analysis.notify_signals.iter()) {
             try!(signal::generate(
                 w,
                 env,

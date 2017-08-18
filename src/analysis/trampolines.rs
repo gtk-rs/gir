@@ -21,6 +21,7 @@ pub struct Trampoline {
     pub version: Option<Version>,
     pub inhibit: bool,
     pub concurrency: library::Concurrency,
+    pub is_notify: bool,
 }
 
 pub type Trampolines = Vec<Trampoline>;
@@ -46,6 +47,8 @@ pub fn analyze(
         return Err(errors);
     }
 
+    let is_notify = signal.name.starts_with("notify::");
+
     let name = format!("{}_trampoline", signal_to_snake(&signal.name));
 
     //TODO: move to object.signal.return config
@@ -64,8 +67,28 @@ pub fn analyze(
         bounds.add_parameter("this", &type_name.into_string(), BoundType::IsA(None));
     }
 
-    let parameters =
-        trampoline_parameters::analyze(env, &signal.parameters, type_tid, configured_signals);
+    let parameters = if is_notify {
+        let mut parameters = trampoline_parameters::Parameters::new(1);
+
+        let owner = env.type_(type_tid);
+        let c_type = format!("{}*", owner.get_glib_name().unwrap());
+
+        let transform = parameters.prepare_transformation(
+            type_tid,
+            "this".to_owned(),
+            c_type,
+            library::ParameterDirection::In,
+            library::Transfer::None,
+            library::Nullable(false),
+            ::analysis::ref_mode::RefMode::ByRef,
+            ConversionType::Pointer,
+        );
+        parameters.transformations.push(transform);
+
+        parameters
+    } else {
+        trampoline_parameters::analyze(env, &signal.parameters, type_tid, configured_signals)
+    };
 
     if in_trait {
         let type_name = bounds_rust_type(env, type_tid);
@@ -122,6 +145,7 @@ pub fn analyze(
         version: version,
         inhibit: inhibit,
         concurrency: concurrency,
+        is_notify: is_notify,
     };
     trampolines.push(trampoline);
     Ok(name)
