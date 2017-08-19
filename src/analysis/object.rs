@@ -90,7 +90,10 @@ pub fn class(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<Info>
     let supertypes = supertypes::analyze(env, class_tid, &mut imports);
 
     let mut generate_trait = obj.generate_trait;
-    let trait_name = obj.trait_name.as_ref().map(|s| s.clone()).unwrap_or(format!("{}Ext", name));
+    let trait_name = obj.trait_name
+        .as_ref()
+        .cloned()
+        .unwrap_or_else(|| format!("{}Ext", name));
 
     // Sanity check the user's configuration. It's unlikely that not generating
     // a trait is wanted if there are subtypes in this very crate
@@ -101,7 +104,8 @@ pub fn class(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<Info>
         );
     }
 
-    let mut trampolines = trampolines::Trampolines::with_capacity(klass.signals.len() + klass.properties.len());
+    let mut trampolines =
+        trampolines::Trampolines::with_capacity(klass.signals.len() + klass.properties.len());
     let mut signatures = Signatures::with_capacity(klass.functions.len());
 
     let mut functions = functions::analyze(
@@ -254,7 +258,10 @@ pub fn interface(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<I
 
     let supertypes = supertypes::analyze(env, iface_tid, &mut imports);
 
-    let trait_name = obj.trait_name.as_ref().map(|s| s.clone()).unwrap_or(format!("{}Ext", name));
+    let trait_name = obj.trait_name
+        .as_ref()
+        .cloned()
+        .unwrap_or_else(|| format!("{}Ext", name));
 
     let mut trampolines = trampolines::Trampolines::with_capacity(iface.signals.len());
     let mut signatures = Signatures::with_capacity(iface.functions.len());

@@ -273,8 +273,8 @@ impl Library {
                                 parser,
                                 ns_id,
                                 &attributes,
-                                Some(&class_name),
-                                Some(&c_type)
+                                Some(class_name),
+                                Some(c_type)
                             )) {
                                 let field_name =
                                     if let Some(field_name) = attributes.by_name("name") {
@@ -410,8 +410,8 @@ impl Library {
                                 parser,
                                 ns_id,
                                 &attributes,
-                                Some(&record_name),
-                                Some(&c_type)
+                                Some(record_name),
+                                Some(c_type)
                             )) {
                                 let field_name =
                                     if let Some(field_name) = attributes.by_name("name") {
@@ -429,7 +429,7 @@ impl Library {
                                                 s.push('_');
                                                 s
                                             })
-                                            .unwrap_or("".into()),
+                                            .unwrap_or_else(String::new),
                                         record_name,
                                         field_name
                                     ),
@@ -441,7 +441,7 @@ impl Library {
                                                 s.push('_');
                                                 s
                                             })
-                                            .unwrap_or("".into()),
+                                            .unwrap_or_else(String::new),
                                         c_type,
                                         field_name
                                     )),
@@ -618,7 +618,7 @@ impl Library {
                                             s.push('_');
                                             s
                                         })
-                                        .unwrap_or("".into()),
+                                        .unwrap_or_else(String::new),
                                     union_name,
                                     field_name
                                 ),
@@ -630,7 +630,7 @@ impl Library {
                                             s.push('_');
                                             s
                                         })
-                                        .unwrap_or("".into()),
+                                        .unwrap_or_else(String::new),
                                     c_type,
                                     field_name
                                 ),

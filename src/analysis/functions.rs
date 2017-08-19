@@ -164,26 +164,23 @@ fn analyze_function(
 
     for par in &parameters.rust_parameters {
         // Disallow fundamental arrays without length
-        match *env.library.type_(par.typ) {
-            Type::CArray(inner_tid) => {
-                use super::conversion_type::ConversionType;
-                match *env.library.type_(inner_tid) {
-                    Type::Fundamental(..) if ConversionType::of(&env.library, inner_tid) == ConversionType::Direct => {
-                        if parameters.transformations.iter().find(|t|
-                            if let TransformationType::Length { ref array_name, .. } = t.transformation_type {
-                                array_name == &par.name
-                            } else {
-                                false
-                            }
-                        ).is_none() {
-                            commented = true;
-                        }
-                    },
-                    _ => (),
-                }
-            },
-            _ => (),
-        };
+        if is_carray_with_direct_elements(env, par.typ) &&
+            parameters
+                .transformations
+                .iter()
+                .find(|t| {
+                    if let TransformationType::Length { ref array_name, .. } =
+                        t.transformation_type
+                    {
+                        array_name == &par.name
+                    } else {
+                        false
+                    }
+                })
+                .is_none()
+        {
+            commented = true;
+        }
     }
 
     let (outs, unsupported_outs) = out_parameters::analyze(env, func, configured_functions);
@@ -237,5 +234,22 @@ fn analyze_function(
         cfg_condition: cfg_condition,
         assertion: assertion,
         doc_hidden: doc_hidden,
+    }
+}
+
+pub fn is_carray_with_direct_elements(env: &Env, typ: library::TypeId) -> bool {
+    match *env.library.type_(typ) {
+        Type::CArray(inner_tid) => {
+            use super::conversion_type::ConversionType;
+            match *env.library.type_(inner_tid) {
+                Type::Fundamental(..)
+                    if ConversionType::of(&env.library, inner_tid) == ConversionType::Direct =>
+                {
+                    true
+                }
+                _ => false,
+            }
+        }
+        _ => false,
     }
 }
