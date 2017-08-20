@@ -185,10 +185,8 @@ fn parse_object(toml_object: &Value, concurrency: library::Concurrency) -> GObje
         .and_then(ref_mode_from_str);
     let child_properties = ChildProperties::parse(toml_object, &name);
 
-    if status != GStatus::Manual {
-        if ref_mode != None {
-            warn!("ref_mode configuration used for non-manual object {}", name);
-        }
+    if status != GStatus::Manual && ref_mode != None {
+        warn!("ref_mode configuration used for non-manual object {}", name);
     }
 
     GObject {

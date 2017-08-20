@@ -23,14 +23,14 @@ pub fn generate(w: &mut Write, env: &Env, analysis: &analysis::object::Info) -> 
         &analysis.supertypes,
     ));
 
-    if generate_inherent(analysis) {
+    if need_generate_inherent(analysis) {
         try!(writeln!(w, ""));
         try!(write!(w, "impl {} {{", analysis.name));
         for func_analysis in &analysis.constructors() {
             try!(function::generate(w, env, func_analysis, false, false, 1));
         }
 
-        if !generate_trait(analysis) {
+        if !need_generate_trait(analysis) {
             for func_analysis in &analysis.methods() {
                 try!(function::generate(w, env, func_analysis, false, false, 1));
             }
@@ -55,8 +55,12 @@ pub fn generate(w: &mut Write, env: &Env, analysis: &analysis::object::Info) -> 
             try!(function::generate(w, env, func_analysis, false, false, 1));
         }
 
-        if !generate_trait(analysis) {
-            for signal_analysis in analysis.signals.iter().chain(analysis.notify_signals.iter()) {
+        if !need_generate_trait(analysis) {
+            for signal_analysis in analysis
+                .signals
+                .iter()
+                .chain(analysis.notify_signals.iter())
+            {
                 try!(signal::generate(
                     w,
                     env,
@@ -84,7 +88,11 @@ pub fn generate(w: &mut Write, env: &Env, analysis: &analysis::object::Info) -> 
         &analysis.name,
         &analysis.functions,
         &analysis.specials,
-        if generate_trait(analysis) { Some(&analysis.trait_name) } else { None },
+        if need_generate_trait(analysis) {
+            Some(&analysis.trait_name)
+        } else {
+            None
+        },
     ));
 
     if analysis.concurrency != library::Concurrency::None {
@@ -98,89 +106,13 @@ pub fn generate(w: &mut Write, env: &Env, analysis: &analysis::object::Info) -> 
         _ => (),
     }
 
-    match analysis.concurrency {
-        library::Concurrency::SendSync => {
-            try!(writeln!(w, "unsafe impl Sync for {} {{}}", analysis.name));
-        }
-        _ => (),
+    if let library::Concurrency::SendSync = analysis.concurrency {
+        try!(writeln!(w, "unsafe impl Sync for {} {{}}", analysis.name));
     }
 
-    if generate_trait(analysis) {
+    if need_generate_trait(analysis) {
         try!(writeln!(w, ""));
-        try!(write!(w, "pub trait {} {{", analysis.trait_name));
-        for func_analysis in &analysis.methods() {
-            try!(function::generate(w, env, func_analysis, true, true, 1));
-        }
-        for property in &analysis.properties {
-            try!(properties::generate(w, env, property, true, true, 1));
-        }
-        for child_property in &analysis.child_properties {
-            try!(child_properties::generate(
-                w,
-                env,
-                child_property,
-                true,
-                true,
-                1,
-            ));
-        }
-        for signal_analysis in analysis.signals.iter().chain(analysis.notify_signals.iter()) {
-            try!(signal::generate(
-                w,
-                env,
-                signal_analysis,
-                &analysis.trampolines,
-                true,
-                true,
-                1,
-            ));
-        }
-        try!(writeln!(w, "}}"));
-
-        try!(writeln!(w, ""));
-        let mut extra_isa: Vec<&'static str> = Vec::new();
-        if !analysis.child_properties.is_empty() {
-            extra_isa.push(" + IsA<Container>");
-        }
-        if analysis.has_signals() || !analysis.properties.is_empty() {
-            extra_isa.push(" + IsA<glib::object::Object>");
-        }
-        try!(write!(
-            w,
-            "impl<O: IsA<{}>{}> {} for O {{",
-            analysis.name,
-            extra_isa.join(""),
-            analysis.trait_name,
-        ));
-
-        for func_analysis in &analysis.methods() {
-            try!(function::generate(w, env, func_analysis, true, false, 1));
-        }
-        for property in &analysis.properties {
-            try!(properties::generate(w, env, property, true, false, 1));
-        }
-        for child_property in &analysis.child_properties {
-            try!(child_properties::generate(
-                w,
-                env,
-                child_property,
-                true,
-                false,
-                1,
-            ));
-        }
-        for signal_analysis in analysis.signals.iter().chain(analysis.notify_signals.iter()) {
-            try!(signal::generate(
-                w,
-                env,
-                signal_analysis,
-                &analysis.trampolines,
-                true,
-                false,
-                1,
-            ));
-        }
-        try!(writeln!(w, "}}"));
+        try!(generate_trait(w, env, analysis));
     }
 
     if !analysis.trampolines.is_empty() {
@@ -189,7 +121,7 @@ pub fn generate(w: &mut Write, env: &Env, analysis: &analysis::object::Info) -> 
                 w,
                 env,
                 trampoline,
-                generate_trait(analysis),
+                need_generate_trait(analysis),
                 &analysis.name,
             ));
         }
@@ -198,11 +130,98 @@ pub fn generate(w: &mut Write, env: &Env, analysis: &analysis::object::Info) -> 
     Ok(())
 }
 
-fn generate_inherent(analysis: &analysis::object::Info) -> bool {
-    analysis.has_constructors || analysis.has_functions || !generate_trait(analysis)
+fn generate_trait(w: &mut Write, env: &Env, analysis: &analysis::object::Info) -> Result<()> {
+    try!(write!(w, "pub trait {} {{", analysis.trait_name));
+    for func_analysis in &analysis.methods() {
+        try!(function::generate(w, env, func_analysis, true, true, 1));
+    }
+    for property in &analysis.properties {
+        try!(properties::generate(w, env, property, true, true, 1));
+    }
+    for child_property in &analysis.child_properties {
+        try!(child_properties::generate(
+            w,
+            env,
+            child_property,
+            true,
+            true,
+            1,
+        ));
+    }
+    for signal_analysis in analysis
+        .signals
+        .iter()
+        .chain(analysis.notify_signals.iter())
+    {
+        try!(signal::generate(
+            w,
+            env,
+            signal_analysis,
+            &analysis.trampolines,
+            true,
+            true,
+            1,
+        ));
+    }
+    try!(writeln!(w, "}}"));
+
+    try!(writeln!(w, ""));
+    let mut extra_isa: Vec<&'static str> = Vec::new();
+    if !analysis.child_properties.is_empty() {
+        extra_isa.push(" + IsA<Container>");
+    }
+    if analysis.has_signals() || !analysis.properties.is_empty() {
+        extra_isa.push(" + IsA<glib::object::Object>");
+    }
+    try!(write!(
+        w,
+        "impl<O: IsA<{}>{}> {} for O {{",
+        analysis.name,
+        extra_isa.join(""),
+        analysis.trait_name,
+    ));
+
+    for func_analysis in &analysis.methods() {
+        try!(function::generate(w, env, func_analysis, true, false, 1));
+    }
+    for property in &analysis.properties {
+        try!(properties::generate(w, env, property, true, false, 1));
+    }
+    for child_property in &analysis.child_properties {
+        try!(child_properties::generate(
+            w,
+            env,
+            child_property,
+            true,
+            false,
+            1,
+        ));
+    }
+    for signal_analysis in analysis
+        .signals
+        .iter()
+        .chain(analysis.notify_signals.iter())
+    {
+        try!(signal::generate(
+            w,
+            env,
+            signal_analysis,
+            &analysis.trampolines,
+            true,
+            false,
+            1,
+        ));
+    }
+    try!(writeln!(w, "}}"));
+
+    Ok(())
 }
 
-fn generate_trait(analysis: &analysis::object::Info) -> bool {
+fn need_generate_inherent(analysis: &analysis::object::Info) -> bool {
+    analysis.has_constructors || analysis.has_functions || !need_generate_trait(analysis)
+}
+
+fn need_generate_trait(analysis: &analysis::object::Info) -> bool {
     analysis.generate_trait
 }
 
@@ -225,7 +244,7 @@ pub fn generate_reexports(
     contents.push(format!("mod {};", module_name));
     contents.extend_from_slice(&cfgs);
     contents.push(format!("pub use self::{}::{};", module_name, analysis.name));
-    if generate_trait(analysis) {
+    if need_generate_trait(analysis) {
         contents.extend_from_slice(&cfgs);
         contents.push(format!(
             "pub use self::{}::{};",

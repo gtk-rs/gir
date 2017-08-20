@@ -133,12 +133,9 @@ impl Builder {
         });
         chunks.push(unsafe_);
 
-        match self.conversion {
-            Direct => {
-                let unwrap = if self.is_nullable { "" } else { ".unwrap()" };
-                chunks.push(Chunk::Custom(format!("value.get(){}", unwrap)));
-            }
-            _ => (),
+        if self.conversion == Direct {
+            let unwrap = if self.is_nullable { "" } else { ".unwrap()" };
+            chunks.push(Chunk::Custom(format!("value.get(){}", unwrap)));
         }
 
         chunks

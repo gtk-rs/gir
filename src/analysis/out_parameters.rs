@@ -7,6 +7,7 @@ use config;
 use env::Env;
 use library::*;
 use super::conversion_type::ConversionType;
+use super::functions::is_carray_with_direct_elements;
 use super::rust_type::parameter_rust_type;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -117,19 +118,9 @@ pub fn can_as_return(env: &Env, par: &Parameter) -> bool {
         Scalar => true,
         Pointer => {
             // Disallow fundamental arrays without length
-            match *env.library.type_(par.typ) {
-                Type::CArray(inner_tid) => {
-                    match *env.library.type_(inner_tid) {
-                        Type::Fundamental(..) if ConversionType::of(&env.library, inner_tid) == ConversionType::Direct => {
-                            if par.array_length.is_none() {
-                                return false;
-                            }
-                        },
-                        _ => (),
-                    }
-                },
-                _ => (),
-            };
+            if is_carray_with_direct_elements(env, par.typ) && par.array_length.is_none() {
+                return false;
+            }
 
             parameter_rust_type(
                 env,

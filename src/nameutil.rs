@@ -14,7 +14,7 @@ pub fn split_namespace_name(name: &str) -> (Option<&str>, &str) {
     (ns, name)
 }
 
-/// Strip the longest of the prefixes from an upper-case name (G_|FOO_BAR)
+/// Strip the longest of the prefixes from an upper-case name (`G_|FOO_BAR`)
 pub fn strip_prefix_uppercase<'a, S>(prefixes: &[S], name: &'a str) -> &'a str
 where
     S: AsRef<str>,
@@ -93,9 +93,7 @@ lazy_static! {
 pub fn signal_to_snake(signal: &str) -> String {
     signal
         .replace("::", "_")
-        .chars()
-        .map(|ch| if ch == '-' { '_' } else { ch })
-        .collect()
+        .replace('-', "_")
 }
 
 #[cfg(test)]
