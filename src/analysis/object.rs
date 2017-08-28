@@ -147,6 +147,7 @@ pub fn class(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<Info>
         env,
         obj,
         &functions,
+        Some(&specials),
         klass.version,
         klass.deprecated_version,
     );
@@ -301,6 +302,7 @@ pub fn interface(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<I
         env,
         obj,
         &functions,
+        None,
         iface.version,
         iface.deprecated_version,
     );
