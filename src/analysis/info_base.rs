@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 use config::gobjects::GObject;
 use env::Env;
 use library;
@@ -49,12 +51,25 @@ pub fn versions(
     env: &Env,
     obj: &GObject,
     functions: &[functions::Info],
+    specials: Option<&special_functions::Infos>,
     version: Option<Version>,
     deprecated_version: Option<Version>,
 ) -> (Option<Version>, Option<Version>) {
+    let special_names: HashSet<String> = if let Some(specials) = specials {
+        specials
+            .iter()
+            .map(|(_type, glib_name)| glib_name.clone())
+            .collect()
+    } else {
+        HashSet::new()
+    };
+
+
     let fn_version = functions
         .iter()
-        .filter(|f| f.visibility == Visibility::Public)
+        .filter(|f| {
+            f.visibility == Visibility::Public || special_names.contains(&f.glib_name)
+        })
         .map(|f| f.version)
         .min()
         .unwrap_or(None);
