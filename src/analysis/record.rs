@@ -77,7 +77,6 @@ pub fn new(env: &Env, obj: &GObject) -> Option<Info> {
         env,
         obj,
         &functions,
-        None,
         record.version,
         record.deprecated_version,
     );
