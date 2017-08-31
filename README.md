@@ -32,7 +32,28 @@ ignore = ["Gtk.Widget", "Gtk.Window"]
 
 And that's all! Neither `GtkWidget` nor `GtkWindow` (alongside with their functions) will be generated.
 
-Also you can mark some functions that has suffix `_utf8` on Windows:
+You also need to add any needed external libraries in the "external_libraries" parameter. Example:
+
+```toml
+external_libraries = [
+   "GLib",
+   "GObject",
+]
+```
+
+You can specify a few other options:
+
+```toml
+[options]
+girs_dir = "../gir-files"
+library = "GtkSource"
+version = "3.0"
+min_cfg_version = "3.0"
+target_path = "."
+work_mode = "sys"
+```
+
+Also, you can mark some functions that has suffix `_utf8` on Windows:
 
 ```toml
 [[object]]
