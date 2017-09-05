@@ -15,7 +15,6 @@ extern crate log;
 extern crate xml;
 extern crate toml;
 extern crate regex;
-extern crate time;
 extern crate hprof;
 extern crate stripper_lib;
 
