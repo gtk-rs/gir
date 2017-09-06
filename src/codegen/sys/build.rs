@@ -47,7 +47,12 @@ fn find() -> Result<(), Error> {
     let regex = Regex::new(r"^lib(.+)\.so.*$").expect("Regex failed");
     let shared_libs: Vec<_> = ns.shared_libs
         .iter()
-        .map(|s| regex.replace(s, "\"$1\""))
+        .map(|s| {
+            if !regex.is_match(s) {
+                panic!("A 'shared-library' in the GIR file doesn't match the following form: '^lib(.+)\\.so.*$'");
+            }
+            regex.replace(s, "\"$1\"")
+        })
         .collect();
 
     try!(writeln!(
