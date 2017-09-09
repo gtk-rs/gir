@@ -81,7 +81,7 @@ pub fn analyze(
             library::Transfer::None,
             library::Nullable(false),
             ::analysis::ref_mode::RefMode::ByRef,
-            ConversionType::Pointer,
+            ConversionType::Borrow,
         );
         parameters.transformations.push(transform);
 
