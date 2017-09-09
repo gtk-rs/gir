@@ -109,7 +109,7 @@ fn declaration(
 ) -> String {
     let bounds = bounds(function_type_string);
     let param_str = "&self, f: F";
-    let return_str = " -> u64";
+    let return_str = " -> SignalHandlerId";
     format!(
         "fn {}<{}>({}){}",
         analysis.connect_name,

@@ -95,6 +95,7 @@ fn analyze_signal(
             imports.add("glib::object::Downcast", version);
         }
         imports.add("glib::signal::connect", version);
+        imports.add("glib::signal::SignalHandlerId", version);
         imports.add("std::mem::transmute", version);
         imports.add("std::boxed::Box as Box_", version);
         imports.add("glib_ffi", version);
