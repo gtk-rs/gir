@@ -191,7 +191,7 @@ fn apply_transformation_type(
         TransformationType::Borrow => {
             if transform.conversion_type == ConversionType::Pointer {
                 transform.conversion_type = ConversionType::Borrow;
-            } else {
+            } else if transform.conversion_type != ConversionType::Borrow {
                 error!(
                     "Wrong conversion_type for borrow transformation {:?}",
                     transform.conversion_type
