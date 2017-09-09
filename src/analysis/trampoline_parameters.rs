@@ -119,7 +119,7 @@ pub fn analyze(
         library::Transfer::None,
         library::Nullable(false),
         RefMode::ByRef,
-        ConversionType::Pointer,
+        ConversionType::Borrow,
     );
     parameters.transformations.push(transform);
 
@@ -135,7 +135,14 @@ pub fn analyze(
             .next();
         let nullable = nullable_override.unwrap_or(par.nullable);
 
-        let conversion_type = ConversionType::of(&env.library, par.typ);
+        let conversion_type = {
+            match *env.library.type_(par.typ) {
+                library::Type::Record(..) |
+                library::Type::Interface(..) |
+                library::Type::Class(..) => ConversionType::Borrow,
+                _ => ConversionType::of(&env.library, par.typ),
+            }
+        };
 
         let new_name = configured_signals
             .matched_parameters(&name)
