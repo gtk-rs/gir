@@ -1,4 +1,5 @@
 use std::io::{Result, Write};
+use std::path::Path;
 
 use env::Env;
 use file_saver::save_to_file;
@@ -44,14 +45,17 @@ fn find() -> Result<(), Error> {
     ));
 
     let ns = env.namespaces.main();
-    let regex = Regex::new(r"^lib(.+)\.so.*$").expect("Regex failed");
+    let regex = Regex::new(r"^lib(.+)\.(so.*|dylib)$").expect("Regex failed");
     let shared_libs: Vec<_> = ns.shared_libs
         .iter()
         .map(|s| {
-            if !regex.is_match(s) {
-                panic!("A 'shared-library' in the GIR file doesn't match the following form: '^lib(.+)\\.so.*$'");
-            }
-            regex.replace(s, "\"$1\"")
+            let lib_path = Path::new(s);
+            let lib_file_name = lib_path
+                .file_name()
+                .expect("A 'shared-library' in the GIR file has an invalid form")
+                .to_str()
+                .expect("Failed to convert OsStr to str");
+            regex.replace(lib_file_name, "\"$1\"")
         })
         .collect();
 
