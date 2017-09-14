@@ -327,6 +327,7 @@ impl Library {
         let typ = Type::Class(Class {
             name: class_name.into(),
             c_type: c_type.into(),
+            c_class_type: None, // this will be resolved during postprocessing
             glib_get_type: get_type.into(),
             fields: fields,
             functions: fns,
