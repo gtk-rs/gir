@@ -23,6 +23,7 @@ impl Library {
         self.fix_gtype();
         self.check_resolved();
         self.fill_empty_signals_c_types();
+        self.resolve_class_structs();
     }
 
     fn fix_gtype(&mut self) {
@@ -166,6 +167,43 @@ impl Library {
             Alias(ref alias) => self.is_referenced_type(self.type_(alias.typ)),
             Record(..) | Union(..) | Class(..) | Interface(..) => true,
             _ => false,
+        }
+    }
+
+    fn resolve_class_structs(&mut self) {
+        // stores pairs of (gtype-struct-c-name, type-name)
+        let mut structs_and_types = Vec::new();
+
+        for (ns_id, ns) in self.namespaces.iter().enumerate() {
+            for type_ in ns.types.iter() {
+                let type_ = type_.as_ref().unwrap(); //Always contains something
+
+                match *type_ {
+                    Type::Record(ref record) => {
+                        if let Some(ref struct_for) = record.gtype_struct_for {
+                            if let Some(struct_for_tid) = self.find_type(ns_id as u16, struct_for) {
+                                structs_and_types.push ((record.c_type.clone(), struct_for_tid));
+                            }
+                        }
+                    },
+
+                    _ => (),
+                }
+            }
+        }
+
+        for (gtype_struct_c_type, struct_for_tid) in structs_and_types {
+            match *self.type_mut(struct_for_tid) {
+                Type::Class(ref mut klass) => {
+                    klass.c_class_type = Some(gtype_struct_c_type);
+                },
+
+                Type::Interface(ref mut iface) => {
+                    iface.c_class_type = Some(gtype_struct_c_type);
+                },
+
+                ref x @ _ => unreachable!("Something other than a class or interface has a class struct: {:?}", x)
+            }
         }
     }
 }
