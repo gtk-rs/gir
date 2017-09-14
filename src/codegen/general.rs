@@ -42,6 +42,7 @@ pub fn define_object_type(
     env: &Env,
     type_name: &str,
     glib_name: &str,
+    glib_class_name: &Option<&str>,
     glib_func_name: &str,
     parents: &[StatusedTypeId],
 ) -> Result<()> {
@@ -62,21 +63,33 @@ pub fn define_object_type(
         })
         .collect();
 
+    let (separator, class_name) = {
+        if let &Some(s) = glib_class_name {
+            (", ".to_string(), format!("ffi::{}", s))
+        } else {
+            ("".to_string(), "".to_string())
+        }
+    };
+
     try!(writeln!(w, ""));
     try!(writeln!(w, "glib_wrapper! {{"));
     if parents.is_empty() {
         try!(writeln!(
             w,
-            "\tpub struct {}(Object<ffi::{}>);",
+            "\tpub struct {}(Object<ffi::{}{}{}>);",
             type_name,
-            glib_name
+            glib_name,
+            separator,
+            class_name
         ));
     } else if external_parents {
         try!(writeln!(
             w,
-            "\tpub struct {}(Object<ffi::{}>): [",
+            "\tpub struct {}(Object<ffi::{}{}{}>): [",
             type_name,
-            glib_name
+            glib_name,
+            separator,
+            class_name
         ));
         for parent in parents {
             try!(writeln!(w, "\t\t{},", parent));
@@ -85,9 +98,11 @@ pub fn define_object_type(
     } else {
         try!(writeln!(
             w,
-            "\tpub struct {}(Object<ffi::{}>): {};",
+            "\tpub struct {}(Object<ffi::{}{}{}>): {};",
             type_name,
             glib_name,
+            separator,
+            class_name,
             parents.join(", ")
         ));
     }
