@@ -379,6 +379,7 @@ impl Library {
             Some(s) => Some(s.to_string()),
             None => None,
         };
+        let gtype_struct_for = attrs.by_name("is-gtype-struct-for");
         let version = try!(self.parse_version(parser, ns_id, attrs.by_name("version")));
         let deprecated_version = try!(self.parse_version(
             parser,
@@ -515,6 +516,7 @@ impl Library {
             name: record_name.into(),
             c_type: c_type.into(),
             glib_get_type: get_type.map(|s| s.into()),
+            gtype_struct_for: gtype_struct_for.map(|s| s.into()),
             fields: fields,
             functions: fns,
             version: version,
