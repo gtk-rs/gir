@@ -492,10 +492,6 @@ impl Library {
             }
         }
 
-        if attrs.by_name("is-gtype-struct").is_some() {
-            return Ok(None);
-        }
-
         if record_name == "Atom" && self.namespace(ns_id).name == "Gdk" {
             // the gir definitions don't reflect the following correctly
             // typedef struct _GdkAtom *GdkAtom;
