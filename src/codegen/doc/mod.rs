@@ -14,6 +14,7 @@ use self::format::reformat_doc;
 use stripper_lib::Type as SType;
 use stripper_lib::{write_file_name, write_item_doc, TypeStruct};
 use traits::*;
+use version::Version;
 
 mod format;
 
@@ -22,6 +23,14 @@ trait ToStripperType {
 }
 
 macro_rules! impl_to_stripper_type {
+    ($ty:ident, $enum_var:ident, $useless:expr) => {
+        impl ToStripperType for $ty {
+            fn to_stripper_type(&self) -> TypeStruct {
+                TypeStruct::new(SType::$enum_var,
+                                &format!("connect_{}", self.name.replace('-', "_")))
+            }
+        }
+    };
     ($ty:ident, $enum_var:ident) => {
         impl ToStripperType for $ty {
             fn to_stripper_type(&self) -> TypeStruct {
@@ -31,12 +40,51 @@ macro_rules! impl_to_stripper_type {
     }
 }
 
+trait FunctionLikeType {
+    fn doc(&self) -> &Option<String>;
+    fn doc_deprecated(&self) -> &Option<String>;
+    fn ret(&self) -> &Parameter;
+    fn parameters(&self) -> &[Parameter];
+    fn version(&self) -> &Option<Version>;
+    fn deprecated_version(&self) -> &Option<Version>;
+}
+
+macro_rules! impl_function_like_type {
+    ($ty:ident) => {
+        impl FunctionLikeType for $ty {
+            fn doc(&self) -> &Option<String> {
+                &self.doc
+            }
+            fn doc_deprecated(&self) -> &Option<String> {
+                &self.doc_deprecated
+            }
+            fn ret(&self) -> &Parameter {
+                &self.ret
+            }
+            fn parameters(&self) -> &[Parameter] {
+                &self.parameters
+            }
+            fn version(&self) -> &Option<Version> {
+                &self.version
+            }
+            fn deprecated_version(&self) -> &Option<Version> {
+                &self.deprecated_version
+            }
+        }
+    }
+}
+
 impl_to_stripper_type!(Member, Variant);
 impl_to_stripper_type!(Enumeration, Enum);
 impl_to_stripper_type!(Bitfield, Type);
 impl_to_stripper_type!(Record, Struct);
-impl_to_stripper_type!(Function, Fn);
 impl_to_stripper_type!(Class, Struct);
+impl_to_stripper_type!(Function, Fn);
+impl_to_stripper_type!(Signal, Fn, false);
+impl_to_stripper_type!(Property, Fn);
+
+impl_function_like_type!(Function);
+impl_function_like_type!(Signal);
 
 pub fn generate(env: &Env) {
     let path = env.config.target_path.join("vendor.md");
@@ -96,15 +144,18 @@ fn create_object_doc(w: &mut Write, env: &Env, info: &analysis::object::Info) ->
     let has_trait = info.generate_trait;
     let doc;
     let functions: &[Function];
+    let signals: &[Signal];
 
     match *env.library.type_(info.type_id) {
         Type::Class(ref cl) => {
             doc = cl.doc.as_ref();
             functions = &cl.functions;
+            signals = &cl.signals;
         }
         Type::Interface(ref iface) => {
             doc = iface.doc.as_ref();
             functions = &iface.functions;
+            signals = &iface.signals;
         }
         _ => unreachable!(),
     }
@@ -187,6 +238,9 @@ fn create_object_doc(w: &mut Write, env: &Env, info: &analysis::object::Info) ->
             ty.clone()
         };
         try!(create_fn_doc(w, env, function, Some(Box::new(ty))));
+    }
+    for signal in signals {
+        try!(create_fn_doc(w, env, signal, Some(Box::new(ty_ext.clone()))));
     }
     Ok(())
 }
@@ -286,15 +340,15 @@ fn fix_param_names<'a>(doc: &'a str, self_name: &Option<String>) -> Cow<'a, str>
     })
 }
 
-fn create_fn_doc(
+fn create_fn_doc<T>(
     w: &mut Write,
     env: &Env,
-    fn_: &Function,
+    fn_: &T,
     parent: Option<Box<TypeStruct>>,
-) -> Result<()> {
-    if fn_.doc.is_none() && fn_.doc_deprecated.is_none() && fn_.ret.doc.is_none() &&
-        fn_.parameters.iter().all(|p| p.doc.is_none())
-    {
+) -> Result<()>
+where T: FunctionLikeType + ToStripperType {
+    if fn_.doc().is_none() && fn_.doc_deprecated().is_none() && fn_.ret().doc.is_none() &&
+        fn_.parameters().iter().all(|p| p.doc.is_none()) {
         return Ok(());
     }
 
@@ -304,30 +358,30 @@ fn create_fn_doc(
         ..fn_.to_stripper_type()
     };
 
-    let self_name: Option<String> = fn_.parameters
+    let self_name: Option<String> = fn_.parameters()
         .iter()
         .find(|p| p.instance_parameter)
         .map(|p| p.name.clone());
 
     write_item_doc(w, &ty, |w| {
-        if let Some(ref doc) = fn_.doc {
+        if let &Some(ref doc) = fn_.doc() {
             try!(writeln!(
                 w,
                 "{}",
                 reformat_doc(&fix_param_names(doc, &self_name), &symbols)
             ));
         }
-        if let Some(version) = fn_.version {
+        if let &Some(version) = fn_.version() {
             if version > env.config.min_cfg_version {
                 try!(writeln!(w, "\nFeature: `{}`\n", version.to_feature()));
             }
         }
-        if let Some(ver) = fn_.deprecated_version {
+        if let &Some(ver) = fn_.deprecated_version() {
             try!(writeln!(w, "\n# Deprecated since {}\n", ver));
-        } else if fn_.doc_deprecated.is_some() {
+        } else if fn_.doc_deprecated().is_some() {
             try!(writeln!(w, "\n# Deprecated\n"));
         }
-        if let Some(ref doc) = fn_.doc_deprecated {
+        if let &Some(ref doc) = fn_.doc_deprecated() {
             try!(writeln!(
                 w,
                 "{}",
@@ -335,7 +389,7 @@ fn create_fn_doc(
             ));
         }
 
-        for parameter in &fn_.parameters {
+        for parameter in fn_.parameters() {
             if parameter.instance_parameter || parameter.name.is_empty() {
                 continue;
             }
@@ -353,7 +407,7 @@ fn create_fn_doc(
             }
         }
 
-        if let Some(ref doc) = fn_.ret.doc {
+        if let Some(ref doc) = fn_.ret().doc {
             try!(writeln!(w, "\n# Returns\n"));
             try!(writeln!(
                 w,
