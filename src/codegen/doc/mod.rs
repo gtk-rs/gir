@@ -81,7 +81,6 @@ impl_to_stripper_type!(Record, Struct);
 impl_to_stripper_type!(Class, Struct);
 impl_to_stripper_type!(Function, Fn);
 impl_to_stripper_type!(Signal, Fn, false);
-impl_to_stripper_type!(Property, Fn);
 
 impl_function_like_type!(Function);
 impl_function_like_type!(Signal);
@@ -145,17 +144,20 @@ fn create_object_doc(w: &mut Write, env: &Env, info: &analysis::object::Info) ->
     let doc;
     let functions: &[Function];
     let signals: &[Signal];
+    let properties: &[Property];
 
     match *env.library.type_(info.type_id) {
         Type::Class(ref cl) => {
             doc = cl.doc.as_ref();
             functions = &cl.functions;
             signals = &cl.signals;
+            properties = &cl.properties;
         }
         Type::Interface(ref iface) => {
             doc = iface.doc.as_ref();
             functions = &iface.functions;
             signals = &iface.signals;
+            properties = &iface.properties;
         }
         _ => unreachable!(),
     }
@@ -241,6 +243,9 @@ fn create_object_doc(w: &mut Write, env: &Env, info: &analysis::object::Info) ->
     }
     for signal in signals {
         try!(create_fn_doc(w, env, signal, Some(Box::new(ty_ext.clone()))));
+    }
+    for property in properties {
+        try!(create_property_doc(w, env, property, Some(Box::new(ty_ext.clone()))));
     }
     Ok(())
 }
@@ -357,18 +362,16 @@ where T: FunctionLikeType + ToStripperType {
         parent: parent,
         ..fn_.to_stripper_type()
     };
-
     let self_name: Option<String> = fn_.parameters()
-        .iter()
-        .find(|p| p.instance_parameter)
-        .map(|p| p.name.clone());
+                                       .iter()
+                                       .find(|p| p.instance_parameter)
+                                       .map(|p| p.name.clone());
 
     write_item_doc(w, &ty, |w| {
         if let &Some(ref doc) = fn_.doc() {
-            try!(writeln!(
-                w,
-                "{}",
-                reformat_doc(&fix_param_names(doc, &self_name), &symbols)
+            try!(writeln!(w,
+                          "{}",
+                          reformat_doc(&fix_param_names(doc, &self_name), &symbols)
             ));
         }
         if let &Some(version) = fn_.version() {
@@ -394,15 +397,13 @@ where T: FunctionLikeType + ToStripperType {
                 continue;
             }
             if let Some(ref doc) = parameter.doc {
-                try!(writeln!(
-                    w,
-                    "## `{}`",
-                    nameutil::mangle_keywords(&parameter.name[..])
+                try!(writeln!(w,
+                              "## `{}`",
+                              nameutil::mangle_keywords(&parameter.name[..])
                 ));
-                try!(writeln!(
-                    w,
-                    "{}",
-                    reformat_doc(&fix_param_names(doc, &self_name), &symbols)
+                try!(writeln!(w,
+                              "{}",
+                              reformat_doc(&fix_param_names(doc, &self_name), &symbols)
                 ));
             }
         }
@@ -417,4 +418,62 @@ where T: FunctionLikeType + ToStripperType {
         }
         Ok(())
     })
+}
+
+fn create_property_doc(
+    w: &mut Write,
+    env: &Env,
+    property: &Property,
+    parent: Option<Box<TypeStruct>>,
+) -> Result<()> {
+    if property.doc.is_none() && property.doc_deprecated.is_none() &&
+       (property.readable || property.writable) {
+        return Ok(());
+    }
+    let mut v = Vec::with_capacity(2);
+
+    let symbols = env.symbols.borrow();
+    if property.readable {
+        v.push(TypeStruct {
+            parent: parent.clone(),
+            ..TypeStruct::new(SType::Fn, &format!("get_property_{}", property.name))
+        });
+    }
+    if property.writable {
+        v.push(TypeStruct {
+            parent: parent,
+            ..TypeStruct::new(SType::Fn, &format!("set_property_{}", property.name))
+        });
+    }
+
+    for item in &v {
+        try!(write_item_doc(w, item, |w| {
+            if let Some(ref doc) = property.doc {
+                try!(writeln!(
+                     w,
+                     "{}",
+                     reformat_doc(&fix_param_names(doc, &None), &symbols)
+                ));
+            }
+            if let Some(version) = property.version {
+                if version > env.config.min_cfg_version {
+                    try!(writeln!(w, "\nFeature: `{}`\n", version.to_feature()));
+                }
+            }
+            if let Some(ver) = property.deprecated_version {
+                try!(writeln!(w, "\n# Deprecated since {}\n", ver));
+            } else if property.doc_deprecated.is_some() {
+                try!(writeln!(w, "\n# Deprecated\n"));
+            }
+            if let Some(ref doc) = property.doc_deprecated {
+                try!(writeln!(
+                    w,
+                    "{}",
+                    reformat_doc(&fix_param_names(doc, &None), &symbols)
+                ));
+            }
+            Ok(())
+        }));
+    }
+    Ok(())
 }
