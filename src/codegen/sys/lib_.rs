@@ -491,6 +491,9 @@ fn generate_fields(env: &Env, struct_name: &str, fields: &[Field]) -> (Vec<Strin
     // instead guint64
     let is_gvalue = env.config.library_name == "GObject" && struct_name == "Value";
 
+    // TODO: Workaround for GHookList using bitfields
+    let is_ghooklist = env.config.library_name == "GLib" && struct_name == "HookList";
+
     // TODO: GLib/GObject special cases until we have proper union support in Rust
     let is_gweakref = env.config.library_name == "GObject" && struct_name == "WeakRef";
 
@@ -534,7 +537,7 @@ fn generate_fields(env: &Env, struct_name: &str, fields: &[Field]) -> (Vec<Strin
         }
 
         if !cfg!(feature = "use_unions") || (is_bits && !truncated) {
-            if !is_gweakref && !truncated && !is_ptr && (is_union || is_bits) &&
+            if !is_gweakref && !is_ghooklist && !truncated && !is_ptr && (is_union || is_bits) &&
                 !is_union_special_case(&field.c_type)
             {
                 warn!(
@@ -565,7 +568,21 @@ fn generate_fields(env: &Env, struct_name: &str, fields: &[Field]) -> (Vec<Strin
             continue 'fields;
         }
 
-        if is_gweakref && !cfg!(feature = "use_unions") {
+        if is_ghooklist && ["hook_size", "is_setup"].contains(&field.name.as_str()) {
+            // hook_size is 16 bits, is_setup is 1 bit
+            // hook_size is c_ulong aligned, after is_setup is a pointer:
+            // - if sizeof(c_ulong) < sizeof(gpointer) => c_ulong
+            // - if sizeof(c_ulong) == sizeof(gpointer) => gpointer
+            //
+            // sizeof(c_ulong)) == sizeof(gpointer) everywhere except for Windows 64-bit
+            if field.name == "hook_size" {
+                lines.push("\t#[cfg(any(not(windows), not(target_pointer_width = \"64\")))]".to_owned());
+                lines.push("\tpub hook_size_and_setup: gpointer,".to_owned());
+                lines.push("\t#[cfg(all(windows, target_pointer_width = \"64\"))]".to_owned());
+                lines.push("\tpub hook_size_and_setup: c_ulong,".to_owned());
+            }
+            // is_setup is ignored
+        } else if is_gweakref && !cfg!(feature = "use_unions") {
             // union containing a single pointer
             lines.push("\tpub priv_: gpointer,".to_owned());
         } else if let Some(ref c_type) = field.c_type {
