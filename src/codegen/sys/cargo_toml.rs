@@ -68,7 +68,7 @@ fn fill_in(root: &mut Table, env: &Env) {
 
     {
         let deps = upsert_table(root, "dependencies");
-        set_string(deps, "bitflags", "0.9");
+        set_string(deps, "bitflags", "1.0");
         set_string(deps, "libc", "0.2");
     }
 

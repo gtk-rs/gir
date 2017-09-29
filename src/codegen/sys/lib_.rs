@@ -136,6 +136,7 @@ fn generate_bitfields(w: &mut Write, env: &Env, items: &[&Bitfield]) -> Result<(
     for item in items {
         let full_name = format!("{}.{}", env.namespaces.main().name, item.name);
         let config = env.config.objects.get(&full_name);
+        let mut vals: HashMap<String, (String, Option<Version>)> = HashMap::new();
 
         try!(writeln!(
             w,
@@ -154,11 +155,25 @@ fn generate_bitfields(w: &mut Write, env: &Env, items: &[&Bitfield]) -> Result<(
             try!(writeln!(
                 w,
                 "\t\tconst {} = {};",
-                member.c_identifier,
+                member.name.to_uppercase(),
                 val as u32
             ));
+            vals.insert(member.value.clone(), (member.name.clone(), version));
         }
         try!(writeln!(w, "\t}}\n}}"));
+
+        for member in &item.members {
+            if let Some(&(ref value, version)) = vals.get(&member.value) {
+                try!(version_condition(w, env, version, false, 0));
+                try!(writeln!(
+                    w,
+                    "pub const {}: {} = {1}::{};",
+                    member.c_identifier,
+                    item.c_type,
+                    value.to_uppercase(),
+                ));
+            }
+        }
         try!(writeln!(w, ""));
     }
 

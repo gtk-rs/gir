@@ -4,7 +4,6 @@ use config::gobjects::GObject;
 use env::Env;
 use file_saver;
 use library::*;
-use nameutil::strip_prefix_uppercase;
 use std::cmp;
 use std::io::prelude::*;
 use std::io::Result;
@@ -97,10 +96,7 @@ fn generate_flags(
             continue;
         }
 
-        let name = strip_prefix_uppercase(
-            &env.library.namespace(namespaces::MAIN).symbol_prefixes,
-            &member.c_identifier,
-        );
+        let name = member.name.to_uppercase();
         let val: i64 = member.value.parse().unwrap();
         let version = member_config.iter().filter_map(|m| m.version).next();
         try!(version_condition(w, env, version, false, 2));
@@ -110,7 +106,6 @@ fn generate_flags(
         {
             mod_rs.push(cfg);
         }
-        mod_rs.push(format!("pub use self::flags::{};", name));
     }
 
     try!(writeln!(
