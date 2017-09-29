@@ -15,8 +15,9 @@ xml-rs = "0.6"
 toml = "0.4"
 case = "0.1"
 env_logger = "0.4"
-error-chain = { version = "0.10", default-features = false }
-git2 = { version = "0.6", default-features = false }
+error-chain = { version = "0.11", default-features = false }
+# We can update to newer versions once appveyor has a newer version of libgit
+git2 = { version = "=0.6.6", default-features = false }
 lazy_static = "0.2"
 log = "0.3"
 regex = "0.2"
