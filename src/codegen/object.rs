@@ -173,6 +173,9 @@ fn generate_trait(w: &mut Write, env: &Env, analysis: &analysis::object::Info) -
     if analysis.has_signals() || !analysis.properties.is_empty() {
         extra_isa.push(" + IsA<glib::object::Object>");
     }
+    if analysis.has_action_signals() {
+        extra_isa.push(" + glib::object::ObjectExt");
+    }
     try!(write!(
         w,
         "impl<O: IsA<{}>{}> {} for O {{",

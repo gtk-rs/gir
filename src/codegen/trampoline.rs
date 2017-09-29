@@ -30,7 +30,7 @@ pub fn generate(
     };
 
     let params_str = trampoline_parameters(env, analysis);
-    let func_str = func_string(env, analysis, None);
+    let func_str = func_string(env, analysis, None, true);
     let ret_str = trampoline_returns(env, analysis);
 
     try!(version_condition(w, env, analysis.version, false, 0));
@@ -65,43 +65,60 @@ pub fn func_string(
     env: &Env,
     analysis: &Trampoline,
     bound_replace: Option<(char, &str)>,
+    closure: bool,
 ) -> String {
-    let param_str = func_parameters(env, analysis, bound_replace);
+    let param_str = func_parameters(env, analysis, bound_replace, closure);
     let return_str = func_returns(env, analysis);
 
-    let concurrency_str = match analysis.concurrency {
-        // If an object can be Send to other threads, this means that
-        // our callback will be called from whatever thread the object
-        // is sent to. But it will only be ever owned by a single thread
-        // at a time, so signals can only be emitted from one thread at
-        // a time and Sync is not needed
-        library::Concurrency::Send => " + Send",
-        // If an object is Sync, it can be shared between threads, and as
-        // such our callback can be called from arbitrary threads and needs
-        // to be Send *AND* Sync
-        library::Concurrency::SendSync => " + Send + Sync",
-        library::Concurrency::None => "",
-    };
+    if closure {
+        let concurrency_str = match analysis.concurrency {
+            // If an object can be Send to other threads, this means that
+            // our callback will be called from whatever thread the object
+            // is sent to. But it will only be ever owned by a single thread
+            // at a time, so signals can only be emitted from one thread at
+            // a time and Sync is not needed
+            library::Concurrency::Send => " + Send",
+            // If an object is Sync, it can be shared between threads, and as
+            // such our callback can be called from arbitrary threads and needs
+            // to be Send *AND* Sync
+            library::Concurrency::SendSync => " + Send + Sync",
+            library::Concurrency::None => "",
+        };
 
-    format!(
-        "Fn({}){}{} + 'static",
-        param_str,
-        return_str,
-        concurrency_str
-    )
+        format!(
+            "Fn({}){}{} + 'static",
+            param_str,
+            return_str,
+            concurrency_str
+        )
+    } else {
+        format!(
+            "({}){}",
+            param_str,
+            return_str,
+        )
+    }
 }
 
 fn func_parameters(
     env: &Env,
     analysis: &Trampoline,
     bound_replace: Option<(char, &str)>,
+    closure: bool,
 ) -> String {
     let mut param_str = String::with_capacity(100);
 
     for (pos, par) in analysis.parameters.rust_parameters.iter().enumerate() {
         if pos > 0 {
-            param_str.push_str(", ")
+            param_str.push_str(", ");
+            if !closure {
+                param_str.push_str(&format!("{}: ", par.name));
+            }
+        } else if !closure {
+            param_str.push_str("&self");
+            continue;
         }
+
         let s = func_parameter(env, par, &analysis.bounds, bound_replace);
         param_str.push_str(&s);
     }
