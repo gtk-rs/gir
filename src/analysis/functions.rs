@@ -47,6 +47,7 @@ pub struct Info {
     pub deprecated_version: Option<Version>,
     pub not_version: Option<Version>,
     pub cfg_condition: Option<String>,
+    pub target_os: Option<String>,
     pub assertion: SafetyAssertionMode,
     pub doc_hidden: bool,
 }
@@ -120,6 +121,10 @@ fn analyze_function(
     let cfg_condition = configured_functions
         .iter()
         .filter_map(|f| f.cfg_condition.clone())
+        .next();
+    let target_os = configured_functions
+        .iter()
+        .filter_map(|f| f.target_os.clone())
         .next();
     let doc_hidden = configured_functions.iter().any(|f| f.doc_hidden);
     let disable_length_detect = configured_functions.iter().any(|f| f.disable_length_detect);
@@ -232,6 +237,7 @@ fn analyze_function(
         deprecated_version: deprecated_version,
         not_version: None,
         cfg_condition: cfg_condition,
+        target_os: target_os,
         assertion: assertion,
         doc_hidden: doc_hidden,
     }

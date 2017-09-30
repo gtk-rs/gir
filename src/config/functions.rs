@@ -97,6 +97,7 @@ pub struct Function {
     pub ignore: bool,
     pub version: Option<Version>,
     pub cfg_condition: Option<String>,
+    pub target_os: Option<String>,
     pub parameters: Parameters,
     pub ret: Return,
     pub doc_hidden: bool,
@@ -117,7 +118,8 @@ impl Parse for Function {
             }
         };
         toml.check_unwanted(&["ignore", "version", "cfg_condition", "parameter", "return", "name",
-                              "doc_hidden", "is_windows_utf8", "disable_length_detect", "pattern"],
+                              "doc_hidden", "is_windows_utf8", "disable_length_detect", "pattern",
+                              "target_os"],
                             &format!("function {}", object_name));
 
         let ignore = toml.lookup("ignore")
@@ -127,6 +129,9 @@ impl Parse for Function {
             .and_then(|v| v.as_str())
             .and_then(|s| s.parse().ok());
         let cfg_condition = toml.lookup("cfg_condition")
+            .and_then(|v| v.as_str())
+            .map(|s| s.to_owned());
+        let target_os = toml.lookup("target_os")
             .and_then(|v| v.as_str())
             .map(|s| s.to_owned());
         let parameters = Parameters::parse(toml.lookup("parameter"), object_name);
@@ -148,6 +153,7 @@ impl Parse for Function {
             parameters: parameters,
             ret: ret,
             cfg_condition: cfg_condition,
+            target_os: target_os,
             doc_hidden: doc_hidden,
             is_windows_utf8: is_windows_utf8,
             disable_length_detect: disable_length_detect,
