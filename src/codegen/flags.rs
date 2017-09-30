@@ -4,7 +4,6 @@ use config::gobjects::GObject;
 use env::Env;
 use file_saver;
 use library::*;
-use std::cmp;
 use std::io::prelude::*;
 use std::io::Result;
 use std::path::Path;
@@ -71,7 +70,7 @@ pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>) {
                     mod_rs.push(cfg);
                 }
                 mod_rs.push(format!("pub use self::flags::{};", flags.name));
-                try!(generate_flags(env, w, mod_rs, flags, config));
+                try!(generate_flags(env, w, flags, config));
             }
         }
 
@@ -82,7 +81,6 @@ pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>) {
 fn generate_flags(
     env: &Env,
     w: &mut Write,
-    mod_rs: &mut Vec<String>,
     flags: &Bitfield,
     config: &GObject,
 ) -> Result<()> {
@@ -101,11 +99,6 @@ fn generate_flags(
         let version = member_config.iter().filter_map(|m| m.version).next();
         try!(version_condition(w, env, version, false, 2));
         try!(writeln!(w, "\t\tconst {} = {};", name, val as u32));
-        if let Some(cfg) =
-            version_condition_string(env, cmp::max(flags.version, version), false, 0)
-        {
-            mod_rs.push(cfg);
-        }
     }
 
     try!(writeln!(
