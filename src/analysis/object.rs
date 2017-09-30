@@ -35,6 +35,10 @@ impl Info {
         self.signals.iter().any(|s| s.trampoline_name.is_ok()) ||
         self.notify_signals.iter().any(|s| s.trampoline_name.is_ok())
     }
+
+    pub fn has_action_signals(&self) -> bool {
+        self.signals.iter().any(|s| s.action_emit_name.is_some())
+    }
 }
 
 impl Deref for Info {

@@ -1325,6 +1325,7 @@ impl Library {
                 .by_name("name")
                 .ok_or_else(|| mk_error!("Missing signal name", parser))
         );
+        let is_action = to_bool(attrs.by_name("action").unwrap_or("none"));
         let version = match attrs.by_name("version") {
             Some(v) => Some(try!(v.parse().map_err(|why| mk_error!(why, parser)))),
             None => None,
@@ -1389,6 +1390,7 @@ impl Library {
                 name: signal_name.into(),
                 parameters: params,
                 ret: ret,
+                is_action: is_action,
                 version: version,
                 deprecated_version: deprecated_version,
                 doc: doc,

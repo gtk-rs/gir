@@ -12,6 +12,7 @@ use version::Version;
 pub struct Info {
     pub connect_name: String,
     pub signal_name: String,
+    pub action_emit_name: Option<String>,
     pub trampoline_name: Result<String, Vec<String>>,
     pub version: Option<Version>,
     pub deprecated_version: Option<Version>,
@@ -88,6 +89,15 @@ fn analyze_signal(
         version,
     );
 
+    let action_emit_name = if signal.is_action {
+        if !in_trait {
+            imports.add("glib::object::ObjectExt", version);
+        }
+        Some(format!("emit_{}", nameutil::signal_to_snake(&signal.name)))
+    } else {
+        None
+    };
+
     if trampoline_name.is_ok() {
         imports.add_used_types(&used_types, version);
         if in_trait {
@@ -105,6 +115,7 @@ fn analyze_signal(
         connect_name: connect_name,
         signal_name: signal.name.clone(),
         trampoline_name: trampoline_name,
+        action_emit_name: action_emit_name,
         version: version,
         deprecated_version: deprecated_version,
         doc_hidden: doc_hidden,

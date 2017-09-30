@@ -360,6 +360,7 @@ pub struct Signal {
     pub name: String,
     pub parameters: Vec<Parameter>,
     pub ret: Parameter,
+    pub is_action: bool,
     pub version: Option<Version>,
     pub deprecated_version: Option<Version>,
     pub doc: Option<String>,

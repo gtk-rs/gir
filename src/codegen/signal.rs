@@ -1,6 +1,7 @@
 use std::io::{Result, Write};
 
 use analysis;
+use library;
 use chunk::Chunk;
 use consts::TYPE_PARAMETERS_START;
 use env::Env;
@@ -23,8 +24,8 @@ pub fn generate(
     let comment_prefix = if commented { "//" } else { "" };
     let pub_prefix = if in_trait { "" } else { "pub " };
 
-    let function_type_string = function_type_string(env, analysis, trampolines);
-    let declaration = declaration(analysis, &function_type_string);
+    let function_type = function_type_string(env, analysis, trampolines, true);
+    let declaration = declaration(analysis, &function_type);
     let suffix = if only_declaration { ";" } else { " {" };
 
     try!(writeln!(w, ""));
@@ -47,7 +48,7 @@ pub fn generate(
     ));
 
     if !only_declaration {
-        match function_type_string {
+        match function_type {
             Some(ref type_) => {
                 let body = body(analysis, type_, in_trait).to_code(env);
                 for s in body {
@@ -72,6 +73,85 @@ pub fn generate(
         }
     }
 
+    if let Some(ref emit_name) = analysis.action_emit_name {
+        try!(writeln!(w, ""));
+        try!(version_condition(
+            w,
+            env,
+            analysis.version,
+            commented,
+            indent,
+        ));
+
+        let function_type = function_type_string(env, analysis, trampolines, false);
+
+        try!(writeln!(
+            w,
+            "{}{}{}fn {}{}{}",
+            tabs(indent),
+            comment_prefix,
+            pub_prefix,
+            emit_name,
+            function_type.unwrap(),
+            suffix));
+
+        if !only_declaration {
+            let trampoline_name = analysis.trampoline_name.as_ref().unwrap();
+            let trampoline = match trampolines.iter().find(|t| *trampoline_name == t.name) {
+                Some(trampoline) => trampoline,
+                None => {
+                    panic!(
+                        "Internal error: can't find trampoline '{}'",
+                        trampoline_name
+                    )
+                }
+            };
+            let mut args = String::with_capacity(100);
+
+            for (pos, par) in trampoline.parameters.rust_parameters.iter().enumerate() {
+                // Skip the self parameter
+                if pos == 0 {
+                    continue;
+                }
+
+                if pos > 1 {
+                    args.push_str(", ");
+                }
+                args.push('&');
+                args.push_str(&par.name);
+            }
+
+            try!(writeln!(
+                w,
+                "{}let {} = self.emit(\"{}\", &[{}]).unwrap();",
+                tabs(indent+1),
+                if trampoline.ret.typ != Default::default() { "res" } else { "_" },
+                analysis.signal_name,
+                args,
+                ));
+
+            if trampoline.ret.typ != Default::default() {
+                if trampoline.ret.nullable == library::Nullable(true) {
+                    try!(writeln!(
+                        w,
+                        "{}res.unwrap().get()",
+                        tabs(indent+1),
+                    ));
+                } else {
+                    try!(writeln!(
+                        w,
+                        "{}res.unwrap().get().unwrap()",
+                        tabs(indent+1),
+                    ));
+                }
+            }
+            try!(writeln!(
+                w,
+                "{}}}",
+                tabs(indent)));
+        }
+    }
+
     Ok(())
 }
 
@@ -79,6 +159,7 @@ fn function_type_string(
     env: &Env,
     analysis: &analysis::signals::Info,
     trampolines: &analysis::trampolines::Trampolines,
+    closure: bool,
 ) -> Option<String> {
     if analysis.trampoline_name.is_err() {
         return None;
@@ -98,16 +179,21 @@ fn function_type_string(
     let type_ = func_string(
         env,
         trampoline,
-        Some((TYPE_PARAMETERS_START, "Self")),
+        if closure {
+            Some((TYPE_PARAMETERS_START, "Self"))
+        } else {
+            Some((TYPE_PARAMETERS_START, "self"))
+        },
+        closure,
     );
     Some(type_)
 }
 
 fn declaration(
     analysis: &analysis::signals::Info,
-    function_type_string: &Option<String>,
+    function_type: &Option<String>,
 ) -> String {
-    let bounds = bounds(function_type_string);
+    let bounds = bounds(function_type);
     let param_str = "&self, f: F";
     let return_str = " -> SignalHandlerId";
     format!(
@@ -119,21 +205,21 @@ fn declaration(
     )
 }
 
-fn bounds(function_type_string: &Option<String>) -> String {
-    match *function_type_string {
+fn bounds(function_type: &Option<String>) -> String {
+    match *function_type {
         Some(ref type_) => format!("F: {}", type_),
         _ => "Unsupported or ignored types".to_owned(),
     }
 }
 
-fn body(analysis: &analysis::signals::Info, function_type_string: &str, in_trait: bool) -> Chunk {
+fn body(analysis: &analysis::signals::Info, function_type: &str, in_trait: bool) -> Chunk {
     let mut builder = signal_body::Builder::new();
 
     builder
         .signal_name(&analysis.signal_name)
         .trampoline_name(analysis.trampoline_name.as_ref().unwrap())
         .in_trait(in_trait)
-        .function_type_string(function_type_string);
+        .function_type_string(function_type);
 
     builder.generate()
 }
