@@ -2,7 +2,7 @@ use std::io::{Result, Write};
 
 use env::Env;
 use library;
-use analysis::bounds::{Bounds, BoundType};
+use analysis::bounds::{BoundType, Bounds};
 use analysis::ffi_type::ffi_type;
 use analysis::ref_mode::RefMode;
 use analysis::rust_type::parameter_rust_type;
@@ -92,11 +92,7 @@ pub fn func_string(
             concurrency_str
         )
     } else {
-        format!(
-            "({}){}",
-            param_str,
-            return_str,
-        )
+        format!("({}){}", param_str, return_str,)
     }
 }
 
@@ -142,24 +138,20 @@ fn func_parameter(
     };
 
     match bounds.get_parameter_alias_info(&par.name) {
-        Some((t, bound_type)) => {
-            match bound_type {
-                BoundType::IsA(_) => {
-                    if *par.nullable {
-                        format!("&Option<{}{}>", mut_str, t)
-                    } else if let Some((from, to)) = bound_replace {
-                        if from == t {
-                            format!("&{}{}", mut_str, to)
-                        } else {
-                            format!("&{}{}", mut_str, t)
-                        }
-                    } else {
-                        format!("&{}{}", mut_str, t)
-                    }
+        Some((t, bound_type)) => match bound_type {
+            BoundType::IsA(_) => if *par.nullable {
+                format!("&Option<{}{}>", mut_str, t)
+            } else if let Some((from, to)) = bound_replace {
+                if from == t {
+                    format!("&{}{}", mut_str, to)
+                } else {
+                    format!("&{}{}", mut_str, t)
                 }
-                BoundType::AsRef(_) | BoundType::Into(_, _) => t.to_string(),
-            }
-        }
+            } else {
+                format!("&{}{}", mut_str, t)
+            },
+            BoundType::AsRef(_) | BoundType::Into(_, _) => t.to_string(),
+        },
         None => {
             let rust_type =
                 parameter_rust_type(env, par.typ, par.direction, par.nullable, ref_mode);
@@ -180,8 +172,10 @@ fn func_returns(env: &Env, analysis: &Trampoline) -> String {
 
 fn trampoline_parameters(env: &Env, analysis: &Trampoline) -> String {
     if analysis.is_notify {
-        return format!("{}, _param_spec: glib_ffi::gpointer",
-            trampoline_parameter(env, &analysis.parameters.c_parameters[0]));
+        return format!(
+            "{}, _param_spec: glib_ffi::gpointer",
+            trampoline_parameter(env, &analysis.parameters.c_parameters[0])
+        );
     }
 
     let mut parameter_strs: Vec<String> = Vec::new();

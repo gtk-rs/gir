@@ -55,21 +55,19 @@ pub fn generate(
                     try!(writeln!(w, "{}{}", tabs(indent), s));
                 }
             }
-            _ => {
-                if let Err(ref errors) = analysis.trampoline_name {
-                    for error in errors {
-                        try!(writeln!(w, "{}{}\t{}", tabs(indent), comment_prefix, error));
-                    }
-                    try!(writeln!(w, "{}{}}}", tabs(indent), comment_prefix));
-                } else {
-                    try!(writeln!(
-                        w,
-                        "{}{}\tTODO: connect to trampoline\n{0}{1}}}",
-                        tabs(indent),
-                        comment_prefix
-                    ));
+            _ => if let Err(ref errors) = analysis.trampoline_name {
+                for error in errors {
+                    try!(writeln!(w, "{}{}\t{}", tabs(indent), comment_prefix, error));
                 }
-            }
+                try!(writeln!(w, "{}{}}}", tabs(indent), comment_prefix));
+            } else {
+                try!(writeln!(
+                    w,
+                    "{}{}\tTODO: connect to trampoline\n{0}{1}}}",
+                    tabs(indent),
+                    comment_prefix
+                ));
+            },
         }
     }
 
@@ -93,18 +91,17 @@ pub fn generate(
             pub_prefix,
             emit_name,
             function_type.unwrap(),
-            suffix));
+            suffix
+        ));
 
         if !only_declaration {
             let trampoline_name = analysis.trampoline_name.as_ref().unwrap();
             let trampoline = match trampolines.iter().find(|t| *trampoline_name == t.name) {
                 Some(trampoline) => trampoline,
-                None => {
-                    panic!(
-                        "Internal error: can't find trampoline '{}'",
-                        trampoline_name
-                    )
-                }
+                None => panic!(
+                    "Internal error: can't find trampoline '{}'",
+                    trampoline_name
+                ),
             };
             let mut args = String::with_capacity(100);
 
@@ -124,31 +121,28 @@ pub fn generate(
             try!(writeln!(
                 w,
                 "{}let {} = self.emit(\"{}\", &[{}]).unwrap();",
-                tabs(indent+1),
-                if trampoline.ret.typ != Default::default() { "res" } else { "_" },
+                tabs(indent + 1),
+                if trampoline.ret.typ != Default::default() {
+                    "res"
+                } else {
+                    "_"
+                },
                 analysis.signal_name,
                 args,
-                ));
+            ));
 
             if trampoline.ret.typ != Default::default() {
                 if trampoline.ret.nullable == library::Nullable(true) {
-                    try!(writeln!(
-                        w,
-                        "{}res.unwrap().get()",
-                        tabs(indent+1),
-                    ));
+                    try!(writeln!(w, "{}res.unwrap().get()", tabs(indent + 1),));
                 } else {
                     try!(writeln!(
                         w,
                         "{}res.unwrap().get().unwrap()",
-                        tabs(indent+1),
+                        tabs(indent + 1),
                     ));
                 }
             }
-            try!(writeln!(
-                w,
-                "{}}}",
-                tabs(indent)));
+            try!(writeln!(w, "{}}}", tabs(indent)));
         }
     }
 
@@ -168,12 +162,10 @@ fn function_type_string(
     let trampoline_name = analysis.trampoline_name.as_ref().unwrap();
     let trampoline = match trampolines.iter().find(|t| *trampoline_name == t.name) {
         Some(trampoline) => trampoline,
-        None => {
-            panic!(
-                "Internal error: can't find trampoline '{}'",
-                trampoline_name
-            )
-        }
+        None => panic!(
+            "Internal error: can't find trampoline '{}'",
+            trampoline_name
+        ),
     };
 
     let type_ = func_string(
@@ -189,10 +181,7 @@ fn function_type_string(
     Some(type_)
 }
 
-fn declaration(
-    analysis: &analysis::signals::Info,
-    function_type: &Option<String>,
-) -> String {
+fn declaration(analysis: &analysis::signals::Info, function_type: &Option<String>) -> String {
     let bounds = bounds(function_type);
     let param_str = "&self, f: F";
     let return_str = " -> SignalHandlerId";

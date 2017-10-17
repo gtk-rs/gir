@@ -80,35 +80,31 @@ fn rust_type_full(
                 Int64 => ok("i64"),
                 UInt64 => ok("u64"),
 
-                Int => ok("i32"),      //maybe dependent on target system
-                UInt => ok("u32"),     //maybe dependent on target system
+                Int => ok("i32"),  //maybe dependent on target system
+                UInt => ok("u32"), //maybe dependent on target system
 
-                Short => ok("libc::c_short"),   //depends of target system
+                Short => ok("libc::c_short"), //depends of target system
                 UShort => ok("libc::c_ushort"), //depends of target system
-                Long => ok("libc::c_long"),     //depends of target system
-                ULong => ok("libc::c_ulong"),   //depends of target system
+                Long => ok("libc::c_long"),   //depends of target system
+                ULong => ok("libc::c_ulong"), //depends of target system
 
-                Size => ok("usize"),     //depends of target system
-                SSize => ok("isize"),    //depends of target system
+                Size => ok("usize"),  //depends of target system
+                SSize => ok("isize"), //depends of target system
 
                 Float => ok("f32"),
                 Double => ok("f64"),
 
                 UniChar => ok("char"),
-                Utf8 => {
-                    if ref_mode.is_ref() {
-                        ok("str")
-                    } else {
-                        ok("String")
-                    }
-                }
-                Filename => {
-                    if ref_mode.is_ref() {
-                        ok("std::path::Path")
-                    } else {
-                        ok("std::path::PathBuf")
-                    }
-                }
+                Utf8 => if ref_mode.is_ref() {
+                    ok("str")
+                } else {
+                    ok("String")
+                },
+                Filename => if ref_mode.is_ref() {
+                    ok("std::path::Path")
+                } else {
+                    ok("std::path::PathBuf")
+                },
                 Type if env.namespaces.glib_ns_id == library::MAIN_NAMESPACE => ok("types::Type"),
                 Type => ok("glib::types::Type"),
                 Unsupported => err("Unsupported"),
@@ -134,20 +130,24 @@ fn rust_type_full(
             }
         }
         List(inner_tid) | SList(inner_tid) | CArray(inner_tid)
-            if ConversionType::of(&env.library, inner_tid) == ConversionType::Pointer => {
+            if ConversionType::of(&env.library, inner_tid) == ConversionType::Pointer =>
+        {
             skip_option = true;
             let inner_ref_mode = match *env.library.type_(inner_tid) {
                 Class(..) | Interface(..) => RefMode::None,
                 _ => ref_mode,
             };
-            rust_type_full(env, inner_tid, Nullable(false), inner_ref_mode)
-                .map_any(|s| if ref_mode.is_ref() {
+            rust_type_full(env, inner_tid, Nullable(false), inner_ref_mode).map_any(
+                |s| if ref_mode.is_ref() {
                     format!("[{}]", s)
                 } else {
                     format!("Vec<{}>", s)
-                })
+                },
+            )
         }
-        CArray(inner_tid) if ConversionType::of(&env.library, inner_tid) == ConversionType::Direct => {
+        CArray(inner_tid)
+            if ConversionType::of(&env.library, inner_tid) == ConversionType::Direct =>
+        {
             if let Fundamental(fund) = *env.library.type_(inner_tid) {
                 let array_type = match fund {
                     Int8 => Some("i8"),
@@ -159,8 +159,8 @@ fn rust_type_full(
                     Int64 => Some("i64"),
                     UInt64 => Some("u64"),
 
-                    Int => Some("i32"),      //maybe dependent on target system
-                    UInt => Some("u32"),     //maybe dependent on target system
+                    Int => Some("i32"),  //maybe dependent on target system
+                    UInt => Some("u32"), //maybe dependent on target system
 
                     Float => Some("f32"),
                     Double => Some("f64"),
@@ -184,8 +184,8 @@ fn rust_type_full(
         _ => Err(TypeError::Unimplemented(type_.get_name().to_owned())),
     };
 
-    if type_id.ns_id != library::MAIN_NAMESPACE && type_id.ns_id != library::INTERNAL_NAMESPACE &&
-        !implemented_in_main_namespace(&env.library, type_id)
+    if type_id.ns_id != library::MAIN_NAMESPACE && type_id.ns_id != library::INTERNAL_NAMESPACE
+        && !implemented_in_main_namespace(&env.library, type_id)
     {
         if env.type_status(&type_id.full_name(&env.library)).ignored() {
             rust_type = Err(TypeError::Ignored(into_inner(rust_type)));
@@ -248,9 +248,9 @@ pub fn parameter_rust_type(
     match *type_ {
         Fundamental(fund) => {
             if fund == library::Fundamental::Utf8 || fund == library::Fundamental::Filename {
-                if direction == library::ParameterDirection::InOut ||
-                    (direction == library::ParameterDirection::Out &&
-                         ref_mode == RefMode::ByRefMut)
+                if direction == library::ParameterDirection::InOut
+                    || (direction == library::ParameterDirection::Out
+                        && ref_mode == RefMode::ByRefMut)
                 {
                     return Err(TypeError::Unimplemented(into_inner(rust_type)));
                 }
@@ -258,50 +258,39 @@ pub fn parameter_rust_type(
             rust_type.map_any(|s| format_parameter(s, direction))
         }
 
-        Alias(ref alias) => {
-            rust_type
-                .and_then(|s| {
-                    parameter_rust_type(env, alias.typ, direction, nullable, ref_mode)
-                        .map_any(|_| s)
-                })
-                .map_any(|s| format_parameter(s, direction))
-        }
+        Alias(ref alias) => rust_type
+            .and_then(|s| {
+                parameter_rust_type(env, alias.typ, direction, nullable, ref_mode).map_any(|_| s)
+            })
+            .map_any(|s| format_parameter(s, direction)),
 
         Enumeration(..) | Union(..) | Bitfield(..) => {
             rust_type.map_any(|s| format_parameter(s, direction))
         }
 
-        Record(..) => {
-            if direction == library::ParameterDirection::InOut {
-                Err(TypeError::Unimplemented(into_inner(rust_type)))
-            } else {
-                rust_type
-            }
-        }
+        Record(..) => if direction == library::ParameterDirection::InOut {
+            Err(TypeError::Unimplemented(into_inner(rust_type)))
+        } else {
+            rust_type
+        },
 
-        Class(..) | Interface(..) => {
-            match direction {
-                library::ParameterDirection::In |
-                library::ParameterDirection::Out |
-                library::ParameterDirection::Return => rust_type,
-                _ => Err(TypeError::Unimplemented(into_inner(rust_type))),
-            }
-        }
+        Class(..) | Interface(..) => match direction {
+            library::ParameterDirection::In |
+            library::ParameterDirection::Out |
+            library::ParameterDirection::Return => rust_type,
+            _ => Err(TypeError::Unimplemented(into_inner(rust_type))),
+        },
 
-        List(..) | SList(..) => {
-            match direction {
-                library::ParameterDirection::In | library::ParameterDirection::Return => rust_type,
-                _ => Err(TypeError::Unimplemented(into_inner(rust_type))),
-            }
-        }
-        CArray(..) => {
-            match direction {
-                library::ParameterDirection::In |
-                library::ParameterDirection::Out |
-                library::ParameterDirection::Return => rust_type,
-                _ => Err(TypeError::Unimplemented(into_inner(rust_type))),
-            }
-        }
+        List(..) | SList(..) => match direction {
+            library::ParameterDirection::In | library::ParameterDirection::Return => rust_type,
+            _ => Err(TypeError::Unimplemented(into_inner(rust_type))),
+        },
+        CArray(..) => match direction {
+            library::ParameterDirection::In |
+            library::ParameterDirection::Out |
+            library::ParameterDirection::Return => rust_type,
+            _ => Err(TypeError::Unimplemented(into_inner(rust_type))),
+        },
         _ => Err(TypeError::Unimplemented(type_.get_name().to_owned())),
     }
 }

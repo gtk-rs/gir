@@ -469,7 +469,10 @@ fn generate_records(w: &mut Write, env: &Env, records: &[&Record]) -> Result<()>
             ));
         } else {
             if record.name == "Value" {
-                try!(writeln!(w, "#[cfg(any(target_pointer_width = \"128\", feature = \"dox\"))]"));
+                try!(writeln!(
+                    w,
+                    "#[cfg(any(target_pointer_width = \"128\", feature = \"dox\"))]"
+                ));
                 try!(writeln!(
                     w,
                     "const ERROR: () = \"Your pointers are too big.\";"
@@ -537,8 +540,8 @@ fn generate_fields(env: &Env, struct_name: &str, fields: &[Field]) -> (Vec<Strin
             if is_union && !truncated {
                 if let Some(union_) = env.library.type_(field.typ).maybe_ref_as::<Union>() {
                     for union_field in &union_.fields {
-                        if union_field.name.contains("reserved") ||
-                            union_field.name.contains("padding")
+                        if union_field.name.contains("reserved")
+                            || union_field.name.contains("padding")
                         {
                             if let Some(ref c_type) = union_field.c_type {
                                 let name = mangle_keywords(&*union_field.name);
@@ -556,8 +559,8 @@ fn generate_fields(env: &Env, struct_name: &str, fields: &[Field]) -> (Vec<Strin
         }
 
         if !cfg!(feature = "use_unions") || (is_bits && !truncated) {
-            if !is_gweakref && !is_ghooklist && !truncated && !is_ptr && (is_union || is_bits) &&
-                !is_union_special_case(&field.c_type)
+            if !is_gweakref && !is_ghooklist && !truncated && !is_ptr && (is_union || is_bits)
+                && !is_union_special_case(&field.c_type)
             {
                 warn!(
                     "Field `{}::{}` not expressible in Rust, truncated",
@@ -595,14 +598,20 @@ fn generate_fields(env: &Env, struct_name: &str, fields: &[Field]) -> (Vec<Strin
             //
             // sizeof(c_ulong)) == sizeof(gpointer) everywhere except for Windows 64-bit
             if field.name == "hook_size" {
-                lines.push("\t#[cfg(any(not(windows), \
-                            not(target_pointer_width = \"64\"), feature = \"dox\"))]".to_owned());
+                lines.push(
+                    "\t#[cfg(any(not(windows), \
+                     not(target_pointer_width = \"64\"), feature = \"dox\"))]"
+                        .to_owned(),
+                );
                 lines.push("\tpub hook_size_and_setup: gpointer,".to_owned());
-                lines.push("\t#[cfg(any(all(windows, target_pointer_width = \"64\"), \
-                            feature = \"dox\"))]".to_owned());
+                lines.push(
+                    "\t#[cfg(any(all(windows, target_pointer_width = \"64\"), \
+                     feature = \"dox\"))]"
+                        .to_owned(),
+                );
                 lines.push("\tpub hook_size_and_setup: c_ulong,".to_owned());
             }
-            // is_setup is ignored
+        // is_setup is ignored
         } else if is_gweakref && !cfg!(feature = "use_unions") {
             // union containing a single pointer
             lines.push("\tpub priv_: gpointer,".to_owned());

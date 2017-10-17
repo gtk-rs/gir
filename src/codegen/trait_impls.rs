@@ -28,16 +28,19 @@ pub fn generate(
                 ));
             }
             Type::Equal => {
-                try!(generate_eq(w, type_name, lookup(functions, name), trait_name));
-            }
-            Type::ToString => {
-                try!(generate_display(
+                try!(generate_eq(
                     w,
                     type_name,
                     lookup(functions, name),
-                    trait_name,
-                ))
+                    trait_name
+                ));
             }
+            Type::ToString => try!(generate_display(
+                w,
+                type_name,
+                lookup(functions, name),
+                trait_name,
+            )),
             _ => {}
         }
     }
@@ -79,7 +82,12 @@ fn generate_call(func_name: &str, args: &[&str], trait_name: Option<&str>) -> St
     }
 }
 
-fn generate_display(w: &mut Write, type_name: &str, func: &Info, trait_name: Option<&str>) -> Result<()> {
+fn generate_display(
+    w: &mut Write,
+    type_name: &str,
+    func: &Info,
+    trait_name: Option<&str>,
+) -> Result<()> {
     use analysis::out_parameters::Mode;
 
     let call = generate_call(&func.name, &[], trait_name);
@@ -110,7 +118,12 @@ impl fmt::Display for {type_name} {{
     )
 }
 
-fn generate_eq(w: &mut Write, type_name: &str, func: &Info, trait_name: Option<&str>) -> Result<()> {
+fn generate_eq(
+    w: &mut Write,
+    type_name: &str,
+    func: &Info,
+    trait_name: Option<&str>,
+) -> Result<()> {
     let call = generate_call(&func.name, &["other"], trait_name);
 
     writeln!(
@@ -129,7 +142,12 @@ impl Eq for {type_name} {{}}",
     )
 }
 
-fn generate_eq_compare(w: &mut Write, type_name: &str, func: &Info, trait_name: Option<&str>) -> Result<()> {
+fn generate_eq_compare(
+    w: &mut Write,
+    type_name: &str,
+    func: &Info,
+    trait_name: Option<&str>,
+) -> Result<()> {
     let call = generate_call(&func.name, &["other"], trait_name);
 
     writeln!(
@@ -148,7 +166,12 @@ impl Eq for {type_name} {{}}",
     )
 }
 
-fn generate_ord(w: &mut Write, type_name: &str, func: &Info, trait_name: Option<&str>) -> Result<()> {
+fn generate_ord(
+    w: &mut Write,
+    type_name: &str,
+    func: &Info,
+    trait_name: Option<&str>,
+) -> Result<()> {
     let call = generate_call(&func.name, &["other"], trait_name);
 
     writeln!(

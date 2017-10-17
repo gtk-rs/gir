@@ -6,7 +6,7 @@ use xml::attribute::OwnedAttribute;
 use xml::common::Position;
 use xml::name::OwnedName;
 use xml::reader::EventReader;
-use xml::reader::XmlEvent::{StartElement, EndElement, EndDocument, Characters};
+use xml::reader::XmlEvent::{Characters, EndDocument, EndElement, StartElement};
 
 use config::error::*;
 use library::*;
@@ -48,14 +48,16 @@ impl Library {
             try!(
                 match event {
                     Ok(StartElement {
-                        name: OwnedName {
-                            ref local_name,
-                            namespace: Some(ref namespace),
-                            ..
-                        },
+                        name:
+                            OwnedName {
+                                ref local_name,
+                                namespace: Some(ref namespace),
+                                ..
+                            },
                         ..
-                    }) if local_name == "repository" &&
-                          namespace == "http://www.gtk.org/introspection/core/1.0" => {
+                    }) if local_name == "repository"
+                        && namespace == "http://www.gtk.org/introspection/core/1.0" =>
+                    {
                         match self.read_repository(dir, &mut parser) {
                             // To prevent repeat message in "caused by:" for each file
                             e @ Err(Error(ErrorKind::Msg(_), _)) => return e,
@@ -235,87 +237,72 @@ impl Library {
             match event {
                 StartElement {
                     name, attributes, ..
-                } => {
-                    match name.local_name.as_ref() {
-                        kind @ "constructor" | kind @ "function" | kind @ "method" => {
-                            try!(self.read_function_to_vec(
-                                parser,
-                                ns_id,
-                                kind,
-                                &attributes,
-                                &mut fns,
-                            ))
-                        }
-                        "implements" => {
-                            impls.push(try!(self.read_type(parser, ns_id, &name, &attributes)).0)
-                        }
-                        "signal" => {
-                            try!(self.read_signal_to_vec(
-                                parser,
-                                ns_id,
-                                &attributes,
-                                &mut signals,
-                            ))
-                        }
-                        "property" => {
-                            try!(self.read_property_to_vec(
-                                parser,
-                                ns_id,
-                                &attributes,
-                                &mut properties,
-                            ))
-                        }
-                        "field" => fields.push(try!(self.read_field(parser, ns_id, &attributes))),
-                        "virtual-method" => try!(ignore_element(parser)),
-                        "doc" => doc = try!(read_text(parser)),
-                        "union" => {
-                            if let Type::Union(mut u) = try!(self.read_union(
-                                parser,
-                                ns_id,
-                                &attributes,
-                                Some(class_name),
-                                Some(c_type)
-                            )) {
-                                let field_name =
-                                    if let Some(field_name) = attributes.by_name("name") {
-                                        field_name.into()
-                                    } else {
-                                        format!("u{}", union_count)
-                                    };
-
-                                u = Union {
-                                    name: format!("{}_{}", class_name, field_name),
-                                    c_type: Some(format!("{}_{}", c_type, field_name)),
-                                    ..u
-                                };
-
-                                let u_doc = u.doc.clone();
-                                let ctype = u.c_type.clone();
-
-                                let type_id = {
-                                    #[cfg(not(feature = "use_unions"))]
-                                    {
-                                        Type::union(self, u, INTERNAL_NAMESPACE)
-                                    }
-                                    #[cfg(feature = "use_unions")]
-                                    {
-                                        Type::union(self, u, ns_id)
-                                    }
-                                };
-
-                                fields.push(Field {
-                                    name: field_name,
-                                    typ: type_id,
-                                    doc: u_doc,
-                                    c_type: ctype,
-                                    ..Field::default()
-                                });
-                                union_count += 1;
-                            }
-                        }
-                        x => bail!(mk_error!(format!("Unexpected element <{}>", x), parser)),
+                } => match name.local_name.as_ref() {
+                    kind @ "constructor" | kind @ "function" | kind @ "method" => try!(
+                        self.read_function_to_vec(parser, ns_id, kind, &attributes, &mut fns,)
+                    ),
+                    "implements" => {
+                        impls.push(try!(self.read_type(parser, ns_id, &name, &attributes)).0)
                     }
-                }
+                    "signal" => try!(self.read_signal_to_vec(
+                        parser,
+                        ns_id,
+                        &attributes,
+                        &mut signals,
+                    )),
+                    "property" => try!(self.read_property_to_vec(
+                        parser,
+                        ns_id,
+                        &attributes,
+                        &mut properties,
+                    )),
+                    "field" => fields.push(try!(self.read_field(parser, ns_id, &attributes))),
+                    "virtual-method" => try!(ignore_element(parser)),
+                    "doc" => doc = try!(read_text(parser)),
+                    "union" => if let Type::Union(mut u) = try!(self.read_union(
+                        parser,
+                        ns_id,
+                        &attributes,
+                        Some(class_name),
+                        Some(c_type)
+                    )) {
+                        let field_name = if let Some(field_name) = attributes.by_name("name") {
+                            field_name.into()
+                        } else {
+                            format!("u{}", union_count)
+                        };
+
+                        u = Union {
+                            name: format!("{}_{}", class_name, field_name),
+                            c_type: Some(format!("{}_{}", c_type, field_name)),
+                            ..u
+                        };
+
+                        let u_doc = u.doc.clone();
+                        let ctype = u.c_type.clone();
+
+                        let type_id = {
+                            #[cfg(not(feature = "use_unions"))]
+                            {
+                                Type::union(self, u, INTERNAL_NAMESPACE)
+                            }
+                            #[cfg(feature = "use_unions")]
+                            {
+                                Type::union(self, u, ns_id)
+                            }
+                        };
+
+                        fields.push(Field {
+                            name: field_name,
+                            typ: type_id,
+                            doc: u_doc,
+                            c_type: ctype,
+                            ..Field::default()
+                        });
+                        union_count += 1;
+                    },
+                    x => bail!(mk_error!(format!("Unexpected element <{}>", x), parser)),
+                },
                 EndElement { .. } => break,
                 _ => xml_next!(event, parser),
             }
@@ -348,7 +335,6 @@ impl Library {
         ns_id: u16,
         attrs: &Attributes,
     ) -> Result<()> {
-
         if let Some(typ) = try!(self.read_record(parser, ns_id, attrs, None, None)) {
             let name = typ.get_name().clone();
             self.add_type(ns_id, &name, typ);
@@ -396,82 +382,73 @@ impl Library {
                     name, attributes, ..
                 } => {
                     match name.local_name.as_ref() {
-                        kind @ "constructor" | kind @ "function" | kind @ "method" => {
-                            try!(self.read_function_to_vec(
-                                parser,
-                                ns_id,
-                                kind,
-                                &attributes,
-                                &mut fns,
-                            ))
-                        }
-                        "union" => {
-                            if let Type::Union(mut u) = try!(self.read_union(
-                                parser,
-                                ns_id,
-                                &attributes,
-                                Some(record_name),
-                                Some(c_type)
-                            )) {
-                                let field_name =
-                                    if let Some(field_name) = attributes.by_name("name") {
-                                        field_name.into()
-                                    } else {
-                                        format!("u{}", union_count)
-                                    };
+                        kind @ "constructor" | kind @ "function" | kind @ "method" => try!(
+                            self.read_function_to_vec(parser, ns_id, kind, &attributes, &mut fns,)
+                        ),
+                        "union" => if let Type::Union(mut u) = try!(self.read_union(
+                            parser,
+                            ns_id,
+                            &attributes,
+                            Some(record_name),
+                            Some(c_type)
+                        )) {
+                            let field_name = if let Some(field_name) = attributes.by_name("name") {
+                                field_name.into()
+                            } else {
+                                format!("u{}", union_count)
+                            };
 
-                                u = Union {
-                                    name: format!(
-                                        "{}{}_{}",
-                                        parent_name_prefix
-                                            .map(|s| {
-                                                let mut s = String::from(s);
-                                                s.push('_');
-                                                s
-                                            })
-                                            .unwrap_or_else(String::new),
-                                        record_name,
-                                        field_name
-                                    ),
-                                    c_type: Some(format!(
-                                        "{}{}_{}",
-                                        parent_ctype_prefix
-                                            .map(|s| {
-                                                let mut s = String::from(s);
-                                                s.push('_');
-                                                s
-                                            })
-                                            .unwrap_or_else(String::new),
-                                        c_type,
-                                        field_name
-                                    )),
-                                    ..u
-                                };
+                            u = Union {
+                                name: format!(
+                                    "{}{}_{}",
+                                    parent_name_prefix
+                                        .map(|s| {
+                                            let mut s = String::from(s);
+                                            s.push('_');
+                                            s
+                                        })
+                                        .unwrap_or_else(String::new),
+                                    record_name,
+                                    field_name
+                                ),
+                                c_type: Some(format!(
+                                    "{}{}_{}",
+                                    parent_ctype_prefix
+                                        .map(|s| {
+                                            let mut s = String::from(s);
+                                            s.push('_');
+                                            s
+                                        })
+                                        .unwrap_or_else(String::new),
+                                    c_type,
+                                    field_name
+                                )),
+                                ..u
+                            };
 
-                                let u_doc = u.doc.clone();
-                                let ctype = u.c_type.clone();
+                            let u_doc = u.doc.clone();
+                            let ctype = u.c_type.clone();
 
-                                let type_id = {
-                                    #[cfg(not(feature = "use_unions"))]
-                                    {
-                                        Type::union(self, u, INTERNAL_NAMESPACE)
-                                    }
-                                    #[cfg(feature = "use_unions")]
-                                    {
-                                        Type::union(self, u, ns_id)
-                                    }
-                                };
+                            let type_id = {
+                                #[cfg(not(feature = "use_unions"))]
+                                {
+                                    Type::union(self, u, INTERNAL_NAMESPACE)
+                                }
+                                #[cfg(feature = "use_unions")]
+                                {
+                                    Type::union(self, u, ns_id)
+                                }
+                            };
 
-                                fields.push(Field {
-                                    name: field_name,
-                                    typ: type_id,
-                                    doc: u_doc,
-                                    c_type: ctype,
-                                    ..Field::default()
-                                });
-                                union_count += 1;
-                            }
-                        }
+                            fields.push(Field {
+                                name: field_name,
+                                typ: type_id,
+                                doc: u_doc,
+                                c_type: ctype,
+                                ..Field::default()
+                            });
+                            union_count += 1;
+                        },
                         "field" => {
                             if let Ok(mut f) = self.read_field(parser, ns_id, &attributes) {
                                 // Workaround for wrong GValue c:type
@@ -576,95 +553,87 @@ impl Library {
             match event {
                 StartElement {
                     name, attributes, ..
-                } => {
-                    match name.local_name.as_ref() {
-                        "field" => {
-                            let f = try!(self.read_field(parser, ns_id, &attributes));
-                            fields.push(f);
-                        }
-                        kind @ "constructor" | kind @ "function" | kind @ "method" => {
-                            try!(self.read_function_to_vec(
-                                parser,
-                                ns_id,
-                                kind,
-                                &attributes,
-                                &mut fns,
-                            ))
-                        }
-                        "record" => {
-                            let mut r = match try!(self.read_record(
-                                parser,
-                                ns_id,
-                                attrs,
-                                parent_name_prefix,
-                                parent_ctype_prefix
-                            )) {
-                                Some(Type::Record(r)) => r,
-                                _ => continue,
-                            };
-
-                            let field_name = if let Some(field_name) = attributes.by_name("name") {
-                                field_name.into()
-                            } else {
-                                format!("s{}", struct_count)
-                            };
-
-                            r = Record {
-                                name: format!(
-                                    "{}{}_{}",
-                                    parent_name_prefix
-                                        .map(|s| {
-                                            let mut s = String::from(s);
-                                            s.push('_');
-                                            s
-                                        })
-                                        .unwrap_or_else(String::new),
-                                    union_name,
-                                    field_name
-                                ),
-                                c_type: format!(
-                                    "{}{}_{}",
-                                    parent_ctype_prefix
-                                        .map(|s| {
-                                            let mut s = String::from(s);
-                                            s.push('_');
-                                            s
-                                        })
-                                        .unwrap_or_else(String::new),
-                                    c_type,
-                                    field_name
-                                ),
-                                ..r
-                            };
-
-                            let r_doc = r.doc.clone();
-                            let ctype = r.c_type.clone();
-
-                            let type_id = {
-                                #[cfg(not(feature = "use_unions"))]
-                                {
-                                    Type::record(self, r, INTERNAL_NAMESPACE)
-                                }
-                                #[cfg(feature = "use_unions")]
-                                {
-                                    Type::record(self, r, ns_id)
-                                }
-                            };
-
-                            fields.push(Field {
-                                name: field_name,
-                                typ: type_id,
-                                doc: r_doc,
-                                c_type: Some(ctype),
-                                ..Field::default()
-                            });
-
-                            struct_count += 1;
-                        }
-                        "doc" => doc = try!(read_text(parser)),
-                        x => bail!(mk_error!(format!("Unexpected element <{}>", x), parser)),
+                } => match name.local_name.as_ref() {
+                    "field" => {
+                        let f = try!(self.read_field(parser, ns_id, &attributes));
+                        fields.push(f);
                     }
-                }
+                    kind @ "constructor" | kind @ "function" | kind @ "method" => try!(
+                        self.read_function_to_vec(parser, ns_id, kind, &attributes, &mut fns,)
+                    ),
+                    "record" => {
+                        let mut r = match try!(self.read_record(
+                            parser,
+                            ns_id,
+                            attrs,
+                            parent_name_prefix,
+                            parent_ctype_prefix
+                        )) {
+                            Some(Type::Record(r)) => r,
+                            _ => continue,
+                        };
+
+                        let field_name = if let Some(field_name) = attributes.by_name("name") {
+                            field_name.into()
+                        } else {
+                            format!("s{}", struct_count)
+                        };
+
+                        r = Record {
+                            name: format!(
+                                "{}{}_{}",
+                                parent_name_prefix
+                                    .map(|s| {
+                                        let mut s = String::from(s);
+                                        s.push('_');
+                                        s
+                                    })
+                                    .unwrap_or_else(String::new),
+                                union_name,
+                                field_name
+                            ),
+                            c_type: format!(
+                                "{}{}_{}",
+                                parent_ctype_prefix
+                                    .map(|s| {
+                                        let mut s = String::from(s);
+                                        s.push('_');
+                                        s
+                                    })
+                                    .unwrap_or_else(String::new),
+                                c_type,
+                                field_name
+                            ),
+                            ..r
+                        };
+
+                        let r_doc = r.doc.clone();
+                        let ctype = r.c_type.clone();
+
+                        let type_id = {
+                            #[cfg(not(feature = "use_unions"))]
+                            {
+                                Type::record(self, r, INTERNAL_NAMESPACE)
+                            }
+                            #[cfg(feature = "use_unions")]
+                            {
+                                Type::record(self, r, ns_id)
+                            }
+                        };
+
+                        fields.push(Field {
+                            name: field_name,
+                            typ: type_id,
+                            doc: r_doc,
+                            c_type: Some(ctype),
+                            ..Field::default()
+                        });
+
+                        struct_count += 1;
+                    }
+                    "doc" => doc = try!(read_text(parser)),
+                    x => bail!(mk_error!(format!("Unexpected element <{}>", x), parser)),
+                },
                 EndElement { .. } => break,
                 _ => xml_next!(event, parser),
             }
@@ -694,28 +663,25 @@ impl Library {
             match event {
                 StartElement {
                     name, attributes, ..
-                } => {
-                    match name.local_name.as_ref() {
-                        "type" | "array" => {
-                            let pos = parser.position();
-                            if typ.is_some() {
-                                bail!(mk_error!("Too many <type> elements", &pos));
-                            }
-                            typ = Some(try!(self.read_type(parser, ns_id, &name, &attributes)));
+                } => match name.local_name.as_ref() {
+                    "type" | "array" => {
+                        let pos = parser.position();
+                        if typ.is_some() {
+                            bail!(mk_error!("Too many <type> elements", &pos));
                         }
-                        "callback" => {
-                            let pos = parser.position();
-                            if typ.is_some() {
-                                bail!(mk_error!("Too many <type> elements", &pos));
-                            }
-                            let f =
-                                try!(self.read_function(parser, ns_id, "callback", &attributes));
-                            typ = Some((Type::function(self, f), None, None));
-                        }
-                        "doc" => doc = try!(read_text(parser)),
-                        x => bail!(mk_error!(format!("Unexpected element <{}>", x), parser)),
+                        typ = Some(try!(self.read_type(parser, ns_id, &name, &attributes)));
                     }
-                }
+                    "callback" => {
+                        let pos = parser.position();
+                        if typ.is_some() {
+                            bail!(mk_error!("Too many <type> elements", &pos));
+                        }
+                        let f = try!(self.read_function(parser, ns_id, "callback", &attributes));
+                        typ = Some((Type::function(self, f), None, None));
+                    }
+                    "doc" => doc = try!(read_text(parser)),
+                    x => bail!(mk_error!(format!("Unexpected element <{}>", x), parser)),
+                },
                 EndElement { .. } => break,
                 _ => xml_next!(event, parser),
             }
@@ -792,40 +758,28 @@ impl Library {
             match event {
                 StartElement {
                     name, attributes, ..
-                } => {
-                    match name.local_name.as_ref() {
-                        kind @ "constructor" | kind @ "function" | kind @ "method" => {
-                            try!(self.read_function_to_vec(
-                                parser,
-                                ns_id,
-                                kind,
-                                &attributes,
-                                &mut fns,
-                            ))
-                        }
-                        "prerequisite" => {
-                            prereqs.push(try!(self.read_type(parser, ns_id, &name, &attributes)).0)
-                        }
-                        "signal" => {
-                            try!(self.read_signal_to_vec(
-                                parser,
-                                ns_id,
-                                &attributes,
-                                &mut signals,
-                            ))
-                        }
-                        "property" => {
-                            try!(self.read_property_to_vec(
-                                parser,
-                                ns_id,
-                                &attributes,
-                                &mut properties,
-                            ))
-                        }
-                        "doc" => doc = try!(read_text(parser)),
-                        _ => try!(ignore_element(parser)),
+                } => match name.local_name.as_ref() {
+                    kind @ "constructor" | kind @ "function" | kind @ "method" => try!(
+                        self.read_function_to_vec(parser, ns_id, kind, &attributes, &mut fns,)
+                    ),
+                    "prerequisite" => {
+                        prereqs.push(try!(self.read_type(parser, ns_id, &name, &attributes)).0)
                     }
-                }
+                    "signal" => try!(self.read_signal_to_vec(
+                        parser,
+                        ns_id,
+                        &attributes,
+                        &mut signals,
+                    )),
+                    "property" => try!(self.read_property_to_vec(
+                        parser,
+                        ns_id,
+                        &attributes,
+                        &mut properties,
+                    )),
+                    "doc" => doc = try!(read_text(parser)),
+                    _ => try!(ignore_element(parser)),
+                },
                 EndElement { .. } => break,
                 _ => xml_next!(event, parser),
             }
@@ -874,25 +828,17 @@ impl Library {
             match event {
                 StartElement {
                     name, attributes, ..
-                } => {
-                    match name.local_name.as_ref() {
-                        "member" => {
-                            members.push(try!(self.read_member(parser, &attributes)));
-                        }
-                        kind @ "constructor" | kind @ "function" | kind @ "method" => {
-                            try!(self.read_function_to_vec(
-                                parser,
-                                ns_id,
-                                kind,
-                                &attributes,
-                                &mut fns,
-                            ))
-                        }
-                        "doc" => doc = try!(read_text(parser)),
-                        "doc-deprecated" => doc_deprecated = try!(read_text(parser)),
-                        x => bail!(mk_error!(format!("Unexpected element <{}>", x), parser)),
+                } => match name.local_name.as_ref() {
+                    "member" => {
+                        members.push(try!(self.read_member(parser, &attributes)));
                     }
-                }
+                    kind @ "constructor" | kind @ "function" | kind @ "method" => try!(
+                        self.read_function_to_vec(parser, ns_id, kind, &attributes, &mut fns,)
+                    ),
+                    "doc" => doc = try!(read_text(parser)),
+                    "doc-deprecated" => doc_deprecated = try!(read_text(parser)),
+                    x => bail!(mk_error!(format!("Unexpected element <{}>", x), parser)),
+                },
                 EndElement { .. } => break,
                 _ => xml_next!(event, parser),
             }
@@ -946,25 +892,17 @@ impl Library {
             match event {
                 StartElement {
                     name, attributes, ..
-                } => {
-                    match name.local_name.as_ref() {
-                        "member" => {
-                            members.push(try!(self.read_member(parser, &attributes)));
-                        }
-                        kind @ "constructor" | kind @ "function" | kind @ "method" => {
-                            try!(self.read_function_to_vec(
-                                parser,
-                                ns_id,
-                                kind,
-                                &attributes,
-                                &mut fns,
-                            ))
-                        }
-                        "doc" => doc = try!(read_text(parser)),
-                        "doc-deprecated" => doc_deprecated = try!(read_text(parser)),
-                        x => bail!(mk_error!(format!("Unexpected element <{}>", x), parser)),
+                } => match name.local_name.as_ref() {
+                    "member" => {
+                        members.push(try!(self.read_member(parser, &attributes)));
                     }
-                }
+                    kind @ "constructor" | kind @ "function" | kind @ "method" => try!(
+                        self.read_function_to_vec(parser, ns_id, kind, &attributes, &mut fns,)
+                    ),
+                    "doc" => doc = try!(read_text(parser)),
+                    "doc-deprecated" => doc_deprecated = try!(read_text(parser)),
+                    x => bail!(mk_error!(format!("Unexpected element <{}>", x), parser)),
+                },
                 EndElement { .. } => break,
                 _ => xml_next!(event, parser),
             }
@@ -1032,26 +970,24 @@ impl Library {
             match event {
                 StartElement {
                     name, attributes, ..
-                } => {
-                    match name.local_name.as_ref() {
-                        "type" | "array" => {
-                            if inner.is_some() {
-                                bail!(mk_error!("Too many <type> elements", parser));
-                            }
-                            let pos = parser.position();
-                            let (typ, c_type, array_length) =
-                                try!(self.read_type(parser, ns_id, &name, &attributes));
-                            if let Some(c_type) = c_type {
-                                inner = Some((typ, c_type, array_length));
-                            } else {
-                                bail!(mk_error!("Missing constant's c:type", &pos));
-                            }
+                } => match name.local_name.as_ref() {
+                    "type" | "array" => {
+                        if inner.is_some() {
+                            bail!(mk_error!("Too many <type> elements", parser));
                         }
-                        "doc" => doc = try!(read_text(parser)),
-                        "doc-deprecated" => doc_deprecated = try!(read_text(parser)),
-                        x => bail!(mk_error!(format!("Unexpected element <{}>", x), parser)),
+                        let pos = parser.position();
+                        let (typ, c_type, array_length) =
+                            try!(self.read_type(parser, ns_id, &name, &attributes));
+                        if let Some(c_type) = c_type {
+                            inner = Some((typ, c_type, array_length));
+                        } else {
+                            bail!(mk_error!("Missing constant's c:type", &pos));
+                        }
                     }
-                }
+                    "doc" => doc = try!(read_text(parser)),
+                    "doc-deprecated" => doc_deprecated = try!(read_text(parser)),
+                    x => bail!(mk_error!(format!("Unexpected element <{}>", x), parser)),
+                },
                 EndElement { .. } => break,
                 _ => xml_next!(event, parser),
             }
@@ -1095,25 +1031,23 @@ impl Library {
             match event {
                 StartElement {
                     name, attributes, ..
-                } => {
-                    match name.local_name.as_ref() {
-                        "type" | "array" => {
-                            if inner.is_some() {
-                                bail!(mk_error!("Too many <type> elements", parser));
-                            }
-                            let pos = parser.position();
-                            let (typ, c_type, array_length) =
-                                try!(self.read_type(parser, ns_id, &name, &attributes));
-                            if let Some(c_type) = c_type {
-                                inner = Some((typ, c_type, array_length));
-                            } else {
-                                bail!(mk_error!("Missing alias target's c:type", &pos));
-                            }
+                } => match name.local_name.as_ref() {
+                    "type" | "array" => {
+                        if inner.is_some() {
+                            bail!(mk_error!("Too many <type> elements", parser));
                         }
-                        "doc" => doc = try!(read_text(parser)),
-                        x => bail!(mk_error!(format!("Unexpected element <{}>", x), parser)),
+                        let pos = parser.position();
+                        let (typ, c_type, array_length) =
+                            try!(self.read_type(parser, ns_id, &name, &attributes));
+                        if let Some(c_type) = c_type {
+                            inner = Some((typ, c_type, array_length));
+                        } else {
+                            bail!(mk_error!("Missing alias target's c:type", &pos));
+                        }
                     }
-                }
+                    "doc" => doc = try!(read_text(parser)),
+                    x => bail!(mk_error!(format!("Unexpected element <{}>", x), parser)),
+                },
                 EndElement { .. } => break,
                 _ => xml_next!(event, parser),
             }
@@ -1355,32 +1289,30 @@ impl Library {
             match event {
                 StartElement {
                     name, attributes, ..
-                } => {
-                    match name.local_name.as_ref() {
-                        "parameters" => {
-                            try!(self.read_parameters(parser, ns_id, true, false))
-                                .into_iter()
-                                .map(|p| params.push(p))
-                                .count();
-                        }
-                        "return-value" => {
-                            if ret.is_some() {
-                                bail!(mk_error!("Too many <return-value> elements", parser));
-                            }
-                            ret = Some(try!(self.read_parameter(
-                                parser,
-                                ns_id,
-                                "return-value",
-                                &attributes,
-                                true,
-                                false
-                            )));
-                        }
-                        "doc" => doc = try!(read_text(parser)),
-                        "doc-deprecated" => doc_deprecated = try!(read_text(parser)),
-                        x => bail!(mk_error!(format!("Unexpected element <{}>", x), parser)),
+                } => match name.local_name.as_ref() {
+                    "parameters" => {
+                        try!(self.read_parameters(parser, ns_id, true, false))
+                            .into_iter()
+                            .map(|p| params.push(p))
+                            .count();
                     }
-                }
+                    "return-value" => {
+                        if ret.is_some() {
+                            bail!(mk_error!("Too many <return-value> elements", parser));
+                        }
+                        ret = Some(try!(self.read_parameter(
+                            parser,
+                            ns_id,
+                            "return-value",
+                            &attributes,
+                            true,
+                            false
+                        )));
+                    }
+                    "doc" => doc = try!(read_text(parser)),
+                    "doc-deprecated" => doc_deprecated = try!(read_text(parser)),
+                    x => bail!(mk_error!(format!("Unexpected element <{}>", x), parser)),
+                },
                 EndElement { .. } => break,
                 _ => xml_next!(event, parser),
             }
@@ -1427,22 +1359,20 @@ impl Library {
             match event {
                 StartElement {
                     name, attributes, ..
-                } => {
-                    match name.local_name.as_ref() {
-                        kind @ "parameter" | kind @ "instance-parameter" => {
-                            let param = try!(self.read_parameter(
-                                parser,
-                                ns_id,
-                                kind,
-                                &attributes,
-                                allow_no_ctype,
-                                for_method
-                            ));
-                            params.push(param);
-                        }
-                        x => bail!(mk_error!(format!("Unexpected element <{}>", x), parser)),
+                } => match name.local_name.as_ref() {
+                    kind @ "parameter" | kind @ "instance-parameter" => {
+                        let param = try!(self.read_parameter(
+                            parser,
+                            ns_id,
+                            kind,
+                            &attributes,
+                            allow_no_ctype,
+                            for_method
+                        ));
+                        params.push(param);
                     }
-                }
+                    x => bail!(mk_error!(format!("Unexpected element <{}>", x), parser)),
+                },
                 EndElement { .. } => break,
                 _ => xml_next!(event, parser),
             }
@@ -1483,30 +1413,28 @@ impl Library {
             match event {
                 StartElement {
                     name, attributes, ..
-                } => {
-                    match name.local_name.as_ref() {
-                        "type" | "array" => {
-                            let pos = parser.position();
-                            if typ.is_some() {
-                                bail!(mk_error!("Too many <type> elements", &pos));
-                            }
-                            typ = Some(try!(self.read_type(parser, ns_id, &name, &attributes)));
-                            if let Some((tid, None, _)) = typ {
-                                if allow_no_ctype {
-                                    typ = Some((tid, Some(EMPTY_CTYPE.to_owned()), None));
-                                } else {
-                                    bail!(mk_error!("Missing c:type attribute", &pos));
-                                }
+                } => match name.local_name.as_ref() {
+                    "type" | "array" => {
+                        let pos = parser.position();
+                        if typ.is_some() {
+                            bail!(mk_error!("Too many <type> elements", &pos));
+                        }
+                        typ = Some(try!(self.read_type(parser, ns_id, &name, &attributes)));
+                        if let Some((tid, None, _)) = typ {
+                            if allow_no_ctype {
+                                typ = Some((tid, Some(EMPTY_CTYPE.to_owned()), None));
+                            } else {
+                                bail!(mk_error!("Missing c:type attribute", &pos));
                             }
                         }
-                        "varargs" => {
-                            varargs = true;
-                            try!(ignore_element(parser));
-                        }
-                        "doc" => doc = try!(read_text(parser)),
-                        x => bail!(mk_error!(format!("Unexpected element <{}>", x), parser)),
                     }
-                }
+                    "varargs" => {
+                        varargs = true;
+                        try!(ignore_element(parser));
+                    }
+                    "doc" => doc = try!(read_text(parser)),
+                    x => bail!(mk_error!(format!("Unexpected element <{}>", x), parser)),
+                },
                 EndElement { .. } => break,
                 _ => xml_next!(event, parser),
             }
@@ -1688,14 +1616,12 @@ impl Library {
             match event {
                 StartElement {
                     name, attributes, ..
-                } => {
-                    match name.local_name.as_ref() {
-                        "type" | "array" => {
-                            inner.push(try!(self.read_type(parser, ns_id, &name, &attributes)).0);
-                        }
-                        x => bail!(mk_error!(format!("Unexpected element <{}>", x), parser)),
+                } => match name.local_name.as_ref() {
+                    "type" | "array" => {
+                        inner.push(try!(self.read_type(parser, ns_id, &name, &attributes)).0);
                     }
-                }
+                    x => bail!(mk_error!(format!("Unexpected element <{}>", x), parser)),
+                },
                 EndElement { .. } => break,
                 _ => xml_next!(event, parser),
             }
@@ -1772,12 +1698,10 @@ fn read_text(parser: &mut Reader) -> Result<Option<String>> {
                 }
             }
             EndElement { .. } => break,
-            StartElement { name, .. } => {
-                bail!(mk_error!(
-                    &format!("Unexpected element: {}", name.local_name),
-                    parser
-                ))
-            }
+            StartElement { name, .. } => bail!(mk_error!(
+                &format!("Unexpected element: {}", name.local_name),
+                parser
+            )),
             _ => xml_next!(event, parser),
         }
     }

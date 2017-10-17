@@ -30,13 +30,11 @@ impl TranslateFromGlib for Mode {
                 match *env.type_(self.typ) {
                     library::Type::List(..) |
                     library::Type::SList(..) |
-                    library::Type::CArray(..) => {
-                        if array_length.is_some() {
-                            (format!("FromGlibContainer::{}", trans.0), trans.1)
-                        } else {
-                            (format!("FromGlibPtrContainer::{}", trans.0), trans.1)
-                        }
-                    }
+                    library::Type::CArray(..) => if array_length.is_some() {
+                        (format!("FromGlibContainer::{}", trans.0), trans.1)
+                    } else {
+                        (format!("FromGlibPtrContainer::{}", trans.0), trans.1)
+                    },
                     _ => trans,
                 }
             }
@@ -53,40 +51,38 @@ impl TranslateFromGlib for analysis::return_value::Info {
         array_length: Option<&String>,
     ) -> (String, String) {
         match self.parameter {
-            Some(ref par) => {
-                match self.base_tid {
-                    Some(tid) => {
-                        let rust_type = rust_type(env, tid);
-                        let from_glib_xxx = from_glib_xxx(par.transfer, None);
+            Some(ref par) => match self.base_tid {
+                Some(tid) => {
+                    let rust_type = rust_type(env, tid);
+                    let from_glib_xxx = from_glib_xxx(par.transfer, None);
 
-                        let prefix = if *par.nullable {
-                            format!("Option::<{}>::{}", rust_type.into_string(), from_glib_xxx.0)
-                        } else {
-                            format!("{}::{}", rust_type.into_string(), from_glib_xxx.0)
-                        };
-                        let suffix_function = if *par.nullable {
-                            "map(Downcast::downcast_unchecked)"
-                        } else {
-                            "downcast_unchecked()"
-                        };
-                        (prefix, format!("{}.{}", from_glib_xxx.1, suffix_function))
-                    }
-                    None if self.bool_return_is_error.is_some() => {
-                        if env.namespaces.glib_ns_id == namespaces::MAIN {
-                            (
-                                "error::BoolError::from_glib(".into(),
-                                format!(", \"{}\")", self.bool_return_is_error.as_ref().unwrap()),
-                            )
-                        } else {
-                            (
-                                "glib::error::BoolError::from_glib(".into(),
-                                format!(", \"{}\")", self.bool_return_is_error.as_ref().unwrap()),
-                            )
-                        }
-                    }
-                    None => Mode::from(par).translate_from_glib_as_function(env, array_length),
+                    let prefix = if *par.nullable {
+                        format!("Option::<{}>::{}", rust_type.into_string(), from_glib_xxx.0)
+                    } else {
+                        format!("{}::{}", rust_type.into_string(), from_glib_xxx.0)
+                    };
+                    let suffix_function = if *par.nullable {
+                        "map(Downcast::downcast_unchecked)"
+                    } else {
+                        "downcast_unchecked()"
+                    };
+                    (prefix, format!("{}.{}", from_glib_xxx.1, suffix_function))
                 }
-            }
+                None if self.bool_return_is_error.is_some() => {
+                    if env.namespaces.glib_ns_id == namespaces::MAIN {
+                        (
+                            "error::BoolError::from_glib(".into(),
+                            format!(", \"{}\")", self.bool_return_is_error.as_ref().unwrap()),
+                        )
+                    } else {
+                        (
+                            "glib::error::BoolError::from_glib(".into(),
+                            format!(", \"{}\")", self.bool_return_is_error.as_ref().unwrap()),
+                        )
+                    }
+                }
+                None => Mode::from(par).translate_from_glib_as_function(env, array_length),
+            },
             None => (String::new(), ";".into()),
         }
     }

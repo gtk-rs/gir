@@ -51,10 +51,12 @@ impl TomlHelper for toml::Value {
             }
         }
         if !ret.is_empty() {
-            error!("\"{}\": Unknown key{}: {:?}",
-                   err_msg,
-                   if ret.len() > 1 { "s" } else { "" },
-                   ret);
+            error!(
+                "\"{}\": Unknown key{}: {:?}",
+                err_msg,
+                if ret.len() > 1 { "s" } else { "" },
+                ret
+            );
         }
     }
     fn lookup<'a>(&'a self, option: &str) -> Option<&'a toml::Value> {

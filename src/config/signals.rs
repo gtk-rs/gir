@@ -50,8 +50,10 @@ impl Parse for Parameter {
                 return None;
             }
         };
-        toml.check_unwanted(&["nullable", "transformation", "new_name", "name", "pattern"],
-                            &format!("parameter {}", object_name));
+        toml.check_unwanted(
+            &["nullable", "transformation", "new_name", "name", "pattern"],
+            &format!("parameter {}", object_name),
+        );
 
         let nullable = toml.lookup("nullable")
             .and_then(|val| val.as_bool())
@@ -102,7 +104,11 @@ pub struct Signal {
 }
 
 impl Signal {
-    pub fn parse(toml: &Value, object_name: &str, concurrency: library::Concurrency) -> Option<Signal> {
+    pub fn parse(
+        toml: &Value,
+        object_name: &str,
+        concurrency: library::Concurrency,
+    ) -> Option<Signal> {
         let ident = match Ident::parse(toml, object_name, "signal") {
             Some(ident) => ident,
             None => {
@@ -113,9 +119,20 @@ impl Signal {
                 return None;
             }
         };
-        toml.check_unwanted(&["ignore", "inhibit", "version", "parameter", "return", "doc_hidden",
-                              "name", "pattern", "concurrency"],
-                            &format!("signal {}", object_name));
+        toml.check_unwanted(
+            &[
+                "ignore",
+                "inhibit",
+                "version",
+                "parameter",
+                "return",
+                "doc_hidden",
+                "name",
+                "pattern",
+                "concurrency",
+            ],
+            &format!("signal {}", object_name),
+        );
 
         let ignore = toml.lookup("ignore")
             .and_then(|val| val.as_bool())
@@ -130,8 +147,7 @@ impl Signal {
         let parameters = Parameters::parse(toml.lookup("parameter"), object_name);
         let ret = Return::parse(toml.lookup("return"));
 
-        let concurrency = toml
-            .lookup("concurrency")
+        let concurrency = toml.lookup("concurrency")
             .and_then(|v| v.as_str())
             .and_then(|v| v.parse().ok())
             .unwrap_or(concurrency);

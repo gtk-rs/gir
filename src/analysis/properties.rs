@@ -225,7 +225,9 @@ fn analyze_property(
             parameters: Vec::new(),
             ret: library::Parameter {
                 name: "".into(),
-                typ: env.library.find_type(library::INTERNAL_NAMESPACE, "none").unwrap(),
+                typ: env.library
+                    .find_type(library::INTERNAL_NAMESPACE, "none")
+                    .unwrap(),
                 c_type: "none".into(),
                 instance_parameter: false,
                 direction: library::ParameterDirection::Return,
@@ -289,31 +291,29 @@ pub fn get_type_default_value(
     use library::Fundamental;
     let some = |s: &str| Some(s.to_string());
     match *type_ {
-        Type::Fundamental(fund) => {
-            match fund {
-                Fundamental::Boolean => some("&false"),
-                Fundamental::Int => some("&0"),
-                Fundamental::UInt => some("&0u32"),
-                Fundamental::Utf8 => some("None::<&str>"),
-                Fundamental::Float => some("&0f32"),
-                Fundamental::Double => some("&0f64"),
-                Fundamental::Int8 => some("&0i8"),
-                Fundamental::UInt8 => some("&0u8"),
-                Fundamental::Int16 => some("&0i16"),
-                Fundamental::UInt16 => some("&0u16"),
-                Fundamental::Int32 => some("&0i32"),
-                Fundamental::UInt32 => some("&0u32"),
-                Fundamental::Int64 => some("&0i64"),
-                Fundamental::UInt64 => some("&0u64"),
-                Fundamental::Char => some("&0i8"),
-                Fundamental::UChar => some("&0u8"),
-                Fundamental::Size => some("&0isize"),
-                Fundamental::SSize => some("&0usize"),
-                Fundamental::Pointer => some("::std::ptr::null_mut()"),
-                Fundamental::Type => some("&gobject_sys::G_TYPE_NONE"),
-                _ => None,
-            }
-        }
+        Type::Fundamental(fund) => match fund {
+            Fundamental::Boolean => some("&false"),
+            Fundamental::Int => some("&0"),
+            Fundamental::UInt => some("&0u32"),
+            Fundamental::Utf8 => some("None::<&str>"),
+            Fundamental::Float => some("&0f32"),
+            Fundamental::Double => some("&0f64"),
+            Fundamental::Int8 => some("&0i8"),
+            Fundamental::UInt8 => some("&0u8"),
+            Fundamental::Int16 => some("&0i16"),
+            Fundamental::UInt16 => some("&0u16"),
+            Fundamental::Int32 => some("&0i32"),
+            Fundamental::UInt32 => some("&0u32"),
+            Fundamental::Int64 => some("&0i64"),
+            Fundamental::UInt64 => some("&0u64"),
+            Fundamental::Char => some("&0i8"),
+            Fundamental::UChar => some("&0u8"),
+            Fundamental::Size => some("&0isize"),
+            Fundamental::SSize => some("&0usize"),
+            Fundamental::Pointer => some("::std::ptr::null_mut()"),
+            Fundamental::Type => some("&gobject_sys::G_TYPE_NONE"),
+            _ => None,
+        },
         Type::Bitfield(_) => some("&0u32"),
         Type::Enumeration(_) => some("&0"),
         Type::Class(..) | Type::Record(..) | Type::Interface(..) => {

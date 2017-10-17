@@ -164,13 +164,12 @@ fn analyze_function(
 
     for par in &parameters.rust_parameters {
         // Disallow fundamental arrays without length
-        if is_carray_with_direct_elements(env, par.typ) &&
-            parameters
+        if is_carray_with_direct_elements(env, par.typ)
+            && parameters
                 .transformations
                 .iter()
                 .find(|t| {
-                    if let TransformationType::Length { ref array_name, .. } =
-                        t.transformation_type
+                    if let TransformationType::Length { ref array_name, .. } = t.transformation_type
                     {
                         array_name == &par.name
                     } else {

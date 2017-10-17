@@ -1,5 +1,5 @@
 use env::Env;
-use analysis::bounds::{Bounds, BoundType};
+use analysis::bounds::{BoundType, Bounds};
 use analysis::conversion_type::ConversionType;
 use analysis::function_parameters::CParameter;
 use analysis::ref_mode::RefMode;

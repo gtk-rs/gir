@@ -32,8 +32,10 @@ pub struct Info {
 
 impl Info {
     pub fn has_signals(&self) -> bool {
-        self.signals.iter().any(|s| s.trampoline_name.is_ok()) ||
-        self.notify_signals.iter().any(|s| s.trampoline_name.is_ok())
+        self.signals.iter().any(|s| s.trampoline_name.is_ok())
+            || self.notify_signals
+                .iter()
+                .any(|s| s.trampoline_name.is_ok())
     }
 
     pub fn has_action_signals(&self) -> bool {
@@ -161,13 +163,13 @@ pub fn class(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<Info>
     let has_methods = functions
         .iter()
         .any(|f| f.kind == library::FunctionKind::Method);
-    let has_signals = signals.iter().any(|s| s.trampoline_name.is_ok()) ||
-                      notify_signals.iter().any(|s| s.trampoline_name.is_ok());
+    let has_signals = signals.iter().any(|s| s.trampoline_name.is_ok())
+        || notify_signals.iter().any(|s| s.trampoline_name.is_ok());
 
     // There's no point in generating a trait if there are no signals, methods, properties
     // and child properties: it would be empty
-    if generate_trait && !has_signals && !has_methods && properties.is_empty() &&
-        child_properties.is_empty()
+    if generate_trait && !has_signals && !has_methods && properties.is_empty()
+        && child_properties.is_empty()
     {
         generate_trait = false;
     }
@@ -175,8 +177,8 @@ pub fn class(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<Info>
     if generate_trait && (!properties.is_empty() || has_signals) {
         imports.add("glib", None);
     }
-    if generate_trait &&
-        (has_methods || !properties.is_empty() || !child_properties.is_empty() || has_signals)
+    if generate_trait
+        && (has_methods || !properties.is_empty() || !child_properties.is_empty() || has_signals)
     {
         imports.add("glib::object::IsA", None);
     }

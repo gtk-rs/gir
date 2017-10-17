@@ -44,20 +44,16 @@ pub fn out_parameter_as_return_parts(
         .filter(|p| p.array_length.is_none())
         .count();
     match analysis.outs.mode {
-        Normal | Combined => {
-            if num_outs > 1 {
-                ("(", ")")
-            } else {
-                ("", "")
-            }
-        }
-        Optional => {
-            if num_outs > 1 {
-                ("Option<(", ")>")
-            } else {
-                ("Option<", ">")
-            }
-        }
+        Normal | Combined => if num_outs > 1 {
+            ("(", ")")
+        } else {
+            ("", "")
+        },
+        Optional => if num_outs > 1 {
+            ("Option<(", ")>")
+        } else {
+            ("Option<", ">")
+        },
         Throws(..) => {
             if num_outs == 1 + 1 {
                 //if only one parameter except "glib::Error"

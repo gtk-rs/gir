@@ -11,7 +11,7 @@ use super::child_properties::ChildProperties;
 use super::functions::Functions;
 use super::members::Members;
 use super::properties::Properties;
-use super::signals::{Signals, Signal};
+use super::signals::{Signal, Signals};
 use version::Version;
 use analysis::ref_mode;
 
@@ -127,10 +127,27 @@ fn parse_object(toml_object: &Value, concurrency: library::Concurrency) -> GObje
         .unwrap()
         .into();
     // Also checks for ChildProperties
-    toml_object.check_unwanted(&["name", "status", "function", "signal", "member", "property",
-                                 "module_name", "version", "concurrency", "ref_mode", "child_prop",
-                                 "child_name", "child_type", "trait", "trait_name", "cfg_condition"],
-                               &format!("object {}", name));
+    toml_object.check_unwanted(
+        &[
+            "name",
+            "status",
+            "function",
+            "signal",
+            "member",
+            "property",
+            "module_name",
+            "version",
+            "concurrency",
+            "ref_mode",
+            "child_prop",
+            "child_name",
+            "child_type",
+            "trait",
+            "trait_name",
+            "cfg_condition",
+        ],
+        &format!("object {}", name),
+    );
 
     let status = match toml_object.lookup("status") {
         Some(value) => {

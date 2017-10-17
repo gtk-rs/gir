@@ -184,8 +184,12 @@ pub fn version_condition_string(
     match version {
         Some(v) if v > env.config.min_cfg_version => {
             let comment = if commented { "//" } else { "" };
-            Some(format!("{}{}#[cfg(any({}, feature = \"dox\"))]",
-                         tabs(indent), comment, v.to_cfg()))
+            Some(format!(
+                "{}{}#[cfg(any({}, feature = \"dox\"))]",
+                tabs(indent),
+                comment,
+                v.to_cfg()
+            ))
         }
         _ => None,
     }
@@ -199,8 +203,12 @@ pub fn not_version_condition(
 ) -> Result<()> {
     if let Some(v) = version {
         let comment = if commented { "//" } else { "" };
-        let s = format!("{}{}#[cfg(any(not({}), feature = \"dox\"))]",
-                        tabs(indent), comment, v.to_cfg());
+        let s = format!(
+            "{}{}#[cfg(any(not({}), feature = \"dox\"))]",
+            tabs(indent),
+            comment,
+            v.to_cfg()
+        );
         try!(writeln!(w, "{}", s));
     }
     Ok(())
@@ -227,7 +235,12 @@ pub fn cfg_condition_string(
     match cfg_condition.as_ref() {
         Some(v) => {
             let comment = if commented { "//" } else { "" };
-            Some(format!("{}{}#[cfg(any({}, feature = \"dox\"))]", tabs(indent), comment, v))
+            Some(format!(
+                "{}{}#[cfg(any({}, feature = \"dox\"))]",
+                tabs(indent),
+                comment,
+                v
+            ))
         }
         None => None,
     }

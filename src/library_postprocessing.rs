@@ -151,13 +151,13 @@ impl Library {
 
     fn c_type_by_type_id(&self, tid: TypeId) -> Option<String> {
         let type_ = self.type_(tid);
-        type_.get_glib_name().map(
-            |glib_name| if self.is_referenced_type(type_) {
+        type_
+            .get_glib_name()
+            .map(|glib_name| if self.is_referenced_type(type_) {
                 format!("{}*", glib_name)
             } else {
                 glib_name.to_string()
-            },
-        )
+            })
     }
 
     fn is_referenced_type(&self, type_: &Type) -> bool {

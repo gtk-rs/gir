@@ -11,14 +11,12 @@ impl TranslateToGlib for TransformationType {
         use self::TransformationType::*;
         match *self {
             ToGlibDirect { ref name } => name.clone(),
-            ToGlibScalar { ref name, nullable } => {
-                format!(
-                    "{}{}{}",
-                    name,
-                    if !*nullable { "" } else { ".into()" },
-                    ".to_glib()"
-                )
-            }
+            ToGlibScalar { ref name, nullable } => format!(
+                "{}{}{}",
+                name,
+                if !*nullable { "" } else { ".into()" },
+                ".to_glib()"
+            ),
             ToGlibPointer {
                 ref name,
                 instance_parameter,
@@ -46,11 +44,11 @@ fn to_glib_xxx(transfer: Transfer, ref_mode: RefMode) -> (&'static str, &'static
     match transfer {
         None => {
             match ref_mode {
-                RefMode::None => ("", ".to_glib_none_mut().0"),//unreachable!(),
+                RefMode::None => ("", ".to_glib_none_mut().0"), //unreachable!(),
                 RefMode::ByRef => ("", ".to_glib_none().0"),
                 RefMode::ByRefMut => ("", ".to_glib_none_mut().0"),
                 RefMode::ByRefImmut => ("mut_override(", ".to_glib_none().0)"),
-                RefMode::ByRefFake => ("", ""),//unreachable!(),
+                RefMode::ByRefFake => ("", ""), //unreachable!(),
             }
         }
         Full => ("", ".to_glib_full()"),

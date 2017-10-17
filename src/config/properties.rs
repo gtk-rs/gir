@@ -27,8 +27,10 @@ impl Parse for Property {
             }
         };
 
-        toml.check_unwanted(&["ignore", "version", "name", "pattern"],
-                            &format!("property {}", object_name));
+        toml.check_unwanted(
+            &["ignore", "version", "name", "pattern"],
+            &format!("property {}", object_name),
+        );
 
         let ignore = toml.lookup("ignore")
             .and_then(|val| val.as_bool())

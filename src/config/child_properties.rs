@@ -22,8 +22,10 @@ impl Parse for ChildProperty {
             return None;
         };
 
-        toml.check_unwanted(&["name", "type", "doc_hidden"],
-                            &format!("child property {}", object_name));
+        toml.check_unwanted(
+            &["name", "type", "doc_hidden"],
+            &format!("child property {}", object_name),
+        );
 
         let type_name = toml.lookup("type")
             .and_then(|v| v.as_str())

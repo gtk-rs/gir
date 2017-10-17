@@ -42,31 +42,25 @@ impl RefMode {
             Interface(..) |
             List(..) |
             SList(..) |
-            CArray(..) => {
-                if direction == library::ParameterDirection::In {
-                    RefMode::ByRef
-                } else {
-                    RefMode::None
+            CArray(..) => if direction == library::ParameterDirection::In {
+                RefMode::ByRef
+            } else {
+                RefMode::None
+            },
+            Record(ref record) => if direction == library::ParameterDirection::In {
+                match RecordType::of(record) {
+                    RecordType::Direct => RefMode::ByRefMut,
+                    RecordType::Boxed => RefMode::ByRefMut,
+                    RecordType::Refcounted => RefMode::ByRef,
                 }
-            }
-            Record(ref record) => {
-                if direction == library::ParameterDirection::In {
-                    match RecordType::of(record) {
-                        RecordType::Direct => RefMode::ByRefMut,
-                        RecordType::Boxed => RefMode::ByRefMut,
-                        RecordType::Refcounted => RefMode::ByRef,
-                    }
-                } else {
-                    RefMode::None
-                }
-            }
-            Union(..) => {
-                if direction == library::ParameterDirection::In {
-                    RefMode::ByRefMut
-                } else {
-                    RefMode::None
-                }
-            }
+            } else {
+                RefMode::None
+            },
+            Union(..) => if direction == library::ParameterDirection::In {
+                RefMode::ByRefMut
+            } else {
+                RefMode::None
+            },
             Alias(ref alias) => RefMode::of(env, alias.typ, direction),
             _ => RefMode::None,
         }

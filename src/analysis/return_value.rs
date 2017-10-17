@@ -22,7 +22,6 @@ pub fn analyze(
     used_types: &mut Vec<String>,
     imports: &mut Imports,
 ) -> Info {
-
     let mut parameter = if func.ret.typ == Default::default() {
         None
     } else {
@@ -113,14 +112,12 @@ fn can_be_nullable_return(env: &Env, type_id: library::TypeId) -> bool {
     use library::Type::*;
     use library::Fundamental::*;
     match *env.library.type_(type_id) {
-        Fundamental(fund) => {
-            match fund {
-                Pointer => true,
-                Utf8 => true,
-                Filename => true,
-                _ => false,
-            }
-        }
+        Fundamental(fund) => match fund {
+            Pointer => true,
+            Utf8 => true,
+            Filename => true,
+            _ => false,
+        },
         Alias(ref alias) => can_be_nullable_return(env, alias.typ),
         Enumeration(_) => false,
         Bitfield(_) => false,

@@ -28,8 +28,10 @@ impl Parse for Parameter {
                 return None;
             }
         };
-        toml.check_unwanted(&["const", "nullable", "length_of", "name", "pattern"],
-                            &format!("function parameter {}", object_name));
+        toml.check_unwanted(
+            &["const", "nullable", "length_of", "name", "pattern"],
+            &format!("function parameter {}", object_name),
+        );
 
         let constant = toml.lookup("const")
             .and_then(|val| val.as_bool())
@@ -68,8 +70,7 @@ pub struct Return {
 impl Return {
     pub fn parse(toml: Option<&Value>) -> Return {
         if let Some(v) = toml {
-            v.check_unwanted(&["nullable", "bool_return_is_error"],
-                             "return");
+            v.check_unwanted(&["nullable", "bool_return_is_error"], "return");
 
             let nullable = v.lookup("nullable").and_then(|v| v.as_bool()).map(Nullable);
             let bool_return_is_error = v.lookup("bool_return_is_error")
@@ -85,7 +86,6 @@ impl Return {
                 bool_return_is_error: None,
             }
         }
-
     }
 }
 
@@ -116,9 +116,21 @@ impl Parse for Function {
                 return None;
             }
         };
-        toml.check_unwanted(&["ignore", "version", "cfg_condition", "parameter", "return", "name",
-                              "doc_hidden", "is_windows_utf8", "disable_length_detect", "pattern"],
-                            &format!("function {}", object_name));
+        toml.check_unwanted(
+            &[
+                "ignore",
+                "version",
+                "cfg_condition",
+                "parameter",
+                "return",
+                "name",
+                "doc_hidden",
+                "is_windows_utf8",
+                "disable_length_detect",
+                "pattern",
+            ],
+            &format!("function {}", object_name),
+        );
 
         let ignore = toml.lookup("ignore")
             .and_then(|val| val.as_bool())
