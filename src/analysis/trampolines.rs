@@ -4,7 +4,7 @@ use env::Env;
 use library;
 use nameutil::signal_to_snake;
 use parser::is_empty_c_type;
-use super::bounds::{Bounds, BoundType};
+use super::bounds::{BoundType, Bounds};
 use super::conversion_type::ConversionType;
 use super::ffi_type::used_ffi_type;
 use super::rust_type::{bounds_rust_type, rust_type, used_rust_type};
@@ -127,10 +127,10 @@ pub fn analyze(
     }
 
     let concurrency = configured_signals
-            .iter()
-            .map(|f| f.concurrency)
-            .next()
-            .unwrap_or(obj.concurrency);
+        .iter()
+        .map(|f| f.concurrency)
+        .next()
+        .unwrap_or(obj.concurrency);
 
     let ret = library::Parameter {
         nullable: ret_nullable,

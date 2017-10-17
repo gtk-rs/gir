@@ -325,13 +325,13 @@ fn detect_length<'a>(
         return None;
     }
 
-    let array = parameters.get(pos - 1).and_then(
-        |p| if has_length(env, p.typ) {
+    let array = parameters
+        .get(pos - 1)
+        .and_then(|p| if has_length(env, p.typ) {
             Some(p)
         } else {
             None
-        },
-    );
+        });
     array.map(|p| &p.name)
 }
 

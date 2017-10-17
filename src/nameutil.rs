@@ -72,9 +72,7 @@ lazy_static! {
 }
 
 pub fn signal_to_snake(signal: &str) -> String {
-    signal
-        .replace("::", "_")
-        .replace('-', "_")
+    signal.replace("::", "_").replace('-', "_")
 }
 
 #[cfg(test)]

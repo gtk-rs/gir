@@ -70,26 +70,25 @@ impl Builder {
     pub fn out_parameter(&mut self, env: &Env, parameter: &AnalysisCParameter) -> &mut Builder {
         use self::OutMemMode::*;
         let mem_mode = match ConversionType::of(&env.library, parameter.typ) {
-            ConversionType::Pointer => {
-                if parameter.caller_allocates {
-                    UninitializedNamed(rust_type(env, parameter.typ).unwrap())
-                } else {
-                    use library::Type::*;
-                    let type_ = env.library.type_(parameter.typ);
-                    match *type_ {
-                        Fundamental(fund)
-                            if fund == library::Fundamental::Utf8 ||
-                                   fund == library::Fundamental::Filename => {
-                            if parameter.transfer == library::Transfer::Full {
-                                NullMutPtr
-                            } else {
-                                NullPtr
-                            }
+            ConversionType::Pointer => if parameter.caller_allocates {
+                UninitializedNamed(rust_type(env, parameter.typ).unwrap())
+            } else {
+                use library::Type::*;
+                let type_ = env.library.type_(parameter.typ);
+                match *type_ {
+                    Fundamental(fund)
+                        if fund == library::Fundamental::Utf8
+                            || fund == library::Fundamental::Filename =>
+                    {
+                        if parameter.transfer == library::Transfer::Full {
+                            NullMutPtr
+                        } else {
+                            NullPtr
                         }
-                        _ => NullMutPtr,
                     }
+                    _ => NullMutPtr,
                 }
-            }
+            },
             _ => Uninitialized,
         };
         self.parameters.push(Parameter::Out {
@@ -291,15 +290,18 @@ impl Builder {
                 ref mem_mode,
             } = *par
             {
-                if self.transformations.iter().any(
-                    |tr| match tr.transformation_type {
+                if self.transformations
+                    .iter()
+                    .any(|tr| match tr.transformation_type {
                         TransformationType::Length {
                             ref array_length_name,
                             ..
-                        } if array_length_name == &parameter.name => true,
+                        } if array_length_name == &parameter.name =>
+                        {
+                            true
+                        }
                         _ => false,
-                    },
-                ) {
+                    }) {
                     continue;
                 }
 
@@ -359,17 +361,16 @@ impl Builder {
             }
             Throws(use_ret) => {
                 //extracting original FFI function call
-                let (boxed_call, array_length_name, ret_info) =
-                    if let Chunk::FfiCallConversion {
-                        call: inner,
-                        array_length_name,
-                        ret: ret_info,
-                    } = call
-                    {
-                        (inner, array_length_name, ret_info)
-                    } else {
-                        panic!("Call without Chunk::FfiCallConversion")
-                    };
+                let (boxed_call, array_length_name, ret_info) = if let Chunk::FfiCallConversion {
+                    call: inner,
+                    array_length_name,
+                    ret: ret_info,
+                } = call
+                {
+                    (inner, array_length_name, ret_info)
+                } else {
+                    panic!("Call without Chunk::FfiCallConversion")
+                };
                 let call = if use_ret {
                     Chunk::Let {
                         name: "ret".into(),

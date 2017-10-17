@@ -199,7 +199,11 @@ fn generate_object_funcs(
         let name = func.c_identifier.as_ref().unwrap();
         // since we work with gir-files from Linux, some function names need to be adjusted
         if is_windows_utf8 {
-            try!(writeln!(w, "    {}#[cfg(any(windows, feature = \"dox\"))]", comment));
+            try!(writeln!(
+                w,
+                "    {}#[cfg(any(windows, feature = \"dox\"))]",
+                comment
+            ));
             try!(writeln!(w, "    {}pub fn {}_utf8{};", comment, name, sig));
             try!(version_condition(w, env, func.version, commented, 1));
         }

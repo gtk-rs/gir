@@ -30,16 +30,14 @@ pub fn generate(
             commented = true;
             comment_prefix = "//";
         }
-        Visibility::Private => {
-            if in_trait {
-                warn!(
-                    "Generating trait method for private function {}",
-                    analysis.glib_name
-                );
-            } else {
-                pub_prefix = "";
-            }
-        }
+        Visibility::Private => if in_trait {
+            warn!(
+                "Generating trait method for private function {}",
+                analysis.glib_name
+            );
+        } else {
+            pub_prefix = "";
+        },
         Visibility::Hidden => return Ok(()),
     }
     let declaration = declaration(env, analysis);

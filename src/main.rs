@@ -8,15 +8,15 @@ extern crate env_logger;
 #[macro_use]
 extern crate error_chain;
 extern crate git2;
+extern crate hprof;
 #[macro_use]
 extern crate lazy_static;
 #[macro_use]
 extern crate log;
-extern crate xml;
-extern crate toml;
 extern crate regex;
-extern crate hprof;
 extern crate stripper_lib;
+extern crate toml;
+extern crate xml;
 
 use std::cell::RefCell;
 

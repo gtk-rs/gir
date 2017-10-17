@@ -12,8 +12,12 @@ pub enum Chunk {
     Unsafe(Vec<Chunk>),
     FfiCallTODO(String),
     FfiCall { name: String, params: Vec<Chunk> },
-    FfiCallParameter { transformation_type: TransformationType, },
-    FfiCallOutParameter { par: parameter_ffi_call_out::Parameter, },
+    FfiCallParameter {
+        transformation_type: TransformationType,
+    },
+    FfiCallOutParameter {
+        par: parameter_ffi_call_out::Parameter,
+    },
     //TODO: separate without return_value::Info
     FfiCallConversion {
         ret: return_value::Info,

@@ -81,8 +81,8 @@ pub fn new(env: &Env, obj: &GObject) -> Option<Info> {
         record.deprecated_version,
     );
 
-    let is_shared = specials.get(&special_functions::Type::Ref).is_some() &&
-        specials.get(&special_functions::Type::Unref).is_some();
+    let is_shared = specials.get(&special_functions::Type::Ref).is_some()
+        && specials.get(&special_functions::Type::Unref).is_some();
     if is_shared {
         // `copy` will duplicate a struct while `clone` just adds a reference
         special_functions::unhide(&mut functions, &specials, special_functions::Type::Copy);

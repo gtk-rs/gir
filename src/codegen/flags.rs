@@ -16,8 +16,8 @@ pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>) {
             .objects
             .values()
             .filter(|c| {
-                c.status.need_generate() &&
-                    c.type_id.map_or(false, |tid| tid.ns_id == namespaces::MAIN)
+                c.status.need_generate()
+                    && c.type_id.map_or(false, |tid| tid.ns_id == namespaces::MAIN)
             })
             .collect();
 
@@ -78,12 +78,7 @@ pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>) {
     });
 }
 
-fn generate_flags(
-    env: &Env,
-    w: &mut Write,
-    flags: &Bitfield,
-    config: &GObject,
-) -> Result<()> {
+fn generate_flags(env: &Env, w: &mut Write, flags: &Bitfield, config: &GObject) -> Result<()> {
     try!(version_condition(w, env, flags.version, false, 0));
     try!(writeln!(w, "bitflags! {{"));
     try!(writeln!(w, "    pub struct {}: u32 {{", flags.name));

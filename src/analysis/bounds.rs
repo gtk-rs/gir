@@ -7,7 +7,7 @@ use env::Env;
 use analysis::imports::Imports;
 use analysis::function_parameters::CParameter;
 use analysis::rust_type::bounds_rust_type;
-use library::{Function, Fundamental, Nullable, Type, TypeId, ParameterDirection};
+use library::{Function, Fundamental, Nullable, ParameterDirection, Type, TypeId};
 use traits::IntoString;
 
 #[derive(Clone, Eq, Debug, PartialEq)]
@@ -128,13 +128,11 @@ impl Bounds {
                     None
                 }
             }
-            Type::Class(..) => {
-                if env.class_hierarchy.subtypes(type_id).next().is_some() {
-                    Some(Into(Some('_'), Some(Box::new(IsA(None)))))
-                } else {
-                    Some(Into(Some('_'), None))
-                }
-            }
+            Type::Class(..) => if env.class_hierarchy.subtypes(type_id).next().is_some() {
+                Some(Into(Some('_'), Some(Box::new(IsA(None)))))
+            } else {
+                Some(Into(Some('_'), None))
+            },
             Type::Interface(..) if !*nullable => Some(IsA(None)),
             Type::Interface(..) => Some(Into(Some('_'), Some(Box::new(IsA(None))))),
             Type::List(_) | Type::SList(_) | Type::CArray(_) => None,

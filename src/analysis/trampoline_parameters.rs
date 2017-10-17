@@ -188,16 +188,14 @@ fn apply_transformation_type(
     transform.transformation = transformation_type;
     match transformation_type {
         TransformationType::None => (),
-        TransformationType::Borrow => {
-            if transform.conversion_type == ConversionType::Pointer {
-                transform.conversion_type = ConversionType::Borrow;
-            } else if transform.conversion_type != ConversionType::Borrow {
-                error!(
-                    "Wrong conversion_type for borrow transformation {:?}",
-                    transform.conversion_type
-                );
-            }
-        }
+        TransformationType::Borrow => if transform.conversion_type == ConversionType::Pointer {
+            transform.conversion_type = ConversionType::Borrow;
+        } else if transform.conversion_type != ConversionType::Borrow {
+            error!(
+                "Wrong conversion_type for borrow transformation {:?}",
+                transform.conversion_type
+            );
+        },
         TransformationType::TreePath => {
             let type_ = env.type_(transform.typ);
             if let library::Type::Fundamental(library::Fundamental::Utf8) = *type_ {

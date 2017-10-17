@@ -242,10 +242,20 @@ fn create_object_doc(w: &mut Write, env: &Env, info: &analysis::object::Info) ->
         try!(create_fn_doc(w, env, function, Some(Box::new(ty))));
     }
     for signal in signals {
-        try!(create_fn_doc(w, env, signal, Some(Box::new(ty_ext.clone()))));
+        try!(create_fn_doc(
+            w,
+            env,
+            signal,
+            Some(Box::new(ty_ext.clone()))
+        ));
     }
     for property in properties {
-        try!(create_property_doc(w, env, property, Some(Box::new(ty_ext.clone()))));
+        try!(create_property_doc(
+            w,
+            env,
+            property,
+            Some(Box::new(ty_ext.clone()))
+        ));
     }
     Ok(())
 }
@@ -351,9 +361,12 @@ fn create_fn_doc<T>(
     fn_: &T,
     parent: Option<Box<TypeStruct>>,
 ) -> Result<()>
-where T: FunctionLikeType + ToStripperType {
-    if fn_.doc().is_none() && fn_.doc_deprecated().is_none() && fn_.ret().doc.is_none() &&
-        fn_.parameters().iter().all(|p| p.doc.is_none()) {
+where
+    T: FunctionLikeType + ToStripperType,
+{
+    if fn_.doc().is_none() && fn_.doc_deprecated().is_none() && fn_.ret().doc.is_none()
+        && fn_.parameters().iter().all(|p| p.doc.is_none())
+    {
         return Ok(());
     }
 
@@ -363,15 +376,16 @@ where T: FunctionLikeType + ToStripperType {
         ..fn_.to_stripper_type()
     };
     let self_name: Option<String> = fn_.parameters()
-                                       .iter()
-                                       .find(|p| p.instance_parameter)
-                                       .map(|p| p.name.clone());
+        .iter()
+        .find(|p| p.instance_parameter)
+        .map(|p| p.name.clone());
 
     write_item_doc(w, &ty, |w| {
         if let &Some(ref doc) = fn_.doc() {
-            try!(writeln!(w,
-                          "{}",
-                          reformat_doc(&fix_param_names(doc, &self_name), &symbols)
+            try!(writeln!(
+                w,
+                "{}",
+                reformat_doc(&fix_param_names(doc, &self_name), &symbols)
             ));
         }
         if let &Some(version) = fn_.version() {
@@ -397,13 +411,15 @@ where T: FunctionLikeType + ToStripperType {
                 continue;
             }
             if let Some(ref doc) = parameter.doc {
-                try!(writeln!(w,
-                              "## `{}`",
-                              nameutil::mangle_keywords(&parameter.name[..])
+                try!(writeln!(
+                    w,
+                    "## `{}`",
+                    nameutil::mangle_keywords(&parameter.name[..])
                 ));
-                try!(writeln!(w,
-                              "{}",
-                              reformat_doc(&fix_param_names(doc, &self_name), &symbols)
+                try!(writeln!(
+                    w,
+                    "{}",
+                    reformat_doc(&fix_param_names(doc, &self_name), &symbols)
                 ));
             }
         }
@@ -426,8 +442,9 @@ fn create_property_doc(
     property: &Property,
     parent: Option<Box<TypeStruct>>,
 ) -> Result<()> {
-    if property.doc.is_none() && property.doc_deprecated.is_none() &&
-       (property.readable || property.writable) {
+    if property.doc.is_none() && property.doc_deprecated.is_none()
+        && (property.readable || property.writable)
+    {
         return Ok(());
     }
     let mut v = Vec::with_capacity(2);
@@ -450,9 +467,9 @@ fn create_property_doc(
         try!(write_item_doc(w, item, |w| {
             if let Some(ref doc) = property.doc {
                 try!(writeln!(
-                     w,
-                     "{}",
-                     reformat_doc(&fix_param_names(doc, &None), &symbols)
+                    w,
+                    "{}",
+                    reformat_doc(&fix_param_names(doc, &None), &symbols)
                 ));
             }
             if let Some(version) = property.version {

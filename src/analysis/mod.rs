@@ -132,21 +132,15 @@ fn analyze(env: &mut Env, tid: TypeId, deps: &[TypeId]) {
         None => return,
     };
     match *env.library.type_(tid) {
-        Type::Class(_) => {
-            if let Some(info) = object::class(env, obj, deps) {
-                env.analysis.objects.insert(full_name, info);
-            }
-        }
-        Type::Interface(_) => {
-            if let Some(info) = object::interface(env, obj, deps) {
-                env.analysis.objects.insert(full_name, info);
-            }
-        }
-        Type::Record(_) => {
-            if let Some(info) = record::new(env, obj) {
-                env.analysis.records.insert(full_name, info);
-            }
-        }
+        Type::Class(_) => if let Some(info) = object::class(env, obj, deps) {
+            env.analysis.objects.insert(full_name, info);
+        },
+        Type::Interface(_) => if let Some(info) = object::interface(env, obj, deps) {
+            env.analysis.objects.insert(full_name, info);
+        },
+        Type::Record(_) => if let Some(info) = record::new(env, obj) {
+            env.analysis.records.insert(full_name, info);
+        },
         _ => {}
     }
 }

@@ -8,7 +8,7 @@ use toml;
 use git::repo_hash;
 use library;
 use library::Library;
-use super::external_libraries::{ExternalLibrary, read_external_libraries};
+use super::external_libraries::{read_external_libraries, ExternalLibrary};
 use super::WorkMode;
 use super::gobjects;
 use super::error::*;

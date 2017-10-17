@@ -27,8 +27,10 @@ impl Parse for Member {
             }
         };
 
-        toml.check_unwanted(&["alias", "version", "name", "pattern", "ignore"],
-                            &format!("member {}", object_name));
+        toml.check_unwanted(
+            &["alias", "version", "name", "pattern", "ignore"],
+            &format!("member {}", object_name),
+        );
 
         let alias = toml.lookup("alias")
             .and_then(|val| val.as_bool())
