@@ -368,10 +368,10 @@ fn generate_unions(w: &mut Write, env: &Env, items: &[&Union]) -> Result<()> {
                     // platforms (32 bit vs. 64 bits on 64 bit platforms)
                     try!(writeln!(
                         w,
-                        "#[cfg(any(target_pointer_width = \"32\", feature = \"dox\"))]\n\
+                        "#[cfg(target_pointer_width = \"32\")]\n\
                          #[repr(C)]\n\
                          pub struct {0}([u32; 2]);\n\
-                         #[cfg(any(target_pointer_width = \"64\", feature = \"dox\"))]\n\
+                         #[cfg(target_pointer_width = \"64\")]\n\
                          #[repr(C)]\n\
                          pub struct {0}(*mut c_void);",
                         c_type
@@ -471,7 +471,7 @@ fn generate_records(w: &mut Write, env: &Env, records: &[&Record]) -> Result<()>
             if record.name == "Value" {
                 try!(writeln!(
                     w,
-                    "#[cfg(any(target_pointer_width = \"128\", feature = \"dox\"))]"
+                    "#[cfg(target_pointer_width = \"128\")]"
                 ));
                 try!(writeln!(
                     w,
@@ -599,15 +599,11 @@ fn generate_fields(env: &Env, struct_name: &str, fields: &[Field]) -> (Vec<Strin
             // sizeof(c_ulong)) == sizeof(gpointer) everywhere except for Windows 64-bit
             if field.name == "hook_size" {
                 lines.push(
-                    "\t#[cfg(any(not(windows), \
-                     not(target_pointer_width = \"64\"), feature = \"dox\"))]"
-                        .to_owned(),
+                    "\t#[cfg(any(not(windows), not(target_pointer_width = \"64\")))]".to_owned(),
                 );
                 lines.push("\tpub hook_size_and_setup: gpointer,".to_owned());
                 lines.push(
-                    "\t#[cfg(any(all(windows, target_pointer_width = \"64\"), \
-                     feature = \"dox\"))]"
-                        .to_owned(),
+                    "\t#[cfg(all(windows, target_pointer_width = \"64\"))]".to_owned(),
                 );
                 lines.push("\tpub hook_size_and_setup: c_ulong,".to_owned());
             }
