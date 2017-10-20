@@ -1279,6 +1279,7 @@ impl Library {
         if let Some(v) = deprecated_version {
             self.register_version(ns_id, v);
         }
+        let is_action = to_bool(attrs.by_name("action").unwrap_or("0"));
 
         let mut params = Vec::new();
         let mut ret = None;
@@ -1327,6 +1328,7 @@ impl Library {
                 deprecated_version: deprecated_version,
                 doc: doc,
                 doc_deprecated: doc_deprecated,
+                is_action: is_action,
             })
         } else {
             bail!(mk_error!("Missing <return-value> element", parser))

@@ -10,6 +10,7 @@ use version::Version;
 
 #[derive(Debug)]
 pub struct Info {
+    pub object_name: String,
     pub connect_name: String,
     pub signal_name: String,
     pub action_emit_name: Option<String>,
@@ -17,6 +18,7 @@ pub struct Info {
     pub version: Option<Version>,
     pub deprecated_version: Option<Version>,
     pub doc_hidden: bool,
+    pub is_action: bool,
 }
 
 pub fn analyze(
@@ -41,6 +43,7 @@ pub fn analyze(
 
         let info = analyze_signal(
             env,
+            obj,
             signal,
             type_tid,
             in_trait,
@@ -59,6 +62,7 @@ pub fn analyze(
 
 fn analyze_signal(
     env: &Env,
+    obj: &GObject,
     signal: &library::Signal,
     type_tid: library::TypeId,
     in_trait: bool,
@@ -112,6 +116,7 @@ fn analyze_signal(
     }
 
     let info = Info {
+        object_name: obj.name.clone(),
         connect_name: connect_name,
         signal_name: signal.name.clone(),
         trampoline_name: trampoline_name,
@@ -119,6 +124,7 @@ fn analyze_signal(
         version: version,
         deprecated_version: deprecated_version,
         doc_hidden: doc_hidden,
+        is_action: signal.is_action,
     };
     Some(info)
 }

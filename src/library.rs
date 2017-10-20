@@ -365,6 +365,7 @@ pub struct Signal {
     pub deprecated_version: Option<Version>,
     pub doc: Option<String>,
     pub doc_deprecated: Option<String>,
+    pub is_action: bool,
 }
 
 #[derive(Default, Debug)]
