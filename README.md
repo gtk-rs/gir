@@ -179,12 +179,15 @@ child_type = "Gtk.MenuItem"
     doc_hidden = true
 ```
 
-For enumerations, you can configure the members:
+For enumerations and bitflags, you can configure the members and mark the type
+as `#[must_use]`:
 
 ```toml
 [[object]]
 name = "Gdk.EventType"
 status = "generate"
+# generates #[must_use] attribute for the type
+must_use = true
     [[object.member]]
     name = "2button_press"
     # allows to skip elements with bad names, other members with same value used instead

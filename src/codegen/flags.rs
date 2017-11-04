@@ -81,6 +81,12 @@ pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>) {
 fn generate_flags(env: &Env, w: &mut Write, flags: &Bitfield, config: &GObject) -> Result<()> {
     try!(version_condition(w, env, flags.version, false, 0));
     try!(writeln!(w, "bitflags! {{"));
+    if config.must_use {
+        try!(writeln!(
+            w,
+            "    #[must_use]"
+        ));
+    }
     try!(writeln!(w, "    pub struct {}: u32 {{", flags.name));
     for member in &flags.members {
         let member_config = config.members.matched(&member.name);

@@ -128,6 +128,12 @@ fn generate_enum(env: &Env, w: &mut Write, enum_: &Enumeration, config: &GObject
         w,
         "#[derive(Clone, Copy, Debug, Eq, PartialEq, Hash)]"
     ));
+    if config.must_use {
+        try!(writeln!(
+            w,
+            "#[must_use]"
+        ));
+    }
     try!(writeln!(w, "pub enum {} {{", enum_.name));
     for member in &members {
         try!(version_condition(w, env, member.version, false, 1));
