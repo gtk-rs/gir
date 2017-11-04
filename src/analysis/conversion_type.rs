@@ -1,4 +1,6 @@
+use env;
 use library::*;
+use config::gobjects::GObject;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum ConversionType {
@@ -16,7 +18,17 @@ impl Default for ConversionType {
 }
 
 impl ConversionType {
-    pub fn of(library: &Library, type_id: TypeId) -> ConversionType {
+    pub fn of(env: &env::Env, type_id: TypeId) -> ConversionType {
+        let library = &env.library;
+
+        if let Some(&GObject {
+            conversion_type: Some(conversion_type),
+            ..
+        }) = env.config.objects.get(&type_id.full_name(library))
+        {
+            return conversion_type;
+        }
+
         use library::Type::*;
         use library::Fundamental::*;
         match *library.type_(type_id) {
@@ -53,7 +65,7 @@ impl ConversionType {
                 UIntPtr => ConversionType::Direct,
                 Unsupported => ConversionType::Unknown,
             },
-            Alias(ref alias) => ConversionType::of(library, alias.typ),
+            Alias(ref alias) => ConversionType::of(env, alias.typ),
             Bitfield(_) => ConversionType::Scalar,
             Record(_) => ConversionType::Pointer,
             Union(_) => ConversionType::Pointer,

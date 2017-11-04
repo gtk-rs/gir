@@ -183,7 +183,7 @@ fn type_error(env: &Env, par: &library::Parameter) -> Option<&'static str> {
         Some("InOut")
     } else if is_empty_c_type(&par.c_type) {
         Some("Empty ctype")
-    } else if ConversionType::of(&env.library, par.typ) == ConversionType::Unknown {
+    } else if ConversionType::of(env, par.typ) == ConversionType::Unknown {
         Some("Unknown conversion")
     } else {
         match rust_type(env, par.typ) {

@@ -140,7 +140,7 @@ pub fn analyze(
                 library::Type::Record(..) |
                 library::Type::Interface(..) |
                 library::Type::Class(..) => ConversionType::Borrow,
-                _ => ConversionType::of(&env.library, par.typ),
+                _ => ConversionType::of(env, par.typ),
             }
         };
 

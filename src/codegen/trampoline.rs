@@ -226,7 +226,7 @@ fn trampoline_call_func(env: &Env, analysis: &Trampoline, in_trait: bool) -> Str
     let ret = if analysis.ret.typ == Default::default() {
         String::new()
     } else {
-        analysis.ret.trampoline_to_glib(&env.library)
+        analysis.ret.trampoline_to_glib(env)
     };
     format!("f({}){}", params, ret)
 }

@@ -130,7 +130,7 @@ fn rust_type_full(
             }
         }
         List(inner_tid) | SList(inner_tid) | CArray(inner_tid)
-            if ConversionType::of(&env.library, inner_tid) == ConversionType::Pointer =>
+            if ConversionType::of(env, inner_tid) == ConversionType::Pointer =>
         {
             skip_option = true;
             let inner_ref_mode = match *env.library.type_(inner_tid) {
@@ -146,7 +146,7 @@ fn rust_type_full(
             )
         }
         CArray(inner_tid)
-            if ConversionType::of(&env.library, inner_tid) == ConversionType::Direct =>
+            if ConversionType::of(env, inner_tid) == ConversionType::Direct =>
         {
             if let Fundamental(fund) = *env.library.type_(inner_tid) {
                 let array_type = match fund {
@@ -203,7 +203,7 @@ fn rust_type_full(
         RefMode::ByRefMut => rust_type = rust_type.map_any(|s| format!("&mut {}", s)),
     }
     if *nullable && !skip_option {
-        match ConversionType::of(&env.library, type_id) {
+        match ConversionType::of(env, type_id) {
             ConversionType::Pointer | ConversionType::Scalar => {
                 rust_type = rust_type.map_any(|s| format!("Option<{}>", s))
             }

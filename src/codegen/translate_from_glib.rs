@@ -22,7 +22,7 @@ impl TranslateFromGlib for Mode {
         array_length: Option<&String>,
     ) -> (String, String) {
         use analysis::conversion_type::ConversionType::*;
-        match ConversionType::of(&env.library, self.typ) {
+        match ConversionType::of(env, self.typ) {
             Direct => (String::new(), String::new()),
             Scalar => ("from_glib(".into(), ")".into()),
             Pointer => {
