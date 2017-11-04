@@ -72,6 +72,7 @@ pub struct GObject {
     pub child_properties: Option<ChildProperties>,
     pub concurrency: library::Concurrency,
     pub ref_mode: Option<ref_mode::RefMode>,
+    pub must_use: bool,
 }
 
 impl Default for GObject {
@@ -92,6 +93,7 @@ impl Default for GObject {
             child_properties: None,
             concurrency: Default::default(),
             ref_mode: None,
+            must_use: false,
         }
     }
 }
@@ -145,6 +147,7 @@ fn parse_object(toml_object: &Value, concurrency: library::Concurrency) -> GObje
             "trait",
             "trait_name",
             "cfg_condition",
+            "must_use",
         ],
         &format!("object {}", name),
     );
@@ -201,6 +204,10 @@ fn parse_object(toml_object: &Value, concurrency: library::Concurrency) -> GObje
         .and_then(|v| v.as_str())
         .and_then(ref_mode_from_str);
     let child_properties = ChildProperties::parse(toml_object, &name);
+    let must_use = toml_object
+        .lookup("must_use")
+        .and_then(|v| v.as_bool())
+        .unwrap_or(false);
 
     if status != GStatus::Manual && ref_mode != None {
         warn!("ref_mode configuration used for non-manual object {}", name);
@@ -222,6 +229,7 @@ fn parse_object(toml_object: &Value, concurrency: library::Concurrency) -> GObje
         child_properties: child_properties,
         concurrency: concurrency,
         ref_mode: ref_mode,
+        must_use: must_use,
     }
 }
 
