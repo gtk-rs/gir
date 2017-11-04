@@ -13,7 +13,7 @@ use super::members::Members;
 use super::properties::Properties;
 use super::signals::{Signal, Signals};
 use version::Version;
-use analysis::ref_mode;
+use analysis::{ref_mode, conversion_type};
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum GStatus {
@@ -73,6 +73,7 @@ pub struct GObject {
     pub concurrency: library::Concurrency,
     pub ref_mode: Option<ref_mode::RefMode>,
     pub must_use: bool,
+    pub conversion_type: Option<conversion_type::ConversionType>,
 }
 
 impl Default for GObject {
@@ -94,6 +95,7 @@ impl Default for GObject {
             concurrency: Default::default(),
             ref_mode: None,
             must_use: false,
+            conversion_type: None,
         }
     }
 }
@@ -111,12 +113,27 @@ pub fn parse_toml(toml_objects: &Value, concurrency: library::Concurrency) -> GO
 }
 
 fn ref_mode_from_str(ref_mode: &str) -> Option<ref_mode::RefMode> {
+    use analysis::ref_mode::RefMode::*;
+
     match ref_mode {
-        "none" => Some(ref_mode::RefMode::None),
-        "ref" => Some(ref_mode::RefMode::ByRef),
-        "ref-mut" => Some(ref_mode::RefMode::ByRefMut),
-        "ref-immut" => Some(ref_mode::RefMode::ByRefImmut),
-        "ref-fake" => Some(ref_mode::RefMode::ByRefFake),
+        "none" => Some(None),
+        "ref" => Some(ByRef),
+        "ref-mut" => Some(ByRefMut),
+        "ref-immut" => Some(ByRefImmut),
+        "ref-fake" => Some(ByRefFake),
+        _ => Option::None,
+    }
+}
+
+fn conversion_type_from_str(conversion_type: &str) -> Option<conversion_type::ConversionType> {
+    use analysis::conversion_type::ConversionType::*;
+
+    match conversion_type {
+        "direct" => Some(Direct),
+        "scalar" => Some(Scalar),
+        "pointer" => Some(Pointer),
+        "borrow" => Some(Borrow),
+        "unknown" => Some(Unknown),
         _ => None,
     }
 }
@@ -141,6 +158,7 @@ fn parse_object(toml_object: &Value, concurrency: library::Concurrency) -> GObje
             "version",
             "concurrency",
             "ref_mode",
+            "conversion_type",
             "child_prop",
             "child_name",
             "child_type",
@@ -203,14 +221,22 @@ fn parse_object(toml_object: &Value, concurrency: library::Concurrency) -> GObje
         .lookup("ref_mode")
         .and_then(|v| v.as_str())
         .and_then(ref_mode_from_str);
+    let conversion_type = toml_object
+        .lookup("conversion_type")
+        .and_then(|v| v.as_str())
+        .and_then(conversion_type_from_str);
     let child_properties = ChildProperties::parse(toml_object, &name);
     let must_use = toml_object
         .lookup("must_use")
         .and_then(|v| v.as_bool())
         .unwrap_or(false);
 
-    if status != GStatus::Manual && ref_mode != None {
+    if status != GStatus::Manual && ref_mode.is_some() {
         warn!("ref_mode configuration used for non-manual object {}", name);
+    }
+
+    if status != GStatus::Manual && conversion_type.is_some() {
+        warn!("conversion_type configuration used for non-manual object {}", name);
     }
 
     GObject {
@@ -230,6 +256,7 @@ fn parse_object(toml_object: &Value, concurrency: library::Concurrency) -> GObje
         concurrency: concurrency,
         ref_mode: ref_mode,
         must_use: must_use,
+        conversion_type: conversion_type,
     }
 }
 

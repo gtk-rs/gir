@@ -1,14 +1,15 @@
 use analysis::conversion_type::ConversionType;
 use library;
+use env;
 
 pub trait TrampolineToGlib {
-    fn trampoline_to_glib(&self, library: &library::Library) -> String;
+    fn trampoline_to_glib(&self, env: &env::Env) -> String;
 }
 
 impl TrampolineToGlib for library::Parameter {
-    fn trampoline_to_glib(&self, library: &library::Library) -> String {
+    fn trampoline_to_glib(&self, env: &env::Env) -> String {
         use analysis::conversion_type::ConversionType::*;
-        match ConversionType::of(library, self.typ) {
+        match ConversionType::of(env, self.typ) {
             Direct => String::new(),
             Scalar => ".to_glib()".to_owned(),
             Pointer => to_glib_xxx(self.transfer).to_owned(),

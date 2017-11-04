@@ -189,7 +189,7 @@ pub fn analyze(
 
         let mut caller_allocates = par.caller_allocates;
         let mut transfer = par.transfer;
-        let conversion = ConversionType::of(&env.library, par.typ);
+        let conversion = ConversionType::of(env, par.typ);
         if conversion == ConversionType::Direct || conversion == ConversionType::Scalar {
             //For simply types no reason to have these flags
             caller_allocates = false;
@@ -258,7 +258,7 @@ pub fn analyze(
             ind_rust = None;
         }
 
-        let transformation_type = match ConversionType::of(&env.library, par.typ) {
+        let transformation_type = match ConversionType::of(env, par.typ) {
             ConversionType::Direct => TransformationType::ToGlibDirect { name: name },
             ConversionType::Scalar => TransformationType::ToGlibScalar {
                 name: name,

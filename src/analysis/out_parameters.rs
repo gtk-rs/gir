@@ -114,7 +114,7 @@ pub fn analyze_imports(env: &Env, func: &Function, imports: &mut Imports) {
 
 pub fn can_as_return(env: &Env, par: &Parameter) -> bool {
     use super::conversion_type::ConversionType::*;
-    match ConversionType::of(&env.library, par.typ) {
+    match ConversionType::of(env, par.typ) {
         Direct => true,
         Scalar => true,
         Pointer => {

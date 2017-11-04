@@ -45,7 +45,7 @@ impl ToParameter for CParameter {
                         self.ref_mode,
                     );
                     let type_name = rust_type.into_string();
-                    type_str = match ConversionType::of(&env.library, self.typ) {
+                    type_str = match ConversionType::of(env, self.typ) {
                         ConversionType::Unknown => format!("/*Unknown conversion*/{}", type_name),
                         _ => type_name,
                     }

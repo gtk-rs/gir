@@ -25,7 +25,7 @@ impl RefMode {
         if let Some(&GObject {
             ref_mode: Some(ref_mode),
             ..
-        }) = env.config.objects.get(&tid.full_name(&env.library))
+        }) = env.config.objects.get(&tid.full_name(library))
         {
             if direction == library::ParameterDirection::In {
                 return ref_mode;

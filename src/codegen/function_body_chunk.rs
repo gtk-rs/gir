@@ -69,7 +69,7 @@ impl Builder {
     }
     pub fn out_parameter(&mut self, env: &Env, parameter: &AnalysisCParameter) -> &mut Builder {
         use self::OutMemMode::*;
-        let mem_mode = match ConversionType::of(&env.library, parameter.typ) {
+        let mem_mode = match ConversionType::of(env, parameter.typ) {
             ConversionType::Pointer => if parameter.caller_allocates {
                 UninitializedNamed(rust_type(env, parameter.typ).unwrap())
             } else {
