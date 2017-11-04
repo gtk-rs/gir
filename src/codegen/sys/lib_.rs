@@ -1,6 +1,5 @@
 use std::collections::HashMap;
 use std::io::{Result, Write};
-use case::CaseExt;
 
 use analysis::c_type::rustify_pointers;
 
@@ -282,11 +281,7 @@ fn generate_enums(w: &mut Write, env: &Env, items: &[&Enumeration]) -> Result<()
         let config = env.config.objects.get(&full_name);
 
         let mut vals: HashMap<String, (String, Option<Version>)> = HashMap::new();
-        try!(writeln!(
-            w,
-            "#[derive(Clone, Copy, Debug, Eq, PartialEq)]\n#[repr(C)]"
-        ));
-        try!(writeln!(w, "pub enum {} {{", item.c_type));
+        try!(writeln!(w, "pub type {} = c_int;", item.c_type));
         for member in &item.members {
             let member_config = config
                 .as_ref()
@@ -298,27 +293,16 @@ fn generate_enums(w: &mut Write, env: &Env, items: &[&Enumeration]) -> Result<()
             if is_alias || vals.get(&member.value).is_some() {
                 continue;
             }
-            try!(version_condition(w, env, version, false, 1));
+
+            try!(version_condition(w, env, version, false, 0));
             try!(writeln!(
                 w,
-                "\t{} = {},",
-                &prepare_enum_member_name(&member.name),
-                member.value
+                "pub const {}: {} = {};",
+                member.c_identifier,
+                item.c_type,
+                member.value,
             ));
             vals.insert(member.value.clone(), (member.name.clone(), version));
-        }
-        try!(writeln!(w, "}}"));
-        for member in &item.members {
-            if let Some(&(ref value, version)) = vals.get(&member.value) {
-                try!(version_condition(w, env, version, false, 0));
-                try!(writeln!(
-                    w,
-                    "pub const {}: {} = {1}::{};",
-                    member.c_identifier,
-                    item.c_type,
-                    &prepare_enum_member_name(value)
-                ));
-            }
         }
         try!(writeln!(w, ""));
     }
@@ -390,15 +374,6 @@ fn generate_unions(w: &mut Write, env: &Env, items: &[&Union]) -> Result<()> {
     }
 
     Ok(())
-}
-
-fn prepare_enum_member_name(name: &str) -> String {
-    let cameled = name.to_camel();
-    if name.chars().next().unwrap().is_digit(10) {
-        format!("_{}", cameled)
-    } else {
-        cameled
-    }
 }
 
 fn generate_classes_structs(w: &mut Write, env: &Env, classes: &[&Class]) -> Result<()> {

@@ -75,7 +75,6 @@ pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>) {
             }
             try!(writeln!(w, "use glib::translate::*;"));
         }
-        try!(writeln!(w, "use std;"));
         try!(writeln!(w, ""));
 
         if has_any {
@@ -172,7 +171,7 @@ impl ToGlib for {name} {{
     }
     try!(writeln!(
         w,
-        "\t\t\t{}::__Unknown(value) => unsafe{{std::mem::transmute(value)}}",
+        "\t\t\t{}::__Unknown(value) => value",
         enum_.name
     ));
     try!(writeln!(
@@ -196,7 +195,7 @@ impl ToGlib for {name} {{
         "#[doc(hidden)]
 impl FromGlib<ffi::{ffi_name}> for {name} {{
     fn from_glib(value: ffi::{ffi_name}) -> Self {{
-        {assert}match value as i32 {{",
+        {assert}match value {{",
         name = enum_.name,
         ffi_name = enum_.c_type,
         assert = assert
@@ -237,7 +236,7 @@ impl FromGlib<ffi::{ffi_name}> for {name} {{
     }}
 
     fn code(self) -> i32 {{
-        self.to_glib() as i32
+        self.to_glib()
     }}
 
     fn from(code: i32) -> Option<Self> {{
@@ -308,11 +307,10 @@ impl FromGlib<ffi::{ffi_name}> for {name} {{
             w,
             "impl<'a> FromValue<'a> for {name} {{
     unsafe fn from_value(value: &Value) -> Self {{
-        from_glib(std::mem::transmute::<i32, ffi::{ffi_name}>(gobject_ffi::g_value_get_enum(value.to_glib_none().0)))
+        from_glib(gobject_ffi::g_value_get_enum(value.to_glib_none().0))
     }}
 }}",
             name = enum_.name,
-            ffi_name = enum_.c_type,
         ));
         try!(writeln!(w, ""));
 
@@ -321,7 +319,7 @@ impl FromGlib<ffi::{ffi_name}> for {name} {{
             w,
             "impl SetValue for {name} {{
     unsafe fn set_value(value: &mut Value, this: &Self) {{
-        gobject_ffi::g_value_set_enum(value.to_glib_none_mut().0, this.to_glib() as i32)
+        gobject_ffi::g_value_set_enum(value.to_glib_none_mut().0, this.to_glib())
     }}
 }}",
             name = enum_.name,
