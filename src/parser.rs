@@ -212,6 +212,9 @@ impl Library {
                     mk_error!("Missing c:type/glib:type-name attributes", parser)
                 })
         );
+        let type_struct = attrs
+            .by_name("type-struct")
+            .map(|s| s.to_owned());
         let get_type = try!(
             attrs
                 .by_name("get-type")
@@ -327,6 +330,7 @@ impl Library {
         let typ = Type::Class(Class {
             name: class_name.into(),
             c_type: c_type.into(),
+            type_struct: type_struct,
             c_class_type: None, // this will be resolved during postprocessing
             glib_get_type: get_type.into(),
             fields: fields,

@@ -386,6 +386,7 @@ pub struct Interface {
 pub struct Class {
     pub name: String,
     pub c_type: String,
+    pub type_struct: Option<String>,
     pub c_class_type: Option<String>,
     pub glib_get_type: String,
     pub fields: Vec<Field>,
