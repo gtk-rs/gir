@@ -371,6 +371,7 @@ pub struct Signal {
 pub struct Interface {
     pub name: String,
     pub c_type: String,
+    pub type_struct: Option<String>,
     pub c_class_type: Option<String>,
     pub glib_get_type: String,
     pub functions: Vec<Function>,
