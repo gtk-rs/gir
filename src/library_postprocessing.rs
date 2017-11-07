@@ -228,7 +228,7 @@ impl Library {
                     _ => { continue; }
                 }
 
-                if let &Some(ref type_struct) = type_struct {
+                if let Some(ref type_struct) = *type_struct {
                     let type_struct_tid = self.find_type(ns_id as u16, type_struct);
                     if type_struct_tid.is_none() {
                         panic!("\"{}\" has glib:type-struct=\"{}\" but there is no such record",
