@@ -135,7 +135,6 @@ fn do_main() -> Result<()> {
 
     {
         let _watcher = statistics.enter("Generating");
-
         codegen::generate(&env);
     }
 
