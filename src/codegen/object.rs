@@ -20,7 +20,7 @@ pub fn generate(w: &mut Write, env: &Env, analysis: &analysis::object::Info) -> 
         env,
         &analysis.name,
         &analysis.c_type,
-        &analysis.c_class_type.as_ref().map(|s| &*s as &str),
+        &analysis.c_class_type.as_ref().map(|s| &s[..]),
         &analysis.get_type,
         &analysis.supertypes,
     ));
