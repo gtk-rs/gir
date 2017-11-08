@@ -208,9 +208,9 @@ impl Library {
         for (ns_id, ns) in self.namespaces.iter().enumerate() {
             for type_ in ns.types.iter() {
                 let type_ = type_.as_ref().unwrap(); //Always contains something
-                let mut name;
-                let mut type_struct;
-                let mut c_class_type;
+                let name;
+                let type_struct;
+                let c_class_type;
 
                 match *type_ {
                     Type::Class(ref klass) => {
