@@ -176,7 +176,7 @@ impl Library {
         let mut structs_and_types = Vec::new();
 
         for (ns_id, ns) in self.namespaces.iter().enumerate() {
-            for type_ in ns.types.iter() {
+            for type_ in &ns.types {
                 let type_ = type_.as_ref().unwrap(); //Always contains something
 
                 if let Type::Record(ref record) = *type_ {
@@ -199,14 +199,14 @@ impl Library {
                     iface.c_class_type = Some(gtype_struct_c_type);
                 },
 
-                ref x @ _ => unreachable!("Something other than a class or interface has a class struct: {:?}", x)
+                ref x => unreachable!("Something other than a class or interface has a class struct: {:?}", x)
             }
         }
     }
 
     fn correlate_class_structs(&self) {
         for (ns_id, ns) in self.namespaces.iter().enumerate() {
-            for type_ in ns.types.iter() {
+            for type_ in &ns.types {
                 let type_ = type_.as_ref().unwrap(); //Always contains something
                 let name;
                 let type_struct;
