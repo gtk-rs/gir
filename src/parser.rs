@@ -214,6 +214,9 @@ impl Library {
                     mk_error!("Missing c:type/glib:type-name attributes", parser)
                 })
         );
+        let type_struct = attrs
+            .by_name("type-struct")
+            .map(|s| s.to_owned());
         let get_type = try!(
             attrs
                 .by_name("get-type")
@@ -314,6 +317,8 @@ impl Library {
         let typ = Type::Class(Class {
             name: class_name.into(),
             c_type: c_type.into(),
+            type_struct: type_struct,
+            c_class_type: None, // this will be resolved during postprocessing
             glib_get_type: get_type.into(),
             fields: fields,
             functions: fns,
@@ -364,6 +369,7 @@ impl Library {
             Some(s) => Some(s.to_string()),
             None => None,
         };
+        let gtype_struct_for = attrs.by_name("is-gtype-struct-for");
         let version = try!(self.parse_version(parser, ns_id, attrs.by_name("version")));
         let deprecated_version = try!(self.parse_version(
             parser,
@@ -468,10 +474,6 @@ impl Library {
             }
         }
 
-        if attrs.by_name("is-gtype-struct").is_some() {
-            return Ok(None);
-        }
-
         if record_name == "Atom" && self.namespace(ns_id).name == "Gdk" {
             // the gir definitions don't reflect the following correctly
             // typedef struct _GdkAtom *GdkAtom;
@@ -495,6 +497,7 @@ impl Library {
             name: record_name.into(),
             c_type: c_type.into(),
             glib_get_type: get_type.map(|s| s.into()),
+            gtype_struct_for: gtype_struct_for.map(|s| s.into()),
             fields: fields,
             functions: fns,
             version: version,
@@ -737,6 +740,9 @@ impl Library {
                 .by_name("type")
                 .ok_or_else(|| mk_error!("Missing c:type attribute", parser))
         );
+        let type_struct = attrs
+            .by_name("type-struct")
+            .map(|s| s.to_owned());
         let get_type = try!(
             attrs
                 .by_name("get-type")
@@ -788,6 +794,8 @@ impl Library {
         let typ = Type::Interface(Interface {
             name: interface_name.into(),
             c_type: c_type.into(),
+            type_struct: type_struct,
+            c_class_type: None, // this will be resolved during postprocessing
             glib_get_type: get_type.into(),
             functions: fns,
             signals: signals,

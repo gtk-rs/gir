@@ -28,6 +28,7 @@ generate = [
     "Gtk.ButtonBox",
     "Gtk.Calendar",
     "Gtk.CheckButton",
+    "Gtk.Clipboard",
     "Gtk.ColorButton",
     "Gtk.ColorChooserWidget",
     "Gtk.ComboBoxText",

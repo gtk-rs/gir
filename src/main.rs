@@ -84,36 +84,57 @@ fn do_main() -> Result<()> {
     statistics.start_frame();
 
     let watcher_total = statistics.enter("Total");
-    let watcher_loading = statistics.enter("Loading");
 
-    let mut library = Library::new(&cfg.library_name);
-    try!(library.read_file(&cfg.girs_dir, &cfg.library_full_name()));
-    library.postprocessing();
+    let mut library;
 
-    cfg.resolve_type_ids(&library);
-    update_version::check_function_real_version(&mut library);
-    let namespaces = analysis::namespaces::run(&library);
-    let symbols = analysis::symbols::run(&library, &namespaces);
-    let class_hierarchy = analysis::class_hierarchy::run(&library);
+    {
+        let _watcher = statistics.enter("Loading");
 
-    let mut env = Env {
-        library: library,
-        config: cfg,
-        namespaces: namespaces,
-        symbols: RefCell::new(symbols),
-        class_hierarchy: class_hierarchy,
-        analysis: Default::default(),
-    };
+        library = Library::new(&cfg.library_name);
+        try!(library.read_file(&cfg.girs_dir, &cfg.library_full_name()));
+    }
 
-    drop(watcher_loading);
+    {
+        let _watcher = statistics.enter("Postprocessing");
+        library.postprocessing();
+    }
+
+    {
+        let _watcher = statistics.enter("Resolving type ids");
+        cfg.resolve_type_ids(&library);
+    }
+
+    {
+        let _watcher = statistics.enter("Checking versions");
+        update_version::check_function_real_version(&mut library);
+    }
+
+    let mut env;
+
+    {
+        let _watcher = statistics.enter("Namespace/symbol/class analysis");
+
+        let namespaces = analysis::namespaces::run(&library);
+        let symbols = analysis::symbols::run(&library, &namespaces);
+        let class_hierarchy = analysis::class_hierarchy::run(&library);
+
+        env = Env {
+            library: library,
+            config: cfg,
+            namespaces: namespaces,
+            symbols: RefCell::new(symbols),
+            class_hierarchy: class_hierarchy,
+            analysis: Default::default(),
+        };
+    }
+
     {
         let _watcher = statistics.enter("Analysing");
         analysis::run(&mut env);
     }
 
     {
-        let _watcher_generating = statistics.enter("Generating");
-
+        let _watcher = statistics.enter("Generating");
         codegen::generate(&env);
     }
 

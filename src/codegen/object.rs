@@ -14,11 +14,13 @@ use super::trampoline;
 pub fn generate(w: &mut Write, env: &Env, analysis: &analysis::object::Info) -> Result<()> {
     try!(general::start_comments(w, &env.config));
     try!(general::uses(w, env, &analysis.imports));
+
     try!(general::define_object_type(
         w,
         env,
         &analysis.name,
         &analysis.c_type,
+        &analysis.c_class_type.as_ref().map(|s| &s[..]),
         &analysis.get_type,
         &analysis.supertypes,
     ));

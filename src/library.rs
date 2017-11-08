@@ -280,6 +280,7 @@ pub struct Record {
     pub name: String,
     pub c_type: String,
     pub glib_get_type: Option<String>,
+    pub gtype_struct_for: Option<String>,
     pub fields: Vec<Field>,
     pub functions: Vec<Function>,
     pub version: Option<Version>,
@@ -371,6 +372,8 @@ pub struct Signal {
 pub struct Interface {
     pub name: String,
     pub c_type: String,
+    pub type_struct: Option<String>,
+    pub c_class_type: Option<String>,
     pub glib_get_type: String,
     pub functions: Vec<Function>,
     pub signals: Vec<Signal>,
@@ -385,6 +388,8 @@ pub struct Interface {
 pub struct Class {
     pub name: String,
     pub c_type: String,
+    pub type_struct: Option<String>,
+    pub c_class_type: Option<String>,
     pub glib_get_type: String,
     pub fields: Vec<Field>,
     pub functions: Vec<Function>,
@@ -563,6 +568,7 @@ impl Type {
             name: r.name,
             c_type: r.c_type,
             glib_get_type: r.glib_get_type,
+            gtype_struct_for: r.gtype_struct_for,
             fields: fields,
             functions: r.functions,
             version: r.version,

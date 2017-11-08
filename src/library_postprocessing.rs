@@ -23,6 +23,8 @@ impl Library {
         self.fix_gtype();
         self.check_resolved();
         self.fill_empty_signals_c_types();
+        self.resolve_class_structs();
+        self.correlate_class_structs();
     }
 
     fn fix_gtype(&mut self) {
@@ -166,6 +168,104 @@ impl Library {
             Alias(ref alias) => self.is_referenced_type(self.type_(alias.typ)),
             Record(..) | Union(..) | Class(..) | Interface(..) => true,
             _ => false,
+        }
+    }
+
+    fn resolve_class_structs(&mut self) {
+        // stores pairs of (gtype-struct-c-name, type-name)
+        let mut structs_and_types = Vec::new();
+
+        for (ns_id, ns) in self.namespaces.iter().enumerate() {
+            for type_ in &ns.types {
+                let type_ = type_.as_ref().unwrap(); //Always contains something
+
+                if let Type::Record(ref record) = *type_ {
+                    if let Some(ref struct_for) = record.gtype_struct_for {
+                        if let Some(struct_for_tid) = self.find_type(ns_id as u16, struct_for) {
+                            structs_and_types.push ((record.c_type.clone(), struct_for_tid));
+                        }
+                    }
+                }
+            }
+        }
+
+        for (gtype_struct_c_type, struct_for_tid) in structs_and_types {
+            match *self.type_mut(struct_for_tid) {
+                Type::Class(ref mut klass) => {
+                    klass.c_class_type = Some(gtype_struct_c_type);
+                },
+
+                Type::Interface(ref mut iface) => {
+                    iface.c_class_type = Some(gtype_struct_c_type);
+                },
+
+                ref x => unreachable!("Something other than a class or interface has a class struct: {:?}", x)
+            }
+        }
+    }
+
+    fn correlate_class_structs(&self) {
+        for (ns_id, ns) in self.namespaces.iter().enumerate() {
+            for type_ in &ns.types {
+                let type_ = type_.as_ref().unwrap(); //Always contains something
+                let name;
+                let type_struct;
+                let c_class_type;
+
+                match *type_ {
+                    Type::Class(ref klass) => {
+                        name         = &klass.name;
+                        type_struct  = &klass.type_struct;
+                        c_class_type = &klass.c_class_type;
+                    },
+
+                    Type::Interface(ref iface) => {
+                        name         = &iface.name;
+                        type_struct  = &iface.type_struct;
+                        c_class_type = &iface.c_class_type;
+                    },
+
+                    _ => { continue; }
+                }
+
+                if let Some(ref type_struct) = *type_struct {
+                    let type_struct_tid = self.find_type(ns_id as u16, type_struct);
+                    if type_struct_tid.is_none() {
+                        panic!("\"{}\" has glib:type-struct=\"{}\" but there is no such record",
+                               name,
+                               type_struct);
+                    }
+
+                    let type_struct_type = self.type_(type_struct_tid.unwrap());
+
+                    if let Type::Record(ref r) = *type_struct_type {
+                        if r.gtype_struct_for.as_ref() != Some(name) {
+                            if let Some(ref gtype_struct_for) = r.gtype_struct_for {
+                                panic!("\"{}\" has glib:type-struct=\"{}\" but the corresponding record \"{}\" has glib:is-gtype-struct-for={:?}",
+                                       name,
+                                       type_struct,
+                                       r.name,
+                                       gtype_struct_for);
+                            } else {
+                                panic!("\"{}\" has glib:type-struct=\"{}\" but the corresponding record \"{}\" has no glib:is-gtype-struct-for attribute",
+                                       name,
+                                       type_struct,
+                                       r.name);
+                            }
+                        }
+                    } else {
+                        panic!("Element with name=\"{}\" should be a record but it isn't",
+                               type_struct);
+                    }
+                } else if let Some(ref c) = *c_class_type {
+                    panic!("\"{}\" has no glib:type-struct but there is an element with glib:is-gtype-struct-for=\"{}\"",
+                           name,
+                           c);
+                }
+                // else both type_struct and c_class_type are None,
+                // and that's fine because they don't reference each
+                // other.
+            }
         }
     }
 }
