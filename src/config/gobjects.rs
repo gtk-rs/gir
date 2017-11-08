@@ -1,3 +1,4 @@
+use std::ascii::AsciiExt;
 use std::collections::BTreeMap;
 use std::str::FromStr;
 use toml::Value;
