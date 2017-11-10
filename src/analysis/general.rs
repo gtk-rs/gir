@@ -1,6 +1,7 @@
 use config::gobjects::*;
 use library::*;
 
+#[derive(Debug, Clone)]
 pub struct StatusedTypeId {
     pub type_id: TypeId,
     pub name: String,
