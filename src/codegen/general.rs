@@ -74,12 +74,15 @@ pub fn uses(w: &mut Write, env: &Env, imports: &Imports) -> Result<()> {
 pub fn define_object_type(
     w: &mut Write,
     env: &Env,
+    is_interface: bool,
     type_name: &str,
     glib_name: &str,
+    class_name: &Option<&str>,
     glib_class_name: &Option<&str>,
     rust_class_name: &Option<&str>,
     glib_func_name: &str,
     parents: &[StatusedTypeId],
+    ifaces: &[StatusedTypeId],
 ) -> Result<()> {
     let mut external_parents = false;
     let parents: Vec<String> = parents
@@ -97,10 +100,25 @@ pub fn define_object_type(
             )
         })
         .collect();
+    let ifaces: Vec<String> = ifaces
+        .iter()
+        .filter(|p| !p.status.ignored())
+        .map(|p| if p.type_id.ns_id == namespaces::MAIN {
+            p.name.clone()
+        } else {
+            external_parents = true;
+            format!(
+                "{krate}::{name} => {krate}_ffi::{ffi_name}",
+                krate = env.namespaces[p.type_id.ns_id].crate_name,
+                name = p.name,
+                ffi_name = env.library.type_(p.type_id).get_glib_name().unwrap()
+            )
+        })
+        .collect();
 
     let (separator, class_name) = {
-        if let Some(s) = *glib_class_name {
-            (", ".to_string(), format!("ffi::{}", s))
+        if let (Some(name), Some(ffi_name)) = (*class_name, *glib_class_name) {
+            (", ".to_string(), format!("{}, ffi::{}", name, ffi_name))
         } else {
             ("".to_string(), "".to_string())
         }
@@ -111,13 +129,16 @@ pub fn define_object_type(
         Some(ref rust_class_name) => format!(", {}", rust_class_name),
     };
 
+    let kind_name = if is_interface { "Interface" } else { "Object" };
+
     try!(writeln!(w));
     try!(writeln!(w, "glib_wrapper! {{"));
-    if parents.is_empty() {
+    if parents.is_empty() && ifaces.is_empty() {
         try!(writeln!(
             w,
-            "\tpub struct {}(Object<ffi::{}{}{}{}>);",
+            "\tpub struct {}({}<ffi::{}{}{}{}>);",
             type_name,
+            kind_name,
             glib_name,
             separator,
             class_name,
@@ -126,28 +147,59 @@ pub fn define_object_type(
     } else if external_parents {
         try!(writeln!(
             w,
-            "\tpub struct {}(Object<ffi::{}{}{}{}>): [",
+            "\tpub struct {}({}<ffi::{}{}{}{}>):",
             type_name,
+            kind_name,
             glib_name,
             separator,
             class_name,
             rust_class_name
         ));
-        for parent in parents {
-            try!(writeln!(w, "\t\t{},", parent));
+
+        if !parents.is_empty() {
+            try!(writeln!(w, "\t\tparents=["));
+            try!(writeln!(w, "{}", parents.iter().map(|s| format!("\t\t\t{}", s)).collect::<Vec<_>>().join(",\n")));
+
+            if !ifaces.is_empty() {
+                try!(writeln!(w, "\t\t],"));
+            } else {
+                try!(writeln!(w, "\t\t];"));
+            }
         }
-        try!(writeln!(w, "\t];"));
+
+        if !ifaces.is_empty() {
+            try!(writeln!(w, "\t\tifaces=["));
+            try!(writeln!(w, "{}", ifaces.iter().map(|s| format!("\t\t\t{}", s)).collect::<Vec<_>>().join(",\n")));
+            try!(writeln!(w, "\t\t];"));
+        }
     } else {
         try!(writeln!(
             w,
-            "\tpub struct {}(Object<ffi::{}{}{}{}>): {};",
+            "\tpub struct {}({}<ffi::{}{}{}{}>):",
             type_name,
+            kind_name,
             glib_name,
             separator,
             class_name,
-            rust_class_name,
-            parents.join(", ")
+            rust_class_name
         ));
+
+        if !parents.is_empty() {
+            try!(writeln!(w, "\t\tparents=["));
+            try!(writeln!(w, "{}", parents.iter().map(|s| format!("\t\t\t{}", s)).collect::<Vec<_>>().join(",\n")));
+
+            if !ifaces.is_empty() {
+                try!(writeln!(w, "\t\t],"));
+            } else {
+                try!(writeln!(w, "\t\t];"));
+            }
+        }
+
+        if !ifaces.is_empty() {
+            try!(writeln!(w, "\t\tifaces=["));
+            try!(writeln!(w, "{}", ifaces.iter().map(|s| format!("\t\t\t{}", s)).collect::<Vec<_>>().join(",\n")));
+            try!(writeln!(w, "\t\t];"));
+        }
     }
     try!(writeln!(w));
     try!(writeln!(w, "\tmatch fn {{"));
