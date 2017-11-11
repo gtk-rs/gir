@@ -342,6 +342,9 @@ fn generate_unions(w: &mut Write, env: &Env, items: &[&Union]) -> Result<()> {
                     }
                     try!(writeln!(w, "{}}}\n", comment));
                 }
+                if comment.is_empty() {
+                    try!(generate_debug_with_fields(w, name, &lines));
+                }
             }
             #[cfg(not(feature = "use_unions"))]
             {
@@ -354,9 +357,11 @@ fn generate_unions(w: &mut Write, env: &Env, items: &[&Union]) -> Result<()> {
                         w,
                         "#[cfg(target_pointer_width = \"32\")]\n\
                          #[repr(C)]\n\
+                         #[derive(Debug)]\n\
                          pub struct {0}([u32; 2]);\n\
                          #[cfg(target_pointer_width = \"64\")]\n\
                          #[repr(C)]\n\
+                         #[derive(Debug)]\n\
                          pub struct {0}(*mut c_void);",
                         c_type
                     ));
@@ -376,6 +381,47 @@ fn generate_unions(w: &mut Write, env: &Env, items: &[&Union]) -> Result<()> {
     Ok(())
 }
 
+fn generate_debug_impl(w: &mut Write, name: &str, impl_content: &str) -> Result<()> {
+    writeln!(
+        w,
+        "impl ::std::fmt::Debug for {} {{\n\
+            \tfn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {{\n\
+                \t\t{}\n\
+            \t}}\n\
+        }}\n",
+        name,
+        impl_content)
+}
+
+fn generate_debug_with_fields(w: &mut Write, name: &str, lines: &[String]) -> Result<()> {
+    let fields =
+        lines.iter()
+             .filter_map(|field| {
+                 if field.contains("//") {
+                    None
+                 } else {
+                    let field_name = field.split(":").next().unwrap().trim().replace("pub ", "");
+                    Some(if field.replace(",", "").trim().ends_with("c_void") {
+                             format!("\t\t .field(\"{name}\", &\"c_void\")\n", name=field_name)
+                         } else {
+                             format!("\t\t .field(\"{name}\", &self.{name})\n", name=field_name)
+                         })
+                 }
+             })
+             .collect::<String>();
+
+    generate_debug_impl(
+        w,
+        name,
+        &format!("f.debug_struct(&format!(\"{name} @ {{:?}}\", self as *const _))\n\
+                   {fields}\
+              \t\t .finish()",
+                 name=name,
+                 fields=fields,
+        )
+    )
+}
+
 fn generate_classes_structs(w: &mut Write, env: &Env, classes: &[&Class]) -> Result<()> {
     if !classes.is_empty() {
         try!(writeln!(w, "// Classes"));
@@ -389,20 +435,32 @@ fn generate_classes_structs(w: &mut Write, env: &Env, classes: &[&Class]) -> Res
                 w,
                 "{comment}#[repr(C)]\n{comment}pub struct {name}(c_void);\n",
                 comment = comment,
-                name = klass.c_type
+                name = klass.c_type,
+            ));
+            try!(generate_debug_impl(
+                w,
+                &klass.c_type,
+                &format!("write!(f, \"{name} @ {{:?}}\", self as *const _)",
+                         name=klass.c_type)
             ));
         } else {
+            let can_generate_fields_debug = can_generate_fields_debug(&klass.fields);
             try!(writeln!(
                 w,
-                "{comment}#[repr(C)]\n{comment}pub struct {name} {{",
+                "{comment}#[repr(C)]\n{debug}{comment}pub struct {name} {{",
                 comment = comment,
-                name = klass.c_type
+                debug = if can_generate_fields_debug { "#[derive(Debug)]\n" } else { "" },
+                name = klass.c_type,
             ));
 
-            for line in lines {
+            for line in &lines {
                 try!(writeln!(w, "{}{}", comment, line));
             }
             try!(writeln!(w, "{}}}\n", comment));
+
+            if !can_generate_fields_debug && comment.is_empty() {
+                try!(generate_debug_with_fields(w, &klass.c_type, &lines));
+            }
         }
     }
 
@@ -416,8 +474,14 @@ fn generate_interfaces_structs(w: &mut Write, interfaces: &[&Interface]) -> Resu
     for interface in interfaces {
         try!(writeln!(
             w,
-            "#[repr(C)]\npub struct {}(c_void);",
+            "#[repr(C)]\npub struct {}(c_void);\n",
             interface.c_type
+        ));
+        try!(generate_debug_impl(
+            w,
+            &interface.c_type,
+            &format!("write!(f, \"{name} @ {{:?}}\", self as *const _)",
+                     name=interface.c_type)
         ));
     }
     if !interfaces.is_empty() {
@@ -425,6 +489,15 @@ fn generate_interfaces_structs(w: &mut Write, interfaces: &[&Interface]) -> Resu
     }
 
     Ok(())
+}
+
+fn can_generate_fields_debug(f: &[Field]) -> bool {
+    !f.iter().any(|f| {
+        match f.c_type {
+            Some(ref s) if s.as_str() == "c_void" => false,
+            _ => true,
+        }
+    })
 }
 
 fn generate_records(w: &mut Write, env: &Env, records: &[&Record]) -> Result<()> {
@@ -456,14 +529,23 @@ fn generate_records(w: &mut Write, env: &Env, records: &[&Record]) -> Result<()>
             }
             try!(writeln!(
                 w,
-                "{}#[repr(C)]\n{0}pub struct {} {{",
+                "{}#[repr(C)]\n{}{0}pub struct {} {{",
                 comment,
+                if can_generate_fields_debug(&record.fields) { "#[derive(Debug)]\n" } else { "" },
                 record.c_type
             ));
-            for line in lines {
+            for line in &lines {
                 try!(writeln!(w, "{}{}", comment, line));
             }
             try!(writeln!(w, "{}}}\n", comment));
+        }
+        if lines.is_empty() || !can_generate_fields_debug(&record.fields) {
+            try!(generate_debug_impl(
+                w,
+                &record.c_type,
+                &format!("write!(f, \"{name} @ {{:?}}\", self as *const _)",
+                         name=record.c_type)
+            ));
         }
     }
     Ok(())
