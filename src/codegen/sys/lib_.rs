@@ -343,7 +343,7 @@ fn generate_unions(w: &mut Write, env: &Env, items: &[&Union]) -> Result<()> {
                     try!(writeln!(w, "{}}}\n", comment));
                 }
                 if comment.is_empty() {
-                    try!(generate_fields_with_debug(w, name, &lines));
+                    try!(generate_debug_with_fields(w, name, &lines));
                 }
             }
             #[cfg(not(feature = "use_unions"))]
@@ -393,41 +393,31 @@ fn generate_debug_impl(w: &mut Write, name: &str, impl_content: &str) -> Result<
         impl_content)
 }
 
-fn generate_fields_with_debug(w: &mut Write, name: &str, lines: &[String]) -> Result<()> {
-    let non_commented_fields = lines.iter()
-                                    .filter(|f| !f.contains("//"))
-                                    .count();
-    let fields_formatters = ::std::iter::repeat("{:?}".to_owned())
-                                        .take(non_commented_fields)
-                                        .collect::<Vec<String>>()
-                                        .join(", ");
-    let fields_arguments =
+fn generate_debug_with_fields(w: &mut Write, name: &str, lines: &[String]) -> Result<()> {
+    let fields =
         lines.iter()
              .filter_map(|field| {
                  if field.contains("//") {
                     None
                  } else {
+                    let field_name = field.split(":").next().unwrap().trim().replace("pub ", "");
                     Some(if field.replace(",", "").trim().ends_with("c_void") {
-                             format!("\t\t       \"c_void\"")
+                             format!("\t\t .field(\"{name}\", &\"c_void\")\n", name=field_name)
                          } else {
-                             format!("\t\t       self.{}",
-                                     field.split(":").next().unwrap().trim().replace("pub ", ""))
+                             format!("\t\t .field(\"{name}\", &self.{name})\n", name=field_name)
                          })
                  }
              })
-             .collect::<Vec<String>>()
-             .join(",\n");
+             .collect::<String>();
 
     generate_debug_impl(
         w,
         name,
-        &format!(
-            "write!(f, \"{name} @ {{:?}} {{{{ {fields}}}}}\",\n\
-             \t\t       self as *const _,\n\
-                    {fields_name})",
-            name=name,
-            fields=fields_formatters,
-            fields_name=fields_arguments,
+        &format!("f.debug_struct(&format!(\"{name} @ {{:?}}\", self as *const _))\n\
+                   {fields}\
+              \t\t .finish()",
+                 name=name,
+                 fields=fields,
         )
     )
 }
@@ -469,7 +459,7 @@ fn generate_classes_structs(w: &mut Write, env: &Env, classes: &[&Class]) -> Res
             try!(writeln!(w, "{}}}\n", comment));
 
             if !can_generate_fields_debug && comment.is_empty() {
-                try!(generate_fields_with_debug(w, &klass.c_type, &lines));
+                try!(generate_debug_with_fields(w, &klass.c_type, &lines));
             }
         }
     }
