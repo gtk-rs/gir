@@ -35,6 +35,7 @@ And that's all! Neither `GtkWidget` nor `GtkWindow` (alongside with their functi
 You also need to add any needed external libraries in the "external_libraries" parameter. Example:
 
 ```toml
+[options]
 external_libraries = [
    "GLib",
    "GObject",
