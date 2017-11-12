@@ -53,6 +53,13 @@ pub enum Chunk {
         trampoline: String,
         in_trait: bool,
     },
+    New {
+        name: String,
+    },
+    Name(String),
+    BoxFn {
+        typ: String,
+    },
 }
 
 pub fn chunks(ch: Chunk) -> Vec<Chunk> {

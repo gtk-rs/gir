@@ -75,6 +75,8 @@ impl ConversionType {
             CArray(_) => ConversionType::Pointer,
             List(_) => ConversionType::Pointer,
             SList(_) => ConversionType::Pointer,
+            Function(super::library::Function { ref name, .. }) if name == "AsyncReadyCallback" =>
+                ConversionType::Direct,
             _ => ConversionType::Unknown,
         }
     }

@@ -21,9 +21,14 @@ pub fn generate(
     only_declaration: bool,
     indent: usize,
 ) -> Result<()> {
+    if analysis.is_async_finish(env) {
+        return Ok(());
+    }
+
     let mut commented = false;
     let mut comment_prefix = "";
     let mut pub_prefix = if in_trait { "" } else { "pub " };
+
     match analysis.visibility {
         Visibility::Public => {}
         Visibility::Comment => {
@@ -83,6 +88,8 @@ pub fn declaration(env: &Env, analysis: &analysis::functions::Info) -> String {
     let outs_as_return = !analysis.outs.is_empty();
     let return_str = if outs_as_return {
         out_parameters_as_return(env, analysis)
+    } else if analysis.async {
+        " -> Cancellable".into()
     } else if analysis.ret.bool_return_is_error.is_some() {
         if env.namespaces.glib_ns_id == namespaces::MAIN {
             " -> Result<(), error::BoolError>".into()
@@ -123,6 +130,9 @@ pub fn bounds(bounds: &Bounds) -> String {
         .iter_lifetimes()
         .map(|s| format!("'{}", s))
         .chain(bounds.iter().map(|bound| match bound.bound_type {
+            NoWrapper => {
+                format!("{}: {}", bound.alias, bound.type_str)
+            }
             IsA(Some(lifetime)) => {
                 format!("{}: IsA<{}> + '{}", bound.alias, bound.type_str, lifetime)
             }
@@ -156,6 +166,15 @@ pub fn body_chunk(env: &Env, analysis: &analysis::functions::Info) -> Chunk {
         .transformations(&analysis.parameters.transformations)
         .outs_mode(analysis.outs.mode);
 
+    if analysis.async {
+        builder.cancellable();
+        if let Some(ref trampoline) = analysis.trampoline {
+            builder.async_trampoline(trampoline);
+        } else {
+            warn!("Async function {} has no associated _finish function", analysis.name);
+        }
+    }
+
     for par in &analysis.parameters.c_parameters {
         if outs_as_return && analysis.outs.iter().any(|p| p.name == par.name) {
             builder.out_parameter(env, par);
@@ -164,5 +183,5 @@ pub fn body_chunk(env: &Env, analysis: &analysis::functions::Info) -> Chunk {
         }
     }
 
-    builder.generate()
+    builder.generate(env)
 }

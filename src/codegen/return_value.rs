@@ -14,7 +14,7 @@ pub trait ToReturnValue {
 impl ToReturnValue for library::Parameter {
     fn to_return_value(&self, env: &Env) -> String {
         let rust_type =
-            parameter_rust_type(env, self.typ, self.direction, self.nullable, RefMode::None);
+            parameter_rust_type(env, self.typ, self.direction, self.nullable, RefMode::None, false); // TODO: check if async.
         let name = rust_type.into_string();
         let type_str = match ConversionType::of(env, self.typ) {
             ConversionType::Unknown => format!("/*Unknown conversion*/{}", name),
@@ -119,6 +119,7 @@ fn out_parameter_as_return(par: &library::Parameter, env: &Env) -> String {
         ParameterDirection::Return,
         par.nullable,
         RefMode::None,
+        false, // TODO: check if async.
     );
     let name = rust_type.into_string();
     match ConversionType::of(env, par.typ) {

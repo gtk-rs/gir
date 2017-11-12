@@ -6,6 +6,7 @@ use config::gobjects::GStatus;
 use library::*;
 use version::Version;
 
+#[derive(Debug)]
 pub struct Env {
     pub library: Library,
     pub config: Config,

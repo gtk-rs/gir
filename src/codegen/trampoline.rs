@@ -139,6 +139,7 @@ fn func_parameter(
 
     match bounds.get_parameter_alias_info(&par.name) {
         Some((t, bound_type)) => match bound_type {
+            BoundType::NoWrapper => "TODO".to_string(),
             BoundType::IsA(_) => if *par.nullable {
                 format!("&Option<{}{}>", mut_str, t)
             } else if let Some((from, to)) = bound_replace {
@@ -154,7 +155,7 @@ fn func_parameter(
         },
         None => {
             let rust_type =
-                parameter_rust_type(env, par.typ, par.direction, par.nullable, ref_mode);
+                parameter_rust_type(env, par.typ, par.direction, par.nullable, ref_mode, false); // TODO: check if async.
             rust_type.into_string().replace("Option<&", "&Option<")
         }
     }

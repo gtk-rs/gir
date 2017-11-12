@@ -24,6 +24,7 @@ impl ToParameter for CParameter {
             match bounds.get_parameter_alias_info(&self.name) {
                 Some((t, bound_type)) => {
                     match bound_type {
+                        BoundType::NoWrapper => type_str = t.to_string(),
                         BoundType::IsA(_) => {
                             if *self.nullable {
                                 // should not happen!
@@ -43,6 +44,7 @@ impl ToParameter for CParameter {
                         self.direction,
                         self.nullable,
                         self.ref_mode,
+                        false, // TODO: check if async.
                     );
                     let type_name = rust_type.into_string();
                     type_str = match ConversionType::of(env, self.typ) {

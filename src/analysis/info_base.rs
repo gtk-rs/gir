@@ -7,7 +7,7 @@ use super::functions::Visibility;
 use super::imports::Imports;
 use version::Version;
 
-#[derive(Default)]
+#[derive(Debug, Default)]
 pub struct InfoBase {
     pub full_name: String,
     pub type_id: library::TypeId,

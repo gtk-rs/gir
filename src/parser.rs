@@ -1197,6 +1197,7 @@ impl Library {
                 allow_none: true,
                 is_error: true,
                 doc: None,
+                async: false,
             });
         }
         if let Some(ret) = ret {
@@ -1405,6 +1406,7 @@ impl Library {
         );
         let nullable = to_bool(attrs.by_name("nullable").unwrap_or("none"));
         let allow_none = to_bool(attrs.by_name("allow-none").unwrap_or("none"));
+        let async = attrs.by_name("scope").unwrap_or("") == "async";
         let caller_allocates = to_bool(attrs.by_name("caller-allocates").unwrap_or("none"));
         let direction = try!(if kind_str == "return-value" {
             Ok(ParameterDirection::Return)
@@ -1464,6 +1466,7 @@ impl Library {
                 array_length: array_length,
                 is_error: false,
                 doc: doc,
+                async,
             })
         } else if varargs {
             Ok(Parameter {
@@ -1479,6 +1482,7 @@ impl Library {
                 array_length: None,
                 is_error: false,
                 doc: doc,
+                async,
             })
         } else {
             bail!(mk_error!("Missing <type> element", parser))

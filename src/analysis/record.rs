@@ -9,7 +9,7 @@ use super::imports::Imports;
 use super::info_base::InfoBase;
 use traits::*;
 
-#[derive(Default)]
+#[derive(Debug, Default)]
 pub struct Info {
     pub base: InfoBase,
     pub glib_get_type: Option<String>,

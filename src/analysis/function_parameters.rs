@@ -60,6 +60,8 @@ pub enum TransformationType {
         array_length_name: String,
         array_length_type: String,
     },
+    IntoRaw(String),
+    ToSome(String),
 }
 
 impl TransformationType {
@@ -71,7 +73,9 @@ impl TransformationType {
             ToGlibPointer { .. } |
             ToGlibStash { .. } |
             ToGlibBorrow |
-            ToGlibUnknown { .. } => true,
+            ToGlibUnknown { .. } |
+            ToSome(_) |
+            IntoRaw(_) => true,
             _ => false,
         }
     }
@@ -139,6 +143,7 @@ pub fn analyze(
     function_parameters: &[library::Parameter],
     configured_functions: &[&config::functions::Function],
     disable_length_detect: bool,
+    async_func: bool,
 ) -> Parameters {
     let mut parameters = Parameters::new(function_parameters.len());
 
@@ -161,8 +166,14 @@ pub fn analyze(
         let mut add_rust_parameter = match par.direction {
             library::ParameterDirection::In | library::ParameterDirection::InOut => true,
             library::ParameterDirection::Return => false,
-            library::ParameterDirection::Out => !can_as_return(env, par),
+            library::ParameterDirection::Out => !can_as_return(env, par) && !async_func,
         };
+
+        if async_func {
+            if async_param_to_remove(&par.name) {
+                add_rust_parameter = false;
+            }
+        }
 
         let mut array_name = configured_functions
             .matched_parameters(&name)
@@ -223,6 +234,9 @@ pub fn analyze(
         };
         parameters.c_parameters.push(c_par);
 
+        let data_param_name = "user_data";
+        let callback_param_name = "callback";
+
         if add_rust_parameter {
             let rust_par = RustParameter {
                 name: name.clone(),
@@ -232,7 +246,7 @@ pub fn analyze(
             };
             parameters.rust_parameters.push(rust_par);
 
-            if *nullable && is_into(env, par) {
+            if *nullable && is_into(env, par) && !(async_func && (name == data_param_name || name == callback_param_name)) {
                 let with_stash = ref_mode == RefMode::ByRef;
                 let transformation = Transformation {
                     ind_c: ind_c,
@@ -275,11 +289,31 @@ pub fn analyze(
             ConversionType::Unknown => TransformationType::ToGlibUnknown { name: name },
         };
 
-        let transformation = Transformation {
+        let mut transformation = Transformation {
             ind_c: ind_c,
             ind_rust: ind_rust,
             transformation_type: transformation_type,
         };
+        let mut typ = None;
+        match transformation.transformation_type {
+            TransformationType::ToGlibDirect { ref name, .. } | TransformationType::ToGlibUnknown { ref name, .. } => {
+                if async_func && name == callback_param_name {
+                    // Remove the conversion of callback for async functions.
+                    typ = Some(TransformationType::ToSome(name.clone()));
+                }
+            },
+            TransformationType::ToGlibPointer { ref name, .. } => {
+                if async_func && name == data_param_name {
+                    // Do the conversion of user_data for async functions.
+                    // In async functions, this argument is used to send the callback.
+                    typ = Some(TransformationType::IntoRaw(name.clone()));
+                }
+            },
+            _ => (),
+        }
+        if let Some(typ) = typ {
+            transformation.transformation_type = typ;
+        }
         parameters.transformations.push(transformation);
     }
 
@@ -371,6 +405,13 @@ fn has_length(env: &Env, typ: library::TypeId) -> bool {
         Type::SList(..) |
         Type::HashTable(..) => true,
         Type::Alias(ref alias) => has_length(env, alias.typ),
+        _ => false,
+    }
+}
+
+pub fn async_param_to_remove(name: &str) -> bool {
+    match name {
+        "cancellable" | "user_data" => true,
         _ => false,
     }
 }

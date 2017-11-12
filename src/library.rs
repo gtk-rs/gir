@@ -340,6 +340,7 @@ pub struct Parameter {
     pub array_length: Option<u32>,
     pub is_error: bool,
     pub doc: Option<String>,
+    pub async: bool,
 }
 
 #[derive(Debug)]
@@ -627,7 +628,7 @@ impl<U> MaybeRefAs for U {
     }
 }
 
-#[derive(Default)]
+#[derive(Debug, Default)]
 pub struct Namespace {
     pub name: String,
     pub types: Vec<Option<Type>>,
@@ -696,6 +697,7 @@ pub const INTERNAL_NAMESPACE_NAME: &'static str = "*";
 pub const INTERNAL_NAMESPACE: u16 = 0;
 pub const MAIN_NAMESPACE: u16 = 1;
 
+#[derive(Debug)]
 pub struct Library {
     pub namespaces: Vec<Namespace>,
     pub index: HashMap<String, u16>,

@@ -129,6 +129,7 @@ pub fn can_as_return(env: &Env, par: &Parameter) -> bool {
                 ParameterDirection::Out,
                 Nullable(false),
                 RefMode::None,
+                false, // TODO: check if async.
             ).is_ok()
         }
         Borrow => false,

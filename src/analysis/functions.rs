@@ -1,3 +1,12 @@
+/*
+ * TODO: better heuristic (https://bugzilla.gnome.org/show_bug.cgi?id=623635#c5)
+ * TODO: ProgressCallback types (not specific to async).
+ * TODO: add annotation for methods like g_file_replace_contents_bytes_async where the finish
+ * method has a different prefix.
+ * TODO: if Cancellable is not a type, write Unimplemented next to Cancellable in the generated
+ * code.
+ */
+
 use std::collections::HashMap;
 use std::vec::Vec;
 
@@ -12,7 +21,7 @@ use analysis::safety_assertion_mode::SafetyAssertionMode;
 use analysis::signatures::{Signature, Signatures};
 use config;
 use env::Env;
-use library::{self, Nullable, Type};
+use library::{self, Function, FunctionKind, Nullable, Parameter, Type};
 use nameutil;
 use traits::*;
 use version::Version;
@@ -32,6 +41,15 @@ impl Visibility {
     }
 }
 
+#[derive(Clone, Debug)]
+pub struct AsyncTrampoline {
+    pub is_method: bool,
+    pub name: String,
+    pub finish_func_name: String,
+    pub callback_type: String,
+    pub output_params: Vec<Parameter>,
+}
+
 #[derive(Debug)]
 pub struct Info {
     pub name: String,
@@ -49,6 +67,16 @@ pub struct Info {
     pub cfg_condition: Option<String>,
     pub assertion: SafetyAssertionMode,
     pub doc_hidden: bool,
+    pub async: bool,
+    pub trampoline: Option<AsyncTrampoline>,
+}
+
+impl Info {
+    pub fn is_async_finish(&self, env: &Env) -> bool {
+        let has_async_result = self.parameters.rust_parameters.iter()
+            .any(|param| param.typ.full_name(&env.library) == "Gio.AsyncResult");
+        self.name.ends_with("_finish") && has_async_result
+    }
 }
 
 pub fn analyze<F: Borrow<library::Function>>(
@@ -105,10 +133,12 @@ fn analyze_function(
     configured_functions: &[&config::functions::Function],
     imports: &mut Imports,
 ) -> Info {
+    let async = func.parameters.iter().any(|parameter| parameter.async) && name.ends_with("_async");
     let mut commented = false;
     let mut bounds: Bounds = Default::default();
     let mut to_glib_extras = HashMap::<usize, String>::new();
     let mut used_types: Vec<String> = Vec::with_capacity(4);
+    let mut trampoline = None;
 
     let version = configured_functions
         .iter()
@@ -139,6 +169,7 @@ fn analyze_function(
         &func.parameters,
         configured_functions,
         disable_length_detect,
+        async,
     );
     parameters.analyze_return(env, &ret.parameter);
 
@@ -151,11 +182,28 @@ fn analyze_function(
         if let Ok(s) = used_rust_type(env, par.typ) {
             used_types.push(s);
         }
-        if let Some(to_glib_extra) = bounds.add_for_parameter(env, func, par) {
+        let (to_glib_extra, type_string) = bounds.add_for_parameter(env, func, par, async);
+        if let Some(to_glib_extra) = to_glib_extra {
             to_glib_extras.insert(pos, to_glib_extra);
         }
+        if let Some(callback_type) = type_string {
+            let func_name = func.c_identifier.as_ref().unwrap();
+            let finish_func_name = replace_async_by_finish(&func_name);
+            let rust_finish_func_name = replace_async_by_finish(&func.name);
+            let mut output_params = vec![];
+            if let Some(function) = find_function(env, &rust_finish_func_name) {
+                output_params.extend(function.parameters.clone());
+            }
+            trampoline = Some(AsyncTrampoline {
+                is_method: func.kind == FunctionKind::Method,
+                name: format!("{}_trampoline", func.name),
+                finish_func_name,
+                callback_type,
+                output_params,
+            });
+        }
         let type_error =
-            parameter_rust_type(env, par.typ, par.direction, Nullable(false), RefMode::None)
+            parameter_rust_type(env, par.typ, par.direction, Nullable(false), RefMode::None, async)
                 .is_err();
         if type_error {
             commented = true;
@@ -193,6 +241,10 @@ fn analyze_function(
         out_parameters::analyze_imports(env, func, imports);
     }
 
+    if async {
+        imports.add("std::mem::transmute", version);
+    }
+
     if !commented {
         for transformation in &mut parameters.transformations {
             if let Some(to_glib_extra) = to_glib_extras.get(&transformation.ind_c) {
@@ -209,7 +261,7 @@ fn analyze_function(
         bounds.update_imports(imports);
     }
 
-    let visibility = if commented {
+    let visibility = if commented || (async && trampoline.is_none()) {
         Visibility::Comment
     } else {
         Visibility::Public
@@ -233,6 +285,8 @@ fn analyze_function(
         cfg_condition: cfg_condition,
         assertion: assertion,
         doc_hidden: doc_hidden,
+        async,
+        trampoline,
     }
 }
 
@@ -251,4 +305,37 @@ pub fn is_carray_with_direct_elements(env: &Env, typ: library::TypeId) -> bool {
         }
         _ => false,
     }
+}
+
+pub fn find_function<'a>(env: &'a Env, function_name: &str) -> Option<&'a Function> {
+    if let Some(index) = env.library.find_namespace(&env.config.library_name) {
+        let namespace = env.library.namespace(index);
+        for typ in &namespace.types {
+            if let Some(Type::Class(ref class)) = *typ {
+                for function in &class.functions {
+                    if function.name == function_name {
+                        return Some(function);
+                    }
+                }
+            } else if let Some(Type::Interface(ref interface)) = *typ {
+                for function in &interface.functions {
+                    if function.name == function_name {
+                        return Some(function);
+                    }
+                }
+            }
+        }
+    }
+    None
+}
+
+pub fn replace_async_by_finish(func_name: &str) -> String {
+    let len = func_name.len() - "_async".len();
+    format!("{}_finish", &func_name[0..len])
+}
+
+pub fn find_index_to_ignore(parameters: &[Parameter]) -> Option<usize> {
+    parameters.iter()
+        .find(|param| param.array_length.is_some())
+        .and_then(|param| param.array_length.map(|length| length as usize))
 }

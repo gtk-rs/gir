@@ -141,6 +141,9 @@ impl ToCode for Chunk {
                 );
                 vec![s1, s2]
             }
+            New { ref name } => vec![format!("{}::new()", name)],
+            Name(ref name) => vec![name.clone()],
+            BoxFn { ref typ } => vec![format!("let user_data: Box<Box<{}>> = Box::new(Box::new(callback));", typ)],
         }
     }
 }
