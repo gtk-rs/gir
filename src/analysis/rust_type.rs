@@ -107,6 +107,10 @@ fn rust_type_full(
                 },
                 Type if env.namespaces.glib_ns_id == library::MAIN_NAMESPACE => ok("types::Type"),
                 Type => ok("glib::types::Type"),
+                Char if env.namespaces.glib_ns_id == library::MAIN_NAMESPACE => ok("Char"),
+                Char => ok("glib::Char"),
+                UChar if env.namespaces.glib_ns_id == library::MAIN_NAMESPACE => ok("UChar"),
+                UChar => ok("glib::UChar"),
                 Unsupported => err("Unsupported"),
                 _ => err(&format!("Fundamental: {:?}", fund)),
             }
@@ -222,6 +226,8 @@ pub fn used_rust_type(env: &Env, type_id: library::TypeId) -> Result {
         Fundamental(library::Fundamental::UShort) |
         Fundamental(library::Fundamental::Long) |
         Fundamental(library::Fundamental::ULong) |
+        Fundamental(library::Fundamental::Char) |
+        Fundamental(library::Fundamental::UChar) |
         Fundamental(library::Fundamental::Filename) |
         Alias(..) |
         Bitfield(..) |
