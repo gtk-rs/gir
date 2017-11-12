@@ -15,14 +15,31 @@ pub fn generate(w: &mut Write, env: &Env, analysis: &analysis::object::Info) -> 
     try!(general::start_comments(w, &env.config));
     try!(general::uses(w, env, &analysis.imports));
 
+    let parents = analysis.supertypes.iter().filter(|t| {
+            match *env.library.type_(t.type_id) {
+                library::Type::Class(..) => true,
+                _ => false,
+            }
+    }).cloned().collect::<Vec<_>>();
+
+    let interfaces = analysis.supertypes.iter().filter(|t| {
+            match *env.library.type_(t.type_id) {
+                library::Type::Interface(..) => true,
+                _ => false,
+            }
+    }).cloned().collect::<Vec<_>>();
+
     try!(general::define_object_type(
         w,
         env,
+        analysis.is_interface,
         &analysis.name,
         &analysis.c_type,
+        &analysis.class_type.as_ref().map(|s| &s[..]),
         &analysis.c_class_type.as_ref().map(|s| &s[..]),
         &analysis.get_type,
-        &analysis.supertypes,
+        parents.as_ref(),
+        interfaces.as_ref(),
     ));
 
     if need_generate_inherent(analysis) {
