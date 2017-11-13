@@ -317,33 +317,13 @@ fn generate_unions(w: &mut Write, env: &Env, items: &[&Union]) -> Result<()> {
 
     for item in items {
         if let Some(ref c_type) = item.c_type {
-           /* #[cfg(not(feature = "use_unions"))]
-            {
-                // TODO: GLib/GObject special cases until we have proper union support in Rust
-                if env.config.library_name == "GLib" && c_type == "GMutex" {
-                    // Two c_uint or a pointer => 64 bits on all platforms currently
-                    // supported by GLib but the alignment is different on 32 bit
-                    // platforms (32 bit vs. 64 bits on 64 bit platforms)
-                    try!(writeln!(
-                        w,
-                        "#[cfg(target_pointer_width = \"32\")]\n\
-                         #[repr(C)]\n\
-                         #[derive(Debug)]\n\
-                         pub struct {0}([u32; 2]);\n\
-                         #[cfg(target_pointer_width = \"64\")]\n\
-                         #[repr(C)]\n\
-                         #[derive(Debug)]\n\
-                         pub struct {0}(*mut c_void);",
-                        c_type
-                    ));
-                }*/
             let (lines, commented) = generate_fields(env, &item.name, &item.fields);
 
             let comment = if commented { "//" } else { "" };
             if lines.is_empty() {
                 try!(writeln!(
                     w,
-                    "{0}#[repr(C)]\n{0}pub union {1}(c_void);\n",
+                    "{0}#[repr(C)]\n{0}#[derive(Copy,Clone,Debug)]\n{0}pub union {1}(u8);\n",
                     comment,
                     c_type
                 ));
@@ -355,13 +335,13 @@ fn generate_unions(w: &mut Write, env: &Env, items: &[&Union]) -> Result<()> {
                     c_type
                 ));
 
-                for line in lines {
+                for line in &lines {
                     try!(writeln!(w, "{}{}", comment, line));
                 }
                 try!(writeln!(w, "{}}}\n", comment));
             }
             if comment.is_empty() {
-                try!(generate_debug_with_fields(w, name, &lines));
+                try!(generate_debug_with_fields(w, c_type, &lines, false));
             }
         }
     }
@@ -380,7 +360,7 @@ fn generate_debug_impl(w: &mut Write, name: &str, impl_content: &str) -> Result<
         impl_content)
 }
 
-fn generate_debug_with_fields(w: &mut Write, name: &str, lines: &[String]) -> Result<()> {
+fn generate_debug_with_fields(w: &mut Write, name: &str, lines: &[String], safe: bool) -> Result<()> {
     let fields =
         lines.iter()
              .filter_map(|field| {
@@ -400,12 +380,23 @@ fn generate_debug_with_fields(w: &mut Write, name: &str, lines: &[String]) -> Re
     generate_debug_impl(
         w,
         name,
-        &format!("f.debug_struct(&format!(\"{name} @ {{:?}}\", self as *const _))\n\
+        &if safe {
+            format!("f.debug_struct(&format!(\"{name} @ {{:?}}\", self as *const _))\n\
                    {fields}\
               \t\t .finish()",
-                 name=name,
-                 fields=fields,
-        )
+              name=name,
+              fields=fields,
+            )
+        } else {
+            format!("unsafe {{\n\
+              \t\t f.debug_struct(&format!(\"{name} @ {{:?}}\", self as *const _))\n\
+                   {fields}\
+              \t\t .finish()\n\
+              \t\t }}",
+              name=name,
+              fields=fields,
+            )
+        },
     )
 }
 
@@ -436,7 +427,8 @@ fn generate_classes_structs(w: &mut Write, env: &Env, classes: &[&Class]) -> Res
                 w,
                 "{comment}#[repr(C)]\n{debug}{comment}pub struct {name} {{",
                 comment = comment,
-                debug = if can_generate_fields_debug { "#[derive(Debug)]\n" } else { "" },
+                debug = if can_generate_fields_debug { "#[derive(Copy,Clone,Debug)]\n" }
+                        else { "#[derive(Copy,Clone)]\n" },
                 name = klass.c_type,
             ));
 
@@ -446,7 +438,7 @@ fn generate_classes_structs(w: &mut Write, env: &Env, classes: &[&Class]) -> Res
             try!(writeln!(w, "{}}}\n", comment));
 
             if !can_generate_fields_debug && comment.is_empty() {
-                try!(generate_debug_with_fields(w, &klass.c_type, &lines));
+                try!(generate_debug_with_fields(w, &klass.c_type, &lines, true));
             }
         }
     }
@@ -519,7 +511,7 @@ fn generate_records(w: &mut Write, env: &Env, records: &[&Record]) -> Result<()>
                 "{}#[repr(C)]\n{}{0}pub struct {} {{",
                 comment,
                 if can_generate_fields_debug(&record.fields) { "#[derive(Copy,Clone,Debug)]\n" }
-                else { "" },
+                else { "#[derive(Copy,Clone)]\n" },
                 record.c_type
             ));
             for line in &lines {
@@ -578,8 +570,7 @@ fn generate_fields(env: &Env, struct_name: &str, fields: &[Field]) -> (Vec<Strin
             }
         };
 
-        if !is_gweakref && !truncated && !is_ptr && is_bits &&
-            !is_union_special_case(&field.c_type)
+        if !is_gweakref && !is_ghooklist && !truncated && !is_ptr && is_bits
         {
             warn!(
                 "Field `{}::{}` not expressible in Rust, truncated",
