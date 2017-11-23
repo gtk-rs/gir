@@ -155,7 +155,7 @@ fn func_parameter(
         },
         None => {
             let rust_type =
-                parameter_rust_type(env, par.typ, par.direction, par.nullable, ref_mode, false); // TODO: check if async.
+                parameter_rust_type(env, par.typ, par.direction, par.nullable, ref_mode);
             rust_type.into_string().replace("Option<&", "&Option<")
         }
     }

@@ -56,7 +56,6 @@ pub fn analyze(
             func.ret.direction,
             Nullable(false),
             RefMode::None,
-            false, // TODO: check if async.
         ).is_err()
     };
 

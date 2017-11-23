@@ -441,7 +441,7 @@ impl_lexical_ord!(
     Union => c_type,
 );
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum Type {
     Fundamental(Fundamental),
     Alias(Alias),

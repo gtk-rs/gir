@@ -104,7 +104,7 @@ fn declaration(env: &Env, prop: &Property) -> String {
                 format!("&{}", alias)
             }
         } else {
-            parameter_rust_type(env, prop.typ, dir, prop.nullable, prop.set_in_ref_mode, false) // TODO: check if async.
+            parameter_rust_type(env, prop.typ, dir, prop.nullable, prop.set_in_ref_mode)
                 .into_string()
         };
         format!(", {}: {}", prop.var_name, param_type)
@@ -112,7 +112,7 @@ fn declaration(env: &Env, prop: &Property) -> String {
     let return_str = if prop.is_get {
         let dir = library::ParameterDirection::Return;
         let ret_type =
-            parameter_rust_type(env, prop.typ, dir, prop.nullable, prop.get_out_ref_mode, false) // TODO: check if async.
+            parameter_rust_type(env, prop.typ, dir, prop.nullable, prop.get_out_ref_mode)
                 .into_string();
         format!(" -> {}", ret_type)
     } else {

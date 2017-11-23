@@ -241,13 +241,11 @@ pub fn parameter_rust_type(
     direction: library::ParameterDirection,
     nullable: Nullable,
     ref_mode: RefMode,
-    async: bool,
 ) -> Result {
     use library::Type::*;
     let type_ = env.library.type_(type_id);
     let rust_type = rust_type_full(env, type_id, nullable, ref_mode);
     match *type_ {
-        Fundamental(super::library::Fundamental::Pointer) if async => Ok("TODO4".to_string()), // FIXME: remove
         Fundamental(fund) => {
             if fund == library::Fundamental::Utf8 || fund == library::Fundamental::Filename {
                 if direction == library::ParameterDirection::InOut
@@ -262,7 +260,7 @@ pub fn parameter_rust_type(
 
         Alias(ref alias) => rust_type
             .and_then(|s| {
-                parameter_rust_type(env, alias.typ, direction, nullable, ref_mode, false).map_any(|_| s) // TODO: check if async.
+                parameter_rust_type(env, alias.typ, direction, nullable, ref_mode).map_any(|_| s)
             })
             .map_any(|s| format_parameter(s, direction)),
 

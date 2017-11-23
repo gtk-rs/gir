@@ -100,7 +100,7 @@ fn declaration(env: &Env, prop: &ChildProperty, is_get: bool) -> String {
     let return_str = if is_get {
         let dir = library::ParameterDirection::Return;
         let ret_type =
-            parameter_rust_type(env, prop.typ, dir, prop.nullable, prop.get_out_ref_mode, false) // TODO: check if async.
+            parameter_rust_type(env, prop.typ, dir, prop.nullable, prop.get_out_ref_mode)
                 .into_string();
         format!(" -> {}", ret_type)
     } else {

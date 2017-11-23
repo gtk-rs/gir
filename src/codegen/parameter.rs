@@ -44,7 +44,6 @@ impl ToParameter for CParameter {
                         self.direction,
                         self.nullable,
                         self.ref_mode,
-                        false, // TODO: check if async.
                     );
                     let type_name = rust_type.into_string();
                     type_str = match ConversionType::of(env, self.typ) {

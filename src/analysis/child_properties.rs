@@ -120,7 +120,7 @@ fn analyze_property(
             is_into = bound.is_into();
             let r_type = bounds_rust_type(env, typ).into_string();
             let mut bounds = Bounds::default();
-            bounds.add_parameter("P", &r_type, bound, false); // TODO: check if async is false.
+            bounds.add_parameter("P", &r_type, bound, false);
             let s_bounds = function::bounds(&bounds);
             // Because the bounds won't necessarily be added into the final function, we
             // only keep the "inner" part to make the string computation easier. So
@@ -131,7 +131,7 @@ fn analyze_property(
             format!(
                 "{}: {}",
                 prop_name,
-                parameter_rust_type(env, typ, dir, nullable, set_in_ref_mode, false).into_string() // TODO: check if async.
+                parameter_rust_type(env, typ, dir, nullable, set_in_ref_mode).into_string()
             )
         };
         Some(ChildProperty {

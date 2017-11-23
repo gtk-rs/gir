@@ -203,7 +203,8 @@ fn analyze_function(
             });
         }
         let type_error =
-            parameter_rust_type(env, par.typ, par.direction, Nullable(false), RefMode::None, async)
+            !(async && *env.library.type_(par.typ) == Type::Fundamental(library::Fundamental::Pointer)) &&
+            parameter_rust_type(env, par.typ, par.direction, Nullable(false), RefMode::None)
                 .is_err();
         if type_error {
             commented = true;
