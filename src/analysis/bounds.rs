@@ -106,11 +106,8 @@ impl Bounds {
     ) -> (Option<String>, Option<String>) {
         let type_name = bounds_rust_type(env, par.typ);
         let mut type_string =
-            if async {
-                if async_param_to_remove(&par.name) {
-                    return (None, None);
-                }
-                type_name.into_string()
+            if async && async_param_to_remove(&par.name) {
+                return (None, None);
             } else {
                 type_name.into_string()
             };
@@ -185,9 +182,8 @@ impl Bounds {
                         info_for_next_type: false,
                     });
                     return true;
-                } else {
-                    return false;
                 }
+                return false;
             }
         }
         if self.used.iter().any(|n| n.parameter_name == name) {
@@ -238,10 +234,10 @@ impl Bounds {
             .iter()
             .find(move |n| {
                 if n.parameter_name == name {
-                !n.info_for_next_type
-            } else {
-                false
-            }})
+                    !n.info_for_next_type
+                } else {
+                    false
+                }})
             .map(|t| (t.alias, t.bound_type.clone()))
     }
     pub fn update_imports(&self, imports: &mut Imports) {
@@ -313,29 +309,29 @@ mod tests {
     fn get_new_all() {
         let mut bounds: Bounds = Default::default();
         let typ = BoundType::IsA(None);
-        assert_eq!(bounds.add_parameter("a", "", typ.clone()), true);
+        assert_eq!(bounds.add_parameter("a", "", typ.clone(), false), true);
         // Don't add second time
-        assert_eq!(bounds.add_parameter("a", "", typ.clone()), false);
-        assert_eq!(bounds.add_parameter("b", "", typ.clone()), true);
-        assert_eq!(bounds.add_parameter("c", "", typ.clone()), true);
-        assert_eq!(bounds.add_parameter("d", "", typ.clone()), true);
-        assert_eq!(bounds.add_parameter("e", "", typ.clone()), true);
-        assert_eq!(bounds.add_parameter("f", "", typ.clone()), true);
-        assert_eq!(bounds.add_parameter("g", "", typ.clone()), true);
-        assert_eq!(bounds.add_parameter("h", "", typ.clone()), true);
-        assert_eq!(bounds.add_parameter("h", "", typ.clone()), false);
-        assert_eq!(bounds.add_parameter("i", "", typ.clone()), true);
-        assert_eq!(bounds.add_parameter("j", "", typ.clone()), true);
-        assert_eq!(bounds.add_parameter("k", "", typ.clone()), true);
-        assert_eq!(bounds.add_parameter("l", "", typ), false);
+        assert_eq!(bounds.add_parameter("a", "", typ.clone(), false), false);
+        assert_eq!(bounds.add_parameter("b", "", typ.clone(), false), true);
+        assert_eq!(bounds.add_parameter("c", "", typ.clone(), false), true);
+        assert_eq!(bounds.add_parameter("d", "", typ.clone(), false), true);
+        assert_eq!(bounds.add_parameter("e", "", typ.clone(), false), true);
+        assert_eq!(bounds.add_parameter("f", "", typ.clone(), false), true);
+        assert_eq!(bounds.add_parameter("g", "", typ.clone(), false), true);
+        assert_eq!(bounds.add_parameter("h", "", typ.clone(), false), true);
+        assert_eq!(bounds.add_parameter("h", "", typ.clone(), false), false);
+        assert_eq!(bounds.add_parameter("i", "", typ.clone(), false), true);
+        assert_eq!(bounds.add_parameter("j", "", typ.clone(), false), true);
+        assert_eq!(bounds.add_parameter("k", "", typ.clone(), false), true);
+        assert_eq!(bounds.add_parameter("l", "", typ, false), false);
     }
 
     #[test]
     fn get_parameter_alias_info() {
         let mut bounds: Bounds = Default::default();
         let typ = BoundType::IsA(None);
-        bounds.add_parameter("a", "", typ.clone());
-        bounds.add_parameter("b", "", typ.clone());
+        bounds.add_parameter("a", "", typ.clone(), false);
+        bounds.add_parameter("b", "", typ.clone(), false);
         assert_eq!(
             bounds.get_parameter_alias_info("a"),
             Some(('P', typ.clone()))

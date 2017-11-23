@@ -177,12 +177,7 @@ impl Builder {
                 let mut error = ptr::null_mut();
                 {output_vars}
                 let _ = ffi::{finish_func_name}({object_arg} res, {output_args} &mut error);
-                let result =
-                    if error.is_null() {{
-                        Ok(({result}))
-                    }} else {{
-                        Err(from_glib_full(error))
-                    }};
+                let result = if error.is_null() {{ Ok(({result})) }} else {{ Err(from_glib_full(error)) }};
                 let callback: &Box<{callback_type}> = transmute(user_data);
                 callback(result)
             }};

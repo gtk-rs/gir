@@ -169,10 +169,8 @@ pub fn analyze(
             library::ParameterDirection::Out => !can_as_return(env, par) && !async_func,
         };
 
-        if async_func {
-            if async_param_to_remove(&par.name) {
-                add_rust_parameter = false;
-            }
+        if async_func && async_param_to_remove(&par.name) {
+            add_rust_parameter = false;
         }
 
         let mut array_name = configured_functions
