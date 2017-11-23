@@ -60,6 +60,27 @@ pub enum Chunk {
     BoxFn {
         typ: String,
     },
+    ExternCFunc {
+        name: String,
+        parameters: Vec<Param>,
+        body: Box<Chunk>,
+    },
+    OutParam(String),
+    Cast {
+        name: String,
+        type_: String,
+    },
+    Transmute(Box<Chunk>),
+    BoxedRef(String),
+    Call {
+        func_name: String,
+        arguments: Vec<Chunk>,
+    },
+}
+
+pub struct Param {
+    pub name: String,
+    pub typ: String,
 }
 
 pub fn chunks(ch: Chunk) -> Vec<Chunk> {
@@ -70,5 +91,5 @@ pub fn chunks(ch: Chunk) -> Vec<Chunk> {
 pub enum TupleMode {
     Auto, // "", "1", "(1,2)"
     WithUnit, // "()", "1", "(1,2)"
-          //Simple,    // "()", "(1)", "(1,2)"
+    Simple,    // "()", "(1)", "(1,2)"
 }

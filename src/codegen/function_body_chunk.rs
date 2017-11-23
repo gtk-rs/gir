@@ -7,9 +7,8 @@ use analysis::namespaces;
 use analysis::return_value;
 use analysis::rust_type::rust_type;
 use analysis::safety_assertion_mode::SafetyAssertionMode;
-use chunk::{Chunk, TupleMode};
+use chunk::{Chunk, Param, TupleMode};
 use chunk::{conversion_from_glib, parameter_ffi_call_out};
-use codegen::translate_from_glib::TranslateFromGlib;
 use env::Env;
 use library::{self, ParameterDirection};
 use nameutil;
@@ -140,51 +139,103 @@ impl Builder {
                 typ: trampoline.callback_type.clone(),
             });
 
-            let object_arg =
-                if trampoline.is_method {
-                    "_source_object as *mut _, "
-                } else {
-                    ""
-                };
-            let output_vars = trampoline.output_params.iter()
+            let mut finish_args = vec![];
+            if trampoline.is_method {
+                finish_args.push(Chunk::Cast {
+                    name: "_source_object".to_string(),
+                    type_: "*mut _".to_string(),
+                });
+            }
+            finish_args.push(Chunk::Name("res".to_string()));
+            finish_args.extend(trampoline.output_params.iter()
                 .filter(|param| param.direction == ParameterDirection::Out && param.name != "error")
-                .map(|param| (param, type_mem_mode(env, param)))
-                .map(|(param, mode)| format!("let mut {} = {};\n", param.name, mode_to_string(mode)))
-                .collect::<Vec<_>>()
-                .join("                ");
-            let output_args = trampoline.output_params.iter()
-                .filter(|param| param.direction == ParameterDirection::Out && param.name != "error")
-                .map(|param| format!("&mut {},", param.name))
-                .collect::<Vec<_>>()
-                .join(" ");
+                .map(|param| Chunk::OutParam(param.name.clone())));
+            finish_args.push(Chunk::OutParam("error".to_string()));
             let index_to_ignore = find_index_to_ignore(&trampoline.output_params);
-            let result = trampoline.output_params.iter().enumerate()
+            let result: Vec<_> = trampoline.output_params.iter().enumerate()
                 .filter(|&(index, param)| param.direction == ParameterDirection::Out && param.name != "error" &&
                         Some(index) != index_to_ignore)
                 .map(|(_, param)| (param, conversion_from_glib::Mode {
                     typ: param.typ,
                     transfer: param.transfer,
                 }))
-                .map(|(param, mode)| (param, mode.translate_from_glib_as_function(env, self.array_length(param))))
-                .map(|(param, (prefix, suffix))| format!("{}{}{}", prefix, param.name, suffix))
-                .collect::<Vec<_>>()
-                .join(", ");
+                .map(|(param, mode)|
+                     Chunk::FromGlibConversion {
+                         mode,
+                         array_length_name: self.array_length(param).cloned(),
+                         value: Box::new(Chunk::Name(param.name.clone())),
+                     })
+                .collect();
+            let result = Chunk::Tuple(result, TupleMode::Simple);
             let gio_crate_name = crate_name("Gio", env);
             let gobject_crate_name = crate_name("GObject", env);
             let glib_crate_name = crate_name("GLib", env);
-            chunks.push(Chunk::Custom(format!(r#"extern "C" fn {func_name}(_source_object: *mut {gobject_crate_name}::GObject, res: *mut {gio_crate_name}::GAsyncResult, user_data: {glib_crate_name}::gpointer) {{
-            unsafe {{
-                let mut error = ptr::null_mut();
-                {output_vars}
-                let _ = ffi::{finish_func_name}({object_arg} res, {output_args} &mut error);
-                let result = if error.is_null() {{ Ok(({result})) }} else {{ Err(from_glib_full(error)) }};
-                let callback: &Box<{callback_type}> = transmute(user_data);
-                callback(result)
-            }};
-        }}"#, func_name = trampoline.name, gobject_crate_name = gobject_crate_name, gio_crate_name = gio_crate_name,
-              glib_crate_name = glib_crate_name, finish_func_name = trampoline.finish_func_name,
-              output_vars = output_vars, object_arg = object_arg, output_args = output_args,
-              result = result, callback_type = trampoline.callback_type)));
+            let mut body = vec![
+                Chunk::Let {
+                    name: "error".to_string(),
+                    is_mut: true,
+                    value: Box::new(Chunk::NullMutPtr),
+                    type_: None,
+                },
+            ];
+            let output_vars = trampoline.output_params.iter()
+                .filter(|param| param.direction == ParameterDirection::Out && param.name != "error")
+                .map(|param| (param, type_mem_mode(env, param)))
+                .map(|(param, mode)|
+                    Chunk::Let {
+                        name: param.name.clone(),
+                        is_mut: true,
+                        value: Box::new(mode),
+                        type_: None,
+                    });
+            body.extend(output_vars);
+            body.push(
+                Chunk::Let {
+                    name: "_".to_string(),
+                    is_mut: false,
+                    value: Box::new(Chunk::FfiCall {
+                        name: trampoline.finish_func_name.clone(),
+                        params: finish_args,
+                    }),
+                    type_: None,
+                }
+            );
+            body.push(
+                Chunk::Let {
+                    name: "result".to_string(),
+                    is_mut: false,
+                    value: Box::new(Chunk::ErrorResultReturn {
+                        value: Box::new(result),
+                    }),
+                    type_: None,
+                }
+            );
+            body.push(
+                Chunk::Let {
+                    name: "callback".to_string(),
+                    is_mut: false,
+                    value: Box::new(Chunk::Transmute(Box::new(Chunk::Name("user_data".to_string())))),
+                    type_: Some(Box::new(Chunk::BoxedRef(trampoline.callback_type.clone()))),
+                }
+            );
+            body.push(
+                Chunk::Call {
+                    func_name: "callback".to_string(),
+                    arguments: vec![Chunk::Name("result".to_string())],
+                }
+            );
+
+            let parameters = vec![
+                Param { name: "_source_object".to_string(), typ: format!("*mut {}::GObject", gobject_crate_name) },
+                Param { name: "res".to_string(), typ: format!("*mut {}::GAsyncResult", gio_crate_name) },
+                Param { name: "user_data".to_string(), typ: format!("{}::gpointer", glib_crate_name) },
+            ];
+
+            chunks.push(Chunk::ExternCFunc {
+                name: trampoline.name.clone(),
+                parameters,
+                body: Box::new(Chunk::Unsafe(body)),
+            });
             let chunk = Chunk::Let {
                 name: "callback".to_string(),
                 is_mut: false,
@@ -533,11 +584,12 @@ fn c_type_mem_mode(env: &Env, parameter: &AnalysisCParameter) -> OutMemMode {
     }
 }
 
-fn type_mem_mode(env: &Env, parameter: &library::Parameter) -> OutMemMode {
-    use self::OutMemMode::*;
+fn type_mem_mode(env: &Env, parameter: &library::Parameter) -> Chunk {
     match ConversionType::of(env, parameter.typ) {
         ConversionType::Pointer => if parameter.caller_allocates {
-            UninitializedNamed(rust_type(env, parameter.typ).unwrap())
+            Chunk::UninitializedNamed {
+                name: rust_type(env, parameter.typ).unwrap(),
+            }
         } else {
             use library::Type::*;
             let type_ = env.library.type_(parameter.typ);
@@ -547,25 +599,15 @@ fn type_mem_mode(env: &Env, parameter: &library::Parameter) -> OutMemMode {
                         || fund == library::Fundamental::Filename =>
                         {
                             if parameter.transfer == library::Transfer::Full {
-                                NullMutPtr
+                                Chunk::NullMutPtr
                             } else {
-                                NullPtr
+                                Chunk::NullPtr
                             }
                         }
-                _ => NullMutPtr,
+                _ => Chunk::NullMutPtr,
             }
         },
-        _ => Uninitialized,
-    }
-}
-
-fn mode_to_string(mode: OutMemMode) -> String {
-    use self::OutMemMode::*;
-    match mode {
-        Uninitialized => "mem::uninitialized()".to_string(),
-        NullMutPtr => "ptr::null_mut()".to_string(),
-        UninitializedNamed(ref name) => format!("{}::uninitialized()", name),
-        NullPtr => "ptr::null()".to_string(),
+        _ => Chunk::Uninitialized,
     }
 }
 

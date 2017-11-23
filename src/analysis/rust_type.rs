@@ -291,7 +291,7 @@ pub fn parameter_rust_type(
             library::ParameterDirection::Return => rust_type,
             _ => Err(TypeError::Unimplemented(into_inner(rust_type))),
         },
-        Function(ref func) if func.name == "AsyncReadyCallback" => Ok("AsyncReadyCallback".to_string()), // TODO
+        Function(ref func) if func.name == "AsyncReadyCallback" => Ok("AsyncReadyCallback".to_string()),
         _ => Err(TypeError::Unimplemented(type_.get_name().to_owned())),
     }
 }

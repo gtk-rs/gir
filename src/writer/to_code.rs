@@ -1,6 +1,6 @@
 use std::vec::Vec;
 
-use chunk::{Chunk, TupleMode};
+use chunk::{Chunk, Param, TupleMode};
 use codegen::translate_from_glib::TranslateFromGlib;
 use codegen::translate_to_glib::TranslateToGlib;
 use env::Env;
@@ -89,7 +89,7 @@ impl ToCode for Chunk {
                 let with_bracket = match mode {
                     TupleMode::Auto => chs.len() > 1,
                     TupleMode::WithUnit => chs.len() != 1,
-                    //                    TupleMode::Simple => true,
+                    TupleMode::Simple => true,
                 };
                 let (prefix, suffix) = if with_bracket { ("(", ")") } else { ("", "") };
                 let s = format_block_one_line(prefix, suffix, &chs.to_code(env), "", ", ");
@@ -144,7 +144,38 @@ impl ToCode for Chunk {
             New { ref name } => vec![format!("{}::new()", name)],
             Name(ref name) => vec![name.clone()],
             BoxFn { ref typ } => vec![format!("let user_data: Box<Box<{}>> = Box::new(Box::new(callback));", typ)],
+            ExternCFunc { ref name, ref parameters, ref body } => {
+                let prefix = format!(r#"extern "C" fn {}("#, name);
+                let suffix = ")".to_string();
+                let params: Vec<_> = parameters.iter()
+                    .flat_map(|param| param.to_code(env))
+                    .collect();
+                let s = format_block_one_line(&prefix, &suffix, &params, "", ", ");
+                let mut code = format_block_smart("{", "}", &body.to_code(env), " ", " ");
+                code.insert(0, s);
+                code
+            },
+            OutParam(ref name) => vec![format!("&mut {}", name)],
+            Cast { ref name, ref type_ } => vec![format!("{} as {}", name, type_)],
+            Transmute(ref chunk) => {
+                let s = format_block_one_line("", "", &chunk.to_code(env), "", "");
+                vec![format!("transmute({})", s)]
+            },
+            BoxedRef(ref typ) => vec![format!("&Box<{}>", typ)],
+            Call { ref func_name, ref arguments } => {
+                let args: Vec<_> = arguments.iter()
+                    .flat_map(|arg| arg.to_code(env))
+                    .collect();
+                let s = format_block_one_line("(", ")", &args, "", ",");
+                vec![format!("{}{};", func_name, s)]
+            },
         }
+    }
+}
+
+impl ToCode for Param {
+    fn to_code(&self, _env: &Env) -> Vec<String> {
+        vec![format!("{}: {}", self.name, self.typ)]
     }
 }
 
