@@ -160,7 +160,7 @@ impl ToCode for Chunk {
                 let s = format_block_one_line("", "", &chunk.to_code(env), "", "");
                 vec![format!("transmute({})", s)]
             },
-            RefRef(ref typ) => vec![format!("&&{}", typ)],
+            RefRef(ref typ) => vec![format!("&&({})", typ)],
             Call { ref func_name, ref arguments } => {
                 let args: Vec<_> = arguments.iter()
                     .flat_map(|arg| arg.to_code(env))

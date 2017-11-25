@@ -121,7 +121,7 @@ impl Builder {
 
         if let Some(ref trampoline) = self.async_trampoline {
             chunks.push(Chunk::BoxFn {
-                typ: format!("{} + Send + Sync", trampoline.callback_type),
+                typ: trampoline.callback_type.clone(),
             });
 
             let mut finish_args = vec![];

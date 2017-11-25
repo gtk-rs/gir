@@ -116,19 +116,17 @@ impl Bounds {
         if !par.instance_parameter && par.direction != ParameterDirection::Out {
             if let Some(bound_type) = Bounds::type_for(env, par.typ, par.nullable) {
                 ret = Some(Bounds::get_to_glib_extra(&bound_type));
-                let mut param_trait_bound = String::new();
                 if async && par.name == "callback" {
                     let finish_func_name = replace_async_by_finish(&func.name);
                     if let Some(function) = find_function(env, &finish_func_name) {
                         let out_parameters = find_out_parameters(env, &function);
                         let parameters = format_out_parameters(&out_parameters);
                         let error_type = find_error_type(env, &function);
-                        type_string = format!("Fn(Result<{}, {}>)", parameters, error_type);
-                        param_trait_bound = " + Send + Sync".to_string();
+                        type_string = format!("Fn(Result<{}, {}>) + Send + Sync + 'static", parameters, error_type);
                         trampoline_type = Some(type_string.clone());
                     }
                 }
-                if !self.add_parameter(&par.name, &format!("{}{}", type_string, param_trait_bound), bound_type, async) {
+                if !self.add_parameter(&par.name, &type_string, bound_type, async) {
                     panic!(
                         "Too many type constraints for {}",
                         func.c_identifier.as_ref().unwrap()
