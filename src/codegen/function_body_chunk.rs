@@ -42,7 +42,6 @@ use self::Parameter::*;
 #[derive(Default)]
 pub struct Builder {
     async_trampoline: Option<AsyncTrampoline>,
-    cancellable: bool,
     glib_name: String,
     parameters: Vec<Parameter>,
     transformations: Vec<Transformation>,
@@ -55,10 +54,6 @@ pub struct Builder {
 impl Builder {
     pub fn new() -> Builder {
         Default::default()
-    }
-    pub fn cancellable(&mut self) -> &mut Builder {
-        self.cancellable = true;
-        self
     }
     pub fn async_trampoline(&mut self, trampoline: &AsyncTrampoline) -> &mut Builder {
         self.async_trampoline = Some(trampoline.clone());
@@ -120,16 +115,6 @@ impl Builder {
 
         let mut chunks = Vec::new();
 
-        let name = "cancellable".to_string();
-        if self.cancellable {
-            let chunk = Chunk::Let {
-                name: name.clone(),
-                is_mut: false,
-                value: Box::new(Chunk::New { name: "Cancellable".to_string() }),
-                type_: None,
-            };
-            chunks.push(chunk);
-        }
         self.add_into_conversion(&mut chunks);
         self.add_in_array_lengths(&mut chunks);
         self.add_assertion(&mut chunks);
@@ -215,7 +200,7 @@ impl Builder {
                     name: "callback".to_string(),
                     is_mut: false,
                     value: Box::new(Chunk::Transmute(Box::new(Chunk::Name("user_data".to_string())))),
-                    type_: Some(Box::new(Chunk::BoxedRef(trampoline.callback_type.clone()))),
+                    type_: Some(Box::new(Chunk::RefRef(trampoline.callback_type.clone()))),
                 }
             );
             body.push(
@@ -245,9 +230,6 @@ impl Builder {
             chunks.push(chunk);
         }
         chunks.push(unsafe_);
-        if self.cancellable {
-            chunks.push(Chunk::Name(name));
-        }
         Chunk::BlockHalf(chunks)
     }
 

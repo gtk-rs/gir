@@ -141,7 +141,6 @@ impl ToCode for Chunk {
                 );
                 vec![s1, s2]
             }
-            New { ref name } => vec![format!("{}::new()", name)],
             Name(ref name) => vec![name.clone()],
             BoxFn { ref typ } => vec![format!("let user_data: Box<Box<{}>> = Box::new(Box::new(callback));", typ)],
             ExternCFunc { ref name, ref parameters, ref body } => {
@@ -161,7 +160,7 @@ impl ToCode for Chunk {
                 let s = format_block_one_line("", "", &chunk.to_code(env), "", "");
                 vec![format!("transmute({})", s)]
             },
-            BoxedRef(ref typ) => vec![format!("&Box<{}>", typ)],
+            RefRef(ref typ) => vec![format!("&&{}", typ)],
             Call { ref func_name, ref arguments } => {
                 let args: Vec<_> = arguments.iter()
                     .flat_map(|arg| arg.to_code(env))

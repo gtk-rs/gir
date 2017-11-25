@@ -53,9 +53,6 @@ pub enum Chunk {
         trampoline: String,
         in_trait: bool,
     },
-    New {
-        name: String,
-    },
     Name(String),
     BoxFn {
         typ: String,
@@ -71,7 +68,7 @@ pub enum Chunk {
         type_: String,
     },
     Transmute(Box<Chunk>),
-    BoxedRef(String),
+    RefRef(String),
     Call {
         func_name: String,
         arguments: Vec<Chunk>,

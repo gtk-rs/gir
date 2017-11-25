@@ -3,8 +3,6 @@
  * TODO: ProgressCallback types (not specific to async).
  * TODO: add annotation for methods like g_file_replace_contents_bytes_async where the finish
  * method has a different prefix.
- * TODO: if Cancellable is not a type, write Unimplemented next to Cancellable in the generated
- * code.
  */
 
 use std::collections::HashMap;

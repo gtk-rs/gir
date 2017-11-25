@@ -408,8 +408,5 @@ fn has_length(env: &Env, typ: library::TypeId) -> bool {
 }
 
 pub fn async_param_to_remove(name: &str) -> bool {
-    match name {
-        "cancellable" | "user_data" => true,
-        _ => false,
-    }
+    name == "user_data"
 }

@@ -88,8 +88,6 @@ pub fn declaration(env: &Env, analysis: &analysis::functions::Info) -> String {
     let outs_as_return = !analysis.outs.is_empty();
     let return_str = if outs_as_return {
         out_parameters_as_return(env, analysis)
-    } else if analysis.async {
-        " -> Cancellable".into()
     } else if analysis.ret.bool_return_is_error.is_some() {
         if env.namespaces.glib_ns_id == namespaces::MAIN {
             " -> Result<(), error::BoolError>".into()
@@ -167,7 +165,6 @@ pub fn body_chunk(env: &Env, analysis: &analysis::functions::Info) -> Chunk {
         .outs_mode(analysis.outs.mode);
 
     if analysis.async {
-        builder.cancellable();
         if let Some(ref trampoline) = analysis.trampoline {
             builder.async_trampoline(trampoline);
         } else {
