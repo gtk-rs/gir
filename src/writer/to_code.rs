@@ -15,6 +15,7 @@ impl ToCode for Chunk {
         use chunk::Chunk::*;
         match *self {
             Comment(ref chs) => comment_block(&chs.to_code(env)),
+            Chunks(ref chs) => chs.to_code(env),
             BlockHalf(ref chs) => format_block("", "}", &chs.to_code(env)),
             UnsafeSmart(ref chs) => {
                 format_block_smart("unsafe {", "}", &chs.to_code(env), " ", " ")
