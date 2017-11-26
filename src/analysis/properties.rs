@@ -21,7 +21,6 @@ pub struct Property {
     pub is_get: bool,
     pub func_name: String,
     pub nullable: library::Nullable,
-    pub conversion: PropertyConversion,
     pub default_value: Option<String>, //for getter
     pub get_out_ref_mode: RefMode,
     pub set_in_ref_mode: RefMode,
@@ -80,9 +79,6 @@ pub fn analyze(
         if let Some(prop) = getter {
             if let Ok(ref s) = used_type_string {
                 imports.add_used_type(s, prop.version);
-            }
-            if prop.conversion != PropertyConversion::Direct {
-                imports.add("std::mem::transmute", prop.version);
             }
             if type_string.is_ok() && prop.default_value.is_some() {
                 imports.add("glib::Value", prop.version);
@@ -169,7 +165,6 @@ fn analyze_property(
             owner_name
         );
     }
-    let conversion = PropertyConversion::of(type_);
     let get_out_ref_mode = RefMode::of(env, prop.typ, library::ParameterDirection::Return);
     let mut set_in_ref_mode = RefMode::of(env, prop.typ, library::ParameterDirection::In);
     if set_in_ref_mode == RefMode::ByRefMut {
@@ -184,7 +179,6 @@ fn analyze_property(
             is_get: true,
             func_name: get_func_name,
             nullable: nullable,
-            conversion: conversion,
             default_value: default_value,
             get_out_ref_mode: get_out_ref_mode,
             set_in_ref_mode: set_in_ref_mode,
@@ -205,7 +199,6 @@ fn analyze_property(
             is_get: false,
             func_name: set_func_name,
             nullable: nullable,
-            conversion: conversion,
             default_value: None,
             get_out_ref_mode: get_out_ref_mode,
             set_in_ref_mode: set_in_ref_mode,
@@ -322,30 +315,5 @@ pub fn get_type_default_value(
             Some(format!("None::<&{}>", type_str))
         }
         _ => None,
-    }
-}
-
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum PropertyConversion {
-    Direct,
-    AsI32,
-    Bitflag,
-}
-
-impl PropertyConversion {
-    pub fn of(type_: &library::Type) -> PropertyConversion {
-        use library::Type;
-        use self::PropertyConversion::*;
-        match *type_ {
-            Type::Bitfield(_) => Bitflag,
-            Type::Enumeration(_) => AsI32,
-            _ => Direct,
-        }
-    }
-}
-
-impl Default for PropertyConversion {
-    fn default() -> Self {
-        PropertyConversion::Direct
     }
 }

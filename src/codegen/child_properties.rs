@@ -128,8 +128,7 @@ fn body(prop: &ChildProperty, is_get: bool) -> Chunk {
         .is_get(is_get)
         .is_ref(prop.set_in_ref_mode.is_ref())
         .is_nullable(*prop.nullable)
-        .is_into(prop.is_into)
-        .conversion(prop.conversion);
+        .is_into(prop.is_into);
     if let Some(ref default_value) = prop.default_value {
         builder.default_value(default_value);
     } else {

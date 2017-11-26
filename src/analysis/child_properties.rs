@@ -17,7 +17,6 @@ pub struct ChildProperty {
     pub child_name: String,
     pub child_type: Option<library::TypeId>,
     pub nullable: library::Nullable,
-    pub conversion: properties::PropertyConversion,
     pub default_value: Option<String>, // for getter
     pub get_out_ref_mode: RefMode,
     pub set_in_ref_mode: RefMode,
@@ -102,10 +101,6 @@ fn analyze_property(
                 owner_name
             );
         }
-        let conversion = properties::PropertyConversion::of(type_);
-        if conversion != properties::PropertyConversion::Direct {
-            imports.add("std::mem::transmute", None);
-        }
         let get_out_ref_mode = RefMode::of(env, typ, library::ParameterDirection::Return);
         let mut set_in_ref_mode = RefMode::of(env, typ, library::ParameterDirection::In);
         if set_in_ref_mode == RefMode::ByRefMut {
@@ -140,7 +135,6 @@ fn analyze_property(
             child_name: child_name.to_owned(),
             child_type: child_type,
             nullable: nullable,
-            conversion: conversion,
             default_value: default_value,
             get_out_ref_mode: get_out_ref_mode,
             set_in_ref_mode: set_in_ref_mode,
