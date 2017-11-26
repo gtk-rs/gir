@@ -7,6 +7,7 @@ use super::parameter_ffi_call_out;
 
 pub enum Chunk {
     Comment(Vec<Chunk>),
+    Chunks(Vec<Chunk>),
     BlockHalf(Vec<Chunk>),   //Block without open bracket, temporary
     UnsafeSmart(Vec<Chunk>), //TODO: remove (will change generated results)
     Unsafe(Vec<Chunk>),
