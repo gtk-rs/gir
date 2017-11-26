@@ -400,9 +400,22 @@ fn generate_debug_with_fields(w: &mut Write, name: &str, lines: &[String]) -> Re
                  if field.contains("//") {
                     None
                  } else {
-                    let field_name = field.split(":").next().unwrap().trim().replace("pub ", "");
-                    Some(if field.replace(",", "").trim().ends_with("c_void") {
+                    let mut parts = field.split(":");
+                    let field_name = parts.next().unwrap().trim().replace("pub ", "");
+                    let type_ = parts.collect::<Vec<_>>()
+                                     .join(":")
+                                     .trim()
+                                     .replace(",", "");
+                    // This part is just a big hack. Not very reliable but makes the whole work
+                    // for the moment...
+                    Some(if type_.ends_with("c_void") {
+                             // For c_void types.
                              format!("\t\t .field(\"{name}\", &\"c_void\")\n", name=field_name)
+                         } else if type_.ends_with("]") && type_.contains("[c_void") {
+                             // For [c_void] types.
+                             format!("\t\t .field(\"{name}\",
+                                                  &format!(\"{{:?}}\", &self.{name} as *const _))\n",
+                                     name=field_name)
                          } else {
                              format!("\t\t .field(\"{name}\", &self.{name})\n", name=field_name)
                          })
