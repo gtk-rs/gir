@@ -24,6 +24,7 @@ impl ToParameter for CParameter {
             match bounds.get_parameter_alias_info(&self.name) {
                 Some((t, bound_type)) => {
                     match bound_type {
+                        BoundType::NoWrapper => type_str = t.to_string(),
                         BoundType::IsA(_) => {
                             if *self.nullable {
                                 // should not happen!

@@ -21,9 +21,14 @@ pub fn generate(
     only_declaration: bool,
     indent: usize,
 ) -> Result<()> {
+    if analysis.is_async_finish(env) {
+        return Ok(());
+    }
+
     let mut commented = false;
     let mut comment_prefix = "";
     let mut pub_prefix = if in_trait { "" } else { "pub " };
+
     match analysis.visibility {
         Visibility::Public => {}
         Visibility::Comment => {
@@ -123,6 +128,9 @@ pub fn bounds(bounds: &Bounds) -> String {
         .iter_lifetimes()
         .map(|s| format!("'{}", s))
         .chain(bounds.iter().map(|bound| match bound.bound_type {
+            NoWrapper => {
+                format!("{}: {}", bound.alias, bound.type_str)
+            }
             IsA(Some(lifetime)) => {
                 format!("{}: IsA<{}> + '{}", bound.alias, bound.type_str, lifetime)
             }
@@ -156,6 +164,14 @@ pub fn body_chunk(env: &Env, analysis: &analysis::functions::Info) -> Chunk {
         .transformations(&analysis.parameters.transformations)
         .outs_mode(analysis.outs.mode);
 
+    if analysis.async {
+        if let Some(ref trampoline) = analysis.trampoline {
+            builder.async_trampoline(trampoline);
+        } else {
+            warn!("Async function {} has no associated _finish function", analysis.name);
+        }
+    }
+
     for par in &analysis.parameters.c_parameters {
         if outs_as_return && analysis.outs.iter().any(|p| p.name == par.name) {
             builder.out_parameter(env, par);
@@ -164,5 +180,5 @@ pub fn body_chunk(env: &Env, analysis: &analysis::functions::Info) -> Chunk {
         }
     }
 
-    builder.generate()
+    builder.generate(env)
 }

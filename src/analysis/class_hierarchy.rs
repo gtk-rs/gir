@@ -2,11 +2,13 @@ use library::*;
 use std::collections::{HashMap, HashSet};
 use std::iter::{self, Iterator};
 
+#[derive(Debug)]
 struct Node {
     supers: Vec<TypeId>,
     subs: HashSet<TypeId>,
 }
 
+#[derive(Debug)]
 pub struct Info {
     hier: HashMap<TypeId, Node>,
 }

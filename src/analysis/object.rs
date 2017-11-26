@@ -11,7 +11,7 @@ use super::info_base::InfoBase;
 use super::signatures::Signatures;
 use traits::*;
 
-#[derive(Default)]
+#[derive(Debug, Default)]
 pub struct Info {
     pub base: InfoBase,
     pub c_type: String,

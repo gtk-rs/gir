@@ -1,7 +1,7 @@
 use analysis;
 use library;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Parameter {
     pub name: String,
     pub typ: library::TypeId,

@@ -33,7 +33,7 @@ pub mod symbols;
 pub mod trampoline_parameters;
 pub mod trampolines;
 
-#[derive(Default)]
+#[derive(Debug, Default)]
 pub struct Analysis {
     pub objects: BTreeMap<String, object::Info>,
     pub records: BTreeMap<String, record::Info>,

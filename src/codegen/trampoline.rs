@@ -139,6 +139,7 @@ fn func_parameter(
 
     match bounds.get_parameter_alias_info(&par.name) {
         Some((t, bound_type)) => match bound_type {
+            BoundType::NoWrapper => unreachable!(),
             BoundType::IsA(_) => if *par.nullable {
                 format!("&Option<{}{}>", mut_str, t)
             } else if let Some((from, to)) = bound_replace {

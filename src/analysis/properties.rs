@@ -238,6 +238,7 @@ fn analyze_property(
                 array_length: None,
                 is_error: false,
                 doc: None,
+                async: false,
             },
             is_action: false,
             version: prop_version,

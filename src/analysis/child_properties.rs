@@ -120,7 +120,7 @@ fn analyze_property(
             is_into = bound.is_into();
             let r_type = bounds_rust_type(env, typ).into_string();
             let mut bounds = Bounds::default();
-            bounds.add_parameter("P", &r_type, bound);
+            bounds.add_parameter("P", &r_type, bound, false);
             let s_bounds = function::bounds(&bounds);
             // Because the bounds won't necessarily be added into the final function, we
             // only keep the "inner" part to make the string computation easier. So

@@ -3,7 +3,7 @@ mod chunk;
 pub mod conversion_from_glib;
 pub mod parameter_ffi_call_out;
 
-pub use self::chunk::{chunks, Chunk, TupleMode};
+pub use self::chunk::{chunks, Chunk, Param, TupleMode};
 
 pub fn ffi_function_todo(name: &str) -> Chunk {
     let call = Chunk::FfiCallTODO(name.into());

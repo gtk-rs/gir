@@ -64,7 +64,7 @@ pub fn analyze(
 
     if in_trait {
         let type_name = bounds_rust_type(env, type_tid);
-        bounds.add_parameter("this", &type_name.into_string(), BoundType::IsA(None));
+        bounds.add_parameter("this", &type_name.into_string(), BoundType::IsA(None), false);
     }
 
     let parameters = if is_notify {
@@ -92,7 +92,7 @@ pub fn analyze(
 
     if in_trait {
         let type_name = bounds_rust_type(env, type_tid);
-        bounds.add_parameter("this", &type_name.into_string(), BoundType::IsA(None));
+        bounds.add_parameter("this", &type_name.into_string(), BoundType::IsA(None), false);
     }
 
 
