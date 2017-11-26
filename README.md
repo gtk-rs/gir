@@ -326,4 +326,4 @@ let testUnion = myUnion { test : 42 };
 unsafe { println!("{}", myUnion.test };
 ```
 
-This is required as the rust compiler can not guarantee the safety of the union, or that the member being addressed exsits. The union RFC is [here](https://github.com/tbu-/rust-rfcs/blob/master/text/1444-union.md) and the tracking issue is [here](https://github.com/rust-lang/rust/issues/32836).
+This is required as the rust compiler can not guarantee the safety of the union, or that the member being addressed exists. The union RFC is [here](https://github.com/tbu-/rust-rfcs/blob/master/text/1444-union.md) and the tracking issue is [here](https://github.com/rust-lang/rust/issues/32836).
