@@ -240,8 +240,11 @@ fn analyze_function(
         out_parameters::analyze_imports(env, func, imports);
     }
 
-    if async {
+    if async && !commented {
         imports.add("std::mem::transmute", version);
+        if env.config.library_name != "Gio" {
+            imports.add("gio_ffi", version);
+        }
     }
 
     if !commented {
