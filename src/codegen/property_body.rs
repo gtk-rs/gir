@@ -1,5 +1,4 @@
 use analysis;
-use analysis::properties::PropertyConversion;
 use chunk::Chunk;
 
 #[derive(Default)]
@@ -8,11 +7,10 @@ pub struct Builder {
     var_name: String,
     is_get: bool,
     is_child_property: bool,
-    default_value: String,
+    type_: String,
     is_ref: bool,
     is_nullable: bool,
     is_into: bool,
-    conversion: PropertyConversion,
 }
 
 #[cfg_attr(feature = "cargo-clippy", allow(wrong_self_convention))]
@@ -43,8 +41,8 @@ impl Builder {
         self
     }
 
-    pub fn default_value(&mut self, value: &str) -> &mut Builder {
-        self.default_value = value.into();
+    pub fn type_(&mut self, type_: &str) -> &mut Builder {
+        self.type_ = type_.into();
         self
     }
 
@@ -63,11 +61,6 @@ impl Builder {
         self
     }
 
-    pub fn conversion(&mut self, value: PropertyConversion) -> &mut Builder {
-        self.conversion = value;
-        self
-    }
-
     pub fn generate(&self) -> Chunk {
         let chunks = if self.is_get {
             self.chunks_for_get()
@@ -78,7 +71,6 @@ impl Builder {
     }
 
     fn chunks_for_get(&self) -> Vec<Chunk> {
-        use analysis::properties::PropertyConversion::*;
         let mut params = Vec::new();
 
         params.push(Chunk::Custom("self.to_glib_none().0".into()));
@@ -100,45 +92,44 @@ impl Builder {
             name: self.get_ffi_func(),
             params: params,
         };
+
+        body.push(Chunk::Let {
+            name: "value".into(),
+            is_mut: true,
+            value: Box::new(Chunk::Custom("Value::uninitialized()".into())),
+            type_: None,
+        });
+
+        body.push(Chunk::Custom(format!("gobject_ffi::g_value_init(value.to_glib_none_mut().0, <{} as StaticType>::static_type().to_glib());", self.type_)));
+
         body.push(Chunk::FfiCallConversion {
             ret: return_info,
             array_length_name: None,
             call: Box::new(ffi_call),
         });
 
-        match self.conversion {
-            AsI32 => body.push(Chunk::Custom(
-                "from_glib(transmute(value.get::<i32>().unwrap()))".into(),
-            )),
-            Bitflag => body.push(Chunk::Custom(
-                "from_glib(transmute(value.get::<u32>().unwrap()))".into(),
-            )),
-            _ => (),
-        }
+        let unwrap = if self.is_nullable {
+            // This one is strictly speaking nullable, but
+            // we represent that with an empty Vec instead
+            if self.type_ == "Vec<String>" {
+                ".unwrap()"
+            } else {
+                ""
+            }
+        } else {
+            ".unwrap()"
+        };
+        body.push(Chunk::Custom(format!("value.get(){}", unwrap)));
 
         let unsafe_ = Chunk::Unsafe(body);
 
         let mut chunks = Vec::new();
-
-        let default_value_chunk = Chunk::Custom(format!("Value::from({})", self.default_value));
-        chunks.push(Chunk::Let {
-            name: "value".into(),
-            is_mut: true,
-            value: Box::new(default_value_chunk),
-            type_: None,
-        });
         chunks.push(unsafe_);
-
-        if self.conversion == Direct {
-            let unwrap = if self.is_nullable { "" } else { ".unwrap()" };
-            chunks.push(Chunk::Custom(format!("value.get(){}", unwrap)));
-        }
 
         chunks
     }
 
     fn chunks_for_set(&self) -> Vec<Chunk> {
-        use analysis::properties::PropertyConversion::*;
         let mut params = Vec::new();
 
         params.push(Chunk::Custom("self.to_glib_none().0".into()));
@@ -183,28 +174,6 @@ impl Builder {
                 value: Box::new(value),
                 type_: None,
             });
-        }
-        match self.conversion {
-            AsI32 => {
-                let value_chunk = Chunk::Custom(format!("{}.to_glib() as i32", self.var_name));
-                chunks.push(Chunk::Let {
-                    name: self.var_name.clone(),
-                    is_mut: false,
-                    value: Box::new(value_chunk),
-                    type_: None,
-                })
-            }
-            Bitflag => {
-                let value_chunk =
-                    Chunk::Custom(format!("{}.to_glib().bits() as u32", self.var_name));
-                chunks.push(Chunk::Let {
-                    name: self.var_name.clone(),
-                    is_mut: false,
-                    value: Box::new(value_chunk),
-                    type_: None,
-                })
-            }
-            _ => (),
         }
 
         chunks.push(unsafe_);

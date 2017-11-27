@@ -43,7 +43,7 @@ fn generate_prop_func(
     let pub_prefix = if in_trait { "" } else { "pub " };
     let decl_suffix = if only_declaration { ";" } else { " {" };
     let type_string = rust_type(env, prop.typ);
-    let commented = type_string.is_err() || (prop.default_value.is_none() && prop.is_get);
+    let commented = type_string.is_err();
 
     let comment_prefix = if commented { "//" } else { "" };
 
@@ -62,7 +62,7 @@ fn generate_prop_func(
     ));
 
     if !only_declaration {
-        let body = body(prop).to_code(env);
+        let body = body(env, prop).to_code(env);
         for s in body {
             try!(writeln!(w, "{}{}{}", tabs(indent), comment_prefix, s));
         }
@@ -127,19 +127,19 @@ fn declaration(env: &Env, prop: &Property) -> String {
     )
 }
 
-fn body(prop: &Property) -> Chunk {
+fn body(env: &Env, prop: &Property) -> Chunk {
     let mut builder = property_body::Builder::new();
     builder
         .name(&prop.name)
         .var_name(&prop.var_name)
         .is_get(prop.is_get)
         .is_ref(prop.set_in_ref_mode.is_ref())
-        .is_nullable(*prop.nullable)
-        .conversion(prop.conversion);
-    if let Some(ref default_value) = prop.default_value {
-        builder.default_value(default_value);
+        .is_nullable(*prop.nullable);
+
+    if let Ok(type_) = rust_type(env, prop.typ) {
+        builder.type_(&type_);
     } else {
-        builder.default_value("/*Unknown default value*/");
+        builder.type_("/*Unknown type*/");
     }
 
     builder.generate()

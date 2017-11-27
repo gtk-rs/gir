@@ -54,7 +54,7 @@ fn generate_func(
     let pub_prefix = if in_trait { "" } else { "pub " };
     let decl_suffix = if only_declaration { ";" } else { " {" };
     let type_string = rust_type(env, prop.typ);
-    let comment_prefix = if type_string.is_err() || (prop.default_value.is_none() && is_get) {
+    let comment_prefix = if type_string.is_err() {
         "//"
     } else {
         ""
@@ -75,7 +75,7 @@ fn generate_func(
     ));
 
     if !only_declaration {
-        let body = body(prop, is_get).to_code(env);
+        let body = body(env, prop, is_get).to_code(env);
         for s in body {
             try!(writeln!(w, "{}{}{}", tabs(indent), comment_prefix, s));
         }
@@ -119,7 +119,7 @@ fn declaration(env: &Env, prop: &ChildProperty, is_get: bool) -> String {
     )
 }
 
-fn body(prop: &ChildProperty, is_get: bool) -> Chunk {
+fn body(env: &Env, prop: &ChildProperty, is_get: bool) -> Chunk {
     let mut builder = property_body::Builder::new_for_child_property();
     let prop_name = nameutil::signal_to_snake(&*prop.name);
     builder
@@ -128,12 +128,12 @@ fn body(prop: &ChildProperty, is_get: bool) -> Chunk {
         .is_get(is_get)
         .is_ref(prop.set_in_ref_mode.is_ref())
         .is_nullable(*prop.nullable)
-        .is_into(prop.is_into)
-        .conversion(prop.conversion);
-    if let Some(ref default_value) = prop.default_value {
-        builder.default_value(default_value);
+        .is_into(prop.is_into);
+
+    if let Ok(type_) = rust_type(env, prop.typ) {
+        builder.type_(&type_);
     } else {
-        builder.default_value("/*Unknown default value*/");
+        builder.type_("/*Unknown type*/");
     }
 
     builder.generate()
