@@ -139,7 +139,7 @@ fn body(env: &Env, prop: &Property) -> Chunk {
     if let Ok(type_) = rust_type(env, prop.typ) {
         builder.type_(&type_);
     } else {
-        builder.type_("/*Unknown type */");
+        builder.type_("/*Unknown type*/");
     }
 
     builder.generate()
