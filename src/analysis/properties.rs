@@ -21,7 +21,6 @@ pub struct Property {
     pub is_get: bool,
     pub func_name: String,
     pub nullable: library::Nullable,
-    pub default_value: Option<String>, //for getter
     pub get_out_ref_mode: RefMode,
     pub set_in_ref_mode: RefMode,
     pub version: Option<Version>,
@@ -80,8 +79,10 @@ pub fn analyze(
             if let Ok(ref s) = used_type_string {
                 imports.add_used_type(s, prop.version);
             }
-            if type_string.is_ok() && prop.default_value.is_some() {
+            if type_string.is_ok() {
+                imports.add("gobject_ffi", prop.version);
                 imports.add("glib::Value", prop.version);
+                imports.add("glib::StaticType", prop.version);
             }
 
             properties.push(prop);
@@ -119,7 +120,6 @@ fn analyze_property(
     deps: &[library::TypeId],
 ) -> (Option<Property>, Option<Property>, Option<signals::Info>) {
     let name = prop.name.clone();
-    let type_ = env.type_(prop.typ);
 
     let prop_version = configured_properties
         .iter()
@@ -155,16 +155,6 @@ fn analyze_property(
         }
     }
 
-    let default_value = get_type_default_value(env, prop.typ, type_);
-    if default_value.is_none() && readable {
-        readable = false;
-        let owner_name = rust_type(env, type_tid).into_string();
-        error!(
-            "No default value for getter of property `{}` for `{}`",
-            name,
-            owner_name
-        );
-    }
     let get_out_ref_mode = RefMode::of(env, prop.typ, library::ParameterDirection::Return);
     let mut set_in_ref_mode = RefMode::of(env, prop.typ, library::ParameterDirection::In);
     if set_in_ref_mode == RefMode::ByRefMut {
@@ -179,7 +169,6 @@ fn analyze_property(
             is_get: true,
             func_name: get_func_name,
             nullable: nullable,
-            default_value: default_value,
             get_out_ref_mode: get_out_ref_mode,
             set_in_ref_mode: set_in_ref_mode,
             version: prop_version,
@@ -199,7 +188,6 @@ fn analyze_property(
             is_get: false,
             func_name: set_func_name,
             nullable: nullable,
-            default_value: None,
             get_out_ref_mode: get_out_ref_mode,
             set_in_ref_mode: set_in_ref_mode,
             version: prop_version,
@@ -274,46 +262,4 @@ fn analyze_property(
     };
 
     (getter, setter, notify_signal)
-}
-
-pub fn get_type_default_value(
-    env: &Env,
-    type_tid: library::TypeId,
-    type_: &library::Type,
-) -> Option<String> {
-    use library::Type;
-    use library::Fundamental;
-    let some = |s: &str| Some(s.to_string());
-    match *type_ {
-        Type::Fundamental(fund) => match fund {
-            Fundamental::Boolean => some("&false"),
-            Fundamental::Int => some("&0"),
-            Fundamental::UInt => some("&0u32"),
-            Fundamental::Utf8 => some("None::<&str>"),
-            Fundamental::Float => some("&0f32"),
-            Fundamental::Double => some("&0f64"),
-            Fundamental::Int8 => some("&0i8"),
-            Fundamental::UInt8 => some("&0u8"),
-            Fundamental::Int16 => some("&0i16"),
-            Fundamental::UInt16 => some("&0u16"),
-            Fundamental::Int32 => some("&0i32"),
-            Fundamental::UInt32 => some("&0u32"),
-            Fundamental::Int64 => some("&0i64"),
-            Fundamental::UInt64 => some("&0u64"),
-            Fundamental::Char => some("&0i8"),
-            Fundamental::UChar => some("&0u8"),
-            Fundamental::Size => some("&0isize"),
-            Fundamental::SSize => some("&0usize"),
-            Fundamental::Pointer => some("::std::ptr::null_mut()"),
-            Fundamental::Type => some("&gobject_sys::G_TYPE_NONE"),
-            _ => None,
-        },
-        Type::Bitfield(_) => some("&0u32"),
-        Type::Enumeration(_) => some("&0"),
-        Type::Class(..) | Type::Record(..) | Type::Interface(..) => {
-            let type_str = rust_type(env, type_tid).into_string();
-            Some(format!("None::<&{}>", type_str))
-        }
-        _ => None,
-    }
 }

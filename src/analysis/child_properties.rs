@@ -1,7 +1,6 @@
 use analysis::bounds::Bounds;
 use analysis::imports::Imports;
 use analysis::ref_mode::RefMode;
-use analysis::properties;
 use analysis::rust_type::*;
 use codegen::function;
 use config;
@@ -17,7 +16,6 @@ pub struct ChildProperty {
     pub child_name: String,
     pub child_type: Option<library::TypeId>,
     pub nullable: library::Nullable,
-    pub default_value: Option<String>, // for getter
     pub get_out_ref_mode: RefMode,
     pub set_in_ref_mode: RefMode,
     pub doc_hidden: bool,
@@ -83,24 +81,14 @@ fn analyze_property(
     let name = prop.name.clone();
     if let Some(typ) = env.library.find_type(0, &prop.type_name) {
         let prop_name = nameutil::signal_to_snake(&*prop.name);
-        let type_ = env.type_(typ);
         let doc_hidden = prop.doc_hidden;
 
         imports.add("glib::Value", None);
+        imports.add("glib::StaticType", None);
         if let Ok(s) = used_rust_type(env, typ) {
             imports.add_used_type(&s, None);
         }
 
-        let default_value = properties::get_type_default_value(env, typ, type_);
-        if default_value.is_none() {
-            let owner_name = rust_type(env, type_tid).into_string();
-            error!(
-                "No default value for type `{}` of child property `{}` for `{}`",
-                &prop.type_name,
-                name,
-                owner_name
-            );
-        }
         let get_out_ref_mode = RefMode::of(env, typ, library::ParameterDirection::Return);
         let mut set_in_ref_mode = RefMode::of(env, typ, library::ParameterDirection::In);
         if set_in_ref_mode == RefMode::ByRefMut {
@@ -135,7 +123,6 @@ fn analyze_property(
             child_name: child_name.to_owned(),
             child_type: child_type,
             nullable: nullable,
-            default_value: default_value,
             get_out_ref_mode: get_out_ref_mode,
             set_in_ref_mode: set_in_ref_mode,
             doc_hidden: doc_hidden,
