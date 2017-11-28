@@ -96,11 +96,9 @@ impl Builder {
         body.push(Chunk::Let {
             name: "value".into(),
             is_mut: true,
-            value: Box::new(Chunk::Custom("Value::uninitialized()".into())),
+            value: Box::new(Chunk::Custom(format!("Value::from_type(<{} as StaticType>::static_type())", self.type_))),
             type_: None,
         });
-
-        body.push(Chunk::Custom(format!("gobject_ffi::g_value_init(value.to_glib_none_mut().0, <{} as StaticType>::static_type().to_glib());", self.type_)));
 
         body.push(Chunk::FfiCallConversion {
             ret: return_info,

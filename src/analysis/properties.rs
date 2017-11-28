@@ -92,6 +92,7 @@ pub fn analyze(
                 imports.add_used_type(s, prop.version);
             }
             if type_string.is_ok() {
+                imports.add("gobject_ffi", prop.version);
                 imports.add("glib::Value", prop.version);
             }
 
