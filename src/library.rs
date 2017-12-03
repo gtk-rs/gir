@@ -1,3 +1,4 @@
+use env::Env;
 use std::cmp::{Ord, Ordering, PartialOrd};
 use std::collections::{BTreeMap, BTreeSet, HashMap};
 use std::iter::Iterator;
@@ -486,6 +487,28 @@ impl Type {
         }
     }
 
+    pub fn get_deprecated_version(&self) -> Option<Version> {
+        use self::Type::*;
+        match *self {
+            Fundamental(_) => None,
+            Alias(_) => None,
+            Enumeration(ref enum_) => enum_.deprecated_version,
+            Bitfield(ref bit_field) => bit_field.deprecated_version,
+            Record(ref rec) => rec.deprecated_version,
+            Union(_) => None,
+            Function(ref func) => func.deprecated_version,
+            Interface(ref interface) => interface.deprecated_version,
+            Array(_) => None,
+            Class(ref class) => class.deprecated_version,
+            CArray(_) => None,
+            FixedArray(_, _) => None,
+            PtrArray(_) => None,
+            HashTable(_, _) => None,
+            List(_) => None,
+            SList(_) => None,
+        }
+    }
+
     pub fn get_glib_name(&self) -> Option<&str> {
         use self::Type::*;
         match *self {
@@ -718,6 +741,32 @@ impl Library {
         }
         assert_eq!(MAIN_NAMESPACE, library.add_namespace(main_namespace_name));
         library
+    }
+
+    pub fn show_non_bound_types(&self, env: &Env) {
+        let not_allowed_ending = ["Class", "Private", "Func", "Callback", "Accessible", "Iface",
+                                  "Type"];
+        let namespace_name = self.namespaces[MAIN_NAMESPACE as usize].name.clone();
+        for x in self.namespace(MAIN_NAMESPACE).types.iter() {
+            if let Some(ref x) = *x {
+                let name = x.get_name();
+                if !not_allowed_ending.iter().any(|s| name.ends_with(s)) {
+                    let full_name = format!("{}.{}", namespace_name, name);
+                    let version = x.get_deprecated_version();
+                    let depr_version = version.unwrap_or(env.config.min_cfg_version);
+                    if !env.analysis.objects.contains_key(&full_name) &&
+                       !env.analysis.records.contains_key(&full_name) &&
+                       !env.config.objects.iter().any(|o| o.1.name == full_name) &&
+                       depr_version >= env.config.min_cfg_version {
+                        if let Some(version) = version {
+                            println!("[NOT GENERATED] {} (deprecated in {})", full_name, version);
+                        } else {
+                            println!("[NOT GENERATED] {}", full_name);
+                        }
+                    }
+                }
+            }
+        }
     }
 
     pub fn namespace(&self, ns_id: u16) -> &Namespace {

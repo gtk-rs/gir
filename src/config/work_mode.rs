@@ -2,9 +2,10 @@ use std::str::FromStr;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum WorkMode {
-    Normal, // generate widgets etc.
-    Sys,    // generate -sys with ffi
-    Doc,    // generate documentation file
+    Normal,          // generate widgets etc.
+    Sys,             // generate -sys with ffi
+    Doc,             // generate documentation file
+    DisplayNotBound, // Show not bound types
 }
 
 impl Default for WorkMode {
@@ -20,6 +21,7 @@ impl FromStr for WorkMode {
             "normal" => Ok(WorkMode::Normal),
             "sys" => Ok(WorkMode::Sys),
             "doc" => Ok(WorkMode::Doc),
+            "not_bound" => Ok(WorkMode::DisplayNotBound),
             _ => Err("Wrong work mode".into()),
         }
     }

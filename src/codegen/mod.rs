@@ -36,6 +36,7 @@ pub fn generate(env: &Env) {
         WorkMode::Normal => normal_generate(env),
         WorkMode::Sys => sys::generate(env),
         WorkMode::Doc => doc::generate(env),
+        WorkMode::DisplayNotBound => {}
     }
 }
 
