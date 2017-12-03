@@ -16,7 +16,7 @@ Keep it in mind that since `gir` is still under development, it generates warnin
 
 There are two main modes of generation for `gir`; *FFI* and *API*.
 
-There is also a third one used for documentation generation: *doc*.
+There is also a third one used for documentation generation: *doc* and a fourth one used to display all not bound types in your crate: *not_bound*.
 
 The *FFI* mode is what creates the low-level FFI bindings from the supplied `*.gir` file - these are essentially direct calls in to the related C library and are typically unsafe. The resulting crate is typically appended with `-sys`.
 

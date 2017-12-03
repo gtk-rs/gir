@@ -20,6 +20,7 @@ extern crate xml;
 
 use std::cell::RefCell;
 
+use config::WorkMode;
 use env::Env;
 use library::Library;
 use hprof::Profiler;
@@ -138,7 +139,7 @@ fn do_main() -> Result<()> {
         analysis::run(&mut env);
     }
 
-    {
+    if env.config.work_mode != WorkMode::DisplayNotBound {
         let _watcher = statistics.enter("Generating");
         codegen::generate(&env);
     }
@@ -148,6 +149,9 @@ fn do_main() -> Result<()> {
 
     if env.config.show_statistics {
         statistics.print_timing();
+    }
+    if env.config.work_mode == WorkMode::DisplayNotBound {
+        env.library.show_non_bound_types(&env);
     }
 
     Ok(())
