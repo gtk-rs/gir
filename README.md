@@ -104,6 +104,8 @@ child_name = "item"
 trait = false
 # allow rename result file
 module_name = "soome_class"
+# override starting version
+version = "3.12"
 # prefixed object in mod.rs with #[cfg(mycond)]
 cfg_condition = "mycond"
     # define overrides for function
@@ -189,6 +191,8 @@ name = "Gdk.EventType"
 status = "generate"
 # generates #[must_use] attribute for the type
 must_use = true
+# override starting version
+version = "3.12"
     [[object.member]]
     name = "2button_press"
     # allows to skip elements with bad names, other members with same value used instead

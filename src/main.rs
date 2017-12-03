@@ -95,6 +95,11 @@ fn do_main() -> Result<()> {
     }
 
     {
+        let _watcher = statistics.enter("Update library by config");
+        update_version::apply_config(&mut library, &cfg);
+    }
+
+    {
         let _watcher = statistics.enter("Postprocessing");
         library.postprocessing();
     }
