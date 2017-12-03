@@ -1,6 +1,11 @@
+use config::Config;
 use library::{self, Function, Parameter, Type, MAIN_NAMESPACE};
 use Library;
 use version::Version;
+
+pub fn apply_config(library: &mut Library, cfg: &Config) {
+    fix_versions_by_config(library, cfg);
+}
 
 pub fn check_function_real_version(library: &mut Library) {
     // In order to avoid the borrow checker to annoy us...
@@ -63,6 +68,32 @@ fn update_function_version(functions: &mut Vec<Function>, lib: *const Library) {
             _ => false,
         } {
             function.version = current_version;
+        }
+    }
+}
+
+fn fix_versions_by_config(library: &mut Library, cfg: &Config) {
+    use library::Type::*;
+    for obj in cfg.objects.values() {
+        if obj.status.ignored() {
+            continue;
+        }
+        if obj.version.is_none() {
+            continue;
+        }
+        let version = obj.version;
+
+        let tid = match library.find_type(0, &obj.name) {
+            Some(x) => x,
+            None => continue,
+        };
+        match *library.type_mut(tid) {
+            Class(ref mut class) => class.version = version,
+            Interface(ref mut interface) => interface.version = version,
+            Record(ref mut record) => record.version = version,
+            Bitfield(ref mut flags) => flags.version = version,
+            Enumeration(ref mut enum_) => enum_.version = version,
+            _ => (),
         }
     }
 }
