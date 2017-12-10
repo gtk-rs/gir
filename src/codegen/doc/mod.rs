@@ -4,6 +4,7 @@ use std::io::{Result, Write};
 use analysis;
 use analysis::namespaces::MAIN;
 use case::CaseExt;
+use config::gobjects::GObject;
 use env::Env;
 use file_saver::save_to_file;
 use library::*;
@@ -182,12 +183,7 @@ fn create_object_doc(w: &mut Write, env: &Env, info: &analysis::object::Info) ->
             .filter(|&tid| {
                 !env.type_status(&tid.full_name(&env.library)).ignored()
             })
-            .map(|&tid| {
-                format!(
-                    "[`{name}Ext`](trait.{name}Ext.html)",
-                    name = env.library.type_(tid).get_name()
-                )
-            })
+            .map(|&tid| get_type_trait_for_implements(env, tid))
             .collect::<Vec<_>>();
         if !implements.is_empty() {
             try!(writeln!(w, "\n# Implements\n"));
@@ -493,4 +489,41 @@ fn create_property_doc(
         }));
     }
     Ok(())
+}
+
+fn get_type_trait_for_implements(env: &Env, tid: TypeId) -> String {
+    let trait_name = if let Some(&GObject {
+        trait_name: Some(ref trait_name),
+        ..
+    }) = env.config.objects.get(&tid.full_name(&env.library))
+    {
+        trait_name.clone()
+    } else {
+        format!("{}Ext", env.library.type_(tid).get_name())
+    };
+    if tid.ns_id == MAIN_NAMESPACE {
+        format!("[`{name}`](trait.{name}.html)", name = trait_name)
+    } else if let Some(symbol) = env.symbols.borrow().by_tid(tid) {
+        let mut name = symbol.full_rust_name();
+        let crate_name = if let Some(crate_name) = symbol.crate_name() {
+            if crate_name == "gobject" {
+                name = name.replace("gobject", "glib::object");
+                "glib/object".to_owned()
+            } else {
+                crate_name.clone()
+            }
+        } else {
+            error!("Type {} don't have crate", tid.full_name(&env.library));
+            "unknown".to_owned()
+        };
+        format!(
+            "[`{}Ext`](../{}/trait.{}.html)",
+            name,
+            crate_name,
+            trait_name
+        )
+    } else {
+        error!("Type {} don't have crate", tid.full_name(&env.library));
+        format!("`{}`", trait_name)
+    }
 }

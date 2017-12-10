@@ -28,18 +28,24 @@ impl Symbol {
     pub fn make_trait_method(&mut self, trait_name: &str) {
         self.owner_name = Some(trait_name.into());
     }
+
+    pub fn crate_name(&self) -> Option<&String> {
+        self.crate_name.as_ref()
+    }
 }
 
 #[derive(Debug)]
 pub struct Info {
     symbols: Vec<Symbol>,
     c_name_index: HashMap<String, u32>,
+    tid_index: HashMap<Option<TypeId>, u32>,
 }
 
 pub fn run(library: &Library, namespaces: &namespaces::Info) -> Info {
     let mut info = Info {
         symbols: Vec::new(),
         c_name_index: HashMap::new(),
+        tid_index: HashMap::new(),
     };
 
     info.insert(
@@ -48,6 +54,7 @@ pub fn run(library: &Library, namespaces: &namespaces::Info) -> Info {
             name: "None".into(),
             ..Default::default()
         },
+        None,
     );
     info.insert(
         "FALSE",
@@ -55,6 +62,7 @@ pub fn run(library: &Library, namespaces: &namespaces::Info) -> Info {
             name: "false".into(),
             ..Default::default()
         },
+        None,
     );
     info.insert(
         "TRUE",
@@ -62,6 +70,7 @@ pub fn run(library: &Library, namespaces: &namespaces::Info) -> Info {
             name: "true".into(),
             ..Default::default()
         },
+        None,
     );
 
     for (ns_id, ns) in library.namespaces.iter().enumerate() {
@@ -76,18 +85,22 @@ pub fn run(library: &Library, namespaces: &namespaces::Info) -> Info {
             Some(&namespaces[ns_id].crate_name)
         };
 
-        for typ in ns.types.iter().map(|t| t.as_ref().unwrap()) {
+        for (pos, typ) in ns.types.iter().map(|t| t.as_ref().unwrap()).enumerate() {
             let symbol = Symbol {
                 crate_name: crate_name.cloned(),
                 name: typ.get_name(),
                 ..Default::default()
+            };
+            let tid = TypeId {
+                ns_id: ns_id,
+                id: pos as u32,
             };
 
             match *typ {
                 Type::Alias(Alias {
                     ref c_identifier, ..
                 }) => {
-                    info.insert(c_identifier, symbol);
+                    info.insert(c_identifier, symbol, Some(tid));
                 }
                 Type::Enumeration(Enumeration {
                     ref name,
@@ -103,14 +116,14 @@ pub fn run(library: &Library, namespaces: &namespaces::Info) -> Info {
                     ref functions,
                     ..
                 }) => {
-                    info.insert(c_type, symbol);
+                    info.insert(c_type, symbol, Some(tid));
                     for member in members {
                         let symbol = Symbol {
                             crate_name: crate_name.cloned(),
                             owner_name: Some(name.clone()),
                             name: member.name.to_camel(),
                         };
-                        info.insert(&member.c_identifier, symbol);
+                        info.insert(&member.c_identifier, symbol, Some(tid));
                     }
                     for func in functions {
                         let symbol = Symbol {
@@ -118,7 +131,7 @@ pub fn run(library: &Library, namespaces: &namespaces::Info) -> Info {
                             owner_name: Some(name.clone()),
                             name: func.name.clone(),
                         };
-                        info.insert(func.c_identifier.as_ref().unwrap(), symbol);
+                        info.insert(func.c_identifier.as_ref().unwrap(), symbol, None);
                     }
                 }
                 Type::Record(Record {
@@ -139,14 +152,14 @@ pub fn run(library: &Library, namespaces: &namespaces::Info) -> Info {
                     ref functions,
                     ..
                 }) => {
-                    info.insert(c_type, symbol);
+                    info.insert(c_type, symbol, Some(tid));
                     for func in functions {
                         let symbol = Symbol {
                             crate_name: crate_name.cloned(),
                             owner_name: Some(name.clone()),
                             name: func.name.clone(),
                         };
-                        info.insert(func.c_identifier.as_ref().unwrap(), symbol);
+                        info.insert(func.c_identifier.as_ref().unwrap(), symbol, None);
                     }
                 }
                 _ => {}
@@ -172,9 +185,18 @@ impl Info {
         }
     }
 
-    fn insert(&mut self, name: &str, symbol: Symbol) {
+    pub fn by_tid(&self, tid: TypeId) -> Option<&Symbol> {
+        self.tid_index
+            .get(&Some(tid))
+            .map(|&id| &self.symbols[id as usize])
+    }
+
+    fn insert(&mut self, name: &str, symbol: Symbol, tid: Option<TypeId>) {
         let id = self.symbols.len();
         self.symbols.push(symbol);
         self.c_name_index.insert(name.to_owned(), id as u32);
+        if tid.is_some() {
+            self.tid_index.insert(tid, id as u32);
+        }
     }
 }
