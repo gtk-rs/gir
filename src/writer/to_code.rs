@@ -157,11 +157,6 @@ impl ToCode for Chunk {
             },
             OutParam(ref name) => vec![format!("&mut {}", name)],
             Cast { ref name, ref type_ } => vec![format!("{} as {}", name, type_)],
-            Transmute(ref chunk) => {
-                let s = format_block_one_line("", "", &chunk.to_code(env), "", "");
-                vec![format!("transmute({})", s)]
-            },
-            RefRef(ref typ) => vec![format!("&&({})", typ)],
             Call { ref func_name, ref arguments } => {
                 let args: Vec<_> = arguments.iter()
                     .flat_map(|arg| arg.to_code(env))

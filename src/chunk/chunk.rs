@@ -68,8 +68,6 @@ pub enum Chunk {
         name: String,
         type_: String,
     },
-    Transmute(Box<Chunk>),
-    RefRef(String),
     Call {
         func_name: String,
         arguments: Vec<Chunk>,
