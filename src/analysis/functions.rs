@@ -241,7 +241,6 @@ fn analyze_function(
     }
 
     if async && !commented {
-        imports.add("std::mem::transmute", version);
         if env.config.library_name != "Gio" {
             imports.add("gio_ffi", version);
         }
