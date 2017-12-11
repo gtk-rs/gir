@@ -199,8 +199,8 @@ impl Builder {
                 Chunk::Let {
                     name: "callback".to_string(),
                     is_mut: false,
-                    value: Box::new(Chunk::Transmute(Box::new(Chunk::Name("user_data".to_string())))),
-                    type_: Some(Box::new(Chunk::RefRef(trampoline.callback_type.clone()))),
+                    value: Box::new(Chunk::Custom("Box::from_raw(user_data as *mut _)".into())),
+                    type_: Some(Box::new(Chunk::Custom(format!("Box<Box<{}>>", trampoline.callback_type)))),
                 }
             );
             body.push(
