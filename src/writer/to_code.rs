@@ -145,7 +145,7 @@ impl ToCode for Chunk {
             Name(ref name) => vec![name.clone()],
             BoxFn { ref typ } => vec![format!("let user_data: Box<Box<{}>> = Box::new(Box::new(callback));", typ)],
             ExternCFunc { ref name, ref parameters, ref body } => {
-                let prefix = format!(r#"extern "C" fn {}("#, name);
+                let prefix = format!(r#"unsafe extern "C" fn {}("#, name);
                 let suffix = ")".to_string();
                 let params: Vec<_> = parameters.iter()
                     .flat_map(|param| param.to_code(env))

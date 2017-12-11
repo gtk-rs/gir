@@ -217,7 +217,7 @@ impl Builder {
             ];
             let body = Chunk::Chunks(vec![
                 Chunk::Custom("callback_guard!();".into()),
-                Chunk::Unsafe(body),
+                Chunk::Chunks(body),
             ]);
 
             chunks.push(Chunk::ExternCFunc {
