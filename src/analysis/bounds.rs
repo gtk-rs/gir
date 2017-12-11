@@ -122,7 +122,7 @@ impl Bounds {
                         let out_parameters = find_out_parameters(env, &function);
                         let parameters = format_out_parameters(&out_parameters);
                         let error_type = find_error_type(env, &function);
-                        type_string = format!("Fn(Result<{}, {}>) + Send + Sync + 'static", parameters, error_type);
+                        type_string = format!("Fn(Result<{}, {}>) + Send + 'static", parameters, error_type);
                         trampoline_type = Some(type_string.clone());
                     }
                 }
