@@ -45,6 +45,7 @@ pub struct AsyncTrampoline {
     pub name: String,
     pub finish_func_name: String,
     pub callback_type: String,
+    pub bound_name: char,
     pub output_params: Vec<Parameter>,
 }
 
@@ -184,7 +185,7 @@ fn analyze_function(
         if let Some(to_glib_extra) = to_glib_extra {
             to_glib_extras.insert(pos, to_glib_extra);
         }
-        if let Some(callback_type) = type_string {
+        if let Some((callback_type, bound_name)) = type_string {
             let func_name = func.c_identifier.as_ref().unwrap();
             let finish_func_name = replace_async_by_finish(&func_name);
             let rust_finish_func_name = replace_async_by_finish(&func.name);
@@ -197,6 +198,7 @@ fn analyze_function(
                 name: format!("{}_trampoline", func.name),
                 finish_func_name,
                 callback_type,
+                bound_name,
                 output_params,
             });
         }
