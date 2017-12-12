@@ -121,7 +121,7 @@ impl Builder {
 
         if let Some(ref trampoline) = self.async_trampoline {
             chunks.push(Chunk::BoxFn {
-                typ: trampoline.callback_type.clone(),
+                typ: format!("{}", trampoline.bound_name),
             });
 
             let mut finish_args = vec![];
@@ -199,8 +199,8 @@ impl Builder {
                 Chunk::Let {
                     name: "callback".to_string(),
                     is_mut: false,
-                    value: Box::new(Chunk::Transmute(Box::new(Chunk::Name("user_data".to_string())))),
-                    type_: Some(Box::new(Chunk::RefRef(trampoline.callback_type.clone()))),
+                    value: Box::new(Chunk::Custom("Box::from_raw(user_data as *mut _)".into())),
+                    type_: Some(Box::new(Chunk::Custom(format!("Box<Box<{}>>", trampoline.bound_name)))),
                 }
             );
             body.push(
@@ -217,18 +217,18 @@ impl Builder {
             ];
             let body = Chunk::Chunks(vec![
                 Chunk::Custom("callback_guard!();".into()),
-                Chunk::Unsafe(body),
+                Chunk::Chunks(body),
             ]);
 
             chunks.push(Chunk::ExternCFunc {
-                name: trampoline.name.clone(),
+                name: format!("{}<{}: {}>", trampoline.name, trampoline.bound_name, trampoline.callback_type),
                 parameters,
                 body: Box::new(body),
             });
             let chunk = Chunk::Let {
                 name: "callback".to_string(),
                 is_mut: false,
-                value: Box::new(Chunk::Name(trampoline.name.clone())),
+                value: Box::new(Chunk::Name(format!("{}::<{}>", trampoline.name, trampoline.bound_name))),
                 type_: None,
             };
             chunks.push(chunk);
