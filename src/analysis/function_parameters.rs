@@ -144,6 +144,7 @@ pub fn analyze(
     configured_functions: &[&config::functions::Function],
     disable_length_detect: bool,
     async_func: bool,
+    in_trait: bool,
 ) -> Parameters {
     let mut parameters = Parameters::new(function_parameters.len());
 
@@ -209,7 +210,8 @@ pub fn analyze(
             .matched_parameters(&name)
             .iter()
             .any(|p| p.constant);
-        let ref_mode = RefMode::without_unneeded_mut(env, par, immutable);
+        let ref_mode = RefMode::without_unneeded_mut(env, par, immutable,
+                                                     in_trait && par.instance_parameter);
 
         let nullable_override = configured_functions
             .matched_parameters(&name)

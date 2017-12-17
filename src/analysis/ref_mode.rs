@@ -10,6 +10,7 @@ pub enum RefMode {
     ByRef,
     ByRefMut,
     ByRefImmut, //immutable reference with mutable pointer in ffi
+    ByRefConst, //instance parameters in trait function with const pointer in ffi
     ByRefFake,
 }
 
@@ -70,18 +71,15 @@ impl RefMode {
         env: &env::Env,
         par: &library::Parameter,
         immutable: bool,
+        self_in_trait: bool,
     ) -> RefMode {
+        use self::RefMode::*;
         let ref_mode = RefMode::of(env, par.typ, par.direction);
-        if ref_mode == RefMode::ByRefMut {
-            if !is_mut_ptr(&*par.c_type) {
-                RefMode::ByRef
-            } else if immutable {
-                RefMode::ByRefImmut
-            } else {
-                ref_mode
-            }
-        } else {
-            ref_mode
+        match ref_mode {
+            ByRefMut if !is_mut_ptr(&*par.c_type) => ByRef,
+            ByRefMut if immutable => ByRefImmut,
+            ByRef if self_in_trait && !is_mut_ptr(&*par.c_type) => ByRefConst,
+            ref_mode => ref_mode,
         }
     }
 
@@ -92,6 +90,7 @@ impl RefMode {
             ByRef => true,
             ByRefMut => true,
             ByRefImmut => true,
+            ByRefConst => true,
             ByRefFake => true,
         }
     }

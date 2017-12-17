@@ -82,6 +82,7 @@ pub fn analyze<F: Borrow<library::Function>>(
     env: &Env,
     functions: &[F],
     type_tid: library::TypeId,
+    in_trait: bool,
     obj: &config::gobjects::GObject,
     imports: &mut Imports,
     mut signatures: Option<&mut Signatures>,
@@ -116,7 +117,8 @@ pub fn analyze<F: Borrow<library::Function>>(
             signatures.insert(name.clone(), signature_params);
         }
 
-        let mut info = analyze_function(env, name, func, type_tid, &configured_functions, imports);
+        let mut info = analyze_function(env, name, func, type_tid, in_trait,
+                                        &configured_functions, imports);
         info.not_version = not_version;
         funcs.push(info);
     }
@@ -129,6 +131,7 @@ fn analyze_function(
     name: String,
     func: &library::Function,
     type_tid: library::TypeId,
+    in_trait: bool,
     configured_functions: &[&config::functions::Function],
     imports: &mut Imports,
 ) -> Info {
@@ -169,6 +172,7 @@ fn analyze_function(
         configured_functions,
         disable_length_detect,
         async,
+        in_trait
     );
     parameters.analyze_return(env, &ret.parameter);
 
