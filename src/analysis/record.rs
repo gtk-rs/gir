@@ -66,6 +66,7 @@ pub fn new(env: &Env, obj: &GObject) -> Option<Info> {
         env,
         &record.functions,
         record_tid,
+        false,
         obj,
         &mut imports,
         None,

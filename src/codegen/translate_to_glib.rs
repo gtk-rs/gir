@@ -50,6 +50,7 @@ fn to_glib_xxx(transfer: Transfer, ref_mode: RefMode) -> (&'static str, &'static
                 RefMode::ByRef => ("", ".to_glib_none().0"),
                 RefMode::ByRefMut => ("", ".to_glib_none_mut().0"),
                 RefMode::ByRefImmut => ("mut_override(", ".to_glib_none().0)"),
+                RefMode::ByRefConst => ("const_override(", ".to_glib_none().0)"),
                 RefMode::ByRefFake => ("", ""), //unreachable!(),
             }
         }

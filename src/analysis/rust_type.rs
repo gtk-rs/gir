@@ -201,7 +201,7 @@ fn rust_type_full(
 
     match ref_mode {
         RefMode::None | RefMode::ByRefFake => {}
-        RefMode::ByRef | RefMode::ByRefImmut => {
+        RefMode::ByRef | RefMode::ByRefImmut | RefMode::ByRefConst => {
             rust_type = rust_type.map_any(|s| format!("&{}", s))
         }
         RefMode::ByRefMut => rust_type = rust_type.map_any(|s| format!("&mut {}", s)),
