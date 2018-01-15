@@ -1,6 +1,6 @@
 use analysis::namespaces;
 use case::CaseExt;
-use codegen::general::{self, version_condition, version_condition_string};
+use codegen::general::{self, cfg_deprecated, version_condition, version_condition_string};
 use config::gobjects::GObject;
 use env::Env;
 use file_saver;
@@ -100,6 +100,7 @@ fn generate_enum(env: &Env, w: &mut Write, enum_: &Enumeration, config: &GObject
         c_name: String,
         value: String,
         version: Option<Version>,
+        deprecated_version: Option<Version>,
     }
 
     let mut members: Vec<Member> = Vec::new();
@@ -113,15 +114,18 @@ fn generate_enum(env: &Env, w: &mut Write, enum_: &Enumeration, config: &GObject
             continue;
         }
         vals.insert(member.value.clone());
+        let deprecated_version = member_config.iter().filter_map(|m| m.deprecated_version).next();
         let version = member_config.iter().filter_map(|m| m.version).next();
         members.push(Member {
             name: member.name.to_camel(),
             c_name: member.c_identifier.clone(),
             value: member.value.clone(),
             version: version,
+            deprecated_version: deprecated_version,
         });
     }
 
+    try!(cfg_deprecated(w, env, enum_.deprecated_version, false, 0));
     try!(version_condition(w, env, enum_.version, false, 0));
     try!(writeln!(
         w,
@@ -135,6 +139,7 @@ fn generate_enum(env: &Env, w: &mut Write, enum_: &Enumeration, config: &GObject
     }
     try!(writeln!(w, "pub enum {} {{", enum_.name));
     for member in &members {
+        try!(cfg_deprecated(w, env, member.deprecated_version, false, 1));
         try!(version_condition(w, env, member.version, false, 1));
         try!(writeln!(w, "\t{},", member.name));
     }
@@ -147,6 +152,7 @@ fn generate_enum(env: &Env, w: &mut Write, enum_: &Enumeration, config: &GObject
 "
     ));
 
+    try!(cfg_deprecated(w, env, enum_.deprecated_version, false, 0));
     try!(version_condition(w, env, enum_.version, false, 0));
     try!(writeln!(
         w,
@@ -160,6 +166,7 @@ impl ToGlib for {name} {{
         ffi_name = enum_.c_type
     ));
     for member in &members {
+        try!(cfg_deprecated(w, env, member.deprecated_version, false, 3));
         try!(version_condition(w, env, member.version, false, 3));
         try!(writeln!(
             w,
@@ -189,6 +196,7 @@ impl ToGlib for {name} {{
         ""
     };
 
+    try!(cfg_deprecated(w, env, enum_.deprecated_version, false, 0));
     try!(version_condition(w, env, enum_.version, false, 0));
     try!(writeln!(
         w,
@@ -201,6 +209,7 @@ impl FromGlib<ffi::{ffi_name}> for {name} {{
         assert = assert
     ));
     for member in &members {
+        try!(cfg_deprecated(w, env, member.deprecated_version, false, 3));
         try!(version_condition(w, env, member.version, false, 3));
         try!(writeln!(
             w,
@@ -227,6 +236,7 @@ impl FromGlib<ffi::{ffi_name}> for {name} {{
         let get_quark = get_quark.replace("-", "_");
         let has_failed_member = members.iter().any(|m| m.name == "Failed");
 
+        try!(cfg_deprecated(w, env, enum_.deprecated_version, false, 0));
         try!(version_condition(w, env, enum_.version, false, 0));
         try!(writeln!(
             w,
@@ -247,6 +257,7 @@ impl FromGlib<ffi::{ffi_name}> for {name} {{
         ));
 
         for member in &members {
+            try!(cfg_deprecated(w, env, member.deprecated_version, false, 3));
             try!(version_condition(w, env, member.version, false, 3));
             try!(writeln!(
                 w,
@@ -277,6 +288,7 @@ impl FromGlib<ffi::{ffi_name}> for {name} {{
     }
 
     if let Some(ref get_type) = enum_.glib_get_type {
+        try!(cfg_deprecated(w, env, enum_.deprecated_version, false, 0));
         try!(version_condition(w, env, enum_.version, false, 0));
         try!(writeln!(
             w,
@@ -290,6 +302,7 @@ impl FromGlib<ffi::{ffi_name}> for {name} {{
         ));
         try!(writeln!(w, ""));
 
+        try!(cfg_deprecated(w, env, enum_.deprecated_version, false, 0));
         try!(version_condition(w, env, enum_.version, false, 0));
         try!(writeln!(
             w,
@@ -302,6 +315,7 @@ impl FromGlib<ffi::{ffi_name}> for {name} {{
         ));
         try!(writeln!(w, ""));
 
+        try!(cfg_deprecated(w, env, enum_.deprecated_version, false, 0));
         try!(version_condition(w, env, enum_.version, false, 0));
         try!(writeln!(
             w,
@@ -314,6 +328,7 @@ impl FromGlib<ffi::{ffi_name}> for {name} {{
         ));
         try!(writeln!(w, ""));
 
+        try!(cfg_deprecated(w, env, enum_.deprecated_version, false, 0));
         try!(version_condition(w, env, enum_.version, false, 0));
         try!(writeln!(
             w,

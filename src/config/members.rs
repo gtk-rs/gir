@@ -11,6 +11,7 @@ pub struct Member {
     // some enum variants have multiple names
     pub alias: bool,
     pub version: Option<Version>,
+    pub deprecated_version: Option<Version>,
     pub ignore: bool,
 }
 
@@ -38,6 +39,9 @@ impl Parse for Member {
         let version = toml.lookup("version")
             .and_then(|v| v.as_str())
             .and_then(|s| s.parse().ok());
+        let deprecated_version = toml.lookup("deprecated_version")
+            .and_then(|v| v.as_str())
+            .and_then(|s| s.parse().ok());
 
         let ignore = toml.lookup("ignore")
             .and_then(|val| val.as_bool())
@@ -47,6 +51,7 @@ impl Parse for Member {
             ident: ident,
             alias: alias,
             version: version,
+            deprecated_version: deprecated_version,
             ignore: ignore,
         })
     }

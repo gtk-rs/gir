@@ -5,7 +5,7 @@ use library;
 use chunk::Chunk;
 use consts::TYPE_PARAMETERS_START;
 use env::Env;
-use super::general::{doc_hidden, version_condition};
+use super::general::{cfg_deprecated, doc_hidden, version_condition};
 use super::signal_body;
 use super::trampoline::func_string;
 use writer::primitives::tabs;
@@ -29,6 +29,9 @@ pub fn generate(
     let suffix = if only_declaration { ";" } else { " {" };
 
     try!(writeln!(w, ""));
+    if !in_trait || only_declaration {
+        try!(cfg_deprecated(w, env, analysis.deprecated_version, commented, indent));
+    }
     try!(version_condition(
         w,
         env,
@@ -73,6 +76,9 @@ pub fn generate(
 
     if let Some(ref emit_name) = analysis.action_emit_name {
         try!(writeln!(w, ""));
+        if !in_trait || only_declaration {
+            try!(cfg_deprecated(w, env, analysis.deprecated_version, commented, indent));
+        }
         try!(version_condition(
             w,
             env,

@@ -44,4 +44,11 @@ impl Env {
             _ => false,
         }
     }
+
+    pub fn is_too_low_version(&self, version: Option<Version>) -> bool {
+        match version {
+            Some(version) => version <= self.config.min_cfg_version,
+            _ => false,
+        }
+    }
 }
