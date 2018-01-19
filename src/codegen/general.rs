@@ -177,6 +177,40 @@ pub fn define_shared_type(
     Ok(())
 }
 
+pub fn cfg_deprecated(
+    w: &mut Write,
+    env: &Env,
+    deprecated: Option<Version>,
+    commented: bool,
+    indent: usize,
+) -> Result<()> {
+    if let Some(s) = cfg_deprecated_string(deprecated, env, commented, indent) {
+        try!(writeln!(w, "{}", s));
+    }
+    Ok(())
+}
+
+pub fn cfg_deprecated_string(
+    deprecated: Option<Version>,
+    env: &Env,
+    commented: bool,
+    indent: usize,
+) -> Option<String> {
+    let comment = if commented { "//" } else { "" };
+    if env.is_too_low_version(deprecated) {
+        Some(format!("{}{}#[deprecated]", tabs(indent), comment))
+    } else if let Some(v) = deprecated {
+        Some(format!(
+            "{}{}#[cfg_attr({}, deprecated)]",
+            tabs(indent),
+            comment,
+            v.to_cfg()
+        ))
+    } else {
+        None
+    }
+}
+
 pub fn version_condition(
     w: &mut Write,
     env: &Env,
@@ -291,6 +325,7 @@ pub fn declare_default_from_new(
         !f.visibility.hidden() && f.name == "new" && f.parameters.rust_parameters.is_empty()
     }) {
         try!(writeln!(w, ""));
+        try!(cfg_deprecated(w, env, func.deprecated_version, false, 0));
         try!(version_condition(w, env, func.version, false, 0));
         try!(writeln!(w, "impl Default for {} {{", name));
         try!(writeln!(w, "    fn default() -> Self {{"));

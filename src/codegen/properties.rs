@@ -5,7 +5,7 @@ use analysis::properties::Property;
 use analysis::rust_type::{parameter_rust_type, rust_type};
 use chunk::Chunk;
 use env::Env;
-use super::general::version_condition;
+use super::general::{cfg_deprecated, version_condition};
 use library;
 use writer::primitives::tabs;
 use super::property_body;
@@ -50,6 +50,9 @@ fn generate_prop_func(
     try!(writeln!(w, ""));
 
     let decl = declaration(env, prop);
+    if !in_trait || only_declaration {
+        try!(cfg_deprecated(w, env, prop.deprecated_version, commented, indent));
+    }
     try!(version_condition(w, env, prop.version, commented, indent));
     try!(writeln!(
         w,

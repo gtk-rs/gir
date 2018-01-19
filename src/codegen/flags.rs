@@ -1,5 +1,5 @@
 use analysis::namespaces;
-use codegen::general::{self, version_condition, version_condition_string};
+use codegen::general::{self, cfg_deprecated, version_condition, version_condition_string};
 use config::gobjects::GObject;
 use env::Env;
 use file_saver;
@@ -79,6 +79,7 @@ pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>) {
 }
 
 fn generate_flags(env: &Env, w: &mut Write, flags: &Bitfield, config: &GObject) -> Result<()> {
+    try!(cfg_deprecated(w, env, flags.deprecated_version, false, 0));
     try!(version_condition(w, env, flags.version, false, 0));
     try!(writeln!(w, "bitflags! {{"));
     if config.must_use {
@@ -97,7 +98,9 @@ fn generate_flags(env: &Env, w: &mut Write, flags: &Bitfield, config: &GObject) 
 
         let name = member.name.to_uppercase();
         let val: i64 = member.value.parse().unwrap();
+        let deprecated_version = member_config.iter().filter_map(|m| m.deprecated_version).next();
         let version = member_config.iter().filter_map(|m| m.version).next();
+        try!(cfg_deprecated(w, env, deprecated_version, false, 2));
         try!(version_condition(w, env, version, false, 2));
         try!(writeln!(w, "\t\tconst {} = {};", name, val as u32));
     }
@@ -110,6 +113,7 @@ fn generate_flags(env: &Env, w: &mut Write, flags: &Bitfield, config: &GObject) 
 "
     ));
 
+    try!(cfg_deprecated(w, env, flags.deprecated_version, false, 0));
     try!(version_condition(w, env, flags.version, false, 0));
     try!(writeln!(
         w,
@@ -132,6 +136,7 @@ impl ToGlib for {name} {{
         ""
     };
 
+    try!(cfg_deprecated(w, env, flags.deprecated_version, false, 0));
     try!(version_condition(w, env, flags.version, false, 0));
     try!(writeln!(
         w,
@@ -148,6 +153,7 @@ impl FromGlib<ffi::{ffi_name}> for {name} {{
     ));
 
     if let Some(ref get_type) = flags.glib_get_type {
+        try!(cfg_deprecated(w, env, flags.deprecated_version, false, 0));
         try!(version_condition(w, env, flags.version, false, 0));
         try!(writeln!(
             w,
@@ -161,6 +167,7 @@ impl FromGlib<ffi::{ffi_name}> for {name} {{
         ));
         try!(writeln!(w, ""));
 
+        try!(cfg_deprecated(w, env, flags.deprecated_version, false, 0));
         try!(version_condition(w, env, flags.version, false, 0));
         try!(writeln!(
             w,
@@ -173,6 +180,7 @@ impl FromGlib<ffi::{ffi_name}> for {name} {{
         ));
         try!(writeln!(w, ""));
 
+        try!(cfg_deprecated(w, env, flags.deprecated_version, false, 0));
         try!(version_condition(w, env, flags.version, false, 0));
         try!(writeln!(
             w,
@@ -186,6 +194,7 @@ impl FromGlib<ffi::{ffi_name}> for {name} {{
         ));
         try!(writeln!(w, ""));
 
+        try!(cfg_deprecated(w, env, flags.deprecated_version, false, 0));
         try!(version_condition(w, env, flags.version, false, 0));
         try!(writeln!(
             w,
