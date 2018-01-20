@@ -155,7 +155,6 @@ impl ToCode for Chunk {
                 code.insert(0, s);
                 code
             },
-            OutParam(ref name) => vec![format!("&mut {}", name)],
             Cast { ref name, ref type_ } => vec![format!("{} as {}", name, type_)],
             Call { ref func_name, ref arguments } => {
                 let args: Vec<_> = arguments.iter()

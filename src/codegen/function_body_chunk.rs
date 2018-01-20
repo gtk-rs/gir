@@ -140,9 +140,8 @@ impl Builder {
         }
         finish_args.push(Chunk::Name("res".to_string()));
         finish_args.extend(trampoline.output_params.iter()
-                           .filter(|param| param.direction == ParameterDirection::Out && param.name != "error")
+                           .filter(|param| param.direction == ParameterDirection::Out)
                            .map(|param| Chunk::FfiCallOutParameter{ par: param.into() }));
-        finish_args.push(Chunk::OutParam("error".to_string()));
         let index_to_ignore = find_index_to_ignore(&trampoline.output_params);
         let result: Vec<_> = trampoline.output_params.iter().enumerate()
             .filter(|&(index, param)| param.direction == ParameterDirection::Out && param.name != "error" &&
