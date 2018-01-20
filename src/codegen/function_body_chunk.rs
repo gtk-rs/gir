@@ -8,7 +8,7 @@ use analysis::return_value;
 use analysis::rust_type::rust_type;
 use analysis::safety_assertion_mode::SafetyAssertionMode;
 use chunk::{Chunk, Param, TupleMode};
-use chunk::{conversion_from_glib, parameter_ffi_call_out};
+use chunk::parameter_ffi_call_out;
 use env::Env;
 use library::{self, ParameterDirection};
 use nameutil;
@@ -134,23 +134,25 @@ impl Builder {
             finish_args.push(Chunk::Name("res".to_string()));
             finish_args.extend(trampoline.output_params.iter()
                 .filter(|param| param.direction == ParameterDirection::Out && param.name != "error")
-                .map(|param| Chunk::OutParam(param.name.clone())));
+                .map(|param| Chunk::FfiCallOutParameter{ par: param.into() }));
             finish_args.push(Chunk::OutParam("error".to_string()));
             let index_to_ignore = find_index_to_ignore(&trampoline.output_params);
             let result: Vec<_> = trampoline.output_params.iter().enumerate()
                 .filter(|&(index, param)| param.direction == ParameterDirection::Out && param.name != "error" &&
                         Some(index) != index_to_ignore)
-                .map(|(_, param)| (param, conversion_from_glib::Mode {
-                    typ: param.typ,
-                    transfer: param.transfer,
-                }))
-                .map(|(param, mode)|
-                     Chunk::FromGlibConversion {
-                         mode,
-                         array_length_name: self.array_length(param).cloned(),
-                         value: Box::new(Chunk::Name(param.name.clone())),
-                     })
-                .collect();
+                .map(|(_, param)| {
+                    let value = Chunk::Custom(param.name.clone());
+                    let mem_mode = c_type_mem_mode_lib(env, param.typ, param.caller_allocates, param.transfer);
+                    if let OutMemMode::UninitializedNamed(_) = mem_mode {
+                        value
+                    } else {
+                        Chunk::FromGlibConversion {
+                            mode: param.into(),
+                            array_length_name: self.array_length(param).cloned(),
+                            value: Box::new(value),
+                        }
+                    }
+                }).collect();
             let result = Chunk::Tuple(result, TupleMode::Simple);
             let gio_crate_name = crate_name("Gio", env);
             let gobject_crate_name = crate_name("GObject", env);
@@ -544,20 +546,21 @@ impl Builder {
     }
 }
 
-fn c_type_mem_mode(env: &Env, parameter: &AnalysisCParameter) -> OutMemMode {
+fn c_type_mem_mode_lib(env: &Env, typ: library::TypeId, caller_allocates: bool,
+                       transfer: library::Transfer) -> OutMemMode {
     use self::OutMemMode::*;
-    match ConversionType::of(env, parameter.typ) {
-        ConversionType::Pointer => if parameter.caller_allocates {
-            UninitializedNamed(rust_type(env, parameter.typ).unwrap())
+    match ConversionType::of(env, typ) {
+        ConversionType::Pointer => if caller_allocates {
+            UninitializedNamed(rust_type(env, typ).unwrap())
         } else {
             use library::Type::*;
-            let type_ = env.library.type_(parameter.typ);
+            let type_ = env.library.type_(typ);
             match *type_ {
                 Fundamental(fund)
                     if fund == library::Fundamental::Utf8
                         || fund == library::Fundamental::Filename =>
                         {
-                            if parameter.transfer == library::Transfer::Full {
+                            if transfer == library::Transfer::Full {
                                 NullMutPtr
                             } else {
                                 NullPtr
@@ -568,6 +571,10 @@ fn c_type_mem_mode(env: &Env, parameter: &AnalysisCParameter) -> OutMemMode {
         },
         _ => Uninitialized,
     }
+}
+
+fn c_type_mem_mode(env: &Env, parameter: &AnalysisCParameter) -> OutMemMode {
+    c_type_mem_mode_lib(env, parameter.typ, parameter.caller_allocates, parameter.transfer)
 }
 
 fn type_mem_mode(env: &Env, parameter: &library::Parameter) -> Chunk {
