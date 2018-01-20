@@ -45,6 +45,10 @@ pub fn module_name(name: &str) -> String {
     mangle_keywords(name.to_snake()).into_owned()
 }
 
+pub fn needs_mangling(name: &str) -> bool {
+    KEYWORDS.contains_key(name)
+}
+
 // If the mangling happened, guaranteed to return Owned.
 pub fn mangle_keywords<'a, S: Into<Cow<'a, str>>>(name: S) -> Cow<'a, str> {
     let name = name.into();

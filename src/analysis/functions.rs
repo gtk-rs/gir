@@ -196,6 +196,11 @@ fn analyze_function(
             let mut output_params = vec![];
             if let Some(function) = find_function(env, &rust_finish_func_name) {
                 output_params.extend(function.parameters.clone());
+                for param in output_params.iter_mut() {
+                    if nameutil::needs_mangling(&param.name) {
+                        param.name = nameutil::mangle_keywords(&*param.name).into_owned();
+                    }
+                }
             }
             trampoline = Some(AsyncTrampoline {
                 is_method: func.kind == FunctionKind::Method,
