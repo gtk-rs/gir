@@ -21,3 +21,15 @@ impl Parameter {
         }
     }
 }
+
+impl<'a> From<&'a library::Parameter> for Parameter {
+    fn from(orig: &'a library::Parameter) -> Parameter{
+        Parameter {
+            name: orig.name.clone(),
+            typ: orig.typ,
+            transfer: orig.transfer,
+            caller_allocates: orig.caller_allocates,
+            is_error: orig.is_error,
+        }
+    }
+}
