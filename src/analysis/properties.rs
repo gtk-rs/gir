@@ -142,15 +142,15 @@ fn analyze_property(
     };
 
     if readable {
-        let (has, version) =
-            Signature::has_by_name_and_in_deps(env, &check_get_func_name, signatures, deps);
+        let (has, version) = Signature::has_for_property(env, &check_get_func_name,
+                                                         true, prop.typ, signatures, deps);
         if has && (env.is_totally_deprecated(version) || version <= prop_version) {
             readable = false;
         }
     }
     if writable {
-        let (has, version) =
-            Signature::has_by_name_and_in_deps(env, &check_set_func_name, signatures, deps);
+        let (has, version) = Signature::has_for_property(env, &check_set_func_name,
+                                                         false, prop.typ, signatures, deps);
         if has && (env.is_totally_deprecated(version) || version <= prop_version) {
             writable = false;
         }
