@@ -87,6 +87,7 @@ impl ToCode for Chunk {
             NullMutPtr => vec!["ptr::null_mut()".into()],
             Custom(ref string) => vec![string.clone()],
             Tuple(ref chs, mode) => {
+                #[allow(deprecated)]
                 let with_bracket = match mode {
                     TupleMode::Auto => chs.len() > 1,
                     TupleMode::WithUnit => chs.len() != 1,
