@@ -590,24 +590,10 @@ fn generate_records(w: &mut Write, env: &Env, records: &[&Record]) -> Result<()>
     Ok(())
 }
 
-// TODO: GLib/GObject special cases unless nightly unions are enabled
-fn is_union_special_case(c_type: &Option<String>) -> bool {
-    if let Some(c_type) = c_type.as_ref() {
-        c_type.as_str() == "GMutex"
-    } else {
-        false
-    }
-}
-
 fn generate_fields(env: &Env, struct_name: &str, fields: &[Field]) -> (Vec<String>, bool) {
     let mut lines = Vec::new();
     let mut commented = false;
     let mut truncated = false;
-
-    //TODO: remove after GObject-2.0.gir fixed
-    // Fix for wrong GValue size on i686-pc-windows-gnu due `c:type="gpointer"` in data field
-    // instead guint64
-    let is_gvalue = env.config.library_name == "GObject" && struct_name == "Value";
 
     // TODO: Workaround for GHookList using bitfields
     let is_ghooklist = env.config.library_name == "GLib" && struct_name == "HookList";
