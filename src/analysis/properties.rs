@@ -126,7 +126,8 @@ fn analyze_property(
         .iter()
         .filter_map(|f| f.version)
         .min()
-        .or(prop.version);
+        .or(prop.version)
+        .or(Some(env.config.min_cfg_version));
     let name_for_func = nameutil::signal_to_snake(&name);
     let var_name = nameutil::mangle_keywords(&*name_for_func).into_owned();
     let get_func_name = format!("get_property_{}", name_for_func);
