@@ -484,7 +484,7 @@ fn generate_classes_structs(w: &mut Write, env: &Env, classes: &[&Class]) -> Res
             let can_generate_fields_debug = can_generate_fields_debug(&klass.fields);
             try!(writeln!(
                 w,
-                "{comment}#[repr(C)]\n{debug}{comment}pub struct {name} {{",
+                "{comment}#[repr(C)]\n{comment}{debug}{comment}pub struct {name} {{",
                 comment = comment,
                 debug = if can_generate_fields_debug { "#[derive(Copy,Clone,Debug)]\n" }
                         else { "#[derive(Copy,Clone)]\n" },
@@ -567,11 +567,11 @@ fn generate_records(w: &mut Write, env: &Env, records: &[&Record]) -> Result<()>
             }
             try!(writeln!(
                 w,
-                "{}#[repr(C)]\n{}{0}pub struct {} {{",
-                comment,
-                if can_generate_fields_debug(&record.fields) { "#[derive(Copy,Clone,Debug)]\n" }
-                else { "#[derive(Copy,Clone)]\n" },
-                record.c_type
+                "{comment}#[repr(C)]\n{comment}{derive}\n{comment}pub struct {name} {{",
+                comment = comment,
+                derive = if can_generate_fields_debug(&record.fields) { "#[derive(Copy,Clone,Debug)]" }
+                         else { "#[derive(Copy,Clone)]" },
+                name = record.c_type
             ));
             for line in &lines {
                 try!(writeln!(w, "{}{}", comment, line));
