@@ -747,18 +747,6 @@ fn generate_fields(env: &Env, struct_name: &str, fields: &[Field]) -> (Vec<Strin
                     sig
                 ));
                 commented |= com;
-            } else if let Some(c_type) = env.library.type_(field.typ).get_glib_name() {
-                warn!(
-                    "Field `{}::{}` missing c:type assumed `{}`",
-                    struct_name,
-                    field.name,
-                    c_type
-                );
-                let c_type = ffi_type(env, field.typ, c_type);
-                if c_type.is_err() {
-                    commented = true;
-                }
-                lines.push(format!("\tpub {}: {},", name, c_type.into_string()));
             } else {
                 lines.push(format!(
                     "\tpub {}: [{:?} {}],",
