@@ -159,7 +159,7 @@ impl Builder {
                     }
                 }
             }).collect();
-        let result = Chunk::Tuple(result, TupleMode::Simple);
+        let result = Chunk::Tuple(result, TupleMode::WithUnit);
         let gio_crate_name = crate_name("Gio", env);
         let gobject_crate_name = crate_name("GObject", env);
         let glib_crate_name = crate_name("GLib", env);

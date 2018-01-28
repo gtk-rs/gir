@@ -86,5 +86,7 @@ pub fn chunks(ch: Chunk) -> Vec<Chunk> {
 pub enum TupleMode {
     Auto, // "", "1", "(1,2)"
     WithUnit, // "()", "1", "(1,2)"
+    #[deprecated]
+    #[allow(dead_code)]
     Simple,    // "()", "(1)", "(1,2)"
 }
