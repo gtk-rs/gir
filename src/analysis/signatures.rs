@@ -13,6 +13,14 @@ impl Signature {
         Signature(params, func.ret.typ, func.version)
     }
 
+    fn from_property(is_get: bool, typ: library::TypeId) -> Signature {
+        if is_get {
+            Signature(vec![Default::default()], typ, None)
+        } else {
+            Signature(vec![Default::default(), typ], Default::default(), None)
+        }
+    }
+
     pub fn has_in_deps(
         &self,
         env: &Env,
@@ -22,9 +30,9 @@ impl Signature {
         for tid in deps {
             let full_name = tid.full_name(&env.library);
             if let Some(info) = env.analysis.objects.get(&full_name) {
-                if let Some(params) = info.signatures.get(name) {
-                    if params.1 == self.1 && params.0[1..] == self.0[1..] {
-                        return (true, params.2);
+                if let Some(signature) = info.signatures.get(name) {
+                    if self.eq(signature) {
+                        return (true, signature.2);
                     }
                 }
             }
@@ -32,24 +40,44 @@ impl Signature {
         (false, None)
     }
 
-    pub fn has_by_name_and_in_deps(
+    pub fn has_for_property(
         env: &Env,
         name: &str,
+        is_get: bool,
+        typ: library::TypeId,
         signatures: &Signatures,
         deps: &[library::TypeId],
     ) -> (bool, Option<Version>) {
         if let Some(params) = signatures.get(name) {
             return (true, params.2);
         }
+        let this = Signature::from_property(is_get, typ);
         for tid in deps {
             let full_name = tid.full_name(&env.library);
             if let Some(info) = env.analysis.objects.get(&full_name) {
-                if let Some(params) = info.signatures.get(name) {
-                    return (true, params.2);
+                if let Some(signature) = info.signatures.get(name) {
+                    if this.property_eq(signature, is_get) {
+                        return (true, signature.2);
+                    }
                 }
             }
         }
         (false, None)
+    }
+
+    pub fn eq(&self, other: &Signature) -> bool {
+        other.1 == self.1 && other.0[1..] == self.0[1..]
+    }
+
+    pub fn property_eq(&self, other: &Signature, is_get: bool) -> bool {
+        if self.eq(other) {
+            true
+        } else if is_get && other.0.len() == 2 && other.0[1] == self.1 {
+            //For getters for types like GdkRGBA
+            true
+        } else {
+            false
+        }
     }
 }
 
