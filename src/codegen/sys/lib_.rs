@@ -660,12 +660,11 @@ fn generate_fields(env: &Env, struct_name: &str, fields: &[Field]) -> (Vec<Strin
                             || union_field.name.contains("padding")
                         {
                             if let Some(ref c_type) = union_field.c_type {
-                                let name = mangle_keywords(&*union_field.name);
                                 let c_type = ffi_type(env, union_field.typ, c_type);
                                 if c_type.is_err() {
                                     commented = true;
                                 }
-                                lines.push(format!("\tpub {}: {},", name, c_type.into_string()));
+                                lines.push(format!("\tpub {}: {},", &union_field.name, c_type.into_string()));
                                 continue 'fields;
                             }
                         }
@@ -728,7 +727,6 @@ fn generate_fields(env: &Env, struct_name: &str, fields: &[Field]) -> (Vec<Strin
             // union containing a single pointer
             lines.push("\tpub priv_: gpointer,".to_owned());
         } else if let Some(ref c_type) = field.c_type {
-            let name = mangle_keywords(&*field.name);
             let mut c_type = ffi_type(env, field.typ, c_type);
             if c_type.is_err() {
                 commented = true;
@@ -736,21 +734,20 @@ fn generate_fields(env: &Env, struct_name: &str, fields: &[Field]) -> (Vec<Strin
             if !cfg!(feature = "use_unions") && is_gvalue && field.name == "data" {
                 c_type = Ok("[u64; 2]".to_owned());
             }
-            lines.push(format!("\tpub {}: {},", name, c_type.into_string()));
+            lines.push(format!("\tpub {}: {},", &field.name, c_type.into_string()));
         } else {
-            let name = mangle_keywords(&*field.name);
             if let Some(func) = env.library.type_(field.typ).maybe_ref_as::<Function>() {
                 let (com, sig) = functions::function_signature(env, func, true);
                 lines.push(format!(
                     "\tpub {}: Option<unsafe extern \"C\" fn{}>,",
-                    name,
+                    &field.name,
                     sig
                 ));
                 commented |= com;
             } else {
                 lines.push(format!(
                     "\tpub {}: [{:?} {}],",
-                    name,
+                    &field.name,
                     field.typ,
                     field.typ.full_name(&env.library)
                 ));
