@@ -364,6 +364,11 @@ impl Library {
                 Type::Class(Class {ref name, ref mut fields, ..}) |
                 Type::Record(Record {ref name, ref mut fields, ..}) |
                 Type::Union(Union {ref name, ref mut fields, ..}) => {
+                    if name == "EventKey" || name == "EventScroll" {
+                        // Make an exception for GdkEventKey and GdkEventScroll
+                        // as we already have manual bindings that use those.
+                        continue;
+                    }
                     info!("Type `{}` is not representable: {}.", name, reason);
                     fields.clear();
                 }

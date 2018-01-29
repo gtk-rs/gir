@@ -570,6 +570,9 @@ fn generate_records(w: &mut Write, env: &Env, records: &[&Record]) -> Result<()>
                 "{comment}#[repr(C)]\n{comment}{derive}\n{comment}pub struct {name} {{",
                 comment = comment,
                 derive = if can_generate_fields_debug(&record.fields) { "#[derive(Copy,Clone,Debug)]" }
+                         // Make an exception for GdkEventKey and GdkEventScroll,
+                         // those have truncated representation that make then non-copyable.
+                         else if record.c_type == "GdkEventKey" || record.c_type == "GdkEventScroll" { "" }
                          else { "#[derive(Copy,Clone)]" },
                 name = record.c_type
             ));
