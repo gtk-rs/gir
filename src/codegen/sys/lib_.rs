@@ -369,7 +369,7 @@ fn generate_unions(w: &mut Write, env: &Env, items: &[&Union]) -> Result<()> {
             if lines.is_empty() {
                 try!(writeln!(
                     w,
-                    "{0}#[repr(C)]\n{0}#[derive(Copy,Clone,Debug)]\n{0}pub union {1}(u8);\n",
+                    "{0}#[repr(C)]\n{0}pub struct {1}(c_void);\n",
                     comment,
                     c_type
                 ));
@@ -549,7 +549,7 @@ fn generate_records(w: &mut Write, env: &Env, records: &[&Record]) -> Result<()>
         if lines.is_empty() {
             try!(writeln!(
                 w,
-                "{0}#[repr(C)]\n{0}#[derive(Copy,Clone)]\n{0}pub struct {1}(u8);\n",
+                "{0}#[repr(C)]\n{0}pub struct {1}(c_void);\n",
                 comment,
                 record.c_type
             ));
@@ -622,7 +622,7 @@ fn generate_fields(env: &Env, struct_name: &str, fields: &[Field]) -> (Vec<Strin
                 struct_name,
                 field.name
             );
-            lines.push("\t_truncated_record_marker: u8,".to_owned());
+            lines.push("\t_truncated_record_marker: c_void,".to_owned());
             truncated = true;
         }
 

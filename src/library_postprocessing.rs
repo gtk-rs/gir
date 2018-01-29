@@ -385,7 +385,8 @@ fn is_representable(lib: &Library, tid: TypeId) -> Result<(), String> {
             is_representable(lib, alias.typ)
         },
         Type::Class(Class {ref fields, ..}) |
-        Type::Record(Record {ref fields, ..}) => {
+        Type::Record(Record {ref fields, ..}) |
+        Type::Union(Union {ref fields, ..}) => {
             if fields.is_empty() {
                 return Err("opaque type".to_owned())
             }
@@ -403,7 +404,6 @@ fn is_representable(lib: &Library, tid: TypeId) -> Result<(), String> {
             }
             Ok(())
         },
-        Type::Union(..) => Err("union".to_owned()),
         Type::Interface(..) => Err("interface".to_owned()),
         Type::FixedArray(inner, ..) => {
             is_representable(lib, inner)
