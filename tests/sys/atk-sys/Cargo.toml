@@ -1,9 +1,8 @@
-
 [build-dependencies]
 pkg-config = "0.3.7"
 
 [dependencies]
-bitflags = "0.8"
+bitflags = "1.0"
 libc = "0.2"
 
 [dependencies.glib-sys]
@@ -13,6 +12,7 @@ path = "../glib-sys"
 path = "../gobject-sys"
 
 [features]
+dox = []
 v2_10 = ["v2_9_4"]
 v2_12 = ["v2_10"]
 v2_14 = ["v2_12"]
