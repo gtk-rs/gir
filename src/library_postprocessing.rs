@@ -1,7 +1,9 @@
 use std::collections::HashMap;
 
 use library::*;
+use nameutil;
 use parser::is_empty_c_type;
+use traits::MaybeRefAs;
 
 impl Namespace {
     fn unresolved(&self) -> Vec<&str> {
@@ -25,6 +27,7 @@ impl Library {
         self.fill_empty_signals_c_types();
         self.resolve_class_structs();
         self.correlate_class_structs();
+        self.fix_fields();
     }
 
     fn fix_gtype(&mut self) {
@@ -265,6 +268,71 @@ impl Library {
                 // else both type_struct and c_class_type are None,
                 // and that's fine because they don't reference each
                 // other.
+            }
+        }
+    }
+
+    fn fix_fields(&mut self) {
+        enum Action {
+            SetCType(String),
+            SetName(String),
+        }
+        let mut actions: Vec<(TypeId, usize, Action)> = Vec::new();
+        for (ns_id, ns) in self.namespaces.iter().enumerate() {
+            for (id, type_) in ns.types.iter().enumerate() {
+                let type_ = type_.as_ref().unwrap(); //Always contains something
+                let tid = TypeId {
+                    ns_id: ns_id as u16,
+                    id: id as u32,
+                };
+                match *type_ {
+                    Type::Class(Class { ref name, ref fields, ..}) |
+                    Type::Record(Record { ref name, ref fields, ..}) |
+                    Type::Union(Union { ref name, ref fields, ..}) => {
+                        for (fid, field) in fields.iter().enumerate() {
+                            if nameutil::needs_mangling(&field.name) {
+                                let new_name = nameutil::mangle_keywords(&*field.name).to_string();
+                                actions.push((tid, fid, Action::SetName(new_name)));
+                            }
+                            if field.c_type.is_some() {
+                                continue;
+                            }
+                            let field_type = self.type_(field.typ);
+                            if let Some(_) = field_type.maybe_ref_as::<Function>() {
+                                // Function pointers generally don't have c_type.
+                                continue;
+                            }
+                            if let Some(c_type) = field_type.get_glib_name() {
+                                actions.push((tid, fid, Action::SetCType(c_type.to_owned())));
+                                continue;
+                            }
+                            if let Type::Fundamental(Fundamental::Pointer) = *field_type {
+                                // For example SoupBuffer is missing c:type for data field.
+                                actions.push((tid, fid, Action::SetCType("void*".to_owned())));
+                                continue;
+                            }
+                            error!("Field `{}::{}` is missing c:type", name, &field.name);
+                        }
+                    },
+                    _ => {},
+                }
+            }
+        }
+        for (tid, fid, action) in actions {
+            match *self.type_mut(tid) {
+                Type::Class(Class { ref name, ref mut fields, ..}) |
+                Type::Record(Record { ref name, ref mut fields, ..}) |
+                Type::Union(Union { ref name, ref mut fields, ..}) => {
+                    match action {
+                        Action::SetCType(c_type) => {
+                            warn!("Field `{}::{}` missing c:type assumed to be `{}`",
+                                  name, &fields[fid].name, c_type);
+                            fields[fid].c_type = Some(c_type);
+                        }
+                        Action::SetName(name) => fields[fid].name = name,
+                    }
+                },
+                _ => unreachable!("Expected class, record or union"),
             }
         }
     }
