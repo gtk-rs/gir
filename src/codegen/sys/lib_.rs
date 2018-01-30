@@ -2,8 +2,6 @@ use std::collections::HashMap;
 use std::fs;
 use std::io::{Result, Write};
 
-use analysis::c_type::rustify_pointers;
-
 use codegen::general::{self, version_condition};
 use config::ExternalLibrary;
 use env::Env;
@@ -11,6 +9,7 @@ use file_saver::*;
 use library::*;
 use nameutil::*;
 use super::ffi_type::ffi_type;
+use super::fields;
 use super::functions;
 use super::statics;
 use traits::*;
@@ -356,39 +355,14 @@ fn generate_enums(w: &mut Write, env: &Env, items: &[&Enumeration]) -> Result<()
     Ok(())
 }
 
-fn generate_unions(w: &mut Write, env: &Env, items: &[&Union]) -> Result<()> {
-    if !items.is_empty() {
+fn generate_unions(w: &mut Write, env: &Env, unions: &[&Union]) -> Result<()> {
+    if !unions.is_empty() {
         try!(writeln!(w, "// Unions"));
     }
-
-    for item in items {
-        if let Some(ref c_type) = item.c_type {
-            let (lines, commented) = generate_fields(env, &item.name, &item.fields);
-
-            let comment = if commented { "//" } else { "" };
-            if lines.is_empty() {
-                try!(writeln!(
-                    w,
-                    "{0}#[repr(C)]\n{0}pub struct {1}(c_void);\n",
-                    comment,
-                    c_type
-                ));
-            } else {
-                try!(writeln!(
-                    w,
-                    "{0}#[repr(C)]\n{0}#[derive(Copy,Clone)]\n{0}pub union {1} {{",
-                    comment,
-                    c_type
-                ));
-
-                for line in &lines {
-                    try!(writeln!(w, "{}{}", comment, line));
-                }
-                try!(writeln!(w, "{}}}\n", comment));
-            }
-            if comment.is_empty() {
-                try!(generate_debug_with_fields(w, c_type, &lines, false));
-            }
+    for union in unions {
+        if union.c_type.is_some() {
+            let fields = fields::from_union(env, union);
+            try!(generate_from_fields(w, &fields));
         }
     }
     Ok(())
@@ -406,102 +380,14 @@ fn generate_debug_impl(w: &mut Write, name: &str, impl_content: &str) -> Result<
         impl_content)
 }
 
-fn generate_debug_with_fields(w: &mut Write, name: &str, lines: &[String], safe: bool) -> Result<()> {
-    let fields =
-        lines.iter()
-             .filter_map(|field| {
-                 if field.contains("//") {
-                    None
-                 } else {
-                    let mut parts = field.split(":");
-                    let field_name = parts.next().unwrap().trim().replace("pub ", "");
-                    let type_ = parts.collect::<Vec<_>>()
-                                     .join(":")
-                                     .trim()
-                                     .replace(",", "");
-                    // This part is just a big hack. Not very reliable but makes the whole work
-                    // for the moment...
-                    Some(if type_.ends_with("c_void") {
-                             // For c_void types.
-                             format!("\t\t .field(\"{name}\", &\"c_void\")\n", name=field_name)
-                         } else if type_.ends_with("]") && type_.contains("[c_void") {
-                             // For [c_void] types.
-                             format!("\t\t .field(\"{name}\",
-                                                  &format!(\"{{:?}}\", &self.{name} as *const _))\n",
-                                     name=field_name)
-                         } else {
-                             format!("\t\t .field(\"{name}\", &self.{name})\n", name=field_name)
-                         })
-                 }
-             })
-             .collect::<String>();
-
-    generate_debug_impl(
-        w,
-        name,
-        &if safe {
-            format!("f.debug_struct(&format!(\"{name} @ {{:?}}\", self as *const _))\n\
-                   {fields}\
-              \t\t .finish()",
-              name=name,
-              fields=fields,
-            )
-        } else {
-            format!("unsafe {{\n\
-              \t\t f.debug_struct(&format!(\"{name} @ {{:?}}\", self as *const _))\n\
-                   {fields}\
-              \t\t .finish()\n\
-              \t\t }}",
-              name=name,
-              fields=fields,
-            )
-        },
-    )
-}
-
 fn generate_classes_structs(w: &mut Write, env: &Env, classes: &[&Class]) -> Result<()> {
     if !classes.is_empty() {
         try!(writeln!(w, "// Classes"));
     }
-    for klass in classes {
-        let (lines, commented) = generate_fields(env, &klass.name, &klass.fields);
-
-        let comment = if commented { "//" } else { "" };
-        if lines.is_empty() {
-            try!(writeln!(
-                w,
-                "{comment}#[repr(C)]\n{comment}pub struct {name}(c_void);\n",
-                comment = comment,
-                name = klass.c_type,
-            ));
-            try!(generate_debug_impl(
-                w,
-                &klass.c_type,
-                &format!("write!(f, \"{name} @ {{:?}}\", self as *const _)",
-                         name=klass.c_type)
-            ));
-        } else {
-            let can_generate_fields_debug = can_generate_fields_debug(&klass.fields);
-            try!(writeln!(
-                w,
-                "{comment}#[repr(C)]\n{comment}{debug}{comment}pub struct {name} {{",
-                comment = comment,
-                debug = if can_generate_fields_debug { "#[derive(Copy,Clone,Debug)]\n" }
-                        else { "#[derive(Copy,Clone)]\n" },
-                name = klass.c_type,
-            ));
-
-            for line in &lines {
-                try!(writeln!(w, "{}{}", comment, line));
-            }
-            try!(writeln!(w, "{}}}\n", comment));
-
-            if !can_generate_fields_debug && comment.is_empty() {
-                try!(generate_debug_with_fields(w, &klass.c_type, &lines, true));
-            }
-        }
+    for class in classes {
+        let fields = fields::from_class(env, class);
+        try!(generate_from_fields(w, &fields));
     }
-
     Ok(())
 }
 
@@ -529,172 +415,56 @@ fn generate_interfaces_structs(w: &mut Write, interfaces: &[&Interface]) -> Resu
     Ok(())
 }
 
-fn can_generate_fields_debug(f: &[Field]) -> bool {
-    !f.iter().any(|f| {
-        match f.c_type {
-            Some(ref s) if s.as_str() == "c_void" => false,
-            _ => true,
-        }
-    })
-}
-
 fn generate_records(w: &mut Write, env: &Env, records: &[&Record]) -> Result<()> {
     if !records.is_empty() {
         try!(writeln!(w, "// Records"));
     }
     for record in records {
-        let (lines, commented) = generate_fields(env, &record.name, &record.fields);
-
-        let comment = if commented { "//" } else { "" };
-        if lines.is_empty() {
-            try!(writeln!(
-                w,
-                "{0}#[repr(C)]\n{0}pub struct {1}(c_void);\n",
-                comment,
-                record.c_type
-            ));
-        } else {
-            if record.name == "Value" {
-                try!(writeln!(
-                    w,
-                    "#[cfg(target_pointer_width = \"128\")]"
-                ));
-                try!(writeln!(
-                    w,
-                    "const ERROR: () = \"Your pointers are too big.\";"
-                ));
-                try!(writeln!(w, ""));
-            }
-            try!(writeln!(
-                w,
-                "{comment}#[repr(C)]\n{comment}{derive}\n{comment}pub struct {name} {{",
-                comment = comment,
-                derive = if can_generate_fields_debug(&record.fields) { "#[derive(Copy,Clone,Debug)]" }
-                         // Make an exception for GdkEventKey and GdkEventScroll,
-                         // those have truncated representation that make then non-copyable.
-                         else if record.c_type == "GdkEventKey" || record.c_type == "GdkEventScroll" { "" }
-                         else { "#[derive(Copy,Clone)]" },
-                name = record.c_type
-            ));
-            for line in &lines {
-                try!(writeln!(w, "{}{}", comment, line));
-            }
-            try!(writeln!(w, "{}}}\n", comment));
-        }
-        if lines.is_empty() || !can_generate_fields_debug(&record.fields) {
-            try!(generate_debug_impl(
-                w,
-                &record.c_type,
-                &format!("write!(f, \"{name} @ {{:?}}\", self as *const _)",
-                         name=record.c_type)
-            ));
-        }
+        let fields = fields::from_record(env, record);
+        try!(generate_from_fields(w, &fields));
     }
     Ok(())
 }
 
-fn generate_fields(env: &Env, struct_name: &str, fields: &[Field]) -> (Vec<String>, bool) {
-    let mut lines = Vec::new();
-    let mut commented = false;
-    let mut truncated = false;
-
-    // TODO: Workaround for GHookList using bitfields
-    let is_ghooklist = env.config.library_name == "GLib" && struct_name == "HookList";
-
-    // TODO: GLib/GObject special cases until we have proper union support in Rust
-    let is_gweakref = env.config.library_name == "GObject" && struct_name == "WeakRef";
-
-    'fields: for field in fields {
-        let is_union = env.library
-            .type_(field.typ)
-            .maybe_ref_as::<Union>()
-            .is_some();
-        let is_bits = field.bits.is_some();
-        let is_ptr = {
-            if let Some(ref c_type) = field.c_type {
-                !rustify_pointers(c_type).0.is_empty()
-            } else {
-                false
-            }
-        };
-
-        if !is_gweakref && !is_ghooklist && !truncated && !is_ptr && is_bits
-        {
-            warn!(
-                "Field `{}::{}` not expressible in Rust, truncated",
-                struct_name,
-                field.name
-            );
-            lines.push("\t_truncated_record_marker: c_void,".to_owned());
-            truncated = true;
-        }
-
-        if truncated {
-            if is_union {
-                lines.push("\t//union,".to_owned());
-            } else {
-                let bits = field
-                    .bits
-                    .map(|n| format!(": {}", n))
-                    .unwrap_or_else(|| "".to_owned());
-                lines.push(format!(
-                    "\t//{}: {}{},",
-                    field.name,
-                    field.c_type.as_ref().map(|s| &s[..]).unwrap_or("fn"),
-                    bits
-                ));
-            };
-            continue 'fields;
-        }
-
-        if is_ghooklist && ["hook_size", "is_setup"].contains(&field.name.as_str()) {
-            // hook_size is 16 bits, is_setup is 1 bit
-            // hook_size is c_ulong aligned, after is_setup is a pointer:
-            // - if sizeof(c_ulong) < sizeof(gpointer) => c_ulong
-            // - if sizeof(c_ulong) == sizeof(gpointer) => gpointer
-            //
-            // sizeof(c_ulong)) == sizeof(gpointer) everywhere except for Windows 64-bit
-            if field.name == "hook_size" {
-                lines.push(
-                    "\t#[cfg(any(not(windows), not(target_pointer_width = \"64\")))]".to_owned(),
-                );
-                lines.push("\tpub hook_size_and_setup: gpointer,".to_owned());
-                lines.push(
-                    "\t#[cfg(all(windows, target_pointer_width = \"64\"))]".to_owned(),
-                );
-                lines.push("\tpub hook_size_and_setup: c_ulong,".to_owned());
-            }
-        // is_setup is ignored
-        } else if is_gweakref {
-            // union containing a single pointer
-            lines.push("\tpub priv_: gpointer,".to_owned());
-        } else if let Some(ref c_type) = field.c_type {
-            let c_type = ffi_type(env, field.typ, c_type);
-            if c_type.is_err() {
-                commented = true;
-            }
-            lines.push(format!("\tpub {}: {},", &field.name, c_type.into_string()));
-        } else {
-            if let Some(func) = env.library.type_(field.typ).maybe_ref_as::<Function>() {
-                let (com, sig) = functions::function_signature(env, func, true);
-                lines.push(format!(
-                    "\tpub {}: Option<unsafe extern \"C\" fn{}>,",
-                    &field.name,
-                    sig
-                ));
-                commented |= com;
-            } else {
-                lines.push(format!(
-                    "\tpub {}: [{:?} {}],",
-                    &field.name,
-                    field.typ,
-                    field.typ.full_name(&env.library)
-                ));
-                commented = true;
-            }
-        }
+fn generate_from_fields(w: &mut Write, fields: &fields::Fields) -> Result<()> {
+    try!(writeln!(w, "#[repr(C)]"));
+    let traits = fields.derived_traits().join(", ");
+    if !traits.is_empty() {
+        try!(writeln!(w, "#[derive({traits})]", traits=traits));
     }
-    (lines, commented)
+    if fields.external {
+        // It would be nice to represent those using extern types 
+        // from RFC 1861, once they are available in stable Rust. 
+        // https://github.com/rust-lang/rust/issues/43467
+        try!(writeln!(w, "pub struct {name}(c_void);", name=&fields.name));
+    } else {
+        try!(writeln!(w, "pub {kind} {name} {{", kind=fields.kind, name=&fields.name));
+        for field in &fields.fields {
+            try!(writeln!(w, "\tpub {field_name}: {field_type},",
+                          field_name=&field.name,
+                          field_type=&field.typ));
+        }
+        if let Some(ref reason) = fields.truncated {
+            try!(writeln!(w, "\t_truncated_record_marker: c_void,"));
+            try!(writeln!(w, "\t// {}", reason));
+        }
+        try!(writeln!(w, "}}"));
+    }
+    try!(writeln!(w, "\n"));
+
+    try!(writeln!(w, "impl ::std::fmt::Debug for {name} {{", name=&fields.name));
+    try!(writeln!(w, "\tfn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {{"));
+    try!(writeln!(w, "\t\tf.debug_struct(&format!(\"{name} @ {{:?}}\", self as *const _))", name=&fields.name));
+    for field in fields.fields.iter().filter(|f| f.debug) {
+        // TODO: We should generate debug for field manually if automatic one is not available.
+        try!(writeln!(w, "\t\t .field(\"{field_name}\", {field_get})", 
+                      field_name=&field.name,
+                      field_get=&field.access_str()));
+    }
+    try!(writeln!(w, "\t\t .finish()"));
+    try!(writeln!(w, "\t}}"));
+    try!(writeln!(w, "}}"));
+    writeln!(w, "\n")
 }
 
 #[cfg(test)]
