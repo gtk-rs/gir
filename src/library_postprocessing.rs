@@ -339,6 +339,14 @@ impl Library {
     }
 
     fn make_unrepresentable_types_opaque(&mut self) {
+        // Unions with non-`Copy` fields are unstable (see issue #32836).
+        // It would seem that this shouldn't be cause for concern as one can
+        // always make all types in the union copyable.
+        //
+        // Unfortunately, this is not that simple, as some types are currently
+        // unrepresentable in Rust, and they do occur inside the unions.
+        // Thus to avoid the problem, we mark all unions with such unrepresentable
+        // types as opaque, and don't generate their definitions.
         let mut unrepresentable: Vec<(TypeId, String)> = Vec::new();
         for (ns_id, ns) in self.namespaces.iter().enumerate() {
             for (id, type_) in ns.types.iter().enumerate() {
@@ -348,8 +356,6 @@ impl Library {
                     id: id as u32,
                 };
                 match *type_ {
-                    Type::Class(Class {ref fields, ..}) |
-                    Type::Record(Record {ref fields, ..}) |
                     Type::Union(Union {ref fields, ..}) if !fields.is_empty() => {
                         if let Err(reason) = is_representable(self, tid) {
                             unrepresentable.push((tid, reason));
@@ -361,18 +367,11 @@ impl Library {
         }
         for (tid, reason) in unrepresentable {
             match *self.type_mut(tid) {
-                Type::Class(Class {ref name, ref mut fields, ..}) |
-                Type::Record(Record {ref name, ref mut fields, ..}) |
                 Type::Union(Union {ref name, ref mut fields, ..}) => {
-                    if name == "EventKey" || name == "EventScroll" {
-                        // Make an exception for GdkEventKey and GdkEventScroll
-                        // as we already have manual bindings that use those.
-                        continue;
-                    }
                     info!("Type `{}` is not representable: {}.", name, reason);
                     fields.clear();
                 }
-                _ => unreachable!("Expected class, record or union"),
+                _ => unreachable!("Expected a union"),
             }
         }
     }
