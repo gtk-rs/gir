@@ -11,15 +11,15 @@ exclude = ["Gir*.toml", "tests/**/*", "*.md"]
 
 [dependencies]
 docopt = "0.8"
-xml-rs = "0.6"
+xml-rs = "0.7"
 toml = "0.4"
 case = "0.1"
-env_logger = "0.4"
+env_logger = "0.5"
 error-chain = { version = "0.11", default-features = false }
 # We can update to newer versions once appveyor has a newer version of libgit
 git2 = { version = "=0.6.6", default-features = false }
-lazy_static = "0.2"
-log = "0.3"
+lazy_static = "1.0"
+log = "0.4"
 regex = "0.2"
 hprof = "0.1"
 rustdoc-stripper = { git = "https://github.com/GuillaumeGomez/rustdoc-stripper" }
