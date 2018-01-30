@@ -64,7 +64,7 @@ fn do_main() -> Result<()> {
     if std::env::var_os("RUST_LOG").is_none() {
         std::env::set_var("RUST_LOG", "gir=warn");
     }
-    try!(env_logger::init());
+    env_logger::init();
 
     let mut cfg = match config::Config::new() {
         Ok(cfg) => cfg,
