@@ -450,7 +450,7 @@ fn generate_from_fields(w: &mut Write, fields: &fields::Fields) -> Result<()> {
         }
         try!(writeln!(w, "}}"));
     }
-    try!(writeln!(w, "\n"));
+    try!(writeln!(w, ""));
 
     try!(writeln!(w, "impl ::std::fmt::Debug for {name} {{", name=&fields.name));
     try!(writeln!(w, "\tfn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {{"));
@@ -464,7 +464,7 @@ fn generate_from_fields(w: &mut Write, fields: &fields::Fields) -> Result<()> {
     try!(writeln!(w, "\t\t .finish()"));
     try!(writeln!(w, "\t}}"));
     try!(writeln!(w, "}}"));
-    writeln!(w, "\n")
+    writeln!(w, "")
 }
 
 #[cfg(test)]

@@ -92,7 +92,7 @@ pub fn from_union(env: &Env, union: &Union) -> Fields {
 
 fn analyze_fields(env: &Env, unsafe_access: bool, fields: &[Field]) -> (Vec<FieldInfo>, Option<String>) {
     let mut truncated = None;
-    let mut infos = Vec::new();
+    let mut infos = Vec::with_capacity(fields.len());
 
     for field in fields {
         let typ = match field_ffi_type(env, field) {

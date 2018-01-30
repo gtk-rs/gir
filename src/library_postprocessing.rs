@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+use analysis::types::IsIncomplete;
 use library::*;
 use nameutil;
 use parser::is_empty_c_type;
@@ -347,7 +348,7 @@ impl Library {
         // unrepresentable in Rust, and they do occur inside the unions.
         // Thus to avoid the problem, we mark all unions with such unrepresentable
         // types as opaque, and don't generate their definitions.
-        let mut unrepresentable: Vec<(TypeId, String)> = Vec::new();
+        let mut unrepresentable: Vec<TypeId> = Vec::new();
         for (ns_id, ns) in self.namespaces.iter().enumerate() {
             for (id, type_) in ns.types.iter().enumerate() {
                 let type_ = type_.as_ref().unwrap();
@@ -356,19 +357,16 @@ impl Library {
                     id: id as u32,
                 };
                 match *type_ {
-                    Type::Union(Union {ref fields, ..}) if !fields.is_empty() => {
-                        if let Err(reason) = is_representable(self, tid) {
-                            unrepresentable.push((tid, reason));
-                        }
-                    },
+                    Type::Union(Union {ref fields, ..}) if fields.as_slice().is_incomplete(self) =>
+                        unrepresentable.push(tid),
                     _ => {},
                 }
             }
         }
-        for (tid, reason) in unrepresentable {
+        for tid in unrepresentable {
             match *self.type_mut(tid) {
                 Type::Union(Union {ref name, ref mut fields, ..}) => {
-                    info!("Type `{}` is not representable: {}.", name, reason);
+                    info!("Type `{}` is not representable.", name);
                     fields.clear();
                 }
                 _ => unreachable!("Expected a union"),
@@ -377,55 +375,3 @@ impl Library {
     }
 }
 
-fn is_representable(lib: &Library, tid: TypeId) -> Result<(), String> {
-    match *lib.type_(tid) {
-        Type::Fundamental(Fundamental::None) => Err("void".to_owned()),
-        Type::Fundamental(Fundamental::Unsupported) => Err("unsupported".to_owned()),
-        Type::Fundamental(_) => Ok(()),
-        Type::Alias(ref alias) => {
-            if is_ptr(lib, &alias.target_c_type) {
-                return Ok(())
-            }
-            is_representable(lib, alias.typ)
-        },
-        Type::Class(Class {ref fields, ..}) |
-        Type::Record(Record {ref fields, ..}) |
-        Type::Union(Union {ref fields, ..}) => {
-            if fields.is_empty() {
-                return Err("opaque type".to_owned())
-            }
-            for field in fields {
-                if field.bits.is_some() {
-                    return Err(format!("{} is bitfield", field.name));
-                }
-                if let Some(ref c_type) = field.c_type {
-                    if !is_ptr(lib, c_type) {
-                        if let Err(reason) = is_representable(lib, field.typ) {
-                            return Err(format!("{}::{}", field.name, reason));
-                        }
-                    }
-                }
-            }
-            Ok(())
-        },
-        Type::Interface(..) => Err("interface".to_owned()),
-        Type::FixedArray(inner, ..) => {
-            is_representable(lib, inner)
-        },
-        Type::Function(..) |
-        Type::Enumeration(..) |
-        Type::Bitfield(..) |
-        Type::Array(..) |
-        Type::CArray(..) |
-        Type::PtrArray(..) |
-        Type::HashTable(..) |
-        Type::List(..) |
-        Type::SList(..) => {
-            Ok(())
-        }
-    }
-}
-
-fn is_ptr(_lib: &Library, c_type: &str) -> bool {
-    c_type.contains("*")
-}
