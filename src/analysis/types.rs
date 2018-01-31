@@ -13,7 +13,7 @@ pub trait IsPtr {
 impl IsPtr for Field {
     fn is_ptr(&self) -> bool {
         if let Some(ref c_type) = self.c_type {
-            return c_type.contains("*")
+            return c_type.contains('*')
         } else {
             // After library post processing phase
             // only types without c:type should be 
@@ -25,7 +25,7 @@ impl IsPtr for Field {
 
 impl IsPtr for Alias {
     fn is_ptr(&self) -> bool {
-        self.target_c_type.contains("*")
+        self.target_c_type.contains('*')
     }
 }
 
@@ -207,4 +207,3 @@ impl ImplementsDebug for Field {
         }
     }
 }
-

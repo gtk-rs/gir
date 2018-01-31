@@ -27,7 +27,7 @@ pub struct FieldInfo {
     pub typ: String,
     /// Does access to this field require unsafe block?
     unsafe_access: bool,
-    /// Does this field implement debug trait?
+    /// Include this field in Debug impl?
     pub debug: bool,
 }
 
@@ -105,7 +105,7 @@ fn analyze_fields(env: &Env, unsafe_access: bool, fields: &[Field]) -> (Vec<Fiel
         infos.push(FieldInfo {
             name: field.name.clone(),
             typ,
-            debug: field.implements_debug(&env.library),
+            debug: !field.private && field.implements_debug(&env.library),
             unsafe_access,
         });
     }

@@ -284,13 +284,9 @@ impl Library {
                         let u_doc = u.doc.clone();
                         let ctype = u.c_type.clone();
 
-                        let type_id = {
-                            Type::union(self, u, ns_id)
-                        };
-
                         fields.push(Field {
                             name: field_name,
-                            typ: type_id,
+                            typ: Type::union(self, u, ns_id),
                             doc: u_doc,
                             c_type: ctype,
                             ..Field::default()
@@ -428,13 +424,9 @@ impl Library {
                             let u_doc = u.doc.clone();
                             let ctype = u.c_type.clone();
 
-                            let type_id = {
-                                Type::union(self, u, ns_id)
-                            };
-
                             fields.push(Field {
                                 name: field_name,
-                                typ: type_id,
+                                typ: Type::union(self, u, ns_id),
                                 doc: u_doc,
                                 c_type: ctype,
                                 ..Field::default()
@@ -583,7 +575,7 @@ impl Library {
                                         s.push('_');
                                         s
                                     })
-                                    .unwrap_or("".into()),
+                                    .unwrap_or_else(String::new),
                                 union_name,
                                 field_name
                             ),
@@ -595,7 +587,7 @@ impl Library {
                                         s.push('_');
                                         s
                                     })
-                                    .unwrap_or("".into()),
+                                    .unwrap_or_else(String::new),
                                 c_type,
                                 field_name
                             ),

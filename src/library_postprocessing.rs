@@ -293,14 +293,14 @@ impl Library {
                     Type::Union(Union { ref name, ref fields, ..}) => {
                         for (fid, field) in fields.iter().enumerate() {
                             if nameutil::needs_mangling(&field.name) {
-                                let new_name = nameutil::mangle_keywords(&*field.name).to_string();
+                                let new_name = nameutil::mangle_keywords(&*field.name).into_owned();
                                 actions.push((tid, fid, Action::SetName(new_name)));
                             }
                             if field.c_type.is_some() {
                                 continue;
                             }
                             let field_type = self.type_(field.typ);
-                            if let Some(_) = field_type.maybe_ref_as::<Function>() {
+                            if field_type.maybe_ref_as::<Function>().is_some() {
                                 // Function pointers generally don't have c_type.
                                 continue;
                             }
@@ -374,4 +374,3 @@ impl Library {
         }
     }
 }
-
