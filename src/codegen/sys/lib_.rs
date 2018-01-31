@@ -420,10 +420,44 @@ fn generate_records(w: &mut Write, env: &Env, records: &[&Record]) -> Result<()>
         try!(writeln!(w, "// Records"));
     }
     for record in records {
-        let fields = fields::from_record(env, record);
-        try!(generate_from_fields(w, &fields));
+        if record.c_type == "GHookList" {
+            // 1. GHookList is useful.
+            // 2. GHookList contains bitfields.
+            // 3. Bitfields are unrepresentable in Rust.
+            // 4. ...
+            // 5. Thus, we use custom generated GHookList.
+            //    Hopefully someone will profit from all this.
+            try!(generate_ghooklist(w));
+        } else {
+            let fields = fields::from_record(env, record);
+            try!(generate_from_fields(w, &fields));
+        }
     }
     Ok(())
+}
+
+fn generate_ghooklist(w: &mut Write) -> Result<()> {
+    w.write_all(br#"#[repr(C)]
+#[derive(Copy, Clone)]
+pub struct GHookList {
+    pub seq_id: c_ulong,
+    #[cfg(any(not(windows), not(target_pointer_width = "64")))]
+    pub hook_size_and_setup: gpointer,
+    #[cfg(all(windows, target_pointer_width = "64"))]
+    pub hook_size_and_setup: c_ulong,
+    pub hooks: *mut GHook,
+    pub dummy3: gpointer,
+    pub finalize_hook: GHookFinalizeFunc,
+    pub dummy: [gpointer; 2],
+}
+
+impl ::std::fmt::Debug for GHookList {
+    fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
+        write!(f, "GHookList @ {:?}", self as *const _)
+    }
+}
+
+"#)
 }
 
 fn generate_from_fields(w: &mut Write, fields: &fields::Fields) -> Result<()> {
