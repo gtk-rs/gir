@@ -29,6 +29,21 @@ impl IsPtr for Alias {
     }
 }
 
+/// Checks if given type has volatile qualifier.
+pub trait IsVolatile {
+    fn is_volatile(&self) -> bool;
+}
+
+impl IsVolatile for Field {
+    fn is_volatile(&self) -> bool {
+        if let Some(ref c_type) = self.c_type {
+            c_type.starts_with("volatile")
+        } else {
+            false
+        }
+    }
+}
+
 /// Checks if given type is incomplete, i.e., its size is unknown.
 pub trait IsIncomplete {
     fn is_incomplete(&self, lib: &Library) -> bool;

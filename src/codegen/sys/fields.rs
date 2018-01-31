@@ -102,10 +102,15 @@ fn analyze_fields(env: &Env, unsafe_access: bool, fields: &[Field]) -> (Vec<Fiel
             }
             Ok(typ) => typ,
         };
+        // Skip private fields from Debug impl. Ignore volatile as well, 
+        // they are usually used as synchronization primites,
+        // so we wouldn't want to introduce additional reads.
+        let debug = !field.private && !field.is_volatile() && field.implements_debug(&env.library);
+
         infos.push(FieldInfo {
             name: field.name.clone(),
             typ,
-            debug: !field.private && field.implements_debug(&env.library),
+            debug,
             unsafe_access,
         });
     }
