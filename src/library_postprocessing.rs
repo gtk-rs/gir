@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+use analysis::types::IsIncomplete;
 use library::*;
 use nameutil;
 use parser::is_empty_c_type;
@@ -28,6 +29,7 @@ impl Library {
         self.resolve_class_structs();
         self.correlate_class_structs();
         self.fix_fields();
+        self.make_unrepresentable_types_opaque();
     }
 
     fn fix_gtype(&mut self) {
@@ -291,14 +293,14 @@ impl Library {
                     Type::Union(Union { ref name, ref fields, ..}) => {
                         for (fid, field) in fields.iter().enumerate() {
                             if nameutil::needs_mangling(&field.name) {
-                                let new_name = nameutil::mangle_keywords(&*field.name).to_string();
+                                let new_name = nameutil::mangle_keywords(&*field.name).into_owned();
                                 actions.push((tid, fid, Action::SetName(new_name)));
                             }
                             if field.c_type.is_some() {
                                 continue;
                             }
                             let field_type = self.type_(field.typ);
-                            if let Some(_) = field_type.maybe_ref_as::<Function>() {
+                            if field_type.maybe_ref_as::<Function>().is_some() {
                                 // Function pointers generally don't have c_type.
                                 continue;
                             }
@@ -333,6 +335,41 @@ impl Library {
                     }
                 },
                 _ => unreachable!("Expected class, record or union"),
+            }
+        }
+    }
+
+    fn make_unrepresentable_types_opaque(&mut self) {
+        // Unions with non-`Copy` fields are unstable (see issue #32836).
+        // It would seem that this shouldn't be cause for concern as one can
+        // always make all types in the union copyable.
+        //
+        // Unfortunately, this is not that simple, as some types are currently
+        // unrepresentable in Rust, and they do occur inside the unions.
+        // Thus to avoid the problem, we mark all unions with such unrepresentable
+        // types as opaque, and don't generate their definitions.
+        let mut unrepresentable: Vec<TypeId> = Vec::new();
+        for (ns_id, ns) in self.namespaces.iter().enumerate() {
+            for (id, type_) in ns.types.iter().enumerate() {
+                let type_ = type_.as_ref().unwrap();
+                let tid = TypeId {
+                    ns_id: ns_id as u16,
+                    id: id as u32,
+                };
+                match *type_ {
+                    Type::Union(Union {ref fields, ..}) if fields.as_slice().is_incomplete(self) =>
+                        unrepresentable.push(tid),
+                    _ => {},
+                }
+            }
+        }
+        for tid in unrepresentable {
+            match *self.type_mut(tid) {
+                Type::Union(Union {ref name, ref mut fields, ..}) => {
+                    info!("Type `{}` is not representable.", name);
+                    fields.clear();
+                }
+                _ => unreachable!("Expected a union"),
             }
         }
     }

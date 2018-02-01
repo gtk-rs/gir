@@ -32,6 +32,7 @@ pub mod supertypes;
 pub mod symbols;
 pub mod trampoline_parameters;
 pub mod trampolines;
+pub mod types;
 
 #[derive(Debug, Default)]
 pub struct Analysis {

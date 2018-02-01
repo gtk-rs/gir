@@ -1,20 +1,22 @@
-
 [build-dependencies]
 pkg-config = "0.3.7"
 
 [dependencies]
-bitflags = "0.8"
+bitflags = "1.0"
 libc = "0.2"
 
 [dependencies.glib-sys]
 path = "../glib-sys"
 
 [features]
+dox = []
 v2_34 = []
 v2_36 = ["v2_34"]
 v2_38 = ["v2_36"]
 v2_42 = ["v2_38"]
 v2_44 = ["v2_42"]
+v2_46 = ["v2_44"]
+v2_54 = ["v2_46"]
 
 [lib]
 name = "gobject_sys"
