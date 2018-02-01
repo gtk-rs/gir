@@ -1241,12 +1241,12 @@ impl Library {
                 .by_name("name")
                 .ok_or_else(|| mk_error!("Missing signal name", parser))
         );
-        let is_action = to_bool(attrs.by_name("action").unwrap_or("none"));
+        let is_action = to_bool(attrs.by_name("action"), false);
         let version = match attrs.by_name("version") {
             Some(v) => Some(try!(v.parse().map_err(|why| mk_error!(why, parser)))),
             None => None,
         };
-        let deprecated = to_bool(attrs.by_name("deprecated").unwrap_or("none"));
+        let deprecated = to_bool(attrs.by_name("deprecated"), false);
         let deprecated_version = if deprecated {
             match attrs.by_name("deprecated-version") {
                 Some(v) => Some(try!(v.parse().map_err(|why| mk_error!(why, parser)))),
@@ -1377,10 +1377,10 @@ impl Library {
             Transfer::from_str(attrs.by_name("transfer-ownership").unwrap_or("none"))
                 .map_err(|why| mk_error!(why, parser))
         );
-        let nullable = to_bool(attrs.by_name("nullable").unwrap_or("none"));
-        let allow_none = to_bool(attrs.by_name("allow-none").unwrap_or("none"));
+        let nullable = to_bool(attrs.by_name("nullable"), false);
+        let allow_none = to_bool(attrs.by_name("allow-none"), false);
         let async = attrs.by_name("scope").unwrap_or("") == "async";
-        let caller_allocates = to_bool(attrs.by_name("caller-allocates").unwrap_or("none"));
+        let caller_allocates = to_bool(attrs.by_name("caller-allocates"), false);
         let direction = try!(if kind_str == "return-value" {
             Ok(ParameterDirection::Return)
         } else {
@@ -1473,10 +1473,10 @@ impl Library {
                 .by_name("name")
                 .ok_or_else(|| mk_error!("Missing property name", parser))
         );
-        let readable = to_bool(attrs.by_name("readable").unwrap_or("1"));
-        let writable = to_bool(attrs.by_name("writable").unwrap_or("none"));
-        let construct = to_bool(attrs.by_name("construct").unwrap_or("none"));
-        let construct_only = to_bool(attrs.by_name("construct-only").unwrap_or("none"));
+        let readable = to_bool(attrs.by_name("readable"), true);
+        let writable = to_bool(attrs.by_name("writable"), false);
+        let construct = to_bool(attrs.by_name("construct"), false);
+        let construct_only = to_bool(attrs.by_name("construct-only"), false);
         let transfer = try!(
             Transfer::from_str(attrs.by_name("transfer-ownership").unwrap_or("none"))
                 .map_err(|why| mk_error!(why, parser))
@@ -1485,7 +1485,7 @@ impl Library {
             Some(v) => Some(try!(v.parse().map_err(|why| mk_error!(why, parser)))),
             None => None,
         };
-        let deprecated = to_bool(attrs.by_name("deprecated").unwrap_or("none"));
+        let deprecated = to_bool(attrs.by_name("deprecated"), false);
         let deprecated_version = if deprecated {
             match attrs.by_name("deprecated-version") {
                 Some(v) => Some(try!(v.parse().map_err(|why| mk_error!(why, parser)))),
@@ -1711,6 +1711,23 @@ fn make_file_name(dir: &Path, name: &str) -> PathBuf {
     path
 }
 
-fn to_bool(s: &str) -> bool {
-    s == "1"
+fn to_bool(value: Option<&str>, default: bool) -> bool {
+    if let Some(v) = value {
+        return v == "1";
+    } else {
+        return default;
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_to_bool() {
+        assert_eq!(to_bool(None, false), false);
+        assert_eq!(to_bool(None, true), true);
+        assert_eq!(to_bool(Some("1"), false), true);
+        assert_eq!(to_bool(Some("0"), true), false);
+    }
 }
