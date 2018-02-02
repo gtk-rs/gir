@@ -5,7 +5,7 @@ use super::super::general::write_vec;
 pub fn begin(w: &mut Write) -> Result<()> {
     let v = vec![
         "",
-        "#![allow(non_camel_case_types, non_upper_case_globals)]",
+        "#![allow(non_camel_case_types, non_upper_case_globals, non_snake_case)]",
         "",
         "extern crate libc;",
         "#[macro_use] extern crate bitflags;",
