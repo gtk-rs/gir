@@ -72,11 +72,9 @@ impl Signature {
     pub fn property_eq(&self, other: &Signature, is_get: bool) -> bool {
         if self.eq(other) {
             true
-        } else if is_get && other.0.len() == 2 && other.0[1] == self.1 {
-            //For getters for types like GdkRGBA
-            true
         } else {
-            false
+            //For getters for types like GdkRGBA
+            is_get && other.0.len() == 2 && other.0[1] == self.1
         }
     }
 }

@@ -119,9 +119,9 @@ impl Bounds {
                 if async && par.name == "callback" {
                     let finish_func_name = replace_async_by_finish(&func.name);
                     if let Some(function) = find_function(env, &finish_func_name) {
-                        let out_parameters = find_out_parameters(env, &function);
+                        let out_parameters = find_out_parameters(env, function);
                         let parameters = format_out_parameters(&out_parameters);
-                        let error_type = find_error_type(env, &function);
+                        let error_type = find_error_type(env, function);
                         type_string = format!("FnOnce(Result<{}, {}>) + Send + 'static", parameters, error_type);
                         let bounds_name = *self.unused.front().unwrap();
                         trampoline_info = Some((type_string.clone(), bounds_name));
@@ -172,20 +172,18 @@ impl Bounds {
         }
     }
     pub fn add_parameter(&mut self, name: &str, type_str: &str, mut bound_type: BoundType, async: bool) -> bool {
-        if async {
-            if name == "callback" {
-                if let Some(alias) = self.unused.pop_front() {
-                    self.used.push(Bound {
-                        bound_type: BoundType::NoWrapper,
-                        parameter_name: name.to_owned(),
-                        alias,
-                        type_str: type_str.to_string(),
-                        info_for_next_type: false,
-                    });
-                    return true;
-                }
-                return false;
+        if async && name == "callback" {
+            if let Some(alias) = self.unused.pop_front() {
+                self.used.push(Bound {
+                    bound_type: BoundType::NoWrapper,
+                    parameter_name: name.to_owned(),
+                    alias,
+                    type_str: type_str.to_string(),
+                    info_for_next_type: false,
+                });
+                return true;
             }
+            return false;
         }
         if self.used.iter().any(|n| n.parameter_name == name) {
             return false;

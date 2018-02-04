@@ -9,7 +9,7 @@ use std::collections::HashMap;
 use std::vec::Vec;
 
 use analysis::bounds::Bounds;
-use analysis::function_parameters::{self, Parameters, TransformationType};
+use analysis::function_parameters::{self, Parameters, Transformation, TransformationType};
 use analysis::imports::Imports;
 use analysis::out_parameters;
 use analysis::ref_mode::RefMode;
@@ -191,12 +191,12 @@ fn analyze_function(
         }
         if let Some((callback_type, bound_name)) = type_string {
             let func_name = func.c_identifier.as_ref().unwrap();
-            let finish_func_name = replace_async_by_finish(&func_name);
+            let finish_func_name = replace_async_by_finish(func_name);
             let rust_finish_func_name = replace_async_by_finish(&func.name);
             let mut output_params = vec![];
             if let Some(function) = find_function(env, &rust_finish_func_name) {
                 output_params.extend(function.parameters.clone());
-                for param in output_params.iter_mut() {
+                for param in &mut output_params {
                     if nameutil::needs_mangling(&param.name) {
                         param.name = nameutil::mangle_keywords(&*param.name).into_owned();
                     }
@@ -222,18 +222,18 @@ fn analyze_function(
 
     for par in &parameters.rust_parameters {
         // Disallow fundamental arrays without length
+        let is_len_for_par = |t: &&Transformation| {
+            if let TransformationType::Length { ref array_name, .. } = t.transformation_type {
+                array_name == &par.name
+            } else {
+                false
+            }
+        };
         if is_carray_with_direct_elements(env, par.typ)
             && parameters
                 .transformations
                 .iter()
-                .find(|t| {
-                    if let TransformationType::Length { ref array_name, .. } = t.transformation_type
-                    {
-                        array_name == &par.name
-                    } else {
-                        false
-                    }
-                })
+                .find(is_len_for_par)
                 .is_none()
         {
             commented = true;
@@ -251,10 +251,8 @@ fn analyze_function(
         out_parameters::analyze_imports(env, func, imports);
     }
 
-    if async && !commented {
-        if env.config.library_name != "Gio" {
-            imports.add("gio_ffi", version);
-        }
+    if async && !commented && env.config.library_name != "Gio" {
+        imports.add("gio_ffi", version);
     }
 
     if !commented {

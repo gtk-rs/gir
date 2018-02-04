@@ -1,4 +1,4 @@
-pub const TAB: &'static str = "    ";
+pub const TAB: &str = "    ";
 pub const TAB_SIZE: usize = 4;
 pub const MAX_TEXT_WIDTH: usize = 100;
 
