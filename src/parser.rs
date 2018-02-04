@@ -1,19 +1,10 @@
-use std::io::BufReader;
-use std::fs::File;
 use std::path::{Path, PathBuf};
 use std::str::FromStr;
-use xml::attribute::OwnedAttribute;
-use xml::common::Position;
-use xml::name::OwnedName;
-use xml::reader::EventReader;
-use xml::reader::XmlEvent::{Characters, EndDocument, EndElement, StartElement};
 
 use config::error::*;
 use library::*;
 use version::Version;
-
-type Reader = EventReader<BufReader<File>>;
-type Attributes = [OwnedAttribute];
+use xmlparser::{Element, XmlParser};
 
 const EMPTY_CTYPE: &'static str = "/*EMPTY*/";
 
@@ -21,213 +12,101 @@ pub fn is_empty_c_type(c_type: &str) -> bool {
     c_type == EMPTY_CTYPE
 }
 
-macro_rules! mk_error {
-    ($msg:expr, $obj:expr) => (
-        ErrorKind::GirXml(format!("{} {}:{} {}", $obj.position(), file!(), line!(), $msg))
-    )
-}
-
-macro_rules! xml_next {
-    ($event:expr, $pos:expr) => (
-        if let EndDocument = $event {
-            bail!(mk_error!("Unexpected end of document", $pos))
-        }
-    )
-}
-
 impl Library {
     pub fn read_file(&mut self, dir: &Path, lib: &str) -> Result<()> {
         let file_name = make_file_name(dir, lib);
-        let display_name = file_name.display();
-        let file = try!(
-            File::open(&file_name).chain_err(|| { format!("Can't read file {}", display_name) })
-        );
-        let mut parser = EventReader::new(BufReader::new(file));
-        loop {
-            let event = parser.next();
-            try!(
-                match event {
-                    Ok(StartElement {
-                        name:
-                            OwnedName {
-                                ref local_name,
-                                namespace: Some(ref namespace),
-                                ..
-                            },
-                        ..
-                    }) if local_name == "repository"
-                        && namespace == "http://www.gtk.org/introspection/core/1.0" =>
-                    {
-                        match self.read_repository(dir, &mut parser) {
-                            // To prevent repeat message in "caused by:" for each file
-                            e @ Err(Error(ErrorKind::Msg(_), _)) => return e,
-                            Err(e) => Err(e),
-                            Ok(_) => Ok(()),
-                        }
-                    }
-                    Ok(EndDocument) => break,
-                    Err(e) => Err(e.into()),
-                    _ => continue,
-                }.chain_err(|| format!("Error in file {}", display_name))
-            );
-        }
-        Ok(())
+        let mut p = XmlParser::from_path(&file_name)?;
+        p.document(|p, _| {
+            p.element_with_name("repository", |parser, _elem| {
+                self.read_repository(dir, parser)
+            })
+        })
     }
 
-    fn read_repository(&mut self, dir: &Path, parser: &mut Reader) -> Result<()> {
+    fn read_repository(&mut self, dir: &Path, parser: &mut XmlParser) -> Result<()> {
         let mut package = None;
-        loop {
-            let event = try!(parser.next());
-            match event {
-                StartElement {
-                    name, attributes, ..
-                } => {
-                    match name.local_name.as_ref() {
-                        "include" => {
-                            if let (Some(lib), Some(ver)) =
-                                (attributes.by_name("name"), attributes.by_name("version"))
-                            {
-                                if self.find_namespace(lib).is_none() {
-                                    let lib = format!("{}-{}", lib, ver);
-                                    try!(self.read_file(dir, &lib));
-                                }
-                            }
-                            try!(ignore_element(parser));
-                        }
-                        "package" => {
-                            // take the first package element and ignore any other ones
-                            if package.is_none() {
-                                package = attributes.by_name("name").map(|s| s.to_owned());
-                                if package.is_none() {
-                                    bail!(mk_error!("Missing package name", parser));
-                                }
-                            }
-                            try!(ignore_element(parser));
-                        }
-                        "namespace" => {
-                            try!(self.read_namespace(parser, &attributes, package.take()));
-                        }
-                        _ => try!(ignore_element(parser)),
+        parser.elements(|parser, elem| match elem.name() {
+            "include" => {
+                if let (Some(lib), Some(ver)) = (elem.attr("name"), elem.attr("version")) {
+                    if self.find_namespace(lib).is_none() {
+                        let lib = format!("{}-{}", lib, ver);
+                        self.read_file(dir, &lib)?;
                     }
                 }
-                EndElement { .. } => return Ok(()),
-                _ => xml_next!(event, parser),
+                Ok(())
             }
-        }
+            "package" => {
+                // Take the first package element and ignore any other ones.
+                if package.is_none() {
+                    let name = elem.attr_required("name")?;
+                    package = Some(name.to_owned());
+                }
+                Ok(())
+            }
+            "namespace" => self.read_namespace(parser, elem, package.take()),
+            _ => Err(parser.unexpected_element(elem)),
+        })?;
+        Ok(())
     }
 
     fn read_namespace(
         &mut self,
-        parser: &mut Reader,
-        attrs: &Attributes,
+        parser: &mut XmlParser,
+        elem: &Element,
         package: Option<String>,
     ) -> Result<()> {
-        let ns_name = try!(
-            attrs
-                .by_name("name")
-                .ok_or_else(|| mk_error!("Missing namespace name", parser))
-        );
+        let ns_name = elem.attr_required("name")?;
         let ns_id = self.add_namespace(ns_name);
         self.namespace_mut(ns_id).package_name = package;
-        if let Some(s) = attrs.by_name("shared-library") {
+        if let Some(s) = elem.attr("shared-library") {
             self.namespace_mut(ns_id).shared_library = s.split(',').map(String::from).collect();
         }
-        if let Some(s) = attrs.by_name("identifier-prefixes") {
+        if let Some(s) = elem.attr("identifier-prefixes") {
             self.namespace_mut(ns_id).identifier_prefixes =
                 s.split(',').map(String::from).collect();
         }
-        if let Some(s) = attrs.by_name("symbol-prefixes") {
+        if let Some(s) = elem.attr("symbol-prefixes") {
             self.namespace_mut(ns_id).symbol_prefixes = s.split(',').map(String::from).collect();
         }
-        trace!("Reading {}-{}", ns_name, attrs.by_name("version").unwrap());
-        loop {
-            let event = try!(parser.next());
-            match event {
-                StartElement {
-                    name, attributes, ..
-                } => {
-                    trace!(
-                        "<{} name={:?}>",
-                        name.local_name,
-                        attributes.by_name("name")
-                    );
-                    match name.local_name.as_ref() {
-                        "class" => {
-                            trace!("class {}", attributes.by_name("name").unwrap());
-                            try!(self.read_class(parser, ns_id, &attributes));
-                        }
-                        "record" => {
-                            try!(self.read_record_start(parser, ns_id, &attributes));
-                        }
-                        "union" => {
-                            try!(self.read_named_union(parser, ns_id, &attributes));
-                        }
-                        "interface" => {
-                            try!(self.read_interface(parser, ns_id, &attributes));
-                        }
-                        "callback" => {
-                            try!(self.read_named_callback(parser, ns_id, &attributes));
-                        }
-                        "bitfield" => {
-                            try!(self.read_bitfield(parser, ns_id, &attributes));
-                        }
-                        "enumeration" => {
-                            try!(self.read_enumeration(parser, ns_id, &attributes));
-                        }
-                        "function" => {
-                            try!(self.read_global_function(parser, ns_id, &attributes));
-                        }
-                        "constant" => {
-                            try!(self.read_constant(parser, ns_id, &attributes));
-                        }
-                        "alias" => {
-                            try!(self.read_alias(parser, ns_id, &attributes));
-                        }
-                        _ => {
-                            warn!(
-                                "<{} name={:?}>",
-                                name.local_name,
-                                attributes.by_name("name")
-                            );
-                            try!(ignore_element(parser));
-                        }
-                    }
+
+        trace!(
+            "Reading {}-{}",
+            ns_name,
+            elem.attr("version").unwrap_or("?")
+        );
+
+        parser.elements(|parser, elem| {
+            trace!("<{} name={:?}>", elem.name(), elem.attr("name"));
+            match elem.name() {
+                "class" => self.read_class(parser, ns_id, elem),
+                "record" => self.read_record_start(parser, ns_id, elem),
+                "union" => self.read_named_union(parser, ns_id, elem),
+                "interface" => self.read_interface(parser, ns_id, elem),
+                "callback" => self.read_named_callback(parser, ns_id, elem),
+                "bitfield" => self.read_bitfield(parser, ns_id, elem),
+                "enumeration" => self.read_enumeration(parser, ns_id, elem),
+                "function" => self.read_global_function(parser, ns_id, elem),
+                "constant" => self.read_constant(parser, ns_id, elem),
+                "alias" => self.read_alias(parser, ns_id, elem),
+                _ => {
+                    warn!("<{} name={:?}>", elem.name(), elem.attr("name"));
+                    parser.ignore_element()
                 }
-                EndElement { .. } => break,
-                _ => xml_next!(event, parser),
             }
-        }
+        })?;
         Ok(())
     }
 
-    fn read_class(&mut self, parser: &mut Reader, ns_id: u16, attrs: &Attributes) -> Result<()> {
-        let class_name = try!(
-            attrs
-                .by_name("name")
-                .ok_or_else(|| mk_error!("Missing class name", parser))
-        );
-        let c_type = try!(
-            attrs
-                .by_name("type")
-                .or_else(|| attrs.by_name("type-name"))
-                .ok_or_else(|| {
-                    mk_error!("Missing c:type/glib:type-name attributes", parser)
-                })
-        );
-        let type_struct = attrs
-            .by_name("type-struct")
-            .map(|s| s.to_owned());
-        let get_type = try!(
-            attrs
-                .by_name("get-type")
-                .ok_or_else(|| mk_error!("Missing get-type attribute", parser))
-        );
-        let version = try!(self.parse_version(parser, ns_id, attrs.by_name("version")));
-        let deprecated_version = try!(self.parse_version(
-            parser,
-            ns_id,
-            attrs.by_name("deprecated-version"),
-        ));
+    fn read_class(&mut self, parser: &mut XmlParser, ns_id: u16, elem: &Element) -> Result<()> {
+        let class_name = elem.attr_required("name")?;
+        let c_type = elem.attr("type")
+            .or_else(|| elem.attr("type-name"))
+            .ok_or_else(|| parser.fail("Missing c:type/glib:type-name attributes"))?;
+        let type_struct = elem.attr("type-struct").map(|s| s.to_owned());
+        let get_type = elem.attr_required("get-type")?;
+        let version = self.read_version(parser, ns_id, elem)?;
+        let deprecated_version = self.read_deprecated_version(parser, ns_id, elem)?;
+
         let mut fns = Vec::new();
         let mut signals = Vec::new();
         let mut properties = Vec::new();
@@ -235,74 +114,66 @@ impl Library {
         let mut fields = Vec::new();
         let mut doc = None;
         let mut union_count = 1;
-        loop {
-            let event = try!(parser.next());
-            match event {
-                StartElement {
-                    name, attributes, ..
-                } => match name.local_name.as_ref() {
-                    kind @ "constructor" | kind @ "function" | kind @ "method" => try!(
-                        self.read_function_to_vec(parser, ns_id, kind, &attributes, &mut fns,)
-                    ),
-                    "implements" => {
-                        impls.push(try!(self.read_type(parser, ns_id, &name, &attributes)).0)
-                    }
-                    "signal" => try!(self.read_signal_to_vec(
-                        parser,
-                        ns_id,
-                        &attributes,
-                        &mut signals,
-                    )),
-                    "property" => try!(self.read_property_to_vec(
-                        parser,
-                        ns_id,
-                        &attributes,
-                        &mut properties,
-                    )),
-                    "field" => fields.push(try!(self.read_field(parser, ns_id, &attributes))),
-                    "virtual-method" => try!(ignore_element(parser)),
-                    "doc" => doc = try!(read_text(parser)),
-                    "union" => if let Type::Union(mut u) = try!(self.read_union(
-                        parser,
-                        ns_id,
-                        &attributes,
-                        Some(class_name),
-                        Some(c_type)
-                    )) {
-                        let field_name = if let Some(field_name) = attributes.by_name("name") {
-                            field_name.into()
-                        } else {
-                            format!("u{}", union_count)
-                        };
 
-                        u = Union {
-                            name: format!("{}_{}", class_name, field_name),
-                            c_type: Some(format!("{}_{}", c_type, field_name)),
-                            ..u
-                        };
-
-                        let u_doc = u.doc.clone();
-                        let ctype = u.c_type.clone();
-
-                        fields.push(Field {
-                            name: field_name,
-                            typ: Type::union(self, u, ns_id),
-                            doc: u_doc,
-                            c_type: ctype,
-                            ..Field::default()
-                        });
-                        union_count += 1;
-                    },
-                    x => bail!(mk_error!(format!("Unexpected element <{}>", x), parser)),
-                },
-                EndElement { .. } => break,
-                _ => xml_next!(event, parser),
+        parser.elements(|parser, elem| match elem.name() {
+            "constructor" | "function" | "method" => {
+                self.read_function_to_vec(parser, ns_id, elem, &mut fns)
+            },
+            "implements" => {
+                self.read_type(parser, ns_id, elem).map(|r| {
+                    impls.push(r.0);
+                })
             }
-        }
+            "signal" => {
+                self.read_signal(parser, ns_id, elem).map(|s| {
+                    signals.push(s)
+                })
+            }
+            "property" => {
+                self.read_property(parser, ns_id, elem).map(|p| {
+                    if let Some(p) = p {
+                        properties.push(p);
+                    }
+                })
+            }
+            "field" => {
+                self.read_field(parser, ns_id, elem).map(|f| {
+                    fields.push(f);
+                })
+            }
+            "virtual-method" => parser.ignore_element(),
+            "doc" => parser.text().map(|t| doc = Some(t)),
+            "union" => {
+                self.read_union(parser, ns_id, elem, Some(class_name), Some(c_type)).map(|mut u| {
+                    let field_name = if let Some(field_name) = elem.attr("name") {
+                        field_name.into()
+                    } else {
+                        format!("u{}", union_count)
+                    };
 
-        let parent = attrs
-            .by_name("parent")
-            .map(|s| self.find_or_stub_type(ns_id, s));
+                    u = Union {
+                        name: format!("{}_{}", class_name, field_name),
+                        c_type: Some(format!("{}_{}", c_type, field_name)),
+                        ..u
+                    };
+
+                    let u_doc = u.doc.clone();
+                    let ctype = u.c_type.clone();
+
+                    fields.push(Field {
+                        name: field_name,
+                        typ: Type::union(self, u, ns_id),
+                        doc: u_doc,
+                        c_type: ctype,
+                        ..Field::default()
+                    });
+                    union_count += 1;
+                })
+            }
+            _ => Err(parser.unexpected_element(elem)),
+        })?;
+
+        let parent = elem.attr("parent").map(|s| self.find_or_stub_type(ns_id, s));
         let typ = Type::Class(Class {
             name: class_name.into(),
             c_type: c_type.into(),
@@ -325,11 +196,11 @@ impl Library {
 
     fn read_record_start(
         &mut self,
-        parser: &mut Reader,
+        parser: &mut XmlParser,
         ns_id: u16,
-        attrs: &Attributes,
+        elem: &Element,
     ) -> Result<()> {
-        if let Some(typ) = try!(self.read_record(parser, ns_id, attrs, None, None)) {
+        if let Some(typ) = self.read_record(parser, ns_id, elem, None, None)? {
             let name = typ.get_name().clone();
             self.add_type(ns_id, &name, typ);
         }
@@ -338,119 +209,91 @@ impl Library {
 
     fn read_record(
         &mut self,
-        parser: &mut Reader,
+        parser: &mut XmlParser,
         ns_id: u16,
-        attrs: &Attributes,
+        elem: &Element,
         parent_name_prefix: Option<&str>,
         parent_ctype_prefix: Option<&str>,
     ) -> Result<Option<Type>> {
-        let mut record_name = try!(
-            attrs
-                .by_name("name")
-                .ok_or_else(|| mk_error!("Missing record name", parser))
-        );
-        let mut c_type = try!(
-            attrs
-                .by_name("type")
-                .ok_or_else(|| mk_error!("Missing c:type attribute", parser))
-        );
-        let get_type = match attrs.by_name("get-type") {
-            Some(s) => Some(s.to_string()),
-            None => None,
-        };
-        let gtype_struct_for = attrs.by_name("is-gtype-struct-for");
-        let version = try!(self.parse_version(parser, ns_id, attrs.by_name("version")));
-        let deprecated_version = try!(self.parse_version(
-            parser,
-            ns_id,
-            attrs.by_name("deprecated-version"),
-        ));
+        let mut record_name = elem.attr_required("name")?;
+        let mut c_type = elem.attr_required("type")?;
+        let get_type = elem.attr("get-type").map(|s| s.to_owned());
+        let gtype_struct_for = elem.attr("is-gtype-struct-for");
+        let version = self.read_version(parser, ns_id, elem)?;
+        let deprecated_version = self.read_deprecated_version(parser, ns_id, elem)?;
+
         let mut fields = Vec::new();
         let mut fns = Vec::new();
         let mut doc = None;
         let mut doc_deprecated = None;
         let mut union_count = 1;
-        loop {
-            let event = try!(parser.next());
-            match event {
-                StartElement {
-                    name, attributes, ..
-                } => {
-                    match name.local_name.as_ref() {
-                        kind @ "constructor" | kind @ "function" | kind @ "method" => try!(
-                            self.read_function_to_vec(parser, ns_id, kind, &attributes, &mut fns,)
-                        ),
-                        "union" => if let Type::Union(mut u) = try!(self.read_union(
-                            parser,
-                            ns_id,
-                            &attributes,
-                            Some(record_name),
-                            Some(c_type)
-                        )) {
-                            let field_name = if let Some(field_name) = attributes.by_name("name") {
-                                field_name.into()
-                            } else {
-                                format!("u{}", union_count)
-                            };
 
-                            u = Union {
-                                name: format!(
-                                    "{}{}_{}",
-                                    parent_name_prefix
-                                        .map(|s| {
-                                            let mut s = String::from(s);
-                                            s.push('_');
-                                            s
-                                        })
-                                        .unwrap_or_else(String::new),
-                                    record_name,
-                                    field_name
-                                ),
-                                c_type: Some(format!(
-                                    "{}{}_{}",
-                                    parent_ctype_prefix
-                                        .map(|s| {
-                                            let mut s = String::from(s);
-                                            s.push('_');
-                                            s
-                                        })
-                                        .unwrap_or_else(String::new),
-                                    c_type,
-                                    field_name
-                                )),
-                                ..u
-                            };
-
-                            let u_doc = u.doc.clone();
-                            let ctype = u.c_type.clone();
-
-                            fields.push(Field {
-                                name: field_name,
-                                typ: Type::union(self, u, ns_id),
-                                doc: u_doc,
-                                c_type: ctype,
-                                ..Field::default()
-                            });
-                            union_count += 1;
-                        },
-                        "field" => {
-                            if let Ok(mut f) = self.read_field(parser, ns_id, &attributes) {
-                                // Workaround for wrong GValue c:type
-                                if c_type == "GValue" && f.name == "data" {
-                                    f.c_type = Some("GValue_data".into());
-                                }
-                                fields.push(f);
-                            }
-                        }
-                        "doc" => doc = try!(read_text(parser)),
-                        "doc-deprecated" => doc_deprecated = try!(read_text(parser)),
-                        x => bail!(mk_error!(format!("Unexpected element <{}>", x), parser)),
-                    }
-                }
-                EndElement { .. } => break,
-                _ => xml_next!(event, parser),
+        parser.elements(|parser, elem| match elem.name() {
+            "constructor" | "function" | "method" => {
+                self.read_function_to_vec(parser, ns_id, elem, &mut fns)
             }
-        }
+            "union" => {
+                self.read_union(parser, ns_id, elem, Some(record_name), Some(c_type)).map(|mut u| {
+                    let field_name = if let Some(field_name) = elem.attr("name") {
+                        field_name.into()
+                    } else {
+                        format!("u{}", union_count)
+                    };
+
+                    u = Union {
+                        name: format!(
+                                  "{}{}_{}",
+                                  parent_name_prefix
+                                  .map(|s| {
+                                      let mut s = String::from(s);
+                                      s.push('_');
+                                      s
+                                  })
+                                  .unwrap_or_else(String::new),
+                                  record_name,
+                                  field_name
+                                  ),
+                                  c_type: Some(format!(
+                                          "{}{}_{}",
+                                          parent_ctype_prefix
+                                          .map(|s| {
+                                              let mut s = String::from(s);
+                                              s.push('_');
+                                              s
+                                          })
+                                          .unwrap_or_else(String::new),
+                                          c_type,
+                                          field_name
+                                          )),
+                                          ..u
+                    };
+
+                    let u_doc = u.doc.clone();
+                    let ctype = u.c_type.clone();
+
+                    fields.push(Field {
+                        name: field_name,
+                        typ: Type::union(self, u, ns_id),
+                        doc: u_doc,
+                        c_type: ctype,
+                        ..Field::default()
+                    });
+                    union_count += 1;
+                })
+            }
+            "field" => {
+                self.read_field(parser, ns_id, elem).map(|mut f| {
+                    // Workaround for wrong GValue c:type
+                    if c_type == "GValue" && f.name == "data" {
+                        f.c_type = Some("GValue_data".into());
+                    }
+                    fields.push(f);
+                })
+            }
+            "doc" => parser.text().map(|t| doc = Some(t)),
+            "doc-deprecated" => parser.text().map(|t| doc_deprecated = Some(t)),
+            _ => Err(parser.unexpected_element(elem)),
+        })?;
 
         if record_name == "Atom" && self.namespace(ns_id).name == "Gdk" {
             // the gir definitions don't reflect the following correctly
@@ -489,181 +332,157 @@ impl Library {
 
     fn read_named_union(
         &mut self,
-        parser: &mut Reader,
+        parser: &mut XmlParser,
         ns_id: u16,
-        attrs: &Attributes,
+        elem: &Element,
     ) -> Result<()> {
         // Require a name here
-        try!(
-            attrs
-                .by_name("name")
-                .ok_or_else(|| mk_error!("Missing union name", parser))
-        );
-        if let Type::Union(mut u) = try!(self.read_union(parser, ns_id, attrs, None, None)) {
+        elem.attr_required("name")?;
+
+        self.read_union(parser, ns_id, elem, None, None).and_then(|mut u| {
             assert_ne!(u.name, "");
             // Workaround for missing c:type
             if u.name == "_Value__data__union" {
                 u.c_type = Some("GValue_data".into());
             } else if u.c_type.is_none() {
-                return Err(mk_error!("Missing union c:type", parser).into());
+                bail!(parser.fail("Missing union c:type"));
             }
             let union_name = u.name.clone();
             self.add_type(ns_id, &union_name, Type::Union(u));
-        }
-        Ok(())
+            Ok(())
+        })
     }
 
     fn read_union(
         &mut self,
-        parser: &mut Reader,
+        parser: &mut XmlParser,
         ns_id: u16,
-        attrs: &Attributes,
+        elem: &Element,
         parent_name_prefix: Option<&str>,
         parent_ctype_prefix: Option<&str>,
-    ) -> Result<Type> {
-        let union_name = attrs.by_name("name").unwrap_or("");
-        let c_type = attrs.by_name("type").unwrap_or("");
-        let get_type = attrs.by_name("get-type").map(|s| s.into());
+    ) -> Result<Union> {
+        let union_name = elem.attr("name").unwrap_or("");
+        let c_type = elem.attr("type").unwrap_or("");
+        let get_type = elem.attr("get-type").map(|s| s.into());
 
         let mut fields = Vec::new();
         let mut fns = Vec::new();
         let mut doc = None;
         let mut struct_count = 1;
-        loop {
-            let event = try!(parser.next());
-            match event {
-                StartElement {
-                    name, attributes, ..
-                } => match name.local_name.as_ref() {
-                    "field" => {
-                        let f = try!(self.read_field(parser, ns_id, &attributes));
-                        fields.push(f);
-                    }
-                    kind @ "constructor" | kind @ "function" | kind @ "method" => {
-                        try!(self.read_function_to_vec(
-                            parser,
-                            ns_id,
-                            kind,
-                            &attributes,
-                            &mut fns,
-                        ))
-                    }
-                    "record" => {
-                        let mut r = match try!(self.read_record(
-                            parser,
-                            ns_id,
-                            attrs,
-                            parent_name_prefix,
-                            parent_ctype_prefix,
-                        )) {
-                            Some(Type::Record(r)) => r,
-                            _ => continue,
-                        };
 
-                        let field_name = if let Some(field_name) = attributes.by_name("name") {
-                            field_name.into()
-                        } else {
-                            format!("s{}", struct_count)
-                        };
-
-                        r = Record {
-                            name: format!(
-                                "{}{}_{}",
-                                parent_name_prefix
-                                    .map(|s| {
-                                        let mut s = String::from(s);
-                                        s.push('_');
-                                        s
-                                    })
-                                    .unwrap_or_else(String::new),
-                                union_name,
-                                field_name
-                            ),
-                            c_type: format!(
-                                "{}{}_{}",
-                                parent_ctype_prefix
-                                    .map(|s| {
-                                        let mut s = String::from(s);
-                                        s.push('_');
-                                        s
-                                    })
-                                    .unwrap_or_else(String::new),
-                                c_type,
-                                field_name
-                            ),
-                            ..r
-                        };
-
-                        let r_doc = r.doc.clone();
-                        let ctype = r.c_type.clone();
-
-                        fields.push(Field {
-                            name: field_name,
-                            typ: Type::record(self, r, ns_id),
-                            doc: r_doc,
-                            c_type: Some(ctype),
-                            ..Field::default()
-                        });
-
-                        struct_count += 1;
-                    }
-                    "doc" => doc = try!(read_text(parser)),
-                    x => bail!(mk_error!(format!("Unexpected element <{}>", x), parser)),
-                },
-                EndElement { .. } => break,
-                _ => xml_next!(event, parser),
+        parser.elements(|parser, elem| match elem.name() {
+            "field" => {
+                self.read_field(parser, ns_id, elem).map(|f| {
+                    fields.push(f);
+                })
             }
-        }
+            "constructor" | "function" | "method" => {
+                self.read_function_to_vec(parser, ns_id, elem, &mut fns)
+            }
+            "record" => {
+                let mut r = match self.read_record(
+                    parser,
+                    ns_id,
+                    elem,
+                    parent_name_prefix,
+                    parent_ctype_prefix,
+                    )? {
+                    Some(Type::Record(r)) => r,
+                    _ => return Ok(()),
+                };
 
-        let typ = Type::Union(Union {
+                let field_name = if let Some(field_name) = elem.attr("name") {
+                    field_name.into()
+                } else {
+                    format!("s{}", struct_count)
+                };
+
+                r = Record {
+                    name: format!(
+                              "{}{}_{}",
+                              parent_name_prefix
+                              .map(|s| {
+                                  let mut s = String::from(s);
+                                  s.push('_');
+                                  s
+                              })
+                              .unwrap_or_else(String::new),
+                              union_name,
+                              field_name
+                              ),
+                              c_type: format!(
+                                  "{}{}_{}",
+                                  parent_ctype_prefix
+                                  .map(|s| {
+                                      let mut s = String::from(s);
+                                      s.push('_');
+                                      s
+                                  })
+                                  .unwrap_or_else(String::new),
+                                  c_type,
+                                  field_name
+                                  ),
+                                  ..r
+                };
+
+                let r_doc = r.doc.clone();
+                let ctype = r.c_type.clone();
+
+                fields.push(Field {
+                    name: field_name,
+                    typ: Type::record(self, r, ns_id),
+                    doc: r_doc,
+                    c_type: Some(ctype),
+                    ..Field::default()
+                });
+
+                struct_count += 1;
+
+                Ok(())
+            }
+            "doc" => parser.text().map(|t| doc = Some(t)),
+            _ => Err(parser.unexpected_element(elem)),
+        })?;
+
+        Ok(Union {
             name: union_name.into(),
             c_type: Some(c_type.into()),
             glib_get_type: get_type,
             fields: fields,
             functions: fns,
             doc: doc,
-        });
-        Ok(typ)
+        })
     }
 
-    fn read_field(&mut self, parser: &mut Reader, ns_id: u16, attrs: &Attributes) -> Result<Field> {
-        let field_name = try!(
-            attrs
-                .by_name("name")
-                .ok_or_else(|| mk_error!("Missing field name", parser))
-        );
+    fn read_field(&mut self, parser: &mut XmlParser, ns_id: u16, elem: &Element) -> Result<Field> {
+        let field_name = elem.attr_required("name")?;
+        let private = elem.attr_bool("private", false);
+        let bits = elem.attr("bits").and_then(|s| s.parse().ok());
+
         let mut typ = None;
         let mut doc = None;
-        loop {
-            let event = try!(parser.next());
-            match event {
-                StartElement {
-                    name, attributes, ..
-                } => match name.local_name.as_ref() {
-                    "type" | "array" => {
-                        let pos = parser.position();
-                        if typ.is_some() {
-                            bail!(mk_error!("Too many <type> elements", &pos));
-                        }
-                        typ = Some(try!(self.read_type(parser, ns_id, &name, &attributes)));
-                    }
-                    "callback" => {
-                        let pos = parser.position();
-                        if typ.is_some() {
-                            bail!(mk_error!("Too many <type> elements", &pos));
-                        }
-                        let f = try!(self.read_function(parser, ns_id, "callback", &attributes));
-                        typ = Some((Type::function(self, f), None, None));
-                    }
-                    "doc" => doc = try!(read_text(parser)),
-                    x => bail!(mk_error!(format!("Unexpected element <{}>", x), parser)),
-                },
-                EndElement { .. } => break,
-                _ => xml_next!(event, parser),
+
+        parser.elements(|parser, elem| match elem.name() {
+            "type" | "array" => {
+                if typ.is_some() {
+                    bail!(parser.fail("Too many <type> elements"));
+                }
+                self.read_type(parser, ns_id, elem).map(|t| {
+                    typ = Some(t);
+                })
             }
-        }
-        let private = attrs.by_name("private").unwrap_or("") == "1";
-        let bits = attrs.by_name("bits").and_then(|s| s.parse().ok());
+            "callback" => {
+                if typ.is_some() {
+                    bail!(parser.fail("Too many <type> elements"));
+                }
+                self.read_function(parser, ns_id, elem.name(), elem).map(|f| {
+                    typ = Some((Type::function(self, f), None, None));
+                })
+            }
+            "doc" => parser.text().map(|t| doc = Some(t)),
+            _ => Err(parser.unexpected_element(elem)),
+        })?;
+
         if let Some((tid, c_type, array_length)) = typ {
             Ok(Field {
                 name: field_name.into(),
@@ -675,94 +494,66 @@ impl Library {
                 doc: doc,
             })
         } else {
-            bail!(mk_error!("Missing <type> element", parser))
+            Err(parser.fail("Missing <type> element"))
         }
     }
 
     fn read_named_callback(
         &mut self,
-        parser: &mut Reader,
+        parser: &mut XmlParser,
         ns_id: u16,
-        attrs: &Attributes,
+        elem: &Element,
     ) -> Result<()> {
-        try!(self.read_function_if_not_moved(
-            parser,
-            ns_id,
-            "callback",
-            attrs,
-        )).map(|func| {
-            self.add_type(ns_id, &func.name.clone(), Type::Function(func))
-        });
+        self.read_function_if_not_moved(parser, ns_id, elem.name(), elem)?
+            .map(|func| self.add_type(ns_id, &func.name.clone(), Type::Function(func)));
 
         Ok(())
     }
 
     fn read_interface(
         &mut self,
-        parser: &mut Reader,
+        parser: &mut XmlParser,
         ns_id: u16,
-        attrs: &Attributes,
+        elem: &Element,
     ) -> Result<()> {
-        let interface_name = try!(
-            attrs
-                .by_name("name")
-                .ok_or_else(|| mk_error!("Missing interface name", parser))
-        );
-        let c_type = try!(
-            attrs
-                .by_name("type")
-                .ok_or_else(|| mk_error!("Missing c:type attribute", parser))
-        );
-        let type_struct = attrs
-            .by_name("type-struct")
-            .map(|s| s.to_owned());
-        let get_type = try!(
-            attrs
-                .by_name("get-type")
-                .ok_or_else(|| mk_error!("Missing get-type attribute", parser))
-        );
-        let version = try!(self.parse_version(parser, ns_id, attrs.by_name("version")));
-        let deprecated_version = try!(self.parse_version(
-            parser,
-            ns_id,
-            attrs.by_name("deprecated-version"),
-        ));
+        let interface_name = elem.attr_required("name")?;
+        let c_type = elem.attr_required("type")?;
+        let type_struct = elem.attr("type-struct").map(|s| s.to_owned());
+        let get_type = elem.attr_required("get-type")?;
+        let version = self.read_version(parser, ns_id, elem)?;
+        let deprecated_version = self.read_deprecated_version(parser, ns_id, elem)?;
+
         let mut fns = Vec::new();
         let mut signals = Vec::new();
         let mut properties = Vec::new();
         let mut prereqs = Vec::new();
         let mut doc = None;
-        loop {
-            let event = try!(parser.next());
-            match event {
-                StartElement {
-                    name, attributes, ..
-                } => match name.local_name.as_ref() {
-                    kind @ "constructor" | kind @ "function" | kind @ "method" => try!(
-                        self.read_function_to_vec(parser, ns_id, kind, &attributes, &mut fns,)
-                    ),
-                    "prerequisite" => {
-                        prereqs.push(try!(self.read_type(parser, ns_id, &name, &attributes)).0)
-                    }
-                    "signal" => try!(self.read_signal_to_vec(
-                        parser,
-                        ns_id,
-                        &attributes,
-                        &mut signals,
-                    )),
-                    "property" => try!(self.read_property_to_vec(
-                        parser,
-                        ns_id,
-                        &attributes,
-                        &mut properties,
-                    )),
-                    "doc" => doc = try!(read_text(parser)),
-                    _ => try!(ignore_element(parser)),
-                },
-                EndElement { .. } => break,
-                _ => xml_next!(event, parser),
+
+        parser.elements(|parser, elem| match elem.name() {
+            "constructor" | "function" | "method" => {
+                self.read_function_to_vec(parser, ns_id, elem, &mut fns)
             }
-        }
+            "prerequisite" => {
+                self.read_type(parser, ns_id, elem).map(|r| {
+                    prereqs.push(r.0);
+                })
+            }
+            "signal" => {
+                self.read_signal(parser, ns_id, elem).map(|s| {
+                    signals.push(s)
+                })
+            }
+            "property" => {
+                self.read_property(parser, ns_id, elem).map(|p| {
+                    if let Some(p) = p {
+                        properties.push(p);
+                    }
+                })
+            }
+            "doc" => parser.text().map(|t| doc = Some(t)),
+            "virtual-method" => parser.ignore_element(),
+            _ => Err(parser.unexpected_element(elem)),
+        })?;
 
         let typ = Type::Interface(Interface {
             name: interface_name.into(),
@@ -782,48 +573,27 @@ impl Library {
         Ok(())
     }
 
-    fn read_bitfield(&mut self, parser: &mut Reader, ns_id: u16, attrs: &Attributes) -> Result<()> {
-        let bitfield_name = try!(
-            attrs
-                .by_name("name")
-                .ok_or_else(|| mk_error!("Missing bitfield name", parser))
-        );
-        let c_type = try!(
-            attrs
-                .by_name("type")
-                .ok_or_else(|| mk_error!("Missing c:type attribute", parser))
-        );
-        let get_type = attrs.by_name("get-type").map(|s| s.into());
-        let version = try!(self.parse_version(parser, ns_id, attrs.by_name("version")));
-        let deprecated_version = try!(self.parse_version(
-            parser,
-            ns_id,
-            attrs.by_name("deprecated-version"),
-        ));
+    fn read_bitfield(&mut self, parser: &mut XmlParser, ns_id: u16, elem: &Element) -> Result<()> {
+        let bitfield_name = elem.attr_required("name")?;
+        let c_type = elem.attr_required("type")?;
+        let get_type = elem.attr("get-type").map(|s| s.into());
+        let version = self.read_version(parser, ns_id, elem)?;
+        let deprecated_version = self.read_deprecated_version(parser, ns_id, elem)?;
+
         let mut members = Vec::new();
         let mut fns = Vec::new();
         let mut doc = None;
         let mut doc_deprecated = None;
-        loop {
-            let event = try!(parser.next());
-            match event {
-                StartElement {
-                    name, attributes, ..
-                } => match name.local_name.as_ref() {
-                    "member" => {
-                        members.push(try!(self.read_member(parser, &attributes)));
-                    }
-                    kind @ "constructor" | kind @ "function" | kind @ "method" => try!(
-                        self.read_function_to_vec(parser, ns_id, kind, &attributes, &mut fns,)
-                    ),
-                    "doc" => doc = try!(read_text(parser)),
-                    "doc-deprecated" => doc_deprecated = try!(read_text(parser)),
-                    x => bail!(mk_error!(format!("Unexpected element <{}>", x), parser)),
-                },
-                EndElement { .. } => break,
-                _ => xml_next!(event, parser),
+
+        parser.elements(|parser, elem| match elem.name() {
+            "member" => self.read_member(parser, elem).map(|m| members.push(m)),
+            "constructor" | "function" | "method" => {
+                self.read_function_to_vec(parser, ns_id, elem, &mut fns)
             }
-        }
+            "doc" => parser.text().map(|t| doc = Some(t)),
+            "doc-deprecated" => parser.text().map(|t| doc_deprecated = Some(t)),
+            _ => Err(parser.unexpected_element(elem)),
+        })?;
 
         let typ = Type::Bitfield(Bitfield {
             name: bitfield_name.into(),
@@ -842,52 +612,35 @@ impl Library {
 
     fn read_enumeration(
         &mut self,
-        parser: &mut Reader,
+        parser: &mut XmlParser,
         ns_id: u16,
-        attrs: &Attributes,
+        elem: &Element,
     ) -> Result<()> {
-        let enum_name = try!(
-            attrs
-                .by_name("name")
-                .ok_or_else(|| mk_error!("Missing enumeration name", parser))
-        );
-        let c_type = try!(
-            attrs
-                .by_name("type")
-                .ok_or_else(|| mk_error!("Missing c:type attribute", parser))
-        );
-        let get_type = attrs.by_name("get-type").map(|s| s.into());
-        let version = try!(self.parse_version(parser, ns_id, attrs.by_name("version")));
-        let deprecated_version = try!(self.parse_version(
-            parser,
-            ns_id,
-            attrs.by_name("deprecated-version"),
-        ));
-        let error_domain = attrs.by_name("error-domain").map(String::from);
+        let enum_name = elem.attr_required("name")?;
+        let c_type = elem.attr_required("type")?;
+        let get_type = elem.attr("get-type").map(|s| s.into());
+        let version = self.read_version(parser, ns_id, elem)?;
+        let deprecated_version = self.read_deprecated_version(parser, ns_id, elem)?;
+        let error_domain = elem.attr("error-domain").map(String::from);
+
         let mut members = Vec::new();
         let mut fns = Vec::new();
         let mut doc = None;
         let mut doc_deprecated = None;
-        loop {
-            let event = try!(parser.next());
-            match event {
-                StartElement {
-                    name, attributes, ..
-                } => match name.local_name.as_ref() {
-                    "member" => {
-                        members.push(try!(self.read_member(parser, &attributes)));
-                    }
-                    kind @ "constructor" | kind @ "function" | kind @ "method" => try!(
-                        self.read_function_to_vec(parser, ns_id, kind, &attributes, &mut fns,)
-                    ),
-                    "doc" => doc = try!(read_text(parser)),
-                    "doc-deprecated" => doc_deprecated = try!(read_text(parser)),
-                    x => bail!(mk_error!(format!("Unexpected element <{}>", x), parser)),
-                },
-                EndElement { .. } => break,
-                _ => xml_next!(event, parser),
+
+        parser.elements(|parser, elem| match elem.name() {
+            "member" => {
+                self.read_member(parser, elem).map(|m| {
+                    members.push(m)
+                })
             }
-        }
+            "constructor" | "function" | "method" => {
+                self.read_function_to_vec(parser, ns_id, elem, &mut fns)
+            }
+            "doc" => parser.text().map(|t| doc = Some(t)),
+            "doc-deprecated" => parser.text().map(|t| doc_deprecated = Some(t)),
+            _ => Err(parser.unexpected_element(elem)),
+        })?;
 
         let typ = Type::Enumeration(Enumeration {
             name: enum_name.into(),
@@ -907,72 +660,56 @@ impl Library {
 
     fn read_global_function(
         &mut self,
-        parser: &mut Reader,
+        parser: &mut XmlParser,
         ns_id: u16,
-        attrs: &Attributes,
+        elem: &Element,
     ) -> Result<()> {
-        try!(self.read_function_if_not_moved(
+        self.read_function_if_not_moved(
             parser,
             ns_id,
             "global",
-            attrs,
-        )).map(|func| self.add_function(ns_id, func));
-
-        Ok(())
+            elem,
+        ).map(|func| {
+            if let Some(func) = func {
+                self.add_function(ns_id, func);
+            }
+        })
     }
 
-    fn read_constant(&mut self, parser: &mut Reader, ns_id: u16, attrs: &Attributes) -> Result<()> {
-        let const_name = try!(
-            attrs
-                .by_name("name")
-                .ok_or_else(|| mk_error!("Missing constant name", parser))
-        );
-        let c_identifier = try!(
-            attrs
-                .by_name("type")
-                .ok_or_else(|| mk_error!("Missing c:type attribute", parser))
-        );
-        let value = try!(
-            attrs
-                .by_name("value")
-                .ok_or_else(|| mk_error!("Missing constant value", parser))
-        );
-        let version = try!(self.parse_version(parser, ns_id, attrs.by_name("version")));
-        let deprecated_version = try!(self.parse_version(
-            parser,
-            ns_id,
-            attrs.by_name("deprecated-version"),
-        ));
+    fn read_constant(
+        &mut self,
+        parser: &mut XmlParser,
+        ns_id: u16,
+        elem: &Element,
+    ) -> Result<()> {
+        let const_name = elem.attr_required("name")?;
+        let c_identifier = elem.attr_required("type")?;
+        let value = elem.attr_required("value")?;
+        let version = self.read_version(parser, ns_id, elem)?;
+        let deprecated_version = self.read_deprecated_version(parser, ns_id, elem)?;
+
         let mut inner = None;
         let mut doc = None;
         let mut doc_deprecated = None;
-        loop {
-            let event = try!(parser.next());
-            match event {
-                StartElement {
-                    name, attributes, ..
-                } => match name.local_name.as_ref() {
-                    "type" | "array" => {
-                        if inner.is_some() {
-                            bail!(mk_error!("Too many <type> elements", parser));
-                        }
-                        let pos = parser.position();
-                        let (typ, c_type, array_length) =
-                            try!(self.read_type(parser, ns_id, &name, &attributes));
-                        if let Some(c_type) = c_type {
-                            inner = Some((typ, c_type, array_length));
-                        } else {
-                            bail!(mk_error!("Missing constant's c:type", &pos));
-                        }
-                    }
-                    "doc" => doc = try!(read_text(parser)),
-                    "doc-deprecated" => doc_deprecated = try!(read_text(parser)),
-                    x => bail!(mk_error!(format!("Unexpected element <{}>", x), parser)),
-                },
-                EndElement { .. } => break,
-                _ => xml_next!(event, parser),
+
+        parser.elements(|parser, elem| match elem.name() {
+            "type" | "array" => {
+                if inner.is_some() {
+                    bail!(parser.fail("Too many <type> elements"));
+                }
+                let (typ, c_type, array_length) = self.read_type(parser, ns_id, elem)?;
+                if let Some(c_type) = c_type {
+                    inner = Some((typ, c_type, array_length));
+                } else {
+                    bail!(parser.fail_with_position("Missing constant's c:type", elem.position()));
+                }
+                Ok(())
             }
-        }
+            "doc" => parser.text().map(|t| doc = Some(t)),
+            "doc-deprecated" => parser.text().map(|t| doc_deprecated = Some(t)),
+            _ => Err(parser.unexpected_element(elem)),
+        })?;
+
         if let Some((typ, c_type, _array_length)) = inner {
             self.add_constant(
                 ns_id,
@@ -990,49 +727,34 @@ impl Library {
             );
             Ok(())
         } else {
-            bail!(mk_error!("Missing <type> element", parser))
+            Err(parser.fail("Missing <type> element"))
         }
     }
 
-    fn read_alias(&mut self, parser: &mut Reader, ns_id: u16, attrs: &Attributes) -> Result<()> {
-        let alias_name = try!(
-            attrs
-                .by_name("name")
-                .ok_or_else(|| mk_error!("Missing alias name", parser))
-        );
-        let c_identifier = try!(
-            attrs
-                .by_name("type")
-                .ok_or_else(|| mk_error!("Missing c:type attribute", parser))
-        );
+    fn read_alias(&mut self, parser: &mut XmlParser, ns_id: u16, elem: &Element) -> Result<()> {
+        let alias_name = elem.attr_required("name")?;
+        let c_identifier = elem.attr_required("type")?;
+
         let mut inner = None;
         let mut doc = None;
-        loop {
-            let event = try!(parser.next());
-            match event {
-                StartElement {
-                    name, attributes, ..
-                } => match name.local_name.as_ref() {
-                    "type" | "array" => {
-                        if inner.is_some() {
-                            bail!(mk_error!("Too many <type> elements", parser));
-                        }
-                        let pos = parser.position();
-                        let (typ, c_type, array_length) =
-                            try!(self.read_type(parser, ns_id, &name, &attributes));
-                        if let Some(c_type) = c_type {
-                            inner = Some((typ, c_type, array_length));
-                        } else {
-                            bail!(mk_error!("Missing alias target's c:type", &pos));
-                        }
-                    }
-                    "doc" => doc = try!(read_text(parser)),
-                    x => bail!(mk_error!(format!("Unexpected element <{}>", x), parser)),
-                },
-                EndElement { .. } => break,
-                _ => xml_next!(event, parser),
+
+        parser.elements(|parser, elem| match elem.name() {
+            "type" | "array" => {
+                if inner.is_some() {
+                    bail!(parser.fail("Too many <type> elements"));
+                }
+                let (typ, c_type, array_length) = self.read_type(parser, ns_id, elem)?;
+                if let Some(c_type) = c_type {
+                    inner = Some((typ, c_type, array_length));
+                } else {
+                    bail!(parser.fail("Missing alias target's c:type"));
+                }
+                Ok(())
             }
-        }
+            "doc" => parser.text().map(|t| doc = Some(t)),
+            _ => Err(parser.unexpected_element(elem)),
+        })?;
+
         if let Some((typ, c_type, _array_length)) = inner {
             let typ = Type::Alias(Alias {
                 name: alias_name.into(),
@@ -1044,45 +766,22 @@ impl Library {
             self.add_type(ns_id, alias_name, typ);
             Ok(())
         } else {
-            bail!(mk_error!("Missing <type> element", parser))
+            Err(parser.fail("Missing <type> element"))
         }
     }
 
-    fn read_member(&self, parser: &mut Reader, attrs: &Attributes) -> Result<Member> {
-        let member_name = try!(
-            attrs
-                .by_name("name")
-                .ok_or_else(|| mk_error!("Missing member name", parser))
-        );
-        let value = try!(
-            attrs
-                .by_name("value")
-                .ok_or_else(|| mk_error!("Missing member value", parser))
-        );
-        let c_identifier = attrs.by_name("identifier").map(|x| x.into());
+    fn read_member(&self, parser: &mut XmlParser, elem: &Element) -> Result<Member> {
+        let member_name = elem.attr_required("name")?;
+        let value = elem.attr_required("value")?;
+        let c_identifier = elem.attr("identifier").map(|x| x.into());
+
         let mut doc = None;
-        loop {
-            let event = try!(parser.next());
-            match event {
-                StartElement {
-                    name, attributes, ..
-                } => {
-                    match (name.local_name.as_ref(), attributes.by_name("name")) {
-                        /*
-                        ("attribute", Some("c:identifier")) => {
-                            let value = try!(attributes.get("value")
-                                .ok_or_else(|| mk_error!("Missing attribute value", parser)));
-                            c_identifier = Some(value.into());
-                        }
-                        */
-                        ("doc", _) => doc = try!(read_text(parser)),
-                        (x, _) => bail!(mk_error!(format!("Unexpected element <{}>", x), parser)),
-                    }
-                }
-                EndElement { .. } => break,
-                _ => xml_next!(event, parser),
-            }
-        }
+
+        parser.elements(|parser, elem| match elem.name() {
+            "doc" => parser.text().map(|t| doc = Some(t)),
+            _ => Err(parser.unexpected_element(elem)),
+        })?;
+
         Ok(Member {
             name: member_name.into(),
             value: value.into(),
@@ -1093,69 +792,49 @@ impl Library {
 
     fn read_function(
         &mut self,
-        parser: &mut Reader,
+        parser: &mut XmlParser,
         ns_id: u16,
         kind_str: &str,
-        attrs: &Attributes,
+        elem: &Element,
     ) -> Result<Function> {
-        let fn_name = try!(
-            attrs
-                .by_name("name")
-                .ok_or_else(|| mk_error!("Missing function name", parser))
-        );
-        let c_identifier = attrs
-            .by_name("identifier")
-            .or_else(|| attrs.by_name("type"));
-        let kind = try!(FunctionKind::from_str(kind_str).map_err(|why| mk_error!(why, parser)));
+        let fn_name = elem.attr_required("name")?;
+        let c_identifier = elem.attr("identifier").or_else(|| elem.attr("type"));
+        let kind = FunctionKind::from_str(kind_str).or_else(|why| Err(parser.fail(&why)))?;
         let is_method = kind == FunctionKind::Method;
-        let version = try!(self.parse_version(parser, ns_id, attrs.by_name("version")));
-        let deprecated_version = try!(self.parse_version(
-            parser,
-            ns_id,
-            attrs.by_name("deprecated-version"),
-        ));
+        let version = self.read_version(parser, ns_id, elem)?;
+        let deprecated_version = self.read_deprecated_version(parser, ns_id, elem)?;
+
         let mut params = Vec::new();
         let mut ret = None;
         let mut doc = None;
         let mut doc_deprecated = None;
-        loop {
-            let event = try!(parser.next());
-            match event {
-                StartElement {
-                    name, attributes, ..
-                } => {
-                    match name.local_name.as_ref() {
-                        "parameters" => {
-                            //params.append(&mut try!(self.read_parameters(parser, ns_id)));
-                            try!(self.read_parameters(parser, ns_id, false, is_method))
-                                .into_iter()
-                                .map(|p| params.push(p))
-                                .count();
-                        }
-                        "return-value" => {
-                            if ret.is_some() {
-                                bail!(mk_error!("Too many <return-value> elements", parser));
-                            }
-                            ret = Some(try!(self.read_parameter(
-                                parser,
-                                ns_id,
-                                "return-value",
-                                &attributes,
-                                false,
-                                is_method
-                            )));
-                        }
-                        "doc" => doc = try!(read_text(parser)),
-                        "doc-deprecated" => doc_deprecated = try!(read_text(parser)),
-                        "doc-version" => try!(ignore_element(parser)),
-                        x => bail!(mk_error!(format!("Unexpected element <{}>", x), parser)),
-                    }
-                }
-                EndElement { .. } => break,
-                _ => xml_next!(event, parser),
+
+        parser.elements(|parser, elem| match elem.name() {
+            "parameters" => {
+                self.read_parameters(parser, ns_id, false, is_method).map(|mut ps| {
+                    params.append(&mut ps)
+                })
             }
-        }
-        let throws = attrs.by_name("throws").unwrap_or("") == "1";
+            "return-value" => {
+                if ret.is_some() {
+                    bail!(parser.fail("Too many <return-value> elements"));
+                }
+                ret = Some(self.read_parameter(
+                            parser,
+                            ns_id,
+                            elem,
+                            false,
+                            is_method
+                            )?);
+                Ok(())
+            }
+            "doc" => parser.text().map(|t| doc = Some(t)),
+            "doc-deprecated" => parser.text().map(|t| doc_deprecated = Some(t)),
+            "doc-version" => parser.ignore_element(),
+            _ => Err(parser.unexpected_element(elem)),
+        })?;
+
+        let throws = elem.attr_bool("throws", false);
         if throws {
             params.push(Parameter {
                 name: "error".into(),
@@ -1187,118 +866,75 @@ impl Library {
                 doc_deprecated: doc_deprecated,
             })
         } else {
-            bail!(mk_error!("Missing <return-value> element", parser))
+            Err(parser.fail("Missing <return-value> element"))
         }
     }
 
     fn read_function_to_vec(
         &mut self,
-        parser: &mut Reader,
+        parser: &mut XmlParser,
         ns_id: u16,
-        kind_str: &str,
-        attrs: &Attributes,
+        elem: &Element,
         fns: &mut Vec<Function>,
     ) -> Result<()> {
-        try!(self.read_function_if_not_moved(
-            parser,
-            ns_id,
-            kind_str,
-            attrs,
-        )).map(|f| fns.push(f));
-
+        if let Some(f) = self.read_function_if_not_moved(parser, ns_id, elem.name(), elem)? {
+            fns.push(f)
+        }
         Ok(())
     }
 
     fn read_function_if_not_moved(
         &mut self,
-        parser: &mut Reader,
+        parser: &mut XmlParser,
         ns_id: u16,
         kind_str: &str,
-        attrs: &Attributes,
+        elem: &Element,
     ) -> Result<Option<Function>> {
-        let moved_to = attrs.by_name("moved-to").is_some();
-        if moved_to {
-            try!(ignore_element(parser));
-            return Ok(None);
+        if elem.attr("moved-to").is_some() {
+            return parser.ignore_element().map(|_| None)
         }
-        let pos = parser.position();
-        let f = try!(self.read_function(parser, ns_id, kind_str, attrs));
-        if f.c_identifier.is_none() {
-            bail!(mk_error!("Missing c:identifier attribute", &pos));
-        }
-
-        Ok(Some(f))
+        self.read_function(parser, ns_id, kind_str, elem).and_then(|f| {
+            if f.c_identifier.is_none() {
+                bail!(parser.fail_with_position("Missing c:identifier attribute", elem.position()))
+            }
+            Ok(Some(f))
+        })
     }
 
     fn read_signal(
         &mut self,
-        parser: &mut Reader,
+        parser: &mut XmlParser,
         ns_id: u16,
-        attrs: &Attributes,
+        elem: &Element,
     ) -> Result<Signal> {
-        let signal_name = try!(
-            attrs
-                .by_name("name")
-                .ok_or_else(|| mk_error!("Missing signal name", parser))
-        );
-        let is_action = to_bool(attrs.by_name("action"), false);
-        let version = match attrs.by_name("version") {
-            Some(v) => Some(try!(v.parse().map_err(|why| mk_error!(why, parser)))),
-            None => None,
-        };
-        let deprecated = to_bool(attrs.by_name("deprecated"), false);
-        let deprecated_version = if deprecated {
-            match attrs.by_name("deprecated-version") {
-                Some(v) => Some(try!(v.parse().map_err(|why| mk_error!(why, parser)))),
-                None => None,
-            }
-        } else {
-            None
-        };
-        if let Some(v) = version {
-            self.register_version(ns_id, v);
-        }
-        if let Some(v) = deprecated_version {
-            self.register_version(ns_id, v);
-        }
+        let signal_name = elem.attr_required("name")?;
+        let is_action = elem.attr_bool("action", false);
+        let version = self.read_version(parser, ns_id, elem)?;
+        let deprecated_version = self.read_deprecated_version(parser, ns_id, elem)?;
 
         let mut params = Vec::new();
         let mut ret = None;
         let mut doc = None;
         let mut doc_deprecated = None;
-        loop {
-            let event = try!(parser.next());
-            match event {
-                StartElement {
-                    name, attributes, ..
-                } => match name.local_name.as_ref() {
-                    "parameters" => {
-                        try!(self.read_parameters(parser, ns_id, true, false))
-                            .into_iter()
-                            .map(|p| params.push(p))
-                            .count();
-                    }
-                    "return-value" => {
-                        if ret.is_some() {
-                            bail!(mk_error!("Too many <return-value> elements", parser));
-                        }
-                        ret = Some(try!(self.read_parameter(
-                            parser,
-                            ns_id,
-                            "return-value",
-                            &attributes,
-                            true,
-                            false
-                        )));
-                    }
-                    "doc" => doc = try!(read_text(parser)),
-                    "doc-deprecated" => doc_deprecated = try!(read_text(parser)),
-                    x => bail!(mk_error!(format!("Unexpected element <{}>", x), parser)),
-                },
-                EndElement { .. } => break,
-                _ => xml_next!(event, parser),
+
+        parser.elements(|parser, elem| match elem.name() {
+            "parameters" => {
+                self.read_parameters(parser, ns_id, true, false).map(|mut ps| {
+                    params.append(&mut ps)
+                })
             }
-        }
+            "return-value" => {
+                if ret.is_some() {
+                    bail!(parser.fail("Too many <return-value> elements"));
+                }
+                self.read_parameter(parser, ns_id, elem, true, false).map(|p| {
+                    ret = Some(p)
+                })
+            }
+            "doc" => parser.text().map(|t| doc = Some(t)),
+            "doc-deprecated" => parser.text().map(|t| doc_deprecated = Some(t)),
+            _ => Err(parser.unexpected_element(elem)),
+        })?;
         if let Some(ret) = ret {
             Ok(Signal {
                 name: signal_name.into(),
@@ -1311,117 +947,81 @@ impl Library {
                 doc_deprecated: doc_deprecated,
             })
         } else {
-            bail!(mk_error!("Missing <return-value> element", parser))
+            Err(parser.fail("Missing <return-value> element"))
         }
-    }
-
-    fn read_signal_to_vec(
-        &mut self,
-        parser: &mut Reader,
-        ns_id: u16,
-        attrs: &Attributes,
-        signals: &mut Vec<Signal>,
-    ) -> Result<()> {
-        let s = try!(self.read_signal(parser, ns_id, attrs));
-        signals.push(s);
-
-        Ok(())
     }
 
     fn read_parameters(
         &mut self,
-        parser: &mut Reader,
+        parser: &mut XmlParser,
         ns_id: u16,
         allow_no_ctype: bool,
         for_method: bool,
     ) -> Result<Vec<Parameter>> {
-        let mut params = Vec::new();
-        loop {
-            let event = try!(parser.next());
-            match event {
-                StartElement {
-                    name, attributes, ..
-                } => match name.local_name.as_ref() {
-                    kind @ "parameter" | kind @ "instance-parameter" => {
-                        let param = try!(self.read_parameter(
-                            parser,
-                            ns_id,
-                            kind,
-                            &attributes,
-                            allow_no_ctype,
-                            for_method
-                        ));
-                        params.push(param);
-                    }
-                    x => bail!(mk_error!(format!("Unexpected element <{}>", x), parser)),
-                },
-                EndElement { .. } => break,
-                _ => xml_next!(event, parser),
+        parser.elements(|parser, elem| match elem.name() {
+            "parameter" | "instance-parameter" => {
+                self.read_parameter(
+                    parser,
+                    ns_id,
+                    elem,
+                    allow_no_ctype,
+                    for_method)
             }
-        }
-        Ok(params)
+            _ => Err(parser.unexpected_element(elem)),
+        })
     }
 
     fn read_parameter(
         &mut self,
-        parser: &mut Reader,
+        parser: &mut XmlParser,
         ns_id: u16,
-        kind_str: &str,
-        attrs: &Attributes,
+        elem: &Element,
         allow_no_ctype: bool,
         for_method: bool,
     ) -> Result<Parameter> {
-        let param_name = attrs.by_name("name").unwrap_or("");
-        let instance_parameter = kind_str == "instance-parameter";
-        let transfer = try!(
-            Transfer::from_str(attrs.by_name("transfer-ownership").unwrap_or("none"))
-                .map_err(|why| mk_error!(why, parser))
-        );
-        let nullable = to_bool(attrs.by_name("nullable"), false);
-        let allow_none = to_bool(attrs.by_name("allow-none"), false);
-        let async = attrs.by_name("scope").unwrap_or("") == "async";
-        let caller_allocates = to_bool(attrs.by_name("caller-allocates"), false);
-        let direction = try!(if kind_str == "return-value" {
+        let param_name = elem.attr("name").unwrap_or("");
+        let instance_parameter = elem.name() == "instance-parameter";
+        let transfer =
+            Transfer::from_str(elem.attr("transfer-ownership").unwrap_or("none"))
+                .or_else(|why| Err(parser.fail(&why)))?;
+        let nullable = elem.attr_bool("nullable", false);
+        let allow_none = elem.attr_bool("allow-none", false);
+        let async = elem.attr("scope").unwrap_or("") == "async";
+        let caller_allocates = elem.attr_bool("caller-allocates", false);
+        let direction = if elem.name() == "return-value" {
             Ok(ParameterDirection::Return)
         } else {
-            ParameterDirection::from_str(attrs.by_name("direction").unwrap_or("in"))
-                .map_err(|why| mk_error!(why, parser))
-        });
+            ParameterDirection::from_str(elem.attr("direction").unwrap_or("in"))
+                .or_else(|why| Err(parser.fail(&why)))
+        }?;
 
         let mut typ = None;
         let mut varargs = false;
         let mut doc = None;
-        loop {
-            let event = try!(parser.next());
-            match event {
-                StartElement {
-                    name, attributes, ..
-                } => match name.local_name.as_ref() {
-                    "type" | "array" => {
-                        let pos = parser.position();
-                        if typ.is_some() {
-                            bail!(mk_error!("Too many <type> elements", &pos));
-                        }
-                        typ = Some(try!(self.read_type(parser, ns_id, &name, &attributes)));
-                        if let Some((tid, None, _)) = typ {
-                            if allow_no_ctype {
-                                typ = Some((tid, Some(EMPTY_CTYPE.to_owned()), None));
-                            } else {
-                                bail!(mk_error!("Missing c:type attribute", &pos));
-                            }
-                        }
+
+        parser.elements(|parser, elem| match elem.name() {
+            "type" | "array" => {
+                if typ.is_some() {
+                    bail!(parser.fail_with_position("Too many <type> elements", elem.position()));
+                }
+                typ = Some(self.read_type(parser, ns_id, elem)?);
+                if let Some((tid, None, _)) = typ {
+                    if allow_no_ctype {
+                        typ = Some((tid, Some(EMPTY_CTYPE.to_owned()), None));
+                    } else {
+                        bail!(parser.fail_with_position("Missing c:type attribute", elem.position()));
                     }
-                    "varargs" => {
-                        varargs = true;
-                        try!(ignore_element(parser));
-                    }
-                    "doc" => doc = try!(read_text(parser)),
-                    x => bail!(mk_error!(format!("Unexpected element <{}>", x), parser)),
-                },
-                EndElement { .. } => break,
-                _ => xml_next!(event, parser),
+                }
+                Ok(())
             }
-        }
+            "varargs" => {
+                varargs = true;
+                parser.ignore_element()
+            }
+            "doc" => parser.text().map(|t| doc = Some(t)),
+            _ => Err(parser.unexpected_element(elem)),
+        })?;
+
         if let Some((tid, c_type, mut array_length)) = typ {
             if for_method {
                 array_length = array_length.map(|l| l + 1);
@@ -1458,84 +1058,52 @@ impl Library {
                 async,
             })
         } else {
-            bail!(mk_error!("Missing <type> element", parser))
+            Err(parser.fail("Missing <type> element"))
         }
     }
 
     fn read_property(
         &mut self,
-        parser: &mut Reader,
+        parser: &mut XmlParser,
         ns_id: u16,
-        attrs: &Attributes,
+        elem: &Element,
     ) -> Result<Option<Property>> {
-        let prop_name = try!(
-            attrs
-                .by_name("name")
-                .ok_or_else(|| mk_error!("Missing property name", parser))
-        );
-        let readable = to_bool(attrs.by_name("readable"), true);
-        let writable = to_bool(attrs.by_name("writable"), false);
-        let construct = to_bool(attrs.by_name("construct"), false);
-        let construct_only = to_bool(attrs.by_name("construct-only"), false);
-        let transfer = try!(
-            Transfer::from_str(attrs.by_name("transfer-ownership").unwrap_or("none"))
-                .map_err(|why| mk_error!(why, parser))
-        );
-        let version = match attrs.by_name("version") {
-            Some(v) => Some(try!(v.parse().map_err(|why| mk_error!(why, parser)))),
-            None => None,
-        };
-        let deprecated = to_bool(attrs.by_name("deprecated"), false);
-        let deprecated_version = if deprecated {
-            match attrs.by_name("deprecated-version") {
-                Some(v) => Some(try!(v.parse().map_err(|why| mk_error!(why, parser)))),
-                None => None,
-            }
-        } else {
-            None
-        };
-        if let Some(v) = version {
-            self.register_version(ns_id, v);
-        }
-        if let Some(v) = deprecated_version {
-            self.register_version(ns_id, v);
-        }
+        let prop_name = elem.attr_required("name")?;
+        let readable = elem.attr_bool("readable", true);
+        let writable = elem.attr_bool("writable", false);
+        let construct = elem.attr_bool("construct", false);
+        let construct_only = elem.attr_bool("construct-only", false);
+        let transfer = Transfer::from_str(elem.attr("transfer-ownership").unwrap_or("none"))
+                .or_else(|why| Err(parser.fail(&why)))?;
+
+        let version = self.read_version(parser, ns_id, elem)?;
+        let deprecated_version = self.read_deprecated_version(parser, ns_id, elem)?;
         let mut has_empty_type_tag = false;
         let mut typ = None;
         let mut doc = None;
         let mut doc_deprecated = None;
-        loop {
-            let event = try!(parser.next());
-            match event {
-                StartElement {
-                    name, attributes, ..
-                } => {
-                    match name.local_name.as_ref() {
-                        "type" | "array" => {
-                            let pos = parser.position();
-                            if typ.is_some() {
-                                bail!(mk_error!("Too many <type> elements", &pos));
-                            }
-                            //defend from <type/>
-                            if attributes.is_empty() && name.local_name == "type" {
-                                try!(ignore_element(parser));
-                                has_empty_type_tag = true;
-                                continue;
-                            }
-                            typ = Some(try!(self.read_type(parser, ns_id, &name, &attributes)));
-                            if let Some((tid, None, _)) = typ {
-                                typ = Some((tid, Some(EMPTY_CTYPE.to_owned()), None));
-                            }
-                        }
-                        "doc" => doc = try!(read_text(parser)),
-                        "doc-deprecated" => doc_deprecated = try!(read_text(parser)),
-                        x => bail!(mk_error!(format!("Unexpected element <{}>", x), parser)),
-                    }
+
+        parser.elements(|parser, elem| match elem.name() {
+            "type" | "array" => {
+                if typ.is_some() {
+                    bail!(parser.fail_with_position("Too many <type> elements", elem.position()));
                 }
-                EndElement { .. } => break,
-                _ => xml_next!(event, parser),
+                if !elem.has_attrs() && elem.name() == "type" {
+                    // defend from <type/>
+                    has_empty_type_tag = true;
+                    return parser.ignore_element();
+                }
+                typ = Some(self.read_type(parser, ns_id, elem)?);
+                if let Some((tid, None, _)) = typ {
+                    typ = Some((tid, Some(EMPTY_CTYPE.to_owned()), None));
+                }
+                Ok(())
             }
-        }
+            "doc" => parser.text().map(|t| doc = Some(t)),
+            "doc-deprecated" => parser.text().map(|t| doc_deprecated = Some(t)),
+            _ => Err(parser.unexpected_element(elem)),
+        })?;
+
         if has_empty_type_tag {
             return Ok(None);
         }
@@ -1556,64 +1124,35 @@ impl Library {
                 doc_deprecated: doc_deprecated,
             }))
         } else {
-            bail!(mk_error!("Missing <type> element", parser))
+            Err(parser.fail("Missing <type> element"))
         }
-    }
-
-    fn read_property_to_vec(
-        &mut self,
-        parser: &mut Reader,
-        ns_id: u16,
-        attrs: &Attributes,
-        properties: &mut Vec<Property>,
-    ) -> Result<()> {
-        let s = try!(self.read_property(parser, ns_id, attrs));
-        if let Some(s) = s {
-            properties.push(s);
-        }
-
-        Ok(())
     }
 
     fn read_type(
         &mut self,
-        parser: &mut Reader,
+        parser: &mut XmlParser,
         ns_id: u16,
-        name: &OwnedName,
-        attrs: &Attributes,
+        elem: &Element,
     ) -> Result<(TypeId, Option<String>, Option<u32>)> {
-        let start_pos = parser.position();
-        let type_name = try!(
-            attrs
-                .by_name("name")
-                .or_else(|| if name.local_name == "array" {
+        let type_name = 
+            elem.attr("name")
+                .or_else(|| if elem.name() == "array" {
                     Some("array")
                 } else {
                     None
                 })
-                .ok_or_else(|| mk_error!("Missing type name", &start_pos))
-        );
-        let c_type = attrs.by_name("type").map(|s| s.into());
-        let array_length = attrs.by_name("length").and_then(|s| s.parse().ok());
-        let mut inner = Vec::new();
-        loop {
-            let event = try!(parser.next());
-            match event {
-                StartElement {
-                    name, attributes, ..
-                } => match name.local_name.as_ref() {
-                    "type" | "array" => {
-                        inner.push(try!(self.read_type(parser, ns_id, &name, &attributes)).0);
-                    }
-                    x => bail!(mk_error!(format!("Unexpected element <{}>", x), parser)),
-                },
-                EndElement { .. } => break,
-                _ => xml_next!(event, parser),
-            }
-        }
+                .ok_or_else(|| parser.fail_with_position("Missing type name", elem.position()))?;
+        let c_type = elem.attr("type").map(|s| s.into());
+        let array_length = elem.attr("length").and_then(|s| s.parse().ok());
+
+        let inner = parser.elements(|parser, elem| match elem.name() {
+            "type" | "array" => self.read_type(parser, ns_id, elem).map(|r| r.0),
+            _ => Err(parser.unexpected_element(elem)),
+        })?;
+
         if inner.is_empty() || type_name == "GLib.ByteArray" {
             if type_name == "array" {
-                bail!(mk_error!("Missing element type", &start_pos))
+                bail!(parser.fail_with_position("Missing element type", elem.position()))
             } else {
                 Ok((
                     self.find_or_stub_type(ns_id, type_name),
@@ -1626,80 +1165,35 @@ impl Library {
                 Type::c_array(
                     self,
                     inner[0],
-                    attrs.by_name("fixed-size").and_then(|n| n.parse().ok()),
+                    elem.attr("fixed-size").and_then(|n| n.parse().ok()),
                 )
             } else {
-                try!(
-                    Type::container(self, type_name, inner)
-                        .ok_or_else(|| mk_error!("Unknown container type", &start_pos))
-                )
+                Type::container(self, type_name, inner)
+                    .ok_or_else(|| parser.fail_with_position("Unknown container type", elem.position()))?
             };
             Ok((tid, c_type, array_length))
         }
     }
 
-    fn parse_version(
-        &mut self,
-        parser: &mut Reader,
-        ns_id: u16,
-        attr: Option<&str>,
-    ) -> Result<Option<Version>> {
-        let ret = match attr {
-            Some(v) => Ok(Some(try!(v.parse().map_err(|why| mk_error!(why, parser))))),
-            None => Ok(None),
-        };
-        if let Ok(Some(version)) = ret {
-            self.register_version(ns_id, version);
-        }
-        ret
+    fn read_version(&mut self, parser: &XmlParser, ns_id: u16, elem: &Element) -> Result<Option<Version>> {
+        self.read_version_attribute(parser, ns_id, elem, "version")
     }
-}
 
-trait ByName {
-    fn by_name<'a>(&'a self, name: &str) -> Option<&'a str>;
-}
-
-impl ByName for Attributes {
-    fn by_name<'a>(&'a self, name: &str) -> Option<&'a str> {
-        for attr in self {
-            if attr.name.local_name == name {
-                return Some(&attr.value);
-            }
-        }
-        None
+    fn read_deprecated_version(&mut self, parser: &XmlParser, ns_id: u16, elem: &Element) -> Result<Option<Version>> {
+        self.read_version_attribute(parser, ns_id, elem, "deprecated-version")
     }
-}
 
-fn read_text(parser: &mut Reader) -> Result<Option<String>> {
-    let mut ret_text = None;
-
-    loop {
-        let event = try!(parser.next());
-        match event {
-            Characters(text) => {
-                ret_text = match ret_text {
-                    Some(t) => Some(format!("{}{}", t, text)),
-                    None => Some(text),
+    fn read_version_attribute(&mut self, parser: &XmlParser, ns_id: u16, elem: &Element, attr: &str) -> Result<Option<Version>> {
+        if let Some(v) = elem.attr(attr) {
+            match v.parse() {
+                Ok(v) => { 
+                    self.register_version(ns_id, v);
+                    Ok(Some(v))
                 }
+                Err(e) => Err(parser.fail(&format!("Invalid `{}` attribute: {}", attr, e))),
             }
-            EndElement { .. } => break,
-            StartElement { name, .. } => bail!(mk_error!(
-                &format!("Unexpected element: {}", name.local_name),
-                parser
-            )),
-            _ => xml_next!(event, parser),
-        }
-    }
-    Ok(ret_text)
-}
-
-fn ignore_element(parser: &mut Reader) -> Result<()> {
-    loop {
-        let event = try!(parser.next());
-        match event {
-            StartElement { .. } => try!(ignore_element(parser)),
-            EndElement { .. } => return Ok(()),
-            _ => xml_next!(event, parser),
+        } else {
+            Ok(None)
         }
     }
 }
@@ -1709,25 +1203,4 @@ fn make_file_name(dir: &Path, name: &str) -> PathBuf {
     let name = format!("{}.gir", name);
     path.push(name);
     path
-}
-
-fn to_bool(value: Option<&str>, default: bool) -> bool {
-    if let Some(v) = value {
-        return v == "1";
-    } else {
-        return default;
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_to_bool() {
-        assert_eq!(to_bool(None, false), false);
-        assert_eq!(to_bool(None, true), true);
-        assert_eq!(to_bool(Some("1"), false), true);
-        assert_eq!(to_bool(Some("0"), true), false);
-    }
 }

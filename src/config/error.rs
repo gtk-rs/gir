@@ -1,6 +1,5 @@
 use std::path::PathBuf;
 use toml;
-use xml;
 
 // Create the Error, ErrorKind, ResultExt, and Result types
 error_chain! {
@@ -9,7 +8,6 @@ error_chain! {
         Io(::std::io::Error);
         Log(::log::SetLoggerError);
         Toml(toml::de::Error);
-        Xml(xml::reader::Error);
     }
 
     errors {

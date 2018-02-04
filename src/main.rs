@@ -44,6 +44,7 @@ mod traits;
 mod update_version;
 mod version;
 mod writer;
+mod xmlparser;
 
 use self::config::error::*;
 
