@@ -161,7 +161,7 @@ pub enum Fundamental {
     Unsupported,
 }
 
-const FUNDAMENTAL: &'static [(&'static str, Fundamental)] = &[
+const FUNDAMENTAL: &[(&str, Fundamental)] = &[
     ("none", Fundamental::None),
     ("gboolean", Fundamental::Boolean),
     ("gint8", Fundamental::Int8),
@@ -207,7 +207,7 @@ impl TypeId {
     pub fn full_name(&self, library: &Library) -> String {
         let ns_name = &library.namespace(self.ns_id).name;
         let type_ = &library.type_(*self);
-        format!("{}.{}", ns_name, &type_.get_name()).into()
+        format!("{}.{}", ns_name, &type_.get_name())
     }
 
     pub fn tid_none() -> TypeId {
@@ -466,7 +466,7 @@ impl Type {
     pub fn get_name(&self) -> String {
         use self::Type::*;
         match *self {
-            Fundamental(fund) => format!("{:?}", fund).into(),
+            Fundamental(fund) => format!("{:?}", fund),
             Alias(ref alias) => alias.name.clone(),
             Enumeration(ref enum_) => enum_.name.clone(),
             Bitfield(ref bit_field) => bit_field.name.clone(),
@@ -716,7 +716,7 @@ impl Namespace {
     }
 }
 
-pub const INTERNAL_NAMESPACE_NAME: &'static str = "*";
+pub const INTERNAL_NAMESPACE_NAME: &str = "*";
 pub const INTERNAL_NAMESPACE: u16 = 0;
 pub const MAIN_NAMESPACE: u16 = 1;
 
@@ -747,7 +747,7 @@ impl Library {
         let not_allowed_ending = ["Class", "Private", "Func", "Callback", "Accessible", "Iface",
                                   "Type"];
         let namespace_name = self.namespaces[MAIN_NAMESPACE as usize].name.clone();
-        for x in self.namespace(MAIN_NAMESPACE).types.iter() {
+        for x in &self.namespace(MAIN_NAMESPACE).types {
             if let Some(ref x) = *x {
                 let name = x.get_name();
                 if !not_allowed_ending.iter().any(|s| name.ends_with(s)) {

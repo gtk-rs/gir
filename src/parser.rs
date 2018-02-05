@@ -6,7 +6,7 @@ use library::*;
 use version::Version;
 use xmlparser::{Element, XmlParser};
 
-const EMPTY_CTYPE: &'static str = "/*EMPTY*/";
+const EMPTY_CTYPE: &str = "/*EMPTY*/";
 
 pub fn is_empty_c_type(c_type: &str) -> bool {
     c_type == EMPTY_CTYPE
@@ -317,7 +317,7 @@ impl Library {
         let typ = Type::Record(Record {
             name: record_name.into(),
             c_type: c_type.into(),
-            glib_get_type: get_type.map(|s| s.into()),
+            glib_get_type: get_type,
             gtype_struct_for: gtype_struct_for.map(|s| s.into()),
             fields: fields,
             functions: fns,
@@ -717,7 +717,7 @@ impl Library {
                     name: const_name.into(),
                     c_identifier: c_identifier.into(),
                     typ: typ,
-                    c_type: c_type.into(),
+                    c_type: c_type,
                     value: value.into(),
                     version: version,
                     deprecated_version: deprecated_version,
@@ -760,7 +760,7 @@ impl Library {
                 name: alias_name.into(),
                 c_identifier: c_identifier.into(),
                 typ: typ,
-                target_c_type: c_type.into(),
+                target_c_type: c_type,
                 doc: doc,
             });
             self.add_type(ns_id, alias_name, typ);

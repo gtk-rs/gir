@@ -11,6 +11,7 @@ use super::trampoline::func_string;
 use writer::primitives::tabs;
 use writer::ToCode;
 
+#[cfg_attr(feature = "cargo-clippy", allow(ptr_arg))]
 pub fn generate(
     w: &mut Write,
     env: &Env,
@@ -155,6 +156,7 @@ pub fn generate(
     Ok(())
 }
 
+#[cfg_attr(feature = "cargo-clippy", allow(ptr_arg))]
 fn function_type_string(
     env: &Env,
     analysis: &analysis::signals::Info,

@@ -27,7 +27,7 @@ pub fn ffi_type(env: &Env, tid: TypeId, c_type: &str) -> Result {
                 .is_some()
             {
                 match *env.library.type_(tid) {
-                    Type::FixedArray(_, size) => ffi_inner(env, c_tid, c_type.into())
+                    Type::FixedArray(_, size) => ffi_inner(env, c_tid, c_type)
                         .map_any(|s| format!("[{}; {}]", s, size)),
                     Type::Class(Class {
                         c_type: ref expected,
@@ -41,7 +41,7 @@ pub fn ffi_type(env: &Env, tid: TypeId, c_type: &str) -> Result {
                         info!("[c:type `gpointer` instead of `*mut {}`, fixing]", expected);
                         ffi_inner(env, tid, expected).map_any(|s| format!("*mut {}", s))
                     }
-                    _ => ffi_inner(env, c_tid, c_type.into()),
+                    _ => ffi_inner(env, c_tid, c_type),
                 }
             } else {
                 // c_type isn't fundamental

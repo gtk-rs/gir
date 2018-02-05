@@ -11,7 +11,7 @@ fn main() {
 
     File::create("src/gir_version.rs")
         .and_then(|mut f| {
-            writeln!(f, "pub const VERSION: &'static str = \"{}\";", ver)
+            writeln!(f, "pub const VERSION: &str = \"{}\";", ver)
         })
         .unwrap();
 }

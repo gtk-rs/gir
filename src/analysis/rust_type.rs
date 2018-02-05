@@ -253,13 +253,11 @@ pub fn parameter_rust_type(
     let rust_type = rust_type_full(env, type_id, nullable, ref_mode);
     match *type_ {
         Fundamental(fund) => {
-            if fund == library::Fundamental::Utf8 || fund == library::Fundamental::Filename {
-                if direction == library::ParameterDirection::InOut
+            if (fund == library::Fundamental::Utf8 || fund == library::Fundamental::Filename)
+                && (direction == library::ParameterDirection::InOut
                     || (direction == library::ParameterDirection::Out
-                        && ref_mode == RefMode::ByRefMut)
-                {
-                    return Err(TypeError::Unimplemented(into_inner(rust_type)));
-                }
+                        && ref_mode == RefMode::ByRefMut)) {
+                return Err(TypeError::Unimplemented(into_inner(rust_type)));
             }
             rust_type.map_any(|s| format_parameter(s, direction))
         }

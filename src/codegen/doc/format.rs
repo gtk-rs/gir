@@ -1,10 +1,10 @@
 use analysis::symbols;
 use regex::{Captures, Regex};
 
-const LANGUAGE_SEP_BEGIN: &'static str = "<!-- language=\"";
-const LANGUAGE_SEP_END: &'static str = "\" -->";
-const LANGUAGE_BLOCK_BEGIN: &'static str = "|[";
-const LANGUAGE_BLOCK_END: &'static str = "\n]|";
+const LANGUAGE_SEP_BEGIN: &str = "<!-- language=\"";
+const LANGUAGE_SEP_END: &str = "\" -->";
+const LANGUAGE_BLOCK_BEGIN: &str = "|[";
+const LANGUAGE_BLOCK_END: &str = "\n]|";
 
 pub fn reformat_doc(input: &str, symbols: &symbols::Info) -> String {
     code_blocks_transformation(input, symbols)

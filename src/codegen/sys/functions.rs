@@ -10,7 +10,7 @@ use traits::*;
 use regex::Regex;
 
 //used as glib:get-type in GLib-2.0.gir
-const INTERN: &'static str = "intern";
+const INTERN: &str = "intern";
 
 lazy_static! {
     static ref DEFAULT_OBJ: GObject = Default::default();

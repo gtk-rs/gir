@@ -64,7 +64,7 @@ pub fn define_object_type(
         .collect();
 
     let (separator, class_name) = {
-        if let &Some(s) = glib_class_name {
+        if let Some(s) = *glib_class_name {
             (", ".to_string(), format!("ffi::{}", s))
         } else {
             ("".to_string(), "".to_string())

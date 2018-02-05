@@ -63,13 +63,13 @@ impl Config {
         let toml =
             try!(read_toml(&config_file).chain_err(|| ErrorKind::ReadConfig(config_file.clone())));
 
-        Config::process_options(args, toml, &config_dir)
+        Config::process_options(&args, &toml, &config_dir)
             .chain_err(|| ErrorKind::Options(config_file))
     }
 
     fn process_options(
-        args: docopt::ArgvMap,
-        toml: toml::Value,
+        args: &docopt::ArgvMap,
+        toml: &toml::Value,
         config_dir: &Path,
     ) -> Result<Config> {
         let work_mode_str = match args.get_str("-m") {
@@ -118,9 +118,9 @@ impl Config {
         let mut objects = toml.lookup("object")
             .map(|t| gobjects::parse_toml(t, concurrency))
             .unwrap_or_default();
-        gobjects::parse_status_shorthands(&mut objects, &toml, concurrency);
+        gobjects::parse_status_shorthands(&mut objects, toml, concurrency);
 
-        let external_libraries = try!(read_external_libraries(&toml));
+        let external_libraries = try!(read_external_libraries(toml));
 
         let min_cfg_version = match toml.lookup("options.min_cfg_version") {
             Some(v) => try!(try!(v.as_result_str("options.min_cfg_version")).parse()),

@@ -105,7 +105,7 @@ pub fn analyze_imports(env: &Env, func: &Function, imports: &mut Imports) {
                 {
                     imports.add("std::mem", func.version)
                 }
-                _ if !par.caller_allocates => imports.add("std::ptr".into(), func.version),
+                _ if !par.caller_allocates => imports.add("std::ptr", func.version),
                 _ => (),
             }
         }
