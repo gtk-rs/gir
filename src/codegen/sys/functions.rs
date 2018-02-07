@@ -7,7 +7,6 @@ use library;
 use nameutil;
 use super::ffi_type::*;
 use traits::*;
-use regex::Regex;
 
 //used as glib:get-type in GLib-2.0.gir
 const INTERN: &str = "intern";
@@ -23,22 +22,17 @@ pub fn generate_records_funcs(
 ) -> Result<()> {
     let intern_str = INTERN.to_string();
     for record in records {
-        // Nested structs tend to generate a duplicate function name,
-        // this catches the nested struct and ignores function gen
-        let s_regex = Regex::new(r"^\w+_s\d+$").unwrap();
-        if !s_regex.is_match(&record.name) {
-            let name = format!("{}.{}", env.config.library_name, record.name);
-            let obj = env.config.objects.get(&name).unwrap_or(&DEFAULT_OBJ);
-            let glib_get_type = record.glib_get_type.as_ref().unwrap_or(&intern_str);
-            try!(generate_object_funcs(
-                w,
-                env,
-                obj,
-                &record.c_type,
-                glib_get_type,
-                &record.functions,
-            ));
-        }
+        let name = format!("{}.{}", env.config.library_name, record.name);
+        let obj = env.config.objects.get(&name).unwrap_or(&DEFAULT_OBJ);
+        let glib_get_type = record.glib_get_type.as_ref().unwrap_or(&intern_str);
+        try!(generate_object_funcs(
+            w,
+            env,
+            obj,
+            &record.c_type,
+            glib_get_type,
+            &record.functions,
+        ));
     }
 
     Ok(())

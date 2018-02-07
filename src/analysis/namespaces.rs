@@ -1,4 +1,3 @@
-//use std::collections::HashMap;
 use std::ops::Index;
 
 use library;
@@ -23,17 +22,10 @@ pub struct Namespace {
 #[derive(Debug)]
 pub struct Info {
     namespaces: Vec<Namespace>,
-    //name_index: HashMap<String, NsId>,
     pub glib_ns_id: NsId,
 }
 
 impl Info {
-    /*
-    pub fn by_name(&self, name: &str) -> Option<NsId> {
-        self.name_index.get(name).cloned()
-    }
-    */
-
     pub fn main(&self) -> &Namespace {
         &self[MAIN]
     }
@@ -49,7 +41,6 @@ impl Index<NsId> for Info {
 
 pub fn run(gir: &library::Library) -> Info {
     let mut namespaces = Vec::with_capacity(gir.namespaces.len());
-    //let mut name_index = HashMap::with_capacity(gir.namespaces.len());
     let mut glib_ns_id = None;
 
     for (ns_id, ns) in gir.namespaces.iter().enumerate() {
@@ -73,7 +64,6 @@ pub fn run(gir: &library::Library) -> Info {
             shared_libs: ns.shared_library.clone(),
             versions: ns.versions.iter().cloned().collect(),
         });
-        //name_index.insert(ns.name.clone(), ns_id);
         if ns.name == "GLib" {
             glib_ns_id = Some(ns_id);
         }
@@ -81,7 +71,6 @@ pub fn run(gir: &library::Library) -> Info {
 
     Info {
         namespaces: namespaces,
-        //name_index: name_index,
         glib_ns_id: glib_ns_id.expect("Missing `GLib` namespace!"),
     }
 }
