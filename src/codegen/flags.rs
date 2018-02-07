@@ -36,12 +36,12 @@ pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>) {
         try!(writeln!(w, "use ffi;"));
         if env.namespaces.glib_ns_id == namespaces::MAIN {
             if has_get_type {
-                try!(writeln!(w, "use Type;"));
-                try!(writeln!(w, "use StaticType;"));
-                try!(writeln!(w, "use Value;"));
-                try!(writeln!(w, "use SetValue;"));
-                try!(writeln!(w, "use FromValue;"));
-                try!(writeln!(w, "use FromValueOptional;"));
+                try!(writeln!(w, "use types::Type;"));
+                try!(writeln!(w, "use types::StaticType;"));
+                try!(writeln!(w, "use value::Value;"));
+                try!(writeln!(w, "use value::SetValue;"));
+                try!(writeln!(w, "use value::FromValue;"));
+                try!(writeln!(w, "use value::FromValueOptional;"));
                 try!(writeln!(w, "use gobject_ffi;"));
             }
             try!(writeln!(w, "use translate::*;"));
