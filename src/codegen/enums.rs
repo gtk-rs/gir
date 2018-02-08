@@ -1,3 +1,4 @@
+use analysis::imports::Imports;
 use analysis::namespaces;
 use case::CaseExt;
 use codegen::general::{self, cfg_deprecated, version_condition, version_condition_string};
@@ -39,42 +40,27 @@ pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>) {
         }
     }
 
+    let mut imports = Imports::new(&env.library);
+    imports.add("ffi", None);
+    if has_get_quark {
+        imports.add("glib_ffi", None);
+        imports.add("glib::error::ErrorDomain", None);
+    }
+    if has_get_type {
+        imports.add("glib::Type", None);
+        imports.add("glib::StaticType", None);
+        imports.add("glib::value::Value", None);
+        imports.add("glib::value::SetValue", None);
+        imports.add("glib::value::FromValue", None);
+        imports.add("glib::value::FromValueOptional", None);
+        imports.add("gobject_ffi", None);
+    }
+    imports.add("glib::translate::*", None);
+
     let path = root_path.join("enums.rs");
     file_saver::save_to_file(path, env.config.make_backup, |w| {
         try!(general::start_comments(w, &env.config));
-        try!(writeln!(w, ""));
-        try!(writeln!(w, "use ffi;"));
-        if env.namespaces.glib_ns_id == namespaces::MAIN {
-            if has_get_quark {
-                try!(writeln!(w, "use ffi as glib_ffi;"));
-                try!(writeln!(w, "use error::ErrorDomain;"));
-            }
-            if has_get_type {
-                try!(writeln!(w, "use types::Type;"));
-                try!(writeln!(w, "use types::StaticType;"));
-                try!(writeln!(w, "use value::Value;"));
-                try!(writeln!(w, "use value::SetValue;"));
-                try!(writeln!(w, "use value::FromValue;"));
-                try!(writeln!(w, "use value::FromValueOptional;"));
-                try!(writeln!(w, "use gobject_ffi;"));
-            }
-            try!(writeln!(w, "use translate::*;"));
-        } else {
-            if has_get_quark {
-                try!(writeln!(w, "use glib_ffi;"));
-                try!(writeln!(w, "use glib::error::ErrorDomain;"));
-            }
-            if has_get_type {
-                try!(writeln!(w, "use glib::Type;"));
-                try!(writeln!(w, "use glib::StaticType;"));
-                try!(writeln!(
-                    w,
-                    "use glib::value::{{Value, SetValue, FromValue, FromValueOptional}};"
-                ));
-                try!(writeln!(w, "use gobject_ffi;"));
-            }
-            try!(writeln!(w, "use glib::translate::*;"));
-        }
+        try!(general::uses(w, env, &imports));
         try!(writeln!(w, ""));
 
         if has_any {

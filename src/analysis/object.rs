@@ -86,7 +86,7 @@ pub fn class(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<Info>
         None => return None,
     };
 
-    let mut imports = Imports::new();
+    let mut imports = Imports::with_defined(&env.library, &name);
     imports.add("glib::translate::*", None);
     imports.add("ffi", None);
     imports.add("glib_ffi", None);
@@ -185,11 +185,6 @@ pub fn class(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<Info>
         imports.add("glib::object::IsA", None);
     }
 
-    //don't `use` yourself
-    imports.remove(&name);
-
-    imports.clean_glib(env);
-
     let base = InfoBase {
         full_name: full_name,
         type_id: class_tid,
@@ -256,7 +251,7 @@ pub fn interface(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<I
         None => return None,
     };
 
-    let mut imports = Imports::new();
+    let mut imports = Imports::with_defined(&env.library, &name);
     imports.add("glib::translate::*", None);
     imports.add("ffi", None);
     imports.add("glib::object::IsA", None);
@@ -318,11 +313,6 @@ pub fn interface(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<I
     if !properties.is_empty() {
         imports.add("glib", None);
     }
-
-    //don't `use` yourself
-    imports.remove(&name);
-
-    imports.clean_glib(env);
 
     let base = InfoBase {
         full_name: full_name,

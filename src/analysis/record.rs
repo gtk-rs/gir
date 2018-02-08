@@ -52,7 +52,7 @@ pub fn new(env: &Env, obj: &GObject) -> Option<Info> {
         None => return None,
     };
 
-    let mut imports = Imports::new();
+    let mut imports = Imports::with_defined(&env.library, &name);
     imports.add("glib::translate::*", None);
     imports.add("ffi", None);
     imports.add("glib_ffi", None);
@@ -90,11 +90,6 @@ pub fn new(env: &Env, obj: &GObject) -> Option<Info> {
     };
 
     special_functions::analyze_imports(&specials, &mut imports);
-
-    //don't `use` yourself
-    imports.remove(&name);
-
-    imports.clean_glib(env);
 
     let base = InfoBase {
         full_name: full_name,
