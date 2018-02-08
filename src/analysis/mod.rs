@@ -100,7 +100,7 @@ fn analyze_global_functions(env: &mut Env) {
         return;
     }
 
-    let mut imports = imports::Imports::new();
+    let mut imports = imports::Imports::new(&env.library);
     imports.add("glib::translate::*", None);
     imports.add("ffi", None);
 
@@ -114,8 +114,6 @@ fn analyze_global_functions(env: &mut Env) {
         None,
         None,
     );
-
-    imports.clean_glib(env);
 
     env.analysis.global_functions = Some(info_base::InfoBase {
         full_name: full_name,
