@@ -1,3 +1,4 @@
+use analysis::imports::Imports;
 use analysis::namespaces;
 use codegen::general::{self, cfg_deprecated, version_condition, version_condition_string};
 use config::gobjects::GObject;
@@ -21,42 +22,27 @@ pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>) {
             })
             .collect();
 
-        let mut has_get_type = false;
+        let mut imports = Imports::new(&env.library);
+        imports.add("ffi", None);
+        imports.add("glib::translate::*", None);
+
         for config in &configs {
             if let Type::Bitfield(ref flags) = *env.library.type_(config.type_id.unwrap()) {
                 if flags.glib_get_type.is_some() {
-                    has_get_type = true;
+                    imports.add("glib::Type", None);
+                    imports.add("glib::StaticType", None);
+                    imports.add("glib::value::Value", None);
+                    imports.add("glib::value::SetValue", None);
+                    imports.add("glib::value::FromValue", None);
+                    imports.add("glib::value::FromValueOptional", None);
+                    imports.add("gobject_ffi", None);
                     break;
                 }
             }
         }
 
         try!(general::start_comments(w, &env.config));
-        try!(writeln!(w, ""));
-        try!(writeln!(w, "use ffi;"));
-        if env.namespaces.glib_ns_id == namespaces::MAIN {
-            if has_get_type {
-                try!(writeln!(w, "use types::Type;"));
-                try!(writeln!(w, "use types::StaticType;"));
-                try!(writeln!(w, "use value::Value;"));
-                try!(writeln!(w, "use value::SetValue;"));
-                try!(writeln!(w, "use value::FromValue;"));
-                try!(writeln!(w, "use value::FromValueOptional;"));
-                try!(writeln!(w, "use gobject_ffi;"));
-            }
-            try!(writeln!(w, "use translate::*;"));
-        } else {
-            if has_get_type {
-                try!(writeln!(w, "use glib::Type;"));
-                try!(writeln!(w, "use glib::StaticType;"));
-                try!(writeln!(
-                    w,
-                    "use glib::value::{{Value, SetValue, FromValue, FromValueOptional}};"
-                ));
-                try!(writeln!(w, "use gobject_ffi;"));
-            }
-            try!(writeln!(w, "use glib::translate::*;"));
-        }
+        try!(general::uses(w, env, &imports));
         try!(writeln!(w, ""));
 
         let mut first = true;
