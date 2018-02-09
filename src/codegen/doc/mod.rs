@@ -87,9 +87,8 @@ impl_function_like_type!(Function);
 impl_function_like_type!(Signal);
 
 pub fn generate(env: &Env) {
-    let path = env.config.target_path.join("vendor.md");
-    println!("Generating documentation {:?}", path);
-    save_to_file(&path, env.config.make_backup, |w| generate_doc(w, env));
+    println!("Generating documentation {:?}", env.config.doc_target_path);
+    save_to_file(&env.config.doc_target_path, env.config.make_backup, |w| generate_doc(w, env));
 }
 
 #[cfg_attr(feature = "cargo-clippy", allow(type_complexity))]
