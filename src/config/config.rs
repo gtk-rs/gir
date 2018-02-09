@@ -25,7 +25,7 @@ Options:
     -m MODE                 Work mode: doc, normal, sys or not_bound
     -o PATH                 Target path
     --doc-target-path PATH  Doc target path
-    -b, --make_backup       Make backup before generating
+    -b, --make-backup       Make backup before generating
     -s, --stats             Show statistics
 ";
 
