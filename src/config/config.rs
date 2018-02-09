@@ -19,13 +19,14 @@ Usage: gir [options] [<library> <version>]
        gir --help
 
 Options:
-    -h, --help          Show this message.
-    -c CONFIG           Config file path (default: Gir.toml)
-    -d GIRSPATH         Directory for girs
-    -m MODE             Work mode: doc, normal, sys or not_bound
-    -o PATH             Target path
-    -b, --make_backup   Make backup before generating
-    -s, --stats         Show statistics
+    -h, --help              Show this message.
+    -c CONFIG               Config file path (default: Gir.toml)
+    -d GIRSPATH             Directory for girs
+    -m MODE                 Work mode: doc, normal, sys or not_bound
+    -o PATH                 Target path
+    --doc-target-path PATH  Doc target path
+    -b, --make_backup       Make backup before generating
+    -s, --stats             Show statistics
 ";
 
 #[derive(Debug)]
@@ -36,6 +37,7 @@ pub struct Config {
     pub library_name: String,
     pub library_version: String,
     pub target_path: PathBuf,
+    pub doc_target_path: PathBuf,
     pub external_libraries: Vec<ExternalLibrary>,
     pub objects: gobjects::GObjects,
     pub min_cfg_version: Version,
@@ -108,6 +110,16 @@ impl Config {
             a => a.into(),
         };
 
+        let doc_target_path: PathBuf = match args.get_str("--doc-target-path") {
+            "" => {
+                match toml.lookup("options.doc_target_path") {
+                    Some(p) => config_dir.join(try!(p.as_result_str("options.doc_target_path"))),
+                    None => target_path.join("vendor.md"),
+                }
+            },
+            p => config_dir.join(p),
+        };
+
         let concurrency = match toml.lookup("options.concurrency") {
             Some(v) => try!(try!(v.as_result_str("options.concurrency")).parse()),
             None => Default::default(),
@@ -148,6 +160,7 @@ impl Config {
             library_name: library_name.into(),
             library_version: library_version.into(),
             target_path: target_path,
+            doc_target_path: doc_target_path,
             external_libraries: external_libraries,
             objects: objects,
             min_cfg_version: min_cfg_version,
