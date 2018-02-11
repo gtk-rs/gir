@@ -428,6 +428,8 @@ fn generate_records(w: &mut Write, env: &Env, records: &[&Record]) -> Result<()>
             // 5. Thus, we use custom generated GHookList.
             //    Hopefully someone will profit from all this.
             try!(generate_ghooklist(w));
+        } else if record.disguised {
+            try!(generate_disguised(w, record));
         } else {
             let fields = fields::from_record(env, record);
             try!(generate_from_fields(w, &fields));
@@ -460,6 +462,14 @@ impl ::std::fmt::Debug for GHookList {
 "#)
 }
 
+fn generate_disguised(w: &mut Write, record: &Record) -> Result<()> {
+    try!(writeln!(w, "#[repr(C)]"));
+    try!(writeln!(w, "pub struct _{name}(c_void);", name=record.c_type));
+    try!(writeln!(w, ""));
+    try!(writeln!(w, "pub type {name} = *mut _{name};", name=record.c_type));
+    writeln!(w, "")
+}
+
 fn generate_from_fields(w: &mut Write, fields: &fields::Fields) -> Result<()> {
     try!(writeln!(w, "#[repr(C)]"));
     let traits = fields.derived_traits().join(", ");
@@ -467,8 +477,8 @@ fn generate_from_fields(w: &mut Write, fields: &fields::Fields) -> Result<()> {
         try!(writeln!(w, "#[derive({traits})]", traits=traits));
     }
     if fields.external {
-        // It would be nice to represent those using extern types 
-        // from RFC 1861, once they are available in stable Rust. 
+        // It would be nice to represent those using extern types
+        // from RFC 1861, once they are available in stable Rust.
         // https://github.com/rust-lang/rust/issues/43467
         try!(writeln!(w, "pub struct {name}(c_void);", name=&fields.name));
     } else {
@@ -491,7 +501,7 @@ fn generate_from_fields(w: &mut Write, fields: &fields::Fields) -> Result<()> {
     try!(writeln!(w, "\t\tf.debug_struct(&format!(\"{name} @ {{:?}}\", self as *const _))", name=&fields.name));
     for field in fields.fields.iter().filter(|f| f.debug) {
         // TODO: We should generate debug for field manually if automatic one is not available.
-        try!(writeln!(w, "\t\t .field(\"{field_name}\", {field_get})", 
+        try!(writeln!(w, "\t\t .field(\"{field_name}\", {field_get})",
                       field_name=&field.name,
                       field_get=&field.access_str()));
     }
