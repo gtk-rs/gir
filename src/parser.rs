@@ -215,8 +215,8 @@ impl Library {
         parent_name_prefix: Option<&str>,
         parent_ctype_prefix: Option<&str>,
     ) -> Result<Option<Type>> {
-        let mut record_name = elem.attr_required("name")?;
-        let mut c_type = elem.attr_required("type")?;
+        let mut record_name = elem.attr_required("name")?.to_owned();
+        let mut c_type = elem.attr_required("type")?.to_owned();
         let get_type = elem.attr("get-type").map(|s| s.to_owned());
         let gtype_struct_for = elem.attr("is-gtype-struct-for");
         let version = self.read_version(parser, ns_id, elem)?;
@@ -233,7 +233,7 @@ impl Library {
                 self.read_function_to_vec(parser, ns_id, elem, &mut fns)
             }
             "union" => {
-                self.read_union(parser, ns_id, elem, Some(record_name), Some(c_type)).map(|mut u| {
+                self.read_union(parser, ns_id, elem, Some(&record_name), Some(&c_type)).map(|mut u| {
                     let field_name = if let Some(field_name) = elem.attr("name") {
                         field_name.into()
                     } else {
@@ -295,28 +295,39 @@ impl Library {
             _ => Err(parser.unexpected_element(elem)),
         })?;
 
-        if record_name == "Atom" && self.namespace(ns_id).name == "Gdk" {
-            // the gir definitions don't reflect the following correctly
-            // typedef struct _GdkAtom *GdkAtom;
-            record_name = "Atom_";
-            c_type = "GdkAtom_";
-            let tid = self.find_or_stub_type(ns_id, "Gdk.Atom_");
+        let disguised = elem.attr_bool("disguised", false);
+        if disguised && (c_type == "GdkAtom" || c_type == "GIConv") {
+            // A 'disguised' structure is one where the c:type is a typedef that
+            // doesn't look like a pointer, but is internally: typedef struct _X *X;
+            //
+            // Currently g-ir-sanner is too eager to mark all typedef to non-complete
+            // types as disguised, so we limit this behaviour two most common cases.
+            // https://gitlab.gnome.org/GNOME/gobject-introspection/issues/101
+
+            let disguised_record_name = record_name.clone();
+            let disguised_c_type = c_type.clone();
+
+            record_name = format!("_{}", &record_name);
+            c_type = format!("_{}", &c_type);
+            let target_c_type = format!("{}*", c_type);
+
+            let tid = self.find_or_stub_type(ns_id, &record_name);
             self.add_type(
                 ns_id,
-                "Atom",
+                &disguised_record_name,
                 Type::Alias(Alias {
-                    name: "Atom".into(),
-                    c_identifier: "GdkAtom".into(),
+                    name: disguised_record_name.clone(),
+                    c_identifier: disguised_c_type,
                     typ: tid,
-                    target_c_type: "GdkAtom_*".into(),
+                    target_c_type,
                     doc: None, //TODO: temporary
-                }),
+                })
             );
         }
 
         let typ = Type::Record(Record {
-            name: record_name.into(),
-            c_type: c_type.into(),
+            name: record_name,
+            c_type: c_type,
             glib_get_type: get_type,
             gtype_struct_for: gtype_struct_for.map(|s| s.into()),
             fields: fields,
