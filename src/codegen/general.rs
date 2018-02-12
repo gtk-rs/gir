@@ -120,9 +120,9 @@ pub fn define_boxed_type(
     w: &mut Write,
     type_name: &str,
     glib_name: &str,
-    copy_fn: &str,
-    free_fn: &str,
-    get_type_fn: &Option<String>,
+    copy_fn: Option<&String>,
+    free_fn: Option<&String>,
+    get_type_fn: Option<&String>,
 ) -> Result<()> {
     try!(writeln!(w, ""));
     try!(writeln!(w, "glib_wrapper! {{"));
@@ -134,14 +134,26 @@ pub fn define_boxed_type(
     ));
     try!(writeln!(w, ""));
     try!(writeln!(w, "\tmatch fn {{"));
-    try!(writeln!(
-        w,
-        "\t\tcopy => |ptr| ffi::{}(mut_override(ptr)),",
-        copy_fn
-    ));
-    try!(writeln!(w, "\t\tfree => |ptr| ffi::{}(ptr),", free_fn));
-    if let Some(ref get_type_fn) = *get_type_fn {
+    if let Some(get_type_fn) = get_type_fn {
+        try!(writeln!(
+            w,
+            "\t\tcopy => |ptr| gobject_ffi::g_boxed_copy(ffi::{}(), ptr as *mut _) as *mut ffi::{},",
+            get_type_fn, glib_name
+        ));
+        try!(writeln!(w, "\t\tfree => |ptr| gobject_ffi::g_boxed_free(ffi::{}(), ptr as *mut _),", get_type_fn));
         try!(writeln!(w, "\t\tget_type => || ffi::{}(),", get_type_fn));
+    } else {
+        if let Some(copy_fn) = copy_fn {
+            try!(writeln!(
+                w,
+                "\t\tcopy => |ptr| ffi::{}(mut_override(ptr)),",
+                copy_fn
+            ));
+        }
+
+        if let Some(free_fn) = free_fn {
+            try!(writeln!(w, "\t\tfree => |ptr| ffi::{}(ptr),", free_fn));
+        }
     }
     try!(writeln!(w, "\t}}"));
     try!(writeln!(w, "}}"));

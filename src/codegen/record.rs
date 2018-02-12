@@ -24,17 +24,24 @@ pub fn generate(w: &mut Write, env: &Env, analysis: &analysis::record::Info) -> 
             unref_fn,
             &analysis.glib_get_type,
         ));
-    } else if let (Some(copy_fn), Some(free_fn)) = (
-        analysis.specials.get(&Type::Copy),
-        analysis.specials.get(&Type::Free),
-    ) {
+    } else if analysis.glib_get_type.is_some() {
         try!(general::define_boxed_type(
             w,
             &analysis.name,
             &type_.c_type,
-            copy_fn,
-            free_fn,
-            &analysis.glib_get_type,
+            None,
+            None,
+            analysis.glib_get_type.as_ref(),
+        ));
+    } else if analysis.specials.get(&Type::Copy).is_some() &&
+        analysis.specials.get(&Type::Free).is_some() {
+        try!(general::define_boxed_type(
+            w,
+            &analysis.name,
+            &type_.c_type,
+            analysis.specials.get(&Type::Copy),
+            analysis.specials.get(&Type::Free),
+            None,
         ));
     } else {
         panic!(
