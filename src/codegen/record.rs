@@ -12,7 +12,7 @@ pub fn generate(w: &mut Write, env: &Env, analysis: &analysis::record::Info) -> 
     try!(general::start_comments(w, &env.config));
     try!(general::uses(w, env, &analysis.imports));
 
-    if analysis.record_boxed {
+    if analysis.use_boxed_functions {
         try!(general::define_auto_boxed_type(
             w,
             &analysis.name,

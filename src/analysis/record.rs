@@ -13,7 +13,7 @@ use traits::*;
 pub struct Info {
     pub base: InfoBase,
     pub glib_get_type: Option<String>,
-    pub record_boxed: bool,
+    pub use_boxed_functions: bool,
 }
 
 impl Deref for Info {
@@ -53,7 +53,7 @@ pub fn new(env: &Env, obj: &GObject) -> Option<Info> {
         None => return None,
     };
 
-    let record_boxed = obj.record_boxed;
+    let use_boxed_functions = obj.use_boxed_functions;
 
     let mut imports = Imports::with_defined(&env.library, &name);
     imports.add("glib::translate::*", None);
@@ -110,7 +110,7 @@ pub fn new(env: &Env, obj: &GObject) -> Option<Info> {
     let info = Info {
         base: base,
         glib_get_type: record.glib_get_type.clone(),
-        record_boxed: record_boxed,
+        use_boxed_functions: use_boxed_functions,
     };
 
     Some(info)
