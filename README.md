@@ -203,6 +203,18 @@ version = "3.12"
     version = "3.18"
 ```
 
+Some records have non-standard `copy` or `free` functions or even do not have it.
+You can define these records with functions for boxed types.
+
+```toml
+[[object]]
+name = "GstSdp.SDPMessage"
+status = "generate"
+# generates `copy` and `free` function by `g_boxed_copy` and `g_boxed_free`
+# only works if record has `glib:get-type` defined
+record_boxed = true
+```
+
 For global functions, the members can be configured by configuring the `Gtk.*` object:
 
 ```toml

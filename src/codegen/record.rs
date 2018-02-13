@@ -12,7 +12,14 @@ pub fn generate(w: &mut Write, env: &Env, analysis: &analysis::record::Info) -> 
     try!(general::start_comments(w, &env.config));
     try!(general::uses(w, env, &analysis.imports));
 
-    if let (Some(ref_fn), Some(unref_fn)) = (
+    if analysis.record_boxed {
+        try!(general::define_auto_boxed_type(
+            w,
+            &analysis.name,
+            &type_.c_type,
+            &analysis.glib_get_type,
+        ));
+    } else if let (Some(ref_fn), Some(unref_fn)) = (
         analysis.specials.get(&Type::Ref),
         analysis.specials.get(&Type::Unref),
     ) {
