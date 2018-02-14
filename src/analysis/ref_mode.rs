@@ -50,7 +50,7 @@ impl RefMode {
             },
             Record(ref record) => if direction == library::ParameterDirection::In {
                 match RecordType::of(record) {
-                    RecordType::Direct => RefMode::ByRefMut,
+                    RecordType::AutoBoxed => RefMode::ByRefMut,
                     RecordType::Boxed => RefMode::ByRefMut,
                     RecordType::Refcounted => RefMode::ByRef,
                 }

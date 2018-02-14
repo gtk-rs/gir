@@ -153,17 +153,8 @@ pub fn define_auto_boxed_type(
     w: &mut Write,
     type_name: &str,
     glib_name: &str,
-    get_type_fn: &Option<String>,
+    get_type_fn: &str,
 ) -> Result<()> {
-    let get_type_fn = if let Some(ref get_type_fn) = *get_type_fn {
-        get_type_fn
-    } else {
-        panic!(
-            "Record {} has record_boxed=true but don't have glib:get_type function",
-            type_name
-        );
-    };
-
     try!(writeln!(w, ""));
     try!(writeln!(w, "glib_wrapper! {{"));
     try!(writeln!(
