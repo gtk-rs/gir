@@ -203,6 +203,19 @@ version = "3.12"
     version = "3.18"
 ```
 
+Gir auto-detects copy and free functions by looking up `type_name_copy` and `type_name_free` functions.
+If the relevant functions are not named that way, and the type is defined with `G_DEFINE_BOXED_TYPE`,
+`use_boxed_functions=true` can be used to call `g_boxed_copy` and `g_boxed_free` instead.
+
+```toml
+[[object]]
+name = "GstSdp.SDPMessage"
+status = "generate"
+# generates `copy` and `free` function by `g_boxed_copy` and `g_boxed_free`
+# only works if record has `glib:get-type` defined
+use_boxed_functions = true
+```
+
 For global functions, the members can be configured by configuring the `Gtk.*` object:
 
 ```toml

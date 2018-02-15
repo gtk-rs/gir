@@ -73,6 +73,7 @@ pub struct GObject {
     pub ref_mode: Option<ref_mode::RefMode>,
     pub must_use: bool,
     pub conversion_type: Option<conversion_type::ConversionType>,
+    pub use_boxed_functions: bool,
 }
 
 impl Default for GObject {
@@ -95,6 +96,7 @@ impl Default for GObject {
             ref_mode: None,
             must_use: false,
             conversion_type: None,
+            use_boxed_functions: false,
         }
     }
 }
@@ -165,6 +167,7 @@ fn parse_object(toml_object: &Value, concurrency: library::Concurrency) -> GObje
             "trait_name",
             "cfg_condition",
             "must_use",
+            "use_boxed_functions",
         ],
         &format!("object {}", name),
     );
@@ -229,6 +232,10 @@ fn parse_object(toml_object: &Value, concurrency: library::Concurrency) -> GObje
         .lookup("must_use")
         .and_then(|v| v.as_bool())
         .unwrap_or(false);
+    let use_boxed_functions = toml_object
+        .lookup("use_boxed_functions")
+        .and_then(|v| v.as_bool())
+        .unwrap_or(false);
 
     if status != GStatus::Manual && ref_mode.is_some() {
         warn!("ref_mode configuration used for non-manual object {}", name);
@@ -256,6 +263,7 @@ fn parse_object(toml_object: &Value, concurrency: library::Concurrency) -> GObje
         ref_mode: ref_mode,
         must_use: must_use,
         conversion_type: conversion_type,
+        use_boxed_functions: use_boxed_functions,
     }
 }
 

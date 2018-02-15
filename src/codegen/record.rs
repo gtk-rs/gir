@@ -12,7 +12,21 @@ pub fn generate(w: &mut Write, env: &Env, analysis: &analysis::record::Info) -> 
     try!(general::start_comments(w, &env.config));
     try!(general::uses(w, env, &analysis.imports));
 
-    if let (Some(ref_fn), Some(unref_fn)) = (
+    if analysis.use_boxed_functions {
+        if let Some(ref glib_get_type) = analysis.glib_get_type {
+            try!(general::define_auto_boxed_type(
+                w,
+                &analysis.name,
+                &type_.c_type,
+                glib_get_type,
+            ));
+        } else {
+            panic!(
+                "Record {} has record_boxed=true but don't have glib:get_type function",
+                analysis.name
+            );
+        }
+    } else if let (Some(ref_fn), Some(unref_fn)) = (
         analysis.specials.get(&Type::Ref),
         analysis.specials.get(&Type::Unref),
     ) {
@@ -35,6 +49,13 @@ pub fn generate(w: &mut Write, env: &Env, analysis: &analysis::record::Info) -> 
             copy_fn,
             free_fn,
             &analysis.glib_get_type,
+        ));
+    } else if let Some(ref glib_get_type) = analysis.glib_get_type {
+        try!(general::define_auto_boxed_type(
+            w,
+            &analysis.name,
+            &type_.c_type,
+            glib_get_type,
         ));
     } else {
         panic!(

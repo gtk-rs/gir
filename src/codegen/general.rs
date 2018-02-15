@@ -149,6 +149,39 @@ pub fn define_boxed_type(
     Ok(())
 }
 
+pub fn define_auto_boxed_type(
+    w: &mut Write,
+    type_name: &str,
+    glib_name: &str,
+    get_type_fn: &str,
+) -> Result<()> {
+    try!(writeln!(w, ""));
+    try!(writeln!(w, "glib_wrapper! {{"));
+    try!(writeln!(
+        w,
+        "\tpub struct {}(Boxed<ffi::{}>);",
+        type_name,
+        glib_name
+    ));
+    try!(writeln!(w, ""));
+    try!(writeln!(w, "\tmatch fn {{"));
+    try!(writeln!(
+        w,
+        "\t\tcopy => |ptr| gobject_ffi::g_boxed_copy(ffi::{}(), ptr as *mut _) as *mut ffi::{},",
+        get_type_fn, glib_name
+    ));
+    try!(writeln!(
+        w,
+        "\t\tfree => |ptr| gobject_ffi::g_boxed_free(ffi::{}(), ptr as *mut _),",
+        get_type_fn
+    ));
+    try!(writeln!(w, "\t\tget_type => || ffi::{}(),", get_type_fn));
+    try!(writeln!(w, "\t}}"));
+    try!(writeln!(w, "}}"));
+
+    Ok(())
+}
+
 pub fn define_shared_type(
     w: &mut Write,
     type_name: &str,
