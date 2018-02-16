@@ -288,6 +288,9 @@ pub struct Record {
     pub deprecated_version: Option<Version>,
     pub doc: Option<String>,
     pub doc_deprecated: Option<String>,
+    /// A 'disguised' record is one where the c:type is a typedef that
+    /// doesn't look like a pointer, but is internally: typedef struct _X *X;
+    pub disguised: bool,
 }
 
 #[derive(Default, Debug)]
@@ -442,6 +445,7 @@ impl_lexical_ord!(
     Union => c_type,
 );
 
+#[cfg_attr(feature = "cargo-clippy", allow(large_enum_variant))]
 #[derive(Debug, PartialEq)]
 pub enum Type {
     Fundamental(Fundamental),
@@ -586,20 +590,8 @@ impl Type {
     }
 
     pub fn record(library: &mut Library, r: Record, ns_id: u16) -> TypeId {
-        let fields = r.fields;
-        let field_tids: Vec<TypeId> = fields.iter().map(|f| f.typ).collect();
-        let typ = Type::Record(Record {
-            name: r.name,
-            c_type: r.c_type,
-            glib_get_type: r.glib_get_type,
-            gtype_struct_for: r.gtype_struct_for,
-            fields: fields,
-            functions: r.functions,
-            version: r.version,
-            deprecated_version: r.deprecated_version,
-            doc: r.doc,
-            doc_deprecated: r.doc_deprecated,
-        });
+        let field_tids: Vec<TypeId> = r.fields.iter().map(|f| f.typ).collect();
+        let typ = Type::Record(r);
         library.add_type(ns_id, &format!("#{:?}", field_tids), typ)
     }
 }

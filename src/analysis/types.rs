@@ -16,8 +16,8 @@ impl IsPtr for Field {
             return c_type.contains('*')
         } else {
             // After library post processing phase
-            // only types without c:type should be 
-            // function pointers.  
+            // only types without c:type should be
+            // function pointers.
             true
         }
     }
@@ -52,7 +52,7 @@ pub trait IsIncomplete {
 impl IsIncomplete for Fundamental {
     fn is_incomplete(&self, _lib: &Library) -> bool {
         match *self {
-            Fundamental::None | 
+            Fundamental::None |
             Fundamental::Unsupported => true,
             _ => false,
         }
@@ -102,9 +102,12 @@ impl IsIncomplete for Class {
 }
 
 impl IsIncomplete for Record {
+    #[cfg_attr(feature = "cargo-clippy", allow(if_same_then_else))]
     fn is_incomplete(&self, lib: &Library) -> bool {
         if self.c_type == "GHookList" {
             // Search for GHookList in sys codegen for rationale.
+            false
+        } else if self.disguised {
             false
         } else {
             self.fields.as_slice().is_incomplete(lib)
