@@ -51,7 +51,6 @@ pub fn generate(
             object_name
         ));
     }
-    try!(writeln!(w, "\tcallback_guard!();"));
     try!(writeln!(w, "\tlet f: &&({}) = transmute(f);", func_str));
     try!(transformation_vars(w, analysis));
     let call = trampoline_call_func(env, analysis, in_trait);
