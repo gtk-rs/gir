@@ -143,7 +143,7 @@ impl Builder {
                            .filter(|param| param.direction == ParameterDirection::Out)
                            .map(|param| Chunk::FfiCallOutParameter{ par: param.into() }));
         let index_to_ignore = find_index_to_ignore(&trampoline.output_params);
-        let result: Vec<_> = trampoline.output_params.iter().enumerate()
+        let mut result: Vec<_> = trampoline.output_params.iter().enumerate()
             .filter(|&(index, param)| param.direction == ParameterDirection::Out && param.name != "error" &&
                     Some(index) != index_to_ignore)
             .map(|(_, param)| {
@@ -159,6 +159,22 @@ impl Builder {
                     }
                 }
             }).collect();
+
+        if let Some(ref ffi_ret) = trampoline.ffi_ret {
+            let mem_mode = c_type_mem_mode_lib(env, ffi_ret.typ, ffi_ret.caller_allocates, ffi_ret.transfer);
+            let value = Chunk::Name("ret".to_string());
+            if let OutMemMode::UninitializedNamed(_) = mem_mode {
+                result.insert(0, value);
+            } else {
+                result.insert(0,
+                    Chunk::FromGlibConversion {
+                        mode: ffi_ret.into(),
+                        array_length_name: self.array_length(ffi_ret).cloned(),
+                        value: Box::new(value),
+                    });
+            }
+        }
+
         let result = Chunk::Tuple(result, TupleMode::WithUnit);
         let gio_crate_name = crate_name("Gio", env);
         let gobject_crate_name = crate_name("GObject", env);
@@ -182,9 +198,12 @@ impl Builder {
                      type_: None,
                  });
         body.extend(output_vars);
+
+        let ret_name = if trampoline.ffi_ret.is_some() { "ret" } else { "_" };
+
         body.push(
             Chunk::Let {
-                name: "_".to_string(),
+                name: ret_name.to_string(),
                 is_mut: false,
                 value: Box::new(Chunk::FfiCall {
                     name: trampoline.finish_func_name.clone(),
