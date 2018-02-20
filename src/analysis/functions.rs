@@ -10,6 +10,7 @@ use std::vec::Vec;
 
 use analysis::bounds::Bounds;
 use analysis::function_parameters::{self, Parameters, Transformation, TransformationType};
+use analysis::out_parameters::use_function_return_for_result;
 use analysis::imports::Imports;
 use analysis::out_parameters;
 use analysis::ref_mode::RefMode;
@@ -47,6 +48,7 @@ pub struct AsyncTrampoline {
     pub callback_type: String,
     pub bound_name: char,
     pub output_params: Vec<Parameter>,
+    pub ffi_ret: Option<Parameter>,
 }
 
 #[derive(Debug)]
@@ -192,9 +194,13 @@ fn analyze_function(
         if let Some((callback_type, bound_name)) = type_string {
             let func_name = func.c_identifier.as_ref().unwrap();
             let finish_func_name = replace_async_by_finish(func_name);
-            let rust_finish_func_name = replace_async_by_finish(&func.name);
             let mut output_params = vec![];
-            if let Some(function) = find_function(env, &rust_finish_func_name) {
+            let mut ffi_ret = None;
+            if let Some(function) = find_function(env, &finish_func_name) {
+                if use_function_return_for_result(env, &function.ret) {
+                    ffi_ret = Some(function.ret.clone());
+                }
+
                 output_params.extend(function.parameters.clone());
                 for param in &mut output_params {
                     if nameutil::needs_mangling(&param.name) {
@@ -209,6 +215,7 @@ fn analyze_function(
                 callback_type,
                 bound_name,
                 output_params,
+                ffi_ret,
             });
         }
         let type_error =
@@ -317,20 +324,24 @@ pub fn is_carray_with_direct_elements(env: &Env, typ: library::TypeId) -> bool {
     }
 }
 
-pub fn find_function<'a>(env: &'a Env, function_name: &str) -> Option<&'a Function> {
+pub fn find_function<'a>(env: &'a Env, c_identifier: &str) -> Option<&'a Function> {
     if let Some(index) = env.library.find_namespace(&env.config.library_name) {
         let namespace = env.library.namespace(index);
         for typ in &namespace.types {
             if let Some(Type::Class(ref class)) = *typ {
                 for function in &class.functions {
-                    if function.name == function_name {
-                        return Some(function);
+                    if let Some(ref func_c_identifier) = function.c_identifier {
+                        if func_c_identifier == c_identifier {
+                          return Some(function);
+                        }
                     }
                 }
             } else if let Some(Type::Interface(ref interface)) = *typ {
                 for function in &interface.functions {
-                    if function.name == function_name {
-                        return Some(function);
+                    if let Some(ref func_c_identifier) = function.c_identifier {
+                        if func_c_identifier == c_identifier {
+                          return Some(function);
+                        }
                     }
                 }
             }

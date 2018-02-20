@@ -7,6 +7,7 @@ use env::Env;
 use analysis::imports::Imports;
 use analysis::functions::{find_function, find_index_to_ignore, replace_async_by_finish};
 use analysis::function_parameters::{CParameter, async_param_to_remove};
+use analysis::out_parameters::use_function_return_for_result;
 use analysis::rust_type::{bounds_rust_type, rust_type};
 use library::{Function, Fundamental, Nullable, ParameterDirection, Type, TypeId};
 use traits::IntoString;
@@ -117,9 +118,13 @@ impl Bounds {
             if let Some(bound_type) = Bounds::type_for(env, par.typ, par.nullable) {
                 ret = Some(Bounds::get_to_glib_extra(&bound_type));
                 if async && par.name == "callback" {
-                    let finish_func_name = replace_async_by_finish(&func.name);
+                    let func_name = func.c_identifier.as_ref().unwrap();
+                    let finish_func_name = replace_async_by_finish(func_name);
                     if let Some(function) = find_function(env, &finish_func_name) {
-                        let out_parameters = find_out_parameters(env, function);
+                        let mut out_parameters = find_out_parameters(env, function);
+                        if use_function_return_for_result(env, &function.ret) {
+                            out_parameters.insert(0, rust_type(env, function.ret.typ).expect("get rust type from return"));
+                        }
                         let parameters = format_out_parameters(&out_parameters);
                         let error_type = find_error_type(env, function);
                         type_string = format!("FnOnce(Result<{}, {}>) + Send + 'static", parameters, error_type);

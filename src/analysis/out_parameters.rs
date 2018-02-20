@@ -136,7 +136,7 @@ pub fn can_as_return(env: &Env, par: &Parameter) -> bool {
     }
 }
 
-fn use_function_return_for_result(env: &Env, ret: &Parameter) -> bool {
+pub fn use_function_return_for_result(env: &Env, ret: &Parameter) -> bool {
     if ret.typ == Default::default() {
         return false;
     }
