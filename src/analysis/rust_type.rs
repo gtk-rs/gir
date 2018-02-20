@@ -185,6 +185,7 @@ fn rust_type_full(
                 Err(TypeError::Unimplemented(type_.get_name().to_owned()))
             }
         }
+        Custom(library::Custom { ref name, .. }) => Ok(name.clone()),
         _ => Err(TypeError::Unimplemented(type_.get_name().to_owned())),
     };
 
@@ -237,6 +238,7 @@ pub fn used_rust_type(env: &Env, type_id: library::TypeId) -> Result {
         Enumeration(..) |
         Interface(..) => rust_type(env, type_id),
         List(inner_tid) | SList(inner_tid) | CArray(inner_tid) => used_rust_type(env, inner_tid),
+        Custom(..) => rust_type(env, type_id),
         _ => Err(TypeError::Ignored("Don't need use".to_owned())),
     }
 }
@@ -296,6 +298,7 @@ pub fn parameter_rust_type(
             _ => Err(TypeError::Unimplemented(into_inner(rust_type))),
         },
         Function(ref func) if func.name == "AsyncReadyCallback" => Ok("AsyncReadyCallback".to_string()),
+        Custom(..) => rust_type.map_any(|s| format_parameter(s, direction)),
         _ => Err(TypeError::Unimplemented(type_.get_name().to_owned())),
     }
 }
