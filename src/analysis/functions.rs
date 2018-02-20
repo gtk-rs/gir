@@ -192,6 +192,10 @@ fn analyze_function(
             to_glib_extras.insert(pos, to_glib_extra);
         }
         if let Some((callback_type, bound_name)) = type_string {
+            // Checks for /*Ignored*/ or other error comments
+            if callback_type.find("/*").is_some() {
+                commented = true;
+            }
             let func_name = func.c_identifier.as_ref().unwrap();
             let finish_func_name = replace_async_by_finish(func_name);
             let mut output_params = vec![];
