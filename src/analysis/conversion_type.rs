@@ -77,6 +77,9 @@ impl ConversionType {
             SList(_) => ConversionType::Pointer,
             Function(super::library::Function { ref name, .. }) if name == "AsyncReadyCallback" =>
                 ConversionType::Direct,
+            Custom(super::library::Custom {
+                conversion_type, ..
+            }) => conversion_type,
             _ => ConversionType::Unknown,
         }
     }

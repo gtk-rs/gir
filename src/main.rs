@@ -33,16 +33,19 @@ mod chunk;
 mod codegen;
 mod config;
 mod consts;
+mod custom_type_glib_priority;
 mod env;
 mod file_saver;
 mod git;
 mod library;
 mod library_postprocessing;
+mod library_preprocessing;
 mod nameutil;
 mod parser;
 mod traits;
 mod update_version;
 mod version;
+mod visitors;
 mod writer;
 mod xmlparser;
 
@@ -94,6 +97,11 @@ fn do_main() -> Result<()> {
 
         library = Library::new(&cfg.library_name);
         try!(library.read_file(&cfg.girs_dir, &cfg.library_full_name()));
+    }
+
+    {
+        let _watcher = statistics.enter("Preprocessing");
+        library.preprocessing(cfg.work_mode);
     }
 
     {

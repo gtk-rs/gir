@@ -4,6 +4,7 @@ use std::collections::{BTreeMap, BTreeSet, HashMap};
 use std::iter::Iterator;
 use std::ops::{Deref, DerefMut};
 use std::str::FromStr;
+use analysis::conversion_type::ConversionType;
 use nameutil::split_namespace_name;
 use traits::*;
 use version::Version;
@@ -407,6 +408,12 @@ pub struct Class {
     pub doc: Option<String>,
 }
 
+#[derive(Debug)]
+pub struct Custom {
+    pub name: String,
+    pub conversion_type: ConversionType,
+}
+
 macro_rules! impl_lexical_ord {
     () => ();
     ($name:ident => $field:ident, $($more_name:ident => $more_field:ident,)*) => (
@@ -443,6 +450,7 @@ impl_lexical_ord!(
     Interface => c_type,
     Record => c_type,
     Union => c_type,
+    Custom => name,
 );
 
 #[cfg_attr(feature = "cargo-clippy", allow(large_enum_variant))]
@@ -457,6 +465,7 @@ pub enum Type {
     Function(Function),
     Interface(Interface),
     Class(Class),
+    Custom(Custom),
     Array(TypeId),
     CArray(TypeId),
     FixedArray(TypeId, u16),
@@ -480,6 +489,7 @@ impl Type {
             Interface(ref interface) => interface.name.clone(),
             Array(type_id) => format!("Array {:?}", type_id),
             Class(ref class) => class.name.clone(),
+            Custom(ref custom) => custom.name.clone(),
             CArray(type_id) => format!("CArray {:?}", type_id),
             FixedArray(type_id, size) => format!("FixedArray {:?}; {}", type_id, size),
             PtrArray(type_id) => format!("PtrArray {:?}", type_id),
@@ -504,6 +514,7 @@ impl Type {
             Interface(ref interface) => interface.deprecated_version,
             Array(_) => None,
             Class(ref class) => class.deprecated_version,
+            Custom(_) => None,
             CArray(_) => None,
             FixedArray(_, _) => None,
             PtrArray(_) => None,
