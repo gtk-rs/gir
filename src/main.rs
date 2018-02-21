@@ -143,7 +143,7 @@ fn do_main() -> Result<()> {
         };
     }
 
-    {
+    if env.config.work_mode != WorkMode::Sys {
         let _watcher = statistics.enter("Analysing");
         analysis::run(&mut env);
     }

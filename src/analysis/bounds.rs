@@ -123,7 +123,7 @@ impl Bounds {
                     if let Some(function) = find_function(env, &finish_func_name) {
                         let mut out_parameters = find_out_parameters(env, function);
                         if use_function_return_for_result(env, &function.ret) {
-                            out_parameters.insert(0, rust_type(env, function.ret.typ).expect("get rust type from return"));
+                            out_parameters.insert(0, rust_type(env, function.ret.typ).into_string());
                         }
                         let parameters = format_out_parameters(&out_parameters);
                         let error_type = find_error_type(env, function);
