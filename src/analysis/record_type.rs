@@ -34,10 +34,10 @@ impl RecordType {
             has_free = true;
         }
 
-        if has_copy && has_free {
-            RecordType::Boxed
-        } else if has_ref && has_unref {
+        if has_ref && has_unref {
             RecordType::Refcounted
+        } else if has_copy && has_free {
+            RecordType::Boxed
         } else {
             RecordType::AutoBoxed
         }
