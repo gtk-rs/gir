@@ -49,10 +49,10 @@ impl RefMode {
                 RefMode::None
             },
             Record(ref record) => if direction == library::ParameterDirection::In {
-                match RecordType::of(record) {
-                    RecordType::AutoBoxed => RefMode::ByRefMut,
-                    RecordType::Boxed => RefMode::ByRefMut,
-                    RecordType::Refcounted => RefMode::ByRef,
+                if let RecordType::Refcounted = RecordType::of(record) {
+                    RefMode::ByRef
+                } else {
+                    RefMode::ByRefMut
                 }
             } else {
                 RefMode::None
