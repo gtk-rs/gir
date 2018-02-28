@@ -7,6 +7,7 @@ use file_saver::*;
 mod child_properties;
 mod doc;
 mod enums;
+mod constants;
 mod flags;
 mod alias;
 pub mod function;
@@ -51,6 +52,7 @@ fn normal_generate(env: &Env) {
     flags::generate(env, &root_path, &mut mod_rs);
     alias::generate(env, &root_path, &mut mod_rs);
     functions::generate(env, &root_path, &mut mod_rs);
+    constants::generate(env, &root_path, &mut mod_rs);
 
     generate_mod_rs(env, &root_path, &mod_rs, &traits);
 }

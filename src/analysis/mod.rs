@@ -12,6 +12,7 @@ pub mod conversion_type;
 pub mod ffi_type;
 pub mod function_parameters;
 pub mod functions;
+pub mod constants;
 pub mod general;
 pub mod imports;
 pub mod info_base;
@@ -39,6 +40,7 @@ pub struct Analysis {
     pub objects: BTreeMap<String, object::Info>,
     pub records: BTreeMap<String, record::Info>,
     pub global_functions: Option<info_base::InfoBase>,
+    pub constants: Vec<constants::Info>,
 }
 
 pub fn run(env: &mut Env) {
@@ -77,6 +79,8 @@ pub fn run(env: &mut Env) {
         );
         return;
     }
+
+    analyze_constants(env);
 
     // Analyze free functions as the last step once all types are analyzed
     analyze_global_functions(env);
@@ -123,6 +127,26 @@ fn analyze_global_functions(env: &mut Env) {
         imports: imports,
         ..Default::default()
     });
+}
+
+fn analyze_constants(env: &mut Env) {
+    let ns = env.library.namespace(library::MAIN_NAMESPACE);
+
+    let full_name = format!("{}.*", ns.name);
+
+    let obj = match env.config.objects.get(&*full_name) {
+        Some(obj) if obj.status.need_generate() => obj,
+        _ => return,
+    };
+
+    let constants: Vec<_> = ns.constants
+        .iter()
+        .collect();
+    if constants.is_empty() {
+        return;
+    }
+
+    env.analysis.constants = constants::analyze(env, &constants, obj);
 }
 
 fn analyze(env: &mut Env, tid: TypeId, deps: &[TypeId]) {

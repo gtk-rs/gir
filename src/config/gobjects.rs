@@ -8,6 +8,7 @@ use config::error::TomlHelper;
 use config::parsable::{Parsable, Parse};
 use super::child_properties::ChildProperties;
 use super::functions::Functions;
+use super::constants::Constants;
 use super::members::Members;
 use super::properties::Properties;
 use super::signals::{Signal, Signals};
@@ -58,6 +59,7 @@ impl FromStr for GStatus {
 pub struct GObject {
     pub name: String,
     pub functions: Functions,
+    pub constants: Constants,
     pub signals: Signals,
     pub members: Members,
     pub properties: Properties,
@@ -81,6 +83,7 @@ impl Default for GObject {
         GObject {
             name: "Default".into(),
             functions: Functions::new(),
+            constants: Constants::new(),
             signals: Signals::new(),
             members: Members::new(),
             properties: Properties::new(),
@@ -152,6 +155,7 @@ fn parse_object(toml_object: &Value, concurrency: library::Concurrency) -> GObje
             "name",
             "status",
             "function",
+            "constant",
             "signal",
             "member",
             "property",
@@ -179,6 +183,7 @@ fn parse_object(toml_object: &Value, concurrency: library::Concurrency) -> GObje
         None => Default::default(),
     };
 
+    let constants = Constants::parse(toml_object.lookup("constant"), &name);
     let functions = Functions::parse(toml_object.lookup("function"), &name);
     let signals = {
         let mut v = Vec::new();
@@ -248,6 +253,7 @@ fn parse_object(toml_object: &Value, concurrency: library::Concurrency) -> GObje
     GObject {
         name: name,
         functions: functions,
+        constants: constants,
         signals: signals,
         members: members,
         properties: properties,
