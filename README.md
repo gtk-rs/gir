@@ -231,6 +231,20 @@ status = "generate"
 Note that you must not place `Gtk.*` into the `generate` array and
 additionally configure its members.
 
+You can control the generation of constants in a similar fashion:
+
+```
+[[object]]
+name = "Gtk.*"
+status = "generate"
+    [[object.constant]]
+    pattern = "*"
+    # No constants will be generated
+    ignore = true
+```
+
+Constants also support `version` and `cfg_condition` fields.
+
 In various cases, GObjects or boxed types can be used from multiple threads
 and have certain concurrency guarantees. This can be configured with the
 `concurrency` setting at the top-level options or per object. It will
