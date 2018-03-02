@@ -242,11 +242,15 @@ impl Builder {
             Param { name: "res".to_string(), typ: format!("*mut {}::GAsyncResult", gio_crate_name) },
             Param { name: "user_data".to_string(), typ: format!("{}::gpointer", glib_crate_name) },
         ];
+        let body = Chunk::Chunks(vec![
+            Chunk::Custom("callback_guard!();".into()),
+            Chunk::Chunks(body),
+        ]);
 
         chunks.push(Chunk::ExternCFunc {
             name: format!("{}<{}: {}>", trampoline.name, trampoline.bound_name, trampoline.callback_type),
             parameters,
-            body: Box::new(Chunk::Chunks(body)),
+            body: Box::new(body),
         });
         let chunk = Chunk::Let {
             name: "callback".to_string(),
