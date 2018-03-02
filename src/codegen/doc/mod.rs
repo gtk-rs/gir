@@ -87,7 +87,7 @@ impl_function_like_type!(Function);
 impl_function_like_type!(Signal);
 
 pub fn generate(env: &Env) {
-    println!("Generating documentation {:?}", env.config.doc_target_path);
+    info!("Generating documentation {:?}", env.config.doc_target_path);
     save_to_file(&env.config.doc_target_path, env.config.make_backup, |w| generate_doc(w, env));
 }
 

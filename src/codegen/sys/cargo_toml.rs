@@ -10,8 +10,8 @@ use nameutil::crate_name;
 use version::Version;
 
 pub fn generate(env: &Env) {
-    println!(
-        "manipulating sys Cargo.toml for {}",
+    info!(
+        "Generatnig sys Cargo.toml for {}",
         env.config.library_name
     );
 

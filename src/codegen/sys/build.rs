@@ -6,14 +6,14 @@ use file_saver::save_to_file;
 use regex::Regex;
 
 pub fn generate(env: &Env) {
-    println!(
-        "generating sys build script for {}",
+    info!(
+        "Generating sys build script for {}",
         env.config.library_name
     );
 
     let path = env.config.target_path.join("build.rs");
 
-    println!("Generating file {:?}", path);
+    info!("Generating file {:?}", path);
     save_to_file(
         &path,
         env.config.make_backup,

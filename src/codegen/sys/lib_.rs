@@ -16,11 +16,11 @@ use traits::*;
 use version::Version;
 
 pub fn generate(env: &Env) {
-    println!("generating sys for {}", env.config.library_name);
+    info!("Generating sys for {}", env.config.library_name);
 
     let path = env.config.target_path.join(file_name_sys("lib"));
 
-    println!("Generating file {:?}", path);
+    info!("Generating file {:?}", path);
     save_to_file(&path, env.config.make_backup, |w| generate_lib(w, env));
 }
 
