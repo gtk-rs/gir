@@ -669,6 +669,8 @@ pub struct Namespace {
     pub shared_library: Vec<String>,
     pub identifier_prefixes: Vec<String>,
     pub symbol_prefixes: Vec<String>,
+    /// C headers, relative to include directories provided by pkg-config --cflags.
+    pub c_includes: Vec<String>,
 }
 
 impl Namespace {

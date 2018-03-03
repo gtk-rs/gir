@@ -133,11 +133,11 @@ impl IsIncomplete for Type {
             Type::Class(ref klass) => klass.is_incomplete(lib),
             Type::Record(ref record) => record.is_incomplete(lib),
             Type::Union(ref union) => union.is_incomplete(lib),
+            Type::Interface(..) => true,
             Type::Custom(..) |
             Type::Enumeration(..) |
             Type::Bitfield(..) |
             Type::Function(..) |
-            Type::Interface(..) |
             Type::Array(..) |
             Type::CArray(..) |
             Type::PtrArray(..) |
@@ -189,12 +189,12 @@ impl IsExternal for Type {
             Type::Class(ref klass) => klass.is_external(lib),
             Type::Record(ref record) => record.is_external(lib),
             Type::Union(ref union) => union.is_external(lib),
+            Type::Interface(..) => true,
             Type::Custom(..) |
             Type::Fundamental(..) |
             Type::Enumeration(..) |
             Type::Bitfield(..) |
             Type::Function(..) |
-            Type::Interface(..) |
             Type::Array(..) |
             Type::CArray(..) |
             Type::FixedArray(..) |
