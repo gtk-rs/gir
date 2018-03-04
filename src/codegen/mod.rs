@@ -46,6 +46,10 @@ fn normal_generate(env: &Env) {
     let mut traits: Vec<String> = Vec::new();
     let root_path = env.config.target_path.join("src").join("auto");
 
+    if env.config.single_version_file {
+        generate_single_version_file(env, &root_path);
+    }
+
     objects::generate(env, &root_path, &mut mod_rs, &mut traits);
     records::generate(env, &root_path, &mut mod_rs);
     enums::generate(env, &root_path, &mut mod_rs);
@@ -67,5 +71,12 @@ pub fn generate_mod_rs(env: &Env, root_path: &Path, mod_rs: &[String], traits: &
         try!(writeln!(w, "pub mod traits {{"));
         try!(general::write_vec(w, traits));
         writeln!(w, "}}")
+    });
+}
+
+pub fn generate_single_version_file(env: &Env, root_path: &Path) {
+    let path = root_path.join("versions.txt");
+    save_to_file(path, env.config.make_backup, |w| {
+        general::single_version_file(w, &env.config)
     });
 }

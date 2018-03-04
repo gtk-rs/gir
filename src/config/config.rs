@@ -46,6 +46,7 @@ pub struct Config {
     pub deprecate_by_min_version: bool,
     pub show_statistics: bool,
     pub concurrency: library::Concurrency,
+    pub single_version_file: bool,
 }
 
 impl Config {
@@ -151,24 +152,30 @@ impl Config {
             None => false,
         };
 
+        let single_version_file = match toml.lookup("options.single_version_file") {
+            Some(v) => try!(v.as_result_bool("options.single_version_file")),
+            None => false,
+        };
+
         let show_statistics = args.get_bool("-s");
 
         Ok(Config {
-            work_mode: work_mode,
-            girs_dir: girs_dir,
-            girs_version: girs_version,
+            work_mode,
+            girs_dir,
+            girs_version,
             library_name: library_name.into(),
             library_version: library_version.into(),
-            target_path: target_path,
-            doc_target_path: doc_target_path,
-            external_libraries: external_libraries,
-            objects: objects,
-            min_cfg_version: min_cfg_version,
-            make_backup: make_backup,
-            generate_safety_asserts: generate_safety_asserts,
-            deprecate_by_min_version: deprecate_by_min_version,
-            show_statistics: show_statistics,
-            concurrency: concurrency,
+            target_path,
+            doc_target_path,
+            external_libraries,
+            objects,
+            min_cfg_version,
+            make_backup,
+            generate_safety_asserts,
+            deprecate_by_min_version,
+            show_statistics,
+            concurrency,
+            single_version_file,
         })
     }
 

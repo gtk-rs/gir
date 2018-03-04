@@ -81,6 +81,20 @@ You now have the sys part of your binding!
 
 This mode requires you to write another TOML file. [gtk/Gir.toml](https://github.com/gtk-rs/gtk/blob/master/Gir.toml) is a good example.
 
+```toml
+[options]
+girs_dir = "gir-files"
+library = "Gtk"
+version = "3.0"
+min_cfg_version = "3.4"
+target_path = "."
+work_mode = "normal"
+generate_safety_asserts = true
+deprecate_by_min_version = true
+# with this option enabled, versions for gir and gir-files saved only to one file to minimize noise
+single_version_file = true
+```
+
 This mode generates only the specified objects. You can either add the object's fullname to the `generate` array or add it to the `manual` array (but in this case, it won't be generated, just used in other functions/methods instead of generating an "ignored" argument). Example:
 
 ```toml
