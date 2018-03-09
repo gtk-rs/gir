@@ -20,6 +20,7 @@ pub fn generate(env :&Env) {
     let tests = env.config.target_path.join("tests");
     let abi_c = tests.join("abi.c");
     let abi_rs = tests.join("abi.rs");
+    let manual_h = tests.join("manual.h");
 
     let ns = env.library.namespace(MAIN_NAMESPACE);
     let ctypes = ns.types
@@ -62,6 +63,12 @@ pub fn generate(env :&Env) {
         return;
     }
 
+    if !manual_h.exists() {
+        save_to_file(&manual_h, env.config.make_backup, |w| {
+            info!("Generating file {:?}", &manual_h);
+            writeln!(w, "// Insert manual customizations here, they won't be overwritten.")
+        });
+    }
     save_to_file(&abi_c, env.config.make_backup, |w| {
         generate_abi_c(env, &abi_c, w)
     });
@@ -84,6 +91,7 @@ fn generate_abi_c(env: &Env, path: &Path, w: &mut Write) -> io::Result<()> {
     writeln!(w, "#define _POSIX_C_SOURCE 200809L")?;
     writeln!(w, "#include <stdalign.h>")?;
     writeln!(w, "#include <stdio.h>")?;
+    writeln!(w, "#include \"manual.h\"")?;
 
     let ns = env.library.namespace(MAIN_NAMESPACE);
     for include in ns.c_includes.iter() {
