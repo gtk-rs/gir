@@ -101,6 +101,7 @@ fn generate_abi_c(env: &Env, path: &Path, w: &mut Write) -> io::Result<()> {
     writeln!(w, "{}", r##"
 int main() {
   printf("%zu\n%zu\n", sizeof(ABI_TEST_TYPE), alignof(ABI_TEST_TYPE));
+  return 0;
 }"##)
 
 }
