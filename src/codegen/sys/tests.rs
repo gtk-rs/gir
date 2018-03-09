@@ -9,6 +9,13 @@ use library::{Type, MAIN_NAMESPACE};
 use nameutil::crate_name;
 use codegen::general;
 
+struct CType {
+    /// Name of type, as used in C.
+    name: String,
+    /// Expression describing when type is available (when defined only conditionally).
+    cfg_condition: Option<String>,
+}
+
 pub fn generate(env :&Env) {
     let tests = env.config.target_path.join("tests");
     let abi_c = tests.join("abi.c");
@@ -29,15 +36,26 @@ pub fn generate(env :&Env) {
             Type::Interface(_)
             => {
                 let full_name = format!("{}.{}", &ns.name, t.get_name());
-                if !env.type_status_sys(&full_name).ignored() {
-                    t.get_glib_name()
-                } else {
-                    None
+                if env.type_status_sys(&full_name).ignored() {
+                    return None;
                 }
+                let name = match t.get_glib_name() {
+                    None => return None,
+                    Some(name) => name,
+                };
+                if is_name_made_up(name) {
+                    return None;
+                }
+                let cfg_condition = env.config.objects.get(&full_name).and_then(|obj| {
+                    obj.cfg_condition.clone()
+                });
+                Some(CType {
+                    name: name.to_owned(),
+                    cfg_condition,
+                })
             },
             _ => None,
         })
-        .filter(|s| !is_name_made_up(s))
         .collect::<Vec<_>>();
 
     if ctypes.is_empty() {
@@ -79,7 +97,7 @@ int main() {
 
 }
 
-fn generate_abi_rs(env: &Env, path: &Path, w: &mut Write, ctypes: &[&str]) -> io::Result<()> {
+fn generate_abi_rs(env: &Env, path: &Path, w: &mut Write, ctypes: &[CType]) -> io::Result<()> {
     info!("Generating file {:?}", path);
     general::start_comments(w, &env.config)?;
     writeln!(w, "")?;
@@ -232,8 +250,9 @@ fn get_rust_abi() -> BTreeMap<String, ABI> {
     let mut abi = BTreeMap::new();"##)?;
     
     for ctype in ctypes {
+        general::cfg_condition(w, &ctype.cfg_condition, false, 1)?;
         writeln!(w, r##"    abi.insert("{ctype}".to_owned(), ABI::from_type::<{ctype}>());"##,
-                 ctype=ctype)?;
+                 ctype=ctype.name)?;
     }
 
     writeln!(w, "{}", r##"    abi
