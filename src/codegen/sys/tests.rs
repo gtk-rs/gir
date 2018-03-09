@@ -262,8 +262,8 @@ fn get_c_abi(cc: &Compiler, name: &str) -> Result<ABI, Box<Error>> {
     let mut abi_cmd = Command::new("./abi");
     let output = abi_cmd.output()?;
     if !output.status.success() {
-        return Err(format!("command {:?} failed, {}",
-                           &abi_cmd, output.status).into());
+        return Err(format!("command {:?} failed, {:?}",
+                           &abi_cmd, &output).into());
     }
 
     let stdout = str::from_utf8(&output.stdout)?;
