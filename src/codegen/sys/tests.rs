@@ -178,6 +178,16 @@ impl ABI {
     }
 }
 
+#[derive(Copy, Clone, Debug, Default, Eq, PartialEq)]
+struct TestResults {
+    /// Number of successfully completed tests.
+    passed: usize,
+    /// Total number of failed tests (including those that failed to compile).
+    failed: usize,
+    /// Number of tests that failed to compile.
+    failed_compile: usize,
+}
+
 #[test]
 fn test_cross_validate_abi_with_c() {
     // Configure compiler instance."##)?;
@@ -196,27 +206,36 @@ fn test_cross_validate_abi_with_c() {
 
     // Sanity check that compilation works.
     assert_eq!(ABI {size: 1, alignment: 1},
-               get_c_abi(&cc, "char").expect("C ABI for char"));
+               get_c_abi(&cc, "char").expect("C ABI for char"),
+               "failed to obtain correct ABI for char type");
 
-    let rust = get_rust_abi();
-    let mut failed = false;
-    for (name, rust_abi) in &rust {
+    let mut results : TestResults = Default::default();
+    for (name, rust_abi) in &get_rust_abi() {
         match get_c_abi(&cc, name) {
             Err(e) => {
-                failed = true;
+                results.failed += 1;
+                results.failed_compile += 1;
                 eprintln!("{}", e);
                 continue;
             },
             Ok(ref c_abi) => {
-                if rust_abi != c_abi {
-                    failed = true;
+                if rust_abi == c_abi {
+                    results.passed += 1;
+                } else {
+                    results.failed += 1;
                     eprintln!("ABI mismatch for {}\nRust: {:?}\nC:    {:?}",
                               name, rust_abi, c_abi);
                 }
             }
         };
     }
-    assert!(!failed);
+
+    if results.failed + results.failed_compile != 0 {
+        panic!("FAILED\nABI test results: {} passed; {} failed (compilation errors: {})",
+               results.passed,
+               results.failed,
+               results.failed_compile);
+    }
 }
 
 fn get_c_abi(cc: &Compiler, name: &str) -> Result<ABI, Box<Error>> {
@@ -257,9 +276,6 @@ fn get_rust_abi() -> BTreeMap<String, ABI> {
 
     writeln!(w, "{}", r##"    abi
 }
-
 "##)
 
 }
-
-
