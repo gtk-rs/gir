@@ -7,6 +7,7 @@ use env::Env;
 use file_saver::save_to_file;
 use library::{Type, MAIN_NAMESPACE};
 use nameutil::crate_name;
+use codegen::general;
 
 pub fn generate(env :&Env) {
     let tests = env.config.target_path.join("tests");
@@ -59,7 +60,8 @@ fn is_name_made_up(name: &str) -> bool {
 
 fn generate_abi_c(env: &Env, path: &Path, w: &mut Write) -> io::Result<()> {
     info!("Generating file {:?}", path);
-
+    general::start_comments(w, &env.config)?;
+    writeln!(w, "")?;
     writeln!(w, "/* For %z support in printf when using MinGW. */")?;
     writeln!(w, "#define _POSIX_C_SOURCE 200809L")?;
     writeln!(w, "#include <stdalign.h>")?;
@@ -79,7 +81,8 @@ int main() {
 
 fn generate_abi_rs(env: &Env, path: &Path, w: &mut Write, ctypes: &[&str]) -> io::Result<()> {
     info!("Generating file {:?}", path);
-
+    general::start_comments(w, &env.config)?;
+    writeln!(w, "")?;
     let name = format!("{}_sys", crate_name(&env.config.library_name));
     writeln!(w, "extern crate {};", &name)?;
     writeln!(w, "extern crate shell_words;")?;
