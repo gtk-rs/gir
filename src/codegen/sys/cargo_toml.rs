@@ -78,6 +78,11 @@ fn fill_in(root: &mut Table, env: &Env) {
     }
 
     {
+        let dev_deps = upsert_table(root, "dev-dependencies");
+        set_string(dev_deps, "shell-words", "0.1.0");
+    }
+
+    {
         let features = upsert_table(root, "features");
         features.clear();
         let versions = env.namespaces

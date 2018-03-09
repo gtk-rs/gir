@@ -82,6 +82,7 @@ fn generate_abi_rs(env: &Env, path: &Path, w: &mut Write, ctypes: &[&str]) -> io
 
     let name = format!("{}_sys", crate_name(&env.config.library_name));
     writeln!(w, "extern crate {};", &name)?;
+    writeln!(w, "extern crate shell_words;")?;
     writeln!(w, "{}", r##"
 use std::collections::BTreeMap;
 use std::env;
@@ -122,8 +123,8 @@ impl Compiler {
 
 fn get_var(name: &str, default: &str) -> Result<Vec<String>, Box<Error>> {
     match env::var(name) {
-        Ok(value) => Ok(shell_split(&value)),
-        Err(env::VarError::NotPresent) => Ok(shell_split(default)),
+        Ok(value) => Ok(shell_words::split(&value)?),
+        Err(env::VarError::NotPresent) => Ok(shell_words::split(default)?),
         Err(err) => Err(format!("{} {}", name, err).into()),
     }
 }
@@ -138,14 +139,7 @@ fn pkg_config_cflags(package: &str) -> Result<Vec<String>, Box<Error>> {
                            &cmd, out.status).into());
     }
     let stdout = str::from_utf8(&out.stdout)?;
-    Ok(shell_split(stdout))
-}
-
-fn shell_split(s: &str) -> Vec<String> {
-    // FIXME: Use shell word splitting rules.
-    s.split_whitespace()
-        .map(|s| s.to_owned())
-        .collect()
+    Ok(shell_words::split(stdout)?)
 }
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
