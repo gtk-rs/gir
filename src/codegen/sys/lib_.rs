@@ -59,7 +59,7 @@ fn generate_lib(w: &mut Write, env: &Env) -> Result<()> {
     try!(functions::generate_callbacks(w, env, &prepare(ns)));
     try!(generate_records(w, env, &records));
     try!(generate_classes_structs(w, env, &classes));
-    try!(generate_interfaces_structs(w, &interfaces));
+    try!(generate_interfaces_structs(w, env, &interfaces));
 
     try!(writeln!(w, "extern \"C\" {{"));
     try!(functions::generate_enums_funcs(w, env, &enums));
@@ -154,6 +154,10 @@ fn generate_aliases(w: &mut Write, env: &Env, items: &[&Alias]) -> Result<()> {
         try!(writeln!(w, "// Aliases"));
     }
     for item in items {
+        let full_name = format!("{}.{}", env.namespaces.main().name, item.name);
+        if !env.type_status_sys(&full_name).need_generate() {
+            continue;
+        }
         let (comment, c_type) = match ffi_type(env, item.typ, &item.target_c_type) {
             Ok(x) => ("", x),
             x @ Err(..) => ("//", x.into_string()),
@@ -180,6 +184,9 @@ fn generate_bitfields(w: &mut Write, env: &Env, items: &[&Bitfield]) -> Result<(
     for item in items {
         let full_name = format!("{}.{}", env.namespaces.main().name, item.name);
         let config = env.config.objects.get(&full_name);
+        if let Some(false) = config.map(|c| c.status.need_generate()) {
+            continue;
+        }
         let mut vals: HashMap<String, (String, Option<Version>)> = HashMap::new();
 
         try!(writeln!(
@@ -229,15 +236,15 @@ fn generate_constants(w: &mut Write, env: &Env, constants: &[Constant]) -> Resul
         try!(writeln!(w, "// Constants"));
     }
     for constant in constants {
-        let (mut comment, mut type_) = match ffi_type(env, constant.typ, &constant.c_type) {
+        let full_name = format!("{}.{}", env.namespaces.main().name, constant.name);
+        let config = env.config.objects.get(&full_name);
+        if let Some(false) = config.map(|c| c.status.need_generate()) {
+            continue;
+        }
+        let (comment, mut type_) = match ffi_type(env, constant.typ, &constant.c_type) {
             Ok(x) => ("", x),
             x @ Err(..) => ("//", x.into_string()),
         };
-        if env.type_status_sys(&format!("{}.{}", env.config.library_name, constant.name))
-            .ignored()
-        {
-            comment = "//";
-        }
         let mut value = constant.value.clone();
         if type_ == "*mut c_char" {
             type_ = "*const c_char".into();
@@ -308,6 +315,11 @@ fn generate_enums(w: &mut Write, env: &Env, items: &[&Enumeration]) -> Result<()
         try!(writeln!(w, "// Enums"));
     }
     for item in items {
+        let full_name = format!("{}.{}", env.namespaces.main().name, item.name);
+        let config = env.config.objects.get(&full_name);
+        if let Some(false) = config.map(|c| c.status.need_generate()) {
+            continue;
+        }
         if item.members.len() == 1 {
             try!(writeln!(w, "pub type {} = c_int;", item.name));
             try!(writeln!(
@@ -321,10 +333,6 @@ fn generate_enums(w: &mut Write, env: &Env, items: &[&Enumeration]) -> Result<()
             try!(writeln!(w, ""));
             continue;
         }
-
-        let full_name = format!("{}.{}", env.namespaces.main().name, item.name);
-        let config = env.config.objects.get(&full_name);
-
         let mut vals: HashMap<String, (String, Option<Version>)> = HashMap::new();
         try!(writeln!(w, "pub type {} = c_int;", item.c_type));
         for member in &item.members {
@@ -360,10 +368,15 @@ fn generate_unions(w: &mut Write, env: &Env, unions: &[&Union]) -> Result<()> {
         try!(writeln!(w, "// Unions"));
     }
     for union in unions {
-        if union.c_type.is_some() {
-            let fields = fields::from_union(env, union);
-            try!(generate_from_fields(w, &fields));
+        if union.c_type.is_none() {
+            continue;
         }
+        let full_name = format!("{}.{}", env.namespaces.main().name, union.name);
+        if !env.type_status_sys(&full_name).need_generate() {
+            continue;
+        }
+        let fields = fields::from_union(env, union);
+        try!(generate_from_fields(w, &fields));
     }
     Ok(())
 }
@@ -385,17 +398,25 @@ fn generate_classes_structs(w: &mut Write, env: &Env, classes: &[&Class]) -> Res
         try!(writeln!(w, "// Classes"));
     }
     for class in classes {
+        let full_name = format!("{}.{}", env.namespaces.main().name, class.name);
+        if !env.type_status_sys(&full_name).need_generate() {
+            continue;
+        }
         let fields = fields::from_class(env, class);
         try!(generate_from_fields(w, &fields));
     }
     Ok(())
 }
 
-fn generate_interfaces_structs(w: &mut Write, interfaces: &[&Interface]) -> Result<()> {
+fn generate_interfaces_structs(w: &mut Write, env: &Env, interfaces: &[&Interface]) -> Result<()> {
     if !interfaces.is_empty() {
         try!(writeln!(w, "// Interfaces"));
     }
     for interface in interfaces {
+        let full_name = format!("{}.{}", env.namespaces.main().name, interface.name);
+        if !env.type_status_sys(&full_name).need_generate() {
+            continue;
+        }
         try!(writeln!(
             w,
             "#[repr(C)]\npub struct {}(c_void);\n",
@@ -420,6 +441,10 @@ fn generate_records(w: &mut Write, env: &Env, records: &[&Record]) -> Result<()>
         try!(writeln!(w, "// Records"));
     }
     for record in records {
+        let full_name = format!("{}.{}", env.namespaces.main().name, record.name);
+        if !env.type_status_sys(&full_name).need_generate() {
+            continue;
+        }
         if record.c_type == "GHookList" {
             // 1. GHookList is useful.
             // 2. GHookList contains bitfields.
