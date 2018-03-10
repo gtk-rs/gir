@@ -44,7 +44,7 @@ impl FunctionsMutVisitor for ReplaceToPriority {
         if !func.name.ends_with("_async") {
             return true;
         }
-        for par in func.parameters.iter_mut() {
+        for par in &mut func.parameters {
             if par.typ == self.tid_int && par.name.ends_with("priority") {
                 par.typ = self.tid_priority;
             }

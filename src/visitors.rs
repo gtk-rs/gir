@@ -8,7 +8,7 @@ pub trait FunctionsMutVisitor {
 
 impl Namespace {
     pub fn visit_functions_mut<V: FunctionsMutVisitor>(&mut self, visitor: &mut V) -> bool {
-        for type_ in self.types.iter_mut() {
+        for type_ in &mut self.types {
             if let Some(ref mut type_) = *type_ {
                 if !type_.visit_functions_mut(visitor) {
                     return false;
@@ -22,17 +22,17 @@ impl Namespace {
 impl Type {
     pub fn visit_functions_mut<V: FunctionsMutVisitor>(&mut self, visitor: &mut V) -> bool {
         match *self {
-            Type::Class(ref mut class) => for function in class.functions.iter_mut() {
+            Type::Class(ref mut class) => for function in &mut class.functions {
                 if !visitor.visit_function_mut(function) {
                     return false;
                 }
             },
-            Type::Interface(ref mut interface) => for function in interface.functions.iter_mut() {
+            Type::Interface(ref mut interface) => for function in &mut interface.functions {
                 if !visitor.visit_function_mut(function) {
                     return false;
                 }
             },
-            Type::Record(ref mut record) => for function in record.functions.iter_mut() {
+            Type::Record(ref mut record) => for function in &mut record.functions {
                 if !visitor.visit_function_mut(function) {
                     return false;
                 }
