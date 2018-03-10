@@ -805,7 +805,7 @@ impl Library {
 
     pub fn add_type(&mut self, ns_id: u16, name: &str, typ: Type) -> TypeId {
         TypeId {
-            ns_id: ns_id,
+            ns_id,
             id: self.namespace_mut(ns_id).add_type(name, Some(typ)),
         }
     }
@@ -820,20 +820,20 @@ impl Library {
             self.find_namespace(ns).and_then(|ns_id| {
                 self.namespace(ns_id).find_type(name).map(|id| {
                     TypeId {
-                        ns_id: ns_id,
-                        id: id,
+                        ns_id,
+                        id,
                     }
                 })
             })
         } else if let Some(id) = self.namespace(current_ns_id).find_type(name) {
             Some(TypeId {
                 ns_id: current_ns_id,
-                id: id,
+                id,
             })
         } else if let Some(id) = self.namespace(INTERNAL_NAMESPACE).find_type(name) {
             Some(TypeId {
                 ns_id: INTERNAL_NAMESPACE,
-                id: id,
+                id,
             })
         } else {
             None
@@ -854,15 +854,15 @@ impl Library {
             let id = ns.find_type(name)
                 .unwrap_or_else(|| ns.add_type(name, None));
             return TypeId {
-                ns_id: ns_id,
-                id: id,
+                ns_id,
+                id,
             };
         }
 
         let id = self.namespace_mut(current_ns_id).add_type(name, None);
         TypeId {
             ns_id: current_ns_id,
-            id: id,
+            id,
         }
     }
 
@@ -896,8 +896,8 @@ impl Library {
         Box::new(ns.index.values().map(move |&id| {
             (
                 TypeId {
-                    ns_id: ns_id,
-                    id: id,
+                    ns_id,
+                    id,
                 },
                 ns.types[id as usize].as_ref().unwrap(),
             )

@@ -42,7 +42,7 @@ pub fn analyze(
             nullable = val;
         }
         Some(library::Parameter {
-            nullable: nullable,
+            nullable,
             ..func.ret.clone()
         })
     };
@@ -101,9 +101,9 @@ pub fn analyze(
     }
 
     Info {
-        parameter: parameter,
-        base_tid: base_tid,
-        commented: commented,
+        parameter,
+        base_tid,
+        commented,
         bool_return_is_error: bool_return_error_message,
     }
 }

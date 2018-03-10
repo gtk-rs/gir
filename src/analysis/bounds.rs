@@ -209,7 +209,7 @@ impl Bounds {
                 self.used.push(Bound {
                     bound_type: BoundType::with_lifetime(*sub, lifetime),
                     parameter_name: name.to_owned(),
-                    alias: alias,
+                    alias,
                     type_str: type_str.to_owned(),
                     info_for_next_type: true,
                 });
@@ -222,9 +222,9 @@ impl Bounds {
         };
         if let Some(alias) = self.unused.pop_front() {
             self.used.push(Bound {
-                bound_type: bound_type,
+                bound_type,
                 parameter_name: name.to_owned(),
-                alias: alias,
+                alias,
                 type_str: type_str.to_owned(),
                 info_for_next_type: false,
             });

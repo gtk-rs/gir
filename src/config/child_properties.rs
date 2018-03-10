@@ -45,9 +45,9 @@ impl Parse for ChildProperty {
             .unwrap_or(false);
 
         Some(ChildProperty {
-            name: name,
-            type_name: type_name,
-            doc_hidden: doc_hidden,
+            name,
+            type_name,
+            doc_hidden,
         })
     }
 }
@@ -83,9 +83,9 @@ impl Parse for ChildProperties {
 
         if !properties.is_empty() {
             Some(ChildProperties {
-                child_name: child_name,
-                child_type: child_type,
-                properties: properties,
+                child_name,
+                child_type,
+                properties,
             })
         } else {
             if child_name.is_some() {

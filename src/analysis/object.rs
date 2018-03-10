@@ -186,14 +186,14 @@ pub fn class(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<Info>
     }
 
     let base = InfoBase {
-        full_name: full_name,
+        full_name,
         type_id: class_tid,
-        name: name,
-        functions: functions,
-        specials: specials,
-        imports: imports,
-        version: version,
-        deprecated_version: deprecated_version,
+        name,
+        functions,
+        specials,
+        imports,
+        version,
+        deprecated_version,
         cfg_condition: obj.cfg_condition.clone(),
         concurrency: obj.concurrency,
     };
@@ -212,22 +212,22 @@ pub fn class(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<Info>
     let has_functions = !base.functions().is_empty();
 
     let info = Info {
-        base: base,
+        base,
         c_type: klass.c_type.clone(),
         c_class_type: klass.c_class_type.clone(),
         get_type: klass.glib_get_type.clone(),
-        supertypes: supertypes,
-        generate_trait: generate_trait,
-        trait_name: trait_name,
-        has_constructors: has_constructors,
-        has_methods: has_methods,
-        has_functions: has_functions,
-        signals: signals,
-        notify_signals: notify_signals,
-        trampolines: trampolines,
-        properties: properties,
-        child_properties: child_properties,
-        signatures: signatures,
+        supertypes,
+        generate_trait,
+        trait_name,
+        has_constructors,
+        has_methods,
+        has_functions,
+        signals,
+        notify_signals,
+        trampolines,
+        properties,
+        child_properties,
+        signatures,
     };
 
     Some(info)
@@ -315,14 +315,14 @@ pub fn interface(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<I
     }
 
     let base = InfoBase {
-        full_name: full_name,
+        full_name,
         type_id: iface_tid,
-        name: name,
-        functions: functions,
+        name,
+        functions,
         specials: Default::default(),
-        imports: imports,
-        version: version,
-        deprecated_version: deprecated_version,
+        imports,
+        version,
+        deprecated_version,
         cfg_condition: obj.cfg_condition.clone(),
         concurrency: obj.concurrency,
     };
@@ -331,20 +331,20 @@ pub fn interface(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<I
     let has_functions = !base.functions().is_empty();
 
     let info = Info {
-        base: base,
+        base,
         c_type: iface.c_type.clone(),
         c_class_type: iface.c_class_type.clone(),
         get_type: iface.glib_get_type.clone(),
-        supertypes: supertypes,
+        supertypes,
         generate_trait: true,
-        trait_name: trait_name,
-        has_methods: has_methods,
-        has_functions: has_functions,
-        signals: signals,
-        notify_signals: notify_signals,
-        trampolines: trampolines,
-        properties: properties,
-        signatures: signatures,
+        trait_name,
+        has_methods,
+        has_functions,
+        signals,
+        notify_signals,
+        trampolines,
+        properties,
+        signatures,
         ..Default::default()
     };
 

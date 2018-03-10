@@ -130,7 +130,7 @@ impl Parameters {
         };
 
         let transformation = Transformation {
-            ind_c: ind_c,
+            ind_c,
             ind_rust: None,
             transformation_type: get_length_type(env, "", &par.name, par.typ),
         };
@@ -191,7 +191,7 @@ pub fn analyze(
             add_rust_parameter = false;
 
             let transformation = Transformation {
-                ind_c: ind_c,
+                ind_c,
                 ind_rust: None,
                 transformation_type: get_length_type(env, &array_name, &par.name, par.typ),
             };
@@ -227,10 +227,10 @@ pub fn analyze(
             c_type: par.c_type.clone(),
             instance_parameter: par.instance_parameter,
             direction: par.direction,
-            transfer: transfer,
-            caller_allocates: caller_allocates,
-            nullable: nullable,
-            ref_mode: ref_mode,
+            transfer,
+            caller_allocates,
+            nullable,
+            ref_mode,
             is_error: par.is_error,
         };
         parameters.c_parameters.push(c_par);
@@ -242,7 +242,7 @@ pub fn analyze(
             let rust_par = RustParameter {
                 name: name.clone(),
                 typ: par.typ,
-                ind_c: ind_c,
+                ind_c,
                 allow_none: par.allow_none,
             };
             parameters.rust_parameters.push(rust_par);
@@ -250,20 +250,20 @@ pub fn analyze(
             if *nullable && is_into(env, par) && !(async_func && (name == data_param_name || name == callback_param_name)) {
                 let with_stash = ref_mode == RefMode::ByRef;
                 let transformation = Transformation {
-                    ind_c: ind_c,
-                    ind_rust: ind_rust,
+                    ind_c,
+                    ind_rust,
                     transformation_type: TransformationType::Into {
                         name: name.clone(),
-                        with_stash: with_stash,
+                        with_stash,
                     },
                 };
                 parameters.transformations.push(transformation);
 
                 if with_stash {
                     parameters.transformations.push(Transformation {
-                        ind_c: ind_c,
-                        ind_rust: ind_rust,
-                        transformation_type: TransformationType::ToGlibStash { name: name },
+                        ind_c,
+                        ind_rust,
+                        transformation_type: TransformationType::ToGlibStash { name },
                     });
 
                     continue;
@@ -274,26 +274,26 @@ pub fn analyze(
         }
 
         let transformation_type = match ConversionType::of(env, par.typ) {
-            ConversionType::Direct => TransformationType::ToGlibDirect { name: name },
+            ConversionType::Direct => TransformationType::ToGlibDirect { name },
             ConversionType::Scalar => TransformationType::ToGlibScalar {
-                name: name,
-                nullable: nullable,
+                name,
+                nullable,
             },
             ConversionType::Pointer => TransformationType::ToGlibPointer {
-                name: name,
+                name,
                 instance_parameter: par.instance_parameter,
-                transfer: transfer,
-                ref_mode: ref_mode,
+                transfer,
+                ref_mode,
                 to_glib_extra: String::new(),
             },
             ConversionType::Borrow => TransformationType::ToGlibBorrow,
-            ConversionType::Unknown => TransformationType::ToGlibUnknown { name: name },
+            ConversionType::Unknown => TransformationType::ToGlibUnknown { name },
         };
 
         let mut transformation = Transformation {
-            ind_c: ind_c,
-            ind_rust: ind_rust,
-            transformation_type: transformation_type,
+            ind_c,
+            ind_rust,
+            transformation_type,
         };
         let mut typ = None;
         match transformation.transformation_type {
@@ -346,7 +346,7 @@ fn get_length_type(
     TransformationType::Length {
         array_name: array_name.to_string(),
         array_length_name: length_name.to_string(),
-        array_length_type: array_length_type,
+        array_length_type,
     }
 }
 

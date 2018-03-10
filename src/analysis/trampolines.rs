@@ -139,13 +139,13 @@ pub fn analyze(
 
     let trampoline = Trampoline {
         name: name.clone(),
-        parameters: parameters,
-        ret: ret,
-        bounds: bounds,
-        version: version,
-        inhibit: inhibit,
-        concurrency: concurrency,
-        is_notify: is_notify,
+        parameters,
+        ret,
+        bounds,
+        version,
+        inhibit,
+        concurrency,
+        is_notify,
     };
     trampolines.push(trampoline);
     Ok(name)

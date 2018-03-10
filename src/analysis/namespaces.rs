@@ -57,9 +57,9 @@ pub fn run(gir: &library::Library) -> Info {
         };
         namespaces.push(Namespace {
             name: ns.name.clone(),
-            crate_name: crate_name,
-            ffi_crate_name: ffi_crate_name,
-            higher_crate_name: higher_crate_name,
+            crate_name,
+            ffi_crate_name,
+            higher_crate_name,
             package_name: ns.package_name.clone(),
             shared_libs: ns.shared_library.clone(),
             versions: ns.versions.iter().cloned().collect(),
@@ -70,7 +70,7 @@ pub fn run(gir: &library::Library) -> Info {
     }
 
     Info {
-        namespaces: namespaces,
+        namespaces,
         glib_ns_id: glib_ns_id.expect("Missing `GLib` namespace!"),
     }
 }

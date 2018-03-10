@@ -92,7 +92,7 @@ pub fn run(library: &Library, namespaces: &namespaces::Info) -> Info {
                 ..Default::default()
             };
             let tid = TypeId {
-                ns_id: ns_id,
+                ns_id,
                 id: pos as u32,
             };
 

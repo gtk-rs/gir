@@ -177,18 +177,18 @@ impl Library {
         let typ = Type::Class(Class {
             name: class_name.into(),
             c_type: c_type.into(),
-            type_struct: type_struct,
+            type_struct,
             c_class_type: None, // this will be resolved during postprocessing
             glib_get_type: get_type.into(),
-            fields: fields,
+            fields,
             functions: fns,
-            signals: signals,
-            properties: properties,
-            parent: parent,
+            signals,
+            properties,
+            parent,
             implements: impls,
-            doc: doc,
-            version: version,
-            deprecated_version: deprecated_version,
+            doc,
+            version,
+            deprecated_version,
         });
         self.add_type(ns_id, class_name, typ);
         Ok(())
@@ -305,13 +305,13 @@ impl Library {
             c_type: c_type.into(),
             glib_get_type: get_type,
             gtype_struct_for: gtype_struct_for.map(|s| s.into()),
-            fields: fields,
+            fields,
             functions: fns,
-            version: version,
-            deprecated_version: deprecated_version,
-            doc: doc,
-            doc_deprecated: doc_deprecated,
-            disguised: disguised,
+            version,
+            deprecated_version,
+            doc,
+            doc_deprecated,
+            disguised,
         });
 
         Ok(Some(typ))
@@ -435,9 +435,9 @@ impl Library {
             name: union_name.into(),
             c_type: Some(c_type.into()),
             glib_get_type: get_type,
-            fields: fields,
+            fields,
             functions: fns,
-            doc: doc,
+            doc,
         })
     }
 
@@ -474,11 +474,11 @@ impl Library {
             Ok(Field {
                 name: field_name.into(),
                 typ: tid,
-                c_type: c_type,
-                private: private,
-                bits: bits,
-                array_length: array_length,
-                doc: doc,
+                c_type,
+                private,
+                bits,
+                array_length,
+                doc,
             })
         } else {
             Err(parser.fail("Missing <type> element"))
@@ -545,16 +545,16 @@ impl Library {
         let typ = Type::Interface(Interface {
             name: interface_name.into(),
             c_type: c_type.into(),
-            type_struct: type_struct,
+            type_struct,
             c_class_type: None, // this will be resolved during postprocessing
             glib_get_type: get_type.into(),
             functions: fns,
-            signals: signals,
-            properties: properties,
+            signals,
+            properties,
             prerequisites: prereqs,
-            doc: doc,
-            version: version,
-            deprecated_version: deprecated_version,
+            doc,
+            version,
+            deprecated_version,
         });
         self.add_type(ns_id, interface_name, typ);
         Ok(())
@@ -585,12 +585,12 @@ impl Library {
         let typ = Type::Bitfield(Bitfield {
             name: bitfield_name.into(),
             c_type: c_type.into(),
-            members: members,
+            members,
             functions: fns,
-            version: version,
-            deprecated_version: deprecated_version,
-            doc: doc,
-            doc_deprecated: doc_deprecated,
+            version,
+            deprecated_version,
+            doc,
+            doc_deprecated,
             glib_get_type: get_type,
         });
         self.add_type(ns_id, bitfield_name, typ);
@@ -632,13 +632,13 @@ impl Library {
         let typ = Type::Enumeration(Enumeration {
             name: enum_name.into(),
             c_type: c_type.into(),
-            members: members,
+            members,
             functions: fns,
-            version: version,
-            deprecated_version: deprecated_version,
-            doc: doc,
-            doc_deprecated: doc_deprecated,
-            error_domain: error_domain,
+            version,
+            deprecated_version,
+            doc,
+            doc_deprecated,
+            error_domain,
             glib_get_type: get_type,
         });
         self.add_type(ns_id, enum_name, typ);
@@ -703,13 +703,13 @@ impl Library {
                 Constant {
                     name: const_name.into(),
                     c_identifier: c_identifier.into(),
-                    typ: typ,
-                    c_type: c_type,
+                    typ,
+                    c_type,
                     value: value.into(),
-                    version: version,
-                    deprecated_version: deprecated_version,
-                    doc: doc,
-                    doc_deprecated: doc_deprecated,
+                    version,
+                    deprecated_version,
+                    doc,
+                    doc_deprecated,
                 },
             );
             Ok(())
@@ -746,9 +746,9 @@ impl Library {
             let typ = Type::Alias(Alias {
                 name: alias_name.into(),
                 c_identifier: c_identifier.into(),
-                typ: typ,
+                typ,
                 target_c_type: c_type,
-                doc: doc,
+                doc,
             });
             self.add_type(ns_id, alias_name, typ);
             Ok(())
@@ -772,7 +772,7 @@ impl Library {
         Ok(Member {
             name: member_name.into(),
             value: value.into(),
-            doc: doc,
+            doc,
             c_identifier: c_identifier.unwrap_or_else(|| member_name.into()),
         })
     }
@@ -843,14 +843,14 @@ impl Library {
             Ok(Function {
                 name: fn_name.into(),
                 c_identifier: c_identifier.map(|s| s.into()),
-                kind: kind,
+                kind,
                 parameters: params,
-                ret: ret,
-                throws: throws,
-                version: version,
-                deprecated_version: deprecated_version,
-                doc: doc,
-                doc_deprecated: doc_deprecated,
+                ret,
+                throws,
+                version,
+                deprecated_version,
+                doc,
+                doc_deprecated,
             })
         } else {
             Err(parser.fail("Missing <return-value> element"))
@@ -926,12 +926,12 @@ impl Library {
             Ok(Signal {
                 name: signal_name.into(),
                 parameters: params,
-                ret: ret,
-                is_action: is_action,
-                version: version,
-                deprecated_version: deprecated_version,
-                doc: doc,
-                doc_deprecated: doc_deprecated,
+                ret,
+                is_action,
+                version,
+                deprecated_version,
+                doc,
+                doc_deprecated,
             })
         } else {
             Err(parser.fail("Missing <return-value> element"))
@@ -1017,15 +1017,15 @@ impl Library {
                 name: param_name.into(),
                 typ: tid,
                 c_type: c_type.unwrap(),
-                instance_parameter: instance_parameter,
-                direction: direction,
-                transfer: transfer,
-                caller_allocates: caller_allocates,
+                instance_parameter,
+                direction,
+                transfer,
+                caller_allocates,
                 nullable: Nullable(nullable),
-                allow_none: allow_none,
-                array_length: array_length,
+                allow_none,
+                array_length,
                 is_error: false,
-                doc: doc,
+                doc,
                 async,
             })
         } else if varargs {
@@ -1033,15 +1033,15 @@ impl Library {
                 name: "".into(),
                 typ: self.find_type(INTERNAL_NAMESPACE, "varargs").unwrap(),
                 c_type: "".into(),
-                instance_parameter: instance_parameter,
+                instance_parameter,
                 direction: Default::default(),
                 transfer: Transfer::None,
                 caller_allocates: false,
                 nullable: Nullable(false),
-                allow_none: allow_none,
+                allow_none,
                 array_length: None,
                 is_error: false,
-                doc: doc,
+                doc,
                 async,
             })
         } else {
@@ -1098,17 +1098,17 @@ impl Library {
         if let Some((tid, c_type, _array_length)) = typ {
             Ok(Some(Property {
                 name: prop_name.into(),
-                readable: readable,
-                writable: writable,
-                construct: construct,
-                construct_only: construct_only,
-                transfer: transfer,
+                readable,
+                writable,
+                construct,
+                construct_only,
+                transfer,
                 typ: tid,
-                c_type: c_type,
-                version: version,
-                deprecated_version: deprecated_version,
-                doc: doc,
-                doc_deprecated: doc_deprecated,
+                c_type,
+                version,
+                deprecated_version,
+                doc,
+                doc_deprecated,
             }))
         } else {
             Err(parser.fail("Missing <type> element"))

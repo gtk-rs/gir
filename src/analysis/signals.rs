@@ -112,13 +112,13 @@ fn analyze_signal(
     }
 
     let info = Info {
-        connect_name: connect_name,
+        connect_name,
         signal_name: signal.name.clone(),
-        trampoline_name: trampoline_name,
-        action_emit_name: action_emit_name,
-        version: version,
-        deprecated_version: deprecated_version,
-        doc_hidden: doc_hidden,
+        trampoline_name,
+        action_emit_name,
+        version,
+        deprecated_version,
+        doc_hidden,
     };
     Some(info)
 }

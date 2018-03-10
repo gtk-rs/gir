@@ -79,7 +79,7 @@ impl Builder {
         let mem_mode = c_type_mem_mode(env, parameter);
         self.parameters.push(Parameter::Out {
             parameter: parameter_ffi_call_out::Parameter::new(parameter),
-            mem_mode: mem_mode,
+            mem_mode,
         });
         self.outs_as_return = true;
         self
@@ -332,7 +332,7 @@ impl Builder {
         let params = self.generate_func_parameters();
         let func = Chunk::FfiCall {
             name: self.glib_name.clone(),
-            params: params,
+            params,
         };
         func
     }
@@ -529,7 +529,7 @@ impl Builder {
                         let val = Chunk::Custom("ret".into());
                         let conv = Chunk::FfiCallConversion {
                             call: Box::new(val),
-                            array_length_name: array_length_name,
+                            array_length_name,
                             ret: ret_info,
                         };
                         vec.insert(0, conv);

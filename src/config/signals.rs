@@ -73,10 +73,10 @@ impl Parse for Parameter {
             .map(|s| s.to_owned());
 
         Some(Parameter {
-            ident: ident,
-            nullable: nullable,
-            transformation: transformation,
-            new_name: new_name,
+            ident,
+            nullable,
+            transformation,
+            new_name,
         })
     }
 }
@@ -157,14 +157,14 @@ impl Signal {
             .unwrap_or(false);
 
         Some(Signal {
-            ident: ident,
-            ignore: ignore,
-            inhibit: inhibit,
-            version: version,
-            parameters: parameters,
-            ret: ret,
-            concurrency: concurrency,
-            doc_hidden: doc_hidden,
+            ident,
+            ignore,
+            inhibit,
+            version,
+            parameters,
+            ret,
+            concurrency,
+            doc_hidden,
         })
     }
 }

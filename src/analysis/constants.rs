@@ -56,12 +56,12 @@ pub fn analyze<F: Borrow<library::Constant>>(
         let name = nameutil::mangle_keywords(&*constant.name).into_owned();
 
         consts.push(Info {
-            name: name,
+            name,
             glib_name: constant.c_identifier.clone(),
             typ: constant.typ,
-            version: version,
-            deprecated_version: deprecated_version,
-            cfg_condition: cfg_condition,
+            version,
+            deprecated_version,
+            cfg_condition,
         });
     }
 

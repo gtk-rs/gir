@@ -17,7 +17,7 @@ pub fn read_external_libraries(toml: &toml::Value) -> Result<Vec<ExternalLibrary
             .map(|namespace| {
                 ExternalLibrary {
                     crate_name: crate_name(&namespace),
-                    namespace: namespace,
+                    namespace,
                 }
             })
             .collect(),

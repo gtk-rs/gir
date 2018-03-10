@@ -170,9 +170,9 @@ fn analyze_property(
             typ: prop.typ,
             is_get: true,
             func_name: get_func_name,
-            nullable: nullable,
-            get_out_ref_mode: get_out_ref_mode,
-            set_in_ref_mode: set_in_ref_mode,
+            nullable,
+            get_out_ref_mode,
+            set_in_ref_mode,
             version: prop_version,
             deprecated_version: prop.deprecated_version,
             bound: None,
@@ -185,16 +185,16 @@ fn analyze_property(
         let bound = Bound::get_for_property_setter(env, &var_name, prop.typ, nullable);
         Some(Property {
             name: name.clone(),
-            var_name: var_name,
+            var_name,
             typ: prop.typ,
             is_get: false,
             func_name: set_func_name,
-            nullable: nullable,
-            get_out_ref_mode: get_out_ref_mode,
-            set_in_ref_mode: set_in_ref_mode,
+            nullable,
+            get_out_ref_mode,
+            set_in_ref_mode,
             version: prop_version,
             deprecated_version: prop.deprecated_version,
-            bound: bound,
+            bound,
         })
     } else {
         None
@@ -253,7 +253,7 @@ fn analyze_property(
         Some(signals::Info {
             connect_name: format!("connect_property_{}_notify", name_for_func),
             signal_name: format!("notify::{}", name),
-            trampoline_name: trampoline_name,
+            trampoline_name,
             action_emit_name: None,
             version: prop_version,
             deprecated_version: prop.deprecated_version,
