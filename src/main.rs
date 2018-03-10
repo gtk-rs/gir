@@ -134,11 +134,11 @@ fn do_main() -> Result<()> {
         let class_hierarchy = analysis::class_hierarchy::run(&library);
 
         env = Env {
-            library: library,
+            library,
             config: cfg,
-            namespaces: namespaces,
+            namespaces,
             symbols: RefCell::new(symbols),
-            class_hierarchy: class_hierarchy,
+            class_hierarchy,
             analysis: Default::default(),
         };
     }

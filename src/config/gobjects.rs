@@ -251,25 +251,25 @@ fn parse_object(toml_object: &Value, concurrency: library::Concurrency) -> GObje
     }
 
     GObject {
-        name: name,
-        functions: functions,
-        constants: constants,
-        signals: signals,
-        members: members,
-        properties: properties,
-        status: status,
-        module_name: module_name,
-        version: version,
-        cfg_condition: cfg_condition,
+        name,
+        functions,
+        constants,
+        signals,
+        members,
+        properties,
+        status,
+        module_name,
+        version,
+        cfg_condition,
         type_id: None,
-        generate_trait: generate_trait,
-        trait_name: trait_name,
-        child_properties: child_properties,
-        concurrency: concurrency,
-        ref_mode: ref_mode,
-        must_use: must_use,
-        conversion_type: conversion_type,
-        use_boxed_functions: use_boxed_functions,
+        generate_trait,
+        trait_name,
+        child_properties,
+        concurrency,
+        ref_mode,
+        must_use,
+        conversion_type,
+        use_boxed_functions,
     }
 }
 
@@ -299,8 +299,8 @@ fn parse_status_shorthand(
                         name_.into(),
                         GObject {
                             name: name_.into(),
-                            status: status,
-                            concurrency: concurrency,
+                            status,
+                            concurrency,
                             ..Default::default()
                         },
                     );

@@ -45,10 +45,10 @@ impl Parse for Parameter {
             .map(ToOwned::to_owned);
 
         Some(Parameter {
-            ident: ident,
-            constant: constant,
-            nullable: nullable,
-            length_of: length_of,
+            ident,
+            constant,
+            nullable,
+            length_of,
         })
     }
 }
@@ -77,8 +77,8 @@ impl Return {
                 .and_then(|v| v.as_str())
                 .map(|m| m.to_owned());
             Return {
-                nullable: nullable,
-                bool_return_is_error: bool_return_is_error,
+                nullable,
+                bool_return_is_error,
             }
         } else {
             Return {
@@ -154,15 +154,15 @@ impl Parse for Function {
             .unwrap_or(false);
 
         Some(Function {
-            ident: ident,
-            ignore: ignore,
-            version: version,
-            parameters: parameters,
-            ret: ret,
-            cfg_condition: cfg_condition,
-            doc_hidden: doc_hidden,
-            is_windows_utf8: is_windows_utf8,
-            disable_length_detect: disable_length_detect,
+            ident,
+            ignore,
+            version,
+            parameters,
+            ret,
+            cfg_condition,
+            doc_hidden,
+            is_windows_utf8,
+            disable_length_detect,
         })
     }
 }

@@ -118,17 +118,17 @@ fn analyze_property(
             )
         };
         Some(ChildProperty {
-            name: name,
-            typ: typ,
+            name,
+            typ,
             child_name: child_name.to_owned(),
-            child_type: child_type,
-            nullable: nullable,
-            get_out_ref_mode: get_out_ref_mode,
-            set_in_ref_mode: set_in_ref_mode,
-            doc_hidden: doc_hidden,
-            set_params: set_params,
+            child_type,
+            nullable,
+            get_out_ref_mode,
+            set_in_ref_mode,
+            doc_hidden,
+            set_params,
             bounds: bounds_str,
-            is_into: is_into,
+            is_into,
             to_glib_extra: String::new(),
         })
     } else {

@@ -41,10 +41,10 @@ impl Parse for Constant {
             .unwrap_or(false);
 
         Some(Constant {
-            ident: ident,
-            ignore: ignore,
-            version: version,
-            cfg_condition: cfg_condition,
+            ident,
+            ignore,
+            version,
+            cfg_condition,
         })
     }
 }

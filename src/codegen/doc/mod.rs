@@ -368,7 +368,7 @@ where
 
     let symbols = env.symbols.borrow();
     let ty = TypeStruct {
-        parent: parent,
+        parent,
         ..fn_.to_stripper_type()
     };
     let self_name: Option<String> = fn_.parameters()
@@ -454,7 +454,7 @@ fn create_property_doc(
     }
     if property.writable {
         v.push(TypeStruct {
-            parent: parent,
+            parent,
             ..TypeStruct::new(SType::Fn, &format!("set_property_{}", property.name))
         });
     }

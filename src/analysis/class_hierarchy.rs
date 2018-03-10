@@ -18,7 +18,7 @@ pub fn run(library: &Library) -> Info {
     for (tid, _) in library.types() {
         get_node(library, &mut hier, tid);
     }
-    Info { hier: hier }
+    Info { hier }
 }
 
 fn get_node<'a>(
@@ -56,7 +56,7 @@ fn get_node<'a>(
     hier.insert(
         tid,
         Node {
-            supers: supers,
+            supers,
             subs: HashSet::new(),
         },
     );

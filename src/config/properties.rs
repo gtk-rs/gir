@@ -40,9 +40,9 @@ impl Parse for Property {
             .and_then(|s| s.parse().ok());
 
         Some(Property {
-            ident: ident,
-            ignore: ignore,
-            version: version,
+            ident,
+            ignore,
+            version,
         })
     }
 }

@@ -120,11 +120,11 @@ fn analyze_global_functions(env: &mut Env) {
     );
 
     env.analysis.global_functions = Some(info_base::InfoBase {
-        full_name: full_name,
+        full_name,
         type_id: TypeId::tid_none(),
         name: "*".into(),
-        functions: functions,
-        imports: imports,
+        functions,
+        imports,
         ..Default::default()
     });
 }

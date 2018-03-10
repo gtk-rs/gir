@@ -106,8 +106,8 @@ fn generate_enum(env: &Env, w: &mut Write, enum_: &Enumeration, config: &GObject
             name: member.name.to_camel(),
             c_name: member.c_identifier.clone(),
             value: member.value.clone(),
-            version: version,
-            deprecated_version: deprecated_version,
+            version,
+            deprecated_version,
         });
     }
 

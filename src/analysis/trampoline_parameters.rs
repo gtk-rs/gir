@@ -66,7 +66,7 @@ impl Parameters {
         let c_par = CParameter {
             name: name.clone(),
             typ: type_tid,
-            c_type: c_type,
+            c_type,
         };
         let ind_c = self.c_parameters.len();
         self.c_parameters.push(c_par);
@@ -74,22 +74,22 @@ impl Parameters {
         let rust_par = RustParameter {
             name: name.clone(),
             typ: type_tid,
-            direction: direction,
-            nullable: nullable,
-            ref_mode: ref_mode,
+            direction,
+            nullable,
+            ref_mode,
         };
         let ind_rust = self.rust_parameters.len();
         self.rust_parameters.push(rust_par);
 
         Transformation {
-            ind_c: ind_c,
-            ind_rust: ind_rust,
+            ind_c,
+            ind_rust,
             transformation: TransformationType::None,
-            name: name,
+            name,
             typ: type_tid,
-            transfer: transfer,
-            ref_mode: ref_mode,
-            conversion_type: conversion_type,
+            transfer,
+            ref_mode,
+            conversion_type,
         }
     }
 

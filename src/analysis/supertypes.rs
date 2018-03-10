@@ -22,7 +22,7 @@ pub fn analyze(env: &Env, type_id: TypeId, imports: &mut Imports) -> Vec<Statuse
         parents.push(StatusedTypeId {
             type_id: super_tid,
             name: env.library.type_(super_tid).get_name(),
-            status: status,
+            status,
         });
 
         if !status.ignored() {

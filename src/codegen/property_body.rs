@@ -90,7 +90,7 @@ impl Builder {
         };
         let ffi_call = Chunk::FfiCall {
             name: self.get_ffi_func(),
-            params: params,
+            params,
         };
 
         body.push(Chunk::Let {
@@ -146,7 +146,7 @@ impl Builder {
 
         let ffi_call = Chunk::FfiCall {
             name: self.set_ffi_func(),
-            params: params,
+            params,
         };
         let return_info = analysis::return_value::Info {
             parameter: None,

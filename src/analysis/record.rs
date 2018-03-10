@@ -95,22 +95,22 @@ pub fn new(env: &Env, obj: &GObject) -> Option<Info> {
     special_functions::analyze_imports(&specials, &mut imports);
 
     let base = InfoBase {
-        full_name: full_name,
+        full_name,
         type_id: record_tid,
-        name: name,
-        functions: functions,
-        specials: specials,
-        imports: imports,
-        version: version,
-        deprecated_version: deprecated_version,
+        name,
+        functions,
+        specials,
+        imports,
+        version,
+        deprecated_version,
         cfg_condition: obj.cfg_condition.clone(),
         concurrency: obj.concurrency,
     };
 
     let info = Info {
-        base: base,
+        base,
         glib_get_type: record.glib_get_type.clone(),
-        use_boxed_functions: use_boxed_functions,
+        use_boxed_functions,
     };
 
     Some(info)

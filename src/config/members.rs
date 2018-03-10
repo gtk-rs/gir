@@ -48,11 +48,11 @@ impl Parse for Member {
             .unwrap_or(false);
 
         Some(Member {
-            ident: ident,
-            alias: alias,
-            version: version,
-            deprecated_version: deprecated_version,
-            ignore: ignore,
+            ident,
+            alias,
+            version,
+            deprecated_version,
+            ignore,
         })
     }
 }
