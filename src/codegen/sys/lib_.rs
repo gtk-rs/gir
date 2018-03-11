@@ -250,7 +250,7 @@ fn generate_constants(w: &mut Write, env: &Env, constants: &[Constant]) -> Resul
             type_ = "*const c_char".into();
             value = format!(
                 "b\"{}\\0\" as *const u8 as *const c_char",
-                escape_string(&value)
+                general::escape_string(&value)
             );
         } else if type_ == "gboolean" {
             let prefix = if env.config.library_name == "GLib" {
@@ -294,20 +294,6 @@ fn generate_constants(w: &mut Write, env: &Env, constants: &[Constant]) -> Resul
     }
 
     Ok(())
-}
-
-fn escape_string(s: &str) -> String {
-    let mut es = String::with_capacity(s.len() * 2);
-    let _ = s.chars()
-        .map(|c| match c {
-            '\'' | '\"' | '\\' => {
-                es.push('\\');
-                es.push(c)
-            }
-            _ => es.push(c),
-        })
-        .count();
-    es
 }
 
 fn generate_enums(w: &mut Write, env: &Env, items: &[&Enumeration]) -> Result<()> {

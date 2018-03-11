@@ -391,3 +391,33 @@ pub fn declare_default_from_new(
 
     Ok(())
 }
+
+/// Escapes string in format suitable for placing inside double quotes.
+pub fn escape_string(s: &str) -> String {
+    let mut es = String::with_capacity(s.len() * 2);
+    let _ = s.chars()
+        .map(|c| match c {
+            '\"' | '\\' => {
+                es.push('\\');
+                es.push(c)
+            }
+            _ => es.push(c),
+        })
+        .count();
+    es
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_escape_string() {
+        assert_eq!(escape_string(""),
+                   "");
+        assert_eq!(escape_string("no escaping here"),
+                   "no escaping here");
+        assert_eq!(escape_string(r#"'"\"#),
+                   r#"'\"\\"#);
+    }
+}
