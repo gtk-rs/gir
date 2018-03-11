@@ -1,3 +1,4 @@
+use std::mem::replace;
 use std::path::{Path, PathBuf};
 use std::str::FromStr;
 
@@ -25,13 +26,18 @@ impl Library {
 
     fn read_repository(&mut self, dir: &Path, parser: &mut XmlParser) -> Result<()> {
         let mut package = None;
+        let mut includes = Vec::new();
         parser.elements(|parser, elem| match elem.name() {
             "include" => {
-                if let (Some(lib), Some(ver)) = (elem.attr("name"), elem.attr("version")) {
-                    if self.find_namespace(lib).is_none() {
-                        let lib = format!("{}-{}", lib, ver);
-                        self.read_file(dir, &lib)?;
-                    }
+                match (elem.attr("name"), elem.attr("version")) {
+                    (Some(name), Some(ver)) => {
+                        if self.find_namespace(name).is_none() {
+                            let lib = format!("{}-{}", name, ver);
+                            self.read_file(dir, &lib)?;
+                        }
+                    },
+                    (Some(name), None) => includes.push(name.to_owned()),
+                    _ => {},
                 }
                 Ok(())
             }
@@ -43,7 +49,8 @@ impl Library {
                 }
                 Ok(())
             }
-            "namespace" => self.read_namespace(parser, elem, package.take()),
+            "namespace" => self.read_namespace(parser, elem, package.take(), 
+                                               replace(&mut includes, Vec::new())),
             _ => Err(parser.unexpected_element(elem)),
         })?;
         Ok(())
@@ -54,19 +61,25 @@ impl Library {
         parser: &mut XmlParser,
         elem: &Element,
         package: Option<String>,
+        c_includes: Vec<String>,
     ) -> Result<()> {
         let ns_name = elem.attr_required("name")?;
         let ns_id = self.add_namespace(ns_name);
-        self.namespace_mut(ns_id).package_name = package;
-        if let Some(s) = elem.attr("shared-library") {
-            self.namespace_mut(ns_id).shared_library = s.split(',').map(String::from).collect();
-        }
-        if let Some(s) = elem.attr("identifier-prefixes") {
-            self.namespace_mut(ns_id).identifier_prefixes =
-                s.split(',').map(String::from).collect();
-        }
-        if let Some(s) = elem.attr("symbol-prefixes") {
-            self.namespace_mut(ns_id).symbol_prefixes = s.split(',').map(String::from).collect();
+
+        {
+            let ns = self.namespace_mut(ns_id);
+            ns.package_name = package;
+            ns.c_includes = c_includes;
+            if let Some(s) = elem.attr("shared-library") {
+                ns.shared_library = s.split(',').map(String::from).collect();
+            }
+            if let Some(s) = elem.attr("identifier-prefixes") {
+                ns.identifier_prefixes =
+                    s.split(',').map(String::from).collect();
+            }
+            if let Some(s) = elem.attr("symbol-prefixes") {
+                ns.symbol_prefixes = s.split(',').map(String::from).collect();
+            }
         }
 
         trace!(
