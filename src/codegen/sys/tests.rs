@@ -197,9 +197,11 @@ fn generate_abi_rs(env: &Env, path: &Path, w: &mut Write, ctypes: &[CType], ccon
     let name = format!("{}_sys", crate_name(&env.config.library_name));
     writeln!(w, "extern crate {};", &name)?;
     writeln!(w, "extern crate shell_words;")?;
+    writeln!(w, "extern crate tempdir;")?;
     writeln!(w, "use std::collections::BTreeMap;")?;
     writeln!(w, "use std::env;")?;
     writeln!(w, "use std::error::Error;")?;
+    writeln!(w, "use std::path::Path;")?;
     writeln!(w, "use std::mem::{{align_of, size_of}};")?;
     writeln!(w, "use std::process::Command;")?;
     writeln!(w, "use std::str;")?;
@@ -229,7 +231,20 @@ impl Compiler {
         self.args.push(arg);
     }
 
-    pub fn to_command(&self) -> Command {
+    pub fn compile(&self, src: &Path, out: &Path) -> Result<(), Box<Error>> {
+        let mut cmd = self.to_command();
+        cmd.arg(src);
+        cmd.arg("-o");
+        cmd.arg(out);
+        let status = cmd.spawn()?.wait()?;
+        if !status.success() {
+            return Err(format!("compilation command {:?} failed, {}",
+                               &cmd, status).into());
+        }
+        Ok(())
+    }
+
+    fn to_command(&self) -> Command {
         let mut cmd = Command::new(&self.args[0]);
         cmd.args(&self.args[1..]);
         cmd
@@ -316,15 +331,16 @@ impl Results {
 
 #[test]
 fn cross_validate_constants_with_c() {
+    let tmpdir = tempdir::TempDir::new("abi").expect("temporary directory");
     let cc = Compiler::new().expect("configured compiler");
 
     assert_eq!("1",
-               get_c_value(&cc, "1").expect("C constant"),
+               get_c_value(tmpdir.path(), &cc, "1").expect("C constant"),
                "failed to obtain correct constant value for 1");
 
     let mut results : Results = Default::default();
     for (name, rust_value) in &get_rust_constants() {
-        match get_c_value(&cc, name) {
+        match get_c_value(tmpdir.path(), &cc, name) {
             Err(e) => {
                 results.record_failed_to_compile();
                 eprintln!("{}", e);
@@ -345,15 +361,16 @@ fn cross_validate_constants_with_c() {
 
 #[test]
 fn cross_validate_layout_with_c() {
+    let tmpdir = tempdir::TempDir::new("abi").expect("temporary directory");
     let cc = Compiler::new().expect("configured compiler");
 
     assert_eq!(Layout {size: 1, alignment: 1},
-               get_c_layout(&cc, "char").expect("C layout"),
+               get_c_layout(tmpdir.path(), &cc, "char").expect("C layout"),
                "failed to obtain correct layout for char type");
 
     let mut results : Results = Default::default();
     for (name, rust_layout) in &get_rust_layout() {
-        match get_c_layout(&cc, name) {
+        match get_c_layout(tmpdir.path(), &cc, name) {
             Err(e) => {
                 results.record_failed_to_compile();
                 eprintln!("{}", e);
@@ -372,20 +389,13 @@ fn cross_validate_layout_with_c() {
     results.expect_total_success();
 }
 
-fn get_c_layout(cc: &Compiler, name: &str) -> Result<Layout, Box<Error>> {
+fn get_c_layout(dir: &Path, cc: &Compiler, name: &str) -> Result<Layout, Box<Error>> {
+    let exe = dir.join("layout");
     let mut cc = cc.clone();
     cc.define("ABI_TYPE_NAME", name);
-    cc.args.push("tests/layout.c".to_owned());
-    cc.args.push("-olayout".to_owned());
+    cc.compile(Path::new("tests/layout.c"), &exe)?;
 
-    let mut cc_cmd = cc.to_command();
-    let status = cc_cmd.spawn()?.wait()?;
-    if !status.success() {
-        return Err(format!("compilation command {:?} failed, {}",
-                           &cc_cmd, status).into());
-    }
-
-    let mut abi_cmd = Command::new("./layout");
+    let mut abi_cmd = Command::new(exe);
     let output = abi_cmd.output()?;
     if !output.status.success() {
         return Err(format!("command {:?} failed, {:?}",
@@ -399,20 +409,13 @@ fn get_c_layout(cc: &Compiler, name: &str) -> Result<Layout, Box<Error>> {
     Ok(Layout {size, alignment})
 }
 
-fn get_c_value(cc: &Compiler, name: &str) -> Result<String, Box<Error>> {
+fn get_c_value(dir: &Path, cc: &Compiler, name: &str) -> Result<String, Box<Error>> {
+    let exe = dir.join("constant");
     let mut cc = cc.clone();
     cc.define("ABI_CONSTANT_NAME", name);
-    cc.args.push("tests/constant.c".to_owned());
-    cc.args.push("-oconstant".to_owned());
+    cc.compile(Path::new("tests/constant.c"), &exe)?;
 
-    let mut cc_cmd = cc.to_command();
-    let status = cc_cmd.spawn()?.wait()?;
-    if !status.success() {
-        return Err(format!("compilation command {:?} failed, {}",
-                           &cc_cmd, status).into());
-    }
-
-    let mut abi_cmd = Command::new("./constant");
+    let mut abi_cmd = Command::new(exe);
     let output = abi_cmd.output()?;
     if !output.status.success() {
         return Err(format!("command {:?} failed, {:?}",
