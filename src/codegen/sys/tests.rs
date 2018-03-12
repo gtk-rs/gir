@@ -312,20 +312,19 @@ impl Results {
         self.failed += 1;
         self.failed_to_compile += 1;
     }
-    fn expect_total_success(&self) {
-        let status = if self.failed == 0 { "OK" } else { "FAILED" };
-        let summary = format!(
-            "\n{}. {} passed; {} failed (compilation errors: {})",
-            status,
+    fn summary(&self) -> String {
+        format!(
+            "{} passed; {} failed (compilation errors: {})",
             self.passed,
             self.failed,
-            self.failed_to_compile);
-
+            self.failed_to_compile)
+    }
+    fn expect_total_success(&self) {
         if self.failed == 0 {
-            println!("{}", summary);
+            println!("OK: {}", self.summary());
         } else {
-            panic!("{}", summary);
-        }
+            panic!("FAILED: {}", self.summary());
+        };
     }
 }
 
@@ -339,7 +338,7 @@ fn cross_validate_constants_with_c() {
                "failed to obtain correct constant value for 1");
 
     let mut results : Results = Default::default();
-    for (name, rust_value) in &get_rust_constants() {
+    for (i, (name, rust_value)) in get_rust_constants().iter().enumerate() {
         match get_c_value(tmpdir.path(), &cc, name) {
             Err(e) => {
                 results.record_failed_to_compile();
@@ -355,6 +354,9 @@ fn cross_validate_constants_with_c() {
                 }
             }
         };
+        if (i + 1) % 25 == 0 {
+            println!("constants ... {}", results.summary());
+        }
     }
     results.expect_total_success();
 }
@@ -369,7 +371,7 @@ fn cross_validate_layout_with_c() {
                "failed to obtain correct layout for char type");
 
     let mut results : Results = Default::default();
-    for (name, rust_layout) in &get_rust_layout() {
+    for (i, (name, rust_layout)) in get_rust_layout().iter().enumerate() {
         match get_c_layout(tmpdir.path(), &cc, name) {
             Err(e) => {
                 results.record_failed_to_compile();
@@ -385,6 +387,9 @@ fn cross_validate_layout_with_c() {
                 }
             }
         };
+        if (i + 1) % 25 == 0 {
+            println!("layout    ... {}", results.summary());
+        }
     }
     results.expect_total_success();
 }

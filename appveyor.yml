@@ -26,6 +26,6 @@ build_script:
   - cargo build
   - cargo build --features v3_20
   - cd ../secret-sys
-  - cargo test
+  - cargo test -- --nocapture
 
 test: false
