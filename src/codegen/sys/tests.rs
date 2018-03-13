@@ -16,14 +16,49 @@ struct CType {
     cfg_condition: Option<String>,
 }
 
-pub fn generate(env :&Env) {
-    let tests = env.config.target_path.join("tests");
-    let abi_c = tests.join("abi.c");
-    let abi_rs = tests.join("abi.rs");
-    let manual_h = tests.join("manual.h");
+struct CConstant {
+    /// Identifier in C.
+    name: String,
+    /// Stringified value.
+    value: String,
+}
 
+pub fn generate(env :&Env) {
+    let ctypes = prepare_ctypes(env);
+    let cconsts = prepare_cconsts(env);
+
+    if ctypes.is_empty() && cconsts.is_empty() {
+        return;
+    }
+
+    let tests = env.config.target_path.join("tests");
+
+    let manual_h = tests.join("manual.h");
+    if !manual_h.exists() {
+        save_to_file(&manual_h, env.config.make_backup, |w| {
+            generate_manual_h(env, &manual_h, w)
+        });
+    }
+
+    let layout_c = tests.join("layout.c");
+    save_to_file(&layout_c, env.config.make_backup, |w| {
+        generate_layout_c(env, &layout_c, w)
+    });
+
+    let constant_c = tests.join("constant.c");
+    save_to_file(&constant_c, env.config.make_backup, |w| {
+        generate_constant_c(env, &constant_c, w)
+    });
+
+    let abi_rs = tests.join("abi.rs");
+    save_to_file(&abi_rs, env.config.make_backup, |w| {
+        generate_abi_rs(env, &abi_rs, w, &ctypes, &cconsts)
+    });
+}
+
+fn prepare_ctypes(env: &Env) -> Vec<CType> {
     let ns = env.library.namespace(MAIN_NAMESPACE);
-    let ctypes = ns.types
+    ns.types
         .iter()
         .filter_map(|t| t.as_ref())
         .filter(|t| !t.is_incomplete(&env.library))
@@ -57,23 +92,29 @@ pub fn generate(env :&Env) {
             },
             _ => None,
         })
-        .collect::<Vec<_>>();
+        .collect()
+}
 
-    if ctypes.is_empty() {
-        return;
-    }
-
-    if !manual_h.exists() {
-        save_to_file(&manual_h, env.config.make_backup, |w| {
-            generate_manual_h(env, &manual_h, w)
-        });
-    }
-    save_to_file(&abi_c, env.config.make_backup, |w| {
-        generate_abi_c(env, &abi_c, w)
-    });
-    save_to_file(&abi_rs, env.config.make_backup, |w| {
-        generate_abi_rs(env, &abi_rs, w, &ctypes)
-    });
+fn prepare_cconsts(env: &Env) -> Vec<CConstant> {
+    let ns = env.library.namespace(MAIN_NAMESPACE);
+    ns.constants
+        .iter()
+        .filter_map(|constant| {
+            let full_name = format!("{}.{}", &ns.name, constant.name);
+            if env.type_status_sys(&full_name).ignored() {
+                return None;
+            }
+            let value = match constant {
+                c if c.c_type == "gboolean" && c.value == "true" => "1",
+                c if c.c_type == "gboolean" && c.value == "false" => "0",
+                c => &c.value,
+            };
+            Some(CConstant {
+                name: constant.c_identifier.clone(),
+                value: value.to_owned(),
+            })
+        })
+        .collect()
 }
 
 /// Checks if type name is unlikely to correspond to a real C type name.
@@ -95,7 +136,7 @@ fn generate_manual_h(env: &Env, path: &Path, w: &mut Write) -> io::Result<()> {
     Ok(())
 }
 
-fn generate_abi_c(env: &Env, path: &Path, w: &mut Write) -> io::Result<()> {
+fn generate_layout_c(env: &Env, path: &Path, w: &mut Write) -> io::Result<()> {
     info!("Generating file {:?}", path);
     general::start_comments(w, &env.config)?;
     writeln!(w, "")?;
@@ -107,29 +148,66 @@ fn generate_abi_c(env: &Env, path: &Path, w: &mut Write) -> io::Result<()> {
 
     writeln!(w, "{}", r##"
 int main() {
-  printf("%zu\n%zu\n", sizeof(ABI_TEST_TYPE), alignof(ABI_TEST_TYPE));
-  return 0;
+    printf("%zu\n%zu", sizeof(ABI_TYPE_NAME), alignof(ABI_TYPE_NAME));
+    return 0;
 }"##)
 
 }
 
-fn generate_abi_rs(env: &Env, path: &Path, w: &mut Write, ctypes: &[CType]) -> io::Result<()> {
+fn generate_constant_c(env: &Env, path: &Path, w: &mut Write) -> io::Result<()> {
     info!("Generating file {:?}", path);
     general::start_comments(w, &env.config)?;
     writeln!(w, "")?;
+    writeln!(w, "#define _POSIX_C_SOURCE 200809L")?;
+    writeln!(w, "#include <stdio.h>")?;
+    writeln!(w, "#include \"manual.h\"")?;
+
+    writeln!(w, "{}", r##"
+int main() {
+    printf(_Generic((ABI_CONSTANT_NAME),
+                    char *: "%s",
+                    char: "%c",
+                    signed char: "%hhd",
+                    unsigned char: "%hhu",
+                    short int: "%hd",
+                    unsigned short int: "%hu",
+                    int: "%d",
+                    unsigned int: "%u",
+                    long: "%ld",
+                    unsigned long: "%lu",
+                    long long: "%lld",
+                    unsigned long long: "%llu",
+                    double: "%f",
+                    long double: "%ld"),
+           ABI_CONSTANT_NAME);
+    return 0;
+}"##)
+
+}
+
+fn generate_abi_rs(env: &Env, path: &Path, w: &mut Write, ctypes: &[CType], cconsts: &[CConstant]) -> io::Result<()> {
+    let ns = env.library.namespace(MAIN_NAMESPACE);
+    let package_name = ns.package_name.as_ref()
+        .expect("Missing package name");
+
+    info!("Generating file {:?}", path);
+    general::start_comments(w, &env.config)?;
+    writeln!(w, "")?;
+
     let name = format!("{}_sys", crate_name(&env.config.library_name));
     writeln!(w, "extern crate {};", &name)?;
     writeln!(w, "extern crate shell_words;")?;
+    writeln!(w, "extern crate tempdir;")?;
+    writeln!(w, "use std::collections::BTreeMap;")?;
+    writeln!(w, "use std::env;")?;
+    writeln!(w, "use std::error::Error;")?;
+    writeln!(w, "use std::path::Path;")?;
+    writeln!(w, "use std::mem::{{align_of, size_of}};")?;
+    writeln!(w, "use std::process::Command;")?;
+    writeln!(w, "use std::str;")?;
+    writeln!(w, "use {}::*;\n", &name)?;
+    writeln!(w, "static PACKAGES: &[&str] = &[\"{}\"];", package_name)?;
     writeln!(w, "{}", r##"
-use std::collections::BTreeMap;
-use std::env;
-use std::error::Error;
-use std::mem::{align_of, size_of};
-use std::process::Command;
-use std::str;"##)?;
-    writeln!(w, "use {}::*;", &name)?;
-    writeln!(w, "{}", r##"
-
 #[derive(Clone, Debug)]
 struct Compiler {
     pub args: Vec<String>,
@@ -138,8 +216,10 @@ struct Compiler {
 impl Compiler {
     pub fn new() -> Result<Compiler, Box<Error>> {
         let mut args = get_var("CC", "cc")?;
+        args.push("-Wno-deprecated-declarations".to_owned());
         args.extend(get_var("CFLAGS", "")?);
         args.extend(get_var("CPPFLAGS", "")?);
+        args.extend(pkg_config_cflags(PACKAGES)?);
         Ok(Compiler { args })
     }
 
@@ -151,7 +231,20 @@ impl Compiler {
         self.args.push(arg);
     }
 
-    pub fn to_command(&self) -> Command {
+    pub fn compile(&self, src: &Path, out: &Path) -> Result<(), Box<Error>> {
+        let mut cmd = self.to_command();
+        cmd.arg(src);
+        cmd.arg("-o");
+        cmd.arg(out);
+        let status = cmd.spawn()?.wait()?;
+        if !status.success() {
+            return Err(format!("compilation command {:?} failed, {}",
+                               &cmd, status).into());
+        }
+        Ok(())
+    }
+
+    fn to_command(&self) -> Command {
         let mut cmd = Command::new(&self.args[0]);
         cmd.args(&self.args[1..]);
         cmd
@@ -166,10 +259,13 @@ fn get_var(name: &str, default: &str) -> Result<Vec<String>, Box<Error>> {
     }
 }
 
-fn pkg_config_cflags(package: &str) -> Result<Vec<String>, Box<Error>> {
+fn pkg_config_cflags(packages: &[&str]) -> Result<Vec<String>, Box<Error>> {
+    if packages.is_empty() {
+        return Ok(Vec::new());
+    }
     let mut cmd = Command::new("pkg-config");
     cmd.arg("--cflags");
-    cmd.arg(package);
+    cmd.args(packages);
     let out = cmd.output()?;
     if !out.status.success() {
         return Err(format!("command {:?} returned {}", 
@@ -179,15 +275,16 @@ fn pkg_config_cflags(package: &str) -> Result<Vec<String>, Box<Error>> {
     Ok(shell_words::split(stdout)?)
 }
 
+
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
-struct ABI {
+struct Layout {
     size: usize,
     alignment: usize,
 }
 
-impl ABI {
-    pub fn from_type<T: Sized>() -> ABI {
-        ABI {
+impl Layout {
+    pub fn from_type<T: Sized>() -> Layout {
+        Layout {
             size: size_of::<T>(),
             alignment: align_of::<T>(),
         }
@@ -195,79 +292,115 @@ impl ABI {
 }
 
 #[derive(Copy, Clone, Debug, Default, Eq, PartialEq)]
-struct TestResults {
+struct Results {
     /// Number of successfully completed tests.
     passed: usize,
     /// Total number of failed tests (including those that failed to compile).
     failed: usize,
     /// Number of tests that failed to compile.
-    failed_compile: usize,
+    failed_to_compile: usize,
+}
+
+impl Results {
+    fn record_passed(&mut self) {
+        self.passed += 1;
+    }
+    fn record_failed(&mut self) {
+        self.failed += 1;
+    }
+    fn record_failed_to_compile(&mut self) {
+        self.failed += 1;
+        self.failed_to_compile += 1;
+    }
+    fn summary(&self) -> String {
+        format!(
+            "{} passed; {} failed (compilation errors: {})",
+            self.passed,
+            self.failed,
+            self.failed_to_compile)
+    }
+    fn expect_total_success(&self) {
+        if self.failed == 0 {
+            println!("OK: {}", self.summary());
+        } else {
+            panic!("FAILED: {}", self.summary());
+        };
+    }
 }
 
 #[test]
-fn test_cross_validate_abi_with_c() {
-    // Configure compiler instance."##)?;
+fn cross_validate_constants_with_c() {
+    let tmpdir = tempdir::TempDir::new("abi").expect("temporary directory");
+    let cc = Compiler::new().expect("configured compiler");
 
-    let ns = env.library.namespace(MAIN_NAMESPACE);
-    let package_name = ns.package_name.as_ref()
-        .expect("Missing package name");
+    assert_eq!("1",
+               get_c_value(tmpdir.path(), &cc, "1").expect("C constant"),
+               "failed to obtain correct constant value for 1");
 
-    writeln!(w, "\tlet package_name = \"{}\";", package_name)?;
-    writeln!(w, "{}", r##"    let mut cc = Compiler::new()
-        .expect("compiler from environment");
-    let cflags = pkg_config_cflags(package_name)
-        .expect("cflags from pkg-config");
-    cc.args.extend(cflags);
-    cc.args.push("-Wno-deprecated-declarations".to_owned());
-
-    // Sanity check that compilation works.
-    assert_eq!(ABI {size: 1, alignment: 1},
-               get_c_abi(&cc, "char").expect("C ABI for char"),
-               "failed to obtain correct ABI for char type");
-
-    let mut results : TestResults = Default::default();
-    for (name, rust_abi) in &get_rust_abi() {
-        match get_c_abi(&cc, name) {
+    let mut results : Results = Default::default();
+    for (i, (name, rust_value)) in get_rust_constants().iter().enumerate() {
+        match get_c_value(tmpdir.path(), &cc, name) {
             Err(e) => {
-                results.failed += 1;
-                results.failed_compile += 1;
+                results.record_failed_to_compile();
                 eprintln!("{}", e);
-                continue;
             },
-            Ok(ref c_abi) => {
-                if rust_abi == c_abi {
-                    results.passed += 1;
+            Ok(ref c_value) => {
+                if rust_value == c_value {
+                    results.record_passed();
                 } else {
-                    results.failed += 1;
-                    eprintln!("ABI mismatch for {}\nRust: {:?}\nC:    {:?}",
-                              name, rust_abi, c_abi);
+                    results.record_failed();
+                    eprintln!("Constant value mismatch for {}\nRust: {:?}\nC:    {:?}",
+                              name, rust_value, c_value);
                 }
             }
         };
+        if (i + 1) % 25 == 0 {
+            println!("constants ... {}", results.summary());
+        }
     }
-
-    if results.failed + results.failed_compile != 0 {
-        panic!("FAILED\nABI test results: {} passed; {} failed (compilation errors: {})",
-               results.passed,
-               results.failed,
-               results.failed_compile);
-    }
+    results.expect_total_success();
 }
 
-fn get_c_abi(cc: &Compiler, name: &str) -> Result<ABI, Box<Error>> {
-    let mut cc = cc.clone();
-    cc.define("ABI_TEST_TYPE", name);
-    cc.args.push("tests/abi.c".to_owned());
-    cc.args.push("-oabi".to_owned());
+#[test]
+fn cross_validate_layout_with_c() {
+    let tmpdir = tempdir::TempDir::new("abi").expect("temporary directory");
+    let cc = Compiler::new().expect("configured compiler");
 
-    let mut cc_cmd = cc.to_command();
-    let status = cc_cmd.spawn()?.wait()?;
-    if !status.success() {
-        return Err(format!("compilation command {:?} failed, {}",
-                           &cc_cmd, status).into());
+    assert_eq!(Layout {size: 1, alignment: 1},
+               get_c_layout(tmpdir.path(), &cc, "char").expect("C layout"),
+               "failed to obtain correct layout for char type");
+
+    let mut results : Results = Default::default();
+    for (i, (name, rust_layout)) in get_rust_layout().iter().enumerate() {
+        match get_c_layout(tmpdir.path(), &cc, name) {
+            Err(e) => {
+                results.record_failed_to_compile();
+                eprintln!("{}", e);
+            },
+            Ok(ref c_layout) => {
+                if rust_layout == c_layout {
+                    results.record_passed();
+                } else {
+                    results.record_failed();
+                    eprintln!("Layout mismatch for {}\nRust: {:?}\nC:    {:?}",
+                              name, rust_layout, c_layout);
+                }
+            }
+        };
+        if (i + 1) % 25 == 0 {
+            println!("layout    ... {}", results.summary());
+        }
     }
+    results.expect_total_success();
+}
 
-    let mut abi_cmd = Command::new("./abi");
+fn get_c_layout(dir: &Path, cc: &Compiler, name: &str) -> Result<Layout, Box<Error>> {
+    let exe = dir.join("layout");
+    let mut cc = cc.clone();
+    cc.define("ABI_TYPE_NAME", name);
+    cc.compile(Path::new("tests/layout.c"), &exe)?;
+
+    let mut abi_cmd = Command::new(exe);
     let output = abi_cmd.output()?;
     if !output.status.success() {
         return Err(format!("command {:?} failed, {:?}",
@@ -278,19 +411,46 @@ fn get_c_abi(cc: &Compiler, name: &str) -> Result<ABI, Box<Error>> {
     let mut words = stdout.split_whitespace();
     let size = words.next().unwrap().parse().unwrap();
     let alignment = words.next().unwrap().parse().unwrap();
-    Ok(ABI {size, alignment})
+    Ok(Layout {size, alignment})
 }
 
-fn get_rust_abi() -> BTreeMap<String, ABI> {
-    let mut abi = BTreeMap::new();"##)?;
+fn get_c_value(dir: &Path, cc: &Compiler, name: &str) -> Result<String, Box<Error>> {
+    let exe = dir.join("constant");
+    let mut cc = cc.clone();
+    cc.define("ABI_CONSTANT_NAME", name);
+    cc.compile(Path::new("tests/constant.c"), &exe)?;
+
+    let mut abi_cmd = Command::new(exe);
+    let output = abi_cmd.output()?;
+    if !output.status.success() {
+        return Err(format!("command {:?} failed, {:?}",
+                           &abi_cmd, &output).into());
+    }
+
+    Ok(str::from_utf8(&output.stdout)?.to_owned())
+}
+
+fn get_rust_layout() -> BTreeMap<&'static str, Layout> {
+    let mut layout = BTreeMap::new();"##)?;
     
     for ctype in ctypes {
         general::cfg_condition(w, &ctype.cfg_condition, false, 1)?;
-        writeln!(w, r##"    abi.insert("{ctype}".to_owned(), ABI::from_type::<{ctype}>());"##,
+        writeln!(w, r##"    layout.insert("{ctype}", Layout::from_type::<{ctype}>());"##,
                  ctype=ctype.name)?;
     }
 
-    writeln!(w, "{}", r##"    abi
+    writeln!(w, "{}", r##"    layout
+}
+
+fn get_rust_constants() -> BTreeMap<&'static str, &'static str> {
+    let mut constants = BTreeMap::new();"##)?;
+
+    for cconst in cconsts {
+        writeln!(w, r##"    constants.insert("{name}", "{value}");"##,
+                 name=cconst.name, value=&general::escape_string(&cconst.value))?;
+    }
+
+    writeln!(w, "{}", r##"    constants
 }
 "##)
 
