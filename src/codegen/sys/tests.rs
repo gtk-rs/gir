@@ -3,11 +3,11 @@ use std::io;
 use std::path::Path;
 
 use analysis::types::IsIncomplete;
+use codegen::general;
 use env::Env;
 use file_saver::save_to_file;
-use library::{Type, MAIN_NAMESPACE};
+use library::{Bitfield, Enumeration, Type, MAIN_NAMESPACE};
 use nameutil::crate_name;
-use codegen::general;
 
 struct CType {
     /// Name of type, as used in C.
@@ -97,7 +97,7 @@ fn prepare_ctypes(env: &Env) -> Vec<CType> {
 
 fn prepare_cconsts(env: &Env) -> Vec<CConstant> {
     let ns = env.library.namespace(MAIN_NAMESPACE);
-    ns.constants
+    let mut constants: Vec<CConstant> = ns.constants
         .iter()
         .filter_map(|constant| {
             let full_name = format!("{}.{}", &ns.name, constant.name);
@@ -114,7 +114,24 @@ fn prepare_cconsts(env: &Env) -> Vec<CConstant> {
                 value: value.to_owned(),
             })
         })
-        .collect()
+        .collect();
+
+    for typ in &ns.types {
+        match *typ {
+            Some(Type::Bitfield(Bitfield {ref members, ..})) |
+            Some(Type::Enumeration(Enumeration {ref members, ..})) => {
+                for member in members {
+                    constants.push(CConstant {
+                        name: member.c_identifier.clone(),
+                        value: member.value.clone(),
+                    });
+                }
+            }
+            _ => {},
+        }
+    }
+
+    constants
 }
 
 /// Checks if type name is unlikely to correspond to a real C type name.
