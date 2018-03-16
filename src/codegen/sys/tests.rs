@@ -8,6 +8,7 @@ use env::Env;
 use file_saver::save_to_file;
 use library::{Bitfield, Enumeration, Type, MAIN_NAMESPACE};
 
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
 struct CType {
     /// Name of type, as used in C.
     name: String,
@@ -15,6 +16,7 @@ struct CType {
     cfg_condition: Option<String>,
 }
 
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
 struct CConstant {
     /// Identifier in C.
     name: String,
@@ -57,7 +59,7 @@ pub fn generate(env :&Env, crate_name: &str) {
 
 fn prepare_ctypes(env: &Env) -> Vec<CType> {
     let ns = env.library.namespace(MAIN_NAMESPACE);
-    ns.types
+    let mut types: Vec<CType> = ns.types
         .iter()
         .filter_map(|t| t.as_ref())
         .filter(|t| !t.is_incomplete(&env.library))
@@ -91,7 +93,10 @@ fn prepare_ctypes(env: &Env) -> Vec<CType> {
             },
             _ => None,
         })
-        .collect()
+        .collect();
+    
+    types.sort();
+    types
 }
 
 fn prepare_cconsts(env: &Env) -> Vec<CConstant> {
@@ -130,6 +135,7 @@ fn prepare_cconsts(env: &Env) -> Vec<CConstant> {
         }
     }
 
+    constants.sort();
     constants
 }
 
@@ -214,7 +220,6 @@ fn generate_abi_rs(env: &Env, path: &Path, w: &mut Write, crate_name: &str, ctyp
     writeln!(w, "extern crate {};", crate_name)?;
     writeln!(w, "extern crate shell_words;")?;
     writeln!(w, "extern crate tempdir;")?;
-    writeln!(w, "use std::collections::BTreeMap;")?;
     writeln!(w, "use std::env;")?;
     writeln!(w, "use std::error::Error;")?;
     writeln!(w, "use std::path::Path;")?;
@@ -298,15 +303,6 @@ struct Layout {
     alignment: usize,
 }
 
-impl Layout {
-    pub fn from_type<T: Sized>() -> Layout {
-        Layout {
-            size: size_of::<T>(),
-            alignment: align_of::<T>(),
-        }
-    }
-}
-
 #[derive(Copy, Clone, Debug, Default, Eq, PartialEq)]
 struct Results {
     /// Number of successfully completed tests.
@@ -354,7 +350,7 @@ fn cross_validate_constants_with_c() {
                "failed to obtain correct constant value for 1");
 
     let mut results : Results = Default::default();
-    for (i, (name, rust_value)) in get_rust_constants().iter().enumerate() {
+    for (i, &(name, rust_value)) in RUST_CONSTANTS.iter().enumerate() {
         match get_c_value(tmpdir.path(), &cc, name) {
             Err(e) => {
                 results.record_failed_to_compile();
@@ -387,19 +383,19 @@ fn cross_validate_layout_with_c() {
                "failed to obtain correct layout for char type");
 
     let mut results : Results = Default::default();
-    for (i, (name, rust_layout)) in get_rust_layout().iter().enumerate() {
+    for (i, &(name, rust_layout)) in RUST_LAYOUTS.iter().enumerate() {
         match get_c_layout(tmpdir.path(), &cc, name) {
             Err(e) => {
                 results.record_failed_to_compile();
                 eprintln!("{}", e);
             },
-            Ok(ref c_layout) => {
+            Ok(c_layout) => {
                 if rust_layout == c_layout {
                     results.record_passed();
                 } else {
                     results.record_failed();
                     eprintln!("Layout mismatch for {}\nRust: {:?}\nC:    {:?}",
-                              name, rust_layout, c_layout);
+                              name, rust_layout, &c_layout);
                 }
             }
         };
@@ -446,28 +442,21 @@ fn get_c_value(dir: &Path, cc: &Compiler, name: &str) -> Result<String, Box<Erro
     Ok(str::from_utf8(&output.stdout)?.to_owned())
 }
 
-fn get_rust_layout() -> BTreeMap<&'static str, Layout> {
-    let mut layout = BTreeMap::new();"##)?;
-    
+const RUST_LAYOUTS: &[(&str, Layout)] = &["##)?;
     for ctype in ctypes {
         general::cfg_condition(w, &ctype.cfg_condition, false, 1)?;
-        writeln!(w, r##"    layout.insert("{ctype}", Layout::from_type::<{ctype}>());"##,
+        writeln!(w, "\t(\"{ctype}\", Layout {{size: size_of::<{ctype}>(), alignment: align_of::<{ctype}>()}}),",
                  ctype=ctype.name)?;
     }
+    writeln!(w, "{}", r##"];
 
-    writeln!(w, "{}", r##"    layout
-}
-
-fn get_rust_constants() -> BTreeMap<&'static str, &'static str> {
-    let mut constants = BTreeMap::new();"##)?;
-
+const RUST_CONSTANTS: &[(&str, &str)] = &["##)?;
     for cconst in cconsts {
-        writeln!(w, r##"    constants.insert("{name}", "{value}");"##,
+        writeln!(w, "\t(\"{name}\", \"{value}\"),",
                  name=cconst.name, value=&general::escape_string(&cconst.value))?;
     }
+    writeln!(w, "{}", r##"];
 
-    writeln!(w, "{}", r##"    constants
-}
 "##)
 
 }
