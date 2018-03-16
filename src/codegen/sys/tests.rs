@@ -7,7 +7,6 @@ use codegen::general;
 use env::Env;
 use file_saver::save_to_file;
 use library::{Bitfield, Enumeration, Type, MAIN_NAMESPACE};
-use nameutil::crate_name;
 
 struct CType {
     /// Name of type, as used in C.
@@ -23,7 +22,7 @@ struct CConstant {
     value: String,
 }
 
-pub fn generate(env :&Env) {
+pub fn generate(env :&Env, crate_name: &str) {
     let ctypes = prepare_ctypes(env);
     let cconsts = prepare_cconsts(env);
 
@@ -52,7 +51,7 @@ pub fn generate(env :&Env) {
 
     let abi_rs = tests.join("abi.rs");
     save_to_file(&abi_rs, env.config.make_backup, |w| {
-        generate_abi_rs(env, &abi_rs, w, &ctypes, &cconsts)
+        generate_abi_rs(env, &abi_rs, w, crate_name, &ctypes, &cconsts)
     });
 }
 
@@ -183,6 +182,7 @@ fn generate_constant_c(env: &Env, path: &Path, w: &mut Write) -> io::Result<()> 
 int main() {
     printf(_Generic((ABI_CONSTANT_NAME),
                     char *: "%s",
+                    const char *: "%s",
                     char: "%c",
                     signed char: "%hhd",
                     unsigned char: "%hhu",
@@ -202,7 +202,7 @@ int main() {
 
 }
 
-fn generate_abi_rs(env: &Env, path: &Path, w: &mut Write, ctypes: &[CType], cconsts: &[CConstant]) -> io::Result<()> {
+fn generate_abi_rs(env: &Env, path: &Path, w: &mut Write, crate_name: &str, ctypes: &[CType], cconsts: &[CConstant]) -> io::Result<()> {
     let ns = env.library.namespace(MAIN_NAMESPACE);
     let package_name = ns.package_name.as_ref()
         .expect("Missing package name");
@@ -211,8 +211,7 @@ fn generate_abi_rs(env: &Env, path: &Path, w: &mut Write, ctypes: &[CType], ccon
     general::start_comments(w, &env.config)?;
     writeln!(w, "")?;
 
-    let name = format!("{}_sys", crate_name(&env.config.library_name));
-    writeln!(w, "extern crate {};", &name)?;
+    writeln!(w, "extern crate {};", crate_name)?;
     writeln!(w, "extern crate shell_words;")?;
     writeln!(w, "extern crate tempdir;")?;
     writeln!(w, "use std::collections::BTreeMap;")?;
@@ -222,7 +221,7 @@ fn generate_abi_rs(env: &Env, path: &Path, w: &mut Write, ctypes: &[CType], ccon
     writeln!(w, "use std::mem::{{align_of, size_of}};")?;
     writeln!(w, "use std::process::Command;")?;
     writeln!(w, "use std::str;")?;
-    writeln!(w, "use {}::*;\n", &name)?;
+    writeln!(w, "use {}::*;\n", crate_name)?;
     writeln!(w, "static PACKAGES: &[&str] = &[\"{}\"];", package_name)?;
     writeln!(w, "{}", r##"
 #[derive(Clone, Debug)]
