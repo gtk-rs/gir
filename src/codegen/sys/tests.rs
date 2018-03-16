@@ -183,6 +183,7 @@ fn generate_constant_c(env: &Env, path: &Path, w: &mut Write) -> io::Result<()> 
 int main() {
     printf(_Generic((ABI_CONSTANT_NAME),
                     char *: "%s",
+                    const char *: "%s",
                     char: "%c",
                     signed char: "%hhd",
                     unsigned char: "%hhu",
