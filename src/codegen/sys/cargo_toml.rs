@@ -4,12 +4,13 @@ use std::io::prelude::*;
 use toml::{self, Value};
 use toml::value::Table;
 
+use config::Config;
 use env::Env;
 use file_saver::save_to_file;
-use nameutil::crate_name;
+use nameutil;
 use version::Version;
 
-pub fn generate(env: &Env) {
+pub fn generate(env: &Env) -> String {
     info!(
         "Generatnig sys Cargo.toml for {}",
         env.config.library_name
@@ -23,31 +24,33 @@ pub fn generate(env: &Env) {
     }
     let empty = toml_str.trim().is_empty();
     let mut root_table = toml::from_str(&toml_str).unwrap_or_else(|_| Table::new());
+    let crate_name = get_crate_name(&env.config, &root_table);
 
     if empty {
-        fill_empty(&mut root_table, env);
+        fill_empty(&mut root_table, env, &crate_name);
     }
     fill_in(&mut root_table, env);
 
     save_to_file(&path, env.config.make_backup, |w| {
         w.write_all(toml::to_string(&root_table).unwrap().as_bytes())
     });
+
+    crate_name
 }
 
-fn fill_empty(root: &mut Table, env: &Env) {
-    let name = format!("{}_sys", crate_name(&env.config.library_name));
-    let package_name = name.replace("_", "-");
+fn fill_empty(root: &mut Table, env: &Env, crate_name: &str) {
+    let package_name = crate_name.replace("_", "-");
 
     {
         let package = upsert_table(root, "package");
         set_string(package, "name", package_name);
         set_string(package, "version", "0.2.0");
-        set_string(package, "links", crate_name(&env.config.library_name));
+        set_string(package, "links", nameutil::crate_name(&env.config.library_name));
     }
 
     {
         let lib = upsert_table(root, "lib");
-        set_string(lib, "name", name);
+        set_string(lib, "name", crate_name);
     }
 
     let deps = upsert_table(root, "dependencies");
@@ -99,6 +102,21 @@ fn fill_in(root: &mut Table, env: &Env) {
         });
         features.insert("dox".to_string(), Value::Array(Vec::new()));
     }
+}
+
+/// Returns the name of crate being currently generated.
+fn get_crate_name(config: &Config, root: &Table) -> String {
+    if let Some(&Value::Table(ref lib)) = root.get("lib") {
+        if let Some(&Value::String(ref lib_name)) = lib.get("name") {
+            return lib_name.to_owned();
+        }
+    }
+    if let Some(&Value::Table(ref package)) = root.get("package") {
+        if let Some(&Value::String(ref package_name)) = package.get("name") {
+            return nameutil::crate_name(package_name);
+        }
+    }
+    return format!("{}_sys", nameutil::crate_name(&config.library_name));
 }
 
 fn set_string<S: Into<String>>(table: &mut Table, name: &str, new_value: S) {
