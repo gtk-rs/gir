@@ -295,7 +295,7 @@ fn pkg_config_flags(packages: &[&str]) -> Result<Vec<String>, Box<Error>> {
                            &cmd, out.status).into());
     }
     let stdout = str::from_utf8(&out.stdout)?;
-    Ok(shell_words::split(stdout)?)
+    Ok(shell_words::split(stdout.trim())?)
 }
 
 
@@ -422,7 +422,7 @@ fn get_c_layout(dir: &Path, cc: &Compiler, name: &str) -> Result<Layout, Box<Err
     }
 
     let stdout = str::from_utf8(&output.stdout)?;
-    let mut words = stdout.split_whitespace();
+    let mut words = stdout.trim().split_whitespace();
     let size = words.next().unwrap().parse().unwrap();
     let alignment = words.next().unwrap().parse().unwrap();
     Ok(Layout {size, alignment})
@@ -441,7 +441,7 @@ fn get_c_value(dir: &Path, cc: &Compiler, name: &str) -> Result<String, Box<Erro
                            &abi_cmd, &output).into());
     }
 
-    Ok(str::from_utf8(&output.stdout)?.to_owned())
+    Ok(str::from_utf8(&output.stdout)?.trim().to_owned())
 }
 
 const RUST_LAYOUTS: &[(&str, Layout)] = &["##)?;
