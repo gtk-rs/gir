@@ -240,8 +240,7 @@ impl Compiler {
         args.push("-Wno-deprecated-declarations".to_owned());
         args.extend(get_var("CFLAGS", "")?);
         args.extend(get_var("CPPFLAGS", "")?);
-        args.extend(get_var("LDFLAGS", "")?);
-        args.extend(pkg_config_flags(PACKAGES)?);
+        args.extend(pkg_config_cflags(PACKAGES)?);
         Ok(Compiler { args })
     }
 
@@ -281,13 +280,12 @@ fn get_var(name: &str, default: &str) -> Result<Vec<String>, Box<Error>> {
     }
 }
 
-fn pkg_config_flags(packages: &[&str]) -> Result<Vec<String>, Box<Error>> {
+fn pkg_config_cflags(packages: &[&str]) -> Result<Vec<String>, Box<Error>> {
     if packages.is_empty() {
         return Ok(Vec::new());
     }
     let mut cmd = Command::new("pkg-config");
     cmd.arg("--cflags");
-    cmd.arg("--libs");
     cmd.args(packages);
     let out = cmd.output()?;
     if !out.status.success() {
