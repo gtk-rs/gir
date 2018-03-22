@@ -240,7 +240,8 @@ impl Compiler {
         args.push("-Wno-deprecated-declarations".to_owned());
         args.extend(get_var("CFLAGS", "")?);
         args.extend(get_var("CPPFLAGS", "")?);
-        args.extend(pkg_config_cflags(PACKAGES)?);
+        args.extend(get_var("LDFLAGS", "")?);
+        args.extend(pkg_config_flags(PACKAGES)?);
         Ok(Compiler { args })
     }
 
@@ -280,12 +281,13 @@ fn get_var(name: &str, default: &str) -> Result<Vec<String>, Box<Error>> {
     }
 }
 
-fn pkg_config_cflags(packages: &[&str]) -> Result<Vec<String>, Box<Error>> {
+fn pkg_config_flags(packages: &[&str]) -> Result<Vec<String>, Box<Error>> {
     if packages.is_empty() {
         return Ok(Vec::new());
     }
     let mut cmd = Command::new("pkg-config");
     cmd.arg("--cflags");
+    cmd.arg("--libs");
     cmd.args(packages);
     let out = cmd.output()?;
     if !out.status.success() {
@@ -293,7 +295,7 @@ fn pkg_config_cflags(packages: &[&str]) -> Result<Vec<String>, Box<Error>> {
                            &cmd, out.status).into());
     }
     let stdout = str::from_utf8(&out.stdout)?;
-    Ok(shell_words::split(stdout)?)
+    Ok(shell_words::split(stdout.trim())?)
 }
 
 
@@ -420,7 +422,7 @@ fn get_c_layout(dir: &Path, cc: &Compiler, name: &str) -> Result<Layout, Box<Err
     }
 
     let stdout = str::from_utf8(&output.stdout)?;
-    let mut words = stdout.split_whitespace();
+    let mut words = stdout.trim().split_whitespace();
     let size = words.next().unwrap().parse().unwrap();
     let alignment = words.next().unwrap().parse().unwrap();
     Ok(Layout {size, alignment})
@@ -439,7 +441,7 @@ fn get_c_value(dir: &Path, cc: &Compiler, name: &str) -> Result<String, Box<Erro
                            &abi_cmd, &output).into());
     }
 
-    Ok(str::from_utf8(&output.stdout)?.to_owned())
+    Ok(str::from_utf8(&output.stdout)?.trim().to_owned())
 }
 
 const RUST_LAYOUTS: &[(&str, Layout)] = &["##)?;
