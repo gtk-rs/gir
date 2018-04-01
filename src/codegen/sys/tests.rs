@@ -162,11 +162,9 @@ fn generate_layout_c(env: &Env, path: &Path, w: &mut Write) -> io::Result<()> {
     info!("Generating file {:?}", path);
     general::start_comments(w, &env.config)?;
     writeln!(w, "")?;
-    writeln!(w, "/* For %z support in printf when using MinGW. */")?;
-    writeln!(w, "#define _POSIX_C_SOURCE 200809L")?;
+    writeln!(w, "#include \"manual.h\"")?;
     writeln!(w, "#include <stdalign.h>")?;
     writeln!(w, "#include <stdio.h>")?;
-    writeln!(w, "#include \"manual.h\"")?;
 
     writeln!(w, "{}", r##"
 int main() {
@@ -180,9 +178,8 @@ fn generate_constant_c(env: &Env, path: &Path, w: &mut Write) -> io::Result<()> 
     info!("Generating file {:?}", path);
     general::start_comments(w, &env.config)?;
     writeln!(w, "")?;
-    writeln!(w, "#define _POSIX_C_SOURCE 200809L")?;
-    writeln!(w, "#include <stdio.h>")?;
     writeln!(w, "#include \"manual.h\"")?;
+    writeln!(w, "#include <stdio.h>")?;
 
     writeln!(w, "{}", r##"
 int main() {
@@ -238,6 +235,8 @@ impl Compiler {
     pub fn new() -> Result<Compiler, Box<Error>> {
         let mut args = get_var("CC", "cc")?;
         args.push("-Wno-deprecated-declarations".to_owned());
+        // For %z support in printf when using MinGW.
+        args.push("-D__USE_MINGW_ANSI_STDIO".to_owned());
         args.extend(get_var("CFLAGS", "")?);
         args.extend(get_var("CPPFLAGS", "")?);
         args.extend(pkg_config_cflags(PACKAGES)?);
