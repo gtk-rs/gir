@@ -8,7 +8,6 @@ pub fn begin(w: &mut Write) -> Result<()> {
         "#![allow(non_camel_case_types, non_upper_case_globals, non_snake_case)]",
         "",
         "extern crate libc;",
-        "#[macro_use] extern crate bitflags;",
     ];
 
     write_vec(w, &v)
