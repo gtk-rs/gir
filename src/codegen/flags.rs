@@ -108,7 +108,7 @@ impl ToGlib for {name} {{
     type GlibType = ffi::{ffi_name};
 
     fn to_glib(&self) -> ffi::{ffi_name} {{
-        ffi::{ffi_name}::from_bits_truncate(self.bits())
+        self.bits()
     }}
 }}
 ",
@@ -129,7 +129,7 @@ impl ToGlib for {name} {{
         "#[doc(hidden)]
 impl FromGlib<ffi::{ffi_name}> for {name} {{
     fn from_glib(value: ffi::{ffi_name}) -> {name} {{
-        {assert}{name}::from_bits_truncate(value.bits())
+        {assert}{name}::from_bits_truncate(value)
     }}
 }}
 ",
@@ -172,11 +172,10 @@ impl FromGlib<ffi::{ffi_name}> for {name} {{
             w,
             "impl<'a> FromValue<'a> for {name} {{
     unsafe fn from_value(value: &Value) -> Self {{
-        from_glib(ffi::{ffi_name}::from_bits_truncate(gobject_ffi::g_value_get_flags(value.to_glib_none().0)))
+        from_glib(gobject_ffi::g_value_get_flags(value.to_glib_none().0))
     }}
 }}",
             name = flags.name,
-            ffi_name = flags.c_type,
         ));
         try!(writeln!(w, ""));
 
@@ -186,7 +185,7 @@ impl FromGlib<ffi::{ffi_name}> for {name} {{
             w,
             "impl SetValue for {name} {{
     unsafe fn set_value(value: &mut Value, this: &Self) {{
-        gobject_ffi::g_value_set_flags(value.to_glib_none_mut().0, this.to_glib().bits())
+        gobject_ffi::g_value_set_flags(value.to_glib_none_mut().0, this.to_glib())
     }}
 }}",
             name = flags.name,

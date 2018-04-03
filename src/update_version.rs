@@ -42,7 +42,7 @@ fn check_versions(param: &Parameter, current_version: &mut Option<Version>, lib:
         _ => None,
     };
     let new_version = match (*current_version, ty_version) {
-        (Some(ref current_version), Some(ty_version)) => if current_version < &ty_version {
+        (Some(current_version), Some(ty_version)) => if current_version < ty_version {
             Some(ty_version)
         } else {
             None

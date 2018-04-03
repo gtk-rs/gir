@@ -187,13 +187,7 @@ fn generate_bitfields(w: &mut Write, env: &Env, items: &[&Bitfield]) -> Result<(
         if let Some(false) = config.map(|c| c.status.need_generate()) {
             continue;
         }
-        let mut vals: HashMap<String, (String, Option<Version>)> = HashMap::new();
-
-        try!(writeln!(
-            w,
-            "bitflags! {{\n\t#[repr(C)]\n\tpub struct {}: c_uint {{",
-            item.c_type
-        ));
+        try!(writeln!(w, "pub type {} = c_uint;", item.c_type));
         for member in &item.members {
             let member_config = config
                 .as_ref()
@@ -201,29 +195,14 @@ fn generate_bitfields(w: &mut Write, env: &Env, items: &[&Bitfield]) -> Result<(
                 .unwrap_or_else(|| vec![]);
             let version = member_config.iter().filter_map(|m| m.version).next();
 
-            try!(version_condition(w, env, version, false, 2));
             let val: i64 = member.value.parse().unwrap();
+
+            try!(version_condition(w, env, version, false, 0));
             try!(writeln!(
                 w,
-                "\t\tconst {} = {};",
-                member.name.to_uppercase(),
-                val as u32
+                "pub const {}: {} = {};",
+                member.c_identifier, item.c_type, val as u32,
             ));
-            vals.insert(member.value.clone(), (member.name.clone(), version));
-        }
-        try!(writeln!(w, "\t}}\n}}"));
-
-        for member in &item.members {
-            if let Some(&(ref value, version)) = vals.get(&member.value) {
-                try!(version_condition(w, env, version, false, 0));
-                try!(writeln!(
-                    w,
-                    "pub const {}: {} = {1}::{};",
-                    member.c_identifier,
-                    item.c_type,
-                    value.to_uppercase(),
-                ));
-            }
         }
         try!(writeln!(w, ""));
     }
@@ -263,31 +242,20 @@ fn generate_constants(w: &mut Write, env: &Env, constants: &[Constant]) -> Resul
             } else {
                 value = format!("{}GFALSE", prefix);
             }
-        }
-
-        if env.library
+        } else if env.library
             .type_(constant.typ)
             .maybe_ref_as::<Bitfield>()
             .is_some()
         {
-            try!(writeln!(
-                w,
-                "{}pub const {}: {} = {2} {{ bits: {} }};",
-                comment,
-                constant.c_identifier,
-                type_,
-                value
-            ));
-        } else {
-            try!(writeln!(
-                w,
-                "{}pub const {}: {} = {};",
-                comment,
-                constant.c_identifier,
-                type_,
-                value
-            ));
+            let val: i64 = constant.value.parse().unwrap();
+            value = (val as u32).to_string();
         }
+
+        try!(writeln!(
+            w,
+            "{}pub const {}: {} = {};",
+            comment, constant.c_identifier, type_, value
+        ));
     }
     if !constants.is_empty() {
         try!(writeln!(w, ""));
