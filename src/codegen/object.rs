@@ -133,7 +133,16 @@ pub fn generate(w: &mut Write, env: &Env, analysis: &analysis::object::Info) -> 
 }
 
 fn generate_trait(w: &mut Write, env: &Env, analysis: &analysis::object::Info) -> Result<()> {
-    try!(write!(w, "pub trait {} {{", analysis.trait_name));
+    use analysis::functions::Visibility;
+
+    let has_async = analysis.methods().iter().any(|f| f.async && f.visibility == Visibility::Public);
+
+    if has_async {
+        try!(write!(w, "pub trait {}: Sized {{", analysis.trait_name));
+    } else {
+        try!(write!(w, "pub trait {} {{", analysis.trait_name));
+    }
+
     for func_analysis in &analysis.methods() {
         try!(function::generate(w, env, func_analysis, true, true, 1));
     }
@@ -172,12 +181,16 @@ fn generate_trait(w: &mut Write, env: &Env, analysis: &analysis::object::Info) -
     if !analysis.child_properties.is_empty() {
         extra_isa.push(" + IsA<Container>");
     }
-    if analysis.has_signals() || !analysis.properties.is_empty() {
+    if analysis.has_signals() || !analysis.properties.is_empty() || has_async {
         extra_isa.push(" + IsA<glib::object::Object>");
     }
     if analysis.has_action_signals() {
         extra_isa.push(" + glib::object::ObjectExt");
     }
+    if has_async {
+        extra_isa.push(" + Clone + 'static");
+    }
+
     try!(write!(
         w,
         "impl<O: IsA<{}>{}> {} for O {{",
