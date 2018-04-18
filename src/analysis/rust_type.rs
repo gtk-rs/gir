@@ -22,14 +22,22 @@ fn into_inner(res: Result) -> String {
     }
 }
 
-impl IntoString for Result {
+impl IntoString for TypeError {
     fn into_string(self) -> String {
         use self::TypeError::*;
         match self {
+            Ignored(s) => format!("/*Ignored*/{}", s),
+            Mismatch(s) => format!("/*Metadata mismatch*/{}", s),
+            Unimplemented(s) => format!("/*Unimplemented*/{}", s),
+        }
+    }
+}
+
+impl IntoString for Result {
+    fn into_string(self) -> String {
+        match self {
             Ok(s) => s,
-            Err(Ignored(s)) => format!("/*Ignored*/{}", s),
-            Err(Mismatch(s)) => format!("/*Metadata mismatch*/{}", s),
-            Err(Unimplemented(s)) => format!("/*Unimplemented*/{}", s),
+            Err(e) => e.into_string(),
         }
     }
 }

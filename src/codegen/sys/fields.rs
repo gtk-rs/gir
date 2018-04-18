@@ -93,15 +93,50 @@ pub fn from_union(env: &Env, union: &Union) -> Fields {
 fn analyze_fields(env: &Env, unsafe_access: bool, fields: &[Field]) -> (Vec<FieldInfo>, Option<String>) {
     let mut truncated = None;
     let mut infos = Vec::with_capacity(fields.len());
+    let mut skip_bits = false;
 
-    for field in fields {
-        let typ = match field_ffi_type(env, field) {
-            e @ Err(..) => {
-                truncated = Some(e.into_string());
-                break;
+    for (i, field) in fields.iter().enumerate() {
+        let typ =
+            if field.bits.is_some() {
+                if skip_bits {
+                    continue;
+                }
+                skip_bits = true;
+                let mut bits = 0;
+                for i in i..fields.len() {
+                    if let Some(bs) = fields[i].bits {
+                        bits += bs;
+                    }
+                }
+                let typ =
+                    if bits <= 8 {
+                        "u8"
+                    }
+                    else if bits <= 16 {
+                        "u16"
+                    }
+                    else if bits <= 32 {
+                        "u32"
+                    }
+                    else if bits <= 64 {
+                        "u64"
+                    }
+                    else {
+                        truncated = Some("Bit fields too large".to_string());
+                        break;
+                    };
+                typ.to_string()
             }
-            Ok(typ) => typ,
-        };
+            else {
+                skip_bits = false;
+                match field_ffi_type(env, field) {
+                    Err(e) => {
+                        truncated = Some(e.into_string());
+                        break;
+                    }
+                    Ok(typ) => typ,
+                }
+            };
         // Skip private fields from Debug impl. Ignore volatile as well, 
         // they are usually used as synchronization primites,
         // so we wouldn't want to introduce additional reads.
