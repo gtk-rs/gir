@@ -137,7 +137,7 @@ fn analyze_function(
     configured_functions: &[&config::functions::Function],
     imports: &mut Imports,
 ) -> Info {
-    let async = func.parameters.iter().any(|parameter| parameter.async) && name.ends_with("_async");
+    let async = func.parameters.iter().any(|parameter| parameter.async);
     let mut commented = false;
     let mut bounds: Bounds = Default::default();
     let mut to_glib_extras = HashMap::<usize, String>::new();
@@ -197,7 +197,7 @@ fn analyze_function(
                 commented = true;
             }
             let func_name = func.c_identifier.as_ref().unwrap();
-            let finish_func_name = replace_async_by_finish(func_name);
+            let finish_func_name = finish_function_name(func_name);
             let mut output_params = vec![];
             let mut ffi_ret = None;
             if let Some(function) = find_function(env, &finish_func_name) {
@@ -231,6 +231,10 @@ fn analyze_function(
         }
     }
 
+    if async && trampoline.is_none() {
+        commented = true;
+    }
+
     for par in &parameters.rust_parameters {
         // Disallow fundamental arrays without length
         let is_len_for_par = |t: &&Transformation| {
@@ -262,8 +266,12 @@ fn analyze_function(
         out_parameters::analyze_imports(env, func, imports);
     }
 
-    if async && !commented && env.config.library_name != "Gio" {
-        imports.add("gio_ffi", version);
+    if async && !commented {
+        if env.config.library_name != "Gio" {
+            imports.add("gio_ffi", version);
+        }
+        imports.add("glib_ffi", None);
+        imports.add("gobject_ffi", None);
     }
 
     if !commented {
@@ -329,24 +337,30 @@ pub fn is_carray_with_direct_elements(env: &Env, typ: library::TypeId) -> bool {
 }
 
 pub fn find_function<'a>(env: &'a Env, c_identifier: &str) -> Option<&'a Function> {
+    let find = |functions: &'a [Function]| -> Option<&'a Function> {
+        for function in functions {
+            if let Some(ref func_c_identifier) = function.c_identifier {
+                if func_c_identifier == c_identifier {
+                    return Some(function);
+                }
+            }
+        }
+        None
+    };
+
     if let Some(index) = env.library.find_namespace(&env.config.library_name) {
         let namespace = env.library.namespace(index);
+        if let Some(f) = find(&namespace.functions) {
+            return Some(f);
+        }
         for typ in &namespace.types {
             if let Some(Type::Class(ref class)) = *typ {
-                for function in &class.functions {
-                    if let Some(ref func_c_identifier) = function.c_identifier {
-                        if func_c_identifier == c_identifier {
-                          return Some(function);
-                        }
-                    }
+                if let Some(f) = find(&class.functions) {
+                    return Some(f);
                 }
             } else if let Some(Type::Interface(ref interface)) = *typ {
-                for function in &interface.functions {
-                    if let Some(ref func_c_identifier) = function.c_identifier {
-                        if func_c_identifier == c_identifier {
-                          return Some(function);
-                        }
-                    }
+                if let Some(f) = find(&interface.functions) {
+                    return Some(f);
                 }
             }
         }
@@ -354,13 +368,28 @@ pub fn find_function<'a>(env: &'a Env, c_identifier: &str) -> Option<&'a Functio
     None
 }
 
-pub fn replace_async_by_finish(func_name: &str) -> String {
-    let len = func_name.len() - "_async".len();
-    format!("{}_finish", &func_name[0..len])
+/// Given async function name tries to guess the name of finish function.
+pub fn finish_function_name(mut func_name: &str) -> String {
+    if func_name.ends_with("_async") {
+        let len = func_name.len() - "_async".len();
+        func_name = &func_name[0..len];
+    }
+    format!("{}_finish", &func_name)
 }
 
 pub fn find_index_to_ignore(parameters: &[Parameter]) -> Option<usize> {
     parameters.iter()
         .find(|param| param.array_length.is_some())
         .and_then(|param| param.array_length.map(|length| length as usize))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_finish_function_name() {
+        assert_eq!("g_file_copy_finish", &finish_function_name("g_file_copy_async"));
+        assert_eq!("g_bus_get_finish", &finish_function_name("g_bus_get"));
+    }
 }

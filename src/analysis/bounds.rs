@@ -5,7 +5,7 @@ use std::vec::Vec;
 use consts::TYPE_PARAMETERS_START;
 use env::Env;
 use analysis::imports::Imports;
-use analysis::functions::{find_function, find_index_to_ignore, replace_async_by_finish};
+use analysis::functions::{find_function, find_index_to_ignore, finish_function_name};
 use analysis::function_parameters::{CParameter, async_param_to_remove};
 use analysis::out_parameters::use_function_return_for_result;
 use analysis::rust_type::{bounds_rust_type, rust_type};
@@ -119,7 +119,7 @@ impl Bounds {
                 ret = Some(Bounds::get_to_glib_extra(&bound_type));
                 if async && par.name == "callback" {
                     let func_name = func.c_identifier.as_ref().unwrap();
-                    let finish_func_name = replace_async_by_finish(func_name);
+                    let finish_func_name = finish_function_name(func_name);
                     if let Some(function) = find_function(env, &finish_func_name) {
                         let mut out_parameters = find_out_parameters(env, function);
                         if use_function_return_for_result(env, &function.ret) {
