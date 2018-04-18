@@ -20,7 +20,7 @@ use analysis::safety_assertion_mode::SafetyAssertionMode;
 use analysis::signatures::{Signature, Signatures};
 use config;
 use env::Env;
-use library::{self, Function, FunctionKind, Nullable, Parameter, Type};
+use library::{self, Function, FunctionKind, Nullable, Parameter, ParameterScope, Type};
 use nameutil;
 use traits::*;
 use version::Version;
@@ -137,7 +137,7 @@ fn analyze_function(
     configured_functions: &[&config::functions::Function],
     imports: &mut Imports,
 ) -> Info {
-    let async = func.parameters.iter().any(|parameter| parameter.async);
+    let async = func.parameters.iter().any(|parameter| parameter.scope == ParameterScope::Async);
     let mut commented = false;
     let mut bounds: Bounds = Default::default();
     let mut to_glib_extras = HashMap::<usize, String>::new();

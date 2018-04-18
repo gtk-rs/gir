@@ -1,7 +1,9 @@
+use std::fmt;
 use std::fs::File;
 use std::io::{BufReader, Read};
-use std::rc::Rc;
 use std::path::{Path, PathBuf};
+use std::rc::Rc;
+use std::str;
 use xml::attribute::OwnedAttribute;
 use xml::common::{Position, TextPosition};
 use xml::name::OwnedName;
@@ -91,6 +93,26 @@ impl Element {
         }
         default
     }
+
+    pub fn attr_from_str<T>(&self, name: &str) -> Result<Option<T>>
+    where
+        T: str::FromStr,
+        T::Err: fmt::Display,
+    {
+        if let Some(value_str) = self.attr(name) {
+            match T::from_str(value_str) {
+                Ok(value) => Ok(Some(value)),
+                Err(error) => {
+                    let message = format!("Attribute `{}` on element <{}> has invalid value: {}",
+                                          name, self.name(), error);
+                    Err(self.error_emitter.emit(&message, self.position))
+                }
+            }
+        } else {
+            Ok(None)
+        }
+    }
+
 
     /// Returns element position.
     pub fn position(&self) -> TextPosition {
@@ -418,6 +440,22 @@ mod tests {
                     assert!(elem.attr_required("b").is_ok());
                     assert!(elem.attr_required("c").is_err());
                     assert!(elem.attr_required("d").is_err());
+                    Ok(())
+                })
+            })
+        }).unwrap();
+    }
+
+    #[test]
+    fn test_attr_from_str() {
+        let xml = br#"<?xml version="1.0"?>
+            <x a="123" b="2a"></x>"#;
+
+        with_parser(xml, |mut p| {
+            p.document(|p, _| {
+                p.element_with_name("x", |_, elem| {
+                    assert_eq!(elem.attr_from_str::<usize>("a").unwrap(), Some(123));
+                    assert!(elem.attr_from_str::<usize>("b").is_err());
                     Ok(())
                 })
             })

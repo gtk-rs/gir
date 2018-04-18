@@ -849,7 +849,9 @@ impl Library {
                 allow_none: true,
                 is_error: true,
                 doc: None,
-                async: false,
+                scope: ParameterScope::None,
+                closure: None,
+                destroy: None,
             });
         }
         if let Some(ret) = ret {
@@ -981,12 +983,12 @@ impl Library {
     ) -> Result<Parameter> {
         let param_name = elem.attr("name").unwrap_or("");
         let instance_parameter = elem.name() == "instance-parameter";
-        let transfer =
-            Transfer::from_str(elem.attr("transfer-ownership").unwrap_or("none"))
-                .or_else(|why| Err(parser.fail(&why)))?;
+        let transfer = elem.attr_from_str("transfer-ownership")?.unwrap_or(Transfer::None);
         let nullable = elem.attr_bool("nullable", false);
         let allow_none = elem.attr_bool("allow-none", false);
-        let async = elem.attr("scope").unwrap_or("") == "async";
+        let scope = elem.attr_from_str("scope")?.unwrap_or(ParameterScope::None);
+        let closure = elem.attr_from_str("closure")?;
+        let destroy = elem.attr_from_str("destroy")?;
         let caller_allocates = elem.attr_bool("caller-allocates", false);
         let direction = if elem.name() == "return-value" {
             Ok(ParameterDirection::Return)
@@ -1039,7 +1041,9 @@ impl Library {
                 array_length,
                 is_error: false,
                 doc,
-                async,
+                scope,
+                closure,
+                destroy,
             })
         } else if varargs {
             Ok(Parameter {
@@ -1055,7 +1059,9 @@ impl Library {
                 array_length: None,
                 is_error: false,
                 doc,
-                async,
+                scope,
+                closure,
+                destroy,
             })
         } else {
             Err(parser.fail("Missing <type> element"))
