@@ -1,27 +1,4 @@
-use std::path::PathBuf;
 use toml;
-
-// Create the Error, ErrorKind, ResultExt, and Result types
-error_chain! {
-    foreign_links {
-        CommandLine(::docopt::Error);
-        Io(::std::io::Error);
-        Log(::log::SetLoggerError);
-        Toml(toml::de::Error);
-    }
-
-    errors {
-        ReadConfig(filename: PathBuf) {
-            display("Error read config \"{}\"", filename.display())
-        }
-        Options(filename: PathBuf) {
-            display("Error in config \"{}\"", filename.display())
-        }
-        GirXml(msg: String) {
-            display("{}", msg)
-        }
-    }
-}
 
 pub trait TomlHelper
 where
@@ -29,11 +6,11 @@ where
 {
     fn check_unwanted(&self, options: &[&str], err_msg: &str);
     fn lookup<'a>(&'a self, option: &str) -> Option<&'a toml::Value>;
-    fn lookup_str<'a>(&'a self, option: &'a str, err: &str) -> Result<&'a str>;
-    fn lookup_vec<'a>(&'a self, option: &'a str, err: &str) -> Result<&'a Vec<Self>>;
-    fn as_result_str<'a>(&'a self, option: &'a str) -> Result<&'a str>;
-    fn as_result_vec<'a>(&'a self, option: &'a str) -> Result<&'a Vec<Self>>;
-    fn as_result_bool<'a>(&'a self, option: &'a str) -> Result<bool>;
+    fn lookup_str<'a>(&'a self, option: &'a str, err: &str) -> Result<&'a str, String>;
+    fn lookup_vec<'a>(&'a self, option: &'a str, err: &str) -> Result<&'a Vec<Self>, String>;
+    fn as_result_str<'a>(&'a self, option: &'a str) -> Result<&'a str, String>;
+    fn as_result_vec<'a>(&'a self, option: &'a str) -> Result<&'a Vec<Self>, String>;
+    fn as_result_bool<'a>(&'a self, option: &'a str) -> Result<bool, String>;
 }
 
 impl TomlHelper for toml::Value {
@@ -71,15 +48,15 @@ impl TomlHelper for toml::Value {
         }
         Some(value)
     }
-    fn lookup_str<'a>(&'a self, option: &'a str, err: &str) -> Result<&'a str> {
+    fn lookup_str<'a>(&'a self, option: &'a str, err: &str) -> Result<&'a str, String> {
         let value = try!(self.lookup(option).ok_or(err));
         value.as_result_str(option)
     }
-    fn lookup_vec<'a>(&'a self, option: &'a str, err: &str) -> Result<&'a Vec<Self>> {
+    fn lookup_vec<'a>(&'a self, option: &'a str, err: &str) -> Result<&'a Vec<Self>, String> {
         let value = try!(self.lookup(option).ok_or(err));
         value.as_result_vec(option)
     }
-    fn as_result_str<'a>(&'a self, option: &'a str) -> Result<&'a str> {
+    fn as_result_str<'a>(&'a self, option: &'a str) -> Result<&'a str, String> {
         self.as_str().ok_or_else(|| {
             format!(
                 "Invalid `{}` value, expected a string, found {}",
@@ -88,7 +65,7 @@ impl TomlHelper for toml::Value {
             ).into()
         })
     }
-    fn as_result_vec<'a>(&'a self, option: &'a str) -> Result<&'a Vec<Self>> {
+    fn as_result_vec<'a>(&'a self, option: &'a str) -> Result<&'a Vec<Self>, String> {
         self.as_array().ok_or_else(|| {
             format!(
                 "Invalid `{}` value, expected a array, found {}",
@@ -97,7 +74,7 @@ impl TomlHelper for toml::Value {
             ).into()
         })
     }
-    fn as_result_bool<'a>(&'a self, option: &'a str) -> Result<bool> {
+    fn as_result_bool<'a>(&'a self, option: &'a str) -> Result<bool, String> {
         self.as_bool().ok_or_else(|| {
             format!(
                 "Invalid `{}` value, expected a boolean, found {}",

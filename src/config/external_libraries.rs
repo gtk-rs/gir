@@ -9,7 +9,7 @@ pub struct ExternalLibrary {
     pub crate_name: String,
 }
 
-pub fn read_external_libraries(toml: &toml::Value) -> Result<Vec<ExternalLibrary>> {
+pub fn read_external_libraries(toml: &toml::Value) -> Result<Vec<ExternalLibrary>, String> {
     let mut external_libraries = match toml.lookup("options.external_libraries") {
         Some(a) => try!(a.as_result_vec("options.external_libraries"))
             .iter()
@@ -34,10 +34,8 @@ pub fn read_external_libraries(toml: &toml::Value) -> Result<Vec<ExternalLibrary
                 };
                 external_libraries.push(lib);
             } else {
-                bail!(
-                    "For external library \"{}\" namespace must be string",
-                    crate_name
-                );
+                return Err(format!("For external library \"{}\" namespace must be string",
+                                   crate_name));
             }
         }
     }
