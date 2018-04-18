@@ -62,6 +62,45 @@ impl Default for ParameterDirection {
     }
 }
 
+/// Annotation describing lifetime requirements / guarantees of callback parameters, 
+/// that is callback itself and associated user data.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum ParameterScope {
+    /// Parameter is not of callback type.
+    None,
+    /// Used only for the duration of the call.
+    ///
+    /// Can be invoked multiple times.
+    Call,
+    /// Used for the duration of the asynchronous call.
+    ///
+    /// Invoked exactly once when asynchronous call completes.
+    Async,
+    /// Used until notified with associated destroy notify parameter.
+    ///
+    /// Can be invoked multiple times.
+    Notified,
+}
+
+impl Default for ParameterScope {
+    fn default() -> Self {
+        ParameterScope::None
+    }
+}
+
+impl FromStr for ParameterScope {
+    type Err = String;
+
+    fn from_str(name: &str) -> Result<ParameterScope, String> {
+        match name {
+            "call" => Ok(ParameterScope::Call),
+            "async" => Ok(ParameterScope::Async),
+            "notified" => Ok(ParameterScope::Notified),
+            _ => Err(format!("Unknown parameter scope type: {}", name)),
+        }
+    }
+}
+
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct Nullable(pub bool);
 
@@ -345,7 +384,11 @@ pub struct Parameter {
     pub array_length: Option<u32>,
     pub is_error: bool,
     pub doc: Option<String>,
-    pub async: bool,
+    pub scope: ParameterScope,
+    /// Index of the user data parameter associated with the callback.
+    pub closure: Option<usize>,
+    /// Index of the destroy notification parameter associated with the callback.
+    pub destroy: Option<usize>,
 }
 
 #[derive(Debug)]
