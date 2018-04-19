@@ -1,33 +1,17 @@
-use docopt::{self, Docopt};
 use std::fs::File;
 use std::io::Read;
 use std::path::{Path, PathBuf};
 use std::str::FromStr;
 use toml;
 
+
+use config::error::TomlHelper;
 use git::repo_hash;
-use library;
-use library::Library;
+use library::{self, Library};
 use super::external_libraries::{read_external_libraries, ExternalLibrary};
 use super::WorkMode;
 use super::gobjects;
-use super::error::*;
 use version::Version;
-
-static USAGE: &'static str = "
-Usage: gir [options] [<library> <version>]
-       gir --help
-
-Options:
-    -h, --help              Show this message.
-    -c CONFIG               Config file path (default: Gir.toml)
-    -d GIRSPATH             Directory for girs
-    -m MODE                 Work mode: doc, normal, sys or not_bound
-    -o PATH                 Target path
-    --doc-target-path PATH  Doc target path
-    -b, --make-backup       Make backup before generating
-    -s, --stats             Show statistics
-";
 
 #[derive(Debug)]
 pub struct Config {
@@ -50,12 +34,22 @@ pub struct Config {
 }
 
 impl Config {
-    pub fn new() -> Result<Config> {
-        let args = try!(Docopt::new(USAGE).and_then(|dopt| dopt.parse()));
-
-        let config_file: PathBuf = match args.get_str("-c") {
-            "" => "Gir.toml",
-            a => a,
+    pub fn new<'a, S, B, W>(config_file: S,
+                            work_mode: W,
+                            girs_dir: S,
+                            library_name: S,
+                            library_version: S,
+                            target_path: S,
+                            doc_target_path: S,
+                            make_backup: B,
+                            show_statistics: B)
+                            -> Result<Config, String>
+    where S: Into<Option<&'a str>>,
+          B: Into<Option<bool>>,
+          W: Into<Option<WorkMode>> {
+        let config_file: PathBuf = match config_file.into() {
+            Some("") | None => "Gir.toml",
+            Some(a) => a,
         }.into();
 
         let config_dir = match config_file.parent() {
@@ -63,62 +57,62 @@ impl Config {
             None => PathBuf::new(),
         };
 
-        let toml =
-            try!(read_toml(&config_file).chain_err(|| ErrorKind::ReadConfig(config_file.clone())));
-
-        Config::process_options(&args, &toml, &config_dir)
-            .chain_err(|| ErrorKind::Options(config_file))
-    }
-
-    fn process_options(
-        args: &docopt::ArgvMap,
-        toml: &toml::Value,
-        config_dir: &Path,
-    ) -> Result<Config> {
-        let work_mode_str = match args.get_str("-m") {
-            "" => try!(toml.lookup_str("options.work_mode", "No options.work_mode")),
-            a => a,
+        let toml = match read_toml(&config_file) {
+            Ok(toml) => toml,
+            Err(e) => return Err(format!("Error while reading \"{}\": {}",
+                                         config_file.display(), e)),
         };
-        let work_mode = try!(WorkMode::from_str(work_mode_str));
 
-        let girs_dir: PathBuf = match args.get_str("-d") {
-            "" => {
+        let work_mode = match work_mode.into() {
+            Some(w) => w,
+            None => {
+                let s = match toml.lookup_str("options.work_mode", "No options.work_mode") {
+                    Ok(s) => s,
+                    Err(e) => return Err(format!("Invalid toml file \"{}\": {}",
+                                                 config_file.display(), e))
+                };
+                try!(WorkMode::from_str(s))
+            }
+        };
+
+        let girs_dir: PathBuf = match girs_dir.into() {
+            Some("") | None => {
                 let path = try!(toml.lookup_str("options.girs_dir", "No options.girs_dir"));
                 config_dir.join(path)
             }
-            a => a.into(),
+            Some(a) => a.into(),
         };
         let girs_version = repo_hash(&girs_dir).unwrap_or_else(|_| "???".into());
 
-        let (library_name, library_version) =
-            match (args.get_str("<library>"), args.get_str("<version>")) {
-                ("", "") => (
-                    try!(toml.lookup_str("options.library", "No options.library")),
-                    try!(toml.lookup_str("options.version", "No options.version")),
-                ),
-                ("", _) | (_, "") => bail!("Library and version can not be specified separately"),
-                (a, b) => (a, b),
-            };
+        let (library_name, library_version) = match (library_name.into(), library_version.into()) {
+            (Some(""), Some("")) | (None, None) => (
+                try!(toml.lookup_str("options.library", "No options.library")).to_owned(),
+                try!(toml.lookup_str("options.version", "No options.version")).to_owned(),
+            ),
+            (Some(""), Some(_)) | (Some(_), Some("")) | (None, Some(_)) | (Some(_), None) =>
+                return Err("Library and version can not be specified separately".to_owned()),
+            (Some(a), Some(b)) => (a.to_owned(), b.to_owned()),
+        };
 
-        let target_path: PathBuf = match args.get_str("-o") {
-            "" => {
+        let target_path: PathBuf = match target_path.into() {
+            Some("") | None => {
                 let path = try!(toml.lookup_str(
                     "options.target_path",
                     "No target path specified",
                 ));
                 config_dir.join(path)
             }
-            a => a.into(),
+            Some(a) => a.into(),
         };
 
-        let doc_target_path: PathBuf = match args.get_str("--doc-target-path") {
-            "" => {
+        let doc_target_path: PathBuf = match doc_target_path.into() {
+            Some("") | None => {
                 match toml.lookup("options.doc_target_path") {
                     Some(p) => config_dir.join(try!(p.as_result_str("options.doc_target_path"))),
                     None => target_path.join("vendor.md"),
                 }
-            },
-            p => config_dir.join(p),
+            }
+            Some(p) => config_dir.join(p),
         };
 
         let concurrency = match toml.lookup("options.concurrency") {
@@ -131,16 +125,14 @@ impl Config {
         let mut objects = toml.lookup("object")
             .map(|t| gobjects::parse_toml(t, concurrency))
             .unwrap_or_default();
-        gobjects::parse_status_shorthands(&mut objects, toml, concurrency);
+        gobjects::parse_status_shorthands(&mut objects, &toml, concurrency);
 
-        let external_libraries = try!(read_external_libraries(toml));
+        let external_libraries = try!(read_external_libraries(&toml));
 
         let min_cfg_version = match toml.lookup("options.min_cfg_version") {
             Some(v) => try!(try!(v.as_result_str("options.min_cfg_version")).parse()),
             None => Default::default(),
         };
-
-        let make_backup = args.get_bool("-b");
 
         let generate_safety_asserts = match toml.lookup("options.generate_safety_asserts") {
             Some(v) => try!(v.as_result_bool("options.generate_safety_asserts")),
@@ -157,8 +149,6 @@ impl Config {
             None => false,
         };
 
-        let show_statistics = args.get_bool("-s");
-
         Ok(Config {
             work_mode,
             girs_dir,
@@ -170,10 +160,10 @@ impl Config {
             external_libraries,
             objects,
             min_cfg_version,
-            make_backup,
+            make_backup: make_backup.into().unwrap_or(false),
             generate_safety_asserts,
             deprecate_by_min_version,
-            show_statistics,
+            show_statistics: show_statistics.into().unwrap_or(false),
             concurrency,
             single_version_file,
         })
@@ -196,14 +186,24 @@ impl Config {
     }
 }
 
-fn read_toml<P: AsRef<Path>>(filename: P) -> Result<toml::Value> {
+fn read_toml<P: AsRef<Path>>(filename: P) -> Result<toml::Value, String> {
     if !filename.as_ref().is_file() {
-        bail!("Config don't exists or not file");
+        return Err("Config don't exists or not file".to_owned());
     }
     let mut input = String::new();
-    try!(File::open(&filename).and_then(|mut f| f.read_to_string(&mut input)));
+    match File::open(&filename) {
+        Ok(mut f) => {
+            if let Err(e) = f.read_to_string(&mut input) {
+                return Err(format!("read_to_string failed on \"{}\": {}",
+                                   filename.as_ref().display(), e))
+            }
 
-    let toml = try!(toml::from_str(&input));
-
-    Ok(toml)
+            match toml::from_str(&input) {
+                Ok(toml) => Ok(toml),
+                Err(e) => Err(format!("Invalid toml format in \"{}\": {}",
+                                      filename.as_ref().display(), e)),
+            }
+        }
+        Err(e) => Err(format!("Cannot open file \"{}\": {}", filename.as_ref().display(), e)),
+    }
 }

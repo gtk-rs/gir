@@ -15,7 +15,6 @@ xml-rs = "0.7"
 toml = "0.4"
 case = "0.1"
 env_logger = "0.5"
-error-chain = { version = "0.11", default-features = false }
 # We can update to newer versions once appveyor has a newer version of libgit
 git2 = { version = "=0.6.6", default-features = false }
 lazy_static = "1.0"
@@ -29,3 +28,11 @@ git2 = { version = "0.6", default-features = false }
 
 [profile.release]
 codegen-units = 4
+
+[[bin]]
+name = "gir"
+path = "src/main.rs"
+
+[lib]
+name = "libgir"
+path = "src/lib.rs"

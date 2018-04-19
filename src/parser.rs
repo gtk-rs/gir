@@ -2,7 +2,6 @@ use std::mem::replace;
 use std::path::{Path, PathBuf};
 use std::str::FromStr;
 
-use config::error::*;
 use library::*;
 use version::Version;
 use xmlparser::{Element, XmlParser};
@@ -14,7 +13,7 @@ pub fn is_empty_c_type(c_type: &str) -> bool {
 }
 
 impl Library {
-    pub fn read_file(&mut self, dir: &Path, lib: &str) -> Result<()> {
+    pub fn read_file(&mut self, dir: &Path, lib: &str) -> Result<(), String> {
         let file_name = make_file_name(dir, lib);
         let mut p = XmlParser::from_path(&file_name)?;
         p.document(|p, _| {
@@ -24,7 +23,7 @@ impl Library {
         })
     }
 
-    fn read_repository(&mut self, dir: &Path, parser: &mut XmlParser) -> Result<()> {
+    fn read_repository(&mut self, dir: &Path, parser: &mut XmlParser) -> Result<(), String> {
         let mut package = None;
         let mut includes = Vec::new();
         parser.elements(|parser, elem| match elem.name() {
@@ -62,7 +61,7 @@ impl Library {
         elem: &Element,
         package: Option<String>,
         c_includes: Vec<String>,
-    ) -> Result<()> {
+    ) -> Result<(), String> {
         let ns_name = elem.attr_required("name")?;
         let ns_id = self.add_namespace(ns_name);
 
@@ -110,7 +109,7 @@ impl Library {
         Ok(())
     }
 
-    fn read_class(&mut self, parser: &mut XmlParser, ns_id: u16, elem: &Element) -> Result<()> {
+    fn read_class(&mut self, parser: &mut XmlParser, ns_id: u16, elem: &Element) -> Result<(), String> {
         let class_name = elem.attr_required("name")?;
         let c_type = elem.attr("type")
             .or_else(|| elem.attr("type-name"))
@@ -212,7 +211,7 @@ impl Library {
         parser: &mut XmlParser,
         ns_id: u16,
         elem: &Element,
-    ) -> Result<()> {
+    ) -> Result<(), String> {
         if let Some(typ) = self.read_record(parser, ns_id, elem, None, None)? {
             let name = typ.get_name().clone();
             self.add_type(ns_id, &name, typ);
@@ -227,7 +226,7 @@ impl Library {
         elem: &Element,
         parent_name_prefix: Option<&str>,
         parent_ctype_prefix: Option<&str>,
-    ) -> Result<Option<Type>> {
+    ) -> Result<Option<Type>, String> {
         let record_name = elem.attr_required("name")?;
         let c_type = elem.attr_required("type")?;
         let get_type = elem.attr("get-type").map(|s| s.to_owned());
@@ -335,7 +334,7 @@ impl Library {
         parser: &mut XmlParser,
         ns_id: u16,
         elem: &Element,
-    ) -> Result<()> {
+    ) -> Result<(), String> {
         // Require a name here
         elem.attr_required("name")?;
 
@@ -345,7 +344,7 @@ impl Library {
             if u.name == "_Value__data__union" {
                 u.c_type = Some("GValue_data".into());
             } else if u.c_type.is_none() {
-                bail!(parser.fail("Missing union c:type"));
+                return Err(parser.fail("Missing union c:type"));
             }
             let union_name = u.name.clone();
             self.add_type(ns_id, &union_name, Type::Union(u));
@@ -360,7 +359,7 @@ impl Library {
         elem: &Element,
         parent_name_prefix: Option<&str>,
         parent_ctype_prefix: Option<&str>,
-    ) -> Result<Union> {
+    ) -> Result<Union, String> {
         let union_name = elem.attr("name").unwrap_or("");
         let c_type = elem.attr("type").unwrap_or("");
         let get_type = elem.attr("get-type").map(|s| s.into());
@@ -454,7 +453,8 @@ impl Library {
         })
     }
 
-    fn read_field(&mut self, parser: &mut XmlParser, ns_id: u16, elem: &Element) -> Result<Field> {
+    fn read_field(&mut self, parser: &mut XmlParser, ns_id: u16,
+                  elem: &Element) -> Result<Field, String> {
         let field_name = elem.attr_required("name")?;
         let private = elem.attr_bool("private", false);
         let bits = elem.attr("bits").and_then(|s| s.parse().ok());
@@ -465,7 +465,7 @@ impl Library {
         parser.elements(|parser, elem| match elem.name() {
             "type" | "array" => {
                 if typ.is_some() {
-                    bail!(parser.fail("Too many <type> elements"));
+                    return Err(parser.fail("Too many <type> elements"));
                 }
                 self.read_type(parser, ns_id, elem).map(|t| {
                     typ = Some(t);
@@ -473,7 +473,7 @@ impl Library {
             }
             "callback" => {
                 if typ.is_some() {
-                    bail!(parser.fail("Too many <type> elements"));
+                    return Err(parser.fail("Too many <type> elements"));
                 }
                 self.read_function(parser, ns_id, elem.name(), elem).map(|f| {
                     typ = Some((Type::function(self, f), None, None));
@@ -503,7 +503,7 @@ impl Library {
         parser: &mut XmlParser,
         ns_id: u16,
         elem: &Element,
-    ) -> Result<()> {
+    ) -> Result<(), String> {
         self.read_function_if_not_moved(parser, ns_id, elem.name(), elem)?
             .map(|func| self.add_type(ns_id, &func.name.clone(), Type::Function(func)));
 
@@ -515,7 +515,7 @@ impl Library {
         parser: &mut XmlParser,
         ns_id: u16,
         elem: &Element,
-    ) -> Result<()> {
+    ) -> Result<(), String> {
         let interface_name = elem.attr_required("name")?;
         let c_type = elem.attr_required("type")?;
         let type_struct = elem.attr("type-struct").map(|s| s.to_owned());
@@ -573,7 +573,7 @@ impl Library {
         Ok(())
     }
 
-    fn read_bitfield(&mut self, parser: &mut XmlParser, ns_id: u16, elem: &Element) -> Result<()> {
+    fn read_bitfield(&mut self, parser: &mut XmlParser, ns_id: u16, elem: &Element) -> Result<(), String> {
         let bitfield_name = elem.attr_required("name")?;
         let c_type = elem.attr_required("type")?;
         let get_type = elem.attr("get-type").map(|s| s.into());
@@ -615,7 +615,7 @@ impl Library {
         parser: &mut XmlParser,
         ns_id: u16,
         elem: &Element,
-    ) -> Result<()> {
+    ) -> Result<(), String> {
         let enum_name = elem.attr_required("name")?;
         let c_type = elem.attr_required("type")?;
         let get_type = elem.attr("get-type").map(|s| s.into());
@@ -663,7 +663,7 @@ impl Library {
         parser: &mut XmlParser,
         ns_id: u16,
         elem: &Element,
-    ) -> Result<()> {
+    ) -> Result<(), String> {
         self.read_function_if_not_moved(
             parser,
             ns_id,
@@ -681,7 +681,7 @@ impl Library {
         parser: &mut XmlParser,
         ns_id: u16,
         elem: &Element,
-    ) -> Result<()> {
+    ) -> Result<(), String> {
         let const_name = elem.attr_required("name")?;
         let c_identifier = elem.attr_required("type")?;
         let value = elem.attr_required("value")?;
@@ -695,13 +695,14 @@ impl Library {
         parser.elements(|parser, elem| match elem.name() {
             "type" | "array" => {
                 if inner.is_some() {
-                    bail!(parser.fail("Too many <type> elements"));
+                    return Err(parser.fail("Too many <type> elements"));
                 }
                 let (typ, c_type, array_length) = self.read_type(parser, ns_id, elem)?;
                 if let Some(c_type) = c_type {
                     inner = Some((typ, c_type, array_length));
                 } else {
-                    bail!(parser.fail_with_position("Missing constant's c:type", elem.position()));
+                    return Err(parser.fail_with_position("Missing constant's c:type",
+                                                         elem.position()));
                 }
                 Ok(())
             }
@@ -731,7 +732,8 @@ impl Library {
         }
     }
 
-    fn read_alias(&mut self, parser: &mut XmlParser, ns_id: u16, elem: &Element) -> Result<()> {
+    fn read_alias(&mut self, parser: &mut XmlParser, ns_id: u16,
+                  elem: &Element) -> Result<(), String> {
         let alias_name = elem.attr_required("name")?;
         let c_identifier = elem.attr_required("type")?;
 
@@ -741,13 +743,13 @@ impl Library {
         parser.elements(|parser, elem| match elem.name() {
             "type" | "array" => {
                 if inner.is_some() {
-                    bail!(parser.fail("Too many <type> elements"));
+                    return Err(parser.fail("Too many <type> elements"));
                 }
                 let (typ, c_type, array_length) = self.read_type(parser, ns_id, elem)?;
                 if let Some(c_type) = c_type {
                     inner = Some((typ, c_type, array_length));
                 } else {
-                    bail!(parser.fail("Missing alias target's c:type"));
+                    return Err(parser.fail("Missing alias target's c:type"));
                 }
                 Ok(())
             }
@@ -770,7 +772,7 @@ impl Library {
         }
     }
 
-    fn read_member(&self, parser: &mut XmlParser, elem: &Element) -> Result<Member> {
+    fn read_member(&self, parser: &mut XmlParser, elem: &Element) -> Result<Member, String> {
         let member_name = elem.attr_required("name")?;
         let value = elem.attr_required("value")?;
         let c_identifier = elem.attr("identifier").map(|x| x.into());
@@ -796,7 +798,7 @@ impl Library {
         ns_id: u16,
         kind_str: &str,
         elem: &Element,
-    ) -> Result<Function> {
+    ) -> Result<Function, String> {
         let fn_name = elem.attr_required("name")?;
         let c_identifier = elem.attr("identifier").or_else(|| elem.attr("type"));
         let kind = FunctionKind::from_str(kind_str).or_else(|why| Err(parser.fail(&why)))?;
@@ -817,7 +819,7 @@ impl Library {
             }
             "return-value" => {
                 if ret.is_some() {
-                    bail!(parser.fail("Too many <return-value> elements"));
+                    return Err(parser.fail("Too many <return-value> elements"));
                 }
                 ret = Some(self.read_parameter(
                             parser,
@@ -878,7 +880,7 @@ impl Library {
         ns_id: u16,
         elem: &Element,
         fns: &mut Vec<Function>,
-    ) -> Result<()> {
+    ) -> Result<(), String> {
         if let Some(f) = self.read_function_if_not_moved(parser, ns_id, elem.name(), elem)? {
             fns.push(f)
         }
@@ -891,13 +893,14 @@ impl Library {
         ns_id: u16,
         kind_str: &str,
         elem: &Element,
-    ) -> Result<Option<Function>> {
+    ) -> Result<Option<Function>, String> {
         if elem.attr("moved-to").is_some() {
             return parser.ignore_element().map(|_| None)
         }
         self.read_function(parser, ns_id, kind_str, elem).and_then(|f| {
             if f.c_identifier.is_none() {
-                bail!(parser.fail_with_position("Missing c:identifier attribute", elem.position()))
+                return Err(parser.fail_with_position("Missing c:identifier attribute",
+                                                     elem.position()));
             }
             Ok(Some(f))
         })
@@ -908,7 +911,7 @@ impl Library {
         parser: &mut XmlParser,
         ns_id: u16,
         elem: &Element,
-    ) -> Result<Signal> {
+    ) -> Result<Signal, String> {
         let signal_name = elem.attr_required("name")?;
         let is_action = elem.attr_bool("action", false);
         let version = self.read_version(parser, ns_id, elem)?;
@@ -927,7 +930,7 @@ impl Library {
             }
             "return-value" => {
                 if ret.is_some() {
-                    bail!(parser.fail("Too many <return-value> elements"));
+                    return Err(parser.fail("Too many <return-value> elements"));
                 }
                 self.read_parameter(parser, ns_id, elem, true, false).map(|p| {
                     ret = Some(p)
@@ -959,7 +962,7 @@ impl Library {
         ns_id: u16,
         allow_no_ctype: bool,
         for_method: bool,
-    ) -> Result<Vec<Parameter>> {
+    ) -> Result<Vec<Parameter>, String> {
         parser.elements(|parser, elem| match elem.name() {
             "parameter" | "instance-parameter" => {
                 self.read_parameter(
@@ -980,7 +983,7 @@ impl Library {
         elem: &Element,
         allow_no_ctype: bool,
         for_method: bool,
-    ) -> Result<Parameter> {
+    ) -> Result<Parameter, String> {
         let param_name = elem.attr("name").unwrap_or("");
         let instance_parameter = elem.name() == "instance-parameter";
         let transfer = elem.attr_from_str("transfer-ownership")?.unwrap_or(Transfer::None);
@@ -1004,14 +1007,16 @@ impl Library {
         parser.elements(|parser, elem| match elem.name() {
             "type" | "array" => {
                 if typ.is_some() {
-                    bail!(parser.fail_with_position("Too many <type> elements", elem.position()));
+                    return Err(parser.fail_with_position("Too many <type> elements",
+                                                         elem.position()));
                 }
                 typ = Some(self.read_type(parser, ns_id, elem)?);
                 if let Some((tid, None, _)) = typ {
                     if allow_no_ctype {
                         typ = Some((tid, Some(EMPTY_CTYPE.to_owned()), None));
                     } else {
-                        bail!(parser.fail_with_position("Missing c:type attribute", elem.position()));
+                        return Err(parser.fail_with_position("Missing c:type attribute",
+                                                             elem.position()));
                     }
                 }
                 Ok(())
@@ -1073,7 +1078,7 @@ impl Library {
         parser: &mut XmlParser,
         ns_id: u16,
         elem: &Element,
-    ) -> Result<Option<Property>> {
+    ) -> Result<Option<Property>, String> {
         let prop_name = elem.attr_required("name")?;
         let readable = elem.attr_bool("readable", true);
         let writable = elem.attr_bool("writable", false);
@@ -1092,7 +1097,8 @@ impl Library {
         parser.elements(|parser, elem| match elem.name() {
             "type" | "array" => {
                 if typ.is_some() {
-                    bail!(parser.fail_with_position("Too many <type> elements", elem.position()));
+                    return Err(parser.fail_with_position("Too many <type> elements",
+                                                         elem.position()));
                 }
                 if !elem.has_attrs() && elem.name() == "type" {
                     // defend from <type/>
@@ -1139,7 +1145,7 @@ impl Library {
         parser: &mut XmlParser,
         ns_id: u16,
         elem: &Element,
-    ) -> Result<(TypeId, Option<String>, Option<u32>)> {
+    ) -> Result<(TypeId, Option<String>, Option<u32>), String> {
         let type_name =
             elem.attr("name")
                 .or_else(|| if elem.name() == "array" {
@@ -1158,7 +1164,7 @@ impl Library {
 
         if inner.is_empty() || type_name == "GLib.ByteArray" {
             if type_name == "array" {
-                bail!(parser.fail_with_position("Missing element type", elem.position()))
+                return Err(parser.fail_with_position("Missing element type", elem.position()))
             } else {
                 Ok((
                     self.find_or_stub_type(ns_id, type_name),
@@ -1181,15 +1187,18 @@ impl Library {
         }
     }
 
-    fn read_version(&mut self, parser: &XmlParser, ns_id: u16, elem: &Element) -> Result<Option<Version>> {
+    fn read_version(&mut self, parser: &XmlParser, ns_id: u16,
+                    elem: &Element) -> Result<Option<Version>, String> {
         self.read_version_attribute(parser, ns_id, elem, "version")
     }
 
-    fn read_deprecated_version(&mut self, parser: &XmlParser, ns_id: u16, elem: &Element) -> Result<Option<Version>> {
+    fn read_deprecated_version(&mut self, parser: &XmlParser, ns_id: u16,
+                               elem: &Element) -> Result<Option<Version>, String> {
         self.read_version_attribute(parser, ns_id, elem, "deprecated-version")
     }
 
-    fn read_version_attribute(&mut self, parser: &XmlParser, ns_id: u16, elem: &Element, attr: &str) -> Result<Option<Version>> {
+    fn read_version_attribute(&mut self, parser: &XmlParser, ns_id: u16, elem: &Element,
+                              attr: &str) -> Result<Option<Version>, String> {
         if let Some(v) = elem.attr(attr) {
             match v.parse() {
                 Ok(v) => {
