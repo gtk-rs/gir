@@ -41,7 +41,7 @@ fn generate_lib(w: &mut Write, env: &Env) -> Result<()> {
         "Gtk" => try!(statics::only_for_gtk(w)),
         _ => (),
     }
-    try!(writeln!(w, ""));
+    try!(writeln!(w));
 
     let ns = env.library.namespace(MAIN_NAMESPACE);
     let records = prepare(ns);
@@ -94,11 +94,11 @@ fn get_extern_crate_string(library: &ExternalLibrary) -> String {
 fn include_custom_modules(w: &mut Write, env: &Env) -> Result<()> {
     let modules = try!(find_modules(env));
     if !modules.is_empty() {
-        try!(writeln!(w, ""));
+        try!(writeln!(w));
         for module in &modules {
             try!(writeln!(w, "mod {};", module));
         }
-        try!(writeln!(w, ""));
+        try!(writeln!(w));
         for module in &modules {
             try!(writeln!(w, "pub use {}::*;", module));
         }
@@ -171,7 +171,7 @@ fn generate_aliases(w: &mut Write, env: &Env, items: &[&Alias]) -> Result<()> {
         ));
     }
     if !items.is_empty() {
-        try!(writeln!(w, ""));
+        try!(writeln!(w));
     }
 
     Ok(())
@@ -204,7 +204,7 @@ fn generate_bitfields(w: &mut Write, env: &Env, items: &[&Bitfield]) -> Result<(
                 member.c_identifier, item.c_type, val as u32,
             ));
         }
-        try!(writeln!(w, ""));
+        try!(writeln!(w));
     }
 
     Ok(())
@@ -258,7 +258,7 @@ fn generate_constants(w: &mut Write, env: &Env, constants: &[Constant]) -> Resul
         ));
     }
     if !constants.is_empty() {
-        try!(writeln!(w, ""));
+        try!(writeln!(w));
     }
 
     Ok(())
@@ -284,7 +284,7 @@ fn generate_enums(w: &mut Write, env: &Env, items: &[&Enumeration]) -> Result<()
                 item.members[0].value
             ));
             try!(writeln!(w, "pub type {} = {};", item.c_type, item.name));
-            try!(writeln!(w, ""));
+            try!(writeln!(w));
             continue;
         }
         let mut vals: HashMap<String, (String, Option<Version>)> = HashMap::new();
@@ -311,7 +311,7 @@ fn generate_enums(w: &mut Write, env: &Env, items: &[&Enumeration]) -> Result<()
             ));
             vals.insert(member.value.clone(), (member.name.clone(), version));
         }
-        try!(writeln!(w, ""));
+        try!(writeln!(w));
     }
 
     Ok(())
@@ -384,7 +384,7 @@ fn generate_interfaces_structs(w: &mut Write, env: &Env, interfaces: &[&Interfac
         ));
     }
     if !interfaces.is_empty() {
-        try!(writeln!(w, ""));
+        try!(writeln!(w));
     }
 
     Ok(())
@@ -444,9 +444,9 @@ impl ::std::fmt::Debug for GHookList {
 fn generate_disguised(w: &mut Write, record: &Record) -> Result<()> {
     try!(writeln!(w, "#[repr(C)]"));
     try!(writeln!(w, "pub struct _{name}(c_void);", name=record.c_type));
-    try!(writeln!(w, ""));
+    try!(writeln!(w));
     try!(writeln!(w, "pub type {name} = *mut _{name};", name=record.c_type));
-    writeln!(w, "")
+    writeln!(w)
 }
 
 fn generate_from_fields(w: &mut Write, fields: &fields::Fields) -> Result<()> {
@@ -473,7 +473,7 @@ fn generate_from_fields(w: &mut Write, fields: &fields::Fields) -> Result<()> {
         }
         try!(writeln!(w, "}}"));
     }
-    try!(writeln!(w, ""));
+    try!(writeln!(w));
 
     try!(writeln!(w, "impl ::std::fmt::Debug for {name} {{", name=&fields.name));
     try!(writeln!(w, "\tfn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {{"));
@@ -487,7 +487,7 @@ fn generate_from_fields(w: &mut Write, fields: &fields::Fields) -> Result<()> {
     try!(writeln!(w, "\t\t .finish()"));
     try!(writeln!(w, "\t}}"));
     try!(writeln!(w, "}}"));
-    writeln!(w, "")
+    writeln!(w)
 }
 
 #[cfg(test)]

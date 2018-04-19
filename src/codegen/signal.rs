@@ -29,7 +29,7 @@ pub fn generate(
     let declaration = declaration(analysis, &function_type);
     let suffix = if only_declaration { ";" } else { " {" };
 
-    try!(writeln!(w, ""));
+    try!(writeln!(w));
     if !in_trait || only_declaration {
         try!(cfg_deprecated(w, env, analysis.deprecated_version, commented, indent));
     }
@@ -76,7 +76,7 @@ pub fn generate(
     }
 
     if let Some(ref emit_name) = analysis.action_emit_name {
-        try!(writeln!(w, ""));
+        try!(writeln!(w));
         if !in_trait || only_declaration {
             try!(cfg_deprecated(w, env, analysis.deprecated_version, commented, indent));
         }

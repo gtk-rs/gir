@@ -170,7 +170,7 @@ fn create_object_doc(w: &mut Write, env: &Env, info: &analysis::object::Info) ->
         if let Some(doc) = doc {
             try!(writeln!(w, "{}", reformat_doc(doc, &symbols)));
         } else {
-            try!(writeln!(w, ""));
+            try!(writeln!(w));
         }
         if let Some(version) = info.version {
             try!(writeln!(w, "\nFeature: `{}`", version.to_feature()));

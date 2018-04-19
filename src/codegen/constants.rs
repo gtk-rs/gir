@@ -20,7 +20,7 @@ pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>) {
     file_saver::save_to_file(path, env.config.make_backup, |w| {
         try!(general::start_comments(w, &env.config));
         try!(general::uses(w, env, &imports));
-        try!(writeln!(w, ""));
+        try!(writeln!(w));
 
         mod_rs.push("\nmod constants;".into());
 

@@ -65,7 +65,7 @@ pub fn generate(w: &mut Write, env: &Env, analysis: &analysis::record::Info) -> 
     }
 
     if analysis.functions.iter().any(|f| !f.visibility.hidden()) {
-        try!(writeln!(w, ""));
+        try!(writeln!(w));
         try!(write!(w, "impl {} {{", analysis.name));
 
         for func_analysis in &analysis.functions {
@@ -91,7 +91,7 @@ pub fn generate(w: &mut Write, env: &Env, analysis: &analysis::record::Info) -> 
     ));
 
     if analysis.concurrency != library::Concurrency::None {
-        try!(writeln!(w, ""));
+        try!(writeln!(w));
     }
 
     match analysis.concurrency {

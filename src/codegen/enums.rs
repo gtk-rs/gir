@@ -61,7 +61,7 @@ pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>) {
     file_saver::save_to_file(path, env.config.make_backup, |w| {
         try!(general::start_comments(w, &env.config));
         try!(general::uses(w, env, &imports));
-        try!(writeln!(w, ""));
+        try!(writeln!(w));
 
         if has_any {
             mod_rs.push("\nmod enums;".into());
@@ -286,7 +286,7 @@ impl FromGlib<ffi::{ffi_name}> for {name} {{
             name = enum_.name,
             get_type = get_type
         ));
-        try!(writeln!(w, ""));
+        try!(writeln!(w));
 
         try!(cfg_deprecated(w, env, enum_.deprecated_version, false, 0));
         try!(version_condition(w, env, enum_.version, false, 0));
@@ -299,7 +299,7 @@ impl FromGlib<ffi::{ffi_name}> for {name} {{
 }}",
             name = enum_.name,
         ));
-        try!(writeln!(w, ""));
+        try!(writeln!(w));
 
         try!(cfg_deprecated(w, env, enum_.deprecated_version, false, 0));
         try!(version_condition(w, env, enum_.version, false, 0));
@@ -312,7 +312,7 @@ impl FromGlib<ffi::{ffi_name}> for {name} {{
 }}",
             name = enum_.name,
         ));
-        try!(writeln!(w, ""));
+        try!(writeln!(w));
 
         try!(cfg_deprecated(w, env, enum_.deprecated_version, false, 0));
         try!(version_condition(w, env, enum_.version, false, 0));
@@ -325,7 +325,7 @@ impl FromGlib<ffi::{ffi_name}> for {name} {{
 }}",
             name = enum_.name,
         ));
-        try!(writeln!(w, ""));
+        try!(writeln!(w));
     }
 
     Ok(())

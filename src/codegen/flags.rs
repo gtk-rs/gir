@@ -43,7 +43,7 @@ pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>) {
 
         try!(general::start_comments(w, &env.config));
         try!(general::uses(w, env, &imports));
-        try!(writeln!(w, ""));
+        try!(writeln!(w));
 
         let mut first = true;
         for config in &configs {
@@ -151,7 +151,7 @@ impl FromGlib<ffi::{ffi_name}> for {name} {{
             name = flags.name,
             get_type = get_type
         ));
-        try!(writeln!(w, ""));
+        try!(writeln!(w));
 
         try!(cfg_deprecated(w, env, flags.deprecated_version, false, 0));
         try!(version_condition(w, env, flags.version, false, 0));
@@ -164,7 +164,7 @@ impl FromGlib<ffi::{ffi_name}> for {name} {{
 }}",
             name = flags.name,
         ));
-        try!(writeln!(w, ""));
+        try!(writeln!(w));
 
         try!(cfg_deprecated(w, env, flags.deprecated_version, false, 0));
         try!(version_condition(w, env, flags.version, false, 0));
@@ -177,7 +177,7 @@ impl FromGlib<ffi::{ffi_name}> for {name} {{
 }}",
             name = flags.name,
         ));
-        try!(writeln!(w, ""));
+        try!(writeln!(w));
 
         try!(cfg_deprecated(w, env, flags.deprecated_version, false, 0));
         try!(version_condition(w, env, flags.version, false, 0));
@@ -191,7 +191,7 @@ impl FromGlib<ffi::{ffi_name}> for {name} {{
             name = flags.name,
         ));
 
-        try!(writeln!(w, ""));
+        try!(writeln!(w));
     }
 
     Ok(())

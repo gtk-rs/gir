@@ -26,7 +26,7 @@ pub fn generate(w: &mut Write, env: &Env, analysis: &analysis::object::Info) -> 
     ));
 
     if need_generate_inherent(analysis) {
-        try!(writeln!(w, ""));
+        try!(writeln!(w));
         try!(write!(w, "impl {} {{", analysis.name));
         for func_analysis in &analysis.constructors() {
             try!(function::generate(w, env, func_analysis, false, false, 1));
@@ -98,7 +98,7 @@ pub fn generate(w: &mut Write, env: &Env, analysis: &analysis::object::Info) -> 
     ));
 
     if analysis.concurrency != library::Concurrency::None {
-        try!(writeln!(w, ""));
+        try!(writeln!(w));
     }
 
     match analysis.concurrency {
@@ -113,7 +113,7 @@ pub fn generate(w: &mut Write, env: &Env, analysis: &analysis::object::Info) -> 
     }
 
     if need_generate_trait(analysis) {
-        try!(writeln!(w, ""));
+        try!(writeln!(w));
         try!(generate_trait(w, env, analysis));
     }
 
@@ -167,7 +167,7 @@ fn generate_trait(w: &mut Write, env: &Env, analysis: &analysis::object::Info) -
     }
     try!(writeln!(w, "}}"));
 
-    try!(writeln!(w, ""));
+    try!(writeln!(w));
     let mut extra_isa: Vec<&'static str> = Vec::new();
     if !analysis.child_properties.is_empty() {
         extra_isa.push(" + IsA<Container>");
