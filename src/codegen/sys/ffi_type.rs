@@ -164,7 +164,7 @@ fn ffi_inner(env: &Env, tid: library::TypeId, mut inner: String) -> Result {
     };
 
     if volatile {
-        res.map(|s| format!("Volatile<{}>", s))
+        res.map(|s| format!("/*volatile*/{}", s))
     } else {
         res
     }
