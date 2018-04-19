@@ -291,8 +291,8 @@ fn parse_status_shorthand(
     concurrency: library::Concurrency,
 ) {
     let name = format!("options.{:?}", status).to_ascii_lowercase();
-    toml.lookup(&name).map(|a| a.as_array().unwrap()).map(
-        |a| for name_ in a.iter().map(|s| s.as_str().unwrap()) {
+    if let Some(a) = toml.lookup(&name).map(|a| a.as_array().unwrap()) {
+        for name_ in a.iter().map(|s| s.as_str().unwrap()) {
             match objects.get(name_) {
                 None => {
                     objects.insert(
@@ -307,8 +307,8 @@ fn parse_status_shorthand(
                 }
                 Some(_) => panic!("Bad name in {}: {} already defined", name, name_),
             }
-        },
-    );
+        }
+    }
 }
 
 pub fn resolve_type_ids(objects: &mut GObjects, library: &Library) {

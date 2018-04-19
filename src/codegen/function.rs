@@ -50,7 +50,7 @@ pub fn generate(
     let declaration = declaration(env, analysis);
     let suffix = if only_declaration { ";" } else { " {" };
 
-    try!(writeln!(w, ""));
+    try!(writeln!(w));
     if !in_trait || only_declaration {
         try!(cfg_deprecated(w, env, analysis.deprecated_version, commented, indent));
     }

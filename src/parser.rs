@@ -1164,7 +1164,7 @@ impl Library {
 
         if inner.is_empty() || type_name == "GLib.ByteArray" {
             if type_name == "array" {
-                return Err(parser.fail_with_position("Missing element type", elem.position()))
+                Err(parser.fail_with_position("Missing element type", elem.position()))
             } else {
                 Ok((
                     self.find_or_stub_type(ns_id, type_name),

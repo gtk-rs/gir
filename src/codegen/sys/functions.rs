@@ -165,7 +165,7 @@ fn generate_object_funcs(
 ) -> Result<()> {
     let write_get_type = glib_get_type != INTERN;
     if write_get_type || !functions.is_empty() {
-        try!(writeln!(w, ""));
+        try!(writeln!(w));
         try!(writeln!(
             w,
             "    //========================================================================="
@@ -227,7 +227,7 @@ pub fn generate_callbacks(
         ));
     }
     if !callbacks.is_empty() {
-        try!(writeln!(w, ""));
+        try!(writeln!(w));
     }
 
     Ok(())

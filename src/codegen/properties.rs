@@ -47,7 +47,7 @@ fn generate_prop_func(
 
     let comment_prefix = if commented { "//" } else { "" };
 
-    try!(writeln!(w, ""));
+    try!(writeln!(w));
 
     let decl = declaration(env, prop);
     if !in_trait || only_declaration {

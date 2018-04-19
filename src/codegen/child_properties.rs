@@ -60,7 +60,7 @@ fn generate_func(
         ""
     };
 
-    try!(writeln!(w, ""));
+    try!(writeln!(w));
 
     try!(doc_hidden(w, prop.doc_hidden, comment_prefix, indent));
     let decl = declaration(env, prop, is_get);

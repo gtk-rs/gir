@@ -46,7 +46,7 @@ DO NOT EDIT THEM",
 }
 
 pub fn uses(w: &mut Write, env: &Env, imports: &Imports) -> Result<()> {
-    try!(writeln!(w, ""));
+    try!(writeln!(w));
     for (name, &version) in imports.iter() {
         try!(version_condition(w, env, version, false, 0));
         if env.namespaces.glib_ns_id == namespaces::MAIN && name == "glib_ffi" {
@@ -93,7 +93,7 @@ pub fn define_object_type(
         }
     };
 
-    try!(writeln!(w, ""));
+    try!(writeln!(w));
     try!(writeln!(w, "glib_wrapper! {{"));
     if parents.is_empty() {
         try!(writeln!(
@@ -128,7 +128,7 @@ pub fn define_object_type(
             parents.join(", ")
         ));
     }
-    try!(writeln!(w, ""));
+    try!(writeln!(w));
     try!(writeln!(w, "\tmatch fn {{"));
     try!(writeln!(w, "\t\tget_type => || ffi::{}(),", glib_func_name));
     try!(writeln!(w, "\t}}"));
@@ -145,7 +145,7 @@ pub fn define_boxed_type(
     free_fn: &str,
     get_type_fn: &Option<String>,
 ) -> Result<()> {
-    try!(writeln!(w, ""));
+    try!(writeln!(w));
     try!(writeln!(w, "glib_wrapper! {{"));
     try!(writeln!(
         w,
@@ -153,7 +153,7 @@ pub fn define_boxed_type(
         type_name,
         glib_name
     ));
-    try!(writeln!(w, ""));
+    try!(writeln!(w));
     try!(writeln!(w, "\tmatch fn {{"));
     try!(writeln!(
         w,
@@ -176,7 +176,7 @@ pub fn define_auto_boxed_type(
     glib_name: &str,
     get_type_fn: &str,
 ) -> Result<()> {
-    try!(writeln!(w, ""));
+    try!(writeln!(w));
     try!(writeln!(w, "glib_wrapper! {{"));
     try!(writeln!(
         w,
@@ -184,7 +184,7 @@ pub fn define_auto_boxed_type(
         type_name,
         glib_name
     ));
-    try!(writeln!(w, ""));
+    try!(writeln!(w));
     try!(writeln!(w, "\tmatch fn {{"));
     try!(writeln!(
         w,
@@ -211,7 +211,7 @@ pub fn define_shared_type(
     unref_fn: &str,
     get_type_fn: &Option<String>,
 ) -> Result<()> {
-    try!(writeln!(w, ""));
+    try!(writeln!(w));
     try!(writeln!(w, "glib_wrapper! {{"));
     try!(writeln!(
         w,
@@ -219,7 +219,7 @@ pub fn define_shared_type(
         type_name,
         glib_name
     ));
-    try!(writeln!(w, ""));
+    try!(writeln!(w));
     try!(writeln!(w, "\tmatch fn {{"));
     try!(writeln!(w, "\t\tref => |ptr| ffi::{}(ptr),", ref_fn));
     try!(writeln!(w, "\t\tunref => |ptr| ffi::{}(ptr),", unref_fn));
@@ -379,7 +379,7 @@ pub fn declare_default_from_new(
     if let Some(func) = functions.iter().find(|f| {
         !f.visibility.hidden() && f.name == "new" && f.parameters.rust_parameters.is_empty()
     }) {
-        try!(writeln!(w, ""));
+        try!(writeln!(w));
         try!(cfg_deprecated(w, env, func.deprecated_version, false, 0));
         try!(version_condition(w, env, func.version, false, 0));
         try!(writeln!(w, "impl Default for {} {{", name));

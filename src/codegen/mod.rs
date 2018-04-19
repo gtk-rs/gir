@@ -66,7 +66,7 @@ pub fn generate_mod_rs(env: &Env, root_path: &Path, mod_rs: &[String], traits: &
     save_to_file(path, env.config.make_backup, |w| {
         try!(general::start_comments(w, &env.config));
         try!(general::write_vec(w, mod_rs));
-        try!(writeln!(w, ""));
+        try!(writeln!(w));
         try!(writeln!(w, "#[doc(hidden)]"));
         try!(writeln!(w, "pub mod traits {{"));
         try!(general::write_vec(w, traits));

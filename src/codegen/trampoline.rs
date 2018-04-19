@@ -22,7 +22,7 @@ pub fn generate(
     in_trait: bool,
     object_name: &str,
 ) -> Result<()> {
-    try!(writeln!(w, ""));
+    try!(writeln!(w));
     let (bounds, end) = if in_trait {
         (format!("<{}>", TYPE_PARAMETERS_START), "")
     } else {

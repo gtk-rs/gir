@@ -18,7 +18,7 @@ pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>) {
         try!(general::start_comments(w, &env.config));
         try!(general::uses(w, env, &functions.imports));
 
-        try!(writeln!(w, ""));
+        try!(writeln!(w));
 
         mod_rs.push("\npub mod functions;".into());
 
