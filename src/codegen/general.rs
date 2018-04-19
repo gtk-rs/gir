@@ -47,8 +47,14 @@ DO NOT EDIT THEM",
 
 pub fn uses(w: &mut Write, env: &Env, imports: &Imports) -> Result<()> {
     try!(writeln!(w));
-    for (name, &version) in imports.iter() {
-        try!(version_condition(w, env, version, false, 0));
+    for (name, &(ref version, ref constraints)) in imports.iter() {
+        if constraints.len() == 1 {
+            try!(writeln!(w, "#[cfg(feature = \"{}\")]", constraints[0]));
+        } else if !constraints.is_empty() {
+            try!(writeln!(w, "#[cfg(any({}))]", constraints.iter().map(|c| format!("feature = \"{}\"", c)).collect::<Vec<_>>().join(", ")));
+        }
+
+        try!(version_condition(w, env, *version, false, 0));
         if env.namespaces.glib_ns_id == namespaces::MAIN && name == "glib_ffi" {
             try!(writeln!(w, "use ffi as {};", name));
         } else {

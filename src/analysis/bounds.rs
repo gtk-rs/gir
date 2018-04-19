@@ -104,7 +104,7 @@ impl Bounds {
         func: &Function,
         par: &CParameter,
         async: bool,
-    ) -> (Option<String>, Option<(String, char)>) {
+    ) -> (Option<String>, Option<(String, String, String, char)>) {
         let type_name = bounds_rust_type(env, par.typ);
         let mut type_string =
             if async && async_param_to_remove(&par.name) {
@@ -129,7 +129,7 @@ impl Bounds {
                         let error_type = find_error_type(env, function);
                         type_string = format!("FnOnce(Result<{}, {}>) + Send + 'static", parameters, error_type);
                         let bounds_name = *self.unused.front().unwrap();
-                        trampoline_info = Some((type_string.clone(), bounds_name));
+                        trampoline_info = Some((type_string.clone(), parameters, error_type, bounds_name));
                     }
                 }
                 if !self.add_parameter(&par.name, &type_string, bound_type, async) {

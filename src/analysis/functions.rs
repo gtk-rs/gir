@@ -51,6 +51,14 @@ pub struct AsyncTrampoline {
     pub ffi_ret: Option<Parameter>,
 }
 
+#[derive(Clone, Debug)]
+pub struct AsyncFuture {
+    pub is_method: bool,
+    pub name: String,
+    pub success_parameters: String,
+    pub error_parameters: String,
+}
+
 #[derive(Debug)]
 pub struct Info {
     pub name: String,
@@ -70,6 +78,7 @@ pub struct Info {
     pub doc_hidden: bool,
     pub async: bool,
     pub trampoline: Option<AsyncTrampoline>,
+    pub async_future: Option<AsyncFuture>,
 }
 
 impl Info {
@@ -143,6 +152,7 @@ fn analyze_function(
     let mut to_glib_extras = HashMap::<usize, String>::new();
     let mut used_types: Vec<String> = Vec::with_capacity(4);
     let mut trampoline = None;
+    let mut async_future = None;
 
     let version = configured_functions
         .iter()
@@ -191,7 +201,7 @@ fn analyze_function(
         if let Some(to_glib_extra) = to_glib_extra {
             to_glib_extras.insert(pos, to_glib_extra);
         }
-        if let Some((callback_type, bound_name)) = type_string {
+        if let Some((callback_type, success_parameters, error_parameters, bound_name)) = type_string {
             // Checks for /*Ignored*/ or other error comments
             if callback_type.find("/*").is_some() {
                 commented = true;
@@ -220,6 +230,13 @@ fn analyze_function(
                 bound_name,
                 output_params,
                 ffi_ret,
+            });
+
+            async_future = Some(AsyncFuture {
+                is_method: func.kind == FunctionKind::Method,
+                name: format!("{}_future", func.name),
+                success_parameters,
+                error_parameters,
             });
         }
         let type_error =
@@ -269,9 +286,15 @@ fn analyze_function(
     if async && !commented {
         if env.config.library_name != "Gio" {
             imports.add("gio_ffi", version);
+            imports.add_with_constraint("gio", version, Some("futures"));
         }
         imports.add("glib_ffi", None);
         imports.add("gobject_ffi", None);
+    }
+
+    if async && !commented {
+        imports.add_with_constraint("futures_core", version, Some("futures"));
+        imports.add_with_constraint("std::boxed::Box as Box_", version, Some("futures"));
     }
 
     if !commented {
@@ -316,6 +339,7 @@ fn analyze_function(
         doc_hidden,
         async,
         trampoline,
+        async_future,
     }
 }
 

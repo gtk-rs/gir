@@ -19,7 +19,7 @@ pub struct Imports {
     ///
     /// NOTE: Currently we don't need to support more than one such name.
     defined: Option<String>,
-    map: BTreeMap<String, Option<Version>>,
+    map: BTreeMap<String, (Option<Version>, Vec<String>)>,
 }
 
 impl Imports {
@@ -51,9 +51,38 @@ impl Imports {
             }
         }
         if let Some(name) = self.strip_crate_name(name) {
-            let entry = self.map.entry(name.to_owned()).or_insert(version);
-            if version < *entry {
-                *entry = version;
+            let entry = self.map.entry(name.to_owned()).or_insert((version, Vec::new()));
+            if version < entry.0 {
+                *entry = (version, Vec::new());
+            } else {
+                *entry = (entry.0, Vec::new());
+            }
+        }
+    }
+
+    /// Declares that name should be available through its last path component and provides
+    /// an optional feature constraint.
+    ///
+    /// For example, if name is `X::Y::Z` then it will be available as `Z`.
+    pub fn add_with_constraint(&mut self, name: &str, version: Option<Version>, constraint: Option<&str>) {
+        if let Some(ref defined) = self.defined {
+            if name == defined {
+                return
+            }
+        }
+        if let Some(name) = self.strip_crate_name(name) {
+            let entry = self.map.entry(name.to_owned()).or_insert((version, Vec::new()));
+            if version < entry.0 {
+                *entry = (version, Vec::new());
+            } else {
+                *entry = (entry.0, Vec::new());
+            }
+
+            if let Some(constraint) = constraint {
+                let constraint = String::from(constraint);
+                if !entry.1.contains(&constraint) {
+                    entry.1.push(constraint);
+                }
             }
         }
     }
@@ -99,7 +128,7 @@ impl Imports {
         }
     }
 
-    pub fn iter(&self) -> Iter<String, Option<Version>> {
+    pub fn iter(&self) -> Iter<String, (Option<Version>, Vec<String>)> {
         self.map.iter()
     }
 }
