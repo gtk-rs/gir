@@ -2,7 +2,6 @@
 #![cfg_attr(feature = "cargo-clippy", allow(let_and_return))]
 #![cfg_attr(feature = "cargo-clippy", allow(too_many_arguments))]
 
-extern crate case;
 extern crate git2;
 #[macro_use]
 extern crate lazy_static;
@@ -17,6 +16,7 @@ extern crate xml;
 mod gir_version;
 
 mod analysis;
+mod case;
 mod chunk;
 mod codegen;
 mod config;
