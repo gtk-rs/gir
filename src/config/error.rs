@@ -62,7 +62,7 @@ impl TomlHelper for toml::Value {
                 "Invalid `{}` value, expected a string, found {}",
                 option,
                 self.type_str()
-            ).into()
+            )
         })
     }
     fn as_result_vec<'a>(&'a self, option: &'a str) -> Result<&'a Vec<Self>, String> {
@@ -71,7 +71,7 @@ impl TomlHelper for toml::Value {
                 "Invalid `{}` value, expected a array, found {}",
                 option,
                 self.type_str()
-            ).into()
+            )
         })
     }
     fn as_result_bool<'a>(&'a self, option: &'a str) -> Result<bool, String> {
@@ -80,7 +80,7 @@ impl TomlHelper for toml::Value {
                 "Invalid `{}` value, expected a boolean, found {}",
                 option,
                 self.type_str()
-            ).into()
+            )
         })
     }
 }
