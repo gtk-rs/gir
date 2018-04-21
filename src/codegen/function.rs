@@ -353,7 +353,11 @@ pub fn body_chunk_futures(env: &Env, analysis: &analysis::functions::Info) -> St
         try!(writeln!(body, "GioFuture::new(&(), move |_obj, send| {{"));
     }
 
-    try!(writeln!(body, "    let cancellable = Cancellable::new();"));
+    if env.config.library_name != "Gio" {
+        try!(writeln!(body, "    let cancellable = gio::Cancellable::new();"));
+    } else {
+        try!(writeln!(body, "    let cancellable = Cancellable::new();"));
+    }
     try!(writeln!(body, "    let send = SendCell::new(send);"));
 
     if async_future.is_method {
