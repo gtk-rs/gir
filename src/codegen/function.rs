@@ -335,10 +335,8 @@ pub fn body_chunk_futures(env: &Env, analysis: &analysis::functions::Info) -> St
 
         if is_into {
             try!(writeln!(body, "let {} = {}.into();", par.name, par.name));
-            if is_str {
-                try!(writeln!(body, "let {} = {}.map(String::from);", par.name, par.name));
-            } else if c_par.nullable.0 {
-                try!(writeln!(body, "let {} = {}.cloned();", par.name, par.name));
+            if is_str || c_par.nullable.0 {
+                try!(writeln!(body, "let {} = {}.map(ToOwned::to_owned);", par.name, par.name));
             }
         } else if is_str {
             try!(writeln!(body, "let {} = String::from({});", par.name, par.name));
@@ -381,13 +379,8 @@ pub fn body_chunk_futures(env: &Env, analysis: &analysis::functions::Info) -> St
             let bounds = analysis.bounds.get_parameter_alias_info(&par.name);
             let is_into = if let Some((_, BoundType::Into(..))) = bounds { true } else { false };
 
-            let type_ = env.type_(par.typ);
-            let is_str = if let library::Type::Fundamental(library::Fundamental::Utf8) = *type_ { true } else { false };
-
-            if is_into && is_str {
-                try!(writeln!(body, "         {}.as_ref().map(|s| s.as_str()),", par.name));
-            } else if is_into && c_par.nullable.0 {
-                try!(writeln!(body, "         {}.as_ref(),", par.name));
+            if is_into {
+                try!(writeln!(body, "         {}.as_ref().map(::std::borrow::Borrow::borrow),", par.name));
             } else if c_par.ref_mode != RefMode::None {
                 try!(writeln!(body, "         &{},", par.name));
             } else {
