@@ -290,11 +290,21 @@ fn analyze_function(
         }
         imports.add("glib_ffi", None);
         imports.add("gobject_ffi", None);
-    }
-
-    if async && !commented {
         imports.add_with_constraint("futures_core", version, Some("futures"));
         imports.add_with_constraint("std::boxed::Box as Box_", version, Some("futures"));
+
+        if let Some(ref trampoline) = trampoline {
+            for par in &trampoline.output_params {
+                if let Ok(s) = used_rust_type(env, par.typ) {
+                    used_types.push(s);
+                }
+            }
+            if let Some(ref par) = trampoline.ffi_ret {
+                if let Ok(s) = used_rust_type(env, par.typ) {
+                    used_types.push(s);
+                }
+            }
+        }
     }
 
     if !commented {
@@ -313,7 +323,7 @@ fn analyze_function(
         bounds.update_imports(imports);
     }
 
-    let visibility = if commented || (async && trampoline.is_none()) {
+    let visibility = if commented {
         Visibility::Comment
     } else {
         Visibility::Public
