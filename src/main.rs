@@ -63,6 +63,7 @@ fn main() {
 fn do_main() -> Result<(), String> {
     if std::env::var_os("RUST_LOG").is_none() {
         std::env::set_var("RUST_LOG", "gir=warn");
+        std::env::set_var("RUST_LOG", "libgir=warn");
     }
     env_logger::init();
 
