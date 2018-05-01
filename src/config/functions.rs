@@ -1,8 +1,11 @@
+use std::str::FromStr;
+
 use library::Nullable;
 use super::error::TomlHelper;
 use super::ident::Ident;
 use super::parameter_matchable::Functionlike;
 use super::parsable::{Parsable, Parse};
+use super::string_type::StringType;
 use toml::Value;
 use version::Version;
 
@@ -14,6 +17,7 @@ pub struct Parameter {
     pub constant: bool,
     pub nullable: Option<Nullable>,
     pub length_of: Option<String>,
+    pub string_type: Option<StringType>,
 }
 
 impl Parse for Parameter {
@@ -29,7 +33,7 @@ impl Parse for Parameter {
             }
         };
         toml.check_unwanted(
-            &["const", "nullable", "length_of", "name", "pattern"],
+            &["const", "nullable", "length_of", "name", "pattern", "string_type"],
             &format!("function parameter {}", object_name),
         );
 
@@ -43,12 +47,28 @@ impl Parse for Parameter {
             .and_then(|val| val.as_str())
             .map(|s| if s == "return" { "" } else { s })
             .map(ToOwned::to_owned);
+        let string_type = toml.lookup("string_type")
+            .and_then(|val| val.as_str());
+        let string_type = match string_type {
+            None => None,
+            Some(val) => match StringType::from_str(val) {
+                Ok(val) => Some(val),
+                Err(error_str) => {
+                    error!(
+                        "Error: {} for parameter for object {}",
+                        error_str, object_name
+                    );
+                    None
+                }
+            }
+        };
 
         Some(Parameter {
             ident,
             constant,
             nullable,
             length_of,
+            string_type,
         })
     }
 }
@@ -65,26 +85,43 @@ pub type Parameters = Vec<Parameter>;
 pub struct Return {
     pub nullable: Option<Nullable>,
     pub bool_return_is_error: Option<String>,
+    pub string_type: Option<StringType>,
 }
 
 impl Return {
     pub fn parse(toml: Option<&Value>) -> Return {
-        if let Some(v) = toml {
-            v.check_unwanted(&["nullable", "bool_return_is_error"], "return");
-
-            let nullable = v.lookup("nullable").and_then(|v| v.as_bool()).map(Nullable);
-            let bool_return_is_error = v.lookup("bool_return_is_error")
-                .and_then(|v| v.as_str())
-                .map(|m| m.to_owned());
-            Return {
-                nullable,
-                bool_return_is_error,
-            }
-        } else {
-            Return {
+        if toml.is_none() {
+            return Return {
                 nullable: None,
                 bool_return_is_error: None,
+                string_type: None,
+            };
+        }
+
+        let v = toml.unwrap();
+        v.check_unwanted(&["nullable", "bool_return_is_error", "string_type"], "return");
+
+        let nullable = v.lookup("nullable").and_then(|v| v.as_bool()).map(Nullable);
+        let bool_return_is_error = v.lookup("bool_return_is_error")
+            .and_then(|v| v.as_str())
+            .map(|m| m.to_owned());
+        let string_type = v.lookup("string_type")
+            .and_then(|v| v.as_str());
+        let string_type = match string_type {
+            None => None,
+            Some(v) => match StringType::from_str(v) {
+                Ok(v) => Some(v),
+                Err(error_str) => {
+                    error!("Error: {} for return", error_str);
+                    None
+                }
             }
+        };
+
+        Return {
+            nullable,
+            bool_return_is_error,
+            string_type,
         }
     }
 }
