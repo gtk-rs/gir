@@ -39,6 +39,7 @@ impl RefMode {
         match *library.type_(tid) {
             Fundamental(library::Fundamental::Utf8) |
             Fundamental(library::Fundamental::Filename) |
+            Fundamental(library::Fundamental::OsString) |
             Class(..) |
             Interface(..) |
             List(..) |

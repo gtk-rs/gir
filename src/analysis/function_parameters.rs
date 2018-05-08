@@ -395,6 +395,7 @@ fn has_length(env: &Env, typ: library::TypeId) -> bool {
             match fund {
                 Utf8 => true,
                 Filename => true,
+                OsString => true,
                 _ => false,
             }
         }

@@ -580,6 +580,7 @@ fn c_type_mem_mode_lib(env: &Env, typ: library::TypeId, caller_allocates: bool,
             match *type_ {
                 Fundamental(fund)
                     if fund == library::Fundamental::Utf8
+                        || fund == library::Fundamental::OsString
                         || fund == library::Fundamental::Filename =>
                         {
                             if transfer == library::Transfer::Full {
@@ -611,6 +612,7 @@ fn type_mem_mode(env: &Env, parameter: &library::Parameter) -> Chunk {
             match *type_ {
                 Fundamental(fund)
                     if fund == library::Fundamental::Utf8
+                        || fund == library::Fundamental::OsString
                         || fund == library::Fundamental::Filename =>
                         {
                             if parameter.transfer == library::Transfer::Full {

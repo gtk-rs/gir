@@ -105,6 +105,11 @@ fn rust_type_full(
                 } else {
                     ok("std::path::PathBuf")
                 },
+                OsString => if ref_mode.is_ref() {
+                    ok("std::ffi::OsStr")
+                } else {
+                    ok("std::ffi::OsString")
+                },
                 Type if env.namespaces.glib_ns_id == library::MAIN_NAMESPACE => ok("types::Type"),
                 Type => ok("glib::types::Type"),
                 Char if env.namespaces.glib_ns_id == library::MAIN_NAMESPACE => ok("Char"),
@@ -230,6 +235,7 @@ pub fn used_rust_type(env: &Env, type_id: library::TypeId) -> Result {
         Fundamental(library::Fundamental::Char) |
         Fundamental(library::Fundamental::UChar) |
         Fundamental(library::Fundamental::Filename) |
+        Fundamental(library::Fundamental::OsString) |
         Alias(..) |
         Bitfield(..) |
         Record(..) |
@@ -255,7 +261,9 @@ pub fn parameter_rust_type(
     let rust_type = rust_type_full(env, type_id, nullable, ref_mode);
     match *type_ {
         Fundamental(fund) => {
-            if (fund == library::Fundamental::Utf8 || fund == library::Fundamental::Filename)
+            if (fund == library::Fundamental::Utf8
+                || fund == library::Fundamental::OsString
+                || fund == library::Fundamental::Filename)
                 && (direction == library::ParameterDirection::InOut
                     || (direction == library::ParameterDirection::Out
                         && ref_mode == RefMode::ByRefMut)) {

@@ -59,6 +59,7 @@ impl ConversionType {
                 VarArgs => ConversionType::Unknown,
                 Utf8 => ConversionType::Pointer,
                 Filename => ConversionType::Pointer,
+                OsString => ConversionType::Pointer,
                 Type => ConversionType::Scalar,
                 None => ConversionType::Unknown,
                 IntPtr => ConversionType::Direct,

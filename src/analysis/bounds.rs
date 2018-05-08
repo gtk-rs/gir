@@ -147,6 +147,7 @@ impl Bounds {
         use self::BoundType::*;
         match *env.library.type_(type_id) {
             Type::Fundamental(Fundamental::Filename) => Some(AsRef(None)),
+            Type::Fundamental(Fundamental::OsString)=> Some(AsRef(None)),
             Type::Fundamental(Fundamental::Utf8) if *nullable => Some(Into(Some('_'), None)),
             Type::Class(..) if !*nullable => {
                 if env.class_hierarchy.subtypes(type_id).next().is_some() {

@@ -101,7 +101,9 @@ pub fn analyze_imports(env: &Env, func: &Function, imports: &mut Imports) {
             match *env.library.type_(par.typ) {
                 Type::Bitfield(..) | Type::Enumeration(..) => imports.add("std::mem", func.version),
                 Type::Fundamental(fund)
-                    if fund != Fundamental::Utf8 && fund != Fundamental::Filename =>
+                    if fund != Fundamental::Utf8
+                        && fund != Fundamental::OsString
+                        && fund != Fundamental::Filename =>
                 {
                     imports.add("std::mem", func.version)
                 }

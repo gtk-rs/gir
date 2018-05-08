@@ -116,6 +116,7 @@ fn can_be_nullable_return(env: &Env, type_id: library::TypeId) -> bool {
             Pointer => true,
             Utf8 => true,
             Filename => true,
+            OsString => true,
             _ => false,
         },
         Alias(ref alias) => can_be_nullable_return(env, alias.typ),
