@@ -8,17 +8,18 @@ pub mod bounds;
 pub mod c_type;
 pub mod child_properties;
 pub mod class_hierarchy;
+pub mod constants;
 pub mod conversion_type;
 pub mod ffi_type;
 pub mod function_parameters;
 pub mod functions;
-pub mod constants;
 pub mod general;
 pub mod imports;
 pub mod info_base;
 pub mod namespaces;
 pub mod object;
 pub mod out_parameters;
+mod override_string_type;
 pub mod properties;
 pub mod record;
 pub mod record_type;
@@ -139,9 +140,7 @@ fn analyze_constants(env: &mut Env) {
         _ => return,
     };
 
-    let constants: Vec<_> = ns.constants
-        .iter()
-        .collect();
+    let constants: Vec<_> = ns.constants.iter().collect();
     if constants.is_empty() {
         return;
     }

@@ -600,18 +600,26 @@ impl Type {
     }
 
     pub fn c_array(library: &mut Library, inner: TypeId, size: Option<u16>) -> TypeId {
+        let name = Type::c_array_internal_name(inner, size);
         if let Some(size) = size {
-            library.add_type(
-                INTERNAL_NAMESPACE,
-                &format!("[#{:?}; {}]", inner, size),
-                Type::FixedArray(inner, size),
-            )
+            library.add_type(INTERNAL_NAMESPACE, &name, Type::FixedArray(inner, size))
         } else {
-            library.add_type(
-                INTERNAL_NAMESPACE,
-                &format!("[#{:?}]", inner),
-                Type::CArray(inner),
-            )
+            library.add_type(INTERNAL_NAMESPACE, &name, Type::CArray(inner))
+        }
+    }
+
+    pub fn find_c_array(library: &Library, inner: TypeId, size: Option<u16>) -> TypeId {
+        let name = Type::c_array_internal_name(inner, size);
+        library
+            .find_type(INTERNAL_NAMESPACE, &name)
+            .unwrap_or_else(|| panic!("No type for '*.{}'", name))
+    }
+
+    fn c_array_internal_name(inner: TypeId, size: Option<u16>) -> String {
+        if let Some(size) = size {
+            format!("[#{:?}; {}]", inner, size)
+        } else {
+            format!("[#{:?}]", inner)
         }
     }
 
@@ -805,6 +813,12 @@ impl Library {
             library.add_type(INTERNAL_NAMESPACE, name, Type::Fundamental(t));
         }
         assert_eq!(MAIN_NAMESPACE, library.add_namespace(main_namespace_name));
+
+        //For string_type override
+        Type::c_array(&mut library, TypeId::tid_utf8(), None);
+        Type::c_array(&mut library, TypeId::tid_filename(), None);
+        Type::c_array(&mut library, TypeId::tid_os_string(), None);
+
         library
     }
 

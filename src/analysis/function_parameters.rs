@@ -3,12 +3,13 @@ use std::collections::HashMap;
 use config;
 use config::parameter_matchable::ParameterMatchable;
 use env::Env;
-use library;
+use library::{self, TypeId};
 use nameutil;
 use super::conversion_type::ConversionType;
 use super::rust_type::rust_type;
 use super::ref_mode::RefMode;
 use super::out_parameters::can_as_return;
+use super::override_string_type::override_string_type_parameter;
 use traits::IntoString;
 
 //TODO: remove unused fields
@@ -16,14 +17,14 @@ use traits::IntoString;
 pub struct RustParameter {
     pub ind_c: usize, //index in `Vec<CParameter>`
     pub name: String,
-    pub typ: library::TypeId,
+    pub typ: TypeId,
     pub allow_none: bool,
 }
 
 #[derive(Clone, Debug)]
 pub struct CParameter {
     pub name: String,
-    pub typ: library::TypeId,
+    pub typ: TypeId,
     pub c_type: String,
     pub instance_parameter: bool,
     pub direction: library::ParameterDirection,
@@ -162,6 +163,11 @@ pub fn analyze(
             nameutil::mangle_keywords(&*par.name).into_owned()
         };
 
+        let configured_parameters = configured_functions.matched_parameters(&name);
+
+        let c_type = par.c_type.clone();
+        let typ = override_string_type_parameter(env, par.typ, &configured_parameters);
+
         let ind_c = parameters.c_parameters.len();
         let mut ind_rust = Some(parameters.rust_parameters.len());
 
@@ -175,8 +181,7 @@ pub fn analyze(
             add_rust_parameter = false;
         }
 
-        let mut array_name = configured_functions
-            .matched_parameters(&name)
+        let mut array_name = configured_parameters
             .iter()
             .filter_map(|p| p.length_of.as_ref())
             .next();
@@ -193,29 +198,25 @@ pub fn analyze(
             let transformation = Transformation {
                 ind_c,
                 ind_rust: None,
-                transformation_type: get_length_type(env, &array_name, &par.name, par.typ),
+                transformation_type: get_length_type(env, &array_name, &par.name, typ),
             };
             parameters.transformations.push(transformation);
         }
 
         let mut caller_allocates = par.caller_allocates;
         let mut transfer = par.transfer;
-        let conversion = ConversionType::of(env, par.typ);
+        let conversion = ConversionType::of(env, typ);
         if conversion == ConversionType::Direct || conversion == ConversionType::Scalar {
             //For simply types no reason to have these flags
             caller_allocates = false;
             transfer = library::Transfer::None;
         }
 
-        let immutable = configured_functions
-            .matched_parameters(&name)
-            .iter()
-            .any(|p| p.constant);
+        let immutable = configured_parameters.iter().any(|p| p.constant);
         let ref_mode = RefMode::without_unneeded_mut(env, par, immutable,
                                                      in_trait && par.instance_parameter);
 
-        let nullable_override = configured_functions
-            .matched_parameters(&name)
+        let nullable_override = configured_parameters
             .iter()
             .filter_map(|p| p.nullable)
             .next();
@@ -223,8 +224,8 @@ pub fn analyze(
 
         let c_par = CParameter {
             name: name.clone(),
-            typ: par.typ,
-            c_type: par.c_type.clone(),
+            typ,
+            c_type,
             instance_parameter: par.instance_parameter,
             direction: par.direction,
             transfer,
@@ -241,7 +242,7 @@ pub fn analyze(
         if add_rust_parameter {
             let rust_par = RustParameter {
                 name: name.clone(),
-                typ: par.typ,
+                typ,
                 ind_c,
                 allow_none: par.allow_none,
             };
@@ -273,7 +274,7 @@ pub fn analyze(
             ind_rust = None;
         }
 
-        let transformation_type = match ConversionType::of(env, par.typ) {
+        let transformation_type = match ConversionType::of(env, typ) {
             ConversionType::Direct => TransformationType::ToGlibDirect { name },
             ConversionType::Scalar => TransformationType::ToGlibScalar {
                 name,
@@ -295,25 +296,25 @@ pub fn analyze(
             ind_rust,
             transformation_type,
         };
-        let mut typ = None;
+        let mut transformation_type = None;
         match transformation.transformation_type {
             TransformationType::ToGlibDirect { ref name, .. } | TransformationType::ToGlibUnknown { ref name, .. } => {
                 if async_func && name == callback_param_name {
                     // Remove the conversion of callback for async functions.
-                    typ = Some(TransformationType::ToSome(name.clone()));
+                    transformation_type = Some(TransformationType::ToSome(name.clone()));
                 }
             },
             TransformationType::ToGlibPointer { ref name, .. } => {
                 if async_func && name == data_param_name {
                     // Do the conversion of user_data for async functions.
                     // In async functions, this argument is used to send the callback.
-                    typ = Some(TransformationType::IntoRaw(name.clone()));
+                    transformation_type = Some(TransformationType::IntoRaw(name.clone()));
                 }
             },
             _ => (),
         }
-        if let Some(typ) = typ {
-            transformation.transformation_type = typ;
+        if let Some(transformation_type) = transformation_type {
+            transformation.transformation_type = transformation_type;
         }
         parameters.transformations.push(transformation);
     }
@@ -340,7 +341,7 @@ fn get_length_type(
     env: &Env,
     array_name: &str,
     length_name: &str,
-    length_typ: library::TypeId,
+    length_typ: TypeId,
 ) -> TransformationType {
     let array_length_type = rust_type(env, length_typ).into_string();
     TransformationType::Length {
@@ -386,7 +387,7 @@ fn is_length(par: &library::Parameter) -> bool {
     false
 }
 
-fn has_length(env: &Env, typ: library::TypeId) -> bool {
+fn has_length(env: &Env, typ: TypeId) -> bool {
     use library::Type;
     let typ = env.library.type_(typ);
     match *typ {
