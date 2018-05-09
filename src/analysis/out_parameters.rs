@@ -3,6 +3,7 @@ use std::vec::Vec;
 
 use analysis::imports::Imports;
 use analysis::ref_mode::RefMode;
+use analysis::return_value;
 use config;
 use env::Env;
 use library::*;
@@ -45,6 +46,7 @@ impl Info {
 pub fn analyze(
     env: &Env,
     func: &Function,
+    func_ret: &return_value::Info,
     configured_functions: &[&config::functions::Function],
 ) -> (Info, bool) {
     let mut info: Info = Default::default();
@@ -55,7 +57,7 @@ pub fn analyze(
         .filter_map(|f| f.ret.nullable)
         .next();
     if func.throws {
-        let use_ret = use_function_return_for_result(env, &func.ret);
+        let use_ret = use_return_value_for_result(env, func_ret);
         info.mode = Mode::Throws(use_ret);
     } else if func.ret.typ == TypeId::tid_none() {
         info.mode = Mode::Normal;
@@ -85,7 +87,10 @@ pub fn analyze(
     }
     if info.mode == Mode::Combined || info.mode == Mode::Throws(true) {
         let mut ret = func.ret.clone();
-        //TODO: switch to use analyzed returns (it add too many Return<Option<>>)
+        //TODO: fully switch to use analyzed returns (it add too many Return<Option<>>)
+        if let Some(ref par) = func_ret.parameter {
+            ret.typ = par.typ;
+        }
         if let Some(val) = nullable_override {
             ret.nullable = val;
         }
@@ -138,14 +143,22 @@ pub fn can_as_return(env: &Env, par: &Parameter) -> bool {
     }
 }
 
-pub fn use_function_return_for_result(env: &Env, ret: &Parameter) -> bool {
-    if ret.typ == Default::default() {
+pub fn use_return_value_for_result(env: &Env, ret: &return_value::Info) -> bool {
+    if let Some(ref par) = ret.parameter {
+        use_function_return_for_result(env, par.typ)
+    } else {
+        false
+    }
+}
+
+pub fn use_function_return_for_result(env: &Env, typ: TypeId) -> bool {
+    if typ == Default::default() {
         return false;
     }
-    if ret.typ.ns_id != INTERNAL_NAMESPACE {
+    if typ.ns_id != INTERNAL_NAMESPACE {
         return true;
     }
-    let type_ = env.type_(ret.typ);
+    let type_ = env.type_(typ);
     match &*type_.get_name() {
         "UInt" => false,
         "Boolean" => false,
