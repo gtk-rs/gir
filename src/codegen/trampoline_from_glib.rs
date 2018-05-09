@@ -51,6 +51,7 @@ fn is_need_type_name(env: &Env, type_id: library::TypeId) -> bool {
         match *env.type_(type_id) {
             Fundamental(fund) if fund == Utf8 => true,
             Fundamental(fund) if fund == Filename => true,
+            Fundamental(fund) if fund == OsString => true,
             _ => false,
         }
     } else {

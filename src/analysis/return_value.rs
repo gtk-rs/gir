@@ -2,6 +2,7 @@ use analysis::ref_mode::RefMode;
 use analysis::rust_type::*;
 use analysis::imports::Imports;
 use analysis::namespaces;
+use analysis::override_string_type::override_string_type_return;
 use config;
 use env::Env;
 use library::{self, Nullable, TypeId};
@@ -22,16 +23,17 @@ pub fn analyze(
     used_types: &mut Vec<String>,
     imports: &mut Imports,
 ) -> Info {
-    let mut parameter = if func.ret.typ == Default::default() {
+    let typ = override_string_type_return(env, func.ret.typ, configured_functions);
+    let mut parameter = if typ == Default::default() {
         None
     } else {
-        if let Ok(s) = used_rust_type(env, func.ret.typ) {
+        if let Ok(s) = used_rust_type(env, typ) {
             used_types.push(s);
         }
         // Since GIRs are bad at specifying return value nullability, assume
         // any returned pointer is nullable unless overridden by the config.
         let mut nullable = func.ret.nullable;
-        if !*nullable && can_be_nullable_return(env, func.ret.typ) {
+        if !*nullable && can_be_nullable_return(env, typ) {
             *nullable = true;
         }
         let nullable_override = configured_functions
@@ -42,17 +44,18 @@ pub fn analyze(
             nullable = val;
         }
         Some(library::Parameter {
+            typ,
             nullable,
             ..func.ret.clone()
         })
     };
 
-    let commented = if func.ret.typ == Default::default() {
+    let commented = if typ == Default::default() {
         false
     } else {
         parameter_rust_type(
             env,
-            func.ret.typ,
+            typ,
             func.ret.direction,
             Nullable(false),
             RefMode::None,
@@ -64,7 +67,7 @@ pub fn analyze(
         .filter_map(|f| f.ret.bool_return_is_error.as_ref())
         .next();
     let bool_return_error_message =
-        bool_return_is_error.and_then(|m| if func.ret.typ != TypeId::tid_bool() {
+        bool_return_is_error.and_then(|m| if typ != TypeId::tid_bool() {
             error!(
                 "Ignoring bool_return_is_error configuration for non-bool returning function {}",
                 func.name
@@ -116,6 +119,7 @@ fn can_be_nullable_return(env: &Env, type_id: library::TypeId) -> bool {
             Pointer => true,
             Utf8 => true,
             Filename => true,
+            OsString => true,
             _ => false,
         },
         Alias(ref alias) => can_be_nullable_return(env, alias.typ),

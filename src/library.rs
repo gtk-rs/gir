@@ -62,7 +62,7 @@ impl Default for ParameterDirection {
     }
 }
 
-/// Annotation describing lifetime requirements / guarantees of callback parameters, 
+/// Annotation describing lifetime requirements / guarantees of callback parameters,
 /// that is callback itself and associated user data.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum ParameterScope {
@@ -198,6 +198,9 @@ pub enum Fundamental {
     Type,
     IntPtr,
     UIntPtr,
+    //Same encoding as Filename but can contains any string
+    //Not defined in GLib directly
+    OsString,
     Unsupported,
 }
 
@@ -235,6 +238,8 @@ const FUNDAMENTAL: &[(&str, Fundamental)] = &[
     ("GType", Fundamental::Type),
     ("gintptr", Fundamental::IntPtr),
     ("guintptr", Fundamental::UIntPtr),
+    //TODO: this is temporary name, change it when type added to GLib
+    ("os_string", Fundamental::OsString),
 ];
 
 #[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq, PartialOrd, Ord)]
@@ -256,6 +261,18 @@ impl TypeId {
 
     pub fn tid_bool() -> TypeId {
         TypeId { ns_id: 0, id: 1 }
+    }
+
+    pub fn tid_utf8() -> TypeId {
+        TypeId { ns_id: 0, id: 28 }
+    }
+
+    pub fn tid_filename() -> TypeId {
+        TypeId { ns_id: 0, id: 29 }
+    }
+
+    pub fn tid_os_string() -> TypeId {
+        TypeId { ns_id: 0, id: 33 }
     }
 }
 
@@ -583,18 +600,26 @@ impl Type {
     }
 
     pub fn c_array(library: &mut Library, inner: TypeId, size: Option<u16>) -> TypeId {
+        let name = Type::c_array_internal_name(inner, size);
         if let Some(size) = size {
-            library.add_type(
-                INTERNAL_NAMESPACE,
-                &format!("[#{:?}; {}]", inner, size),
-                Type::FixedArray(inner, size),
-            )
+            library.add_type(INTERNAL_NAMESPACE, &name, Type::FixedArray(inner, size))
         } else {
-            library.add_type(
-                INTERNAL_NAMESPACE,
-                &format!("[#{:?}]", inner),
-                Type::CArray(inner),
-            )
+            library.add_type(INTERNAL_NAMESPACE, &name, Type::CArray(inner))
+        }
+    }
+
+    pub fn find_c_array(library: &Library, inner: TypeId, size: Option<u16>) -> TypeId {
+        let name = Type::c_array_internal_name(inner, size);
+        library
+            .find_type(INTERNAL_NAMESPACE, &name)
+            .unwrap_or_else(|| panic!("No type for '*.{}'", name))
+    }
+
+    fn c_array_internal_name(inner: TypeId, size: Option<u16>) -> String {
+        if let Some(size) = size {
+            format!("[#{:?}; {}]", inner, size)
+        } else {
+            format!("[#{:?}]", inner)
         }
     }
 
@@ -788,6 +813,12 @@ impl Library {
             library.add_type(INTERNAL_NAMESPACE, name, Type::Fundamental(t));
         }
         assert_eq!(MAIN_NAMESPACE, library.add_namespace(main_namespace_name));
+
+        //For string_type override
+        Type::c_array(&mut library, TypeId::tid_utf8(), None);
+        Type::c_array(&mut library, TypeId::tid_filename(), None);
+        Type::c_array(&mut library, TypeId::tid_os_string(), None);
+
         library
     }
 
@@ -960,6 +991,9 @@ mod tests {
 
         assert_eq!(TypeId::tid_none().full_name(&lib), "*.None");
         assert_eq!(TypeId::tid_bool().full_name(&lib), "*.Boolean");
+        assert_eq!(TypeId::tid_utf8().full_name(&lib), "*.Utf8");
+        assert_eq!(TypeId::tid_filename().full_name(&lib), "*.Filename");
+        assert_eq!(TypeId::tid_os_string().full_name(&lib), "*.OsString");
     }
 
 }

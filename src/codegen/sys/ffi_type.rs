@@ -88,6 +88,7 @@ fn ffi_inner(env: &Env, tid: library::TypeId, mut inner: String) -> Result {
                 UniChar => "u32",
                 Utf8 => "c_char",
                 Filename => "c_char",
+                OsString => "c_char",
                 Type => "GType",
                 Pointer => {
                     match &inner[..] {

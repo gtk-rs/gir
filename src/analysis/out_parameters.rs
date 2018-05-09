@@ -1,14 +1,16 @@
 use std::slice::Iter;
 use std::vec::Vec;
 
+use analysis::conversion_type::ConversionType;
+use analysis::function_parameters::CParameter;
+use analysis::functions::is_carray_with_direct_elements;
 use analysis::imports::Imports;
 use analysis::ref_mode::RefMode;
+use analysis::return_value;
+use analysis::rust_type::parameter_rust_type;
 use config;
 use env::Env;
 use library::*;
-use super::conversion_type::ConversionType;
-use super::functions::is_carray_with_direct_elements;
-use super::rust_type::parameter_rust_type;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum Mode {
@@ -45,6 +47,8 @@ impl Info {
 pub fn analyze(
     env: &Env,
     func: &Function,
+    func_c_params: &[CParameter],
+    func_ret: &return_value::Info,
     configured_functions: &[&config::functions::Function],
 ) -> (Info, bool) {
     let mut info: Info = Default::default();
@@ -55,7 +59,7 @@ pub fn analyze(
         .filter_map(|f| f.ret.nullable)
         .next();
     if func.throws {
-        let use_ret = use_function_return_for_result(env, &func.ret);
+        let use_ret = use_return_value_for_result(env, func_ret);
         info.mode = Mode::Throws(use_ret);
     } else if func.ret.typ == TypeId::tid_none() {
         info.mode = Mode::Normal;
@@ -74,7 +78,12 @@ pub fn analyze(
             continue;
         }
         if can_as_return(env, par) {
-            info.params.push(par.clone());
+            let mut par = par.clone();
+            //TODO: temporary solution for string_type override
+            if let Some(c_par) = func_c_params.iter().find(|c_par| c_par.name == par.name) {
+                par.typ = c_par.typ;
+            }
+            info.params.push(par);
         } else {
             unsupported_outs = true;
         }
@@ -85,7 +94,10 @@ pub fn analyze(
     }
     if info.mode == Mode::Combined || info.mode == Mode::Throws(true) {
         let mut ret = func.ret.clone();
-        //TODO: switch to use analyzed returns (it add too many Return<Option<>>)
+        //TODO: fully switch to use analyzed returns (it add too many Return<Option<>>)
+        if let Some(ref par) = func_ret.parameter {
+            ret.typ = par.typ;
+        }
         if let Some(val) = nullable_override {
             ret.nullable = val;
         }
@@ -101,7 +113,9 @@ pub fn analyze_imports(env: &Env, func: &Function, imports: &mut Imports) {
             match *env.library.type_(par.typ) {
                 Type::Bitfield(..) | Type::Enumeration(..) => imports.add("std::mem", func.version),
                 Type::Fundamental(fund)
-                    if fund != Fundamental::Utf8 && fund != Fundamental::Filename =>
+                    if fund != Fundamental::Utf8
+                        && fund != Fundamental::OsString
+                        && fund != Fundamental::Filename =>
                 {
                     imports.add("std::mem", func.version)
                 }
@@ -136,14 +150,22 @@ pub fn can_as_return(env: &Env, par: &Parameter) -> bool {
     }
 }
 
-pub fn use_function_return_for_result(env: &Env, ret: &Parameter) -> bool {
-    if ret.typ == Default::default() {
+pub fn use_return_value_for_result(env: &Env, ret: &return_value::Info) -> bool {
+    if let Some(ref par) = ret.parameter {
+        use_function_return_for_result(env, par.typ)
+    } else {
+        false
+    }
+}
+
+pub fn use_function_return_for_result(env: &Env, typ: TypeId) -> bool {
+    if typ == Default::default() {
         return false;
     }
-    if ret.typ.ns_id != INTERNAL_NAMESPACE {
+    if typ.ns_id != INTERNAL_NAMESPACE {
         return true;
     }
-    let type_ = env.type_(ret.typ);
+    let type_ = env.type_(typ);
     match &*type_.get_name() {
         "UInt" => false,
         "Boolean" => false,

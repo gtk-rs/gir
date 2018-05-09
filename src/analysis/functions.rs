@@ -211,7 +211,7 @@ fn analyze_function(
             let mut output_params = vec![];
             let mut ffi_ret = None;
             if let Some(function) = find_function(env, &finish_func_name) {
-                if use_function_return_for_result(env, &function.ret) {
+                if use_function_return_for_result(env, function.ret.typ) {
                     ffi_ret = Some(function.ret.clone());
                 }
 
@@ -272,7 +272,13 @@ fn analyze_function(
         }
     }
 
-    let (outs, unsupported_outs) = out_parameters::analyze(env, func, configured_functions);
+    let (outs, unsupported_outs) = out_parameters::analyze(
+        env,
+        func,
+        &parameters.c_parameters,
+        &ret,
+        configured_functions,
+    );
     if unsupported_outs {
         warn!(
             "Function {} has unsupported outs",
