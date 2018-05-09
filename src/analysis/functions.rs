@@ -275,6 +275,7 @@ fn analyze_function(
     let (outs, unsupported_outs) = out_parameters::analyze(
         env,
         func,
+        &parameters.c_parameters,
         &ret,
         configured_functions,
     );

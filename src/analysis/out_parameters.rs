@@ -1,15 +1,16 @@
 use std::slice::Iter;
 use std::vec::Vec;
 
+use analysis::conversion_type::ConversionType;
+use analysis::function_parameters::CParameter;
+use analysis::functions::is_carray_with_direct_elements;
 use analysis::imports::Imports;
 use analysis::ref_mode::RefMode;
 use analysis::return_value;
+use analysis::rust_type::parameter_rust_type;
 use config;
 use env::Env;
 use library::*;
-use super::conversion_type::ConversionType;
-use super::functions::is_carray_with_direct_elements;
-use super::rust_type::parameter_rust_type;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum Mode {
@@ -46,6 +47,7 @@ impl Info {
 pub fn analyze(
     env: &Env,
     func: &Function,
+    func_c_params: &[CParameter],
     func_ret: &return_value::Info,
     configured_functions: &[&config::functions::Function],
 ) -> (Info, bool) {
@@ -76,7 +78,12 @@ pub fn analyze(
             continue;
         }
         if can_as_return(env, par) {
-            info.params.push(par.clone());
+            let mut par = par.clone();
+            //TODO: temporary solution for string_type override
+            if let Some(c_par) = func_c_params.iter().find(|c_par| c_par.name == par.name) {
+                par.typ = c_par.typ;
+            }
+            info.params.push(par);
         } else {
             unsupported_outs = true;
         }
