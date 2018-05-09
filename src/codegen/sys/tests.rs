@@ -94,7 +94,7 @@ fn prepare_ctypes(env: &Env) -> Vec<CType> {
             _ => None,
         })
         .collect();
-    
+
     types.sort();
     types
 }
@@ -121,9 +121,18 @@ fn prepare_cconsts(env: &Env) -> Vec<CConstant> {
         .collect();
 
     for typ in &ns.types {
+        let typ = if let Some(ref typ) = *typ {
+            typ
+        } else {
+            continue;
+        };
+        let full_name = format!("{}.{}", &ns.name, typ.get_name());
+        if env.type_status_sys(&full_name).ignored() {
+            continue;
+        }
         match *typ {
-            Some(Type::Bitfield(Bitfield {ref members, ..})) |
-            Some(Type::Enumeration(Enumeration {ref members, ..})) => {
+            Type::Bitfield(Bitfield { ref members, .. })
+            | Type::Enumeration(Enumeration { ref members, .. }) => {
                 for member in members {
                     constants.push(CConstant {
                         name: member.c_identifier.clone(),
@@ -131,7 +140,7 @@ fn prepare_cconsts(env: &Env) -> Vec<CConstant> {
                     });
                 }
             }
-            _ => {},
+            _ => {}
         }
     }
 
@@ -245,7 +254,7 @@ impl Compiler {
 
     pub fn define<'a, V: Into<Option<&'a str>>>(&mut self, var: &str, val: V) {
         let arg = match val.into() {
-            None => format!("-D{}", var), 
+            None => format!("-D{}", var),
             Some(val) => format!("-D{}={}", var, val),
         };
         self.args.push(arg);
@@ -288,7 +297,7 @@ fn pkg_config_cflags(packages: &[&str]) -> Result<Vec<String>, Box<Error>> {
     cmd.args(packages);
     let out = cmd.output()?;
     if !out.status.success() {
-        return Err(format!("command {:?} returned {}", 
+        return Err(format!("command {:?} returned {}",
                            &cmd, out.status).into());
     }
     let stdout = str::from_utf8(&out.stdout)?;
