@@ -41,7 +41,7 @@ fn apply(
     let replace = {
         use config::StringType::*;
         match string_type {
-            String => TypeId::tid_utf8(),
+            Utf8 => TypeId::tid_utf8(),
             Filename => TypeId::tid_filename(),
             OsString => TypeId::tid_os_string(),
         }
