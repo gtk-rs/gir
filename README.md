@@ -150,6 +150,9 @@ cfg_condition = "mycond"
         # parameter is calculated as length of string or array and removed from function declaration
         #  ( for length of return value use "return" )
         length_of = "str"
+        # change string type. Variants: "utf8", "filename", "os_string"
+        string_type = "os_string"
+
         # override for return value
         [[object.function.return]]
         # allow to remove/add Option<> to return value
@@ -157,6 +160,8 @@ cfg_condition = "mycond"
         # convert bool return types to Result<(), glib::BoolError> with
         # the given error message on failure
         bool_return_is_error = "Function failed doing what it is supposed to do"
+        # change string type. Variants: "utf8", "filename", "os_string"
+        string_type = "os_string"
     [[object.signal]]
     name = "activate-link"
     # replace trampoline bool return type with `Inhibit`
