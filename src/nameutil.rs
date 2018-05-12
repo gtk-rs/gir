@@ -81,7 +81,6 @@ pub fn signal_to_snake(signal: &str) -> String {
 
 #[cfg(test)]
 mod tests {
-    use std::path::*;
     use super::*;
 
     #[test]

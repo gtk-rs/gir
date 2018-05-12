@@ -147,9 +147,9 @@ impl Config {
         let single_version_file = match toml.lookup("options.single_version_file") {
             Some(v) => match v.as_result_bool("options.single_version_file") {
                 Ok(false) => None,
-                Ok(true) => Some(target_path.join("src").join("auto")),
+                Ok(true) => Some(make_single_version_file(None, &target_path)),
                 Err(_) => match v.as_str() {
-                    Some(p) => Some(target_path.join(p)),
+                    Some(p) => Some(make_single_version_file(Some(p), &target_path)),
                     None => return Err("single_version_file must be bool or string path".into()),
                 },
             },
@@ -212,5 +212,52 @@ fn read_toml<P: AsRef<Path>>(filename: P) -> Result<toml::Value, String> {
             }
         }
         Err(e) => Err(format!("Cannot open file \"{}\": {}", filename.as_ref().display(), e)),
+    }
+}
+
+fn make_single_version_file(configured: Option<&str>, target_path: &Path) -> PathBuf {
+    let file_dir = match configured {
+        None | Some("") => target_path.join("src").join("auto"),
+        Some(path) => target_path.join(path),
+    };
+
+    if file_dir.extension().is_some() {
+        file_dir
+    } else {
+        file_dir.join("versions.txt")
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_make_single_version_file() {
+        let target_path = Path::new("/tmp/glib");
+        assert_eq!(
+            make_single_version_file(None, &target_path),
+            PathBuf::from("/tmp/glib/src/auto/versions.txt")
+        );
+        assert_eq!(
+            make_single_version_file(Some(""), &target_path),
+            PathBuf::from("/tmp/glib/src/auto/versions.txt")
+        );
+        assert_eq!(
+            make_single_version_file(Some("src"), &target_path),
+            PathBuf::from("/tmp/glib/src/versions.txt")
+        );
+        assert_eq!(
+            make_single_version_file(Some("src/vers.txt"), &target_path),
+            PathBuf::from("/tmp/glib/src/vers.txt")
+        );
+        assert_eq!(
+            make_single_version_file(Some("."), &target_path),
+            PathBuf::from("/tmp/glib/versions.txt")
+        );
+        assert_eq!(
+            make_single_version_file(Some("./_vers.dat"), &target_path),
+            PathBuf::from("/tmp/glib/_vers.dat")
+        );
     }
 }

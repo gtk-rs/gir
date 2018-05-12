@@ -92,7 +92,8 @@ work_mode = "normal"
 generate_safety_asserts = true
 deprecate_by_min_version = true
 # with this option enabled, versions for gir and gir-files saved only to one file to minimize noise,
-# can also take path to the directory for saving "versions.txt"
+# can also take path to the directory for saving "versions.txt" or filename with extension.
+# Relative to target_path
 single_version_file = true
 ```
 
