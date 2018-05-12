@@ -1,15 +1,15 @@
 use std::path::Path;
 
-use env::Env;
 use config::WorkMode;
+use env::Env;
 use file_saver::*;
 
+mod alias;
 mod child_properties;
+mod constants;
 mod doc;
 mod enums;
-mod constants;
 mod flags;
-mod alias;
 pub mod function;
 mod function_body_chunk;
 mod functions;
@@ -46,8 +46,8 @@ fn normal_generate(env: &Env) {
     let mut traits: Vec<String> = Vec::new();
     let root_path = env.config.target_path.join("src").join("auto");
 
-    if env.config.single_version_file {
-        generate_single_version_file(env, &root_path);
+    if let Some(ref version_path) = env.config.single_version_file {
+        generate_single_version_file(env, version_path);
     }
 
     objects::generate(env, &root_path, &mut mod_rs, &mut traits);
@@ -74,8 +74,8 @@ pub fn generate_mod_rs(env: &Env, root_path: &Path, mod_rs: &[String], traits: &
     });
 }
 
-pub fn generate_single_version_file(env: &Env, root_path: &Path) {
-    let path = root_path.join("versions.txt");
+pub fn generate_single_version_file(env: &Env, version_path: &Path) {
+    let path = version_path.join("versions.txt");
     save_to_file(path, env.config.make_backup, |w| {
         general::single_version_file(w, &env.config)
     });

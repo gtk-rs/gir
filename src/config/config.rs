@@ -30,7 +30,7 @@ pub struct Config {
     pub deprecate_by_min_version: bool,
     pub show_statistics: bool,
     pub concurrency: library::Concurrency,
-    pub single_version_file: bool,
+    pub single_version_file: Option<PathBuf>,
 }
 
 impl Config {
@@ -145,8 +145,15 @@ impl Config {
         };
 
         let single_version_file = match toml.lookup("options.single_version_file") {
-            Some(v) => try!(v.as_result_bool("options.single_version_file")),
-            None => false,
+            Some(v) => match v.as_result_bool("options.single_version_file") {
+                Ok(false) => None,
+                Ok(true) => Some(target_path.join("src").join("auto")),
+                Err(_) => match v.as_str() {
+                    Some(p) => Some(target_path.join(p)),
+                    None => return Err("single_version_file must be bool or string path".into()),
+                },
+            },
+            None => None,
         };
 
         Ok(Config {
