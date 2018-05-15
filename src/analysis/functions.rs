@@ -201,50 +201,14 @@ fn analyze_function(
         if let Some(to_glib_extra) = to_glib_extra {
             to_glib_extras.insert(pos, to_glib_extra);
         }
-        if let Some(CallbackInfo {
-            callback_type,
-            success_parameters,
-            error_parameters,
-            bound_name,
-        }) = callback_info
-        {
-            // Checks for /*Ignored*/ or other error comments
-            if callback_type.find("/*").is_some() {
-                commented = true;
-            }
-            let func_name = func.c_identifier.as_ref().unwrap();
-            let finish_func_name = finish_function_name(func_name);
-            let mut output_params = vec![];
-            let mut ffi_ret = None;
-            if let Some(function) = find_function(env, &finish_func_name) {
-                if use_function_return_for_result(env, function.ret.typ) {
-                    ffi_ret = Some(function.ret.clone());
-                }
-
-                output_params.extend(function.parameters.clone());
-                for param in &mut output_params {
-                    if nameutil::needs_mangling(&param.name) {
-                        param.name = nameutil::mangle_keywords(&*param.name).into_owned();
-                    }
-                }
-            }
-            trampoline = Some(AsyncTrampoline {
-                is_method: func.kind == FunctionKind::Method,
-                name: format!("{}_trampoline", func.name),
-                finish_func_name,
-                callback_type,
-                bound_name,
-                output_params,
-                ffi_ret,
-            });
-
-            async_future = Some(AsyncFuture {
-                is_method: func.kind == FunctionKind::Method,
-                name: format!("{}_future", func.name),
-                success_parameters,
-                error_parameters,
-            });
-        }
+        analyze_async(
+            env,
+            func,
+            callback_info,
+            &mut commented,
+            &mut trampoline,
+            &mut async_future,
+        );
         let type_error =
             !(async && *env.library.type_(par.typ) == Type::Fundamental(library::Fundamental::Pointer)) &&
             parameter_rust_type(env, par.typ, par.direction, Nullable(false), RefMode::None)
@@ -379,6 +343,60 @@ pub fn is_carray_with_direct_elements(env: &Env, typ: library::TypeId) -> bool {
             }
         }
         _ => false,
+    }
+}
+
+fn analyze_async(
+    env: &Env,
+    func: &library::Function,
+    callback_info: Option<CallbackInfo>,
+    commented: &mut bool,
+    trampoline: &mut Option<AsyncTrampoline>,
+    async_future: &mut Option<AsyncFuture>,
+) {
+    if let Some(CallbackInfo {
+        callback_type,
+        success_parameters,
+        error_parameters,
+        bound_name,
+    }) = callback_info
+    {
+        // Checks for /*Ignored*/ or other error comments
+        if callback_type.find("/*").is_some() {
+            *commented = true;
+        }
+        let func_name = func.c_identifier.as_ref().unwrap();
+        let finish_func_name = finish_function_name(func_name);
+        let mut output_params = vec![];
+        let mut ffi_ret = None;
+        if let Some(function) = find_function(env, &finish_func_name) {
+            if use_function_return_for_result(env, function.ret.typ) {
+                ffi_ret = Some(function.ret.clone());
+            }
+
+            output_params.extend(function.parameters.clone());
+            for param in &mut output_params {
+                if nameutil::needs_mangling(&param.name) {
+                    param.name = nameutil::mangle_keywords(&*param.name).into_owned();
+                }
+            }
+        }
+        *trampoline = Some(AsyncTrampoline {
+            is_method: func.kind == FunctionKind::Method,
+            name: format!("{}_trampoline", func.name),
+            finish_func_name,
+            callback_type,
+            bound_name,
+            output_params,
+            ffi_ret,
+        });
+
+        *async_future = Some(AsyncFuture {
+            is_method: func.kind == FunctionKind::Method,
+            name: format!("{}_future", func.name),
+            success_parameters,
+            error_parameters,
+        });
     }
 }
 
