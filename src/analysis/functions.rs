@@ -8,11 +8,11 @@
 use std::collections::HashMap;
 use std::vec::Vec;
 
-use analysis::bounds::Bounds;
+use analysis::bounds::{Bounds, CallbackInfo};
 use analysis::function_parameters::{self, Parameters, Transformation, TransformationType};
-use analysis::out_parameters::use_function_return_for_result;
 use analysis::imports::Imports;
 use analysis::out_parameters;
+use analysis::out_parameters::use_function_return_for_result;
 use analysis::ref_mode::RefMode;
 use analysis::return_value;
 use analysis::rust_type::*;
@@ -22,9 +22,9 @@ use config;
 use env::Env;
 use library::{self, Function, FunctionKind, Nullable, Parameter, ParameterScope, Type};
 use nameutil;
+use std::borrow::Borrow;
 use traits::*;
 use version::Version;
-use std::borrow::Borrow;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Visibility {
@@ -197,11 +197,17 @@ fn analyze_function(
         if let Ok(s) = used_rust_type(env, par.typ) {
             used_types.push(s);
         }
-        let (to_glib_extra, type_string) = bounds.add_for_parameter(env, func, par, async);
+        let (to_glib_extra, callback_info) = bounds.add_for_parameter(env, func, par, async);
         if let Some(to_glib_extra) = to_glib_extra {
             to_glib_extras.insert(pos, to_glib_extra);
         }
-        if let Some((callback_type, success_parameters, error_parameters, bound_name)) = type_string {
+        if let Some(CallbackInfo {
+            callback_type,
+            success_parameters,
+            error_parameters,
+            bound_name,
+        }) = callback_info
+        {
             // Checks for /*Ignored*/ or other error comments
             if callback_type.find("/*").is_some() {
                 commented = true;

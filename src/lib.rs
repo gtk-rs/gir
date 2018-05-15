@@ -1,6 +1,7 @@
 #![cfg_attr(feature = "cargo-clippy", allow(match_same_arms))]
 #![cfg_attr(feature = "cargo-clippy", allow(let_and_return))]
 #![cfg_attr(feature = "cargo-clippy", allow(too_many_arguments))]
+#![cfg_attr(feature = "cargo-clippy", allow(write_literal))]
 
 extern crate git2;
 #[macro_use]
