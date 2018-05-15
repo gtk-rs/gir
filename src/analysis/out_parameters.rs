@@ -11,6 +11,7 @@ use analysis::rust_type::parameter_rust_type;
 use config;
 use env::Env;
 use library::*;
+use nameutil;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum Mode {
@@ -79,6 +80,7 @@ pub fn analyze(
         }
         if can_as_return(env, par) {
             let mut par = par.clone();
+            par.name = nameutil::mangle_keywords(&*par.name).into_owned();
             //TODO: temporary solution for string_type override
             if let Some(c_par) = func_c_params.iter().find(|c_par| c_par.name == par.name) {
                 par.typ = c_par.typ;
