@@ -19,7 +19,7 @@ Options:
     -h, --help              Show this message.
     -c CONFIG               Config file path (default: Gir.toml)
     -d GIRSPATH             Directory for girs
-    -m MODE                 Work mode: doc, normal, sys or not_bound
+    -m MODE                 Work mode: doc, normal, sys, subclass or not_bound
     -o PATH                 Target path
     --doc-target-path PATH  Doc target path
     -b, --make-backup       Make backup before generating
