@@ -24,6 +24,7 @@ mod records;
 mod return_value;
 mod signal;
 mod signal_body;
+mod subclass;
 mod sys;
 mod trait_impls;
 mod trampoline;
@@ -37,6 +38,7 @@ pub fn generate(env: &Env) {
         WorkMode::Normal => normal_generate(env),
         WorkMode::Sys => sys::generate(env),
         WorkMode::Doc => doc::generate(env),
+        WorkMode::Subclass => subclass::generate(env),
         WorkMode::DisplayNotBound => {}
     }
 }
