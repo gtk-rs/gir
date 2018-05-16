@@ -2,13 +2,13 @@ use std::collections::vec_deque::VecDeque;
 use std::slice::Iter;
 use std::vec::Vec;
 
-use consts::TYPE_PARAMETERS_START;
-use env::Env;
-use analysis::imports::Imports;
+use analysis::function_parameters::{async_param_to_remove, CParameter};
 use analysis::functions::{find_function, find_index_to_ignore, finish_function_name};
-use analysis::function_parameters::{CParameter, async_param_to_remove};
+use analysis::imports::Imports;
 use analysis::out_parameters::use_function_return_for_result;
 use analysis::rust_type::{bounds_rust_type, rust_type};
+use consts::TYPE_PARAMETERS_START;
+use env::Env;
 use library::{Function, Fundamental, Nullable, ParameterDirection, Type, TypeId};
 use traits::IntoString;
 
@@ -97,6 +97,14 @@ impl Bound {
     }
 }
 
+#[derive(Debug)]
+pub struct CallbackInfo {
+    pub callback_type: String,
+    pub success_parameters: String,
+    pub error_parameters: String,
+    pub bound_name: char,
+}
+
 impl Bounds {
     pub fn add_for_parameter(
         &mut self,
@@ -104,15 +112,14 @@ impl Bounds {
         func: &Function,
         par: &CParameter,
         async: bool,
-    ) -> (Option<String>, Option<(String, String, String, char)>) {
+    ) -> (Option<String>, Option<CallbackInfo>) {
         let type_name = bounds_rust_type(env, par.typ);
-        let mut type_string =
-            if async && async_param_to_remove(&par.name) {
-                return (None, None);
-            } else {
-                type_name.into_string()
-            };
-        let mut trampoline_info = None;
+        let mut type_string = if async && async_param_to_remove(&par.name) {
+            return (None, None);
+        } else {
+            type_name.into_string()
+        };
+        let mut callback_info = None;
         let mut ret = None;
         if !par.instance_parameter && par.direction != ParameterDirection::Out {
             if let Some(bound_type) = Bounds::type_for(env, par.typ, par.nullable) {
@@ -123,13 +130,22 @@ impl Bounds {
                     if let Some(function) = find_function(env, &finish_func_name) {
                         let mut out_parameters = find_out_parameters(env, function);
                         if use_function_return_for_result(env, function.ret.typ) {
-                            out_parameters.insert(0, rust_type(env, function.ret.typ).into_string());
+                            out_parameters
+                                .insert(0, rust_type(env, function.ret.typ).into_string());
                         }
                         let parameters = format_out_parameters(&out_parameters);
                         let error_type = find_error_type(env, function);
-                        type_string = format!("FnOnce(Result<{}, {}>) + Send + 'static", parameters, error_type);
-                        let bounds_name = *self.unused.front().unwrap();
-                        trampoline_info = Some((type_string.clone(), parameters, error_type, bounds_name));
+                        type_string = format!(
+                            "FnOnce(Result<{}, {}>) + Send + 'static",
+                            parameters, error_type
+                        );
+                        let bound_name = *self.unused.front().unwrap();
+                        callback_info = Some(CallbackInfo {
+                            callback_type: type_string.clone(),
+                            success_parameters: parameters,
+                            error_parameters: error_type,
+                            bound_name,
+                        });
                     }
                 }
                 if !self.add_parameter(&par.name, &type_string, bound_type, async) {
@@ -140,7 +156,7 @@ impl Bounds {
                 }
             }
         }
-        (ret, trampoline_info)
+        (ret, callback_info)
     }
 
     pub fn type_for(env: &Env, type_id: TypeId, nullable: Nullable) -> Option<BoundType> {
