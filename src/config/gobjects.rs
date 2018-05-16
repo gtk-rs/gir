@@ -74,7 +74,6 @@ pub struct GObject {
     pub trait_name: Option<String>,
     pub subclass_impl_trait_name: Option<String>,
     pub subclass_base_trait_name: Option<String>,
-    pub subclass_class_trait_name: Option<String>,
     pub child_properties: Option<ChildProperties>,
     pub concurrency: library::Concurrency,
     pub ref_mode: Option<ref_mode::RefMode>,
@@ -104,7 +103,6 @@ impl Default for GObject {
             trait_name: None,
             subclass_impl_trait_name: None,
             subclass_base_trait_name: None,
-            subclass_class_trait_name: None,
             child_properties: None,
             concurrency: Default::default(),
             ref_mode: None,
@@ -193,7 +191,6 @@ fn parse_object(
             "trait_name",
             "subclass_impl_trait_name",
             "subclass_base_trait_name",
-            "subclass_class_trait_name",
             "cfg_condition",
             "must_use",
             "use_boxed_functions",
@@ -259,10 +256,6 @@ fn parse_object(
         .lookup("subclass_base_trait_name")
         .and_then(|v| v.as_str())
         .map(|s| s.to_owned());
-    let subclass_class_trait_name = toml_object
-        .lookup("subclass_class_trait_name")
-        .and_then(|v| v.as_str())
-        .map(|s| s.to_owned());
     let concurrency = toml_object
         .lookup("concurrency")
         .and_then(|v| v.as_str())
@@ -319,7 +312,6 @@ fn parse_object(
         trait_name,
         subclass_impl_trait_name,
         subclass_base_trait_name,
-        subclass_class_trait_name,
         child_properties,
         concurrency,
         ref_mode,
