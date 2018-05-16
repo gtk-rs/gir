@@ -22,7 +22,6 @@ Options:
     -m MODE                 Work mode: doc, normal, sys, subclass or not_bound
     -o PATH                 Target path
     --doc-target-path PATH  Doc target path
-    --subclass-target-path PATH  Subclass target path
     -b, --make-backup       Make backup before generating
     -s, --stats             Show statistics
 ";
@@ -45,7 +44,7 @@ fn build_config() -> Result<Config, String> {
 
     Config::new(args.get_str("-c"), work_mode, args.get_str("-d"),
                 args.get_str("<library>"), args.get_str("<version>"), args.get_str("-o"),
-                args.get_str("--doc-target-path"), args.get_str("--subclass-target-path"),
+                args.get_str("--doc-target-path"),
                 args.get_bool("-b"), args.get_bool("-s"))
 }
 

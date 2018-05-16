@@ -24,7 +24,6 @@ pub struct Config {
     /// Path where files generated in normal and sys mode
     pub auto_path: PathBuf,
     pub doc_target_path: PathBuf,
-    pub subclass_target_path: PathBuf,
     pub external_libraries: Vec<ExternalLibrary>,
     pub objects: gobjects::GObjects,
     pub min_cfg_version: Version,
@@ -45,7 +44,6 @@ impl Config {
                             library_version: S,
                             target_path: S,
                             doc_target_path: S,
-                            subclass_target_path: S,
                             make_backup: B,
                             show_statistics: B)
                             -> Result<Config, String>
@@ -126,17 +124,6 @@ impl Config {
             Some(p) => config_dir.join(p),
         };
 
-        let subclass_target_path: PathBuf = match subclass_target_path.into() {
-            Some("") | None => {
-                let path = try!(toml.lookup_str(
-                    "options.subclass_target_path",
-                    "No subclass target path specified",
-                ));
-                config_dir.join(path)
-            }
-            Some(a) => a.into(),
-        };
-
         let concurrency = match toml.lookup("options.concurrency") {
             Some(v) => try!(try!(v.as_result_str("options.concurrency")).parse()),
             None => Default::default(),
@@ -192,7 +179,6 @@ impl Config {
             target_path,
             auto_path,
             doc_target_path,
-            subclass_target_path,
             external_libraries,
             objects,
             min_cfg_version,
