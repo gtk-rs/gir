@@ -21,6 +21,9 @@ pub struct Info {
     pub supertypes: Vec<general::StatusedTypeId>,
     pub generate_trait: bool,
     pub trait_name: String,
+    pub subclass_impl_trait_name: String,
+    pub subclass_base_trait_name: String,
+    pub subclass_class_trait_name: String,
     pub has_constructors: bool,
     pub has_methods: bool,
     pub has_functions: bool,
@@ -101,6 +104,21 @@ pub fn class(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<Info>
         .as_ref()
         .cloned()
         .unwrap_or_else(|| format!("{}Ext", name));
+
+    let subclass_impl_trait_name = obj.subclass_impl_trait_name
+        .as_ref()
+        .cloned()
+        .unwrap_or_else(|| format!("{}Impl", name));
+
+    let subclass_base_trait_name = obj.subclass_base_trait_name
+        .as_ref()
+        .cloned()
+        .unwrap_or_else(|| format!("{}Base", name));
+
+    let subclass_class_trait_name = obj.subclass_class_trait_name
+        .as_ref()
+        .cloned()
+        .unwrap_or_else(|| format!("{}ClassExt", name));
 
     // Sanity check the user's configuration. It's unlikely that not generating
     // a trait is wanted if there are subtypes in this very crate
@@ -239,6 +257,9 @@ pub fn class(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<Info>
         supertypes,
         generate_trait,
         trait_name,
+        subclass_impl_trait_name,
+        subclass_base_trait_name,
+        subclass_class_trait_name,
         has_constructors,
         has_methods,
         has_functions,
