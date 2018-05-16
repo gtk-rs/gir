@@ -2,6 +2,7 @@ use env::Env;
 mod objects;
 mod object;
 mod traits;
+mod functions;
 
 use codegen::generate_single_version_file;
 

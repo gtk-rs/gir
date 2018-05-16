@@ -18,7 +18,7 @@ pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>, traits: &
 
         let mut path = root_path.join(&mod_name);
         path.set_extension("rs");
-        info!("Generating file {:?}", path);
+        info!("Generating file {:?}", mod_name);
 
         save_to_file(path, env.config.make_backup, |ref mut w| {
             super::object::generate(w, env, class_analysis)
