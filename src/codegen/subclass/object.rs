@@ -39,6 +39,8 @@ pub fn generate(w: &mut Write, env: &Env, analysis: &analysis::object::Info) -> 
     traits::generate_impl(w, env, analysis, &subclass_info);
 
 
+    traits::generate_base(w, env, analysis, &subclass_info);
+
 
     Ok(())
 }

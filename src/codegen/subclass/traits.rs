@@ -25,6 +25,8 @@ pub fn generate_impl(w: &mut Write,
                      subclass_info: &SubclassInfo
                  ) -> Result<()> {
 
+    // start impl trait
+    try!(writeln!(w));
     try!(writeln!(
         w,
         "pub trait {}<T: {}>: ObjectImpl<T> + AnyImpl + 'static {{",
@@ -32,9 +34,41 @@ pub fn generate_impl(w: &mut Write,
         analysis.subclass_base_trait_name
     ));
 
+    //end impl trait
+    try!(writeln!(w));
+    try!(writeln!(
+        w,
+        "}}"
+    ));
+
     Ok(())
 }
 
+
+pub fn generate_base(w: &mut Write,
+                     env: &Env,
+                     analysis: &analysis::object::Info,
+                     subclass_info: &SubclassInfo
+                 ) -> Result<()> {
+
+    // start base trait
+    try!(writeln!(w));
+    try!(writeln!(
+        w,
+        "pub unsafe trait {}: IsA<{}> + ObjectType {{",
+        analysis.subclass_base_trait_name,
+        analysis.subclass_impl_trait_name //TODO: user-facing parent
+    ));
+
+    //end base trait
+    try!(writeln!(w));
+    try!(writeln!(
+        w,
+        "}}"
+    ));
+
+    Ok(())
+}
 
 // pub fn generate_base -->
 // pub unsafe trait ApplicationBase: IsA<gio::Application> + ObjectType {
