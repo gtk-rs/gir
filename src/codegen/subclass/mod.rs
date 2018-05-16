@@ -10,6 +10,8 @@ mod statics;
 mod tests;
 
 pub fn generate(env: &Env) {
+    info!("Generating subclasssing traits {:?}", env.config.subclass_target_path);
+
     // generate_single_version_file(env);
     // lib_::generate(env);
     // build::generate(env);
