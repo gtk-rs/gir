@@ -124,6 +124,7 @@ impl Library {
         let mut properties = Vec::new();
         let mut impls = Vec::new();
         let mut fields = Vec::new();
+        let mut vfns = Vec::new();
         let mut doc = None;
         let mut union_count = 1;
 
@@ -153,7 +154,11 @@ impl Library {
                     fields.push(f);
                 })
             }
-            "virtual-method" => parser.ignore_element(),
+            "virtual-method" => {
+                self.read_signal(parser, ns_id, elem).map(|v| {
+                    vfns.push(v)
+                })
+            }
             "doc" => parser.text().map(|t| doc = Some(t)),
             "union" => {
                 self.read_union(parser, ns_id, elem, Some(class_name), Some(c_type)).map(|mut u| {
@@ -194,6 +199,7 @@ impl Library {
             glib_get_type: get_type.into(),
             fields,
             functions: fns,
+            virtual_methods: vfns,
             signals,
             properties,
             parent,
@@ -498,6 +504,51 @@ impl Library {
         }
     }
 
+    fn read_vfunc(&mut self, parser: &mut XmlParser, ns_id: u16,
+                  elem: &Element) -> Result<Field, String> {
+        let field_name = elem.attr_required("name")?;
+        let private = elem.attr_bool("private", false);
+        let bits = elem.attr("bits").and_then(|s| s.parse().ok());
+
+        let mut typ = None;
+        let mut doc = None;
+
+        parser.elements(|parser, elem| match elem.name() {
+            "type" | "array" => {
+                if typ.is_some() {
+                    return Err(parser.fail("Too many <type> elements"));
+                }
+                self.read_type(parser, ns_id, elem).map(|t| {
+                    typ = Some(t);
+                })
+            }
+            "callback" => {
+                if typ.is_some() {
+                    return Err(parser.fail("Too many <type> elements"));
+                }
+                self.read_function(parser, ns_id, elem.name(), elem).map(|f| {
+                    typ = Some((Type::function(self, f), None, None));
+                })
+            }
+            "doc" => parser.text().map(|t| doc = Some(t)),
+            _ => Err(parser.unexpected_element(elem)),
+        })?;
+
+        if let Some((tid, c_type, array_length)) = typ {
+            Ok(Field {
+                name: field_name.into(),
+                typ: tid,
+                c_type,
+                private,
+                bits,
+                array_length,
+                doc,
+            })
+        } else {
+            Err(parser.fail("Missing <type> element"))
+        }
+    }
+
     fn read_named_callback(
         &mut self,
         parser: &mut XmlParser,
@@ -527,6 +578,7 @@ impl Library {
         let mut signals = Vec::new();
         let mut properties = Vec::new();
         let mut prereqs = Vec::new();
+        let mut vfns = Vec::new();
         let mut doc = None;
 
         parser.elements(|parser, elem| match elem.name() {
@@ -551,7 +603,11 @@ impl Library {
                 })
             }
             "doc" => parser.text().map(|t| doc = Some(t)),
-            "virtual-method" => parser.ignore_element(),
+            "virtual-method" => {
+                self.read_signal(parser, ns_id, elem).map(|v| {
+                    vfns.push(v)
+                })
+            },
             _ => Err(parser.unexpected_element(elem)),
         })?;
 
@@ -562,6 +618,7 @@ impl Library {
             c_class_type: None, // this will be resolved during postprocessing
             glib_get_type: get_type.into(),
             functions: fns,
+            virtual_methods: vfns,
             signals,
             properties,
             prerequisites: prereqs,
@@ -899,6 +956,7 @@ impl Library {
         }
         self.read_function(parser, ns_id, kind_str, elem).and_then(|f| {
             if f.c_identifier.is_none() {
+                info!("read func: {:?}", f);
                 return Err(parser.fail_with_position("Missing c:identifier attribute",
                                                      elem.position()));
             }
