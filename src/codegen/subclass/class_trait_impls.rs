@@ -27,7 +27,17 @@ pub fn generate_impl(w: &mut Write,
                      subclass_info: &SubclassInfo
                  ) -> Result<()> {
 
-    info!("Generating {:?}", analysis.subclass_impl_trait_name);
+
+    if analysis.class_type.is_some(){
+        // let name = format!("{}.{}", env.config., &analysis.class_type.as_ref().unwrap());
+        // let klass = env.config.objects.vmap(|x| x.name).collect();
+        let ns: Vec<String> = env.library.namespaces.iter().map(|ref x| x.name.clone()).collect();
+       info!("Generating  {:?} {:?}", ns, env.analysis.objects.keys());
+
+
+    }
+
+
 
     // start impl trait
     try!(writeln!(w));

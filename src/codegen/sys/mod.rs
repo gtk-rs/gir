@@ -4,7 +4,7 @@ use env::Env;
 mod build;
 mod cargo_toml;
 pub mod ffi_type;
-mod fields;
+pub mod fields;
 mod functions;
 mod lib_;
 mod statics;

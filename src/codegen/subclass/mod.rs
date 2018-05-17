@@ -1,8 +1,15 @@
 use env::Env;
+use std::io::{Result, Write};
+
+use library::*;
+
 mod objects;
 mod object;
-mod traits;
+mod class_trait_impls;
 mod functions;
+
+use traits::*;
+
 
 use codegen::generate_single_version_file;
 
@@ -14,6 +21,7 @@ pub fn generate(env: &Env) {
     let mut traits: Vec<String> = Vec::new();
 
     generate_single_version_file(env);
+
     objects::generate(env, &root_path, &mut mod_rs, &mut traits);
 
     // lib_::generate(env);

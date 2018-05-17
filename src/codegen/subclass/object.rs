@@ -12,7 +12,7 @@ use codegen::trait_impls;
 use codegen::trampoline;
 
 
-use codegen::subclass::traits;
+use codegen::subclass::class_trait_impls;
 
 
 pub struct SubclassInfo{
@@ -36,14 +36,14 @@ pub fn generate(w: &mut Write, env: &Env, analysis: &analysis::object::Info) -> 
 
     let subclass_info = SubclassInfo::new(env, analysis);
 
-    traits::generate_impl(w, env, analysis, &subclass_info);
+    class_trait_impls::generate_impl(w, env, analysis, &subclass_info);
 
-    traits::generate_impl_ext(w, env, analysis, &subclass_info);
+    class_trait_impls::generate_impl_ext(w, env, analysis, &subclass_info);
 
     generate_any_impl(w, env, analysis, &subclass_info);
 
 
-    traits::generate_base(w, env, analysis, &subclass_info);
+    class_trait_impls::generate_base(w, env, analysis, &subclass_info);
 
 
     Ok(())
