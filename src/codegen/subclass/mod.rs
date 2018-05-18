@@ -3,7 +3,7 @@ use env::Env;
 mod object;
 mod class_impls;
 mod class_impl;
-mod functions;
+mod virtual_methods;
 
 
 use codegen::generate_single_version_file;

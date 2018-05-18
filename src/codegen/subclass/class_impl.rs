@@ -17,7 +17,7 @@ use std::fmt;
 
 use library::*;
 use codegen::subclass::class_impls::SubclassInfo;
-use codegen::subclass::functions;
+use codegen::subclass::virtual_methods;
 use codegen::general;
 use codegen::sys::fields;
 
@@ -60,17 +60,6 @@ pub fn generate_impl(w: &mut Write,
                  ) -> Result<()> {
 
 
-    if analysis.class_type.is_some(){
-        // let name = format!("{}.{}", env.config., &analysis.class_type.as_ref().unwrap());
-        // let klass = env.config.objects.vmap(|x| x.name).collect();
-        let ns: Vec<String> = env.library.namespaces.iter().map(|ref x| x.name.clone()).collect();
-       info!("Generating  {:?} {:?}", ns, env.analysis.objects.keys());
-
-       // let f = fields::from_class()
-    }
-
-
-
     // start impl trait
     try!(writeln!(w));
     try!(writeln!(
@@ -80,8 +69,10 @@ pub fn generate_impl(w: &mut Write,
         analysis.subclass_base_trait_name
     ));
 
-    for func_analysis in &analysis.functions{
-        try!(functions::generate_impl(w, env, func_analysis, subclass_info, 1));
+    for vfunc_analysis in &class.virtual_methods{
+        try!(virtual_methods::generate_default_impl(w, env, analysis, vfunc_analysis, subclass_info, 1));
+
+
     }
 
     //end impl trait
