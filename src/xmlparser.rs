@@ -145,7 +145,6 @@ impl<'a> XmlParser<'a> {
         }
     }
 
-    #[cfg(test)]
     pub fn new<'r, R: 'r + Read>(read: R) -> Result<XmlParser<'r>, String> {
         Ok(XmlParser {
             parser: EventReader::new(Box::new(read)),

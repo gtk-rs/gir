@@ -1,0 +1,4 @@
+<!--mode:object-->
+    <constant name="ANALYZER_ANALYZING" value="1" c:type="T_ANALYZER_ANALYZING">
+      <type name="gint" c:type="gint"/>
+    </constant>

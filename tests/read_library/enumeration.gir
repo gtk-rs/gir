@@ -1,0 +1,8 @@
+<!--mode:object-->
+    <enumeration name="BookmarkFileError" c:type="TBookmarkFileError" glib:error-domain="t-bookmark-file-error-quark">
+      <doc xml:space="preserve">Error codes returned by bookmark file parsing.</doc>
+      <member name="invalid_uri" value="0" c:identifier="T_BOOKMARK_FILE_ERROR_INVALID_URI">
+      </member>
+      <member name="invalid_value" value="1" c:identifier="T_BOOKMARK_FILE_ERROR_INVALID_VALUE">
+      </member>
+    </enumeration>

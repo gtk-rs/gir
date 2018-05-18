@@ -1,3 +1,4 @@
+use std::io::Read;
 use std::mem::replace;
 use std::path::{Path, PathBuf};
 use std::str::FromStr;
@@ -6,7 +7,7 @@ use library::*;
 use version::Version;
 use xmlparser::{Element, XmlParser};
 
-const EMPTY_CTYPE: &str = "/*EMPTY*/";
+pub const EMPTY_CTYPE: &str = "/*EMPTY*/";
 
 pub fn is_empty_c_type(c_type: &str) -> bool {
     c_type == EMPTY_CTYPE
@@ -16,6 +17,16 @@ impl Library {
     pub fn read_file(&mut self, dir: &Path, lib: &str) -> Result<(), String> {
         let file_name = make_file_name(dir, lib);
         let mut p = XmlParser::from_path(&file_name)?;
+        p.document(|p, _| {
+            p.element_with_name("repository", |parser, _elem| {
+                self.read_repository(dir, parser)
+            })
+        })
+    }
+
+    pub fn read_reader<R: Read>(&mut self, reader: R) -> Result<(), String> {
+        let dir = Path::new("read_reader_not_implement_include");
+        let mut p = XmlParser::new(reader)?;
         p.document(|p, _| {
             p.element_with_name("repository", |parser, _elem| {
                 self.read_repository(dir, parser)
@@ -48,8 +59,12 @@ impl Library {
                 }
                 Ok(())
             }
-            "namespace" => self.read_namespace(parser, elem, package.take(), 
-                                               replace(&mut includes, Vec::new())),
+            "namespace" => self.read_namespace(
+                parser,
+                elem,
+                package.take(),
+                replace(&mut includes, Vec::new()),
+            ),
             _ => Err(parser.unexpected_element(elem)),
         })?;
         Ok(())

@@ -1,0 +1,54 @@
+<!--mode:object-->
+    <class name="AppLaunchContext" c:symbol-prefix="app_launch_context" c:type="GAppLaunchContext" parent="GObject.Object" glib:type-name="GAppLaunchContext" glib:get-type="g_app_launch_context_get_type" glib:type-struct="AppLaunchContextClass">
+      <constructor name="new" c:identifier="g_app_launch_context_new">
+        <return-value transfer-ownership="full">
+          <type name="AppLaunchContext" c:type="GAppLaunchContext*"/>
+        </return-value>
+      </constructor>
+      <virtual-method name="get_display" invoker="get_display">
+        <return-value transfer-ownership="full">
+          <type name="utf8" c:type="char*"/>
+        </return-value>
+        <parameters>
+          <instance-parameter name="context" transfer-ownership="none">
+            <type name="AppLaunchContext" c:type="GAppLaunchContext*"/>
+          </instance-parameter>
+          <parameter name="info" transfer-ownership="none">
+            <type name="AppInfo" c:type="GAppInfo*"/>
+          </parameter>
+          <parameter name="files" transfer-ownership="none">
+            <type name="GLib.List" c:type="GList*">
+              <type name="File"/>
+            </type>
+          </parameter>
+        </parameters>
+      </virtual-method>
+      <method name="get_environment" c:identifier="g_app_launch_context_get_environment" version="2.32">
+        <return-value transfer-ownership="full">
+          <array c:type="char**">
+            <type name="filename"/>
+          </array>
+        </return-value>
+        <parameters>
+          <instance-parameter name="context" transfer-ownership="none">
+            <type name="AppLaunchContext" c:type="GAppLaunchContext*"/>
+          </instance-parameter>
+        </parameters>
+      </method>
+      <field name="parent_instance">
+        <type name="GObject.Object" c:type="GObject"/>
+      </field>
+      <glib:signal name="launched" when="last" version="2.36">
+        <return-value transfer-ownership="none">
+          <type name="none" c:type="void"/>
+        </return-value>
+        <parameters>
+          <parameter name="info" transfer-ownership="none">
+            <type name="AppInfo"/>
+          </parameter>
+          <parameter name="platform_data" transfer-ownership="none">
+            <type name="GLib.Variant"/>
+          </parameter>
+        </parameters>
+      </glib:signal>
+    </class>
