@@ -15,7 +15,7 @@ use nameutil;
 use std::result::Result as StdResult;
 use std::fmt;
 
-use codegen::subclass::object::SubclassInfo;
+use codegen::subclass::class_impls::SubclassInfo;
 
 
 pub fn generate_impl(w: &mut Write,

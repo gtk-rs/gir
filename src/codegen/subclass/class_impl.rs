@@ -15,14 +15,46 @@ use nameutil;
 use std::result::Result as StdResult;
 use std::fmt;
 
-use codegen::subclass::object::SubclassInfo;
+use library::*;
+use codegen::subclass::class_impls::SubclassInfo;
 use codegen::subclass::functions;
+use codegen::general;
+use codegen::sys::fields;
+
+
+pub fn generate(w: &mut Write, env: &Env, class: &Class, analysis: &analysis::object::Info) -> Result<()>
+{
+    try!(general::start_comments(w, &env.config));
+    try!(general::uses(w, env, &analysis.imports));
+    // TODO: insert gobject-subclass uses
+    // TODO: insert gobject-subclass uses of parent types
+
+    info!("{:?}, {:?}", analysis.c_type, analysis.c_type);
+
+    let subclass_info = SubclassInfo::new(env, class, analysis);
+
+    generate_impl(w, env, class, analysis, &subclass_info);
+
+    generate_impl_ext(w, env, class, analysis, &subclass_info);
+
+    generate_any_impl(w, env, class, analysis, &subclass_info);
+
+
+    generate_base(w, env, class, analysis, &subclass_info);
+
+
+    Ok(())
+}
 
 // pub fn generate_impl -->
 //  pub trait ApplicationImpl<T: ApplicationBase>: ObjectImpl<T> + AnyImpl + 'static {
 
+
+
+
 pub fn generate_impl(w: &mut Write,
                      env: &Env,
+                     class: &Class,
                      analysis: &analysis::object::Info,
                      subclass_info: &SubclassInfo
                  ) -> Result<()> {
@@ -34,7 +66,7 @@ pub fn generate_impl(w: &mut Write,
         let ns: Vec<String> = env.library.namespaces.iter().map(|ref x| x.name.clone()).collect();
        info!("Generating  {:?} {:?}", ns, env.analysis.objects.keys());
 
-
+       // let f = fields::from_class()
     }
 
 
@@ -64,6 +96,7 @@ pub fn generate_impl(w: &mut Write,
 
 pub fn generate_impl_ext(w: &mut Write,
                      env: &Env,
+                     class: &Class,
                      analysis: &analysis::object::Info,
                      subclass_info: &SubclassInfo
                  ) -> Result<()> {
@@ -89,6 +122,7 @@ pub fn generate_impl_ext(w: &mut Write,
 
 pub fn generate_base(w: &mut Write,
                      env: &Env,
+                     class: &Class,
                      analysis: &analysis::object::Info,
                      subclass_info: &SubclassInfo
                  ) -> Result<()> {
@@ -117,3 +151,17 @@ pub fn generate_base(w: &mut Write,
 
 // pub fn generate_base -->
 // pub unsafe trait ApplicationBase: IsA<gio::Application> + ObjectType {
+
+
+fn generate_any_impl(w: &mut Write, _env: &Env, class: &Class, analysis: &analysis::object::Info, _subclass_info: &SubclassInfo) -> Result<()>
+{
+    try!(writeln!(w));
+    try!(writeln!(
+        w,
+        "any_impl!({}, {});",
+        analysis.subclass_base_trait_name,
+        analysis.subclass_impl_trait_name
+    ));
+
+    Ok(())
+}
