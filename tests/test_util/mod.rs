@@ -5,7 +5,7 @@ extern crate libgir as gir;
 use std::collections::HashMap;
 use std::fs::File;
 use std::io::{self, BufRead, BufReader, Read, Seek, SeekFrom};
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::str::FromStr;
 
 use gir::tests_export::*;
@@ -32,6 +32,10 @@ pub fn create_default_config() -> Config {
         concurrency: library::Concurrency::None,
         single_version_file: None,
     }
+}
+
+pub fn default_include_dir() -> PathBuf {
+    Path::new("tests").join("include")
 }
 
 pub type Parameters = HashMap<String, String>;

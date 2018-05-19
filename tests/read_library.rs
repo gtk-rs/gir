@@ -9,16 +9,26 @@ use std::io::{self, Read};
 use std::path::Path;
 
 use gir::tests_export::*;
+use gir::*;
 use test_util::*;
 
 fn read_library<P: AsRef<Path>>(filename: P) -> Result<(library::Library), io::Error> {
+    let cfg = create_default_config();
+    read_library_with_config(filename, cfg)
+}
+
+fn read_library_with_config<P: AsRef<Path>>(
+    filename: P,
+    cfg: Config,
+) -> Result<(library::Library), io::Error> {
     let full_name = Path::new("tests")
         .join("read_library")
         .join(filename.as_ref());
-    let cfg = create_default_config();
     let mut library = library::Library::new(&cfg.library_name);
     let (f, _) = read_parameterized(full_name)?;
-    library.read_reader(f).unwrap();
+    library
+        .read_reader(f, Some(default_include_dir().as_ref()))
+        .unwrap();
     Ok(library)
 }
 
@@ -28,7 +38,7 @@ fn load_normal() {
     let mut library = library::Library::new(&cfg.library_name);
 
     let f = File::open("tests/read_library/normal.gir").unwrap();
-    library.read_reader(f).unwrap();
+    library.read_reader(f, None).unwrap();
     assert!(library.find_type(1, "TimeSpan").is_some());
 }
 
@@ -57,6 +67,21 @@ fn read_mode_object() {
     assert_eq!(f.read(&mut buffer).unwrap(), 6);
     let str = String::from_utf8_lossy(&buffer);
     assert_eq!(str, "<?xml ");
+}
+
+/// Check that we can add an object to glib and still have access to its objects
+#[test]
+fn read_glib_addition() {
+    let mut cfg = create_default_config();
+    cfg.library_name = "GLib".into();
+    cfg.library_version = "2.0".into();
+    let library = read_library_with_config("glib_addition.gir", cfg).unwrap();
+    let a: &library::Alias = get_type(&library, "NewAlias");
+    assert_eq!(a.c_identifier, "TNewAlias");
+    assert_eq!(a.target_c_type, "gint64");
+    assert_eq!(a.typ.full_name(&library), "*.Int64");
+    let r: &library::Record = get_type(&library, "Variant");
+    assert_eq!(r.c_type, "GVariant");
 }
 
 #[test]

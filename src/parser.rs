@@ -19,35 +19,48 @@ impl Library {
         let mut p = XmlParser::from_path(&file_name)?;
         p.document(|p, _| {
             p.element_with_name("repository", |parser, _elem| {
-                self.read_repository(dir, parser)
+                self.read_repository(dir, parser, false)
             })
         })
     }
 
-    pub fn read_reader<R: Read>(&mut self, reader: R) -> Result<(), String> {
-        let dir = Path::new("read_reader_not_implement_include");
+    pub fn read_reader<'a, R: Read, P: Into<Option<&'a Path>>>(
+        &mut self,
+        reader: R,
+        dir: P,
+    ) -> Result<(), String> {
+        let dir = if let Some(dir) = dir.into() {
+            dir
+        } else {
+            Path::new("directory for include not passed into read_reader")
+        };
         let mut p = XmlParser::new(reader)?;
         p.document(|p, _| {
             p.element_with_name("repository", |parser, _elem| {
-                self.read_repository(dir, parser)
+                self.read_repository(dir, parser, true)
             })
         })
     }
 
-    fn read_repository(&mut self, dir: &Path, parser: &mut XmlParser) -> Result<(), String> {
+    fn read_repository(
+        &mut self,
+        dir: &Path,
+        parser: &mut XmlParser,
+        include_existing: bool,
+    ) -> Result<(), String> {
         let mut package = None;
         let mut includes = Vec::new();
         parser.elements(|parser, elem| match elem.name() {
             "include" => {
                 match (elem.attr("name"), elem.attr("version")) {
                     (Some(name), Some(ver)) => {
-                        if self.find_namespace(name).is_none() {
+                        if include_existing || self.find_namespace(name).is_none() {
                             let lib = format!("{}-{}", name, ver);
                             self.read_file(dir, &lib)?;
                         }
-                    },
+                    }
                     (Some(name), None) => includes.push(name.to_owned()),
-                    _ => {},
+                    _ => {}
                 }
                 Ok(())
             }
