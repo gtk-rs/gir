@@ -111,14 +111,12 @@ fn load_bitfield() {
 #[test]
 fn load_class() {
     let library = read_library("class.gir").unwrap();
-    let typ_object = library.find_type(0, "GObject.Object").unwrap();
     let typ_app_info = library.find_type(0, "Tst.AppInfo").unwrap();
-    let typ_variant = library.find_type(0, "GLib.Variant").unwrap();
     let c: &library::Class = get_type(&library, "AppLaunchContext");
     assert_eq!(c.c_type, "GAppLaunchContext");
     assert_eq!(c.type_struct, Some("AppLaunchContextClass".into()));
     assert_eq!(c.glib_get_type, "g_app_launch_context_get_type");
-    assert_eq!(c.parent, Some(typ_object));
+    assert_eq!(c.parent.unwrap().full_name(&library), "GObject.Object");
     assert_eq!(c.version, None);
     let f = &c.functions[0];
     assert_eq!(f.name, "new");
@@ -138,7 +136,7 @@ fn load_class() {
     let f = &c.fields[0];
     assert_eq!(f.name, "parent_instance");
     assert_eq!(f.c_type, Some("GObject".into()));
-    assert_eq!(f.typ, typ_object);
+    assert_eq!(f.typ.full_name(&library), "GObject.Object");
     assert_eq!(f.private, false);
     let s = &c.signals[0];
     assert_eq!(s.name, "launched");
@@ -152,7 +150,7 @@ fn load_class() {
     let p = &s.parameters[1];
     assert_eq!(p.name, "platform_data");
     assert_eq!(p.c_type, library::EMPTY_CTYPE);
-    assert_eq!(p.typ, typ_variant);
+    assert_eq!(p.typ.full_name(&library), "GLib.Variant");
     assert_eq!(p.transfer, library::Transfer::None);
     let p = &s.ret;
     assert_eq!(p.name, "");

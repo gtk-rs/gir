@@ -85,6 +85,8 @@ pub fn read_parameterized<P: AsRef<Path>>(
         "object" => {
             let begin = r##"<?xml version="1.0"?>
 <repository xmlns="http://www.gtk.org/introspection/core/1.0" xmlns:c="http://www.gtk.org/introspection/c/1.0" xmlns:glib="http://www.gtk.org/introspection/glib/1.0" version="1.2">
+  <include name="GLib" version="2.0"/>
+  <include name="GObject" version="2.0"/>
   <package name="tst-1.0"/>
   <namespace name="Tst" version="1.0" c:identifier-prefixes="T" c:symbol-prefixes="t,tst">
 "##
