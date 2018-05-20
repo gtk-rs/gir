@@ -1023,7 +1023,7 @@ impl Library {
         let method_name = elem.attr_required("name")?;
         let version = self.read_version(parser, ns_id, elem)?;
         let deprecated_version = self.read_deprecated_version(parser, ns_id, elem)?;
-        let c_identifier = elem.attr("identifier").or_else(|| elem.attr("type"));
+        let c_identifier = elem.attr("identifier").or_else(|| elem.attr("name"));
 
         let mut params = Vec::new();
         let mut ret = None;
