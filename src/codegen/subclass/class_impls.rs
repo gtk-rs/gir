@@ -10,17 +10,6 @@ use library::*;
 use traits::*;
 use codegen::subclass::class_impl;
 
-pub struct SubclassInfo{
-
-}
-
-impl SubclassInfo{
-    pub fn new(env: &Env, analysis: &analysis::object::Info) -> Self{
-        Self{}
-    }
-}
-
-
 
 pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>, traits: &mut Vec<String>) {
     info!("Generate class traits");

@@ -13,7 +13,7 @@ use codegen::parameter::ToParameter;
 use std::result::Result as StdResult;
 use std::fmt;
 
-use codegen::subclass::class_impls::SubclassInfo;
+use codegen::subclass::class_impl::SubclassInfo;
 
 pub fn generate_default_impl(
     w: &mut Write,
@@ -24,8 +24,6 @@ pub fn generate_default_impl(
     indent: usize,
 ) -> Result<()> {
     info!("vfunc: {:?}", method_analysis.name);
-
-
 
 
     try!(writeln!(w));
