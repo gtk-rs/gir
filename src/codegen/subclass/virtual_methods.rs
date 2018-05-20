@@ -31,7 +31,7 @@ pub fn generate_default_impl(
     try!(writeln!(w));
     try!(write!(
         w,
-        "{}fn {}(&self",
+        "{}fn {}(",
         tabs(indent),
         method_analysis.name,
     ));
@@ -39,23 +39,42 @@ pub fn generate_default_impl(
     let mut param_str = String::with_capacity(100);
     for (pos, par) in method_analysis.parameters.rust_parameters.iter().enumerate() {
         if pos > 0 {
-            param_str.push_str(", ")
+            param_str.push_str(", ");
         }
+
         let c_par = &method_analysis.parameters.c_parameters[par.ind_c];
         let s = c_par.to_parameter(env, &method_analysis.bounds);
         param_str.push_str(&s);
+
+        // insert the templated param
+        if pos == 0{
+            param_str.push_str(&format!(", {}: &T", object_analysis.name.to_lowercase()));
+        }
     }
 
 
     try!(writeln!(w, "{}){{", param_str));
 
 
+    let mut arg_str = String::with_capacity(100);
+    for (pos, par) in method_analysis.parameters.rust_parameters.iter().enumerate() {
+        if pos == 0{
+            // skip the first one
+            continue;
+        }
+        if pos > 1 {
+            arg_str.push_str(", ");
+        }
+        arg_str.push_str(&par.name);
+    }
+
     try!(writeln!(
         w,
-        "{}{}.parent_{}()",
+        "{}{}.parent_{}({})",
         tabs(indent+1),
         object_analysis.name.to_lowercase(),
-        method_analysis.name
+        method_analysis.name,
+        arg_str
     ));
 
 
