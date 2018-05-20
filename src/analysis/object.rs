@@ -30,6 +30,7 @@ pub struct Info {
     pub has_functions: bool,
     pub signals: Vec<signals::Info>,
     pub notify_signals: Vec<signals::Info>,
+    pub virtual_methods: Vec<virtual_methods::Info>,
     pub trampolines: trampolines::Trampolines,
     pub properties: Vec<properties::Property>,
     pub child_properties: ChildProperties,
@@ -163,6 +164,18 @@ pub fn class(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<Info>
         obj,
         &mut imports,
     );
+
+    let virtual_methods = virtual_methods::analyze(
+        env,
+        &klass.virtual_methods,
+        class_tid,
+        generate_trait,
+        obj,
+        &mut imports,
+        Some(&mut signatures),
+        Some(deps),
+    );
+
     let (properties, notify_signals) = properties::analyze(
         env,
         &klass.properties,
@@ -262,6 +275,7 @@ pub fn class(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<Info>
         has_functions,
         signals,
         notify_signals,
+        virtual_methods,
         trampolines,
         properties,
         child_properties,
@@ -327,6 +341,18 @@ pub fn interface(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<I
         obj,
         &mut imports,
     );
+
+    let virtual_methods = virtual_methods::analyze(
+        env,
+        &iface.virtual_methods,
+        iface_tid,
+        true,
+        obj,
+        &mut imports,
+        Some(&mut signatures),
+        Some(deps)
+    );
+
     let (properties, notify_signals) = properties::analyze(
         env,
         &iface.properties,
@@ -382,6 +408,7 @@ pub fn interface(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<I
         has_functions,
         signals,
         notify_signals,
+        virtual_methods,
         trampolines,
         properties,
         signatures,

@@ -155,7 +155,7 @@ impl Library {
                 })
             }
             "virtual-method" => {
-                self.read_signal(parser, ns_id, elem).map(|v| {
+                self.read_virtual_method(parser, ns_id, elem).map(|v| {
                     vfns.push(v)
                 })
             }
@@ -604,7 +604,7 @@ impl Library {
             }
             "doc" => parser.text().map(|t| doc = Some(t)),
             "virtual-method" => {
-                self.read_signal(parser, ns_id, elem).map(|v| {
+                self.read_virtual_method(parser, ns_id, elem).map(|v| {
                     vfns.push(v)
                 })
             },
@@ -1013,6 +1013,81 @@ impl Library {
             Err(parser.fail("Missing <return-value> element"))
         }
     }
+
+    fn read_virtual_method(
+        &mut self,
+        parser: &mut XmlParser,
+        ns_id: u16,
+        elem: &Element,
+    ) -> Result<Function, String> {
+        let method_name = elem.attr_required("name")?;
+        let version = self.read_version(parser, ns_id, elem)?;
+        let deprecated_version = self.read_deprecated_version(parser, ns_id, elem)?;
+        let c_identifier = elem.attr("identifier").or_else(|| elem.attr("type"));
+
+        let mut params = Vec::new();
+        let mut ret = None;
+        let mut doc = None;
+        let mut doc_deprecated = None;
+
+        parser.elements(|parser, elem| match elem.name() {
+            "parameters" => {
+                self.read_parameters(parser, ns_id, true, true).map(|mut ps| {
+                    params.append(&mut ps)
+                })
+            }
+            "return-value" => {
+                if ret.is_some() {
+                    return Err(parser.fail("Too many <return-value> elements"));
+                }
+                self.read_parameter(parser, ns_id, elem, true, false).map(|p| {
+                    ret = Some(p)
+                })
+            }
+            "doc" => parser.text().map(|t| doc = Some(t)),
+            "doc-deprecated" => parser.text().map(|t| doc_deprecated = Some(t)),
+            _ => Err(parser.unexpected_element(elem)),
+        })?;
+
+        let throws = elem.attr_bool("throws", false);
+        if throws {
+            params.push(Parameter {
+                name: "error".into(),
+                typ: self.find_or_stub_type(ns_id, "GLib.Error"),
+                c_type: "GError**".into(),
+                instance_parameter: false,
+                direction: ParameterDirection::Out,
+                transfer: Transfer::Full,
+                caller_allocates: false,
+                nullable: Nullable(true),
+                array_length: None,
+                allow_none: true,
+                is_error: true,
+                doc: None,
+                scope: ParameterScope::None,
+                closure: None,
+                destroy: None,
+            });
+        }
+
+        if let Some(ret) = ret {
+            Ok(Function {
+                name: method_name.into(),
+                c_identifier: c_identifier.map(|s| s.into()),
+                kind: FunctionKind::VirtualMethod,
+                parameters: params,
+                ret,
+                throws,
+                version,
+                deprecated_version,
+                doc,
+                doc_deprecated,
+            })
+        } else {
+            Err(parser.fail("Missing <return-value> element"))
+        }
+    }
+
 
     fn read_parameters(
         &mut self,

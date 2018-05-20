@@ -60,6 +60,7 @@ impl FromStr for GStatus {
 pub struct GObject {
     pub name: String,
     pub functions: Functions,
+    pub virtual_methods: Functions,
     pub constants: Constants,
     pub signals: Signals,
     pub members: Members,
@@ -89,6 +90,7 @@ impl Default for GObject {
         GObject {
             name: "Default".into(),
             functions: Functions::new(),
+            virtual_methods: Functions::new(),
             constants: Constants::new(),
             signals: Signals::new(),
             members: Members::new(),
@@ -174,6 +176,7 @@ fn parse_object(
             "name",
             "status",
             "function",
+            "virtual_method",
             "constant",
             "signal",
             "member",
@@ -209,6 +212,7 @@ fn parse_object(
 
     let constants = Constants::parse(toml_object.lookup("constant"), &name);
     let functions = Functions::parse(toml_object.lookup("function"), &name);
+    let virtual_methods = Functions::parse(toml_object.lookup("virtual_methods"), &name);
     let signals = {
         let mut v = Vec::new();
         if let Some(configs) = toml_object.lookup("signal").and_then(|val| val.as_array()) {
@@ -298,6 +302,7 @@ fn parse_object(
     GObject {
         name,
         functions,
+        virtual_methods,
         constants,
         signals,
         members,

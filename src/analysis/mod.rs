@@ -28,6 +28,7 @@ pub mod return_value;
 pub mod rust_type;
 pub mod safety_assertion_mode;
 pub mod signals;
+pub mod virtual_methods;
 pub mod signatures;
 pub mod special_functions;
 pub mod supertypes;

@@ -22,7 +22,7 @@ use codegen::general;
 use codegen::sys::fields;
 
 
-pub fn generate(w: &mut Write, env: &Env, class: &Class, analysis: &analysis::object::Info) -> Result<()>
+pub fn generate(w: &mut Write, env: &Env, analysis: &analysis::object::Info) -> Result<()>
 {
     try!(general::start_comments(w, &env.config));
     try!(general::uses(w, env, &analysis.imports));
@@ -31,16 +31,16 @@ pub fn generate(w: &mut Write, env: &Env, class: &Class, analysis: &analysis::ob
 
     info!("{:?}, {:?}", analysis.c_type, analysis.c_type);
 
-    let subclass_info = SubclassInfo::new(env, class, analysis);
+    let subclass_info = SubclassInfo::new(env, analysis);
 
-    generate_impl(w, env, class, analysis, &subclass_info);
+    generate_impl(w, env, analysis, &subclass_info);
 
-    generate_impl_ext(w, env, class, analysis, &subclass_info);
+    generate_impl_ext(w, env, analysis, &subclass_info);
 
-    generate_any_impl(w, env, class, analysis, &subclass_info);
+    generate_any_impl(w, env, analysis, &subclass_info);
 
 
-    generate_base(w, env, class, analysis, &subclass_info);
+    generate_base(w, env, analysis, &subclass_info);
 
 
     Ok(())
@@ -54,8 +54,7 @@ pub fn generate(w: &mut Write, env: &Env, class: &Class, analysis: &analysis::ob
 
 pub fn generate_impl(w: &mut Write,
                      env: &Env,
-                     class: &Class,
-                     analysis: &analysis::object::Info,
+                     object_analysis: &analysis::object::Info,
                      subclass_info: &SubclassInfo
                  ) -> Result<()> {
 
@@ -65,12 +64,12 @@ pub fn generate_impl(w: &mut Write,
     try!(writeln!(
         w,
         "pub trait {}<T: {}>: ObjectImpl<T> + AnyImpl + 'static {{", //TODO: use real superclasses chain
-        analysis.subclass_impl_trait_name,
-        analysis.subclass_base_trait_name
+        object_analysis.subclass_impl_trait_name,
+        object_analysis.subclass_base_trait_name
     ));
 
-    for vfunc_analysis in &class.virtual_methods{
-        try!(virtual_methods::generate_default_impl(w, env, analysis, vfunc_analysis, subclass_info, 1));
+    for method_analysis in &object_analysis.virtual_methods{
+        try!(virtual_methods::generate_default_impl(w, env, object_analysis, method_analysis, subclass_info, 1));
 
 
     }
@@ -87,8 +86,7 @@ pub fn generate_impl(w: &mut Write,
 
 pub fn generate_impl_ext(w: &mut Write,
                      env: &Env,
-                     class: &Class,
-                     analysis: &analysis::object::Info,
+                     object_analysis: &analysis::object::Info,
                      subclass_info: &SubclassInfo
                  ) -> Result<()> {
 
@@ -97,7 +95,7 @@ pub fn generate_impl_ext(w: &mut Write,
     try!(writeln!(
         w,
         "pub trait {}Ext<T> {{}}",
-        analysis.subclass_impl_trait_name
+        object_analysis.subclass_impl_trait_name
     ));
 
     //end impl trait
@@ -113,7 +111,6 @@ pub fn generate_impl_ext(w: &mut Write,
 
 pub fn generate_base(w: &mut Write,
                      env: &Env,
-                     class: &Class,
                      analysis: &analysis::object::Info,
                      subclass_info: &SubclassInfo
                  ) -> Result<()> {
@@ -144,7 +141,7 @@ pub fn generate_base(w: &mut Write,
 // pub unsafe trait ApplicationBase: IsA<gio::Application> + ObjectType {
 
 
-fn generate_any_impl(w: &mut Write, _env: &Env, class: &Class, analysis: &analysis::object::Info, _subclass_info: &SubclassInfo) -> Result<()>
+fn generate_any_impl(w: &mut Write, _env: &Env, analysis: &analysis::object::Info, _subclass_info: &SubclassInfo) -> Result<()>
 {
     try!(writeln!(w));
     try!(writeln!(

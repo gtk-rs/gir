@@ -124,6 +124,7 @@ pub enum FunctionKind {
     Function,
     Method,
     Global,
+    VirtualMethod
 }
 
 impl FromStr for FunctionKind {
@@ -136,6 +137,7 @@ impl FromStr for FunctionKind {
             "method" => Ok(Method),
             "callback" => Ok(Function),
             "global" => Ok(Global),
+            "virtual-method" => Ok(VirtualMethod),
             _ => Err("Unknown function kind".into()),
         }
     }
@@ -445,7 +447,7 @@ pub struct Interface {
     pub c_class_type: Option<String>,
     pub glib_get_type: String,
     pub functions: Vec<Function>,
-    pub virtual_methods: Vec<Signal>,
+    pub virtual_methods: Vec<Function>,
     pub signals: Vec<Signal>,
     pub properties: Vec<Property>,
     pub prerequisites: Vec<TypeId>,
@@ -463,7 +465,7 @@ pub struct Class {
     pub glib_get_type: String,
     pub fields: Vec<Field>,
     pub functions: Vec<Function>,
-    pub virtual_methods: Vec<Signal>,
+    pub virtual_methods: Vec<Function>,
     pub signals: Vec<Signal>,
     pub properties: Vec<Property>,
     pub parent: Option<TypeId>,
