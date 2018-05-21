@@ -95,3 +95,72 @@ fn virtual_method_args(method_analysis: &analysis::virtual_methods::Info, includ
     }
     arg_str
 }
+
+
+pub fn generate_base_impl(
+    w: &mut Write,
+    env: &Env,
+    object_analysis: &analysis::object::Info,
+    method_analysis: &analysis::virtual_methods::Info,
+    subclass_info: &SubclassInfo,
+    indent: usize,
+) -> Result<()> {
+    info!("vfunc: {:?}", method_analysis.name);
+
+
+    try!(writeln!(w));
+    try!(write!(
+        w,
+        "{}fn parent_{}(",
+        tabs(indent),
+        method_analysis.name,
+    ));
+
+    let mut param_str = String::with_capacity(100);
+    for (pos, par) in method_analysis.parameters.rust_parameters.iter().enumerate() {
+        if pos > 0 {
+            param_str.push_str(", ");
+        }
+
+        let c_par = &method_analysis.parameters.c_parameters[par.ind_c];
+        let s = c_par.to_parameter(env, &method_analysis.bounds);
+        param_str.push_str(&s);
+
+    }
+
+
+    try!(writeln!(w, "{}){{", param_str));
+
+
+
+    // fn parent_startup(&self) {
+    //     unsafe {
+    //         let klass = self.get_class();
+    //         let parent_klass = (*klass).get_parent_class() as *const gio_ffi::GApplicationClass;
+    //         (*parent_klass)
+    //             .startup
+    //             .map(|f| f(self.to_glib_none().0))
+    //             .unwrap_or(())
+    //     }
+    // }
+
+
+    // try!(writeln!(
+    //     w,
+    //     "{}{}.parent_{}({})",
+    //     tabs(indent+1),
+    //     parent_name,
+    //     method_analysis.name,
+    //     arg_str
+    // ));
+
+
+    try!(writeln!(
+        w,
+        "{}}}",
+        tabs(indent),
+    ));
+
+    Ok(())
+
+}

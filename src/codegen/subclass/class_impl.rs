@@ -96,9 +96,9 @@ pub fn generate_impl(
 
     let parent_impls: Vec<String> = parents
         .iter()
-        .map(|ref p| format!("{}Impl<T> + ", p))
+        .map(|ref p| format!(" {}Impl<T> +", p))
         .collect();
-    let parent_objs = parent_impls.join(" ");
+    let parent_objs = parent_impls.join("");
 
     // start impl trait
     try!(writeln!(w));
@@ -153,9 +153,8 @@ pub fn generate_impl_ext(
     try!(writeln!(w, "}}"));
 
 
-
     // start ext trait impl
-    let mut parents = subclass_info.parent_names(env, "");
+    let parents = subclass_info.parent_names(env, "");
 
     let parent_impls: Vec<String> = parents
         .iter()
@@ -181,20 +180,37 @@ pub fn generate_impl_ext(
 pub fn generate_base(
     w: &mut Write,
     env: &Env,
-    analysis: &analysis::object::Info,
+    object_analysis: &analysis::object::Info,
     subclass_info: &SubclassInfo,
 ) -> Result<()> {
-    let normal_crate_name = nameutil::crate_name(&env.config.library_name);
 
+    let parents = subclass_info.parent_names(env, "");
 
+    let parent_impls: Vec<String> = parents
+        .iter()
+        .map(|ref p| format!("+ glib::IsA<{}>", p))
+        .collect();
+    let parent_objs = parent_impls.join(" ");
 
     // start base trait
     try!(writeln!(w));
     try!(writeln!(
         w,
-        "pub unsafe trait {}: IsA<{}::{}> + ObjectType {{",
-        analysis.subclass_base_trait_name, normal_crate_name, analysis.name
+        "pub unsafe trait {}: ObjectType {}{{",
+        object_analysis.subclass_base_trait_name,
+        parent_objs
     ));
+
+    for method_analysis in &object_analysis.virtual_methods {
+        try!(virtual_methods::generate_base_impl(
+            w,
+            env,
+            object_analysis,
+            method_analysis,
+            subclass_info,
+            1
+        ));
+    }
 
     //end base trait
     try!(writeln!(w));
