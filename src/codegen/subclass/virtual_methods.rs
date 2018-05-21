@@ -14,6 +14,7 @@ use std::result::Result as StdResult;
 use std::fmt;
 
 use codegen::subclass::class_impl::SubclassInfo;
+use codegen::subclass::virtual_method_bodies::BaseBuilder;
 
 pub fn generate_default_impl(
     w: &mut Write,
@@ -130,6 +131,12 @@ pub fn generate_base_impl(
 
 
     try!(writeln!(w, "{}){{", param_str));
+
+    let builder = BaseBuilder::new();
+    let body = builder.generate(env).to_code(env);
+    for s in body {
+        try!(writeln!(w, "{}{}", tabs(indent), s));
+    }
 
 
 
