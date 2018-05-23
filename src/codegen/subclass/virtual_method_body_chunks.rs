@@ -1,3 +1,4 @@
+use codegen::function_body_chunk::Parameter::Out;
 use analysis::conversion_type::ConversionType;
 use analysis::functions::{AsyncTrampoline, find_index_to_ignore};
 use analysis::function_parameters::CParameter as AnalysisCParameter;
@@ -13,12 +14,22 @@ use chunk::parameter_ffi_call_out;
 use env::Env;
 use library::{self, ParameterDirection};
 use nameutil;
+use writer::ToCode;
+
+use codegen::parameter::*;
+use codegen::function_body_chunk::{ReturnValue, Parameter, c_type_mem_mode};
 
 
 #[derive(Default)]
 pub struct Builder {
     object_class_c_type: String,
-    ffi_crate_name: String
+    ffi_crate_name: String,
+    method_name: String,
+    parameters: Vec<Parameter>,
+    transformations: Vec<Transformation>,
+    ret: ReturnValue,
+    outs_as_return: bool,
+    outs_mode: Mode
 }
 
 impl Builder {
@@ -35,35 +46,59 @@ impl Builder {
         self.ffi_crate_name = ns.into();
         self
     }
-    //
-    // pub fn in_trait(&mut self, value: bool) -> &mut Builder {
-    //     self.in_trait = value;
-    //     self
-    // }
-    //
-    // pub fn function_type_string(&mut self, type_: &str) -> &mut Builder {
-    //     self.function_type_string = type_.into();
-    //     self
-    // }
 
-    pub fn generate(&self, env: &Env) -> Chunk {
+    pub fn method_name(&mut self, name: &str) -> &mut Builder {
+        self.method_name = name.into();
+        self
+    }
+
+    pub fn ret(&mut self, ret: &return_value::Info) -> &mut Builder {
+        self.ret = ReturnValue { ret: ret.clone() };
+        self
+    }
+    pub fn parameter(&mut self) -> &mut Builder {
+        self.parameters.push(Parameter::In);
+        self
+    }
+    pub fn out_parameter(&mut self, env: &Env, parameter: &AnalysisCParameter) -> &mut Builder {
+        let mem_mode = c_type_mem_mode(env, parameter);
+        self.parameters.push(Parameter::Out {
+            parameter: parameter_ffi_call_out::Parameter::new(parameter),
+            mem_mode,
+        });
+        self.outs_as_return = true;
+        self
+    }
+
+    pub fn transformations(&mut self, transformations: &[Transformation]) -> &mut Builder {
+        self.transformations = transformations.to_owned();
+        self
+    }
+
+    pub fn outs_mode(&mut self, mode: Mode) -> &mut Builder {
+        self.outs_mode = mode;
+        self
+    }
+
+    pub fn generate_default_impl(&self, env: &Env) -> Chunk {
+        //TODO
+        let mut chunks = Vec::new();
+        Chunk::Chunks(chunks)
+    }
+
+    pub fn generate_base_impl(&self, env: &Env) -> Chunk {
         let mut body = Vec::new();
 
 
         body.push(self.let_klass());
         body.push(self.let_parent_klass());
 
-
-        // fn parent_startup(&self) {
-        //     unsafe {
-        //         let klass = self.get_class();
-        //         let parent_klass = (*klass).get_parent_class() as *const gio_ffi::GApplicationClass;
-        //         (*parent_klass)
-        //             .startup
-        //             .map(|f| f(self.to_glib_none().0))
-        //             .unwrap_or(())
-        //     }
-        // }
+        body.push(Chunk::Custom("(*parent_klass)".to_owned()));
+        body.push(Chunk::Custom(format!(".{}", self.method_name).to_owned()));
+        let mut args = Vec::new();
+        args.push(self.base_impl_body_chunk());
+        body.push(Chunk::Call{ func_name: ".map".to_owned(), arguments: args});
+        body.push(Chunk::Custom(".unwrap_or(())".to_owned()));
 
 
         let unsafe_ = Chunk::Unsafe(body);
@@ -72,6 +107,26 @@ impl Builder {
         chunks.push(unsafe_);
         Chunk::Chunks(chunks)
     }
+
+    fn base_impl_body_chunk(&self) -> Chunk {
+
+        Chunk::Closure{ arguments: vec![Chunk::Custom("f".to_owned())],
+                        body: Box::new(Chunk::Call{
+                            func_name: "f".to_owned(),
+                            arguments: self.generate_func_parameters()
+                        })
+        }
+
+
+
+        //         (*parent_klass)
+        //             .startup
+        //             .map(|f| f(self.to_glib_none().0))
+        //             .unwrap_or(())
+        //     }
+        // }
+    }
+
 
     fn let_klass(&self) -> Chunk {
         Chunk::Let {
@@ -93,6 +148,26 @@ impl Builder {
                 }),
             type_: None
         }
+    }
+
+    fn generate_func_parameters(&self) -> Vec<Chunk> {
+        let mut params = Vec::new();
+        for trans in &self.transformations {
+            if !trans.transformation_type.is_to_glib() {
+                continue;
+            }
+            let par = &self.parameters[trans.ind_c];
+            let chunk = match par {
+                In => Chunk::FfiCallParameter {
+                    transformation_type: trans.transformation_type.clone(),
+                },
+                Out { ref parameter, .. } => Chunk::FfiCallOutParameter {
+                    par: parameter.clone(),
+                },
+            };
+            params.push(chunk);
+        }
+        params
     }
 
     //let parent_klass = (*klass).get_parent_class() as *const gio_ffi::GApplicationClass;

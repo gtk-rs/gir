@@ -163,8 +163,16 @@ impl ToCode for Chunk {
                     .flat_map(|arg| arg.to_code(env))
                     .collect();
                 let s = format_block_one_line("(", ")", &args, "", ",");
-                vec![format!("{}{};", func_name, s)]
+                vec![format!("{}{}", func_name, s)] //TODO: removed the trailing ';' here
             },
+            Closure { ref arguments, ref body } => {
+                let args: Vec<_> = arguments.iter()
+                    .flat_map(|arg| arg.to_code(env))
+                    .collect();
+                let s = format_block_one_line("|", "|", &args, "", "");
+                let code = format_block_one_line("{", "}", &body.to_code(env), " ", " ");
+                vec![format!("{}{}", s, code)]
+            }
         }
     }
 }

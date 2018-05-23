@@ -82,70 +82,19 @@ pub fn generate_default_impl(
 
 }
 
-// fn func_parameters(
-//     env: &Env,
-//     analysis: &analysis::virtual_methods::Info,
-//     bound_replace: Option<(char, &str)>,
-//     closure: bool,
-// ) -> String {
-//     let mut param_str = String::with_capacity(100);
-//
-//     for (pos, par) in analysis.parameters.rust_parameters.iter().enumerate() {
-//         if pos > 0 {
-//             param_str.push_str(", ");
-//             if !closure {
-//                 param_str.push_str(&format!("{}: ", par.name));
-//             }
-//         } else if !closure {
-//             param_str.push_str("&self");
-//             continue;
-//         }
-//
-//         let s = func_parameter(env, par, &analysis.bounds, bound_replace);
-//         param_str.push_str(&s);
-//     }
-//
-//     param_str
-// }
-//
-// fn func_parameter(
-//     env: &Env,
-//     par: &RustParameter,
-//     bounds: &Bounds,
-//     bound_replace: Option<(char, &str)>,
-// ) -> String {
-//     //TODO: restore mutable support
-//     //let mut_str = if par.ref_mode == RefMode::ByRefMut { "mut " } else { "" };
-//     let mut_str = "";
-//     let ref_mode = if par.ref_mode == RefMode::ByRefMut {
-//         RefMode::ByRef
-//     } else {
-//         par.ref_mode
-//     };
-//
-//     match bounds.get_parameter_alias_info(&par.name) {
-//         Some((t, bound_type)) => match bound_type {
-//             BoundType::NoWrapper => unreachable!(),
-//             BoundType::IsA(_) => if *par.nullable {
-//                 format!("&Option<{}{}>", mut_str, t)
-//             } else if let Some((from, to)) = bound_replace {
-//                 if from == t {
-//                     format!("&{}{}", mut_str, to)
-//                 } else {
-//                     format!("&{}{}", mut_str, t)
-//                 }
-//             } else {
-//                 format!("&{}{}", mut_str, t)
-//             },
-//             BoundType::AsRef(_) | BoundType::Into(_, _) => t.to_string(),
-//         },
-//         None => {
-//             let rust_type =
-//                 parameter_rust_type(env, par.typ, par.direction, par.nullable, ref_mode);
-//             rust_type.into_string().replace("Option<&", "&Option<")
-//         }
-//     }
-// }
+pub fn default_impl_body_chunk(env: &Env,
+                            object_analysis: &analysis::object::Info,
+                            method_analysis: &analysis::virtual_methods::Info,
+                            subclass_info: &SubclassInfo
+                        ) -> Chunk
+{
+    let mut builder = Builder::new();
+    builder.object_class_c_type(object_analysis.c_class_type.as_ref().unwrap())
+           .ffi_crate_name(&env.namespaces[object_analysis.type_id.ns_id].ffi_crate_name);
+
+
+    builder.generate_default_impl(env)
+}
 
 
 fn virtual_method_args(method_analysis: &analysis::virtual_methods::Info, include_parent: bool) -> String
@@ -219,9 +168,24 @@ pub fn base_impl_body_chunk(env: &Env,
                         ) -> Chunk
 {
     let mut builder = Builder::new();
+
+    let outs_as_return = !method_analysis.outs.is_empty();
+
     builder.object_class_c_type(object_analysis.c_class_type.as_ref().unwrap())
-           .ffi_crate_name(&env.namespaces[object_analysis.type_id.ns_id].ffi_crate_name);
+           .ffi_crate_name(&env.namespaces[object_analysis.type_id.ns_id].ffi_crate_name)
+           .method_name(&method_analysis.name)
+           .ret(&method_analysis.ret)
+           .transformations(&method_analysis.parameters.transformations)
+           .outs_mode(method_analysis.outs.mode);
+
+   for par in &method_analysis.parameters.c_parameters {
+       if outs_as_return && method_analysis.outs.iter().any(|p| p.name == par.name) {
+           builder.out_parameter(env, par);
+       } else {
+           builder.parameter();
+       }
+   }
 
 
-    builder.generate(env)
+    builder.generate_base_impl(env)
 }

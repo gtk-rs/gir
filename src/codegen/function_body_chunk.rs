@@ -14,7 +14,7 @@ use library::{self, ParameterDirection};
 use nameutil;
 
 #[derive(Clone, Debug)]
-enum Parameter {
+pub enum Parameter {
     //Used to separate in and out parameters in `add_in_array_lengths`
     // and `generate_func_parameters`
     In,
@@ -25,7 +25,7 @@ enum Parameter {
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
-enum OutMemMode {
+pub enum OutMemMode {
     Uninitialized,
     UninitializedNamed(String),
     NullPtr,
@@ -33,7 +33,7 @@ enum OutMemMode {
 }
 
 #[derive(Clone, Default)]
-struct ReturnValue {
+pub struct ReturnValue {
     pub ret: return_value::Info,
 }
 
@@ -588,7 +588,7 @@ fn c_type_mem_mode_lib(env: &Env, typ: library::TypeId, caller_allocates: bool,
     }
 }
 
-fn c_type_mem_mode(env: &Env, parameter: &AnalysisCParameter) -> OutMemMode {
+pub fn c_type_mem_mode(env: &Env, parameter: &AnalysisCParameter) -> OutMemMode {
     c_type_mem_mode_lib(env, parameter.typ, parameter.caller_allocates, parameter.transfer)
 }
 

@@ -71,6 +71,10 @@ pub enum Chunk {
         func_name: String,
         arguments: Vec<Chunk>,
     },
+    Closure{
+        arguments: Vec<Chunk>,
+        body: Box<Chunk>,
+    }
 }
 
 pub struct Param {
