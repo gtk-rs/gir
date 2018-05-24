@@ -161,11 +161,66 @@ pub fn generate_base_impl(
     Ok(())
 }
 
-pub fn base_impl_body_chunk(env: &Env,
+pub fn generate_override_vfuncs(
+    w: &mut Write,
+    env: &Env,
+    object_analysis: &analysis::object::Info,
+    subclass_info: &SubclassInfo,
+    indent: usize,
+) -> Result<()> {
+
+    if object_analysis.c_class_type.is_none(){
+        return Ok(());
+    }
+
+
+    try!(writeln!(w));
+    try!(write!(
+        w,
+        "{}fn override_vfuncs(&mut self, _: &ClassInitToken){{",
+        tabs(indent)
+    ));
+
+    let mut body_chunks = Vec::new();
+    body_chunks.push(Chunk::Let{
+        name: "klass".to_owned(),
+        is_mut: false,
+        value: Box::new(Chunk::Custom(format!("&mut *(self as *const Self as *mut {}::{})",
+            &env.namespaces[object_analysis.type_id.ns_id].ffi_crate_name,
+            object_analysis.c_class_type.as_ref().unwrap()).to_owned())),
+        type_: None,
+    });
+
+
+    for method_analysis in &object_analysis.virtual_methods {
+        body_chunks.push(Chunk::Custom(
+            format!("klass.{mname} = Some({cname}_{mname}::<T>);", mname=method_analysis.name,
+                                                                   cname=object_analysis.name.to_lowercase()).to_owned()
+        ));
+    }
+
+
+    let unsafe_ = Chunk::Unsafe(body_chunks);
+
+    let mut chunks = Vec::new();
+    chunks.push(unsafe_);
+    let body = Chunk::Chunks(chunks).to_code(env);
+
+    for s in body {
+        try!(writeln!(w, "{}{}", tabs(indent+1), s));
+    }
+
+    Ok(())
+
+}
+
+
+
+pub fn body_chunk_builder(env: &Env,
                             object_analysis: &analysis::object::Info,
                             method_analysis: &analysis::virtual_methods::Info,
                             subclass_info: &SubclassInfo
-                        ) -> Chunk
+                        ) -> Builder
 {
     let mut builder = Builder::new();
 
@@ -186,6 +241,16 @@ pub fn base_impl_body_chunk(env: &Env,
        }
    }
 
+    builder
+}
+
+pub fn base_impl_body_chunk(env: &Env,
+                            object_analysis: &analysis::object::Info,
+                            method_analysis: &analysis::virtual_methods::Info,
+                            subclass_info: &SubclassInfo
+                        ) -> Chunk
+{
+    let mut builder = body_chunk_builder(env, object_analysis, method_analysis, subclass_info);
 
     builder.generate_base_impl(env)
 }

@@ -79,6 +79,9 @@ pub fn generate(w: &mut Write, env: &Env, analysis: &analysis::object::Info) -> 
 
     try!(generate_base(w, env, analysis, &subclass_info));
 
+    try!(generate_ext(w, env, analysis, &subclass_info));
+
+
     Ok(())
 }
 
@@ -225,15 +228,58 @@ pub fn generate_base(
 fn generate_any_impl(
     w: &mut Write,
     _env: &Env,
-    analysis: &analysis::object::Info,
+    object_analysis: &analysis::object::Info,
     _subclass_info: &SubclassInfo,
 ) -> Result<()> {
     try!(writeln!(w));
     try!(writeln!(
         w,
         "any_impl!({}, {});",
-        analysis.subclass_base_trait_name, analysis.subclass_impl_trait_name
+        object_analysis.subclass_base_trait_name,
+        object_analysis.subclass_impl_trait_name
     ));
+
+    Ok(())
+}
+
+
+fn generate_ext(
+    w: &mut Write,
+    env: &Env,
+    object_analysis: &analysis::object::Info,
+    subclass_info: &SubclassInfo,
+) -> Result<()> {
+
+    if object_analysis.class_type.is_none(){
+        return Ok(());
+    }
+
+
+    let classext_name = format!("{}Ext", object_analysis.class_type.as_ref().unwrap());
+
+    // start base trait
+    try!(writeln!(w));
+    try!(writeln!(
+        w,
+        "pub unsafe trait {}<T: {}>
+        where
+        T::ImplType: {}<T>{{",
+        classext_name,
+        object_analysis.subclass_base_trait_name,
+        object_analysis.subclass_impl_trait_name
+    ));
+
+
+    try!(virtual_methods::generate_override_vfuncs(
+        w,
+        env,
+        object_analysis,
+        subclass_info,
+        1
+    ));
+
+    try!(writeln!(w));
+    try!(writeln!(w, "}}"));
 
     Ok(())
 }

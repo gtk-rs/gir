@@ -1,24 +1,23 @@
-use codegen::function_body_chunk::Parameter::Out;
+use analysis;
 use analysis::conversion_type::ConversionType;
-use analysis::functions::{AsyncTrampoline, find_index_to_ignore};
 use analysis::function_parameters::CParameter as AnalysisCParameter;
 use analysis::function_parameters::{Transformation, TransformationType};
-use analysis::out_parameters::Mode;
+use analysis::functions::{find_index_to_ignore, AsyncTrampoline};
 use analysis::namespaces;
+use analysis::out_parameters::Mode;
 use analysis::return_value;
 use analysis::rust_type::rust_type;
 use analysis::safety_assertion_mode::SafetyAssertionMode;
-use analysis;
-use chunk::{Chunk, Param, TupleMode};
 use chunk::parameter_ffi_call_out;
+use chunk::{Chunk, Param, TupleMode};
+use codegen::function_body_chunk::Parameter::Out;
 use env::Env;
 use library::{self, ParameterDirection};
 use nameutil;
 use writer::ToCode;
 
+use codegen::function_body_chunk::{c_type_mem_mode, Parameter, ReturnValue};
 use codegen::parameter::*;
-use codegen::function_body_chunk::{ReturnValue, Parameter, c_type_mem_mode};
-
 
 #[derive(Default)]
 pub struct Builder {
@@ -29,7 +28,7 @@ pub struct Builder {
     transformations: Vec<Transformation>,
     ret: ReturnValue,
     outs_as_return: bool,
-    outs_mode: Mode
+    outs_mode: Mode,
 }
 
 impl Builder {
@@ -89,7 +88,6 @@ impl Builder {
     pub fn generate_base_impl(&self, env: &Env) -> Chunk {
         let mut body = Vec::new();
 
-
         body.push(self.let_klass());
         body.push(self.let_parent_klass());
 
@@ -97,9 +95,12 @@ impl Builder {
         body.push(Chunk::Custom(format!(".{}", self.method_name).to_owned()));
         let mut args = Vec::new();
         args.push(self.base_impl_body_chunk());
-        body.push(Chunk::Call{ func_name: ".map".to_owned(), arguments: args});
+        body.push(Chunk::Call {
+            func_name: ".map".to_owned(),
+            arguments: args,
+            as_return: true,
+        });
         body.push(Chunk::Custom(".unwrap_or(())".to_owned()));
-
 
         let unsafe_ = Chunk::Unsafe(body);
 
@@ -108,32 +109,24 @@ impl Builder {
         Chunk::Chunks(chunks)
     }
 
+
     fn base_impl_body_chunk(&self) -> Chunk {
-
-        Chunk::Closure{ arguments: vec![Chunk::Custom("f".to_owned())],
-                        body: Box::new(Chunk::Call{
-                            func_name: "f".to_owned(),
-                            arguments: self.generate_func_parameters()
-                        })
+        Chunk::Closure {
+            arguments: vec![Chunk::Custom("f".to_owned())],
+            body: Box::new(Chunk::Call {
+                func_name: "f".to_owned(),
+                arguments: self.generate_func_parameters(),
+                as_return: true,
+            }),
         }
-
-
-
-        //         (*parent_klass)
-        //             .startup
-        //             .map(|f| f(self.to_glib_none().0))
-        //             .unwrap_or(())
-        //     }
-        // }
     }
-
 
     fn let_klass(&self) -> Chunk {
         Chunk::Let {
             name: "klass".to_owned(),
             is_mut: false,
             value: Box::new(Chunk::Custom("self.get_class()".to_owned())),
-            type_: None
+            type_: None,
         }
     }
 
@@ -141,12 +134,14 @@ impl Builder {
         Chunk::Let {
             name: "parent_klass".to_owned(),
             is_mut: false,
-            value: Box::new(
-                Chunk::Cast {
-                    name: "(*klass).get_parent_class()".to_owned(),
-                    type_: format!("*const {}::{}", self.ffi_crate_name, self.object_class_c_type).to_owned()
-                }),
-            type_: None
+            value: Box::new(Chunk::Cast {
+                name: "(*klass).get_parent_class()".to_owned(),
+                type_: format!(
+                    "*const {}::{}",
+                    self.ffi_crate_name, self.object_class_c_type
+                ).to_owned(),
+            }),
+            type_: None,
         }
     }
 
@@ -169,14 +164,4 @@ impl Builder {
         }
         params
     }
-
-    //let parent_klass = (*klass).get_parent_class() as *const gio_ffi::GApplicationClass;
-
-    // fn connect(&self) -> Chunk {
-    //     Chunk::Connect {
-    //         signal: self.signal_name.clone(),
-    //         trampoline: self.trampoline_name.clone(),
-    //         in_trait: self.in_trait,
-    //     }
-    // }
 }

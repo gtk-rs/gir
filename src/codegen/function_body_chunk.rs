@@ -234,6 +234,7 @@ impl Builder {
             Chunk::Call {
                 func_name: "callback".to_string(),
                 arguments: vec![Chunk::Name("result".to_string())],
+                as_return: false
             }
         );
 
