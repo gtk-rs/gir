@@ -291,17 +291,18 @@ fn generate_glib_wrapper(
         for parent in &subclass_info.parents {
             let t = env.library.type_(parent.type_id);
             let k = &env.namespaces[parent.type_id.ns_id].crate_name;
-            try!(write!(w, "\n{tabs} {krate}::{ty} => {krate}_ffi::{cty}",
-                tabs=tabs(2),
-                krate=k,
-                ty=t.get_name(),
-                cty=t.get_glib_name().unwrap()));
-
+            try!(write!(
+                w,
+                "\n{tabs} {krate}::{ty} => {krate}_ffi::{cty}",
+                tabs = tabs(2),
+                krate = k,
+                ty = t.get_name(),
+                cty = t.get_glib_name().unwrap()
+            ));
         }
 
         try!(write!(w, "]"));
     }
-
 
     try!(writeln!(w, "{tabs1};", tabs1 = tabs(1)));
     try!(writeln!(
@@ -326,7 +327,6 @@ fn generate_impl_base(
     object_analysis: &analysis::object::Info,
     subclass_info: &SubclassInfo,
 ) -> Result<()> {
-
     let parents = subclass_info.parent_names(env, "");
 
     let parent_impls: Vec<String> = parents
@@ -339,8 +339,7 @@ fn generate_impl_base(
     try!(writeln!(
         w,
         "unsafe impl<T: ObjectType {}> {} for T {{}}",
-        parent_objs,
-        object_analysis.subclass_base_trait_name
+        parent_objs, object_analysis.subclass_base_trait_name
     ));
 
     Ok(())
@@ -352,7 +351,6 @@ fn generate_class(
     object_analysis: &analysis::object::Info,
     subclass_info: &SubclassInfo,
 ) -> Result<()> {
-
     try!(writeln!(w));
 
     writeln!(
@@ -370,17 +368,18 @@ fn generate_parent_impls(
     object_analysis: &analysis::object::Info,
     subclass_info: &SubclassInfo,
 ) -> Result<()> {
-
     try!(writeln!(w));
 
     writeln!(w, "// FIXME: Boilerplate");
     if subclass_info.parents.len() > 0 {
         for parent in &subclass_info.parents {
             let t = env.library.type_(parent.type_id);
-            try!(writeln!(w, "unsafe impl {par}ClassExt<{obj}> for {obj}Class {}",
-                obj=object_analysis.name,
-                par=t.get_name()));
-
+            try!(writeln!(
+                w,
+                "unsafe impl {par}ClassExt<{obj}> for {obj}Class {}",
+                obj = object_analysis.name,
+                par = t.get_name()
+            ));
         }
     }
 
@@ -393,40 +392,64 @@ fn generate_box_impl(
     object_analysis: &analysis::object::Info,
     subclass_info: &SubclassInfo,
 ) -> Result<()> {
-
     try!(writeln!(w));
 
     try!(writeln!(w, "#[macro_export]"));
-    try!(writeln!(w, "macro_rules! box_{}_impl(", object_analysis.name.to_lowercase()));
+    try!(writeln!(
+        w,
+        "macro_rules! box_{}_impl(",
+        object_analysis.name.to_lowercase()
+    ));
 
     try!(writeln!(w, "{}($name:ident) => {{", tabs(1)));
 
-    if subclass_info.parents.len() > 0{
-
+    if subclass_info.parents.len() > 0 {
         for parent in &subclass_info.parents {
-            if !env.analysis.objects.contains_key(&parent.type_id.full_name(&env.library)){
+            if !env.analysis
+                .objects
+                .contains_key(&parent.type_id.full_name(&env.library))
+            {
                 continue;
             }
-            try!(writeln!(w, "{}box_{}_impl!($name);", tabs(2), o.name.to_lowercase()));
+            let o = &env.analysis.objects[&parent.type_id.full_name(&env.library)];
+            try!(writeln!(
+                w,
+                "{}box_{}_impl!($name);",
+                tabs(2),
+                o.name.to_lowercase()
+            ));
         }
-
-        let n = subclass_info.parents.len() - 1;
-    }else{
+    } else {
         try!(writeln!(w, "{}box_object_impl!($name);", tabs(2)));
     }
 
-    //
-    //         impl<T: $crate::application::ApplicationBase>  $crate::application::ApplicationImpl<T> for Box<$name<T>>
-    //         {
-    //             fn startup(&self, application: &T){
-    //                 let imp: &$name<T> = self.as_ref();
-    //                 imp.startup(application)
-    //             }
+    let obj = &env.config.objects[&object_analysis.full_name];
+    let mod_name = obj.module_name.clone().unwrap_or_else(|| {
+        nameutil::module_name(nameutil::split_namespace_name(&object_analysis.full_name).1)
+    });
+
+    try!(writeln!(w, "{tabs}impl<T: $crate::{mo}::{base}> $crate::{mo}::{impl}<T> for Box<$name<T>>{{",
+                  tabs=tabs(2),
+                  mo=mod_name,
+                  base=object_analysis.subclass_base_trait_name,
+                  impl=object_analysis.subclass_impl_trait_name));
+
+
+    for method_analysis in &object_analysis.virtual_methods {
+        try!(virtual_methods::generate_box_impl(
+            w,
+            env,
+            object_analysis,
+            method_analysis,
+            subclass_info,
+            3
+        ));
+    }
+
+    try!(writeln!(w, "{}}}", tabs(2)));
 
     try!(writeln!(w, "{}}}", tabs(1)));
-
     try!(writeln!(w, ");"));
-
 
     Ok(())
 }

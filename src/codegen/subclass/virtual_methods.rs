@@ -39,23 +39,7 @@ pub fn generate_default_impl(
 
     let parent_name = &method_analysis.parameters.rust_parameters[0].name;
 
-
-    let mut param_str = String::with_capacity(100);
-    for (pos, par) in method_analysis.parameters.rust_parameters.iter().enumerate() {
-        if pos > 0 {
-            param_str.push_str(", ");
-        }
-
-        let c_par = &method_analysis.parameters.c_parameters[par.ind_c];
-        let s = c_par.to_parameter(env, &method_analysis.bounds);
-        param_str.push_str(&s);
-
-        // insert the templated param
-        if pos == 0{
-            param_str.push_str(&format!(", {}: &T", parent_name));
-        }
-    }
-
+    let param_str = virtual_method_params(env, method_analysis, parent_name, true);
 
     try!(writeln!(w, "{}){{", param_str));
 
@@ -111,6 +95,26 @@ fn virtual_method_args(method_analysis: &analysis::virtual_methods::Info, includ
         arg_str.push_str(&par.name);
     }
     arg_str
+}
+
+fn virtual_method_params(env: &Env, method_analysis: &analysis::virtual_methods::Info, parent_name: &String, include_templated: bool) -> String
+{
+    let mut param_str = String::with_capacity(100);
+    for (pos, par) in method_analysis.parameters.rust_parameters.iter().enumerate() {
+        if pos > 0 {
+            param_str.push_str(", ");
+        }
+
+        let c_par = &method_analysis.parameters.c_parameters[par.ind_c];
+        let s = c_par.to_parameter(env, &method_analysis.bounds);
+        param_str.push_str(&s);
+
+        // insert the templated param
+        if include_templated && pos == 0{
+            param_str.push_str(&format!(", {}: &T", parent_name));
+        }
+    }
+    param_str
 }
 
 
@@ -215,6 +219,57 @@ pub fn generate_override_vfuncs(
 
     Ok(())
 
+}
+
+pub fn generate_box_impl(
+    w: &mut Write,
+    env: &Env,
+    object_analysis: &analysis::object::Info,
+    method_analysis: &analysis::virtual_methods::Info,
+    subclass_info: &SubclassInfo,
+    indent: usize,
+) -> Result<()> {
+
+    try!(writeln!(w));
+    try!(write!(
+        w,
+        "{}fn {}(",
+        tabs(indent),
+        method_analysis.name,
+    ));
+
+    let parent_name = &method_analysis.parameters.rust_parameters[0].name;
+
+    let param_str = virtual_method_params(env, method_analysis, parent_name, true);
+    try!(writeln!(w, "{}){{", param_str));
+
+
+    let arg_str = virtual_method_args(method_analysis, false);
+
+
+    try!(writeln!(
+        w,
+        "{}let imp: &$name<T> = self.as_ref();",
+        tabs(indent+1)
+    ));
+
+
+    try!(writeln!(
+        w,
+        "{}imp.{}({})",
+        tabs(indent+1),
+        method_analysis.name,
+        arg_str
+    ));
+
+
+    try!(writeln!(
+        w,
+        "{}}}",
+        tabs(indent),
+    ));
+
+    Ok(())
 }
 
 
