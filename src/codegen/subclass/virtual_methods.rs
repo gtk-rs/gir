@@ -175,7 +175,7 @@ pub fn generate_override_vfuncs(
 
 
     try!(writeln!(w));
-    try!(write!(
+    try!(writeln!(
         w,
         "{}fn override_vfuncs(&mut self, _: &ClassInitToken){{",
         tabs(indent)
@@ -209,6 +209,9 @@ pub fn generate_override_vfuncs(
     for s in body {
         try!(writeln!(w, "{}{}", tabs(indent+1), s));
     }
+
+    try!(writeln!(w, "{}}}", tabs(indent)));
+
 
     Ok(())
 
