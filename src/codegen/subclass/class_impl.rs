@@ -376,7 +376,7 @@ fn generate_parent_impls(
             let t = env.library.type_(parent.type_id);
             try!(writeln!(
                 w,
-                "unsafe impl {par}ClassExt<{obj}> for {obj}Class {}",
+                "unsafe impl {par}ClassExt<{obj}> for {obj}Class {{}}",
                 obj = object_analysis.name,
                 par = t.get_name()
             ));
