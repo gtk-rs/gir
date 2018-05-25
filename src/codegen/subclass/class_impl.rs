@@ -215,9 +215,6 @@ pub fn generate_base(
     Ok(())
 }
 
-// pub fn generate_base -->
-// pub unsafe trait ApplicationBase: IsA<gio::Application> + ObjectType {
-
 fn generate_any_impl(
     w: &mut Write,
     _env: &Env,
@@ -290,15 +287,21 @@ fn generate_glib_wrapper(
     ));
 
     if subclass_info.parents.len() > 0 {
-        try!(write!(w, ":\n    ["));
-        for parent in &subclass_info.parents {}
+        try!(write!(w, ":["));
+        for parent in &subclass_info.parents {
+            let t = env.library.type_(parent.type_id);
+            let k = &env.namespaces[parent.type_id.ns_id].crate_name;
+            try!(write!(w, "\n{tabs} {krate}::{ty} => {krate}_ffi::{cty}",
+                tabs=tabs(2),
+                krate=k,
+                ty=t.get_name(),
+                cty=t.get_glib_name().unwrap()));
 
-        try!(writeln!(w, "]"));
+        }
+
+        try!(write!(w, "]"));
     }
 
-    //         [gio::Application => gio_ffi::GApplication,
-    //          gio::ActionGroup => gio_ffi::GActionGroup,
-    //          gio::ActionMap => gio_ffi::GActionMap];
 
     try!(writeln!(w, "{tabs1};", tabs1 = tabs(1)));
     try!(writeln!(
@@ -323,7 +326,22 @@ fn generate_impl_base(
     object_analysis: &analysis::object::Info,
     subclass_info: &SubclassInfo,
 ) -> Result<()> {
-    // unsafe impl<T: IsA<gio::Application> + ObjectType> ApplicationBase for T {}
+
+    let parents = subclass_info.parent_names(env, "");
+
+    let parent_impls: Vec<String> = parents
+        .iter()
+        .map(|ref p| format!("+ glib::IsA<{}>", p))
+        .collect();
+    let parent_objs = parent_impls.join(" ");
+
+    try!(writeln!(w));
+    try!(writeln!(
+        w,
+        "unsafe impl<T: ObjectType {}> {} for T {{}}",
+        parent_objs,
+        object_analysis.subclass_base_trait_name
+    ));
 
     Ok(())
 }
@@ -334,6 +352,8 @@ fn generate_class(
     object_analysis: &analysis::object::Info,
     subclass_info: &SubclassInfo,
 ) -> Result<()> {
+
+    try!(writeln!(w));
 
     writeln!(
         w,
@@ -350,12 +370,19 @@ fn generate_parent_impls(
     object_analysis: &analysis::object::Info,
     subclass_info: &SubclassInfo,
 ) -> Result<()> {
-    // // FIXME: Boilerplate
-    // unsafe impl ApplicationClassExt<Application> for ApplicationClass {}
-    // unsafe impl ObjectClassExt<Application> for ApplicationClass {}
+
+    try!(writeln!(w));
 
     writeln!(w, "// FIXME: Boilerplate");
-    if subclass_info.parents.len() > 0 {}
+    if subclass_info.parents.len() > 0 {
+        for parent in &subclass_info.parents {
+            let t = env.library.type_(parent.type_id);
+            try!(writeln!(w, "unsafe impl {par}ClassExt<{obj}> for {obj}Class {}",
+                obj=object_analysis.name,
+                par=t.get_name()));
+
+        }
+    }
 
     Ok(())
 }
@@ -366,10 +393,28 @@ fn generate_box_impl(
     object_analysis: &analysis::object::Info,
     subclass_info: &SubclassInfo,
 ) -> Result<()> {
-    // #[macro_export]
-    // macro_rules! box_gapplication_impl(
-    //     ($name:ident) => {
-    //         box_object_impl!($name);
+
+    try!(writeln!(w));
+
+    try!(writeln!(w, "#[macro_export]"));
+    try!(writeln!(w, "macro_rules! box_{}_impl(", object_analysis.name.to_lowercase()));
+
+    try!(writeln!(w, "{}($name:ident) => {{", tabs(1)));
+
+    if subclass_info.parents.len() > 0{
+
+        for parent in &subclass_info.parents {
+            if !env.analysis.objects.contains_key(&parent.type_id.full_name(&env.library)){
+                continue;
+            }
+            try!(writeln!(w, "{}box_{}_impl!($name);", tabs(2), o.name.to_lowercase()));
+        }
+
+        let n = subclass_info.parents.len() - 1;
+    }else{
+        try!(writeln!(w, "{}box_object_impl!($name);", tabs(2)));
+    }
+
     //
     //         impl<T: $crate::application::ApplicationBase>  $crate::application::ApplicationImpl<T> for Box<$name<T>>
     //         {
@@ -377,6 +422,11 @@ fn generate_box_impl(
     //                 let imp: &$name<T> = self.as_ref();
     //                 imp.startup(application)
     //             }
+
+    try!(writeln!(w, "{}}}", tabs(1)));
+
+    try!(writeln!(w, ");"));
+
 
     Ok(())
 }
