@@ -10,7 +10,7 @@ use super::trampolines;
 use traits::*;
 use version::Version;
 
-use analysis::bounds::Bounds;
+use analysis::bounds::{Bounds, CallbackInfo};
 use analysis::function_parameters::{self, Parameters, Transformation, TransformationType};
 use analysis::out_parameters::use_function_return_for_result;
 use analysis::imports::Imports;
@@ -28,7 +28,8 @@ use super::functions::{
     AsyncTrampoline,
     is_carray_with_direct_elements,
     finish_function_name,
-    find_function
+    find_function,
+    analyze_async
 };
 
 
@@ -167,48 +168,20 @@ fn analyze_virtual_method(
         if let Ok(s) = used_rust_type(env, par.typ) {
             used_types.push(s);
         }
-        let (to_glib_extra, type_string) = bounds.add_for_parameter(env, method, par, async);
+        let (to_glib_extra, callback_info) = bounds.add_for_parameter(env, method, par, async);
         if let Some(to_glib_extra) = to_glib_extra {
             to_glib_extras.insert(pos, to_glib_extra);
         }
-        if let Some((callback_type, success_parameters, error_parameters, bound_name)) = type_string {
-            // Checks for /*Ignored*/ or other error comments
-            if callback_type.find("/*").is_some() {
-                commented = true;
-            }
-            let func_name = method.c_identifier.as_ref().unwrap();
-            let finish_func_name = finish_function_name(func_name);
-            let mut output_params = vec![];
-            let mut ffi_ret = None;
-            if let Some(function) = find_function(env, &finish_func_name) {
-                if use_function_return_for_result(env, function.ret.typ) {
-                    ffi_ret = Some(function.ret.clone());
-                }
 
-                output_params.extend(function.parameters.clone());
-                for param in &mut output_params {
-                    if nameutil::needs_mangling(&param.name) {
-                        param.name = nameutil::mangle_keywords(&*param.name).into_owned();
-                    }
-                }
-            }
-            trampoline = Some(AsyncTrampoline {
-                is_method: true,
-                name: format!("{}_trampoline", method.name),
-                finish_func_name,
-                callback_type,
-                bound_name,
-                output_params,
-                ffi_ret,
-            });
+        analyze_async(
+            env,
+            method,
+            callback_info,
+            &mut commented,
+            &mut trampoline,
+            &mut async_future
+        );
 
-            async_future = Some(AsyncFuture {
-                is_method: true,
-                name: format!("{}_future", method.name),
-                success_parameters,
-                error_parameters,
-            });
-        }
         let type_error =
             !(async && *env.library.type_(par.typ) == Type::Fundamental(library::Fundamental::Pointer)) &&
             parameter_rust_type(env, par.typ, par.direction, Nullable(false), RefMode::None)
