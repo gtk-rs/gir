@@ -21,6 +21,7 @@ use codegen::parameter::*;
 
 #[derive(Default)]
 pub struct Builder {
+    object_name: String,
     object_class_c_type: String,
     ffi_crate_name: String,
     method_name: String,
@@ -34,6 +35,11 @@ pub struct Builder {
 impl Builder {
     pub fn new() -> Builder {
         Default::default()
+    }
+
+    pub fn object_name(&mut self, name: &str) -> &mut Builder {
+        self.object_name = name.into();
+        self
     }
 
     pub fn object_class_c_type(&mut self, c_class_type: &str) -> &mut Builder {
@@ -108,6 +114,39 @@ impl Builder {
         chunks.push(unsafe_);
         Chunk::Chunks(chunks)
     }
+
+    pub fn generate_extern_c_func(&self, env: &Env) -> Chunk {
+        let mut chunks = Vec::new();
+
+        chunks.push(Chunk::Custom("callback_guard!();".to_owned()));
+        chunks.push(Chunk::Custom("floating_reference_guard!(ptr);".to_owned()));
+
+        chunks.push(Chunk::Let{ is_mut:false,
+                                name: self.object_name.to_lowercase(),
+                                value: Box::new(Chunk::Custom("&*(ptr as *mut T::InstanceStructType)".to_owned())),
+                                type_: None
+                             });
+
+         chunks.push(Chunk::Let{ is_mut:false,
+                                 name: "wrap".to_owned(),
+                                 value: Box::new(Chunk::Custom("from_glib_borrow(ptr as *mut T::InstanceStructType))".to_owned())),
+                                 type_: Some(Box::new(Chunk::Custom("T".to_owned())))
+                              });
+
+        chunks.push(Chunk::Let{ is_mut:false,
+                                name: "imp".to_owned(),
+                                value: Box::new(Chunk::Custom(format!("{}.get_impl())",
+                            self.object_name.to_lowercase()).to_owned())),
+                                type_: None
+                             });
+
+        chunks.push(Chunk::Custom(format!("imp.{}({})",
+                                  self.method_name,
+                                  &"").to_owned()));
+
+        Chunk::Chunks(chunks)
+    }
+
 
 
     fn base_impl_body_chunk(&self) -> Chunk {

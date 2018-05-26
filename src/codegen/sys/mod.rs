@@ -5,7 +5,7 @@ mod build;
 mod cargo_toml;
 pub mod ffi_type;
 pub mod fields;
-mod functions;
+pub mod functions;
 mod lib_;
 mod statics;
 mod tests;

@@ -18,6 +18,7 @@ use std::result::Result as StdResult;
 use codegen::general;
 use codegen::subclass::virtual_methods;
 use codegen::sys::fields;
+
 use library::*;
 
 use analysis::general::StatusedTypeId;
@@ -554,18 +555,18 @@ fn generate_extern_c_funcs(
     object_analysis: &analysis::object::Info,
     subclass_info: &SubclassInfo,
 ) -> Result<()> {
-    // unsafe extern "C" fn application_startup<T: ApplicationBase>(ptr: *mut gio_ffi::GApplication)
-    // where
-    //     T::ImplType: ApplicationImpl<T>,
-    // {
-    //     callback_guard!();
-    //     floating_reference_guard!(ptr);
-    //     let application = &*(ptr as *mut T::InstanceStructType);
-    //     let wrap: T = from_glib_borrow(ptr as *mut T::InstanceStructType);
-    //     let imp = application.get_impl();
-    //
-    //     imp.startup(&wrap)
-    // }
+
+
+    for method_analysis in &object_analysis.virtual_methods {
+        try!(virtual_methods::generate_extern_c_func(
+            w,
+            env,
+            object_analysis,
+            method_analysis,
+            subclass_info,
+            0
+        ));
+    }
 
     Ok(())
 }
