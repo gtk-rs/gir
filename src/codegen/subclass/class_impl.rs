@@ -59,6 +59,28 @@ impl SubclassInfo {
             })
             .collect()
     }
+
+    fn parent<'a>(&self, env: &'a Env) -> Option<&'a analysis::object::Info>{
+        // get the actual superclass object
+        if self.parents.len() == 0 {
+            return None
+        }
+        for parent in &self.parents {
+            if !env.analysis
+                .objects
+                .contains_key(&parent.type_id.full_name(&env.library))
+            {
+                continue;
+            }
+
+            let o = &env.analysis.objects[&parent.type_id.full_name(&env.library)];
+            if !o.is_interface{
+                return Some(o);
+            }
+        }
+        None
+    }
+
 }
 
 pub fn generate(w: &mut Write, env: &Env, analysis: &analysis::object::Info) -> Result<()> {
@@ -460,19 +482,68 @@ fn generate_impl_objecttype(
     object_analysis: &analysis::object::Info,
     subclass_info: &SubclassInfo,
 ) -> Result<()> {
-    // impl ObjectType for Application {
-    //     const NAME: &'static str = "RsGApplication";
-    //     type ParentType = gio::Application;
-    //     type ImplType = Box<ApplicationImpl<Self>>;
-    //     type InstanceStructType = InstanceStruct<Self>;
-    //
-    //     fn class_init(token: &ClassInitToken, klass: &mut ApplicationClass) {
-    //         ObjectClassExt::override_vfuncs(klass, token);
-    //         ApplicationClassExt::override_vfuncs(klass, token);
-    //     }
-    //
-    //     object_type_fns!();
-    // }
+
+
+    try!(writeln!(w));
+
+    try!(writeln!(w, "impl ObjectType for {}{{",
+        object_analysis.name
+    ));
+
+    try!(writeln!(w, "{}const NAME: &'static str = \"Rs{}\";",
+        tabs(1),
+        object_analysis.full_name
+    ));
+
+    let parent = subclass_info.parent(env);
+
+    if parent.is_some(){
+
+        let p = parent.as_ref().unwrap();
+
+        let (ns, n) = nameutil::split_namespace_name(&p.full_name);
+
+        try!(writeln!(w, "{}type ParentType = {}::{};",
+            tabs(1),
+            ns.unwrap_or("").to_lowercase(),
+            n
+        ));
+    }
+
+    try!(writeln!(w, "{}type ImplType = Box<{}<Self>>;",
+        tabs(1),
+        object_analysis.subclass_impl_trait_name
+    ));
+
+    try!(writeln!(w, "{}type InstanceStructType = InstanceStruct<Self>;",
+        tabs(1)
+    ));
+
+    try!(writeln!(w, "{}fn class_init(token: &ClassInitToken, klass: &mut {}Class) {{",
+        tabs(1),
+        object_analysis.name
+    ));
+
+    try!(writeln!(w, "{}ObjectClassExt::override_vfuncs(klass, token);",
+        tabs(2)
+    ));
+
+
+    for parent in &subclass_info.parents {
+        try!(writeln!(w, "{}{}ClassExt::override_vfuncs(klass, token);",
+                      tabs(2),
+                      parent.name));
+    }
+
+    try!(writeln!(w, "{}}}", tabs(1)));
+
+
+    try!(writeln!(w, "{}object_type_fns!();",
+        tabs(1)
+    ));
+
+    try!(writeln!(w, "}}"));
+
 
     Ok(())
 }
