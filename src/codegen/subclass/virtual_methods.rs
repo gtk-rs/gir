@@ -470,8 +470,9 @@ pub fn function_signature(env: &Env, method: &analysis::virtual_methods::Info, b
     let (mut commented, ret_str) = function_return_value(env, method);
 
     let mut parameter_strs: Vec<String> = Vec::new();
-    for par in &method.parameters.c_parameters {
-        let (c, par_str) = function_parameter(env, par, bare);
+    for (pos, par) in method.parameters.c_parameters.iter().enumerate() {
+
+        let (c, par_str) = function_parameter(env, par, bare, Some(&"ptr".to_string()));
         parameter_strs.push(par_str);
         if c {
             commented = true;
@@ -497,7 +498,7 @@ fn function_return_value(env: &Env, method: &analysis::virtual_methods::Info) ->
     (commented, format!(" -> {}", ffi_type.into_string()))
 }
 
-fn function_parameter(env: &Env, par: &analysis::function_parameters::CParameter, bare: bool) -> (bool, String) {
+fn function_parameter(env: &Env, par: &analysis::function_parameters::CParameter, bare: bool, param_name: Option<&String>) -> (bool, String) {
     if let library::Type::Fundamental(library::Fundamental::VarArgs) = *env.library.type_(par.typ) {
         return (false, "...".into());
     }
@@ -508,7 +509,7 @@ fn function_parameter(env: &Env, par: &analysis::function_parameters::CParameter
     } else {
         format!(
             "{}: {}",
-            nameutil::mangle_keywords(&*par.name),
+            param_name.unwrap_or(&nameutil::mangle_keywords(&*par.name).into_owned()),
             ffi_type.into_string()
         )
     };
