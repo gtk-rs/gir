@@ -472,7 +472,9 @@ pub fn function_signature(env: &Env, method: &analysis::virtual_methods::Info, b
     let mut parameter_strs: Vec<String> = Vec::new();
     for (pos, par) in method.parameters.c_parameters.iter().enumerate() {
 
-        let (c, par_str) = function_parameter(env, par, bare, Some(&"ptr".to_string()));
+        let param_name = if pos == 0 { Some("ptr".to_owned()) } else { None };
+
+        let (c, par_str) = function_parameter(env, par, bare, param_name.as_ref());
         parameter_strs.push(par_str);
         if c {
             commented = true;
