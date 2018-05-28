@@ -106,6 +106,8 @@ impl Builder {
             arguments: args,
             as_return: true,
         });
+
+        //TODO: return variables?
         body.push(Chunk::Custom(".unwrap_or(())".to_owned()));
 
         let unsafe_ = Chunk::Unsafe(body);
@@ -129,13 +131,13 @@ impl Builder {
 
          chunks.push(Chunk::Let{ is_mut:false,
                                  name: "wrap".to_owned(),
-                                 value: Box::new(Chunk::Custom("from_glib_borrow(ptr as *mut T::InstanceStructType))".to_owned())),
+                                 value: Box::new(Chunk::Custom("from_glib_borrow(ptr as *mut T::InstanceStructType)".to_owned())),
                                  type_: Some(Box::new(Chunk::Custom("T".to_owned())))
                               });
 
         chunks.push(Chunk::Let{ is_mut:false,
                                 name: "imp".to_owned(),
-                                value: Box::new(Chunk::Custom(format!("{}.get_impl())",
+                                value: Box::new(Chunk::Custom(format!("{}.get_impl()",
                             self.object_name.to_lowercase()).to_owned())),
                                 type_: None
                              });
