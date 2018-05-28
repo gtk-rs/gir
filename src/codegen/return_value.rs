@@ -114,7 +114,7 @@ pub fn out_parameters_as_return(env: &Env, analysis: &analysis::functions::Info)
     return_str
 }
 
-fn out_parameter_as_return(par: &library::Parameter, env: &Env) -> String {
+pub fn out_parameter_as_return(par: &library::Parameter, env: &Env) -> String {
     //TODO: upcasts?
     let rust_type = parameter_rust_type(
         env,

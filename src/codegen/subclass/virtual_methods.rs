@@ -21,6 +21,8 @@ use codegen::subclass::class_impl::SubclassInfo;
 use codegen::subclass::virtual_method_body_chunks::Builder;
 use codegen::sys::ffi_type::ffi_type;
 use codegen::function_body_chunk::{Parameter, ReturnValue};
+use codegen::return_value::{ToReturnValue, out_parameter_as_return};
+
 
 pub fn generate_default_impl(
     w: &mut Write,
@@ -34,18 +36,16 @@ pub fn generate_default_impl(
 
 
     try!(writeln!(w));
-    try!(write!(
-        w,
-        "{}fn {}(",
-        tabs(indent),
-        method_analysis.name,
-    ));
 
     let parent_name = &method_analysis.parameters.rust_parameters[0].name;
+    let declr = declaration(env, method_analysis, None, Some(parent_name));
 
-    let param_str = virtual_method_params(env, method_analysis, Some(parent_name));
-
-    try!(writeln!(w, "{}){{", param_str));
+    try!(writeln!(
+        w,
+        "{}{}{{",
+        tabs(indent),
+        declr,
+    ));
 
 
     let arg_str = virtual_method_args(method_analysis, false);
@@ -101,18 +101,29 @@ fn virtual_method_args(method_analysis: &analysis::virtual_methods::Info, includ
     arg_str
 }
 
-fn virtual_method_params(env: &Env, method_analysis: &analysis::virtual_methods::Info, parent_name: Option<&String>) -> String
-{
+
+pub fn declaration(env: &Env, method_analysis: &analysis::virtual_methods::Info, method_name: Option<&String>, parent_name: Option<&String>) -> String {
+    let outs_as_return = !method_analysis.outs.is_empty();
+    let return_str = if outs_as_return {
+        out_parameters_as_return(env, method_analysis)
+    } else if method_analysis.ret.bool_return_is_error.is_some() {
+        if env.namespaces.glib_ns_id == namespaces::MAIN {
+            " -> Result<(), error::BoolError>".into()
+        } else {
+            " -> Result<(), glib::error::BoolError>".into()
+        }
+    } else {
+        method_analysis.ret.to_return_value(env)
+    };
     let mut param_str = String::with_capacity(100);
+
+    // generate types, not trait bounds
+    let bounds = Bounds::default();
     for (pos, par) in method_analysis.parameters.rust_parameters.iter().enumerate() {
         if pos > 0 {
-            param_str.push_str(", ");
+            param_str.push_str(", ")
         }
-
         let c_par = &method_analysis.parameters.c_parameters[par.ind_c];
-
-        // generate types, not trait bounds
-        let bounds = Bounds::default();
         let s = c_par.to_parameter(env, &bounds);
         param_str.push_str(&s);
 
@@ -121,8 +132,94 @@ fn virtual_method_params(env: &Env, method_analysis: &analysis::virtual_methods:
             param_str.push_str(&format!(", {}: &T", parent_name.as_ref().unwrap()));
         }
     }
-    param_str
+
+    format!(
+        "fn {}({}){}",
+        method_name.unwrap_or(&method_analysis.name),
+        param_str,
+        return_str
+    )
 }
+
+
+pub fn out_parameter_as_return_parts(
+    analysis: &analysis::virtual_methods::Info,
+) -> (&'static str, &'static str) {
+    use analysis::out_parameters::Mode::*;
+    let num_outs = analysis
+        .outs
+        .iter()
+        .filter(|p| p.array_length.is_none())
+        .count();
+    match analysis.outs.mode {
+        Normal | Combined => if num_outs > 1 {
+            ("(", ")")
+        } else {
+            ("", "")
+        },
+        Optional => if num_outs > 1 {
+            ("Option<(", ")>")
+        } else {
+            ("Option<", ">")
+        },
+        Throws(..) => {
+            if num_outs == 1 + 1 {
+                //if only one parameter except "glib::Error"
+                ("Result<", ", Error>")
+            } else {
+                ("Result<(", "), Error>")
+            }
+        }
+        None => unreachable!(),
+    }
+}
+
+pub fn out_parameters_as_return(env: &Env, analysis: &analysis::virtual_methods::Info) -> String {
+    let (prefix, suffix) = out_parameter_as_return_parts(analysis);
+    let mut return_str = String::with_capacity(100);
+    return_str.push_str(" -> ");
+    return_str.push_str(prefix);
+
+    let array_lengths: Vec<_> = analysis
+        .outs
+        .iter()
+        .filter_map(|p| p.array_length)
+        .collect();
+
+    let mut skip = 0;
+    for (pos, par) in analysis.outs.iter().filter(|par| !par.is_error).enumerate() {
+        // The actual return value is inserted with an empty name at position 0
+        if !par.name.is_empty() {
+            let mangled_par_name = nameutil::mangle_keywords(par.name.as_str());
+            let param_pos = analysis
+                .parameters
+                .c_parameters
+                .iter()
+                .enumerate()
+                .filter_map(|(pos, orig_par)| if orig_par.name == mangled_par_name {
+                    Some(pos)
+                } else {
+                    None
+                })
+                .next()
+                .unwrap();
+            if array_lengths.contains(&(param_pos as u32)) {
+                skip += 1;
+                continue;
+            }
+        }
+
+        if pos > skip {
+            return_str.push_str(", ")
+        }
+        let s = out_parameter_as_return(par, env);
+        return_str.push_str(&s);
+    }
+    return_str.push_str(suffix);
+    return_str
+}
+
+
 
 
 pub fn generate_base_impl(
@@ -137,17 +234,14 @@ pub fn generate_base_impl(
 
 
     try!(writeln!(w));
-    try!(write!(
+
+    let declr = declaration(env, method_analysis, Some(&format!("parent_{}", method_analysis.name)), None);
+    try!(writeln!(
         w,
-        "{}fn parent_{}(",
+        "{}{}{{",
         tabs(indent),
-        method_analysis.name,
+        declr,
     ));
-
-    let mut param_str = virtual_method_params(env, method_analysis, None);
-
-
-    try!(writeln!(w, "{}){{", param_str));
 
     let body = base_impl_body_chunk(env, object_analysis, method_analysis, subclass_info).to_code(env);
     for s in body {
@@ -229,18 +323,17 @@ pub fn generate_box_impl(
 ) -> Result<()> {
 
     try!(writeln!(w));
-    try!(write!(
-        w,
-        "{}fn {}(",
-        tabs(indent),
-        method_analysis.name,
-    ));
+
 
     let parent_name = &method_analysis.parameters.rust_parameters[0].name;
+    let declr = declaration(env, method_analysis, None, Some(parent_name));
 
-    let param_str = virtual_method_params(env, method_analysis, Some(parent_name));
-    try!(writeln!(w, "{}){{", param_str));
-
+    try!(writeln!(
+        w,
+        "{}{}{{",
+        tabs(indent),
+        declr,
+    ));
 
     let arg_str = virtual_method_args(method_analysis, false);
 
