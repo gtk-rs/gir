@@ -17,9 +17,9 @@ use std::fmt;
 use std::result::Result as StdResult;
 
 use codegen::general;
-use codegen::subclass::virtual_methods;
+use codegen::subclass::{virtual_methods, statics};
 use codegen::sys::fields;
-use codegen::sys::statics;
+use codegen::sys::statics as statics_ffi;
 
 use library::*;
 
@@ -90,12 +90,12 @@ pub fn generate(w: &mut Write, env: &Env, analysis: &analysis::object::Info) -> 
     try!(general::start_comments(w, &env.config));
     try!(general::uses(w, env, &analysis.imports));
 
-    try!(statics::begin(w));
+    try!(statics_ffi::begin(w));
 
-    try!(generate_extern_crates(w, env));
-    try!(include_custom_modules(w, env));
-    try!(statics::after_extern_crates(w));
-    try!(statics::use_glib(w));
+    try!(statics::generate_extern_crates(w, env));
+    try!(statics::include_custom_modules(w, env));
+    try!(statics_ffi::after_extern_crates(w));
+    try!(statics_ffi::use_glib(w));
 
     // match &*env.config.library_name {
     //     "GLib" => try!(statics::only_for_glib(w)),
@@ -135,70 +135,6 @@ pub fn generate(w: &mut Write, env: &Env, analysis: &analysis::object::Info) -> 
     try!(generate_extern_c_funcs(w, env, analysis, &subclass_info));
 
     Ok(())
-}
-
-// TODO: copied from sys
-pub fn generate_extern_crates(w: &mut Write, env: &Env) -> Result<()> {
-    for library in &env.config.external_libraries {
-        try!(w.write_all(get_extern_crate_string(library).as_bytes()));
-    }
-
-    Ok(())
-}
-
-// TODO: copied from sys
-fn get_extern_crate_string(library: &ExternalLibrary) -> String {
-    format!(
-        "extern crate {}_sys as {};\n",
-        library.crate_name.replace("-", "_"),
-        nameutil::crate_name(&library.namespace)
-    )
-}
-
-// TODO: copied from sys
-fn include_custom_modules(w: &mut Write, env: &Env) -> Result<()> {
-    let modules = try!(find_modules(env));
-    if !modules.is_empty() {
-        try!(writeln!(w));
-        for module in &modules {
-            try!(writeln!(w, "mod {};", module));
-        }
-        try!(writeln!(w));
-        for module in &modules {
-            try!(writeln!(w, "pub use {}::*;", module));
-        }
-    }
-
-    Ok(())
-}
-
-// TODO: copied from sys
-fn find_modules(env: &Env) -> Result<Vec<String>> {
-    let path = env.config.target_path.join("src");
-
-    let mut vec = Vec::<String>::new();
-    for entry in try!(fs::read_dir(path)) {
-        let path = try!(entry).path();
-        let ext = match path.extension() {
-            Some(ext) => ext,
-            None => continue,
-        };
-        if ext != "rs" {
-            continue;
-        }
-        let file_stem = path.file_stem().expect("No file name");
-        if file_stem == "lib" {
-            continue;
-        }
-        let file_stem = file_stem
-            .to_str()
-            .expect("Can't convert file name to string")
-            .to_owned();
-        vec.push(file_stem);
-    }
-    vec.sort();
-
-    Ok(vec)
 }
 
 

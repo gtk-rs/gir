@@ -1,6 +1,7 @@
 use env::Env;
 
 mod object;
+mod statics;
 mod class_impls;
 mod class_impl;
 mod virtual_methods;
