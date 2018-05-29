@@ -264,12 +264,24 @@ fn generate_any_impl(
     object_analysis: &analysis::object::Info,
     _subclass_info: &SubclassInfo,
 ) -> Result<()> {
+
     try!(writeln!(w));
-    try!(writeln!(
-        w,
-        "any_impl!({}, {});",
-        object_analysis.subclass_base_trait_name, object_analysis.subclass_impl_trait_name
-    ));
+
+
+    if object_analysis.is_interface{
+        try!(writeln!(
+            w,
+            "any_impl!({});",
+            object_analysis.subclass_base_trait_name
+        ));
+    }else{
+        try!(writeln!(
+            w,
+            "any_impl!({}, {});",
+            object_analysis.subclass_base_trait_name, object_analysis.subclass_impl_trait_name
+        ));
+    }
+
 
     Ok(())
 }

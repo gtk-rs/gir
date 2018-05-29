@@ -377,6 +377,11 @@ pub fn interface(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<I
         imports.add("glib::ObjectExt", None);
     }
 
+    let subclass_impl_trait_name = obj.subclass_impl_trait_name
+        .as_ref()
+        .cloned()
+        .unwrap_or_else(|| format!("{}Impl", name));
+
     let base = InfoBase {
         full_name,
         type_id: iface_tid,
@@ -412,6 +417,7 @@ pub fn interface(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<I
         trampolines,
         properties,
         signatures,
+        subclass_impl_trait_name,
         ..Default::default()
     };
 
