@@ -76,7 +76,7 @@ fn generate_lib(w: &mut Write, env: &Env) -> Result<()> {
     Ok(())
 }
 
-fn generate_extern_crates(w: &mut Write, env: &Env) -> Result<()> {
+pub fn generate_extern_crates(w: &mut Write, env: &Env) -> Result<()> {
     for library in &env.config.external_libraries {
         try!(w.write_all(get_extern_crate_string(library).as_bytes()));
     }

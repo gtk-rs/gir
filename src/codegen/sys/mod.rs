@@ -7,7 +7,7 @@ pub mod ffi_type;
 pub mod fields;
 pub mod functions;
 mod lib_;
-mod statics;
+pub mod statics;
 mod tests;
 
 pub fn generate(env: &Env) {
