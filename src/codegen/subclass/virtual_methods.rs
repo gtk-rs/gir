@@ -70,6 +70,31 @@ pub fn generate_default_impl(
 
 }
 
+pub fn generate_declaration(
+    w: &mut Write,
+    env: &Env,
+    object_analysis: &analysis::object::Info,
+    method_analysis: &analysis::virtual_methods::Info,
+    subclass_info: &SubclassInfo,
+    indent: usize,
+) -> Result<()> {
+
+    try!(writeln!(w));
+
+    let parent_name = &method_analysis.parameters.rust_parameters[0].name;
+    let declr = declaration(env, method_analysis, None, Some(parent_name));
+
+    try!(writeln!(
+        w,
+        "{}{};",
+        tabs(indent),
+        declr,
+    ));
+
+    Ok(())
+}
+
+
 pub fn default_impl_body_chunk(env: &Env,
                             object_analysis: &analysis::object::Info,
                             method_analysis: &analysis::virtual_methods::Info,

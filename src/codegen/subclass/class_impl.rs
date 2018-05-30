@@ -112,25 +112,22 @@ pub fn generate(w: &mut Write, env: &Env, analysis: &analysis::object::Info) -> 
 
     try!(generate_impl(w, env, analysis, &subclass_info));
 
-    try!(generate_impl_ext(w, env, analysis, &subclass_info));
+    if !analysis.is_interface{
+        try!(generate_impl_ext(w, env, analysis, &subclass_info));
+    }
 
     try!(generate_any_impl(w, env, analysis, &subclass_info));
 
-    try!(generate_base(w, env, analysis, &subclass_info));
-
-    try!(generate_ext(w, env, analysis, &subclass_info));
-
-    try!(generate_glib_wrapper(w, env, analysis, &subclass_info));
-
-    try!(generate_impl_base(w, env, analysis, &subclass_info));
-
-    try!(generate_class(w, env, analysis, &subclass_info));
-
-    try!(generate_parent_impls(w, env, analysis, &subclass_info));
-
-    try!(generate_box_impl(w, env, analysis, &subclass_info));
-
-    try!(generate_impl_objecttype(w, env, analysis, &subclass_info));
+    if !analysis.is_interface{
+        try!(generate_base(w, env, analysis, &subclass_info));
+        try!(generate_ext(w, env, analysis, &subclass_info));
+        try!(generate_glib_wrapper(w, env, analysis, &subclass_info));
+        try!(generate_impl_base(w, env, analysis, &subclass_info));
+        try!(generate_class(w, env, analysis, &subclass_info));
+        try!(generate_parent_impls(w, env, analysis, &subclass_info));
+        try!(generate_box_impl(w, env, analysis, &subclass_info));
+        try!(generate_impl_objecttype(w, env, analysis, &subclass_info));
+    }
 
     try!(generate_extern_c_funcs(w, env, analysis, &subclass_info));
 
@@ -144,35 +141,62 @@ pub fn generate_impl(
     object_analysis: &analysis::object::Info,
     subclass_info: &SubclassInfo,
 ) -> Result<()> {
-    let mut parents = subclass_info.parent_names(env, "_subclass");
-
-    let parent_impls: Vec<String> = parents
-        .iter()
-        .map(|ref p| format!(" {}Impl<T> +", p))
-        .collect();
-    let parent_objs = parent_impls.join("");
 
     // start impl trait
     try!(writeln!(w));
-    try!(writeln!(
-        w,
-        "pub trait {}<T: {}>:{} ObjectImpl<T> + AnyImpl + 'static {{",
-        object_analysis.subclass_impl_trait_name,
-        object_analysis.subclass_base_trait_name,
-        parent_objs
-    ));
 
-    info!("supertypes, {:?}", parents);
+    if object_analysis.is_interface{
+
+        // TODO: Can I use a generic parent 'T' here, too? That'd be easier
+        try!(writeln!(
+            w,
+            "pub trait {}: AnyImpl + 'static {{",
+            object_analysis.subclass_impl_trait_name
+        ));
+    }else{
+
+        let parents = subclass_info.parent_names(env, "_subclass");
+
+        let parent_impls: Vec<String> = parents
+            .iter()
+            .map(|ref p| format!(" {}Impl<T> +", p))
+            .collect();
+        let parent_objs = parent_impls.join("");
+
+        try!(writeln!(
+            w,
+            "pub trait {}<T: {}>:{} ObjectImpl<T> + AnyImpl + 'static {{",
+            object_analysis.subclass_impl_trait_name,
+            object_analysis.subclass_base_trait_name,
+            parent_objs
+        ));
+
+        info!("supertypes, {:?}", parents);
+    }
+
 
     for method_analysis in &object_analysis.virtual_methods {
-        try!(virtual_methods::generate_default_impl(
-            w,
-            env,
-            object_analysis,
-            method_analysis,
-            subclass_info,
-            1
-        ));
+
+        if object_analysis.is_interface{
+            try!(virtual_methods::generate_declaration(
+                w,
+                env,
+                object_analysis,
+                method_analysis,
+                subclass_info,
+                1
+            ));
+        }else{
+
+            try!(virtual_methods::generate_default_impl(
+                w,
+                env,
+                object_analysis,
+                method_analysis,
+                subclass_info,
+                1
+            ));
+        }
     }
 
     //end impl trait
@@ -272,7 +296,7 @@ fn generate_any_impl(
         try!(writeln!(
             w,
             "any_impl!({});",
-            object_analysis.subclass_base_trait_name
+            object_analysis.subclass_impl_trait_name
         ));
     }else{
         try!(writeln!(
