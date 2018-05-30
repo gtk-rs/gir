@@ -452,10 +452,13 @@ pub fn body_chunk_builder(env: &Env,
     builder.object_name(&object_analysis.name)
            .object_class_c_type(object_analysis.c_class_type.as_ref().unwrap())
            .ffi_crate_name(&env.namespaces[object_analysis.type_id.ns_id].ffi_crate_name)
+           .glib_name(&method_analysis.glib_name)
            .method_name(&method_analysis.name)
+           .assertion(method_analysis.assertion)
            .ret(&method_analysis.ret)
            .transformations(&method_analysis.parameters.transformations)
            .outs_mode(method_analysis.outs.mode);
+
 
    for par in &method_analysis.parameters.c_parameters {
        if outs_as_return && method_analysis.outs.iter().any(|p| p.name == par.name) {
@@ -486,6 +489,8 @@ pub fn extern_c_func_body_chunk(env: &Env,
                         ) -> Chunk
 {
     let mut builder = body_chunk_builder(env, object_analysis, method_analysis, subclass_info);
+
+    info!("TRAMPOLINE {:?}", method_analysis.trampoline);
 
     builder.generate_extern_c_func(env)
 }
