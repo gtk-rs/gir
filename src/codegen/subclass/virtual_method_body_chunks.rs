@@ -132,7 +132,6 @@ impl Builder {
         let mut chunks = Vec::new();
 
         self.add_into_conversion(&mut chunks);
-        self.add_in_array_lengths(&mut chunks);
         // self.add_assertion(&mut chunks);
 
         chunks.push(unsafe_);
@@ -173,8 +172,6 @@ impl Builder {
         Chunk::Chunks(body)
     }
 
-
-
     fn base_impl_body_chunk(&self) -> Chunk {
 
         let mut body = Vec::new();
@@ -182,6 +179,8 @@ impl Builder {
         if self.outs_as_return {
             self.write_out_variables(&mut body);
         }
+
+        self.add_in_array_lengths(&mut body);
 
         let call = self.generate_ffi_call(Some("f".to_owned()));
         let call = self.generate_ffi_call_conversion(call);
@@ -199,6 +198,71 @@ impl Builder {
             body: Box::new(Chunk::Chunks(body)
         ),
         }
+    }
+
+    pub fn generate_interface_init(&self, env: &Env, virtual_methods: &Vec<analysis::virtual_methods::Info>) -> Chunk {
+
+        let mut body = Vec::new();
+
+        let iface_name = format!("{}_iface", self.object_name.to_lowercase()).to_owned();
+        let iface_get_type = format!("{}_get_type", self.object_name.to_lowercase()).to_owned();
+
+        body.push(Chunk::Custom("callback_guard!();".to_owned()));
+        body.push(Chunk::Let {
+                    name: iface_name.clone(),
+                    is_mut: false,
+                    value: Box::new(Chunk::Custom(format!("&mut *(iface as *mut {}::{})",
+                            self.ffi_crate_name, self.object_class_c_type
+                        ).to_owned(),
+                    )),
+                    type_: None,
+                });
+        body.push(Chunk::Let {
+                    name: "iface_type".to_owned(),
+                    is_mut: false,
+                    value: Box::new(Chunk::Custom("(*(iface as *const gobject_ffi::GTypeInterface)).g_type".to_owned(),
+                    )),
+                    type_: None,
+                });
+        body.push(Chunk::Let {
+                    name: "type_".to_owned(),
+                    is_mut: false,
+                    value: Box::new(Chunk::Custom("(*(iface as *const gobject_ffi::GTypeInterface)).g_instance_type".to_owned(),
+                    )),
+                    type_: None,
+                });
+
+        body.push(Chunk::Let {
+                    name: "klass".to_owned(),
+                    is_mut: false,
+                    value: Box::new(Chunk::Custom("&mut *(gobject_ffi::g_type_class_ref(type_) as *mut ClassStruct<T>)".to_owned(),
+                    )),
+                    type_: None,
+                });
+
+        body.push(Chunk::Let {
+                    name: "interfaces_static".to_owned(),
+                    is_mut: false,
+                    value: Box::new(Chunk::Custom("&mut *(klass.interfaces_static as *mut Vec<_>)".to_owned(),
+                    )),
+                    type_: None,
+                });
+
+        body.push(Chunk::Custom("interfaces_static.push((iface_type, iface_data))".to_owned()));
+
+
+        for method_analysis in virtual_methods {
+            body.push(Chunk::Custom(
+                format!("{iface}.{mname} = Some({type_fn}_{mname}::<T>);",
+                    mname=method_analysis.name,
+                    iface=iface_name,
+                    type_fn=iface_get_type).to_owned()
+            ));
+        }
+
+
+        Chunk::Chunks(body)
+
     }
 
     fn let_klass(&self) -> Chunk {
@@ -224,6 +288,7 @@ impl Builder {
             type_: None,
         }
     }
+
 
     fn generate_func_parameters(&self) -> Vec<Chunk> {
         let mut params = Vec::new();

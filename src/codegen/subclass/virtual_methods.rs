@@ -562,28 +562,21 @@ pub fn generate_interface_init(
 unsafe extern \"C\" fn {}_init<T: ObjectType>
     iface: glib_ffi::gpointer,
     iface_data: glib_ffi::gpointer,
-) {",
+) {{",
         object_analysis.name.to_lowercase()
     ));
 
-    // unsafe extern "C" fn uri_handler_init<T: ObjectType>(
-    //     iface: glib_ffi::gpointer,
-    //     iface_data: glib_ffi::gpointer,
-    // ) {
-    //     callback_guard!();
-    //     let uri_handler_iface = &mut *(iface as *mut gst_ffi::GstURIHandlerInterface);
-    //
-    //     let iface_type = (*(iface as *const gobject_ffi::GTypeInterface)).g_type;
-    //     let type_ = (*(iface as *const gobject_ffi::GTypeInterface)).g_instance_type;
-    //     let klass = &mut *(gobject_ffi::g_type_class_ref(type_) as *mut ClassStruct<T>);
-    //     let interfaces_static = &mut *(klass.interfaces_static as *mut Vec<_>);
-    //     interfaces_static.push((iface_type, iface_data));
-    //
-    //     uri_handler_iface.get_type = Some(uri_handler_get_type::<T>);
-    //     uri_handler_iface.get_protocols = Some(uri_handler_get_protocols::<T>);
-    //     uri_handler_iface.get_uri = Some(uri_handler_get_uri::<T>);
-    //     uri_handler_iface.set_uri = Some(uri_handler_set_uri::<T>);
-    // }
+    let mut builder = Builder::new();
+
+    builder.object_name(&object_analysis.name)
+           .object_class_c_type(object_analysis.c_class_type.as_ref().unwrap())
+           .ffi_crate_name(&env.namespaces[object_analysis.type_id.ns_id].ffi_crate_name);
+
+
+    let body = builder.generate_interface_init(env, &object_analysis.virtual_methods).to_code(env);
+    for s in body {
+        try!(writeln!(w, "{}{}", tabs(indent+1), s));
+    }
 
     try!(writeln!(w,"}}"));
 
