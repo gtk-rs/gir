@@ -399,6 +399,8 @@ pub fn generate_extern_c_func(
 
     try!(writeln!(w));
 
+    // TODO: use Chunk::ExternCFunc
+
     try!(writeln!(
         w,
         "unsafe extern \"C\" fn {}_{}<T: {}>",
@@ -490,8 +492,6 @@ pub fn extern_c_func_body_chunk(env: &Env,
 {
     let mut builder = body_chunk_builder(env, object_analysis, method_analysis, subclass_info);
 
-    info!("TRAMPOLINE {:?}", method_analysis.trampoline);
-
     builder.generate_extern_c_func(env)
 }
 
@@ -546,4 +546,47 @@ fn function_parameter(env: &Env, par: &analysis::function_parameters::CParameter
         )
     };
     (commented, res)
+}
+
+pub fn generate_interface_init(
+    w: &mut Write,
+    env: &Env,
+    object_analysis: &analysis::object::Info,
+    subclass_info: &SubclassInfo,
+    indent: usize,
+) -> Result<()> {
+
+    try!(writeln!(
+        w,
+        "
+unsafe extern \"C\" fn {}_init<T: ObjectType>
+    iface: glib_ffi::gpointer,
+    iface_data: glib_ffi::gpointer,
+) {",
+        object_analysis.name.to_lowercase()
+    ));
+
+    // unsafe extern "C" fn uri_handler_init<T: ObjectType>(
+    //     iface: glib_ffi::gpointer,
+    //     iface_data: glib_ffi::gpointer,
+    // ) {
+    //     callback_guard!();
+    //     let uri_handler_iface = &mut *(iface as *mut gst_ffi::GstURIHandlerInterface);
+    //
+    //     let iface_type = (*(iface as *const gobject_ffi::GTypeInterface)).g_type;
+    //     let type_ = (*(iface as *const gobject_ffi::GTypeInterface)).g_instance_type;
+    //     let klass = &mut *(gobject_ffi::g_type_class_ref(type_) as *mut ClassStruct<T>);
+    //     let interfaces_static = &mut *(klass.interfaces_static as *mut Vec<_>);
+    //     interfaces_static.push((iface_type, iface_data));
+    //
+    //     uri_handler_iface.get_type = Some(uri_handler_get_type::<T>);
+    //     uri_handler_iface.get_protocols = Some(uri_handler_get_protocols::<T>);
+    //     uri_handler_iface.get_uri = Some(uri_handler_get_uri::<T>);
+    //     uri_handler_iface.set_uri = Some(uri_handler_set_uri::<T>);
+    // }
+
+    try!(writeln!(w,"}}"));
+
+    Ok(())
+
 }

@@ -125,10 +125,11 @@ pub fn generate(w: &mut Write, env: &Env, analysis: &analysis::object::Info) -> 
         try!(generate_impl_base(w, env, analysis, &subclass_info));
         try!(generate_class(w, env, analysis, &subclass_info));
         try!(generate_parent_impls(w, env, analysis, &subclass_info));
+        try!(generate_interface_impls(w, env, analysis, &subclass_info));
         try!(generate_box_impl(w, env, analysis, &subclass_info));
         try!(generate_impl_objecttype(w, env, analysis, &subclass_info));
     }else{
-        try!(generate_impl_static(w, env, analysis, &subclass_info));
+        // try!(generate_impl_static(w, env, analysis, &subclass_info));
     }
 
     try!(generate_extern_c_funcs(w, env, analysis, &subclass_info));
@@ -467,6 +468,30 @@ fn generate_parent_impls(
     Ok(())
 }
 
+fn generate_interface_impls(
+    w: &mut Write,
+    env: &Env,
+    object_analysis: &analysis::object::Info,
+    subclass_info: &SubclassInfo,
+) -> Result<()> {
+    try!(writeln!(w));
+
+    writeln!(w, "// FIXME: Boilerplate");
+    if subclass_info.parents.len() > 0 {
+        for parent in &subclass_info.parents {
+            let t = env.library.type_(parent.type_id);
+            try!(writeln!(
+                w,
+                "unsafe impl {par}ClassExt<{obj}> for {obj}Class {{}}",
+                obj = object_analysis.name,
+                par = t.get_name()
+            ));
+        }
+    }
+
+    Ok(())
+}
+
 fn generate_box_impl(
     w: &mut Write,
     env: &Env,
@@ -665,6 +690,14 @@ fn generate_extern_c_funcs(
 
         // TODO: generate *_init<T: ObjectType>(
         // see: https://github.com/sdroege/gst-plugin-rs/blob/25af5afb2bb9dfea79a13fd306d4b7fe36d26496/gst-plugin/src/uri_handler.rs#L104
+
+        try!(virtual_methods::generate_interface_init(
+            w,
+            env,
+            object_analysis,
+            subclass_info,
+            0
+        ));
 
         // TODO: generate register_*<T: ObjectType, I: *ImplStatic<T>>(
         // see: https://github.com/sdroege/gst-plugin-rs/blob/25af5afb2bb9dfea79a13fd306d4b7fe36d26496/gst-plugin/src/uri_handler.rs#L123
