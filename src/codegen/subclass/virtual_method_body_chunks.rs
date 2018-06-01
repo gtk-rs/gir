@@ -185,10 +185,8 @@ impl Builder {
             is_mut: false,
             name: "klass".to_owned(),
             value: Box::new(Chunk::Custom(
-                format!(
-                    "&**({} as *const *const ClassStruct<T>)",
-                    self.object_name.to_lowercase()
-                ).to_owned(),
+                    "&**(ptr as *const *const ClassStruct<T>)"
+                .to_owned(),
             )),
             type_: None,
         });
@@ -199,9 +197,10 @@ impl Builder {
             value: Box::new(Chunk::Custom(
                 format!(
                     "klass.get_interface_static({}::{}_get_type())
-                                     as *const URIHandlerStatic<T>",
+                                     as *const {}Static<T>",
                     self.ffi_crate_name,
-                    self.object_name.to_lowercase()
+                    self.object_name.to_lowercase(),
+                    self.object_name
                 ).to_owned(),
             )),
             type_: None,
@@ -211,10 +210,7 @@ impl Builder {
             is_mut: false,
             name: "interface_static".to_owned(),
             value: Box::new(Chunk::Custom(
-                format!(
-                    "&*({} as *const T::InstanceStructType)",
-                    self.object_name.to_lowercase()
-                ).to_owned(),
+                    "&*(ptr as *const T::InstanceStructType)".to_owned(),
             )),
             type_: None,
         });
