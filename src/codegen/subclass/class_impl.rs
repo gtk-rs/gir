@@ -129,7 +129,7 @@ pub fn generate(w: &mut Write, env: &Env, analysis: &analysis::object::Info) -> 
         try!(generate_box_impl(w, env, analysis, &subclass_info));
         try!(generate_impl_objecttype(w, env, analysis, &subclass_info));
     }else{
-        // try!(generate_impl_static(w, env, analysis, &subclass_info));
+        try!(generate_impl_static(w, env, analysis, &subclass_info));
     }
 
     try!(generate_extern_c_funcs(w, env, analysis, &subclass_info));
@@ -660,6 +660,27 @@ fn generate_impl_static(
         "}}"
     );
 
+    try!(writeln!(w));
+
+
+    writeln!(
+        w,
+        "pub trait {}Static<T: ObjectType>{{",
+        object_analysis.name
+    );
+
+
+    try!(writeln!(w, "{}imp_static: *const {}Static<T>;",
+        tabs(1),
+        object_analysis.subclass_impl_trait_name
+    ));
+
+    writeln!(
+        w,
+        "}}"
+    );
+
+
     Ok(())
 }
 
@@ -685,13 +706,15 @@ fn generate_extern_c_funcs(
 
     if object_analysis.is_interface{
 
-        // TODO: generate *_get_type<T: ObjectType>(
-        // see: https://github.com/sdroege/gst-plugin-rs/blob/25af5afb2bb9dfea79a13fd306d4b7fe36d26496/gst-plugin/src/uri_handler.rs#L40
-
-        // TODO: generate *_init<T: ObjectType>(
-        // see: https://github.com/sdroege/gst-plugin-rs/blob/25af5afb2bb9dfea79a13fd306d4b7fe36d26496/gst-plugin/src/uri_handler.rs#L104
-
         try!(virtual_methods::generate_interface_init(
+            w,
+            env,
+            object_analysis,
+            subclass_info,
+            0
+        ));
+
+        try!(virtual_methods::generate_interface_get_type(
             w,
             env,
             object_analysis,
