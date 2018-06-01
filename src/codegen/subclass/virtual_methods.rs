@@ -492,7 +492,11 @@ pub fn extern_c_func_body_chunk(env: &Env,
 {
     let mut builder = body_chunk_builder(env, object_analysis, method_analysis, subclass_info);
 
-    builder.generate_extern_c_func(env)
+    if object_analysis.is_interface{
+        return builder.generate_interface_extern_c_func(env);
+    }else{
+        return builder.generate_object_extern_c_func(env);
+    }
 }
 
 

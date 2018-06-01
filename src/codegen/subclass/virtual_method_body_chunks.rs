@@ -16,7 +16,7 @@ use library::{self, ParameterDirection};
 use nameutil;
 use writer::ToCode;
 
-use codegen::function_body_chunk::{c_type_mem_mode, Parameter, ReturnValue, OutMemMode};
+use codegen::function_body_chunk::{c_type_mem_mode, OutMemMode, Parameter, ReturnValue};
 
 #[derive(Default)]
 pub struct Builder {
@@ -120,12 +120,8 @@ impl Builder {
             as_return: true,
         });
 
-
-
-
         //TODO: return variables?
         body.push(Chunk::Custom(".unwrap_or(())".to_owned()));
-
 
         let unsafe_ = Chunk::Unsafe(body);
 
@@ -138,42 +134,122 @@ impl Builder {
         Chunk::Chunks(chunks)
     }
 
-    pub fn generate_extern_c_func(&self, env: &Env) -> Chunk {
+    pub fn generate_object_extern_c_func(&self, env: &Env) -> Chunk {
         let mut body = Vec::new();
 
-        body.push(Chunk::Custom("callback_guard!();".to_owned()));
-        body.push(Chunk::Custom("floating_reference_guard!(ptr);".to_owned()));
+        body.push(self.callback_guard());
+        body.push(self.floating_reference_guard("ptr"));
 
-        body.push(Chunk::Let{ is_mut:false,
-                                name: self.object_name.to_lowercase(),
-                                value: Box::new(Chunk::Custom("&*(ptr as *mut T::InstanceStructType)".to_owned())),
-                                type_: None
-                             });
+        body.push(Chunk::Let {
+            is_mut: false,
+            name: self.object_name.to_lowercase(),
+            value: Box::new(Chunk::Custom(
+                "&*(ptr as *mut T::InstanceStructType)".to_owned(),
+            )),
+            type_: None,
+        });
 
-        body.push(Chunk::Let{ is_mut:false,
-                                 name: "wrap".to_owned(),
-                                 value: Box::new(Chunk::Custom("from_glib_borrow(ptr as *mut T::InstanceStructType)".to_owned())),
-                                 type_: Some(Box::new(Chunk::Custom("T".to_owned())))
-                              });
+        body.push(Chunk::Let {
+            is_mut: false,
+            name: "wrap".to_owned(),
+            value: Box::new(Chunk::Custom(
+                "from_glib_borrow(ptr as *mut T::InstanceStructType)".to_owned(),
+            )),
+            type_: Some(Box::new(Chunk::Custom("T".to_owned()))),
+        });
 
-        body.push(Chunk::Let{ is_mut:false,
-                                name: "imp".to_owned(),
-                                value: Box::new(Chunk::Custom(format!("{}.get_impl()",
-                            self.object_name.to_lowercase()).to_owned())),
-                                type_: None
-                             });
+        body.push(Chunk::Let {
+            is_mut: false,
+            name: "imp".to_owned(),
+            value: Box::new(Chunk::Custom(
+                format!("{}.get_impl()", self.object_name.to_lowercase()).to_owned(),
+            )),
+            type_: None,
+        });
 
-
-
-        body.push(Chunk::Custom(format!("imp.{}({})",
-                                  self.method_name,
-                                  &"").to_owned()));
+        // TODO: call imp function
+        body.push(Chunk::Custom(
+            format!("imp.{}({})", self.method_name, &"").to_owned(),
+        ));
 
         Chunk::Chunks(body)
     }
 
-    fn base_impl_body_chunk(&self) -> Chunk {
+    pub fn generate_interface_extern_c_func(&self, env: &Env) -> Chunk {
+        let mut body = Vec::new();
 
+        body.push(self.callback_guard());
+        body.push(self.floating_reference_guard("ptr"));
+
+        body.push(Chunk::Let {
+            is_mut: false,
+            name: "klass".to_owned(),
+            value: Box::new(Chunk::Custom(
+                format!(
+                    "&**({} as *const *const ClassStruct<T>)",
+                    self.object_name.to_lowercase()
+                ).to_owned(),
+            )),
+            type_: None,
+        });
+
+        body.push(Chunk::Let {
+            is_mut: false,
+            name: "interface_static".to_owned(),
+            value: Box::new(Chunk::Custom(
+                format!(
+                    "klass.get_interface_static({}::{}_get_type())
+                                     as *const URIHandlerStatic<T>",
+                    self.ffi_crate_name,
+                    self.object_name.to_lowercase()
+                ).to_owned(),
+            )),
+            type_: None,
+        });
+
+        body.push(Chunk::Let {
+            is_mut: false,
+            name: "interface_static".to_owned(),
+            value: Box::new(Chunk::Custom(
+                format!(
+                    "&*({} as *const T::InstanceStructType)",
+                    self.object_name.to_lowercase()
+                ).to_owned(),
+            )),
+            type_: None,
+        });
+        body.push(Chunk::Let {
+            is_mut: false,
+            name: "imp".to_owned(),
+            value: Box::new(Chunk::Custom("instance.get_impl()".to_owned())),
+            type_: None,
+        });
+        body.push(Chunk::Let {
+            is_mut: false,
+            name: "imp".to_owned(),
+            value: Box::new(Chunk::Custom(
+                "(*(*interface_static).imp_static).get_impl(imp)".to_owned(),
+            )),
+            type_: None,
+        });
+
+        // TODO: call imp function
+        body.push(Chunk::Custom(
+            format!("imp.{}({})", self.method_name, &"").to_owned(),
+        ));
+
+        Chunk::Chunks(body)
+    }
+
+    fn callback_guard(&self) -> Chunk {
+        Chunk::Custom("callback_guard!();".to_owned())
+    }
+
+    fn floating_reference_guard(&self, p: &str) -> Chunk {
+        Chunk::Custom(format!("floating_reference_guard!({});", p).to_owned())
+    }
+
+    fn base_impl_body_chunk(&self) -> Chunk {
         let mut body = Vec::new();
 
         if self.outs_as_return {
@@ -195,74 +271,82 @@ impl Builder {
 
         Chunk::Closure {
             arguments: vec![Chunk::Custom("f".to_owned())],
-            body: Box::new(Chunk::Chunks(body)
-        ),
+            body: Box::new(Chunk::Chunks(body)),
         }
     }
 
-    pub fn generate_interface_init(&self, env: &Env, virtual_methods: &Vec<analysis::virtual_methods::Info>) -> Chunk {
-
+    pub fn generate_interface_init(
+        &self,
+        env: &Env,
+        virtual_methods: &Vec<analysis::virtual_methods::Info>,
+    ) -> Chunk {
         let mut body = Vec::new();
 
         let iface_name = format!("{}_iface", self.object_name.to_lowercase()).to_owned();
-        let iface_get_type = format!("{}_get_type", self.object_name.to_lowercase()).to_owned();
 
-        body.push(Chunk::Custom("callback_guard!();".to_owned()));
+        body.push(self.callback_guard());
         body.push(Chunk::Let {
-                    name: iface_name.clone(),
-                    is_mut: false,
-                    value: Box::new(Chunk::Custom(format!("&mut *(iface as *mut {}::{})",
-                            self.ffi_crate_name, self.object_class_c_type
-                        ).to_owned(),
-                    )),
-                    type_: None,
-                });
+            name: iface_name.clone(),
+            is_mut: false,
+            value: Box::new(Chunk::Custom(
+                format!(
+                    "&mut *(iface as *mut {}::{})",
+                    self.ffi_crate_name, self.object_class_c_type
+                ).to_owned(),
+            )),
+            type_: None,
+        });
         body.push(Chunk::Let {
-                    name: "iface_type".to_owned(),
-                    is_mut: false,
-                    value: Box::new(Chunk::Custom("(*(iface as *const gobject_ffi::GTypeInterface)).g_type".to_owned(),
-                    )),
-                    type_: None,
-                });
+            name: "iface_type".to_owned(),
+            is_mut: false,
+            value: Box::new(Chunk::Custom(
+                "(*(iface as *const gobject_ffi::GTypeInterface)).g_type".to_owned(),
+            )),
+            type_: None,
+        });
         body.push(Chunk::Let {
-                    name: "type_".to_owned(),
-                    is_mut: false,
-                    value: Box::new(Chunk::Custom("(*(iface as *const gobject_ffi::GTypeInterface)).g_instance_type".to_owned(),
-                    )),
-                    type_: None,
-                });
-
-        body.push(Chunk::Let {
-                    name: "klass".to_owned(),
-                    is_mut: false,
-                    value: Box::new(Chunk::Custom("&mut *(gobject_ffi::g_type_class_ref(type_) as *mut ClassStruct<T>)".to_owned(),
-                    )),
-                    type_: None,
-                });
+            name: "type_".to_owned(),
+            is_mut: false,
+            value: Box::new(Chunk::Custom(
+                "(*(iface as *const gobject_ffi::GTypeInterface)).g_instance_type".to_owned(),
+            )),
+            type_: None,
+        });
 
         body.push(Chunk::Let {
-                    name: "interfaces_static".to_owned(),
-                    is_mut: false,
-                    value: Box::new(Chunk::Custom("&mut *(klass.interfaces_static as *mut Vec<_>)".to_owned(),
-                    )),
-                    type_: None,
-                });
+            name: "klass".to_owned(),
+            is_mut: false,
+            value: Box::new(Chunk::Custom(
+                "&mut *(gobject_ffi::g_type_class_ref(type_) as *mut ClassStruct<T>)".to_owned(),
+            )),
+            type_: None,
+        });
 
-        body.push(Chunk::Custom("interfaces_static.push((iface_type, iface_data))".to_owned()));
+        body.push(Chunk::Let {
+            name: "interfaces_static".to_owned(),
+            is_mut: false,
+            value: Box::new(Chunk::Custom(
+                "&mut *(klass.interfaces_static as *mut Vec<_>)".to_owned(),
+            )),
+            type_: None,
+        });
 
+        body.push(Chunk::Custom(
+            "interfaces_static.push((iface_type, iface_data))".to_owned(),
+        ));
 
         for method_analysis in virtual_methods {
             body.push(Chunk::Custom(
-                format!("{iface}.{mname} = Some({type_fn}_{mname}::<T>);",
-                    mname=method_analysis.name,
-                    iface=iface_name,
-                    type_fn=iface_get_type).to_owned()
+                format!(
+                    "{iface}.{mname} = Some({obj}_{mname}::<T>);",
+                    mname = method_analysis.name,
+                    iface = iface_name,
+                    obj = self.object_name.to_lowercase()
+                ).to_owned(),
             ));
         }
 
-
         Chunk::Chunks(body)
-
     }
 
     fn let_klass(&self) -> Chunk {
@@ -288,7 +372,6 @@ impl Builder {
             type_: None,
         }
     }
-
 
     fn generate_func_parameters(&self) -> Vec<Chunk> {
         let mut params = Vec::new();
@@ -342,24 +425,28 @@ impl Builder {
     fn get_outs(&self) -> Vec<&Parameter> {
         self.parameters
             .iter()
-            .filter_map(|par| if let Out { .. } = *par {
-                Some(par)
-            } else {
-                None
+            .filter_map(|par| {
+                if let Out { .. } = *par {
+                    Some(par)
+                } else {
+                    None
+                }
             })
             .collect()
     }
     fn get_outs_without_error(&self) -> Vec<&Parameter> {
         self.parameters
             .iter()
-            .filter_map(|par| if let Out { ref parameter, .. } = *par {
-                if parameter.is_error {
-                    None
+            .filter_map(|par| {
+                if let Out { ref parameter, .. } = *par {
+                    if parameter.is_error {
+                        None
+                    } else {
+                        Some(par)
+                    }
                 } else {
-                    Some(par)
+                    None
                 }
-            } else {
-                None
             })
             .collect()
     }
@@ -581,5 +668,4 @@ impl Builder {
             }
         }
     }
-
 }
