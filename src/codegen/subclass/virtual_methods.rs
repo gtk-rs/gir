@@ -290,10 +290,6 @@ pub fn generate_override_vfuncs(
     indent: usize,
 ) -> Result<()> {
 
-    if object_analysis.c_class_type.is_none(){
-        return Ok(());
-    }
-
 
     try!(writeln!(w));
     try!(writeln!(
@@ -303,23 +299,27 @@ pub fn generate_override_vfuncs(
     ));
 
     let mut body_chunks = Vec::new();
-    body_chunks.push(Chunk::Let{
-        name: "klass".to_owned(),
-        is_mut: false,
-        value: Box::new(Chunk::Custom(format!("&mut *(self as *const Self as *mut {}::{})",
-            &env.namespaces[object_analysis.type_id.ns_id].ffi_crate_name,
-            object_analysis.c_class_type.as_ref().unwrap()).to_owned())),
-        type_: None,
-    });
 
 
-    for method_analysis in &object_analysis.virtual_methods {
-        body_chunks.push(Chunk::Custom(
-            format!("klass.{mname} = Some({cname}_{mname}::<T>);", mname=method_analysis.name,
-                                                                   cname=object_analysis.name.to_lowercase()).to_owned()
-        ));
+    if !object_analysis.is_interface{
+        body_chunks.push(Chunk::Let{
+            name: "klass".to_owned(),
+            is_mut: false,
+            value: Box::new(Chunk::Custom(format!("&mut *(self as *const Self as *mut {}::{})",
+                &env.namespaces[object_analysis.type_id.ns_id].ffi_crate_name,
+                object_analysis.c_class_type.as_ref().unwrap()).to_owned())),
+            type_: None,
+        });
+
+
+        for method_analysis in &object_analysis.virtual_methods {
+            body_chunks.push(Chunk::Custom(
+                format!("klass.{mname} = Some({cname}_{mname}::<T>);", mname=method_analysis.name,
+                                                                       cname=object_analysis.name.to_lowercase()).to_owned()
+            ));
+        }
+
     }
-
 
     let unsafe_ = Chunk::Unsafe(body_chunks);
 
@@ -573,7 +573,6 @@ unsafe extern \"C\" fn {}_init<T: ObjectType>
     let mut builder = Builder::new();
 
     builder.object_name(&object_analysis.name)
-           .object_class_c_type(object_analysis.c_class_type.as_ref().unwrap())
            .ffi_crate_name(&env.namespaces[object_analysis.type_id.ns_id].ffi_crate_name);
 
 
@@ -597,19 +596,6 @@ pub fn generate_interface_get_type(
     subclass_info: &SubclassInfo,
     indent: usize,
 ) -> Result<()> {
-
-
-
-// unsafe extern "C" fn uri_handler_get_type<T: ObjectType>(
-//     type_: glib_ffi::GType,
-// ) -> gst_ffi::GstURIType {
-//     callback_guard!();
-//     let klass = gobject_ffi::g_type_class_peek(type_);
-//     let klass = &*(klass as *const ClassStruct<T>);
-//     let interface_static = klass.get_interface_static(gst_ffi::gst_uri_handler_get_type())
-//         as *const URIHandlerStatic<T>;
-//     (*(*interface_static).imp_static).get_type().to_glib()
-// }
 
     try!(writeln!(
         w,

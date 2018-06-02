@@ -88,14 +88,13 @@ impl SubclassInfo {
 
 pub fn generate(w: &mut Write, env: &Env, analysis: &analysis::object::Info) -> Result<()> {
     try!(general::start_comments(w, &env.config));
-    try!(general::uses(w, env, &analysis.imports));
 
     try!(statics_ffi::begin(w));
-
-    try!(statics::generate_extern_crates(w, env));
-    try!(statics::include_custom_modules(w, env));
     try!(statics_ffi::after_extern_crates(w));
     try!(statics_ffi::use_glib(w));
+    try!(statics::include_custom_modules(w, env));
+    try!(general::uses(w, env, &analysis.imports));
+
 
     // match &*env.config.library_name {
     //     "GLib" => try!(statics::only_for_glib(w)),
@@ -137,6 +136,32 @@ pub fn generate(w: &mut Write, env: &Env, analysis: &analysis::object::Info) -> 
     Ok(())
 }
 
+pub fn generate_exports(
+    env: &Env,
+    analysis: &analysis::object::Info,
+    module_name: &str,
+    contents: &mut Vec<String>,
+) {
+    let cfg_condition = general::cfg_condition_string(&analysis.cfg_condition, false, 0);
+    let version_cfg = general::version_condition_string(env, analysis.version, false, 0);
+    let mut cfg = String::new();
+    if let Some(s) = cfg_condition {
+        cfg.push_str(&s);
+        cfg.push('\n');
+    };
+    if let Some(s) = version_cfg {
+        cfg.push_str(&s);
+        cfg.push('\n');
+    };
+    contents.push("".to_owned());
+    contents.push(format!("{}pub mod {};", cfg, module_name));
+    // contents.push(format!(
+    //     "{}pub use self::{}::{};",
+    //     cfg,
+    //     module_name,
+    //     analysis.name
+    // ));
+}
 
 pub fn generate_impl(
     w: &mut Write,
@@ -323,18 +348,26 @@ fn generate_ext(
         return Ok(());
     }
 
-    let classext_name = format!("{}Ext", object_analysis.class_type.as_ref().unwrap());
+    let ext_name = if object_analysis.is_interface{
+        format!("{}InterfaceExt", object_analysis.name)
+    }else{
+        format!("{}Ext", object_analysis.class_type.as_ref().unwrap())
+    };
 
-    // start base trait
-    try!(writeln!(w));
-    try!(writeln!(
-        w,
-        "pub unsafe trait {}<T: {}>\nwhere\n{}T::ImplType: {}<T>{{",
-        classext_name,
-        object_analysis.subclass_base_trait_name,
-        tabs(1),
-        object_analysis.subclass_impl_trait_name
-    ));
+
+
+        // start base trait
+        try!(writeln!(w));
+        try!(writeln!(
+            w,
+            "pub unsafe trait {}<T: {}>\nwhere\n{}T::ImplType: {}<T>{{",
+            ext_name,
+            object_analysis.subclass_base_trait_name,
+            tabs(1),
+            object_analysis.subclass_impl_trait_name
+        ));
+
+
 
     try!(virtual_methods::generate_override_vfuncs(
         w,

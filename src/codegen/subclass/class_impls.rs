@@ -11,7 +11,7 @@ use traits::*;
 use codegen::subclass::class_impl;
 
 
-pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>, traits: &mut Vec<String>) {
+pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>) {
     info!("Generate class traits");
 
 
@@ -34,6 +34,6 @@ pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>, traits: &
             class_impl::generate(w, env, object_analysis)
         });
 
-        // super::object::generate_reexports(env, class_analysis, &mod_name, mod_rs, traits);
+        super::class_impl::generate_exports(env, object_analysis, &mod_name, mod_rs);
     }
 }
