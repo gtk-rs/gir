@@ -703,7 +703,7 @@ fn generate_impl_static(
     );
 
 
-    try!(writeln!(w, "{}imp_static: *const {}Static<T>;",
+    try!(writeln!(w, "{}imp_static: *const {}Static<T>",
         tabs(1),
         object_analysis.subclass_impl_trait_name
     ));
