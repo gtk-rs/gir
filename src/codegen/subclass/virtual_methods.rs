@@ -602,7 +602,7 @@ pub fn generate_interface_get_type(
         "
 unsafe extern \"C\" fn {}_get_type<T: ObjectType>
     type_: glib_ffi::GType
-) -> {}::{} {{",
+) -> glib::Type {{",
         object_analysis.name.to_lowercase(),
         "","" //TODO!
     ));
