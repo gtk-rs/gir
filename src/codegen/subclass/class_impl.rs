@@ -246,10 +246,6 @@ pub fn generate_impl_ext(
     try!(writeln!(w));
     try!(writeln!(w, "pub trait {}<T> {{}}", implext_name));
 
-    //end ext trait def
-    try!(writeln!(w));
-    try!(writeln!(w, "}}"));
-
     // start ext trait impl
     let parents = subclass_info.parent_names(env, "");
 
