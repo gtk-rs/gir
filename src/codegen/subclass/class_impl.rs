@@ -698,7 +698,7 @@ fn generate_impl_static(
 
     writeln!(
         w,
-        "pub trait {}Static<T: ObjectType>{{",
+        "struct {}Static<T: ObjectType>{{",
         object_analysis.name
     );
 
