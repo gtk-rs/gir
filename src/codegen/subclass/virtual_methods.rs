@@ -603,8 +603,7 @@ pub fn generate_interface_get_type(
 unsafe extern \"C\" fn {}_get_type<T: ObjectType>
     type_: glib_ffi::GType
 ) -> glib::Type {{",
-        object_analysis.name.to_lowercase(),
-        "","" //TODO!
+        object_analysis.name.to_lowercase()
     ));
 
     let ffi_crate_name = &env.namespaces[object_analysis.type_id.ns_id].ffi_crate_name;
