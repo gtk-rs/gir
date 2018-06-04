@@ -565,7 +565,7 @@ pub fn generate_interface_init(
         "
 unsafe extern \"C\" fn {}_init<T: ObjectType>
     iface: glib_ffi::gpointer,
-    iface_data: glib_ffi::gpointer,
+    iface_data: glib_ffi::gpointer
 ) {{",
         object_analysis.name.to_lowercase()
     ));
@@ -601,7 +601,7 @@ pub fn generate_interface_get_type(
         w,
         "
 unsafe extern \"C\" fn {}_get_type<T: ObjectType>
-    type_: glib_ffi::GType,
+    type_: glib_ffi::GType
 ) -> {}::{} {{",
         object_analysis.name.to_lowercase(),
         "","" //TODO!
