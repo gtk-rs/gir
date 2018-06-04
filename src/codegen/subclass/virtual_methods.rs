@@ -563,7 +563,7 @@ pub fn generate_interface_init(
     try!(writeln!(
         w,
         "
-unsafe extern \"C\" fn {}_init<T: ObjectType>
+unsafe extern \"C\" fn {}_init<T: ObjectType>(
     iface: glib_ffi::gpointer,
     iface_data: glib_ffi::gpointer
 ) {{",
@@ -600,7 +600,7 @@ pub fn generate_interface_get_type(
     try!(writeln!(
         w,
         "
-unsafe extern \"C\" fn {}_get_type<T: ObjectType>
+unsafe extern \"C\" fn {}_get_type<T: ObjectType>(
     type_: glib_ffi::GType
 ) -> glib::Type {{",
         object_analysis.name.to_lowercase()
