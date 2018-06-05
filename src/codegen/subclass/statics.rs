@@ -60,15 +60,18 @@ fn get_extern_crate_string_subclass(library: &ExternalLibrary) -> String {
     )
 }
 
+pub fn use_subclass_modules(w: &mut Write, env: &Env) -> Result<()> {
+    try!(writeln!(w));
+    try!(writeln!(w, "use gobject_subclass::anyimpl::*;"));
+    try!(writeln!(w, "use gobject_subclass::object::*;"));
 
-// TODO: copied from sys
+    Ok(())
+}
+
+
 pub fn include_custom_modules(w: &mut Write, env: &Env) -> Result<()> {
     let modules = try!(find_modules(env));
     if !modules.is_empty() {
-        try!(writeln!(w));
-        for module in &modules {
-            try!(writeln!(w, "mod {};", module));
-        }
         try!(writeln!(w));
         for module in &modules {
             try!(writeln!(w, "pub use {}::*;", module));

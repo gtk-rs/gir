@@ -11,7 +11,7 @@ mod class_impl;
 mod virtual_methods;
 mod virtual_method_body_chunks;
 
-
+use codegen::sys::statics as statics_ffi;
 use codegen::generate_single_version_file;
 
 pub fn generate(env: &Env) {
@@ -19,7 +19,6 @@ pub fn generate(env: &Env) {
 
     let root_path = env.config.target_path.join("src").join("auto");
     let mut lib_rs: Vec<String> = Vec::new();
-    let mut modules: Vec<String> = Vec::new();
 
     generate_single_version_file(env);
 
@@ -40,6 +39,7 @@ pub fn generate_lib_rs(env: &Env, root_path: &Path, lib_rs: &[String]) {
     save_to_file(path, env.config.make_backup, |w| {
         try!(general::start_comments(w, &env.config));
         try!(writeln!(w));
+        try!(statics_ffi::begin(w));
         try!(statics::generate_extern_crates(w, env));
         try!(writeln!(w));
         general::write_vec(w, lib_rs)

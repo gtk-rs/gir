@@ -89,10 +89,10 @@ impl SubclassInfo {
 pub fn generate(w: &mut Write, env: &Env, analysis: &analysis::object::Info) -> Result<()> {
     try!(general::start_comments(w, &env.config));
 
-    try!(statics_ffi::begin(w));
     try!(statics_ffi::after_extern_crates(w));
     try!(statics_ffi::use_glib(w));
     try!(statics::include_custom_modules(w, env));
+    try!(statics::use_subclass_modules(w, env));
     try!(general::uses(w, env, &analysis.imports));
 
 
@@ -257,7 +257,7 @@ pub fn generate_impl_ext(
 
     try!(writeln!(
         w,
-        "impl<S: {impl_name}<T>, T: ObjectType {parents}>> {implext_name}<T> for S {{}}",
+        "impl<S: {impl_name}<T>, T: ObjectType {parents}> {implext_name}<T> for S {{}}",
         impl_name = object_analysis.subclass_impl_trait_name,
         parents = parent_objs,
         implext_name = implext_name
