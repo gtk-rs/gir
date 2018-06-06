@@ -214,7 +214,7 @@ impl Builder {
 
         body.push(Chunk::Let {
             is_mut: false,
-            name: "interface_static".to_owned(),
+            name: "instance".to_owned(),
             value: Box::new(Chunk::Custom(
                     "&*(ptr as *const T::InstanceStructType)".to_owned(),
             )),
