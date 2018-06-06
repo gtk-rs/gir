@@ -5,6 +5,7 @@ use analysis;
 use analysis::bounds::{BoundType, Bounds};
 use analysis::ref_mode::RefMode;
 use analysis::functions::Visibility;
+use analysis::rust_type::parameter_rust_type;
 use analysis::namespaces;
 use env::Env;
 use writer::primitives::tabs;
@@ -38,7 +39,7 @@ pub fn generate_default_impl(
     try!(writeln!(w));
 
     let parent_name = &method_analysis.parameters.rust_parameters[0].name;
-    let declr = declaration(env, method_analysis, None, Some(parent_name));
+    let declr = declaration(env, method_analysis, None, Some(&format!("{}: &T", parent_name)));
 
     try!(writeln!(
         w,
@@ -81,8 +82,22 @@ pub fn generate_declaration(
 
     try!(writeln!(w));
 
-    let parent_name = &method_analysis.parameters.rust_parameters[0].name;
-    let declr = declaration(env, method_analysis, None, Some(parent_name));
+    let param =  &method_analysis.parameters.rust_parameters[0];
+    let parent_name = &param.name;
+    let bounds = Bounds::default();
+    let c_par = &method_analysis.parameters.c_parameters[param.ind_c];
+
+    let rust_type = parameter_rust_type(
+        env,
+        c_par.typ,
+        c_par.direction,
+        c_par.nullable,
+        c_par.ref_mode,
+    );
+    let parent_type = rust_type.into_string();
+
+
+    let declr = declaration(env, method_analysis, None, Some(&format!("{}: {}", parent_name, parent_type)));
 
     try!(writeln!(
         w,
@@ -127,7 +142,7 @@ fn virtual_method_args(method_analysis: &analysis::virtual_methods::Info, includ
 }
 
 
-pub fn declaration(env: &Env, method_analysis: &analysis::virtual_methods::Info, method_name: Option<&String>, parent_name: Option<&String>) -> String {
+pub fn declaration(env: &Env, method_analysis: &analysis::virtual_methods::Info, method_name: Option<&String>, parent: Option<&String>) -> String {
     let outs_as_return = !method_analysis.outs.is_empty();
     let return_str = if outs_as_return {
         out_parameters_as_return(env, method_analysis)
@@ -153,8 +168,8 @@ pub fn declaration(env: &Env, method_analysis: &analysis::virtual_methods::Info,
         param_str.push_str(&s);
 
         // insert the templated param
-        if parent_name.is_some() && pos == 0{
-            param_str.push_str(&format!(", {}: &T", parent_name.as_ref().unwrap()));
+        if parent.is_some() && pos == 0{
+            param_str.push_str(&format!(", {}", parent.as_ref().unwrap()));
         }
     }
 
@@ -351,7 +366,7 @@ pub fn generate_box_impl(
 
 
     let parent_name = &method_analysis.parameters.rust_parameters[0].name;
-    let declr = declaration(env, method_analysis, None, Some(parent_name));
+    let declr = declaration(env, method_analysis, None, Some(&format!("{}: &T", parent_name)));
 
     try!(writeln!(
         w,
@@ -580,44 +595,6 @@ unsafe extern \"C\" fn {}_init<T: ObjectType>(
     for s in body {
         try!(writeln!(w, "{}{}", tabs(indent+1), s));
     }
-
-    try!(writeln!(w,"}}"));
-
-    Ok(())
-
-}
-
-
-
-pub fn generate_interface_get_type(
-    w: &mut Write,
-    env: &Env,
-    object_analysis: &analysis::object::Info,
-    subclass_info: &SubclassInfo,
-    indent: usize,
-) -> Result<()> {
-
-    try!(writeln!(
-        w,
-        "
-unsafe extern \"C\" fn {}_get_type<T: ObjectType>(
-    type_: glib_ffi::GType
-) -> glib::Type {{",
-        object_analysis.name.to_lowercase()
-    ));
-
-    let ffi_crate_name = &env.namespaces[object_analysis.type_id.ns_id].ffi_crate_name;
-
-    try!(writeln!(w,"{}callback_guard!();", tabs(1)));
-    try!(writeln!(w,"{}let klass = gobject_ffi::g_type_class_peek(type_);", tabs(1)));
-    try!(writeln!(w,"{}let klass = &*(klass as *const ClassStruct<T>);", tabs(1)));
-    try!(writeln!(w,"{}let interface_static = klass.get_interface_static({}::{}_get_type()) as *const {}Static<T>;",
-                    tabs(1),
-                    ffi_crate_name,
-                    object_analysis.name.to_lowercase(),
-                    object_analysis.name));
-    try!(writeln!(w,"{}(*(*interface_static).imp_static).get_type().to_glib()", tabs(1)));
-
 
     try!(writeln!(w,"}}"));
 
