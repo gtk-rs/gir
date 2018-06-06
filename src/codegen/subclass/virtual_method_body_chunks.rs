@@ -22,6 +22,7 @@ use codegen::function_body_chunk::{c_type_mem_mode, OutMemMode, Parameter, Retur
 pub struct Builder {
     object_name: String,
     object_class_c_type: String,
+    object_c_type: String,
     ffi_crate_name: String,
     glib_name: String,
     method_name: String,
@@ -50,6 +51,11 @@ impl Builder {
 
     pub fn object_class_c_type(&mut self, c_class_type: &str) -> &mut Builder {
         self.object_class_c_type = c_class_type.into();
+        self
+    }
+
+    pub fn object_c_type(&mut self, c_type: &str) -> &mut Builder {
+        self.object_c_type = c_type.into();
         self
     }
 
@@ -287,7 +293,7 @@ impl Builder {
             value: Box::new(Chunk::Custom(
                 format!(
                     "&mut *(iface as *mut {}::{})",
-                    self.ffi_crate_name, self.object_class_c_type
+                    self.ffi_crate_name, self.object_c_type
                 ).to_owned(),
             )),
             type_: None,

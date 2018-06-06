@@ -588,6 +588,7 @@ unsafe extern \"C\" fn {}_init<T: ObjectType>(
     let mut builder = Builder::new();
 
     builder.object_name(&object_analysis.name)
+           .object_c_type(&object_analysis.c_type)
            .ffi_crate_name(&env.namespaces[object_analysis.type_id.ns_id].ffi_crate_name);
 
 
