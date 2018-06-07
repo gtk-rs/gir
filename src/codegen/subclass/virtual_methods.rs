@@ -450,8 +450,13 @@ pub fn generate_extern_c_func(
         try!(writeln!(w, "{}{}", tabs(indent+1), s));
     }
 
-    let func_str = trampoline_call_parameters(env, method_analysis, false);
-    try!(writeln!(w, "{}{}", tabs(indent+1), func_str));
+    let mut func_params = trampoline_call_parameters(env, method_analysis, false);
+    func_params.insert(0, "&wrap".to_string());
+
+    try!(writeln!(w, "{}imp.{}({})",
+                     tabs(indent+1),
+                     &method_analysis.name,
+                     func_params.join(", ")));
 
     try!(writeln!(
         w,
@@ -648,7 +653,7 @@ fn parameter_transformation(env: &Env, analysis: &analysis::virtual_methods::Inf
 }
 
 
-fn trampoline_call_parameters(env: &Env, analysis: &analysis::virtual_methods::Info, in_trait: bool) -> String {
+fn trampoline_call_parameters(env: &Env, analysis: &analysis::virtual_methods::Info, in_trait: bool) -> Vec<String> {
     let mut need_downcast = in_trait;
     let mut parameter_strs: Vec<String> = Vec::new();
     for (ind, par) in analysis.parameters.rust_parameters.iter().enumerate() {
@@ -659,5 +664,5 @@ fn trampoline_call_parameters(env: &Env, analysis: &analysis::virtual_methods::I
         need_downcast = false; //Only downcast first parameter
     }
 
-    parameter_strs.join(", ")
+    parameter_strs
 }

@@ -173,11 +173,6 @@ impl Builder {
             type_: None,
         });
 
-        // TODO: call imp function
-        body.push(Chunk::Custom(
-            format!("imp.{}({})", self.method_name, &"&wrap").to_owned(),
-        ));
-
         Chunk::Chunks(body)
     }
 
@@ -241,11 +236,6 @@ impl Builder {
             value: Box::new(Chunk::Custom("from_glib_borrow(instance)".to_owned())),
             type_: Some(Box::new(Chunk::Custom("T".to_owned()))),
         });
-
-        // TODO: call imp function
-        body.push(Chunk::Custom(
-            format!("imp.{}({})", self.method_name, &"&wrap").to_owned(),
-        ));
 
         Chunk::Chunks(body)
     }
