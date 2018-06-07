@@ -78,8 +78,7 @@ fn do_main() -> Result<(), String> {
 
     {
         let _watcher = statistics.enter("Loading");
-
-        library = Library::new(&cfg.library_name);
+        library = Library::new(&cfg.library_export_name);
         try!(library.read_file(&cfg.girs_dir, &cfg.library_full_name()));
     }
 
