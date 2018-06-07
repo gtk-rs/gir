@@ -418,10 +418,9 @@ pub fn generate_extern_c_func(
 
     try!(writeln!(
         w,
-        "unsafe extern \"C\" fn {}_{}<T: {}>",
+        "unsafe extern \"C\" fn {}_{}<T: ObjectType>",
         object_analysis.name.to_lowercase(),
-        method_analysis.name,
-        object_analysis.subclass_base_trait_name
+        method_analysis.name
     ));
 
     let (_, sig) = function_signature(env, method_analysis, false);
@@ -432,12 +431,14 @@ pub fn generate_extern_c_func(
         sig
     ));
 
-    try!(writeln!(
-        w,
-        "where\n{}T::ImplType: {}<T>",
-        tabs(indent+1),
-        object_analysis.subclass_impl_trait_name
-    ));
+    if !object_analysis.is_interface{
+        try!(writeln!(
+            w,
+            "where\n{}T::ImplType: {}<T>",
+            tabs(indent+1),
+            object_analysis.subclass_impl_trait_name
+        ));
+    }
     try!(writeln!(
         w,
         "{{"

@@ -175,7 +175,7 @@ impl Builder {
 
         // TODO: call imp function
         body.push(Chunk::Custom(
-            format!("imp.{}({})", self.method_name, &"").to_owned(),
+            format!("imp.{}({})", self.method_name, &"&wrap").to_owned(),
         ));
 
         Chunk::Chunks(body)
@@ -235,9 +235,16 @@ impl Builder {
             type_: None,
         });
 
+        body.push(Chunk::Let {
+            is_mut: false,
+            name: "wrap".to_owned(),
+            value: Box::new(Chunk::Custom("from_glib_borrow(instance)".to_owned())),
+            type_: Some(Box::new(Chunk::Custom("T".to_owned()))),
+        });
+
         // TODO: call imp function
         body.push(Chunk::Custom(
-            format!("imp.{}({})", self.method_name, &"").to_owned(),
+            format!("imp.{}({})", self.method_name, &"&wrap").to_owned(),
         ));
 
         Chunk::Chunks(body)
@@ -334,7 +341,7 @@ impl Builder {
         });
 
         body.push(Chunk::Custom(
-            "interfaces_static.push((iface_type, iface_data))".to_owned(),
+            "interfaces_static.push((iface_type, iface_data));".to_owned(),
         ));
 
         for method_analysis in virtual_methods {
