@@ -25,6 +25,7 @@ use codegen::sys::ffi_type::ffi_type;
 use codegen::function_body_chunk::{Parameter, ReturnValue};
 use codegen::return_value::{ToReturnValue, out_parameter_as_return};
 use codegen::trampoline_from_glib::TrampolineFromGlib;
+use codegen::trampoline_to_glib::TrampolineToGlib;
 
 pub fn generate_default_impl(
     w: &mut Write,
@@ -451,12 +452,14 @@ pub fn generate_extern_c_func(
     }
 
     let mut func_params = trampoline_call_parameters(env, method_analysis, false);
+    let func_ret = trampoline_call_return(env, method_analysis);
     func_params.insert(0, "&wrap".to_string());
 
-    try!(writeln!(w, "{}imp.{}({})",
+    try!(writeln!(w, "{}imp.{}({}){}",
                      tabs(indent+1),
                      &method_analysis.name,
-                     func_params.join(", ")));
+                     func_params.join(", "),
+                     func_ret));
 
     try!(writeln!(
         w,
@@ -665,4 +668,11 @@ fn trampoline_call_parameters(env: &Env, analysis: &analysis::virtual_methods::I
     }
 
     parameter_strs
+}
+
+fn trampoline_call_return(env: &Env, analysis: &analysis::virtual_methods::Info) -> String {
+    match analysis.ret.parameter {
+        Some(ref param) => param.trampoline_to_glib(env),
+        None => String::new()
+    }
 }
