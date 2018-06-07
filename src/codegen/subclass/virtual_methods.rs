@@ -14,16 +14,17 @@ use codegen::parameter::ToParameter;
 use chunk::{ffi_function_todo, Chunk};
 use traits::IntoString;
 use nameutil;
-
+use config;
 use std::result::Result as StdResult;
 use std::fmt;
-
+use analysis::conversion_type::ConversionType;
+use analysis::function_parameters::TransformationType;
 use codegen::subclass::class_impl::SubclassInfo;
 use codegen::subclass::virtual_method_body_chunks::Builder;
 use codegen::sys::ffi_type::ffi_type;
 use codegen::function_body_chunk::{Parameter, ReturnValue};
 use codegen::return_value::{ToReturnValue, out_parameter_as_return};
-
+use codegen::trampoline_from_glib::TrampolineFromGlib;
 
 pub fn generate_default_impl(
     w: &mut Write,
@@ -449,6 +450,9 @@ pub fn generate_extern_c_func(
         try!(writeln!(w, "{}{}", tabs(indent+1), s));
     }
 
+    let func_str = trampoline_call_parameters(env, method_analysis, false);
+    try!(writeln!(w, "{}{}", tabs(indent+1), func_str));
+
     try!(writeln!(
         w,
         "}}"
@@ -602,4 +606,58 @@ unsafe extern \"C\" fn {}_init<T: ObjectType>(
 
     Ok(())
 
+}
+
+
+fn parameter_transformation(env: &Env, analysis: &analysis::virtual_methods::Info,
+                                       ind: usize,
+                                       par: &analysis::function_parameters::RustParameter) -> analysis::trampoline_parameters::Transformation{
+
+    let c_par = &analysis.parameters.c_parameters[par.ind_c];
+    let transformation = &analysis.parameters.transformations
+                                 .iter()
+                                 .find(|tr| tr.ind_c == par.ind_c);
+
+
+    let conversion_type = match transformation {
+        &Some(ttype) => match ttype.transformation_type {
+            TransformationType::ToGlibDirect{..} => ConversionType::Direct,
+            TransformationType::ToGlibScalar{..} => ConversionType::Scalar,
+            TransformationType::ToGlibPointer{..} => ConversionType::Pointer,
+            TransformationType::ToGlibBorrow{..} => ConversionType::Borrow,
+            TransformationType::ToGlibUnknown{..} => ConversionType::Unknown,
+            TransformationType::ToGlibStash{..} => ConversionType::Unknown,
+            TransformationType::Into{..} => ConversionType::Unknown,
+            TransformationType::Length{..} => ConversionType::Unknown,
+            TransformationType::IntoRaw{..} => ConversionType::Unknown,
+            TransformationType::ToSome{..} => ConversionType::Unknown
+        },
+        &None => ConversionType::Unknown
+    };
+
+    analysis::trampoline_parameters::Transformation{
+        ind_c: par.ind_c,
+        ind_rust: ind,
+        transformation: config::signals::TransformationType::None,
+        name: par.name.clone(),
+        typ: par.typ,
+        transfer: c_par.transfer,
+        ref_mode: c_par.ref_mode,
+        conversion_type: conversion_type,
+    }
+}
+
+
+fn trampoline_call_parameters(env: &Env, analysis: &analysis::virtual_methods::Info, in_trait: bool) -> String {
+    let mut need_downcast = in_trait;
+    let mut parameter_strs: Vec<String> = Vec::new();
+    for (ind, par) in analysis.parameters.rust_parameters.iter().enumerate() {
+        let transformation = parameter_transformation(env, analysis, ind, par);
+
+        let par_str = transformation.trampoline_from_glib(env, need_downcast);
+        parameter_strs.push(par_str);
+        need_downcast = false; //Only downcast first parameter
+    }
+
+    parameter_strs.join(", ")
 }
