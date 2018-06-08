@@ -197,7 +197,7 @@ impl Builder {
             name: "interface_static".to_owned(),
             value: Box::new(Chunk::Custom(
                 format!(
-                    "klass.get_interface_static({}::{}_get_type())
+                    "klass.get_interface_static({}::g_{}_get_type())
                                      as *const {}Static<T>",
                     self.ffi_crate_name,
                     self.object_name.to_lowercase(),
