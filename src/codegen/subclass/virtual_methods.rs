@@ -635,7 +635,7 @@ fn parameter_transformation(env: &Env, analysis: &analysis::virtual_methods::Inf
             TransformationType::ToGlibBorrow{..} => ConversionType::Borrow,
             TransformationType::ToGlibUnknown{..} => ConversionType::Unknown,
             TransformationType::ToGlibStash{..} => ConversionType::Unknown,
-            TransformationType::Into{..} => ConversionType::Unknown,
+            TransformationType::Into{..} => ConversionType::Pointer,
             TransformationType::Length{..} => ConversionType::Unknown,
             TransformationType::IntoRaw{..} => ConversionType::Pointer,
             TransformationType::ToSome{..} => ConversionType::Direct
