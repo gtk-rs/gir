@@ -143,11 +143,11 @@ pub fn generate(w: &mut Write, env: &Env, analysis: &analysis::object::Info) -> 
         try!(generate_impl_base(w, env, analysis, &subclass_info));
         try!(generate_class(w, env, analysis, &subclass_info));
         try!(generate_parent_impls(w, env, analysis, &subclass_info));
-        try!(generate_interface_impls(w, env, analysis, &subclass_info));
         try!(generate_box_impl(w, env, analysis, &subclass_info));
         try!(generate_impl_objecttype(w, env, analysis, &subclass_info));
     }else{
         try!(generate_impl_static(w, env, analysis, &subclass_info));
+        try!(generate_interface_impls(w, env, analysis, &subclass_info));
     }
 
     try!(generate_extern_c_funcs(w, env, analysis, &subclass_info));
@@ -235,14 +235,21 @@ pub fn generate_impl(
             ));
         }else{
 
-            try!(virtual_methods::generate_default_impl(
-                w,
-                env,
-                object_analysis,
-                method_analysis,
-                subclass_info,
-                1
-            ));
+            let path = env.config.config_dir.join(&env.config.library_export_name)
+                                            .join(format!("{}-{}-impl.rs",
+                                                  object_analysis.name.to_lowercase(),
+                                                  method_analysis.name.to_lowercase()));
+
+            if !insert_from_file(w, &path) {
+                try!(virtual_methods::generate_default_impl(
+                    w,
+                    env,
+                    object_analysis,
+                    method_analysis,
+                    subclass_info,
+                    1
+                ));
+            }
         }
     }
 
@@ -308,14 +315,22 @@ pub fn generate_base(
     ));
 
     for method_analysis in &object_analysis.virtual_methods {
-        try!(virtual_methods::generate_base_impl(
-            w,
-            env,
-            object_analysis,
-            method_analysis,
-            subclass_info,
-            1
-        ));
+
+        let path = env.config.config_dir.join(&env.config.library_export_name)
+                                        .join(format!("{}-{}-base.rs",
+                                              object_analysis.name.to_lowercase(),
+                                              method_analysis.name.to_lowercase()));
+
+        if !insert_from_file(w, &path) {
+            try!(virtual_methods::generate_base_impl(
+                w,
+                env,
+                object_analysis,
+                method_analysis,
+                subclass_info,
+                1
+            ));
+        }
     }
 
     //end base trait
@@ -370,19 +385,16 @@ fn generate_ext(
     };
 
 
-
-        // start base trait
-        try!(writeln!(w));
-        try!(writeln!(
-            w,
-            "pub unsafe trait {}<T: {}>\nwhere\n{}T::ImplType: {}<T>{{",
-            ext_name,
-            object_analysis.subclass_base_trait_name,
-            tabs(1),
-            object_analysis.subclass_impl_trait_name
-        ));
-
-
+    // start base trait
+    try!(writeln!(w));
+    try!(writeln!(
+        w,
+        "pub unsafe trait {}<T: {}>\nwhere\n{}T::ImplType: {}<T>{{",
+        ext_name,
+        object_analysis.subclass_base_trait_name,
+        tabs(1),
+        object_analysis.subclass_impl_trait_name
+    ));
 
     try!(virtual_methods::generate_override_vfuncs(
         w,
@@ -590,14 +602,22 @@ fn generate_box_impl(
 
 
     for method_analysis in &object_analysis.virtual_methods {
-        try!(virtual_methods::generate_box_impl(
-            w,
-            env,
-            object_analysis,
-            method_analysis,
-            subclass_info,
-            3
-        ));
+
+        let path = env.config.config_dir.join(&env.config.library_export_name)
+                                        .join(format!("{}-{}-box_impl.rs",
+                                              object_analysis.name.to_lowercase(),
+                                              method_analysis.name.to_lowercase()));
+
+        if !insert_from_file(w, &path) {
+            try!(virtual_methods::generate_box_impl(
+                w,
+                env,
+                object_analysis,
+                method_analysis,
+                subclass_info,
+                3
+            ));
+        }
     }
 
     try!(writeln!(w, "{}}}", tabs(2)));
