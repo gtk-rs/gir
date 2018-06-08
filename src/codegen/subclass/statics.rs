@@ -5,7 +5,17 @@ use env::Env;
 use config::ExternalLibrary;
 use nameutil;
 use analysis::namespaces;
+use super::super::general::write_vec;
 
+pub fn use_glib(w: &mut Write) -> Result<()> {
+    let v = vec![
+        "",
+        "#[allow(unused_imports)]",
+        "use glib_ffi::{gboolean, gconstpointer, gpointer, GType};",
+    ];
+
+    write_vec(w, &v)
+}
 
 // TODO: copied from sys
 pub fn generate_extern_crates(w: &mut Write, env: &Env) -> Result<()> {

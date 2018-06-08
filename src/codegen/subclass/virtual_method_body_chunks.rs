@@ -233,8 +233,8 @@ impl Builder {
         body.push(Chunk::Let {
             is_mut: false,
             name: "wrap".to_owned(),
-            value: Box::new(Chunk::Custom("from_glib_borrow(instance)".to_owned())),
-            type_: Some(Box::new(Chunk::Custom("T".to_owned()))),
+            value: Box::new(Chunk::Custom("from_glib_borrow(ptr)".to_owned())),
+            type_: None,
         });
 
         Chunk::Chunks(body)

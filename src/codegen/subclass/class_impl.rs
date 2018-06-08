@@ -103,6 +103,7 @@ pub fn generate(w: &mut Write, env: &Env, analysis: &analysis::object::Info) -> 
     try!(general::start_comments(w, &env.config));
 
     try!(statics_ffi::after_extern_crates(w));
+    try!(statics::use_glib(w));
     try!(statics::include_custom_modules(w, env));
     try!(statics::use_subclass_modules(w, env));
     try!(general::uses(w, env, &analysis.imports));
