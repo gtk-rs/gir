@@ -2,6 +2,7 @@ use std::io::{Result, Write};
 use std::fs;
 use std::fs::File;
 use std::io::prelude::*;
+use std::path::PathBuf;
 
 use analysis;
 use analysis::bounds::Bounds;
@@ -88,6 +89,16 @@ impl SubclassInfo {
 
 }
 
+fn insert_from_file(w: &mut Write, path: &PathBuf) -> bool{
+    if let Ok(mut file) = File::open(&path) {
+        let mut custom_str = String::new();
+        file.read_to_string(&mut custom_str).unwrap();
+        write!(w, "{}", custom_str);
+        return true;
+    }
+    false
+}
+
 pub fn generate(w: &mut Write, env: &Env, analysis: &analysis::object::Info) -> Result<()> {
     try!(general::start_comments(w, &env.config));
 
@@ -109,6 +120,13 @@ pub fn generate(w: &mut Write, env: &Env, analysis: &analysis::object::Info) -> 
     // TODO: insert gobject-subclass uses
 
     let subclass_info = SubclassInfo::new(env, analysis);
+
+
+    let path = env.config.config_dir.join(&env.config.library_export_name)
+                                    .join(format!("{}-main.rs",
+                                          analysis.name.to_lowercase()));
+
+    insert_from_file(w, &path);
 
     try!(generate_impl(w, env, analysis, &subclass_info));
 
@@ -730,12 +748,7 @@ fn generate_extern_c_funcs(
                                               object_analysis.name.to_lowercase(),
                                               method_analysis.name.to_lowercase()));
 
-        if let Ok(mut file) = File::open(&path) {
-            let mut custom_str = String::new();
-            file.read_to_string(&mut custom_str).unwrap();
-
-            try!(write!(w, "{}", custom_str));
-        } else{
+        if !insert_from_file(w, &path) {
             try!(virtual_methods::generate_extern_c_func(
                 w,
                 env,
