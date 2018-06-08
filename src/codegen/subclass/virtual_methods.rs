@@ -451,7 +451,7 @@ pub fn generate_extern_c_func(
         try!(writeln!(w, "{}{}", tabs(indent+1), s));
     }
 
-    let mut func_params = trampoline_call_parameters(env, method_analysis, false);
+    let mut func_params = trampoline_call_parameters(env, method_analysis);
     let func_ret = trampoline_call_return(env, method_analysis);
     func_params.insert(0, "&wrap".to_string());
 
@@ -637,8 +637,8 @@ fn parameter_transformation(env: &Env, analysis: &analysis::virtual_methods::Inf
             TransformationType::ToGlibStash{..} => ConversionType::Unknown,
             TransformationType::Into{..} => ConversionType::Unknown,
             TransformationType::Length{..} => ConversionType::Unknown,
-            TransformationType::IntoRaw{..} => ConversionType::Unknown,
-            TransformationType::ToSome{..} => ConversionType::Unknown
+            TransformationType::IntoRaw{..} => ConversionType::Pointer,
+            TransformationType::ToSome{..} => ConversionType::Direct
         },
         &None => ConversionType::Unknown
     };
@@ -656,15 +656,17 @@ fn parameter_transformation(env: &Env, analysis: &analysis::virtual_methods::Inf
 }
 
 
-fn trampoline_call_parameters(env: &Env, analysis: &analysis::virtual_methods::Info, in_trait: bool) -> Vec<String> {
-    let mut need_downcast = in_trait;
+fn trampoline_call_parameters(env: &Env, analysis: &analysis::virtual_methods::Info) -> Vec<String> {
     let mut parameter_strs: Vec<String> = Vec::new();
     for (ind, par) in analysis.parameters.rust_parameters.iter().enumerate() {
+        if ind == 0{
+            continue;
+        }
+
         let transformation = parameter_transformation(env, analysis, ind, par);
 
-        let par_str = transformation.trampoline_from_glib(env, need_downcast);
+        let par_str = transformation.trampoline_from_glib(env, false);
         parameter_strs.push(par_str);
-        need_downcast = false; //Only downcast first parameter
     }
 
     parameter_strs

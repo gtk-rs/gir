@@ -122,7 +122,7 @@ fn func_parameters(
     param_str
 }
 
-fn func_parameter(
+pub fn func_parameter(
     env: &Env,
     par: &RustParameter,
     bounds: &Bounds,
