@@ -1,5 +1,7 @@
 use std::io::{Result, Write};
 use std::fs;
+use std::fs::File;
+use std::io::prelude::*;
 
 use analysis;
 use analysis::bounds::Bounds;
@@ -722,14 +724,27 @@ fn generate_extern_c_funcs(
 
 
     for method_analysis in &object_analysis.virtual_methods {
-        try!(virtual_methods::generate_extern_c_func(
-            w,
-            env,
-            object_analysis,
-            method_analysis,
-            subclass_info,
-            0
-        ));
+
+        let path = env.config.config_dir.join(&env.config.library_export_name)
+                                        .join(format!("{}-{}-trampoline.rs",
+                                              object_analysis.name.to_lowercase(),
+                                              method_analysis.name.to_lowercase()));
+
+        if let Ok(mut file) = File::open(&path) {
+            let mut custom_str = String::new();
+            file.read_to_string(&mut custom_str).unwrap();
+
+            try!(write!(w, "{}", custom_str));
+        } else{
+            try!(virtual_methods::generate_extern_c_func(
+                w,
+                env,
+                object_analysis,
+                method_analysis,
+                subclass_info,
+                0
+            ));
+        }
     }
 
     if object_analysis.is_interface{

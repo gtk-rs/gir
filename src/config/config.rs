@@ -35,6 +35,7 @@ pub struct Config {
     pub concurrency: library::Concurrency,
     pub single_version_file: Option<PathBuf>,
     pub generate_display_trait: bool,
+    pub config_dir: PathBuf
 }
 
 impl Config {
@@ -196,6 +197,7 @@ impl Config {
             concurrency,
             single_version_file,
             generate_display_trait,
+            config_dir
         })
     }
 
