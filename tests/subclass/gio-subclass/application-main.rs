@@ -1,10 +1,15 @@
+use std::fmt;
+use std::ffi::OsString;
+use std::convert;
+use std::ops::Deref;
+
 pub struct ArgumentList {
-    pub(crate) ptr: *mut *mut *mut libc::c_char,
+    pub(crate) ptr: *mut *mut *mut c_char,
     items: Vec<OsString>,
 }
 
 impl ArgumentList {
-    pub(crate) fn new(arguments: *mut *mut *mut libc::c_char) -> Self {
+    pub(crate) fn new(arguments: *mut *mut *mut c_char) -> Self {
         Self {
             ptr: arguments,
             items: unsafe { FromGlibPtrContainer::from_glib_none(ptr::read(arguments)) },
@@ -24,7 +29,7 @@ impl ArgumentList {
 
             self.items.remove(idx);
 
-            glib_ffi::g_free(((*self.ptr).offset(idx as isize)) as *mut libc::c_void);
+            glib_ffi::g_free(((*self.ptr).offset(idx as isize)) as *mut c_void);
 
             for i in (idx as u32)..n_args - 1 {
                 ptr::write(
