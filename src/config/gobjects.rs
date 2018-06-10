@@ -212,7 +212,7 @@ fn parse_object(
 
     let constants = Constants::parse(toml_object.lookup("constant"), &name);
     let functions = Functions::parse(toml_object.lookup("function"), &name);
-    let virtual_methods = Functions::parse(toml_object.lookup("virtual_methods"), &name);
+    let virtual_methods = Functions::parse(toml_object.lookup("virtual_method"), &name);
     let signals = {
         let mut v = Vec::new();
         if let Some(configs) = toml_object.lookup("signal").and_then(|val| val.as_array()) {
