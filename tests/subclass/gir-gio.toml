@@ -52,3 +52,10 @@ status = "generate"
 name = "Gio.Application"
 status = "generate"
 trait = true
+    [[object.virtual_method]]
+    name = "handle_local_options"
+    ignore = true
+
+    [[object.virtual_method]]
+    name = "add_platform_data"
+    ignore = true
