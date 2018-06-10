@@ -233,10 +233,9 @@ fn analyze_virtual_method(
     }
 
     if async && !commented {
-        if env.config.library_name != "Gio" {
-            imports.add("gio_ffi", version);
-            imports.add_with_constraint("gio", version, Some("futures"));
-        }
+        imports.add("gio_ffi", version);
+        imports.add_with_constraint("gio", version, Some("futures"));
+
         imports.add("glib_ffi", None);
         imports.add("gobject_ffi", None);
         imports.add_with_constraint("futures_core", version, Some("futures"));

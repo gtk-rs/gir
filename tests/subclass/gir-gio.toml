@@ -59,3 +59,11 @@ trait = true
     [[object.virtual_method]]
     name = "add_platform_data"
     ignore = true
+
+    [[object.virtual_method]]
+    name = "dbus_register"
+    ignore = true
+    
+    [[object.virtual_method]]
+    name = "dbus_unregister"
+    ignore = true

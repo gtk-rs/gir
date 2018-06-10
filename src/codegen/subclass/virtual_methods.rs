@@ -455,11 +455,12 @@ pub fn generate_extern_c_func(
     let func_ret = trampoline_call_return(env, method_analysis);
     func_params.insert(0, "&wrap".to_string());
 
-    try!(writeln!(w, "{}imp.{}({}){}",
+    try!(writeln!(w, "{}{}imp.{}({}){}",
                      tabs(indent+1),
+                     func_ret.0,
                      &method_analysis.name,
                      func_params.join(", "),
-                     func_ret));
+                     func_ret.1));
 
     try!(writeln!(
         w,
@@ -672,9 +673,9 @@ fn trampoline_call_parameters(env: &Env, analysis: &analysis::virtual_methods::I
     parameter_strs
 }
 
-fn trampoline_call_return(env: &Env, analysis: &analysis::virtual_methods::Info) -> String {
+fn trampoline_call_return(env: &Env, analysis: &analysis::virtual_methods::Info) -> (String, String) {
     match analysis.ret.parameter {
-        Some(ref param) => param.trampoline_to_glib(env),
-        None => String::new()
+        Some(ref param) => param.trampoline_to_glib_as_function(env),
+        None => (String::new(), String::new())
     }
 }
