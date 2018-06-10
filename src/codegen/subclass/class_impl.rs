@@ -803,8 +803,14 @@ fn generate_extern_c_funcs(
             0
         ));
 
-        // TODO: generate register_*<T: ObjectType, I: *ImplStatic<T>>(
-        // see: https://github.com/sdroege/gst-plugin-rs/blob/25af5afb2bb9dfea79a13fd306d4b7fe36d26496/gst-plugin/src/uri_handler.rs#L123
+        try!(virtual_methods::generate_interface_register(
+            w,
+            env,
+            object_analysis,
+            subclass_info,
+            0
+        ));
+        
     }
 
 

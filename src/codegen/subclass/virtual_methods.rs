@@ -614,6 +614,59 @@ unsafe extern \"C\" fn {}_init<T: ObjectType>(
     try!(writeln!(w,"}}"));
 
     Ok(())
+}
+
+
+pub fn generate_interface_register(
+    w: &mut Write,
+    env: &Env,
+    object_analysis: &analysis::object::Info,
+    subclass_info: &SubclassInfo,
+    indent: usize,
+) -> Result<()> {
+
+    try!(writeln!(
+        w,
+        "
+unsafe extern \"C\" fn register_{}<T: ObjectType, I: {}Static<T>>(
+    _: &TypeInitToken,
+    type_: glib::Type,
+    imp: &I,
+) {{",
+        object_analysis.name.to_lowercase(),
+        object_analysis.subclass_impl_trait_name
+    ));
+
+
+    try!(writeln!(
+        w,
+        "
+    unsafe {{
+        let imp = imp as &{iface_impl}Static<T> as *const {iface_impl}Static<T>;
+        let interface_static = Box::new({iface}Static {{
+            imp_static: imp,
+        }});
+        let iface_info = gobject_ffi::GInterfaceInfo {{
+            interface_init: Some({iface_l}_init::<T>),
+            interface_finalize: None,
+            interface_data: Box::into_raw(interface_static) as glib_ffi::gpointer,
+        }};
+        gobject_ffi::g_type_add_interface_static(
+            type_.to_glib(),
+            gio_ffi::g_{iface_l}_get_type(),
+            &iface_info,
+        );
+    }}
+        ",
+        iface=object_analysis.name,
+        iface_impl=object_analysis.subclass_impl_trait_name,
+        iface_l=object_analysis.name.to_lowercase()
+    ));
+
+
+    try!(writeln!(w,"}}"));
+
+    Ok(())
 
 }
 
