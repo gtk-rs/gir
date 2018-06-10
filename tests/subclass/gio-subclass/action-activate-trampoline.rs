@@ -14,7 +14,7 @@ unsafe extern "C" fn action_activate<T: ObjectType>
     let param = if parameter.is_null(){
         None
     }else{
-        Some(&from_glib_none(parameter))
+        Some(from_glib_none(parameter))
     };
-    imp.activate(&wrap, param)
+    imp.activate(&wrap, param.as_ref())
 }

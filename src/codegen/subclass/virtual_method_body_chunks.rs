@@ -289,7 +289,7 @@ impl Builder {
             is_mut: false,
             value: Box::new(Chunk::Custom(
                 format!(
-                    "&mut *(iface as *mut {}::{})",
+                    "&mut *(iface as *mut {}::{}Interface)",
                     self.ffi_crate_name, self.object_c_type
                 ).to_owned(),
             )),
