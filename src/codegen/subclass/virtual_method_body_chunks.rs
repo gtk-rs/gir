@@ -144,13 +144,13 @@ impl Builder {
         let mut body = Vec::new();
 
         body.push(self.callback_guard());
-        body.push(self.floating_reference_guard("ptr"));
+        body.push(self.floating_reference_guard("gptr"));
 
         body.push(Chunk::Let {
             is_mut: false,
             name: self.object_name.to_lowercase(),
             value: Box::new(Chunk::Custom(
-                "&*(ptr as *mut T::InstanceStructType)".to_owned(),
+                "&*(gptr as *mut T::InstanceStructType)".to_owned(),
             )),
             type_: None,
         });
@@ -159,7 +159,7 @@ impl Builder {
             is_mut: false,
             name: "wrap".to_owned(),
             value: Box::new(Chunk::Custom(
-                "from_glib_borrow(ptr as *mut T::InstanceStructType)".to_owned(),
+                "from_glib_borrow(gptr as *mut T::InstanceStructType)".to_owned(),
             )),
             type_: Some(Box::new(Chunk::Custom("T".to_owned()))),
         });
@@ -180,13 +180,13 @@ impl Builder {
         let mut body = Vec::new();
 
         body.push(self.callback_guard());
-        body.push(self.floating_reference_guard("ptr"));
+        body.push(self.floating_reference_guard("gptr"));
 
         body.push(Chunk::Let {
             is_mut: false,
             name: "klass".to_owned(),
             value: Box::new(Chunk::Custom(
-                    "&**(ptr as *const *const ClassStruct<T>)"
+                    "&**(gptr as *const *const ClassStruct<T>)"
                 .to_owned(),
             )),
             type_: None,
@@ -211,7 +211,7 @@ impl Builder {
             is_mut: false,
             name: "instance".to_owned(),
             value: Box::new(Chunk::Custom(
-                    "&*(ptr as *const T::InstanceStructType)".to_owned(),
+                    "&*(gptr as *const T::InstanceStructType)".to_owned(),
             )),
             type_: None,
         });
@@ -233,7 +233,7 @@ impl Builder {
         body.push(Chunk::Let {
             is_mut: false,
             name: "wrap".to_owned(),
-            value: Box::new(Chunk::Custom("from_glib_borrow(ptr)".to_owned())),
+            value: Box::new(Chunk::Custom("from_glib_borrow(gptr)".to_owned())),
             type_: None,
         });
 

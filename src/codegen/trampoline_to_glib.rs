@@ -9,8 +9,6 @@ pub trait TrampolineToGlib {
 
 impl TrampolineToGlib for library::Parameter {
     fn trampoline_to_glib(&self, env: &env::Env) -> String {
-
-
         use analysis::conversion_type::ConversionType::*;
         match ConversionType::of(env, self.typ) {
             Direct => String::new(),
@@ -22,7 +20,6 @@ impl TrampolineToGlib for library::Parameter {
     }
 
     fn trampoline_to_glib_as_function(&self, env: &env::Env) -> (String, String){
-
         use analysis::conversion_type::ConversionType::*;
         match ConversionType::of(env, self.typ) {
             Direct => (String::new(), String::new()),
@@ -30,7 +27,7 @@ impl TrampolineToGlib for library::Parameter {
             Pointer => {
                 if *self.nullable{
                     let left = "match ".to_owned();
-                    let right = format!("{{ Some(t)  => t{}, None => std::ptr::null()}}", to_glib_xxx(self.transfer)).to_owned();
+                    let right = format!("{{ Some(t)  => t{}, None => ptr::null()}}", to_glib_xxx(self.transfer)).to_owned();
 
                     (left, right)
                 }else{
