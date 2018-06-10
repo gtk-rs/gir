@@ -431,12 +431,24 @@ fn generate_glib_wrapper(
 
     if subclass_info.parents.len() > 0 {
         try!(write!(w, ":["));
+
+        let t = env.library.type_(object_analysis.type_id);
+        let k = &env.namespaces[object_analysis.type_id.ns_id].crate_name;
+        try!(write!(
+            w,
+            "\n{tabs} {krate}::{ty} => {krate}_ffi::{cty},",
+            tabs = tabs(2),
+            krate = k,
+            ty = t.get_name(),
+            cty = t.get_glib_name().unwrap()
+        ));
+
         for parent in &subclass_info.parents {
             let t = env.library.type_(parent.type_id);
             let k = &env.namespaces[parent.type_id.ns_id].crate_name;
             try!(write!(
                 w,
-                "\n{tabs} {krate}::{ty} => {krate}_ffi::{cty}",
+                "\n{tabs} {krate}::{ty} => {krate}_ffi::{cty},",
                 tabs = tabs(2),
                 krate = k,
                 ty = t.get_name(),
