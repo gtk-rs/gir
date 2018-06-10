@@ -26,8 +26,9 @@ impl TrampolineToGlib for library::Parameter {
             Scalar => (String::new(), ".to_glib()".to_owned()),
             Pointer => {
                 if *self.nullable{
+                    let mut_str = if self.transfer == library::Transfer::Full{ "_mut"} else {""};
                     let left = "match ".to_owned();
-                    let right = format!("{{ Some(t)  => t{}, None => ptr::null()}}", to_glib_xxx(self.transfer)).to_owned();
+                    let right = format!("{{ Some(t)  => t{}, None => ptr::null{}()}}", to_glib_xxx(self.transfer), mut_str).to_owned();
 
                     (left, right)
                 }else{
