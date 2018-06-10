@@ -628,7 +628,7 @@ pub fn generate_interface_register(
     try!(writeln!(
         w,
         "
-unsafe extern \"C\" fn register_{}<T: ObjectType, I: {}Static<T>>(
+pub fn register_{}<T: ObjectType, I: {}Static<T>>(
     _: &TypeInitToken,
     type_: glib::Type,
     imp: &I,
