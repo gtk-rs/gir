@@ -87,6 +87,61 @@ impl SubclassInfo {
         None
     }
 
+    fn get_all_parents<'a>(&self, env: &'a Env) -> Vec<&'a analysis::object::Info>
+    {
+        let mut pars = Vec::new();
+        for parent in &self.parents {
+            if !env.analysis
+                .objects
+                .contains_key(&parent.type_id.full_name(&env.library))
+            {
+                continue;
+            }
+
+            let o = &env.analysis.objects[&parent.type_id.full_name(&env.library)];
+            pars.push(o);
+        }
+        pars
+    }
+
+    fn get_parents<'a>(&self, env: &'a Env) -> Vec<&'a analysis::object::Info>
+    {
+        let mut pars = Vec::new();
+        for parent in &self.parents {
+            if !env.analysis
+                .objects
+                .contains_key(&parent.type_id.full_name(&env.library))
+            {
+                continue;
+            }
+
+            let o = &env.analysis.objects[&parent.type_id.full_name(&env.library)];
+            if !o.is_interface{
+                pars.push(o);
+            }
+        }
+        pars
+    }
+
+    fn get_interfaces<'a>(&self, env: &'a Env) -> Vec<&'a analysis::object::Info>
+    {
+        let mut ifaces = Vec::new();
+        for parent in &self.parents {
+            if !env.analysis
+                .objects
+                .contains_key(&parent.type_id.full_name(&env.library))
+            {
+                continue;
+            }
+
+            let o = &env.analysis.objects[&parent.type_id.full_name(&env.library)];
+            if o.is_interface{
+                ifaces.push(o);
+            }
+        }
+        ifaces
+    }
+
 }
 
 fn insert_from_file(w: &mut Write, path: &PathBuf) -> bool{
@@ -108,20 +163,12 @@ pub fn generate(w: &mut Write, env: &Env, analysis: &analysis::object::Info) -> 
     try!(statics::use_subclass_modules(w, env));
     try!(general::uses(w, env, &analysis.imports));
 
-
-    // match &*env.config.library_name {
-    //     "GLib" => try!(statics::only_for_glib(w)),
-    //     "GObject" => try!(statics::only_for_gobject(w)),
-    //     "Gtk" => try!(statics::only_for_gtk(w)),
-    //     _ => (),
-    // }
-    try!(writeln!(w));
-
-
-    // TODO: insert gobject-subclass uses
-
     let subclass_info = SubclassInfo::new(env, analysis);
 
+    try!(generate_subclass_uses(w, env, analysis, &subclass_info));
+
+
+    try!(writeln!(w));
 
     let path = env.config.config_dir.join(&env.config.library_export_name)
                                     .join(format!("{}-main.rs",
@@ -183,6 +230,33 @@ pub fn generate_exports(
     // ));
 }
 
+pub fn generate_subclass_uses(w: &mut Write,
+    env: &Env,
+    object_analysis: &analysis::object::Info,
+    subclass_info: &SubclassInfo,
+) -> Result<()> {
+
+    for parent in &subclass_info.get_all_parents(env){
+
+        let mut ns = "".to_string();
+        if parent.type_id.ns_id != object_analysis.type_id.ns_id{
+            let ns_name = &env.library.namespace(parent.type_id.ns_id).name;
+            ns = format!("{}subclass::", ns_name).to_string();
+        }
+
+        try!(writeln!(
+            w,
+            "use {}{};",
+            ns,
+            parent.module_name(env).unwrap_or("".to_string())
+        ));
+
+    }
+
+    Ok(())
+}
+
+
 pub fn generate_impl(
     w: &mut Write,
     env: &Env,
@@ -203,13 +277,17 @@ pub fn generate_impl(
         ));
     }else{
 
-        let parents = subclass_info.parent_names(env, "_subclass");
-
-        let parent_impls: Vec<String> = parents
+        let parent_impls: Vec<String> = subclass_info.get_parents(env)
             .iter()
-            .map(|ref p| format!(" {}Impl<T> +", p))
+            .map(|ref p| { format!(" {}::{}Impl<T> +", p.module_name(env).unwrap_or("".to_string()), p.name) })
             .collect();
-        let parent_objs = parent_impls.join("");
+
+        let iface_impls: Vec<String> = subclass_info.get_interfaces(env)
+            .iter()
+            .map(|ref p| { format!(" {}::{}Impl +", p.module_name(env).unwrap_or("".to_string()), p.name)  })
+            .collect();
+
+        let parent_objs = parent_impls.join("") + &iface_impls.join("");
 
         try!(writeln!(
             w,
@@ -218,8 +296,6 @@ pub fn generate_impl(
             object_analysis.subclass_base_trait_name,
             parent_objs
         ));
-
-        info!("supertypes, {:?}", parents);
     }
 
 
@@ -525,15 +601,15 @@ fn generate_parent_impls(
 ) -> Result<()> {
     try!(writeln!(w));
 
-    writeln!(w, "// FIXME: Boilerplate");
-    if subclass_info.parents.len() > 0 {
-        for parent in &subclass_info.parents {
-            let t = env.library.type_(parent.type_id);
+    let parents = subclass_info.get_parents(env);
+    if parents.len() > 0 {
+        writeln!(w, "// FIXME: Boilerplate");
+        for parent in parents {
             try!(writeln!(
                 w,
                 "unsafe impl {par}ClassExt<{obj}> for {obj}Class {{}}",
                 obj = object_analysis.name,
-                par = t.get_name()
+                par = parent.name
             ));
         }
     }
@@ -582,20 +658,14 @@ fn generate_box_impl(
 
     try!(writeln!(w, "{}($name:ident) => {{", tabs(1)));
 
-    if subclass_info.parents.len() > 0 {
-        for parent in &subclass_info.parents {
-            if !env.analysis
-                .objects
-                .contains_key(&parent.type_id.full_name(&env.library))
-            {
-                continue;
-            }
-            let o = &env.analysis.objects[&parent.type_id.full_name(&env.library)];
+    let parents = subclass_info.get_parents(env);
+    if parents.len() > 0 {
+        for parent in parents {
             try!(writeln!(
                 w,
                 "{}box_{}_impl!($name);",
                 tabs(2),
-                o.name.to_lowercase()
+                parent.name.to_lowercase()
             ));
         }
     } else {
@@ -694,7 +764,7 @@ fn generate_impl_objecttype(
     ));
 
 
-    for parent in &subclass_info.parents {
+    for parent in &subclass_info.get_parents(env) {
         try!(writeln!(w, "{}{}ClassExt::override_vfuncs(klass, token);",
                       tabs(2),
                       parent.name));
@@ -810,7 +880,7 @@ fn generate_extern_c_funcs(
             subclass_info,
             0
         ));
-        
+
     }
 
 

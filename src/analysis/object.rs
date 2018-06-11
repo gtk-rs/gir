@@ -48,6 +48,17 @@ impl Info {
     pub fn has_action_signals(&self) -> bool {
         self.signals.iter().any(|s| s.action_emit_name.is_some())
     }
+
+    pub fn module_name(&self, env: &Env) -> Option<String>{
+        let obj = &env.config.objects[&self.full_name];
+        if !obj.status.need_generate() {
+            return None;
+        }
+
+        Some(obj.module_name.clone().unwrap_or_else(|| {
+            module_name(split_namespace_name(&self.full_name).1)
+        }))
+    }
 }
 
 impl Deref for Info {
