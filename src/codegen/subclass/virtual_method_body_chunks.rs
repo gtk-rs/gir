@@ -25,6 +25,7 @@ pub struct Builder {
     object_c_type: String,
     ffi_crate_name: String,
     glib_name: String,
+    get_type: String,
     method_name: String,
     parameters: Vec<Parameter>,
     transformations: Vec<Transformation>,
@@ -61,6 +62,11 @@ impl Builder {
 
     pub fn ffi_crate_name(&mut self, ns: &str) -> &mut Builder {
         self.ffi_crate_name = ns.into();
+        self
+    }
+
+    pub fn get_type(&mut self, get_type_fn: &str) -> &mut Builder {
+        self.get_type = get_type_fn.into();
         self
     }
 
@@ -197,10 +203,10 @@ impl Builder {
             name: "interface_static".to_owned(),
             value: Box::new(Chunk::Custom(
                 format!(
-                    "klass.get_interface_static({}::g_{}_get_type())
+                    "klass.get_interface_static({}::{}())
                                      as *const {}Static<T>",
                     self.ffi_crate_name,
-                    self.object_name.to_lowercase(),
+                    self.get_type,
                     self.object_name
                 ).to_owned(),
             )),

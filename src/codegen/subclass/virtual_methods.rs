@@ -484,6 +484,7 @@ pub fn body_chunk_builder(env: &Env,
            .object_class_c_type(object_analysis.c_class_type.as_ref().unwrap())
            .ffi_crate_name(&env.namespaces[object_analysis.type_id.ns_id].ffi_crate_name)
            .glib_name(&method_analysis.glib_name)
+           .get_type(&object_analysis.get_type)
            .method_name(&method_analysis.name)
            .assertion(method_analysis.assertion)
            .ret(&method_analysis.ret)
