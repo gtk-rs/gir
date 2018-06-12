@@ -130,15 +130,17 @@ pub fn default_impl_body_chunk(env: &Env,
 fn virtual_method_args(method_analysis: &analysis::virtual_methods::Info, include_parent: bool) -> String
 {
     let mut arg_str = String::with_capacity(100);
+    let mut cnt = 0;
     for (pos, par) in method_analysis.parameters.rust_parameters.iter().enumerate() {
         if !include_parent && pos == 0{
             // skip the first one,
             continue;
         }
-        if pos > 1 {
+        if cnt > 0 {
             arg_str.push_str(", ");
         }
         arg_str.push_str(&par.name);
+        cnt += 1;
     }
     arg_str
 }
@@ -377,7 +379,7 @@ pub fn generate_box_impl(
         declr,
     ));
 
-    let arg_str = virtual_method_args(method_analysis, false);
+    let arg_str = virtual_method_args(method_analysis, true);
 
 
     try!(writeln!(
@@ -420,9 +422,10 @@ pub fn generate_extern_c_func(
 
     try!(writeln!(
         w,
-        "unsafe extern \"C\" fn {}_{}<T: ObjectType>",
+        "unsafe extern \"C\" fn {}_{}<T: {}>",
         object_analysis.name.to_lowercase(),
-        method_analysis.name
+        method_analysis.name,
+        object_analysis.subclass_base_trait_name
     ));
 
     let (_, sig) = function_signature(env, method_analysis, false);

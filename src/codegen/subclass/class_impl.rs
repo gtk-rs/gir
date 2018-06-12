@@ -80,6 +80,12 @@ impl SubclassInfo {
             }
 
             let o = &env.analysis.objects[&parent.type_id.full_name(&env.library)];
+            let obj = &env.config.objects[&o.full_name];
+
+            if obj.status.ignored() {
+                continue;
+            }
+
             if !o.is_interface{
                 return Some(o);
             }
@@ -99,6 +105,11 @@ impl SubclassInfo {
             }
 
             let o = &env.analysis.objects[&parent.type_id.full_name(&env.library)];
+            let obj = &env.config.objects[&o.full_name];
+            debug!("object status {:?}: {:?}", o.full_name, obj.status);
+            if obj.status.ignored() {
+                continue;
+            }
             pars.push(o);
         }
         pars
@@ -116,6 +127,12 @@ impl SubclassInfo {
             }
 
             let o = &env.analysis.objects[&parent.type_id.full_name(&env.library)];
+            let obj = &env.config.objects[&o.full_name];
+            debug!("object status {:?}: {:?}", o.full_name, obj.status);
+
+            if obj.status.ignored() {
+                continue;
+            }
             if !o.is_interface{
                 pars.push(o);
             }
@@ -133,8 +150,14 @@ impl SubclassInfo {
             {
                 continue;
             }
-
             let o = &env.analysis.objects[&parent.type_id.full_name(&env.library)];
+            let obj = &env.config.objects[&o.full_name];
+            debug!("object status {:?}: {:?}", o.full_name, obj.status);
+
+            if obj.status.ignored() {
+                continue;
+            }
+
             if o.is_interface{
                 ifaces.push(o);
             }
@@ -160,11 +183,10 @@ pub fn generate(w: &mut Write, env: &Env, analysis: &analysis::object::Info) -> 
     try!(statics_ffi::after_extern_crates(w));
     try!(statics::use_glib(w));
     try!(statics::include_custom_modules(w, env));
-    try!(statics::use_subclass_modules(w, env));
     try!(general::uses(w, env, &analysis.imports));
 
     let subclass_info = SubclassInfo::new(env, analysis);
-
+    try!(statics::use_subclass_modules(w, env));
     try!(generate_subclass_uses(w, env, analysis, &subclass_info));
 
 
@@ -277,17 +299,12 @@ pub fn generate_impl(
         ));
     }else{
 
-        let parent_impls: Vec<String> = subclass_info.get_parents(env)
+        let parent_impls: Vec<String> = subclass_info.get_all_parents(env)
             .iter()
             .map(|ref p| { format!(" {}::{}Impl<T> +", p.module_name(env).unwrap_or("".to_string()), p.name) })
             .collect();
 
-        let iface_impls: Vec<String> = subclass_info.get_interfaces(env)
-            .iter()
-            .map(|ref p| { format!(" {}::{}Impl +", p.module_name(env).unwrap_or("".to_string()), p.name)  })
-            .collect();
-
-        let parent_objs = parent_impls.join("") + &iface_impls.join("");
+        let parent_objs = parent_impls.join("");
 
         try!(writeln!(
             w,
@@ -350,12 +367,16 @@ pub fn generate_impl_ext(
     try!(writeln!(w, "pub trait {}<T> {{}}", implext_name));
 
     // start ext trait impl
-    let parents = subclass_info.parent_names(env, "");
+    let mut impls: Vec<&analysis::object::Info> = vec![object_analysis];
+    impls.append(&mut subclass_info.get_parents(env));
 
-    let parent_impls: Vec<String> = parents
-        .iter()
-        .map(|ref p| format!("+ glib::IsA<{}>", p))
-        .collect();
+    let parent_impls: Vec<String> = impls.iter()
+                                .map(|ref p| {
+                                    let ns_name = &env.namespaces[p.type_id.ns_id].crate_name;
+                                    format!("+ glib::IsA<{}::{}>", ns_name, p.name)
+                                })
+                                .collect();
+
     let parent_objs = parent_impls.join(" ");
 
     try!(writeln!(
@@ -375,12 +396,17 @@ pub fn generate_base(
     object_analysis: &analysis::object::Info,
     subclass_info: &SubclassInfo,
 ) -> Result<()> {
-    let parents = subclass_info.parent_names(env, "");
 
-    let parent_impls: Vec<String> = parents
-        .iter()
-        .map(|ref p| format!("+ glib::IsA<{}>", p))
-        .collect();
+    let mut impls: Vec<&analysis::object::Info> = vec![object_analysis];
+    impls.append(&mut subclass_info.get_parents(env));
+
+    let parent_impls: Vec<String> = impls.iter()
+                                .map(|ref p| {
+                                    let ns_name = &env.namespaces[object_analysis.type_id.ns_id].crate_name;
+                                    format!("+ glib::IsA<{}::{}>", ns_name, p.name)
+                                })
+                                .collect();
+
     let parent_objs = parent_impls.join(" ");
 
     // start base trait
@@ -558,12 +584,17 @@ fn generate_impl_base(
     object_analysis: &analysis::object::Info,
     subclass_info: &SubclassInfo,
 ) -> Result<()> {
-    let parents = subclass_info.parent_names(env, "");
 
-    let parent_impls: Vec<String> = parents
-        .iter()
-        .map(|ref p| format!("+ glib::IsA<{}>", p))
-        .collect();
+    let mut impls: Vec<&analysis::object::Info> = vec![object_analysis];
+    impls.append(&mut subclass_info.get_parents(env));
+
+    let parent_impls: Vec<String> = impls.iter()
+                                .map(|ref p| {
+                                    let ns_name = &env.namespaces[p.type_id.ns_id].crate_name;
+                                    format!("+ glib::IsA<{}::{}>", ns_name, p.name)
+                                })
+                                .collect();
+
     let parent_objs = parent_impls.join(" ");
 
     try!(writeln!(w));
@@ -602,17 +633,31 @@ fn generate_parent_impls(
     try!(writeln!(w));
 
     let parents = subclass_info.get_parents(env);
-    if parents.len() > 0 {
-        writeln!(w, "// FIXME: Boilerplate");
-        for parent in parents {
-            try!(writeln!(
-                w,
-                "unsafe impl {par}ClassExt<{obj}> for {obj}Class {{}}",
-                obj = object_analysis.name,
-                par = parent.name
-            ));
-        }
+    writeln!(w, "// FIXME: Boilerplate");
+
+    try!(writeln!(
+        w,
+        "unsafe impl {par}ClassExt<{obj}> for {obj}Class {{}}",
+        obj = object_analysis.name,
+        par = "Object".to_owned()
+    ));
+
+    try!(writeln!(
+        w,
+        "unsafe impl {par}ClassExt<{obj}> for {obj}Class {{}}",
+        obj = object_analysis.name,
+        par = object_analysis.name
+    ));
+
+    for parent in parents {
+        try!(writeln!(
+            w,
+            "unsafe impl {par}ClassExt<{obj}> for {obj}Class {{}}",
+            obj = object_analysis.name,
+            par = parent.name
+        ));
     }
+
 
     Ok(())
 }
@@ -641,6 +686,13 @@ fn generate_interface_impls(
     Ok(())
 }
 
+fn box_impl_name(env: &Env,
+                 analysis: &analysis::object::Info) -> String{
+    format!("box_{}_{}_impl",
+        env.namespaces[analysis.type_id.ns_id].name.to_lowercase(),
+        analysis.name.to_lowercase())
+}
+
 fn generate_box_impl(
     w: &mut Write,
     env: &Env,
@@ -652,8 +704,8 @@ fn generate_box_impl(
     try!(writeln!(w, "#[macro_export]"));
     try!(writeln!(
         w,
-        "macro_rules! box_{}_impl(",
-        object_analysis.name.to_lowercase()
+        "macro_rules! {}(",
+        box_impl_name(env, object_analysis)
     ));
 
     try!(writeln!(w, "{}($name:ident) => {{", tabs(1)));
@@ -663,9 +715,9 @@ fn generate_box_impl(
         for parent in parents {
             try!(writeln!(
                 w,
-                "{}box_{}_impl!($name);",
+                "{}{}!($name);",
                 tabs(2),
-                parent.name.to_lowercase()
+                box_impl_name(env, &parent)
             ));
         }
     } else {
@@ -708,7 +760,16 @@ fn generate_box_impl(
     try!(writeln!(w, "{}}}", tabs(1)));
     try!(writeln!(w, ");"));
 
+    try!(writeln!(w));
+
+    try!(writeln!(w, "{}!({});", box_impl_name(env, object_analysis), object_analysis.subclass_impl_trait_name));
+
     Ok(())
+}
+
+
+fn override_vfuncs_statement(name: &String) -> String{
+    format!("{}ClassExt::override_vfuncs(klass, token);", name)
 }
 
 fn generate_impl_objecttype(
@@ -730,20 +791,14 @@ fn generate_impl_objecttype(
         object_analysis.full_name
     ));
 
-    let parent = subclass_info.parent(env);
 
-    if parent.is_some(){
+    let (ns, n) = nameutil::split_namespace_name(&object_analysis.full_name);
+    try!(writeln!(w, "{}type ParentType = {}::{};",
+        tabs(1),
+        ns.unwrap_or("").to_lowercase(),
+        n
+    ));
 
-        let p = parent.as_ref().unwrap();
-
-        let (ns, n) = nameutil::split_namespace_name(&p.full_name);
-
-        try!(writeln!(w, "{}type ParentType = {}::{};",
-            tabs(1),
-            ns.unwrap_or("").to_lowercase(),
-            n
-        ));
-    }
 
     try!(writeln!(w, "{}type ImplType = Box<{}<Self>>;",
         tabs(1),
@@ -759,15 +814,10 @@ fn generate_impl_objecttype(
         object_analysis.name
     ));
 
-    try!(writeln!(w, "{}ObjectClassExt::override_vfuncs(klass, token);",
-        tabs(2)
-    ));
-
-
+    try!(writeln!(w, "{}{}", tabs(2), override_vfuncs_statement(&"Object".to_string())));
+    try!(writeln!(w, "{}{}", tabs(2), override_vfuncs_statement(&object_analysis.name)));
     for parent in &subclass_info.get_parents(env) {
-        try!(writeln!(w, "{}{}ClassExt::override_vfuncs(klass, token);",
-                      tabs(2),
-                      parent.name));
+        try!(writeln!(w, "{}{}", tabs(2), override_vfuncs_statement(&parent.name)));
     }
 
     try!(writeln!(w, "{}}}", tabs(1)));
