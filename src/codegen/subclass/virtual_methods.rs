@@ -419,13 +419,17 @@ pub fn generate_extern_c_func(
     try!(writeln!(w));
 
     // TODO: use Chunk::ExternCFunc
-
+    let base_trait_name = if object_analysis.is_interface {
+        "ObjectType".to_string()
+    } else {
+        object_analysis.subclass_base_trait_name.clone()
+    };
     try!(writeln!(
         w,
         "unsafe extern \"C\" fn {}_{}<T: {}>",
         object_analysis.name.to_lowercase(),
         method_analysis.name,
-        object_analysis.subclass_base_trait_name
+        base_trait_name
     ));
 
     let (_, sig) = function_signature(env, method_analysis, false);
