@@ -788,7 +788,7 @@ fn generate_impl_objecttype(
 
     try!(writeln!(w, "{}const NAME: &'static str = \"Rs{}\";",
         tabs(1),
-        object_analysis.full_name
+        object_analysis.full_name.replace(".", "")
     ));
 
 
