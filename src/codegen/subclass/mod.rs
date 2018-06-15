@@ -24,7 +24,7 @@ pub fn generate(env: &Env) {
 
     class_impls::generate(env, &root_path, &mut lib_rs);
 
-    generate_lib_rs(env, &root_path, &lib_rs);
+    generate_mod_rs(env, &root_path, &lib_rs);
 
     // lib_::generate(env);
     // build::generate(env);
@@ -33,15 +33,15 @@ pub fn generate(env: &Env) {
 }
 
 
-pub fn generate_lib_rs(env: &Env, root_path: &Path, lib_rs: &[String]) {
+pub fn generate_mod_rs(env: &Env, root_path: &Path, lib_rs: &[String]) {
 
-    let path = root_path.join("lib.rs");
+    let path = root_path.join("mod.rs");
     save_to_file(path, env.config.make_backup, |w| {
         try!(general::start_comments(w, &env.config));
         try!(writeln!(w));
-        try!(statics_ffi::begin(w));
-        try!(statics::generate_extern_crates(w, env));
-        try!(writeln!(w));
+        // try!(statics_ffi::begin(w));
+        // try!(statics::generate_extern_crates(w, env));
+        // try!(writeln!(w));
         general::write_vec(w, lib_rs)
     });
 }

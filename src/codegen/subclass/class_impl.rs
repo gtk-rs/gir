@@ -192,9 +192,9 @@ pub fn generate(w: &mut Write, env: &Env, analysis: &analysis::object::Info) -> 
 
     try!(writeln!(w));
 
-    let path = env.config.config_dir.join(&env.config.library_export_name)
-                                    .join(format!("{}-main.rs",
-                                          analysis.name.to_lowercase()));
+    let path = env.config.target_path.join("src").join("custom")
+                                     .join(format!("{}-main.rs",
+                                           analysis.name.to_lowercase()));
 
     insert_from_file(w, &path);
 
@@ -329,10 +329,10 @@ pub fn generate_impl(
             ));
         }else{
 
-            let path = env.config.config_dir.join(&env.config.library_export_name)
-                                            .join(format!("{}-{}-impl.rs",
-                                                  object_analysis.name.to_lowercase(),
-                                                  method_analysis.name.to_lowercase()));
+            let path = env.config.target_path.join("src").join("custom")
+                                             .join(format!("{}-{}-impl.rs",
+                                                   object_analysis.name.to_lowercase(),
+                                                   method_analysis.name.to_lowercase()));
 
             if !insert_from_file(w, &path) {
                 try!(virtual_methods::generate_default_impl(
@@ -419,10 +419,10 @@ pub fn generate_base(
 
     for method_analysis in &object_analysis.virtual_methods {
 
-        let path = env.config.config_dir.join(&env.config.library_export_name)
-                                        .join(format!("{}-{}-base.rs",
-                                              object_analysis.name.to_lowercase(),
-                                              method_analysis.name.to_lowercase()));
+        let path = env.config.target_path.join("src").join("custom")
+                                         .join(format!("{}-{}-base.rs",
+                                               object_analysis.name.to_lowercase(),
+                                               method_analysis.name.to_lowercase()));
 
         if !insert_from_file(w, &path) {
             try!(virtual_methods::generate_base_impl(
@@ -738,10 +738,10 @@ fn generate_box_impl(
 
     for method_analysis in &object_analysis.virtual_methods {
 
-        let path = env.config.config_dir.join(&env.config.library_export_name)
-                                        .join(format!("{}-{}-box_impl.rs",
-                                              object_analysis.name.to_lowercase(),
-                                              method_analysis.name.to_lowercase()));
+        let path = env.config.target_path.join("src").join("custom")
+                                         .join(format!("{}-{}-box_impl.rs",
+                                               object_analysis.name.to_lowercase(),
+                                               method_analysis.name.to_lowercase()));
 
         if !insert_from_file(w, &path) {
             try!(virtual_methods::generate_box_impl(
@@ -896,10 +896,10 @@ fn generate_extern_c_funcs(
 
     for method_analysis in &object_analysis.virtual_methods {
 
-        let path = env.config.config_dir.join(&env.config.library_export_name)
-                                        .join(format!("{}-{}-trampoline.rs",
-                                              object_analysis.name.to_lowercase(),
-                                              method_analysis.name.to_lowercase()));
+        let path = env.config.target_path.join("src").join("custom")
+                                         .join(format!("{}-{}-trampoline.rs",
+                                               object_analysis.name.to_lowercase(),
+                                               method_analysis.name.to_lowercase()));
 
         if !insert_from_file(w, &path) {
             try!(virtual_methods::generate_extern_c_func(
