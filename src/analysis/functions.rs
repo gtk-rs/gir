@@ -264,6 +264,9 @@ fn analyze_function(
             imports.add("gio_ffi", version);
             imports.add_with_constraint("gio", version, Some("futures"));
         }
+        if func.kind == FunctionKind::Method {
+            imports.add("glib", None);
+        }
         imports.add("glib_ffi", None);
         imports.add("gobject_ffi", None);
         imports.add_with_constraint("futures_core", version, Some("futures"));
