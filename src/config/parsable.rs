@@ -1,4 +1,3 @@
-use super::ident::Ident;
 use toml::Value;
 
 pub trait Parse: Sized {
@@ -11,7 +10,7 @@ pub trait Parsable {
     fn parse(toml: Option<&Value>, object_name: &str) -> Vec<Self::Item>;
 }
 
-impl<T: Parse + AsRef<Ident>> Parsable for Vec<T> {
+impl<T: Parse> Parsable for Vec<T> {
     type Item = T;
 
     fn parse(toml: Option<&Value>, object_name: &str) -> Vec<Self::Item> {

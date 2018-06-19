@@ -224,6 +224,18 @@ version = "3.12"
     version = "3.18"
 ```
 
+For enumerations and bitflags, you can also configure additional `#[derive()]`
+clauses optionally conditioned to a `cfg`.
+
+``` toml
+[[object]]
+name = "Gst.Format"
+status = "generate"
+    [[object.derive]]
+    name = "Serialize, Deserialize"
+    cfg_condition = "feature = \"ser_de\""
+```
+
 Gir auto-detects copy and free functions by looking up `type_name_copy` and `type_name_free` functions.
 If the relevant functions are not named that way, and the type is defined with `G_DEFINE_BOXED_TYPE`,
 `use_boxed_functions=true` can be used to call `g_boxed_copy` and `g_boxed_free` instead.

@@ -7,6 +7,7 @@ use library::{Library, TypeId, MAIN_NAMESPACE};
 use config::error::TomlHelper;
 use config::parsable::{Parsable, Parse};
 use super::child_properties::ChildProperties;
+use super::derives::Derives;
 use super::functions::Functions;
 use super::constants::Constants;
 use super::members::Members;
@@ -63,6 +64,7 @@ pub struct GObject {
     pub signals: Signals,
     pub members: Members,
     pub properties: Properties,
+    pub derives: Derives,
     pub status: GStatus,
     pub module_name: Option<String>,
     pub version: Option<Version>,
@@ -87,6 +89,7 @@ impl Default for GObject {
             signals: Signals::new(),
             members: Members::new(),
             properties: Properties::new(),
+            derives: Derives::new(),
             status: Default::default(),
             module_name: None,
             version: None,
@@ -159,6 +162,7 @@ fn parse_object(toml_object: &Value, concurrency: library::Concurrency) -> GObje
             "signal",
             "member",
             "property",
+            "derive",
             "module_name",
             "version",
             "concurrency",
@@ -199,6 +203,7 @@ fn parse_object(toml_object: &Value, concurrency: library::Concurrency) -> GObje
     };
     let members = Members::parse(toml_object.lookup("member"), &name);
     let properties = Properties::parse(toml_object.lookup("property"), &name);
+    let derives = Derives::parse(toml_object.lookup("derive"), &name);
     let module_name = toml_object
         .lookup("module_name")
         .and_then(|v| v.as_str())
@@ -257,6 +262,7 @@ fn parse_object(toml_object: &Value, concurrency: library::Concurrency) -> GObje
         signals,
         members,
         properties,
+        derives,
         status,
         module_name,
         version,

@@ -1,7 +1,7 @@
 use analysis::imports::Imports;
 use analysis::namespaces;
 use case::CaseExt;
-use codegen::general::{self, cfg_deprecated, version_condition, version_condition_string};
+use codegen::general::{self, cfg_deprecated, derives, version_condition, version_condition_string};
 use config::gobjects::GObject;
 use env::Env;
 use file_saver;
@@ -123,6 +123,7 @@ fn generate_enum(env: &Env, w: &mut Write, enum_: &Enumeration, config: &GObject
             "#[must_use]"
         ));
     }
+    try!(derives(w, &config.derives, 0));
     try!(writeln!(w, "pub enum {} {{", enum_.name));
     for member in &members {
         try!(cfg_deprecated(w, env, member.deprecated_version, false, 1));
