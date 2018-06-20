@@ -6,6 +6,7 @@ use analysis::general::StatusedTypeId;
 use analysis::imports::Imports;
 use analysis::namespaces;
 use config::Config;
+use config::derives::Derive;
 use env::Env;
 use gir_version::VERSION;
 use version::Version;
@@ -351,6 +352,25 @@ pub fn cfg_condition_string(
         }
         None => None,
     }
+}
+
+pub fn derives(
+    w: &mut Write,
+    derives: &[Derive],
+    indent: usize,
+) -> Result<()> {
+    for derive in derives {
+        let s = match &derive.cfg_condition {
+            Some(condition) => format!(
+                "#[cfg_attr({}, derive({}))]",
+                condition,
+                derive.name
+            ),
+            None => format!("#[derive({})]", derive.name),
+        };
+        try!(writeln!(w, "{}{}", tabs(indent), s));
+    }
+    Ok(())
 }
 
 pub fn doc_hidden(

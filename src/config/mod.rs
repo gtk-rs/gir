@@ -15,6 +15,7 @@ pub mod signals;
 pub mod string_type;
 pub mod work_mode;
 pub mod constants;
+pub mod derives;
 
 pub use self::config::Config;
 pub use self::external_libraries::ExternalLibrary;

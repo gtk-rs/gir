@@ -1,6 +1,6 @@
 use analysis::imports::Imports;
 use analysis::namespaces;
-use codegen::general::{self, cfg_deprecated, version_condition, version_condition_string};
+use codegen::general::{self, cfg_deprecated, derives, version_condition, version_condition_string};
 use config::gobjects::GObject;
 use env::Env;
 use file_saver;
@@ -74,6 +74,7 @@ fn generate_flags(env: &Env, w: &mut Write, flags: &Bitfield, config: &GObject) 
             "    #[must_use]"
         ));
     }
+    try!(derives(w, &config.derives, 1));
     try!(writeln!(w, "    pub struct {}: u32 {{", flags.name));
     for member in &flags.members {
         let member_config = config.members.matched(&member.name);
