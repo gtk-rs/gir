@@ -39,7 +39,8 @@ pub fn analyze(
 ) -> Result<String, Vec<String>> {
     let errors = closure_errors(env, signal);
     if !errors.is_empty() {
-        warn!(
+        warn_main!(
+            type_tid,
             "Can't generate {} trampoline for signal '{}'",
             type_tid.full_name(&env.library),
             signal.name

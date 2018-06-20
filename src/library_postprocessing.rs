@@ -327,7 +327,7 @@ impl Library {
                 Type::Union(Union { ref name, ref mut fields, ..}) => {
                     match action {
                         Action::SetCType(c_type) => {
-                            warn!("Field `{}::{}` missing c:type assumed to be `{}`",
+                            warn_main!(tid, "Field `{}::{}` missing c:type assumed to be `{}`",
                                   name, &fields[fid].name, c_type);
                             fields[fid].c_type = Some(c_type);
                         }
