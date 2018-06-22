@@ -661,14 +661,16 @@ pub fn register_{}<T: ObjectType, I: {}Static<T>>(
         }};
         gobject_ffi::g_type_add_interface_static(
             type_.to_glib(),
-            gio_ffi::g_{iface_l}_get_type(),
+            {ffi_crate}::{get_type}(),
             &iface_info,
         );
     }}
         ",
         iface=object_analysis.name,
         iface_impl=object_analysis.subclass_impl_trait_name,
-        iface_l=object_analysis.name.to_lowercase()
+        iface_l=object_analysis.name.to_lowercase(),
+        ffi_crate=&env.namespaces[object_analysis.type_id.ns_id].ffi_crate_name,
+        get_type=object_analysis.get_type
     ));
 
 
