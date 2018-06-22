@@ -301,7 +301,9 @@ pub fn generate_impl(
 
         let parent_impls: Vec<String> = subclass_info.get_all_parents(env)
             .iter()
-            .map(|ref p| { format!(" {}::{}Impl<T> +", p.module_name(env).unwrap_or("".to_string()), p.name) })
+            .map(|ref p| {
+                let templ = if p.is_interface { "" } else {"<T>"};
+                format!(" {}::{}Impl{} +", p.module_name(env).unwrap_or("".to_string()), p.name, templ) })
             .collect();
 
         let parent_objs = parent_impls.join("");
