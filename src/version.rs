@@ -9,18 +9,18 @@ pub enum Version {
 }
 
 impl Version {
-    pub fn to_cfg(&self) -> String {
+    pub fn to_cfg(self) -> String {
         use self::Version::*;
-        match *self {
+        match self {
             Full(major, minor, 0) => format!("feature = \"v{}_{}\"", major, minor),
             Full(major, minor, patch) => format!("feature = \"v{}_{}_{}\"", major, minor, patch),
             Short(major) => format!("feature = \"v{}\"", major),
         }
     }
 
-    pub fn to_feature(&self) -> String {
+    pub fn to_feature(self) -> String {
         use self::Version::*;
-        match *self {
+        match self {
             Full(major, minor, 0) => format!("v{}_{}", major, minor),
             Full(major, minor, patch) => format!("v{}_{}_{}", major, minor, patch),
             Short(major) => format!("v{}", major),

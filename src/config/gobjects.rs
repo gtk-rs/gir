@@ -25,14 +25,14 @@ pub enum GStatus {
 }
 
 impl GStatus {
-    pub fn ignored(&self) -> bool {
-        self == &GStatus::Ignore
+    pub fn ignored(self) -> bool {
+        self == GStatus::Ignore
     }
-    pub fn need_generate(&self) -> bool {
-        self == &GStatus::Generate
+    pub fn need_generate(self) -> bool {
+        self == GStatus::Generate
     }
-    pub fn normal(&self) -> bool {
-        self == &GStatus::Generate || self == &GStatus::Manual
+    pub fn normal(self) -> bool {
+        self == GStatus::Generate || self == GStatus::Manual
     }
 }
 

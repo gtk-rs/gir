@@ -84,9 +84,9 @@ impl RefMode {
         }
     }
 
-    pub fn is_ref(&self) -> bool {
+    pub fn is_ref(self) -> bool {
         use self::RefMode::*;
-        match *self {
+        match self {
             None => false,
             ByRef => true,
             ByRefMut => true,
