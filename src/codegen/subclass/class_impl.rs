@@ -299,7 +299,7 @@ pub fn generate_impl(
         ));
     }else{
 
-        let parent_impls: Vec<String> = subclass_info.get_all_parents(env)
+        let parent_impls: Vec<String> = subclass_info.get_parents(env)
             .iter()
             .map(|ref p| {
                 let templ = if p.is_interface { "" } else {"<T>"};
