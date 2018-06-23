@@ -38,8 +38,8 @@ pub enum ParameterDirection {
 }
 
 impl ParameterDirection {
-    pub fn is_out(&self) -> bool {
-        self == &ParameterDirection::Out || self == &ParameterDirection::InOut
+    pub fn is_out(self) -> bool {
+        self == ParameterDirection::Out || self == ParameterDirection::InOut
     }
 }
 
@@ -249,9 +249,9 @@ pub struct TypeId {
 }
 
 impl TypeId {
-    pub fn full_name(&self, library: &Library) -> String {
+    pub fn full_name(self, library: &Library) -> String {
         let ns_name = &library.namespace(self.ns_id).name;
-        let type_ = &library.type_(*self);
+        let type_ = &library.type_(self);
         format!("{}.{}", ns_name, &type_.get_name())
     }
 

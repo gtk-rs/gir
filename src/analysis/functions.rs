@@ -35,8 +35,8 @@ pub enum Visibility {
 }
 
 impl Visibility {
-    pub fn hidden(&self) -> bool {
-        *self == Visibility::Hidden
+    pub fn hidden(self) -> bool {
+        self == Visibility::Hidden
     }
 }
 
