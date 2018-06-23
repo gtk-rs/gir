@@ -252,21 +252,29 @@ pub fn generate_exports(
     // ));
 }
 
-fn subclass_parent_module_path(object: &analysis::object::Info, parent: &analysis::object::Info, env: &Env, include_crate: bool) -> String{
+fn subclass_parent_module_path(parent: &analysis::object::Info, object: &analysis::object::Info, env: &Env, for_use: bool) -> String{
 
     let mut ns = "".to_string();
-    if include_crate{
-        if parent.type_id.ns_id != object.type_id.ns_id{
-            let ns_name = &env.library.namespace(parent.type_id.ns_id).name;
-            ns = format!("{}_subclass::", ns_name.to_lowercase()).to_string();
-        }
-    }
-
+    let mut alias = "".to_string();
     let obj = &env.config.objects[&parent.full_name];
     let module_name = obj.module_name.clone().unwrap_or_else(|| {
         nameutil::module_name(nameutil::split_namespace_name(&parent.full_name).1)
     });
-    format!("{}{}", ns, module_name)
+
+    if parent.type_id.ns_id != object.type_id.ns_id{
+        let ns_name = &env.library.namespace(parent.type_id.ns_id).name;
+        alias = format!("{}_{}", ns_name.to_lowercase(), module_name).to_string();
+
+        if for_use{
+            ns = format!("{}_subclass::", ns_name.to_lowercase()).to_string();
+        }
+    }
+
+    if for_use{
+        format!("{}{} as {}", ns, module_name, alias)
+    }else{
+        format!("{}", alias)
+    }
 }
 
 pub fn generate_subclass_uses(w: &mut Write,
@@ -667,7 +675,7 @@ fn generate_parent_impls(
             w,
             "unsafe impl {par_mod}::{par}ClassExt<{obj}> for {obj}Class {{}}",
             obj = object_analysis.name,
-            par_mod = subclass_parent_module_path(object_analysis, parent, env, false),
+            par_mod = subclass_parent_module_path(parent, object_analysis, env, false),
             par = parent.name
         ));
     }
@@ -831,7 +839,7 @@ fn generate_impl_objecttype(
     try!(writeln!(w, "{}{}", tabs(2), override_vfuncs_statement(&"Object".to_string())));
     try!(writeln!(w, "{}{}", tabs(2), override_vfuncs_statement(&object_analysis.name)));
     for parent in &subclass_info.get_parents(env) {
-        let par_mod = subclass_parent_module_path(object_analysis, parent, env, false);
+        let par_mod = subclass_parent_module_path(parent, object_analysis, env, false);
         try!(writeln!(w, "{}{}::{}", tabs(2), par_mod, override_vfuncs_statement(&parent.name)));
     }
 
