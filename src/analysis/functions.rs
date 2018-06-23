@@ -250,7 +250,8 @@ fn analyze_function(
         configured_functions,
     );
     if unsupported_outs {
-        warn!(
+        warn_main!(
+            type_tid,
             "Function {} has unsupported outs",
             func.c_identifier.as_ref().unwrap_or(&func.name)
         );
