@@ -252,6 +252,23 @@ pub fn generate_exports(
     // ));
 }
 
+fn subclass_parent_module_path(object: &analysis::object::Info, parent: &analysis::object::Info, env: &Env, include_crate: bool) -> String{
+
+    let mut ns = "".to_string();
+    if include_crate{
+        if parent.type_id.ns_id != object.type_id.ns_id{
+            let ns_name = &env.library.namespace(parent.type_id.ns_id).name;
+            ns = format!("{}_subclass::", ns_name.to_lowercase()).to_string();
+        }
+    }
+
+    let obj = &env.config.objects[&parent.full_name];
+    let module_name = obj.module_name.clone().unwrap_or_else(|| {
+        nameutil::module_name(nameutil::split_namespace_name(&parent.full_name).1)
+    });
+    format!("{}{}", ns, module_name)
+}
+
 pub fn generate_subclass_uses(w: &mut Write,
     env: &Env,
     object_analysis: &analysis::object::Info,
@@ -260,19 +277,13 @@ pub fn generate_subclass_uses(w: &mut Write,
 
     for parent in &subclass_info.get_all_parents(env){
 
-        let mut ns = "".to_string();
-        if parent.type_id.ns_id != object_analysis.type_id.ns_id{
-            let ns_name = &env.library.namespace(parent.type_id.ns_id).name;
-            ns = format!("{}subclass::", ns_name).to_string();
-        }
+        let parent_module_path = subclass_parent_module_path(parent, object_analysis, env, true);
 
         try!(writeln!(
             w,
-            "use {}{};",
-            ns,
-            parent.module_name(env).unwrap_or("".to_string())
+            "use {};",
+            parent_module_path
         ));
-
     }
 
     Ok(())
@@ -303,7 +314,7 @@ pub fn generate_impl(
             .iter()
             .map(|ref p| {
                 let templ = if p.is_interface { "" } else {"<T>"};
-                format!(" {}::{}Impl{} +", p.module_name(env).unwrap_or("".to_string()), p.name, templ) })
+                format!(" {}::{}Impl{} +", subclass_parent_module_path(p, object_analysis, env, false), p.name, templ) })
             .collect();
 
         let parent_objs = parent_impls.join("");
@@ -654,8 +665,9 @@ fn generate_parent_impls(
     for parent in parents {
         try!(writeln!(
             w,
-            "unsafe impl {par}ClassExt<{obj}> for {obj}Class {{}}",
+            "unsafe impl {par_mod}::{par}ClassExt<{obj}> for {obj}Class {{}}",
             obj = object_analysis.name,
+            par_mod = subclass_parent_module_path(object_analysis, parent, env, false),
             par = parent.name
         ));
     }
@@ -819,7 +831,8 @@ fn generate_impl_objecttype(
     try!(writeln!(w, "{}{}", tabs(2), override_vfuncs_statement(&"Object".to_string())));
     try!(writeln!(w, "{}{}", tabs(2), override_vfuncs_statement(&object_analysis.name)));
     for parent in &subclass_info.get_parents(env) {
-        try!(writeln!(w, "{}{}", tabs(2), override_vfuncs_statement(&parent.name)));
+        let par_mod = subclass_parent_module_path(object_analysis, parent, env, false);
+        try!(writeln!(w, "{}{}::{}", tabs(2), par_mod, override_vfuncs_statement(&parent.name)));
     }
 
     try!(writeln!(w, "{}}}", tabs(1)));
