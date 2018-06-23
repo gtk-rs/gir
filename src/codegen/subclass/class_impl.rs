@@ -194,7 +194,7 @@ pub fn generate(w: &mut Write, env: &Env, analysis: &analysis::object::Info) -> 
 
     let path = env.config.target_path.join("src").join("custom")
                                      .join(format!("{}-main.rs",
-                                           analysis.name.to_lowercase()));
+                                           analysis.module_name(env).unwrap_or(analysis.name.to_lowercase())));
 
     insert_from_file(w, &path);
 
@@ -333,7 +333,7 @@ pub fn generate_impl(
 
             let path = env.config.target_path.join("src").join("custom")
                                              .join(format!("{}-{}-impl.rs",
-                                                   object_analysis.name.to_lowercase(),
+                                                   object_analysis.module_name(env).unwrap_or(object_analysis.name.to_lowercase()),
                                                    method_analysis.name.to_lowercase()));
 
             if !insert_from_file(w, &path) {
@@ -423,7 +423,7 @@ pub fn generate_base(
 
         let path = env.config.target_path.join("src").join("custom")
                                          .join(format!("{}-{}-base.rs",
-                                               object_analysis.name.to_lowercase(),
+                                               object_analysis.module_name(env).unwrap_or(object_analysis.name.to_lowercase()),
                                                method_analysis.name.to_lowercase()));
 
         if !insert_from_file(w, &path) {
@@ -742,7 +742,7 @@ fn generate_box_impl(
 
         let path = env.config.target_path.join("src").join("custom")
                                          .join(format!("{}-{}-box_impl.rs",
-                                               object_analysis.name.to_lowercase(),
+                                               object_analysis.module_name(env).unwrap_or(object_analysis.name.to_lowercase()),
                                                method_analysis.name.to_lowercase()));
 
         if !insert_from_file(w, &path) {
@@ -900,7 +900,7 @@ fn generate_extern_c_funcs(
 
         let path = env.config.target_path.join("src").join("custom")
                                          .join(format!("{}-{}-trampoline.rs",
-                                               object_analysis.name.to_lowercase(),
+                                               object_analysis.module_name(env).unwrap_or(object_analysis.name.to_lowercase()),
                                                method_analysis.name.to_lowercase()));
 
         if !insert_from_file(w, &path) {
