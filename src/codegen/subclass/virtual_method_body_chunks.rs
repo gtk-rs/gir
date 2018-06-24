@@ -185,7 +185,6 @@ impl Builder {
     pub fn generate_interface_extern_c_func(&self, env: &Env) -> Chunk {
         let mut body = Vec::new();
 
-        body.push(self.callback_guard());
         body.push(self.floating_reference_guard("gptr"));
 
         body.push(Chunk::Let {
