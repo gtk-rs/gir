@@ -423,7 +423,7 @@ pub fn generate_base(
 
     let parent_impls: Vec<String> = impls.iter()
                                 .map(|ref p| {
-                                    let ns_name = &env.namespaces[object_analysis.type_id.ns_id].crate_name;
+                                    let ns_name = &env.namespaces[p.type_id.ns_id].crate_name;
                                     format!("+ glib::IsA<{}::{}>", ns_name, p.name)
                                 })
                                 .collect();
@@ -569,13 +569,19 @@ fn generate_glib_wrapper(
         for parent in &subclass_info.parents {
             let t = env.library.type_(parent.type_id);
             let k = &env.namespaces[parent.type_id.ns_id].crate_name;
+
+            let tglib = t.get_glib_name();
+            if tglib == Some("InitiallyUnowned"){
+                continue;
+            }
+
             try!(write!(
                 w,
                 "\n{tabs} {krate}::{ty} => {krate}_ffi::{cty},",
                 tabs = tabs(2),
                 krate = k,
                 ty = t.get_name(),
-                cty = t.get_glib_name().unwrap()
+                cty = tglib.unwrap_or("")
             ));
         }
 
