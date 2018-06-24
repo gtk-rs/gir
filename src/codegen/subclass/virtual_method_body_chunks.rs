@@ -149,7 +149,6 @@ impl Builder {
     pub fn generate_object_extern_c_func(&self, env: &Env) -> Chunk {
         let mut body = Vec::new();
 
-        body.push(self.callback_guard());
         body.push(self.floating_reference_guard("gptr"));
 
         body.push(Chunk::Let {
@@ -245,10 +244,6 @@ impl Builder {
         Chunk::Chunks(body)
     }
 
-    fn callback_guard(&self) -> Chunk {
-        Chunk::Custom("callback_guard!();".to_owned())
-    }
-
     fn floating_reference_guard(&self, p: &str) -> Chunk {
         Chunk::Custom(format!("floating_reference_guard!({});", p).to_owned())
     }
@@ -288,7 +283,6 @@ impl Builder {
 
         let iface_name = format!("{}_iface", self.object_name.to_lowercase()).to_owned();
 
-        body.push(self.callback_guard());
         body.push(Chunk::Let {
             name: iface_name.clone(),
             is_mut: false,
