@@ -570,8 +570,7 @@ fn generate_glib_wrapper(
             let t = env.library.type_(parent.type_id);
             let k = &env.namespaces[parent.type_id.ns_id].crate_name;
 
-            let tglib = t.get_glib_name();
-            if tglib == Some("InitiallyUnowned"){
+            if t.get_name() == "InitiallyUnowned"{
                 continue;
             }
 
@@ -581,7 +580,7 @@ fn generate_glib_wrapper(
                 tabs = tabs(2),
                 krate = k,
                 ty = t.get_name(),
-                cty = tglib.unwrap_or("")
+                cty = t.get_glib_name().unwrap_or("")
             ));
         }
 
