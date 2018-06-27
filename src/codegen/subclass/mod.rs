@@ -10,6 +10,7 @@ mod class_impls;
 mod class_impl;
 mod virtual_methods;
 mod virtual_method_body_chunks;
+mod trampoline_from_glib;
 
 use codegen::sys::statics as statics_ffi;
 use codegen::generate_single_version_file;

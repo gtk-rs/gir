@@ -24,7 +24,7 @@ use codegen::subclass::virtual_method_body_chunks::Builder;
 use codegen::sys::ffi_type::ffi_type;
 use codegen::function_body_chunk::{Parameter, ReturnValue};
 use codegen::return_value::{ToReturnValue, out_parameter_as_return};
-use codegen::trampoline_from_glib::TrampolineFromGlib;
+use codegen::subclass::trampoline_from_glib::TrampolineFromGlib;
 use codegen::trampoline_to_glib::TrampolineToGlib;
 
 pub fn generate_default_impl(
@@ -729,7 +729,7 @@ fn trampoline_call_parameters(env: &Env, analysis: &analysis::virtual_methods::I
 
         let transformation = parameter_transformation(env, analysis, ind, par);
 
-        let par_str = transformation.trampoline_from_glib(env, false);
+        let par_str = transformation.trampoline_from_glib(env, par, false);
         parameter_strs.push(par_str);
     }
 
@@ -738,7 +738,7 @@ fn trampoline_call_parameters(env: &Env, analysis: &analysis::virtual_methods::I
 
 fn trampoline_call_return(env: &Env, analysis: &analysis::virtual_methods::Info) -> (String, String) {
     match analysis.ret.parameter {
-        Some(ref param) => param.trampoline_to_glib_as_function(env),
+        Some(ref param) => param.trampoline_to_glib_as_function(env, Some(analysis)),
         None => (String::new(), String::new())
     }
 }
