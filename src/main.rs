@@ -17,7 +17,7 @@ use hprof::Profiler;
 
 static USAGE: &'static str = "
 Usage: gir [options] [<library> <version>]
-       gir --help
+       gir (-h | --help)
 
 Options:
     -h, --help              Show this message.
@@ -33,7 +33,7 @@ Options:
 fn build_config() -> Result<Config, String> {
     let args = match docopt::Docopt::new(USAGE).and_then(|dopt| dopt.parse()) {
         Ok(args) => args,
-        Err(e) => return Err(format!("Failed to get arguments: {}", e)),
+        Err(e) => return Err(e.to_string()),
     };
     let work_mode = match args.get_str("-m") {
         "" => None,
