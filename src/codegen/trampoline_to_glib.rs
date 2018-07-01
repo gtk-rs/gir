@@ -53,7 +53,11 @@ impl TrampolineToGlib for library::Parameter {
     }}"#,
                         object_name=object.map(|ref o| o.module_name(env).unwrap_or(o.name.to_lowercase())).unwrap_or("".to_string()),
                         method_name=method.map(|ref m| &m.name).unwrap_or(&"".to_string()),
-                        to_glib=to_glib_xxx(self.transfer),
+                        to_glib=to_glib_xxx( if self.transfer == library::Transfer::None {
+                            library::Transfer::Full
+                        }else{
+                            self.transfer
+                        }),
                         mut_str=mut_str,
                         ret_param="ret",
                         rust_type=rust_type(env, self.typ).into_string(),
