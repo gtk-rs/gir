@@ -717,7 +717,7 @@ fn box_impl_name(env: &Env,
                  analysis: &analysis::object::Info) -> String{
     format!("box_{}_{}_impl",
         env.namespaces[analysis.type_id.ns_id].name.to_lowercase(),
-        analysis.name.to_lowercase())
+        analysis.module_name(env).unwrap_or(analysis.name.to_lowercase()))
 }
 
 fn generate_box_impl(

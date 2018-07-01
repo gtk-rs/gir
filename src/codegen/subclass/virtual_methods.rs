@@ -334,7 +334,7 @@ pub fn generate_override_vfuncs(
         for method_analysis in &object_analysis.virtual_methods {
             body_chunks.push(Chunk::Custom(
                 format!("klass.{mname} = Some({cname}_{mname}::<T>);", mname=method_analysis.name,
-                                                                       cname=object_analysis.name.to_lowercase()).to_owned()
+                                                                       cname=object_analysis.module_name(env).unwrap_or(object_analysis.name.to_lowercase())).to_owned()
             ));
         }
 
@@ -427,7 +427,7 @@ pub fn generate_extern_c_func(
     try!(writeln!(
         w,
         "unsafe extern \"C\" fn {}_{}<T: {}>",
-        object_analysis.name.to_lowercase(),
+        object_analysis.module_name(env).unwrap_or(object_analysis.name.to_lowercase()),
         method_analysis.name,
         base_trait_name
     ));
@@ -459,7 +459,7 @@ pub fn generate_extern_c_func(
     }
 
     let mut func_params = trampoline_call_parameters(env, method_analysis);
-    let func_ret = trampoline_call_return(env, method_analysis);
+    let func_ret = trampoline_call_return(env, object_analysis, method_analysis);
     func_params.insert(0, "&wrap".to_string());
 
     try!(writeln!(w, "{}{}imp.{}({}){}",
@@ -604,7 +604,7 @@ unsafe extern \"C\" fn {}_init<T: ObjectType>(
     iface: glib_ffi::gpointer,
     iface_data: glib_ffi::gpointer
 ) {{",
-        object_analysis.name.to_lowercase()
+        object_analysis.module_name(env).unwrap_or(object_analysis.name.to_lowercase())
     ));
 
     let mut builder = Builder::new();
@@ -641,7 +641,7 @@ pub fn register_{}<T: ObjectType, I: {}Static<T>>(
     type_: glib::Type,
     imp: &I,
 ) {{",
-        object_analysis.name.to_lowercase(),
+        object_analysis.module_name(env).unwrap_or(object_analysis.name.to_lowercase()),
         object_analysis.subclass_impl_trait_name
     ));
 
@@ -668,7 +668,7 @@ pub fn register_{}<T: ObjectType, I: {}Static<T>>(
         ",
         iface=object_analysis.name,
         iface_impl=object_analysis.subclass_impl_trait_name,
-        iface_l=object_analysis.name.to_lowercase(),
+        iface_l=object_analysis.module_name(env).unwrap_or(object_analysis.name.to_lowercase()),
         ffi_crate=&env.namespaces[object_analysis.type_id.ns_id].ffi_crate_name,
         get_type=object_analysis.get_type
     ));
@@ -699,7 +699,7 @@ fn parameter_transformation(env: &Env, analysis: &analysis::virtual_methods::Inf
             TransformationType::ToGlibBorrow{..} => ConversionType::Borrow,
             TransformationType::ToGlibUnknown{..} => ConversionType::Unknown,
             TransformationType::ToGlibStash{..} => ConversionType::Unknown,
-            TransformationType::Into{..} => ConversionType::Pointer,
+            TransformationType::Into{..} => ConversionType::Borrow,
             TransformationType::Length{..} => ConversionType::Unknown,
             TransformationType::IntoRaw{..} => ConversionType::Pointer,
             TransformationType::ToSome{..} => ConversionType::Direct
@@ -736,9 +736,14 @@ fn trampoline_call_parameters(env: &Env, analysis: &analysis::virtual_methods::I
     parameter_strs
 }
 
-fn trampoline_call_return(env: &Env, analysis: &analysis::virtual_methods::Info) -> (String, String) {
-    match analysis.ret.parameter {
-        Some(ref param) => param.trampoline_to_glib_as_function(env, Some(analysis)),
-        None => (String::new(), String::new())
+fn trampoline_call_return(env: &Env, object: &analysis::object::Info, method: &analysis::virtual_methods::Info) -> (String, String) {
+
+    let outs_as_return = !method.outs.is_empty();
+    if(!outs_as_return){
+        //TODO: convert params to output
+    }
+    match method.ret.parameter {
+        Some(ref param) => param.trampoline_to_glib_as_function(env, Some(object), Some(method)),
+        None => (String::new(), ";".to_string())
     }
 }
