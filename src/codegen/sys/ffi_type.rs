@@ -132,7 +132,9 @@ fn ffi_inner(env: &Env, tid: library::TypeId, mut inner: String) -> Result {
         Type::HashTable(..) => fix_name(env, tid, &inner),
         _ => if let Some(glib_name) = env.library.type_(tid).get_glib_name() {
             if inner != glib_name {
-                if implements_c_type(env, tid, &inner) {
+                if inner == "gpointer" {
+                    fix_name(env, tid, glib_name).map_any(|s| format!("*mut {}", s))
+                } else if implements_c_type(env, tid, &inner) {
                     info!(
                         "[c:type {} of {} <: {}, fixing]",
                         glib_name,
