@@ -75,6 +75,9 @@ pub enum Chunk {
     Closure{
         arguments: Vec<Chunk>,
         body: Box<Chunk>,
+    },
+    Deref{
+        param: Box<Chunk>,
     }
 }
 

@@ -174,6 +174,10 @@ impl ToCode for Chunk {
                 let code = format_block_one_line("{", "}", &body.to_code(env), " ", " ");
                 vec![format!("{}{}", s, code)]
             }
+            Deref { ref param } => {
+                let mut code = format_block_smart("*", "", &param.to_code(env), "", "");
+                code
+            }
         }
     }
 }

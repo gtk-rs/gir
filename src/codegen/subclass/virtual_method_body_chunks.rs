@@ -6,7 +6,8 @@ use analysis::functions::{find_index_to_ignore, AsyncTrampoline};
 use analysis::namespaces;
 use analysis::out_parameters::Mode;
 use analysis::return_value;
-use analysis::rust_type::rust_type;
+use analysis::rust_type::{parameter_rust_type, rust_type};
+use analysis::ref_mode::RefMode;
 use analysis::safety_assertion_mode::SafetyAssertionMode;
 use chunk::parameter_ffi_call_out;
 use chunk::{Chunk, Param, TupleMode};
@@ -15,6 +16,7 @@ use env::Env;
 use library::{self, ParameterDirection};
 use nameutil;
 use writer::ToCode;
+use traits::IntoString;
 
 use codegen::function_body_chunk::{c_type_mem_mode, OutMemMode, Parameter, ReturnValue};
 
@@ -125,15 +127,23 @@ impl Builder {
         body.push(Chunk::Custom("(*parent_klass)".to_owned()));
         body.push(Chunk::Custom(format!(".{}", self.method_name).to_owned()));
         let mut args = Vec::new();
-        args.push(self.base_impl_body_chunk());
+        args.push(self.base_impl_body_chunk(env));
         body.push(Chunk::Call {
             func_name: ".map".to_owned(),
             arguments: args,
             as_return: true,
         });
 
-        //TODO: return variables?
-        body.push(Chunk::Custom(".unwrap_or(())".to_owned()));
+        let mut defaults = Vec::new();
+        self.write_defaults(env, &mut defaults);
+
+        body.push(Chunk::Call {
+            func_name: ".unwrap_or".to_owned(),
+            arguments: vec![Chunk::Tuple(
+                defaults,
+                TupleMode::WithUnit)],
+            as_return: true,
+        });
 
         let unsafe_ = Chunk::Unsafe(body);
 
@@ -248,7 +258,7 @@ impl Builder {
         Chunk::Custom(format!("floating_reference_guard!({});", p).to_owned())
     }
 
-    fn base_impl_body_chunk(&self) -> Chunk {
+    fn base_impl_body_chunk(&self, env: &Env) -> Chunk {
         let mut body = Vec::new();
 
         if self.outs_as_return {
@@ -260,7 +270,7 @@ impl Builder {
         let call = self.generate_ffi_call(Some("f".to_owned()));
         let call = self.generate_ffi_call_conversion(call);
 
-        let ret = self.generate_out_return();
+        let ret = self.generate_out_return(env);
         let (call, ret) = self.apply_outs_mode(call, ret);
 
         body.push(call);
@@ -410,6 +420,55 @@ impl Builder {
             }
         }
     }
+
+    fn write_defaults(&self, env: &Env, v: &mut Vec<Chunk>) {
+        if self.outs_as_return{
+            let outs = self.get_outs();
+            for par in outs {
+                if let Out {
+                    ref parameter,
+                    ref mem_mode,
+                } = *par
+                {
+                    if *parameter.nullable{
+                        v.push(Chunk::Custom("None".to_owned()));
+                    }else{
+                        use library::Type::*;
+                        let type_ = env.library.type_(parameter.typ);
+                        match *type_ {
+                            Fundamental(_) => {
+                                v.push(Chunk::Custom(format!("{}::default()", rust_type(
+                                        env,
+                                        parameter.typ
+                                    ).unwrap())));
+                            },
+                            _ => {
+                                v.push(self.get_uninitialized(mem_mode));
+                            }
+                        }
+                    }
+                }
+            }
+        }else{
+            if  self.ret.ret.parameter.is_none(){
+                return;
+            }
+            let ret = self.ret.ret.parameter.as_ref().unwrap();
+            if *ret.nullable{
+                v.push(Chunk::Custom("None".to_owned()))
+            }else{
+                let rust_type = parameter_rust_type(
+                    env,
+                    ret.typ,
+                    ret.direction,
+                    ret.nullable,
+                    RefMode::None,
+                );
+                v.push(Chunk::Custom(format!("{}::default()", rust_type.into_string()).to_owned()))
+            }
+        }
+    }
+
     fn get_uninitialized(&self, mem_mode: &OutMemMode) -> Chunk {
         use self::OutMemMode::*;
         match *mem_mode {
@@ -487,7 +546,7 @@ impl Builder {
             .next()
     }
 
-    fn generate_out_return(&self) -> Option<Chunk> {
+    fn generate_out_return(&self, env: &Env) -> Option<Chunk> {
         if !self.outs_as_return {
             return None;
         }
@@ -514,7 +573,7 @@ impl Builder {
                     continue;
                 }
 
-                chs.push(self.out_parameter_to_return(parameter, mem_mode));
+                chs.push(self.out_parameter_to_return(env, parameter, mem_mode));
             }
         }
         let chunk = Chunk::Tuple(chs, TupleMode::Auto);
@@ -522,13 +581,31 @@ impl Builder {
     }
     fn out_parameter_to_return(
         &self,
+        env: &Env,
         parameter: &parameter_ffi_call_out::Parameter,
-        mem_mode: &OutMemMode,
+        mem_mode: &OutMemMode
     ) -> Chunk {
         let value = Chunk::Custom(parameter.name.clone());
         if let OutMemMode::UninitializedNamed(_) = *mem_mode {
             value
         } else {
+            let value = if let OutMemMode::Uninitialized = *mem_mode {
+                use library::Type::*;
+                let type_ = env.library.type_(parameter.typ);
+                match *type_ {
+                    Fundamental(_) => {
+                        Chunk::Deref{
+                            param: Box::new(value)
+                        }
+                    },
+                    _ => {
+                        value
+                    }
+                }
+            }else {
+                value
+            };
+
             Chunk::FromGlibConversion {
                 mode: parameter.into(),
                 array_length_name: self.find_array_length_name(&parameter.name),
