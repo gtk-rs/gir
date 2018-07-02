@@ -26,13 +26,15 @@ impl TrampolineToGlib for library::Parameter {
         use analysis::conversion_type::ConversionType::*;
         use codegen::sys::ffi_type::ffi_type;
         use analysis::rust_type::rust_type;
+
+        // TODO: handle out parameters
         match ConversionType::of(env, self.typ) {
             Direct => (String::new(), String::new()),
             Scalar => (String::new(), ".to_glib()".to_owned()),
             Pointer => {
                 if *self.nullable{
-                    println!("trampoline {:?}", self);
-                    let mut_str = if self.transfer == library::Transfer::Full{ "_mut"} else {""};
+                    // FIXME: isn't there any other way to know if we need to return a mutable ptr?
+                    let mut_str = if self.c_type.starts_with("const ") {""} else {"_mut"};
                     let left = "match ".to_owned();
                     let right = (if self.transfer == library::Transfer::None {
                         format!(r#"

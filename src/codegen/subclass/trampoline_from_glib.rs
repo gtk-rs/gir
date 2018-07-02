@@ -1,6 +1,7 @@
 use analysis::rust_type::rust_type;
 use analysis::trampoline_parameters::Transformation;
 use analysis::function_parameters::RustParameter;
+use analysis::ref_mode::RefMode;
 
 use env::Env;
 use library;
@@ -21,8 +22,10 @@ impl TrampolineFromGlib for Transformation {
                 let is_borrow = self.conversion_type == Borrow;
                 let (mut left, mut right) = from_glib_xxx(self.transfer, is_borrow);
 
+                let mut_str = if self.ref_mode == RefMode::ByRefMut{ "mut " } else {""};
+
                 let type_prefix = if need_type_name {
-                    format!("&{}::", rust_type(env, self.typ).into_string())
+                    format!("{}{}::", mut_str, rust_type(env, self.typ).into_string())
                 }else{
                     "".to_string()
                 };
@@ -32,15 +35,17 @@ impl TrampolineFromGlib for Transformation {
                 }
 
                 if !par.allow_none{
-                    left = format!("&{}{}", type_prefix, left);
+                    left = format!("&{}{}{}", mut_str, type_prefix, left);
                     format!("{}{}{}", left, self.name, right)
 
                 }else{
                     left = format!("{}{}", type_prefix, left);
-                    format!("(if {name}.is_null() {{ None }} else {{ Some({left}{name}{right}) }}).as_ref()",
+                    let ref_mode = if self.ref_mode == RefMode::ByRefMut{ "as_mut()" } else {"as_ref()"};
+                    format!("(if {name}.is_null() {{ None }} else {{ Some({left}{name}{right}) }}).{ref_mode}",
                         name=self.name,
                         left=left,
-                        right=right)
+                        right=right,
+                        ref_mode=ref_mode)
                 }
 
 
