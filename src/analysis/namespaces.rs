@@ -22,6 +22,7 @@ pub struct Namespace {
 #[derive(Debug)]
 pub struct Info {
     namespaces: Vec<Namespace>,
+    pub is_glib_crate: bool,
     pub glib_ns_id: NsId,
 }
 
@@ -41,6 +42,7 @@ impl Index<NsId> for Info {
 
 pub fn run(gir: &library::Library) -> Info {
     let mut namespaces = Vec::with_capacity(gir.namespaces.len());
+    let mut is_glib_crate = false;
     let mut glib_ns_id = None;
     let mut is_gobject = false;
 
@@ -51,6 +53,7 @@ pub fn run(gir: &library::Library) -> Info {
         if is_local_ffi && ns.name == "GObject" {
             is_gobject = true;
             is_local_ffi = false;
+            is_glib_crate = true;
         } else if is_gobject && ns.name == "GLib" {
             is_local_ffi = true;
         }
@@ -74,11 +77,15 @@ pub fn run(gir: &library::Library) -> Info {
         });
         if ns.name == "GLib" {
             glib_ns_id = Some(ns_id);
+            if ns_id == MAIN {
+                is_glib_crate = true;
+            }
         }
     }
 
     Info {
         namespaces,
+        is_glib_crate,
         glib_ns_id: glib_ns_id.expect("Missing `GLib` namespace!"),
     }
 }
