@@ -659,7 +659,6 @@ fn generate_parent_impls(
     try!(writeln!(w));
 
     let parents = subclass_info.get_parents(env);
-    writeln!(w, "// FIXME: Boilerplate");
 
     try!(writeln!(
         w,
