@@ -44,18 +44,18 @@ pub fn generate(env: &Env) {
 fn normal_generate(env: &Env) {
     let mut mod_rs: Vec<String> = Vec::new();
     let mut traits: Vec<String> = Vec::new();
-    let root_path = env.config.target_path.join("src").join("auto");
+    let root_path = env.config.auto_path.as_path();
 
     generate_single_version_file(env);
-    objects::generate(env, &root_path, &mut mod_rs, &mut traits);
-    records::generate(env, &root_path, &mut mod_rs);
-    enums::generate(env, &root_path, &mut mod_rs);
-    flags::generate(env, &root_path, &mut mod_rs);
-    alias::generate(env, &root_path, &mut mod_rs);
-    functions::generate(env, &root_path, &mut mod_rs);
-    constants::generate(env, &root_path, &mut mod_rs);
+    objects::generate(env, root_path, &mut mod_rs, &mut traits);
+    records::generate(env, root_path, &mut mod_rs);
+    enums::generate(env, root_path, &mut mod_rs);
+    flags::generate(env, root_path, &mut mod_rs);
+    alias::generate(env, root_path, &mut mod_rs);
+    functions::generate(env, root_path, &mut mod_rs);
+    constants::generate(env, root_path, &mut mod_rs);
 
-    generate_mod_rs(env, &root_path, &mod_rs, &traits);
+    generate_mod_rs(env, root_path, &mod_rs, &traits);
 }
 
 pub fn generate_mod_rs(env: &Env, root_path: &Path, mod_rs: &[String], traits: &[String]) {
