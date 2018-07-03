@@ -696,7 +696,6 @@ fn generate_interface_impls(
 ) -> Result<()> {
     try!(writeln!(w));
 
-    writeln!(w, "// FIXME: Boilerplate");
     if subclass_info.parents.len() > 0 {
         for parent in &subclass_info.parents {
             let t = env.library.type_(parent.type_id);
