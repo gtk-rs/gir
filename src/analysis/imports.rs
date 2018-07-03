@@ -24,7 +24,11 @@ pub struct Imports {
 
 impl Imports {
     pub fn new(gir: &Library) -> Imports {
-        let crate_name = crate_name(&gir.namespace(namespaces::MAIN).name);
+        let crate_name = if gir.namespace(namespaces::MAIN).name == "GObject" {
+            crate_name("GLib")
+        } else {
+            crate_name(&gir.namespace(namespaces::MAIN).name)
+        };
         Imports {
             crate_name,
             defined: None,

@@ -53,9 +53,17 @@ pub fn uses(w: &mut Write, env: &Env, imports: &Imports) -> Result<()> {
         }
 
         try!(version_condition(w, env, *version, false, 0));
-        if env.namespaces.glib_ns_id == namespaces::MAIN && name == "glib_ffi" {
-            try!(writeln!(w, "use ffi as {};", name));
-        } else {
+        let mut default_use = true;
+        if env.namespaces.is_glib_crate {
+            if name == "glib_ffi" {
+                try!(writeln!(w, "use ffi as {};", name));
+                default_use = false;
+            } else if env.namespaces.glib_ns_id != namespaces::MAIN && name == "ffi" {
+                try!(writeln!(w, "use gobject_ffi as {};", name));
+                default_use = false;
+            }
+        }
+        if default_use {
             try!(writeln!(w, "use {};", name));
         }
     }
