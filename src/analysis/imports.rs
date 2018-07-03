@@ -24,22 +24,16 @@ pub struct Imports {
 
 impl Imports {
     pub fn new(gir: &Library) -> Imports {
-        let crate_name = if gir.namespace(namespaces::MAIN).name == "GObject" {
-            crate_name("GLib")
-        } else {
-            crate_name(&gir.namespace(namespaces::MAIN).name)
-        };
         Imports {
-            crate_name,
+            crate_name: make_crate_name(gir),
             defined: None,
             map: BTreeMap::new(),
         }
     }
 
     pub fn with_defined(gir: &Library, name: &str) -> Imports {
-        let crate_name = crate_name(&gir.namespace(namespaces::MAIN).name);
         Imports {
-            crate_name,
+            crate_name: make_crate_name(gir),
             defined: Some(name.to_owned()),
             map: BTreeMap::new(),
         }
@@ -134,5 +128,14 @@ impl Imports {
 
     pub fn iter(&self) -> Iter<String, (Option<Version>, Vec<String>)> {
         self.map.iter()
+    }
+}
+
+fn make_crate_name(gir: &Library) -> String {
+    let name = gir.namespace(namespaces::MAIN).name.as_str();
+    if name == "GObject" {
+        crate_name("GLib")
+    } else {
+        crate_name(name)
     }
 }
