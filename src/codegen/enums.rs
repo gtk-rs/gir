@@ -57,6 +57,10 @@ pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>) {
     }
     imports.add("glib::translate::*", None);
 
+    if !has_any {
+        return
+    }
+
     let path = root_path.join("enums.rs");
     file_saver::save_to_file(path, env.config.make_backup, |w| {
         try!(general::start_comments(w, &env.config));
