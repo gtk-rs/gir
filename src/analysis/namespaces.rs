@@ -42,11 +42,19 @@ impl Index<NsId> for Info {
 pub fn run(gir: &library::Library) -> Info {
     let mut namespaces = Vec::with_capacity(gir.namespaces.len());
     let mut glib_ns_id = None;
+    let mut is_gobject = false;
 
     for (ns_id, ns) in gir.namespaces.iter().enumerate() {
         let ns_id = ns_id as NsId;
         let crate_name = nameutil::crate_name(&ns.name);
-        let ffi_crate_name = if ns_id == MAIN {
+        let mut is_local_ffi = ns_id == MAIN;
+        if is_local_ffi && ns.name == "GObject" {
+            is_gobject = true;
+            is_local_ffi = false;
+        } else if is_gobject && ns.name == "GLib" {
+            is_local_ffi = true;
+        }
+        let ffi_crate_name = if is_local_ffi {
             "ffi".to_owned()
         } else {
             format!("{}_ffi", crate_name)
