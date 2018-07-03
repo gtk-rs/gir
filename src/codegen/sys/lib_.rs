@@ -18,7 +18,7 @@ use version::Version;
 pub fn generate(env: &Env) {
     info!("Generating sys for {}", env.config.library_name);
 
-    let path = env.config.target_path.join(file_name_sys("lib"));
+    let path = env.config.auto_path.join(file_name_sys("lib"));
 
     info!("Generating file {:?}", path);
     save_to_file(&path, env.config.make_backup, |w| generate_lib(w, env));
@@ -108,10 +108,8 @@ fn include_custom_modules(w: &mut Write, env: &Env) -> Result<()> {
 }
 
 fn find_modules(env: &Env) -> Result<Vec<String>> {
-    let path = env.config.target_path.join("src");
-
     let mut vec = Vec::<String>::new();
-    for entry in try!(fs::read_dir(path)) {
+    for entry in try!(fs::read_dir(&env.config.auto_path)) {
         let path = try!(entry).path();
         let ext = match path.extension() {
             Some(ext) => ext,

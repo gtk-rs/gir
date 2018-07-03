@@ -26,7 +26,7 @@ pub fn strip_suffix<'a>(name: &'a str, suffix: &str) -> Option<&'a str> {
 */
 
 pub fn file_name_sys(name: &str) -> String {
-    let mut path = PathBuf::from("src").join(name);
+    let mut path = PathBuf::from(name);
     let added = path.set_extension("rs");
     assert!(added);
     path.to_str().unwrap().into()
@@ -120,12 +120,7 @@ mod tests {
 
     #[test]
     fn file_name_sys_works() {
-        let expected: String = PathBuf::from("src")
-            .join("funcs.rs")
-            .to_str()
-            .unwrap()
-            .into();
-        assert_eq!(file_name_sys("funcs"), expected);
+        assert_eq!(file_name_sys("funcs"), "funcs.rs");
     }
 
     #[test]

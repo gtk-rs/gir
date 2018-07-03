@@ -21,6 +21,8 @@ pub struct Config {
     pub library_name: String,
     pub library_version: String,
     pub target_path: PathBuf,
+    /// Path where files generated in normal and sys mode
+    pub auto_path: PathBuf,
     pub doc_target_path: PathBuf,
     pub external_libraries: Vec<ExternalLibrary>,
     pub objects: gobjects::GObjects,
@@ -105,6 +107,12 @@ impl Config {
             Some(a) => a.into(),
         };
 
+        let auto_path = match toml.lookup("options.auto_path") {
+            Some(p) => target_path.join(try!(p.as_result_str("options.auto_path"))),
+            None if work_mode == WorkMode::Normal => target_path.join("src").join("auto"),
+            None => target_path.join("src"),
+        };
+
         let doc_target_path: PathBuf = match doc_target_path.into() {
             Some("") | None => {
                 match toml.lookup("options.doc_target_path") {
@@ -163,6 +171,7 @@ impl Config {
             library_name,
             library_version,
             target_path,
+            auto_path,
             doc_target_path,
             external_libraries,
             objects,

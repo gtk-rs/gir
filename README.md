@@ -51,6 +51,8 @@ library = "GtkSource"
 version = "3.0"
 min_cfg_version = "3.0"
 target_path = "."
+#Path where lib.rs generated (defaults to <target_path>/src)
+#auto_path = "src"
 work_mode = "sys"
 ```
 
@@ -88,6 +90,8 @@ library = "Gtk"
 version = "3.0"
 min_cfg_version = "3.4"
 target_path = "."
+#Path where objects generated (defaults to <target_path>/src/auto)
+#auto_path = "src/auto"
 work_mode = "normal"
 generate_safety_asserts = true
 deprecate_by_min_version = true
