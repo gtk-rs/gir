@@ -23,6 +23,7 @@ use codegen::function_body_chunk::{c_type_mem_mode, OutMemMode, Parameter, Retur
 #[derive(Default)]
 pub struct Builder {
     object_name: String,
+    module_name: String,
     object_class_c_type: String,
     object_c_type: String,
     ffi_crate_name: String,
@@ -44,6 +45,11 @@ impl Builder {
 
     pub fn object_name(&mut self, name: &str) -> &mut Builder {
         self.object_name = name.into();
+        self
+    }
+
+    pub fn module_name(&mut self, name: &str) -> &mut Builder {
+        self.module_name = name.into();
         self
     }
 
@@ -291,7 +297,7 @@ impl Builder {
     ) -> Chunk {
         let mut body = Vec::new();
 
-        let iface_name = format!("{}_iface", self.object_name.to_lowercase()).to_owned();
+        let iface_name = format!("{}_iface", self.module_name).to_owned();
 
         body.push(Chunk::Let {
             name: iface_name.clone(),
@@ -349,7 +355,7 @@ impl Builder {
                     "{iface}.{mname} = Some({obj}_{mname}::<T>);",
                     mname = method_analysis.name,
                     iface = iface_name,
-                    obj = self.object_name.to_lowercase()
+                    obj = self.module_name
                 ).to_owned(),
             ));
         }

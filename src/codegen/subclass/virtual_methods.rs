@@ -492,6 +492,7 @@ pub fn body_chunk_builder(env: &Env,
     let outs_as_return = !method_analysis.outs.is_empty();
 
     builder.object_name(&object_analysis.name)
+           .module_name(&object_analysis.module_name(env).unwrap_or(object_analysis.name.to_lowercase()))
            .object_class_c_type(object_analysis.c_class_type.as_ref().unwrap())
            .ffi_crate_name(&env.namespaces[object_analysis.type_id.ns_id].ffi_crate_name)
            .glib_name(&method_analysis.glib_name)
@@ -614,6 +615,7 @@ unsafe extern \"C\" fn {}_init<T: ObjectType>(
     let mut builder = Builder::new();
 
     builder.object_name(&object_analysis.name)
+           .module_name(&object_analysis.module_name(env).unwrap_or(object_analysis.name.to_lowercase()))
            .object_c_type(&object_analysis.c_type)
            .ffi_crate_name(&env.namespaces[object_analysis.type_id.ns_id].ffi_crate_name);
 
@@ -645,7 +647,7 @@ pub fn register_{}<T: ObjectType, I: {}Static<T>>(
     type_: glib::Type,
     imp: &I,
 ) {{",
-        object_analysis.module_name(env).unwrap_or(object_analysis.name.to_lowercase()),
+        object_analysis.name,
         object_analysis.subclass_impl_trait_name
     ));
 
@@ -763,7 +765,7 @@ fn trampoline_call_return(env: &Env, object: &analysis::object::Info, method: &a
         }
 
         for param in &method.outs.params{
-            right.push(format!("std::ptr::write({}, {});", param.name, trampoline_to_glib(param, env, object, method)).to_string());
+            right.push(format!("ptr::write({}, {});", param.name, trampoline_to_glib(param, env, object, method)).to_string());
         }
     }
     match method.ret.parameter {

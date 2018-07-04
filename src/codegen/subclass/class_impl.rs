@@ -271,7 +271,11 @@ fn subclass_parent_module_path(parent: &analysis::object::Info, object: &analysi
     }
 
     if for_use{
-        format!("{}{} as {}", ns, module_name, alias)
+        if alias.len() > 0 {
+            format!("{}{} as {}", ns, module_name, alias)
+        }else{
+            format!("{}{}", ns, module_name)
+        }
     }else{
         format!("{}", alias)
     }
