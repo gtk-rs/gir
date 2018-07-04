@@ -755,8 +755,12 @@ fn trampoline_call_return(env: &Env, object: &analysis::object::Info, method: &a
         let mut param_names: Vec<String> = if method.ret.parameter.is_some() { vec![retvar_name.clone()] } else {vec![]};
         param_names.append(&mut (&method.outs.params).into_iter().map(|ref p| format!("rs_{}", p.name).to_string()).collect());
 
-        retvar = format!("({})", param_names.join(", ")).to_string();
-
+        let param_name_list = param_names.join(", ");
+        if param_names.len() > 1{
+            retvar = format!("({})", param_name_list).to_string();
+        }else{
+            retvar = param_name_list;
+        }
 
         for param in &method.outs.params{
             right.push(format!("std::ptr::write({}, {});", param.name, trampoline_to_glib(param, env, object, method)).to_string());
@@ -775,18 +779,3 @@ fn trampoline_call_return(env: &Env, object: &analysis::object::Info, method: &a
 
     (left, right)
 }
-
-
-// fn trampoline_call_output_params(env: &Env, object: &analysis::object::Info, method: &analysis::virtual_methods::Info) -> (String, String) {
-//
-//     // TODO: support both return value and output parameters
-//     for param in method.outs.params{
-//         param.trampoline_to_glib_as_function(env, Some(object), Some(method));
-//     }
-//
-//         // let (rs_minimum_width, rs_natural_width) = imp.get_preferred_width_for_height(&wrap, &from_glib_none(widget), height);
-//         // std::ptr::write(minimum_width, rs_minimum_width);
-//         // std::ptr::write(natural_width, rs_natural_width);
-//
-//
-// }
