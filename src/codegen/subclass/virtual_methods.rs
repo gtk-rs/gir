@@ -25,7 +25,6 @@ use codegen::sys::ffi_type::ffi_type;
 use codegen::function_body_chunk::{Parameter, ReturnValue};
 use codegen::return_value::{ToReturnValue, out_parameter_as_return};
 use codegen::subclass::trampoline_from_glib::TrampolineFromGlib;
-use codegen::trampoline_to_glib::TrampolineToGlib;
 
 pub fn generate_default_impl(
     w: &mut Write,
@@ -462,12 +461,17 @@ pub fn generate_extern_c_func(
     let func_ret = trampoline_call_return(env, object_analysis, method_analysis);
     func_params.insert(0, "&wrap".to_string());
 
-    try!(writeln!(w, "{}{}imp.{}({}){}",
+    try!(writeln!(w, "{}{}imp.{}({});",
                      tabs(indent+1),
                      func_ret.0,
                      &method_analysis.name,
-                     func_params.join(", "),
-                     func_ret.1));
+                     func_params.join(", ")));
+
+    for line in func_ret.1{
+        try!(writeln!(w, "{}{}",
+                         tabs(indent+1),
+                         line));
+    }
 
     try!(writeln!(
         w,
@@ -736,14 +740,53 @@ fn trampoline_call_parameters(env: &Env, analysis: &analysis::virtual_methods::I
     parameter_strs
 }
 
-fn trampoline_call_return(env: &Env, object: &analysis::object::Info, method: &analysis::virtual_methods::Info) -> (String, String) {
+fn trampoline_call_return(env: &Env, object: &analysis::object::Info, method: &analysis::virtual_methods::Info) -> (String, Vec<String>) {
+    use codegen::subclass::trampoline_to_glib::trampoline_to_glib;
+
+    let mut left = String::new();
+    let mut right: Vec<String> = vec![];
+
+    let retvar_name = "rs_ret".to_string();
+    let mut retvar = retvar_name.clone();
 
     let outs_as_return = !method.outs.is_empty();
-    if(!outs_as_return){
-        //TODO: convert params to output
+    if outs_as_return {
+
+        let mut param_names: Vec<String> = if method.ret.parameter.is_some() { vec![retvar_name.clone()] } else {vec![]};
+        param_names.append(&mut (&method.outs.params).into_iter().map(|ref p| format!("rs_{}", p.name).to_string()).collect());
+
+        retvar = format!("({})", param_names.join(", ")).to_string();
+
+
+        for param in &method.outs.params{
+            right.push(format!("std::ptr::write({}, {});", param.name, trampoline_to_glib(param, env, object, method)).to_string());
+        }
     }
     match method.ret.parameter {
-        Some(ref param) => param.trampoline_to_glib_as_function(env, Some(object), Some(method)),
-        None => (String::new(), ";".to_string())
+        Some(ref param) => {
+            right.push(trampoline_to_glib(param, env, object, method));
+        },
+        None => {}
     }
+
+    if method.ret.parameter.is_some() || outs_as_return{
+        left = format!("let {} = ", retvar).to_string();
+    }
+
+    (left, right)
 }
+
+
+// fn trampoline_call_output_params(env: &Env, object: &analysis::object::Info, method: &analysis::virtual_methods::Info) -> (String, String) {
+//
+//     // TODO: support both return value and output parameters
+//     for param in method.outs.params{
+//         param.trampoline_to_glib_as_function(env, Some(object), Some(method));
+//     }
+//
+//         // let (rs_minimum_width, rs_natural_width) = imp.get_preferred_width_for_height(&wrap, &from_glib_none(widget), height);
+//         // std::ptr::write(minimum_width, rs_minimum_width);
+//         // std::ptr::write(natural_width, rs_natural_width);
+//
+//
+// }
