@@ -744,6 +744,7 @@ fn trampoline_call_parameters(env: &Env, analysis: &analysis::virtual_methods::I
 
 fn trampoline_call_return(env: &Env, object: &analysis::object::Info, method: &analysis::virtual_methods::Info) -> (String, Vec<String>) {
     use codegen::subclass::trampoline_to_glib::trampoline_to_glib;
+    use analysis::out_parameters::Mode;
 
     let mut left = String::new();
     let mut right: Vec<String> = vec![];
@@ -752,9 +753,11 @@ fn trampoline_call_return(env: &Env, object: &analysis::object::Info, method: &a
     let mut retvar = retvar_name.clone();
 
     let outs_as_return = !method.outs.is_empty();
-    if outs_as_return {
 
-        let mut param_names: Vec<String> = if method.ret.parameter.is_some() { vec![retvar_name.clone()] } else {vec![]};
+    let outs_as_return_optional = method.outs.mode == Mode::Optional;
+
+    if outs_as_return {
+        let mut param_names: Vec<String> = vec![];
         param_names.append(&mut (&method.outs.params).into_iter().map(|ref p| format!("rs_{}", p.name).to_string()).collect());
 
         let param_name_list = param_names.join(", ");
@@ -772,15 +775,28 @@ fn trampoline_call_return(env: &Env, object: &analysis::object::Info, method: &a
             ]);
         }
     }
-    match method.ret.parameter {
-        Some(ref param) => {
-            right.push(trampoline_to_glib(param, env, object, method));
-        },
-        None => {}
-    }
 
     if method.ret.parameter.is_some() || outs_as_return{
-        left = format!("let {} = ", retvar).to_string();
+        if !outs_as_return_optional{
+            left = format!("let {} = ", retvar).to_string();
+        }else{
+            left = "let ret = ".to_string();
+        }
+    }
+
+    if !outs_as_return_optional{
+        match method.ret.parameter {
+            Some(ref param) => {
+                right.push(trampoline_to_glib(param, env, object, method));
+            },
+            None => {}
+        }
+    }else{
+        right.insert(0, "match ret {".to_string());
+        right.insert(1, format!("Some({}) => {{", retvar).to_string());
+        right.push("true.to_glib() },".to_string());
+        right.push("None => false.to_glib()".to_string());
+        right.push("}".to_string());
     }
 
     (left, right)
