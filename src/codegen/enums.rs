@@ -40,6 +40,10 @@ pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>) {
         }
     }
 
+    if !has_any {
+        return
+    }
+
     let mut imports = Imports::new(&env.library);
     imports.add("ffi", None);
     if has_get_quark {
@@ -57,19 +61,13 @@ pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>) {
     }
     imports.add("glib::translate::*", None);
 
-    if !has_any {
-        return
-    }
-
     let path = root_path.join("enums.rs");
     file_saver::save_to_file(path, env.config.make_backup, |w| {
         try!(general::start_comments(w, &env.config));
         try!(general::uses(w, env, &imports));
         try!(writeln!(w));
 
-        if has_any {
-            mod_rs.push("\nmod enums;".into());
-        }
+        mod_rs.push("\nmod enums;".into());
         for config in &configs {
             if let Type::Enumeration(ref enum_) = *env.library.type_(config.type_id.unwrap()) {
                 if let Some(cfg) = version_condition_string(env, enum_.version, false, 0) {
