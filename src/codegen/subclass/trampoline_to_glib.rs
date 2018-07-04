@@ -64,6 +64,11 @@ fn to_glib_with_destroy(parameter: &library::Parameter,
     use analysis::rust_type::rust_type;
     use codegen::sys::ffi_type::ffi_type;
 
+    let type_ = &env.library.type_(parameter.typ);
+    // TODO: way too ugly
+    let c_type = type_.get_glib_name().map(|c| format!("{}*", c)).unwrap_or(parameter.c_type.clone());
+
+
     format!(r#"{{
         let ret = t_{param_name}{to_glib};
         unsafe extern "C" fn destroy_{param_name}(p: glib_ffi::gpointer){{
@@ -85,7 +90,7 @@ fn to_glib_with_destroy(parameter: &library::Parameter,
     }),
     param_name=param_name,
     rust_type=rust_type(env, parameter.typ).into_string(),
-    c_type= ffi_type(env, parameter.typ, &parameter.c_type).into_string())
+    c_type=ffi_type(env, parameter.typ, &c_type).into_string())
 }
 
 fn to_glib_xxx(transfer: library::Transfer) -> &'static str {

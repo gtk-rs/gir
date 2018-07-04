@@ -647,7 +647,7 @@ pub fn register_{}<T: ObjectType, I: {}Static<T>>(
     type_: glib::Type,
     imp: &I,
 ) {{",
-        object_analysis.name,
+        object_analysis.module_name(env).unwrap_or(object_analysis.name.to_lowercase()),
         object_analysis.subclass_impl_trait_name
     ));
 
@@ -765,7 +765,11 @@ fn trampoline_call_return(env: &Env, object: &analysis::object::Info, method: &a
         }
 
         for param in &method.outs.params{
-            right.push(format!("ptr::write({}, {});", param.name, trampoline_to_glib(param, env, object, method)).to_string());
+            right.append(&mut vec![
+                format!("if !{}.is_null() {{", param.name).to_string(),
+                format!("{}ptr::write({}, {});", tabs(1), param.name, trampoline_to_glib(param, env, object, method)).to_string(),
+                "}".to_string()
+            ]);
         }
     }
     match method.ret.parameter {
