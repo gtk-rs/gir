@@ -75,6 +75,11 @@ pub fn generate(
         }
     }
 
+    if function_type.is_none() {
+        // Signal incomplete, can't generate emit
+        return Ok(());
+    }
+
     if let Some(ref emit_name) = analysis.action_emit_name {
         try!(writeln!(w));
         if !in_trait || only_declaration {
