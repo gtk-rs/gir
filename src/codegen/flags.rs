@@ -58,9 +58,9 @@ pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>) {
         try!(general::uses(w, env, &imports));
         try!(writeln!(w));
 
+        mod_rs.push("\nmod flags;".into());
         for config in &configs {
             if let Type::Bitfield(ref flags) = *env.library.type_(config.type_id.unwrap()) {
-                mod_rs.push("\nmod flags;".into());
                 if let Some(cfg) = version_condition_string(env, flags.version, false, 0) {
                     mod_rs.push(cfg);
                 }
