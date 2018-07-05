@@ -40,6 +40,10 @@ pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>) {
         }
     }
 
+    if !has_any {
+        return
+    }
+
     let mut imports = Imports::new(&env.library);
     imports.add("ffi", None);
     if has_get_quark {
@@ -63,9 +67,7 @@ pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>) {
         try!(general::uses(w, env, &imports));
         try!(writeln!(w));
 
-        if has_any {
-            mod_rs.push("\nmod enums;".into());
-        }
+        mod_rs.push("\nmod enums;".into());
         for config in &configs {
             if let Type::Enumeration(ref enum_) = *env.library.type_(config.type_id.unwrap()) {
                 if let Some(cfg) = version_condition_string(env, enum_.version, false, 0) {

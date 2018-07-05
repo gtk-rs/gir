@@ -11,16 +11,29 @@ use std::path::Path;
 use traits::*;
 
 pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>) {
+    let configs: Vec<&GObject> = env.config
+                                    .objects
+                                    .values()
+                                    .filter(|c| {
+                                        c.status.need_generate()
+                                        && c.type_id.map_or(false,
+                                                            |tid| tid.ns_id == namespaces::MAIN)
+                                    })
+                                    .collect();
+    let has_any = configs.iter()
+                         .any(|c| {
+                             if let Type::Bitfield(_) = *env.library.type_(c.type_id.unwrap()) {
+                                 true
+                             } else {
+                                 false
+                             }
+                         });
+
+    if !has_any {
+        return
+    }
     let path = root_path.join("flags.rs");
     file_saver::save_to_file(path, env.config.make_backup, |w| {
-        let configs: Vec<&GObject> = env.config
-            .objects
-            .values()
-            .filter(|c| {
-                c.status.need_generate()
-                    && c.type_id.map_or(false, |tid| tid.ns_id == namespaces::MAIN)
-            })
-            .collect();
 
         let mut imports = Imports::new(&env.library);
         imports.add("ffi", None);
@@ -45,13 +58,9 @@ pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>) {
         try!(general::uses(w, env, &imports));
         try!(writeln!(w));
 
-        let mut first = true;
         for config in &configs {
             if let Type::Bitfield(ref flags) = *env.library.type_(config.type_id.unwrap()) {
-                if first {
-                    mod_rs.push("\nmod flags;".into());
-                    first = false;
-                }
+                mod_rs.push("\nmod flags;".into());
                 if let Some(cfg) = version_condition_string(env, flags.version, false, 0) {
                     mod_rs.push(cfg);
                 }
