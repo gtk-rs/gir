@@ -80,11 +80,23 @@ fn to_glib_with_destroy(parameter: &library::Parameter,
     // TODO: way too ugly
     let c_type = type_.get_glib_name().map(|c| format!("{}*", c)).unwrap_or(parameter.c_type.clone());
 
+    let is_container_type = match type_ {
+        library::Type::Array(..) |
+        library::Type::CArray(..) |
+        library::Type::PtrArray(..) |
+        library::Type::List(..) |
+        library::Type::SList(..) |
+        library::Type::FixedArray(..) => true,
+        _ => false
+    };
+
+
+    let rust_type = rust_type(env, parameter.typ).into_string();
 
     format!(r#"{{
         let ret = {param_prefix}{param_name}{to_glib};
         unsafe extern "C" fn destroy_{param_name}(p: glib_ffi::gpointer){{
-            {rust_type}::from_glib_full(p as {c_type});
+            let _:{rust_type} = {glib_translate}::from_glib_full(p as {c_type});
         }};
         gobject_ffi::g_object_set_qdata_full(gptr as *mut gobject_ffi::GObject,
             glib_ffi::g_quark_from_string("rs_{object_name}_{method_name}_{param_name}".to_glib_none().0),
@@ -102,7 +114,8 @@ fn to_glib_with_destroy(parameter: &library::Parameter,
     }),
     param_name=param_name,
     param_prefix=param_prefix,
-    rust_type=rust_type(env, parameter.typ).into_string(),
+    glib_translate= if is_container_type {"FromGlibPtrContainer".to_string()} else {rust_type.clone()},
+    rust_type=rust_type,
     c_type=ffi_type(env, parameter.typ, &c_type).into_string())
 }
 
