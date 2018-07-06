@@ -96,7 +96,7 @@ fn to_glib_with_destroy(parameter: &library::Parameter,
     format!(r#"{{
         let ret = {param_prefix}{param_name}{to_glib};
         unsafe extern "C" fn destroy_{param_name}(p: glib_ffi::gpointer){{
-            let _:{rust_type} = {glib_translate}::from_glib_full(p as {c_type});
+            let _: {rust_type} = {glib_translate}::from_glib_full(p as {c_type});
         }};
         gobject_ffi::g_object_set_qdata_full(gptr as *mut gobject_ffi::GObject,
             glib_ffi::g_quark_from_string("rs_{object_name}_{method_name}_{param_name}".to_glib_none().0),
