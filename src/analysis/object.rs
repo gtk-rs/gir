@@ -10,6 +10,7 @@ use super::imports::Imports;
 use super::info_base::InfoBase;
 use super::signatures::Signatures;
 use traits::*;
+use config::WorkMode;
 
 #[derive(Debug, Default)]
 pub struct Info {
@@ -105,9 +106,19 @@ pub fn class(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<Info>
 
     let mut imports = Imports::with_defined(&env.library, &name);
     imports.add("glib::translate::*", None);
-    imports.add("ffi", None);
+    //imports.add("ffi", None);
     if obj.generate_display_trait {
         imports.add("std::fmt", None);
+    }
+    imports.add("glib_ffi", None);
+    imports.add("gobject_ffi", None);
+    imports.add("std::mem", None);
+    imports.add("std::ptr", None);
+
+    if env.config.work_mode != WorkMode::Subclass {
+        imports.add("ffi", None);
+    }else{
+        imports.add(&format!("{}_ffi", env.config.library_name.to_lowercase()), None);
     }
 
     let supertypes = supertypes::analyze(env, class_tid, &mut imports);
@@ -316,10 +327,16 @@ pub fn interface(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<I
 
     let mut imports = Imports::with_defined(&env.library, &name);
     imports.add("glib::translate::*", None);
-    imports.add("ffi", None);
     imports.add("glib::object::IsA", None);
     if obj.generate_display_trait {
         imports.add("std::fmt", None);
+    }
+
+    if env.config.work_mode == WorkMode::Subclass {
+        imports.add("glib", None);
+        imports.add(&format!("{}_ffi", env.config.library_name.to_lowercase()), None);
+    }else{
+        imports.add("ffi", None);
     }
 
     let supertypes = supertypes::analyze(env, iface_tid, &mut imports);

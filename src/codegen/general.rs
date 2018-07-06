@@ -9,7 +9,6 @@ use config::Config;
 use config::derives::Derive;
 use env::Env;
 use gir_version::VERSION;
-use config::WorkMode;
 use version::Version;
 use writer::primitives::tabs;
 
@@ -47,11 +46,6 @@ from gir-files (https://github.com/gtk-rs/gir-files @ {})",
 pub fn uses(w: &mut Write, env: &Env, imports: &Imports) -> Result<()> {
     try!(writeln!(w));
     for (name, &(ref version, ref constraints)) in imports.iter() {
-
-        // HACK: skip ffi in subclass mode.
-        if name == "ffi" && env.config.work_mode == WorkMode::Subclass{
-            continue
-        }
 
         if constraints.len() == 1 {
             try!(writeln!(w, "#[cfg(feature = \"{}\")]", constraints[0]));
