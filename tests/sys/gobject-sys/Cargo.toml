@@ -1,5 +1,5 @@
 [build-dependencies]
-pkg-config = "0.3.7"
+pkg-config = "0.3.12"
 
 [dependencies]
 bitflags = "1.0"
