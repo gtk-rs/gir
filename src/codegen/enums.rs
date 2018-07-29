@@ -47,7 +47,7 @@ pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>) {
     let mut imports = Imports::new(&env.library);
     imports.add("ffi", None);
     if has_get_quark {
-        imports.add("glib_ffi", None);
+        imports.add("glib::Quark", None);
         imports.add("glib::error::ErrorDomain", None);
     }
     if has_get_type {
@@ -230,8 +230,8 @@ impl FromGlib<ffi::{ffi_name}> for {name} {{
         try!(writeln!(
             w,
             "impl ErrorDomain for {name} {{
-    fn domain() -> glib_ffi::GQuark {{
-        {assert}unsafe {{ ffi::{get_quark}() }}
+    fn domain() -> Quark {{
+        {assert}unsafe {{ from_glib(ffi::{get_quark}()) }}
     }}
 
     fn code(self) -> i32 {{
