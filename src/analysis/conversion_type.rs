@@ -66,6 +66,7 @@ impl ConversionType {
                 UIntPtr => ConversionType::Direct,
                 Unsupported => ConversionType::Unknown,
             },
+            Alias(ref alias) if alias.c_identifier == "GQuark" => ConversionType::Scalar,
             Alias(ref alias) => ConversionType::of(env, alias.typ),
             Bitfield(_) => ConversionType::Scalar,
             Record(_) => ConversionType::Pointer,
