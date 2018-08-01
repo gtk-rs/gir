@@ -41,6 +41,12 @@ pub fn generate(
                 lookup(functions, name),
                 trait_name,
             )),
+            Type::Hash => try!(generate_hash(
+                w,
+                type_name,
+                lookup(functions, name),
+                trait_name,
+            )),
             _ => {}
         }
     }
@@ -115,6 +121,28 @@ impl fmt::Display for {type_name} {{
 }}",
         type_name = type_name,
         body = body
+    )
+}
+
+fn generate_hash(
+    w: &mut Write,
+    type_name: &str,
+    func: &Info,
+    trait_name: Option<&str>,
+) -> Result<()> {
+    let call = generate_call(&func.name, &[], trait_name);
+
+    writeln!(
+        w,
+        "
+impl hash::Hash for {type_name} {{
+    #[inline]
+    fn hash<H>(&self, state: &mut H) where H: hash::Hasher {{
+        hash::Hash::hash(&{call}, state)
+    }}
+}}",
+        type_name = type_name,
+        call = call
     )
 }
 

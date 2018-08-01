@@ -129,6 +129,10 @@ pub fn class(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<Info>
     let specials = special_functions::extract(&mut functions);
     // `copy` will duplicate an object while `clone` just adds a reference
     special_functions::unhide(&mut functions, &specials, special_functions::Type::Copy);
+    // these are all automatically derived on objects and compare by pointer. If such functions
+    // exist they will provide additional functionality
+    special_functions::unhide(&mut functions, &specials, special_functions::Type::Hash);
+    special_functions::unhide(&mut functions, &specials, special_functions::Type::Equal);
     special_functions::analyze_imports(&specials, &mut imports);
 
     let signals = signals::analyze(

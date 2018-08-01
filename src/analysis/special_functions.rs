@@ -14,6 +14,7 @@ pub enum Type {
     Ref,
     ToString,
     Unref,
+    Hash,
 }
 
 impl FromStr for Type {
@@ -30,6 +31,7 @@ impl FromStr for Type {
             "ref" | "ref_" => Ok(Ref),
             "to_string" => Ok(ToString),
             "unref" => Ok(Unref),
+            "hash" => Ok(Hash),
             _ => Err(()),
         }
     }
@@ -91,7 +93,7 @@ fn visibility(t: Type, args_len: usize) -> Visibility {
     use self::Type::*;
     match t {
         Copy | Free | Ref | Unref => Visibility::Hidden,
-        Compare | Equal => Visibility::Private,
+        Hash | Compare | Equal => Visibility::Private,
         ToString if args_len == 1 => Visibility::Private,
         ToString => Visibility::Public,
     }
@@ -115,6 +117,7 @@ pub fn analyze_imports(specials: &Infos, imports: &mut Imports) {
         match *type_ {
             Compare => imports.add("std::cmp", None),
             ToString => imports.add("std::fmt", None),
+            Hash => imports.add("std::hash", None),
             _ => {}
         }
     }
