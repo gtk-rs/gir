@@ -51,6 +51,8 @@ pub enum TransformationType {
         ref_mode: RefMode,
         //filled by functions
         to_glib_extra: String,
+        explicit_target_type: String,
+        pointer_cast: String,
     },
     ToGlibStash { name: String },
     ToGlibBorrow,
@@ -286,6 +288,8 @@ pub fn analyze(
                 transfer,
                 ref_mode,
                 to_glib_extra: String::new(),
+                explicit_target_type: String::new(),
+                pointer_cast: String::new(),
             },
             ConversionType::Borrow => TransformationType::ToGlibBorrow,
             ConversionType::Unknown => TransformationType::ToGlibUnknown { name },
