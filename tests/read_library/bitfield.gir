@@ -1,0 +1,7 @@
+<!--mode:object-->
+    <bitfield name="AsciiType" c:type="TAsciiType">
+      <member name="alnum" value="1" c:identifier="T_ASCII_ALNUM">
+      </member>
+      <member name="alpha" value="2" c:identifier="T_ASCII_ALPHA">
+      </member>
+    </bitfield>

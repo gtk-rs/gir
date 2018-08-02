@@ -1,0 +1,4 @@
+<!--mode:object-->
+    <alias name="TimeSpan" c:type="TTimeSpan">
+      <type name="gint64" c:type="gint64"/>
+    </alias>

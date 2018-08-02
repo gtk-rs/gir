@@ -55,3 +55,14 @@ pub use codegen::generate as codegen_generate;
 pub use config::{Config, WorkMode};
 pub use env::Env;
 pub use library::Library;
+
+pub mod tests_export {
+    pub use config::gobjects::{GObject, GObjects};
+    pub use traits::*;
+    pub use version::Version;
+
+    pub mod library {
+        pub use library::*;
+        pub use parser::EMPTY_CTYPE;
+    }
+}

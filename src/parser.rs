@@ -1,3 +1,4 @@
+use std::io::Read;
 use std::mem::replace;
 use std::path::{Path, PathBuf};
 use std::str::FromStr;
@@ -6,7 +7,7 @@ use library::*;
 use version::Version;
 use xmlparser::{Element, XmlParser};
 
-const EMPTY_CTYPE: &str = "/*EMPTY*/";
+pub const EMPTY_CTYPE: &str = "/*EMPTY*/";
 
 pub fn is_empty_c_type(c_type: &str) -> bool {
     c_type == EMPTY_CTYPE
@@ -18,25 +19,48 @@ impl Library {
         let mut p = XmlParser::from_path(&file_name)?;
         p.document(|p, _| {
             p.element_with_name("repository", |parser, _elem| {
-                self.read_repository(dir, parser)
+                self.read_repository(dir, parser, false)
             })
         })
     }
 
-    fn read_repository(&mut self, dir: &Path, parser: &mut XmlParser) -> Result<(), String> {
+    pub fn read_reader<'a, R: Read, P: Into<Option<&'a Path>>>(
+        &mut self,
+        reader: R,
+        dir: P,
+    ) -> Result<(), String> {
+        let dir = if let Some(dir) = dir.into() {
+            dir
+        } else {
+            Path::new("directory for include not passed into read_reader")
+        };
+        let mut p = XmlParser::new(reader)?;
+        p.document(|p, _| {
+            p.element_with_name("repository", |parser, _elem| {
+                self.read_repository(dir, parser, true)
+            })
+        })
+    }
+
+    fn read_repository(
+        &mut self,
+        dir: &Path,
+        parser: &mut XmlParser,
+        include_existing: bool,
+    ) -> Result<(), String> {
         let mut package = None;
         let mut includes = Vec::new();
         parser.elements(|parser, elem| match elem.name() {
             "include" => {
                 match (elem.attr("name"), elem.attr("version")) {
                     (Some(name), Some(ver)) => {
-                        if self.find_namespace(name).is_none() {
+                        if include_existing || self.find_namespace(name).is_none() {
                             let lib = format!("{}-{}", name, ver);
                             self.read_file(dir, &lib)?;
                         }
-                    },
+                    }
                     (Some(name), None) => includes.push(name.to_owned()),
-                    _ => {},
+                    _ => {}
                 }
                 Ok(())
             }
@@ -48,8 +72,12 @@ impl Library {
                 }
                 Ok(())
             }
-            "namespace" => self.read_namespace(parser, elem, package.take(), 
-                                               replace(&mut includes, Vec::new())),
+            "namespace" => self.read_namespace(
+                parser,
+                elem,
+                package.take(),
+                replace(&mut includes, Vec::new()),
+            ),
             _ => Err(parser.unexpected_element(elem)),
         })?;
         Ok(())

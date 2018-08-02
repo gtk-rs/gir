@@ -1,0 +1,14 @@
+<!--mode:object-->
+    <function name="access" c:identifier="t_access" version="2.8">
+      <return-value transfer-ownership="none">
+        <type name="gint" c:type="int"/>
+      </return-value>
+      <parameters>
+        <parameter name="filename" transfer-ownership="full">
+          <type name="filename" c:type="const gchar*"/>
+        </parameter>
+        <parameter name="mode" transfer-ownership="none">
+          <type name="gint" c:type="int"/>
+        </parameter>
+      </parameters>
+    </function>
