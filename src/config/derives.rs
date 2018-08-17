@@ -4,14 +4,14 @@ use super::error::TomlHelper;
 
 #[derive(Clone, Debug)]
 pub struct Derive {
-    pub name: String,
+    pub names: Vec<String>,
     pub cfg_condition: Option<String>,
 }
 
 impl Parse for Derive {
     fn parse(toml: &Value, object_name: &str) -> Option<Derive> {
-        let name = match toml.lookup("name").and_then(|v| v.as_str()) {
-            Some(name) => name.to_owned(),
+        let names = match toml.lookup("name").and_then(|v| v.as_str()) {
+            Some(names) => names,
             None => {
                 error!(
                     "No 'name' given for derive for object {}",
@@ -29,8 +29,13 @@ impl Parse for Derive {
             .and_then(|v| v.as_str())
             .map(|s| s.to_owned());
 
+        let mut names_vec = Vec::new();
+        for name in names.split(',') {
+            names_vec.push(name.trim().into());
+        }
+
         Some(Derive {
-            name,
+            names: names_vec,
             cfg_condition,
         })
     }

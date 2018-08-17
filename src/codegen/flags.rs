@@ -83,7 +83,11 @@ fn generate_flags(env: &Env, w: &mut Write, flags: &Bitfield, config: &GObject) 
             "    #[must_use]"
         ));
     }
-    try!(derives(w, &config.derives, 1));
+
+    if let Some(ref d) = config.derives {
+        try!(derives(w, &d, 1));
+    }
+
     try!(writeln!(w, "    pub struct {}: u32 {{", flags.name));
     for member in &flags.members {
         let member_config = config.members.matched(&member.name);

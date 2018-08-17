@@ -1,6 +1,7 @@
 use std::ops::Deref;
 
 use config::gobjects::GObject;
+use config::derives::{Derive, Derives};
 use env::Env;
 use library;
 use nameutil::*;
@@ -14,6 +15,7 @@ pub struct Info {
     pub base: InfoBase,
     pub glib_get_type: Option<String>,
     pub use_boxed_functions: bool,
+    pub derives: Derives,
 }
 
 impl Deref for Info {
@@ -33,6 +35,23 @@ impl Info {
             .unwrap_or_else(|| panic!("{} is not a record.", self.full_name));
         type_
     }
+}
+
+fn filter_derives(derives: Derives, names: &[&str]) -> Derives {
+    derives.iter().filter_map(|derive| {
+        let new_names = derive.names.iter().filter(|n| {
+            !names.contains(&n.as_str())
+        }).map(Clone::clone).collect::<Vec<_>>();
+
+        if !new_names.is_empty() {
+            Some(Derive {
+                names: new_names,
+                cfg_condition: derive.cfg_condition.clone(),
+            })
+        } else {
+            None
+        }
+    }).collect()
 }
 
 pub fn new(env: &Env, obj: &GObject) -> Option<Info> {
@@ -92,6 +111,34 @@ pub fn new(env: &Env, obj: &GObject) -> Option<Info> {
         special_functions::unhide(&mut functions, &specials, special_functions::Type::Copy);
     };
 
+    let mut derives = if let Some(ref derives) = obj.derives {
+        derives.clone()
+    } else {
+        let derives = vec![
+            Derive {
+                names: vec!["Debug".into(), "PartialEq".into(), "Eq".into(), "PartialOrd".into(), "Ord".into(), "Hash".into()],
+                cfg_condition: None,
+            }
+        ];
+
+        derives
+    };
+
+    for special in specials.keys() {
+        match special {
+            special_functions::Type::Compare => {
+                derives = filter_derives(derives, &["PartialOrd", "Ord", "PartialEq", "Eq"]);
+            },
+            special_functions::Type::Equal => {
+                derives = filter_derives(derives, &["PartialEq", "Eq"]);
+            },
+            special_functions::Type::Hash => {
+                derives = filter_derives(derives, &["Hash"]);
+            },
+            _ => (),
+        }
+    }
+
     special_functions::analyze_imports(&specials, &mut imports);
 
     let base = InfoBase {
@@ -110,6 +157,7 @@ pub fn new(env: &Env, obj: &GObject) -> Option<Info> {
     let info = Info {
         base,
         glib_get_type: record.glib_get_type.clone(),
+        derives,
         use_boxed_functions,
     };
 
