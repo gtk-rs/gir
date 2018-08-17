@@ -115,17 +115,26 @@ fn generate_enum(env: &Env, w: &mut Write, enum_: &Enumeration, config: &GObject
 
     try!(cfg_deprecated(w, env, enum_.deprecated_version, false, 0));
     try!(version_condition(w, env, enum_.version, false, 0));
-    try!(writeln!(
-        w,
-        "#[derive(Clone, Copy, Debug, Eq, PartialEq, Hash)]"
-    ));
     if config.must_use {
         try!(writeln!(
             w,
             "#[must_use]"
         ));
     }
-    try!(derives(w, &config.derives, 0));
+
+    if let Some(ref d) = config.derives {
+        try!(derives(w, &d, 1));
+    } else {
+        try!(writeln!(
+            w,
+            "#[derive(Debug, Eq, PartialEq, Ord, PartialOrd, Hash)]"
+        ));
+    }
+    try!(writeln!(
+            w,
+            "#[derive(Clone, Copy)]"
+    ));
+
     try!(writeln!(w, "pub enum {} {{", enum_.name));
     for member in &members {
         try!(cfg_deprecated(w, env, member.deprecated_version, false, 1));

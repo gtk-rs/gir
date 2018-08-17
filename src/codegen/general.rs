@@ -156,9 +156,12 @@ pub fn define_boxed_type(
     copy_fn: &str,
     free_fn: &str,
     get_type_fn: &Option<String>,
+    derive: &[Derive],
 ) -> Result<()> {
     try!(writeln!(w));
     try!(writeln!(w, "glib_wrapper! {{"));
+
+    try!(derives(w, derive, 1));
     try!(writeln!(
         w,
         "\tpub struct {}(Boxed<ffi::{}>);",
@@ -187,9 +190,11 @@ pub fn define_auto_boxed_type(
     type_name: &str,
     glib_name: &str,
     get_type_fn: &str,
+    derive: &[Derive],
 ) -> Result<()> {
     try!(writeln!(w));
     try!(writeln!(w, "glib_wrapper! {{"));
+    try!(derives(w, derive, 1));
     try!(writeln!(
         w,
         "\tpub struct {}(Boxed<ffi::{}>);",
@@ -222,9 +227,11 @@ pub fn define_shared_type(
     ref_fn: &str,
     unref_fn: &str,
     get_type_fn: &Option<String>,
+    derive: &[Derive],
 ) -> Result<()> {
     try!(writeln!(w));
     try!(writeln!(w, "glib_wrapper! {{"));
+    try!(derives(w, derive, 1));
     try!(writeln!(
         w,
         "\tpub struct {}(Shared<ffi::{}>);",
@@ -372,9 +379,9 @@ pub fn derives(
             Some(condition) => format!(
                 "#[cfg_attr({}, derive({}))]",
                 condition,
-                derive.name
+                derive.names.join(", ")
             ),
-            None => format!("#[derive({})]", derive.name),
+            None => format!("#[derive({})]", derive.names.join(", ")),
         };
         try!(writeln!(w, "{}{}", tabs(indent), s));
     }

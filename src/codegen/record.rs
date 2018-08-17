@@ -19,6 +19,7 @@ pub fn generate(w: &mut Write, env: &Env, analysis: &analysis::record::Info) -> 
                 &analysis.name,
                 &type_.c_type,
                 glib_get_type,
+                &analysis.derives,
             ));
         } else {
             panic!(
@@ -37,6 +38,7 @@ pub fn generate(w: &mut Write, env: &Env, analysis: &analysis::record::Info) -> 
             ref_fn,
             unref_fn,
             &analysis.glib_get_type,
+            &analysis.derives,
         ));
     } else if let (Some(copy_fn), Some(free_fn)) = (
         analysis.specials.get(&Type::Copy),
@@ -49,6 +51,7 @@ pub fn generate(w: &mut Write, env: &Env, analysis: &analysis::record::Info) -> 
             copy_fn,
             free_fn,
             &analysis.glib_get_type,
+            &analysis.derives,
         ));
     } else if let Some(ref glib_get_type) = analysis.glib_get_type {
         try!(general::define_auto_boxed_type(
@@ -56,6 +59,7 @@ pub fn generate(w: &mut Write, env: &Env, analysis: &analysis::record::Info) -> 
             &analysis.name,
             &type_.c_type,
             glib_get_type,
+            &analysis.derives,
         ));
     } else {
         panic!(

@@ -64,7 +64,7 @@ pub struct GObject {
     pub signals: Signals,
     pub members: Members,
     pub properties: Properties,
-    pub derives: Derives,
+    pub derives: Option<Derives>,
     pub status: GStatus,
     pub module_name: Option<String>,
     pub version: Option<Version>,
@@ -89,7 +89,7 @@ impl Default for GObject {
             signals: Signals::new(),
             members: Members::new(),
             properties: Properties::new(),
-            derives: Derives::new(),
+            derives: None,
             status: Default::default(),
             module_name: None,
             version: None,
@@ -203,7 +203,11 @@ fn parse_object(toml_object: &Value, concurrency: library::Concurrency) -> GObje
     };
     let members = Members::parse(toml_object.lookup("member"), &name);
     let properties = Properties::parse(toml_object.lookup("property"), &name);
-    let derives = Derives::parse(toml_object.lookup("derive"), &name);
+    let derives = if let Some(derives) = toml_object.lookup("derive") {
+        Some(Derives::parse(Some(derives), &name))
+    } else {
+        None
+    };
     let module_name = toml_object
         .lookup("module_name")
         .and_then(|v| v.as_str())

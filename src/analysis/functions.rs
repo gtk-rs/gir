@@ -20,7 +20,7 @@ use analysis::safety_assertion_mode::SafetyAssertionMode;
 use analysis::signatures::{Signature, Signatures};
 use config;
 use env::Env;
-use library::{self, Function, FunctionKind, Nullable, Parameter, ParameterScope, Type};
+use library::{self, Function, FunctionKind, Nullable, Parameter, ParameterScope, Type, Transfer};
 use nameutil;
 use std::borrow::Borrow;
 use traits::*;
@@ -137,6 +137,61 @@ pub fn analyze<F: Borrow<library::Function>>(
     funcs
 }
 
+fn fixup_gpointer_parameter(
+    env: &Env,
+    type_tid: library::TypeId,
+    parameters: &mut Parameters,
+    idx: usize
+) {
+    use analysis::ffi_type;
+
+    let instance_parameter = idx == 0;
+
+    let glib_name = env.library.type_(type_tid).get_glib_name().unwrap();
+    let ffi_name = ffi_type::ffi_type(env, type_tid, &glib_name).unwrap();
+    parameters.rust_parameters[idx].typ = type_tid;
+    parameters.c_parameters[idx].typ = type_tid;
+    parameters.c_parameters[idx].instance_parameter = instance_parameter;
+    parameters.c_parameters[idx].ref_mode = RefMode::ByRef;
+    parameters.c_parameters[idx].transfer = Transfer::None;
+    parameters.transformations[idx] = Transformation {
+        ind_c: idx,
+        ind_rust: Some(idx),
+        transformation_type: TransformationType::ToGlibPointer {
+            name: parameters.rust_parameters[idx].name.clone(),
+            instance_parameter: instance_parameter,
+            transfer: Transfer::None,
+            ref_mode: RefMode::ByRef,
+            to_glib_extra: String::new(),
+            explicit_target_type: format!("*mut {}", ffi_name),
+            pointer_cast: " as glib_ffi::gconstpointer".into(),
+        },
+    };
+}
+
+fn fixup_special_functions(
+    env: &Env,
+    name: &str,
+    type_tid: library::TypeId,
+    parameters: &mut Parameters
+) {
+    // Workaround for some _hash() / _compare() / _equal() functions taking
+    // "gconstpointer" as arguments instead of the actual type
+    if name == "hash" && parameters.c_parameters.len() == 1 {
+        if parameters.c_parameters[0].c_type == "gconstpointer" {
+            fixup_gpointer_parameter(env, type_tid, parameters, 0);
+        }
+    }
+
+    if (name == "compare" || name == "equal" || name == "is_equal") && parameters.c_parameters.len() == 2 {
+        if parameters.c_parameters[0].c_type == "gconstpointer" &&
+           parameters.c_parameters[1].c_type == "gconstpointer" {
+            fixup_gpointer_parameter(env, type_tid, parameters, 0);
+            fixup_gpointer_parameter(env, type_tid, parameters, 1);
+        }
+    }
+}
+
 fn analyze_function(
     env: &Env,
     name: String,
@@ -188,6 +243,8 @@ fn analyze_function(
     );
     parameters.analyze_return(env, &ret.parameter);
 
+    fixup_special_functions(env, name.as_str(), type_tid, &mut parameters);
+
     for (pos, par) in parameters.c_parameters.iter().enumerate() {
         assert!(
             !par.instance_parameter || pos == 0,
@@ -201,6 +258,7 @@ fn analyze_function(
         if let Some(to_glib_extra) = to_glib_extra {
             to_glib_extras.insert(pos, to_glib_extra);
         }
+
         analyze_async(
             env,
             func,
