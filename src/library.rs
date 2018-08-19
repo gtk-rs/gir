@@ -829,8 +829,8 @@ impl Library {
         for x in &self.namespace(MAIN_NAMESPACE).types {
             if let Some(ref x) = *x {
                 let name = x.get_name();
+                let full_name = format!("{}.{}", namespace_name, name);
                 if !not_allowed_ending.iter().any(|s| name.ends_with(s)) {
-                    let full_name = format!("{}.{}", namespace_name, name);
                     let version = x.get_deprecated_version();
                     let depr_version = version.unwrap_or(env.config.min_cfg_version);
                     if !env.analysis.objects.contains_key(&full_name) &&
@@ -841,6 +841,20 @@ impl Library {
                             println!("[NOT GENERATED] {} (deprecated in {})", full_name, version);
                         } else {
                             println!("[NOT GENERATED] {}", full_name);
+                        }
+                    }
+                }
+                if let Some(tid) = env.library.find_type(0, &full_name) {
+                    let gobject_id = env.library.find_type(0, "GObject.Object").unwrap();
+
+                    for &super_tid in env.class_hierarchy.supertypes(tid) {
+                        if super_tid != gobject_id &&
+                           env.type_status(&super_tid.full_name(&env.library)).ignored() {
+                            println!("[NOT GENERATED PARENT] {}.{} for {}.{}",
+                                     env.namespaces[super_tid.ns_id].crate_name,
+                                     env.library.type_(super_tid).get_name(),
+                                     namespace_name,
+                                     name);
                         }
                     }
                 }
