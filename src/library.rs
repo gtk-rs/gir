@@ -1,6 +1,7 @@
 use env::Env;
 use std::cmp::{Ord, Ordering, PartialOrd};
 use std::collections::{BTreeMap, BTreeSet, HashMap};
+use std::collections::HashSet;
 use std::iter::Iterator;
 use std::ops::{Deref, DerefMut};
 use std::str::FromStr;
@@ -826,6 +827,8 @@ impl Library {
         let not_allowed_ending = ["Class", "Private", "Func", "Callback", "Accessible", "Iface",
                                   "Type"];
         let namespace_name = self.namespaces[MAIN_NAMESPACE as usize].name.clone();
+        let mut parents = HashSet::new();
+
         for x in &self.namespace(MAIN_NAMESPACE).types {
             if let Some(ref x) = *x {
                 let name = x.get_name();
@@ -848,13 +851,13 @@ impl Library {
                     let gobject_id = env.library.find_type(0, "GObject.Object").unwrap();
 
                     for &super_tid in env.class_hierarchy.supertypes(tid) {
+                        let full_parent_name = format!("{}.{}",
+                                                       env.namespaces[super_tid.ns_id].crate_name,
+                                                       env.library.type_(super_tid).get_name());
                         if super_tid != gobject_id &&
-                           env.type_status(&super_tid.full_name(&env.library)).ignored() {
-                            println!("[NOT GENERATED PARENT] {}.{} for {}.{}",
-                                     env.namespaces[super_tid.ns_id].crate_name,
-                                     env.library.type_(super_tid).get_name(),
-                                     namespace_name,
-                                     name);
+                           env.type_status(&super_tid.full_name(&env.library)).ignored() &&
+                           parents.insert(full_parent_name.clone()) {
+                            println!("[NOT GENERATED PARENT] {}", full_parent_name);
                         }
                     }
                 }
