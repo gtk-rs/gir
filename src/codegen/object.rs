@@ -105,6 +105,19 @@ pub fn generate(w: &mut Write, env: &Env, analysis: &analysis::object::Info) -> 
         library::Concurrency::Send | library::Concurrency::SendSync => {
             try!(writeln!(w, "unsafe impl Send for {} {{}}", analysis.name));
         }
+        library::Concurrency::SendUnique => {
+            if env.namespaces.is_glib_crate {
+                try!(writeln!(w, "unsafe impl ::SendUnique for {} {{", analysis.name));
+            } else {
+                try!(writeln!(w, "unsafe impl glib::SendUnique for {} {{", analysis.name));
+            }
+
+            try!(writeln!(w, "    fn is_unique(&self) -> bool {{"));
+            try!(writeln!(w, "        self.ref_count() == 1"));
+            try!(writeln!(w, "    }}"));
+
+            try!(writeln!(w, "}}"));
+        },
         _ => (),
     }
 
