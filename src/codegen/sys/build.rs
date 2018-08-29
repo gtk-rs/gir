@@ -103,28 +103,11 @@ fn find() -> Result<(), Error> {
         return Ok(())
     }
 
-    let target = env::var("TARGET").expect("TARGET environment variable doesn't exist");
-    let hardcode_shared_libs = target.contains("windows");
-
     let mut config = Config::new();
     config.atleast_version(version);
     config.print_system_libs(false);
-    if hardcode_shared_libs {
-        config.cargo_metadata(false);
-    }
     match config.probe(package_name) {
-        Ok(library) => {
-            if hardcode_shared_libs {
-                for lib_ in shared_libs.iter() {
-                    println!("cargo:rustc-link-lib=dylib={}", lib_);
-                }
-                for path in library.link_paths.iter() {
-                    println!("cargo:rustc-link-search=native={}",
-                             path.to_str().expect("library path doesn't exist"));
-                }
-            }
-            Ok(())
-        }
+        Ok(_) => Ok(()),
         Err(Error::EnvNoPkgConfig(_)) | Err(Error::Command { .. }) => {
             for lib_ in shared_libs.iter() {
                 println!("cargo:rustc-link-lib=dylib={}", lib_);
