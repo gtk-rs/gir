@@ -851,13 +851,19 @@ impl Library {
                     let gobject_id = env.library.find_type(0, "GObject.Object").unwrap();
 
                     for &super_tid in env.class_hierarchy.supertypes(tid) {
+                        let ty = env.library.type_(super_tid);
                         let full_parent_name = format!("{}.{}",
                                                        env.namespaces[super_tid.ns_id].crate_name,
-                                                       env.library.type_(super_tid).get_name());
+                                                       ty.get_name());
                         if super_tid != gobject_id &&
                            env.type_status(&super_tid.full_name(&env.library)).ignored() &&
                            parents.insert(full_parent_name.clone()) {
-                            println!("[NOT GENERATED PARENT] {}", full_parent_name);
+                            if let Some(version) = ty.get_deprecated_version() {
+                                println!("[NOT GENERATED PARENT] {} (deprecated in {})",
+                                         full_parent_name, version);
+                            } else {
+                                println!("[NOT GENERATED PARENT] {}", full_parent_name);
+                            }
                         }
                     }
                 }
