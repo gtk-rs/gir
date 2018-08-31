@@ -854,8 +854,9 @@ impl Library {
 
                     for &super_tid in env.class_hierarchy.supertypes(tid) {
                         let ty = env.library.type_(super_tid);
+                        let ns_id = super_tid.ns_id as usize;
                         let full_parent_name = format!("{}.{}",
-                                                       env.namespaces[super_tid.ns_id].crate_name,
+                                                       self.namespaces[ns_id].name,
                                                        ty.get_name());
                         if super_tid != gobject_id &&
                            env.type_status(&super_tid.full_name(&env.library)).ignored() &&
