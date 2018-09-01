@@ -688,6 +688,28 @@ impl Type {
             _ => &[],
         }
     }
+
+    pub fn is_fundamental(&self) -> bool {
+        match *self {
+            Type::Fundamental(_) => true,
+            _ => false,
+        }
+    }
+
+    pub fn get_inner_type<'a>(&'a self, env: &'a Env) -> Option<(&'a Type, u16)> {
+        match *self {
+            Type::Array(t) |
+            Type::CArray(t) |
+            Type::FixedArray(t, _) |
+            Type::PtrArray(t) |
+            Type::List(t) |
+            Type::SList(t) => {
+                let ty = env.type_(t);
+                ty.get_inner_type(env).or_else(|| Some((ty, t.ns_id)))
+            }
+            _ => None,
+        }
+    }
 }
 
 macro_rules! impl_maybe_ref {
@@ -885,41 +907,72 @@ impl Library {
                         }
                     }
                     if check_methods {
-                        self.not_bound_functions(env, &namespace_name, x.functions(), "METHOD");
+                        self.not_bound_functions(env, &format!("{}::", full_name), x.functions(),
+                                                 "METHOD");
                     }
                 }
             }
         }
-        self.not_bound_functions(env, &namespace_name, &self.namespace(MAIN_NAMESPACE).functions,
-                                 "FUNCTION");
+        self.not_bound_functions(env, &format!("{}.", namespace_name),
+                                 &self.namespace(MAIN_NAMESPACE).functions, "FUNCTION");
     }
 
-    fn not_bound_functions(&self, env: &Env, namespace_name: &str, functions: &[Function],
+    fn not_bound_functions(&self, env: &Env, prefix: &str, functions: &[Function],
                            kind: &str) {
         for func in functions {
+            let version = func.deprecated_version;
+            let depr_version = version.unwrap_or(env.config.min_cfg_version);
+
+            if depr_version < env.config.min_cfg_version {
+                continue
+            }
+
             let mut errors = func.parameters.iter()
                                             .filter_map(|p| {
-                if p.is_error {
-                    let ty = env.library.type_(p.typ);
-                    let ns_id = p.typ.ns_id as usize;
-                    Some(format!("{}.{}",
-                                 self.namespaces[ns_id].name,
-                                 ty.get_name()))
-                } else {
-                    None
-                }
-            })
+                    let mut ty = env.library.type_(p.typ);
+                    let mut ns_id = p.typ.ns_id as usize;
+                    if let Some((t, n)) = ty.get_inner_type(env) {
+                        ty = t;
+                        ns_id = n as usize;
+                    }
+                    if ty.is_fundamental() {
+                        return None;
+                    }
+                    let full_name = format!("{}.{}",
+                                            self.namespaces[ns_id].name,
+                                            ty.get_name());
+                    if env.type_status(&p.typ.full_name(&env.library)).ignored() &&
+                       !env.analysis.objects.contains_key(&full_name) &&
+                       !env.analysis.records.contains_key(&full_name) &&
+                       !env.config.objects.iter().any(|o| o.1.name == full_name) {
+                        Some(full_name)
+                    } else {
+                        None
+                    }
+                })
                                             .collect::<Vec<_>>();
-            if func.ret.is_error {
-                let ty = env.library.type_(func.ret.typ);
-                let ns_id = func.ret.typ.ns_id as usize;
-                errors.push(format!("{}.{}",
-                                    self.namespaces[ns_id].name,
-                                    ty.get_name()));
+            {
+                let mut ty = env.library.type_(func.ret.typ);
+                let mut ns_id = func.ret.typ.ns_id as usize;
+                if let Some((t, n)) = ty.get_inner_type(env) {
+                    ty = t;
+                    ns_id = n as usize;
+                }
+                if !ty.is_fundamental() {
+                    let full_name = format!("{}.{}",
+                                            self.namespaces[ns_id].name,
+                                            ty.get_name());
+                    if env.type_status(&func.ret.typ.full_name(&env.library)).ignored() &&
+                       !env.analysis.objects.contains_key(&full_name) &&
+                       !env.analysis.records.contains_key(&full_name) &&
+                       !env.config.objects.iter().any(|o| o.1.name == full_name) {
+                        errors.push(full_name);
+                    }
+                }
             }
             if !errors.is_empty() {
-                let full_name = format!("{}.{}", namespace_name, func.name);
-                let deprecated_version = match func.deprecated_version {
+                let full_name = format!("{}{}", prefix, func.name);
+                let deprecated_version = match version {
                     Some(dv) => format!(" (deprecated in {})", dv),
                     None => String::new(),
                 };
