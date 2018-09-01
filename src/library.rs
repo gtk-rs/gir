@@ -676,6 +676,18 @@ impl Type {
         let typ = Type::Record(r);
         library.add_type(ns_id, &format!("#{:?}", field_tids), typ)
     }
+
+    pub fn functions(&self) -> &[Function] {
+        match *self {
+            Type::Enumeration(ref e) => &e.functions,
+            Type::Bitfield(ref b) => &b.functions,
+            Type::Record(ref r) => &r.functions,
+            Type::Union(ref u) => &u.functions,
+            Type::Interface(ref i) => &i.functions,
+            Type::Class(ref c) => &c.functions,
+            _ => &[],
+        }
+    }
 }
 
 macro_rules! impl_maybe_ref {
@@ -835,6 +847,8 @@ impl Library {
             if let Some(ref x) = *x {
                 let name = x.get_name();
                 let full_name = format!("{}.{}", namespace_name, name);
+                let mut check_methods = true;
+
                 if !not_allowed_ending.iter().any(|s| name.ends_with(s)) {
                     let version = x.get_deprecated_version();
                     let depr_version = version.unwrap_or(env.config.min_cfg_version);
@@ -842,6 +856,7 @@ impl Library {
                        !env.analysis.records.contains_key(&full_name) &&
                        !env.config.objects.iter().any(|o| o.1.name == full_name) &&
                        depr_version >= env.config.min_cfg_version {
+                        check_methods = false;
                         if let Some(version) = version {
                             println!("[NOT GENERATED] {} (deprecated in {})", full_name, version);
                         } else {
@@ -869,6 +884,60 @@ impl Library {
                             }
                         }
                     }
+                    if check_methods {
+                        self.not_bound_functions(env, &namespace_name, x.functions(), "METHOD");
+                    }
+                }
+            }
+        }
+        self.not_bound_functions(env, &namespace_name, &self.namespace(MAIN_NAMESPACE).functions,
+                                 "FUNCTION");
+    }
+
+    fn not_bound_functions(&self, env: &Env, namespace_name: &str, functions: &[Function],
+                           kind: &str) {
+        for func in functions {
+            let mut errors = func.parameters.iter()
+                                            .filter_map(|p| {
+                if p.is_error {
+                    let ty = env.library.type_(p.typ);
+                    let ns_id = p.typ.ns_id as usize;
+                    Some(format!("{}.{}",
+                                 self.namespaces[ns_id].name,
+                                 ty.get_name()))
+                } else {
+                    None
+                }
+            })
+                                            .collect::<Vec<_>>();
+            if func.ret.is_error {
+                let ty = env.library.type_(func.ret.typ);
+                let ns_id = func.ret.typ.ns_id as usize;
+                errors.push(format!("{}.{}",
+                                    self.namespaces[ns_id].name,
+                                    ty.get_name()));
+            }
+            if !errors.is_empty() {
+                let full_name = format!("{}.{}", namespace_name, func.name);
+                let deprecated_version = match func.deprecated_version {
+                    Some(dv) => format!(" (deprecated in {})", dv),
+                    None => String::new(),
+                };
+                if errors.len() > 1 {
+                    let end = errors.pop().unwrap();
+                    let begin = errors.join(", ");
+                    println!("[NOT GENERATED {}] {}{} because of {} and {}",
+                             kind,
+                             full_name,
+                             deprecated_version,
+                             begin,
+                             end);
+                } else {
+                    println!("[NOT GENERATED {}] {}{} because of {}",
+                             kind,
+                             full_name,
+                             deprecated_version,
+                             errors[0]);
                 }
             }
         }
