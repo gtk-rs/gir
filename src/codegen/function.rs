@@ -314,7 +314,7 @@ pub fn body_chunk_futures(env: &Env, analysis: &analysis::functions::Info) -> St
     } else {
         try!(writeln!(body, "use GioFuture;"));
     }
-    try!(writeln!(body, "use send_cell::SendCell;"));
+    try!(writeln!(body, "use fragile::Fragile;"));
     try!(writeln!(body));
 
     let skip = if async_future.is_method { 1 } else { 0 };
@@ -356,10 +356,10 @@ pub fn body_chunk_futures(env: &Env, analysis: &analysis::functions::Info) -> St
     } else {
         try!(writeln!(body, "    let cancellable = Cancellable::new();"));
     }
-    try!(writeln!(body, "    let send = SendCell::new(send);"));
+    try!(writeln!(body, "    let send = Fragile::new(send);"));
 
     if async_future.is_method {
-        try!(writeln!(body, "    let obj_clone = SendCell::new(obj.clone());"));
+        try!(writeln!(body, "    let obj_clone = Fragile::new(obj.clone());"));
         try!(writeln!(body, "    obj.{}(", analysis.name));
     } else if analysis.type_name.is_ok() {
         try!(writeln!(body, "    Self::{}(", analysis.name));
