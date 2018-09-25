@@ -10,6 +10,7 @@ build = "build.rs"
 exclude = ["Gir*.toml", "tests/**/*", "*.md"]
 
 [dependencies]
+bitflags = "1.0"
 docopt = "1.0"
 xml-rs = "0.8"
 toml = "0.4"

@@ -3,6 +3,7 @@ use toml::Value;
 use super::error::TomlHelper;
 use super::ident::Ident;
 use super::parsable::Parse;
+use super::property_generate_flags::PropertyGenerateFlags;
 use version::Version;
 
 #[derive(Clone, Debug)]
@@ -12,6 +13,7 @@ pub struct Property {
     //false(default) - process this property
     pub ignore: bool,
     pub version: Option<Version>,
+    pub generate: Option<PropertyGenerateFlags>,
 }
 
 impl Parse for Property {
@@ -28,21 +30,29 @@ impl Parse for Property {
         };
 
         toml.check_unwanted(
-            &["ignore", "version", "name", "pattern"],
+            &["ignore", "version", "name", "pattern", "generate"],
             &format!("property {}", object_name),
         );
 
-        let ignore = toml.lookup("ignore")
+        let ignore = toml
+            .lookup("ignore")
             .and_then(|val| val.as_bool())
             .unwrap_or(false);
-        let version = toml.lookup("version")
+        let version = toml
+            .lookup("version")
             .and_then(|v| v.as_str())
             .and_then(|s| s.parse().ok());
+        let generate = toml.lookup("generate").and_then(|v| {
+            PropertyGenerateFlags::parse_flags(v, "generate")
+                .map_err(|e| error!("{} for object {}", e, object_name))
+                .ok()
+        });
 
         Some(Property {
             ident,
             ignore,
             version,
+            generate,
         })
     }
 }

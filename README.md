@@ -189,6 +189,11 @@ cfg_condition = "mycond"
     name = "baseline-position"
     version = "3.10"
     ignore = true
+    [[object.property]]
+    name = "events"
+    # generate only `connect_property_events_notify`, without `get_property_events` and `set_property_events`
+    # supported values: "get", "set", "notify"
+    generate = ["notify"]
 ```
 
 Since there are no child properties in `.gir` files, it needs to be added for classes manually:
