@@ -130,8 +130,10 @@ fn analyze_property(
     let generate = configured_properties
         .iter()
         .filter_map(|f| f.generate)
-        .next()
-        .unwrap_or_else(PropertyGenerateFlags::all);
+        .next();
+    let generate_set = generate.is_some();
+    let generate = generate.unwrap_or_else(PropertyGenerateFlags::all);
+
     let name_for_func = nameutil::signal_to_snake(&name);
     let var_name = nameutil::mangle_keywords(&*name_for_func).into_owned();
     let get_func_name = format!("get_property_{}", name_for_func);
@@ -139,12 +141,26 @@ fn analyze_property(
     let check_get_func_name = format!("get_{}", name_for_func);
     let check_set_func_name = format!("set_{}", name_for_func);
 
-    let mut readable = prop.readable && generate.contains(PropertyGenerateFlags::GET);
+    let mut readable = prop.readable;
     let mut writable = if prop.construct_only {
         false
     } else {
-        prop.writable && generate.contains(PropertyGenerateFlags::SET)
+        prop.writable
     };
+    if generate_set && generate.contains(PropertyGenerateFlags::GET) && !readable {
+        warn!(
+            "Attempt to generate getter for notreadable property \"{}\"",
+            name
+        );
+    }
+    if generate_set && generate.contains(PropertyGenerateFlags::SET) && !writable {
+        warn!(
+            "Attempt to generate setter for nonwritable property \"{}\"",
+            name
+        );
+    }
+    readable &= generate.contains(PropertyGenerateFlags::GET);
+    writable &= generate.contains(PropertyGenerateFlags::SET);
     let notifable = generate.contains(PropertyGenerateFlags::NOTIFY);
 
     if readable {
