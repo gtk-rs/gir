@@ -2,11 +2,10 @@ use analysis::bounds::Bound;
 use analysis::imports::Imports;
 use analysis::ref_mode::RefMode;
 use analysis::rust_type::*;
-use analysis::signatures::{Signature, Signatures};
 use analysis::signals;
+use analysis::signatures::{Signature, Signatures};
 use analysis::trampolines;
-use config;
-use config::gobjects::GObject;
+use config::{self, GObject, PropertyGenerateFlags};
 use env::Env;
 use library;
 use nameutil;
@@ -128,6 +127,13 @@ fn analyze_property(
         .min()
         .or(prop.version)
         .or_else(|| Some(env.config.min_cfg_version));
+    let generate = configured_properties
+        .iter()
+        .filter_map(|f| f.generate)
+        .next();
+    let generate_set = generate.is_some();
+    let generate = generate.unwrap_or_else(PropertyGenerateFlags::all);
+
     let name_for_func = nameutil::signal_to_snake(&name);
     let var_name = nameutil::mangle_keywords(&*name_for_func).into_owned();
     let get_func_name = format!("get_property_{}", name_for_func);
@@ -141,6 +147,21 @@ fn analyze_property(
     } else {
         prop.writable
     };
+    if generate_set && generate.contains(PropertyGenerateFlags::GET) && !readable {
+        warn!(
+            "Attempt to generate getter for notreadable property \"{}\"",
+            name
+        );
+    }
+    if generate_set && generate.contains(PropertyGenerateFlags::SET) && !writable {
+        warn!(
+            "Attempt to generate setter for nonwritable property \"{}\"",
+            name
+        );
+    }
+    readable &= generate.contains(PropertyGenerateFlags::GET);
+    writable &= generate.contains(PropertyGenerateFlags::SET);
+    let notifable = generate.contains(PropertyGenerateFlags::NOTIFY);
 
     if readable {
         let (has, version) = Signature::has_for_property(env, &check_get_func_name,
@@ -240,7 +261,7 @@ fn analyze_property(
         prop_version,
     );
 
-    let notify_signal = if trampoline_name.is_ok() {
+    let notify_signal = if notifable && trampoline_name.is_ok() {
         imports.add_used_types(&used_types, prop_version);
         if generate_trait {
             imports.add("glib", prop_version);
