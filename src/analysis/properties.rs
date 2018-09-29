@@ -119,6 +119,7 @@ fn analyze_property(
     signatures: &Signatures,
     deps: &[library::TypeId],
 ) -> (Option<Property>, Option<Property>, Option<signals::Info>) {
+    let type_name = type_tid.full_name(&env.library);
     let name = prop.name.clone();
 
     let prop_version = configured_properties
@@ -147,21 +148,24 @@ fn analyze_property(
     } else {
         prop.writable
     };
+    let mut notifable = !prop.construct_only;
     if generate_set && generate.contains(PropertyGenerateFlags::GET) && !readable {
         warn!(
-            "Attempt to generate getter for notreadable property \"{}\"",
-            name
+            "Attempt to generate getter for notreadable property \"{}.{}\"",
+            type_name, name
         );
     }
     if generate_set && generate.contains(PropertyGenerateFlags::SET) && !writable {
         warn!(
-            "Attempt to generate setter for nonwritable property \"{}\"",
-            name
+            "Attempt to generate setter for nonwritable property \"{}.{}\"",
+            type_name, name
         );
     }
     readable &= generate.contains(PropertyGenerateFlags::GET);
     writable &= generate.contains(PropertyGenerateFlags::SET);
-    let notifable = generate.contains(PropertyGenerateFlags::NOTIFY);
+    if generate_set {
+        notifable = generate.contains(PropertyGenerateFlags::NOTIFY);
+    }
 
     if readable {
         let (has, version) = Signature::has_for_property(env, &check_get_func_name,
