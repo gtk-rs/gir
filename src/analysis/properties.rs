@@ -119,6 +119,7 @@ fn analyze_property(
     signatures: &Signatures,
     deps: &[library::TypeId],
 ) -> (Option<Property>, Option<Property>, Option<signals::Info>) {
+    let type_name = type_tid.full_name(&env.library);
     let name = prop.name.clone();
 
     let prop_version = configured_properties
@@ -147,21 +148,24 @@ fn analyze_property(
     } else {
         prop.writable
     };
+    let mut notifable = !prop.construct_only;
     if generate_set && generate.contains(PropertyGenerateFlags::GET) && !readable {
         warn!(
-            "Attempt to generate getter for notreadable property \"{}\"",
-            name
+            "Attempt to generate getter for notreadable property \"{}.{}\"",
+            type_name, name
         );
     }
     if generate_set && generate.contains(PropertyGenerateFlags::SET) && !writable {
         warn!(
-            "Attempt to generate setter for nonwritable property \"{}\"",
-            name
+            "Attempt to generate setter for nonwritable property \"{}.{}\"",
+            type_name, name
         );
     }
     readable &= generate.contains(PropertyGenerateFlags::GET);
     writable &= generate.contains(PropertyGenerateFlags::SET);
-    let notifable = generate.contains(PropertyGenerateFlags::NOTIFY);
+    if generate_set {
+        notifable = generate.contains(PropertyGenerateFlags::NOTIFY);
+    }
 
     if readable {
         let (has, version) = Signature::has_for_property(env, &check_get_func_name,
@@ -221,67 +225,72 @@ fn analyze_property(
         None
     };
 
-    let mut used_types: Vec<String> = Vec::with_capacity(4);
-    let trampoline_name = trampolines::analyze(
-        env,
-        &library::Signal {
-            name: format!("notify::{}", name),
-            parameters: Vec::new(),
-            ret: library::Parameter {
-                name: "".into(),
-                typ: env.library
-                    .find_type(library::INTERNAL_NAMESPACE, "none")
-                    .unwrap(),
-                c_type: "none".into(),
-                instance_parameter: false,
-                direction: library::ParameterDirection::Return,
-                transfer: library::Transfer::None,
-                caller_allocates: false,
-                nullable: library::Nullable(false),
-                allow_none: false,
-                array_length: None,
-                is_error: false,
+    let notify_signal = if notifable {
+        let mut used_types: Vec<String> = Vec::with_capacity(4);
+        let trampoline_name = trampolines::analyze(
+            env,
+            &library::Signal {
+                name: format!("notify::{}", name),
+                parameters: Vec::new(),
+                ret: library::Parameter {
+                    name: "".into(),
+                    typ: env
+                        .library
+                        .find_type(library::INTERNAL_NAMESPACE, "none")
+                        .unwrap(),
+                    c_type: "none".into(),
+                    instance_parameter: false,
+                    direction: library::ParameterDirection::Return,
+                    transfer: library::Transfer::None,
+                    caller_allocates: false,
+                    nullable: library::Nullable(false),
+                    allow_none: false,
+                    array_length: None,
+                    is_error: false,
+                    doc: None,
+                    scope: library::ParameterScope::None,
+                    closure: None,
+                    destroy: None,
+                },
+                is_action: false,
+                version: prop_version,
+                deprecated_version: prop.deprecated_version,
                 doc: None,
-                scope: library::ParameterScope::None,
-                closure: None,
-                destroy: None,
+                doc_deprecated: None,
             },
-            is_action: false,
-            version: prop_version,
-            deprecated_version: prop.deprecated_version,
-            doc: None,
-            doc_deprecated: None,
-        },
-        type_tid,
-        generate_trait,
-        &[],
-        trampolines,
-        obj,
-        &mut used_types,
-        prop_version,
-    );
+            type_tid,
+            generate_trait,
+            &[],
+            trampolines,
+            obj,
+            &mut used_types,
+            prop_version,
+        );
 
-    let notify_signal = if notifable && trampoline_name.is_ok() {
-        imports.add_used_types(&used_types, prop_version);
-        if generate_trait {
-            imports.add("glib", prop_version);
-            imports.add("glib::object::Downcast", prop_version);
+        if trampoline_name.is_ok() {
+            imports.add_used_types(&used_types, prop_version);
+            if generate_trait {
+                imports.add("glib", prop_version);
+                imports.add("glib::object::Downcast", prop_version);
+            }
+            imports.add("glib::signal::connect", prop_version);
+            imports.add("glib::signal::SignalHandlerId", prop_version);
+            imports.add("std::mem::transmute", prop_version);
+            imports.add("std::boxed::Box as Box_", prop_version);
+            imports.add("glib_ffi", prop_version);
+
+            Some(signals::Info {
+                connect_name: format!("connect_property_{}_notify", name_for_func),
+                signal_name: format!("notify::{}", name),
+                trampoline_name,
+                action_emit_name: None,
+                version: prop_version,
+                deprecated_version: prop.deprecated_version,
+                doc_hidden: false,
+            })
+        } else {
+            None
         }
-        imports.add("glib::signal::connect", prop_version);
-        imports.add("glib::signal::SignalHandlerId", prop_version);
-        imports.add("std::mem::transmute", prop_version);
-        imports.add("std::boxed::Box as Box_", prop_version);
-        imports.add("glib_ffi", prop_version);
-
-        Some(signals::Info {
-            connect_name: format!("connect_property_{}_notify", name_for_func),
-            signal_name: format!("notify::{}", name),
-            trampoline_name,
-            action_emit_name: None,
-            version: prop_version,
-            deprecated_version: prop.deprecated_version,
-            doc_hidden: false,
-        })
     } else {
         None
     };
