@@ -295,7 +295,7 @@ fn generate_enums(w: &mut Write, env: &Env, items: &[&Enumeration]) -> Result<()
             let is_alias = member_config.iter().any(|m| m.alias);
             let version = member_config.iter().filter_map(|m| m.version).next();
 
-            if is_alias || vals.get(&member.value).is_some() {
+            if is_alias || vals.contains_key(&member.value) {
                 continue;
             }
 

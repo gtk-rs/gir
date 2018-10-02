@@ -5,7 +5,6 @@ use std::string::String;
 
 use case::*;
 
-
 pub fn split_namespace_name(name: &str) -> (Option<&str>, &str) {
     let mut parts = name.split('.');
     let name = parts.next_back().unwrap();
@@ -43,6 +42,22 @@ pub fn crate_name(name: &str) -> String {
 
 pub fn module_name(name: &str) -> String {
     mangle_keywords(name.to_snake()).into_owned()
+}
+
+pub fn enum_member_name(name: &str) -> String {
+    if name.starts_with(char::is_alphabetic) {
+        name.to_camel()
+    } else {
+        format!("_{}", name.to_camel())
+    }
+}
+
+pub fn bitfield_member_name(name: &str) -> String {
+    if name.starts_with(char::is_alphabetic) {
+        name.to_uppercase()
+    } else {
+        format!("_{}", name.to_uppercase())
+    }
 }
 
 pub fn needs_mangling(name: &str) -> bool {
