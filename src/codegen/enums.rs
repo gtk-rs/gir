@@ -1,11 +1,11 @@
 use analysis::imports::Imports;
 use analysis::namespaces;
-use case::CaseExt;
 use codegen::general::{self, cfg_deprecated, derives, version_condition, version_condition_string};
 use config::gobjects::GObject;
 use env::Env;
 use file_saver;
 use library::*;
+use nameutil::enum_member_name;
 use std::collections::HashSet;
 use std::io::prelude::*;
 use std::io::Result;
@@ -105,7 +105,7 @@ fn generate_enum(env: &Env, w: &mut Write, enum_: &Enumeration, config: &GObject
         let deprecated_version = member_config.iter().filter_map(|m| m.deprecated_version).next();
         let version = member_config.iter().filter_map(|m| m.version).next();
         members.push(Member {
-            name: member.name.to_camel(),
+            name: enum_member_name(&member.name),
             c_name: member.c_identifier.clone(),
             value: member.value.clone(),
             version,

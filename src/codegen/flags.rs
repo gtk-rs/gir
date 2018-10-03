@@ -5,6 +5,7 @@ use config::gobjects::GObject;
 use env::Env;
 use file_saver;
 use library::*;
+use nameutil::bitfield_member_name;
 use std::io::prelude::*;
 use std::io::Result;
 use std::path::Path;
@@ -96,7 +97,7 @@ fn generate_flags(env: &Env, w: &mut Write, flags: &Bitfield, config: &GObject) 
             continue;
         }
 
-        let name = member.name.to_uppercase();
+        let name = bitfield_member_name(&member.name);
         let val: i64 = member.value.parse().unwrap();
         let deprecated_version = member_config.iter().filter_map(|m| m.deprecated_version).next();
         let version = member_config.iter().filter_map(|m| m.version).next();
