@@ -24,6 +24,7 @@ pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>) {
     let mut has_get_quark = false;
     let mut has_any = false;
     let mut has_get_type = false;
+    let mut generate_display_trait = false;
     for config in &configs {
         if let Type::Enumeration(ref enum_) = *env.library.type_(config.type_id.unwrap()) {
             has_any = true;
@@ -33,6 +34,7 @@ pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>) {
             if enum_.glib_get_type.is_some() {
                 has_get_type = true;
             }
+            generate_display_trait |= config.generate_display_trait;
 
             if has_get_type && has_get_quark {
                 break;
@@ -60,6 +62,10 @@ pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>) {
         imports.add("gobject_ffi", None);
     }
     imports.add("glib::translate::*", None);
+
+    if generate_display_trait {
+        imports.add("std::fmt", None);
+    }
 
     let path = root_path.join("enums.rs");
     file_saver::save_to_file(path, env.config.make_backup, |w| {
@@ -150,6 +156,27 @@ fn generate_enum(env: &Env, w: &mut Write, enum_: &Enumeration, config: &GObject
 "
     ));
 
+    if config.generate_display_trait {
+        // Generate Display trait implementation.
+        try!(cfg_deprecated(w, env, enum_.deprecated_version, false, 0));
+        try!(version_condition(w, env, enum_.version, false, 0));
+        try!(writeln!(w,
+                      "impl fmt::Display for {0} {{\n\
+                          \tfn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {{\n\
+                            \t\twrite!(f, \"{0}::{{}}\", match *self {{", enum_.name));
+        for member in &members {
+            try!(cfg_deprecated(w, env, member.deprecated_version, false, 3));
+            try!(version_condition(w, env, member.version, false, 3));
+            try!(writeln!(w, "\t\t\t{0}::{1} => \"{1}\",", enum_.name, member.name));
+        }
+        try!(writeln!(w,
+                      "\t\t\t_ => \"Unknown\",\n\
+                  \t\t}})\n\
+                \t}}\n\
+            }}\n"));
+    }
+
+    // Generate ToGlib trait implementation.
     try!(cfg_deprecated(w, env, enum_.deprecated_version, false, 0));
     try!(version_condition(w, env, enum_.version, false, 0));
     try!(writeln!(
@@ -194,6 +221,7 @@ impl ToGlib for {name} {{
         ""
     };
 
+    // Generate FromGlib trait implementation.
     try!(cfg_deprecated(w, env, enum_.deprecated_version, false, 0));
     try!(version_condition(w, env, enum_.version, false, 0));
     try!(writeln!(
@@ -230,6 +258,8 @@ impl FromGlib<ffi::{ffi_name}> for {name} {{
 }
 "
     ));
+
+    // Generate ErrorDomain trait implementation.
     if let Some(ref get_quark) = get_error_quark_name(enum_) {
         let get_quark = get_quark.replace("-", "_");
         let has_failed_member = members.iter().any(|m| m.name == "Failed");
@@ -285,6 +315,7 @@ impl FromGlib<ffi::{ffi_name}> for {name} {{
         ));
     }
 
+    // Generate StaticType trait implementation.
     if let Some(ref get_type) = enum_.glib_get_type {
         try!(cfg_deprecated(w, env, enum_.deprecated_version, false, 0));
         try!(version_condition(w, env, enum_.version, false, 0));

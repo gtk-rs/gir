@@ -78,6 +78,7 @@ pub struct GObject {
     pub must_use: bool,
     pub conversion_type: Option<conversion_type::ConversionType>,
     pub use_boxed_functions: bool,
+    pub generate_display_trait: bool,
 }
 
 impl Default for GObject {
@@ -103,6 +104,7 @@ impl Default for GObject {
             must_use: false,
             conversion_type: None,
             use_boxed_functions: false,
+            generate_display_trait: true,
         }
     }
 }
@@ -176,6 +178,7 @@ fn parse_object(toml_object: &Value, concurrency: library::Concurrency) -> GObje
             "cfg_condition",
             "must_use",
             "use_boxed_functions",
+            "generate_display_trait",
         ],
         &format!("object {}", name),
     );
@@ -250,6 +253,10 @@ fn parse_object(toml_object: &Value, concurrency: library::Concurrency) -> GObje
         .lookup("use_boxed_functions")
         .and_then(|v| v.as_bool())
         .unwrap_or(false);
+    let generate_display_trait = toml_object
+        .lookup("generate_display_trait")
+        .and_then(|v| v.as_bool())
+        .unwrap_or(true);
 
     if status != GStatus::Manual && ref_mode.is_some() {
         warn!("ref_mode configuration used for non-manual object {}", name);
@@ -280,6 +287,7 @@ fn parse_object(toml_object: &Value, concurrency: library::Concurrency) -> GObje
         must_use,
         conversion_type,
         use_boxed_functions,
+        generate_display_trait,
     }
 }
 

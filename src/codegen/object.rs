@@ -11,7 +11,12 @@ use super::signal;
 use super::trait_impls;
 use super::trampoline;
 
-pub fn generate(w: &mut Write, env: &Env, analysis: &analysis::object::Info) -> Result<()> {
+pub fn generate(
+    w: &mut Write,
+    env: &Env,
+    analysis: &analysis::object::Info,
+    generate_display_trait: bool,
+) -> Result<()> {
     try!(general::start_comments(w, &env.config));
     try!(general::uses(w, env, &analysis.imports));
 
@@ -142,10 +147,27 @@ pub fn generate(w: &mut Write, env: &Env, analysis: &analysis::object::Info) -> 
         }
     }
 
+    if generate_display_trait {
+        try!(writeln!(
+            w,
+            "\nimpl fmt::Display for {} {{",
+            analysis.name,
+        ));
+        // Generate Display trait implementation.
+        try!(writeln!(w, "\tfn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {{\n\
+                            \t\twrite!(f, \"{}\")\n\
+                          \t}}\n\
+                        }}", analysis.name));
+    }
+
     Ok(())
 }
 
-fn generate_trait(w: &mut Write, env: &Env, analysis: &analysis::object::Info) -> Result<()> {
+fn generate_trait(
+    w: &mut Write,
+    env: &Env,
+    analysis: &analysis::object::Info,
+) -> Result<()> {
     use analysis::functions::Visibility;
 
     let has_async = analysis.methods().iter().any(|f| f.async && f.visibility == Visibility::Public);
