@@ -1,6 +1,7 @@
 use std::io::{Result, Write};
 
-use codegen::general::version_condition;
+use codegen::general::{cfg_condition, version_condition};
+use config::functions::Function;
 use config::gobjects::GObject;
 use env::Env;
 use library;
@@ -155,6 +156,19 @@ pub fn generate_other_funcs(
     generate_object_funcs(w, env, obj, "Other functions", INTERN, functions)
 }
 
+fn generate_cfg_configure(
+    w: &mut Write,
+    configured_functions: Vec<&Function>,
+    commented: bool,
+) -> Result<()> {
+    let cfg_condition_ = configured_functions
+        .iter()
+        .filter_map(|f| f.cfg_condition.clone())
+        .next();
+    cfg_condition(w, &cfg_condition_, commented, 1)?;
+    Ok(())
+}
+
 fn generate_object_funcs(
     w: &mut Write,
     env: &Env,
@@ -177,6 +191,8 @@ fn generate_object_funcs(
         ));
     }
     if write_get_type {
+        let configured_functions = obj.functions.matched(&glib_get_type);
+        generate_cfg_configure(w, configured_functions, false)?;
         try!(writeln!(w, "    pub fn {}() -> GType;", glib_get_type));
     }
 
@@ -201,6 +217,7 @@ fn generate_object_funcs(
             try!(writeln!(w, "    {}pub fn {}_utf8{};", comment, name, sig));
             try!(version_condition(w, env, func.version, commented, 1));
         }
+        generate_cfg_configure(w, configured_functions, commented)?;
         try!(writeln!(w, "    {}pub fn {}{};", comment, name, sig));
     }
 
