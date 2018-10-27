@@ -1,9 +1,11 @@
 use std::io::{Result, Write};
 
-use analysis::bounds::Bound;
+use analysis;
+use analysis::bounds::{Bound, Bounds};
 use analysis::properties::Property;
 use analysis::rust_type::{parameter_rust_type, rust_type};
 use chunk::Chunk;
+use codegen;
 use env::Env;
 use super::general::{cfg_deprecated, version_condition};
 use library;
@@ -83,28 +85,63 @@ fn declaration(env: &Env, prop: &Property) -> String {
         let param_type = if let Some(Bound {
             alias,
             ref type_str,
+            ref bound_type,
             ..
         }) = prop.bound
         {
-            let value_bound = if !prop.is_get {
-                if *prop.nullable {
-                    " + glib::value::SetValueOptional"
-                } else {
-                    " + glib::value::SetValue"
+            use library::Type::*;
+            use analysis::bounds::BoundType;
+
+            let type_ = env.library.type_(prop.typ);
+            let bound_type = match *type_ {
+                Fundamental(_) => Some(bound_type.clone()),
+                _ => match bound_type {
+                    BoundType::Into(_, Some(ref x)) => Some(*x.clone()),
+                    _ => None,
                 }
-            } else {
-                ""
             };
-            bound = format!(
-                "<{}: IsA<{}> + IsA<glib::object::Object>{}>",
-                alias,
-                type_str,
-                value_bound
-            );
-            if *prop.nullable {
-                format!("Option<&{}>", alias)
-            } else {
-                format!("&{}", alias)
+            match bound_type {
+                Some(ref bound_type) if bound_type.is_into() => {
+                    let type_name = parameter_rust_type(env,
+                                                        prop.typ,
+                                                        dir,
+                                                        library::Nullable(false),
+                                                        analysis::ref_mode::RefMode::ByRefFake)
+                                        .into_string();
+                    let mut bounds = Bounds::default();
+                    bounds.add_parameter(&prop.var_name,
+                                         &type_name,
+                                         bound_type.clone(),
+                                         false);
+                    bound = codegen::function::bounds(&bounds, &[], false);
+                    format!("{}", bounds.iter().next().unwrap().alias)
+                }
+                Some(_) => {
+                    let value_bound = if !prop.is_get {
+                        if *prop.nullable {
+                            " + glib::value::SetValueOptional"
+                        } else {
+                            " + glib::value::SetValue"
+                        }
+                    } else {
+                        ""
+                    };
+                    bound = format!(
+                        "<{}: IsA<{}> + IsA<glib::object::Object>{}>",
+                        alias,
+                        type_str,
+                        value_bound
+                    );
+                    if *prop.nullable {
+                        format!("Option<&{}>", alias)
+                    } else {
+                        format!("&{}", alias)
+                    }
+                }
+                _ => {
+                    parameter_rust_type(env, prop.typ, dir, prop.nullable, prop.set_in_ref_mode)
+                        .into_string()
+                }
             }
         } else {
             parameter_rust_type(env, prop.typ, dir, prop.nullable, prop.set_in_ref_mode)
@@ -137,6 +174,21 @@ fn body(env: &Env, prop: &Property) -> Chunk {
         .var_name(&prop.var_name)
         .is_get(prop.is_get)
         .is_ref(prop.set_in_ref_mode.is_ref())
+        .is_into({
+            use library::Type::*;
+
+            let type_ = env.library.type_(prop.typ);
+            match *type_ {
+                Fundamental(_) => {
+                    if let Some(Bound { ref bound_type, .. }) = prop.bound {
+                        bound_type.is_into()
+                    } else {
+                        false
+                    }
+                }
+                _ => false,
+            }
+        })
         .is_nullable(*prop.nullable);
 
     if let Ok(type_) = rust_type(env, prop.typ) {
