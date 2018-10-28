@@ -80,20 +80,20 @@ impl Bound {
         type_id: TypeId,
         nullable: Nullable,
     ) -> Option<Bound> {
-        match Bounds::type_for(env, type_id, nullable) {
-            //TODO: match boxed_bound to BoundType::IsA(l)
-            Some(BoundType::Into(_, Some(boxed_bound))) => {
+        if let Some(bound_type) = Bounds::type_for(env, type_id, nullable) {
+            if bound_type.is_into() {
+                //TODO: match boxed_bound to BoundType::IsA(l)
                 let type_str = bounds_rust_type(env, type_id);
-                Some(Bound {
-                    bound_type: *boxed_bound.clone(),
+                return Some(Bound {
+                    bound_type,
                     parameter_name: var_name.to_owned(),
                     alias: TYPE_PARAMETERS_START,
                     type_str: type_str.into_string(),
                     info_for_next_type: false,
                 })
             }
-            _ => None,
         }
+        None
     }
 }
 
