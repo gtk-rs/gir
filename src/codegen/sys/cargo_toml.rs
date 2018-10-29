@@ -87,7 +87,6 @@ fn fill_in(root: &mut Table, env: &Env) {
 
     {
         let features = upsert_table(root, "features");
-        features.clear();
         let versions = env.namespaces
             .main()
             .versions
