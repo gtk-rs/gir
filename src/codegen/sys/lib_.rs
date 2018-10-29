@@ -467,6 +467,7 @@ fn generate_disguised(w: &mut Write, record: &Record) -> Result<()> {
 }
 
 fn generate_from_fields(w: &mut Write, fields: &fields::Fields) -> Result<()> {
+    cfg_condition(w, &fields.cfg_condition, false, 0)?;
     try!(writeln!(w, "#[repr(C)]"));
     let traits = fields.derived_traits().join(", ");
     if !traits.is_empty() {
@@ -492,6 +493,7 @@ fn generate_from_fields(w: &mut Write, fields: &fields::Fields) -> Result<()> {
     }
     try!(writeln!(w));
 
+    cfg_condition(w, &fields.cfg_condition, false, 0)?;
     try!(writeln!(w, "impl ::std::fmt::Debug for {name} {{", name=&fields.name));
     try!(writeln!(w, "\tfn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {{"));
     try!(writeln!(w, "\t\tf.debug_struct(&format!(\"{name} @ {{:?}}\", self as *const _))", name=&fields.name));
