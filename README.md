@@ -56,7 +56,7 @@ target_path = "."
 work_mode = "sys"
 ```
 
-Also, you can mark some functions that has suffix `_utf8` on Windows:
+You can mark some functions that has suffix `_utf8` on Windows:
 
 ```toml
 [[object]]
@@ -65,6 +65,18 @@ status = "generate"
     [[object.function]]
     name = "new_from_file"
     is_windows_utf8 = true
+```
+
+Also, you can add rust cfg conditions on objects, functions and constants, for example, when flagging for conditional compilation:
+
+```toml
+[[object]]
+name = "GstGL.GLDisplayEGL"
+status = "generate"
+cfg_condition = "feature = \"egl\""
+    [[object.function]]
+    pattern = ".*"
+    cfg_condition = "feature = \"egl\""
 ```
 
 ### Generation in FFI mode
