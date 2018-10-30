@@ -12,7 +12,7 @@ use version::Version;
 
 pub fn generate(env: &Env) -> String {
     info!(
-        "Generatnig sys Cargo.toml for {}",
+        "Generating sys Cargo.toml for {}",
         env.config.library_name
     );
 
