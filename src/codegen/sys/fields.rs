@@ -64,7 +64,7 @@ pub fn from_record(env: &Env, record: &Record) -> Fields {
         truncated,
         derives_copy: record.derives_copy(&env.library),
         kind: "struct",
-        cfg_condition: None,
+        cfg_condition: get_gobject_cfg_condition(env, &record.name),
         fields,
     }
 }
