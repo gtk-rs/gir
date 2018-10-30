@@ -12,7 +12,7 @@ use version::Version;
 
 pub fn generate(env: &Env) -> String {
     info!(
-        "Generatnig sys Cargo.toml for {}",
+        "Generating sys Cargo.toml for {}",
         env.config.library_name
     );
 
@@ -87,7 +87,6 @@ fn fill_in(root: &mut Table, env: &Env) {
 
     {
         let features = upsert_table(root, "features");
-        features.clear();
         let versions = env.namespaces
             .main()
             .versions

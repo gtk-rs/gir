@@ -2,8 +2,9 @@ use std::collections::HashMap;
 use std::fs;
 use std::io::{Result, Write};
 
-use codegen::general::{self, version_condition};
+use codegen::general::{self, cfg_condition, version_condition};
 use config::ExternalLibrary;
+use config::constants;
 use env::Env;
 use file_saver::*;
 use library::*;
@@ -208,6 +209,19 @@ fn generate_bitfields(w: &mut Write, env: &Env, items: &[&Bitfield]) -> Result<(
     Ok(())
 }
 
+fn generate_constant_cfg_configure(
+    w: &mut Write,
+    configured_constants: Vec<&constants::Constant>,
+    commented: bool,
+) -> Result<()> {
+    let cfg_condition_ = configured_constants
+        .iter()
+        .filter_map(|f| f.cfg_condition.clone())
+        .next();
+    cfg_condition(w, &cfg_condition_, commented, 1)?;
+    Ok(())
+}
+
 fn generate_constants(w: &mut Write, env: &Env, constants: &[Constant]) -> Result<()> {
     if !constants.is_empty() {
         try!(writeln!(w, "// Constants"));
@@ -247,6 +261,11 @@ fn generate_constants(w: &mut Write, env: &Env, constants: &[Constant]) -> Resul
         {
             let val: i64 = constant.value.parse().unwrap();
             value = (val as u32).to_string();
+        }
+
+        if let Some(obj) = config {
+            let configured_constants = obj.constants.matched(&full_name);
+            generate_constant_cfg_configure (w, configured_constants, !comment.is_empty())?;
         }
 
         try!(writeln!(
@@ -448,6 +467,7 @@ fn generate_disguised(w: &mut Write, record: &Record) -> Result<()> {
 }
 
 fn generate_from_fields(w: &mut Write, fields: &fields::Fields) -> Result<()> {
+    cfg_condition(w, &fields.cfg_condition, false, 0)?;
     try!(writeln!(w, "#[repr(C)]"));
     let traits = fields.derived_traits().join(", ");
     if !traits.is_empty() {
@@ -473,6 +493,7 @@ fn generate_from_fields(w: &mut Write, fields: &fields::Fields) -> Result<()> {
     }
     try!(writeln!(w));
 
+    cfg_condition(w, &fields.cfg_condition, false, 0)?;
     try!(writeln!(w, "impl ::std::fmt::Debug for {name} {{", name=&fields.name));
     try!(writeln!(w, "\tfn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {{"));
     try!(writeln!(w, "\t\tf.debug_struct(&format!(\"{name} @ {{:?}}\", self as *const _))", name=&fields.name));

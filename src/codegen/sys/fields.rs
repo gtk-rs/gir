@@ -17,6 +17,8 @@ pub struct Fields {
     derives_copy: bool,
     /// "struct" or "union"
     pub kind: &'static str,
+    /// specified GObject cfg condition
+    pub cfg_condition: Option<String>,
     pub fields: Vec<FieldInfo>,
 }
 
@@ -62,18 +64,21 @@ pub fn from_record(env: &Env, record: &Record) -> Fields {
         truncated,
         derives_copy: record.derives_copy(&env.library),
         kind: "struct",
+        cfg_condition: None,
         fields,
     }
 }
 
 pub fn from_class(env: &Env, klass: &Class) -> Fields {
     let (fields, truncated) = analyze_fields(env, false, &klass.fields);
+
     Fields {
         name: klass.c_type.clone(),
         external: klass.is_external(&env.library),
         truncated,
         derives_copy: klass.derives_copy(&env.library),
         kind: "struct",
+        cfg_condition: get_gobject_cfg_condition(env, &klass.name),
         fields,
     }
 }
@@ -86,6 +91,7 @@ pub fn from_union(env: &Env, union: &Union) -> Fields {
         truncated,
         derives_copy: union.derives_copy(&env.library),
         kind: "union",
+        cfg_condition: None,
         fields,
     }
 }
@@ -135,5 +141,14 @@ fn field_ffi_type(env: &Env, field: &Field) -> Result {
         }
     } else {
         Err(TypeError::Ignored(format!("field {} has empty c:type", &field.name)))
+    }
+}
+
+fn get_gobject_cfg_condition(env: &Env, name: &String) -> Option<String> {
+    let full_name = format!("{}.{}", env.namespaces.main().name, name);
+    if let Some(obj) = env.config.objects.get(&full_name) {
+        obj.cfg_condition.clone()
+    } else {
+        None
     }
 }
