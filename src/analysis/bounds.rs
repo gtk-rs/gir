@@ -31,6 +31,14 @@ impl BoundType {
         }
     }
 
+    pub fn need_isa(&self) -> bool {
+        match *self {
+            BoundType::IsA(_) => true,
+            BoundType::Into(_, Some(ref bound_type)) if bound_type.need_isa() => true,
+            _ => false,
+        }
+    }
+
     fn with_lifetime(ty_: BoundType, lifetime: char) -> BoundType {
         match ty_ {
             BoundType::NoWrapper => unreachable!(),

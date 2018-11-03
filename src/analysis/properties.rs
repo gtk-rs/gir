@@ -95,9 +95,11 @@ pub fn analyze(
                 imports.add("glib::Value", prop.version);
             }
 
-            if prop.bound.is_some() {
-                imports.add("glib", prop.version);
-                imports.add("glib::object::IsA", prop.version);
+            if let Some(ref bound, ..) = prop.bound {
+                if bound.bound_type.need_isa() {
+                    imports.add("glib", prop.version);
+                    imports.add("glib::object::IsA", prop.version);
+                }
             }
 
             properties.push(prop);
