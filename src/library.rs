@@ -531,7 +531,7 @@ pub enum Type {
     Custom(Custom),
     Array(TypeId),
     CArray(TypeId),
-    FixedArray(TypeId, u16),
+    FixedArray(TypeId, u16, Option<String>),
     PtrArray(TypeId),
     HashTable(TypeId, TypeId),
     List(TypeId),
@@ -554,7 +554,7 @@ impl Type {
             Class(ref class) => class.name.clone(),
             Custom(ref custom) => custom.name.clone(),
             CArray(type_id) => format!("CArray {:?}", type_id),
-            FixedArray(type_id, size) => format!("FixedArray {:?}; {}", type_id, size),
+            FixedArray(type_id, size, _) => format!("FixedArray {:?}; {}", type_id, size),
             PtrArray(type_id) => format!("PtrArray {:?}", type_id),
             HashTable(key_type_id, value_type_id) => {
                 format!("HashTable {:?}/{:?}", key_type_id, value_type_id)
@@ -579,7 +579,7 @@ impl Type {
             Class(ref class) => class.deprecated_version,
             Custom(_) => None,
             CArray(_) => None,
-            FixedArray(_, _) => None,
+            FixedArray(..) => None,
             PtrArray(_) => None,
             HashTable(_, _) => None,
             List(_) => None,
@@ -602,25 +602,38 @@ impl Type {
         }
     }
 
-    pub fn c_array(library: &mut Library, inner: TypeId, size: Option<u16>) -> TypeId {
-        let name = Type::c_array_internal_name(inner, size);
+    pub fn c_array(
+        library: &mut Library,
+        inner: TypeId,
+        size: Option<u16>,
+        c_type: Option<String>,
+    ) -> TypeId {
+        let name = Type::c_array_internal_name(inner, size, &c_type);
         if let Some(size) = size {
-            library.add_type(INTERNAL_NAMESPACE, &name, Type::FixedArray(inner, size))
+            library.add_type(
+                INTERNAL_NAMESPACE,
+                &name,
+                Type::FixedArray(inner, size, c_type),
+            )
         } else {
             library.add_type(INTERNAL_NAMESPACE, &name, Type::CArray(inner))
         }
     }
 
     pub fn find_c_array(library: &Library, inner: TypeId, size: Option<u16>) -> TypeId {
-        let name = Type::c_array_internal_name(inner, size);
+        let name = Type::c_array_internal_name(inner, size, &None);
         library
             .find_type(INTERNAL_NAMESPACE, &name)
             .unwrap_or_else(|| panic!("No type for '*.{}'", name))
     }
 
-    fn c_array_internal_name(inner: TypeId, size: Option<u16>) -> String {
+    fn c_array_internal_name(
+        inner: TypeId,
+        size: Option<u16>,
+        c_type: &Option<String>
+    ) -> String {
         if let Some(size) = size {
-            format!("[#{:?}; {}]", inner, size)
+            format!("[#{:?}; {};{:?}]", inner, size, c_type)
         } else {
             format!("[#{:?}]", inner)
         }
@@ -700,7 +713,7 @@ impl Type {
         match *self {
             Type::Array(t) |
             Type::CArray(t) |
-            Type::FixedArray(t, _) |
+            Type::FixedArray(t, ..) |
             Type::PtrArray(t) |
             Type::List(t) |
             Type::SList(t) => {
@@ -852,9 +865,9 @@ impl Library {
         assert_eq!(MAIN_NAMESPACE, library.add_namespace(main_namespace_name));
 
         //For string_type override
-        Type::c_array(&mut library, TypeId::tid_utf8(), None);
-        Type::c_array(&mut library, TypeId::tid_filename(), None);
-        Type::c_array(&mut library, TypeId::tid_os_string(), None);
+        Type::c_array(&mut library, TypeId::tid_utf8(), None, None);
+        Type::c_array(&mut library, TypeId::tid_filename(), None, None);
+        Type::c_array(&mut library, TypeId::tid_os_string(), None, None);
 
         library
     }

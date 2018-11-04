@@ -126,7 +126,7 @@ impl IsIncomplete for Type {
         match *self {
             Type::Fundamental(ref fundamental) => fundamental.is_incomplete(lib),
             Type::Alias(ref alias) => alias.is_incomplete(lib),
-            Type::FixedArray(tid, _) => {
+            Type::FixedArray(tid, ..) => {
                 let item_type = lib.type_(tid);
                 item_type.is_incomplete(lib)
             },
@@ -226,7 +226,7 @@ pub trait ImplementsDebug {
 impl ImplementsDebug for Field {
     fn implements_debug(&self, lib: &Library) -> bool {
         match *lib.type_(self.typ) {
-            Type::FixedArray(_, size) => size <= RUST_DERIVE_ARRAY_SIZE_LIMIT,
+            Type::FixedArray(_, size, _) => size <= RUST_DERIVE_ARRAY_SIZE_LIMIT,
             Type::Function(Function {ref parameters, ..}) => parameters.len() <= RUST_DERIVE_PARAM_SIZE_LIMIT,
             _ => true,
         }

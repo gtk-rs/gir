@@ -20,8 +20,12 @@ pub fn ffi_type(env: &Env, tid: library::TypeId, c_type: &str) -> Result {
                 .is_some()
             {
                 match *env.library.type_(tid) {
-                    Type::FixedArray(_, size) => ffi_inner(env, c_tid, c_type.into())
-                        .map_any(|s| format!("[{}; {}]", s, size)),
+                    Type::FixedArray(inner_tid, size, ref inner_c_type) => {
+                        let inner_c_type = inner_c_type.as_ref().map(|ct| ct.as_str())
+                            .unwrap_or_else(|| c_type);
+                        ffi_type(env, inner_tid, inner_c_type)
+                            .map_any(|s| format!("[{}; {}]", s, size))
+                    }
                     Type::Class(Class {
                         c_type: ref expected,
                         ..
@@ -122,8 +126,10 @@ fn ffi_inner(env: &Env, tid: library::TypeId, mut inner: String) -> Result {
             fix_name(env, tid, &inner)
         }
         Type::CArray(inner_tid) => ffi_inner(env, inner_tid, inner),
-        Type::FixedArray(inner_tid, size) => {
-            ffi_inner(env, inner_tid, inner).map_any(|s| format!("[{}; {}]", s, size))
+        Type::FixedArray(inner_tid, size, ref inner_c_type) => {
+            let inner_c_type = inner_c_type.as_ref().map(|ct| ct.as_str())
+                .unwrap_or_else(|| inner.as_str());
+            ffi_type(env, inner_tid, inner_c_type).map_any(|s| format!("[{}; {}]", s, size))
         }
         Type::Array(..) |
         Type::PtrArray(..) |

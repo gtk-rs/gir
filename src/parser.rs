@@ -48,7 +48,7 @@ impl Library {
                 }
                 Ok(())
             }
-            "namespace" => self.read_namespace(parser, elem, package.take(), 
+            "namespace" => self.read_namespace(parser, elem, package.take(),
                                                replace(&mut includes, Vec::new())),
             _ => Err(parser.unexpected_element(elem)),
         })?;
@@ -1158,7 +1158,7 @@ impl Library {
         let array_length = elem.attr("length").and_then(|s| s.parse().ok());
 
         let inner = parser.elements(|parser, elem| match elem.name() {
-            "type" | "array" => self.read_type(parser, ns_id, elem).map(|r| r.0),
+            "type" | "array" => self.read_type(parser, ns_id, elem),
             _ => Err(parser.unexpected_element(elem)),
         })?;
 
@@ -1174,12 +1174,15 @@ impl Library {
             }
         } else {
             let tid = if type_name == "array" {
+                let inner_type = &inner[0];
                 Type::c_array(
                     self,
-                    inner[0],
+                    inner_type.0,
                     elem.attr("fixed-size").and_then(|n| n.parse().ok()),
+                    inner_type.1.clone(),
                 )
             } else {
+                let inner = inner.iter().map(|r| r.0).collect();
                 Type::container(self, type_name, inner)
                     .ok_or_else(|| parser.fail_with_position("Unknown container type", elem.position()))?
             };
