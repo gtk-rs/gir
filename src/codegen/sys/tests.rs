@@ -190,27 +190,27 @@ fn generate_constant_c(env: &Env, path: &Path, w: &mut Write) -> io::Result<()> 
     writeln!(w, "#include \"manual.h\"")?;
     writeln!(w, "#include <stdio.h>")?;
 
-    writeln!(w, "{}", r##"
+    writeln!(w, "{}", r####"
 int main() {
     printf(_Generic((ABI_CONSTANT_NAME),
-                    char *: "%s",
-                    const char *: "%s",
-                    char: "%c",
-                    signed char: "%hhd",
-                    unsigned char: "%hhu",
-                    short int: "%hd",
-                    unsigned short int: "%hu",
-                    int: "%d",
-                    unsigned int: "%u",
-                    long: "%ld",
-                    unsigned long: "%lu",
-                    long long: "%lld",
-                    unsigned long long: "%llu",
-                    double: "%f",
-                    long double: "%ld"),
+                    char *: "###gir test###%s###gir test###\n",
+                    const char *: "###gir test###%s###gir test###\n",
+                    char: "###gir test###%c###gir test###\n",
+                    signed char: "###gir test###%hhd###gir test###\n",
+                    unsigned char: "###gir test###%hhu###gir test###\n",
+                    short int: "###gir test###%hd###gir test###\n",
+                    unsigned short int: "###gir test###%hu###gir test###\n",
+                    int: "###gir test###%d###gir test###\n",
+                    unsigned int: "###gir test###%u###gir test###\n",
+                    long: "###gir test###%ld###gir test###\n",
+                    unsigned long: "###gir test###%lu###gir test###\n",
+                    long long: "###gir test###%lld###gir test###\n",
+                    unsigned long long: "###gir test###%llu###gir test###\n",
+                    double: "###gir test###%f###gir test###\n",
+                    long double: "###gir test###%ld###gir test###\n"),
            ABI_CONSTANT_NAME);
     return 0;
-}"##)
+}"####)
 
 }
 
@@ -234,7 +234,7 @@ fn generate_abi_rs(env: &Env, path: &Path, w: &mut Write, crate_name: &str, ctyp
     writeln!(w, "use std::str;")?;
     writeln!(w, "use {}::*;\n", crate_name)?;
     writeln!(w, "static PACKAGES: &[&str] = &[\"{}\"];", package_name)?;
-    writeln!(w, "{}", r##"
+    writeln!(w, "{}", r####"
 #[derive(Clone, Debug)]
 struct Compiler {
     pub args: Vec<String>,
@@ -447,10 +447,17 @@ fn get_c_value(dir: &Path, cc: &Compiler, name: &str) -> Result<String, Box<Erro
                            &abi_cmd, &output).into());
     }
 
-    Ok(str::from_utf8(&output.stdout)?.trim().to_owned())
+    let output = str::from_utf8(&output.stdout)?.trim();
+    if !output.starts_with("###gir test###") ||
+       !output.ends_with("###gir test###") {
+        return Err(format!("command {:?} return invalid output, {:?}",
+                           &abi_cmd, &output).into());
+    }
+
+    Ok(String::from(&output[14..(output.len() - 14)]))
 }
 
-const RUST_LAYOUTS: &[(&str, Layout)] = &["##)?;
+const RUST_LAYOUTS: &[(&str, Layout)] = &["####)?;
     for ctype in ctypes {
         general::cfg_condition(w, &ctype.cfg_condition, false, 1)?;
         writeln!(w, "\t(\"{ctype}\", Layout {{size: size_of::<{ctype}>(), alignment: align_of::<{ctype}>()}}),",
