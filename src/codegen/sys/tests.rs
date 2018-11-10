@@ -131,11 +131,22 @@ fn prepare_cconsts(env: &Env) -> Vec<CConstant> {
             continue;
         }
         match *typ {
-            Type::Bitfield(Bitfield { ref members, .. })
-            | Type::Enumeration(Enumeration { ref members, .. }) => {
+            Type::Bitfield(Bitfield { ref members, .. }) => {
                 for member in members {
+                    // GLib assumes that bitflags are unsigned integers,
+                    // see the GValue machinery around them for example
                     constants.push(CConstant {
-                        name: member.c_identifier.clone(),
+                        name: format!("(guint) {}", member.c_identifier),
+                        value: member.value.clone(),
+                    });
+                }
+            }
+            Type::Enumeration(Enumeration { ref members, .. }) => {
+                for member in members {
+                    // GLib assumes that enums are signed integers,
+                    // see the GValue machinery around them for example
+                    constants.push(CConstant {
+                        name: format!("(gint) {}", member.c_identifier),
                         value: member.value.clone(),
                     });
                 }
@@ -144,7 +155,19 @@ fn prepare_cconsts(env: &Env) -> Vec<CConstant> {
         }
     }
 
-    constants.sort();
+    constants.sort_by(|a, b| {
+        fn strip_cast(x: &CConstant) -> &str {
+            if x.name.starts_with("(gint) ") {
+                &x.name[7..]
+            } else if x.name.starts_with("(guint) ") {
+                &x.name[8..]
+            } else {
+                x.name.as_str()
+            }
+        }
+
+        strip_cast(a).cmp(&strip_cast(b))
+    });
     constants
 }
 
