@@ -12,3 +12,10 @@ script:
   - cargo test --release
   - git clone -q https://github.com/gkoz/gir-files tests/gir-files
   - ./tests/sys/test.sh
+  # check if generation generated something buildable
+  - git clone -q https://github.com/gtk-rs/gtk gtk-test
+  - git clone -q https://github.com/gtk-rs/gir-files gtk-gir-files
+  - cd gtk-test
+  - ../target/release/gir -d ../gtk-gir-files/  -o .
+  - rm ../Cargo.*
+  - cargo build
