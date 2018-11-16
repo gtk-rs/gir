@@ -140,6 +140,8 @@ module_name = "soome_class"
 version = "3.12"
 # prefixed object in mod.rs with #[cfg(mycond)]
 cfg_condition = "mycond"
+# if you want to write your own Display implementation, you can disable gir automatic generation
+generate_display_trait = false
     # define overrides for function
     [[object.function]]
     # filter functions from object

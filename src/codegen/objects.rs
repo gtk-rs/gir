@@ -16,12 +16,13 @@ pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>, traits: &
             module_name(split_namespace_name(&class_analysis.full_name).1)
         });
 
+        let generate_display_trait = obj.generate_display_trait;
         let mut path = root_path.join(&mod_name);
         path.set_extension("rs");
         info!("Generating file {:?}", path);
 
         save_to_file(path, env.config.make_backup, |ref mut w| {
-            super::object::generate(w, env, class_analysis)
+            super::object::generate(w, env, class_analysis, generate_display_trait)
         });
 
         super::object::generate_reexports(env, class_analysis, &mod_name, mod_rs, traits);

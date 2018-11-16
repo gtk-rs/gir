@@ -94,6 +94,9 @@ pub fn class(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<Info>
     imports.add("gobject_ffi", None);
     imports.add("std::mem", None);
     imports.add("std::ptr", None);
+    if obj.generate_display_trait {
+        imports.add("std::fmt", None);
+    }
 
     let supertypes = supertypes::analyze(env, class_tid, &mut imports);
 
