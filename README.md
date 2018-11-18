@@ -107,10 +107,14 @@ target_path = "."
 work_mode = "normal"
 generate_safety_asserts = true
 deprecate_by_min_version = true
-# with this option enabled, versions for gir and gir-files saved only to one file to minimize noise,
+# With this option enabled, versions for gir and gir-files saved only to one file to minimize noise,
 # can also take path to the directory for saving "versions.txt" or filename with extension.
 # Relative to target_path
 single_version_file = true
+# Generation of Display trait enabled for all enums, classes, etc.,
+# which do not have an override for `generate_display_trait`
+# (defaults to "true")
+generate_display_trait = true
 ```
 
 This mode generates only the specified objects. You can either add the object's fullname to the `generate` array or add it to the `manual` array (but in this case, it won't be generated, just used in other functions/methods instead of generating an "ignored" argument). Example:
@@ -140,7 +144,7 @@ module_name = "soome_class"
 version = "3.12"
 # prefixed object in mod.rs with #[cfg(mycond)]
 cfg_condition = "mycond"
-# if you want to write your own Display implementation, you can disable gir automatic generation
+# if you want to override default option Ex. for write your own Display implementation
 generate_display_trait = false
     # define overrides for function
     [[object.function]]
