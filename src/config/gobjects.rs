@@ -79,6 +79,7 @@ pub struct GObject {
     pub conversion_type: Option<conversion_type::ConversionType>,
     pub use_boxed_functions: bool,
     pub generate_display_trait: bool,
+    pub subclassing: bool,
 }
 
 impl Default for GObject {
@@ -105,6 +106,7 @@ impl Default for GObject {
             conversion_type: None,
             use_boxed_functions: false,
             generate_display_trait: true,
+            subclassing: false,
         }
     }
 }
@@ -187,6 +189,7 @@ fn parse_object(
             "must_use",
             "use_boxed_functions",
             "generate_display_trait",
+            "subclassing",
         ],
         &format!("object {}", name),
     );
@@ -265,6 +268,10 @@ fn parse_object(
         .lookup("generate_display_trait")
         .and_then(|v| v.as_bool())
         .unwrap_or(default_generate_display_trait);
+    let subclassing = toml_object
+        .lookup("subclassing")
+        .and_then(|v| v.as_bool())
+        .unwrap_or(false);
 
     if status != GStatus::Manual && ref_mode.is_some() {
         warn!("ref_mode configuration used for non-manual object {}", name);
@@ -296,6 +303,7 @@ fn parse_object(
         conversion_type,
         use_boxed_functions,
         generate_display_trait,
+        subclassing,
     }
 }
 

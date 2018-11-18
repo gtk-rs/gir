@@ -77,6 +77,7 @@ pub fn define_object_type(
     type_name: &str,
     glib_name: &str,
     glib_class_name: &Option<&str>,
+    rust_class_name: &Option<&str>,
     glib_func_name: &str,
     parents: &[StatusedTypeId],
 ) -> Result<()> {
@@ -105,25 +106,32 @@ pub fn define_object_type(
         }
     };
 
+    let rust_class_name = match rust_class_name {
+        None => String::new(),
+        Some(ref rust_class_name) => format!(", {}", rust_class_name),
+    };
+
     try!(writeln!(w));
     try!(writeln!(w, "glib_wrapper! {{"));
     if parents.is_empty() {
         try!(writeln!(
             w,
-            "\tpub struct {}(Object<ffi::{}{}{}>);",
+            "\tpub struct {}(Object<ffi::{}{}{}{}>);",
             type_name,
             glib_name,
             separator,
-            class_name
+            class_name,
+            rust_class_name
         ));
     } else if external_parents {
         try!(writeln!(
             w,
-            "\tpub struct {}(Object<ffi::{}{}{}>): [",
+            "\tpub struct {}(Object<ffi::{}{}{}{}>): [",
             type_name,
             glib_name,
             separator,
-            class_name
+            class_name,
+            rust_class_name
         ));
         for parent in parents {
             try!(writeln!(w, "\t\t{},", parent));
@@ -132,11 +140,12 @@ pub fn define_object_type(
     } else {
         try!(writeln!(
             w,
-            "\tpub struct {}(Object<ffi::{}{}{}>): {};",
+            "\tpub struct {}(Object<ffi::{}{}{}{}>): {};",
             type_name,
             glib_name,
             separator,
             class_name,
+            rust_class_name,
             parents.join(", ")
         ));
     }

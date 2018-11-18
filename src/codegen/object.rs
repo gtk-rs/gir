@@ -26,6 +26,7 @@ pub fn generate(
         &analysis.name,
         &analysis.c_type,
         &analysis.c_class_type.as_ref().map(|s| &s[..]),
+        &analysis.rust_class_type.as_ref().map(|s| &s[..]),
         &analysis.get_type,
         &analysis.supertypes,
     ));
