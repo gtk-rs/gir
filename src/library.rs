@@ -9,6 +9,7 @@ use analysis::conversion_type::ConversionType;
 use nameutil::split_namespace_name;
 use traits::*;
 use version::Version;
+use std::fmt;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum Transfer {
@@ -539,6 +540,30 @@ pub enum Type {
     SList(TypeId),
 }
 
+impl fmt::Display for Type {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", match *self {
+            Type::Fundamental(_) => "Fundamental",
+            Type::Alias(_) => "Alias",
+            Type::Enumeration(_) => "Enumeration",
+            Type::Bitfield(_) => "Bitfield",
+            Type::Record(_) => "Record",
+            Type::Union(_) => "Union",
+            Type::Function(_) => "Function",
+            Type::Interface(_) => "Interface",
+            Type::Class(_) => "Class",
+            Type::Custom(_) => "Custom",
+            Type::Array(_) => "Array",
+            Type::CArray(_) => "CArray",
+            Type::FixedArray(_, _, _) => "FixedArray",
+            Type::PtrArray(_) => "PtrArray",
+            Type::HashTable(_, _) => "HashTable",
+            Type::List(_) => "List",
+            Type::SList(_) => "SList",
+        })
+    }
+}
+
 impl Type {
     pub fn get_name(&self) -> String {
         use self::Type::*;
@@ -673,10 +698,16 @@ impl Type {
     }
 
     pub fn function(library: &mut Library, func: Function) -> TypeId {
-        let mut param_tids: Vec<TypeId> = func.parameters.iter().map(|p| p.typ).collect();
-        param_tids.push(func.ret.typ);
+        // let mut param_tids: Vec<TypeId> = func.parameters.iter().map(|p| p.typ).collect();
+        // param_tids.push(func.ret.typ);
+        let name = format!("fn_{}", func.name);
+        if func.name.to_lowercase().ends_with("func") {
+            println!("===> {:?}", name);
+            // println!("fn<#{:?}>", param_tids);
+        }
         let typ = Type::Function(func);
-        library.add_type(INTERNAL_NAMESPACE, &format!("fn<#{:?}>", param_tids), typ)
+        // library.add_type(INTERNAL_NAMESPACE, &format!("fn<#{:?}>", param_tids), typ)
+        library.add_type(INTERNAL_NAMESPACE, &name, typ)
     }
 
     pub fn union(library: &mut Library, u: Union, ns_id: u16) -> TypeId {

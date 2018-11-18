@@ -104,7 +104,7 @@ impl Bound {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct CallbackInfo {
     pub callback_type: String,
     pub success_parameters: String,

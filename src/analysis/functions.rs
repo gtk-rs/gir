@@ -8,7 +8,7 @@
 use std::collections::HashMap;
 use std::vec::Vec;
 
-use analysis::bounds::{Bounds, CallbackInfo};
+use analysis::bounds::{Bounds, BoundType, CallbackInfo};
 use analysis::function_parameters::{self, Parameters, Transformation, TransformationType};
 use analysis::imports::Imports;
 use analysis::out_parameters;
@@ -18,6 +18,7 @@ use analysis::return_value;
 use analysis::rust_type::*;
 use analysis::safety_assertion_mode::SafetyAssertionMode;
 use analysis::signatures::{Signature, Signatures};
+use analysis::trampolines::Trampoline;
 use config;
 use env::Env;
 use library::{self, Function, FunctionKind, Nullable, Parameter, ParameterScope, Transfer, Type};
@@ -78,6 +79,7 @@ pub struct Info {
     pub doc_hidden: bool,
     pub async: bool,
     pub trampoline: Option<AsyncTrampoline>,
+    pub callback: Option<Trampoline>,
     pub async_future: Option<AsyncFuture>,
 }
 
@@ -214,6 +216,7 @@ fn analyze_function(
     let mut to_glib_extras = HashMap::<usize, String>::new();
     let mut used_types: Vec<String> = Vec::with_capacity(4);
     let mut trampoline = None;
+    let mut callback = None;
     let mut async_future = None;
 
     let version = configured_functions
@@ -252,6 +255,10 @@ fn analyze_function(
 
     fixup_special_functions(env, imports, name.as_str(), type_tid, &mut parameters);
 
+    // if func.name.ends_with("_func") {
+    //     println!("=> {:?}", func.name);
+    // }
+    let mut to_replace = Vec::new();
     for (pos, par) in parameters.c_parameters.iter().enumerate() {
         assert!(
             !par.instance_parameter || pos == 0,
@@ -269,7 +276,7 @@ fn analyze_function(
         analyze_async(
             env,
             func,
-            callback_info,
+            callback_info.clone(),
             &mut commented,
             &mut trampoline,
             &mut async_future,
@@ -281,10 +288,48 @@ fn analyze_function(
         if type_error {
             commented = true;
         }
+        if trampoline.is_none() &func.name.ends_with("_func") && par.c_type.ends_with("Func") {
+            if analyze_callback(
+                env,
+                env.library.type_(par.typ),
+                callback_info,
+                &mut commented,
+                &mut callback,
+                in_trait,
+                par.typ,
+                configured_functions,
+            ) {
+                to_replace.push((pos, par.typ));
+            }
+        }
+    }
+    if let Some(ref callback) = callback {
+        println!("\\o/ => {:?}", callback);
     }
 
-    if async && trampoline.is_none() {
-        commented = true;
+    if async {
+        if trampoline.is_none() {
+            commented = true;
+        }
+    } else if callback.is_some() {
+        commented = false;
+
+        let mut params = func.parameters.clone();
+        // This is just a shitty hack for the moment.
+        for (pos, typ) in to_replace {
+            let ty = env.library.type_(typ);
+            params[pos].typ = typ;
+            params[pos].name = ty.get_name();
+            params[pos].c_type = ty.get_glib_name().unwrap().to_owned();
+        }
+        parameters = function_parameters::analyze(
+            env,
+            &params,
+            configured_functions,
+            disable_length_detect,
+            async,
+            in_trait
+        );
     }
 
     for par in &parameters.rust_parameters {
@@ -394,6 +439,7 @@ fn analyze_function(
         async,
         trampoline,
         async_future,
+        callback,
     }
 }
 
@@ -465,6 +511,34 @@ fn analyze_async(
             success_parameters,
             error_parameters,
         });
+    }
+}
+
+fn analyze_callback(
+    env: &Env,
+    func: &library::Type,
+    callback_info: Option<CallbackInfo>,
+    commented: &mut bool,
+    trampoline: &mut Option<Trampoline>,
+    in_trait: bool,
+    type_tid: library::TypeId,
+    configured_functions: &[&config::functions::Function],
+) -> bool {
+    if let Type::Function(ref func) = func {
+        let parameters = ::analysis::trampoline_parameters::analyze(env, &func.parameters, type_tid, &[]);
+        *trampoline = Some(Trampoline {
+            name: format!("{}_trampoline", func.name),
+            parameters: parameters,
+            ret: func.ret.clone(),
+            bounds: Bounds::default(),
+            version: None,
+            inhibit: false,
+            concurrency: library::Concurrency::None,
+            is_notify: false,
+        });
+        true
+    } else {
+        false
     }
 }
 
