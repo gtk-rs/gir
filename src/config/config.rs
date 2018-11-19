@@ -33,6 +33,7 @@ pub struct Config {
     pub show_statistics: bool,
     pub concurrency: library::Concurrency,
     pub single_version_file: Option<PathBuf>,
+    pub generate_display_trait: bool,
 }
 
 impl Config {
@@ -128,10 +129,15 @@ impl Config {
             None => Default::default(),
         };
 
+        let generate_display_trait = match toml.lookup("options.generate_display_trait") {
+            Some(v) => try!(v.as_result_bool("options.generate_display_trait")),
+            None => true,
+        };
+
         // options.concurrency is the default of all objects if nothing
         // else is configured
         let mut objects = toml.lookup("object")
-            .map(|t| gobjects::parse_toml(t, concurrency))
+            .map(|t| gobjects::parse_toml(t, concurrency, generate_display_trait))
             .unwrap_or_default();
         gobjects::parse_status_shorthands(&mut objects, &toml, concurrency);
 
@@ -182,6 +188,7 @@ impl Config {
             show_statistics: show_statistics.into().unwrap_or(false),
             concurrency,
             single_version_file,
+            generate_display_trait,
         })
     }
 

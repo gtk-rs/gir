@@ -112,10 +112,14 @@ impl Default for GObject {
 //TODO: ?change to HashMap<String, GStatus>
 pub type GObjects = BTreeMap<String, GObject>;
 
-pub fn parse_toml(toml_objects: &Value, concurrency: library::Concurrency) -> GObjects {
+pub fn parse_toml(
+    toml_objects: &Value,
+    concurrency: library::Concurrency,
+    generate_display_trait: bool,
+) -> GObjects {
     let mut objects = GObjects::new();
     for toml_object in toml_objects.as_array().unwrap() {
-        let gobject = parse_object(toml_object, concurrency);
+        let gobject = parse_object(toml_object, concurrency, generate_display_trait);
         objects.insert(gobject.name.clone(), gobject);
     }
     objects
@@ -147,7 +151,11 @@ fn conversion_type_from_str(conversion_type: &str) -> Option<conversion_type::Co
     }
 }
 
-fn parse_object(toml_object: &Value, concurrency: library::Concurrency) -> GObject {
+fn parse_object(
+    toml_object: &Value,
+    concurrency: library::Concurrency,
+    default_generate_display_trait: bool,
+) -> GObject {
     let name: String = toml_object
         .lookup("name")
         .expect("Object name not defined")
@@ -256,7 +264,7 @@ fn parse_object(toml_object: &Value, concurrency: library::Concurrency) -> GObje
     let generate_display_trait = toml_object
         .lookup("generate_display_trait")
         .and_then(|v| v.as_bool())
-        .unwrap_or(true);
+        .unwrap_or(default_generate_display_trait);
 
     if status != GStatus::Manual && ref_mode.is_some() {
         warn!("ref_mode configuration used for non-manual object {}", name);
