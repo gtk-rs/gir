@@ -17,6 +17,7 @@ pub struct Info {
     pub base: InfoBase,
     pub c_type: String,
     pub c_class_type: Option<String>,
+    pub rust_class_type: Option<String>,
     pub get_type: String,
     pub supertypes: Vec<general::StatusedTypeId>,
     pub generate_trait: bool,
@@ -207,6 +208,14 @@ pub fn class(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<Info>
         imports.add("glib::ObjectExt", None);
     }
 
+    let rust_class_type = if obj.subclassing {
+        let class_name = format!("{}Class", name);
+        imports.add(&class_name, None);
+        Some(class_name)
+    } else {
+        None
+    };
+
     let base = InfoBase {
         full_name,
         type_id: class_tid,
@@ -237,6 +246,7 @@ pub fn class(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<Info>
         base,
         c_type: klass.c_type.clone(),
         c_class_type: klass.c_class_type.clone(),
+        rust_class_type,
         get_type: klass.glib_get_type.clone(),
         supertypes,
         generate_trait,
@@ -363,6 +373,7 @@ pub fn interface(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<I
         base,
         c_type: iface.c_type.clone(),
         c_class_type: iface.c_class_type.clone(),
+        rust_class_type: None,
         get_type: iface.glib_get_type.clone(),
         supertypes,
         generate_trait: true,
