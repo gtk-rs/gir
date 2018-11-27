@@ -171,6 +171,7 @@ fn fixup_gpointer_parameter(
 
 fn fixup_special_functions(
     env: &Env,
+    imports: &mut Imports,
     name: &str,
     type_tid: library::TypeId,
     parameters: &mut Parameters
@@ -180,6 +181,7 @@ fn fixup_special_functions(
     if name == "hash" && parameters.c_parameters.len() == 1 {
         if parameters.c_parameters[0].c_type == "gconstpointer" {
             fixup_gpointer_parameter(env, type_tid, parameters, 0);
+            imports.add("glib_ffi", None);
         }
     }
 
@@ -188,6 +190,7 @@ fn fixup_special_functions(
            parameters.c_parameters[1].c_type == "gconstpointer" {
             fixup_gpointer_parameter(env, type_tid, parameters, 0);
             fixup_gpointer_parameter(env, type_tid, parameters, 1);
+            imports.add("glib_ffi", None);
         }
     }
 }
@@ -243,7 +246,7 @@ fn analyze_function(
     );
     parameters.analyze_return(env, &ret.parameter);
 
-    fixup_special_functions(env, name.as_str(), type_tid, &mut parameters);
+    fixup_special_functions(env, imports, name.as_str(), type_tid, &mut parameters);
 
     for (pos, par) in parameters.c_parameters.iter().enumerate() {
         assert!(
@@ -324,10 +327,11 @@ fn analyze_function(
             imports.add_with_constraint("gio", version, Some("futures"));
         }
         if func.kind == FunctionKind::Method {
-            imports.add("glib", None);
+            imports.add("glib", version);
         }
-        imports.add("glib_ffi", None);
-        imports.add("gobject_ffi", None);
+        imports.add("glib_ffi", version);
+        imports.add("gobject_ffi", version);
+        imports.add("std::ptr", version);
         imports.add_with_constraint("futures_core", version, Some("futures"));
         imports.add_with_constraint("std::boxed::Box as Box_", version, Some("futures"));
 
@@ -358,6 +362,7 @@ fn analyze_function(
         if ret.base_tid.is_some() {
             imports.add("glib::object::Downcast", None);
         }
+        imports.add("glib::translate::*", version);
         bounds.update_imports(imports);
     }
 
