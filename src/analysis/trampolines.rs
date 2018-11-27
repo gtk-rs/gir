@@ -12,7 +12,7 @@ use super::trampoline_parameters::{self, Parameters};
 use traits::IntoString;
 use version::Version;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Trampoline {
     pub name: String,
     pub parameters: Parameters,

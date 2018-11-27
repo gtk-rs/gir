@@ -121,7 +121,7 @@ impl Bounds {
         async: bool,
     ) -> (Option<String>, Option<CallbackInfo>) {
         let type_name = bounds_rust_type(env, par.typ);
-        let mut type_string = if async && async_param_to_remove(&par.name) {
+        let mut type_string = if (async && async_param_to_remove(&par.name)) || (func.name.ends_with("_func") && par.name == "data") {
             return (None, None);
         } else {
             type_name.into_string()
@@ -151,6 +151,25 @@ impl Bounds {
                             callback_type: type_string.clone(),
                             success_parameters: parameters,
                             error_parameters: error_type,
+                            bound_name,
+                        });
+                    }
+                } else if func.name.ends_with("_func") && par.c_type.ends_with("Func") {
+                    if let Type::Function(ref func) = env.library.type_(par.typ) {
+                        let parameters = ::analysis::trampoline_parameters::analyze(env,
+                                                                                    &func.parameters,
+                                                                                    par.typ,
+                                                                                    &[]);
+                        type_string = format!(
+                            "Fn({}){} + Send + 'static",
+                            parameters.rust_parameters.iter().map(|p| p.name.clone()).collect::<Vec<_>>().join(", "),
+                            format!(" -> {}", env.library.type_(func.ret.typ).to_string()),
+                        );
+                        let bound_name = *self.unused.front().unwrap();
+                        callback_info = Some(CallbackInfo {
+                            callback_type: type_string.clone(),
+                            success_parameters: String::new(),
+                            error_parameters: String::new(),
                             bound_name,
                         });
                     }

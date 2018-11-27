@@ -308,6 +308,9 @@ pub fn parameter_rust_type(
             _ => Err(TypeError::Unimplemented(into_inner(rust_type))),
         },
         Function(ref func) if func.name == "AsyncReadyCallback" => Ok("AsyncReadyCallback".to_string()),
+        Function(ref func)  => {
+            Ok(format!("Fn({})", func.parameters.iter().map(|p| format!("{}", p.c_type)).collect::<Vec<_>>().join(", ")))
+        }
         Custom(..) => rust_type.map_any(|s| format_parameter(s, direction)),
         _ => Err(TypeError::Unimplemented(type_.get_name().to_owned())),
     }

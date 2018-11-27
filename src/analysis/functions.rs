@@ -210,7 +210,8 @@ fn analyze_function(
     configured_functions: &[&config::functions::Function],
     imports: &mut Imports,
 ) -> Info {
-    let async = func.parameters.iter().any(|parameter| parameter.scope == ParameterScope::Async);
+    let mut async = !func.name.ends_with("_func") &&
+                    func.parameters.iter().any(|parameter| parameter.scope == ParameterScope::Async);
     let mut commented = false;
     let mut bounds: Bounds = Default::default();
     let mut to_glib_extras = HashMap::<usize, String>::new();
@@ -288,40 +289,49 @@ fn analyze_function(
         if type_error {
             commented = true;
         }
-        if trampoline.is_none() &func.name.ends_with("_func") && par.c_type.ends_with("Func") {
+        if trampoline.is_none() && callback.is_none() &&
+           func.name.ends_with("_func") && par.c_type.ends_with("Func") {
             if analyze_callback(
                 env,
                 env.library.type_(par.typ),
-                callback_info,
                 &mut commented,
                 &mut callback,
                 in_trait,
                 par.typ,
                 configured_functions,
             ) {
+                async = false;
                 to_replace.push((pos, par.typ));
             }
         }
-    }
-    if let Some(ref callback) = callback {
-        println!("\\o/ => {:?}", callback);
     }
 
     if async {
         if trampoline.is_none() {
             commented = true;
         }
-    } else if callback.is_some() {
+    } else if let Some(_) = callback {
         commented = false;
 
         let mut params = func.parameters.clone();
         // This is just a shitty hack for the moment.
         for (pos, typ) in to_replace {
             let ty = env.library.type_(typ);
+            println!("replacing {} with {}", params[pos].name, ty.get_name());
             params[pos].typ = typ;
-            params[pos].name = ty.get_name();
+            // params[pos].name = ty.get_name();
             params[pos].c_type = ty.get_glib_name().unwrap().to_owned();
         }
+        let mut i = 0;
+        while i < params.len() {
+            println!("==> {:?}", params[i].name);
+            if params[i].name == "data" {
+                params.remove(i);
+                continue
+            }
+            i += 1;
+        }
+        //params[to_replace[0].0] = callback.clone();
         parameters = function_parameters::analyze(
             env,
             &params,
@@ -517,7 +527,6 @@ fn analyze_async(
 fn analyze_callback(
     env: &Env,
     func: &library::Type,
-    callback_info: Option<CallbackInfo>,
     commented: &mut bool,
     trampoline: &mut Option<Trampoline>,
     in_trait: bool,
