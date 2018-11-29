@@ -8,6 +8,7 @@ use nameutil::*;
 use super::*;
 use super::imports::Imports;
 use super::info_base::InfoBase;
+use super::record_type::RecordType;
 use traits::*;
 
 #[derive(Debug, Default)]
@@ -75,13 +76,13 @@ pub fn new(env: &Env, obj: &GObject) -> Option<Info> {
     let use_boxed_functions = obj.use_boxed_functions;
 
     let mut imports = Imports::with_defined(&env.library, &name);
-    imports.add("glib::translate::*", None);
     imports.add("ffi", None);
-    imports.add("glib_ffi", None);
-    imports.add("std::mem", None);
-    imports.add("std::ptr", None);
     if record.glib_get_type.is_some() {
-        imports.add("gobject_ffi", None);
+        if use_boxed_functions {
+            imports.add("gobject_ffi", None);
+        } else if let RecordType::AutoBoxed = RecordType::of(&record) {
+            imports.add("gobject_ffi", None);
+        }
     }
 
     let mut functions = functions::analyze(
