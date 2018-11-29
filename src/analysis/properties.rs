@@ -96,7 +96,6 @@ pub fn analyze(
             }
 
             if let Some(ref bound, ..) = prop.bound {
-                imports.add("glib", prop.version);
                 if bound.bound_type.need_isa() {
                     imports.add("glib::object::IsA", prop.version);
                 }
@@ -272,7 +271,6 @@ fn analyze_property(
         if trampoline_name.is_ok() {
             imports.add_used_types(&used_types, prop_version);
             if generate_trait {
-                imports.add("glib", prop_version);
                 imports.add("glib::object::Downcast", prop_version);
             }
             imports.add("glib::signal::connect", prop_version);

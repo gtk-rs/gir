@@ -10,7 +10,6 @@ use super::imports::Imports;
 use super::info_base::InfoBase;
 use super::signatures::Signatures;
 use traits::*;
-use super::functions::Visibility;
 
 #[derive(Debug, Default)]
 pub struct Info {
@@ -187,13 +186,6 @@ pub fn class(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<Info>
         generate_trait = false;
     }
 
-    let has_async = functions
-        .iter()
-        .any(|f| f.async && f.visibility == Visibility::Public);
-
-    if generate_trait && (!properties.is_empty() || has_signals || has_async) {
-        imports.add("glib", None);
-    }
     if generate_trait
         && (has_methods || !properties.is_empty() || !child_properties.is_empty() || has_signals)
     {
@@ -336,10 +328,6 @@ pub fn interface(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<I
         iface.version,
         iface.deprecated_version,
     );
-
-    if !properties.is_empty() {
-        imports.add("glib", None);
-    }
 
     if obj.concurrency == library::Concurrency::SendUnique {
         imports.add("glib::ObjectExt", None);

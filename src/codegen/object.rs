@@ -169,15 +169,7 @@ fn generate_trait(
     env: &Env,
     analysis: &analysis::object::Info,
 ) -> Result<()> {
-    use analysis::functions::Visibility;
-
-    let has_async = analysis.methods().iter().any(|f| f.async && f.visibility == Visibility::Public);
-
-    if has_async {
-        try!(write!(w, "pub trait {}: Sized {{", analysis.trait_name));
-    } else {
-        try!(write!(w, "pub trait {} {{", analysis.trait_name));
-    }
+    try!(write!(w, "pub trait {}: 'static {{", analysis.trait_name));
 
     for func_analysis in &analysis.methods() {
         try!(function::generate(w, env, func_analysis, true, true, 1));
@@ -213,29 +205,11 @@ fn generate_trait(
     try!(writeln!(w, "}}"));
 
     try!(writeln!(w));
-    let mut extra_isa: Vec<&'static str> = Vec::new();
-    if !analysis.child_properties.is_empty() {
-        extra_isa.push(" + IsA<Container>");
-    }
-    if analysis.has_signals() || !analysis.properties.is_empty() || has_async {
-        if env.namespaces.is_glib_crate {
-            extra_isa.push(" + IsA<::object::Object>");
-        } else {
-            extra_isa.push(" + IsA<glib::object::Object>");
-        }
-    }
-    if analysis.has_action_signals() {
-        extra_isa.push(" + glib::object::ObjectExt");
-    }
-    if has_async {
-        extra_isa.push(" + Clone + 'static");
-    }
-
+    // FIXME remove 'static
     try!(write!(
         w,
-        "impl<O: IsA<{}>{}> {} for O {{",
+        "impl<O: 'static + IsA<{}>> {} for O {{",
         analysis.name,
-        extra_isa.join(""),
         analysis.trait_name,
     ));
 
