@@ -73,11 +73,13 @@ impl Builder {
     fn chunks_for_get(&self) -> Vec<Chunk> {
         let mut params = Vec::new();
 
-        params.push(Chunk::Custom("self.to_glib_none().0".into()));
+        let cast_target = if self.is_child_property { "ffi::GtkContainer" } else { "gobject_ffi::GObject" };
+        params.push(Chunk::Custom(format!("self.to_glib_none().0 as *mut {}", cast_target)));
         if self.is_child_property {
             params.push(Chunk::Custom("item.to_glib_none().0".into()));
         }
-        params.push(Chunk::Custom(format!("\"{}\".to_glib_none().0", self.name)));
+        // FIXME
+        params.push(Chunk::Custom(format!("\"b{}\\0\".as_ptr() as *const _", self.name)));
         params.push(Chunk::Custom("value.to_glib_none_mut().0".into()));
 
         let mut body = Vec::new();
@@ -130,11 +132,13 @@ impl Builder {
     fn chunks_for_set(&self) -> Vec<Chunk> {
         let mut params = Vec::new();
 
-        params.push(Chunk::Custom("self.to_glib_none().0".into()));
+        let cast_target = if self.is_child_property { "ffi::GtkContainer" } else { "gobject_ffi::GObject" };
+        params.push(Chunk::Custom(format!("self.to_glib_none().0 as *mut {}", cast_target)));
         if self.is_child_property {
             params.push(Chunk::Custom("item.to_glib_none().0".into()));
         }
-        params.push(Chunk::Custom(format!("\"{}\".to_glib_none().0", self.name)));
+        // FIXME
+        params.push(Chunk::Custom(format!("\"b{}\\0\".as_ptr() as *const _", self.name)));
         let ref_str = if self.is_ref { "" } else { "&" };
         params.push(Chunk::Custom(format!(
             "Value::from({}{}).to_glib_none().0",

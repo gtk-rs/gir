@@ -90,9 +90,9 @@ fn analyze_signal(
     );
 
     let action_emit_name = if signal.is_action {
-        if !in_trait {
-            imports.add("glib::object::ObjectExt", version);
-        }
+        imports.add("glib", version);
+        imports.add("gobject_ffi", version);
+        imports.add("glib::object::ObjectExt", version);
         Some(format!("emit_{}", nameutil::signal_to_snake(&signal.name)))
     } else {
         None
@@ -101,7 +101,6 @@ fn analyze_signal(
     if trampoline_name.is_ok() {
         imports.add_used_types(&used_types, version);
         if in_trait {
-            imports.add("glib", version);
             imports.add("glib::object::Downcast", version);
         }
         imports.add("glib::signal::connect", version);

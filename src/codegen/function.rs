@@ -210,12 +210,19 @@ pub fn declaration_futures(env: &Env, analysis: &analysis::functions::Info) -> S
 
     let bounds = bounds(&analysis.bounds, skipped_bounds.as_ref(), true);
 
+    let where_str = if async_future.is_method {
+        " where Self: Sized + Clone"
+    } else {
+        ""
+    };
+
     format!(
-        "fn {}{}({}){}",
+        "fn {}{}({}){}{}",
         async_future.name,
         bounds,
         param_str,
-        return_str
+        return_str,
+        where_str,
     )
 }
 
