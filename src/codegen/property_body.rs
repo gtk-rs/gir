@@ -121,7 +121,7 @@ impl Builder {
         let unwrap = if self.is_nullable {
             // This one is strictly speaking nullable, but
             // we represent that with an empty Vec instead
-            if self.type_ == "Vec<String>" {
+            if self.type_ == "Vec<GString>" {
                 ".unwrap()"
             } else {
                 ""

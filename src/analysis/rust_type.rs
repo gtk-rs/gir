@@ -98,7 +98,7 @@ fn rust_type_full(
                 Utf8 => if ref_mode.is_ref() {
                     ok("str")
                 } else {
-                    ok("String")
+                    ok("GString")
                 },
                 Filename => if ref_mode.is_ref() {
                     ok("std::path::Path")

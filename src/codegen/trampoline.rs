@@ -167,7 +167,7 @@ fn func_returns(env: &Env, analysis: &Trampoline) -> String {
     } else if analysis.inhibit {
         " -> Inhibit".into()
     } else {
-        analysis.ret.to_return_value(env)
+        analysis.ret.to_return_value(env, true)
     }
 }
 

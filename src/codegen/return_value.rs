@@ -8,14 +8,17 @@ use traits::*;
 use nameutil;
 
 pub trait ToReturnValue {
-    fn to_return_value(&self, env: &Env) -> String;
+    fn to_return_value(&self, env: &Env, is_trampoline: bool) -> String;
 }
 
 impl ToReturnValue for library::Parameter {
-    fn to_return_value(&self, env: &Env) -> String {
+    fn to_return_value(&self, env: &Env, is_trampoline: bool) -> String {
         let rust_type =
             parameter_rust_type(env, self.typ, self.direction, self.nullable, RefMode::None);
-        let name = rust_type.into_string();
+        let mut name = rust_type.into_string();
+        if is_trampoline && self.direction == library::ParameterDirection::Return && name == "GString" {
+            name = "String".to_owned();
+        }
         let type_str = match ConversionType::of(env, self.typ) {
             ConversionType::Unknown => format!("/*Unknown conversion*/{}", name),
             //TODO: records as in gtk_container_get_path_for_child
@@ -26,9 +29,9 @@ impl ToReturnValue for library::Parameter {
 }
 
 impl ToReturnValue for analysis::return_value::Info {
-    fn to_return_value(&self, env: &Env) -> String {
+    fn to_return_value(&self, env: &Env, is_trampoline: bool) -> String {
         match self.parameter {
-            Some(ref par) => par.to_return_value(env),
+            Some(ref par) => par.to_return_value(env, is_trampoline),
             None => String::new(),
         }
     }
