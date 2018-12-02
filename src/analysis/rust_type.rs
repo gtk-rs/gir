@@ -191,6 +191,24 @@ fn rust_type_full(
             }
         }
         Custom(library::Custom { ref name, .. }) => Ok(name.clone()),
+        Function(ref f) => {
+            let mut s = Vec::with_capacity(f.parameters.len());
+            for p in f.parameters.iter() {
+                if p.name == "data" {
+                    break
+                }
+                match rust_type(env, p.typ) {
+                    Ok(x) => s.push(x),
+                    e => return e,
+                }
+            }
+            println!("{:?}", s);
+            match rust_type(env, f.ret.typ) {
+                Ok(x) => Ok(format!("Fn({}) -> {}", s.join(", "), x)),
+                Err(TypeError::Unimplemented(ref x)) if x == "()" => Ok(format!("Fn({})", s.join(", "))),
+                e => e,
+            }
+        }
         _ => Err(TypeError::Unimplemented(type_.get_name().to_owned())),
     };
 
@@ -312,7 +330,10 @@ pub fn parameter_rust_type(
             Ok(format!("Fn({})", func.parameters.iter().map(|p| format!("{}", p.c_type)).collect::<Vec<_>>().join(", ")))
         }
         Custom(..) => rust_type.map_any(|s| format_parameter(s, direction)),
-        _ => Err(TypeError::Unimplemented(type_.get_name().to_owned())),
+        ref x => {
+            println!("{:?}", x);
+            Err(TypeError::Unimplemented(type_.get_name().to_owned()))
+        },
     }
 }
 

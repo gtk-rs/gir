@@ -160,9 +160,16 @@ impl Bounds {
                                                                                     &func.parameters,
                                                                                     par.typ,
                                                                                     &[]);
+                        let mut params = Vec::new();
+                        for param in parameters.rust_parameters.iter() {
+                            match rust_type(env, param.typ) {
+                                Ok(x) => params.push(x),
+                                _ => return (None, None),
+                            }
+                        }
                         type_string = format!(
                             "Fn({}){} + Send + 'static",
-                            parameters.rust_parameters.iter().map(|p| p.name.clone()).collect::<Vec<_>>().join(", "),
+                            params.join(", "),
                             format!(" -> {}", env.library.type_(func.ret.typ).to_string()),
                         );
                         let bound_name = *self.unused.front().unwrap();
