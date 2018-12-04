@@ -168,7 +168,7 @@ impl Bounds {
                             }
                         }
                         type_string = format!(
-                            "Fn({}){} + Send + 'static",
+                            "xxFn({}){} + Send + 'static",
                             params.join(", "),
                             format!(" -> {}", env.library.type_(func.ret.typ).to_string()),
                         );

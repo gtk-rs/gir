@@ -80,6 +80,7 @@ pub struct Info {
     pub async: bool,
     pub trampoline: Option<AsyncTrampoline>,
     pub callback: Option<Trampoline>,
+    pub destroy: Option<Trampoline>,
     pub async_future: Option<AsyncFuture>,
 }
 
@@ -218,6 +219,7 @@ fn analyze_function(
     let mut used_types: Vec<String> = Vec::with_capacity(4);
     let mut trampoline = None;
     let mut callback = None;
+    let mut destroy = None;
     let mut async_future = None;
 
     let version = configured_functions
@@ -289,19 +291,33 @@ fn analyze_function(
         if type_error {
             commented = true;
         }
-        if trampoline.is_none() && callback.is_none() &&
-           func.name.ends_with("_func") && par.c_type.ends_with("Func") {
-            if analyze_callback(
-                env,
-                env.library.type_(par.typ),
-                &mut commented,
-                &mut callback,
-                in_trait,
-                par.typ,
-                configured_functions,
-            ) {
-                async = false;
-                to_replace.push((pos, par.typ));
+        if trampoline.is_none() && func.name.ends_with("_func") {
+            if callback.is_none() && par.c_type.ends_with("Func") {
+                if analyze_callback(
+                    env,
+                    env.library.type_(par.typ),
+                    &mut commented,
+                    &mut callback,
+                    in_trait,
+                    par.typ,
+                    configured_functions,
+                ) {
+                    async = false;
+                    to_replace.push((pos, par.typ));
+                }
+            } else if destroy.is_none() && par.c_type == "DestroyNotify" {
+                if analyze_callback(
+                    env,
+                    env.library.type_(par.typ),
+                    &mut commented,
+                    &mut destroy,
+                    in_trait,
+                    par.typ,
+                    configured_functions,
+                ) {
+                    async = false;
+                    to_replace.push((pos, par.typ));
+                }
             }
         }
     }
@@ -325,7 +341,7 @@ fn analyze_function(
         let mut i = 0;
         while i < params.len() {
             println!("==> {:?}", params[i].name);
-            if params[i].name == "data" {
+            if params[i].name.ends_with("data") {
                 params.remove(i);
                 continue
             }
@@ -450,6 +466,7 @@ fn analyze_function(
         trampoline,
         async_future,
         callback,
+        destroy,
     }
 }
 

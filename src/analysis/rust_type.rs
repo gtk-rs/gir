@@ -193,14 +193,17 @@ fn rust_type_full(
         Custom(library::Custom { ref name, .. }) => Ok(name.clone()),
         Function(ref f) => {
             let mut s = Vec::with_capacity(f.parameters.len());
-            for p in f.parameters.iter() {
-                if p.name == "data" {
+            let mut i = 0;
+            while i < f.parameters.len() {
+                let p = &f.parameters[i];
+                if p.name == "data" || (i + 1 >= f.parameters.len() && p.c_type == "gpointer") {
                     break
                 }
                 match rust_type(env, p.typ) {
                     Ok(x) => s.push(x),
                     e => return e,
                 }
+                i += 1;
             }
             println!("{:?}", s);
             match rust_type(env, f.ret.typ) {
@@ -326,9 +329,7 @@ pub fn parameter_rust_type(
             _ => Err(TypeError::Unimplemented(into_inner(rust_type))),
         },
         Function(ref func) if func.name == "AsyncReadyCallback" => Ok("AsyncReadyCallback".to_string()),
-        Function(ref func)  => {
-            Ok(format!("Fn({})", func.parameters.iter().map(|p| format!("{}", p.c_type)).collect::<Vec<_>>().join(", ")))
-        }
+        Function(_)  => rust_type,
         Custom(..) => rust_type.map_any(|s| format_parameter(s, direction)),
         ref x => {
             println!("{:?}", x);
