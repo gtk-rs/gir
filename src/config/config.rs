@@ -139,7 +139,7 @@ impl Config {
         let mut objects = toml.lookup("object")
             .map(|t| gobjects::parse_toml(t, concurrency, generate_display_trait))
             .unwrap_or_default();
-        gobjects::parse_status_shorthands(&mut objects, &toml, concurrency);
+        gobjects::parse_status_shorthands(&mut objects, &toml, concurrency, generate_display_trait);
 
         let external_libraries = try!(read_external_libraries(&toml));
 
