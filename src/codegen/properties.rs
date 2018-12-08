@@ -67,7 +67,7 @@ fn generate_prop_func(
     ));
 
     if !only_declaration {
-        let body = body(env, prop).to_code(env);
+        let body = body(env, prop, in_trait).to_code(env);
         for s in body {
             try!(writeln!(w, "{}{}{}", tabs(indent), comment_prefix, s));
         }
@@ -167,10 +167,11 @@ fn declaration(env: &Env, prop: &Property) -> String {
     )
 }
 
-fn body(env: &Env, prop: &Property) -> Chunk {
+fn body(env: &Env, prop: &Property, in_trait: bool) -> Chunk {
     let mut builder = property_body::Builder::new();
     builder
         .name(&prop.name)
+        .in_trait(in_trait)
         .var_name(&prop.var_name)
         .is_get(prop.is_get)
         .is_ref(prop.set_in_ref_mode.is_ref())
