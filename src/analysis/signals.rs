@@ -103,7 +103,7 @@ fn analyze_signal(
         if in_trait {
             imports.add("glib::object::Downcast", version);
         }
-        imports.add("glib::signal::connect", version);
+        imports.add("glib::signal::connect_raw", version);
         imports.add("glib::signal::SignalHandlerId", version);
         imports.add("std::mem::transmute", version);
         imports.add("std::boxed::Box as Box_", version);

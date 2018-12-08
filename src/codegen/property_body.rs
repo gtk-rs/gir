@@ -78,8 +78,7 @@ impl Builder {
         if self.is_child_property {
             params.push(Chunk::Custom("item.to_glib_none().0".into()));
         }
-        // FIXME
-        params.push(Chunk::Custom(format!("\"b{}\\0\".as_ptr() as *const _", self.name)));
+        params.push(Chunk::Custom(format!("b\"{}\\0\".as_ptr() as *const _", self.name)));
         params.push(Chunk::Custom("value.to_glib_none_mut().0".into()));
 
         let mut body = Vec::new();
@@ -137,8 +136,7 @@ impl Builder {
         if self.is_child_property {
             params.push(Chunk::Custom("item.to_glib_none().0".into()));
         }
-        // FIXME
-        params.push(Chunk::Custom(format!("\"b{}\\0\".as_ptr() as *const _", self.name)));
+        params.push(Chunk::Custom(format!("b\"{}\\0\".as_ptr() as *const _", self.name)));
         let ref_str = if self.is_ref { "" } else { "&" };
         params.push(Chunk::Custom(format!(
             "Value::from({}{}).to_glib_none().0",
