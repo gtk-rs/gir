@@ -205,10 +205,9 @@ fn generate_trait(
     try!(writeln!(w, "}}"));
 
     try!(writeln!(w));
-    // FIXME remove 'static
     try!(write!(
         w,
-        "impl<O: 'static + IsA<{}>> {} for O {{",
+        "impl<O: IsA<{}>> {} for O {{",
         analysis.name,
         analysis.trait_name,
     ));

@@ -311,10 +311,11 @@ pub fn parse_status_shorthands(
     objects: &mut GObjects,
     toml: &Value,
     concurrency: library::Concurrency,
+    generate_display_trait: bool,
 ) {
     use self::GStatus::*;
     for &status in &[Manual, Generate, Comment, Ignore] {
-        parse_status_shorthand(objects, status, toml, concurrency);
+        parse_status_shorthand(objects, status, toml, concurrency, generate_display_trait);
     }
 }
 
@@ -323,6 +324,7 @@ fn parse_status_shorthand(
     status: GStatus,
     toml: &Value,
     concurrency: library::Concurrency,
+    generate_display_trait: bool,
 ) {
     let name = format!("options.{:?}", status).to_ascii_lowercase();
     if let Some(a) = toml.lookup(&name).map(|a| a.as_array().unwrap()) {
@@ -335,6 +337,7 @@ fn parse_status_shorthand(
                             name: name_.into(),
                             status,
                             concurrency,
+                            generate_display_trait,
                             ..Default::default()
                         },
                     );

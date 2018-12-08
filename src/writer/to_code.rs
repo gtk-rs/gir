@@ -134,9 +134,8 @@ impl ToCode for Chunk {
                 ref trampoline,
                 in_trait,
             } => {
-                // FIXME \0 terminated string
                 let cast_str = if in_trait { " as *mut _" } else { "" };
-                let s1 = format!("connect(self.to_glib_none().0{}, \"{}\",", cast_str, signal);
+                let s1 = format!("connect_raw(self.to_glib_none().0{}, b\"{}\\0\".as_ptr() as *const _,", cast_str, signal);
                 let self_str = if in_trait { "::<Self>" } else { "" };
                 let s2 = format!(
                     "\ttransmute({}{} as usize), Box_::into_raw(f) as *mut _)",

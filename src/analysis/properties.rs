@@ -273,7 +273,7 @@ fn analyze_property(
             if generate_trait {
                 imports.add("glib::object::Downcast", prop_version);
             }
-            imports.add("glib::signal::connect", prop_version);
+            imports.add("glib::signal::connect_raw", prop_version);
             imports.add("glib::signal::SignalHandlerId", prop_version);
             imports.add("std::mem::transmute", prop_version);
             imports.add("std::boxed::Box as Box_", prop_version);

@@ -75,7 +75,7 @@ fn generate_func(
     ));
 
     if !only_declaration {
-        let body = body(env, prop, is_get).to_code(env);
+        let body = body(env, prop, in_trait, is_get).to_code(env);
         for s in body {
             try!(writeln!(w, "{}{}{}", tabs(indent), comment_prefix, s));
         }
@@ -119,11 +119,12 @@ fn declaration(env: &Env, prop: &ChildProperty, is_get: bool) -> String {
     )
 }
 
-fn body(env: &Env, prop: &ChildProperty, is_get: bool) -> Chunk {
+fn body(env: &Env, prop: &ChildProperty, in_trait: bool, is_get: bool) -> Chunk {
     let mut builder = property_body::Builder::new_for_child_property();
     let prop_name = nameutil::signal_to_snake(&*prop.name);
     builder
         .name(&prop.name)
+        .in_trait(in_trait)
         .var_name(&prop_name)
         .is_get(is_get)
         .is_ref(prop.set_in_ref_mode.is_ref())
