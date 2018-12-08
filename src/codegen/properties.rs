@@ -127,7 +127,7 @@ fn declaration(env: &Env, prop: &Property) -> String {
                         ""
                     };
                     bound = format!(
-                        "<{}: IsA<{}> + IsA<glib::object::Object>{}>",
+                        "<{}: IsA<{}>{}>",
                         alias,
                         type_str,
                         value_bound
