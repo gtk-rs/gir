@@ -193,14 +193,24 @@ impl Builder {
         let gio_crate_name = crate_name("Gio", env);
         let gobject_crate_name = crate_name("GObject", env);
         let glib_crate_name = crate_name("GLib", env);*/
-        let mut body = vec![
-            Chunk::Let {
-                name: "error".to_string(),
-                is_mut: true,
-                value: Box::new(Chunk::NullMutPtr),
-                type_: None,
-            },
-        ];
+        let mut body = trampoline.parameters
+                                 .rust_parameters
+                                 .iter()
+                                 .skip(1)
+                                 .map(|p| {
+                                     Chunk::FromGlibConversion {
+                                        mode: p.into(),
+                                        array_length_name: None,
+                                        value: Box::new(Chunk::Custom(p.name.clone())),
+                                    }
+                                 })
+                                 .collect::<Vec<_>>();
+        let func = trampoline.parameters
+                                 .c_parameters
+                                 .iter()
+                                 .find(|p| p.c_type.ends_with("Func") || p.c_type.ends_with("Callback"))
+                                 .map(|p| p.name.clone())
+                                 .unwrap_or_else(|| "Unknown".to_owned());
         /*let output_vars = trampoline.output_params.iter()
             .filter(|param| param.direction == ParameterDirection::Out && param.name != "error")
             .map(|param| (param, type_mem_mode(env, param)))
@@ -240,7 +250,7 @@ impl Builder {
             Chunk::Let {
                 name: "callback".to_string(),
                 is_mut: false,
-                value: Box::new(Chunk::Custom("Box::from_raw(user_data as *mut _)".into())),
+                value: Box::new(Chunk::Custom(format!("Box::from_raw({} as *mut _)", func))),
                 type_: Some(Box::new(Chunk::Custom(format!("Box<Box<{}>>", trampoline.bound_name)))),
             }
         );
@@ -260,6 +270,7 @@ impl Builder {
         chunks.push(Chunk::ExternCFunc {
             name: format!("{}", trampoline.name),
             parameters: trampoline.parameters.c_parameters.iter()
+                                                          .skip(1) // to skip the generated this
                                                           .map(|p| Param { name: p.name.clone(),
                                                                            typ: p.c_type.clone() })
                                                           .collect::<Vec<_>>(),
