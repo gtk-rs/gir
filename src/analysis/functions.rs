@@ -251,7 +251,6 @@ fn analyze_function(
         let mut i = 0;
         while i < params.len() {
             if params[i].name == "data" || params[i].name.ends_with("data") {
-                println!("==> {:?}", params[i].name);
                 params.remove(i);
                 continue
             }
@@ -270,6 +269,9 @@ fn analyze_function(
 
     fixup_special_functions(env, imports, name.as_str(), type_tid, &mut parameters);
 
+    if name == "add_callback_symbol" {
+        println!("1 {}", commented);
+    }
     let mut to_replace = Vec::new();
     for (pos, par) in parameters.c_parameters.iter().enumerate() {
         assert!(
@@ -285,52 +287,69 @@ fn analyze_function(
             to_glib_extras.insert(pos, to_glib_extra);
         }
 
-        analyze_async(
-            env,
-            func,
-            callback_info.clone(),
-            &mut commented,
-            &mut trampoline,
-            &mut async_future,
-        );
-        let type_error =
-            !(async && *env.library.type_(par.typ) == Type::Fundamental(library::Fundamental::Pointer)) &&
-            parameter_rust_type(env, par.typ, par.direction, Nullable(false), RefMode::None)
-                .is_err();
-        if type_error {
-            commented = true;
+        if !expecting_data {
+            analyze_async(
+                env,
+                func,
+                callback_info.clone(),
+                &mut commented,
+                &mut trampoline,
+                &mut async_future,
+            );
+            let type_error =
+                !(async && *env.library.type_(par.typ) == Type::Fundamental(library::Fundamental::Pointer)) &&
+                parameter_rust_type(env, par.typ, par.direction, Nullable(false), RefMode::None)
+                    .is_err();
+            if type_error {
+                commented = true;
+            }
         }
-        if trampoline.is_none() {
+        if name == "add_callback_symbol" {
+            println!("2 {}", commented);
+        }
+        if expecting_data && (trampoline.is_none() || destroy.is_none()) {
             if callback.is_none() && (par.c_type.ends_with("Func") || par.c_type.ends_with("Callback")) {
+                if name == "add_callback_symbol" {
+                    println!("a {} {:?}", commented, env.library.type_(par.typ));
+                }
                 if analyze_callback(
                     env,
                     env.library.type_(par.typ),
+                    &callback_info,
                     &mut commented,
                     &mut callback,
-                    in_trait,
                     par.typ,
-                    configured_functions,
                 ) {
                     async = false;
                     to_replace.push((pos, par.typ));
                 }
             } else if destroy.is_none() && par.c_type == "DestroyNotify" {
+                if name == "add_callback_symbol" {
+                    println!("b {} {:?}", commented, env.library.type_(par.typ));
+                }
                 if analyze_callback(
                     env,
                     env.library.type_(par.typ),
+                    &callback_info,
                     &mut commented,
                     &mut destroy,
-                    in_trait,
                     par.typ,
-                    configured_functions,
                 ) {
                     async = false;
                     to_replace.push((pos, par.typ));
                 }
             }
         }
+        if name == "add_callback_symbol" {
+            println!("3 {}", commented);
+        }
     }
 
+    if destroy.is_some() {
+        async = false;
+        trampoline = None;
+        async_future = None;
+    }
     if async {
         if trampoline.is_none() {
             commented = true;
@@ -338,7 +357,6 @@ fn analyze_function(
     } else if let Some(_) = callback {
         // commented = false;
 
-        let mut params = func.parameters.clone();
         // This is just a shitty hack for the moment.
         for (pos, typ) in to_replace {
             let ty = env.library.type_(typ);
@@ -503,9 +521,7 @@ fn analyze_async(
     }) = callback_info
     {
         // Checks for /*Ignored*/ or other error comments
-        if callback_type.find("/*").is_some() {
-            *commented = true;
-        }
+        *commented = callback_type.find("/*").is_some();
         let func_name = func.c_identifier.as_ref().unwrap();
         let finish_func_name = finish_function_name(func_name);
         let mut output_params = vec![];
@@ -544,18 +560,23 @@ fn analyze_async(
 fn analyze_callback(
     env: &Env,
     func: &library::Type,
+    callback_info: &Option<CallbackInfo>,
     commented: &mut bool,
     trampoline: &mut Option<Trampoline>,
-    in_trait: bool,
     type_tid: library::TypeId,
-    configured_functions: &[&config::functions::Function],
 ) -> bool {
     if let Type::Function(ref func) = func {
         let parameters = ::analysis::trampoline_parameters::analyze(env, &func.parameters, type_tid, &[]);
+        //let x = env.type_status(&type_tid.full_name(&env.library));
+        *commented |= !func.parameters.iter().any(|p| !env.type_status(&p.typ.full_name(&env.library)).normal());
         *trampoline = Some(Trampoline {
             name: format!("{}_trampoline", func.name),
             parameters: parameters,
             ret: func.ret.clone(),
+            bound_name: match callback_info {
+                Some(x) => x.bound_name,
+                None => return false,
+            },
             bounds: Bounds::default(),
             version: None,
             inhibit: false,

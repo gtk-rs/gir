@@ -214,11 +214,11 @@ fn rust_type_full(
             }
             println!("{:?}", s);
             let ret = match rust_type(env, f.ret.typ) {
-                Ok(x) => format!("aaFn({}) -> {}", s.join(", "), x),
-                Err(TypeError::Unimplemented(ref x)) if x == "()" => format!("aaFn({})", s.join(", ")),
+                Ok(x) => format!("Fn({}) -> {}", s.join(", "), x),
+                Err(TypeError::Unimplemented(ref x)) if x == "()" => format!("Fn({})", s.join(", ")),
                 e => {
                     err = true;
-                    format!("aaFn({}) -> {}", s.join(", "), e.into_string())
+                    format!("Fn({}) -> {}", s.join(", "), e.into_string())
                 }
             };
             if err {

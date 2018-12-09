@@ -17,6 +17,7 @@ pub struct Trampoline {
     pub name: String,
     pub parameters: Parameters,
     pub ret: library::Parameter,
+    pub bound_name: char,
     pub bounds: Bounds,
     pub version: Option<Version>,
     pub inhibit: bool,
@@ -147,6 +148,7 @@ pub fn analyze(
         inhibit,
         concurrency,
         is_notify,
+        bound_name: 'A', // TODO: remove that
     };
     trampolines.push(trampoline);
     Ok(name)

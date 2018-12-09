@@ -352,6 +352,13 @@ pub fn body_chunk(env: &Env, analysis: &analysis::functions::Info) -> Chunk {
         } else {
             warn!("Async function {} has no associated _finish function", analysis.name);
         }
+    } else {
+        if let Some(ref trampoline) = analysis.callback {
+            builder.callback(trampoline);
+        }
+        if let Some(ref trampoline) = analysis.destroy {
+            builder.destroy(trampoline);
+        }
     }
 
     for par in &analysis.parameters.c_parameters {
