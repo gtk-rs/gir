@@ -135,6 +135,7 @@ fn analyze_fields(env: &Env, unsafe_access: bool, fields: &[Field]) -> (Vec<Fiel
 
 fn field_ffi_type(env: &Env, field: &Field) -> Result {
     if field.is_incomplete(&env.library) {
+        println!("6 field");
         return Err(TypeError::Ignored(format!("field {} has incomplete type", &field.name)));
     }
     if let Some(ref c_type) = field.c_type {
@@ -148,6 +149,7 @@ fn field_ffi_type(env: &Env, field: &Field) -> Result {
             Ok(signature)
         }
     } else {
+        println!("7 field");
         Err(TypeError::Ignored(format!("field {} has empty c:type", &field.name)))
     }
 }

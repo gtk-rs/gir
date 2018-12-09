@@ -119,9 +119,10 @@ impl Bounds {
         func: &Function,
         par: &CParameter,
         async: bool,
+        expecting_data: bool,
     ) -> (Option<String>, Option<CallbackInfo>) {
         let type_name = bounds_rust_type(env, par.typ);
-        let mut type_string = if (async && async_param_to_remove(&par.name)) || (func.name.ends_with("_func") && par.name == "data") {
+        let mut type_string = if (async && async_param_to_remove(&par.name)) || (expecting_data && (par.name == "data" || par.name.ends_with("_data"))) {
             return (None, None);
         } else {
             type_name.into_string()
@@ -154,24 +155,9 @@ impl Bounds {
                             bound_name,
                         });
                     }
-                } else if func.name.ends_with("_func") && par.c_type.ends_with("Func") {
-                    if let Type::Function(ref func) = env.library.type_(par.typ) {
-                        let parameters = ::analysis::trampoline_parameters::analyze(env,
-                                                                                    &func.parameters,
-                                                                                    par.typ,
-                                                                                    &[]);
-                        let mut params = Vec::new();
-                        for param in parameters.rust_parameters.iter() {
-                            match rust_type(env, param.typ) {
-                                Ok(x) => params.push(x),
-                                _ => return (None, None),
-                            }
-                        }
-                        type_string = format!(
-                            "xxFn({}){} + Send + 'static",
-                            params.join(", "),
-                            format!(" -> {}", env.library.type_(func.ret.typ).to_string()),
-                        );
+                } else if par.c_type.ends_with("Func") || par.c_type.ends_with("Callback") {
+                    if let Type::Function(_) = env.library.type_(par.typ) {
+                        type_string = rust_type(env, par.typ).into_string();
                         let bound_name = *self.unused.front().unwrap();
                         callback_info = Some(CallbackInfo {
                             callback_type: type_string.clone(),
@@ -221,6 +207,7 @@ impl Bounds {
             Type::Interface(..) => Some(Into(Some('_'), Some(Box::new(IsA(None))))),
             Type::List(_) | Type::SList(_) | Type::CArray(_) => None,
             Type::Fundamental(_) if *nullable => Some(Into(None, None)),
+            Type::Function(_) => Some(Into(None, None)),
             _ if !*nullable => None,
             _ => Some(Into(Some('_'), None)),
         }

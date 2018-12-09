@@ -192,8 +192,12 @@ fn rust_type_full(
         }
         Custom(library::Custom { ref name, .. }) => Ok(name.clone()),
         Function(ref f) => {
+            if type_id.full_name(&env.library) == "GLib.DestroyNotify" {
+                return Ok(format!("FnOnce()"));
+            }
             let mut s = Vec::with_capacity(f.parameters.len());
             let mut i = 0;
+            let mut err = false;
             while i < f.parameters.len() {
                 let p = &f.parameters[i];
                 if p.name == "data" || (i + 1 >= f.parameters.len() && p.c_type == "gpointer") {
@@ -201,15 +205,26 @@ fn rust_type_full(
                 }
                 match rust_type(env, p.typ) {
                     Ok(x) => s.push(x),
-                    e => return e,
+                    e => {
+                        err = true;
+                        s.push(e.into_string());
+                    }
                 }
                 i += 1;
             }
             println!("{:?}", s);
-            match rust_type(env, f.ret.typ) {
-                Ok(x) => Ok(format!("Fn({}) -> {}", s.join(", "), x)),
-                Err(TypeError::Unimplemented(ref x)) if x == "()" => Ok(format!("Fn({})", s.join(", "))),
-                e => e,
+            let ret = match rust_type(env, f.ret.typ) {
+                Ok(x) => format!("aaFn({}) -> {}", s.join(", "), x),
+                Err(TypeError::Unimplemented(ref x)) if x == "()" => format!("aaFn({})", s.join(", ")),
+                e => {
+                    err = true;
+                    format!("aaFn({}) -> {}", s.join(", "), e.into_string())
+                }
+            };
+            if err {
+                Err(TypeError::Unimplemented(ret))
+            } else {
+                Ok(format!("{} + Send + 'static", ret))
             }
         }
         _ => Err(TypeError::Unimplemented(type_.get_name().to_owned())),
@@ -217,6 +232,8 @@ fn rust_type_full(
 
     if type_id.ns_id != library::MAIN_NAMESPACE && type_id.ns_id != library::INTERNAL_NAMESPACE
         && !implemented_in_main_namespace(&env.library, type_id)
+        && type_id.full_name(&env.library) != "GLib.DestroyNotify"
+        && type_id.full_name(&env.library) != "GObject.Callback"
     {
         if env.type_status(&type_id.full_name(&env.library)).ignored() {
             rust_type = Err(TypeError::Ignored(into_inner(rust_type)));
