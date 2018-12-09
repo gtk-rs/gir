@@ -224,7 +224,7 @@ fn rust_type_full(
     rust_type
 }
 
-pub fn used_rust_type(env: &Env, type_id: library::TypeId) -> Result {
+pub fn used_rust_type(env: &Env, type_id: library::TypeId, is_in: bool) -> Result {
     use library::Type::*;
     match *env.library.type_(type_id) {
         Fundamental(library::Fundamental::Type) |
@@ -243,8 +243,10 @@ pub fn used_rust_type(env: &Env, type_id: library::TypeId) -> Result {
         Class(..) |
         Enumeration(..) |
         Interface(..) => rust_type(env, type_id),
-        List(inner_tid) | SList(inner_tid) | CArray(inner_tid) => used_rust_type(env, inner_tid),
+        //process inner types as return parameters
+        List(inner_tid) | SList(inner_tid) | CArray(inner_tid) => used_rust_type(env, inner_tid, false),
         Custom(..) => rust_type(env, type_id),
+        Fundamental(library::Fundamental::Utf8) if !is_in => Ok("::glib::GString".into()),
         _ => Err(TypeError::Ignored("Don't need use".to_owned())),
     }
 }

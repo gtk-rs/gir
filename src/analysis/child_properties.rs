@@ -62,7 +62,7 @@ pub fn analyze(
 
     if !properties.is_empty() {
         imports.add("glib::object::IsA", None);
-        if let Some(s) = child_type.and_then(|typ| used_rust_type(env, typ).ok()) {
+        if let Some(s) = child_type.and_then(|typ| used_rust_type(env, typ, true).ok()) {
             imports.add_used_type(&s, None);
         }
     }
@@ -85,7 +85,7 @@ fn analyze_property(
 
         imports.add("glib::Value", None);
         imports.add("glib::StaticType", None);
-        if let Ok(s) = used_rust_type(env, typ) {
+        if let Ok(s) = used_rust_type(env, typ, false) {
             imports.add_used_type(&s, None);
         }
 

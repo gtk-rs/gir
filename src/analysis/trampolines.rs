@@ -98,7 +98,7 @@ pub fn analyze(
 
 
     for par in &parameters.rust_parameters {
-        if let Ok(s) = used_rust_type(env, par.typ) {
+        if let Ok(s) = used_rust_type(env, par.typ, false) {
             used_types.push(s);
         }
     }
@@ -111,7 +111,7 @@ pub fn analyze(
     let mut ret_nullable = signal.ret.nullable;
 
     if signal.ret.typ != Default::default() {
-        if let Ok(s) = used_rust_type(env, signal.ret.typ) {
+        if let Ok(s) = used_rust_type(env, signal.ret.typ, true) { //No GString
             used_types.push(s);
         }
         if let Some(s) = used_ffi_type(env, signal.ret.typ, &signal.ret.c_type) {

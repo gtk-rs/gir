@@ -27,7 +27,7 @@ pub fn analyze(
     let mut parameter = if typ == Default::default() {
         None
     } else {
-        if let Ok(s) = used_rust_type(env, typ) {
+        if let Ok(s) = used_rust_type(env, typ, false) {
             used_types.push(s);
         }
         // Since GIRs are bad at specifying return value nullability, assume
