@@ -73,9 +73,8 @@ pub fn analyze(
         }
 
         let type_string = rust_type(env, prop.typ);
-        let used_type_string = used_rust_type(env, prop.typ);
         if let Some(prop) = getter {
-            if let Ok(ref s) = used_type_string {
+            if let Ok(ref s) = used_rust_type(env, prop.typ, false) {
                 imports.add_used_type(s, prop.version);
             }
             if type_string.is_ok() {
@@ -87,7 +86,7 @@ pub fn analyze(
             properties.push(prop);
         }
         if let Some(prop) = setter {
-            if let Ok(ref s) = used_type_string {
+            if let Ok(ref s) = used_rust_type(env, prop.typ, true) {
                 imports.add_used_type(s, prop.version);
             }
             if type_string.is_ok() {

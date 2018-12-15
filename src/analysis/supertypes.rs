@@ -26,7 +26,7 @@ pub fn analyze(env: &Env, type_id: TypeId, imports: &mut Imports) -> Vec<Statuse
         });
 
         if !status.ignored() {
-            if let Ok(s) = used_rust_type(env, super_tid) {
+            if let Ok(s) = used_rust_type(env, super_tid, true) {
                 if super_tid.ns_id == namespaces::MAIN {
                     imports.add(&s, None);
                 } else {

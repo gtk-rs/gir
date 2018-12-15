@@ -137,6 +137,7 @@ pub fn analyze(
 
         let conversion_type = {
             match *env.library.type_(par.typ) {
+                library::Type::Fundamental(library::Fundamental::Utf8) |
                 library::Type::Record(..) |
                 library::Type::Interface(..) |
                 library::Type::Class(..) => ConversionType::Borrow,

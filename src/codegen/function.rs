@@ -152,7 +152,7 @@ pub fn declaration(env: &Env, analysis: &analysis::functions::Info) -> String {
             " -> Result<(), glib::error::BoolError>".into()
         }
     } else {
-        analysis.ret.to_return_value(env)
+        analysis.ret.to_return_value(env, false)
     };
     let mut param_str = String::with_capacity(100);
 
