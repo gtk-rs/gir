@@ -73,7 +73,7 @@ pub fn uses(w: &mut Write, env: &Env, imports: &Imports) -> Result<()> {
 
 pub fn define_object_type(
     w: &mut Write,
-    env: &Env,
+    _env: &Env,
     type_name: &str,
     glib_name: &str,
     glib_class_name: &Option<&str>,
@@ -82,21 +82,10 @@ pub fn define_object_type(
     is_interface: bool,
     parents: &[StatusedTypeId],
 ) -> Result<()> {
-    let mut external_parents = false;
     let parents: Vec<String> = parents
         .iter()
         .filter(|p| !p.status.ignored())
-        .map(|p| if p.type_id.ns_id == namespaces::MAIN {
-            p.name.clone()
-        } else {
-            external_parents = true;
-            format!(
-                "{krate}::{name} => {krate}_ffi::{ffi_name}",
-                krate = env.namespaces[p.type_id.ns_id].crate_name,
-                name = p.name,
-                ffi_name = env.library.type_(p.type_id).get_glib_name().unwrap()
-            )
-        })
+        .map(|p| p.name.clone())
         .collect();
 
     let (separator, class_name) = {
@@ -127,21 +116,6 @@ pub fn define_object_type(
             class_name,
             rust_class_name
         ));
-    } else if external_parents {
-        try!(writeln!(
-            w,
-            "\tpub struct {}({}<ffi::{}{}{}{}>): [",
-            type_name,
-            kind_name,
-            glib_name,
-            separator,
-            class_name,
-            rust_class_name
-        ));
-        for parent in parents {
-            try!(writeln!(w, "\t\t{},", parent));
-        }
-        try!(writeln!(w, "\t];"));
     } else {
         try!(writeln!(
             w,
