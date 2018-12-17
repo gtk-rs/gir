@@ -275,7 +275,11 @@ pub fn generate_reexports(
     contents.extend_from_slice(&cfgs);
     contents.push(format!("mod {};", module_name));
     contents.extend_from_slice(&cfgs);
-    contents.push(format!("pub use self::{}::{};", module_name, analysis.name));
+    if let Some(ref class_name) = analysis.rust_class_type {
+        contents.push(format!("pub use self::{}::{{{}, {}}};", module_name, analysis.name, class_name));
+    } else {
+        contents.push(format!("pub use self::{}::{};", module_name, analysis.name));
+    }
     if need_generate_trait(analysis) {
         contents.extend_from_slice(&cfgs);
         contents.push(format!(

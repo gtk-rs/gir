@@ -88,17 +88,20 @@ pub fn define_object_type(
         .map(|p| p.name.clone())
         .collect();
 
-    let (separator, class_name) = {
+    let class_name = {
         if let Some(s) = *glib_class_name {
-            (", ".to_string(), format!("ffi::{}", s))
+            format!(", ffi::{}", s)
         } else {
-            ("".to_string(), "".to_string())
+            "".to_string()
         }
     };
 
-    let rust_class_name = match rust_class_name {
-        None => String::new(),
-        Some(ref rust_class_name) => format!(", {}", rust_class_name),
+    let rust_class_name = {
+        if let Some(s) = *rust_class_name {
+            format!(", {}", s)
+        } else {
+            "".to_string()
+        }
     };
 
     let kind_name = if is_interface { "Interface" } else { "Object" };
@@ -108,22 +111,20 @@ pub fn define_object_type(
     if parents.is_empty() {
         try!(writeln!(
             w,
-            "\tpub struct {}({}<ffi::{}{}{}{}>);",
+            "\tpub struct {}({}<ffi::{}{}{}>);",
             type_name,
             kind_name,
             glib_name,
-            separator,
             class_name,
             rust_class_name
         ));
     } else {
         try!(writeln!(
             w,
-            "\tpub struct {}({}<ffi::{}{}{}{}>): {};",
+            "\tpub struct {}({}<ffi::{}{}{}>): {};",
             type_name,
             kind_name,
             glib_name,
-            separator,
             class_name,
             rust_class_name,
             parents.join(", ")
