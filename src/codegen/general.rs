@@ -79,6 +79,7 @@ pub fn define_object_type(
     glib_class_name: &Option<&str>,
     rust_class_name: &Option<&str>,
     glib_func_name: &str,
+    is_interface: bool,
     parents: &[StatusedTypeId],
 ) -> Result<()> {
     let mut external_parents = false;
@@ -111,13 +112,16 @@ pub fn define_object_type(
         Some(ref rust_class_name) => format!(", {}", rust_class_name),
     };
 
+    let kind_name = if is_interface { "Interface" } else { "Object" };
+
     try!(writeln!(w));
     try!(writeln!(w, "glib_wrapper! {{"));
     if parents.is_empty() {
         try!(writeln!(
             w,
-            "\tpub struct {}(Object<ffi::{}{}{}{}>);",
+            "\tpub struct {}({}<ffi::{}{}{}{}>);",
             type_name,
+            kind_name,
             glib_name,
             separator,
             class_name,
@@ -126,8 +130,9 @@ pub fn define_object_type(
     } else if external_parents {
         try!(writeln!(
             w,
-            "\tpub struct {}(Object<ffi::{}{}{}{}>): [",
+            "\tpub struct {}({}<ffi::{}{}{}{}>): [",
             type_name,
+            kind_name,
             glib_name,
             separator,
             class_name,
@@ -140,8 +145,9 @@ pub fn define_object_type(
     } else {
         try!(writeln!(
             w,
-            "\tpub struct {}(Object<ffi::{}{}{}{}>): {};",
+            "\tpub struct {}({}<ffi::{}{}{}{}>): {};",
             type_name,
+            kind_name,
             glib_name,
             separator,
             class_name,

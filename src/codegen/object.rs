@@ -28,6 +28,7 @@ pub fn generate(
         &analysis.c_class_type.as_ref().map(|s| &s[..]),
         &analysis.rust_class_type.as_ref().map(|s| &s[..]),
         &analysis.get_type,
+        analysis.is_interface,
         &analysis.supertypes,
     ));
 
