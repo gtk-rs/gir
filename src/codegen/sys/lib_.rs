@@ -291,19 +291,6 @@ fn generate_enums(w: &mut Write, env: &Env, items: &[&Enumeration]) -> Result<()
         if let Some(false) = config.map(|c| c.status.need_generate()) {
             continue;
         }
-        if item.members.len() == 1 {
-            try!(writeln!(w, "pub type {} = c_int;", item.name));
-            try!(writeln!(
-                w,
-                "pub const {}: {} = {};",
-                item.members[0].c_identifier,
-                item.name,
-                item.members[0].value
-            ));
-            try!(writeln!(w, "pub type {} = {};", item.c_type, item.name));
-            try!(writeln!(w));
-            continue;
-        }
         let mut vals: HashMap<String, (String, Option<Version>)> = HashMap::new();
         try!(writeln!(w, "pub type {} = c_int;", item.c_type));
         for member in &item.members {
