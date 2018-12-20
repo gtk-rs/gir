@@ -100,15 +100,7 @@ fn analyze_fields(env: &Env, unsafe_access: bool, fields: &[Field]) -> (Vec<Fiel
     let mut truncated = None;
     let mut infos = Vec::with_capacity(fields.len());
 
-    let mut is_bitfield = false;
     for field in fields {
-        // See IsIncomplete for &[Field].
-        if is_bitfield && field.bits.is_some() {
-            truncated = Some(format!("field {} has incomplete type", &field.name));
-            break;
-        }
-        is_bitfield = field.bits.is_some();
-
         let typ = match field_ffi_type(env, field) {
             e @ Err(..) => {
                 truncated = Some(e.into_string());

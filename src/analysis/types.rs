@@ -72,6 +72,11 @@ impl IsIncomplete for Alias {
 
 impl IsIncomplete for Field {
     fn is_incomplete(&self, lib: &Library) -> bool {
+        if self.bits.is_some() {
+            // Bitfields are unrepresentable in Rust,
+            // so from our perspective they are incomplete.
+            return true;
+        }
         if self.is_ptr() {
             // Pointers are always complete.
             return false;
@@ -86,21 +91,7 @@ impl<'a> IsIncomplete for &'a [Field] {
         if self.is_empty() {
             return true;
         }
-
-        let mut is_bitfield = false;
-        for field in self.iter() {
-            if field.is_incomplete(lib) {
-                return true;
-            }
-            // Two consequitive bitfields are unrepresentable in Rust,
-            // so from our perspective they are incomplete.
-            if is_bitfield && field.bits.is_some() {
-                return true;
-            }
-            is_bitfield = field.bits.is_some();
-        }
-
-        false
+        self.iter().any(|f| f.is_incomplete(lib))
     }
 }
 
