@@ -359,7 +359,7 @@ fn analyze_function(
 
         imports.add_used_types(&used_types, version);
         if ret.base_tid.is_some() {
-            imports.add("glib::object::Downcast", None);
+            imports.add("glib::object::Cast", None);
         }
         imports.add("glib::translate::*", version);
         bounds.update_imports(imports);

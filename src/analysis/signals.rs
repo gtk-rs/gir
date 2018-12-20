@@ -101,7 +101,7 @@ fn analyze_signal(
     if trampoline_name.is_ok() {
         imports.add_used_types(&used_types, version);
         if in_trait {
-            imports.add("glib::object::Downcast", version);
+            imports.add("glib::object::Cast", version);
         }
         imports.add("glib::signal::connect_raw", version);
         imports.add("glib::signal::SignalHandlerId", version);
