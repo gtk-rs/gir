@@ -4,6 +4,7 @@ use std::path::Path;
 use env::Env;
 use file_saver::save_to_file;
 use regex::Regex;
+use codegen::general;
 
 pub fn generate(env: &Env) {
     info!(
@@ -22,6 +23,8 @@ pub fn generate(env: &Env) {
 }
 
 fn generate_build_script(w: &mut Write, env: &Env) -> Result<()> {
+    try!(general::start_comments(w, &env.config));
+    try!(writeln!(w));
     try!(write!(
         w,
         "{}",
