@@ -1,5 +1,5 @@
 mod child_properties;
-#[cfg_attr(feature = "cargo-clippy", allow(module_inception))]
+#[allow(clippy::module_inception)]
 pub mod config;
 pub mod error;
 mod external_libraries;

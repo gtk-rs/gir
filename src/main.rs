@@ -1,7 +1,3 @@
-#![cfg_attr(feature = "cargo-clippy", allow(match_same_arms))]
-#![cfg_attr(feature = "cargo-clippy", allow(let_and_return))]
-#![cfg_attr(feature = "cargo-clippy", allow(too_many_arguments))]
-
 extern crate docopt;
 extern crate env_logger;
 extern crate hprof;

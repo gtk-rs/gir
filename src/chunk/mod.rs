@@ -1,4 +1,4 @@
-#[cfg_attr(feature = "cargo-clippy", allow(module_inception))]
+#[allow(clippy::module_inception)]
 mod chunk;
 pub mod conversion_from_glib;
 pub mod parameter_ffi_call_out;

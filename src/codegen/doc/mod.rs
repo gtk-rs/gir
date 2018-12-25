@@ -91,7 +91,7 @@ pub fn generate(env: &Env) {
     save_to_file(&env.config.doc_target_path, env.config.make_backup, |w| generate_doc(w, env));
 }
 
-#[cfg_attr(feature = "cargo-clippy", allow(type_complexity))]
+#[allow(clippy::type_complexity)]
 fn generate_doc(w: &mut Write, env: &Env) -> Result<()> {
     try!(write_file_name(w, None));
     let mut generators: Vec<(&str, Box<Fn(&mut Write, &Env) -> Result<()>>)> = Vec::new();

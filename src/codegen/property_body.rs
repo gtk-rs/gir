@@ -14,7 +14,7 @@ pub struct Builder {
     is_into: bool,
 }
 
-#[cfg_attr(feature = "cargo-clippy", allow(wrong_self_convention))]
+#[allow(clippy::wrong_self_convention)]
 impl Builder {
     pub fn new() -> Builder {
         Default::default()

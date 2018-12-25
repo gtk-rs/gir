@@ -516,7 +516,7 @@ impl_lexical_ord!(
     Custom => name,
 );
 
-#[cfg_attr(feature = "cargo-clippy", allow(large_enum_variant))]
+#[allow(clippy::large_enum_variant)]
 #[derive(Debug, PartialEq)]
 pub enum Type {
     Fundamental(Fundamental),

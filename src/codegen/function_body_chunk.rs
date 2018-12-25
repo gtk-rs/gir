@@ -361,24 +361,20 @@ impl Builder {
     fn get_outs(&self) -> Vec<&Parameter> {
         self.parameters
             .iter()
-            .filter_map(|par| if let Out { .. } = *par {
-                Some(par)
+            .filter(|par| if let Out { .. } = *par {
+                true
             } else {
-                None
+                false
             })
             .collect()
     }
     fn get_outs_without_error(&self) -> Vec<&Parameter> {
         self.parameters
             .iter()
-            .filter_map(|par| if let Out { ref parameter, .. } = *par {
-                if parameter.is_error {
-                    None
-                } else {
-                    Some(par)
-                }
+            .filter(|par| if let Out { ref parameter, .. } = *par {
+                !parameter.is_error
             } else {
-                None
+                false
             })
             .collect()
     }

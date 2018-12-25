@@ -11,12 +11,11 @@ use super::trampoline::func_string;
 use writer::primitives::tabs;
 use writer::ToCode;
 
-#[cfg_attr(feature = "cargo-clippy", allow(ptr_arg))]
 pub fn generate(
     w: &mut Write,
     env: &Env,
     analysis: &analysis::signals::Info,
-    trampolines: &analysis::trampolines::Trampolines,
+    trampolines: &[analysis::trampolines::Trampoline],
     in_trait: bool,
     only_declaration: bool,
     indent: usize,
@@ -161,11 +160,10 @@ pub fn generate(
     Ok(())
 }
 
-#[cfg_attr(feature = "cargo-clippy", allow(ptr_arg))]
 fn function_type_string(
     env: &Env,
     analysis: &analysis::signals::Info,
-    trampolines: &analysis::trampolines::Trampolines,
+    trampolines: &[analysis::trampolines::Trampoline],
     closure: bool,
 ) -> Option<String> {
     if analysis.trampoline_name.is_err() {

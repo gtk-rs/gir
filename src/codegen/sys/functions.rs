@@ -158,7 +158,7 @@ pub fn generate_other_funcs(
 
 fn generate_cfg_configure(
     w: &mut Write,
-    configured_functions: Vec<&Function>,
+    configured_functions: &[&Function],
     commented: bool,
 ) -> Result<()> {
     let cfg_condition_ = configured_functions
@@ -192,7 +192,7 @@ fn generate_object_funcs(
     }
     if write_get_type {
         let configured_functions = obj.functions.matched(&glib_get_type);
-        generate_cfg_configure(w, configured_functions, false)?;
+        generate_cfg_configure(w, &configured_functions, false)?;
         try!(writeln!(w, "    pub fn {}() -> GType;", glib_get_type));
     }
 
@@ -217,7 +217,7 @@ fn generate_object_funcs(
             try!(writeln!(w, "    {}pub fn {}_utf8{};", comment, name, sig));
             try!(version_condition(w, env, func.version, commented, 1));
         }
-        generate_cfg_configure(w, configured_functions, commented)?;
+        generate_cfg_configure(w, &configured_functions, commented)?;
         try!(writeln!(w, "    {}pub fn {}{};", comment, name, sig));
     }
 
