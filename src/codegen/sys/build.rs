@@ -95,6 +95,9 @@ fn find() -> Result<(), Error> {
         w,
         "{}",
         r##"
+    if let Ok(inc_dir) = env::var("GTK_INCLUDE_DIR") {
+        println!("cargo:include={}", inc_dir);
+    }
     if let Ok(lib_dir) = env::var("GTK_LIB_DIR") {
         for lib_ in shared_libs.iter() {
             println!("cargo:rustc-link-lib=dylib={}", lib_);
@@ -114,6 +117,9 @@ fn find() -> Result<(), Error> {
     }
     match config.probe(package_name) {
         Ok(library) => {
+            if let Ok(paths) = std::env::join_paths(library.include_paths) {
+                println!("cargo:include={}", paths.to_string_lossy());
+            }
             if hardcode_shared_libs {
                 for lib_ in shared_libs.iter() {
                     println!("cargo:rustc-link-lib=dylib={}", lib_);
