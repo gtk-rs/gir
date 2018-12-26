@@ -8,6 +8,10 @@ addons:
     - libgtk-3-dev
     - libssh2-1-dev
 script:
+  - if [ "$TRAVIS_RUST_VERSION" == "nightly" ]; then
+    rustup component add clippy;
+    cargo clippy --release;
+    fi
   - cargo build --release
   - cargo test --release
   - git clone -q https://github.com/gkoz/gir-files tests/gir-files

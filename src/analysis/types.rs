@@ -111,7 +111,7 @@ impl IsIncomplete for Class {
 }
 
 impl IsIncomplete for Record {
-    #[cfg_attr(feature = "cargo-clippy", allow(if_same_then_else))]
+    #[allow(clippy::if_same_then_else)]
     fn is_incomplete(&self, lib: &Library) -> bool {
         if self.c_type == "GHookList" {
             // Search for GHookList in sys codegen for rationale.

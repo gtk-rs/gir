@@ -6,7 +6,7 @@ pub fn begin(w: &mut Write) -> Result<()> {
     let v = vec![
         "",
         "#![allow(non_camel_case_types, non_upper_case_globals, non_snake_case)]",
-        "#![cfg_attr(feature = \"cargo-clippy\", allow(approx_constant, type_complexity, unreadable_literal))]",
+        "#![allow(clippy::approx_constant, clippy::type_complexity, clippy::unreadable_literal)]",
         "",
         "extern crate libc;",
     ];

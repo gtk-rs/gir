@@ -65,11 +65,11 @@ impl Signature {
         (false, None)
     }
 
-    pub fn eq(&self, other: &Signature) -> bool {
+    fn eq(&self, other: &Signature) -> bool {
         other.1 == self.1 && other.0[1..] == self.0[1..]
     }
 
-    pub fn property_eq(&self, other: &Signature, is_get: bool) -> bool {
+    fn property_eq(&self, other: &Signature, is_get: bool) -> bool {
         if self.eq(other) {
             true
         } else {

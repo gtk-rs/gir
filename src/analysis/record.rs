@@ -38,7 +38,7 @@ impl Info {
     }
 }
 
-fn filter_derives(derives: Derives, names: &[&str]) -> Derives {
+fn filter_derives(derives: &[Derive], names: &[&str]) -> Derives {
     derives.iter().filter_map(|derive| {
         let new_names = derive.names.iter().filter(|n| {
             !names.contains(&n.as_str())
@@ -128,13 +128,13 @@ pub fn new(env: &Env, obj: &GObject) -> Option<Info> {
     for special in specials.keys() {
         match special {
             special_functions::Type::Compare => {
-                derives = filter_derives(derives, &["PartialOrd", "Ord", "PartialEq", "Eq"]);
+                derives = filter_derives(&derives, &["PartialOrd", "Ord", "PartialEq", "Eq"]);
             },
             special_functions::Type::Equal => {
-                derives = filter_derives(derives, &["PartialEq", "Eq"]);
+                derives = filter_derives(&derives, &["PartialEq", "Eq"]);
             },
             special_functions::Type::Hash => {
-                derives = filter_derives(derives, &["Hash"]);
+                derives = filter_derives(&derives, &["Hash"]);
             },
             _ => (),
         }

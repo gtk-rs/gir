@@ -116,7 +116,7 @@ fn analyze_fields(env: &Env, unsafe_access: bool, fields: &[Field]) -> (Vec<Fiel
             }
             Ok(typ) => typ,
         };
-        // Skip private fields from Debug impl. Ignore volatile as well, 
+        // Skip private fields from Debug impl. Ignore volatile as well,
         // they are usually used as synchronization primites,
         // so we wouldn't want to introduce additional reads.
         let debug = !field.private && !field.is_volatile() && field.implements_debug(&env.library);
@@ -152,7 +152,7 @@ fn field_ffi_type(env: &Env, field: &Field) -> Result {
     }
 }
 
-fn get_gobject_cfg_condition(env: &Env, name: &String) -> Option<String> {
+fn get_gobject_cfg_condition(env: &Env, name: &str) -> Option<String> {
     let full_name = format!("{}.{}", env.namespaces.main().name, name);
     if let Some(obj) = env.config.objects.get(&full_name) {
         obj.cfg_condition.clone()

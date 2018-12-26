@@ -20,7 +20,7 @@ use analysis::safety_assertion_mode::SafetyAssertionMode;
 use analysis::signatures::{Signature, Signatures};
 use config;
 use env::Env;
-use library::{self, Function, FunctionKind, Nullable, Parameter, ParameterScope, Type, Transfer};
+use library::{self, Function, FunctionKind, Nullable, Parameter, ParameterScope, Transfer, Type};
 use nameutil;
 use std::borrow::Borrow;
 use traits::*;
@@ -159,7 +159,7 @@ fn fixup_gpointer_parameter(
         ind_rust: Some(idx),
         transformation_type: TransformationType::ToGlibPointer {
             name: parameters.rust_parameters[idx].name.clone(),
-            instance_parameter: instance_parameter,
+            instance_parameter,
             transfer: Transfer::None,
             ref_mode: RefMode::ByRef,
             to_glib_extra: String::new(),
@@ -178,20 +178,22 @@ fn fixup_special_functions(
 ) {
     // Workaround for some _hash() / _compare() / _equal() functions taking
     // "gconstpointer" as arguments instead of the actual type
-    if name == "hash" && parameters.c_parameters.len() == 1 {
-        if parameters.c_parameters[0].c_type == "gconstpointer" {
-            fixup_gpointer_parameter(env, type_tid, parameters, 0);
-            imports.add("glib_ffi", None);
-        }
+    if name == "hash"
+        && parameters.c_parameters.len() == 1
+        && parameters.c_parameters[0].c_type == "gconstpointer"
+    {
+        fixup_gpointer_parameter(env, type_tid, parameters, 0);
+        imports.add("glib_ffi", None);
     }
 
-    if (name == "compare" || name == "equal" || name == "is_equal") && parameters.c_parameters.len() == 2 {
-        if parameters.c_parameters[0].c_type == "gconstpointer" &&
-           parameters.c_parameters[1].c_type == "gconstpointer" {
-            fixup_gpointer_parameter(env, type_tid, parameters, 0);
-            fixup_gpointer_parameter(env, type_tid, parameters, 1);
-            imports.add("glib_ffi", None);
-        }
+    if (name == "compare" || name == "equal" || name == "is_equal")
+        && parameters.c_parameters.len() == 2
+        && parameters.c_parameters[0].c_type == "gconstpointer"
+        && parameters.c_parameters[1].c_type == "gconstpointer"
+    {
+        fixup_gpointer_parameter(env, type_tid, parameters, 0);
+        fixup_gpointer_parameter(env, type_tid, parameters, 1);
+        imports.add("glib_ffi", None);
     }
 }
 

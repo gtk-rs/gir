@@ -1,7 +1,6 @@
-#![cfg_attr(feature = "cargo-clippy", allow(match_same_arms))]
-#![cfg_attr(feature = "cargo-clippy", allow(let_and_return))]
-#![cfg_attr(feature = "cargo-clippy", allow(too_many_arguments))]
-#![cfg_attr(feature = "cargo-clippy", allow(write_literal))]
+#![allow(clippy::let_and_return)]
+#![allow(clippy::too_many_arguments)]
+#![allow(clippy::write_literal)]
 
 #[macro_use]
 extern crate bitflags;

@@ -67,11 +67,10 @@ pub struct Bounds {
 }
 
 impl Default for Bounds {
-    #[cfg_attr(feature = "cargo-clippy", allow(char_lit_as_u8))]
     fn default() -> Bounds {
         Bounds {
             unused: (TYPE_PARAMETERS_START as u8..)
-                .take_while(|x| *x <= 'Z' as u8)
+                .take_while(|x| *x <= b'Z')
                 .map(|x| x as char)
                 .collect(),
             used: Vec::new(),

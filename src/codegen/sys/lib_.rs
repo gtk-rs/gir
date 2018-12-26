@@ -211,7 +211,7 @@ fn generate_bitfields(w: &mut Write, env: &Env, items: &[&Bitfield]) -> Result<(
 
 fn generate_constant_cfg_configure(
     w: &mut Write,
-    configured_constants: Vec<&constants::Constant>,
+    configured_constants: &[&constants::Constant],
     commented: bool,
 ) -> Result<()> {
     let cfg_condition_ = configured_constants
@@ -265,7 +265,7 @@ fn generate_constants(w: &mut Write, env: &Env, constants: &[Constant]) -> Resul
 
         if let Some(obj) = config {
             let configured_constants = obj.constants.matched(&full_name);
-            generate_constant_cfg_configure (w, configured_constants, !comment.is_empty())?;
+            generate_constant_cfg_configure (w, &configured_constants, !comment.is_empty())?;
         }
 
         try!(writeln!(
