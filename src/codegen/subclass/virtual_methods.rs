@@ -156,7 +156,7 @@ pub fn declaration(env: &Env, method_analysis: &analysis::virtual_methods::Info,
             " -> Result<(), glib::error::BoolError>".into()
         }
     } else {
-        method_analysis.ret.to_return_value(env)
+        method_analysis.ret.to_return_value(env, false)
     };
     let mut param_str = String::with_capacity(100);
 

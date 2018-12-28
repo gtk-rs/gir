@@ -165,7 +165,7 @@ fn analyze_virtual_method(
             "Wrong instance parameter in {}",
             method.c_identifier.as_ref().unwrap()
         );
-        if let Ok(s) = used_rust_type(env, par.typ) {
+        if let Ok(s) = used_rust_type(env, par.typ, !par.direction.is_out()) {
             used_types.push(s);
         }
         let (to_glib_extra, callback_info) = bounds.add_for_parameter(env, method, par, async);
@@ -243,12 +243,12 @@ fn analyze_virtual_method(
 
         if let Some(ref trampoline) = trampoline {
             for par in &trampoline.output_params {
-                if let Ok(s) = used_rust_type(env, par.typ) {
+                if let Ok(s) = used_rust_type(env, par.typ, !par.direction.is_out()) {
                     used_types.push(s);
                 }
             }
             if let Some(ref par) = trampoline.ffi_ret {
-                if let Ok(s) = used_rust_type(env, par.typ) {
+                if let Ok(s) = used_rust_type(env, par.typ, !par.direction.is_out()) {
                     used_types.push(s);
                 }
             }
