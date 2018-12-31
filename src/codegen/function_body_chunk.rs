@@ -136,11 +136,17 @@ impl Builder {
         self.add_assertion(&mut chunks);
 
         if self.callback.is_some() || self.destroy.is_some() {
+            let mut full_type = None;
+            if let (&Some(ref trampoline), &Some(ref destroy)) = (&self.callback, &self.destroy) {
+                full_type = Some(format!("Box<Box<(Box<Box<{}>>, Box<Box<{}>>)>>",
+                                         trampoline.bound_name,
+                                         destroy.bound_name));
+            }
             if let Some(ref trampoline) = self.callback {
-                self.add_trampoline(env, &mut chunks, trampoline);
+                self.add_trampoline(env, &mut chunks, trampoline, &full_type, 0);
             }
             if let Some(ref destroy) = self.destroy {
-                self.add_trampoline(env, &mut chunks, destroy);
+                self.add_trampoline(env, &mut chunks, destroy, &full_type, 1);
             }
             if let (&Some(ref trampoline), &Some(ref destroy)) = (&self.callback, &self.destroy) {
                 chunks.push(
@@ -155,6 +161,22 @@ impl Builder {
                                                                    destroy.bound_name)))),
                     }
                 );
+            } else if let Some(ref trampoline) = self.callback {
+                chunks.push(Chunk::Let {
+                    name: "super_callback".to_string(),
+                    is_mut: false,
+                    value: Box::new(Chunk::Custom(format!("{}_data", trampoline.name))),
+                    type_: Some(Box::new(Chunk::Custom(format!("Box<Box<{}>>",
+                                                               trampoline.bound_name)))),
+                });
+            } else if let Some(ref trampoline) = self.destroy {
+                chunks.push(Chunk::Let {
+                    name: "super_callback".to_string(),
+                    is_mut: false,
+                    value: Box::new(Chunk::Custom(format!("{}_data", trampoline.name))),
+                    type_: Some(Box::new(Chunk::Custom(format!("Box<Box<{}>>",
+                                                               trampoline.bound_name)))),
+                });
             }
         } else if let Some(ref trampoline) = self.async_trampoline {
             self.add_async_trampoline(env, &mut chunks, trampoline);
@@ -163,13 +185,17 @@ impl Builder {
         Chunk::BlockHalf(chunks)
     }
 
-    fn add_trampoline(&self, env: &Env, chunks: &mut Vec<Chunk>, trampoline: &Trampoline) {
+    fn add_trampoline(&self, env: &Env, chunks: &mut Vec<Chunk>, trampoline: &Trampoline,
+                      full_type: &Option<String>, pos: u8) {
+        use analysis::bounds::BoundType;
+        use analysis::ref_mode::RefMode;
+
         chunks.push(Chunk::BoxFn {
             name: Some(trampoline.name.clone()),
             typ: format!("{}", trampoline.bound_name),
         });
 
-        let mut body = trampoline.parameters
+        /*let mut body = trampoline.parameters
                                  .rust_parameters
                                  .iter()
                                  .skip(1)
@@ -180,33 +206,85 @@ impl Builder {
                                         value: Box::new(Chunk::Custom(p.name.clone())),
                                     }
                                  })
-                                 .collect::<Vec<_>>();
+                                 .collect::<Vec<_>>();*/
+        let mut body = Vec::new();
+        let mut arguments = Vec::new();
+
+        // Skip "this" parameter.
+        for par in trampoline.parameters.rust_parameters.iter().skip(1) {
+            //let c_par = &trampoline.parameters.c_parameters[par.ind_c];
+
+            let bounds = trampoline.bounds.get_parameter_alias_info(&par.name);
+            let is_into = if let Some((_, BoundType::Into(..))) = bounds { true } else { false };
+
+            let type_ = env.type_(par.typ);
+            let is_str = if let library::Type::Fundamental(library::Fundamental::Utf8) = *type_ { true } else { false };
+
+            if is_into {
+                body.push(Chunk::Custom(format!("let {0} = {0}.into();", par.name)));
+                if is_str || par.nullable.0 {
+                    body.push(Chunk::Custom(format!("let {0} = {0}.map(ToOwned::to_owned);", par.name)));
+                }
+            } else if is_str {
+                body.push(Chunk::Custom(format!("let {0} = String::from({0});", par.name)));
+            } else if par.ref_mode != RefMode::None {
+                body.push(Chunk::Custom(format!("let {0} = {0}.clone();", par.name)));
+            }
+            if par.name != "data" {
+                arguments.push(Chunk::Name(par.name.clone()));
+            }
+        }
         let func = trampoline.parameters
                                  .c_parameters
                                  .last()
                                  .map(|p| p.name.clone())
                                  .unwrap_or_else(|| "Unknown".to_owned());
 
-        body.push(
-            Chunk::Let {
-                name: "callback".to_string(),
-                is_mut: false,
-                value: Box::new(Chunk::Custom(format!("Box::from_raw({} as *mut _)", func))),
-                type_: Some(Box::new(Chunk::Custom(format!("Box<Box<{}>>", trampoline.bound_name)))),
-            }
-        );
+        if let Some(ref full_type) = full_type {
+            body.push(
+                Chunk::Let {
+                    name: "callback".to_string(),
+                    is_mut: false,
+                    value: Box::new(Chunk::Custom(format!("Box::from_raw({} as *mut _)", func))),
+                    type_: Some(Box::new(Chunk::Custom(full_type.clone()))),
+                }
+            );
+            body.push(
+                Chunk::Let {
+                    name: "callback".to_string(),
+                    is_mut: false,
+                    value: Box::new(Chunk::Custom(format!("callback.{}", pos))),
+                    type_: Some(Box::new(Chunk::Custom(format!("Box<Box<{}>>", trampoline.bound_name)))),
+                }
+            );
+        } else {
+            body.push(
+                Chunk::Let {
+                    name: "callback".to_string(),
+                    is_mut: false,
+                    value: Box::new(Chunk::Custom(format!("Box::from_raw({} as *mut _)", func))),
+                    type_: Some(Box::new(Chunk::Custom(format!("Box<Box<{}>>", trampoline.bound_name)))),
+                }
+            );
+        }
         body.push(
             Chunk::Call {
                 func_name: "callback".to_string(),
-                arguments: vec![Chunk::Name("result".to_string())],
+                arguments,
             }
         );
 
-        /*let parameters = vec![
-            Param { name: "_source_object".to_string(), typ: format!("*mut {}::GObject", gobject_crate_name) },
-            Param { name: "res".to_string(), typ: format!("*mut {}::GAsyncResult", gio_crate_name) },
-            Param { name: "user_data".to_string(), typ: format!("{}::gpointer", glib_crate_name) },
-        ];*/
+        /*if trampoline.ret.typ != Default::default() {
+            if trampoline.ret.nullable == library::Nullable(true) {
+                try!(writeln!(w, "{}res.unwrap().get()", tabs(indent + 1),));
+            } else {
+                try!(writeln!(
+                    w,
+                    "{}res.unwrap().get().unwrap()",
+                    tabs(indent + 1),
+                ));
+            }
+        }*/
 
         chunks.push(Chunk::ExternCFunc {
             name: format!("{}", trampoline.name),
@@ -225,9 +303,6 @@ impl Builder {
             typ: format!("{}", trampoline.bound_name),
         });
 
-        if self.callback.is_some() {
-            println!("we've got one!");
-        }
         let mut finish_args = vec![];
         if trampoline.is_method {
             finish_args.push(Chunk::Cast {

@@ -212,7 +212,6 @@ fn rust_type_full(
                 }
                 i += 1;
             }
-            println!("{:?}", s);
             let ret = match rust_type(env, f.ret.typ) {
                 Ok(x) => format!("Fn({}) -> {}", s.join(", "), x),
                 Err(TypeError::Unimplemented(ref x)) if x == "()" => format!("Fn({})", s.join(", ")),
@@ -348,10 +347,7 @@ pub fn parameter_rust_type(
         Function(ref func) if func.name == "AsyncReadyCallback" => Ok("AsyncReadyCallback".to_string()),
         Function(_)  => rust_type,
         Custom(..) => rust_type.map_any(|s| format_parameter(s, direction)),
-        ref x => {
-            println!("{:?}", x);
-            Err(TypeError::Unimplemented(type_.get_name().to_owned()))
-        },
+        _ => Err(TypeError::Unimplemented(type_.get_name().to_owned())),
     }
 }
 

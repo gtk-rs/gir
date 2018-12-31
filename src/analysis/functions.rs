@@ -272,6 +272,9 @@ fn analyze_function(
 
     fixup_special_functions(env, imports, name.as_str(), type_tid, &mut parameters);
 
+    if name == "connect_signals_full" {
+        println!("=> {}", name);
+    }
     let mut to_replace = Vec::new();
     for (pos, par) in parameters.c_parameters.iter().enumerate() {
         assert!(
@@ -333,6 +336,12 @@ fn analyze_function(
                 }
             }
         }
+        if name == "connect_signals_full" {
+            println!("{}", commented);
+        }
+    }
+    if name == "connect_signals_full" {
+        println!("<= {}", name);
     }
 
     if destroy.is_some() {
@@ -365,6 +374,7 @@ fn analyze_function(
             async,
             in_trait
         );
+        commented |= parameters.rust_parameters.iter().any(|p| !env.type_status(&p.typ.full_name(&env.library)).normal());
     }
 
     for par in &parameters.rust_parameters {
@@ -561,7 +571,9 @@ fn analyze_callback(
     if let Type::Function(ref func) = func {
         let parameters = ::analysis::trampoline_parameters::analyze(env, &func.parameters, type_tid, &[]);
         //let x = env.type_status(&type_tid.full_name(&env.library));
-        *commented |= !func.parameters.iter().any(|p| !env.type_status(&p.typ.full_name(&env.library)).normal());
+        *commented |= !func.parameters.iter()
+                                      .any(|p| !env.type_status(&p.typ.full_name(&env.library))
+                                                   .normal());
         *trampoline = Some(Trampoline {
             name: par_name.to_string(),
             parameters: parameters,
