@@ -144,7 +144,15 @@ impl ToCode for Chunk {
                 vec![s1, s2]
             }
             Name(ref name) => vec![name.clone()],
-            BoxFn { ref typ } => vec![format!("let user_data: Box<Box<{}>> = Box::new(Box::new(callback));", typ)],
+            BoxFn { name: None, ref typ } => vec![
+                format!("let user_data: Box<Box<{}>> = Box::new(Box::new(callback));", typ),
+            ],
+            BoxFn { name: Some(ref name), ref typ } => vec![
+                format!("let {}_data: Box<Box<{}>> = Box::new(Box::new({}));",
+                        name,
+                        typ,
+                        &name),
+            ],
             ExternCFunc { ref name, ref parameters, ref body } => {
                 let prefix = format!(r#"unsafe extern "C" fn {}("#, name);
                 let suffix = ")".to_string();
@@ -155,7 +163,7 @@ impl ToCode for Chunk {
                 let mut code = format_block_smart("{", "}", &body.to_code(env), " ", " ");
                 code.insert(0, s);
                 code
-            },
+            }
             Cast { ref name, ref type_ } => vec![format!("{} as {}", name, type_)],
             Call { ref func_name, ref arguments } => {
                 let args: Vec<_> = arguments.iter()
@@ -163,7 +171,7 @@ impl ToCode for Chunk {
                     .collect();
                 let s = format_block_one_line("(", ")", &args, "", ",");
                 vec![format!("{}{};", func_name, s)]
-            },
+            }
         }
     }
 }

@@ -81,6 +81,7 @@ pub struct Info {
     pub trampoline: Option<AsyncTrampoline>,
     pub callback: Option<Trampoline>,
     pub destroy: Option<Trampoline>,
+    pub remove_param: Option<u8>,
     pub async_future: Option<AsyncFuture>,
 }
 
@@ -246,13 +247,15 @@ fn analyze_function(
     );
     commented |= ret.commented;
 
+    let mut remove_param = None;
     let mut params = func.parameters.clone();
     if expecting_data {
         let mut i = 0;
         while i < params.len() {
             if params[i].name == "data" || params[i].name.ends_with("data") {
                 params.remove(i);
-                continue
+                remove_param = Some(i as _);
+                break
             }
             i += 1;
         }
@@ -269,9 +272,6 @@ fn analyze_function(
 
     fixup_special_functions(env, imports, name.as_str(), type_tid, &mut parameters);
 
-    if name == "add_callback_symbol" {
-        println!("1 {}", commented);
-    }
     let mut to_replace = Vec::new();
     for (pos, par) in parameters.c_parameters.iter().enumerate() {
         assert!(
@@ -304,14 +304,8 @@ fn analyze_function(
                 commented = true;
             }
         }
-        if name == "add_callback_symbol" {
-            println!("2 {}", commented);
-        }
         if expecting_data && (trampoline.is_none() || destroy.is_none()) {
             if callback.is_none() && (par.c_type.ends_with("Func") || par.c_type.ends_with("Callback")) {
-                if name == "add_callback_symbol" {
-                    println!("a {} {:?}", commented, env.library.type_(par.typ));
-                }
                 if analyze_callback(
                     env,
                     env.library.type_(par.typ),
@@ -319,14 +313,12 @@ fn analyze_function(
                     &mut commented,
                     &mut callback,
                     par.typ,
+                    &par.name,
                 ) {
                     async = false;
                     to_replace.push((pos, par.typ));
                 }
-            } else if destroy.is_none() && par.c_type == "DestroyNotify" {
-                if name == "add_callback_symbol" {
-                    println!("b {} {:?}", commented, env.library.type_(par.typ));
-                }
+            } else if destroy.is_none() && par.c_type.ends_with("DestroyNotify") {
                 if analyze_callback(
                     env,
                     env.library.type_(par.typ),
@@ -334,14 +326,12 @@ fn analyze_function(
                     &mut commented,
                     &mut destroy,
                     par.typ,
+                    &par.name,
                 ) {
                     async = false;
                     to_replace.push((pos, par.typ));
                 }
             }
-        }
-        if name == "add_callback_symbol" {
-            println!("3 {}", commented);
         }
     }
 
@@ -361,6 +351,7 @@ fn analyze_function(
         for (pos, typ) in to_replace {
             let ty = env.library.type_(typ);
             println!("replacing {} with {}", params[pos].name, ty.get_name());
+            //params[pos].name = format!("{}_trampoline", params[pos].name);
             params[pos].typ = typ;
             // params[pos].name = ty.get_name();
             params[pos].c_type = ty.get_glib_name().unwrap().to_owned();
@@ -485,6 +476,7 @@ fn analyze_function(
         async_future,
         callback,
         destroy,
+        remove_param,
     }
 }
 
@@ -564,13 +556,14 @@ fn analyze_callback(
     commented: &mut bool,
     trampoline: &mut Option<Trampoline>,
     type_tid: library::TypeId,
+    par_name: &str,
 ) -> bool {
     if let Type::Function(ref func) = func {
         let parameters = ::analysis::trampoline_parameters::analyze(env, &func.parameters, type_tid, &[]);
         //let x = env.type_status(&type_tid.full_name(&env.library));
         *commented |= !func.parameters.iter().any(|p| !env.type_status(&p.typ.full_name(&env.library)).normal());
         *trampoline = Some(Trampoline {
-            name: format!("{}_trampoline", func.name),
+            name: par_name.to_string(),
             parameters: parameters,
             ret: func.ret.clone(),
             bound_name: match callback_info {

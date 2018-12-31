@@ -155,7 +155,8 @@ impl Bounds {
                             bound_name,
                         });
                     }
-                } else if par.c_type.ends_with("Func") || par.c_type.ends_with("Callback") {
+                } else if par.c_type.ends_with("Func") || par.c_type.ends_with("Callback") ||
+                          par.c_type == "GDestroyNotify" {
                     if let Type::Function(_) = env.library.type_(par.typ) {
                         type_string = rust_type(env, par.typ).into_string();
                         let bound_name = *self.unused.front().unwrap();

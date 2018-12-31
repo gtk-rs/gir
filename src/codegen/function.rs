@@ -136,61 +136,6 @@ pub fn generate(
             }
             try!(writeln!(w, "{}{}}}", tabs(indent), comment_prefix));
         }
-    } else if let Some(ref trampoline) = analysis.callback {
-        if !only_declaration {
-            let trampoline_name = &trampoline.name;
-            let mut args = String::with_capacity(100);
-
-            for (pos, par) in trampoline.parameters.rust_parameters.iter().enumerate() {
-                // Skip the self parameter
-                if pos == 0 {
-                    continue;
-                }
-
-                if pos > 1 {
-                    args.push_str(", ");
-                }
-                args.push('&');
-                args.push_str(&par.name);
-            }
-
-            try!(writeln!(
-                w,
-                "{}{}{}fn {}{}",
-                tabs(indent),
-                comment_prefix,
-                pub_prefix,
-                trampoline_name,
-                //function_type.unwrap(),
-                suffix
-            ));
-
-            /*try!(writeln!(
-                w,
-                "{}let {} = self.emit(\"{}\", &[{}]).unwrap();",
-                tabs(indent + 1),
-                if trampoline.ret.typ != Default::default() {
-                    "res"
-                } else {
-                    "_"
-                },
-                analysis.signal_name,
-                args,
-            ));*/
-
-            if trampoline.ret.typ != Default::default() {
-                if trampoline.ret.nullable == library::Nullable(true) {
-                    try!(writeln!(w, "{}res.unwrap().get()", tabs(indent + 1),));
-                } else {
-                    try!(writeln!(
-                        w,
-                        "{}res.unwrap().get().unwrap()",
-                        tabs(indent + 1),
-                    ));
-                }
-            }
-            try!(writeln!(w, "{}}}", tabs(indent)));
-        }
     }
 
     Ok(())
@@ -358,6 +303,9 @@ pub fn body_chunk(env: &Env, analysis: &analysis::functions::Info) -> Chunk {
         }
         if let Some(ref trampoline) = analysis.destroy {
             builder.destroy(trampoline);
+        }
+        if let Some(pos) = analysis.remove_param {
+            builder.remove_param(pos);
         }
     }
 

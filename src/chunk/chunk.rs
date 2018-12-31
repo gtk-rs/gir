@@ -56,6 +56,7 @@ pub enum Chunk {
     },
     Name(String),
     BoxFn {
+        name: Option<String>,
         typ: String,
     },
     ExternCFunc {

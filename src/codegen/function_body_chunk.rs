@@ -52,6 +52,7 @@ pub struct Builder {
     outs_as_return: bool,
     outs_mode: Mode,
     assertion: SafetyAssertionMode,
+    remove_param: Option<u8>,
 }
 
 impl Builder {
@@ -68,6 +69,10 @@ impl Builder {
     }
     pub fn destroy(&mut self, trampoline: &Trampoline) -> &mut Builder {
         self.destroy = Some(trampoline.clone());
+        self
+    }
+    pub fn remove_param(&mut self, remove_param: u8) -> &mut Builder {
+        self.remove_param = Some(remove_param);
         self
     }
     pub fn glib_name(&mut self, name: &str) -> &mut Builder {
@@ -130,9 +135,27 @@ impl Builder {
         self.add_in_array_lengths(&mut chunks);
         self.add_assertion(&mut chunks);
 
-        if let Some(ref trampoline) = self.callback {
-            println!("in!!!");
-            self.add_trampoline(env, &mut chunks, trampoline);
+        if self.callback.is_some() || self.destroy.is_some() {
+            if let Some(ref trampoline) = self.callback {
+                self.add_trampoline(env, &mut chunks, trampoline);
+            }
+            if let Some(ref destroy) = self.destroy {
+                self.add_trampoline(env, &mut chunks, destroy);
+            }
+            if let (&Some(ref trampoline), &Some(ref destroy)) = (&self.callback, &self.destroy) {
+                chunks.push(
+                    Chunk::Let {
+                        name: "super_callback".to_string(),
+                        is_mut: false,
+                        value: Box::new(Chunk::Custom(format!("Box::new(Box::new(({}_data, {}_data)))",
+                                                              trampoline.name,
+                                                              destroy.name))),
+                        type_: Some(Box::new(Chunk::Custom(format!("Box<Box<(Box<Box<{}>>, Box<Box<{}>>)>>",
+                                                                   trampoline.bound_name,
+                                                                   destroy.bound_name)))),
+                    }
+                );
+            }
         } else if let Some(ref trampoline) = self.async_trampoline {
             self.add_async_trampoline(env, &mut chunks, trampoline);
         }
@@ -142,57 +165,10 @@ impl Builder {
 
     fn add_trampoline(&self, env: &Env, chunks: &mut Vec<Chunk>, trampoline: &Trampoline) {
         chunks.push(Chunk::BoxFn {
+            name: Some(trampoline.name.clone()),
             typ: format!("{}", trampoline.bound_name),
         });
 
-        //let mut finish_args = vec![];
-        /*if trampoline.is_method {
-            finish_args.push(Chunk::Cast {
-                name: "_source_object".to_string(),
-                type_: "*mut _".to_string(),
-            });
-        }
-        finish_args.push(Chunk::Name("res".to_string()));
-        finish_args.extend(trampoline.output_params.iter()
-                           .filter(|param| param.direction == ParameterDirection::Out)
-                           .map(|param| Chunk::FfiCallOutParameter{ par: param.into() }));*/
-        /*let index_to_ignore = find_index_to_ignore(&trampoline.output_params);
-        let mut result: Vec<_> = trampoline.output_params.iter().enumerate()
-            .filter(|&(index, param)| param.direction == ParameterDirection::Out && param.name != "error" &&
-                    Some(index) != index_to_ignore)
-            .map(|(_, param)| {
-                let value = Chunk::Custom(param.name.clone());
-                let mem_mode = c_type_mem_mode_lib(env, param.typ, param.caller_allocates, param.transfer);
-                if let OutMemMode::UninitializedNamed(_) = mem_mode {
-                    value
-                } else {
-                    Chunk::FromGlibConversion {
-                        mode: param.into(),
-                        array_length_name: self.array_length(param).cloned(),
-                        value: Box::new(value),
-                    }
-                }
-            }).collect();*/
-
-        /*if let Some(ref ffi_ret) = trampoline.ffi_ret {
-            let mem_mode = c_type_mem_mode_lib(env, ffi_ret.typ, ffi_ret.caller_allocates, ffi_ret.transfer);
-            let value = Chunk::Name("ret".to_string());
-            if let OutMemMode::UninitializedNamed(_) = mem_mode {
-                result.insert(0, value);
-            } else {
-                result.insert(0,
-                    Chunk::FromGlibConversion {
-                        mode: ffi_ret.into(),
-                        array_length_name: self.array_length(ffi_ret).cloned(),
-                        value: Box::new(value),
-                    });
-            }
-        }*/
-
-        /*let result = Chunk::Tuple(result, TupleMode::WithUnit);
-        let gio_crate_name = crate_name("Gio", env);
-        let gobject_crate_name = crate_name("GObject", env);
-        let glib_crate_name = crate_name("GLib", env);*/
         let mut body = trampoline.parameters
                                  .rust_parameters
                                  .iter()
@@ -207,45 +183,10 @@ impl Builder {
                                  .collect::<Vec<_>>();
         let func = trampoline.parameters
                                  .c_parameters
-                                 .iter()
-                                 .find(|p| p.c_type.ends_with("Func") || p.c_type.ends_with("Callback"))
+                                 .last()
                                  .map(|p| p.name.clone())
                                  .unwrap_or_else(|| "Unknown".to_owned());
-        /*let output_vars = trampoline.output_params.iter()
-            .filter(|param| param.direction == ParameterDirection::Out && param.name != "error")
-            .map(|param| (param, type_mem_mode(env, param)))
-            .map(|(param, mode)|
-                 Chunk::Let {
-                     name: param.name.clone(),
-                     is_mut: true,
-                     value: Box::new(mode),
-                     type_: None,
-                 });
-        body.extend(output_vars);
 
-        let ret_name = if trampoline.ffi_ret.is_some() { "ret" } else { "_" };
-
-        body.push(
-            Chunk::Let {
-                name: ret_name.to_string(),
-                is_mut: false,
-                value: Box::new(Chunk::FfiCall {
-                    name: trampoline.finish_func_name.clone(),
-                    params: finish_args,
-                }),
-                type_: None,
-            }
-        );*/
-        /*body.push(
-            Chunk::Let {
-                name: "result".to_string(),
-                is_mut: false,
-                value: Box::new(Chunk::ErrorResultReturn {
-                    value: Box::new(result),
-                }),
-                type_: None,
-            }
-        );*/
         body.push(
             Chunk::Let {
                 name: "callback".to_string(),
@@ -276,17 +217,11 @@ impl Builder {
                                                           .collect::<Vec<_>>(),
             body: Box::new(Chunk::Chunks(body)),
         });
-        let chunk = Chunk::Let {
-            name: "callback".to_string(),
-            is_mut: false,
-            value: Box::new(Chunk::Name(format!("{}", trampoline.name))),
-            type_: None,
-        };
-        chunks.push(chunk);
     }
 
     fn add_async_trampoline(&self, env: &Env, chunks: &mut Vec<Chunk>, trampoline: &AsyncTrampoline) {
         chunks.push(Chunk::BoxFn {
+            name: None,
             typ: format!("{}", trampoline.bound_name),
         });
 
@@ -492,6 +427,14 @@ impl Builder {
         }
     }
     fn generate_func_parameters(&self) -> Vec<Chunk> {
+        let mut callbacks = ::std::collections::HashSet::new();
+        if let Some(ref t) = self.callback {
+            callbacks.insert(t.name.clone());
+        }
+        if let Some(ref t) = self.destroy {
+            callbacks.insert(t.name.clone());
+        }
+
         let mut params = Vec::new();
         for trans in &self.transformations {
             if !trans.transformation_type.is_to_glib() {
@@ -507,6 +450,12 @@ impl Builder {
                 },
             };
             params.push(chunk);
+        }
+        if let Some(x) = self.remove_param {
+            params.insert(x as _, Chunk::FfiCallParameter {
+                    transformation_type: TransformationType::ToGlibDirect {
+                        name: "super_callback".to_owned(),
+                    }});
         }
         params
     }
@@ -576,10 +525,7 @@ impl Builder {
                         TransformationType::Length {
                             ref array_length_name,
                             ..
-                        } if array_length_name == &parameter.name =>
-                        {
-                            true
-                        }
+                        } if array_length_name == &parameter.name => true,
                         _ => false,
                     }) {
                     continue;
