@@ -294,6 +294,7 @@ impl Builder {
                                                                            typ: p.c_type.clone() })
                                                           .collect::<Vec<_>>(),
             body: Box::new(Chunk::Chunks(body)),
+            return_value: Some(env.type_(trampoline.ret.typ).to_string()),
         });
     }
 
@@ -419,6 +420,7 @@ impl Builder {
             name: format!("{}<{}: {}>", trampoline.name, trampoline.bound_name, trampoline.callback_type),
             parameters,
             body: Box::new(Chunk::Chunks(body)),
+            return_value: None,
         });
         let chunk = Chunk::Let {
             name: "callback".to_string(),

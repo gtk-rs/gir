@@ -63,6 +63,7 @@ pub enum Chunk {
         name: String,
         parameters: Vec<Param>,
         body: Box<Chunk>,
+        return_value: Option<String>,
     },
     Cast {
         name: String,

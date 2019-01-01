@@ -272,9 +272,6 @@ fn analyze_function(
 
     fixup_special_functions(env, imports, name.as_str(), type_tid, &mut parameters);
 
-    if name == "connect_signals_full" {
-        println!("=> {}", name);
-    }
     let mut to_replace = Vec::new();
     for (pos, par) in parameters.c_parameters.iter().enumerate() {
         assert!(
@@ -291,23 +288,24 @@ fn analyze_function(
         }
 
         if !expecting_data {
-            analyze_async(
+            if analyze_async(
                 env,
                 func,
                 callback_info.clone(),
                 &mut commented,
                 &mut trampoline,
                 &mut async_future,
-            );
-            let type_error =
-                !(async && *env.library.type_(par.typ) == Type::Fundamental(library::Fundamental::Pointer)) &&
-                parameter_rust_type(env, par.typ, par.direction, Nullable(false), RefMode::None)
-                    .is_err();
-            if type_error {
-                commented = true;
+            ) {
+                let type_error =
+                    !(async && *env.library.type_(par.typ) == Type::Fundamental(library::Fundamental::Pointer)) &&
+                    parameter_rust_type(env, par.typ, par.direction, Nullable(false), RefMode::None)
+                        .is_err();
+                if type_error {
+                    commented = true;
+                }
+                continue;
             }
-        }
-        if expecting_data && (trampoline.is_none() || destroy.is_none()) {
+        } else if trampoline.is_none() || destroy.is_none() {
             if callback.is_none() && (par.c_type.ends_with("Func") || par.c_type.ends_with("Callback")) {
                 if analyze_callback(
                     env,
@@ -320,6 +318,7 @@ fn analyze_function(
                 ) {
                     async = false;
                     to_replace.push((pos, par.typ));
+                    continue;
                 }
             } else if destroy.is_none() && par.c_type.ends_with("DestroyNotify") {
                 if analyze_callback(
@@ -333,15 +332,13 @@ fn analyze_function(
                 ) {
                     async = false;
                     to_replace.push((pos, par.typ));
+                    continue;
                 }
             }
         }
-        if name == "connect_signals_full" {
-            println!("{}", commented);
+        if !commented {
+            commented |= parameter_rust_type(env, par.typ, par.direction, Nullable(false), RefMode::None).is_err();
         }
-    }
-    if name == "connect_signals_full" {
-        println!("<= {}", name);
     }
 
     if destroy.is_some() {
@@ -359,7 +356,7 @@ fn analyze_function(
         // This is just a shitty hack for the moment.
         for (pos, typ) in to_replace {
             let ty = env.library.type_(typ);
-            println!("replacing {} with {}", params[pos].name, ty.get_name());
+            // println!("replacing {} with {}", params[pos].name, ty.get_name());
             //params[pos].name = format!("{}_trampoline", params[pos].name);
             params[pos].typ = typ;
             // params[pos].name = ty.get_name();
@@ -374,7 +371,6 @@ fn analyze_function(
             async,
             in_trait
         );
-        commented |= parameters.rust_parameters.iter().any(|p| !env.type_status(&p.typ.full_name(&env.library)).normal());
     }
 
     for par in &parameters.rust_parameters {
@@ -514,7 +510,7 @@ fn analyze_async(
     commented: &mut bool,
     trampoline: &mut Option<AsyncTrampoline>,
     async_future: &mut Option<AsyncFuture>,
-) {
+) -> bool {
     if let Some(CallbackInfo {
         callback_type,
         success_parameters,
@@ -523,7 +519,7 @@ fn analyze_async(
     }) = callback_info
     {
         // Checks for /*Ignored*/ or other error comments
-        *commented = callback_type.find("/*").is_some();
+        *commented |= callback_type.find("/*").is_some();
         let func_name = func.c_identifier.as_ref().unwrap();
         let finish_func_name = finish_function_name(func_name);
         let mut output_params = vec![];
@@ -556,6 +552,9 @@ fn analyze_async(
             success_parameters,
             error_parameters,
         });
+        true
+    } else {
+        false
     }
 }
 
@@ -570,10 +569,12 @@ fn analyze_callback(
 ) -> bool {
     if let Type::Function(ref func) = func {
         let parameters = ::analysis::trampoline_parameters::analyze(env, &func.parameters, type_tid, &[]);
-        //let x = env.type_status(&type_tid.full_name(&env.library));
-        *commented |= !func.parameters.iter()
-                                      .any(|p| !env.type_status(&p.typ.full_name(&env.library))
-                                                   .normal());
+        *commented |= func.parameters.iter()
+                                     .rev()
+                                     .skip(1)
+                                     .any(|p| {
+                                         ::analysis::trampolines::type_error(env, p).is_some()
+                                     });
         *trampoline = Some(Trampoline {
             name: par_name.to_string(),
             parameters: parameters,

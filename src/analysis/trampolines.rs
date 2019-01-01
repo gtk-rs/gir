@@ -178,7 +178,7 @@ fn closure_errors(env: &Env, signal: &library::Signal) -> Vec<String> {
     errors
 }
 
-fn type_error(env: &Env, par: &library::Parameter) -> Option<&'static str> {
+pub fn type_error(env: &Env, par: &library::Parameter) -> Option<&'static str> {
     use super::rust_type::TypeError::*;
     if par.direction == library::ParameterDirection::Out {
         Some("Out")
