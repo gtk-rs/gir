@@ -75,6 +75,7 @@ pub enum Chunk {
     },
 }
 
+#[derive(Debug)]
 pub struct Param {
     pub name: String,
     pub typ: String,

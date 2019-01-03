@@ -341,7 +341,7 @@ fn analyze_function(
         }
     }
 
-    if destroy.is_some() {
+    if destroy.is_some() || callback.is_some() {
         async = false;
         trampoline = None;
         async_future = None;
@@ -568,16 +568,18 @@ fn analyze_callback(
     par_name: &str,
 ) -> bool {
     if let Type::Function(ref func) = func {
+        *commented |= func.parameters.len() < 1; // If we don't have a "data" parameter, we can't
+                                                 // get the closure so there's nothing we can do...
         let parameters = ::analysis::trampoline_parameters::analyze(env, &func.parameters, type_tid, &[]);
         *commented |= func.parameters.iter()
                                      .rev()
-                                     .skip(1)
+                                     .skip(1) // We skip the "data" parameter.
                                      .any(|p| {
                                          ::analysis::trampolines::type_error(env, p).is_some()
                                      });
         *trampoline = Some(Trampoline {
             name: par_name.to_string(),
-            parameters: parameters,
+            parameters,
             ret: func.ret.clone(),
             bound_name: match callback_info {
                 Some(x) => x.bound_name,

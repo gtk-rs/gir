@@ -132,7 +132,19 @@ impl Bounds {
         if !par.instance_parameter && par.direction != ParameterDirection::Out {
             if let Some(bound_type) = Bounds::type_for(env, par.typ, par.nullable) {
                 ret = Some(Bounds::get_to_glib_extra(&bound_type));
-                if async && par.name == "callback" {
+                if par.c_type.ends_with("Func") || par.c_type.ends_with("Callback") ||
+                   par.c_type == "GDestroyNotify" {
+                    if let Type::Function(_) = env.library.type_(par.typ) {
+                        type_string = rust_type(env, par.typ).into_string();
+                        let bound_name = *self.unused.front().unwrap();
+                        callback_info = Some(CallbackInfo {
+                            callback_type: type_string.clone(),
+                            success_parameters: String::new(),
+                            error_parameters: String::new(),
+                            bound_name,
+                        });
+                    }
+                } else if async && par.name == "callback" {
                     let func_name = func.c_identifier.as_ref().unwrap();
                     let finish_func_name = finish_function_name(func_name);
                     if let Some(function) = find_function(env, &finish_func_name) {
@@ -152,18 +164,6 @@ impl Bounds {
                             callback_type: type_string.clone(),
                             success_parameters: parameters,
                             error_parameters: error_type,
-                            bound_name,
-                        });
-                    }
-                } else if par.c_type.ends_with("Func") || par.c_type.ends_with("Callback") ||
-                          par.c_type == "GDestroyNotify" {
-                    if let Type::Function(_) = env.library.type_(par.typ) {
-                        type_string = rust_type(env, par.typ).into_string();
-                        let bound_name = *self.unused.front().unwrap();
-                        callback_info = Some(CallbackInfo {
-                            callback_type: type_string.clone(),
-                            success_parameters: String::new(),
-                            error_parameters: String::new(),
                             bound_name,
                         });
                     }
