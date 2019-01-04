@@ -113,7 +113,7 @@ fn declaration(env: &Env, prop: &Property) -> String {
                                          &type_name,
                                          bound_type.clone(),
                                          false);
-                    bound = codegen::function::bounds(&bounds, &[], false);
+                    bound = codegen::function::bounds(&mut bounds, &[], false);
                     format!("{}", bounds.iter().next().unwrap().alias)
                 }
                 Some(_) => {

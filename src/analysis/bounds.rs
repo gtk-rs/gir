@@ -1,5 +1,5 @@
 use std::collections::vec_deque::VecDeque;
-use std::slice::Iter;
+use std::slice::{Iter, IterMut};
 use std::vec::Vec;
 
 use analysis::function_parameters::{async_param_to_remove, CParameter};
@@ -129,11 +129,13 @@ impl Bounds {
         };
         let mut callback_info = None;
         let mut ret = None;
+        let mut need_is_into_check = false;
         if !par.instance_parameter && par.direction != ParameterDirection::Out {
             if let Some(bound_type) = Bounds::type_for(env, par.typ, par.nullable) {
                 ret = Some(Bounds::get_to_glib_extra(&bound_type));
                 if par.c_type.ends_with("Func") || par.c_type.ends_with("Callback") ||
                    par.c_type == "GDestroyNotify" {
+                    need_is_into_check = true;
                     if let Type::Function(_) = env.library.type_(par.typ) {
                         type_string = rust_type(env, par.typ).into_string();
                         let bound_name = *self.unused.front().unwrap();
@@ -168,11 +170,29 @@ impl Bounds {
                         });
                     }
                 }
+                let cond = need_is_into_check && bound_type.is_into();
                 if !self.add_parameter(&par.name, &type_string, bound_type, async) {
                     panic!(
                         "Too many type constraints for {}",
                         func.c_identifier.as_ref().unwrap()
                     )
+                }
+                if cond {
+                    if let Some(x) = if let Some(ref mut last) = self.used.last_mut() {
+                        let mut new_one = (*last).clone();
+                        new_one.alias = self.unused.pop_front().expect("no available bound");
+                        new_one.type_str = last.alias.to_string();
+                        new_one.parameter_name = last.parameter_name.clone();
+
+                        last.bound_type = BoundType::NoWrapper;
+                        last.parameter_name = String::new();
+
+                        Some(new_one)
+                    } else {
+                        None
+                    } {
+                        self.used.push(x);
+                    }
                 }
             }
         } else if par.instance_parameter {

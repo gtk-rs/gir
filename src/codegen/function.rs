@@ -262,9 +262,10 @@ pub fn bounds(bounds: &Bounds, skip: &[char], async: bool) -> String {
                 format!("{}: AsRef<{}> + '{}", bound.alias, bound.type_str, lifetime)
             }
             AsRef(None) => format!("{}: AsRef<{}>", bound.alias, bound.type_str),
-            Into(Some(l), _) => {
-                format!("{}: Into<Option<&'{} {}>>", bound.alias, l, bound.type_str)
-            }
+            Into(Some(l), _) => format!("{}: Into<Option<&'{} {}>>",
+                                        bound.alias,
+                                        l,
+                                        bound.type_str),
             Into(None, _) => format!("{}: Into<Option<{}>>", bound.alias, bound.type_str),
         }))
         .collect();

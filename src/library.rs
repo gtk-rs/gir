@@ -701,10 +701,6 @@ impl Type {
         // let mut param_tids: Vec<TypeId> = func.parameters.iter().map(|p| p.typ).collect();
         // param_tids.push(func.ret.typ);
         let name = format!("fn_{}", func.name);
-        if func.name.to_lowercase().ends_with("func") {
-            println!("===> {:?}", name);
-            // println!("fn<#{:?}>", param_tids);
-        }
         let typ = Type::Function(func);
         // library.add_type(INTERNAL_NAMESPACE, &format!("fn<#{:?}>", param_tids), typ)
         library.add_type(INTERNAL_NAMESPACE, &name, typ)
