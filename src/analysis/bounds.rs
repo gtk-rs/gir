@@ -162,7 +162,12 @@ impl Bounds {
                     )
                 }
             }
+        } else if par.instance_parameter {
+            if let Some(bound_type) = Bounds::type_for(env, par.typ, par.nullable) {
+                ret = Some(Bounds::get_to_glib_extra(&bound_type));
+            }
         }
+
         (ret, callback_info)
     }
 
@@ -196,6 +201,7 @@ impl Bounds {
         use self::BoundType::*;
         match *bound_type {
             AsRef(_) => ".as_ref()".to_owned(),
+            IsA(_) => ".as_ref()".to_owned(),
             Into(_, Some(ref x)) => Bounds::get_to_glib_extra(x),
             _ => String::new(),
         }

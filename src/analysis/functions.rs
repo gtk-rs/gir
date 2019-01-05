@@ -165,6 +165,7 @@ fn fixup_gpointer_parameter(
             to_glib_extra: String::new(),
             explicit_target_type: format!("*mut {}", ffi_name),
             pointer_cast: " as glib_ffi::gconstpointer".into(),
+            in_trait: false,
         },
     };
 }

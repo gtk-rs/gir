@@ -25,10 +25,11 @@ impl TranslateToGlib for TransformationType {
                 ref to_glib_extra,
                 ref pointer_cast,
                 ref explicit_target_type,
+                in_trait,
             } => {
                 let (left, right) = to_glib_xxx(transfer, ref_mode, explicit_target_type);
                 if instance_parameter {
-                    format!("{}self{}{}", left, right, pointer_cast)
+                    format!("{}self{}{}{}", left, if in_trait { to_glib_extra } else { "" }, right, pointer_cast)
                 } else {
                     format!("{}{}{}{}{}", left, name, to_glib_extra, right, pointer_cast)
                 }
