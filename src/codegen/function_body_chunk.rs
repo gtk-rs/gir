@@ -43,7 +43,7 @@ use self::Parameter::*;
 #[derive(Default)]
 pub struct Builder {
     async_trampoline: Option<AsyncTrampoline>,
-    callback: Option<Trampoline>,
+    callbacks: Vec<Trampoline>,
     destroy: Option<Trampoline>,
     glib_name: String,
     parameters: Vec<Parameter>,
@@ -64,7 +64,7 @@ impl Builder {
         self
     }
     pub fn callback(&mut self, trampoline: &Trampoline) -> &mut Builder {
-        self.callback = Some(trampoline.clone());
+        self.callbacks.push(trampoline.clone());
         self
     }
     pub fn destroy(&mut self, trampoline: &Trampoline) -> &mut Builder {
@@ -131,7 +131,7 @@ impl Builder {
 
         let mut chunks = Vec::new();
 
-        if self.callback.is_some() || self.destroy.is_some() {
+        if !self.callbacks.is_empty() || self.destroy.is_some() {
             chunks.push(Chunk::Custom("use std::boxed::Box as Box_;\n".to_owned()));
         }
 
@@ -139,48 +139,82 @@ impl Builder {
         self.add_in_array_lengths(&mut chunks);
         self.add_assertion(&mut chunks);
 
-        if self.callback.is_some() || self.destroy.is_some() {
-            let mut full_type = None;
-            if let (&Some(ref trampoline), &Some(ref destroy)) = (&self.callback, &self.destroy) {
-                full_type = Some(format!("Box_<Box_<(Option<{}>, Option<{}>)>>",
-                                         trampoline.bound_name,
-                                         destroy.bound_name));
-            }
-            if let Some(ref trampoline) = self.callback {
+        if !self.callbacks.is_empty() || self.destroy.is_some() {
+            let full_type = match (&self.callbacks, &self.destroy) {
+                (ref callbacks, &Some(ref destroy)) if !callbacks.is_empty() => {
+                    Some(format!("Box_<Box_<({}, Option<{}>)>>",
+                                 callbacks.iter()
+                                          .map(|c| format!("Option<{}>",
+                                                           c.bound_name.clone()))
+                                          .collect::<Vec<_>>()
+                                          .join(", "),
+                                 destroy.bound_name))
+                }
+                (ref callbacks, &None) if callbacks.len() > 1 => {
+                    Some(format!("Box_<Box_<({})>>",
+                                 callbacks.iter()
+                                          .map(|c| format!("Option<{}>",
+                                                           c.bound_name.clone()))
+                                          .collect::<Vec<_>>()
+                                          .join(", ")))
+                }
+                _ => None,
+            };
+            for trampoline in self.callbacks.iter() {
                 self.add_trampoline(env, &mut chunks, trampoline, &full_type, 0, &bounds);
             }
             if let Some(ref destroy) = self.destroy {
                 self.add_trampoline(env, &mut chunks, destroy, &full_type, 1, &bounds);
             }
-            if let (&Some(ref trampoline), &Some(ref destroy)) = (&self.callback, &self.destroy) {
-                chunks.push(
-                    Chunk::Let {
+            match (&self.callbacks, &self.destroy) {
+                (ref callbacks, &Some(ref destroy)) if !callbacks.is_empty() => {
+                    chunks.push(
+                        Chunk::Let {
+                            name: "super_callback".to_string(),
+                            is_mut: false,
+                            value: Box::new(Chunk::Custom(format!("Box_::new(Box_::new(({}, {}_data)))",
+                                                                  callbacks.iter()
+                                                                           .map(|c| format!("{}_data", c.name))
+                                                                           .collect::<Vec<_>>()
+                                                                           .join(", "),
+                                                                  destroy.name))),
+                            type_: Some(Box::new(Chunk::Custom(full_type.clone().unwrap()))),
+                        }
+                    );
+                }
+                (ref callbacks, &None) if callbacks.len() > 1 => {
+                    chunks.push(
+                        Chunk::Let {
+                            name: "super_callback".to_string(),
+                            is_mut: false,
+                            value: Box::new(Chunk::Custom(format!("Box_::new(Box_::new(({})))",
+                                                                  callbacks.iter()
+                                                                           .map(|c| format!("{}_data", c.name))
+                                                                           .collect::<Vec<_>>()
+                                                                           .join(", ")))),
+                            type_: Some(Box::new(Chunk::Custom(full_type.clone().unwrap()))),
+                        }
+                    );
+                }
+                (ref callbacks, &None) if !callbacks.is_empty() => {
+                    chunks.push(Chunk::Let {
                         name: "super_callback".to_string(),
                         is_mut: false,
-                        value: Box::new(Chunk::Custom(format!("Box_::new(Box_::new(({}_data, {}_data)))",
-                                                              trampoline.name,
-                                                              destroy.name))),
-                        type_: Some(Box::new(Chunk::Custom(format!("Box_<Box_<(Option<{}>, Option<{}>)>>",
-                                                                   trampoline.bound_name,
+                        value: Box::new(Chunk::Custom(format!("{}_data", callbacks[0].name))),
+                        type_: Some(Box::new(Chunk::Custom(format!("Box_<Box_<Option<{}>>>",
+                                                                   callbacks[0].bound_name)))),
+                    });
+                }
+                (_, &Some(ref destroy)) => {
+                    chunks.push(Chunk::Let {
+                        name: "super_callback".to_string(),
+                        is_mut: false,
+                        value: Box::new(Chunk::Custom(format!("{}_data", destroy.name))),
+                        type_: Some(Box::new(Chunk::Custom(format!("Box_<Box_<Option<{}>>>",
                                                                    destroy.bound_name)))),
-                    }
-                );
-            } else if let Some(ref trampoline) = self.callback {
-                chunks.push(Chunk::Let {
-                    name: "super_callback".to_string(),
-                    is_mut: false,
-                    value: Box::new(Chunk::Custom(format!("{}_data", trampoline.name))),
-                    type_: Some(Box::new(Chunk::Custom(format!("Box_<Box_<Option<{}>>>",
-                                                               trampoline.bound_name)))),
-                });
-            } else if let Some(ref trampoline) = self.destroy {
-                chunks.push(Chunk::Let {
-                    name: "super_callback".to_string(),
-                    is_mut: false,
-                    value: Box::new(Chunk::Custom(format!("{}_data", trampoline.name))),
-                    type_: Some(Box::new(Chunk::Custom(format!("Box_<Box_<Option<{}>>>",
-                                                               trampoline.bound_name)))),
-                });
+                    });
+                }
+                (_, &None) => {}
             }
         } else if let Some(ref trampoline) = self.async_trampoline {
             self.add_async_trampoline(env, &mut chunks, trampoline);
@@ -194,16 +228,21 @@ impl Builder {
         //use analysis::bounds::BoundType;
         //use analysis::ref_mode::RefMode;
 
-        if pos == 1 { // FIXME: should be a transformation, not a hack performed here!!!
-            chunks.push(Chunk::Custom(format!("let {0} = {0}.into();", trampoline.name)));
-        }
+        //if pos == 1 { // FIXME: should be a transformation, not a hack performed here!!!
+            //chunks.push(Chunk::Custom(format!("let {0} = {0}.into();", trampoline.name)));
+        //}
         if full_type.is_none() {
-            chunks.push(Chunk::BoxFn {
-                name: Some(format!("{}", trampoline.name)),
+            /*if !bounds.contains("Into<Option<Fn") { // FIXME: another hack to remove...
+                chunks.push(Chunk::Custom(format!("let {0} = Some({0});", trampoline.name)));
+            }*/
+            chunks.push(Chunk::Custom(format!("let {0}_data: Box_<Box_<Option<{1}>>> = Box::new(Box::new({0}.into()));",
+                                              trampoline.name, trampoline.bound_name)));
+            /*chunks.push(Chunk::BoxFn {
+                name: Some(format!("{}.into()", trampoline.name)),
                 typ: format!("Option<{}>", trampoline.bound_name),
-            });
+            });*/
         } else {
-            chunks.push(Chunk::Custom(format!("let {0}_data: Option<{1}> = {0};",
+            chunks.push(Chunk::Custom(format!("let {0}_data: Option<{1}> = {0}.into();",
                                               trampoline.name,
                                               trampoline.bound_name)));
         }
@@ -212,14 +251,18 @@ impl Builder {
         let mut arguments = Vec::new();
 
         // Skip "this" parameter.
-        for par in trampoline.parameters.transformations.iter().rev().skip(1).rev() {
-            if par.name == "this" {
+        for par in trampoline.parameters.transformations.iter() {
+            if trampoline.parameters.c_parameters[par.ind_c].c_type == "gpointer" ||
+               par.name == "this" {
                 continue;
             }
             let type_ = env.type_(par.typ);
             match *type_ {
                 library::Type::Fundamental(ref x) if !x.requires_conversion() => {
-                    body.push(Chunk::Custom(format!("let {0} = {0} as _;", par.name)));
+                    // body.push(Chunk::Custom(format!("let {0} = {0} as _;", par.name)));
+                }
+                library::Type::Fundamental(library::Fundamental::Boolean) => {
+                    body.push(Chunk::Custom(format!("let {0} = from_glib({0});", par.name)));
                 }
                 _ => {
                     let (begin, end) = ::codegen::translate_from_glib::from_glib_xxx(par.transfer, None);
@@ -586,7 +629,7 @@ impl Builder {
     }
     fn generate_func_parameters(&self) -> Vec<Chunk> {
         let mut callbacks = ::std::collections::HashSet::new();
-        if let Some(ref t) = self.callback {
+        for t in self.callbacks.iter() {
             callbacks.insert(t.name.clone());
         }
         if let Some(ref t) = self.destroy {

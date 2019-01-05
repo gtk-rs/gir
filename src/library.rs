@@ -211,7 +211,6 @@ pub enum Fundamental {
 impl Fundamental {
     pub fn requires_conversion(&self) -> bool {
         match *self {
-            Fundamental::Boolean |
             Fundamental::Int8 |
             Fundamental::UInt8 |
             Fundamental::Int16 |

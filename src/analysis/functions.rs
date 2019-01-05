@@ -79,7 +79,7 @@ pub struct Info {
     pub doc_hidden: bool,
     pub async: bool,
     pub trampoline: Option<AsyncTrampoline>,
-    pub callback: Option<Trampoline>,
+    pub callbacks: Vec<Trampoline>,
     pub destroy: Option<Trampoline>,
     pub remove_param: Option<u8>,
     pub async_future: Option<AsyncFuture>,
@@ -219,7 +219,7 @@ fn analyze_function(
     let mut to_glib_extras = HashMap::<usize, String>::new();
     let mut used_types: Vec<String> = Vec::with_capacity(4);
     let mut trampoline = None;
-    let mut callback = None;
+    let mut callbacks = Vec::new();
     let mut destroy = None;
     let mut async_future = None;
 
@@ -312,32 +312,32 @@ fn analyze_function(
                 continue;
             }
         } else if trampoline.is_none() || destroy.is_none() {
-            if callback.is_none() && (par.c_type.ends_with("Func") || par.c_type.ends_with("Callback")) {
-                if analyze_callback(
+            if par.c_type.ends_with("Func") || par.c_type.ends_with("Callback") {
+                if let Some(callback) = analyze_callback(
                     env,
                     env.library.type_(par.typ),
                     &callback_info,
                     &mut commented,
-                    &mut callback,
                     par.typ,
                     &par.name,
                     imports,
                 ) {
+                    callbacks.push(callback);
                     async = false;
                     to_replace.push((pos, par.typ));
                     continue;
                 }
             } else if destroy.is_none() && par.c_type.ends_with("DestroyNotify") {
-                if analyze_callback(
+                if let Some(callback) = analyze_callback(
                     env,
                     env.library.type_(par.typ),
                     &callback_info,
                     &mut commented,
-                    &mut destroy,
                     par.typ,
                     &par.name,
                     imports,
                 ) {
+                    destroy = Some(callback);
                     async = false;
                     to_replace.push((pos, par.typ));
                     continue;
@@ -349,7 +349,7 @@ fn analyze_function(
         }
     }
 
-    if destroy.is_some() || callback.is_some() {
+    if destroy.is_some() || !callbacks.is_empty() {
         async = false;
         trampoline = None;
         async_future = None;
@@ -358,7 +358,7 @@ fn analyze_function(
         if trampoline.is_none() {
             commented = true;
         }
-    } else if let Some(_) = callback {
+    } else if !callbacks.is_empty() {
         // commented = false;
 
         // This is just a shitty hack for the moment.
@@ -488,7 +488,7 @@ fn analyze_function(
         async,
         trampoline,
         async_future,
-        callback,
+        callbacks,
         destroy,
         remove_param,
     }
@@ -571,14 +571,14 @@ fn analyze_callback(
     func: &library::Type,
     callback_info: &Option<CallbackInfo>,
     commented: &mut bool,
-    trampoline: &mut Option<Trampoline>,
     type_tid: library::TypeId,
     par_name: &str,
     imports: &mut Imports,
-) -> bool {
+) -> Option<Trampoline> {
     if let Type::Function(ref func) = func {
-        *commented |= func.parameters.len() < 1; // If we don't have a "data" parameter, we can't
-                                                 // get the closure so there's nothing we can do...
+        // If we don't have a "data" parameter, we can't
+        // get the closure so there's nothing we can do...
+        *commented |= func.parameters.len() < 1 || func.parameters.last().unwrap().c_type != "gpointer";
         let parameters = ::analysis::trampoline_parameters::analyze(env, &func.parameters, type_tid, &[]);
         *commented |= func.parameters.iter()
                                      .rev()
@@ -589,27 +589,29 @@ fn analyze_callback(
         imports.add("std::boxed::Box as Box_", None);
         imports.add("glib_ffi::gpointer", None); // TODO: maybe improve this one?
         for p in parameters.rust_parameters.iter() {
-            if let Ok(s) = used_rust_type(env, p.typ) {
+            if let Ok(s) = used_rust_type(env, p.typ, false) {
                 imports.add_used_type(&s, None);
             }
         }
-        *trampoline = Some(Trampoline {
+        if let Ok(s) = used_rust_type(env, func.ret.typ, false) {
+            imports.add_used_type(&s, None);
+        }
+        Some(Trampoline {
             name: par_name.to_string(),
             parameters,
             ret: func.ret.clone(),
             bound_name: match callback_info {
                 Some(x) => x.bound_name,
-                None => return false,
+                None => return None,
             },
             bounds: Bounds::default(),
             version: None,
             inhibit: false,
             concurrency: library::Concurrency::None,
             is_notify: false,
-        });
-        true
+        })
     } else {
-        false
+        None
     }
 }
 

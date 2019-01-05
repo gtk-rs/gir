@@ -306,7 +306,7 @@ pub fn body_chunk(env: &Env, analysis: &analysis::functions::Info, bounds: Strin
             warn!("Async function {} has no associated _finish function", analysis.name);
         }
     } else {
-        if let Some(ref trampoline) = analysis.callback {
+        for trampoline in analysis.callbacks.iter() {
             builder.callback(trampoline);
         }
         if let Some(ref trampoline) = analysis.destroy {
