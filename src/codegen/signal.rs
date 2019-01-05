@@ -28,19 +28,19 @@ pub fn generate(
     let declaration = declaration(analysis, &function_type);
     let suffix = if only_declaration { ";" } else { " {" };
 
-    try!(writeln!(w));
+    writeln!(w)?;
     if !in_trait || only_declaration {
-        try!(cfg_deprecated(w, env, analysis.deprecated_version, commented, indent));
+        cfg_deprecated(w, env, analysis.deprecated_version, commented, indent)?;
     }
-    try!(version_condition(
+    version_condition(
         w,
         env,
         analysis.version,
         commented,
         indent,
-    ));
-    try!(doc_hidden(w, analysis.doc_hidden, comment_prefix, indent));
-    try!(writeln!(
+    )?;
+    doc_hidden(w, analysis.doc_hidden, comment_prefix, indent)?;
+    writeln!(
         w,
         "{}{}{}{}{}",
         tabs(indent),
@@ -48,28 +48,28 @@ pub fn generate(
         pub_prefix,
         declaration,
         suffix
-    ));
+    )?;
 
     if !only_declaration {
         match function_type {
             Some(ref type_) => {
                 let body = body(analysis, type_, in_trait).to_code(env);
                 for s in body {
-                    try!(writeln!(w, "{}{}", tabs(indent), s));
+                    writeln!(w, "{}{}", tabs(indent), s)?;
                 }
             }
             _ => if let Err(ref errors) = analysis.trampoline_name {
                 for error in errors {
-                    try!(writeln!(w, "{}{}\t{}", tabs(indent), comment_prefix, error));
+                    writeln!(w, "{}{}\t{}", tabs(indent), comment_prefix, error)?;
                 }
-                try!(writeln!(w, "{}{}}}", tabs(indent), comment_prefix));
+                writeln!(w, "{}{}}}", tabs(indent), comment_prefix)?;
             } else {
-                try!(writeln!(
+                writeln!(
                     w,
                     "{}{}\tTODO: connect to trampoline\n{0}{1}}}",
                     tabs(indent),
                     comment_prefix
-                ));
+                )?;
             },
         }
     }
@@ -80,21 +80,21 @@ pub fn generate(
     }
 
     if let Some(ref emit_name) = analysis.action_emit_name {
-        try!(writeln!(w));
+        writeln!(w)?;
         if !in_trait || only_declaration {
-            try!(cfg_deprecated(w, env, analysis.deprecated_version, commented, indent));
+            cfg_deprecated(w, env, analysis.deprecated_version, commented, indent)?;
         }
-        try!(version_condition(
+        version_condition(
             w,
             env,
             analysis.version,
             commented,
             indent,
-        ));
+        )?;
 
         let function_type = function_type_string(env, analysis, trampolines, false);
 
-        try!(writeln!(
+        writeln!(
             w,
             "{}{}{}fn {}{}{}",
             tabs(indent),
@@ -103,7 +103,7 @@ pub fn generate(
             emit_name,
             function_type.unwrap(),
             suffix
-        ));
+        )?;
 
         if !only_declaration {
             let trampoline_name = analysis.trampoline_name.as_ref().unwrap();
@@ -129,7 +129,7 @@ pub fn generate(
                 args.push_str(&par.name);
             }
 
-            try!(writeln!(
+            writeln!(
                 w,
                 "{}let {} = unsafe {{ glib::Object::from_glib_borrow(self.to_glib_none().0 as *mut gobject_ffi::GObject).emit(\"{}\", &[{}]).unwrap() }};",
                 tabs(indent + 1),
@@ -140,20 +140,20 @@ pub fn generate(
                 },
                 analysis.signal_name,
                 args,
-            ));
+            )?;
 
             if trampoline.ret.typ != Default::default() {
                 if trampoline.ret.nullable == library::Nullable(true) {
-                    try!(writeln!(w, "{}res.unwrap().get()", tabs(indent + 1),));
+                    writeln!(w, "{}res.unwrap().get()", tabs(indent + 1),)?;
                 } else {
-                    try!(writeln!(
+                    writeln!(
                         w,
                         "{}res.unwrap().get().unwrap()",
                         tabs(indent + 1),
-                    ));
+                    )?;
                 }
             }
-            try!(writeln!(w, "{}}}", tabs(indent)));
+            writeln!(w, "{}}}", tabs(indent))?;
         }
     }
 

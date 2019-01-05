@@ -74,13 +74,13 @@ impl Config {
                     Err(e) => return Err(format!("Invalid toml file \"{}\": {}",
                                                  config_file.display(), e))
                 };
-                try!(WorkMode::from_str(s))
+                WorkMode::from_str(s)?
             }
         };
 
         let girs_dir: PathBuf = match girs_dir.into() {
             Some("") | None => {
-                let path = try!(toml.lookup_str("options.girs_dir", "No options.girs_dir"));
+                let path = toml.lookup_str("options.girs_dir", "No options.girs_dir")?;
                 config_dir.join(path)
             }
             Some(a) => a.into(),
@@ -89,8 +89,8 @@ impl Config {
 
         let (library_name, library_version) = match (library_name.into(), library_version.into()) {
             (Some(""), Some("")) | (None, None) => (
-                try!(toml.lookup_str("options.library", "No options.library")).to_owned(),
-                try!(toml.lookup_str("options.version", "No options.version")).to_owned(),
+                toml.lookup_str("options.library", "No options.library")?.to_owned(),
+                toml.lookup_str("options.version", "No options.version")?.to_owned(),
             ),
             (Some(""), Some(_)) | (Some(_), Some("")) | (None, Some(_)) | (Some(_), None) =>
                 return Err("Library and version can not be specified separately".to_owned()),
@@ -99,17 +99,17 @@ impl Config {
 
         let target_path: PathBuf = match target_path.into() {
             Some("") | None => {
-                let path = try!(toml.lookup_str(
+                let path = toml.lookup_str(
                     "options.target_path",
                     "No target path specified",
-                ));
+                )?;
                 config_dir.join(path)
             }
             Some(a) => a.into(),
         };
 
         let auto_path = match toml.lookup("options.auto_path") {
-            Some(p) => target_path.join(try!(p.as_result_str("options.auto_path"))),
+            Some(p) => target_path.join(p.as_result_str("options.auto_path")?),
             None if work_mode == WorkMode::Normal => target_path.join("src").join("auto"),
             None => target_path.join("src"),
         };
@@ -117,7 +117,7 @@ impl Config {
         let doc_target_path: PathBuf = match doc_target_path.into() {
             Some("") | None => {
                 match toml.lookup("options.doc_target_path") {
-                    Some(p) => config_dir.join(try!(p.as_result_str("options.doc_target_path"))),
+                    Some(p) => config_dir.join(p.as_result_str("options.doc_target_path")?),
                     None => target_path.join("vendor.md"),
                 }
             }
@@ -125,12 +125,12 @@ impl Config {
         };
 
         let concurrency = match toml.lookup("options.concurrency") {
-            Some(v) => try!(try!(v.as_result_str("options.concurrency")).parse()),
+            Some(v) => v.as_result_str("options.concurrency")?.parse()?,
             None => Default::default(),
         };
 
         let generate_display_trait = match toml.lookup("options.generate_display_trait") {
-            Some(v) => try!(v.as_result_bool("options.generate_display_trait")),
+            Some(v) => v.as_result_bool("options.generate_display_trait")?,
             None => true,
         };
 
@@ -141,20 +141,20 @@ impl Config {
             .unwrap_or_default();
         gobjects::parse_status_shorthands(&mut objects, &toml, concurrency, generate_display_trait);
 
-        let external_libraries = try!(read_external_libraries(&toml));
+        let external_libraries = read_external_libraries(&toml)?;
 
         let min_cfg_version = match toml.lookup("options.min_cfg_version") {
-            Some(v) => try!(try!(v.as_result_str("options.min_cfg_version")).parse()),
+            Some(v) => v.as_result_str("options.min_cfg_version")?.parse()?,
             None => Default::default(),
         };
 
         let generate_safety_asserts = match toml.lookup("options.generate_safety_asserts") {
-            Some(v) => try!(v.as_result_bool("options.generate_safety_asserts")),
+            Some(v) => v.as_result_bool("options.generate_safety_asserts")?,
             None => false,
         };
 
         let deprecate_by_min_version = match toml.lookup("options.deprecate_by_min_version") {
-            Some(v) => try!(v.as_result_bool("options.deprecate_by_min_version")),
+            Some(v) => v.as_result_bool("options.deprecate_by_min_version")?,
             None => false,
         };
 

@@ -44,27 +44,27 @@ from gir-files (https://github.com/gtk-rs/gir-files @ {})",
 }
 
 pub fn uses(w: &mut Write, env: &Env, imports: &Imports) -> Result<()> {
-    try!(writeln!(w));
+    writeln!(w)?;
     for (name, &(ref version, ref constraints)) in imports.iter() {
         if constraints.len() == 1 {
-            try!(writeln!(w, "#[cfg(feature = \"{}\")]", constraints[0]));
+            writeln!(w, "#[cfg(feature = \"{}\")]", constraints[0])?;
         } else if !constraints.is_empty() {
-            try!(writeln!(w, "#[cfg(any({}))]", constraints.iter().map(|c| format!("feature = \"{}\"", c)).collect::<Vec<_>>().join(", ")));
+            writeln!(w, "#[cfg(any({}))]", constraints.iter().map(|c| format!("feature = \"{}\"", c)).collect::<Vec<_>>().join(", "))?;
         }
 
-        try!(version_condition(w, env, *version, false, 0));
+        version_condition(w, env, *version, false, 0)?;
         let mut default_use = true;
         if env.namespaces.is_glib_crate {
             if name == "glib_ffi" {
-                try!(writeln!(w, "use ffi as {};", name));
+                writeln!(w, "use ffi as {};", name)?;
                 default_use = false;
             } else if env.namespaces.glib_ns_id != namespaces::MAIN && name == "ffi" {
-                try!(writeln!(w, "use gobject_ffi as {};", name));
+                writeln!(w, "use gobject_ffi as {};", name)?;
                 default_use = false;
             }
         }
         if default_use {
-            try!(writeln!(w, "use {};", name));
+            writeln!(w, "use {};", name)?;
         }
     }
 
@@ -111,10 +111,10 @@ pub fn define_object_type(
         Some(ref rust_class_name) => format!(", {}", rust_class_name),
     };
 
-    try!(writeln!(w));
-    try!(writeln!(w, "glib_wrapper! {{"));
+    writeln!(w)?;
+    writeln!(w, "glib_wrapper! {{")?;
     if parents.is_empty() {
-        try!(writeln!(
+        writeln!(
             w,
             "\tpub struct {}(Object<ffi::{}{}{}{}>);",
             type_name,
@@ -122,9 +122,9 @@ pub fn define_object_type(
             separator,
             class_name,
             rust_class_name
-        ));
+        )?;
     } else if external_parents {
-        try!(writeln!(
+        writeln!(
             w,
             "\tpub struct {}(Object<ffi::{}{}{}{}>): [",
             type_name,
@@ -132,13 +132,13 @@ pub fn define_object_type(
             separator,
             class_name,
             rust_class_name
-        ));
+        )?;
         for parent in parents {
-            try!(writeln!(w, "\t\t{},", parent));
+            writeln!(w, "\t\t{},", parent)?;
         }
-        try!(writeln!(w, "\t];"));
+        writeln!(w, "\t];")?;
     } else {
-        try!(writeln!(
+        writeln!(
             w,
             "\tpub struct {}(Object<ffi::{}{}{}{}>): {};",
             type_name,
@@ -147,13 +147,13 @@ pub fn define_object_type(
             class_name,
             rust_class_name,
             parents.join(", ")
-        ));
+        )?;
     }
-    try!(writeln!(w));
-    try!(writeln!(w, "\tmatch fn {{"));
-    try!(writeln!(w, "\t\tget_type => || ffi::{}(),", glib_func_name));
-    try!(writeln!(w, "\t}}"));
-    try!(writeln!(w, "}}"));
+    writeln!(w)?;
+    writeln!(w, "\tmatch fn {{")?;
+    writeln!(w, "\t\tget_type => || ffi::{}(),", glib_func_name)?;
+    writeln!(w, "\t}}")?;
+    writeln!(w, "}}")?;
 
     Ok(())
 }
@@ -167,29 +167,29 @@ pub fn define_boxed_type(
     get_type_fn: &Option<String>,
     derive: &[Derive],
 ) -> Result<()> {
-    try!(writeln!(w));
-    try!(writeln!(w, "glib_wrapper! {{"));
+    writeln!(w)?;
+    writeln!(w, "glib_wrapper! {{")?;
 
-    try!(derives(w, derive, 1));
-    try!(writeln!(
+    derives(w, derive, 1)?;
+    writeln!(
         w,
         "\tpub struct {}(Boxed<ffi::{}>);",
         type_name,
         glib_name
-    ));
-    try!(writeln!(w));
-    try!(writeln!(w, "\tmatch fn {{"));
-    try!(writeln!(
+    )?;
+    writeln!(w)?;
+    writeln!(w, "\tmatch fn {{")?;
+    writeln!(
         w,
         "\t\tcopy => |ptr| ffi::{}(mut_override(ptr)),",
         copy_fn
-    ));
-    try!(writeln!(w, "\t\tfree => |ptr| ffi::{}(ptr),", free_fn));
+    )?;
+    writeln!(w, "\t\tfree => |ptr| ffi::{}(ptr),", free_fn)?;
     if let Some(ref get_type_fn) = *get_type_fn {
-        try!(writeln!(w, "\t\tget_type => || ffi::{}(),", get_type_fn));
+        writeln!(w, "\t\tget_type => || ffi::{}(),", get_type_fn)?;
     }
-    try!(writeln!(w, "\t}}"));
-    try!(writeln!(w, "}}"));
+    writeln!(w, "\t}}")?;
+    writeln!(w, "}}")?;
 
     Ok(())
 }
@@ -201,30 +201,30 @@ pub fn define_auto_boxed_type(
     get_type_fn: &str,
     derive: &[Derive],
 ) -> Result<()> {
-    try!(writeln!(w));
-    try!(writeln!(w, "glib_wrapper! {{"));
-    try!(derives(w, derive, 1));
-    try!(writeln!(
+    writeln!(w)?;
+    writeln!(w, "glib_wrapper! {{")?;
+    derives(w, derive, 1)?;
+    writeln!(
         w,
         "\tpub struct {}(Boxed<ffi::{}>);",
         type_name,
         glib_name
-    ));
-    try!(writeln!(w));
-    try!(writeln!(w, "\tmatch fn {{"));
-    try!(writeln!(
+    )?;
+    writeln!(w)?;
+    writeln!(w, "\tmatch fn {{")?;
+    writeln!(
         w,
         "\t\tcopy => |ptr| gobject_ffi::g_boxed_copy(ffi::{}(), ptr as *mut _) as *mut ffi::{},",
         get_type_fn, glib_name
-    ));
-    try!(writeln!(
+    )?;
+    writeln!(
         w,
         "\t\tfree => |ptr| gobject_ffi::g_boxed_free(ffi::{}(), ptr as *mut _),",
         get_type_fn
-    ));
-    try!(writeln!(w, "\t\tget_type => || ffi::{}(),", get_type_fn));
-    try!(writeln!(w, "\t}}"));
-    try!(writeln!(w, "}}"));
+    )?;
+    writeln!(w, "\t\tget_type => || ffi::{}(),", get_type_fn)?;
+    writeln!(w, "\t}}")?;
+    writeln!(w, "}}")?;
 
     Ok(())
 }
@@ -238,24 +238,24 @@ pub fn define_shared_type(
     get_type_fn: &Option<String>,
     derive: &[Derive],
 ) -> Result<()> {
-    try!(writeln!(w));
-    try!(writeln!(w, "glib_wrapper! {{"));
-    try!(derives(w, derive, 1));
-    try!(writeln!(
+    writeln!(w)?;
+    writeln!(w, "glib_wrapper! {{")?;
+    derives(w, derive, 1)?;
+    writeln!(
         w,
         "\tpub struct {}(Shared<ffi::{}>);",
         type_name,
         glib_name
-    ));
-    try!(writeln!(w));
-    try!(writeln!(w, "\tmatch fn {{"));
-    try!(writeln!(w, "\t\tref => |ptr| ffi::{}(ptr),", ref_fn));
-    try!(writeln!(w, "\t\tunref => |ptr| ffi::{}(ptr),", unref_fn));
+    )?;
+    writeln!(w)?;
+    writeln!(w, "\tmatch fn {{")?;
+    writeln!(w, "\t\tref => |ptr| ffi::{}(ptr),", ref_fn)?;
+    writeln!(w, "\t\tunref => |ptr| ffi::{}(ptr),", unref_fn)?;
     if let Some(ref get_type_fn) = *get_type_fn {
-        try!(writeln!(w, "\t\tget_type => || ffi::{}(),", get_type_fn));
+        writeln!(w, "\t\tget_type => || ffi::{}(),", get_type_fn)?;
     }
-    try!(writeln!(w, "\t}}"));
-    try!(writeln!(w, "}}"));
+    writeln!(w, "\t}}")?;
+    writeln!(w, "}}")?;
 
     Ok(())
 }
@@ -268,7 +268,7 @@ pub fn cfg_deprecated(
     indent: usize,
 ) -> Result<()> {
     if let Some(s) = cfg_deprecated_string(deprecated, env, commented, indent) {
-        try!(writeln!(w, "{}", s));
+        writeln!(w, "{}", s)?;
     }
     Ok(())
 }
@@ -302,7 +302,7 @@ pub fn version_condition(
     indent: usize,
 ) -> Result<()> {
     if let Some(s) = version_condition_string(env, version, commented, indent) {
-        try!(writeln!(w, "{}", s));
+        writeln!(w, "{}", s)?;
     }
     Ok(())
 }
@@ -341,7 +341,7 @@ pub fn not_version_condition(
             comment,
             v.to_cfg()
         );
-        try!(writeln!(w, "{}", s));
+        writeln!(w, "{}", s)?;
     }
     Ok(())
 }
@@ -354,7 +354,7 @@ pub fn cfg_condition(
 ) -> Result<()> {
     let s = cfg_condition_string(cfg_condition, commented, indent);
     if let Some(s) = s {
-        try!(writeln!(w, "{}", s));
+        writeln!(w, "{}", s)?;
     }
     Ok(())
 }
@@ -392,7 +392,7 @@ pub fn derives(
             ),
             None => format!("#[derive({})]", derive.names.join(", ")),
         };
-        try!(writeln!(w, "{}{}", tabs(indent), s));
+        writeln!(w, "{}{}", tabs(indent), s)?;
     }
     Ok(())
 }
@@ -412,7 +412,7 @@ pub fn doc_hidden(
 
 pub fn write_vec<T: Display>(w: &mut Write, v: &[T]) -> Result<()> {
     for s in v {
-        try!(writeln!(w, "{}", s));
+        writeln!(w, "{}", s)?;
     }
     Ok(())
 }
@@ -426,14 +426,14 @@ pub fn declare_default_from_new(
     if let Some(func) = functions.iter().find(|f| {
         !f.visibility.hidden() && f.name == "new" && f.parameters.rust_parameters.is_empty()
     }) {
-        try!(writeln!(w));
-        try!(cfg_deprecated(w, env, func.deprecated_version, false, 0));
-        try!(version_condition(w, env, func.version, false, 0));
-        try!(writeln!(w, "impl Default for {} {{", name));
-        try!(writeln!(w, "    fn default() -> Self {{"));
-        try!(writeln!(w, "        Self::new()"));
-        try!(writeln!(w, "    }}"));
-        try!(writeln!(w, "}}"));
+        writeln!(w)?;
+        cfg_deprecated(w, env, func.deprecated_version, false, 0)?;
+        version_condition(w, env, func.version, false, 0)?;
+        writeln!(w, "impl Default for {} {{", name)?;
+        writeln!(w, "    fn default() -> Self {{")?;
+        writeln!(w, "        Self::new()")?;
+        writeln!(w, "    }}")?;
+        writeln!(w, "}}")?;
     }
 
     Ok(())

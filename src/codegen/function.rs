@@ -54,26 +54,26 @@ pub fn generate(
     let declaration = declaration(env, analysis);
     let suffix = if only_declaration { ";" } else { " {" };
 
-    try!(writeln!(w));
+    writeln!(w)?;
     if !in_trait || only_declaration {
-        try!(cfg_deprecated(w, env, analysis.deprecated_version, commented, indent));
+        cfg_deprecated(w, env, analysis.deprecated_version, commented, indent)?;
     }
-    try!(cfg_condition(w, &analysis.cfg_condition, commented, indent));
-    try!(version_condition(
+    cfg_condition(w, &analysis.cfg_condition, commented, indent)?;
+    version_condition(
         w,
         env,
         analysis.version,
         commented,
         indent,
-    ));
-    try!(not_version_condition(
+    )?;
+    not_version_condition(
         w,
         analysis.not_version,
         commented,
         indent,
-    ));
-    try!(doc_hidden(w, analysis.doc_hidden, comment_prefix, indent));
-    try!(writeln!(
+    )?;
+    doc_hidden(w, analysis.doc_hidden, comment_prefix, indent)?;
+    writeln!(
         w,
         "{}{}{}{}{}",
         tabs(indent),
@@ -81,12 +81,12 @@ pub fn generate(
         pub_prefix,
         declaration,
         suffix
-    ));
+    )?;
 
     if !only_declaration {
         let body = body_chunk(env, analysis).to_code(env);
         for s in body {
-            try!(writeln!(w, "{}{}", tabs(indent), s));
+            writeln!(w, "{}{}", tabs(indent), s)?;
         }
     }
 
@@ -94,28 +94,28 @@ pub fn generate(
         let declaration = declaration_futures(env, analysis);
         let suffix = if only_declaration { ";" } else { " {" };
 
-        try!(writeln!(w));
+        writeln!(w)?;
         if !in_trait || only_declaration {
-            try!(cfg_deprecated(w, env, analysis.deprecated_version, commented, indent));
+            cfg_deprecated(w, env, analysis.deprecated_version, commented, indent)?;
         }
 
-        try!(writeln!(w, "{}{}#[cfg(feature = \"futures\")]", tabs(indent), comment_prefix));
-        try!(cfg_condition(w, &analysis.cfg_condition, commented, indent));
-        try!(version_condition(
+        writeln!(w, "{}{}#[cfg(feature = \"futures\")]", tabs(indent), comment_prefix)?;
+        cfg_condition(w, &analysis.cfg_condition, commented, indent)?;
+        version_condition(
             w,
             env,
             analysis.version,
             commented,
             indent,
-        ));
-        try!(not_version_condition(
+        )?;
+        not_version_condition(
             w,
             analysis.not_version,
             commented,
             indent,
-        ));
-        try!(doc_hidden(w, analysis.doc_hidden, comment_prefix, indent));
-        try!(writeln!(
+        )?;
+        doc_hidden(w, analysis.doc_hidden, comment_prefix, indent)?;
+        writeln!(
             w,
             "{}{}{}{}{}",
             tabs(indent),
@@ -123,18 +123,18 @@ pub fn generate(
             pub_prefix,
             declaration,
             suffix
-        ));
+        )?;
 
         if !only_declaration {
             let body = body_chunk_futures(env, analysis).unwrap();
             for s in body.lines() {
                 if !s.is_empty() {
-                    try!(writeln!(w, "{}{}{}", tabs(indent+1), comment_prefix, s));
+                    writeln!(w, "{}{}{}", tabs(indent+1), comment_prefix, s)?;
                 } else {
-                    try!(writeln!(w));
+                    writeln!(w)?;
                 }
             }
-            try!(writeln!(w, "{}{}}}", tabs(indent), comment_prefix));
+            writeln!(w, "{}{}}}", tabs(indent), comment_prefix)?;
         }
     }
 
@@ -317,12 +317,12 @@ pub fn body_chunk_futures(env: &Env, analysis: &analysis::functions::Info) -> St
     let mut body = String::new();
 
     if env.config.library_name != "Gio" {
-        try!(writeln!(body, "use gio::GioFuture;"));
+        writeln!(body, "use gio::GioFuture;")?;
     } else {
-        try!(writeln!(body, "use GioFuture;"));
+        writeln!(body, "use GioFuture;")?;
     }
-    try!(writeln!(body, "use fragile::Fragile;"));
-    try!(writeln!(body));
+    writeln!(body, "use fragile::Fragile;")?;
+    writeln!(body)?;
 
     let skip = if async_future.is_method { 1 } else { 0 };
 
@@ -341,43 +341,43 @@ pub fn body_chunk_futures(env: &Env, analysis: &analysis::functions::Info) -> St
         let is_str = if let library::Type::Fundamental(library::Fundamental::Utf8) = *type_ { true } else { false };
 
         if is_into {
-            try!(writeln!(body, "let {} = {}.into();", par.name, par.name));
+            writeln!(body, "let {} = {}.into();", par.name, par.name)?;
             if is_str || c_par.nullable.0 {
-                try!(writeln!(body, "let {} = {}.map(ToOwned::to_owned);", par.name, par.name));
+                writeln!(body, "let {} = {}.map(ToOwned::to_owned);", par.name, par.name)?;
             }
         } else if is_str {
-            try!(writeln!(body, "let {} = String::from({});", par.name, par.name));
+            writeln!(body, "let {} = String::from({});", par.name, par.name)?;
         } else if c_par.ref_mode != RefMode::None {
-            try!(writeln!(body, "let {} = {}.clone();", par.name, par.name));
+            writeln!(body, "let {} = {}.clone();", par.name, par.name)?;
         }
     }
 
     if async_future.is_method {
-        try!(writeln!(body, "GioFuture::new(self, move |obj, send| {{"));
+        writeln!(body, "GioFuture::new(self, move |obj, send| {{")?;
     } else {
-        try!(writeln!(body, "GioFuture::new(&(), move |_obj, send| {{"));
+        writeln!(body, "GioFuture::new(&(), move |_obj, send| {{")?;
     }
 
     if env.config.library_name != "Gio" {
-        try!(writeln!(body, "    let cancellable = gio::Cancellable::new();"));
+        writeln!(body, "    let cancellable = gio::Cancellable::new();")?;
     } else {
-        try!(writeln!(body, "    let cancellable = Cancellable::new();"));
+        writeln!(body, "    let cancellable = Cancellable::new();")?;
     }
-    try!(writeln!(body, "    let send = Fragile::new(send);"));
+    writeln!(body, "    let send = Fragile::new(send);")?;
 
     if async_future.is_method {
-        try!(writeln!(body, "    let obj_clone = Fragile::new(obj.clone());"));
-        try!(writeln!(body, "    obj.{}(", analysis.name));
+        writeln!(body, "    let obj_clone = Fragile::new(obj.clone());")?;
+        writeln!(body, "    obj.{}(", analysis.name)?;
     } else if analysis.type_name.is_ok() {
-        try!(writeln!(body, "    Self::{}(", analysis.name));
+        writeln!(body, "    Self::{}(", analysis.name)?;
     } else {
-        try!(writeln!(body, "    {}(", analysis.name));
+        writeln!(body, "    {}(", analysis.name)?;
     }
 
     // Skip the instance parameter
     for par in analysis.parameters.rust_parameters.iter().skip(skip) {
         if par.name == "cancellable" {
-            try!(writeln!(body, "         Some(&cancellable),"));
+            writeln!(body, "         Some(&cancellable),")?;
         } else if par.name == "callback" {
             continue;
         } else {
@@ -387,26 +387,26 @@ pub fn body_chunk_futures(env: &Env, analysis: &analysis::functions::Info) -> St
             let is_into = if let Some((_, BoundType::Into(..))) = bounds { true } else { false };
 
             if is_into {
-                try!(writeln!(body, "         {}.as_ref().map(::std::borrow::Borrow::borrow),", par.name));
+                writeln!(body, "         {}.as_ref().map(::std::borrow::Borrow::borrow),", par.name)?;
             } else if c_par.ref_mode != RefMode::None {
-                try!(writeln!(body, "         &{},", par.name));
+                writeln!(body, "         &{},", par.name)?;
             } else {
-                try!(writeln!(body, "         {},", par.name));
+                writeln!(body, "         {},", par.name)?;
             }
         }
     }
 
-    try!(writeln!(body, "         move |res| {{"));
+    writeln!(body, "         move |res| {{")?;
     if async_future.is_method {
-        try!(writeln!(body, "             let obj = obj_clone.into_inner();"));
-        try!(writeln!(body, "             let res = res.map(|v| (obj.clone(), v)).map_err(|v| (obj.clone(), v));"));
+        writeln!(body, "             let obj = obj_clone.into_inner();")?;
+        writeln!(body, "             let res = res.map(|v| (obj.clone(), v)).map_err(|v| (obj.clone(), v));")?;
     }
-    try!(writeln!(body, "             let _ = send.into_inner().send(res);"));
-    try!(writeln!(body, "         }},"));
-    try!(writeln!(body, "    );"));
-    try!(writeln!(body));
-    try!(writeln!(body, "    cancellable"));
-    try!(writeln!(body, "}})"));
+    writeln!(body, "             let _ = send.into_inner().send(res);")?;
+    writeln!(body, "         }},")?;
+    writeln!(body, "    );")?;
+    writeln!(body)?;
+    writeln!(body, "    cancellable")?;
+    writeln!(body, "}})")?;
 
     Ok(body)
 }

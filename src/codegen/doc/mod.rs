@@ -93,7 +93,7 @@ pub fn generate(env: &Env) {
 
 #[allow(clippy::type_complexity)]
 fn generate_doc(w: &mut Write, env: &Env) -> Result<()> {
-    try!(write_file_name(w, None));
+    write_file_name(w, None)?;
     let mut generators: Vec<(&str, Box<Fn(&mut Write, &Env) -> Result<()>>)> = Vec::new();
 
     for info in env.analysis.objects.values() {
@@ -131,7 +131,7 @@ fn generate_doc(w: &mut Write, env: &Env) -> Result<()> {
 
     generators.sort_by_key(|&(name, _)| name);
     for (_, f) in generators {
-        try!(f(w, env));
+        f(w, env)?;
     }
 
     Ok(())
@@ -163,17 +163,17 @@ fn create_object_doc(w: &mut Write, env: &Env, info: &analysis::object::Info) ->
         _ => unreachable!(),
     }
 
-    try!(write_item_doc(w, &ty, |w| {
+    write_item_doc(w, &ty, |w| {
         if let Some(ver) = info.deprecated_version {
-            try!(write!(w, "`[Deprecated since {}]` ", ver));
+            write!(w, "`[Deprecated since {}]` ", ver)?;
         }
         if let Some(doc) = doc {
-            try!(writeln!(w, "{}", reformat_doc(doc, &symbols)));
+            writeln!(w, "{}", reformat_doc(doc, &symbols))?;
         } else {
-            try!(writeln!(w));
+            writeln!(w)?;
         }
         if let Some(version) = info.version {
-            try!(writeln!(w, "\nFeature: `{}`", version.to_feature()));
+            writeln!(w, "\nFeature: `{}`", version.to_feature())?;
         }
 
         let impl_self = if has_trait { Some(info.type_id) } else { None };
@@ -186,21 +186,21 @@ fn create_object_doc(w: &mut Write, env: &Env, info: &analysis::object::Info) ->
             .map(|&tid| get_type_trait_for_implements(env, tid))
             .collect::<Vec<_>>();
         if !implements.is_empty() {
-            try!(writeln!(w, "\n# Implements\n"));
-            try!(writeln!(w, "{}", &implements.join(", ")));
+            writeln!(w, "\n# Implements\n")?;
+            writeln!(w, "{}", &implements.join(", "))?;
         }
         Ok(())
-    }));
+    })?;
 
     if has_trait {
-        try!(write_item_doc(w, &ty_ext, |w| {
+        write_item_doc(w, &ty_ext, |w| {
             if let Some(ver) = info.deprecated_version {
-                try!(write!(w, "`[Deprecated since {}]` ", ver));
+                write!(w, "`[Deprecated since {}]` ", ver)?;
             }
-            try!(writeln!(w, "Trait containing all `{}` methods.", ty.name));
+            writeln!(w, "Trait containing all `{}` methods.", ty.name)?;
 
             if let Some(version) = info.version {
-                try!(writeln!(w, "\nFeature: `{}`", version.to_feature()));
+                writeln!(w, "\nFeature: `{}`", version.to_feature())?;
             }
 
             let mut implementors = Some(info.type_id)
@@ -218,10 +218,10 @@ fn create_object_doc(w: &mut Write, env: &Env, info: &analysis::object::Info) ->
                 .collect::<Vec<_>>();
             implementors.sort();
 
-            try!(writeln!(w, "\n# Implementors\n"));
-            try!(writeln!(w, "{}", implementors.join(", ")));
+            writeln!(w, "\n# Implementors\n")?;
+            writeln!(w, "{}", implementors.join(", "))?;
             Ok(())
-        }));
+        })?;
     }
 
     let ty = TypeStruct {
@@ -235,23 +235,23 @@ fn create_object_doc(w: &mut Write, env: &Env, info: &analysis::object::Info) ->
         } else {
             ty.clone()
         };
-        try!(create_fn_doc(w, env, function, Some(Box::new(ty))));
+        create_fn_doc(w, env, function, Some(Box::new(ty)))?;
     }
     for signal in signals {
-        try!(create_fn_doc(
+        create_fn_doc(
             w,
             env,
             signal,
             Some(Box::new(ty_ext.clone()))
-        ));
+        )?;
     }
     for property in properties {
-        try!(create_property_doc(
+        create_property_doc(
             w,
             env,
             property,
             Some(Box::new(ty_ext.clone()))
-        ));
+        )?;
     }
     Ok(())
 }
@@ -261,33 +261,33 @@ fn create_record_doc(w: &mut Write, env: &Env, info: &analysis::record::Info) ->
     let ty = record.to_stripper_type();
     let symbols = env.symbols.borrow();
 
-    try!(write_item_doc(w, &ty, |w| {
+    write_item_doc(w, &ty, |w| {
         if let Some(ref doc) = record.doc {
             if let Some(ver) = info.deprecated_version {
-                try!(write!(w, "`[Deprecated since {}]` ", ver));
+                write!(w, "`[Deprecated since {}]` ", ver)?;
             }
-            try!(writeln!(w, "{}", reformat_doc(doc, &symbols)));
+            writeln!(w, "{}", reformat_doc(doc, &symbols))?;
         }
         if let Some(ver) = info.deprecated_version {
-            try!(writeln!(w, "\n# Deprecated since {}\n", ver));
+            writeln!(w, "\n# Deprecated since {}\n", ver)?;
         } else if record.doc_deprecated.is_some() {
-            try!(writeln!(w, "\n# Deprecated\n"));
+            writeln!(w, "\n# Deprecated\n")?;
         }
         if let Some(ref doc) = record.doc_deprecated {
-            try!(writeln!(w, "{}", reformat_doc(doc, &symbols)));
+            writeln!(w, "{}", reformat_doc(doc, &symbols))?;
         }
         if let Some(version) = info.version {
-            try!(writeln!(w, "\nFeature: `{}`", version.to_feature()));
+            writeln!(w, "\nFeature: `{}`", version.to_feature())?;
         }
         Ok(())
-    }));
+    })?;
 
     let ty = TypeStruct {
         ty: SType::Impl,
         ..ty
     };
     for function in &record.functions {
-        try!(create_fn_doc(w, env, function, Some(Box::new(ty.clone()))));
+        create_fn_doc(w, env, function, Some(Box::new(ty.clone())))?;
     }
     Ok(())
 }
@@ -296,20 +296,20 @@ fn create_enum_doc(w: &mut Write, env: &Env, enum_: &Enumeration) -> Result<()> 
     let ty = enum_.to_stripper_type();
     let symbols = env.symbols.borrow();
 
-    try!(write_item_doc(w, &ty, |w| {
+    write_item_doc(w, &ty, |w| {
         if let Some(ref doc) = enum_.doc {
-            try!(writeln!(w, "{}", reformat_doc(doc, &symbols)));
+            writeln!(w, "{}", reformat_doc(doc, &symbols))?;
         }
         if let Some(ver) = enum_.deprecated_version {
-            try!(writeln!(w, "\n# Deprecated since {}\n", ver));
+            writeln!(w, "\n# Deprecated since {}\n", ver)?;
         } else if enum_.doc_deprecated.is_some() {
-            try!(writeln!(w, "\n# Deprecated\n"));
+            writeln!(w, "\n# Deprecated\n")?;
         }
         if let Some(ref doc) = enum_.doc_deprecated {
-            try!(writeln!(w, "{}", reformat_doc(doc, &symbols)));
+            writeln!(w, "{}", reformat_doc(doc, &symbols))?;
         }
         Ok(())
-    }));
+    })?;
 
     for member in &enum_.members {
         let mut sub_ty = TypeStruct {
@@ -319,18 +319,18 @@ fn create_enum_doc(w: &mut Write, env: &Env, enum_: &Enumeration) -> Result<()> 
 
         if member.doc.is_some() {
             sub_ty.parent = Some(Box::new(ty.clone()));
-            try!(write_item_doc(w, &sub_ty, |w| {
+            write_item_doc(w, &sub_ty, |w| {
                 if let Some(ref doc) = member.doc {
-                    try!(writeln!(w, "{}", reformat_doc(doc, &symbols)));
+                    writeln!(w, "{}", reformat_doc(doc, &symbols))?;
                 }
                 Ok(())
-            }));
+            })?;
         }
     }
 
     if let Some(version) = enum_.version {
         if version > env.config.min_cfg_version {
-            try!(writeln!(w, "\nFeature: `{}`\n", version.to_feature()));
+            writeln!(w, "\nFeature: `{}`\n", version.to_feature())?;
         }
     }
     Ok(())
@@ -378,28 +378,28 @@ where
 
     write_item_doc(w, &ty, |w| {
         if let Some(ref doc) = *fn_.doc() {
-            try!(writeln!(
+            writeln!(
                 w,
                 "{}",
                 reformat_doc(&fix_param_names(doc, &self_name), &symbols)
-            ));
+            )?;
         }
         if let Some(version) = *fn_.version() {
             if version > env.config.min_cfg_version {
-                try!(writeln!(w, "\nFeature: `{}`\n", version.to_feature()));
+                writeln!(w, "\nFeature: `{}`\n", version.to_feature())?;
             }
         }
         if let Some(ver) = *fn_.deprecated_version() {
-            try!(writeln!(w, "\n# Deprecated since {}\n", ver));
+            writeln!(w, "\n# Deprecated since {}\n", ver)?;
         } else if fn_.doc_deprecated().is_some() {
-            try!(writeln!(w, "\n# Deprecated\n"));
+            writeln!(w, "\n# Deprecated\n")?;
         }
         if let Some(ref doc) = *fn_.doc_deprecated() {
-            try!(writeln!(
+            writeln!(
                 w,
                 "{}",
                 reformat_doc(&fix_param_names(doc, &self_name), &symbols)
-            ));
+            )?;
         }
 
         for parameter in fn_.parameters() {
@@ -407,26 +407,26 @@ where
                 continue;
             }
             if let Some(ref doc) = parameter.doc {
-                try!(writeln!(
+                writeln!(
                     w,
                     "## `{}`",
                     nameutil::mangle_keywords(&parameter.name[..])
-                ));
-                try!(writeln!(
+                )?;
+                writeln!(
                     w,
                     "{}",
                     reformat_doc(&fix_param_names(doc, &self_name), &symbols)
-                ));
+                )?;
             }
         }
 
         if let Some(ref doc) = fn_.ret().doc {
-            try!(writeln!(w, "\n# Returns\n"));
-            try!(writeln!(
+            writeln!(w, "\n# Returns\n")?;
+            writeln!(
                 w,
                 "{}",
                 reformat_doc(&fix_param_names(doc, &self_name), &symbols)
-            ));
+            )?;
         }
         Ok(())
     })
@@ -460,33 +460,33 @@ fn create_property_doc(
     }
 
     for item in &v {
-        try!(write_item_doc(w, item, |w| {
+        write_item_doc(w, item, |w| {
             if let Some(ref doc) = property.doc {
-                try!(writeln!(
+                writeln!(
                     w,
                     "{}",
                     reformat_doc(&fix_param_names(doc, &None), &symbols)
-                ));
+                )?;
             }
             if let Some(version) = property.version {
                 if version > env.config.min_cfg_version {
-                    try!(writeln!(w, "\nFeature: `{}`\n", version.to_feature()));
+                    writeln!(w, "\nFeature: `{}`\n", version.to_feature())?;
                 }
             }
             if let Some(ver) = property.deprecated_version {
-                try!(writeln!(w, "\n# Deprecated since {}\n", ver));
+                writeln!(w, "\n# Deprecated since {}\n", ver)?;
             } else if property.doc_deprecated.is_some() {
-                try!(writeln!(w, "\n# Deprecated\n"));
+                writeln!(w, "\n# Deprecated\n")?;
             }
             if let Some(ref doc) = property.doc_deprecated {
-                try!(writeln!(
+                writeln!(
                     w,
                     "{}",
                     reformat_doc(&fix_param_names(doc, &None), &symbols)
-                ));
+                )?;
             }
             Ok(())
-        }));
+        })?;
     }
     Ok(())
 }
