@@ -191,8 +191,8 @@ impl Builder {
 
     fn add_trampoline(&self, env: &Env, chunks: &mut Vec<Chunk>, trampoline: &Trampoline,
                       full_type: &Option<String>, pos: u8, bounds: &str) {
-        use analysis::bounds::BoundType;
-        use analysis::ref_mode::RefMode;
+        //use analysis::bounds::BoundType;
+        //use analysis::ref_mode::RefMode;
 
         if pos == 1 { // FIXME: should be a transformation, not a hack performed here!!!
             chunks.push(Chunk::Custom(format!("let {0} = {0}.into();", trampoline.name)));
@@ -212,10 +212,23 @@ impl Builder {
         let mut arguments = Vec::new();
 
         // Skip "this" parameter.
-        for par in trampoline.parameters.rust_parameters.iter().skip(1) {
+        for par in trampoline.parameters.transformations.iter().rev().skip(1).rev() {
+            if par.name == "this" {
+                continue;
+            }
+            let type_ = env.type_(par.typ);
+            match *type_ {
+                library::Type::Fundamental(ref x) if !x.requires_conversion() => {
+                    body.push(Chunk::Custom(format!("let {0} = {0} as _;", par.name)));
+                }
+                _ => {
+                    let (begin, end) = ::codegen::translate_from_glib::from_glib_xxx(par.transfer, None);
+                    body.push(Chunk::Custom(format!("let {1} = {0}{1}{2};", begin, par.name, end)));
+                }
+            }
             //let c_par = &trampoline.parameters.c_parameters[par.ind_c];
 
-            let bounds = trampoline.bounds.get_parameter_alias_info(&par.name);
+            /*let bounds = trampoline.bounds.get_parameter_alias_info(&par.name);
             let is_into = if let Some((_, BoundType::Into(..))) = bounds { true } else { false };
 
             let type_ = env.type_(par.typ);
@@ -231,10 +244,10 @@ impl Builder {
                 body.push(Chunk::Custom(format!("let {0} = String::from({0});", par.name)));
             } else if par.ref_mode != RefMode::None {
                 body.push(Chunk::Custom(format!("let {0} = {0}.clone();", par.name)));
-            }
-            if par.name != "data" && !par.name.ends_with("_data") {
+            }*/
+            //if par.name != "data" && !par.name.ends_with("_data") {
                 arguments.push(Chunk::Name(par.name.clone()));
-            }
+            //}
         }
 
         let func = trampoline.parameters
@@ -362,7 +375,7 @@ impl Builder {
             bounds: String::new(),
         };
         chunks.push(outer_func);
-        chunks.push(Chunk::Custom(format!("let {0} = if {0}_data.is_some() {{ Some({0}_func as *mut _) }} else {{ None }};", trampoline.name)));
+        chunks.push(Chunk::Custom(format!("let {0} = if {0}_data.is_some() {{ Some({0}_func as _) }} else {{ None }};", trampoline.name)));
     }
 
     fn add_async_trampoline(&self, env: &Env, chunks: &mut Vec<Chunk>, trampoline: &AsyncTrampoline) {

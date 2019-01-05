@@ -321,6 +321,7 @@ fn analyze_function(
                     &mut callback,
                     par.typ,
                     &par.name,
+                    imports,
                 ) {
                     async = false;
                     to_replace.push((pos, par.typ));
@@ -335,6 +336,7 @@ fn analyze_function(
                     &mut destroy,
                     par.typ,
                     &par.name,
+                    imports,
                 ) {
                     async = false;
                     to_replace.push((pos, par.typ));
@@ -572,6 +574,7 @@ fn analyze_callback(
     trampoline: &mut Option<Trampoline>,
     type_tid: library::TypeId,
     par_name: &str,
+    imports: &mut Imports,
 ) -> bool {
     if let Type::Function(ref func) = func {
         *commented |= func.parameters.len() < 1; // If we don't have a "data" parameter, we can't
@@ -583,6 +586,13 @@ fn analyze_callback(
                                      .any(|p| {
                                          ::analysis::trampolines::type_error(env, p).is_some()
                                      });
+        imports.add("std::boxed::Box as Box_", None);
+        imports.add("glib_ffi::gpointer", None); // TODO: maybe improve this one?
+        for p in parameters.rust_parameters.iter() {
+            if let Ok(s) = used_rust_type(env, p.typ) {
+                imports.add_used_type(&s, None);
+            }
+        }
         *trampoline = Some(Trampoline {
             name: par_name.to_string(),
             parameters,

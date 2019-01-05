@@ -208,6 +208,35 @@ pub enum Fundamental {
     Unsupported,
 }
 
+impl Fundamental {
+    pub fn requires_conversion(&self) -> bool {
+        match *self {
+            Fundamental::Boolean |
+            Fundamental::Int8 |
+            Fundamental::UInt8 |
+            Fundamental::Int16 |
+            Fundamental::UInt16 |
+            Fundamental::Int32 |
+            Fundamental::UInt32 |
+            Fundamental::Int64 |
+            Fundamental::UInt64 |
+            Fundamental::Char |
+            Fundamental::UChar |
+            Fundamental::Short |
+            Fundamental::UShort |
+            Fundamental::Int |
+            Fundamental::UInt |
+            Fundamental::Long |
+            Fundamental::ULong |
+            Fundamental::Size |
+            Fundamental::SSize |
+            Fundamental::Float |
+            Fundamental::Double => false,
+            _ => true,
+        }
+    }
+}
+
 const FUNDAMENTAL: &[(&str, Fundamental)] = &[
     ("none", Fundamental::None),
     ("gboolean", Fundamental::Boolean),
