@@ -1,5 +1,5 @@
 use std::collections::vec_deque::VecDeque;
-use std::slice::{Iter, IterMut};
+use std::slice::Iter;
 use std::vec::Vec;
 
 use analysis::function_parameters::{async_param_to_remove, CParameter};
@@ -56,6 +56,7 @@ pub struct Bound {
     pub alias: char,
     pub type_str: String,
     pub info_for_next_type: bool,
+    pub hack: bool,
 }
 
 #[derive(Clone, Debug)]
@@ -97,6 +98,7 @@ impl Bound {
                     alias: TYPE_PARAMETERS_START,
                     type_str: type_str.into_string(),
                     info_for_next_type: false,
+                    hack: false,
                 })
             }
         }
@@ -170,24 +172,32 @@ impl Bounds {
                         });
                     }
                 }
-                let cond = need_is_into_check && bound_type.is_into();
                 if !self.add_parameter(&par.name, &type_string, bound_type, async) {
                     panic!(
                         "Too many type constraints for {}",
                         func.c_identifier.as_ref().unwrap()
                     )
                 }
-                if cond {
+                if need_is_into_check {
                     if let Some(x) = if let Some(ref mut last) = self.used.last_mut() {
-                        let mut new_one = (*last).clone();
-                        new_one.alias = self.unused.pop_front().expect("no available bound");
-                        new_one.type_str = last.alias.to_string();
-                        new_one.parameter_name = last.parameter_name.clone();
+                        if last.bound_type.is_into() {
+                            let mut new_one = (*last).clone();
+                            new_one.alias = self.unused.pop_front().expect("no available bound");
+                            new_one.type_str = last.alias.to_string();
+                            new_one.parameter_name = last.parameter_name.clone();
+                            new_one.hack = true;
 
-                        last.bound_type = BoundType::NoWrapper;
-                        last.parameter_name = String::new();
+                            last.bound_type = BoundType::NoWrapper;
+                            last.parameter_name = String::new();
+                            if func.name == "request_uris" {
+                                println!("=> {:?}", new_one);
+                                println!("=> {:?}", last);
+                            }
 
-                        Some(new_one)
+                            Some(new_one)
+                        } else {
+                            None
+                        }
                     } else {
                         None
                     } {
@@ -251,6 +261,7 @@ impl Bounds {
                     alias,
                     type_str: type_str.to_string(),
                     info_for_next_type: false,
+                    hack: false,
                 });
                 return true;
             }
@@ -278,6 +289,7 @@ impl Bounds {
                     alias,
                     type_str: type_str.to_owned(),
                     info_for_next_type: true,
+                    hack: false,
                 });
                 alias.to_string()
             } else {
@@ -293,6 +305,7 @@ impl Bounds {
                 alias,
                 type_str: type_str.to_owned(),
                 info_for_next_type: false,
+                hack: false,
             });
             true
         } else {

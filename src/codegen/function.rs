@@ -2,7 +2,7 @@ use std::io::{Result, Write};
 
 use library;
 use analysis;
-use analysis::bounds::Bounds;
+use analysis::bounds::{Bound, Bounds};
 use analysis::functions::Visibility;
 use analysis::namespaces;
 use chunk::{ffi_function_todo, Chunk};
@@ -51,7 +51,7 @@ pub fn generate(
         },
         Visibility::Hidden => return Ok(()),
     }
-    let declaration = declaration(env, analysis);
+    let (declaration, bounds) = declaration(env, analysis);
     let suffix = if only_declaration { ";" } else { " {" };
 
     try!(writeln!(w));
@@ -84,7 +84,7 @@ pub fn generate(
     ));
 
     if !only_declaration {
-        let body = body_chunk(env, analysis).to_code(env);
+        let body = body_chunk(env, analysis, bounds).to_code(env);
         for s in body {
             try!(writeln!(w, "{}{}", tabs(indent), s));
         }
@@ -141,7 +141,7 @@ pub fn generate(
     Ok(())
 }
 
-pub fn declaration(env: &Env, analysis: &analysis::functions::Info) -> String {
+pub fn declaration(env: &Env, analysis: &analysis::functions::Info) -> (String, String) {
     let outs_as_return = !analysis.outs.is_empty();
     let return_str = if outs_as_return {
         out_parameters_as_return(env, analysis)
@@ -167,13 +167,13 @@ pub fn declaration(env: &Env, analysis: &analysis::functions::Info) -> String {
         param_str.push_str(&s);
     }
 
-    format!(
+    (format!(
         "fn {}{}({}){}",
         analysis.name,
         bounds,
         param_str,
         return_str
-    )
+    ), bounds)
 }
 
 pub fn declaration_futures(env: &Env, analysis: &analysis::functions::Info) -> String {
@@ -229,8 +229,33 @@ pub fn declaration_futures(env: &Env, analysis: &analysis::functions::Info) -> S
     )
 }
 
+pub fn bound_to_string(bound: &Bound, async: bool) -> String {
+    use analysis::bounds::BoundType::*;
+
+    match bound.bound_type {
+        NoWrapper => {
+            format!("{}: {}", bound.alias, bound.type_str)
+        }
+        IsA(Some(lifetime)) => {
+            format!("{}: IsA<{}> + {}", bound.alias, bound.type_str, if async { "Clone + 'static".into() } else { format!("'{}", lifetime) })
+        }
+        IsA(None) => format!("{}: IsA<{}>{}", bound.alias, bound.type_str, if async { " + Clone + 'static" } else { "" }),
+        // This case should normally never happened
+        AsRef(Some(lifetime)) => {
+            format!("{}: AsRef<{}> + '{}", bound.alias, bound.type_str, lifetime)
+        }
+        AsRef(None) => format!("{}: AsRef<{}>", bound.alias, bound.type_str),
+        Into(Some(l), _) => format!("{}: Into<Option<&'{} {}>>",
+                                    bound.alias,
+                                    l,
+                                    bound.type_str),
+        Into(None, _) => format!("{}: Into<Option<{}>>", bound.alias, bound.type_str),
+    }
+}
+
 pub fn bounds(bounds: &Bounds, skip: &[char], async: bool) -> String {
     use analysis::bounds::BoundType::*;
+
     if bounds.is_empty() {
         return String::new();
     }
@@ -249,25 +274,7 @@ pub fn bounds(bounds: &Bounds, skip: &[char], async: bool) -> String {
         .iter_lifetimes()
         .filter(|s| !skip_lifetimes.contains(s))
         .map(|s| format!("'{}", s))
-        .chain(bounds.iter().filter(|bound| !skip.contains(&bound.alias)).map(|bound| match bound.bound_type {
-            NoWrapper => {
-                format!("{}: {}", bound.alias, bound.type_str)
-            }
-            IsA(Some(lifetime)) => {
-                format!("{}: IsA<{}> + {}", bound.alias, bound.type_str, if async { "Clone + 'static".into() } else { format!("'{}", lifetime) })
-            }
-            IsA(None) => format!("{}: IsA<{}>{}", bound.alias, bound.type_str, if async { " + Clone + 'static" } else { "" }),
-            // This case should normally never happened
-            AsRef(Some(lifetime)) => {
-                format!("{}: AsRef<{}> + '{}", bound.alias, bound.type_str, lifetime)
-            }
-            AsRef(None) => format!("{}: AsRef<{}>", bound.alias, bound.type_str),
-            Into(Some(l), _) => format!("{}: Into<Option<&'{} {}>>",
-                                        bound.alias,
-                                        l,
-                                        bound.type_str),
-            Into(None, _) => format!("{}: Into<Option<{}>>", bound.alias, bound.type_str),
-        }))
+        .chain(bounds.iter().filter(|bound| !skip.contains(&bound.alias)).map(|b| bound_to_string(b, async)))
         .collect();
 
     if strs.is_empty() {
@@ -277,7 +284,7 @@ pub fn bounds(bounds: &Bounds, skip: &[char], async: bool) -> String {
     }
 }
 
-pub fn body_chunk(env: &Env, analysis: &analysis::functions::Info) -> Chunk {
+pub fn body_chunk(env: &Env, analysis: &analysis::functions::Info, bounds: String) -> Chunk {
     if analysis.visibility == Visibility::Comment {
         return ffi_function_todo(&analysis.glib_name);
     }
@@ -318,7 +325,7 @@ pub fn body_chunk(env: &Env, analysis: &analysis::functions::Info) -> Chunk {
         }
     }
 
-    builder.generate(env)
+    builder.generate(env, bounds)
 }
 
 pub fn body_chunk_futures(env: &Env, analysis: &analysis::functions::Info) -> StdResult<String, fmt::Error> {

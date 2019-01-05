@@ -5,6 +5,7 @@ use analysis::return_value;
 use super::conversion_from_glib;
 use super::parameter_ffi_call_out;
 
+#[derive(Clone)]
 pub enum Chunk {
     Comment(Vec<Chunk>),
     Chunks(Vec<Chunk>),
@@ -64,6 +65,7 @@ pub enum Chunk {
         parameters: Vec<Param>,
         body: Box<Chunk>,
         return_value: Option<String>,
+        bounds: String,
     },
     Cast {
         name: String,
@@ -75,7 +77,7 @@ pub enum Chunk {
     },
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct Param {
     pub name: String,
     pub typ: String,

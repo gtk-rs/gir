@@ -153,8 +153,8 @@ impl ToCode for Chunk {
                         typ,
                         &name),
             ],
-            ExternCFunc { ref name, ref parameters, ref body, ref return_value } => {
-                let prefix = format!(r#"unsafe extern "C" fn {}("#, name);
+            ExternCFunc { ref name, ref parameters, ref body, ref return_value, ref bounds } => {
+                let prefix = format!(r#"unsafe extern "C" fn {}{}("#, name, bounds);
                 let suffix = ")".to_string();
                 let params: Vec<_> = parameters.iter()
                     .flat_map(|param| param.to_code(env))
@@ -163,7 +163,8 @@ impl ToCode for Chunk {
                 if let Some(ref return_value) = return_value {
                     s.push_str(&format!(" -> {}", return_value));
                 }
-                let mut code = format_block_smart("{", "}", &body.to_code(env), " ", " ");
+                s.push_str("{");
+                let mut code = format_block_smart("", "}", &body.to_code(env), " ", " ");
                 code.insert(0, s);
                 code
             }

@@ -110,7 +110,7 @@ impl Builder {
         self.outs_mode = mode;
         self
     }
-    pub fn generate(&self, env: &Env) -> Chunk {
+    pub fn generate(&self, env: &Env, bounds: String) -> Chunk {
         let mut body = Vec::new();
 
         if self.outs_as_return {
@@ -147,10 +147,10 @@ impl Builder {
                                          destroy.bound_name));
             }
             if let Some(ref trampoline) = self.callback {
-                self.add_trampoline(env, &mut chunks, trampoline, &full_type, 0);
+                self.add_trampoline(env, &mut chunks, trampoline, &full_type, 0, &bounds);
             }
             if let Some(ref destroy) = self.destroy {
-                self.add_trampoline(env, &mut chunks, destroy, &full_type, 1);
+                self.add_trampoline(env, &mut chunks, destroy, &full_type, 1, &bounds);
             }
             if let (&Some(ref trampoline), &Some(ref destroy)) = (&self.callback, &self.destroy) {
                 chunks.push(
@@ -190,7 +190,7 @@ impl Builder {
     }
 
     fn add_trampoline(&self, env: &Env, chunks: &mut Vec<Chunk>, trampoline: &Trampoline,
-                      full_type: &Option<String>, pos: u8) {
+                      full_type: &Option<String>, pos: u8, bounds: &str) {
         use analysis::bounds::BoundType;
         use analysis::ref_mode::RefMode;
 
@@ -199,7 +199,7 @@ impl Builder {
         }
         if full_type.is_none() {
             chunks.push(Chunk::BoxFn {
-                name: Some(trampoline.name.clone()),
+                name: Some(format!("{}", trampoline.name)),
                 typ: format!("Option<{}>", trampoline.bound_name),
             });
         } else {
@@ -221,6 +221,7 @@ impl Builder {
             let type_ = env.type_(par.typ);
             let is_str = if let library::Type::Fundamental(library::Fundamental::Utf8) = *type_ { true } else { false };
 
+            // TODO: This code should convert to rust types and not from rust types.
             if is_into {
                 body.push(Chunk::Custom(format!("let {0} = {0}.into();", par.name)));
                 if is_str || par.nullable.0 {
@@ -231,7 +232,7 @@ impl Builder {
             } else if par.ref_mode != RefMode::None {
                 body.push(Chunk::Custom(format!("let {0} = {0}.clone();", par.name)));
             }
-            if par.name != "data" {
+            if par.name != "data" && !par.name.ends_with("_data") {
                 arguments.push(Chunk::Name(par.name.clone()));
             }
         }
@@ -253,7 +254,7 @@ impl Builder {
             );
             body.push(
                 Chunk::Call {
-                    func_name: format!("{}callback.{}",
+                    func_name: format!("{}callback.{}.expect(\"cannot get closure...\")",
                                        if trampoline.ret.c_type != "void" { "let res = " } else { "" },
                                        pos),
                     arguments,
@@ -265,12 +266,12 @@ impl Builder {
                     name: "callback".to_string(),
                     is_mut: false,
                     value: Box::new(Chunk::Custom(format!("Box_::from_raw({} as *mut _)", func))),
-                    type_: Some(Box::new(Chunk::Custom(format!("Box_<Box_<{}>>", trampoline.bound_name)))),
+                    type_: Some(Box::new(Chunk::Custom(format!("Box_<Box_<Option<{}>>>", trampoline.bound_name)))),
                 }
             );
             body.push(
                 Chunk::Call {
-                    func_name: format!("{}callback",
+                    func_name: format!("{}callback.expect(\"cannot get closure...\")",
                                        if trampoline.ret.c_type != "void" { "let res = " } else { "" }),
                     arguments,
                 }
@@ -293,8 +294,10 @@ impl Builder {
             }
         }
 
-        chunks.push(Chunk::ExternCFunc {
-            name: format!("{}", trampoline.name),
+        let mut outer = Vec::new();
+
+        let extern_func = Chunk::ExternCFunc {
+            name: format!("{}_func_inner", trampoline.name),
             parameters: trampoline.parameters
                                   .c_parameters.iter()
                                   .skip(1) // to skip the generated this
@@ -319,7 +322,47 @@ impl Builder {
             } else {
                 None
             },
-        });
+            bounds: bounds.to_owned(),
+        };
+
+        outer.push(extern_func);
+        outer.push(Chunk::Custom(format!("{}_func_inner({})",
+                                         trampoline.name,
+                                         trampoline.parameters.c_parameters.iter()
+                                                                           .skip(1)
+                                                                           .map(|p| p.name.clone())
+                                                                           .collect::<Vec<_>>()
+                                                                           .join(", "))));
+        let outer_func = Chunk::ExternCFunc {
+            name: format!("{}_func", trampoline.name),
+            parameters: trampoline.parameters
+                                  .c_parameters.iter()
+                                  .skip(1) // to skip the generated this
+                                  .map(|p| {
+                                      if p.c_type == "gpointer" {
+                                          Param { name: p.name.clone(),
+                                                  typ: "glib_ffi::gpointer".to_owned() }
+                                      } else {
+                                          Param { name: p.name.clone(),
+                                                  typ: ::analysis::ffi_type::ffi_type(env, p.typ, &p.c_type).expect("failed to write c_type") }
+                                      }
+                                  })
+                                  .collect::<Vec<_>>(),
+            body: Box::new(Chunk::Chunks(outer)),
+            return_value: if trampoline.ret.c_type != "void" {
+                let p = &trampoline.ret;
+                Some(if p.c_type == "gpointer" {
+                    "glib_ffi::gpointer".to_owned()
+                } else {
+                    ::analysis::ffi_type::ffi_type(env, p.typ, &p.c_type).expect("failed to write c_type")
+                })
+            } else {
+                None
+            },
+            bounds: String::new(),
+        };
+        chunks.push(outer_func);
+        chunks.push(Chunk::Custom(format!("let {0} = if {0}_data.is_some() {{ Some({0}_func as *mut _) }} else {{ None }};", trampoline.name)));
     }
 
     fn add_async_trampoline(&self, env: &Env, chunks: &mut Vec<Chunk>, trampoline: &AsyncTrampoline) {
@@ -445,6 +488,7 @@ impl Builder {
             parameters,
             body: Box::new(Chunk::Chunks(body)),
             return_value: None,
+            bounds: String::new(),
         });
         let chunk = Chunk::Let {
             name: "callback".to_string(),

@@ -8,7 +8,7 @@
 use std::collections::HashMap;
 use std::vec::Vec;
 
-use analysis::bounds::{Bounds, BoundType, CallbackInfo};
+use analysis::bounds::{Bounds, CallbackInfo};
 use analysis::function_parameters::{self, Parameters, Transformation, TransformationType};
 use analysis::imports::Imports;
 use analysis::out_parameters;
@@ -269,6 +269,12 @@ fn analyze_function(
         in_trait
     );
     parameters.analyze_return(env, &ret.parameter);
+
+    if let Some(ref f) = ret.parameter {
+        if let Type::Function(_) = env.library.type_(f.typ) {
+            commented = true;
+        }
+    }
 
     fixup_special_functions(env, imports, name.as_str(), type_tid, &mut parameters);
 
