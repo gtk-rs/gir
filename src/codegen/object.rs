@@ -36,12 +36,12 @@ pub fn generate(
     if need_generate_inherent(analysis) {
         try!(writeln!(w));
         try!(write!(w, "impl {} {{", analysis.name));
-        for func_analysis in &mut analysis.constructors() {
+        for func_analysis in &analysis.constructors() {
             try!(function::generate(w, env, func_analysis, false, false, 1));
         }
 
         if !need_generate_trait(analysis) {
-            for func_analysis in &mut analysis.methods() {
+            for func_analysis in &analysis.methods() {
                 try!(function::generate(w, env, func_analysis, false, false, 1));
             }
 
@@ -61,7 +61,7 @@ pub fn generate(
             }
         }
 
-        for func_analysis in &mut analysis.functions() {
+        for func_analysis in &analysis.functions() {
             try!(function::generate(w, env, func_analysis, false, false, 1));
         }
 
@@ -178,7 +178,7 @@ fn generate_trait(
 ) -> Result<()> {
     try!(write!(w, "pub trait {}: 'static {{", analysis.trait_name));
 
-    for func_analysis in &mut analysis.methods() {
+    for func_analysis in &analysis.methods() {
         try!(function::generate(w, env, func_analysis, true, true, 1));
     }
     for property in &analysis.properties {
@@ -219,7 +219,7 @@ fn generate_trait(
         analysis.trait_name,
     ));
 
-    for func_analysis in &mut analysis.methods() {
+    for func_analysis in &analysis.methods() {
         try!(function::generate(w, env, func_analysis, true, false, 1));
     }
     for property in &analysis.properties {

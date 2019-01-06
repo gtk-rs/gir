@@ -243,9 +243,7 @@ impl Builder {
             }
             let type_ = env.type_(par.typ);
             match *type_ {
-                library::Type::Fundamental(ref x) if !x.requires_conversion() => {
-                    // body.push(Chunk::Custom(format!("let {0} = {0} as _;", par.name)));
-                }
+                library::Type::Fundamental(ref x) if !x.requires_conversion() => {}
                 library::Type::Fundamental(library::Fundamental::Boolean) => {
                     body.push(Chunk::Custom(format!("let {0} = from_glib({0});", par.name)));
                 }
@@ -319,7 +317,6 @@ impl Builder {
         }
 
         let extern_func = Chunk::ExternCFunc {
-            // name: format!("{}_func_inner", trampoline.name),
             name: format!("{}_func", trampoline.name),
             parameters: trampoline.parameters
                                   .c_parameters.iter()
@@ -348,46 +345,6 @@ impl Builder {
             bounds: bounds.to_owned(),
         };
 
-        // This part is to generate an inner function in order to not have bounds on
-        // "C-like function".
-        /*let mut outer = Vec::new();
-        outer.push(extern_func);
-        outer.push(Chunk::Custom(format!("{}_func_inner({})",
-                                         trampoline.name,
-                                         trampoline.parameters.c_parameters.iter()
-                                                                           .skip(1)
-                                                                           .map(|p| p.name.clone())
-                                                                           .collect::<Vec<_>>()
-                                                                           .join(", "))));
-        let outer_func = Chunk::ExternCFunc {
-            name: format!("{}_func", trampoline.name),
-            parameters: trampoline.parameters
-                                  .c_parameters.iter()
-                                  .skip(1) // to skip the generated this
-                                  .map(|p| {
-                                      if p.c_type == "gpointer" {
-                                          Param { name: p.name.clone(),
-                                                  typ: "glib_ffi::gpointer".to_owned() }
-                                      } else {
-                                          Param { name: p.name.clone(),
-                                                  typ: ::analysis::ffi_type::ffi_type(env, p.typ, &p.c_type).expect("failed to write c_type") }
-                                      }
-                                  })
-                                  .collect::<Vec<_>>(),
-            body: Box::new(Chunk::Chunks(outer)),
-            return_value: if trampoline.ret.c_type != "void" {
-                let p = &trampoline.ret;
-                Some(if p.c_type == "gpointer" {
-                    "glib_ffi::gpointer".to_owned()
-                } else {
-                    ::analysis::ffi_type::ffi_type(env, p.typ, &p.c_type).expect("failed to write c_type")
-                })
-            } else {
-                None
-            },
-            bounds: String::new(),
-        };
-        chunks.push(outer_func);*/
         chunks.push(extern_func);
         chunks.push(Chunk::Custom(format!("let {0} = if {0}_data.is_some() {{ Some({0}_func::<{1}> as _) }} else {{ None }};",
                                           trampoline.name, bounds_names)));
