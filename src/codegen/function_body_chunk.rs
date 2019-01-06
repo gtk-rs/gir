@@ -272,14 +272,9 @@ impl Builder {
                     type_: Some(Box::new(Chunk::Custom(full_type.clone()))),
                 }
             );
-            body.push(
-                Chunk::Call {
-                    func_name: format!("{}callback.{}.expect(\"cannot get closure...\")",
-                                       if trampoline.ret.c_type != "void" { "let res = " } else { "" },
-                                       pos),
-                    arguments,
-                }
-            );
+            body.push(Chunk::Custom(format!("{}if let Some(ref callback) = callback.{} {{",
+                                            if trampoline.ret.c_type != "void" { "let res = " } else { "" },
+                                            pos)));
         } else {
             body.push(
                 Chunk::Let {
@@ -289,14 +284,18 @@ impl Builder {
                     type_: Some(Box::new(Chunk::Custom(format!("Box_<Box_<Option<{}>>>", trampoline.bound_name)))),
                 }
             );
-            body.push(
-                Chunk::Call {
-                    func_name: format!("{}callback.expect(\"cannot get closure...\")",
-                                       if trampoline.ret.c_type != "void" { "let res = " } else { "" }),
-                    arguments,
-                }
-            );
+            body.push(Chunk::Custom(format!("{}if let Some(ref callback) = **callback {{",
+                                            if trampoline.ret.c_type != "void" { "let res = " } else { "" })));
         }
+        use writer::to_code::ToCode;
+        body.push(Chunk::Custom(format!("\tcallback({})",
+                                        arguments.iter()
+                                                 .flat_map(|arg| arg.to_code(env))
+                                                 .collect::<Vec<_>>()
+                                                 .join(", "))));
+        body.push(Chunk::Custom("} else {".to_owned()));
+        body.push(Chunk::Custom("\tpanic!(\"cannot get closure...\")".to_owned()));
+        body.push(Chunk::Custom("};".to_owned()));
         if !is_destroy {
             if full_type.is_some() {
                 body.push(Chunk::Custom("Box_::into_raw(callback);".to_owned()));
