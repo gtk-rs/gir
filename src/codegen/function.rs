@@ -51,7 +51,7 @@ pub fn generate(
         },
         Visibility::Hidden => return Ok(()),
     }
-    let (declaration, bounds) = declaration(env, analysis);
+    let declaration = declaration(env, analysis);
     let suffix = if only_declaration { ";" } else { " {" };
 
     try!(writeln!(w));
@@ -80,11 +80,11 @@ pub fn generate(
         comment_prefix,
         pub_prefix,
         declaration,
-        suffix
+        suffix,
     ));
 
     if !only_declaration {
-        let body = body_chunk(env, analysis, bounds).to_code(env);
+        let body = body_chunk(env, analysis).to_code(env);
         for s in body {
             try!(writeln!(w, "{}{}", tabs(indent), s));
         }
@@ -141,7 +141,7 @@ pub fn generate(
     Ok(())
 }
 
-pub fn declaration(env: &Env, analysis: &analysis::functions::Info) -> (String, String) {
+pub fn declaration(env: &Env, analysis: &analysis::functions::Info) -> String {
     let outs_as_return = !analysis.outs.is_empty();
     let return_str = if outs_as_return {
         out_parameters_as_return(env, analysis)
@@ -156,7 +156,7 @@ pub fn declaration(env: &Env, analysis: &analysis::functions::Info) -> (String, 
     };
     let mut param_str = String::with_capacity(100);
 
-    let bounds = bounds(&analysis.bounds, &[], false);
+    let (bounds, _) = bounds(&analysis.bounds, &[], false, false);
 
     for (pos, par) in analysis.parameters.rust_parameters.iter().enumerate() {
         if pos > 0 {
@@ -167,13 +167,13 @@ pub fn declaration(env: &Env, analysis: &analysis::functions::Info) -> (String, 
         param_str.push_str(&s);
     }
 
-    (format!(
+    format!(
         "fn {}{}({}){}",
         analysis.name,
         bounds,
         param_str,
-        return_str
-    ), bounds)
+        return_str,
+    )
 }
 
 pub fn declaration_futures(env: &Env, analysis: &analysis::functions::Info) -> String {
@@ -211,7 +211,7 @@ pub fn declaration_futures(env: &Env, analysis: &analysis::functions::Info) -> S
         param_str.push_str(&s);
     }
 
-    let bounds = bounds(&analysis.bounds, skipped_bounds.as_ref(), true);
+    let (bounds, _) = bounds(&analysis.bounds, skipped_bounds.as_ref(), true, false);
 
     let where_str = if async_future.is_method {
         " where Self: Sized + Clone"
@@ -253,11 +253,11 @@ pub fn bound_to_string(bound: &Bound, async: bool) -> String {
     }
 }
 
-pub fn bounds(bounds: &Bounds, skip: &[char], async: bool) -> String {
+pub fn bounds(bounds: &Bounds, skip: &[char], async: bool, filter_hack: bool) -> (String, Vec<String>) {
     use analysis::bounds::BoundType::*;
 
     if bounds.is_empty() {
-        return String::new();
+        return (String::new(), Vec::new());
     }
 
     let skip_lifetimes = bounds.iter()
@@ -274,17 +274,27 @@ pub fn bounds(bounds: &Bounds, skip: &[char], async: bool) -> String {
         .iter_lifetimes()
         .filter(|s| !skip_lifetimes.contains(s))
         .map(|s| format!("'{}", s))
-        .chain(bounds.iter().filter(|bound| !skip.contains(&bound.alias)).map(|b| bound_to_string(b, async)))
+        .chain(bounds.iter()
+                     .filter(|bound| !skip.contains(&bound.alias) && (!filter_hack || !bound.hack))
+                     .map(|b| bound_to_string(b, async)))
         .collect();
 
     if strs.is_empty() {
-        String::new()
+        (String::new(), Vec::new())
     } else {
-        format!("<{}>", strs.join(", "))
+        (format!("<{}>", strs.join(", ")),
+         bounds
+            .iter_lifetimes()
+            .filter(|s| !skip_lifetimes.contains(s))
+            .map(|s| format!("'{}", s))
+            .chain(bounds.iter()
+                         .filter(|bound| !skip.contains(&bound.alias) && (!filter_hack || !bound.hack))
+                         .map(|b| b.alias.to_string()))
+            .collect())
     }
 }
 
-pub fn body_chunk(env: &Env, analysis: &analysis::functions::Info, bounds: String) -> Chunk {
+pub fn body_chunk(env: &Env, analysis: &analysis::functions::Info) -> Chunk {
     if analysis.visibility == Visibility::Comment {
         return ffi_function_todo(&analysis.glib_name);
     }
@@ -325,7 +335,9 @@ pub fn body_chunk(env: &Env, analysis: &analysis::functions::Info, bounds: Strin
         }
     }
 
-    builder.generate(env, bounds)
+    let (bounds, bounds_names) = bounds(&analysis.bounds, &[], false, true);
+
+    builder.generate(env, bounds, bounds_names.join(", "))
 }
 
 pub fn body_chunk_futures(env: &Env, analysis: &analysis::functions::Info) -> StdResult<String, fmt::Error> {

@@ -445,6 +445,10 @@ fn analyze_function(
     }
 
     if !commented {
+        if destroy.is_some() || !callbacks.is_empty() {
+            imports.add("std::boxed::Box as Box_", None);
+            imports.add("glib_ffi::gpointer", None); // TODO: maybe improve this one?
+        }
         for transformation in &mut parameters.transformations {
             if let Some(to_glib_extra) = to_glib_extras.get(&transformation.ind_c) {
                 transformation
@@ -586,15 +590,17 @@ fn analyze_callback(
                                      .any(|p| {
                                          ::analysis::trampolines::type_error(env, p).is_some()
                                      });
-        imports.add("std::boxed::Box as Box_", None);
-        imports.add("glib_ffi::gpointer", None); // TODO: maybe improve this one?
         for p in parameters.rust_parameters.iter() {
             if let Ok(s) = used_rust_type(env, p.typ, false) {
                 imports.add_used_type(&s, None);
             }
         }
         if let Ok(s) = used_rust_type(env, func.ret.typ, false) {
-            imports.add_used_type(&s, None);
+            if s != "GString" {
+                imports.add_used_type(&s, None);
+            } else {
+                imports.add_used_type(&"String", None);
+            }
         }
         Some(Trampoline {
             name: par_name.to_string(),

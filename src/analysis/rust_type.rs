@@ -213,7 +213,7 @@ fn rust_type_full(
                 i += 1;
             }
             let ret = match rust_type(env, f.ret.typ) {
-                Ok(x) => format!("Fn({}) -> {}", s.join(", "), x),
+                Ok(x) => format!("Fn({}) -> {}", s.join(", "), if x != "GString" { &x } else { "String" } ),
                 Err(TypeError::Unimplemented(ref x)) if x == "()" => format!("Fn({})", s.join(", ")),
                 e => {
                     err = true;
@@ -223,7 +223,7 @@ fn rust_type_full(
             if err {
                 Err(TypeError::Unimplemented(ret))
             } else {
-                Ok(format!("{} + Send + 'static", ret))
+                Ok(format!("{} + 'static", ret))
             }
         }
         _ => Err(TypeError::Unimplemented(type_.get_name().to_owned())),

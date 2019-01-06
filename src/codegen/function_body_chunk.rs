@@ -110,7 +110,7 @@ impl Builder {
         self.outs_mode = mode;
         self
     }
-    pub fn generate(&self, env: &Env, bounds: String) -> Chunk {
+    pub fn generate(&self, env: &Env, bounds: String, bounds_names: String) -> Chunk {
         let mut body = Vec::new();
 
         if self.outs_as_return {
@@ -130,10 +130,6 @@ impl Builder {
         let unsafe_ = Chunk::Unsafe(body);
 
         let mut chunks = Vec::new();
-
-        if !self.callbacks.is_empty() || self.destroy.is_some() {
-            chunks.push(Chunk::Custom("use std::boxed::Box as Box_;\n".to_owned()));
-        }
 
         self.add_into_conversion(&mut chunks);
         self.add_in_array_lengths(&mut chunks);
@@ -160,11 +156,13 @@ impl Builder {
                 }
                 _ => None,
             };
-            for trampoline in self.callbacks.iter() {
-                self.add_trampoline(env, &mut chunks, trampoline, &full_type, 0, &bounds);
+            for (pos, trampoline) in self.callbacks.iter().enumerate() {
+                self.add_trampoline(env, &mut chunks, trampoline, &full_type, pos, &bounds,
+                                    &bounds_names, false);
             }
             if let Some(ref destroy) = self.destroy {
-                self.add_trampoline(env, &mut chunks, destroy, &full_type, 1, &bounds);
+                self.add_trampoline(env, &mut chunks, destroy, &full_type, self.callbacks.len(),
+                                    &bounds, &bounds_names, true);
             }
             match (&self.callbacks, &self.destroy) {
                 (ref callbacks, &Some(ref destroy)) if !callbacks.is_empty() => {
@@ -224,23 +222,11 @@ impl Builder {
     }
 
     fn add_trampoline(&self, env: &Env, chunks: &mut Vec<Chunk>, trampoline: &Trampoline,
-                      full_type: &Option<String>, pos: u8, bounds: &str) {
-        //use analysis::bounds::BoundType;
-        //use analysis::ref_mode::RefMode;
-
-        //if pos == 1 { // FIXME: should be a transformation, not a hack performed here!!!
-            //chunks.push(Chunk::Custom(format!("let {0} = {0}.into();", trampoline.name)));
-        //}
+                      full_type: &Option<String>, pos: usize, bounds: &str, bounds_names: &str,
+                      is_destroy: bool) {
         if full_type.is_none() {
-            /*if !bounds.contains("Into<Option<Fn") { // FIXME: another hack to remove...
-                chunks.push(Chunk::Custom(format!("let {0} = Some({0});", trampoline.name)));
-            }*/
             chunks.push(Chunk::Custom(format!("let {0}_data: Box_<Box_<Option<{1}>>> = Box::new(Box::new({0}.into()));",
                                               trampoline.name, trampoline.bound_name)));
-            /*chunks.push(Chunk::BoxFn {
-                name: Some(format!("{}.into()", trampoline.name)),
-                typ: format!("Option<{}>", trampoline.bound_name),
-            });*/
         } else {
             chunks.push(Chunk::Custom(format!("let {0}_data: Option<{1}> = {0}.into();",
                                               trampoline.name,
@@ -250,7 +236,6 @@ impl Builder {
         let mut body = Vec::new();
         let mut arguments = Vec::new();
 
-        // Skip "this" parameter.
         for par in trampoline.parameters.transformations.iter() {
             if trampoline.parameters.c_parameters[par.ind_c].c_type == "gpointer" ||
                par.name == "this" {
@@ -269,28 +254,7 @@ impl Builder {
                     body.push(Chunk::Custom(format!("let {1} = {0}{1}{2};", begin, par.name, end)));
                 }
             }
-            //let c_par = &trampoline.parameters.c_parameters[par.ind_c];
-
-            /*let bounds = trampoline.bounds.get_parameter_alias_info(&par.name);
-            let is_into = if let Some((_, BoundType::Into(..))) = bounds { true } else { false };
-
-            let type_ = env.type_(par.typ);
-            let is_str = if let library::Type::Fundamental(library::Fundamental::Utf8) = *type_ { true } else { false };
-
-            // TODO: This code should convert to rust types and not from rust types.
-            if is_into {
-                body.push(Chunk::Custom(format!("let {0} = {0}.into();", par.name)));
-                if is_str || par.nullable.0 {
-                    body.push(Chunk::Custom(format!("let {0} = {0}.map(ToOwned::to_owned);", par.name)));
-                }
-            } else if is_str {
-                body.push(Chunk::Custom(format!("let {0} = String::from({0});", par.name)));
-            } else if par.ref_mode != RefMode::None {
-                body.push(Chunk::Custom(format!("let {0} = {0}.clone();", par.name)));
-            }*/
-            //if par.name != "data" && !par.name.ends_with("_data") {
-                arguments.push(Chunk::Name(par.name.clone()));
-            //}
+            arguments.push(Chunk::Name(par.name.clone()));
         }
 
         let func = trampoline.parameters
@@ -333,7 +297,7 @@ impl Builder {
                 }
             );
         }
-        if pos == 0 {
+        if !is_destroy {
             if full_type.is_some() {
                 body.push(Chunk::Custom("Box_::into_raw(callback);".to_owned()));
             }
@@ -342,18 +306,22 @@ impl Builder {
 
                 body.push(Chunk::Custom(match ConversionType::of(env, trampoline.ret.typ) {
                     ConversionType::Direct => "res".to_owned(),
-                    ConversionType::Scalar => "res.to_glib()".to_owned(),
-                    ConversionType::Pointer => "res.to_glib()".to_owned(),
+                    ConversionType::Scalar | ConversionType::Pointer => {
+                        if rust_type(env, trampoline.ret.typ).unwrap() != "GString" {
+                            "res.to_glib()".to_owned()
+                        } else {
+                            "res.to_glib_full()".to_owned()
+                        }
+                    }
                     ConversionType::Borrow => panic!("cannot return borrowed type..."),
                     ConversionType::Unknown => "res".to_owned(),
                 }));
             }
         }
 
-        let mut outer = Vec::new();
-
         let extern_func = Chunk::ExternCFunc {
-            name: format!("{}_func_inner", trampoline.name),
+            // name: format!("{}_func_inner", trampoline.name),
+            name: format!("{}_func", trampoline.name),
             parameters: trampoline.parameters
                                   .c_parameters.iter()
                                   .skip(1) // to skip the generated this
@@ -381,6 +349,9 @@ impl Builder {
             bounds: bounds.to_owned(),
         };
 
+        // This part is to generate an inner function in order to not have bounds on
+        // "C-like function".
+        /*let mut outer = Vec::new();
         outer.push(extern_func);
         outer.push(Chunk::Custom(format!("{}_func_inner({})",
                                          trampoline.name,
@@ -417,8 +388,10 @@ impl Builder {
             },
             bounds: String::new(),
         };
-        chunks.push(outer_func);
-        chunks.push(Chunk::Custom(format!("let {0} = if {0}_data.is_some() {{ Some({0}_func as _) }} else {{ None }};", trampoline.name)));
+        chunks.push(outer_func);*/
+        chunks.push(extern_func);
+        chunks.push(Chunk::Custom(format!("let {0} = if {0}_data.is_some() {{ Some({0}_func::<{1}> as _) }} else {{ None }};",
+                                          trampoline.name, bounds_names)));
     }
 
     fn add_async_trampoline(&self, env: &Env, chunks: &mut Vec<Chunk>, trampoline: &AsyncTrampoline) {
