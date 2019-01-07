@@ -213,7 +213,9 @@ fn analyze_function(
     imports: &mut Imports,
 ) -> Info {
     let mut async = func.parameters.iter().any(|parameter| parameter.scope == ParameterScope::Async);
-    let expecting_data = func.parameters.iter().any(|par| par.c_type.ends_with("Func") || par.c_type.ends_with("Callback"));
+    let expecting_data = func.parameters.iter()
+                                        .any(|par| par.c_type.ends_with("Func") ||
+                                                   par.c_type.ends_with("Callback"));
     let mut commented = false;
     let mut bounds: Bounds = Default::default();
     let mut to_glib_extras = HashMap::<usize, String>::new();
@@ -272,7 +274,9 @@ fn analyze_function(
 
     if let Some(ref f) = ret.parameter {
         if let Type::Function(_) = env.library.type_(f.typ) {
-            commented = true;
+            if env.config.work_mode.is_normal() {
+                commented = true;
+            }
         }
     }
 

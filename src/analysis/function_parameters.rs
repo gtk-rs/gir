@@ -159,7 +159,7 @@ pub fn analyze(
         .collect();
 
     for (pos, par) in function_parameters.iter().enumerate() {
-        let mut name = if par.instance_parameter {
+        let name = if par.instance_parameter {
             par.name.clone()
         } else {
             nameutil::mangle_keywords(&*par.name).into_owned()
