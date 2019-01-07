@@ -137,7 +137,7 @@ impl Bounds {
                 ret = Some(Bounds::get_to_glib_extra(&bound_type));
                 if par.c_type.ends_with("Func") || par.c_type.ends_with("Callback") ||
                    par.c_type == "GDestroyNotify" {
-                    need_is_into_check = true;
+                    need_is_into_check = par.c_type != "GDestroyNotify";
                     if let Type::Function(_) = env.library.type_(par.typ) {
                         type_string = rust_type(env, par.typ).into_string();
                         let bound_name = *self.unused.front().unwrap();
@@ -172,11 +172,13 @@ impl Bounds {
                         });
                     }
                 }
-                if !self.add_parameter(&par.name, &type_string, bound_type, async) {
-                    panic!(
-                        "Too many type constraints for {}",
-                        func.c_identifier.as_ref().unwrap()
-                    )
+                if par.c_type != "GDestroyNotify" {
+                    if !self.add_parameter(&par.name, &type_string, bound_type, async) {
+                        panic!(
+                            "Too many type constraints for {}",
+                            func.c_identifier.as_ref().unwrap()
+                        )
+                    }
                 }
                 if need_is_into_check {
                     if let Some(x) = if let Some(ref mut last) = self.used.last_mut() {

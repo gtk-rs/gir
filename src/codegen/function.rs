@@ -156,7 +156,11 @@ pub fn declaration(env: &Env, analysis: &analysis::functions::Info) -> String {
     };
     let mut param_str = String::with_capacity(100);
 
-    let (bounds, _) = bounds(&analysis.bounds, &[], false, false);
+    let (bounds, _) = bounds(&analysis.bounds, &[], false, false,
+                             match analysis.destroy {
+                                 Some(ref x) => Some(x.bound_name),
+                                 None => None,
+                             });
 
     for (pos, par) in analysis.parameters.rust_parameters.iter().enumerate() {
         if pos > 0 {
@@ -211,7 +215,7 @@ pub fn declaration_futures(env: &Env, analysis: &analysis::functions::Info) -> S
         param_str.push_str(&s);
     }
 
-    let (bounds, _) = bounds(&analysis.bounds, skipped_bounds.as_ref(), true, false);
+    let (bounds, _) = bounds(&analysis.bounds, skipped_bounds.as_ref(), true, false, None);
 
     let where_str = if async_future.is_method {
         " where Self: Sized + Clone"
@@ -253,7 +257,13 @@ pub fn bound_to_string(bound: &Bound, async: bool) -> String {
     }
 }
 
-pub fn bounds(bounds: &Bounds, skip: &[char], async: bool, filter_hack: bool) -> (String, Vec<String>) {
+pub fn bounds(
+    bounds: &Bounds,
+    skip: &[char],
+    async: bool,
+    filter_hack: bool,
+    extra_bound: Option<char>,
+) -> (String, Vec<String>) {
     use analysis::bounds::BoundType::*;
 
     if bounds.is_empty() {
@@ -270,7 +280,7 @@ pub fn bounds(bounds: &Bounds, skip: &[char], async: bool, filter_hack: bool) ->
         })
         .collect::<Vec<_>>();
 
-    let strs: Vec<String> = bounds
+    let mut strs: Vec<String> = bounds
         .iter_lifetimes()
         .filter(|s| !skip_lifetimes.contains(s))
         .map(|s| format!("'{}", s))
@@ -278,19 +288,25 @@ pub fn bounds(bounds: &Bounds, skip: &[char], async: bool, filter_hack: bool) ->
                      .filter(|bound| !skip.contains(&bound.alias) && (!filter_hack || !bound.hack))
                      .map(|b| bound_to_string(b, async)))
         .collect();
+    if let Some(ref extra_bound) = extra_bound {
+        strs.push(format!("{}: Fn() + 'static", extra_bound))
+    }
 
     if strs.is_empty() {
         (String::new(), Vec::new())
     } else {
-        (format!("<{}>", strs.join(", ")),
-         bounds
-            .iter_lifetimes()
-            .filter(|s| !skip_lifetimes.contains(s))
-            .map(|s| format!("'{}", s))
-            .chain(bounds.iter()
-                         .filter(|bound| !skip.contains(&bound.alias) && (!filter_hack || !bound.hack))
-                         .map(|b| b.alias.to_string()))
-            .collect())
+        let mut bounds = bounds.iter_lifetimes()
+                               .filter(|s| !skip_lifetimes.contains(s))
+                               .map(|s| format!("'{}", s))
+                               .chain(bounds.iter()
+                                            .filter(|bound| !skip.contains(&bound.alias) &&
+                                                            (!filter_hack || !bound.hack))
+                                            .map(|b| b.alias.to_string()))
+                               .collect::<Vec<_>>();
+        if let Some(ref extra_bound) = extra_bound {
+            bounds.push(extra_bound.to_string());
+        }
+        (format!("<{}>", strs.join(", ")), bounds)
     }
 }
 
@@ -335,7 +351,11 @@ pub fn body_chunk(env: &Env, analysis: &analysis::functions::Info) -> Chunk {
         }
     }
 
-    let (bounds, bounds_names) = bounds(&analysis.bounds, &[], false, true);
+    let (bounds, bounds_names) = bounds(&analysis.bounds, &[], false, true,
+                                        match analysis.destroy {
+                                            Some(ref x) => Some(x.bound_name),
+                                            None => None,
+                                        });
 
     builder.generate(env, bounds, bounds_names.join(", "))
 }

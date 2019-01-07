@@ -283,6 +283,7 @@ fn analyze_function(
     fixup_special_functions(env, imports, name.as_str(), type_tid, &mut parameters);
 
     let mut to_replace = Vec::new();
+    let mut to_remove = None;
     for (pos, par) in parameters.c_parameters.iter().enumerate() {
         assert!(
             !par.instance_parameter || pos == 0,
@@ -294,7 +295,9 @@ fn analyze_function(
         }
         let (to_glib_extra, callback_info) = bounds.add_for_parameter(env, func, par, async, expecting_data);
         if let Some(to_glib_extra) = to_glib_extra {
-            to_glib_extras.insert(pos, to_glib_extra);
+            if !par.c_type.ends_with("DestroyNotify") {
+                to_glib_extras.insert(pos, to_glib_extra);
+            }
         }
 
         if !expecting_data {
@@ -343,7 +346,7 @@ fn analyze_function(
                 ) {
                     destroy = Some(callback);
                     async = false;
-                    to_replace.push((pos, par.typ));
+                    to_remove = Some(pos);
                     continue;
                 }
             }
@@ -362,19 +365,16 @@ fn analyze_function(
         if trampoline.is_none() {
             commented = true;
         }
-    } else if !callbacks.is_empty() {
-        // commented = false;
-
+    } else if !callbacks.is_empty() || destroy.is_some() {
         // This is just a shitty hack for the moment.
         for (pos, typ) in to_replace {
             let ty = env.library.type_(typ);
-            // println!("replacing {} with {}", params[pos].name, ty.get_name());
-            //params[pos].name = format!("{}_trampoline", params[pos].name);
             params[pos].typ = typ;
-            // params[pos].name = ty.get_name();
             params[pos].c_type = ty.get_glib_name().unwrap().to_owned();
         }
-        //params[to_replace[0].0] = callback.clone();
+        if let Some(pos) = to_remove {
+            params.remove(pos);
+        }
         parameters = function_parameters::analyze(
             env,
             &params,

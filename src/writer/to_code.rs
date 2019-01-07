@@ -161,9 +161,9 @@ impl ToCode for Chunk {
                     .collect();
                 let mut s = format_block_one_line(&prefix, &suffix, &params, "", ", ");
                 if let Some(ref return_value) = return_value {
-                    s.push_str(&format!(" -> {} ", return_value));
+                    s.push_str(&format!(" -> {}", return_value));
                 }
-                s.push_str("{");
+                s.push_str(" {");
                 let mut code = format_block_smart("", "}", &body.to_code(env), " ", " ");
                 code.insert(0, s);
                 code
