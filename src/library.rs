@@ -726,9 +726,10 @@ impl Type {
     }
 
     pub fn function(library: &mut Library, func: Function) -> TypeId {
-        let name = format!("fn_{}", func.name);
+        let mut param_tids: Vec<TypeId> = func.parameters.iter().map(|p| p.typ).collect();
+        param_tids.push(func.ret.typ);
         let typ = Type::Function(func);
-        library.add_type(INTERNAL_NAMESPACE, &name, typ)
+        library.add_type(INTERNAL_NAMESPACE, &format!("fn<#{:?}>", param_tids), typ)
     }
 
     pub fn union(library: &mut Library, u: Union, ns_id: u16) -> TypeId {
