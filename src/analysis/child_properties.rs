@@ -104,7 +104,7 @@ fn analyze_property(
             let r_type = bounds_rust_type(env, typ).into_string();
             let mut bounds = Bounds::default();
             bounds.add_parameter("P", &r_type, bound, false);
-            let (s_bounds, _) = function::bounds(&bounds, &[], false, false, None);
+            let (s_bounds, _) = function::bounds(&bounds, &[], false, false);
             // Because the bounds won't necessarily be added into the final function, we
             // only keep the "inner" part to make the string computation easier. So
             // `<T: X>` becomes `T: X`.

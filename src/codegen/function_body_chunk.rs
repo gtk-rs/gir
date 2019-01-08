@@ -246,7 +246,7 @@ impl Builder {
                     value: Box::new(Chunk::Custom(format!("Box_::from_raw({} as *mut _)",
                                                           func))),
                     type_: Some(Box::new(Chunk::Custom(format!("Box_<Box_<Option<{}>>>",
-                                                               trampoline.bound_name)))),
+                                                               self.callbacks[0].bound_name)))),
                 }
             );
             if !is_destroy {

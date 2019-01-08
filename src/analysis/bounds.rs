@@ -124,7 +124,9 @@ impl Bounds {
         expecting_data: bool,
     ) -> (Option<String>, Option<CallbackInfo>) {
         let type_name = bounds_rust_type(env, par.typ);
-        let mut type_string = if (async && async_param_to_remove(&par.name)) || (expecting_data && (par.name == "data" || par.name.ends_with("_data"))) {
+        let mut type_string = if (async && async_param_to_remove(&par.name)) ||
+                                 (expecting_data && (par.name == "data" ||
+                                  par.name.ends_with("_data"))) {
             return (None, None);
         } else {
             type_name.into_string()
@@ -191,10 +193,6 @@ impl Bounds {
 
                             last.bound_type = BoundType::NoWrapper;
                             last.parameter_name = String::new();
-                            if func.name == "request_uris" {
-                                println!("=> {:?}", new_one);
-                                println!("=> {:?}", last);
-                            }
 
                             Some(new_one)
                         } else {
@@ -240,7 +238,8 @@ impl Bounds {
             Type::Interface(..) => Some(Into(Some('_'), Some(Box::new(IsA(None))))),
             Type::List(_) | Type::SList(_) | Type::CArray(_) => None,
             Type::Fundamental(_) if *nullable => Some(Into(None, None)),
-            Type::Function(_) => Some(Into(None, None)),
+            Type::Function(_) if *nullable => Some(Into(None, None)),
+            Type::Function(_) if !*nullable => Some(NoWrapper),
             _ if !*nullable => None,
             _ => Some(Into(Some('_'), None)),
         }
