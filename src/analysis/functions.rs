@@ -328,6 +328,7 @@ fn analyze_function(
                     par.typ,
                     &par.name,
                     imports,
+                    par.scope.is_call(),
                 ) {
                     callbacks.push(callback);
                     async = false;
@@ -343,6 +344,7 @@ fn analyze_function(
                     par.typ,
                     &par.name,
                     imports,
+                    par.scope.is_call(),
                 ) {
                     destroy = Some(callback);
                     async = false;
@@ -582,6 +584,7 @@ fn analyze_callback(
     type_tid: library::TypeId,
     par_name: &str,
     imports: &mut Imports,
+    is_call: bool,
 ) -> Option<Trampoline> {
     if let Type::Function(ref func) = func {
         // If we don't have a "data" parameter, we can't
@@ -619,6 +622,7 @@ fn analyze_callback(
             inhibit: false,
             concurrency: library::Concurrency::None,
             is_notify: false,
+            is_call,
         })
     } else {
         None

@@ -117,7 +117,7 @@ impl Builder {
             self.write_out_variables(&mut body);
         }
 
-        let call = self.generate_call();
+        let call = self.generate_call(self.callbacks.iter().all(|c| c.is_call));
         let call = self.generate_call_conversion(call);
         let ret = self.generate_out_return();
         let (call, ret) = self.apply_outs_mode(call, ret);
@@ -138,11 +138,15 @@ impl Builder {
         if !self.callbacks.is_empty() || self.destroy.is_some() {
             let full_type = if self.callbacks.len() > 1 {
                 Some(format!("Box_<Box_<({})>>",
-                             self.callbacks.iter()
-                                           .map(|c| format!("Option<{}>",
-                                                            c.bound_name.clone()))
-                                           .collect::<Vec<_>>()
-                                           .join(", ")))
+                             self.callbacks
+                                 .iter()
+                                 .map(|c| if c.is_call {
+                                     format!("Option<{}>", c.bound_name)
+                                 } else {
+                                     format!("&{}", c.bound_name)
+                                 })
+                                 .collect::<Vec<_>>()
+                                 .join(", ")))
             } else {
                 None
             };
@@ -172,8 +176,12 @@ impl Builder {
                     name: "super_callback".to_string(),
                     is_mut: false,
                     value: Box::new(Chunk::Custom(format!("{}_data", self.callbacks[0].name))),
-                    type_: Some(Box::new(Chunk::Custom(format!("Box_<Box_<Option<{}>>>",
-                                                               self.callbacks[0].bound_name)))),
+                    type_: Some(Box::new(Chunk::Custom(
+                        if self.callbacks[0].is_call {
+                            format!("&{}", self.callbacks[0].bound_name)
+                        } else {
+                            format!("Box_<Box_<Option<{}>>>", self.callbacks[0].bound_name)
+                        }))),
                 });
             }
         } else if let Some(ref trampoline) = self.async_trampoline {
@@ -187,12 +195,27 @@ impl Builder {
                       full_type: &Option<String>, pos: usize, bounds: &str, bounds_names: &str,
                       is_destroy: bool) {
         if full_type.is_none() && !is_destroy {
-            chunks.push(Chunk::Custom(format!("let {0}_data: Box_<Box_<Option<{1}>>> = Box::new(Box::new({0}.into()));",
-                                              trampoline.name, trampoline.bound_name)));
+            if trampoline.is_call {
+                chunks.push(
+                    Chunk::Custom(
+                        format!("let {0}_data: &{1} = &{0};",
+                                trampoline.name, trampoline.bound_name)));
+            } else {
+                chunks.push(
+                    Chunk::Custom(
+                        format!("let {0}_data: Box_<Box_<Option<{1}>>> = Box::new(Box::new({0}.into()));",
+                                trampoline.name, trampoline.bound_name)));
+            }
         } else if !is_destroy {
-            chunks.push(Chunk::Custom(format!("let {0}_data: Option<{1}> = {0}.into();",
-                                              trampoline.name,
-                                              trampoline.bound_name)));
+            if trampoline.is_call {
+                chunks.push(Chunk::Custom(format!("let {0}_data: &{1} = &{0};",
+                                                  trampoline.name,
+                                                  trampoline.bound_name)));
+            } else {
+                chunks.push(Chunk::Custom(format!("let {0}_data: Option<{1}> = {0}.into();",
+                                                  trampoline.name,
+                                                  trampoline.bound_name)));
+            }
         }
 
         let mut body = Vec::new();
@@ -228,44 +251,65 @@ impl Builder {
                 Chunk::Let {
                     name: format!("{}callback", if is_destroy { "_" } else { "" }),
                     is_mut: false,
-                    value: Box::new(Chunk::Custom(format!("Box_::from_raw({} as *mut _)",
-                                                          func))),
+                    value: Box::new(Chunk::Custom(format!("Box_::from_raw({} as *mut _)", func))),
                     type_: Some(Box::new(Chunk::Custom(full_type.clone()))),
                 }
             );
             if !is_destroy {
-                body.push(Chunk::Custom(format!("{}if let Some(ref callback) = callback.{} {{",
-                                                if trampoline.ret.c_type != "void" { "let res = " } else { "" },
-                                                pos)));
+                if !trampoline.is_call {
+                    body.push(
+                        Chunk::Custom(
+                            format!("{}if let Some(ref callback) = callback.{} {{",
+                                    if trampoline.ret.c_type != "void" { "let res = " } else { "" },
+                                    pos)));
+                } else if trampoline.ret.c_type != "void" {
+                    body.push(Chunk::Custom("let res = ".to_owned()));
+                }
             }
         } else {
             body.push(
                 Chunk::Let {
                     name: format!("{}callback", if is_destroy { "_" } else { "" }),
                     is_mut: false,
-                    value: Box::new(Chunk::Custom(format!("Box_::from_raw({} as *mut _)",
-                                                          func))),
-                    type_: Some(Box::new(Chunk::Custom(format!("Box_<Box_<Option<{}>>>",
-                                                               self.callbacks[0].bound_name)))),
+                    value: Box::new(Chunk::Custom(
+                        if trampoline.is_call {
+                            format!("{} as *const _ as usize as *mut {}", func, self.callbacks[0].bound_name)
+                        } else {
+                            format!("Box_::from_raw({} as *mut _)", func)
+                        })),
+                    type_: Some(Box::new(Chunk::Custom(
+                        if trampoline.is_call {
+                            format!("*mut {}", self.callbacks[0].bound_name)
+                        } else {
+                            format!("Box_<Box_<Option<{}>>>", self.callbacks[0].bound_name)
+                        }))),
                 }
             );
             if !is_destroy {
-                body.push(Chunk::Custom(format!("{}if let Some(ref callback) = **callback {{",
-                                                if trampoline.ret.c_type != "void" { "let res = " } else { "" })));
+                if !trampoline.is_call {
+                    body.push(Chunk::Custom(format!("{}if let Some(ref callback) = **callback {{",
+                                                    if trampoline.ret.c_type != "void" { "let res = " } else { "" })));
+                } else if trampoline.ret.c_type != "void" {
+                    body.push(Chunk::Custom("let res = ".to_owned()));
+                }
             }
         }
         if !is_destroy {
             use writer::to_code::ToCode;
-            body.push(Chunk::Custom(format!("\tcallback({})",
+            body.push(Chunk::Custom(format!("{}({}){}",
+                                            if trampoline.is_call { "(*callback)" } else { "\tcallback"},
                                             arguments.iter()
                                                      .flat_map(|arg| arg.to_code(env))
                                                      .collect::<Vec<_>>()
-                                                     .join(", "))));
-            body.push(Chunk::Custom("} else {".to_owned()));
-            body.push(Chunk::Custom("\tpanic!(\"cannot get closure...\")".to_owned()));
-            body.push(Chunk::Custom("};".to_owned()));
-            if full_type.is_some() {
-                body.push(Chunk::Custom("Box_::into_raw(callback);".to_owned()));
+                                                     .join(", "),
+                                            if trampoline.is_call { ";" } else { "" },)));
+            if !trampoline.is_call {
+                body.push(Chunk::Custom("} else {".to_owned()));
+                body.push(Chunk::Custom("\tpanic!(\"cannot get closure...\")".to_owned()));
+                body.push(Chunk::Custom("};".to_owned()));
+                if full_type.is_some() {
+                    body.push(Chunk::Custom("Box_::into_raw(callback);".to_owned()));
+                }
             }
             if trampoline.ret.c_type != "void" {
                 use ::analysis::conversion_type::ConversionType;
@@ -316,9 +360,15 @@ impl Builder {
 
         chunks.push(extern_func);
         if !is_destroy {
-            chunks.push(Chunk::Custom(format!("let {0} = if {0}_data.is_some() {{ Some({0}_func::<{1}> as _) }} else {{ None }};",
-                                              trampoline.name,
-                                              bounds_names)));
+            if !trampoline.is_call {
+                chunks.push(Chunk::Custom(format!("let {0} = if {0}_data.is_some() {{ Some({0}_func::<{1}> as _) }} else {{ None }};",
+                                                  trampoline.name,
+                                                  bounds_names)));
+            } else {
+                chunks.push(Chunk::Custom(format!("let {0} = Some({0}_func::<{1}> as _);",
+                                                  trampoline.name,
+                                                  bounds_names)));
+            }
         } else {
             chunks.push(Chunk::Custom(format!("let destroy_call = Some({}_func::<{}> as _);",
                                               trampoline.name,
@@ -517,8 +567,8 @@ impl Builder {
         }
     }
 
-    fn generate_call(&self) -> Chunk {
-        let params = self.generate_func_parameters();
+    fn generate_call(&self, all_call: bool) -> Chunk {
+        let params = self.generate_func_parameters(all_call);
         let func = Chunk::FfiCall {
             name: self.glib_name.clone(),
             params,
@@ -532,7 +582,7 @@ impl Builder {
             call: Box::new(call),
         }
     }
-    fn generate_func_parameters(&self) -> Vec<Chunk> {
+    fn generate_func_parameters(&self, all_call: bool) -> Vec<Chunk> {
         let mut params = Vec::new();
         for trans in &self.transformations {
             if !trans.transformation_type.is_to_glib() {
@@ -552,7 +602,11 @@ impl Builder {
         if let Some(x) = self.remove_param {
             params.insert(x as _, Chunk::FfiCallParameter {
                     transformation_type: TransformationType::ToGlibDirect {
-                        name: "Box::into_raw(super_callback) as *mut _".to_owned(),
+                        name: if all_call {
+                            "super_callback as *const _ as usize as *mut _".to_owned()
+                        } else {
+                            "Box::into_raw(super_callback) as *mut _".to_owned()
+                        },
                     }});
         }
         if self.destroy.is_some() {

@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use config;
 use config::parameter_matchable::ParameterMatchable;
 use env::Env;
-use library::{self, TypeId};
+use library::{self, TypeId, ParameterScope};
 use nameutil;
 use super::conversion_type::ConversionType;
 use super::rust_type::rust_type;
@@ -32,6 +32,7 @@ pub struct CParameter {
     pub transfer: library::Transfer,
     pub caller_allocates: bool,
     pub is_error: bool,
+    pub scope: ParameterScope,
 
     //analysis fields
     pub ref_mode: RefMode,
@@ -235,6 +236,7 @@ pub fn analyze(
             nullable,
             ref_mode,
             is_error: par.is_error,
+            scope: par.scope,
         };
         parameters.c_parameters.push(c_par);
 

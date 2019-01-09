@@ -2,7 +2,7 @@ use std::result;
 
 use analysis::ref_mode::RefMode;
 use env::Env;
-use library::{self, Nullable};
+use library::{self, Nullable, ParameterScope};
 use super::conversion_type::ConversionType;
 use traits::*;
 
@@ -47,11 +47,15 @@ impl MapAny<String> for Result {
 }
 
 pub fn rust_type(env: &Env, type_id: library::TypeId) -> Result {
-    rust_type_full(env, type_id, Nullable(false), RefMode::None)
+    rust_type_full(env, type_id, Nullable(false), RefMode::None, ParameterScope::None)
+}
+
+pub fn rust_type_with_scope(env: &Env, type_id: library::TypeId, scope: ParameterScope) -> Result {
+    rust_type_full(env, type_id, Nullable(false), RefMode::None, scope)
 }
 
 pub fn bounds_rust_type(env: &Env, type_id: library::TypeId) -> Result {
-    rust_type_full(env, type_id, Nullable(false), RefMode::ByRefFake)
+    rust_type_full(env, type_id, Nullable(false), RefMode::ByRefFake, ParameterScope::None)
 }
 
 fn rust_type_full(
@@ -59,6 +63,7 @@ fn rust_type_full(
     type_id: library::TypeId,
     nullable: Nullable,
     ref_mode: RefMode,
+    scope: ParameterScope,
 ) -> Result {
     use library::Type::*;
     use library::Fundamental::*;
@@ -121,7 +126,7 @@ fn rust_type_full(
             }
         }
         Alias(ref alias) => {
-            rust_type_full(env, alias.typ, nullable, ref_mode).map_any(|_| alias.name.clone())
+            rust_type_full(env, alias.typ, nullable, ref_mode, scope).map_any(|_| alias.name.clone())
         }
         Record(library::Record { ref c_type, .. }) if c_type == "GVariantType" => {
             if ref_mode.is_ref() {
@@ -146,7 +151,7 @@ fn rust_type_full(
                 Class(..) | Interface(..) => RefMode::None,
                 _ => ref_mode,
             };
-            rust_type_full(env, inner_tid, Nullable(false), inner_ref_mode).map_any(
+            rust_type_full(env, inner_tid, Nullable(false), inner_ref_mode, scope).map_any(
                 |s| if ref_mode.is_ref() {
                     format!("[{}]", s)
                 } else {
@@ -213,17 +218,27 @@ fn rust_type_full(
                 i += 1;
             }
             let ret = match rust_type(env, f.ret.typ) {
-                Ok(x) => format!("Fn({}) -> {}", s.join(", "), if x != "GString" { &x } else { "String" } ),
-                Err(TypeError::Unimplemented(ref x)) if x == "()" => format!("Fn({})", s.join(", ")),
+                Ok(x) => format!("{}({}) -> {}",
+                                 if scope.is_call() { "FnMut" } else { "Fn" },
+                                 s.join(", "),
+                                 if x != "GString" { &x } else { "String" }),
+                Err(TypeError::Unimplemented(ref x)) if x == "()" => {
+                    format!("{}({})",
+                            if scope.is_call() { "FnMut" } else { "Fn" },
+                            s.join(", "))
+                }
                 e => {
                     err = true;
-                    format!("Fn({}) -> {}", s.join(", "), e.into_string())
+                    format!("{}({}) -> {}",
+                            if scope.is_call() { "FnMut" } else { "Fn" },
+                            s.join(", "),
+                            e.into_string())
                 }
             };
             if err {
                 Err(TypeError::Unimplemented(ret))
             } else {
-                Ok(format!("{} + 'static", ret))
+                Ok(format!("{}{}", ret, if scope.is_call() { "" } else { " + 'static" }))
             }
         }
         _ => Err(TypeError::Unimplemented(type_.get_name().to_owned())),
@@ -297,7 +312,7 @@ pub fn parameter_rust_type(
 ) -> Result {
     use library::Type::*;
     let type_ = env.library.type_(type_id);
-    let rust_type = rust_type_full(env, type_id, nullable, ref_mode);
+    let rust_type = rust_type_full(env, type_id, nullable, ref_mode, ParameterScope::None);
     match *type_ {
         Fundamental(fund) => {
             if (fund == library::Fundamental::Utf8

@@ -23,6 +23,7 @@ pub struct Trampoline {
     pub inhibit: bool,
     pub concurrency: library::Concurrency,
     pub is_notify: bool,
+    pub is_call: bool,
 }
 
 pub type Trampolines = Vec<Trampoline>;
@@ -149,6 +150,7 @@ pub fn analyze(
         concurrency,
         is_notify,
         bound_name: 'A', // TODO: remove that
+        is_call: false,
     };
     trampolines.push(trampoline);
     Ok(name)

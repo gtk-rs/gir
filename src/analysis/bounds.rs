@@ -6,7 +6,7 @@ use analysis::function_parameters::{async_param_to_remove, CParameter};
 use analysis::functions::{find_function, find_index_to_ignore, finish_function_name};
 use analysis::imports::Imports;
 use analysis::out_parameters::use_function_return_for_result;
-use analysis::rust_type::{bounds_rust_type, rust_type};
+use analysis::rust_type::{bounds_rust_type, rust_type, rust_type_with_scope};
 use consts::TYPE_PARAMETERS_START;
 use env::Env;
 use library::{Class, Function, Fundamental, Nullable, ParameterDirection, Type, TypeId};
@@ -141,7 +141,7 @@ impl Bounds {
                    par.c_type == "GDestroyNotify" {
                     need_is_into_check = par.c_type != "GDestroyNotify";
                     if let Type::Function(_) = env.library.type_(par.typ) {
-                        type_string = rust_type(env, par.typ).into_string();
+                        type_string = rust_type_with_scope(env, par.typ, par.scope).into_string();
                         let bound_name = *self.unused.front().unwrap();
                         callback_info = Some(CallbackInfo {
                             callback_type: type_string.clone(),

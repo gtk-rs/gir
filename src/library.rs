@@ -84,6 +84,15 @@ pub enum ParameterScope {
     Notified,
 }
 
+impl ParameterScope {
+    pub fn is_call(&self) -> bool {
+        match *self {
+            ParameterScope::Call => true,
+            _ => false,
+        }
+    }
+}
+
 impl Default for ParameterScope {
     fn default() -> Self {
         ParameterScope::None
