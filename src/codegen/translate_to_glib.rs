@@ -26,15 +26,21 @@ impl TranslateToGlib for TransformationType {
                 ref pointer_cast,
                 ref explicit_target_type,
                 in_trait,
+                nullable,
             } => {
                 let (left, right) = to_glib_xxx(transfer, ref_mode, explicit_target_type);
+                let to_glib_extra = if nullable && !to_glib_extra.is_empty() {
+                        format!(".map(|p| p{})", to_glib_extra)
+                    } else {
+                        to_glib_extra.clone()
+                    };
+
                 if instance_parameter {
-                    format!("{}self{}{}{}", left, if in_trait { to_glib_extra } else { "" }, right, pointer_cast)
+                    format!("{}self{}{}{}", left, if in_trait { to_glib_extra } else { "".into() }, right, pointer_cast)
                 } else {
                     format!("{}{}{}{}{}", left, name, to_glib_extra, right, pointer_cast)
                 }
             }
-            ToGlibStash { ref name } => format!("{}.0", name),
             ToGlibBorrow => "/*Not applicable conversion Borrow*/".to_owned(),
             ToGlibUnknown { ref name } => format!("/*Unknown conversion*/{}", name),
             ToSome(ref name) => format!("Some({})", name),
