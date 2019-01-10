@@ -103,6 +103,7 @@ fn analyze_signal(
         if in_trait {
             imports.add("glib::object::Cast", version);
         }
+        imports.add("glib::object::ObjectType", version);
         imports.add("glib::signal::connect_raw", version);
         imports.add("glib::signal::SignalHandlerId", version);
         imports.add("std::mem::transmute", version);

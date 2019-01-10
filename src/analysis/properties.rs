@@ -273,6 +273,7 @@ fn analyze_property(
             if generate_trait {
                 imports.add("glib::object::Cast", prop_version);
             }
+            imports.add("glib::object::ObjectType", prop_version);
             imports.add("glib::signal::connect_raw", prop_version);
             imports.add("glib::signal::SignalHandlerId", prop_version);
             imports.add("std::mem::transmute", prop_version);
