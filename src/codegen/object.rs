@@ -1,5 +1,6 @@
 use std::io::{Result, Write};
 
+use case::CaseExt;
 use analysis;
 use library;
 use env::Env;
@@ -131,6 +132,9 @@ pub fn generate(
     if let library::Concurrency::SendSync = analysis.concurrency {
         try!(writeln!(w, "unsafe impl Sync for {} {{}}", analysis.name));
     }
+
+    try!(writeln!(w));
+    try!(writeln!(w, "pub const NONE_{}: Option<&{}> = None;", analysis.name.to_snake().to_uppercase(), analysis.name));
 
     if need_generate_trait(analysis) {
         try!(writeln!(w));
@@ -276,9 +280,9 @@ pub fn generate_reexports(
     contents.push(format!("mod {};", module_name));
     contents.extend_from_slice(&cfgs);
     if let Some(ref class_name) = analysis.rust_class_type {
-        contents.push(format!("pub use self::{}::{{{}, {}}};", module_name, analysis.name, class_name));
+        contents.push(format!("pub use self::{}::{{{}, {}, {}}};", module_name, analysis.name, class_name, format!("NONE_{}", analysis.name.to_snake().to_uppercase())));
     } else {
-        contents.push(format!("pub use self::{}::{};", module_name, analysis.name));
+        contents.push(format!("pub use self::{}::{{{}, {}}};", module_name, analysis.name, format!("NONE_{}", analysis.name.to_snake().to_uppercase())));
     }
     if need_generate_trait(analysis) {
         contents.extend_from_slice(&cfgs);
