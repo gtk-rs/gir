@@ -9,7 +9,7 @@ use std::collections::HashMap;
 use std::vec::Vec;
 
 use analysis::bounds::{Bounds, CallbackInfo};
-use analysis::function_parameters::{self, Parameters, Transformation, TransformationType};
+use analysis::function_parameters::{self, CParameter, Parameters, Transformation, TransformationType};
 use analysis::imports::Imports;
 use analysis::out_parameters;
 use analysis::out_parameters::use_function_return_for_result;
@@ -284,7 +284,11 @@ fn analyze_function(
 
     let mut to_replace = Vec::new();
     let mut to_remove = None;
-    for (pos, par) in parameters.c_parameters.iter().enumerate() {
+
+    let mut cross_user_data_check: HashMap<usize, usize> = HashMap::new();
+
+    for pos in 0..parameters.c_parameters.len() {
+        let par = &parameters.c_parameters[pos];
         assert!(
             !par.instance_parameter || pos == 0,
             "Wrong instance parameter in {}",
@@ -318,33 +322,40 @@ fn analyze_function(
                 }
                 continue;
             }
-        } else if trampoline.is_none() || destroy.is_none() {
+        } else if callbacks.is_empty() || destroy.is_none() {
             if par.c_type.ends_with("Func") || par.c_type.ends_with("Callback") {
-                if let Some(callback) = analyze_callback(
+                if let Some((callback, destroy_index)) = analyze_callback(
+                    &func.name,
                     env,
-                    env.library.type_(par.typ),
+                    &par,
                     &callback_info,
                     &mut commented,
-                    par.typ,
-                    &par.name,
                     imports,
-                    par.scope.is_call(),
+                    &parameters.c_parameters,
                 ) {
                     callbacks.push(callback);
                     async = false;
                     to_replace.push((pos, par.typ));
+                    if let Some(destroy_index) {
+                        let user_data = cross_user_data_check.entry(destroy_index)
+                                                             .or_insert_with(|| callback.user_data_index.unwrap());
+                        if user_data != callback.user_data_index.unwrap() {
+                            error!("`{}`: Different destructors cannot share the same user data",
+                                   func.name);
+                            commented = true;
+                        }
+                    }
                     continue;
                 }
             } else if destroy.is_none() && par.c_type.ends_with("DestroyNotify") {
-                if let Some(callback) = analyze_callback(
+                if let Some((callback, destroy_index)) = analyze_callback(
+                    &func.name,
                     env,
-                    env.library.type_(par.typ),
+                    &par,
                     &callback_info,
                     &mut commented,
-                    par.typ,
-                    &par.name,
                     imports,
-                    par.scope.is_call(),
+                    &parameters.c_parameters,
                 ) {
                     destroy = Some(callback);
                     async = false;
@@ -356,6 +367,12 @@ fn analyze_function(
         if !commented {
             commented |= parameter_rust_type(env, par.typ, par.direction, Nullable(false), RefMode::None).is_err();
         }
+    }
+
+    // Check for cross "user data".
+    if cross_user_data_check.values().collect::<Vec<_>>().partition_dedup().1.is_empty() {
+        commented = true;
+        error!("`{}`: Different user data share the same destructors", func.name);
     }
 
     if destroy.is_some() || !callbacks.is_empty() {
@@ -577,20 +594,51 @@ fn analyze_async(
 }
 
 fn analyze_callback(
+    func_name: &str,
     env: &Env,
-    func: &library::Type,
+    par: &CParameter,
     callback_info: &Option<CallbackInfo>,
     commented: &mut bool,
-    type_tid: library::TypeId,
-    par_name: &str,
     imports: &mut Imports,
-    is_call: bool,
-) -> Option<Trampoline> {
-    if let Type::Function(ref func) = func {
-        // If we don't have a "data" parameter, we can't
-        // get the closure so there's nothing we can do...
-        *commented |= func.parameters.len() < 1 || func.parameters.last().unwrap().c_type != "gpointer";
-        let parameters = ::analysis::trampoline_parameters::analyze(env, &func.parameters, type_tid, &[]);
+    c_parameters: &[CParameter],
+) -> Option<(Trampoline, Option<usize>)> {
+    if let Type::Function(ref func) = env.library.type_(par.typ) {
+        if !par.c_type.ends_with("DestroyNotify") {
+            if let Some(user_data) = par.user_data_index {
+                if c_parameters[user_data].c_type != "gpointer" {
+                    *commented = true;
+                    error!("function `{}`'s callback `{}` has invalid user data",
+                           func_name,
+                           par.name);
+                    return None;
+                }
+            } else {
+                *commented = true;
+                error!("function `{}`'s callback `{}` without associated user data",
+                       func_name,
+                       par.name);
+                return None;
+            }
+            if let Some(destroy) = par.destroy_index {
+                if !par.c_type.ends_with("DestroyNotify") {
+                    *commented = true;
+                    error!("function `{}`'s callback `{}` has invalid destroy callback",
+                           func_name,
+                           par.name);
+                    return None;
+                }
+            }
+        }
+
+        // If we don't have a "user data" parameter, we can't get the closure so there's nothing we
+        // can do...
+        if func.parameters.len() < 1 || func.parameters.last().unwrap().c_type != "gpointer" {
+            *commented = true;
+            error!("Closure type `{}` doesn't provide user data", par.c_type);
+            return None;
+        }
+
+        let parameters = ::analysis::trampoline_parameters::analyze(env, &func.parameters, par.typ, &[]);
         *commented |= func.parameters.iter()
                                      .rev()
                                      .skip(1) // We skip the "data" parameter.
@@ -609,8 +657,8 @@ fn analyze_callback(
                 imports.add_used_type(&"String", None);
             }
         }
-        Some(Trampoline {
-            name: par_name.to_string(),
+        Some((Trampoline {
+            name: par.name.to_string(),
             parameters,
             ret: func.ret.clone(),
             bound_name: match callback_info {
@@ -622,8 +670,10 @@ fn analyze_callback(
             inhibit: false,
             concurrency: library::Concurrency::None,
             is_notify: false,
-            is_call,
-        })
+            is_call: par.scope.is_call(),
+            // If destroy callback, id doesn't matter.
+            user_data_index: par.user_data_index.unwrap_or_else(|| 0),
+        }, par.destroy_index))
     } else {
         None
     }

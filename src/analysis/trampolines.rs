@@ -24,6 +24,8 @@ pub struct Trampoline {
     pub concurrency: library::Concurrency,
     pub is_notify: bool,
     pub is_call: bool,
+    /// It's used to group callbacks
+    pub user_data_index: usize,
 }
 
 pub type Trampolines = Vec<Trampoline>;

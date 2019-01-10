@@ -33,6 +33,10 @@ pub struct CParameter {
     pub caller_allocates: bool,
     pub is_error: bool,
     pub scope: ParameterScope,
+    /// Index of the user data parameter associated with the callback.
+    pub user_data_index: Option<usize>,
+    /// Index of the destroy notification parameter associated with the callback.
+    pub destroy_index: Option<usize>,
 
     //analysis fields
     pub ref_mode: RefMode,
@@ -237,6 +241,8 @@ pub fn analyze(
             ref_mode,
             is_error: par.is_error,
             scope: par.scope,
+            user_data_index: par.closure,
+            destroy_index: par.destroy,
         };
         parameters.c_parameters.push(c_par);
 
