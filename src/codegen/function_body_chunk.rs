@@ -13,6 +13,7 @@ use chunk::parameter_ffi_call_out;
 use env::Env;
 use library::{self, ParameterDirection};
 use nameutil;
+use std::collections::HashMap;
 
 #[derive(Clone, Debug)]
 enum Parameter {
@@ -117,7 +118,42 @@ impl Builder {
             self.write_out_variables(&mut body);
         }
 
-        let call = self.generate_call(self.callbacks.iter().all(|c| c.is_call));
+        // Key: user data index
+        // Value: (global position, type, callbacks)
+        let mut group_by_user_data: HashMap<usize, (usize, Option<String>, Vec<&Trampoline>)> =
+            HashMap::new();
+
+        if !self.callbacks.is_empty() || self.destroy.is_some() {
+            for (pos, callback) in self.callbacks.iter().enumerate() {
+                let user_data_index = callback.user_data_index;
+                if group_by_user_data.get(&user_data_index).is_some() {
+                    continue;
+                }
+                let calls = self.callbacks.iter()
+                                          .filter(|c| c.user_data_index == user_data_index)
+                                          .collect::<Vec<_>>();
+                group_by_user_data.insert(
+                    user_data_index,
+                    (pos,
+                    if calls.len() > 1 {
+                        Some(format!("Box_<Box_<({})>>",
+                                     calls.iter()
+                                          .map(|c| if c.is_call {
+                                              format!("Option<{}>", c.bound_name)
+                                          } else {
+                                              format!("&{}", c.bound_name)
+                                          })
+                                          .collect::<Vec<_>>()
+                                          .join(", ")))
+                    } else {
+                        None
+                    },
+                    calls)
+                );
+            }
+        }
+
+        let call = self.generate_call(&group_by_user_data);
         let call = self.generate_call_conversion(call);
         let ret = self.generate_out_return();
         let (call, ret) = self.apply_outs_mode(call, ret);
@@ -136,53 +172,61 @@ impl Builder {
         self.add_assertion(&mut chunks);
 
         if !self.callbacks.is_empty() || self.destroy.is_some() {
-            let full_type = if self.callbacks.len() > 1 {
-                Some(format!("Box_<Box_<({})>>",
-                             self.callbacks
-                                 .iter()
-                                 .map(|c| if c.is_call {
-                                     format!("Option<{}>", c.bound_name)
-                                 } else {
-                                     format!("&{}", c.bound_name)
-                                 })
-                                 .collect::<Vec<_>>()
-                                 .join(", ")))
-            } else {
-                None
-            };
-            for (pos, trampoline) in self.callbacks.iter().enumerate() {
-                self.add_trampoline(env, &mut chunks, trampoline, &full_type, pos, &bounds,
-                                    &bounds_names, false);
+            // Key: user data index
+            // Value: the current pos in the tuple for the given argument.
+            let mut poses = HashMap::with_capacity(group_by_user_data.len());
+            for trampoline in self.callbacks.iter() {
+                let user_data_index = trampoline.user_data_index;
+                let pos = poses.entry(user_data_index).or_insert_with(|| 0);
+                self.add_trampoline(env,
+                                    &mut chunks,
+                                    trampoline,
+                                    &group_by_user_data.get(&user_data_index).unwrap().1,
+                                    *pos,
+                                    &bounds,
+                                    &bounds_names,
+                                    false);
+                *pos += 1;
             }
             if let Some(ref destroy) = self.destroy {
-                self.add_trampoline(env, &mut chunks, destroy, &full_type, self.callbacks.len(),
-                                    &bounds, &bounds_names, true);
+                self.add_trampoline(env,
+                                    &mut chunks,
+                                    destroy,
+                                    &group_by_user_data.get(&destroy.user_data_index).unwrap().1,
+                                    0, // doesn't matter for destroy
+                                    &bounds,
+                                    &bounds_names,
+                                    true);
             }
-            if self.callbacks.len() > 1 {
-                chunks.push(
-                    Chunk::Let {
-                        name: "super_callback".to_string(),
+            for (_, (pos, full_type, ref calls)) in group_by_user_data.iter() {
+                if calls.len() > 1 {
+                    chunks.push(
+                        Chunk::Let {
+                            name: format!("super_callback{}", pos),
+                            is_mut: false,
+                            value: Box::new(
+                                Chunk::Custom(
+                                    format!("Box_::new(Box_::new(({})))",
+                                            calls.iter()
+                                                 .map(|c| format!("{}_data", c.name))
+                                                 .collect::<Vec<_>>()
+                                                 .join(", ")))),
+                            type_: Some(Box::new(Chunk::Custom(full_type.clone().unwrap()))),
+                        }
+                    );
+                } else if !calls.is_empty() {
+                    chunks.push(Chunk::Let {
+                        name: format!("super_callback{}", pos),
                         is_mut: false,
-                        value: Box::new(Chunk::Custom(format!("Box_::new(Box_::new(({})))",
-                                                              self.callbacks.iter()
-                                                                            .map(|c| format!("{}_data", c.name))
-                                                                            .collect::<Vec<_>>()
-                                                                            .join(", ")))),
-                        type_: Some(Box::new(Chunk::Custom(full_type.clone().unwrap()))),
-                    }
-                );
-            } else if !self.callbacks.is_empty() {
-                chunks.push(Chunk::Let {
-                    name: "super_callback".to_string(),
-                    is_mut: false,
-                    value: Box::new(Chunk::Custom(format!("{}_data", self.callbacks[0].name))),
-                    type_: Some(Box::new(Chunk::Custom(
-                        if self.callbacks[0].is_call {
-                            format!("&{}", self.callbacks[0].bound_name)
-                        } else {
-                            format!("Box_<Box_<Option<{}>>>", self.callbacks[0].bound_name)
-                        }))),
-                });
+                        value: Box::new(Chunk::Custom(format!("{}_data", calls[0].name))),
+                        type_: Some(Box::new(Chunk::Custom(
+                            if calls[0].is_call {
+                                format!("&{}", calls[0].bound_name)
+                            } else {
+                                format!("Box_<Box_<Option<{}>>>", calls[0].bound_name)
+                            }))),
+                    });
+                }
             }
         } else if let Some(ref trampoline) = self.async_trampoline {
             self.add_async_trampoline(env, &mut chunks, trampoline);
@@ -567,8 +611,11 @@ impl Builder {
         }
     }
 
-    fn generate_call(&self, all_call: bool) -> Chunk {
-        let params = self.generate_func_parameters(all_call);
+    fn generate_call(
+        &self,
+        calls: &HashMap<usize, (usize, Option<String>, Vec<&Trampoline>)>,
+    ) -> Chunk {
+        let params = self.generate_func_parameters(calls);
         let func = Chunk::FfiCall {
             name: self.glib_name.clone(),
             params,
@@ -582,7 +629,10 @@ impl Builder {
             call: Box::new(call),
         }
     }
-    fn generate_func_parameters(&self, all_call: bool) -> Vec<Chunk> {
+    fn generate_func_parameters(
+        &self,
+        calls: &HashMap<usize, (usize, Option<String>, Vec<&Trampoline>)>,
+    ) -> Vec<Chunk> {
         let mut params = Vec::new();
         for trans in &self.transformations {
             if !trans.transformation_type.is_to_glib() {
@@ -599,13 +649,14 @@ impl Builder {
             };
             params.push(chunk);
         }
-        if let Some(x) = self.remove_param {
-            params.insert(x as _, Chunk::FfiCallParameter {
+        for (user_data_index, (pos, _, callbacks)) in calls.iter() {
+            let all_call = callbacks.iter().all(|c| c.is_call);
+            params.insert(*user_data_index as _, Chunk::FfiCallParameter {
                     transformation_type: TransformationType::ToGlibDirect {
                         name: if all_call {
-                            "super_callback as *const _ as usize as *mut _".to_owned()
+                            format!("super_callback{} as *const _ as usize as *mut _", pos)
                         } else {
-                            "Box::into_raw(super_callback) as *mut _".to_owned()
+                            format!("Box::into_raw(super_callback{}) as *mut _", pos)
                         },
                     }});
         }
