@@ -157,7 +157,7 @@ pub fn analyze(
 ) -> Parameters {
     let mut parameters = Parameters::new(function_parameters.len());
 
-    //Map: length agrument position => array name
+    // Map: length argument position => array name
     let array_lengths: HashMap<u32, String> = function_parameters
         .iter()
         .filter_map(|p| p.array_length.map(|pos| (pos, p.name.clone())))

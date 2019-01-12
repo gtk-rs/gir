@@ -158,8 +158,11 @@ pub fn declaration(env: &Env, analysis: &analysis::functions::Info) -> String {
 
     let (bounds, _) = bounds(&analysis.bounds, &[], false, false);
 
-    for (pos, par) in analysis.parameters.rust_parameters.iter().enumerate() {
-        if pos > 0 {
+    for par in analysis.parameters.rust_parameters.iter() {
+        if analysis.remove_params.iter().any(|i| *i == par.ind_c) {
+            continue
+        }
+        if !param_str.is_empty() {
             param_str.push_str(", ")
         }
         let c_par = &analysis.parameters.c_parameters[par.ind_c];
@@ -327,8 +330,8 @@ pub fn body_chunk(env: &Env, analysis: &analysis::functions::Info) -> Chunk {
         if let Some(ref trampoline) = analysis.destroy {
             builder.destroy(trampoline);
         }
-        if let Some(pos) = analysis.remove_param {
-            builder.remove_param(pos);
+        if !analysis.remove_params.is_empty() {
+            builder.remove_params(&analysis.remove_params);
         }
     }
 

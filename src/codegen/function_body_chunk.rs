@@ -53,7 +53,7 @@ pub struct Builder {
     outs_as_return: bool,
     outs_mode: Mode,
     assertion: SafetyAssertionMode,
-    remove_param: Option<u8>,
+    remove_params: Option<Vec<usize>>,
 }
 
 impl Builder {
@@ -72,8 +72,8 @@ impl Builder {
         self.destroy = Some(trampoline.clone());
         self
     }
-    pub fn remove_param(&mut self, remove_param: u8) -> &mut Builder {
-        self.remove_param = Some(remove_param);
+    pub fn remove_params(&mut self, remove_params: &[usize]) -> &mut Builder {
+        self.remove_params = Some(remove_params.to_owned());
         self
     }
     pub fn glib_name(&mut self, name: &str) -> &mut Builder {

@@ -201,12 +201,10 @@ fn rust_type_full(
                 return Ok(format!("Fn() + 'static"));
             }
             let mut s = Vec::with_capacity(f.parameters.len());
-            let mut i = 0;
             let mut err = false;
-            while i < f.parameters.len() {
-                let p = &f.parameters[i];
-                if p.name == "data" || (i + 1 >= f.parameters.len() && p.c_type == "gpointer") {
-                    break
+            for p in f.parameters.iter() {
+                if p.closure.is_some() {
+                    continue
                 }
                 match rust_type(env, p.typ) {
                     Ok(x) => s.push(x),
@@ -215,7 +213,6 @@ fn rust_type_full(
                         s.push(e.into_string());
                     }
                 }
-                i += 1;
             }
             let ret = match rust_type(env, f.ret.typ) {
                 Ok(x) => format!("{}({}) -> {}",
