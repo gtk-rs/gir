@@ -26,6 +26,7 @@ pub struct Trampoline {
     pub is_call: bool,
     /// It's used to group callbacks
     pub user_data_index: usize,
+    pub destroy_index: usize,
 }
 
 pub type Trampolines = Vec<Trampoline>;
@@ -154,6 +155,7 @@ pub fn analyze(
         bound_name: 'A', // TODO: remove that
         is_call: false,
         user_data_index: 0,
+        destroy_index: 0,
     };
     trampolines.push(trampoline);
     Ok(name)

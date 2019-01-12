@@ -327,7 +327,7 @@ pub fn body_chunk(env: &Env, analysis: &analysis::functions::Info) -> Chunk {
         for trampoline in analysis.callbacks.iter() {
             builder.callback(trampoline);
         }
-        if let Some(ref trampoline) = analysis.destroy {
+        for trampoline in analysis.destroys.iter() {
             builder.destroy(trampoline);
         }
         if !analysis.remove_params.is_empty() {

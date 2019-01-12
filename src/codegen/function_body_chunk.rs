@@ -45,7 +45,7 @@ use self::Parameter::*;
 pub struct Builder {
     async_trampoline: Option<AsyncTrampoline>,
     callbacks: Vec<Trampoline>,
-    destroy: Option<Trampoline>,
+    destroys: Vec<Trampoline>,
     glib_name: String,
     parameters: Vec<Parameter>,
     transformations: Vec<Transformation>,
@@ -69,7 +69,7 @@ impl Builder {
         self
     }
     pub fn destroy(&mut self, trampoline: &Trampoline) -> &mut Builder {
-        self.destroy = Some(trampoline.clone());
+        self.destroys.push(trampoline.clone());
         self
     }
     pub fn remove_params(&mut self, remove_params: &[usize]) -> &mut Builder {
@@ -119,11 +119,12 @@ impl Builder {
         }
 
         // Key: user data index
-        // Value: (global position, type, callbacks)
+        // Value: (global position used as id, type, callbacks)
         let mut group_by_user_data: HashMap<usize, (usize, Option<String>, Vec<&Trampoline>)> =
             HashMap::new();
 
-        if !self.callbacks.is_empty() || self.destroy.is_some() {
+        // We group arguments by callbacks.
+        if !self.callbacks.is_empty() || !self.destroys.is_empty() {
             for (pos, callback) in self.callbacks.iter().enumerate() {
                 let user_data_index = callback.user_data_index;
                 if group_by_user_data.get(&user_data_index).is_some() {
@@ -171,7 +172,7 @@ impl Builder {
         self.add_in_array_lengths(&mut chunks);
         self.add_assertion(&mut chunks);
 
-        if !self.callbacks.is_empty() || self.destroy.is_some() {
+        if !self.callbacks.is_empty() || !self.destroys.is_empty() {
             // Key: user data index
             // Value: the current pos in the tuple for the given argument.
             let mut poses = HashMap::with_capacity(group_by_user_data.len());
@@ -188,7 +189,7 @@ impl Builder {
                                     false);
                 *pos += 1;
             }
-            if let Some(ref destroy) = self.destroy {
+            for destroy in self.destroys.iter() {
                 self.add_trampoline(env,
                                     &mut chunks,
                                     destroy,
@@ -414,9 +415,12 @@ impl Builder {
                                                   bounds_names)));
             }
         } else {
-            chunks.push(Chunk::Custom(format!("let destroy_call = Some({}_func::<{}> as _);",
-                                              trampoline.name,
-                                              bounds_names)));
+            chunks.push(
+                Chunk::Custom(
+                    format!("let destroy_call{} = Some({}_func::<{}> as _);",
+                            trampoline.destroy_index,
+                            trampoline.name,
+                            bounds_names)));
         }
     }
 
@@ -660,11 +664,12 @@ impl Builder {
                         },
                     }});
         }
-        if self.destroy.is_some() {
-            params.push(Chunk::FfiCallParameter {
-                    transformation_type: TransformationType::ToGlibDirect {
-                        name: "destroy_call".to_owned(),
-                    }});
+        for destroy in self.destroys.iter() {
+            params.insert(destroy.destroy_index,
+                          Chunk::FfiCallParameter {
+                              transformation_type: TransformationType::ToGlibDirect {
+                                  name: format!("destroy_call{}", destroy.destroy_index),
+                              }});
         }
         params
     }
