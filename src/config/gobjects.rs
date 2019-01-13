@@ -60,6 +60,7 @@ impl FromStr for GStatus {
 pub struct GObject {
     pub name: String,
     pub functions: Functions,
+    pub virtual_methods: Functions,
     pub constants: Constants,
     pub signals: Signals,
     pub members: Members,
@@ -72,6 +73,8 @@ pub struct GObject {
     pub type_id: Option<TypeId>,
     pub generate_trait: bool,
     pub trait_name: Option<String>,
+    pub subclass_impl_trait_name: Option<String>,
+    pub subclass_base_trait_name: Option<String>,
     pub child_properties: Option<ChildProperties>,
     pub concurrency: library::Concurrency,
     pub ref_mode: Option<ref_mode::RefMode>,
@@ -87,6 +90,7 @@ impl Default for GObject {
         GObject {
             name: "Default".into(),
             functions: Functions::new(),
+            virtual_methods: Functions::new(),
             constants: Constants::new(),
             signals: Signals::new(),
             members: Members::new(),
@@ -99,6 +103,8 @@ impl Default for GObject {
             type_id: None,
             generate_trait: true,
             trait_name: None,
+            subclass_impl_trait_name: None,
+            subclass_base_trait_name: None,
             child_properties: None,
             concurrency: Default::default(),
             ref_mode: None,
@@ -170,6 +176,7 @@ fn parse_object(
             "name",
             "status",
             "function",
+            "virtual_method",
             "constant",
             "signal",
             "member",
@@ -185,6 +192,8 @@ fn parse_object(
             "child_type",
             "trait",
             "trait_name",
+            "subclass_impl_trait_name",
+            "subclass_base_trait_name",
             "cfg_condition",
             "must_use",
             "use_boxed_functions",
@@ -203,6 +212,7 @@ fn parse_object(
 
     let constants = Constants::parse(toml_object.lookup("constant"), &name);
     let functions = Functions::parse(toml_object.lookup("function"), &name);
+    let virtual_methods = Functions::parse(toml_object.lookup("virtual_method"), &name);
     let signals = {
         let mut v = Vec::new();
         if let Some(configs) = toml_object.lookup("signal").and_then(|val| val.as_array()) {
@@ -240,6 +250,14 @@ fn parse_object(
         .unwrap_or(true);
     let trait_name = toml_object
         .lookup("trait_name")
+        .and_then(|v| v.as_str())
+        .map(|s| s.to_owned());
+    let subclass_impl_trait_name = toml_object
+        .lookup("subclass_impl_trait_name")
+        .and_then(|v| v.as_str())
+        .map(|s| s.to_owned());
+    let subclass_base_trait_name = toml_object
+        .lookup("subclass_base_trait_name")
         .and_then(|v| v.as_str())
         .map(|s| s.to_owned());
     let concurrency = toml_object
@@ -284,6 +302,7 @@ fn parse_object(
     GObject {
         name,
         functions,
+        virtual_methods,
         constants,
         signals,
         members,
@@ -296,6 +315,8 @@ fn parse_object(
         type_id: None,
         generate_trait,
         trait_name,
+        subclass_impl_trait_name,
+        subclass_base_trait_name,
         child_properties,
         concurrency,
         ref_mode,

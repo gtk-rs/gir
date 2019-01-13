@@ -70,7 +70,15 @@ pub enum Chunk {
     Call {
         func_name: String,
         arguments: Vec<Chunk>,
+        as_return: bool
     },
+    Closure{
+        arguments: Vec<Chunk>,
+        body: Box<Chunk>,
+    },
+    Deref{
+        param: Box<Chunk>,
+    }
 }
 
 pub struct Param {

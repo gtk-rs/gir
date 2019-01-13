@@ -8,6 +8,7 @@ pub struct Parameter {
     pub transfer: library::Transfer,
     pub caller_allocates: bool,
     pub is_error: bool,
+    pub nullable: library::Nullable
 }
 
 impl Parameter {
@@ -18,6 +19,7 @@ impl Parameter {
             transfer: orig.transfer,
             caller_allocates: orig.caller_allocates,
             is_error: orig.is_error,
+            nullable: orig.nullable,
         }
     }
 }
@@ -30,6 +32,7 @@ impl<'a> From<&'a library::Parameter> for Parameter {
             transfer: orig.transfer,
             caller_allocates: orig.caller_allocates,
             is_error: orig.is_error,
+            nullable: orig.nullable
         }
     }
 }

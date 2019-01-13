@@ -10,22 +10,28 @@ use super::imports::Imports;
 use super::info_base::InfoBase;
 use super::signatures::Signatures;
 use traits::*;
+use config::WorkMode;
 
 #[derive(Debug, Default)]
 pub struct Info {
     pub base: InfoBase,
+    pub is_interface: bool,
     pub c_type: String,
+    pub class_type: Option<String>,
     pub c_class_type: Option<String>,
     pub rust_class_type: Option<String>,
     pub get_type: String,
     pub supertypes: Vec<general::StatusedTypeId>,
     pub generate_trait: bool,
     pub trait_name: String,
+    pub subclass_impl_trait_name: String,
+    pub subclass_base_trait_name: String,
     pub has_constructors: bool,
     pub has_methods: bool,
     pub has_functions: bool,
     pub signals: Vec<signals::Info>,
     pub notify_signals: Vec<signals::Info>,
+    pub virtual_methods: Vec<virtual_methods::Info>,
     pub trampolines: trampolines::Trampolines,
     pub properties: Vec<properties::Property>,
     pub child_properties: ChildProperties,
@@ -42,6 +48,17 @@ impl Info {
 
     pub fn has_action_signals(&self) -> bool {
         self.signals.iter().any(|s| s.action_emit_name.is_some())
+    }
+
+    pub fn module_name(&self, env: &Env) -> Option<String>{
+        let obj = &env.config.objects[&self.full_name];
+        if !obj.status.need_generate() {
+            return None;
+        }
+
+        Some(obj.module_name.clone().unwrap_or_else(|| {
+            module_name(split_namespace_name(&self.full_name).1)
+        }))
     }
 }
 
@@ -89,9 +106,19 @@ pub fn class(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<Info>
 
     let mut imports = Imports::with_defined(&env.library, &name);
     imports.add("glib::translate::*", None);
-    imports.add("ffi", None);
+    //imports.add("ffi", None);
     if obj.generate_display_trait {
         imports.add("std::fmt", None);
+    }
+    imports.add("glib_ffi", None);
+    imports.add("gobject_ffi", None);
+    imports.add("std::mem", None);
+    imports.add("std::ptr", None);
+
+    if env.config.work_mode != WorkMode::Subclass {
+        imports.add("ffi", None);
+    }else{
+        imports.add(&format!("{}_ffi", env.config.library_name.to_lowercase()), None);
     }
 
     let supertypes = supertypes::analyze(env, class_tid, &mut imports);
@@ -101,6 +128,16 @@ pub fn class(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<Info>
         .as_ref()
         .cloned()
         .unwrap_or_else(|| format!("{}Ext", name));
+
+    let subclass_impl_trait_name = obj.subclass_impl_trait_name
+        .as_ref()
+        .cloned()
+        .unwrap_or_else(|| format!("{}Impl", name));
+
+    let subclass_base_trait_name = obj.subclass_base_trait_name
+        .as_ref()
+        .cloned()
+        .unwrap_or_else(|| format!("{}Base", name));
 
     // Sanity check the user's configuration. It's unlikely that not generating
     // a trait is wanted if there are subtypes in this very crate
@@ -149,6 +186,18 @@ pub fn class(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<Info>
         obj,
         &mut imports,
     );
+
+    let virtual_methods = virtual_methods::analyze(
+        env,
+        &klass.virtual_methods,
+        class_tid,
+        generate_trait,
+        obj,
+        &mut imports,
+        Some(&mut signatures),
+        Some(deps),
+    );
+
     let (properties, notify_signals) = properties::analyze(
         env,
         &klass.properties,
@@ -232,18 +281,23 @@ pub fn class(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<Info>
 
     let info = Info {
         base,
+        is_interface: false,
         c_type: klass.c_type.clone(),
+        class_type: klass.type_struct.clone(),
         c_class_type: klass.c_class_type.clone(),
         rust_class_type,
         get_type: klass.glib_get_type.clone(),
         supertypes,
         generate_trait,
         trait_name,
+        subclass_impl_trait_name,
+        subclass_base_trait_name,
         has_constructors,
         has_methods,
         has_functions,
         signals,
         notify_signals,
+        virtual_methods,
         trampolines,
         properties,
         child_properties,
@@ -273,10 +327,16 @@ pub fn interface(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<I
 
     let mut imports = Imports::with_defined(&env.library, &name);
     imports.add("glib::translate::*", None);
-    imports.add("ffi", None);
     imports.add("glib::object::IsA", None);
     if obj.generate_display_trait {
         imports.add("std::fmt", None);
+    }
+
+    if env.config.work_mode == WorkMode::Subclass {
+        imports.add("glib", None);
+        imports.add(&format!("{}_ffi", env.config.library_name.to_lowercase()), None);
+    }else{
+        imports.add("ffi", None);
     }
 
     let supertypes = supertypes::analyze(env, iface_tid, &mut imports);
@@ -309,6 +369,18 @@ pub fn interface(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<I
         obj,
         &mut imports,
     );
+
+    let virtual_methods = virtual_methods::analyze(
+        env,
+        &iface.virtual_methods,
+        iface_tid,
+        true,
+        obj,
+        &mut imports,
+        Some(&mut signatures),
+        Some(deps)
+    );
+
     let (properties, notify_signals) = properties::analyze(
         env,
         &iface.properties,
@@ -333,6 +405,11 @@ pub fn interface(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<I
         imports.add("glib::ObjectExt", None);
     }
 
+    let subclass_impl_trait_name = obj.subclass_impl_trait_name
+        .as_ref()
+        .cloned()
+        .unwrap_or_else(|| format!("{}Impl", name));
+
     let base = InfoBase {
         full_name,
         type_id: iface_tid,
@@ -351,7 +428,9 @@ pub fn interface(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<I
 
     let info = Info {
         base,
+        is_interface: true,
         c_type: iface.c_type.clone(),
+        class_type: iface.type_struct.clone(),
         c_class_type: iface.c_class_type.clone(),
         rust_class_type: None,
         get_type: iface.glib_get_type.clone(),
@@ -362,9 +441,11 @@ pub fn interface(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<I
         has_functions,
         signals,
         notify_signals,
+        virtual_methods,
         trampolines,
         properties,
         signatures,
+        subclass_impl_trait_name,
         ..Default::default()
     };
 

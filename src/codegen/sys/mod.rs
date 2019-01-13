@@ -4,10 +4,10 @@ use env::Env;
 mod build;
 mod cargo_toml;
 pub mod ffi_type;
-mod fields;
-mod functions;
+pub mod fields;
+pub mod functions;
 mod lib_;
-mod statics;
+pub mod statics;
 mod tests;
 
 pub fn generate(env: &Env) {

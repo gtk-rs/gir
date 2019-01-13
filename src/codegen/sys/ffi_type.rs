@@ -1,6 +1,7 @@
 use analysis::c_type::{implements_c_type, rustify_pointers};
 use analysis::namespaces;
 use analysis::rust_type::{Result, TypeError};
+use config::WorkMode;
 use env::Env;
 use library;
 use library::*;
@@ -179,6 +180,15 @@ fn ffi_inner(env: &Env, tid: library::TypeId, mut inner: String) -> Result {
     }
 }
 
+fn crate_name<'a>(env: &'a Env, ns_id: u16) -> &'a String{
+    if env.config.work_mode == WorkMode::Subclass {
+        &env.namespaces[ns_id].ffi_crate_name
+    }else{
+        &env.namespaces[ns_id].crate_name
+    }
+}
+
+
 fn fix_name(env: &Env, type_id: library::TypeId, name: &str) -> Result {
     if type_id.ns_id == library::INTERNAL_NAMESPACE {
         match *env.library.type_(type_id) {
@@ -191,7 +201,7 @@ fn fix_name(env: &Env, type_id: library::TypeId, name: &str) -> Result {
             } else {
                 Ok(format!(
                     "{}::{}",
-                    &env.namespaces[env.namespaces.glib_ns_id].crate_name,
+                    &crate_name(env, env.namespaces.glib_ns_id),
                     name
                 ))
             },
@@ -201,7 +211,7 @@ fn fix_name(env: &Env, type_id: library::TypeId, name: &str) -> Result {
         let name_with_prefix = if type_id.ns_id == namespaces::MAIN {
             name.into()
         } else {
-            format!("{}::{}", &env.namespaces[type_id.ns_id].crate_name, name)
+            format!("{}::{}", &crate_name(env, type_id.ns_id), name)
         };
         if env.type_status_sys(&type_id.full_name(&env.library))
             .ignored()

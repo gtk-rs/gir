@@ -1,4 +1,5 @@
 use analysis::conversion_type::ConversionType;
+use traits::IntoString;
 use library;
 use env;
 

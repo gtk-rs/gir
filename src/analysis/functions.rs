@@ -412,7 +412,7 @@ pub fn is_carray_with_direct_elements(env: &Env, typ: library::TypeId) -> bool {
     }
 }
 
-fn analyze_async(
+pub fn analyze_async(
     env: &Env,
     func: &library::Function,
     callback_info: Option<CallbackInfo>,

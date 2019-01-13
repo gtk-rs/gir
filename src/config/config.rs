@@ -20,6 +20,7 @@ pub struct Config {
     pub girs_version: String, //Version in girs_dir, detected by git
     pub library_name: String,
     pub library_version: String,
+    pub library_export_name: String,
     pub target_path: PathBuf,
     /// Path where files generated in normal and sys mode
     pub auto_path: PathBuf,
@@ -34,6 +35,7 @@ pub struct Config {
     pub concurrency: library::Concurrency,
     pub single_version_file: Option<PathBuf>,
     pub generate_display_trait: bool,
+    pub config_dir: PathBuf
 }
 
 impl Config {
@@ -95,6 +97,11 @@ impl Config {
             (Some(""), Some(_)) | (Some(_), Some("")) | (None, Some(_)) | (Some(_), None) =>
                 return Err("Library and version can not be specified separately".to_owned()),
             (Some(a), Some(b)) => (a.to_owned(), b.to_owned()),
+        };
+
+        let library_export_name = match toml.lookup_str("options.library_export", "No options.library_export") {
+            Ok(s) => s.to_string(),
+            Err(_) => library_name.clone()
         };
 
         let target_path: PathBuf = match target_path.into() {
@@ -176,6 +183,7 @@ impl Config {
             girs_version,
             library_name,
             library_version,
+            library_export_name,
             target_path,
             auto_path,
             doc_target_path,
@@ -189,6 +197,7 @@ impl Config {
             concurrency,
             single_version_file,
             generate_display_trait,
+            config_dir
         })
     }
 

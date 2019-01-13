@@ -158,13 +158,26 @@ impl ToCode for Chunk {
                 code
             },
             Cast { ref name, ref type_ } => vec![format!("{} as {}", name, type_)],
-            Call { ref func_name, ref arguments } => {
+            Call { ref func_name, ref arguments, as_return } => {
                 let args: Vec<_> = arguments.iter()
                     .flat_map(|arg| arg.to_code(env))
                     .collect();
                 let s = format_block_one_line("(", ")", &args, "", ",");
-                vec![format!("{}{};", func_name, s)]
+                let d = if as_return {""} else {";"};
+                vec![format!("{}{}{}", func_name, s, d)]
             },
+            Closure { ref arguments, ref body } => {
+                let args: Vec<_> = arguments.iter()
+                    .flat_map(|arg| arg.to_code(env))
+                    .collect();
+                let s = format_block_one_line("|", "|", &args, "", "");
+                let code = format_block_one_line("{", "}", &body.to_code(env), " ", " ");
+                vec![format!("{}{}", s, code)]
+            }
+            Deref { ref param } => {
+                let mut code = format_block_smart("*", "", &param.to_code(env), "", "");
+                code
+            }
         }
     }
 }
