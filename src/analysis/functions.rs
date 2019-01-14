@@ -219,12 +219,8 @@ fn analyze_function(
     let expecting_data = !async &&
                          func.parameters.iter()
                                         .any(|par| par.c_type.ends_with("Func") ||
-                                                   par.c_type.ends_with("Callback") ||
-                                                   par.c_type == "GDestroyNotify");
+                                                   par.c_type.ends_with("Callback"));
 
-    if func.name == "set_value_full" {
-        println!("=> {} {}", async, expecting_data);
-    }
     let mut commented = false;
     let mut bounds: Bounds = Default::default();
     let mut to_glib_extras = HashMap::<usize, String>::new();
@@ -234,6 +230,10 @@ fn analyze_function(
     let mut destroys = Vec::new();
     let mut async_future = None;
 
+    if !async && !expecting_data &&
+       func.parameters.iter().any(|par| par.c_type == "GDestroyNotify") {
+        commented = true;
+    }
     let version = configured_functions
         .iter()
         .filter_map(|f| f.version)
@@ -272,6 +272,7 @@ fn analyze_function(
     if let Some(ref f) = ret.parameter {
         if let Type::Function(_) = env.library.type_(f.typ) {
             if env.config.work_mode.is_normal() {
+                warn!("Function \"{}\" has a destroy callback but not other callback", func.name);
                 commented = true;
             }
         }
