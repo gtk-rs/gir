@@ -90,7 +90,7 @@ fn declaration(env: &Env, prop: &ChildProperty, is_get: bool) -> String {
     let func_name = format!("{}_{}_{}", get_set, prop.child_name, prop_name);
     let mut bounds = if let Some(typ) = prop.child_type {
         let child_type = rust_type(env, typ).into_string();
-        format!("T: IsA<{}> + IsA<Widget>", child_type)
+        format!("T: IsA<{}>", child_type)
     } else {
         "T: IsA<Widget>".to_string()
     };
