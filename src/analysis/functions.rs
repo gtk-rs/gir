@@ -232,6 +232,10 @@ fn analyze_function(
 
     if !async && !expecting_data &&
        func.parameters.iter().any(|par| par.c_type == "GDestroyNotify") {
+        warn!("Function \"{}\" with destroy callback without callbacks", func.name);
+        commented = true;
+    } else if async && !func.parameters.iter().any(|par| par.c_type == "GAsyncReadyCallback") {
+        warn!("Async function \"{}\" without async callback", func.name);
         commented = true;
     }
     let version = configured_functions
@@ -272,7 +276,7 @@ fn analyze_function(
     if let Some(ref f) = ret.parameter {
         if let Type::Function(_) = env.library.type_(f.typ) {
             if env.config.work_mode.is_normal() {
-                warn!("Function \"{}\" has a destroy callback but not other callback", func.name);
+                warn!("Function \"{}\" returns callback", func.name);
                 commented = true;
             }
         }
@@ -387,29 +391,29 @@ fn analyze_function(
                         callbacks.push(callback);
                         to_replace.push((pos, par.typ));
                         continue;
-                    } else if par.c_type == "GDestroyNotify" {
-                        if let Some((mut callback, _)) = analyze_callback(
-                            func_name,
-                            env,
-                            &par,
-                            &callback_info,
-                            &mut commented,
-                            imports,
-                            &c_parameters,
-                        ) {
-                            // We just assume that for API "cleaness", the destroy callback will always be
-                            // |-> *after* <-| the initial callback.
-                            if let Some(user_data_index) = cross_user_data_check.get(&pos) {
-                                callback.user_data_index = *user_data_index;
-                                callback.destroy_index = pos;
-                            } else {
-                                error!("`{}`: no user data point to the destroy callback", func_name);
-                                commented = true;
-                            }
-                            destroys.push(callback);
-                            to_remove.push(pos);
-                            continue;
+                    }
+                } else if par.c_type == "GDestroyNotify" {
+                    if let Some((mut callback, _)) = analyze_callback(
+                        func_name,
+                        env,
+                        &par,
+                        &callback_info,
+                        &mut commented,
+                        imports,
+                        &c_parameters,
+                    ) {
+                        // We just assume that for API "cleaness", the destroy callback will always be
+                        // |-> *after* <-| the initial callback.
+                        if let Some(user_data_index) = cross_user_data_check.get(&pos) {
+                            callback.user_data_index = *user_data_index;
+                            callback.destroy_index = pos;
+                        } else {
+                            error!("`{}`: no user data point to the destroy callback", func_name);
+                            commented = true;
                         }
+                        destroys.push(callback);
+                        to_remove.push(pos);
+                        continue;
                     }
                 }
                 if !commented {
