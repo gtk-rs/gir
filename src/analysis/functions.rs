@@ -5,7 +5,7 @@
  * method has a different prefix.
  */
 
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::vec::Vec;
 
 use analysis::bounds::{Bounds, CallbackInfo};
@@ -287,6 +287,7 @@ fn analyze_function(
     // Key: destroy callback index
     // Value: associated user data index
     let mut cross_user_data_check: HashMap<usize, usize> = HashMap::new();
+    let mut user_data_indexes: HashSet<usize> = HashSet::new();
 
     if !expecting_data {
         for (pos, par) in parameters.c_parameters.iter().enumerate() {
@@ -343,9 +344,19 @@ fn analyze_function(
             }
 
             for pos in 0..parameters.c_parameters.len() {
+                if func.c_identifier == Some("gtk_cell_area_foreach".to_owned()) {
+                    println!("=> {}", parameters.c_parameters[pos].name);
+                }
                 // If it is a user data parameter, we ignore it.
-                if cross_user_data_check.values().any(|p| *p == pos) {
+                if cross_user_data_check.values().any(|p| *p == pos) ||
+                   user_data_indexes.contains(&pos) {
+                    if func.c_identifier == Some("gtk_cell_area_foreach".to_owned()) {
+                        println!("user data, ignoring it!");
+                    }
                     continue;
+                }
+                if func.c_identifier == Some("gtk_cell_area_foreach".to_owned()) {
+                    println!("not user data, continuing!");
                 }
                 let par = &parameters.c_parameters[pos];
                 assert!(
@@ -378,6 +389,9 @@ fn analyze_function(
                         imports,
                         &c_parameters,
                     ) {
+                        if func.c_identifier == Some("gtk_cell_area_foreach".to_owned()) {
+                            println!("-> user index: {}", callback.user_data_index);
+                        }
                         if let Some(destroy_index) = destroy_index {
                             let user_data = cross_user_data_check.entry(destroy_index)
                                                                  .or_insert_with(|| callback.user_data_index);
@@ -387,6 +401,9 @@ fn analyze_function(
                                 commented = true;
                             }
                             callback.destroy_index = destroy_index;
+                        } else {
+                            user_data_indexes.insert(callback.user_data_index);
+                            to_remove.push(callback.user_data_index);
                         }
                         callbacks.push(callback);
                         to_replace.push((pos, par.typ));
