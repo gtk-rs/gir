@@ -71,6 +71,21 @@ pub fn uses(w: &mut Write, env: &Env, imports: &Imports) -> Result<()> {
     Ok(())
 }
 
+fn format_parent_name(
+    env: &Env,
+    p: &StatusedTypeId,
+) -> String {
+   if p.type_id.ns_id == namespaces::MAIN {
+        p.name.clone()
+    } else {
+        format!(
+            "{krate}::{name}",
+            krate = env.namespaces[p.type_id.ns_id].crate_name,
+            name = p.name,
+        )
+    }
+}
+
 pub fn define_object_type(
     w: &mut Write,
     env: &Env,
@@ -121,7 +136,7 @@ pub fn define_object_type(
     } else if is_interface {
         let prerequisites: Vec<String> = parents
             .iter()
-            .map(|p| p.name.clone())
+            .map(|p| format_parent_name(env, p))
             .collect();
 
         try!(writeln!(
@@ -145,7 +160,7 @@ pub fn define_object_type(
                     _ => false,
                 }
             })
-            .map(|p| p.name.clone())
+            .map(|p| format_parent_name(env, p))
             .collect();
 
         let parents: Vec<String> = parents
@@ -158,7 +173,7 @@ pub fn define_object_type(
                     _ => false,
                 }
             })
-            .map(|p| p.name.clone())
+            .map(|p| format_parent_name(env, p))
             .collect();
 
         let mut parents_string = String::new();
