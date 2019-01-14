@@ -197,7 +197,11 @@ fn rust_type_full(
         }
         Custom(library::Custom { ref name, .. }) => Ok(name.clone()),
         Function(ref f) => {
-            if type_id.full_name(&env.library) == "GLib.DestroyNotify" {
+            let full_name = type_id.full_name(&env.library);
+            if full_name == "Gio.AsyncReadyCallback" {
+                return Ok(format!("FnOnce(Result<(), Error>) + Send + 'static"));
+            }
+            if full_name == "GLib.DestroyNotify" {
                 return Ok(format!("Fn() + 'static"));
             }
             let mut s = Vec::with_capacity(f.parameters.len());
