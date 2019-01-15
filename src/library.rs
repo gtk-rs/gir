@@ -786,6 +786,13 @@ impl Type {
             _ => None,
         }
     }
+
+    pub fn is_function(&self) -> bool {
+        match *self {
+            Type::Function(_) => true,
+            _ => false,
+        }
+    }
 }
 
 macro_rules! impl_maybe_ref {

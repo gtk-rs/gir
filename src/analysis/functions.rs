@@ -218,8 +218,7 @@ fn analyze_function(
                                                 parameter.c_type == "GAsyncReadyCallback");
     let expecting_data = !async &&
                          func.parameters.iter()
-                                        .any(|par| par.c_type.ends_with("Func") ||
-                                                   par.c_type.ends_with("Callback"));
+                                        .any(|par| env.library.type_(par.typ).is_function());
 
     let mut commented = false;
     let mut bounds: Bounds = Default::default();
@@ -369,56 +368,62 @@ fn analyze_function(
                     Some(n) => &n,
                     None => &func.name,
                 };
-                if par.c_type.ends_with("Func") || par.c_type.ends_with("Callback") {
-                    if let Some((mut callback, destroy_index)) = analyze_callback(
-                        //&func.name,
-                        func_name,
-                        env,
-                        &par,
-                        &callback_info,
-                        &mut commented,
-                        imports,
-                        &c_parameters,
-                    ) {
-                        if let Some(destroy_index) = destroy_index {
-                            let user_data = cross_user_data_check.entry(destroy_index)
-                                                                 .or_insert_with(|| callback.user_data_index);
-                            if *user_data != callback.user_data_index {
-                                error!("`{}`: Different destructors cannot share the same user data",
-                                       func.name);
+                let rust_type = env.library.type_(par.typ);
+                if rust_type.is_function() {
+                    if par.c_type != "GDestroyNotify" {
+                        if let Some((mut callback, destroy_index)) = analyze_callback(
+                            //&func.name,
+                            func_name,
+                            env,
+                            &par,
+                            &callback_info,
+                            &mut commented,
+                            imports,
+                            &c_parameters,
+                            &rust_type,
+                        ) {
+                            if let Some(destroy_index) = destroy_index {
+                                let user_data = cross_user_data_check.entry(destroy_index)
+                                                                     .or_insert_with(|| callback.user_data_index);
+                                if *user_data != callback.user_data_index {
+                                    error!("`{}`: Different destructors cannot share the same user data",
+                                           func.name);
+                                    commented = true;
+                                }
+                                callback.destroy_index = destroy_index;
+                            } else {
+                                user_data_indexes.insert(callback.user_data_index);
+                                to_remove.push(callback.user_data_index);
+                            }
+                            callbacks.push(callback);
+                            to_replace.push((pos, par.typ));
+                            continue;
+                        }
+                    } else {
+                        if let Some((mut callback, _)) = analyze_callback(
+                            func_name,
+                            env,
+                            &par,
+                            &callback_info,
+                            &mut commented,
+                            imports,
+                            &c_parameters,
+                            &rust_type,
+                        ) {
+                            // We just assume that for API "cleaness", the destroy callback will always be
+                            // |-> *after* <-| the initial callback.
+                            if let Some(user_data_index) = cross_user_data_check.get(&pos) {
+                                callback.user_data_index = *user_data_index;
+                                callback.destroy_index = pos;
+                            } else {
+                                error!("`{}`: no user data point to the destroy callback",
+                                       func_name);
                                 commented = true;
                             }
-                            callback.destroy_index = destroy_index;
-                        } else {
-                            user_data_indexes.insert(callback.user_data_index);
-                            to_remove.push(callback.user_data_index);
+                            destroys.push(callback);
+                            to_remove.push(pos);
+                            continue;
                         }
-                        callbacks.push(callback);
-                        to_replace.push((pos, par.typ));
-                        continue;
-                    }
-                } else if par.c_type == "GDestroyNotify" {
-                    if let Some((mut callback, _)) = analyze_callback(
-                        func_name,
-                        env,
-                        &par,
-                        &callback_info,
-                        &mut commented,
-                        imports,
-                        &c_parameters,
-                    ) {
-                        // We just assume that for API "cleaness", the destroy callback will always be
-                        // |-> *after* <-| the initial callback.
-                        if let Some(user_data_index) = cross_user_data_check.get(&pos) {
-                            callback.user_data_index = *user_data_index;
-                            callback.destroy_index = pos;
-                        } else {
-                            error!("`{}`: no user data point to the destroy callback", func_name);
-                            commented = true;
-                        }
-                        destroys.push(callback);
-                        to_remove.push(pos);
-                        continue;
                     }
                 }
                 if !commented {
@@ -662,8 +667,9 @@ fn analyze_callback(
     commented: &mut bool,
     imports: &mut Imports,
     c_parameters: &[(&CParameter, usize)],
+    rust_type: &Type,
 ) -> Option<(Trampoline, Option<usize>)> {
-    if let Type::Function(ref func) = env.library.type_(par.typ) {
+    if let Type::Function(ref func) = rust_type {
         if par.c_type != "GDestroyNotify" {
             if let Some(user_data) = par.user_data_index {
                 if user_data >= c_parameters.len() {

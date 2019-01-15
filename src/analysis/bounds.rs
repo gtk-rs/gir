@@ -160,8 +160,8 @@ impl Bounds {
                             bound_name,
                         });
                     }
-                } else if par.c_type.ends_with("Func") || par.c_type.ends_with("Callback") ||
-                          par.c_type == "GDestroyNotify" {
+                } else if par.c_type == "GDestroyNotify" ||
+                          env.library.type_(par.typ).is_function() {
                     need_is_into_check = par.c_type != "GDestroyNotify";
                     if let Type::Function(_) = env.library.type_(par.typ) {
                         type_string = rust_type_with_scope(env, par.typ, par.scope).into_string();
