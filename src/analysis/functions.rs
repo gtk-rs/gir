@@ -344,19 +344,10 @@ fn analyze_function(
             }
 
             for pos in 0..parameters.c_parameters.len() {
-                if func.c_identifier == Some("gtk_cell_area_foreach".to_owned()) {
-                    println!("=> {}", parameters.c_parameters[pos].name);
-                }
                 // If it is a user data parameter, we ignore it.
                 if cross_user_data_check.values().any(|p| *p == pos) ||
                    user_data_indexes.contains(&pos) {
-                    if func.c_identifier == Some("gtk_cell_area_foreach".to_owned()) {
-                        println!("user data, ignoring it!");
-                    }
                     continue;
-                }
-                if func.c_identifier == Some("gtk_cell_area_foreach".to_owned()) {
-                    println!("not user data, continuing!");
                 }
                 let par = &parameters.c_parameters[pos];
                 assert!(
@@ -389,9 +380,6 @@ fn analyze_function(
                         imports,
                         &c_parameters,
                     ) {
-                        if func.c_identifier == Some("gtk_cell_area_foreach".to_owned()) {
-                            println!("-> user index: {}", callback.user_data_index);
-                        }
                         if let Some(destroy_index) = destroy_index {
                             let user_data = cross_user_data_check.entry(destroy_index)
                                                                  .or_insert_with(|| callback.user_data_index);
@@ -451,8 +439,12 @@ fn analyze_function(
                 params[pos].typ = typ;
                 params[pos].c_type = ty.get_glib_name().unwrap().to_owned();
             }
-            let mut s = to_remove.iter().chain(cross_user_data_check.values()).collect::<Vec<_>>();
-            s.sort();
+            let mut s = to_remove.iter()
+                                 .chain(cross_user_data_check.values())
+                                 .collect::<HashSet<_>>() // To prevent duplicates.
+                                 .into_iter()
+                                 .collect::<Vec<_>>();
+            s.sort(); // We need to remove the end, otherwise the indexes won't be working anymore.
             for pos in s.iter().rev() {
                 params.remove(**pos);
             }
