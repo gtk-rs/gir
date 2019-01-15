@@ -162,7 +162,12 @@ impl Bounds {
                     )
                 }
             }
+        } else if par.instance_parameter {
+            if let Some(bound_type) = Bounds::type_for(env, par.typ, par.nullable) {
+                ret = Some(Bounds::get_to_glib_extra(&bound_type));
+            }
         }
+
         (ret, callback_info)
     }
 
@@ -172,18 +177,8 @@ impl Bounds {
             Type::Fundamental(Fundamental::Filename) => Some(AsRef(None)),
             Type::Fundamental(Fundamental::OsString)=> Some(AsRef(None)),
             Type::Fundamental(Fundamental::Utf8) if *nullable => Some(Into(Some('_'), None)),
-            Type::Class(..) if !*nullable => {
-                if env.class_hierarchy.subtypes(type_id).next().is_some() {
-                    Some(IsA(None))
-                } else {
-                    None
-                }
-            }
-            Type::Class(..) => if env.class_hierarchy.subtypes(type_id).next().is_some() {
-                Some(Into(Some('_'), Some(Box::new(IsA(None)))))
-            } else {
-                Some(Into(Some('_'), None))
-            },
+            Type::Class(..) if !*nullable => Some(IsA(None)),
+            Type::Class(..) => Some(Into(Some('_'), Some(Box::new(IsA(None))))),
             Type::Interface(..) if !*nullable => Some(IsA(None)),
             Type::Interface(..) => Some(Into(Some('_'), Some(Box::new(IsA(None))))),
             Type::List(_) | Type::SList(_) | Type::CArray(_) => None,
@@ -196,6 +191,7 @@ impl Bounds {
         use self::BoundType::*;
         match *bound_type {
             AsRef(_) => ".as_ref()".to_owned(),
+            IsA(_) => ".as_ref()".to_owned(),
             Into(_, Some(ref x)) => Bounds::get_to_glib_extra(x),
             _ => String::new(),
         }

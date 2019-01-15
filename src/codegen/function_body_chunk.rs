@@ -279,7 +279,6 @@ impl Builder {
         for trans in &self.transformations {
             if let TransformationType::Into {
                 ref name,
-                with_stash,
             } = trans.transformation_type
             {
                 let value = Chunk::Custom(format!("{}.into()", name));
@@ -289,15 +288,6 @@ impl Builder {
                     value: Box::new(value),
                     type_: None,
                 });
-                if with_stash {
-                    let value = Chunk::Custom(format!("{}.to_glib_none()", name));
-                    chunks.push(Chunk::Let {
-                        name: name.clone(),
-                        is_mut: false,
-                        value: Box::new(value),
-                        type_: None,
-                    });
-                }
             }
         }
     }

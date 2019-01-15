@@ -32,7 +32,6 @@ pub fn analyze(env: &Env, type_id: TypeId, imports: &mut Imports) -> Vec<Statuse
                 } else {
                     let ns = &env.namespaces[super_tid.ns_id];
                     imports.add(&ns.crate_name, None);
-                    imports.add(&ns.ffi_crate_name, None);
                 }
             }
         }

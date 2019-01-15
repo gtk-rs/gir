@@ -271,7 +271,9 @@ fn analyze_property(
         if trampoline_name.is_ok() {
             imports.add_used_types(&used_types, prop_version);
             if generate_trait {
-                imports.add("glib::object::Downcast", prop_version);
+                imports.add("glib::object::Cast", prop_version);
+            } else {
+                imports.add("glib::object::ObjectType", prop_version);
             }
             imports.add("glib::signal::connect_raw", prop_version);
             imports.add("glib::signal::SignalHandlerId", prop_version);

@@ -61,9 +61,9 @@ impl TranslateFromGlib for analysis::return_value::Info {
                         format!("{}::{}", rust_type.into_string(), from_glib_xxx.0)
                     };
                     let suffix_function = if *par.nullable {
-                        "map(Downcast::downcast_unchecked)"
+                        "map(|o| o.unsafe_cast())"
                     } else {
-                        "downcast_unchecked()"
+                        "unsafe_cast()"
                     };
                     (prefix, format!("{}.{}", from_glib_xxx.1, suffix_function))
                 }

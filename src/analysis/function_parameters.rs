@@ -53,11 +53,12 @@ pub enum TransformationType {
         to_glib_extra: String,
         explicit_target_type: String,
         pointer_cast: String,
+        in_trait: bool,
+        nullable: bool,
     },
-    ToGlibStash { name: String },
     ToGlibBorrow,
     ToGlibUnknown { name: String },
-    Into { name: String, with_stash: bool },
+    Into { name: String },
     Length {
         array_name: String,
         array_length_name: String,
@@ -74,7 +75,6 @@ impl TransformationType {
             ToGlibDirect { .. } |
             ToGlibScalar { .. } |
             ToGlibPointer { .. } |
-            ToGlibStash { .. } |
             ToGlibBorrow |
             ToGlibUnknown { .. } |
             ToSome(_) |
@@ -241,6 +241,8 @@ pub fn analyze(
         let data_param_name = "user_data";
         let callback_param_name = "callback";
 
+        let mut nullable_into = false;
+
         if add_rust_parameter {
             let rust_par = RustParameter {
                 name: name.clone(),
@@ -251,26 +253,15 @@ pub fn analyze(
             parameters.rust_parameters.push(rust_par);
 
             if *nullable && is_into(env, par) && !(async_func && (name == data_param_name || name == callback_param_name)) {
-                let with_stash = ref_mode == RefMode::ByRef;
                 let transformation = Transformation {
                     ind_c,
                     ind_rust,
                     transformation_type: TransformationType::Into {
                         name: name.clone(),
-                        with_stash,
                     },
                 };
                 parameters.transformations.push(transformation);
-
-                if with_stash {
-                    parameters.transformations.push(Transformation {
-                        ind_c,
-                        ind_rust,
-                        transformation_type: TransformationType::ToGlibStash { name },
-                    });
-
-                    continue;
-                }
+                nullable_into = true;
             }
         } else {
             ind_rust = None;
@@ -290,6 +281,8 @@ pub fn analyze(
                 to_glib_extra: String::new(),
                 explicit_target_type: String::new(),
                 pointer_cast: String::new(),
+                in_trait,
+                nullable: nullable_into,
             },
             ConversionType::Borrow => TransformationType::ToGlibBorrow,
             ConversionType::Unknown => TransformationType::ToGlibUnknown { name },

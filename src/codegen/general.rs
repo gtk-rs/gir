@@ -71,6 +71,21 @@ pub fn uses(w: &mut Write, env: &Env, imports: &Imports) -> Result<()> {
     Ok(())
 }
 
+fn format_parent_name(
+    env: &Env,
+    p: &StatusedTypeId,
+) -> String {
+   if p.type_id.ns_id == namespaces::MAIN {
+        p.name.clone()
+    } else {
+        format!(
+            "{krate}::{name}",
+            krate = env.namespaces[p.type_id.ns_id].crate_name,
+            name = p.name,
+        )
+    }
+}
+
 pub fn define_object_type(
     w: &mut Write,
     env: &Env,
@@ -79,74 +94,109 @@ pub fn define_object_type(
     glib_class_name: &Option<&str>,
     rust_class_name: &Option<&str>,
     glib_func_name: &str,
+    is_interface: bool,
     parents: &[StatusedTypeId],
 ) -> Result<()> {
-    let mut external_parents = false;
-    let parents: Vec<String> = parents
-        .iter()
-        .filter(|p| !p.status.ignored())
-        .map(|p| if p.type_id.ns_id == namespaces::MAIN {
-            p.name.clone()
-        } else {
-            external_parents = true;
-            format!(
-                "{krate}::{name} => {krate}_ffi::{ffi_name}",
-                krate = env.namespaces[p.type_id.ns_id].crate_name,
-                name = p.name,
-                ffi_name = env.library.type_(p.type_id).get_glib_name().unwrap()
-            )
-        })
-        .collect();
-
-    let (separator, class_name) = {
+    let class_name = {
         if let Some(s) = *glib_class_name {
-            (", ".to_string(), format!("ffi::{}", s))
+            format!(", ffi::{}", s)
         } else {
-            ("".to_string(), "".to_string())
+            "".to_string()
         }
     };
 
-    let rust_class_name = match rust_class_name {
-        None => String::new(),
-        Some(ref rust_class_name) => format!(", {}", rust_class_name),
+    let rust_class_name = {
+        if let Some(s) = *rust_class_name {
+            format!(", {}", s)
+        } else {
+            "".to_string()
+        }
     };
+
+    let kind_name = if is_interface { "Interface" } else { "Object" };
+
+    let parents: Vec<StatusedTypeId> = parents
+        .iter()
+        .filter(|p| !p.status.ignored())
+        .cloned()
+        .collect();
 
     try!(writeln!(w));
     try!(writeln!(w, "glib_wrapper! {{"));
     if parents.is_empty() {
         try!(writeln!(
             w,
-            "\tpub struct {}(Object<ffi::{}{}{}{}>);",
+            "\tpub struct {}({}<ffi::{}{}{}>);",
             type_name,
+            kind_name,
             glib_name,
-            separator,
             class_name,
             rust_class_name
         ));
-    } else if external_parents {
+    } else if is_interface {
+        let prerequisites: Vec<String> = parents
+            .iter()
+            .map(|p| format_parent_name(env, p))
+            .collect();
+
         try!(writeln!(
             w,
-            "\tpub struct {}(Object<ffi::{}{}{}{}>): [",
+            "\tpub struct {}({}<ffi::{}{}{}>) @requires {};",
             type_name,
+            kind_name,
             glib_name,
-            separator,
-            class_name,
-            rust_class_name
-        ));
-        for parent in parents {
-            try!(writeln!(w, "\t\t{},", parent));
-        }
-        try!(writeln!(w, "\t];"));
-    } else {
-        try!(writeln!(
-            w,
-            "\tpub struct {}(Object<ffi::{}{}{}{}>): {};",
-            type_name,
-            glib_name,
-            separator,
             class_name,
             rust_class_name,
-            parents.join(", ")
+            prerequisites.join(", ")
+        ));
+    } else {
+        let interfaces: Vec<String> = parents
+            .iter()
+            .filter(|p| {
+                use library::*;
+
+                match *env.library.type_(p.type_id) {
+                    Type::Interface { ..} if !p.status.ignored() => true,
+                    _ => false,
+                }
+            })
+            .map(|p| format_parent_name(env, p))
+            .collect();
+
+        let parents: Vec<String> = parents
+            .iter()
+            .filter(|p| {
+                use library::*;
+
+                match *env.library.type_(p.type_id) {
+                    Type::Class { ..} if !p.status.ignored() => true,
+                    _ => false,
+                }
+            })
+            .map(|p| format_parent_name(env, p))
+            .collect();
+
+        let mut parents_string = String::new();
+        if !parents.is_empty() {
+            parents_string.push_str(format!(" @extends {}", parents.join(", ")).as_str());
+        }
+
+        if !interfaces.is_empty() {
+            if !parents.is_empty () {
+                parents_string.push(',');
+            }
+            parents_string.push_str(format!(" @implements {}", interfaces.join(", ")).as_str());
+        }
+
+        try!(writeln!(
+            w,
+            "\tpub struct {}({}<ffi::{}{}{}>){};",
+            type_name,
+            kind_name,
+            glib_name,
+            class_name,
+            rust_class_name,
+            parents_string,
         ));
     }
     try!(writeln!(w));

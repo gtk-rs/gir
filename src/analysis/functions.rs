@@ -165,6 +165,8 @@ fn fixup_gpointer_parameter(
             to_glib_extra: String::new(),
             explicit_target_type: format!("*mut {}", ffi_name),
             pointer_cast: " as glib_ffi::gconstpointer".into(),
+            in_trait: false,
+            nullable: false,
         },
     };
 }
@@ -359,7 +361,7 @@ fn analyze_function(
 
         imports.add_used_types(&used_types, version);
         if ret.base_tid.is_some() {
-            imports.add("glib::object::Downcast", None);
+            imports.add("glib::object::Cast", None);
         }
         imports.add("glib::translate::*", version);
         bounds.update_imports(imports);
