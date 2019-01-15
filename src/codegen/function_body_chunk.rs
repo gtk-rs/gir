@@ -276,7 +276,8 @@ impl Builder {
             let type_ = env.type_(par.typ);
             match *type_ {
                 library::Type::Fundamental(ref x) if !x.requires_conversion() => {}
-                library::Type::Fundamental(library::Fundamental::Boolean) => {
+                library::Type::Fundamental(library::Fundamental::Boolean) |
+                library::Type::Fundamental(library::Fundamental::UniChar) => {
                     body.push(Chunk::Custom(format!("let {0} = from_glib({0});", par.name)));
                 }
                 _ => {
