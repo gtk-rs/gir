@@ -219,10 +219,12 @@ impl Builder {
                     chunks.push(Chunk::Let {
                         name: format!("super_callback{}", pos),
                         is_mut: false,
-                        value: Box::new(Chunk::Custom(format!("{}_data", calls[0].name))),
+                        value: Box::new(Chunk::Custom(format!("{}{}_data",
+                                                              if calls[0].is_call { "&" } else { "" },
+                                                              calls[0].name))),
                         type_: Some(Box::new(Chunk::Custom(
                             if calls[0].is_call {
-                                format!("&{}", calls[0].bound_name)
+                                format!("&Option<{}>", calls[0].bound_name)
                             } else {
                                 format!("Box_<Box_<Option<{}>>>", calls[0].bound_name)
                             }))),
@@ -243,7 +245,7 @@ impl Builder {
             if trampoline.is_call {
                 chunks.push(
                     Chunk::Custom(
-                        format!("let {0}_data: &{1} = &{0};",
+                        format!("let {0}_data: Option<{1}> = {0}.into();",
                                 trampoline.name, trampoline.bound_name)));
             } else {
                 chunks.push(
