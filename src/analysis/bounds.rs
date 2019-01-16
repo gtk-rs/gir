@@ -264,6 +264,20 @@ impl Bounds {
                 }})
             .map(|t| (t.alias, t.bound_type.clone()))
     }
+    pub fn get_base_alias(&self, alias: char) -> Option<char> {
+        if alias == TYPE_PARAMETERS_START {
+            return None;
+        }
+        let prev_alias = ((alias as u8) - 1) as char;
+        self.used
+            .iter()
+            .find(move |n| n.alias == prev_alias)
+            .and_then(|b| if b.info_for_next_type {
+                Some(b.alias)
+            } else {
+                None
+            })
+    }
     pub fn update_imports(&self, imports: &mut Imports) {
         //TODO: import with versions
         use self::BoundType::*;
