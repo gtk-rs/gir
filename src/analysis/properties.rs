@@ -226,6 +226,10 @@ fn analyze_property(
         None
     };
 
+    if !generate_trait && (writable || readable) {
+        imports.add("glib::object::ObjectType", prop_version);
+    }
+
     let notify_signal = if notifable {
         let mut used_types: Vec<String> = Vec::with_capacity(4);
         let trampoline_name = trampolines::analyze(
@@ -272,8 +276,6 @@ fn analyze_property(
             imports.add_used_types(&used_types, prop_version);
             if generate_trait {
                 imports.add("glib::object::Cast", prop_version);
-            } else {
-                imports.add("glib::object::ObjectType", prop_version);
             }
             imports.add("glib::signal::connect_raw", prop_version);
             imports.add("glib::signal::SignalHandlerId", prop_version);
