@@ -231,6 +231,9 @@ fn analyze_function(
 
     if !async && !expecting_data &&
        func.parameters.iter().any(|par| par.c_type == "GDestroyNotify") {
+        // In here, We have a DestroyNotify callback but no other callback is provided. A good
+        // example of this situation is this function:
+        // https://developer.gnome.org/gio/stable/GTlsPassword.html#g-tls-password-set-value-full
         warn!("Function \"{}\" with destroy callback without callbacks", func.name);
         commented = true;
     } else if async && !func.parameters.iter().any(|par| par.c_type == "GAsyncReadyCallback") {
@@ -301,7 +304,7 @@ fn analyze_function(
             if let Ok(s) = used_rust_type(env, par.typ, !par.direction.is_out()) {
                 used_types.push(s);
             }
-            let (to_glib_extra, callback_info) = bounds.add_for_parameter(env, func, par, async, false);
+            let (to_glib_extra, callback_info) = bounds.add_for_parameter(env, func, par, async);
             if let Some(to_glib_extra) = to_glib_extra {
                 to_glib_extras.insert(pos, to_glib_extra);
             }
@@ -357,7 +360,7 @@ fn analyze_function(
                 if let Ok(s) = used_rust_type(env, par.typ, !par.direction.is_out()) {
                     used_types.push(s);
                 }
-                let (to_glib_extra, callback_info) = bounds.add_for_parameter(env, func, par, async, expecting_data);
+                let (to_glib_extra, callback_info) = bounds.add_for_parameter(env, func, par, async);
                 if let Some(to_glib_extra) = to_glib_extra {
                     if par.c_type != "GDestroyNotify" {
                         to_glib_extras.insert(pos, to_glib_extra);
@@ -372,7 +375,6 @@ fn analyze_function(
                 if rust_type.is_function() {
                     if par.c_type != "GDestroyNotify" {
                         if let Some((mut callback, destroy_index)) = analyze_callback(
-                            //&func.name,
                             func_name,
                             env,
                             &par,
@@ -438,7 +440,7 @@ fn analyze_function(
             error!("`{}`: Different user data share the same destructors", func.name);
         }
 
-        if expecting_data && (!destroys.is_empty() || !callbacks.is_empty()) {
+        if !destroys.is_empty() || !callbacks.is_empty() {
             for (pos, typ) in to_replace {
                 let ty = env.library.type_(typ);
                 params[pos].typ = typ;
@@ -449,7 +451,8 @@ fn analyze_function(
                                  .collect::<HashSet<_>>() // To prevent duplicates.
                                  .into_iter()
                                  .collect::<Vec<_>>();
-            s.sort(); // We need to remove the end, otherwise the indexes won't be working anymore.
+            s.sort(); // We need to remove the end, otherwise the indexes won't be working
+                      // anymore.
             for pos in s.iter().rev() {
                 params.remove(**pos);
             }
@@ -461,6 +464,10 @@ fn analyze_function(
                 async,
                 in_trait
             );
+        } else {
+            error!("`{}`: this is supposed to be a callback function but no callback was \
+                    found...", func.name);
+            commented = true;
         }
     }
 
@@ -577,7 +584,7 @@ fn analyze_function(
         async_future,
         callbacks,
         destroys,
-        remove_params: cross_user_data_check.values().map(|p| *p).collect::<Vec<_>>(),
+        remove_params: cross_user_data_check.values().cloned().collect::<Vec<_>>(),
     }
 }
 

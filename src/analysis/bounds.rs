@@ -121,12 +121,9 @@ impl Bounds {
         func: &Function,
         par: &CParameter,
         async: bool,
-        expecting_data: bool,
     ) -> (Option<String>, Option<CallbackInfo>) {
         let type_name = bounds_rust_type(env, par.typ);
-        let mut type_string = if (async && async_param_to_remove(&par.name)) ||
-                                 (expecting_data && (par.name == "data" ||
-                                  par.name.ends_with("_data"))) {
+        let mut type_string = if async && async_param_to_remove(&par.name) {
             return (None, None);
         } else {
             type_name.into_string()

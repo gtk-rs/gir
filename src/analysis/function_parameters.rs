@@ -419,5 +419,5 @@ fn has_length(env: &Env, typ: TypeId) -> bool {
 }
 
 pub fn async_param_to_remove(name: &str) -> bool {
-    name == "user_data" || name.ends_with("data")
+    name == "user_data" || name.ends_with("data") // FIXME: use async indexes instead
 }
