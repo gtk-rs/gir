@@ -665,6 +665,15 @@ fn analyze_async(
             *commented = true;
             return false;
         }
+        if !*commented && (success_parameters.is_empty() || error_parameters.is_empty()) {
+            if success_parameters.is_empty() {
+                error!("{}: missing success parameters for async future", func.name);
+            } else if error_parameters.is_empty() {
+                error!("{}: missing error parameters for async future", func.name);
+            }
+            *commented = true;
+            return false;
+        }
         *trampoline = Some(AsyncTrampoline {
             is_method: func.kind == FunctionKind::Method,
             name: format!("{}_trampoline", func.name),
@@ -740,19 +749,24 @@ fn analyze_callback(
 
         // If we don't have a "user data" parameter, we can't get the closure so there's nothing we
         // can do...
-        if func.parameters.len() < 1 || func.parameters.last().unwrap().c_type != "gpointer" {
+        if par.c_type != "GDestroyNotify" &&
+           (func.parameters.is_empty() || !func.parameters.iter().any(|c| c.closure.is_some())) {
             *commented = true;
             error!("Closure type `{}` doesn't provide user data", par.c_type);
             return None;
         }
 
         let parameters = ::analysis::trampoline_parameters::analyze(env, &func.parameters, par.typ, &[]);
-        *commented |= func.parameters.iter()
-                                     .rev()
-                                     .skip(1) // We skip the "data" parameter.
-                                     .any(|p| {
-                                         ::analysis::trampolines::type_error(env, p).is_some()
-                                     });
+        if par.c_type != "GDestroyNotify" && !*commented {
+            *commented |= func.parameters.iter()
+                                         .any(|p| {
+                                             if p.closure.is_none() {
+                                                 ::analysis::trampolines::type_error(env, p).is_some()
+                                             } else {
+                                                 false
+                                             }
+                                         });
+        }
         for p in parameters.rust_parameters.iter() {
             if let Ok(s) = used_rust_type(env, p.typ, false) {
                 imports.add_used_type(&s, None);
