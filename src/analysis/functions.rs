@@ -792,7 +792,7 @@ fn analyze_callback(
             inhibit: false,
             concurrency: library::Concurrency::None,
             is_notify: false,
-            is_call: par.scope.is_call(),
+            scope: par.scope,
             // If destroy callback, id doesn't matter.
             user_data_index: c_parameters[par.user_data_index.unwrap_or_else(|| 0)].1,
             destroy_index: 0,

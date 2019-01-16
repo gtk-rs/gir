@@ -23,7 +23,7 @@ pub struct Trampoline {
     pub inhibit: bool,
     pub concurrency: library::Concurrency,
     pub is_notify: bool,
-    pub is_call: bool,
+    pub scope: library::ParameterScope,
     /// It's used to group callbacks
     pub user_data_index: usize,
     pub destroy_index: usize,
@@ -153,7 +153,7 @@ pub fn analyze(
         concurrency,
         is_notify,
         bound_name: 'A', // TODO: remove that
-        is_call: false,
+        scope: library::ParameterScope::None,
         user_data_index: 0,
         destroy_index: 0,
     };

@@ -139,7 +139,7 @@ impl Builder {
                     if calls.len() > 1 {
                         Some(format!("Box_<Box_<({})>>",
                                      calls.iter()
-                                          .map(|c| if c.is_call {
+                                          .map(|c| if c.scope.is_call() {
                                               format!("Option<{}>", c.bound_name)
                                           } else {
                                               format!("&{}", c.bound_name)
@@ -220,10 +220,14 @@ impl Builder {
                         name: format!("super_callback{}", pos),
                         is_mut: false,
                         value: Box::new(Chunk::Custom(format!("{}{}_data",
-                                                              if calls[0].is_call { "&" } else { "" },
+                                                              if calls[0].scope.is_call() {
+                                                                  "&"
+                                                              } else {
+                                                                  ""
+                                                              },
                                                               calls[0].name))),
                         type_: Some(Box::new(Chunk::Custom(
-                            if calls[0].is_call {
+                            if calls[0].scope.is_call() {
                                 format!("&Option<{}>", calls[0].bound_name)
                             } else {
                                 format!("Box_<Box_<Option<{}>>>", calls[0].bound_name)
@@ -242,7 +246,7 @@ impl Builder {
                       full_type: &Option<String>, pos: usize, bounds: &str, bounds_names: &str,
                       is_destroy: bool) {
         if full_type.is_none() && !is_destroy {
-            if trampoline.is_call {
+            if trampoline.scope.is_call() {
                 chunks.push(
                     Chunk::Custom(
                         format!("let {0}_data: Option<{1}> = {0}.into();",
@@ -254,7 +258,7 @@ impl Builder {
                                 trampoline.name, trampoline.bound_name)));
             }
         } else if !is_destroy {
-            if trampoline.is_call {
+            if trampoline.scope.is_call() {
                 chunks.push(Chunk::Custom(format!("let {0}_data: &{1} = &{0};",
                                                   trampoline.name,
                                                   trampoline.bound_name)));
@@ -304,7 +308,13 @@ impl Builder {
                 }
             );
             if !is_destroy {
-                if !trampoline.is_call {
+                if trampoline.scope.is_async() {
+                    body.push(
+                        Chunk::Custom(
+                            format!("{}let callback = callback.{}.expect(\"cannot get closure...\");",
+                                    if trampoline.ret.c_type != "void" { "let res = " } else { "" },
+                                    pos)));
+                } else if !trampoline.scope.is_call() {
                     body.push(
                         Chunk::Custom(
                             format!("{}if let Some(ref callback) = callback.{} {{",
@@ -320,13 +330,13 @@ impl Builder {
                     name: format!("{}callback", if is_destroy { "_" } else { "" }),
                     is_mut: false,
                     value: Box::new(Chunk::Custom(
-                        if trampoline.is_call {
+                        if trampoline.scope.is_call() {
                             format!("{} as *const _ as usize as *mut {}", func, self.callbacks[0].bound_name)
                         } else {
                             format!("Box_::from_raw({} as *mut _)", func)
                         })),
                     type_: Some(Box::new(Chunk::Custom(
-                        if trampoline.is_call {
+                        if trampoline.scope.is_call() {
                             format!("*mut {}", self.callbacks[0].bound_name)
                         } else {
                             format!("Box_<Box_<Option<{}>>>", self.callbacks[0].bound_name)
@@ -334,9 +344,14 @@ impl Builder {
                 }
             );
             if !is_destroy {
-                if !trampoline.is_call {
-                    body.push(Chunk::Custom(format!("{}if let Some(ref callback) = **callback {{",
-                                                    if trampoline.ret.c_type != "void" { "let res = " } else { "" })));
+                if trampoline.scope.is_async() {
+                    body.push(Chunk::Custom(
+                        format!("{}let callback = callback.expect(\"cannot get closure...\");",
+                                if trampoline.ret.c_type != "void" { "let res = " } else { "" })));
+                } else if !trampoline.scope.is_call() {
+                    body.push(Chunk::Custom(
+                        format!("{}if let Some(ref callback) = **callback {{",
+                                if trampoline.ret.c_type != "void" { "let res = " } else { "" })));
                 } else if trampoline.ret.c_type != "void" {
                     body.push(Chunk::Custom("let res = ".to_owned()));
                 }
@@ -345,13 +360,23 @@ impl Builder {
         if !is_destroy {
             use writer::to_code::ToCode;
             body.push(Chunk::Custom(format!("{}({}){}",
-                                            if trampoline.is_call { "(*callback)" } else { "\tcallback"},
+                                            if trampoline.scope.is_call() {
+                                                "(*callback)"
+                                            } else if trampoline.scope.is_async() {
+                                                "callback"
+                                            } else {
+                                                "\tcallback"
+                                            },
                                             arguments.iter()
                                                      .flat_map(|arg| arg.to_code(env))
                                                      .collect::<Vec<_>>()
                                                      .join(", "),
-                                            if trampoline.is_call { ";" } else { "" },)));
-            if !trampoline.is_call {
+                                            if trampoline.scope.is_call() {
+                                                ";"
+                                            } else {
+                                                ""
+                                            },)));
+            if !trampoline.scope.is_async() && !trampoline.scope.is_call() {
                 body.push(Chunk::Custom("} else {".to_owned()));
                 body.push(Chunk::Custom("\tpanic!(\"cannot get closure...\")".to_owned()));
                 body.push(Chunk::Custom("};".to_owned()));
@@ -408,7 +433,7 @@ impl Builder {
 
         chunks.push(extern_func);
         if !is_destroy {
-            if !trampoline.is_call {
+            if !trampoline.scope.is_call() {
                 chunks.push(Chunk::Custom(format!("let {0} = if {0}_data.is_some() {{ Some({0}_func::<{1}> as _) }} else {{ None }};",
                                                   trampoline.name,
                                                   bounds_names)));
@@ -657,7 +682,7 @@ impl Builder {
             params.push(chunk);
         }
         for (user_data_index, (pos, _, callbacks)) in calls.iter() {
-            let all_call = callbacks.iter().all(|c| c.is_call);
+            let all_call = callbacks.iter().all(|c| c.scope.is_call());
             params.insert(*user_data_index as _, Chunk::FfiCallParameter {
                     transformation_type: TransformationType::ToGlibDirect {
                         name: if all_call {

@@ -91,6 +91,13 @@ impl ParameterScope {
             _ => false,
         }
     }
+
+    pub fn is_async(&self) -> bool {
+        match *self {
+            ParameterScope::Async => true,
+            _ => false,
+        }
+    }
 }
 
 impl Default for ParameterScope {

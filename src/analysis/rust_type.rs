@@ -218,20 +218,27 @@ fn rust_type_full(
                     }
                 }
             }
+            let closure_kind = if scope.is_call() {
+                "FnMut"
+            } else if scope.is_async() {
+                "FnOnce"
+            } else {
+                "Fn"
+            };
             let ret = match rust_type(env, f.ret.typ) {
                 Ok(x) => format!("{}({}) -> {}",
-                                 if scope.is_call() { "FnMut" } else { "Fn" },
+                                 closure_kind,
                                  s.join(", "),
                                  if x != "GString" { &x } else { "String" }),
                 Err(TypeError::Unimplemented(ref x)) if x == "()" => {
                     format!("{}({})",
-                            if scope.is_call() { "FnMut" } else { "Fn" },
+                            closure_kind,
                             s.join(", "))
                 }
                 e => {
                     err = true;
                     format!("{}({}) -> {}",
-                            if scope.is_call() { "FnMut" } else { "Fn" },
+                            closure_kind,
                             s.join(", "),
                             e.into_string())
                 }
