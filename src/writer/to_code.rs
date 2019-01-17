@@ -148,6 +148,8 @@ impl ToCode for Chunk {
                 format!("let user_data: Box<Box<{}>> = Box::new(Box::new(callback));", typ),
             ],
             BoxFn { name: Some(ref name), ref typ } => vec![
+                // TODO: The name is generated based on user callback data holder. Not ideal doing
+                //       it here, this way...
                 format!("let {}_data: Box<Box<{}>> = Box::new(Box::new({}));",
                         name,
                         typ,

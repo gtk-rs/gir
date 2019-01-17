@@ -1,6 +1,5 @@
 use library;
 use super::parameter_ffi_call_out;
-use analysis::trampoline_parameters::RustParameter;
 
 #[derive(Clone)]
 pub struct Mode {
@@ -22,15 +21,6 @@ impl<'a> From<&'a library::Parameter> for Mode {
         Mode {
             typ: orig.typ,
             transfer: orig.transfer,
-        }
-    }
-}
-
-impl<'a> From<&'a RustParameter> for Mode {
-    fn from(orig: &'a RustParameter) -> Mode {
-        Mode {
-            typ: orig.typ,
-            transfer: library::Transfer::None, // TODO: fix this
         }
     }
 }

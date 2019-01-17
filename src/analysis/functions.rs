@@ -446,6 +446,8 @@ fn analyze_function(
 
     if !has_callback_parameter {
         for (pos, par) in parameters.c_parameters.iter().enumerate() {
+            // FIXME: It'd be better if we assumed that user data wasn't gpointer all the time so
+            //        we could handle it more generically.
             if async && par.c_type == "gpointer" {
                 continue;
             }
@@ -553,7 +555,8 @@ fn analyze_function(
 
     if !commented {
         if !destroys.is_empty() || !callbacks.is_empty() {
-            imports.add("std::boxed::Box as Box_", None);
+            imports.add("std::boxed::Box as Box_", None); // TODO: it often generates useless
+                                                          //       imports...
             imports.add("glib_ffi::gpointer", None); // TODO: maybe improve this one?
         }
         for transformation in &mut parameters.transformations {

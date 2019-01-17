@@ -17,6 +17,10 @@ pub struct Trampoline {
     pub name: String,
     pub parameters: Parameters,
     pub ret: library::Parameter,
+    // This field is used for user callbacks in `codegen::function_body_chunk` when generating
+    // inner C functions. We need to have the bound name in order to create variables and also to
+    // pass to the C function bounds (otherwise it won't compile because it doesn't know how to
+    // infer the bounds).
     pub bound_name: char,
     pub bounds: Bounds,
     pub version: Option<Version>,
@@ -152,7 +156,7 @@ pub fn analyze(
         inhibit,
         concurrency,
         is_notify,
-        bound_name: 'A', // TODO: remove that
+        bound_name: 'A',
         scope: library::ParameterScope::None,
         user_data_index: 0,
         destroy_index: 0,
