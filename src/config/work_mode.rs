@@ -9,8 +9,8 @@ pub enum WorkMode {
 }
 
 impl WorkMode {
-    pub fn is_normal(&self) -> bool {
-        match *self {
+    pub fn is_normal(self) -> bool {
+        match self {
             WorkMode::Normal => true,
             _ => false,
         }

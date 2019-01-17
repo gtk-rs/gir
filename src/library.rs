@@ -85,15 +85,15 @@ pub enum ParameterScope {
 }
 
 impl ParameterScope {
-    pub fn is_call(&self) -> bool {
-        match *self {
+    pub fn is_call(self) -> bool {
+        match self {
             ParameterScope::Call => true,
             _ => false,
         }
     }
 
-    pub fn is_async(&self) -> bool {
-        match *self {
+    pub fn is_async(self) -> bool {
+        match self {
             ParameterScope::Async => true,
             _ => false,
         }
@@ -225,8 +225,8 @@ pub enum Fundamental {
 }
 
 impl Fundamental {
-    pub fn requires_conversion(&self) -> bool {
-        match *self {
+    pub fn requires_conversion(self) -> bool {
+        match self {
             Fundamental::Int8 |
             Fundamental::UInt8 |
             Fundamental::Int16 |

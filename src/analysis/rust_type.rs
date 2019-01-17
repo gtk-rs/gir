@@ -199,10 +199,10 @@ fn rust_type_full(
         Function(ref f) => {
             let full_name = type_id.full_name(&env.library);
             if full_name == "Gio.AsyncReadyCallback" {
-                return Ok(format!("FnOnce(Result<(), Error>) + Send + 'static"));
+                return Ok("FnOnce(Result<(), Error>) + Send + 'static".to_owned());
             }
             if full_name == "GLib.DestroyNotify" {
-                return Ok(format!("Fn() + 'static"));
+                return Ok("Fn() + 'static".to_owned());
             }
             let mut s = Vec::with_capacity(f.parameters.len());
             let mut err = false;

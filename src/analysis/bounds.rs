@@ -171,13 +171,12 @@ impl Bounds {
                         });
                     }
                 }
-                if par.c_type != "GDestroyNotify" {
-                    if !self.add_parameter(&par.name, &type_string, bound_type, async) {
-                        panic!(
-                            "Too many type constraints for {}",
-                            func.c_identifier.as_ref().unwrap()
-                        )
-                    }
+                if par.c_type != "GDestroyNotify" &&
+                   !self.add_parameter(&par.name, &type_string, bound_type, async) {
+                    panic!(
+                        "Too many type constraints for {}",
+                        func.c_identifier.as_ref().unwrap()
+                    )
                 }
                 if need_is_into_check {
                     if let Some(x) = if let Some(ref mut last) = self.used.last_mut() {

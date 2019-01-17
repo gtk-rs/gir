@@ -291,30 +291,28 @@ fn analyze_callbacks(
                         to_replace.push((pos, par.typ));
                         continue;
                     }
-                } else {
-                    if let Some((mut callback, _)) = analyze_callback(
-                        func_name,
-                        env,
-                        &par,
-                        &callback_info,
-                        commented,
-                        imports,
-                        &c_parameters,
-                        &rust_type,
-                    ) {
-                        // We just assume that for API "cleaness", the destroy callback will always
-                        // be |-> *after* <-| the initial callback.
-                        if let Some(user_data_index) = cross_user_data_check.get(&pos) {
-                            callback.user_data_index = *user_data_index;
-                            callback.destroy_index = pos;
-                        } else {
-                            error!("`{}`: no user data point to the destroy callback", func_name);
-                            *commented = true;
-                        }
-                        destroys.push(callback);
-                        to_remove.push(pos);
-                        continue;
+                } else if let Some((mut callback, _)) = analyze_callback(
+                    func_name,
+                    env,
+                    &par,
+                    &callback_info,
+                    commented,
+                    imports,
+                    &c_parameters,
+                    &rust_type,
+                ) {
+                    // We just assume that for API "cleaness", the destroy callback will always
+                    // be |-> *after* <-| the initial callback.
+                    if let Some(user_data_index) = cross_user_data_check.get(&pos) {
+                        callback.user_data_index = *user_data_index;
+                        callback.destroy_index = pos;
+                    } else {
+                        error!("`{}`: no user data point to the destroy callback", func_name);
+                        *commented = true;
                     }
+                    destroys.push(callback);
+                    to_remove.push(pos);
+                    continue;
                 }
             }
             if !*commented {
@@ -480,10 +478,8 @@ fn analyze_function(
                 commented = true;
             }
         }
-        if async {
-            if trampoline.is_none() {
-                commented = true;
-            }
+        if async && trampoline.is_none() {
+            commented = true;
         }
     } else {
         analyze_callbacks(env, func, &mut cross_user_data_check, &mut user_data_indexes,

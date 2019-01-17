@@ -182,7 +182,7 @@ impl Builder {
                 self.add_trampoline(env,
                                     &mut chunks,
                                     trampoline,
-                                    &group_by_user_data.get(&user_data_index).unwrap().1,
+                                    &group_by_user_data[&user_data_index].1,
                                     *pos,
                                     &bounds,
                                     &bounds_names,
@@ -193,7 +193,7 @@ impl Builder {
                 self.add_trampoline(env,
                                     &mut chunks,
                                     destroy,
-                                    &group_by_user_data.get(&destroy.user_data_index).unwrap().1,
+                                    &group_by_user_data[&destroy.user_data_index].1,
                                     0, // doesn't matter for destroy
                                     &bounds,
                                     &bounds_names,
