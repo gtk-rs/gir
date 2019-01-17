@@ -244,8 +244,9 @@ pub fn bound_to_string(bound: &Bound, async: bool) -> String {
         }
         IsA(None) => format!("{}: IsA<{}>{}", bound.alias, bound.type_str, if async { " + Clone + 'static" } else { "" }),
         // This case should normally never happened
-        AsRef(Some(lifetime)) => {
-            format!("{}: AsRef<{}> + '{}", bound.alias, bound.type_str, lifetime)
+        AsRef(Some(_/*lifetime*/)) => {
+            unreachable!();
+            // format!("{}: AsRef<{}> + '{}", bound.alias, bound.type_str, lifetime)
         }
         AsRef(None) => format!("{}: AsRef<{}>", bound.alias, bound.type_str),
         Into(Some(l), _) => format!("{}: Into<Option<&'{} {}>>",
