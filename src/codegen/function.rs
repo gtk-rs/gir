@@ -260,7 +260,7 @@ pub fn bounds(
     bounds: &Bounds,
     skip: &[char],
     async: bool,
-    filter_hack: bool,
+    filter_callback_modified: bool,
 ) -> (String, Vec<String>) {
     use analysis::bounds::BoundType::*;
 
@@ -283,7 +283,8 @@ pub fn bounds(
         .filter(|s| !skip_lifetimes.contains(s))
         .map(|s| format!("'{}", s))
         .chain(bounds.iter()
-                     .filter(|bound| !skip.contains(&bound.alias) && (!filter_hack || !bound.hack))
+                     .filter(|bound| !skip.contains(&bound.alias) && (!filter_callback_modified ||
+                                                                      !bound.callback_modified))
                      .map(|b| bound_to_string(b, async)))
         .collect();
 
@@ -295,7 +296,8 @@ pub fn bounds(
                            .map(|s| format!("'{}", s))
                            .chain(bounds.iter()
                                         .filter(|bound| !skip.contains(&bound.alias) &&
-                                                        (!filter_hack || !bound.hack))
+                                                        (!filter_callback_modified ||
+                                                         !bound.callback_modified))
                                         .map(|b| b.alias.to_string()))
                            .collect::<Vec<_>>();
         (format!("<{}>", strs.join(", ")), bounds)

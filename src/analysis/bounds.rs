@@ -56,7 +56,7 @@ pub struct Bound {
     pub alias: char,
     pub type_str: String,
     pub info_for_next_type: bool,
-    pub hack: bool,
+    pub callback_modified: bool,
 }
 
 #[derive(Clone, Debug)]
@@ -98,7 +98,7 @@ impl Bound {
                     alias: TYPE_PARAMETERS_START,
                     type_str: type_str.into_string(),
                     info_for_next_type: false,
-                    hack: false,
+                    callback_modified: false,
                 })
             }
         }
@@ -186,7 +186,12 @@ impl Bounds {
                             new_one.alias = self.unused.pop_front().expect("no available bound");
                             new_one.type_str = last.alias.to_string();
                             new_one.parameter_name = last.parameter_name.clone();
-                            new_one.hack = true;
+                            // When we create a new bound for a callback which can be NULL,
+                            // we need to generate two new bounds instead of just one. This flag
+                            // allows us to know it so we can prevent its "generation" in the
+                            // codegen part (we don't need the `Into<>` part in a few parts of the
+                            // code).
+                            new_one.callback_modified = true;
 
                             last.bound_type = BoundType::NoWrapper;
                             last.parameter_name = String::new();
@@ -259,7 +264,7 @@ impl Bounds {
                     alias,
                     type_str: type_str.to_string(),
                     info_for_next_type: false,
-                    hack: false,
+                    callback_modified: false,
                 });
                 return true;
             }
@@ -287,7 +292,7 @@ impl Bounds {
                     alias,
                     type_str: type_str.to_owned(),
                     info_for_next_type: true,
-                    hack: false,
+                    callback_modified: false,
                 });
                 alias.to_string()
             } else {
@@ -303,7 +308,7 @@ impl Bounds {
                 alias,
                 type_str: type_str.to_owned(),
                 info_for_next_type: false,
-                hack: false,
+                callback_modified: false,
             });
             true
         } else {

@@ -374,9 +374,9 @@ fn analyze_function(
                 func.parameters.iter()
                                .any(|parameter| parameter.scope == ParameterScope::Async &&
                                                 parameter.c_type == "GAsyncReadyCallback");
-    let expecting_data = !async &&
-                         func.parameters.iter()
-                                        .any(|par| env.library.type_(par.typ).is_function());
+    let has_callback_parameter =
+        !async && func.parameters.iter()
+                                 .any(|par| env.library.type_(par.typ).is_function());
 
     let mut commented = false;
     let mut bounds: Bounds = Default::default();
@@ -387,7 +387,7 @@ fn analyze_function(
     let mut destroys = Vec::new();
     let mut async_future = None;
 
-    if !async && !expecting_data &&
+    if !async && !has_callback_parameter &&
        func.parameters.iter().any(|par| par.c_type == "GDestroyNotify") {
         // In here, We have a DestroyNotify callback but no other callback is provided. A good
         // example of this situation is this function:
@@ -446,7 +446,7 @@ fn analyze_function(
     let mut cross_user_data_check: HashMap<usize, usize> = HashMap::new();
     let mut user_data_indexes: HashSet<usize> = HashSet::new();
 
-    if !expecting_data {
+    if !has_callback_parameter {
         for (pos, par) in parameters.c_parameters.iter().enumerate() {
             if async && par.c_type == "gpointer" {
                 continue;
