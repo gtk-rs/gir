@@ -368,8 +368,7 @@ fn analyze_function(
     configured_functions: &[&config::functions::Function],
     imports: &mut Imports,
 ) -> Info {
-    let async = func.name.ends_with("_async") ||
-                func.parameters.iter()
+    let async = func.parameters.iter()
                                .any(|parameter| parameter.scope == ParameterScope::Async &&
                                                 parameter.c_type == "GAsyncReadyCallback");
     let has_callback_parameter =
