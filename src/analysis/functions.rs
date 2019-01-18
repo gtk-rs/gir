@@ -229,7 +229,7 @@ fn analyze_callbacks(
         // actual closure parameter.
         let mut c_parameters = Vec::new();
         for (pos, par) in parameters.c_parameters.iter().enumerate() {
-            if par.user_data_index.is_some() || par.destroy_index.is_some() {
+            if par.instance_parameter {
                 continue;
             }
             c_parameters.push((par, pos));
@@ -754,7 +754,10 @@ fn analyze_callback(
             return None;
         }
 
-        let parameters = ::analysis::trampoline_parameters::analyze(env, &func.parameters, par.typ, &[]);
+        let parameters = ::analysis::trampoline_parameters::analyze(env,
+                                                                    &func.parameters,
+                                                                    par.typ,
+                                                                    &[]);
         if par.c_type != "GDestroyNotify" && !*commented {
             *commented |= func.parameters.iter()
                                          .any(|p| {
@@ -777,27 +780,47 @@ fn analyze_callback(
                 imports.add_used_type(&"String", None);
             }
         }
-        Some((Trampoline {
-            name: par.name.to_string(),
-            parameters,
-            ret: func.ret.clone(),
-            bound_name: match callback_info {
-                Some(x) => x.bound_name,
-                None => return None,
-            },
-            bounds: Bounds::default(),
-            version: None,
-            inhibit: false,
-            concurrency: library::Concurrency::None,
-            is_notify: false,
-            scope: par.scope,
-            // If destroy callback, id doesn't matter.
-            user_data_index: c_parameters[par.user_data_index.unwrap_or_else(|| 0)].1,
-            destroy_index: 0,
-        }, match par.destroy_index {
-            Some(destroy_index) => Some(c_parameters[destroy_index].1),
-            None => None,
-        }))
+        let user_data_index = par.user_data_index.unwrap_or_else(|| 0);
+        if par.c_type != "GDestroyNotify" && c_parameters.len() <= user_data_index {
+            error!("`{}`: Invalid user data index of `{}`", func.name, user_data_index);
+            *commented = true;
+            None
+        } else if match par.destroy_index {
+            Some(destroy_index) => c_parameters.len() <= destroy_index,
+            None => false,
+        } {
+            error!("`{}`: Invalid destroy index of `{}`",
+                   func.name,
+                   par.destroy_index.unwrap());
+            *commented = true;
+            None
+        } else {
+            Some((Trampoline {
+                name: par.name.to_string(),
+                parameters,
+                ret: func.ret.clone(),
+                bound_name: match callback_info {
+                    Some(x) => x.bound_name,
+                    None => return None,
+                },
+                bounds: Bounds::default(),
+                version: None,
+                inhibit: false,
+                concurrency: library::Concurrency::None,
+                is_notify: false,
+                scope: par.scope,
+                // If destroy callback, id doesn't matter.
+                user_data_index: if par.c_type != "GDestroyNotify" {
+                    c_parameters[user_data_index].1
+                } else {
+                    0
+                },
+                destroy_index: 0,
+            }, match par.destroy_index {
+                Some(destroy_index) => Some(c_parameters[destroy_index].1),
+                None => None,
+            }))
+        }
     } else {
         None
     }
