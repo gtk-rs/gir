@@ -220,6 +220,7 @@ fn analyze_callbacks(
     disable_length_detect: bool,
     in_trait: bool,
     commented: &mut bool,
+    concurrency: library::Concurrency,
 ) {
     let mut to_replace = Vec::new();
     let mut to_remove = Vec::new();
@@ -250,7 +251,8 @@ fn analyze_callbacks(
             if let Ok(s) = used_rust_type(env, par.typ, !par.direction.is_out()) {
                 used_types.push(s);
             }
-            let (to_glib_extra, callback_info) = bounds.add_for_parameter(env, func, par, false);
+            let (to_glib_extra, callback_info) = bounds.add_for_parameter(env, func, par, false,
+                                                                          concurrency);
             if let Some(to_glib_extra) = to_glib_extra {
                 if par.c_type != "GDestroyNotify" {
                     to_glib_extras.insert(pos, to_glib_extra);
@@ -374,6 +376,18 @@ fn analyze_function(
     let has_callback_parameter =
         !async && func.parameters.iter()
                                  .any(|par| env.library.type_(par.typ).is_function());
+    let concurrency = {
+        let full_name = type_tid.full_name(&env.library);
+        match env.config.objects.get(&*full_name) {
+            Some(obj) => {
+                match env.library.type_(type_tid) {
+                    library::Type::Class(_) => obj.concurrency,
+                    _ => library::Concurrency::SendSync,
+                }
+            }
+            None => library::Concurrency::SendSync,
+        }
+    };
 
     let mut commented = false;
     let mut bounds: Bounds = Default::default();
@@ -458,7 +472,8 @@ fn analyze_function(
             if let Ok(s) = used_rust_type(env, par.typ, !par.direction.is_out()) {
                 used_types.push(s);
             }
-            let (to_glib_extra, callback_info) = bounds.add_for_parameter(env, func, par, async);
+            let (to_glib_extra, callback_info) = bounds.add_for_parameter(env, func, par, async,
+                                                                          library::Concurrency::None);
             if let Some(to_glib_extra) = to_glib_extra {
                 to_glib_extras.insert(pos, to_glib_extra);
             }
@@ -485,8 +500,8 @@ fn analyze_function(
     } else {
         analyze_callbacks(env, func, &mut cross_user_data_check, &mut user_data_indexes,
                           &mut parameters, &mut used_types, &mut bounds, &mut to_glib_extras,
-                          imports, &mut destroys, &mut callbacks, &mut params, configured_functions,
-                          disable_length_detect, in_trait, &mut commented);
+                          imports, &mut destroys, &mut callbacks, &mut params,configured_functions,
+                          disable_length_detect, in_trait, &mut commented, concurrency);
     }
 
     for par in &parameters.rust_parameters {

@@ -9,7 +9,7 @@ use analysis::out_parameters::use_function_return_for_result;
 use analysis::rust_type::{bounds_rust_type, rust_type, rust_type_with_scope};
 use consts::TYPE_PARAMETERS_START;
 use env::Env;
-use library::{Class, Function, Fundamental, Nullable, ParameterDirection, Type, TypeId};
+use library::{Class, Concurrency, Function, Fundamental, Nullable, ParameterDirection, Type, TypeId};
 use traits::IntoString;
 
 #[derive(Clone, Eq, Debug, PartialEq)]
@@ -121,6 +121,7 @@ impl Bounds {
         func: &Function,
         par: &CParameter,
         async: bool,
+        concurrency: Concurrency,
     ) -> (Option<String>, Option<CallbackInfo>) {
         let type_name = bounds_rust_type(env, par.typ);
         let mut type_string = if async && async_param_to_remove(&par.name) {
@@ -161,7 +162,8 @@ impl Bounds {
                           env.library.type_(par.typ).is_function() {
                     need_is_into_check = par.c_type != "GDestroyNotify";
                     if let Type::Function(_) = env.library.type_(par.typ) {
-                        type_string = rust_type_with_scope(env, par.typ, par.scope).into_string();
+                        type_string = rust_type_with_scope(env, par.typ, par.scope, concurrency)
+                                          .into_string();
                         let bound_name = *self.unused.front().unwrap();
                         callback_info = Some(CallbackInfo {
                             callback_type: type_string.clone(),
