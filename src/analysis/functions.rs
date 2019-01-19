@@ -341,7 +341,7 @@ fn analyze_callbacks(
                              .collect::<HashSet<_>>() // To prevent duplicates.
                              .into_iter()
                              .collect::<Vec<_>>();
-        s.sort(); // We need to remove the end, otherwise the indexes won't be working
+        s.sort(); // We need to sort the array, otherwise the indexes won't be working
                   // anymore.
         for pos in s.iter().rev() {
             params.remove(**pos);

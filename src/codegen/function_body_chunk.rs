@@ -52,7 +52,6 @@ pub struct Builder {
     outs_as_return: bool,
     outs_mode: Mode,
     assertion: SafetyAssertionMode,
-    remove_params: Option<Vec<usize>>,
 }
 
 impl Builder {
@@ -69,10 +68,6 @@ impl Builder {
     }
     pub fn destroy(&mut self, trampoline: &Trampoline) -> &mut Builder {
         self.destroys.push(trampoline.clone());
-        self
-    }
-    pub fn remove_params(&mut self, remove_params: &[usize]) -> &mut Builder {
-        self.remove_params = Some(remove_params.to_owned());
         self
     }
     pub fn glib_name(&mut self, name: &str) -> &mut Builder {
@@ -716,23 +711,30 @@ impl Builder {
             };
             params.push(chunk);
         }
+        let mut to_insert = Vec::new();
         for (user_data_index, (pos, _, callbacks)) in calls.iter() {
             let all_call = callbacks.iter().all(|c| c.scope.is_call());
-            params.insert(*user_data_index as _, Chunk::FfiCallParameter {
-                    transformation_type: TransformationType::ToGlibDirect {
-                        name: if all_call {
-                            format!("super_callback{} as *const _ as usize as *mut _", pos)
-                        } else {
-                            format!("Box::into_raw(super_callback{}) as *mut _", pos)
-                        },
-                    }});
+            to_insert.push((*user_data_index, Chunk::FfiCallParameter {
+                transformation_type: TransformationType::ToGlibDirect {
+                    name: if all_call {
+                        format!("super_callback{} as *const _ as usize as *mut _", pos)
+                    } else {
+                        format!("Box::into_raw(super_callback{}) as *mut _", pos)
+                    },
+                }}));
         }
         for destroy in self.destroys.iter() {
-            params.insert(destroy.destroy_index,
-                          Chunk::FfiCallParameter {
-                              transformation_type: TransformationType::ToGlibDirect {
-                                  name: format!("destroy_call{}", destroy.destroy_index),
-                              }});
+            to_insert.push(
+                (destroy.destroy_index,
+                 Chunk::FfiCallParameter {
+                     transformation_type: TransformationType::ToGlibDirect {
+                         name: format!("destroy_call{}", destroy.destroy_index),
+                     }
+                 }));
+        }
+        to_insert.sort_unstable_by(|(a, _), (b, _)| a.cmp(b));
+        for (pos, data) in to_insert {
+            params.insert(pos, data)
         }
         params
     }

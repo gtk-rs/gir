@@ -126,6 +126,8 @@ impl Bounds {
         let type_name = bounds_rust_type(env, par.typ);
         let mut type_string = if async && async_param_to_remove(&par.name) {
             return (None, None);
+        } else if type_name.is_err() {
+            return (None, None)
         } else {
             type_name.into_string()
         };

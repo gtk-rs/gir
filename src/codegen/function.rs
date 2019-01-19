@@ -159,9 +159,6 @@ pub fn declaration(env: &Env, analysis: &analysis::functions::Info) -> String {
     let (bounds, _) = bounds(&analysis.bounds, &[], false, false);
 
     for par in analysis.parameters.rust_parameters.iter() {
-        if analysis.remove_params.iter().any(|i| *i == par.ind_c) {
-            continue
-        }
         if !param_str.is_empty() {
             param_str.push_str(", ")
         }
@@ -332,9 +329,6 @@ pub fn body_chunk(env: &Env, analysis: &analysis::functions::Info) -> Chunk {
         }
         for trampoline in analysis.destroys.iter() {
             builder.destroy(trampoline);
-        }
-        if !analysis.remove_params.is_empty() {
-            builder.remove_params(&analysis.remove_params);
         }
     }
 
