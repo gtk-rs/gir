@@ -4,7 +4,6 @@ use analysis::function_parameters::CParameter as AnalysisCParameter;
 use analysis::function_parameters::{Transformation, TransformationType};
 use analysis::trampolines::Trampoline;
 use analysis::out_parameters::Mode;
-use analysis::namespaces;
 use analysis::return_value;
 use analysis::rust_type::rust_type;
 use analysis::safety_assertion_mode::SafetyAssertionMode;
@@ -12,7 +11,7 @@ use chunk::{Chunk, Param, TupleMode};
 use chunk::parameter_ffi_call_out;
 use env::Env;
 use library::{self, ParameterDirection};
-use nameutil;
+use nameutil::get_crate_name;
 use std::collections::HashMap;
 
 #[derive(Clone, Debug)]
@@ -137,7 +136,7 @@ impl Builder {
                     user_data_index,
                     (pos,
                     if calls.len() > 1 {
-                        Some(format!("Box_<Box_<({})>>",
+                        Some(format!("Box_<({})>",
                                      calls.iter()
                                           .map(|c| if c.scope.is_call() {
                                               format!("Option<{}>", c.bound_name)
@@ -230,7 +229,7 @@ impl Builder {
                             if calls[0].scope.is_call() {
                                 format!("&Option<{}>", calls[0].bound_name)
                             } else {
-                                format!("Box_<Box_<Option<{}>>>", calls[0].bound_name)
+                                format!("Box_<Option<{}>>", calls[0].bound_name)
                             }))),
                     });
                 }
@@ -254,7 +253,7 @@ impl Builder {
             } else {
                 chunks.push(
                     Chunk::Custom(
-                        format!("let {0}_data: Box_<Box_<Option<{1}>>> = Box::new(Box::new({0}.into()));",
+                        format!("let {0}_data: Box_<Option<{1}>> = Box::new({0}.into());",
                                 trampoline.name, trampoline.bound_name)));
             }
         } else if !is_destroy {
@@ -298,22 +297,49 @@ impl Builder {
                              .map(|p| p.name.clone())
                              .unwrap_or_else(|| "Unknown".to_owned());
 
+        let mut extra_before_call = "";
         if let Some(ref full_type) = full_type {
-            body.push(
-                Chunk::Let {
-                    name: format!("{}callback", if is_destroy { "_" } else { "" }),
-                    is_mut: false,
-                    value: Box::new(Chunk::Custom(format!("Box_::from_raw({} as *mut _)", func))),
-                    type_: Some(Box::new(Chunk::Custom(full_type.clone()))),
-                }
-            );
-            if !is_destroy {
+            if is_destroy || trampoline.scope.is_async() {
+                body.push(
+                    Chunk::Let {
+                        name: format!("{}callback", if is_destroy { "_" } else { "" }),
+                        is_mut: false,
+                        value: Box::new(Chunk::Custom(format!("Box_::from_raw({} as *mut _)", func))),
+                        type_: Some(Box::new(Chunk::Custom(full_type.clone()))),
+                    }
+                );
+            } else {
+                body.push(
+                    Chunk::Let {
+                        name: "callback".to_owned(),
+                        is_mut: false,
+                        value: Box::new(
+                            Chunk::Custom(
+                                format!("{}*({} as *mut _)",
+                                        if !trampoline.scope.is_call() {
+                                            "&"
+                                        } else {
+                                            ""
+                                        },
+                                        func))),
+                        type_: Some(Box::new(
+                                        Chunk::Custom(
+                                            if !trampoline.scope.is_async() &&
+                                               !trampoline.scope.is_call() {
+                                                format!("&{}", full_type)
+                                            } else {
+                                                full_type.clone()
+                                            }))),
+                    }
+                );
                 if trampoline.scope.is_async() {
                     body.push(
                         Chunk::Custom(
-                            format!("{}let callback = callback.{}.expect(\"cannot get closure...\");",
-                                    if trampoline.ret.c_type != "void" { "let res = " } else { "" },
+                            format!("let callback = callback.{}.expect(\"cannot get closure...\");",
                                     pos)));
+                    if trampoline.ret.c_type != "void" {
+                        extra_before_call = "let res = ";
+                    }
                 } else if !trampoline.scope.is_call() {
                     body.push(
                         Chunk::Custom(
@@ -330,36 +356,46 @@ impl Builder {
                     name: format!("{}callback", if is_destroy { "_" } else { "" }),
                     is_mut: false,
                     value: Box::new(Chunk::Custom(
-                        if trampoline.scope.is_call() {
-                            format!("{} as *const _ as usize as *mut {}", func, self.callbacks[0].bound_name)
-                        } else {
+                        if is_destroy || trampoline.scope.is_async() {
                             format!("Box_::from_raw({} as *mut _)", func)
+                        } else if trampoline.scope.is_call() {
+                            format!("{} as *const _ as usize as *mut {}",
+                                    func,
+                                    self.callbacks[0].bound_name)
+                        } else {
+                            format!("&*({} as *mut _)", func)
                         })),
                     type_: Some(Box::new(Chunk::Custom(
-                        if trampoline.scope.is_call() {
+                        if is_destroy || trampoline.scope.is_async() {
+                            format!("Box_<Option<{}>>", self.callbacks[0].bound_name)
+                        } else if trampoline.scope.is_call() {
                             format!("*mut {}", self.callbacks[0].bound_name)
                         } else {
-                            format!("Box_<Box_<Option<{}>>>", self.callbacks[0].bound_name)
+                            format!("&Box_<Option<{}>>",
+                                    self.callbacks[0].bound_name)
                         }))),
                 }
             );
             if !is_destroy {
                 if trampoline.scope.is_async() {
                     body.push(Chunk::Custom(
-                        format!("{}let callback = callback.expect(\"cannot get closure...\");",
-                                if trampoline.ret.c_type != "void" { "let res = " } else { "" })));
+                        "let callback = (*callback).expect(\"cannot get closure...\");".to_owned()));
+                    if trampoline.ret.c_type != "void" {
+                        extra_before_call = "let res = ";
+                    }
                 } else if !trampoline.scope.is_call() {
                     body.push(Chunk::Custom(
                         format!("{}if let Some(ref callback) = **callback {{",
                                 if trampoline.ret.c_type != "void" { "let res = " } else { "" })));
                 } else if trampoline.ret.c_type != "void" {
-                    body.push(Chunk::Custom("let res = ".to_owned()));
+                    extra_before_call = "let res = ";
                 }
             }
         }
         if !is_destroy {
             use writer::to_code::ToCode;
-            body.push(Chunk::Custom(format!("{}({}){}",
+            body.push(Chunk::Custom(format!("{}{}({}){}",
+                                            extra_before_call,
                                             if trampoline.scope.is_call() {
                                                 "(*callback)"
                                             } else if trampoline.scope.is_async() {
@@ -371,7 +407,8 @@ impl Builder {
                                                      .flat_map(|arg| arg.to_code(env))
                                                      .collect::<Vec<_>>()
                                                      .join(", "),
-                                            if trampoline.scope.is_call() {
+                                            if trampoline.scope.is_call() ||
+                                               !extra_before_call.is_empty() {
                                                 ";"
                                             } else {
                                                 ""
@@ -380,9 +417,6 @@ impl Builder {
                 body.push(Chunk::Custom("} else {".to_owned()));
                 body.push(Chunk::Custom("\tpanic!(\"cannot get closure...\")".to_owned()));
                 body.push(Chunk::Custom("};".to_owned()));
-                if full_type.is_some() {
-                    body.push(Chunk::Custom("Box_::into_raw(callback);".to_owned()));
-                }
             }
             if trampoline.ret.c_type != "void" {
                 use ::analysis::conversion_type::ConversionType;
@@ -410,7 +444,8 @@ impl Builder {
                                   .map(|p| {
                                       if p.c_type == "gpointer" {
                                           Param { name: p.name.clone(),
-                                                  typ: "glib_ffi::gpointer".to_owned() }
+                                                  typ: format!("{}::gpointer",
+                                                               get_crate_name("GLib", env)) }
                                       } else {
                                           Param { name: p.name.clone(),
                                                   typ: ::analysis::ffi_type::ffi_type(env, p.typ, &p.c_type).expect("failed to write c_type") }
@@ -421,7 +456,7 @@ impl Builder {
             return_value: if trampoline.ret.c_type != "void" {
                 let p = &trampoline.ret;
                 Some(if p.c_type == "gpointer" {
-                    "glib_ffi::gpointer".to_owned()
+                    format!("{}::gpointer", get_crate_name("GLib", env))
                 } else {
                     ::analysis::ffi_type::ffi_type(env, p.typ, &p.c_type).expect("failed to write c_type")
                 })
@@ -503,9 +538,9 @@ impl Builder {
         }
 
         let result = Chunk::Tuple(result, TupleMode::WithUnit);
-        let gio_crate_name = crate_name("Gio", env);
-        let gobject_crate_name = crate_name("GObject", env);
-        let glib_crate_name = crate_name("GLib", env);
+        let gio_crate_name = get_crate_name("Gio", env);
+        let gobject_crate_name = get_crate_name("GObject", env);
+        let glib_crate_name = get_crate_name("GLib", env);
         let mut body = vec![
             Chunk::Let {
                 name: "error".to_string(),
@@ -958,14 +993,4 @@ fn type_mem_mode(env: &Env, parameter: &library::Parameter) -> Chunk {
         },
         _ => Chunk::Uninitialized,
     }
-}
-
-fn crate_name(name: &str, env: &Env) -> String {
-    let id = env.library.find_namespace(name).expect("namespace from crate name");
-    let namespace = env.library.namespace(id);
-    let name = nameutil::crate_name(&namespace.name);
-    if id == namespaces::MAIN {
-        return "ffi".to_string();
-    }
-    format!("{}_ffi", name)
 }

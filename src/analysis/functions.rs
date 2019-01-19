@@ -22,7 +22,7 @@ use analysis::trampolines::Trampoline;
 use config;
 use env::Env;
 use library::{self, Function, FunctionKind, Nullable, Parameter, ParameterScope, Transfer, Type};
-use nameutil;
+use nameutil::{self, get_crate_name};
 use std::borrow::Borrow;
 use traits::*;
 use version::Version;
@@ -569,9 +569,10 @@ fn analyze_function(
 
     if !commented {
         if !destroys.is_empty() || !callbacks.is_empty() {
-            imports.add("std::boxed::Box as Box_", None); // TODO: it often generates useless
-                                                          //       imports...
-            imports.add("glib_ffi::gpointer", None); // TODO: maybe improve this one?
+            if callbacks.iter().any(|c| !c.scope.is_call()) {
+                imports.add("std::boxed::Box as Box_", None);
+            }
+            imports.add(&format!("{}::gpointer", get_crate_name("GLib", env)), None);
         }
         for transformation in &mut parameters.transformations {
             if let Some(to_glib_extra) = to_glib_extras.get(&transformation.ind_c) {
