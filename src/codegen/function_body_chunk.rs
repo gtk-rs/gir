@@ -419,10 +419,10 @@ impl Builder {
                 body.push(Chunk::Custom(match ConversionType::of(env, trampoline.ret.typ) {
                     ConversionType::Direct => "res".to_owned(),
                     ConversionType::Scalar | ConversionType::Pointer => {
-                        if rust_type(env, trampoline.ret.typ).unwrap() != "GString" {
-                            "res.to_glib()".to_owned()
-                        } else {
-                            "res.to_glib_full()".to_owned()
+                        match rust_type(env, trampoline.ret.typ).unwrap().as_str() {
+                            "GString" |
+                            "File" => "res.to_glib_full()".to_owned(),
+                            _ => "res.to_glib()".to_owned(),
                         }
                     }
                     ConversionType::Borrow => panic!("cannot return borrowed type..."),
