@@ -20,6 +20,7 @@ pub struct Info {
     pub get_type: String,
     pub is_interface: bool,
     pub supertypes: Vec<general::StatusedTypeId>,
+    pub final_type: bool,
     pub generate_trait: bool,
     pub trait_name: String,
     pub has_constructors: bool,
@@ -54,22 +55,6 @@ impl Deref for Info {
     }
 }
 
-pub fn has_known_subtypes(env: &Env, class_tid: library::TypeId) -> bool {
-    for child_tid in env.class_hierarchy.subtypes(class_tid) {
-        let child_name = child_tid.full_name(&env.library);
-        let status = env.config
-            .objects
-            .get(&child_name)
-            .map(|o| o.status)
-            .unwrap_or_default();
-        if status.normal() {
-            return true;
-        }
-    }
-
-    false
-}
-
 pub fn class(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<Info> {
     info!("Analyzing class {}", obj.name);
     let full_name = obj.name.clone();
@@ -97,20 +82,11 @@ pub fn class(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<Info>
 
     let supertypes = supertypes::analyze(env, class_tid, &mut imports);
 
-    let mut generate_trait = obj.generate_trait;
+    let final_type = klass.final_type;
     let trait_name = obj.trait_name
         .as_ref()
         .cloned()
         .unwrap_or_else(|| format!("{}Ext", name));
-
-    // Sanity check the user's configuration. It's unlikely that not generating
-    // a trait is wanted if there are subtypes in this very crate
-    if !generate_trait && has_known_subtypes(env, class_tid) {
-        error!(
-            "Not generating trait for {} although subtypes exist",
-            full_name
-        );
-    }
 
     let mut trampolines =
         trampolines::Trampolines::with_capacity(klass.signals.len() + klass.properties.len());
@@ -120,7 +96,7 @@ pub fn class(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<Info>
         env,
         &klass.functions,
         class_tid,
-        generate_trait,
+        !final_type,
         obj,
         &mut imports,
         Some(&mut signatures),
@@ -145,7 +121,7 @@ pub fn class(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<Info>
         env,
         &klass.signals,
         class_tid,
-        generate_trait,
+        !final_type,
         &mut trampolines,
         obj,
         &mut imports,
@@ -154,7 +130,7 @@ pub fn class(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<Info>
         env,
         &klass.properties,
         class_tid,
-        generate_trait,
+        !final_type,
         &mut trampolines,
         obj,
         &mut imports,
@@ -181,15 +157,11 @@ pub fn class(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<Info>
 
     // There's no point in generating a trait if there are no signals, methods, properties
     // and child properties: it would be empty
-    if generate_trait && !has_signals && !has_methods && properties.is_empty()
-        && child_properties.is_empty()
-    {
-        generate_trait = false;
-    }
+    //
+    // There's also no point in generating a trait for final types: there are no possible subtypes
+    let generate_trait = !final_type && (has_signals || has_methods || !properties.is_empty() || !child_properties.is_empty());
 
-    if generate_trait
-        && (has_methods || !properties.is_empty() || !child_properties.is_empty() || has_signals)
-    {
+    if generate_trait {
         imports.add("glib::object::IsA", None);
     }
 
@@ -233,6 +205,7 @@ pub fn class(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<Info>
         get_type: klass.glib_get_type.clone(),
         is_interface: false,
         supertypes,
+        final_type,
         generate_trait,
         trait_name,
         has_constructors,
@@ -353,6 +326,7 @@ pub fn interface(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<I
         get_type: iface.glib_get_type.clone(),
         is_interface: true,
         supertypes,
+        final_type: false,
         generate_trait: true,
         trait_name,
         has_methods,

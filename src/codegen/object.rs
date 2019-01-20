@@ -133,8 +133,10 @@ pub fn generate(
         try!(writeln!(w, "unsafe impl Sync for {} {{}}", analysis.name));
     }
 
-    try!(writeln!(w));
-    try!(writeln!(w, "pub const NONE_{}: Option<&{}> = None;", analysis.name.to_snake().to_uppercase(), analysis.name));
+    if !analysis.final_type {
+        try!(writeln!(w));
+        try!(writeln!(w, "pub const NONE_{}: Option<&{}> = None;", analysis.name.to_snake().to_uppercase(), analysis.name));
+    }
 
     if need_generate_trait(analysis) {
         try!(writeln!(w));
@@ -279,10 +281,17 @@ pub fn generate_reexports(
     contents.extend_from_slice(&cfgs);
     contents.push(format!("mod {};", module_name));
     contents.extend_from_slice(&cfgs);
-    if let Some(ref class_name) = analysis.rust_class_type {
-        contents.push(format!("pub use self::{}::{{{}, {}, {}}};", module_name, analysis.name, class_name, format!("NONE_{}", analysis.name.to_snake().to_uppercase())));
+
+    let none_type = if !analysis.final_type {
+        format!(", NONE_{}", analysis.name.to_snake().to_uppercase())
     } else {
-        contents.push(format!("pub use self::{}::{{{}, {}}};", module_name, analysis.name, format!("NONE_{}", analysis.name.to_snake().to_uppercase())));
+        String::new()
+    };
+
+    if let Some(ref class_name) = analysis.rust_class_type {
+        contents.push(format!("pub use self::{}::{{{}, {}{}}};", module_name, analysis.name, class_name, none_type));
+    } else {
+        contents.push(format!("pub use self::{}::{{{}{}}};", module_name, analysis.name, none_type));
     }
     if need_generate_trait(analysis) {
         contents.extend_from_slice(&cfgs);

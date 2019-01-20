@@ -70,7 +70,7 @@ pub struct GObject {
     pub version: Option<Version>,
     pub cfg_condition: Option<String>,
     pub type_id: Option<TypeId>,
-    pub generate_trait: bool,
+    pub final_type: Option<bool>,
     pub trait_name: Option<String>,
     pub child_properties: Option<ChildProperties>,
     pub concurrency: library::Concurrency,
@@ -97,7 +97,7 @@ impl Default for GObject {
             version: None,
             cfg_condition: None,
             type_id: None,
-            generate_trait: true,
+            final_type: None,
             trait_name: None,
             child_properties: None,
             concurrency: Default::default(),
@@ -183,6 +183,7 @@ fn parse_object(
             "child_prop",
             "child_name",
             "child_type",
+            "final_type",
             "trait",
             "trait_name",
             "cfg_condition",
@@ -236,8 +237,11 @@ fn parse_object(
         .map(|s| s.to_owned());
     let generate_trait = toml_object
         .lookup("trait")
+        .and_then(|v| v.as_bool());
+    let final_type = toml_object
+        .lookup("final_type")
         .and_then(|v| v.as_bool())
-        .unwrap_or(true);
+        .or_else(|| generate_trait.map(|t| !t));
     let trait_name = toml_object
         .lookup("trait_name")
         .and_then(|v| v.as_str())
@@ -281,6 +285,10 @@ fn parse_object(
         warn!("conversion_type configuration used for non-manual object {}", name);
     }
 
+    if generate_trait.is_some() {
+        warn!("`trait` configuration is deprecated and replaced by `final_type` for object {}", name);
+    }
+
     GObject {
         name,
         functions,
@@ -294,7 +302,7 @@ fn parse_object(
         version,
         cfg_condition,
         type_id: None,
-        generate_trait,
+        final_type,
         trait_name,
         child_properties,
         concurrency,

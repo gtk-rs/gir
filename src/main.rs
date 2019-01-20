@@ -94,7 +94,7 @@ fn do_main() -> Result<(), String> {
 
     {
         let _watcher = statistics.enter("Postprocessing");
-        library.postprocessing();
+        library.postprocessing(&cfg);
     }
 
     {

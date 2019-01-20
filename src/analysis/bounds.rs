@@ -9,7 +9,7 @@ use analysis::out_parameters::use_function_return_for_result;
 use analysis::rust_type::{bounds_rust_type, rust_type};
 use consts::TYPE_PARAMETERS_START;
 use env::Env;
-use library::{Function, Fundamental, Nullable, ParameterDirection, Type, TypeId};
+use library::{Class, Function, Fundamental, Nullable, ParameterDirection, Type, TypeId};
 use traits::IntoString;
 
 #[derive(Clone, Eq, Debug, PartialEq)]
@@ -177,8 +177,20 @@ impl Bounds {
             Type::Fundamental(Fundamental::Filename) => Some(AsRef(None)),
             Type::Fundamental(Fundamental::OsString)=> Some(AsRef(None)),
             Type::Fundamental(Fundamental::Utf8) if *nullable => Some(Into(Some('_'), None)),
-            Type::Class(..) if !*nullable => Some(IsA(None)),
-            Type::Class(..) => Some(Into(Some('_'), Some(Box::new(IsA(None))))),
+            Type::Class(Class { final_type, ..}) if !*nullable => {
+                if final_type {
+                    None
+                } else {
+                    Some(IsA(None))
+                }
+            },
+            Type::Class(Class { final_type, ..}) => {
+                if final_type {
+                    Some(Into(Some('_'), None))
+                } else {
+                    Some(Into(Some('_'), Some(Box::new(IsA(None)))))
+                }
+            },
             Type::Interface(..) if !*nullable => Some(IsA(None)),
             Type::Interface(..) => Some(Into(Some('_'), Some(Box::new(IsA(None))))),
             Type::List(_) | Type::SList(_) | Type::CArray(_) => None,
