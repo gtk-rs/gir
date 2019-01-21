@@ -80,7 +80,7 @@ impl TranslateFromGlib for analysis::return_value::Info {
     }
 }
 
-pub fn from_glib_xxx(transfer: library::Transfer, array_length: Option<&String>) -> (String, String) {
+fn from_glib_xxx(transfer: library::Transfer, array_length: Option<&String>) -> (String, String) {
     use library::Transfer;
     match (transfer, array_length) {
         (Transfer::None, None) => ("from_glib_none(".into(), ")".into()),

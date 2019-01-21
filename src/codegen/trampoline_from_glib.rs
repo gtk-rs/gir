@@ -34,7 +34,7 @@ impl TrampolineFromGlib for Transformation {
     }
 }
 
-fn from_glib_xxx(transfer: library::Transfer, is_borrow: bool) -> (String, String) {
+pub fn from_glib_xxx(transfer: library::Transfer, is_borrow: bool) -> (String, String) {
     use library::Transfer::*;
     match transfer {
         None if is_borrow => ("from_glib_borrow(".into(), ")".into()),

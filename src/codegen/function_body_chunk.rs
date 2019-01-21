@@ -279,11 +279,13 @@ impl Builder {
                     body.push(Chunk::Custom(format!("let {0} = from_glib({0});", par.name)));
                 }
                 _ => {
-                    let (begin, end) = ::codegen::translate_from_glib::from_glib_xxx(par.transfer, None);
+                    let (begin, end) = ::codegen::trampoline_from_glib::from_glib_xxx(par.transfer, true);
                     body.push(Chunk::Custom(format!("let {1} = {0}{1}{2};", begin, par.name, end)));
                 }
             }
-            arguments.push(Chunk::Name(par.name.clone()));
+            arguments.push(Chunk::Name(format!("{}{}",
+                                               if type_.is_fundamental() { "" } else { "&" },
+                                               par.name)));
         }
 
         let func = trampoline.parameters
