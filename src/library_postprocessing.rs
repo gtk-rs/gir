@@ -5,6 +5,8 @@ use library::*;
 use nameutil;
 use parser::is_empty_c_type;
 use traits::MaybeRefAs;
+use config::Config;
+use config::gobjects::GObject;
 
 impl Namespace {
     fn unresolved(&self) -> Vec<&str> {
@@ -22,7 +24,7 @@ impl Namespace {
 type DetectedCTypes = HashMap<TypeId, String>;
 
 impl Library {
-    pub fn postprocessing(&mut self) {
+    pub fn postprocessing(&mut self, config: &Config) {
         self.fix_gtype();
         self.check_resolved();
         self.fill_empty_signals_c_types();
@@ -30,6 +32,7 @@ impl Library {
         self.correlate_class_structs();
         self.fix_fields();
         self.make_unrepresentable_types_opaque();
+        self.mark_final_types(config);
     }
 
     fn fix_gtype(&mut self) {
@@ -370,6 +373,49 @@ impl Library {
                     fields.clear();
                 }
                 _ => unreachable!("Expected a union"),
+            }
+        }
+    }
+
+    fn mark_final_types(&mut self, config: &Config) {
+        // Here we mark all class types as final types if configured so in the config or
+        // otherwise if there is no public class struct for the type.
+        //
+        // Final types can't have any subclasses and we handle them slightly different
+        // for that reason.
+        let mut final_types: Vec<TypeId> = Vec::new();
+
+        for (ns_id, ns) in self.namespaces.iter().enumerate() {
+            for (id, type_) in ns.types.iter().enumerate() {
+                let type_ = type_.as_ref().unwrap(); //Always contains something
+
+                if let Type::Class(ref klass) = *type_ {
+                    let tid = TypeId {
+                        ns_id: ns_id as u16,
+                        id: id as u32,
+                    };
+
+                    let full_name = tid.full_name(self);
+                    let obj = config.objects.get(&*full_name);
+
+                    if let Some(GObject { final_type: Some(final_type), ..}) = obj {
+                        // The config might also be used to override a type that is wrongly
+                        // detected as final type otherwise
+                        if *final_type {
+                            final_types.push(tid);
+                        }
+                    } else if klass.c_class_type.is_none() {
+                        final_types.push(tid);
+                    }
+                }
+            }
+        }
+
+        for tid in final_types {
+            if let Type::Class(Class { ref mut final_type, ..}) = *self.type_mut(tid) {
+                *final_type = true;
+            } else {
+                unreachable!();
             }
         }
     }

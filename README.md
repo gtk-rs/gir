@@ -136,8 +136,10 @@ name = "Gtk.SomeClass"
 status = "generate"
 # replace the parameter name for the child in child properties (instead "child")
 child_name = "item"
-# don't generate trait SomeClassExt for this object, but implement all functions in impl SomeClass
-trait = false
+# mark object as final type, i.e. one without any further subclasses. this
+# will not generate trait SomeClassExt for this object, but implement all
+# functions in impl SomeClass
+final_type = true
 # allow rename result file
 module_name = "soome_class"
 # override starting version

@@ -198,6 +198,7 @@ impl Library {
             properties,
             parent,
             implements: impls,
+            final_type: false, // this will be set during postprocessing
             doc,
             version,
             deprecated_version,

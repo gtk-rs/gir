@@ -466,6 +466,7 @@ pub struct Class {
     pub properties: Vec<Property>,
     pub parent: Option<TypeId>,
     pub implements: Vec<TypeId>,
+    pub final_type: bool,
     pub version: Option<Version>,
     pub deprecated_version: Option<Version>,
     pub doc: Option<String>,
