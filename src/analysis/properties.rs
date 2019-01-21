@@ -149,7 +149,7 @@ fn analyze_property(
     } else {
         prop.writable
     };
-    let mut notifable = !prop.construct_only;
+    let mut notifiable = !prop.construct_only;
     if generate_set && generate.contains(PropertyGenerateFlags::GET) && !readable {
         warn!(
             "Attempt to generate getter for notreadable property \"{}.{}\"",
@@ -165,7 +165,7 @@ fn analyze_property(
     readable &= generate.contains(PropertyGenerateFlags::GET);
     writable &= generate.contains(PropertyGenerateFlags::SET);
     if generate_set {
-        notifable = generate.contains(PropertyGenerateFlags::NOTIFY);
+        notifiable = generate.contains(PropertyGenerateFlags::NOTIFY);
     }
 
     if readable {
@@ -226,11 +226,11 @@ fn analyze_property(
         None
     };
 
-    if !generate_trait && (writable || readable) {
+    if !generate_trait && (writable || readable || notifiable) {
         imports.add("glib::object::ObjectType", prop_version);
     }
 
-    let notify_signal = if notifable {
+    let notify_signal = if notifiable {
         let mut used_types: Vec<String> = Vec::with_capacity(4);
         let trampoline_name = trampolines::analyze(
             env,
