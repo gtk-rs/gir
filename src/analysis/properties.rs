@@ -226,7 +226,7 @@ fn analyze_property(
         None
     };
 
-    if !generate_trait && (writable || readable) {
+    if !generate_trait && (writable || readable || notifable) {
         imports.add("glib::object::ObjectType", prop_version);
     }
 
