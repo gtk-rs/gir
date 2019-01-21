@@ -22,7 +22,7 @@ use analysis::trampolines::Trampoline;
 use config;
 use env::Env;
 use library::{self, Function, FunctionKind, Nullable, Parameter, ParameterScope, Transfer, Type};
-use nameutil::{self, get_crate_name};
+use nameutil;
 use std::borrow::Borrow;
 use traits::*;
 use version::Version;
@@ -572,7 +572,6 @@ fn analyze_function(
             if callbacks.iter().any(|c| !c.scope.is_call()) {
                 imports.add("std::boxed::Box as Box_", None);
             }
-            imports.add(&format!("{}::gpointer", get_crate_name("GLib", env)), None);
         }
         for transformation in &mut parameters.transformations {
             if let Some(to_glib_extra) = to_glib_extras.get(&transformation.ind_c) {
@@ -720,6 +719,8 @@ fn analyze_callback(
     c_parameters: &[(&CParameter, usize)],
     rust_type: &Type,
 ) -> Option<(Trampoline, Option<usize>)> {
+    let mut imports_to_add = Vec::new();
+
     if let Type::Function(ref func) = rust_type {
         if par.c_type != "GDestroyNotify" {
             if let Some(user_data) = par.user_data_index {
@@ -786,14 +787,14 @@ fn analyze_callback(
         }
         for p in parameters.rust_parameters.iter() {
             if let Ok(s) = used_rust_type(env, p.typ, false) {
-                imports.add_used_type(&s, None);
+                imports_to_add.push(s);
             }
         }
         if let Ok(s) = used_rust_type(env, func.ret.typ, false) {
             if s != "GString" {
-                imports.add_used_type(&s, None);
+                imports_to_add.push(s);
             } else {
-                imports.add_used_type(&"String", None);
+                imports_to_add.push("String".to_owned());
             }
         }
         let user_data_index = par.user_data_index.unwrap_or_else(|| 0);
@@ -811,6 +812,11 @@ fn analyze_callback(
             *commented = true;
             None
         } else {
+            if !*commented {
+                for import in imports_to_add {
+                    imports.add_used_type(&import, None);
+                }
+            }
             Some((Trampoline {
                 name: par.name.to_string(),
                 parameters,
