@@ -3,6 +3,7 @@ use analysis::functions::{AsyncTrampoline, find_index_to_ignore};
 use analysis::function_parameters::CParameter as AnalysisCParameter;
 use analysis::function_parameters::{Transformation, TransformationType};
 use analysis::trampolines::Trampoline;
+use analysis::trampoline_parameters;
 use analysis::out_parameters::Mode;
 use analysis::return_value;
 use analysis::rust_type::rust_type;
@@ -271,20 +272,9 @@ impl Builder {
                par.name == "this" {
                 continue;
             }
-            let type_ = env.type_(par.typ);
-            match *type_ {
-                library::Type::Fundamental(ref x) if !x.requires_conversion() => {}
-                library::Type::Fundamental(library::Fundamental::Boolean) |
-                library::Type::Fundamental(library::Fundamental::UniChar) => {
-                    body.push(Chunk::Custom(format!("let {0} = from_glib({0});", par.name)));
-                }
-                _ => {
-                    let (begin, end) = ::codegen::trampoline_from_glib::from_glib_xxx(par.transfer, true);
-                    body.push(Chunk::Custom(format!("let {1} = {0}{1}{2};", begin, par.name, end)));
-                }
-            }
+            let is_fundamental = add_chunk_for_type(env, par.typ, par, &mut body);
             arguments.push(Chunk::Name(format!("{}{}",
-                                               if type_.is_fundamental() { "" } else { "&" },
+                                               if is_fundamental { "" } else { "&" },
                                                par.name)));
         }
 
@@ -996,5 +986,28 @@ fn type_mem_mode(env: &Env, parameter: &library::Parameter) -> Chunk {
             }
         },
         _ => Chunk::Uninitialized,
+    }
+}
+
+fn add_chunk_for_type(
+    env: &Env,
+    typ_: library::TypeId,
+    par: &trampoline_parameters::Transformation,
+    body: &mut Vec<Chunk>,
+) -> bool {
+    let type_ = env.type_(typ_);
+    match *type_ {
+        library::Type::Fundamental(ref x) if !x.requires_conversion() => true,
+        library::Type::Fundamental(library::Fundamental::Boolean) |
+        library::Type::Fundamental(library::Fundamental::UniChar) => {
+            body.push(Chunk::Custom(format!("let {0} = from_glib({0});", par.name)));
+            true
+        }
+        library::Type::Alias(ref x) => add_chunk_for_type(env, x.typ, par, body),
+        ref x => {
+            let (begin, end) = ::codegen::trampoline_from_glib::from_glib_xxx(par.transfer, true);
+            body.push(Chunk::Custom(format!("let {1} = {0}{1}{2};", begin, par.name, end)));
+            x.is_fundamental()
+        }
     }
 }
