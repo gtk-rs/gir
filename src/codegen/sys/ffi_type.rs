@@ -203,9 +203,7 @@ fn fix_name(env: &Env, type_id: library::TypeId, name: &str) -> Result {
         } else {
             format!("{}::{}", &env.namespaces[type_id.ns_id].crate_name, name)
         };
-        if env.type_status_sys(&type_id.full_name(&env.library))
-            .ignored()
-        {
+        if env.type_status_sys(&type_id.full_name(&env.library)).ignored() {
             Err(TypeError::Ignored(name_with_prefix))
         } else {
             Ok(name_with_prefix)

@@ -9,6 +9,7 @@ use analysis::conversion_type::ConversionType;
 use nameutil::split_namespace_name;
 use traits::*;
 use version::Version;
+use std::fmt;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum Transfer {
@@ -81,6 +82,22 @@ pub enum ParameterScope {
     ///
     /// Can be invoked multiple times.
     Notified,
+}
+
+impl ParameterScope {
+    pub fn is_call(self) -> bool {
+        match self {
+            ParameterScope::Call => true,
+            _ => false,
+        }
+    }
+
+    pub fn is_async(self) -> bool {
+        match self {
+            ParameterScope::Async => true,
+            _ => false,
+        }
+    }
 }
 
 impl Default for ParameterScope {
@@ -205,6 +222,34 @@ pub enum Fundamental {
     //Not defined in GLib directly
     OsString,
     Unsupported,
+}
+
+impl Fundamental {
+    pub fn requires_conversion(self) -> bool {
+        match self {
+            Fundamental::Int8 |
+            Fundamental::UInt8 |
+            Fundamental::Int16 |
+            Fundamental::UInt16 |
+            Fundamental::Int32 |
+            Fundamental::UInt32 |
+            Fundamental::Int64 |
+            Fundamental::UInt64 |
+            Fundamental::Char |
+            Fundamental::UChar |
+            Fundamental::Short |
+            Fundamental::UShort |
+            Fundamental::Int |
+            Fundamental::UInt |
+            Fundamental::Long |
+            Fundamental::ULong |
+            Fundamental::Size |
+            Fundamental::SSize |
+            Fundamental::Float |
+            Fundamental::Double => false,
+            _ => true,
+        }
+    }
 }
 
 const FUNDAMENTAL: &[(&str, Fundamental)] = &[
@@ -539,6 +584,30 @@ pub enum Type {
     SList(TypeId),
 }
 
+impl fmt::Display for Type {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", match *self {
+            Type::Fundamental(_) => "Fundamental",
+            Type::Alias(_) => "Alias",
+            Type::Enumeration(_) => "Enumeration",
+            Type::Bitfield(_) => "Bitfield",
+            Type::Record(_) => "Record",
+            Type::Union(_) => "Union",
+            Type::Function(_) => "Function",
+            Type::Interface(_) => "Interface",
+            Type::Class(_) => "Class",
+            Type::Custom(_) => "Custom",
+            Type::Array(_) => "Array",
+            Type::CArray(_) => "CArray",
+            Type::FixedArray(_, _, _) => "FixedArray",
+            Type::PtrArray(_) => "PtrArray",
+            Type::HashTable(_, _) => "HashTable",
+            Type::List(_) => "List",
+            Type::SList(_) => "SList",
+        })
+    }
+}
+
 impl Type {
     pub fn get_name(&self) -> String {
         use self::Type::*;
@@ -722,6 +791,13 @@ impl Type {
                 ty.get_inner_type(env).or_else(|| Some((ty, t.ns_id)))
             }
             _ => None,
+        }
+    }
+
+    pub fn is_function(&self) -> bool {
+        match *self {
+            Type::Function(_) => true,
+            _ => false,
         }
     }
 }

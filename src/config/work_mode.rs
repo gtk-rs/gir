@@ -8,6 +8,15 @@ pub enum WorkMode {
     DisplayNotBound, // Show not bound types
 }
 
+impl WorkMode {
+    pub fn is_normal(self) -> bool {
+        match self {
+            WorkMode::Normal => true,
+            _ => false,
+        }
+    }
+}
+
 impl Default for WorkMode {
     fn default() -> WorkMode {
         WorkMode::Normal

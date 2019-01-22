@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use config;
 use config::parameter_matchable::ParameterMatchable;
 use env::Env;
-use library::{self, TypeId};
+use library::{self, TypeId, ParameterScope};
 use nameutil;
 use super::conversion_type::ConversionType;
 use super::rust_type::rust_type;
@@ -32,6 +32,11 @@ pub struct CParameter {
     pub transfer: library::Transfer,
     pub caller_allocates: bool,
     pub is_error: bool,
+    pub scope: ParameterScope,
+    /// Index of the user data parameter associated with the callback.
+    pub user_data_index: Option<usize>,
+    /// Index of the destroy notification parameter associated with the callback.
+    pub destroy_index: Option<usize>,
 
     //analysis fields
     pub ref_mode: RefMode,
@@ -152,7 +157,7 @@ pub fn analyze(
 ) -> Parameters {
     let mut parameters = Parameters::new(function_parameters.len());
 
-    //Map: length agrument position => array name
+    // Map: length argument position => array name
     let array_lengths: HashMap<u32, String> = function_parameters
         .iter()
         .filter_map(|p| p.array_length.map(|pos| (pos, p.name.clone())))
@@ -235,6 +240,9 @@ pub fn analyze(
             nullable,
             ref_mode,
             is_error: par.is_error,
+            scope: par.scope,
+            user_data_index: par.closure,
+            destroy_index: par.destroy,
         };
         parameters.c_parameters.push(c_par);
 
@@ -295,19 +303,20 @@ pub fn analyze(
         };
         let mut transformation_type = None;
         match transformation.transformation_type {
-            TransformationType::ToGlibDirect { ref name, .. } | TransformationType::ToGlibUnknown { ref name, .. } => {
+            TransformationType::ToGlibDirect { ref name, .. } |
+            TransformationType::ToGlibUnknown { ref name, .. } => {
                 if async_func && name == callback_param_name {
                     // Remove the conversion of callback for async functions.
                     transformation_type = Some(TransformationType::ToSome(name.clone()));
                 }
-            },
+            }
             TransformationType::ToGlibPointer { ref name, .. } => {
                 if async_func && name == data_param_name {
                     // Do the conversion of user_data for async functions.
                     // In async functions, this argument is used to send the callback.
                     transformation_type = Some(TransformationType::IntoRaw(name.clone()));
                 }
-            },
+            }
             _ => (),
         }
         if let Some(transformation_type) = transformation_type {
@@ -410,5 +419,5 @@ fn has_length(env: &Env, typ: TypeId) -> bool {
 }
 
 pub fn async_param_to_remove(name: &str) -> bool {
-    name == "user_data"
+    name == "user_data" || name.ends_with("data") // FIXME: use async indexes instead
 }

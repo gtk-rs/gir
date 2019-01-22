@@ -4,6 +4,8 @@ use std::path::*;
 use std::string::String;
 
 use case::*;
+use env::Env;
+use analysis::namespaces;
 
 pub fn split_namespace_name(name: &str) -> (Option<&str>, &str) {
     let mut parts = name.split('.');
@@ -92,6 +94,16 @@ lazy_static! {
 
 pub fn signal_to_snake(signal: &str) -> String {
     signal.replace("::", "_").replace('-', "_")
+}
+
+pub fn get_crate_name(name: &str, env: &Env) -> String {
+    let id = env.library.find_namespace(name).expect("namespace from crate name");
+    let namespace = env.library.namespace(id);
+    let name = crate_name(&namespace.name);
+    if id == namespaces::MAIN {
+        return "ffi".to_string();
+    }
+    format!("{}_ffi", name)
 }
 
 #[cfg(test)]

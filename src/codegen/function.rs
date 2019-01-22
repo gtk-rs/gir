@@ -2,7 +2,7 @@ use std::io::{Result, Write};
 
 use library;
 use analysis;
-use analysis::bounds::Bounds;
+use analysis::bounds::{Bound, Bounds};
 use analysis::functions::Visibility;
 use analysis::namespaces;
 use chunk::{ffi_function_todo, Chunk};
@@ -80,7 +80,7 @@ pub fn generate(
         comment_prefix,
         pub_prefix,
         declaration,
-        suffix
+        suffix,
     ));
 
     if !only_declaration {
@@ -156,10 +156,10 @@ pub fn declaration(env: &Env, analysis: &analysis::functions::Info) -> String {
     };
     let mut param_str = String::with_capacity(100);
 
-    let bounds = bounds(&analysis.bounds, &[], false);
+    let (bounds, _) = bounds(&analysis.bounds, &[], false, false);
 
-    for (pos, par) in analysis.parameters.rust_parameters.iter().enumerate() {
-        if pos > 0 {
+    for par in analysis.parameters.rust_parameters.iter() {
+        if !param_str.is_empty() {
             param_str.push_str(", ")
         }
         let c_par = &analysis.parameters.c_parameters[par.ind_c];
@@ -172,7 +172,7 @@ pub fn declaration(env: &Env, analysis: &analysis::functions::Info) -> String {
         analysis.name,
         bounds,
         param_str,
-        return_str
+        return_str,
     )
 }
 
@@ -211,7 +211,7 @@ pub fn declaration_futures(env: &Env, analysis: &analysis::functions::Info) -> S
         param_str.push_str(&s);
     }
 
-    let bounds = bounds(&analysis.bounds, skipped_bounds.as_ref(), true);
+    let (bounds, _) = bounds(&analysis.bounds, skipped_bounds.as_ref(), true, false);
 
     let where_str = if async_future.is_method {
         " where Self: Sized + Clone"
@@ -229,10 +229,41 @@ pub fn declaration_futures(env: &Env, analysis: &analysis::functions::Info) -> S
     )
 }
 
-pub fn bounds(bounds: &Bounds, skip: &[char], async: bool) -> String {
+pub fn bound_to_string(bound: &Bound, async: bool) -> String {
     use analysis::bounds::BoundType::*;
+
+    match bound.bound_type {
+        NoWrapper => {
+            format!("{}: {}", bound.alias, bound.type_str)
+        }
+        IsA(Some(lifetime)) => {
+            format!("{}: IsA<{}> + {}", bound.alias, bound.type_str, if async { "Clone + 'static".into() } else { format!("'{}", lifetime) })
+        }
+        IsA(None) => format!("{}: IsA<{}>{}", bound.alias, bound.type_str, if async { " + Clone + 'static" } else { "" }),
+        // This case should normally never happened
+        AsRef(Some(_/*lifetime*/)) => {
+            unreachable!();
+            // format!("{}: AsRef<{}> + '{}", bound.alias, bound.type_str, lifetime)
+        }
+        AsRef(None) => format!("{}: AsRef<{}>", bound.alias, bound.type_str),
+        Into(Some(l), _) => format!("{}: Into<Option<&'{} {}>>",
+                                    bound.alias,
+                                    l,
+                                    bound.type_str),
+        Into(None, _) => format!("{}: Into<Option<{}>>", bound.alias, bound.type_str),
+    }
+}
+
+pub fn bounds(
+    bounds: &Bounds,
+    skip: &[char],
+    async: bool,
+    filter_callback_modified: bool,
+) -> (String, Vec<String>) {
+    use analysis::bounds::BoundType::*;
+
     if bounds.is_empty() {
-        return String::new();
+        return (String::new(), Vec::new());
     }
 
     let skip_lifetimes = bounds.iter()
@@ -249,30 +280,25 @@ pub fn bounds(bounds: &Bounds, skip: &[char], async: bool) -> String {
         .iter_lifetimes()
         .filter(|s| !skip_lifetimes.contains(s))
         .map(|s| format!("'{}", s))
-        .chain(bounds.iter().filter(|bound| !skip.contains(&bound.alias)).map(|bound| match bound.bound_type {
-            NoWrapper => {
-                format!("{}: {}", bound.alias, bound.type_str)
-            }
-            IsA(Some(lifetime)) => {
-                format!("{}: IsA<{}> + {}", bound.alias, bound.type_str, if async { "Clone + 'static".into() } else { format!("'{}", lifetime) })
-            }
-            IsA(None) => format!("{}: IsA<{}>{}", bound.alias, bound.type_str, if async { " + Clone + 'static" } else { "" }),
-            // This case should normally never happened
-            AsRef(Some(lifetime)) => {
-                format!("{}: AsRef<{}> + '{}", bound.alias, bound.type_str, lifetime)
-            }
-            AsRef(None) => format!("{}: AsRef<{}>", bound.alias, bound.type_str),
-            Into(Some(l), _) => {
-                format!("{}: Into<Option<&'{} {}>>", bound.alias, l, bound.type_str)
-            }
-            Into(None, _) => format!("{}: Into<Option<{}>>", bound.alias, bound.type_str),
-        }))
+        .chain(bounds.iter()
+                     .filter(|bound| !skip.contains(&bound.alias) && (!filter_callback_modified ||
+                                                                      !bound.callback_modified))
+                     .map(|b| bound_to_string(b, async)))
         .collect();
 
     if strs.is_empty() {
-        String::new()
+        (String::new(), Vec::new())
     } else {
-        format!("<{}>", strs.join(", "))
+        let bounds = bounds.iter_lifetimes()
+                           .filter(|s| !skip_lifetimes.contains(s))
+                           .map(|s| format!("'{}", s))
+                           .chain(bounds.iter()
+                                        .filter(|bound| !skip.contains(&bound.alias) &&
+                                                        (!filter_callback_modified ||
+                                                         !bound.callback_modified))
+                                        .map(|b| b.alias.to_string()))
+                           .collect::<Vec<_>>();
+        (format!("<{}>", strs.join(", ")), bounds)
     }
 }
 
@@ -297,6 +323,13 @@ pub fn body_chunk(env: &Env, analysis: &analysis::functions::Info) -> Chunk {
         } else {
             warn!("Async function {} has no associated _finish function", analysis.name);
         }
+    } else {
+        for trampoline in analysis.callbacks.iter() {
+            builder.callback(trampoline);
+        }
+        for trampoline in analysis.destroys.iter() {
+            builder.destroy(trampoline);
+        }
     }
 
     for par in &analysis.parameters.c_parameters {
@@ -307,7 +340,9 @@ pub fn body_chunk(env: &Env, analysis: &analysis::functions::Info) -> Chunk {
         }
     }
 
-    builder.generate(env)
+    let (bounds, bounds_names) = bounds(&analysis.bounds, &[], false, true);
+
+    builder.generate(env, bounds, bounds_names.join(", "))
 }
 
 pub fn body_chunk_futures(env: &Env, analysis: &analysis::functions::Info) -> StdResult<String, fmt::Error> {

@@ -6,10 +6,10 @@ use analysis::function_parameters::{async_param_to_remove, CParameter};
 use analysis::functions::{find_function, find_index_to_ignore, finish_function_name};
 use analysis::imports::Imports;
 use analysis::out_parameters::use_function_return_for_result;
-use analysis::rust_type::{bounds_rust_type, rust_type};
+use analysis::rust_type::{bounds_rust_type, rust_type, rust_type_with_scope};
 use consts::TYPE_PARAMETERS_START;
 use env::Env;
-use library::{Class, Function, Fundamental, Nullable, ParameterDirection, Type, TypeId};
+use library::{Class, Concurrency, Function, Fundamental, Nullable, ParameterDirection, Type, TypeId};
 use traits::IntoString;
 
 #[derive(Clone, Eq, Debug, PartialEq)]
@@ -56,6 +56,7 @@ pub struct Bound {
     pub alias: char,
     pub type_str: String,
     pub info_for_next_type: bool,
+    pub callback_modified: bool,
 }
 
 #[derive(Clone, Debug)]
@@ -97,6 +98,7 @@ impl Bound {
                     alias: TYPE_PARAMETERS_START,
                     type_str: type_str.into_string(),
                     info_for_next_type: false,
+                    callback_modified: false,
                 })
             }
         }
@@ -104,7 +106,7 @@ impl Bound {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct CallbackInfo {
     pub callback_type: String,
     pub success_parameters: String,
@@ -119,15 +121,19 @@ impl Bounds {
         func: &Function,
         par: &CParameter,
         async: bool,
+        concurrency: Concurrency,
     ) -> (Option<String>, Option<CallbackInfo>) {
         let type_name = bounds_rust_type(env, par.typ);
         let mut type_string = if async && async_param_to_remove(&par.name) {
             return (None, None);
+        } else if type_name.is_err() {
+            return (None, None)
         } else {
             type_name.into_string()
         };
         let mut callback_info = None;
         let mut ret = None;
+        let mut need_is_into_check = false;
         if !par.instance_parameter && par.direction != ParameterDirection::Out {
             if let Some(bound_type) = Bounds::type_for(env, par.typ, par.nullable) {
                 ret = Some(Bounds::get_to_glib_extra(&bound_type));
@@ -154,12 +160,54 @@ impl Bounds {
                             bound_name,
                         });
                     }
+                } else if par.c_type == "GDestroyNotify" ||
+                          env.library.type_(par.typ).is_function() {
+                    need_is_into_check = par.c_type != "GDestroyNotify";
+                    if let Type::Function(_) = env.library.type_(par.typ) {
+                        type_string = rust_type_with_scope(env, par.typ, par.scope, concurrency)
+                                          .into_string();
+                        let bound_name = *self.unused.front().unwrap();
+                        callback_info = Some(CallbackInfo {
+                            callback_type: type_string.clone(),
+                            success_parameters: String::new(),
+                            error_parameters: String::new(),
+                            bound_name,
+                        });
+                    }
                 }
-                if !self.add_parameter(&par.name, &type_string, bound_type, async) {
+                if par.c_type != "GDestroyNotify" &&
+                   !self.add_parameter(&par.name, &type_string, bound_type, async) {
                     panic!(
                         "Too many type constraints for {}",
                         func.c_identifier.as_ref().unwrap()
                     )
+                }
+                if need_is_into_check {
+                    if let Some(x) = if let Some(ref mut last) = self.used.last_mut() {
+                        if last.bound_type.is_into() {
+                            let mut new_one = (*last).clone();
+                            new_one.alias = self.unused.pop_front().expect("no available bound");
+                            new_one.type_str = last.alias.to_string();
+                            new_one.parameter_name = last.parameter_name.clone();
+                            // When we create a new bound for a callback which can be NULL,
+                            // we need to generate two new bounds instead of just one. This flag
+                            // allows us to know it so we can prevent its "generation" in the
+                            // codegen part (we don't need the `Into<>` part in a few parts of the
+                            // code).
+                            new_one.callback_modified = true;
+
+                            last.bound_type = BoundType::NoWrapper;
+                            last.parameter_name = String::new();
+
+                            Some(new_one)
+                        } else {
+                            None
+                        }
+                    } else {
+                        None
+                    } {
+                        self.used.push(x);
+                    }
                 }
             }
         } else if par.instance_parameter {
@@ -195,6 +243,8 @@ impl Bounds {
             Type::Interface(..) => Some(Into(Some('_'), Some(Box::new(IsA(None))))),
             Type::List(_) | Type::SList(_) | Type::CArray(_) => None,
             Type::Fundamental(_) if *nullable => Some(Into(None, None)),
+            Type::Function(_) if *nullable => Some(Into(None, None)),
+            Type::Function(_) if !*nullable => Some(NoWrapper),
             _ if !*nullable => None,
             _ => Some(Into(Some('_'), None)),
         }
@@ -217,6 +267,7 @@ impl Bounds {
                     alias,
                     type_str: type_str.to_string(),
                     info_for_next_type: false,
+                    callback_modified: false,
                 });
                 return true;
             }
@@ -244,6 +295,7 @@ impl Bounds {
                     alias,
                     type_str: type_str.to_owned(),
                     info_for_next_type: true,
+                    callback_modified: false,
                 });
                 alias.to_string()
             } else {
@@ -259,6 +311,7 @@ impl Bounds {
                 alias,
                 type_str: type_str.to_owned(),
                 info_for_next_type: false,
+                callback_modified: false,
             });
             true
         } else {

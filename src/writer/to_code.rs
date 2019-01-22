@@ -144,18 +144,32 @@ impl ToCode for Chunk {
                 vec![s1, s2]
             }
             Name(ref name) => vec![name.clone()],
-            BoxFn { ref typ } => vec![format!("let user_data: Box<Box<{}>> = Box::new(Box::new(callback));", typ)],
-            ExternCFunc { ref name, ref parameters, ref body } => {
-                let prefix = format!(r#"unsafe extern "C" fn {}("#, name);
+            BoxFn { name: None, ref typ } => vec![
+                format!("let user_data: Box<Box<{}>> = Box::new(Box::new(callback));", typ),
+            ],
+            BoxFn { name: Some(ref name), ref typ } => vec![
+                // TODO: The name is generated based on user callback data holder. Not ideal doing
+                //       it here, this way...
+                format!("let {}_data: Box<Box<{}>> = Box::new(Box::new({}));",
+                        name,
+                        typ,
+                        &name),
+            ],
+            ExternCFunc { ref name, ref parameters, ref body, ref return_value, ref bounds } => {
+                let prefix = format!(r#"unsafe extern "C" fn {}{}("#, name, bounds);
                 let suffix = ")".to_string();
                 let params: Vec<_> = parameters.iter()
                     .flat_map(|param| param.to_code(env))
                     .collect();
-                let s = format_block_one_line(&prefix, &suffix, &params, "", ", ");
-                let mut code = format_block_smart("{", "}", &body.to_code(env), " ", " ");
+                let mut s = format_block_one_line(&prefix, &suffix, &params, "", ", ");
+                if let Some(ref return_value) = return_value {
+                    s.push_str(&format!(" -> {}", return_value));
+                }
+                s.push_str(" {");
+                let mut code = format_block("", "}", &body.to_code(env));
                 code.insert(0, s);
                 code
-            },
+            }
             Cast { ref name, ref type_ } => vec![format!("{} as {}", name, type_)],
             Call { ref func_name, ref arguments } => {
                 let args: Vec<_> = arguments.iter()
@@ -163,7 +177,7 @@ impl ToCode for Chunk {
                     .collect();
                 let s = format_block_one_line("(", ")", &args, "", ",");
                 vec![format!("{}{};", func_name, s)]
-            },
+            }
         }
     }
 }

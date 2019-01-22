@@ -2,7 +2,7 @@ use std::result;
 
 use analysis::ref_mode::RefMode;
 use env::Env;
-use library::{self, Nullable};
+use library::{self, Nullable, ParameterScope};
 use super::conversion_type::ConversionType;
 use traits::*;
 
@@ -47,11 +47,22 @@ impl MapAny<String> for Result {
 }
 
 pub fn rust_type(env: &Env, type_id: library::TypeId) -> Result {
-    rust_type_full(env, type_id, Nullable(false), RefMode::None)
+    rust_type_full(env, type_id, Nullable(false), RefMode::None, ParameterScope::None,
+                   library::Concurrency::None)
+}
+
+pub fn rust_type_with_scope(
+    env: &Env,
+    type_id: library::TypeId,
+    scope: ParameterScope,
+    concurrency: library::Concurrency,
+) -> Result {
+    rust_type_full(env, type_id, Nullable(false), RefMode::None, scope, concurrency)
 }
 
 pub fn bounds_rust_type(env: &Env, type_id: library::TypeId) -> Result {
-    rust_type_full(env, type_id, Nullable(false), RefMode::ByRefFake)
+    rust_type_full(env, type_id, Nullable(false), RefMode::ByRefFake, ParameterScope::None,
+                   library::Concurrency::None)
 }
 
 fn rust_type_full(
@@ -59,6 +70,8 @@ fn rust_type_full(
     type_id: library::TypeId,
     nullable: Nullable,
     ref_mode: RefMode,
+    scope: ParameterScope,
+    concurrency: library::Concurrency,
 ) -> Result {
     use library::Type::*;
     use library::Fundamental::*;
@@ -121,7 +134,8 @@ fn rust_type_full(
             }
         }
         Alias(ref alias) => {
-            rust_type_full(env, alias.typ, nullable, ref_mode).map_any(|_| alias.name.clone())
+            rust_type_full(env, alias.typ, nullable, ref_mode, scope, concurrency)
+                .map_any(|_| alias.name.clone())
         }
         Record(library::Record { ref c_type, .. }) if c_type == "GVariantType" => {
             if ref_mode.is_ref() {
@@ -146,7 +160,8 @@ fn rust_type_full(
                 Class(..) | Interface(..) => RefMode::None,
                 _ => ref_mode,
             };
-            rust_type_full(env, inner_tid, Nullable(false), inner_ref_mode).map_any(
+            rust_type_full(env, inner_tid, Nullable(false), inner_ref_mode, scope, concurrency)
+                .map_any(
                 |s| if ref_mode.is_ref() {
                     format!("[{}]", s)
                 } else {
@@ -191,11 +206,82 @@ fn rust_type_full(
             }
         }
         Custom(library::Custom { ref name, .. }) => Ok(name.clone()),
+        Function(ref f) => {
+            let concurrency = match concurrency {
+                _ if scope.is_call() => "",
+                library::Concurrency::Send |
+                library::Concurrency::SendUnique => " + Send",
+                // If an object is Sync, it can be shared between threads, and as
+                // such our callback can be called from arbitrary threads and needs
+                // to be Send *AND* Sync
+                library::Concurrency::SendSync => " + Send + Sync",
+                library::Concurrency::None => "",
+            };
+
+            let full_name = type_id.full_name(&env.library);
+            if full_name == "Gio.AsyncReadyCallback" {
+                return Ok("FnOnce(Result<(), Error>) + 'static".to_owned());
+            } else if full_name == "GLib.DestroyNotify" {
+                return Ok(format!("Fn(){} + 'static", concurrency));
+            }
+            let mut s = Vec::with_capacity(f.parameters.len());
+            let mut err = false;
+            for p in f.parameters.iter() {
+                if p.closure.is_some() {
+                    continue
+                }
+                match rust_type(env, p.typ) {
+                    Ok(x) => {
+                        let type_ = env.library.type_(p.typ);
+                        s.push(format!("{}{}", if type_.is_fundamental() { "" } else { "&" }, x));
+                    }
+                    e => {
+                        err = true;
+                        s.push(e.into_string());
+                    }
+                }
+            }
+            let closure_kind = if scope.is_call() {
+                "FnMut"
+            } else if scope.is_async() {
+                "FnOnce"
+            } else {
+                "Fn"
+            };
+            let ret = match rust_type(env, f.ret.typ) {
+                Ok(x) => format!("{}({}) -> {}{}",
+                                 closure_kind,
+                                 s.join(", "),
+                                 if x != "GString" { &x } else { "String" },
+                                 concurrency),
+                Err(TypeError::Unimplemented(ref x)) if x == "()" => {
+                    format!("{}({}){}",
+                            closure_kind,
+                            s.join(", "),
+                            concurrency)
+                }
+                e => {
+                    err = true;
+                    format!("{}({}) -> {}{}",
+                            closure_kind,
+                            s.join(", "),
+                            e.into_string(),
+                            concurrency)
+                }
+            };
+            if err {
+                Err(TypeError::Unimplemented(ret))
+            } else {
+                Ok(format!("{}{}", ret, if scope.is_call() { "" } else { " + 'static" }))
+            }
+        }
         _ => Err(TypeError::Unimplemented(type_.get_name().to_owned())),
     };
 
     if type_id.ns_id != library::MAIN_NAMESPACE && type_id.ns_id != library::INTERNAL_NAMESPACE
         && !implemented_in_main_namespace(&env.library, type_id)
+        && type_id.full_name(&env.library) != "GLib.DestroyNotify"
+        && type_id.full_name(&env.library) != "GObject.Callback"
     {
         if env.type_status(&type_id.full_name(&env.library)).ignored() {
             rust_type = Err(TypeError::Ignored(into_inner(rust_type)));
@@ -260,7 +346,8 @@ pub fn parameter_rust_type(
 ) -> Result {
     use library::Type::*;
     let type_ = env.library.type_(type_id);
-    let rust_type = rust_type_full(env, type_id, nullable, ref_mode);
+    let rust_type = rust_type_full(env, type_id, nullable, ref_mode, ParameterScope::None,
+                                   library::Concurrency::None);
     match *type_ {
         Fundamental(fund) => {
             if (fund == library::Fundamental::Utf8
@@ -308,6 +395,7 @@ pub fn parameter_rust_type(
             _ => Err(TypeError::Unimplemented(into_inner(rust_type))),
         },
         Function(ref func) if func.name == "AsyncReadyCallback" => Ok("AsyncReadyCallback".to_string()),
+        Function(_)  => rust_type,
         Custom(..) => rust_type.map_any(|s| format_parameter(s, direction)),
         _ => Err(TypeError::Unimplemented(type_.get_name().to_owned())),
     }

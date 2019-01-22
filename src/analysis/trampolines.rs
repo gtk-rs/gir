@@ -12,16 +12,25 @@ use super::trampoline_parameters::{self, Parameters};
 use traits::IntoString;
 use version::Version;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Trampoline {
     pub name: String,
     pub parameters: Parameters,
     pub ret: library::Parameter,
+    // This field is used for user callbacks in `codegen::function_body_chunk` when generating
+    // inner C functions. We need to have the bound name in order to create variables and also to
+    // pass to the C function bounds (otherwise it won't compile because it doesn't know how to
+    // infer the bounds).
+    pub bound_name: char,
     pub bounds: Bounds,
     pub version: Option<Version>,
     pub inhibit: bool,
     pub concurrency: library::Concurrency,
     pub is_notify: bool,
+    pub scope: library::ParameterScope,
+    /// It's used to group callbacks
+    pub user_data_index: usize,
+    pub destroy_index: usize,
 }
 
 pub type Trampolines = Vec<Trampoline>;
@@ -147,6 +156,10 @@ pub fn analyze(
         inhibit,
         concurrency,
         is_notify,
+        bound_name: 'A',
+        scope: library::ParameterScope::None,
+        user_data_index: 0,
+        destroy_index: 0,
     };
     trampolines.push(trampoline);
     Ok(name)
@@ -176,7 +189,7 @@ fn closure_errors(env: &Env, signal: &library::Signal) -> Vec<String> {
     errors
 }
 
-fn type_error(env: &Env, par: &library::Parameter) -> Option<&'static str> {
+pub fn type_error(env: &Env, par: &library::Parameter) -> Option<&'static str> {
     use super::rust_type::TypeError::*;
     if par.direction == library::ParameterDirection::Out {
         Some("Out")
