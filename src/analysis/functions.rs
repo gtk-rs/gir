@@ -221,6 +221,7 @@ fn analyze_callbacks(
     in_trait: bool,
     commented: &mut bool,
     concurrency: library::Concurrency,
+    type_tid: library::TypeId,
 ) {
     let mut to_replace = Vec::new();
     let mut to_remove = Vec::new();
@@ -236,6 +237,10 @@ fn analyze_callbacks(
             c_parameters.push((par, pos));
         }
 
+        let func_name = match &func.c_identifier {
+            Some(n) => &n,
+            None => &func.name,
+        };
         for pos in 0..parameters.c_parameters.len() {
             // If it is a user data parameter, we ignore it.
             if cross_user_data_check.values().any(|p| *p == pos) ||
@@ -259,15 +264,12 @@ fn analyze_callbacks(
                 }
             }
 
-            let func_name = match &func.c_identifier {
-                Some(n) => &n,
-                None => &func.name,
-            };
             let rust_type = env.library.type_(par.typ);
             if rust_type.is_function() {
                 if par.c_type != "GDestroyNotify" {
                     if let Some((mut callback, destroy_index)) = analyze_callback(
                         func_name,
+                        type_tid,
                         env,
                         &par,
                         &callback_info,
@@ -280,8 +282,9 @@ fn analyze_callbacks(
                             let user_data = cross_user_data_check.entry(destroy_index)
                                                                  .or_insert_with(|| callback.user_data_index);
                             if *user_data != callback.user_data_index {
-                                error!("`{}`: Different destructors cannot share the same user data",
-                                       func.name);
+                                warn_main!(type_tid,
+                                           "`{}`: Different destructors cannot share the same user data",
+                                           func_name);
                                 *commented = true;
                             }
                             callback.destroy_index = destroy_index;
@@ -295,6 +298,7 @@ fn analyze_callbacks(
                     }
                 } else if let Some((mut callback, _)) = analyze_callback(
                     func_name,
+                    type_tid,
                     env,
                     &par,
                     &callback_info,
@@ -309,7 +313,9 @@ fn analyze_callbacks(
                         callback.user_data_index = *user_data_index;
                         callback.destroy_index = pos;
                     } else {
-                        error!("`{}`: no user data point to the destroy callback", func_name);
+                        warn_main!(type_tid,
+                                   "`{}`: no user data point to the destroy callback",
+                                   func_name);
                         *commented = true;
                     }
                     destroys.push(callback);
@@ -327,7 +333,7 @@ fn analyze_callbacks(
     // Check for cross "user data".
     if cross_user_data_check.values().collect::<Vec<_>>().windows(2).any(|a| a[0] == a[1]) {
         *commented = true;
-        error!("`{}`: Different user data share the same destructors", func.name);
+        warn_main!(type_tid, "`{}`: Different user data share the same destructors", func.name);
     }
 
     if !destroys.is_empty() || !callbacks.is_empty() {
@@ -355,8 +361,9 @@ fn analyze_callbacks(
             in_trait,
         );
     } else {
-        error!("`{}`: this is supposed to be a callback function but no callback was \
-                found...", func.name);
+        warn_main!(type_tid,
+                   "`{}`: this is supposed to be a callback function but no callback was found...",
+                   func.name);
         *commented = true;
     }
 }
@@ -403,7 +410,9 @@ fn analyze_function(
         // In here, We have a DestroyNotify callback but no other callback is provided. A good
         // example of this situation is this function:
         // https://developer.gnome.org/gio/stable/GTlsPassword.html#g-tls-password-set-value-full
-        warn!("Function \"{}\" with destroy callback without callbacks", func.name);
+        warn_main!(type_tid,
+                   "Function \"{}\" with destroy callback without callbacks",
+                   func.name);
         commented = true;
     }
     let version = configured_functions
@@ -481,6 +490,7 @@ fn analyze_function(
             analyze_async(
                 env,
                 func,
+                type_tid,
                 callback_info,
                 &mut commented,
                 &mut trampoline,
@@ -501,7 +511,7 @@ fn analyze_function(
         analyze_callbacks(env, func, &mut cross_user_data_check, &mut user_data_indexes,
                           &mut parameters, &mut used_types, &mut bounds, &mut to_glib_extras,
                           imports, &mut destroys, &mut callbacks, &mut params,configured_functions,
-                          disable_length_detect, in_trait, &mut commented, concurrency);
+                          disable_length_detect, in_trait, &mut commented, concurrency, type_tid);
     }
 
     for par in &parameters.rust_parameters {
@@ -642,6 +652,7 @@ pub fn is_carray_with_direct_elements(env: &Env, typ: library::TypeId) -> bool {
 fn analyze_async(
     env: &Env,
     func: &library::Function,
+    type_tid: library::TypeId,
     callback_info: Option<CallbackInfo>,
     commented: &mut bool,
     trampoline: &mut Option<AsyncTrampoline>,
@@ -673,16 +684,18 @@ fn analyze_async(
             }
         }
         if trampoline.is_some() || async_future.is_some() {
-            warn!("{}: Cannot handle callbacks and async parameters at the same time for the moment",
-                  func.name);
+            warn_main!(type_tid,
+                       "{}: Cannot handle callbacks and async parameters at the same time for the \
+                        moment",
+                       func.name);
             *commented = true;
             return false;
         }
         if !*commented && (success_parameters.is_empty() || error_parameters.is_empty()) {
             if success_parameters.is_empty() {
-                error!("{}: missing success parameters for async future", func.name);
+                warn_main!(type_tid, "{}: missing success parameters for async future", func.name);
             } else if error_parameters.is_empty() {
-                error!("{}: missing error parameters for async future", func.name);
+                warn_main!(type_tid, "{}: missing error parameters for async future", func.name);
             }
             *commented = true;
             return false;
@@ -711,6 +724,7 @@ fn analyze_async(
 
 fn analyze_callback(
     func_name: &str,
+    type_tid: library::TypeId,
     env: &Env,
     par: &CParameter,
     callback_info: &Option<CallbackInfo>,
@@ -725,38 +739,44 @@ fn analyze_callback(
         if par.c_type != "GDestroyNotify" {
             if let Some(user_data) = par.user_data_index {
                 if user_data >= c_parameters.len() {
-                    error!("function `{}` has an invalid user data index of {} when there are {} parameters",
-                           func_name,
-                           user_data,
-                           c_parameters.len());
+                    warn_main!(type_tid,
+                               "function `{}` has an invalid user data index of {} when there are {} parameters",
+                               func_name,
+                               user_data,
+                               c_parameters.len());
                     return None;
                 } else if c_parameters[user_data].0.c_type != "gpointer" {
                     *commented = true;
-                    error!("function `{}`'s callback `{}` has invalid user data",
-                           func_name,
-                           par.name);
+                    warn_main!(type_tid,
+                               "function `{}`'s callback `{}` has invalid user data",
+                               func_name,
+                               par.name);
                     return None;
                 }
             } else {
                 *commented = true;
-                error!("function `{}`'s callback `{}` without associated user data",
-                       func_name,
-                       par.name);
+                warn_main!(type_tid,
+                           "function `{}`'s callback `{}` without associated user data",
+                           func_name,
+                           par.name);
                 return None;
             }
             if let Some(destroy_index) = par.destroy_index {
                 if destroy_index >= c_parameters.len() {
-                    error!("function `{}` has an invalid destroy index of {} when there are {} parameters",
-                           func_name,
-                           destroy_index,
-                           c_parameters.len());
+                    warn_main!(type_tid,
+                               "function `{}` has an invalid destroy index of {} when there are {} \
+                                parameters",
+                               func_name,
+                               destroy_index,
+                               c_parameters.len());
                     return None;
                 }
                 if c_parameters[destroy_index].0.c_type != "GDestroyNotify" {
                     *commented = true;
-                    error!("function `{}`'s callback `{}` has invalid destroy callback",
-                           func_name,
-                           par.name);
+                    warn_main!(type_tid,
+                               "function `{}`'s callback `{}` has invalid destroy callback",
+                               func_name,
+                               par.name);
                     return None;
                 }
             }
@@ -767,7 +787,7 @@ fn analyze_callback(
         if par.c_type != "GDestroyNotify" &&
            (func.parameters.is_empty() || !func.parameters.iter().any(|c| c.closure.is_some())) {
             *commented = true;
-            error!("Closure type `{}` doesn't provide user data", par.c_type);
+            warn_main!(type_tid, "Closure type `{}` doesn't provide user data", par.c_type);
             return None;
         }
 
@@ -799,16 +819,20 @@ fn analyze_callback(
         }
         let user_data_index = par.user_data_index.unwrap_or_else(|| 0);
         if par.c_type != "GDestroyNotify" && c_parameters.len() <= user_data_index {
-            error!("`{}`: Invalid user data index of `{}`", func.name, user_data_index);
+            warn_main!(type_tid,
+                       "`{}`: Invalid user data index of `{}`",
+                       func.name,
+                       user_data_index);
             *commented = true;
             None
         } else if match par.destroy_index {
             Some(destroy_index) => c_parameters.len() <= destroy_index,
             None => false,
         } {
-            error!("`{}`: Invalid destroy index of `{}`",
-                   func.name,
-                   par.destroy_index.unwrap());
+            warn_main!(type_tid,
+                       "`{}`: Invalid destroy index of `{}`",
+                       func.name,
+                       par.destroy_index.unwrap());
             *commented = true;
             None
         } else {
