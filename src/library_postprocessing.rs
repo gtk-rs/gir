@@ -377,9 +377,22 @@ impl Library {
         }
     }
 
+    fn has_subtypes(&self, parent_tid: &TypeId) -> bool {
+        for (tid, _) in self.types() {
+            if let Type::Class(ref class) = *self.type_(tid) {
+                if class.parent.as_ref() == Some(parent_tid) {
+                    return true;
+                }
+            }
+        }
+
+        false
+    }
+
     fn mark_final_types(&mut self, config: &Config) {
         // Here we mark all class types as final types if configured so in the config or
-        // otherwise if there is no public class struct for the type.
+        // otherwise if there is no public class struct for the type and there are no
+        // known subtypes.
         //
         // Final types can't have any subclasses and we handle them slightly different
         // for that reason.
@@ -404,7 +417,7 @@ impl Library {
                         if *final_type {
                             final_types.push(tid);
                         }
-                    } else if klass.c_class_type.is_none() {
+                    } else if klass.c_class_type.is_none() && !self.has_subtypes(&tid) {
                         final_types.push(tid);
                     }
                 }
