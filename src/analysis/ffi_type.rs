@@ -2,6 +2,7 @@ use analysis::c_type::{implements_c_type, rustify_pointers};
 use analysis::rust_type::{Result, TypeError};
 use env::Env;
 use library::*;
+use nameutil::get_crate_name;
 use traits::*;
 
 pub fn used_ffi_type(env: &Env, type_id: TypeId, c_type: &str) -> Option<String> {
@@ -66,7 +67,7 @@ fn ffi_inner(env: &Env, tid: TypeId, inner: &str) -> Result {
             use library::Fundamental::*;
             let inner = match fund {
                 None => "libc::c_void",
-                Boolean => "glib_ffi::gboolean", //TODO:check main namespace
+                Boolean => return Ok(format!("{}::gboolean", get_crate_name("GLib", env))),
                 Int8 => "i8",
                 UInt8 => "u8",
                 Int16 => "i16",
