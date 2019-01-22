@@ -322,6 +322,10 @@ impl TypeId {
     pub fn tid_os_string() -> TypeId {
         TypeId { ns_id: 0, id: 33 }
     }
+
+    pub fn is_fundamental_type(&self, env: &Env) -> bool {
+        env.library.type_(*self).is_fundamental_type(env)
+    }
 }
 
 #[derive(Debug)]
@@ -776,6 +780,15 @@ impl Type {
         match *self {
             Type::Fundamental(_) => true,
             _ => false,
+        }
+    }
+
+    /// If the type is an Alias containing a fundamental, it'll return true (whereas
+    /// `is_fundamental` won't).
+    pub fn is_fundamental_type(&self, env: &Env) -> bool {
+        match *self {
+            Type::Alias(ref x) => env.library.type_(x.typ).is_fundamental_type(env),
+            ref x => x.is_fundamental(),
         }
     }
 

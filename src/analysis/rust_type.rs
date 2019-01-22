@@ -232,8 +232,8 @@ fn rust_type_full(
                 }
                 match rust_type(env, p.typ) {
                     Ok(x) => {
-                        let type_ = env.library.type_(p.typ);
-                        s.push(format!("{}{}", if type_.is_fundamental() { "" } else { "&" }, x));
+                        let is_fundamental = p.typ.is_fundamental_type(env);
+                        s.push(format!("{}{}", if is_fundamental { "" } else { "&" }, x));
                     }
                     e => {
                         err = true;
