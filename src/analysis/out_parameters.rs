@@ -12,6 +12,7 @@ use config;
 use env::Env;
 use library::*;
 use nameutil;
+use version::Version;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum Mode {
@@ -109,24 +110,27 @@ pub fn analyze(
     (info, unsupported_outs)
 }
 
-pub fn analyze_imports(env: &Env, func: &Function, imports: &mut Imports) {
-    for par in &func.parameters {
+pub fn analyze_imports(
+    env: &Env,
+    parameters: &[Parameter],
+    version: Option<Version>,
+    imports: &mut Imports,
+) {
+    for par in parameters {
         if par.direction == ParameterDirection::Out {
             match *env.library.type_(par.typ) {
-                Type::Bitfield(..) | Type::Enumeration(..) => imports.add("std::mem", func.version),
+                Type::Bitfield(..) | Type::Enumeration(..) => imports.add("std::mem", version),
                 Type::Fundamental(fund)
                     if fund != Fundamental::Utf8
                         && fund != Fundamental::OsString
                         && fund != Fundamental::Filename =>
                 {
-                    imports.add("std::mem", func.version)
+                    imports.add("std::mem", version)
                 }
-                _ if !par.caller_allocates => {
-                    match ConversionType::of(env, par.typ) {
-                        ConversionType::Direct | ConversionType::Scalar => (),
-                        _ => imports.add("std::ptr", func.version),
-                    }
-                }
+                _ if !par.caller_allocates => match ConversionType::of(env, par.typ) {
+                    ConversionType::Direct | ConversionType::Scalar => (),
+                    _ => imports.add("std::ptr", version),
+                },
                 _ => (),
             }
         }

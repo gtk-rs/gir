@@ -548,8 +548,13 @@ fn analyze_function(
             func.c_identifier.as_ref().unwrap_or(&func.name)
         );
         commented = true;
-    } else if !outs.is_empty() && !commented {
-        out_parameters::analyze_imports(env, func, imports);
+    } else if !commented {
+        if !outs.is_empty() {
+            out_parameters::analyze_imports(env, &func.parameters, func.version, imports);
+        }
+        if let Some(AsyncTrampoline{ref output_params, ..}) = trampoline {
+            out_parameters::analyze_imports(env, output_params, func.version, imports);
+        }
     }
 
     if async && !commented {
