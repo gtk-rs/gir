@@ -12,7 +12,7 @@ use chunk::parameter_ffi_call_out;
 use env::Env;
 use library::{self, ParameterDirection};
 use nameutil::get_crate_name;
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap};
 
 #[derive(Clone, Debug)]
 enum Parameter {
@@ -114,8 +114,8 @@ impl Builder {
 
         // Key: user data index
         // Value: (global position used as id, type, callbacks)
-        let mut group_by_user_data: HashMap<usize, (usize, Option<String>, Vec<&Trampoline>)> =
-            HashMap::new();
+        let mut group_by_user_data: BTreeMap<usize, (usize, Option<String>, Vec<&Trampoline>)> =
+            BTreeMap::new();
 
         // We group arguments by callbacks.
         if !self.callbacks.is_empty() || !self.destroys.is_empty() {
@@ -677,7 +677,7 @@ impl Builder {
 
     fn generate_call(
         &self,
-        calls: &HashMap<usize, (usize, Option<String>, Vec<&Trampoline>)>,
+        calls: &BTreeMap<usize, (usize, Option<String>, Vec<&Trampoline>)>,
     ) -> Chunk {
         let params = self.generate_func_parameters(calls);
         let func = Chunk::FfiCall {
@@ -695,7 +695,7 @@ impl Builder {
     }
     fn generate_func_parameters(
         &self,
-        calls: &HashMap<usize, (usize, Option<String>, Vec<&Trampoline>)>,
+        calls: &BTreeMap<usize, (usize, Option<String>, Vec<&Trampoline>)>,
     ) -> Vec<Chunk> {
         let mut params = Vec::new();
         for trans in &self.transformations {
