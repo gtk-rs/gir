@@ -323,8 +323,8 @@ impl TypeId {
         TypeId { ns_id: 0, id: 33 }
     }
 
-    pub fn is_fundamental_type(&self, env: &Env) -> bool {
-        env.library.type_(*self).is_fundamental_type(env)
+    pub fn is_fundamental_type(self, env: &Env) -> bool {
+        env.library.type_(self).is_fundamental_type(env)
     }
 }
 
