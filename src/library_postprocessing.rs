@@ -377,10 +377,10 @@ impl Library {
         }
     }
 
-    fn has_subtypes(&self, parent_tid: &TypeId) -> bool {
+    fn has_subtypes(&self, parent_tid: TypeId) -> bool {
         for (tid, _) in self.types() {
             if let Type::Class(ref class) = *self.type_(tid) {
-                if class.parent.as_ref() == Some(parent_tid) {
+                if class.parent == Some(parent_tid) {
                     return true;
                 }
             }
@@ -396,6 +396,7 @@ impl Library {
         //
         // Final types can't have any subclasses and we handle them slightly different
         // for that reason.
+        // FIXME: without class_hierarchy this function O(n2) due inner loop in `has_subtypes`
         let mut final_types: Vec<TypeId> = Vec::new();
 
         for (ns_id, ns) in self.namespaces.iter().enumerate() {
@@ -417,7 +418,7 @@ impl Library {
                         if *final_type {
                             final_types.push(tid);
                         }
-                    } else if klass.c_class_type.is_none() && !self.has_subtypes(&tid) {
+                    } else if klass.c_class_type.is_none() && !self.has_subtypes(tid) {
                         final_types.push(tid);
                     }
                 }
