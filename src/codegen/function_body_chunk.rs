@@ -346,7 +346,7 @@ impl Builder {
                         if is_destroy || trampoline.scope.is_async() {
                             format!("Box_::from_raw({} as *mut _)", func)
                         } else if trampoline.scope.is_call() {
-                            format!("{} as *const _ as usize as *mut {}",
+                            format!("{} as *const _ as usize as *mut Option<{}>",
                                     func,
                                     self.callbacks[0].bound_name)
                         } else {
@@ -356,10 +356,9 @@ impl Builder {
                         if is_destroy || trampoline.scope.is_async() {
                             format!("Box_<Option<{}>>", self.callbacks[0].bound_name)
                         } else if trampoline.scope.is_call() {
-                            format!("*mut {}", self.callbacks[0].bound_name)
+                            format!("*mut Option<{}>", self.callbacks[0].bound_name)
                         } else {
-                            format!("&Box_<Option<{}>>",
-                                    self.callbacks[0].bound_name)
+                            format!("&Option<{}>", self.callbacks[0].bound_name)
                         }))),
                 }
             );
@@ -370,12 +369,11 @@ impl Builder {
                     if trampoline.ret.c_type != "void" {
                         extra_before_call = "let res = ";
                     }
-                } else if !trampoline.scope.is_call() {
+                } else {
                     body.push(Chunk::Custom(
-                        format!("{}if let Some(ref callback) = **callback {{",
-                                if trampoline.ret.c_type != "void" { "let res = " } else { "" })));
-                } else if trampoline.ret.c_type != "void" {
-                    extra_before_call = "let res = ";
+                        format!("{}if let Some(ref {}callback) = *callback {{",
+                                if trampoline.ret.c_type != "void" { "let res = " } else { "" },
+                                if trampoline.scope.is_call() { "mut " } else { "" })));
                 }
             }
         }
@@ -383,9 +381,7 @@ impl Builder {
             use writer::to_code::ToCode;
             body.push(Chunk::Custom(format!("{}{}({}){}",
                                             extra_before_call,
-                                            if trampoline.scope.is_call() {
-                                                "(*callback)"
-                                            } else if trampoline.scope.is_async() {
+                                            if trampoline.scope.is_async() {
                                                 "callback"
                                             } else {
                                                 "\tcallback"
@@ -394,13 +390,12 @@ impl Builder {
                                                      .flat_map(|arg| arg.to_code(env))
                                                      .collect::<Vec<_>>()
                                                      .join(", "),
-                                            if trampoline.scope.is_call() ||
-                                               !extra_before_call.is_empty() {
+                                            if !extra_before_call.is_empty() {
                                                 ";"
                                             } else {
                                                 ""
                                             },)));
-            if !trampoline.scope.is_async() && !trampoline.scope.is_call() {
+            if !trampoline.scope.is_async() {
                 body.push(Chunk::Custom("} else {".to_owned()));
                 body.push(Chunk::Custom("\tpanic!(\"cannot get closure...\")".to_owned()));
                 body.push(Chunk::Custom("};".to_owned()));
