@@ -303,7 +303,15 @@ impl Builder {
                par.name == "this" {
                 continue;
             }
-            let is_fundamental = add_chunk_for_type(env, par.typ, par, &mut body);
+            let ty_name = match rust_type(env, par.typ) {
+                Ok(ref x) => x.clone(),
+                _ => String::new(),
+            };
+            let is_fundamental = add_chunk_for_type(env, par.typ, par, &mut body, &ty_name);
+            if ty_name == "GString" {
+                arguments.push(Chunk::Name(format!("{}.as_str()", par.name)));
+                continue;
+            }
             arguments.push(Chunk::Name(format!("{}{}",
                                                if is_fundamental { "" } else { "&" },
                                                par.name)));
@@ -1046,6 +1054,7 @@ fn add_chunk_for_type(
     typ_: library::TypeId,
     par: &trampoline_parameters::Transformation,
     body: &mut Vec<Chunk>,
+    ty_name: &str,
 ) -> bool {
     let type_ = env.type_(typ_);
     match *type_ {
@@ -1055,10 +1064,18 @@ fn add_chunk_for_type(
             body.push(Chunk::Custom(format!("let {0} = from_glib({0});", par.name)));
             true
         }
-        library::Type::Alias(ref x) => add_chunk_for_type(env, x.typ, par, body),
+        library::Type::Alias(ref x) => add_chunk_for_type(env, x.typ, par, body, ty_name),
         ref x => {
             let (begin, end) = ::codegen::trampoline_from_glib::from_glib_xxx(par.transfer, true);
-            body.push(Chunk::Custom(format!("let {1} = {0}{1}{2};", begin, par.name, end)));
+            body.push(Chunk::Custom(format!("let {1}{3} = {0}{1}{2};",
+                                            begin,
+                                            par.name,
+                                            end,
+                                            if ty_name == "GString" {
+                                                ": GString"
+                                            } else {
+                                                ""
+                                            })));
             x.is_fundamental()
         }
     }
