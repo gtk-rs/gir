@@ -31,6 +31,7 @@ pub struct Trampoline {
     /// It's used to group callbacks
     pub user_data_index: usize,
     pub destroy_index: usize,
+    pub nullable: library::Nullable,
 }
 
 pub type Trampolines = Vec<Trampoline>;
@@ -160,6 +161,7 @@ pub fn analyze(
         scope: library::ParameterScope::None,
         user_data_index: 0,
         destroy_index: 0,
+        nullable: library::Nullable(false),
     };
     trampolines.push(trampoline);
     Ok(name)

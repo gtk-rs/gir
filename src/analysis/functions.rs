@@ -867,6 +867,7 @@ fn analyze_callback(
                     0
                 },
                 destroy_index: 0,
+                nullable: par.nullable,
             }, match par.destroy_index {
                 Some(destroy_index) => Some(c_parameters[destroy_index].1),
                 None => None,
