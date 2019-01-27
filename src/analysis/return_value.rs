@@ -97,7 +97,7 @@ pub fn analyze(
             }
             parameter = Some(library::Parameter {
                 typ: type_tid,
-                nullable: nullable_override.unwrap_or(Nullable(false)),
+                nullable: nullable_override.unwrap_or(func.ret.nullable),
                 ..par
             });
         }
