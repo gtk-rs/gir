@@ -402,6 +402,21 @@ It'll generate a markdown file if everything went fine. That's where all this cr
 
 And now your crate should be completely documented as expected!
 
+If you defining traits manually you can add them to "Implements" section for classes and interfaces:
+```toml
+[[object]]
+name = "Gtk.Assistant"
+status = "generate"
+#add link to trait from current crate
+manual_traits = ["AssistantExtManual"]
+
+[[object]]
+name = "Gtk.Application"
+status = "generate"
+#add link to trait from other crate
+manual_traits = ["gio::ApplicationExtManual"]
+```
+
 ### Unions
 
 `gir` now has the ability to generate c-like unions using newly stabilised `union` in rustc 1.19. As such this means `gir` requires a minimum version rustc of 1.19

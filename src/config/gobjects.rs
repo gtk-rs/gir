@@ -80,6 +80,7 @@ pub struct GObject {
     pub use_boxed_functions: bool,
     pub generate_display_trait: bool,
     pub subclassing: bool,
+    pub manual_traits: Vec<String>,
 }
 
 impl Default for GObject {
@@ -107,6 +108,7 @@ impl Default for GObject {
             use_boxed_functions: false,
             generate_display_trait: true,
             subclassing: false,
+            manual_traits: Vec::default(),
         }
     }
 }
@@ -191,6 +193,7 @@ fn parse_object(
             "use_boxed_functions",
             "generate_display_trait",
             "subclassing",
+            "manual_traits",
         ],
         &format!("object {}", name),
     );
@@ -276,6 +279,14 @@ fn parse_object(
         .lookup("subclassing")
         .and_then(|v| v.as_bool())
         .unwrap_or(false);
+    let manual_traits = toml_object
+        .lookup_vec("manual_traits", "IGNORED ERROR")
+        .map(|v| {
+            v.iter()
+                .filter_map(|v| v.as_str().map(String::from))
+                .collect()
+        })
+        .unwrap_or_else(|_| Vec::new());
 
     if status != GStatus::Manual && ref_mode.is_some() {
         warn!("ref_mode configuration used for non-manual object {}", name);
@@ -312,6 +323,7 @@ fn parse_object(
         use_boxed_functions,
         generate_display_trait,
         subclassing,
+        manual_traits,
     }
 }
 
