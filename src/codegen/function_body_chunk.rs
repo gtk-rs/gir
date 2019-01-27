@@ -264,7 +264,7 @@ impl Builder {
                                                       trampoline.name,
                                                       trampoline.bound_name)));
                 } else {
-                    chunks.push(Chunk::Custom(format!("let {0}_data: Option<{1}> = {0}.into();",
+                    chunks.push(Chunk::Custom(format!("let {0}_data: Option<{1}> = {0};",
                                                       trampoline.name,
                                                       trampoline.bound_name)));
                 }

@@ -318,6 +318,14 @@ fn analyze_callbacks(
                                    func_name);
                         *commented = true;
                     }
+                    // We check if the user trampoline is there. If so, we change the destroy
+                    // nullable value if needed.
+                    for call in callbacks.iter() {
+                        if call.destroy_index == pos {
+                            callback.nullable = call.nullable;
+                            break
+                        }
+                    }
                     destroys.push(callback);
                     to_remove.push(pos);
                     continue;
