@@ -135,26 +135,15 @@ impl ToCode for Chunk {
                 in_trait,
             } => {
                 let s1 = format!("connect_raw(self.as_ptr() as *mut _, b\"{}\\0\".as_ptr() as *const _,", signal);
-                let self_str = if in_trait { "::<Self>" } else { "" };
+                let self_str = if in_trait { "Self, " } else { "" };
                 let s2 = format!(
-                    "\ttransmute({}{} as usize), Box_::into_raw(f) as *mut _)",
+                    "\ttransmute({}::<{}F> as usize), Box_::into_raw(f) as *mut _)",
                     trampoline,
                     self_str
                 );
                 vec![s1, s2]
             }
             Name(ref name) => vec![name.clone()],
-            BoxFn { name: None, ref typ } => vec![
-                format!("let user_data: Box<Box<{}>> = Box::new(Box::new(callback));", typ),
-            ],
-            BoxFn { name: Some(ref name), ref typ } => vec![
-                // TODO: The name is generated based on user callback data holder. Not ideal doing
-                //       it here, this way...
-                format!("let {}_data: Box<Box<{}>> = Box::new(Box::new({}));",
-                        name,
-                        typ,
-                        &name),
-            ],
             ExternCFunc { ref name, ref parameters, ref body, ref return_value, ref bounds } => {
                 let prefix = format!(r#"unsafe extern "C" fn {}{}("#, name, bounds);
                 let suffix = ")".to_string();

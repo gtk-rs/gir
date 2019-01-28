@@ -23,8 +23,8 @@ pub fn generate(
     object_name: &str,
 ) -> Result<()> {
     try!(writeln!(w));
-    let (bounds, end) = if in_trait {
-        (format!("<{}>", TYPE_PARAMETERS_START), "")
+    let (self_bound, end) = if in_trait {
+        (format!("{}, ", TYPE_PARAMETERS_START), "")
     } else {
         (String::new(), " {")
     };
@@ -36,12 +36,13 @@ pub fn generate(
     try!(version_condition(w, env, analysis.version, false, 0));
     try!(writeln!(
         w,
-        "unsafe extern \"C\" fn {}{}({}, f: glib_ffi::gpointer){}{}",
+        "unsafe extern \"C\" fn {}<{}F: {}>({}, f: glib_ffi::gpointer){}{}",
         analysis.name,
-        bounds,
+        self_bound,
+        func_str,
         params_str,
         ret_str,
-        end
+        end,
     ));
     if in_trait {
         try!(writeln!(
@@ -51,7 +52,7 @@ pub fn generate(
             object_name
         ));
     }
-    try!(writeln!(w, "\tlet f: &&({}) = transmute(f);", func_str));
+    try!(writeln!(w, "\tlet f: &F = transmute(f);"));
     try!(transformation_vars(w, analysis));
     let call = trampoline_call_func(env, analysis, in_trait);
     try!(writeln!(w, "\t{}", call));

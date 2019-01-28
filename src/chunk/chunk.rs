@@ -56,10 +56,6 @@ pub enum Chunk {
         in_trait: bool,
     },
     Name(String),
-    BoxFn {
-        name: Option<String>,
-        typ: String,
-    },
     ExternCFunc {
         name: String,
         parameters: Vec<Param>,

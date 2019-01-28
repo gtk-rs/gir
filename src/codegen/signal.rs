@@ -52,8 +52,8 @@ pub fn generate(
 
     if !only_declaration {
         match function_type {
-            Some(ref type_) => {
-                let body = body(analysis, type_, in_trait).to_code(env);
+            Some(_) => {
+                let body = body(analysis, in_trait).to_code(env);
                 for s in body {
                     try!(writeln!(w, "{}{}", tabs(indent), s));
                 }
@@ -212,14 +212,13 @@ fn bounds(function_type: &Option<String>) -> String {
     }
 }
 
-fn body(analysis: &analysis::signals::Info, function_type: &str, in_trait: bool) -> Chunk {
+fn body(analysis: &analysis::signals::Info, in_trait: bool) -> Chunk {
     let mut builder = signal_body::Builder::new();
 
     builder
         .signal_name(&analysis.signal_name)
         .trampoline_name(analysis.trampoline_name.as_ref().unwrap())
-        .in_trait(in_trait)
-        .function_type_string(function_type);
+        .in_trait(in_trait);
 
     builder.generate()
 }

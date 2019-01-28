@@ -5,7 +5,6 @@ pub struct Builder {
     signal_name: String,
     trampoline_name: String,
     in_trait: bool,
-    function_type_string: String,
 }
 
 impl Builder {
@@ -28,11 +27,6 @@ impl Builder {
         self
     }
 
-    pub fn function_type_string(&mut self, type_: &str) -> &mut Builder {
-        self.function_type_string = type_.into();
-        self
-    }
-
     pub fn generate(&self) -> Chunk {
         let mut body = Vec::new();
 
@@ -47,11 +41,11 @@ impl Builder {
     }
 
     fn let_func(&self) -> Chunk {
-        let type_ = format!("Box_<Box_<{}>>", self.function_type_string);
+        let type_ = format!("Box_<F>");
         Chunk::Let {
             name: "f".to_owned(),
             is_mut: false,
-            value: Box::new(Chunk::Custom("Box_::new(Box_::new(f))".to_owned())),
+            value: Box::new(Chunk::Custom("Box_::new(f)".to_owned())),
             type_: Some(Box::new(Chunk::Custom(type_))),
         }
     }

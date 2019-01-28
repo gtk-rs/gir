@@ -535,9 +535,11 @@ impl Builder {
     }
 
     fn add_async_trampoline(&self, env: &Env, chunks: &mut Vec<Chunk>, trampoline: &AsyncTrampoline) {
-        chunks.push(Chunk::BoxFn {
-            name: None,
-            typ: format!("{}", trampoline.bound_name),
+        chunks.push(Chunk::Let {
+                name: "user_data".to_string(),
+                is_mut: false,
+                value: Box::new(Chunk::Custom("Box::new(callback)".into())),
+                type_: Some(Box::new(Chunk::Custom(format!("Box<{}>", trampoline.bound_name)))),
         });
 
         let mut finish_args = vec![];
@@ -636,7 +638,7 @@ impl Builder {
                 name: "callback".to_string(),
                 is_mut: false,
                 value: Box::new(Chunk::Custom("Box::from_raw(user_data as *mut _)".into())),
-                type_: Some(Box::new(Chunk::Custom(format!("Box<Box<{}>>", trampoline.bound_name)))),
+                type_: Some(Box::new(Chunk::Custom(format!("Box<{}>", trampoline.bound_name)))),
             }
         );
         body.push(
