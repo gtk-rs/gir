@@ -396,8 +396,9 @@ fn analyze_function(
         match env.config.objects.get(&*full_name) {
             Some(obj) => {
                 match env.library.type_(type_tid) {
-                    // FIXME: Maybe check for interface and record here as well?
-                    library::Type::Class(_) => obj.concurrency,
+                    library::Type::Class(_) |
+                    library::Type::Interface(_) |
+                    library::Type::Record(_) => obj.concurrency,
                     _ => library::Concurrency::None,
                 }
             }
