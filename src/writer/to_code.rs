@@ -144,17 +144,6 @@ impl ToCode for Chunk {
                 vec![s1, s2]
             }
             Name(ref name) => vec![name.clone()],
-            BoxFn { name: None, ref typ } => vec![
-                format!("let user_data: Box<Box<{}>> = Box::new(Box::new(callback));", typ),
-            ],
-            BoxFn { name: Some(ref name), ref typ } => vec![
-                // TODO: The name is generated based on user callback data holder. Not ideal doing
-                //       it here, this way...
-                format!("let {}_data: Box<Box<{}>> = Box::new(Box::new({}));",
-                        name,
-                        typ,
-                        &name),
-            ],
             ExternCFunc { ref name, ref parameters, ref body, ref return_value, ref bounds } => {
                 let prefix = format!(r#"unsafe extern "C" fn {}{}("#, name, bounds);
                 let suffix = ")".to_string();
