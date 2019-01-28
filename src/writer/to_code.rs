@@ -137,7 +137,7 @@ impl ToCode for Chunk {
                 let s1 = format!("connect_raw(self.as_ptr() as *mut _, b\"{}\\0\".as_ptr() as *const _,", signal);
                 let self_str = if in_trait { "Self, " } else { "" };
                 let s2 = format!(
-                    "\ttransmute({}::<{}F> as usize), Box_::into_raw(f) as *mut _)",
+                    "\tSome(transmute({}::<{}F> as usize)), Box_::into_raw(f))",
                     trampoline,
                     self_str
                 );
