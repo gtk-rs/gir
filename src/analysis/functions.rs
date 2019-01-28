@@ -318,6 +318,14 @@ fn analyze_callbacks(
                                    func_name);
                         *commented = true;
                     }
+                    // We check if the user trampoline is there. If so, we change the destroy
+                    // nullable value if needed.
+                    for call in callbacks.iter() {
+                        if call.destroy_index == pos {
+                            callback.nullable = call.nullable;
+                            break
+                        }
+                    }
                     destroys.push(callback);
                     to_remove.push(pos);
                     continue;
@@ -388,8 +396,10 @@ fn analyze_function(
         match env.config.objects.get(&*full_name) {
             Some(obj) => {
                 match env.library.type_(type_tid) {
-                    library::Type::Class(_) => obj.concurrency,
-                    _ => library::Concurrency::SendSync,
+                    library::Type::Class(_) |
+                    library::Type::Interface(_) |
+                    library::Type::Record(_) => obj.concurrency,
+                    _ => library::Concurrency::None,
                 }
             }
             None => library::Concurrency::SendSync,
@@ -867,6 +877,7 @@ fn analyze_callback(
                     0
                 },
                 destroy_index: 0,
+                nullable: par.nullable,
             }, match par.destroy_index {
                 Some(destroy_index) => Some(c_parameters[destroy_index].1),
                 None => None,

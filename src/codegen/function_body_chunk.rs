@@ -211,6 +211,11 @@ impl Builder {
                         }
                     );
                 } else if !calls.is_empty() {
+                    let ty = if *calls[0].nullable {
+                        format!("Option<{}>", calls[0].bound_name)
+                    } else {
+                        calls[0].bound_name.to_string()
+                    };
                     chunks.push(Chunk::Let {
                         name: format!("super_callback{}", pos),
                         is_mut: false,
@@ -223,9 +228,9 @@ impl Builder {
                                                               calls[0].name))),
                         type_: Some(Box::new(Chunk::Custom(
                             if calls[0].scope.is_call() {
-                                format!("&Option<{}>", calls[0].bound_name)
+                                format!("&{}", ty)
                             } else {
-                                format!("Box_<Option<{}>>", calls[0].bound_name)
+                                format!("Box_<{}>", ty)
                             }))),
                     });
                 }
@@ -240,27 +245,53 @@ impl Builder {
     fn add_trampoline(&self, env: &Env, chunks: &mut Vec<Chunk>, trampoline: &Trampoline,
                       full_type: &Option<String>, pos: usize, bounds: &str, bounds_names: &str,
                       is_destroy: bool) {
-        if full_type.is_none() && !is_destroy {
-            if trampoline.scope.is_call() {
-                chunks.push(
-                    Chunk::Custom(
-                        format!("let {0}_data: Option<{1}> = {0}.into();",
-                                trampoline.name, trampoline.bound_name)));
+        if !is_destroy && *trampoline.nullable {
+            if full_type.is_none() {
+                if trampoline.scope.is_call() {
+                    chunks.push(
+                        Chunk::Custom(
+                            format!("let {0}_data: Option<{1}> = {0}.into();",
+                                    trampoline.name, trampoline.bound_name)));
+                } else {
+                    chunks.push(
+                        Chunk::Custom(
+                            format!("let {0}_data: Box_<Option<{1}>> = Box::new({0}.into());",
+                                    trampoline.name, trampoline.bound_name)));
+                }
             } else {
-                chunks.push(
-                    Chunk::Custom(
-                        format!("let {0}_data: Box_<Option<{1}>> = Box::new({0}.into());",
-                                trampoline.name, trampoline.bound_name)));
+                if trampoline.scope.is_call() {
+                    chunks.push(Chunk::Custom(format!("let {0}_data: &Option<{1}> = &{0};",
+                                                      trampoline.name,
+                                                      trampoline.bound_name)));
+                } else {
+                    chunks.push(Chunk::Custom(format!("let {0}_data: Option<{1}> = {0};",
+                                                      trampoline.name,
+                                                      trampoline.bound_name)));
+                }
             }
         } else if !is_destroy {
-            if trampoline.scope.is_call() {
-                chunks.push(Chunk::Custom(format!("let {0}_data: &{1} = &{0};",
-                                                  trampoline.name,
-                                                  trampoline.bound_name)));
+            if full_type.is_none() {
+                if trampoline.scope.is_call() {
+                    chunks.push(
+                        Chunk::Custom(
+                            format!("let {0}_data: {1} = {0};",
+                                    trampoline.name, trampoline.bound_name)));
+                } else {
+                    chunks.push(
+                        Chunk::Custom(
+                            format!("let {0}_data: Box_<{1}> = Box::new({0});",
+                                    trampoline.name, trampoline.bound_name)));
+                }
             } else {
-                chunks.push(Chunk::Custom(format!("let {0}_data: Option<{1}> = {0}.into();",
-                                                  trampoline.name,
-                                                  trampoline.bound_name)));
+                if trampoline.scope.is_call() {
+                    chunks.push(Chunk::Custom(format!("let {0}_data: &{1} = &{0};",
+                                                      trampoline.name,
+                                                      trampoline.bound_name)));
+                } else {
+                    chunks.push(Chunk::Custom(format!("let {0}_data: {1} = {0};",
+                                                      trampoline.name,
+                                                      trampoline.bound_name)));
+                }
             }
         }
 
@@ -272,7 +303,15 @@ impl Builder {
                par.name == "this" {
                 continue;
             }
-            let is_fundamental = add_chunk_for_type(env, par.typ, par, &mut body);
+            let ty_name = match rust_type(env, par.typ) {
+                Ok(ref x) => x.clone(),
+                _ => String::new(),
+            };
+            let is_fundamental = add_chunk_for_type(env, par.typ, par, &mut body, &ty_name);
+            if ty_name == "GString" {
+                arguments.push(Chunk::Name(format!("{}.as_str()", par.name)));
+                continue;
+            }
             arguments.push(Chunk::Name(format!("{}{}",
                                                if is_fundamental { "" } else { "&" },
                                                par.name)));
@@ -322,22 +361,43 @@ impl Builder {
                 if trampoline.scope.is_async() {
                     body.push(
                         Chunk::Custom(
-                            format!("let callback = callback.{}.expect(\"cannot get closure...\");",
-                                    pos)));
+                            format!("let callback = callback.{}{};",
+                                    pos,
+                                    if *trampoline.nullable {
+                                        ".expect(\"cannot get closure...\")"
+                                    } else {
+                                        ""
+                                    })));
                     if trampoline.ret.c_type != "void" {
                         extra_before_call = "let res = ";
                     }
                 } else if !trampoline.scope.is_call() {
-                    body.push(
-                        Chunk::Custom(
-                            format!("{}if let Some(ref callback) = callback.{} {{",
-                                    if trampoline.ret.c_type != "void" { "let res = " } else { "" },
-                                    pos)));
+                    if *trampoline.nullable {
+                        body.push(
+                            Chunk::Custom(
+                                format!("{}if let Some(ref callback) = callback.{} {{",
+                                        if trampoline.ret.c_type != "void" {
+                                            "let res = "
+                                        } else {
+                                            ""
+                                        },
+                                        pos)));
+                    } else {
+                        body.push(Chunk::Custom(format!("let callback = callback.{}", pos)));
+                        if trampoline.ret.c_type != "void" {
+                            body.push(Chunk::Custom("let res = ".to_owned()));
+                        }
+                    }
                 } else if trampoline.ret.c_type != "void" {
                     body.push(Chunk::Custom("let res = ".to_owned()));
                 }
             }
         } else {
+            let ty = if *trampoline.nullable {
+                format!("Option<{}>", self.callbacks[0].bound_name)
+            } else {
+                self.callbacks[0].bound_name.to_string()
+            };
             body.push(
                 Chunk::Let {
                     name: format!("{}callback", if is_destroy { "_" } else { "" }),
@@ -346,35 +406,35 @@ impl Builder {
                         if is_destroy || trampoline.scope.is_async() {
                             format!("Box_::from_raw({} as *mut _)", func)
                         } else if trampoline.scope.is_call() {
-                            format!("{} as *const _ as usize as *mut {}",
-                                    func,
-                                    self.callbacks[0].bound_name)
+                            format!("{} as *const _ as usize as *mut {}", func, ty)
                         } else {
                             format!("&*({} as *mut _)", func)
                         })),
                     type_: Some(Box::new(Chunk::Custom(
                         if is_destroy || trampoline.scope.is_async() {
-                            format!("Box_<Option<{}>>", self.callbacks[0].bound_name)
+                            format!("Box_<{}>", ty)
                         } else if trampoline.scope.is_call() {
-                            format!("*mut {}", self.callbacks[0].bound_name)
+                            format!("*mut {}", ty)
                         } else {
-                            format!("&Box_<Option<{}>>",
-                                    self.callbacks[0].bound_name)
+                            format!("&{}", ty)
                         }))),
                 }
             );
-            if !is_destroy {
+            if !is_destroy && *trampoline.nullable {
                 if trampoline.scope.is_async() {
                     body.push(Chunk::Custom(
                         "let callback = (*callback).expect(\"cannot get closure...\");".to_owned()));
                     if trampoline.ret.c_type != "void" {
                         extra_before_call = "let res = ";
                     }
-                } else if !trampoline.scope.is_call() {
+                } else {
                     body.push(Chunk::Custom(
-                        format!("{}if let Some(ref callback) = **callback {{",
-                                if trampoline.ret.c_type != "void" { "let res = " } else { "" })));
-                } else if trampoline.ret.c_type != "void" {
+                        format!("{}if let Some(ref {}callback) = *callback {{",
+                                if trampoline.ret.c_type != "void" { "let res = " } else { "" },
+                                if trampoline.scope.is_call() { "mut " } else { "" })));
+                }
+            } else if !is_destroy {
+                if trampoline.ret.c_type != "void" {
                     extra_before_call = "let res = ";
                 }
             }
@@ -383,7 +443,7 @@ impl Builder {
             use writer::to_code::ToCode;
             body.push(Chunk::Custom(format!("{}{}({}){}",
                                             extra_before_call,
-                                            if trampoline.scope.is_call() {
+                                            if !*trampoline.nullable {
                                                 "(*callback)"
                                             } else if trampoline.scope.is_async() {
                                                 "callback"
@@ -394,13 +454,13 @@ impl Builder {
                                                      .flat_map(|arg| arg.to_code(env))
                                                      .collect::<Vec<_>>()
                                                      .join(", "),
-                                            if trampoline.scope.is_call() ||
-                                               !extra_before_call.is_empty() {
+                                            if !extra_before_call.is_empty() ||
+                                               !*trampoline.nullable {
                                                 ";"
                                             } else {
                                                 ""
                                             },)));
-            if !trampoline.scope.is_async() && !trampoline.scope.is_call() {
+            if !trampoline.scope.is_async() && *trampoline.nullable {
                 body.push(Chunk::Custom("} else {".to_owned()));
                 body.push(Chunk::Custom("\tpanic!(\"cannot get closure...\")".to_owned()));
                 body.push(Chunk::Custom("};".to_owned()));
@@ -455,7 +515,7 @@ impl Builder {
 
         chunks.push(extern_func);
         if !is_destroy {
-            if !trampoline.scope.is_call() {
+            if !trampoline.scope.is_call() && *trampoline.nullable {
                 chunks.push(Chunk::Custom(format!("let {0} = if {0}_data.is_some() {{ Some({0}_func::<{1}> as _) }} else {{ None }};",
                                                   trampoline.name,
                                                   bounds_names)));
@@ -994,6 +1054,7 @@ fn add_chunk_for_type(
     typ_: library::TypeId,
     par: &trampoline_parameters::Transformation,
     body: &mut Vec<Chunk>,
+    ty_name: &str,
 ) -> bool {
     let type_ = env.type_(typ_);
     match *type_ {
@@ -1003,10 +1064,18 @@ fn add_chunk_for_type(
             body.push(Chunk::Custom(format!("let {0} = from_glib({0});", par.name)));
             true
         }
-        library::Type::Alias(ref x) => add_chunk_for_type(env, x.typ, par, body),
+        library::Type::Alias(ref x) => add_chunk_for_type(env, x.typ, par, body, ty_name),
         ref x => {
             let (begin, end) = ::codegen::trampoline_from_glib::from_glib_xxx(par.transfer, true);
-            body.push(Chunk::Custom(format!("let {1} = {0}{1}{2};", begin, par.name, end)));
+            body.push(Chunk::Custom(format!("let {1}{3} = {0}{1}{2};",
+                                            begin,
+                                            par.name,
+                                            end,
+                                            if ty_name == "GString" {
+                                                ": GString"
+                                            } else {
+                                                ""
+                                            })));
             x.is_fundamental()
         }
     }

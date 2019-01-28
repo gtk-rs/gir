@@ -233,7 +233,9 @@ fn rust_type_full(
                 match rust_type(env, p.typ) {
                     Ok(x) => {
                         let is_fundamental = p.typ.is_fundamental_type(env);
-                        s.push(format!("{}{}", if is_fundamental { "" } else { "&" }, x));
+                        s.push(format!("{}{}",
+                                       if is_fundamental { "" } else { "&" },
+                                       if x != "GString" { x } else { "&str".to_owned() }));
                     }
                     e => {
                         err = true;
