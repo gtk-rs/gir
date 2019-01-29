@@ -299,8 +299,8 @@ impl Builder {
         let mut arguments = Vec::new();
 
         for par in trampoline.parameters.transformations.iter() {
-            if trampoline.parameters.c_parameters[par.ind_c].c_type == "gpointer" ||
-               par.name == "this" {
+            if par.name == "this" ||
+               trampoline.parameters.c_parameters[par.ind_c].is_real_gpointer(env) {
                 continue;
             }
             let ty_name = match rust_type(env, par.typ) {
@@ -466,20 +466,9 @@ impl Builder {
                 body.push(Chunk::Custom("};".to_owned()));
             }
             if trampoline.ret.c_type != "void" {
-                use ::analysis::conversion_type::ConversionType;
+                use codegen::trampoline_to_glib::TrampolineToGlib;
 
-                body.push(Chunk::Custom(match ConversionType::of(env, trampoline.ret.typ) {
-                    ConversionType::Direct => "res".to_owned(),
-                    ConversionType::Scalar | ConversionType::Pointer => {
-                        match rust_type(env, trampoline.ret.typ).unwrap().as_str() {
-                            "GString" |
-                            "File" => "res.to_glib_full()".to_owned(),
-                            _ => "res.to_glib()".to_owned(),
-                        }
-                    }
-                    ConversionType::Borrow => panic!("cannot return borrowed type..."),
-                    ConversionType::Unknown => "res".to_owned(),
-                }));
+                body.push(Chunk::Custom(format!("res{}", trampoline.ret.trampoline_to_glib(env))));
             }
         }
 
@@ -489,7 +478,7 @@ impl Builder {
                                   .c_parameters.iter()
                                   .skip(1) // to skip the generated this
                                   .map(|p| {
-                                      if p.c_type == "gpointer" {
+                                      if p.is_real_gpointer(env) {
                                           Param { name: p.name.clone(),
                                                   typ: format!("{}::gpointer",
                                                                get_crate_name("GLib", env)) }
