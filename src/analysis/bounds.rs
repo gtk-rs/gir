@@ -21,6 +21,8 @@ pub enum BoundType {
     AsRef(Option<char>),
     // lifetime (if none, not a reference, like for primitive types), wrapper type
     Into(Option<char>, Option<Box<BoundType>>),
+    // Needed for user callbacks: we don't want to wrap with `Into`.
+    Nullable,
 }
 
 impl BoundType {
@@ -42,6 +44,7 @@ impl BoundType {
     fn with_lifetime(ty_: BoundType, lifetime: char) -> BoundType {
         match ty_ {
             BoundType::NoWrapper => unreachable!(),
+            BoundType::Nullable => unreachable!(),
             BoundType::IsA(_) => BoundType::IsA(Some(lifetime)),
             BoundType::AsRef(_) => BoundType::AsRef(Some(lifetime)),
             BoundType::Into(_, x) => BoundType::Into(Some(lifetime), x),
@@ -183,30 +186,10 @@ impl Bounds {
                     )
                 }
                 if need_is_into_check {
-                    if let Some(x) = if let Some(ref mut last) = self.used.last_mut() {
+                    if let Some(ref mut last) = self.used.last_mut() {
                         if last.bound_type.is_into() {
-                            let mut new_one = (*last).clone();
-                            new_one.alias = self.unused.pop_front().expect("no available bound");
-                            new_one.type_str = last.alias.to_string();
-                            new_one.parameter_name = last.parameter_name.clone();
-                            // When we create a new bound for a callback which can be NULL,
-                            // we need to generate two new bounds instead of just one. This flag
-                            // allows us to know it so we can prevent its "generation" in the
-                            // codegen part (we don't need the `Into<>` part in a few parts of the
-                            // code).
-                            new_one.callback_modified = true;
-
-                            last.bound_type = BoundType::NoWrapper;
-                            last.parameter_name = String::new();
-
-                            Some(new_one)
-                        } else {
-                            None
+                            last.bound_type = BoundType::Nullable;
                         }
-                    } else {
-                        None
-                    } {
-                        self.used.push(x);
                     }
                 }
             }
@@ -348,7 +331,7 @@ impl Bounds {
         use self::BoundType::*;
         for used in &self.used {
             match used.bound_type {
-                NoWrapper => (),
+                NoWrapper | Nullable => (),
                 IsA(_) => imports.add("glib::object::IsA", None),
                 AsRef(_) => imports.add_used_type(&used.type_str, None),
                 Into(_, Some(ref x)) => {

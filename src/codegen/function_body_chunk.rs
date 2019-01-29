@@ -250,12 +250,12 @@ impl Builder {
                 if trampoline.scope.is_call() {
                     chunks.push(
                         Chunk::Custom(
-                            format!("let {0}_data: Option<{1}> = {0}.into();",
+                            format!("let {0}_data: Option<{1}> = {0};",
                                     trampoline.name, trampoline.bound_name)));
                 } else {
                     chunks.push(
                         Chunk::Custom(
-                            format!("let {0}_data: Box_<Option<{1}>> = Box::new({0}.into());",
+                            format!("let {0}_data: Box_<Option<{1}>> = Box::new({0});",
                                     trampoline.name, trampoline.bound_name)));
                 }
             } else {

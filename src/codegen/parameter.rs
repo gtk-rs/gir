@@ -35,6 +35,7 @@ impl ToParameter for CParameter {
                         }
                         BoundType::Into(_, Some(_)) => type_str = t.to_string(),
                         BoundType::AsRef(_) | BoundType::Into(_, None) => type_str = t.to_string(),
+                        BoundType::Nullable => type_str = format!("Option<{}>", t),
                     }
                 }
                 None => {
