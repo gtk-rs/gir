@@ -6,6 +6,7 @@ use nameutil;
 use super::conversion_type::ConversionType;
 use super::ref_mode::RefMode;
 
+use analysis::rust_type::rust_type;
 pub use config::signals::TransformationType;
 
 #[derive(Clone, Debug)]
@@ -22,6 +23,12 @@ pub struct CParameter {
     pub name: String,
     pub typ: library::TypeId,
     pub c_type: String,
+}
+
+impl CParameter {
+    pub fn is_real_gpointer(&self, env: &Env) -> bool {
+        self.c_type == "gpointer" && rust_type(env, self.typ).is_err()
+    }
 }
 
 #[derive(Clone, Debug)]

@@ -299,8 +299,8 @@ impl Builder {
         let mut arguments = Vec::new();
 
         for par in trampoline.parameters.transformations.iter() {
-            if trampoline.parameters.c_parameters[par.ind_c].c_type == "gpointer" ||
-               par.name == "this" {
+            if par.name == "this" ||
+               trampoline.parameters.c_parameters[par.ind_c].is_real_gpointer(env) {
                 continue;
             }
             let ty_name = match rust_type(env, par.typ) {
@@ -489,7 +489,7 @@ impl Builder {
                                   .c_parameters.iter()
                                   .skip(1) // to skip the generated this
                                   .map(|p| {
-                                      if p.c_type == "gpointer" {
+                                      if p.is_real_gpointer(env) {
                                           Param { name: p.name.clone(),
                                                   typ: format!("{}::gpointer",
                                                                get_crate_name("GLib", env)) }
