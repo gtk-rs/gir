@@ -21,8 +21,6 @@ pub enum BoundType {
     AsRef(Option<char>),
     // lifetime (if none, not a reference, like for primitive types), wrapper type
     Into(Option<char>, Option<Box<BoundType>>),
-    // Needed for user callbacks: we don't want to wrap with `Into`.
-    Nullable,
 }
 
 impl BoundType {
@@ -44,7 +42,6 @@ impl BoundType {
     fn with_lifetime(ty_: BoundType, lifetime: char) -> BoundType {
         match ty_ {
             BoundType::NoWrapper => unreachable!(),
-            BoundType::Nullable => unreachable!(),
             BoundType::IsA(_) => BoundType::IsA(Some(lifetime)),
             BoundType::AsRef(_) => BoundType::AsRef(Some(lifetime)),
             BoundType::Into(_, x) => BoundType::Into(Some(lifetime), x),
@@ -178,19 +175,13 @@ impl Bounds {
                         });
                     }
                 }
-                if par.c_type != "GDestroyNotify" &&
+                if (!need_is_into_check || !*par.nullable) &&
+                   par.c_type != "GDestroyNotify" &&
                    !self.add_parameter(&par.name, &type_string, bound_type, async) {
                     panic!(
                         "Too many type constraints for {}",
                         func.c_identifier.as_ref().unwrap()
                     )
-                }
-                if need_is_into_check {
-                    if let Some(ref mut last) = self.used.last_mut() {
-                        if last.bound_type.is_into() {
-                            last.bound_type = BoundType::Nullable;
-                        }
-                    }
                 }
             }
         } else if par.instance_parameter {
@@ -331,7 +322,7 @@ impl Bounds {
         use self::BoundType::*;
         for used in &self.used {
             match used.bound_type {
-                NoWrapper | Nullable => (),
+                NoWrapper => (),
                 IsA(_) => imports.add("glib::object::IsA", None),
                 AsRef(_) => imports.add_used_type(&used.type_str, None),
                 Into(_, Some(ref x)) => {

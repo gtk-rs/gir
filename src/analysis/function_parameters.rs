@@ -264,9 +264,7 @@ pub fn analyze(
                 let transformation = Transformation {
                     ind_c,
                     ind_rust,
-                    transformation_type: TransformationType::Into {
-                        name: name.clone(),
-                    },
+                    transformation_type: TransformationType::Into { name: name.clone() },
                 };
                 parameters.transformations.push(transformation);
                 nullable_into = true;

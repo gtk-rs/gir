@@ -256,15 +256,20 @@ fn analyze_callbacks(
             if let Ok(s) = used_rust_type(env, par.typ, !par.direction.is_out()) {
                 used_types.push(s);
             }
-            let (to_glib_extra, callback_info) = bounds.add_for_parameter(env, func, par, false,
-                                                                          concurrency);
-            if let Some(to_glib_extra) = to_glib_extra {
-                if par.c_type != "GDestroyNotify" {
-                    to_glib_extras.insert(pos, to_glib_extra);
-                }
-            }
-
             let rust_type = env.library.type_(par.typ);
+            let callback_info = if !*par.nullable || !rust_type.is_function() {
+                let (to_glib_extra, callback_info) = bounds.add_for_parameter(env, func, par, false,
+                                                                              concurrency);
+                if let Some(to_glib_extra) = to_glib_extra {
+                    if par.c_type != "GDestroyNotify" {
+                        to_glib_extras.insert(pos, to_glib_extra);
+                    }
+                }
+                callback_info
+            } else {
+                None
+            };
+
             if rust_type.is_function() {
                 if par.c_type != "GDestroyNotify" {
                     if let Some((mut callback, destroy_index)) = analyze_callback(
@@ -594,24 +599,32 @@ fn analyze_function(
 
     if !commented {
         if !destroys.is_empty() || !callbacks.is_empty() {
-            if callbacks.iter().any(|c| !c.scope.is_call()) {
+            if callbacks.iter().any(|c| c.scope.is_async() && *c.nullable) {
+                warn_main!(type_tid,
+                           "{}: gir cannot generate nullable async callback...",
+                           func.c_identifier.as_ref().unwrap_or(&func.name));
+                commented = true;
+            }
+            if !commented && callbacks.iter().any(|c| !c.scope.is_call()) {
                 imports.add("std::boxed::Box as Box_", None);
             }
         }
-        for transformation in &mut parameters.transformations {
-            if let Some(to_glib_extra) = to_glib_extras.get(&transformation.ind_c) {
-                transformation
-                    .transformation_type
-                    .set_to_glib_extra(to_glib_extra);
+        if !commented {
+            for transformation in &mut parameters.transformations {
+                if let Some(to_glib_extra) = to_glib_extras.get(&transformation.ind_c) {
+                    transformation
+                        .transformation_type
+                        .set_to_glib_extra(to_glib_extra);
+                }
             }
-        }
 
-        imports.add_used_types(&used_types, version);
-        if ret.base_tid.is_some() {
-            imports.add("glib::object::Cast", None);
+            imports.add_used_types(&used_types, version);
+            if ret.base_tid.is_some() {
+                imports.add("glib::object::Cast", None);
+            }
+            imports.add("glib::translate::*", version);
+            bounds.update_imports(imports);
         }
-        imports.add("glib::translate::*", version);
-        bounds.update_imports(imports);
     }
 
     let visibility = if commented {
@@ -861,8 +874,15 @@ fn analyze_callback(
                 parameters,
                 ret: func.ret.clone(),
                 bound_name: match callback_info {
-                    Some(x) => x.bound_name,
-                    None => return None,
+                    Some(x) => x.bound_name.to_string(),
+                    None => match rust_type_full(env, par.typ, par.nullable, RefMode::None,
+                                                 par.scope, library::Concurrency::None) {
+                                Ok(s) => s,
+                                Err(_) => {
+                                    warn_main!(type_tid, "`{}`: unknown type", func.name);
+                                    return None;
+                                }
+                            },
                 },
                 bounds: Bounds::default(),
                 version: None,

@@ -65,7 +65,7 @@ pub fn bounds_rust_type(env: &Env, type_id: library::TypeId) -> Result {
                    library::Concurrency::None)
 }
 
-fn rust_type_full(
+pub fn rust_type_full(
     env: &Env,
     type_id: library::TypeId,
     nullable: Nullable,
@@ -250,7 +250,7 @@ fn rust_type_full(
             } else {
                 "Fn"
             };
-            let ret = match rust_type(env, f.ret.typ) {
+            let mut ret = match rust_type(env, f.ret.typ) {
                 Ok(x) => format!("{}({}) -> {}{}",
                                  closure_kind,
                                  s.join(", "),
@@ -272,10 +272,22 @@ fn rust_type_full(
                 }
             };
             if err {
-                Err(TypeError::Unimplemented(ret))
-            } else {
-                Ok(format!("{}{}", ret, if scope.is_call() { "" } else { " + 'static" }))
+                return Err(TypeError::Unimplemented(ret));
             }
+            let add = if scope.is_call() {
+                ""
+            } else {
+                " + 'static"
+            };
+            Ok(if *nullable {
+                if add.is_empty() {
+                    format!("Option<&{} dyn {}>", if scope.is_call() { "mut" } else { "" }, ret)
+                } else {
+                    format!("Option<&({} dyn {}{})>", if scope.is_call() { "mut" } else { "" }, ret, add)
+                }
+            } else {
+                format!("{}{}", ret, add)
+            })
         }
         _ => Err(TypeError::Unimplemented(type_.get_name().to_owned())),
     };

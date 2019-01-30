@@ -233,7 +233,7 @@ pub fn bound_to_string(bound: &Bound, async: bool) -> String {
     use analysis::bounds::BoundType::*;
 
     match bound.bound_type {
-        NoWrapper | Nullable => {
+        NoWrapper => {
             format!("{}: {}", bound.alias, bound.type_str)
         }
         IsA(Some(lifetime)) => {
