@@ -114,7 +114,8 @@ fn analyze_property(
             format!(
                 "{}: {}",
                 prop_name,
-                parameter_rust_type(env, typ, dir, nullable, set_in_ref_mode).into_string()
+                parameter_rust_type(env, typ, dir, nullable, set_in_ref_mode,
+                                    library::ParameterScope::None).into_string()
             )
         };
         Some(ChildProperty {

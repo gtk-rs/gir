@@ -156,7 +156,8 @@ fn func_parameter(
         },
         None => {
             let rust_type =
-                parameter_rust_type(env, par.typ, par.direction, par.nullable, ref_mode);
+                parameter_rust_type(env, par.typ, par.direction, par.nullable, ref_mode,
+                                    library::ParameterScope::None);
             rust_type.into_string().replace("Option<&", "&Option<")
         }
     }

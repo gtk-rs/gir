@@ -106,7 +106,8 @@ fn declaration(env: &Env, prop: &Property) -> String {
                                                         prop.typ,
                                                         dir,
                                                         library::Nullable(false),
-                                                        analysis::ref_mode::RefMode::ByRefFake)
+                                                        analysis::ref_mode::RefMode::ByRefFake,
+                                                        library::ParameterScope::None)
                                         .into_string();
                     let mut bounds = Bounds::default();
                     bounds.add_parameter(&prop.var_name,
@@ -139,12 +140,14 @@ fn declaration(env: &Env, prop: &Property) -> String {
                     }
                 }
                 _ => {
-                    parameter_rust_type(env, prop.typ, dir, prop.nullable, prop.set_in_ref_mode)
+                    parameter_rust_type(env, prop.typ, dir, prop.nullable, prop.set_in_ref_mode,
+                                        library::ParameterScope::None)
                         .into_string()
                 }
             }
         } else {
-            parameter_rust_type(env, prop.typ, dir, prop.nullable, prop.set_in_ref_mode)
+            parameter_rust_type(env, prop.typ, dir, prop.nullable, prop.set_in_ref_mode,
+                                library::ParameterScope::None)
                 .into_string()
         };
         format!(", {}: {}", prop.var_name, param_type)
@@ -152,7 +155,8 @@ fn declaration(env: &Env, prop: &Property) -> String {
     let return_str = if prop.is_get {
         let dir = library::ParameterDirection::Return;
         let ret_type =
-            parameter_rust_type(env, prop.typ, dir, prop.nullable, prop.get_out_ref_mode)
+            parameter_rust_type(env, prop.typ, dir, prop.nullable, prop.get_out_ref_mode,
+                                library::ParameterScope::None)
                 .into_string();
         format!(" -> {}", ret_type)
     } else {

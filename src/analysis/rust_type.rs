@@ -274,19 +274,14 @@ pub fn rust_type_full(
             if err {
                 return Err(TypeError::Unimplemented(ret));
             }
-            let add = if scope.is_call() {
-                ""
-            } else {
-                " + 'static"
-            };
             Ok(if *nullable {
-                if add.is_empty() {
-                    format!("Option<&{} dyn {}>", if scope.is_call() { "mut" } else { "" }, ret)
+                if scope.is_call() {
+                    format!("Option<&mut dyn ({})>", ret)
                 } else {
-                    format!("Option<&({} dyn {}{})>", if scope.is_call() { "mut" } else { "" }, ret, add)
+                    format!("Option<Box<dyn {} + 'static>>", ret)
                 }
             } else {
-                format!("{}{}", ret, add)
+                format!("{}{}", ret, if scope.is_call() { "" } else { " + 'static" })
             })
         }
         _ => Err(TypeError::Unimplemented(type_.get_name().to_owned())),
@@ -357,10 +352,11 @@ pub fn parameter_rust_type(
     direction: library::ParameterDirection,
     nullable: Nullable,
     ref_mode: RefMode,
+    scope: ParameterScope,
 ) -> Result {
     use library::Type::*;
     let type_ = env.library.type_(type_id);
-    let rust_type = rust_type_full(env, type_id, nullable, ref_mode, ParameterScope::None,
+    let rust_type = rust_type_full(env, type_id, nullable, ref_mode, scope,
                                    library::Concurrency::None);
     match *type_ {
         Fundamental(fund) => {
@@ -377,7 +373,8 @@ pub fn parameter_rust_type(
 
         Alias(ref alias) => rust_type
             .and_then(|s| {
-                parameter_rust_type(env, alias.typ, direction, nullable, ref_mode).map_any(|_| s)
+                parameter_rust_type(env, alias.typ, direction, nullable, ref_mode,
+                                    scope).map_any(|_| s)
             })
             .map_any(|s| format_parameter(s, direction)),
 

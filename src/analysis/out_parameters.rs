@@ -154,6 +154,7 @@ pub fn can_as_return(env: &Env, par: &Parameter) -> bool {
                 ParameterDirection::Out,
                 Nullable(false),
                 RefMode::None,
+                par.scope,
             ).is_ok()
         }
         Borrow => false,

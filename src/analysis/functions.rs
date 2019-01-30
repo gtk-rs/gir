@@ -338,7 +338,7 @@ fn analyze_callbacks(
             }
             if !*commented {
                 *commented |= parameter_rust_type(env, par.typ, par.direction, Nullable(false),
-                                                  RefMode::None).is_err();
+                                                  RefMode::None, par.scope).is_err();
             }
         }
     }
@@ -513,7 +513,8 @@ fn analyze_function(
             );
             let type_error =
                 !(async && *env.library.type_(par.typ) == Type::Fundamental(library::Fundamental::Pointer)) &&
-                parameter_rust_type(env, par.typ, par.direction, Nullable(false), RefMode::None)
+                parameter_rust_type(env, par.typ, par.direction, Nullable(false), RefMode::None,
+                                    par.scope)
                     .is_err();
             if type_error {
                 commented = true;
