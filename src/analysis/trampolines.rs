@@ -21,7 +21,7 @@ pub struct Trampoline {
     // inner C functions. We need to have the bound name in order to create variables and also to
     // pass to the C function bounds (otherwise it won't compile because it doesn't know how to
     // infer the bounds).
-    pub bound_name: char,
+    pub bound_name: String,
     pub bounds: Bounds,
     pub version: Option<Version>,
     pub inhibit: bool,
@@ -157,7 +157,7 @@ pub fn analyze(
         inhibit,
         concurrency,
         is_notify,
-        bound_name: 'A',
+        bound_name: String::new(),
         scope: library::ParameterScope::None,
         user_data_index: 0,
         destroy_index: 0,

@@ -175,39 +175,13 @@ impl Bounds {
                         });
                     }
                 }
-                if par.c_type != "GDestroyNotify" &&
+                if (!need_is_into_check || !*par.nullable) &&
+                   par.c_type != "GDestroyNotify" &&
                    !self.add_parameter(&par.name, &type_string, bound_type, async) {
                     panic!(
                         "Too many type constraints for {}",
                         func.c_identifier.as_ref().unwrap()
                     )
-                }
-                if need_is_into_check {
-                    if let Some(x) = if let Some(ref mut last) = self.used.last_mut() {
-                        if last.bound_type.is_into() {
-                            let mut new_one = (*last).clone();
-                            new_one.alias = self.unused.pop_front().expect("no available bound");
-                            new_one.type_str = last.alias.to_string();
-                            new_one.parameter_name = last.parameter_name.clone();
-                            // When we create a new bound for a callback which can be NULL,
-                            // we need to generate two new bounds instead of just one. This flag
-                            // allows us to know it so we can prevent its "generation" in the
-                            // codegen part (we don't need the `Into<>` part in a few parts of the
-                            // code).
-                            new_one.callback_modified = true;
-
-                            last.bound_type = BoundType::NoWrapper;
-                            last.parameter_name = String::new();
-
-                            Some(new_one)
-                        } else {
-                            None
-                        }
-                    } else {
-                        None
-                    } {
-                        self.used.push(x);
-                    }
                 }
             }
         } else if par.instance_parameter {

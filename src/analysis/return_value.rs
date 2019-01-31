@@ -59,6 +59,7 @@ pub fn analyze(
             func.ret.direction,
             Nullable(false),
             RefMode::None,
+            library::ParameterScope::None,
         ).is_err()
     };
 

@@ -100,7 +100,8 @@ fn declaration(env: &Env, prop: &ChildProperty, is_get: bool) -> String {
     let return_str = if is_get {
         let dir = library::ParameterDirection::Return;
         let ret_type =
-            parameter_rust_type(env, prop.typ, dir, prop.nullable, prop.get_out_ref_mode)
+            parameter_rust_type(env, prop.typ, dir, prop.nullable, prop.get_out_ref_mode,
+                                library::ParameterScope::None)
                 .into_string();
         format!(" -> {}", ret_type)
     } else {

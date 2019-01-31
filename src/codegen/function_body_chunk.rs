@@ -135,7 +135,7 @@ impl Builder {
                         Some(format!("Box_<({})>",
                                      calls.iter()
                                           .map(|c| if c.scope.is_call() {
-                                              format!("Option<{}>", c.bound_name)
+                                              format!("{}", c.bound_name)
                                           } else {
                                               format!("&{}", c.bound_name)
                                           })
@@ -211,11 +211,6 @@ impl Builder {
                         }
                     );
                 } else if !calls.is_empty() {
-                    let ty = if *calls[0].nullable {
-                        format!("Option<{}>", calls[0].bound_name)
-                    } else {
-                        calls[0].bound_name.to_string()
-                    };
                     chunks.push(Chunk::Let {
                         name: format!("super_callback{}", pos),
                         is_mut: false,
@@ -228,9 +223,9 @@ impl Builder {
                                                               calls[0].name))),
                         type_: Some(Box::new(Chunk::Custom(
                             if calls[0].scope.is_call() {
-                                format!("&{}", ty)
+                                format!("&{}", calls[0].bound_name)
                             } else {
-                                format!("Box_<{}>", ty)
+                                format!("Box_<{}>", calls[0].bound_name)
                             }))),
                     });
                 }
@@ -245,31 +240,7 @@ impl Builder {
     fn add_trampoline(&self, env: &Env, chunks: &mut Vec<Chunk>, trampoline: &Trampoline,
                       full_type: &Option<String>, pos: usize, bounds: &str, bounds_names: &str,
                       is_destroy: bool) {
-        if !is_destroy && *trampoline.nullable {
-            if full_type.is_none() {
-                if trampoline.scope.is_call() {
-                    chunks.push(
-                        Chunk::Custom(
-                            format!("let {0}_data: Option<{1}> = {0}.into();",
-                                    trampoline.name, trampoline.bound_name)));
-                } else {
-                    chunks.push(
-                        Chunk::Custom(
-                            format!("let {0}_data: Box_<Option<{1}>> = Box::new({0}.into());",
-                                    trampoline.name, trampoline.bound_name)));
-                }
-            } else {
-                if trampoline.scope.is_call() {
-                    chunks.push(Chunk::Custom(format!("let {0}_data: &Option<{1}> = &{0};",
-                                                      trampoline.name,
-                                                      trampoline.bound_name)));
-                } else {
-                    chunks.push(Chunk::Custom(format!("let {0}_data: Option<{1}> = {0};",
-                                                      trampoline.name,
-                                                      trampoline.bound_name)));
-                }
-            }
-        } else if !is_destroy {
+        if !is_destroy {
             if full_type.is_none() {
                 if trampoline.scope.is_call() {
                     chunks.push(
@@ -393,11 +364,6 @@ impl Builder {
                 }
             }
         } else {
-            let ty = if *trampoline.nullable {
-                format!("Option<{}>", self.callbacks[0].bound_name)
-            } else {
-                self.callbacks[0].bound_name.to_string()
-            };
             body.push(
                 Chunk::Let {
                     name: format!("{}callback", if is_destroy { "_" } else { "" }),
@@ -406,17 +372,19 @@ impl Builder {
                         if is_destroy || trampoline.scope.is_async() {
                             format!("Box_::from_raw({} as *mut _)", func)
                         } else if trampoline.scope.is_call() {
-                            format!("{} as *const _ as usize as *mut {}", func, ty)
+                            format!("{} as *const _ as usize as *mut {}",
+                                    func,
+                                    self.callbacks[0].bound_name)
                         } else {
                             format!("&*({} as *mut _)", func)
                         })),
                     type_: Some(Box::new(Chunk::Custom(
                         if is_destroy || trampoline.scope.is_async() {
-                            format!("Box_<{}>", ty)
+                            format!("Box_<{}>", self.callbacks[0].bound_name)
                         } else if trampoline.scope.is_call() {
-                            format!("*mut {}", ty)
+                            format!("*mut {}", self.callbacks[0].bound_name)
                         } else {
-                            format!("&{}", ty)
+                            format!("&{}", self.callbacks[0].bound_name)
                         }))),
                 }
             );
@@ -503,23 +471,28 @@ impl Builder {
         };
 
         chunks.push(extern_func);
+        let bounds_str = if bounds_names.is_empty() {
+            String::new()
+        } else {
+            format!("::<{}>", bounds_names)
+        };
         if !is_destroy {
             if !trampoline.scope.is_call() && *trampoline.nullable {
-                chunks.push(Chunk::Custom(format!("let {0} = if {0}_data.is_some() {{ Some({0}_func::<{1}> as _) }} else {{ None }};",
+                chunks.push(Chunk::Custom(format!("let {0} = if {0}_data.is_some() {{ Some({0}_func{1} as _) }} else {{ None }};",
                                                   trampoline.name,
-                                                  bounds_names)));
+                                                  bounds_str)));
             } else {
-                chunks.push(Chunk::Custom(format!("let {0} = Some({0}_func::<{1}> as _);",
+                chunks.push(Chunk::Custom(format!("let {0} = Some({0}_func{1} as _);",
                                                   trampoline.name,
-                                                  bounds_names)));
+                                                  bounds_str)));
             }
         } else {
             chunks.push(
                 Chunk::Custom(
-                    format!("let destroy_call{} = Some({}_func::<{}> as _);",
+                    format!("let destroy_call{} = Some({}_func{} as _);",
                             trampoline.destroy_index,
                             trampoline.name,
-                            bounds_names)));
+                            bounds_str)));
         }
     }
 

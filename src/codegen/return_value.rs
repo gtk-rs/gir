@@ -14,7 +14,8 @@ pub trait ToReturnValue {
 impl ToReturnValue for library::Parameter {
     fn to_return_value(&self, env: &Env, is_trampoline: bool) -> String {
         let rust_type =
-            parameter_rust_type(env, self.typ, self.direction, self.nullable, RefMode::None);
+            parameter_rust_type(env, self.typ, self.direction, self.nullable, RefMode::None,
+                                self.scope);
         let mut name = rust_type.into_string();
         if is_trampoline && self.direction == library::ParameterDirection::Return && name == "GString" {
             name = "String".to_owned();
@@ -122,6 +123,7 @@ fn out_parameter_as_return(par: &library::Parameter, env: &Env) -> String {
         ParameterDirection::Return,
         par.nullable,
         RefMode::None,
+        par.scope,
     );
     let name = rust_type.into_string();
     match ConversionType::of(env, par.typ) {

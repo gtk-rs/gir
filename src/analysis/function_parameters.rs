@@ -260,13 +260,12 @@ pub fn analyze(
             };
             parameters.rust_parameters.push(rust_par);
 
-            if *nullable && is_into(env, par) && !(async_func && (name == data_param_name || name == callback_param_name)) {
+            if *nullable && is_into(env, par) && !env.library.type_(par.typ).is_function() &&
+               !(async_func && (name == data_param_name || name == callback_param_name)) {
                 let transformation = Transformation {
                     ind_c,
                     ind_rust,
-                    transformation_type: TransformationType::Into {
-                        name: name.clone(),
-                    },
+                    transformation_type: TransformationType::Into { name: name.clone() },
                 };
                 parameters.transformations.push(transformation);
                 nullable_into = true;

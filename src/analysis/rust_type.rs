@@ -65,7 +65,7 @@ pub fn bounds_rust_type(env: &Env, type_id: library::TypeId) -> Result {
                    library::Concurrency::None)
 }
 
-fn rust_type_full(
+pub fn rust_type_full(
     env: &Env,
     type_id: library::TypeId,
     nullable: Nullable,
@@ -250,7 +250,7 @@ fn rust_type_full(
             } else {
                 "Fn"
             };
-            let ret = match rust_type(env, f.ret.typ) {
+            let mut ret = match rust_type(env, f.ret.typ) {
                 Ok(x) => format!("{}({}) -> {}{}",
                                  closure_kind,
                                  s.join(", "),
@@ -272,10 +272,17 @@ fn rust_type_full(
                 }
             };
             if err {
-                Err(TypeError::Unimplemented(ret))
-            } else {
-                Ok(format!("{}{}", ret, if scope.is_call() { "" } else { " + 'static" }))
+                return Err(TypeError::Unimplemented(ret));
             }
+            Ok(if *nullable {
+                if scope.is_call() {
+                    format!("Option<&mut dyn ({})>", ret)
+                } else {
+                    format!("Option<Box<dyn {} + 'static>>", ret)
+                }
+            } else {
+                format!("{}{}", ret, if scope.is_call() { "" } else { " + 'static" })
+            })
         }
         _ => Err(TypeError::Unimplemented(type_.get_name().to_owned())),
     };
@@ -345,10 +352,11 @@ pub fn parameter_rust_type(
     direction: library::ParameterDirection,
     nullable: Nullable,
     ref_mode: RefMode,
+    scope: ParameterScope,
 ) -> Result {
     use library::Type::*;
     let type_ = env.library.type_(type_id);
-    let rust_type = rust_type_full(env, type_id, nullable, ref_mode, ParameterScope::None,
+    let rust_type = rust_type_full(env, type_id, nullable, ref_mode, scope,
                                    library::Concurrency::None);
     match *type_ {
         Fundamental(fund) => {
@@ -365,7 +373,8 @@ pub fn parameter_rust_type(
 
         Alias(ref alias) => rust_type
             .and_then(|s| {
-                parameter_rust_type(env, alias.typ, direction, nullable, ref_mode).map_any(|_| s)
+                parameter_rust_type(env, alias.typ, direction, nullable, ref_mode,
+                                    scope).map_any(|_| s)
             })
             .map_any(|s| format_parameter(s, direction)),
 
