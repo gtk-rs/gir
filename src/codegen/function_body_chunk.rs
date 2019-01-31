@@ -495,23 +495,28 @@ impl Builder {
         };
 
         chunks.push(extern_func);
+        let bounds_str = if bounds_names.is_empty() {
+            String::new()
+        } else {
+            format!("::<{}>", bounds_names)
+        };
         if !is_destroy {
             if !trampoline.scope.is_call() && *trampoline.nullable {
-                chunks.push(Chunk::Custom(format!("let {0} = if {0}_data.is_some() {{ Some({0}_func::<{1}> as _) }} else {{ None }};",
+                chunks.push(Chunk::Custom(format!("let {0} = if {0}_data.is_some() {{ Some({0}_func{1} as _) }} else {{ None }};",
                                                   trampoline.name,
-                                                  bounds_names)));
+                                                  bounds_str)));
             } else {
-                chunks.push(Chunk::Custom(format!("let {0} = Some({0}_func::<{1}> as _);",
+                chunks.push(Chunk::Custom(format!("let {0} = Some({0}_func{1} as _);",
                                                   trampoline.name,
-                                                  bounds_names)));
+                                                  bounds_str)));
             }
         } else {
             chunks.push(
                 Chunk::Custom(
-                    format!("let destroy_call{} = Some({}_func::<{}> as _);",
+                    format!("let destroy_call{} = Some({}_func{} as _);",
                             trampoline.destroy_index,
                             trampoline.name,
-                            bounds_names)));
+                            bounds_str)));
         }
     }
 
