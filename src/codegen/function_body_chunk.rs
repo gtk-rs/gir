@@ -240,31 +240,7 @@ impl Builder {
     fn add_trampoline(&self, env: &Env, chunks: &mut Vec<Chunk>, trampoline: &Trampoline,
                       full_type: &Option<String>, pos: usize, bounds: &str, bounds_names: &str,
                       is_destroy: bool) {
-        if !is_destroy && *trampoline.nullable {
-            if full_type.is_none() {
-                if trampoline.scope.is_call() {
-                    chunks.push(
-                        Chunk::Custom(
-                            format!("let {0}_data: {1} = {0};",
-                                    trampoline.name, trampoline.bound_name)));
-                } else {
-                    chunks.push(
-                        Chunk::Custom(
-                            format!("let {0}_data: Box_<{1}> = Box::new({0});",
-                                    trampoline.name, trampoline.bound_name)));
-                }
-            } else {
-                if trampoline.scope.is_call() {
-                    chunks.push(Chunk::Custom(format!("let {0}_data: &{1} = &{0};",
-                                                      trampoline.name,
-                                                      trampoline.bound_name)));
-                } else {
-                    chunks.push(Chunk::Custom(format!("let {0}_data: {1} = {0};",
-                                                      trampoline.name,
-                                                      trampoline.bound_name)));
-                }
-            }
-        } else if !is_destroy {
+        if !is_destroy {
             if full_type.is_none() {
                 if trampoline.scope.is_call() {
                     chunks.push(
