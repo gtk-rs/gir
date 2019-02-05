@@ -14,7 +14,7 @@ bitflags = "1.0"
 docopt = "1.0"
 xml-rs = "0.8"
 toml = "0.4"
-env_logger = "0.5"
+env_logger = "0.6"
 git2 = { version = "0.7", default-features = false }
 lazy_static = "1.0"
 log = "0.4"
