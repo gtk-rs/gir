@@ -13,12 +13,12 @@ pub trait IsPtr {
 impl IsPtr for Field {
     fn is_ptr(&self) -> bool {
         if let Some(ref c_type) = self.c_type {
-            return c_type.contains('*')
+            c_type.contains('*')
         } else {
             // After library post processing phase
             // only types without c:type should be
-            // function pointers.
-            true
+            // function pointers, we need check their parameters.
+            false
         }
     }
 }
@@ -52,8 +52,9 @@ pub trait IsIncomplete {
 impl IsIncomplete for Fundamental {
     fn is_incomplete(&self, _lib: &Library) -> bool {
         match *self {
-            Fundamental::None |
-            Fundamental::Unsupported => true,
+            Fundamental::None
+            | Fundamental::Unsupported
+            | Fundamental::VarArgs => true,
             _ => false,
         }
     }
@@ -64,8 +65,7 @@ impl IsIncomplete for Alias {
         if self.is_ptr() {
             false
         } else {
-            let target_type = lib.type_(self.typ);
-            target_type.is_incomplete(lib)
+            lib.type_(self.typ).is_incomplete(lib)
         }
     }
 }
@@ -74,10 +74,10 @@ impl IsIncomplete for Field {
     fn is_incomplete(&self, lib: &Library) -> bool {
         if self.is_ptr() {
             // Pointers are always complete.
-            return false;
+            false
+        } else {
+            lib.type_(self.typ).is_incomplete(lib)
         }
-        let field_type = lib.type_(self.typ);
-        field_type.is_incomplete(lib)
     }
 }
 
@@ -130,23 +130,37 @@ impl IsIncomplete for Union {
     }
 }
 
+impl IsIncomplete for Function {
+    fn is_incomplete(&self, lib: &Library) -> bool {
+        //Checking p.typ.is_incomplete(lib) cause recursive check on GScannerMsgFunc
+        self.parameters.iter().any(|p| match lib.type_(p.typ) {
+            Type::Fundamental(Fundamental::Unsupported)
+            | Type::Fundamental(Fundamental::VarArgs) => true,
+            _ => false,
+        })
+    }
+}
+
+impl IsIncomplete for TypeId {
+    fn is_incomplete(&self, lib: &Library) -> bool {
+        lib.type_(*self).is_incomplete(lib)
+    }
+}
+
 impl IsIncomplete for Type {
     fn is_incomplete(&self, lib: &Library) -> bool {
         match *self {
             Type::Fundamental(ref fundamental) => fundamental.is_incomplete(lib),
             Type::Alias(ref alias) => alias.is_incomplete(lib),
-            Type::FixedArray(tid, ..) => {
-                let item_type = lib.type_(tid);
-                item_type.is_incomplete(lib)
-            },
+            Type::FixedArray(tid, ..) => tid.is_incomplete(lib),
             Type::Class(ref klass) => klass.is_incomplete(lib),
             Type::Record(ref record) => record.is_incomplete(lib),
             Type::Union(ref union) => union.is_incomplete(lib),
+            Type::Function(ref function) => function.is_incomplete(lib),
             Type::Interface(..) => true,
             Type::Custom(..) |
             Type::Enumeration(..) |
             Type::Bitfield(..) |
-            Type::Function(..) |
             Type::Array(..) |
             Type::CArray(..) |
             Type::PtrArray(..) |
@@ -185,8 +199,7 @@ impl IsExternal for Alias {
         if self.is_ptr() {
             false
         } else {
-            let target_type = lib.type_(self.typ);
-            target_type.is_external(lib)
+            lib.type_(self.typ).is_external(lib)
         }
     }
 }
