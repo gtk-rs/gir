@@ -52,7 +52,7 @@ pub fn generate(
             object_name
         ));
     }
-    try!(writeln!(w, "\tlet f: &F = transmute(f);"));
+    try!(writeln!(w, "\tlet f: &F = &*(f as *const F);"));
     try!(transformation_vars(w, analysis));
     let call = trampoline_call_func(env, analysis, in_trait);
     try!(writeln!(w, "\t{}", call));
