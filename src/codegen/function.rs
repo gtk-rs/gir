@@ -246,11 +246,6 @@ pub fn bound_to_string(bound: &Bound, async: bool) -> String {
             // format!("{}: AsRef<{}> + '{}", bound.alias, bound.type_str, lifetime)
         }
         AsRef(None) => format!("{}: AsRef<{}>", bound.alias, bound.type_str),
-        Into(Some(l), _) => format!("{}: Into<Option<&'{} {}>>",
-                                    bound.alias,
-                                    l,
-                                    bound.type_str),
-        Into(None, _) => format!("{}: Into<Option<{}>>", bound.alias, bound.type_str),
     }
 }
 
@@ -270,8 +265,7 @@ pub fn bounds(
         .filter(|bound| skip.contains(&bound.alias))
         .filter_map(|bound| match bound.bound_type {
             IsA(Some(lifetime)) |
-            AsRef(Some(lifetime)) |
-            Into(Some(lifetime), _) => Some(lifetime),
+            AsRef(Some(lifetime)) => Some(lifetime),
             _ => None,
         })
         .collect::<Vec<_>>();
@@ -347,7 +341,6 @@ pub fn body_chunk(env: &Env, analysis: &analysis::functions::Info) -> Chunk {
 
 pub fn body_chunk_futures(env: &Env, analysis: &analysis::functions::Info) -> StdResult<String, fmt::Error> {
     use std::fmt::Write;
-    use analysis::bounds::BoundType;
     use analysis::ref_mode::RefMode;
 
     let async_future = analysis.async_future.as_ref().unwrap();
@@ -372,18 +365,10 @@ pub fn body_chunk_futures(env: &Env, analysis: &analysis::functions::Info) -> St
 
         let c_par = &analysis.parameters.c_parameters[par.ind_c];
 
-        let bounds = analysis.bounds.get_parameter_alias_info(&par.name);
-        let is_into = if let Some((_, BoundType::Into(..))) = bounds { true } else { false };
-
         let type_ = env.type_(par.typ);
         let is_str = if let library::Type::Fundamental(library::Fundamental::Utf8) = *type_ { true } else { false };
 
-        if is_into {
-            try!(writeln!(body, "let {} = {}.into();", par.name, par.name));
-            if is_str || c_par.nullable.0 {
-                try!(writeln!(body, "let {} = {}.map(ToOwned::to_owned);", par.name, par.name));
-            }
-        } else if is_str {
+        if is_str {
             try!(writeln!(body, "let {} = String::from({});", par.name, par.name));
         } else if c_par.ref_mode != RefMode::None {
             try!(writeln!(body, "let {} = {}.clone();", par.name, par.name));
@@ -421,12 +406,7 @@ pub fn body_chunk_futures(env: &Env, analysis: &analysis::functions::Info) -> St
         } else {
             let c_par = &analysis.parameters.c_parameters[par.ind_c];
 
-            let bounds = analysis.bounds.get_parameter_alias_info(&par.name);
-            let is_into = if let Some((_, BoundType::Into(..))) = bounds { true } else { false };
-
-            if is_into {
-                try!(writeln!(body, "         {}.as_ref().map(::std::borrow::Borrow::borrow),", par.name));
-            } else if c_par.ref_mode != RefMode::None {
+            if c_par.ref_mode != RefMode::None {
                 try!(writeln!(body, "         &{},", par.name));
             } else {
                 try!(writeln!(body, "         {},", par.name));

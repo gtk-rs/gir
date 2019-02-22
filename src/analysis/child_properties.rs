@@ -21,7 +21,6 @@ pub struct ChildProperty {
     pub doc_hidden: bool,
     pub set_params: String,
     pub bounds: String,
-    pub is_into: bool,
     pub to_glib_extra: String,
 }
 
@@ -96,11 +95,9 @@ fn analyze_property(
         }
         let nullable = library::Nullable(set_in_ref_mode.is_ref());
 
-        let mut is_into = false;
         let mut bounds_str = String::new();
         let dir = library::ParameterDirection::In;
         let set_params = if let Some(bound) = Bounds::type_for(env, typ, nullable) {
-            is_into = bound.is_into();
             let r_type = bounds_rust_type(env, typ).into_string();
             let mut bounds = Bounds::default();
             bounds.add_parameter("P", &r_type, bound, false);
@@ -129,7 +126,6 @@ fn analyze_property(
             doc_hidden,
             set_params,
             bounds: bounds_str,
-            is_into,
             to_glib_extra: String::new(),
         })
     } else {

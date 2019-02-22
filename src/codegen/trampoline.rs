@@ -152,7 +152,7 @@ fn func_parameter(
             } else {
                 format!("&{}{}", mut_str, t)
             },
-            BoundType::AsRef(_) | BoundType::Into(_, _) => t.to_string(),
+            BoundType::AsRef(_) => t.to_string(),
         },
         None => {
             let rust_type =

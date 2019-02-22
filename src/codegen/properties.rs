@@ -1,11 +1,10 @@
 use std::io::{Result, Write};
 
-use analysis;
-use analysis::bounds::{Bound, Bounds};
+use analysis::bounds::Bound;
 use analysis::properties::Property;
 use analysis::rust_type::{parameter_rust_type, rust_type};
 use chunk::Chunk;
-use codegen;
+
 use env::Env;
 use super::general::{cfg_deprecated, version_condition};
 use library;
@@ -90,33 +89,13 @@ fn declaration(env: &Env, prop: &Property) -> String {
         }) = prop.bound
         {
             use library::Type::*;
-            use analysis::bounds::BoundType;
 
             let type_ = env.library.type_(prop.typ);
             let bound_type = match *type_ {
                 Fundamental(_) => Some(bound_type.clone()),
-                _ => match bound_type {
-                    BoundType::Into(_, Some(ref x)) => Some(*x.clone()),
-                    _ => None,
-                }
+                _ => None,
             };
             match bound_type {
-                Some(ref bound_type) if bound_type.is_into() => {
-                    let type_name = parameter_rust_type(env,
-                                                        prop.typ,
-                                                        dir,
-                                                        library::Nullable(false),
-                                                        analysis::ref_mode::RefMode::ByRefFake,
-                                                        library::ParameterScope::None)
-                                        .into_string();
-                    let mut bounds = Bounds::default();
-                    bounds.add_parameter(&prop.var_name,
-                                         &type_name,
-                                         bound_type.clone(),
-                                         false);
-                    bound = codegen::function::bounds(&bounds, &[], false, false).0;
-                    format!("{}", bounds.iter().next().unwrap().alias)
-                }
                 Some(_) => {
                     let value_bound = if !prop.is_get {
                         if *prop.nullable {
@@ -179,21 +158,6 @@ fn body(env: &Env, prop: &Property, in_trait: bool) -> Chunk {
         .var_name(&prop.var_name)
         .is_get(prop.is_get)
         .is_ref(prop.set_in_ref_mode.is_ref())
-        .is_into({
-            use library::Type::*;
-
-            let type_ = env.library.type_(prop.typ);
-            match *type_ {
-                Fundamental(_) => {
-                    if let Some(Bound { ref bound_type, .. }) = prop.bound {
-                        bound_type.is_into()
-                    } else {
-                        false
-                    }
-                }
-                _ => false,
-            }
-        })
         .is_nullable(*prop.nullable);
 
     if let Ok(type_) = rust_type(env, prop.typ) {
