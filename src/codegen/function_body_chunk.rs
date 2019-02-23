@@ -163,7 +163,6 @@ impl Builder {
 
         let mut chunks = Vec::new();
 
-        self.add_into_conversion(&mut chunks);
         self.add_in_array_lengths(&mut chunks);
         self.add_assertion(&mut chunks);
 
@@ -323,7 +322,7 @@ impl Builder {
                                         Chunk::Custom(
                                             if !trampoline.scope.is_async() &&
                                                !trampoline.scope.is_call() {
-                                                format!("&{}", full_type)
+                                                format!("&({})", full_type)
                                             } else {
                                                 full_type.clone()
                                             }))),
@@ -384,7 +383,7 @@ impl Builder {
                         } else if trampoline.scope.is_call() {
                             format!("*mut {}", self.callbacks[0].bound_name)
                         } else {
-                            format!("&{}", self.callbacks[0].bound_name)
+                            format!("&({})", self.callbacks[0].bound_name)
                         }))),
                 }
             );
@@ -647,22 +646,6 @@ impl Builder {
             SafetyAssertionMode::Skip => chunks.insert(0, Chunk::AssertSkipInitialized),
             SafetyAssertionMode::InMainThread => {
                 chunks.insert(0, Chunk::AssertInitializedAndInMainThread)
-            }
-        }
-    }
-    fn add_into_conversion(&self, chunks: &mut Vec<Chunk>) {
-        for trans in &self.transformations {
-            if let TransformationType::Into {
-                ref name,
-            } = trans.transformation_type
-            {
-                let value = Chunk::Custom(format!("{}.into()", name));
-                chunks.push(Chunk::Let {
-                    name: name.clone(),
-                    is_mut: false,
-                    value: Box::new(value),
-                    type_: None,
-                });
             }
         }
     }

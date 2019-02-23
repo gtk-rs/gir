@@ -26,15 +26,9 @@ impl ToParameter for CParameter {
                     match bound_type {
                         BoundType::NoWrapper => type_str = t.to_string(),
                         BoundType::IsA(_) => {
-                            if *self.nullable {
-                                // should not happen!
-                                type_str = String::new()
-                            } else {
-                                type_str = format!("&{}{}", mut_str, t)
-                            }
+                            type_str = format!("&{}{}", mut_str, t)
                         }
-                        BoundType::Into(_, Some(_)) => type_str = t.to_string(),
-                        BoundType::AsRef(_) | BoundType::Into(_, None) => type_str = t.to_string(),
+                        BoundType::AsRef(_) => type_str = t.to_string(),
                     }
                 }
                 None => {

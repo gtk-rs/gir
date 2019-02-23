@@ -208,7 +208,6 @@ fn analyze_property(
     };
 
     let setter = if writable {
-        let bound = Bound::get_for_property_setter(env, &var_name, prop.typ, nullable);
         Some(Property {
             name: name.clone(),
             var_name,
@@ -220,7 +219,7 @@ fn analyze_property(
             set_in_ref_mode,
             version: prop_version,
             deprecated_version: prop.deprecated_version,
-            bound,
+            bound: None,
         })
     } else {
         None

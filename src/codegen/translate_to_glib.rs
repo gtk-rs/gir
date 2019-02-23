@@ -11,10 +11,9 @@ impl TranslateToGlib for TransformationType {
         use self::TransformationType::*;
         match *self {
             ToGlibDirect { ref name } => name.clone(),
-            ToGlibScalar { ref name, nullable } => format!(
-                "{}{}{}",
+            ToGlibScalar { ref name, .. } => format!(
+                "{}{}",
                 name,
-                if !*nullable { "" } else { ".into()" },
                 ".to_glib()"
             ),
             ToGlibPointer {

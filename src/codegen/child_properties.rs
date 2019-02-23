@@ -129,8 +129,7 @@ fn body(env: &Env, prop: &ChildProperty, in_trait: bool, is_get: bool) -> Chunk 
         .var_name(&prop_name)
         .is_get(is_get)
         .is_ref(prop.set_in_ref_mode.is_ref())
-        .is_nullable(*prop.nullable)
-        .is_into(prop.is_into);
+        .is_nullable(*prop.nullable);
 
     if let Ok(type_) = rust_type(env, prop.typ) {
         builder.type_(&type_);

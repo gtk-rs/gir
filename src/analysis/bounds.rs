@@ -19,32 +19,13 @@ pub enum BoundType {
     IsA(Option<char>),
     // lifetime <- shouldn't be used but just in case...
     AsRef(Option<char>),
-    // lifetime (if none, not a reference, like for primitive types), wrapper type
-    Into(Option<char>, Option<Box<BoundType>>),
 }
 
 impl BoundType {
-    pub fn is_into(&self) -> bool {
-        match *self {
-            BoundType::Into(_, _) => true,
-            _ => false,
-        }
-    }
-
     pub fn need_isa(&self) -> bool {
         match *self {
             BoundType::IsA(_) => true,
-            BoundType::Into(_, Some(ref bound_type)) if bound_type.need_isa() => true,
             _ => false,
-        }
-    }
-
-    fn with_lifetime(ty_: BoundType, lifetime: char) -> BoundType {
-        match ty_ {
-            BoundType::NoWrapper => unreachable!(),
-            BoundType::IsA(_) => BoundType::IsA(Some(lifetime)),
-            BoundType::AsRef(_) => BoundType::AsRef(Some(lifetime)),
-            BoundType::Into(_, x) => BoundType::Into(Some(lifetime), x),
         }
     }
 }
@@ -78,31 +59,6 @@ impl Default for Bounds {
             unused_lifetimes: "abcdefg".chars().collect(),
             lifetimes: Vec::new(),
         }
-    }
-}
-
-impl Bound {
-    pub fn get_for_property_setter(
-        env: &Env,
-        var_name: &str,
-        type_id: TypeId,
-        nullable: Nullable,
-    ) -> Option<Bound> {
-        if let Some(bound_type) = Bounds::type_for(env, type_id, nullable) {
-            if bound_type.is_into() {
-                //TODO: match boxed_bound to BoundType::IsA(l)
-                let type_str = bounds_rust_type(env, type_id);
-                return Some(Bound {
-                    bound_type,
-                    parameter_name: var_name.to_owned(),
-                    alias: TYPE_PARAMETERS_START,
-                    type_str: type_str.into_string(),
-                    info_for_next_type: false,
-                    callback_modified: false,
-                })
-            }
-        }
-        None
     }
 }
 
@@ -197,30 +153,20 @@ impl Bounds {
         use self::BoundType::*;
         match *env.library.type_(type_id) {
             Type::Fundamental(Fundamental::Filename) => Some(AsRef(None)),
-            Type::Fundamental(Fundamental::OsString)=> Some(AsRef(None)),
-            Type::Fundamental(Fundamental::Utf8) if *nullable => Some(Into(Some('_'), None)),
-            Type::Class(Class { final_type, ..}) if !*nullable => {
+            Type::Fundamental(Fundamental::OsString) => Some(AsRef(None)),
+            Type::Fundamental(Fundamental::Utf8) if *nullable => None,
+            Type::Class(Class { final_type, ..}) => {
                 if final_type {
                     None
                 } else {
                     Some(IsA(None))
                 }
-            },
-            Type::Class(Class { final_type, ..}) => {
-                if final_type {
-                    Some(Into(Some('_'), None))
-                } else {
-                    Some(Into(Some('_'), Some(Box::new(IsA(None)))))
-                }
-            },
-            Type::Interface(..) if !*nullable => Some(IsA(None)),
-            Type::Interface(..) => Some(Into(Some('_'), Some(Box::new(IsA(None))))),
+            }
+            Type::Interface(..) => Some(IsA(None)),
             Type::List(_) | Type::SList(_) | Type::CArray(_) => None,
-            Type::Fundamental(_) if *nullable => Some(Into(None, None)),
-            Type::Function(_) if *nullable => Some(Into(None, None)),
-            Type::Function(_) if !*nullable => Some(NoWrapper),
-            _ if !*nullable => None,
-            _ => Some(Into(Some('_'), None)),
+            Type::Fundamental(_) if *nullable => None,
+            Type::Function(_) => Some(NoWrapper),
+            _ => None,
         }
     }
     fn get_to_glib_extra(bound_type: &BoundType) -> String {
@@ -228,11 +174,10 @@ impl Bounds {
         match *bound_type {
             AsRef(_) => ".as_ref()".to_owned(),
             IsA(_) => ".as_ref()".to_owned(),
-            Into(_, Some(ref x)) => Bounds::get_to_glib_extra(x),
             _ => String::new(),
         }
     }
-    pub fn add_parameter(&mut self, name: &str, type_str: &str, mut bound_type: BoundType, async: bool) -> bool {
+    pub fn add_parameter(&mut self, name: &str, type_str: &str, bound_type: BoundType, async: bool) -> bool {
         if async && name == "callback" {
             if let Some(alias) = self.unused.pop_front() {
                 self.used.push(Bound {
@@ -250,34 +195,7 @@ impl Bounds {
         if self.used.iter().any(|n| n.parameter_name == name) {
             return false;
         }
-        let sub = if let BoundType::Into(Some(_), x) = bound_type {
-            if let Some(lifetime) = self.unused_lifetimes.pop_front() {
-                self.lifetimes.push(lifetime);
-                bound_type = BoundType::Into(Some(lifetime), x.clone());
-                Some((x, lifetime))
-            } else {
-                return false;
-            }
-        } else {
-            None
-        };
-        let type_str = if let Some((Some(sub), lifetime)) = sub {
-            if let Some(alias) = self.unused.pop_front() {
-                self.used.push(Bound {
-                    bound_type: BoundType::with_lifetime(*sub, lifetime),
-                    parameter_name: name.to_owned(),
-                    alias,
-                    type_str: type_str.to_owned(),
-                    info_for_next_type: true,
-                    callback_modified: false,
-                });
-                alias.to_string()
-            } else {
-                return false;
-            }
-        } else {
-            type_str.to_owned()
-        };
+        let type_str = type_str.to_owned();
         if let Some(alias) = self.unused.pop_front() {
             self.used.push(Bound {
                 bound_type,
@@ -325,15 +243,6 @@ impl Bounds {
                 NoWrapper => (),
                 IsA(_) => imports.add("glib::object::IsA", None),
                 AsRef(_) => imports.add_used_type(&used.type_str, None),
-                Into(_, Some(ref x)) => {
-                    match **x {
-                        IsA(_) => imports.add("glib::object::IsA", None),
-                        // This case shouldn't be possible normally.
-                        AsRef(_) => imports.add_used_type(&used.type_str, None),
-                        _ => {}
-                    }
-                }
-                Into(_, None) => {}
             }
         }
     }

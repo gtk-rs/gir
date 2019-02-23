@@ -63,7 +63,6 @@ pub enum TransformationType {
     },
     ToGlibBorrow,
     ToGlibUnknown { name: String },
-    Into { name: String },
     Length {
         array_name: String,
         array_length_name: String,
@@ -259,17 +258,6 @@ pub fn analyze(
                 allow_none: par.allow_none,
             };
             parameters.rust_parameters.push(rust_par);
-
-            if *nullable && is_into(env, par) && !env.library.type_(par.typ).is_function() &&
-               !(async_func && (name == data_param_name || name == callback_param_name)) {
-                let transformation = Transformation {
-                    ind_c,
-                    ind_rust,
-                    transformation_type: TransformationType::Into { name: name.clone() },
-                };
-                parameters.transformations.push(transformation);
-                nullable_into = true;
-            }
         } else {
             ind_rust = None;
         }
@@ -325,21 +313,6 @@ pub fn analyze(
     }
 
     parameters
-}
-
-fn is_into(env: &Env, par: &library::Parameter) -> bool {
-    fn is_into_inner(env: &Env, par: &library::Type) -> bool {
-        match *par {
-            library::Type::Fundamental(fund) => match fund {
-                library::Fundamental::Utf8 | library::Fundamental::Type => true,
-                _ => false,
-            },
-            library::Type::List(_) | library::Type::SList(_) | library::Type::CArray(_) => false,
-            library::Type::Alias(ref alias) => is_into_inner(env, env.library.type_(alias.typ)),
-            _ => true,
-        }
-    }
-    !par.instance_parameter && is_into_inner(env, env.library.type_(par.typ))
 }
 
 fn get_length_type(

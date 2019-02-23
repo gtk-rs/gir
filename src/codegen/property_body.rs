@@ -11,7 +11,6 @@ pub struct Builder {
     type_: String,
     is_ref: bool,
     is_nullable: bool,
-    is_into: bool,
 }
 
 #[allow(clippy::wrong_self_convention)]
@@ -59,11 +58,6 @@ impl Builder {
 
     pub fn is_nullable(&mut self, value: bool) -> &mut Builder {
         self.is_nullable = value;
-        self
-    }
-
-    pub fn is_into(&mut self, is_into: bool) -> &mut Builder {
-        self.is_into = is_into;
         self
     }
 
@@ -178,23 +172,7 @@ impl Builder {
             call: Box::new(ffi_call),
         });
 
-        let unsafe_ = Chunk::Unsafe(body);
-
-        let mut chunks = Vec::new();
-
-        if self.is_into {
-            let value = Chunk::Custom(format!("{}.into()", self.var_name));
-            chunks.push(Chunk::Let {
-                name: self.var_name.clone(),
-                is_mut: false,
-                value: Box::new(value),
-                type_: None,
-            });
-        }
-
-        chunks.push(unsafe_);
-
-        chunks
+        vec![Chunk::Unsafe(body)]
     }
 
     fn get_ffi_func(&self) -> String {
