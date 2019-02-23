@@ -368,7 +368,9 @@ pub fn body_chunk_futures(env: &Env, analysis: &analysis::functions::Info) -> St
         let type_ = env.type_(par.typ);
         let is_str = if let library::Type::Fundamental(library::Fundamental::Utf8) = *type_ { true } else { false };
 
-        if is_str {
+        if *c_par.nullable {
+            try!(writeln!(body, "let {} = {}.map(ToOwned::to_owned);", par.name, par.name));
+        } else if is_str {
             try!(writeln!(body, "let {} = String::from({});", par.name, par.name));
         } else if c_par.ref_mode != RefMode::None {
             try!(writeln!(body, "let {} = {}.clone();", par.name, par.name));
@@ -406,7 +408,10 @@ pub fn body_chunk_futures(env: &Env, analysis: &analysis::functions::Info) -> St
         } else {
             let c_par = &analysis.parameters.c_parameters[par.ind_c];
 
-            if c_par.ref_mode != RefMode::None {
+            if *c_par.nullable {
+                try!(writeln!(body, "         {}.as_ref().map(::std::borrow::Borrow::borrow),",
+                              par.name));
+            } else if c_par.ref_mode != RefMode::None {
                 try!(writeln!(body, "         &{},", par.name));
             } else {
                 try!(writeln!(body, "         {},", par.name));
