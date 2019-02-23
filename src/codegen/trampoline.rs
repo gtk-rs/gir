@@ -142,7 +142,7 @@ fn func_parameter(
         Some((t, bound_type)) => match bound_type {
             BoundType::NoWrapper => unreachable!(),
             BoundType::IsA(_) => if *par.nullable {
-                format!("&Option<{}{}>", mut_str, t)
+                format!("Option<&{}{}>", mut_str, t)
             } else if let Some((from, to)) = bound_replace {
                 if from == t {
                     format!("&{}{}", mut_str, to)
