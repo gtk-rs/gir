@@ -4,7 +4,6 @@ use analysis::bounds::Bound;
 use analysis::properties::Property;
 use analysis::rust_type::{parameter_rust_type, rust_type};
 use chunk::Chunk;
-
 use env::Env;
 use super::general::{cfg_deprecated, version_condition};
 use library;
