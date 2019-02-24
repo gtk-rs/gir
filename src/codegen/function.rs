@@ -1,4 +1,6 @@
+use std::fmt;
 use std::io::{Result, Write};
+use std::result::Result as StdResult;
 
 use library;
 use analysis;
@@ -15,9 +17,6 @@ use super::parameter::ToParameter;
 use super::return_value::{out_parameters_as_return, ToReturnValue};
 use writer::primitives::tabs;
 use writer::ToCode;
-
-use std::result::Result as StdResult;
-use std::fmt;
 
 pub fn generate(
     w: &mut Write,
