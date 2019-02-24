@@ -813,6 +813,27 @@ impl Type {
             _ => false,
         }
     }
+
+    pub fn is_class(&self) -> bool {
+        match *self {
+            Type::Class(_) => true,
+            _ => false,
+        }
+    }
+
+    pub fn is_interface(&self) -> bool {
+        match *self {
+            Type::Interface(_) => true,
+            _ => false,
+        }
+    }
+
+    pub fn is_final_type(&self) -> bool {
+        match *self {
+            Type::Class(Class { final_type, .. }) => final_type,
+            _ => false,
+        }
+    }
 }
 
 macro_rules! impl_maybe_ref {

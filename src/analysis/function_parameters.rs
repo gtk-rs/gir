@@ -6,10 +6,10 @@ use env::Env;
 use library::{self, TypeId, ParameterScope};
 use nameutil;
 use super::conversion_type::ConversionType;
-use super::rust_type::rust_type;
-use super::ref_mode::RefMode;
 use super::out_parameters::can_as_return;
 use super::override_string_type::override_string_type_parameter;
+use super::rust_type::rust_type;
+use super::ref_mode::RefMode;
 use traits::IntoString;
 
 //TODO: remove unused fields
@@ -248,8 +248,6 @@ pub fn analyze(
         let data_param_name = "user_data";
         let callback_param_name = "callback";
 
-        let mut nullable_into = false;
-
         if add_rust_parameter {
             let rust_par = RustParameter {
                 name: name.clone(),
@@ -262,6 +260,20 @@ pub fn analyze(
             ind_rust = None;
         }
 
+        let mut trans_nullable = false;
+        let type_ = env.type_(par.typ);
+        let to_glib_extra = if par.instance_parameter || !*nullable ||
+                               (!type_.is_interface() && !type_.is_class()) {
+            String::new()
+        } else {
+            trans_nullable = *nullable;
+            if !type_.is_final_type() {
+                ".as_ref()".to_owned()
+            } else {
+                String::new()
+            }
+        };
+
         let transformation_type = match ConversionType::of(env, typ) {
             ConversionType::Direct => TransformationType::ToGlibDirect { name },
             ConversionType::Scalar => TransformationType::ToGlibScalar {
@@ -273,11 +285,11 @@ pub fn analyze(
                 instance_parameter: par.instance_parameter,
                 transfer,
                 ref_mode,
-                to_glib_extra: String::new(),
+                to_glib_extra,
                 explicit_target_type: String::new(),
                 pointer_cast: String::new(),
                 in_trait,
-                nullable: nullable_into,
+                nullable: trans_nullable,
             },
             ConversionType::Borrow => TransformationType::ToGlibBorrow,
             ConversionType::Unknown => TransformationType::ToGlibUnknown { name },

@@ -322,7 +322,7 @@ impl Builder {
                                         Chunk::Custom(
                                             if !trampoline.scope.is_async() &&
                                                !trampoline.scope.is_call() {
-                                                format!("&({})", full_type)
+                                                format!("&{}", full_type)
                                             } else {
                                                 full_type.clone()
                                             }))),
@@ -383,7 +383,7 @@ impl Builder {
                         } else if trampoline.scope.is_call() {
                             format!("*mut {}", self.callbacks[0].bound_name)
                         } else {
-                            format!("&({})", self.callbacks[0].bound_name)
+                            format!("&{}", self.callbacks[0].bound_name)
                         }))),
                 }
             );

@@ -29,10 +29,10 @@ impl TranslateToGlib for TransformationType {
             } => {
                 let (left, right) = to_glib_xxx(transfer, ref_mode, explicit_target_type);
                 let to_glib_extra = if nullable && !to_glib_extra.is_empty() {
-                        format!(".map(|p| p{})", to_glib_extra)
-                    } else {
-                        to_glib_extra.clone()
-                    };
+                    format!(".map(|p| p{})", to_glib_extra)
+                } else {
+                    to_glib_extra.clone()
+                };
 
                 if instance_parameter {
                     format!("{}self{}{}{}", left, if in_trait { to_glib_extra } else { "".into() }, right, pointer_cast)

@@ -25,6 +25,9 @@ impl ToParameter for CParameter {
                 Some((t, bound_type)) => {
                     match bound_type {
                         BoundType::NoWrapper => type_str = t.to_string(),
+                        BoundType::IsA(_) if *self.nullable => {
+                            type_str = format!("Option<&{}{}>", mut_str, t)
+                        }
                         BoundType::IsA(_) => {
                             type_str = format!("&{}{}", mut_str, t)
                         }
