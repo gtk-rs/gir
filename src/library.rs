@@ -827,6 +827,13 @@ impl Type {
             _ => false,
         }
     }
+
+    pub fn is_final_type(&self) -> bool {
+        match *self {
+            Type::Class(Class { final_type, .. }) => final_type,
+            _ => false,
+        }
+    }
 }
 
 macro_rules! impl_maybe_ref {

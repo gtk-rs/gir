@@ -10,7 +10,6 @@ use super::out_parameters::can_as_return;
 use super::override_string_type::override_string_type_parameter;
 use super::rust_type::rust_type;
 use super::ref_mode::RefMode;
-use traits::MaybeRef;
 use traits::IntoString;
 
 //TODO: remove unused fields
@@ -268,15 +267,10 @@ pub fn analyze(
             String::new()
         } else {
             trans_nullable = *nullable;
-            match type_.maybe_ref() {
-                Some(&library::Class { final_type, ..}) => {
-                    if final_type {
-                        String::new()
-                    } else {
-                        ".as_ref()".to_owned()
-                    }
-                }
-                None => String::new(),
+            if !type_.is_final_type() {
+                ".as_ref()".to_owned()
+            } else {
+                String::new()
             }
         };
 

@@ -384,51 +384,51 @@ pub fn body_chunk_futures(env: &Env, analysis: &analysis::functions::Info) -> St
     }
 
     if env.config.library_name != "Gio" {
-        try!(writeln!(body, "    let cancellable = gio::Cancellable::new();"));
+        try!(writeln!(body, "\tlet cancellable = gio::Cancellable::new();"));
     } else {
-        try!(writeln!(body, "    let cancellable = Cancellable::new();"));
+        try!(writeln!(body, "\tlet cancellable = Cancellable::new();"));
     }
-    try!(writeln!(body, "    let send = Fragile::new(send);"));
+    try!(writeln!(body, "\tlet send = Fragile::new(send);"));
 
     if async_future.is_method {
-        try!(writeln!(body, "    let obj_clone = Fragile::new(obj.clone());"));
-        try!(writeln!(body, "    obj.{}(", analysis.name));
+        try!(writeln!(body, "\tlet obj_clone = Fragile::new(obj.clone());"));
+        try!(writeln!(body, "\tobj.{}(", analysis.name));
     } else if analysis.type_name.is_ok() {
-        try!(writeln!(body, "    Self::{}(", analysis.name));
+        try!(writeln!(body, "\tSelf::{}(", analysis.name));
     } else {
-        try!(writeln!(body, "    {}(", analysis.name));
+        try!(writeln!(body, "\t{}(", analysis.name));
     }
 
     // Skip the instance parameter
     for par in analysis.parameters.rust_parameters.iter().skip(skip) {
         if par.name == "cancellable" {
-            try!(writeln!(body, "         Some(&cancellable),"));
+            try!(writeln!(body, "\t\tSome(&cancellable),"));
         } else if par.name == "callback" {
             continue;
         } else {
             let c_par = &analysis.parameters.c_parameters[par.ind_c];
 
             if *c_par.nullable {
-                try!(writeln!(body, "         {}.as_ref().map(::std::borrow::Borrow::borrow),",
+                try!(writeln!(body, "\t\t{}.as_ref().map(::std::borrow::Borrow::borrow),",
                               par.name));
             } else if c_par.ref_mode != RefMode::None {
-                try!(writeln!(body, "         &{},", par.name));
+                try!(writeln!(body, "\t\t&{},", par.name));
             } else {
-                try!(writeln!(body, "         {},", par.name));
+                try!(writeln!(body, "\t\t{},", par.name));
             }
         }
     }
 
-    try!(writeln!(body, "         move |res| {{"));
+    try!(writeln!(body, "\t\tmove |res| {{"));
     if async_future.is_method {
-        try!(writeln!(body, "             let obj = obj_clone.into_inner();"));
-        try!(writeln!(body, "             let res = res.map(|v| (obj.clone(), v)).map_err(|v| (obj.clone(), v));"));
+        try!(writeln!(body, "\t\t\tlet obj = obj_clone.into_inner();"));
+        try!(writeln!(body, "\t\t\tlet res = res.map(|v| (obj.clone(), v)).map_err(|v| (obj.clone(), v));"));
     }
-    try!(writeln!(body, "             let _ = send.into_inner().send(res);"));
-    try!(writeln!(body, "         }},"));
-    try!(writeln!(body, "    );"));
+    try!(writeln!(body, "\t\t\tlet _ = send.into_inner().send(res);"));
+    try!(writeln!(body, "\t\t}},"));
+    try!(writeln!(body, "\t);"));
     try!(writeln!(body));
-    try!(writeln!(body, "    cancellable"));
+    try!(writeln!(body, "\tcancellable"));
     try!(writeln!(body, "}})"));
 
     Ok(body)
