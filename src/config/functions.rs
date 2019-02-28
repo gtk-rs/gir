@@ -90,7 +90,7 @@ pub struct Return {
 }
 
 impl Return {
-    pub fn parse(toml: Option<&Value>) -> Return {
+    pub fn parse(toml: Option<&Value>, object_name: &str) -> Return {
         if toml.is_none() {
             return Return {
                 nullable: None,
@@ -122,6 +122,13 @@ impl Return {
         let type_name = v.lookup("type")
             .and_then(|v| v.as_str())
             .map(|s| s.to_owned());
+        if string_type.is_some() && type_name.is_some() {
+            error!(
+                "\"string_type\" and \"type\" parameters can't be passed at the same time for \
+                 object {}, only \"type\" will be applied in this case",
+                 object_name
+            );
+        }
 
         Return {
             nullable,
@@ -185,7 +192,7 @@ impl Parse for Function {
             .and_then(|v| v.as_str())
             .map(|s| s.to_owned());
         let parameters = Parameters::parse(toml.lookup("parameter"), object_name);
-        let ret = Return::parse(toml.lookup("return"));
+        let ret = Return::parse(toml.lookup("return"), object_name);
         let doc_hidden = toml.lookup("doc_hidden")
             .and_then(|val| val.as_bool())
             .unwrap_or(false);
