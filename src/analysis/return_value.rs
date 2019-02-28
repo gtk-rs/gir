@@ -23,7 +23,15 @@ pub fn analyze(
     used_types: &mut Vec<String>,
     imports: &mut Imports,
 ) -> Info {
-    let typ = override_string_type_return(env, func.ret.typ, configured_functions);
+    let typ = match match configured_functions.iter()
+                                              .filter_map(|f| f.ret.type_name.as_ref())
+                                              .next() {
+        Some(ref typ) => env.library.find_type(0, typ),
+        None => None
+    } {
+        Some(typ) => typ,
+        None => override_string_type_return(env, func.ret.typ, configured_functions),
+    };
     let mut parameter = if typ == Default::default() {
         None
     } else {

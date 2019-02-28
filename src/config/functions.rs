@@ -86,6 +86,7 @@ pub struct Return {
     pub nullable: Option<Nullable>,
     pub bool_return_is_error: Option<String>,
     pub string_type: Option<StringType>,
+    pub type_name: Option<String>,
 }
 
 impl Return {
@@ -95,11 +96,12 @@ impl Return {
                 nullable: None,
                 bool_return_is_error: None,
                 string_type: None,
+                type_name: None,
             };
         }
 
         let v = toml.unwrap();
-        v.check_unwanted(&["nullable", "bool_return_is_error", "string_type"], "return");
+        v.check_unwanted(&["nullable", "bool_return_is_error", "string_type", "type"], "return");
 
         let nullable = v.lookup("nullable").and_then(|v| v.as_bool()).map(Nullable);
         let bool_return_is_error = v.lookup("bool_return_is_error")
@@ -117,11 +119,15 @@ impl Return {
                 }
             }
         };
+        let type_name = v.lookup("type")
+            .and_then(|v| v.as_str())
+            .map(|s| s.to_owned());
 
         Return {
             nullable,
             bool_return_is_error,
             string_type,
+            type_name,
         }
     }
 }
