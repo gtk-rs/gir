@@ -15,5 +15,5 @@ pub fn generate(env: &Env) {
     lib_::generate(env);
     build::generate(env);
     let crate_name = cargo_toml::generate(env);
-    tests::generate(env, &crate_name.replace("-", "_"));
+    tests::generate(env, &crate_name);
 }
