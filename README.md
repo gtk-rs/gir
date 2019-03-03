@@ -188,6 +188,8 @@ generate_display_trait = false
         bool_return_is_error = "Function failed doing what it is supposed to do"
         # change string type. Variants: "utf8", "filename", "os_string"
         string_type = "os_string"
+        # overwrite type
+        type = "Gtk.Widget"
     [[object.signal]]
     name = "activate-link"
     # replace trampoline bool return type with `Inhibit`

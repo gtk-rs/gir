@@ -86,20 +86,22 @@ pub struct Return {
     pub nullable: Option<Nullable>,
     pub bool_return_is_error: Option<String>,
     pub string_type: Option<StringType>,
+    pub type_name: Option<String>,
 }
 
 impl Return {
-    pub fn parse(toml: Option<&Value>) -> Return {
+    pub fn parse(toml: Option<&Value>, object_name: &str) -> Return {
         if toml.is_none() {
             return Return {
                 nullable: None,
                 bool_return_is_error: None,
                 string_type: None,
+                type_name: None,
             };
         }
 
         let v = toml.unwrap();
-        v.check_unwanted(&["nullable", "bool_return_is_error", "string_type"], "return");
+        v.check_unwanted(&["nullable", "bool_return_is_error", "string_type", "type"], "return");
 
         let nullable = v.lookup("nullable").and_then(|v| v.as_bool()).map(Nullable);
         let bool_return_is_error = v.lookup("bool_return_is_error")
@@ -117,11 +119,22 @@ impl Return {
                 }
             }
         };
+        let type_name = v.lookup("type")
+            .and_then(|v| v.as_str())
+            .map(|s| s.to_owned());
+        if string_type.is_some() && type_name.is_some() {
+            error!(
+                "\"string_type\" and \"type\" parameters can't be passed at the same time for \
+                 object {}, only \"type\" will be applied in this case",
+                 object_name
+            );
+        }
 
         Return {
             nullable,
             bool_return_is_error,
             string_type,
+            type_name,
         }
     }
 }
@@ -179,7 +192,7 @@ impl Parse for Function {
             .and_then(|v| v.as_str())
             .map(|s| s.to_owned());
         let parameters = Parameters::parse(toml.lookup("parameter"), object_name);
-        let ret = Return::parse(toml.lookup("return"));
+        let ret = Return::parse(toml.lookup("return"), object_name);
         let doc_hidden = toml.lookup("doc_hidden")
             .and_then(|val| val.as_bool())
             .unwrap_or(false);

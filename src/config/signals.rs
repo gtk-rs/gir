@@ -145,7 +145,7 @@ impl Signal {
             .and_then(|v| v.as_str())
             .and_then(|s| s.parse().ok());
         let parameters = Parameters::parse(toml.lookup("parameter"), object_name);
-        let ret = Return::parse(toml.lookup("return"));
+        let ret = Return::parse(toml.lookup("return"), object_name);
 
         let concurrency = toml.lookup("concurrency")
             .and_then(|v| v.as_str())
