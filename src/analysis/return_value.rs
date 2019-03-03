@@ -23,13 +23,13 @@ pub fn analyze(
     used_types: &mut Vec<String>,
     imports: &mut Imports,
 ) -> Info {
-    let typ = match configured_functions.iter()
-                                              .filter_map(|f| f.ret.type_name.as_ref())
-                                              .map(|typ| env.library.find_type(0, typ))
-                                              .next() {
-        Some(Some(typ)) => typ,
-        _ => override_string_type_return(env, func.ret.typ, configured_functions),
-    };
+    let typ = configured_functions.iter()
+                                  .filter_map(|f| f.ret.type_name.as_ref())
+                                  .next()
+                                  .and_then(|typ| env.library.find_type(0, typ))
+                                  .unwrap_or_else(|| override_string_type_return(env,
+                                                                                 func.ret.typ,
+                                                                                 configured_functions));
     let mut parameter = if typ == Default::default() {
         None
     } else {
