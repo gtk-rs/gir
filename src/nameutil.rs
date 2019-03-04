@@ -33,6 +33,7 @@ pub fn file_name_sys(name: &str) -> String {
     path.to_str().unwrap().into()
 }
 
+/// Crate name with undescores for `use` statement
 pub fn crate_name(name: &str) -> String {
     let name = name.to_snake();
     if name.starts_with("g_") {
@@ -42,10 +43,13 @@ pub fn crate_name(name: &str) -> String {
     }
 }
 
+/// Crate name with '-' for Cargo.toml etc.
 pub fn exported_crate_name(crate_name: &str) -> String {
     crate_name.replace("_", "-")
 }
 
+/// Crate name for FFI part, like "gtk-sys"
+/// with underscors for `use` statement
 pub fn ffi_crate_name(name: &str, env: &Env) -> String {
     let id = env.library.find_namespace(name).expect("namespace from crate name");
     if id == namespaces::MAIN {
