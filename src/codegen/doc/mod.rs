@@ -28,7 +28,7 @@ macro_rules! impl_to_stripper_type {
         impl ToStripperType for $ty {
             fn to_stripper_type(&self) -> TypeStruct {
                 TypeStruct::new(SType::$enum_var,
-                                &format!("connect_{}", self.name.replace('-', "_")))
+                                &format!("connect_{}", nameutil::signal_to_snake(&self.name)))
             }
         }
     };

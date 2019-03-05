@@ -39,7 +39,7 @@ pub fn generate(env: &Env) -> String {
 }
 
 fn fill_empty(root: &mut Table, env: &Env, crate_name: &str) {
-    let package_name = crate_name.replace("_", "-");
+    let package_name = nameutil::exported_crate_name(crate_name);
 
     {
         let package = upsert_table(root, "package");
