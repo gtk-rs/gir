@@ -75,7 +75,7 @@ pub fn class(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<Info>
 
     let mut imports = Imports::with_defined(&env.library, &name);
     imports.add("glib::translate::*", None);
-    imports.add("ffi", None);
+    imports.add("sys", None);
     if obj.generate_display_trait {
         imports.add("std::fmt", None);
     }
@@ -242,7 +242,7 @@ pub fn interface(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<I
 
     let mut imports = Imports::with_defined(&env.library, &name);
     imports.add("glib::translate::*", None);
-    imports.add("ffi", None);
+    imports.add("sys", None);
     imports.add("glib::object::IsA", None);
     if obj.generate_display_trait {
         imports.add("std::fmt", None);

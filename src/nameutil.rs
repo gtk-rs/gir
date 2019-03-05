@@ -50,14 +50,14 @@ pub fn exported_crate_name(crate_name: &str) -> String {
 
 /// Crate name for FFI part, like "gtk-sys"
 /// with underscors for `use` statement
-pub fn ffi_crate_name(name: &str, env: &Env) -> String {
+pub fn sys_crate_name(name: &str, env: &Env) -> String {
     let id = env.library.find_namespace(name).expect("namespace from crate name");
     if id == namespaces::MAIN {
-        return "ffi".to_string();
+        return "sys".to_string();
     }
     let namespace = env.library.namespace(id);
     let name = crate_name(&namespace.name);
-    format!("{}_ffi", name)
+    format!("{}_sys", name)
 }
 
 pub fn module_name(name: &str) -> String {

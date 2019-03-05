@@ -3,7 +3,7 @@ use std::str::FromStr;
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum WorkMode {
     Normal,          // generate widgets etc.
-    Sys,             // generate -sys with ffi
+    Sys,             // generate -sys with FFI
     Doc,             // generate documentation file
     DisplayNotBound, // Show not bound types
 }

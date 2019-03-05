@@ -14,7 +14,7 @@ pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>) {
         return;
     }
 
-    imports.add("ffi", None);
+    imports.add("sys", None);
     imports.add("std::ffi::CStr", None);
 
     file_saver::save_to_file(path, env.config.make_backup, |w| {
@@ -40,7 +40,7 @@ pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>) {
                 try!(writeln!(
                     w,
                     "    pub static ref {name}: &'static str = \
-                     unsafe{{CStr::from_ptr(ffi::{c_id}).to_str().unwrap()}};",
+                     unsafe{{CStr::from_ptr(sys::{c_id}).to_str().unwrap()}};",
                     name = constant.name,
                     c_id = constant.glib_name
                 ));

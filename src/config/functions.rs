@@ -12,8 +12,8 @@ use version::Version;
 #[derive(Clone, Debug)]
 pub struct Parameter {
     pub ident: Ident,
-    //true - parameter don't changed in ffi function,
-    //false(default) - parameter can be changed in ffi function
+    //true - parameter don't changed in FFI function,
+    //false(default) - parameter can be changed in FFI function
     pub constant: bool,
     pub nullable: Option<Nullable>,
     pub length_of: Option<String>,

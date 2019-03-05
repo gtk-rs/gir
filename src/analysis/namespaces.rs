@@ -12,7 +12,7 @@ pub const INTERNAL: NsId = library::INTERNAL_NAMESPACE;
 pub struct Namespace {
     pub name: String,
     pub crate_name: String,
-    pub ffi_crate_name: String,
+    pub sys_crate_name: String,
     pub higher_crate_name: String,
     pub package_name: Option<String>,
     pub shared_libs: Vec<String>,
@@ -49,18 +49,18 @@ pub fn run(gir: &library::Library) -> Info {
     for (ns_id, ns) in gir.namespaces.iter().enumerate() {
         let ns_id = ns_id as NsId;
         let crate_name = nameutil::crate_name(&ns.name);
-        let mut is_local_ffi = ns_id == MAIN;
-        if is_local_ffi && ns.name == "GObject" {
+        let mut is_local_sys = ns_id == MAIN;
+        if is_local_sys && ns.name == "GObject" {
             is_gobject = true;
-            is_local_ffi = false;
+            is_local_sys = false;
             is_glib_crate = true;
         } else if is_gobject && ns.name == "GLib" {
-            is_local_ffi = true;
+            is_local_sys = true;
         }
-        let ffi_crate_name = if is_local_ffi {
-            "ffi".to_owned()
+        let sys_crate_name = if is_local_sys {
+            "sys".to_owned()
         } else {
-            format!("{}_ffi", crate_name)
+            format!("{}_sys", crate_name)
         };
         let higher_crate_name = match &crate_name[..] {
             "gobject" => "glib".to_owned(),
@@ -69,7 +69,7 @@ pub fn run(gir: &library::Library) -> Info {
         namespaces.push(Namespace {
             name: ns.name.clone(),
             crate_name,
-            ffi_crate_name,
+            sys_crate_name,
             higher_crate_name,
             package_name: ns.package_name.clone(),
             shared_libs: ns.shared_library.clone(),

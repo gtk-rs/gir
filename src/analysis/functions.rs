@@ -168,7 +168,7 @@ fn fixup_gpointer_parameter(
             ref_mode: RefMode::ByRef,
             to_glib_extra: String::new(),
             explicit_target_type: format!("*mut {}", ffi_name),
-            pointer_cast: " as glib_ffi::gconstpointer".into(),
+            pointer_cast: " as glib_sys::gconstpointer".into(),
             in_trait: false,
             nullable: false,
         },
@@ -189,7 +189,7 @@ fn fixup_special_functions(
         && parameters.c_parameters[0].c_type == "gconstpointer"
     {
         fixup_gpointer_parameter(env, type_tid, parameters, 0);
-        imports.add("glib_ffi", None);
+        imports.add("glib_sys", None);
     }
 
     if (name == "compare" || name == "equal" || name == "is_equal")
@@ -199,7 +199,7 @@ fn fixup_special_functions(
     {
         fixup_gpointer_parameter(env, type_tid, parameters, 0);
         fixup_gpointer_parameter(env, type_tid, parameters, 1);
-        imports.add("glib_ffi", None);
+        imports.add("glib_sys", None);
     }
 }
 
@@ -575,11 +575,11 @@ fn analyze_function(
 
     if async && !commented {
         if env.config.library_name != "Gio" {
-            imports.add("gio_ffi", version);
+            imports.add("gio_sys", version);
             imports.add_with_constraint("gio", version, Some("futures"));
         }
-        imports.add("glib_ffi", version);
-        imports.add("gobject_ffi", version);
+        imports.add("glib_sys", version);
+        imports.add("gobject_sys", version);
         imports.add("std::ptr", version);
         imports.add_with_constraint("futures_core", version, Some("futures"));
         imports.add_with_constraint("std::boxed::Box as Box_", version, Some("futures"));

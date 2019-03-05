@@ -55,11 +55,11 @@ pub fn uses(w: &mut Write, env: &Env, imports: &Imports) -> Result<()> {
         try!(version_condition(w, env, *version, false, 0));
         let mut default_use = true;
         if env.namespaces.is_glib_crate {
-            if name == "glib_ffi" {
-                try!(writeln!(w, "use ffi as {};", name));
+            if name == "glib_sys" {
+                try!(writeln!(w, "use sys as {};", name));
                 default_use = false;
-            } else if env.namespaces.glib_ns_id != namespaces::MAIN && name == "ffi" {
-                try!(writeln!(w, "use gobject_ffi as {};", name));
+            } else if env.namespaces.glib_ns_id != namespaces::MAIN && name == "sys" {
+                try!(writeln!(w, "use gobject_sys as {};", name));
                 default_use = false;
             }
         }
@@ -99,7 +99,7 @@ pub fn define_object_type(
 ) -> Result<()> {
     let class_name = {
         if let Some(s) = *glib_class_name {
-            format!(", ffi::{}", s)
+            format!(", sys::{}", s)
         } else {
             "".to_string()
         }
@@ -126,7 +126,7 @@ pub fn define_object_type(
     if parents.is_empty() {
         try!(writeln!(
             w,
-            "\tpub struct {}({}<ffi::{}{}{}>);",
+            "\tpub struct {}({}<sys::{}{}{}>);",
             type_name,
             kind_name,
             glib_name,
@@ -141,7 +141,7 @@ pub fn define_object_type(
 
         try!(writeln!(
             w,
-            "\tpub struct {}({}<ffi::{}{}{}>) @requires {};",
+            "\tpub struct {}({}<sys::{}{}{}>) @requires {};",
             type_name,
             kind_name,
             glib_name,
@@ -190,7 +190,7 @@ pub fn define_object_type(
 
         try!(writeln!(
             w,
-            "\tpub struct {}({}<ffi::{}{}{}>){};",
+            "\tpub struct {}({}<sys::{}{}{}>){};",
             type_name,
             kind_name,
             glib_name,
@@ -201,7 +201,7 @@ pub fn define_object_type(
     }
     try!(writeln!(w));
     try!(writeln!(w, "\tmatch fn {{"));
-    try!(writeln!(w, "\t\tget_type => || ffi::{}(),", glib_func_name));
+    try!(writeln!(w, "\t\tget_type => || sys::{}(),", glib_func_name));
     try!(writeln!(w, "\t}}"));
     try!(writeln!(w, "}}"));
 
@@ -223,7 +223,7 @@ pub fn define_boxed_type(
     try!(derives(w, derive, 1));
     try!(writeln!(
         w,
-        "\tpub struct {}(Boxed<ffi::{}>);",
+        "\tpub struct {}(Boxed<sys::{}>);",
         type_name,
         glib_name
     ));
@@ -231,12 +231,12 @@ pub fn define_boxed_type(
     try!(writeln!(w, "\tmatch fn {{"));
     try!(writeln!(
         w,
-        "\t\tcopy => |ptr| ffi::{}(mut_override(ptr)),",
+        "\t\tcopy => |ptr| sys::{}(mut_override(ptr)),",
         copy_fn
     ));
-    try!(writeln!(w, "\t\tfree => |ptr| ffi::{}(ptr),", free_fn));
+    try!(writeln!(w, "\t\tfree => |ptr| sys::{}(ptr),", free_fn));
     if let Some(ref get_type_fn) = *get_type_fn {
-        try!(writeln!(w, "\t\tget_type => || ffi::{}(),", get_type_fn));
+        try!(writeln!(w, "\t\tget_type => || sys::{}(),", get_type_fn));
     }
     try!(writeln!(w, "\t}}"));
     try!(writeln!(w, "}}"));
@@ -256,7 +256,7 @@ pub fn define_auto_boxed_type(
     try!(derives(w, derive, 1));
     try!(writeln!(
         w,
-        "\tpub struct {}(Boxed<ffi::{}>);",
+        "\tpub struct {}(Boxed<sys::{}>);",
         type_name,
         glib_name
     ));
@@ -264,15 +264,15 @@ pub fn define_auto_boxed_type(
     try!(writeln!(w, "\tmatch fn {{"));
     try!(writeln!(
         w,
-        "\t\tcopy => |ptr| gobject_ffi::g_boxed_copy(ffi::{}(), ptr as *mut _) as *mut ffi::{},",
+        "\t\tcopy => |ptr| gobject_sys::g_boxed_copy(sys::{}(), ptr as *mut _) as *mut sys::{},",
         get_type_fn, glib_name
     ));
     try!(writeln!(
         w,
-        "\t\tfree => |ptr| gobject_ffi::g_boxed_free(ffi::{}(), ptr as *mut _),",
+        "\t\tfree => |ptr| gobject_sys::g_boxed_free(sys::{}(), ptr as *mut _),",
         get_type_fn
     ));
-    try!(writeln!(w, "\t\tget_type => || ffi::{}(),", get_type_fn));
+    try!(writeln!(w, "\t\tget_type => || sys::{}(),", get_type_fn));
     try!(writeln!(w, "\t}}"));
     try!(writeln!(w, "}}"));
 
@@ -293,16 +293,16 @@ pub fn define_shared_type(
     try!(derives(w, derive, 1));
     try!(writeln!(
         w,
-        "\tpub struct {}(Shared<ffi::{}>);",
+        "\tpub struct {}(Shared<sys::{}>);",
         type_name,
         glib_name
     ));
     try!(writeln!(w));
     try!(writeln!(w, "\tmatch fn {{"));
-    try!(writeln!(w, "\t\tref => |ptr| ffi::{}(ptr),", ref_fn));
-    try!(writeln!(w, "\t\tunref => |ptr| ffi::{}(ptr),", unref_fn));
+    try!(writeln!(w, "\t\tref => |ptr| sys::{}(ptr),", ref_fn));
+    try!(writeln!(w, "\t\tunref => |ptr| sys::{}(ptr),", unref_fn));
     if let Some(ref get_type_fn) = *get_type_fn {
-        try!(writeln!(w, "\t\tget_type => || ffi::{}(),", get_type_fn));
+        try!(writeln!(w, "\t\tget_type => || sys::{}(),", get_type_fn));
     }
     try!(writeln!(w, "\t}}"));
     try!(writeln!(w, "}}"));

@@ -12,7 +12,7 @@ use chunk::{Chunk, Param, TupleMode};
 use chunk::parameter_ffi_call_out;
 use env::Env;
 use library::{self, ParameterDirection};
-use nameutil::ffi_crate_name;
+use nameutil::sys_crate_name;
 use std::collections::{BTreeMap, HashMap};
 
 #[derive(Clone, Debug)]
@@ -448,7 +448,7 @@ impl Builder {
                                       if p.is_real_gpointer(env) {
                                           Param { name: p.name.clone(),
                                                   typ: format!("{}::gpointer",
-                                                               ffi_crate_name("GLib", env)) }
+                                                               sys_crate_name("GLib", env)) }
                                       } else {
                                           Param { name: p.name.clone(),
                                                   typ: ::analysis::ffi_type::ffi_type(env, p.typ, &p.c_type).expect("failed to write c_type") }
@@ -459,7 +459,7 @@ impl Builder {
             return_value: if trampoline.ret.c_type != "void" {
                 let p = &trampoline.ret;
                 Some(if p.c_type == "gpointer" {
-                    format!("{}::gpointer", ffi_crate_name("GLib", env))
+                    format!("{}::gpointer", sys_crate_name("GLib", env))
                 } else {
                     ::analysis::ffi_type::ffi_type(env, p.typ, &p.c_type).expect("failed to write c_type")
                 })
@@ -548,9 +548,9 @@ impl Builder {
         }
 
         let result = Chunk::Tuple(result, TupleMode::WithUnit);
-        let gio_crate_name = ffi_crate_name("Gio", env);
-        let gobject_crate_name = ffi_crate_name("GObject", env);
-        let glib_crate_name = ffi_crate_name("GLib", env);
+        let gio_crate_name = sys_crate_name("Gio", env);
+        let gobject_crate_name = sys_crate_name("GObject", env);
+        let glib_crate_name = sys_crate_name("GLib", env);
         let mut body = vec![
             Chunk::Let {
                 name: "error".to_string(),
