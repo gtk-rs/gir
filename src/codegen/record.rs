@@ -16,6 +16,7 @@ pub fn generate(w: &mut Write, env: &Env, analysis: &analysis::record::Info) -> 
         if let Some(ref glib_get_type) = analysis.glib_get_type {
             try!(general::define_auto_boxed_type(
                 w,
+                env,
                 &analysis.name,
                 &type_.c_type,
                 glib_get_type,
@@ -33,6 +34,7 @@ pub fn generate(w: &mut Write, env: &Env, analysis: &analysis::record::Info) -> 
     ) {
         try!(general::define_shared_type(
             w,
+            env,
             &analysis.name,
             &type_.c_type,
             ref_fn,
@@ -46,6 +48,7 @@ pub fn generate(w: &mut Write, env: &Env, analysis: &analysis::record::Info) -> 
     ) {
         try!(general::define_boxed_type(
             w,
+            env,
             &analysis.name,
             &type_.c_type,
             copy_fn,
@@ -56,6 +59,7 @@ pub fn generate(w: &mut Write, env: &Env, analysis: &analysis::record::Info) -> 
     } else if let Some(ref glib_get_type) = analysis.glib_get_type {
         try!(general::define_auto_boxed_type(
             w,
+            env,
             &analysis.name,
             &type_.c_type,
             glib_get_type,

@@ -76,7 +76,7 @@ pub fn new(env: &Env, obj: &GObject) -> Option<Info> {
     let use_boxed_functions = obj.use_boxed_functions;
 
     let mut imports = Imports::with_defined(&env.library, &name);
-    imports.add("sys", None);
+    imports.add(env.main_sys_crate_name(), None);
     if record.glib_get_type.is_some() {
         if use_boxed_functions {
             imports.add("gobject_sys", None);

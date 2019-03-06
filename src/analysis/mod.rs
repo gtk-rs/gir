@@ -107,7 +107,7 @@ fn analyze_global_functions(env: &mut Env) {
 
     let mut imports = imports::Imports::new(&env.library);
     imports.add("glib::translate::*", None);
-    imports.add("sys", None);
+    imports.add(env.main_sys_crate_name(), None);
 
     let functions = functions::analyze(
         env,

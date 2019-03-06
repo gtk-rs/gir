@@ -53,19 +53,7 @@ pub fn uses(w: &mut Write, env: &Env, imports: &Imports) -> Result<()> {
         }
 
         try!(version_condition(w, env, *version, false, 0));
-        let mut default_use = true;
-        if env.namespaces.is_glib_crate {
-            if name == "glib_sys" {
-                try!(writeln!(w, "use sys as {};", name));
-                default_use = false;
-            } else if env.namespaces.glib_ns_id != namespaces::MAIN && name == "sys" {
-                try!(writeln!(w, "use gobject_sys as {};", name));
-                default_use = false;
-            }
-        }
-        if default_use {
-            try!(writeln!(w, "use {};", name));
-        }
+        try!(writeln!(w, "use {};", name));
     }
 
     Ok(())
@@ -97,9 +85,10 @@ pub fn define_object_type(
     is_interface: bool,
     parents: &[StatusedTypeId],
 ) -> Result<()> {
+    let sys_crate_name = env.main_sys_crate_name();
     let class_name = {
         if let Some(s) = *glib_class_name {
-            format!(", sys::{}", s)
+            format!(", {}::{}", sys_crate_name, s)
         } else {
             "".to_string()
         }
@@ -126,9 +115,10 @@ pub fn define_object_type(
     if parents.is_empty() {
         try!(writeln!(
             w,
-            "\tpub struct {}({}<sys::{}{}{}>);",
+            "\tpub struct {}({}<{}::{}{}{}>);",
             type_name,
             kind_name,
+            sys_crate_name,
             glib_name,
             class_name,
             rust_class_name
@@ -141,9 +131,10 @@ pub fn define_object_type(
 
         try!(writeln!(
             w,
-            "\tpub struct {}({}<sys::{}{}{}>) @requires {};",
+            "\tpub struct {}({}<{}::{}{}{}>) @requires {};",
             type_name,
             kind_name,
+            sys_crate_name,
             glib_name,
             class_name,
             rust_class_name,
@@ -190,9 +181,10 @@ pub fn define_object_type(
 
         try!(writeln!(
             w,
-            "\tpub struct {}({}<sys::{}{}{}>){};",
+            "\tpub struct {}({}<{}::{}{}{}>){};",
             type_name,
             kind_name,
+            sys_crate_name,
             glib_name,
             class_name,
             rust_class_name,
@@ -201,7 +193,7 @@ pub fn define_object_type(
     }
     try!(writeln!(w));
     try!(writeln!(w, "\tmatch fn {{"));
-    try!(writeln!(w, "\t\tget_type => || sys::{}(),", glib_func_name));
+    try!(writeln!(w, "\t\tget_type => || {}::{}(),", sys_crate_name, glib_func_name));
     try!(writeln!(w, "\t}}"));
     try!(writeln!(w, "}}"));
 
@@ -210,6 +202,7 @@ pub fn define_object_type(
 
 pub fn define_boxed_type(
     w: &mut Write,
+    env: &Env,
     type_name: &str,
     glib_name: &str,
     copy_fn: &str,
@@ -217,26 +210,29 @@ pub fn define_boxed_type(
     get_type_fn: &Option<String>,
     derive: &[Derive],
 ) -> Result<()> {
+    let sys_crate_name = env.main_sys_crate_name();
     try!(writeln!(w));
     try!(writeln!(w, "glib_wrapper! {{"));
 
     try!(derives(w, derive, 1));
     try!(writeln!(
         w,
-        "\tpub struct {}(Boxed<sys::{}>);",
+        "\tpub struct {}(Boxed<{}::{}>);",
         type_name,
+        sys_crate_name,
         glib_name
     ));
     try!(writeln!(w));
     try!(writeln!(w, "\tmatch fn {{"));
     try!(writeln!(
         w,
-        "\t\tcopy => |ptr| sys::{}(mut_override(ptr)),",
+        "\t\tcopy => |ptr| {}::{}(mut_override(ptr)),",
+        sys_crate_name,
         copy_fn
     ));
-    try!(writeln!(w, "\t\tfree => |ptr| sys::{}(ptr),", free_fn));
+    try!(writeln!(w, "\t\tfree => |ptr| {}::{}(ptr),", sys_crate_name, free_fn));
     if let Some(ref get_type_fn) = *get_type_fn {
-        try!(writeln!(w, "\t\tget_type => || sys::{}(),", get_type_fn));
+        try!(writeln!(w, "\t\tget_type => || {}::{}(),", sys_crate_name, get_type_fn));
     }
     try!(writeln!(w, "\t}}"));
     try!(writeln!(w, "}}"));
@@ -246,33 +242,36 @@ pub fn define_boxed_type(
 
 pub fn define_auto_boxed_type(
     w: &mut Write,
+    env: &Env,
     type_name: &str,
     glib_name: &str,
     get_type_fn: &str,
     derive: &[Derive],
 ) -> Result<()> {
+    let sys_crate_name = env.main_sys_crate_name();
     try!(writeln!(w));
     try!(writeln!(w, "glib_wrapper! {{"));
     try!(derives(w, derive, 1));
     try!(writeln!(
         w,
-        "\tpub struct {}(Boxed<sys::{}>);",
+        "\tpub struct {}(Boxed<{}::{}>);",
         type_name,
+        sys_crate_name,
         glib_name
     ));
     try!(writeln!(w));
     try!(writeln!(w, "\tmatch fn {{"));
     try!(writeln!(
         w,
-        "\t\tcopy => |ptr| gobject_sys::g_boxed_copy(sys::{}(), ptr as *mut _) as *mut sys::{},",
-        get_type_fn, glib_name
+        "\t\tcopy => |ptr| gobject_sys::g_boxed_copy({}::{}(), ptr as *mut _) as *mut {}::{},",
+        sys_crate_name, get_type_fn, sys_crate_name, glib_name
     ));
     try!(writeln!(
         w,
-        "\t\tfree => |ptr| gobject_sys::g_boxed_free(sys::{}(), ptr as *mut _),",
-        get_type_fn
+        "\t\tfree => |ptr| gobject_sys::g_boxed_free({}::{}(), ptr as *mut _),",
+        sys_crate_name, get_type_fn
     ));
-    try!(writeln!(w, "\t\tget_type => || sys::{}(),", get_type_fn));
+    try!(writeln!(w, "\t\tget_type => || {}::{}(),", sys_crate_name, get_type_fn));
     try!(writeln!(w, "\t}}"));
     try!(writeln!(w, "}}"));
 
@@ -281,6 +280,7 @@ pub fn define_auto_boxed_type(
 
 pub fn define_shared_type(
     w: &mut Write,
+    env: &Env,
     type_name: &str,
     glib_name: &str,
     ref_fn: &str,
@@ -288,21 +288,23 @@ pub fn define_shared_type(
     get_type_fn: &Option<String>,
     derive: &[Derive],
 ) -> Result<()> {
+    let sys_crate_name = env.main_sys_crate_name();
     try!(writeln!(w));
     try!(writeln!(w, "glib_wrapper! {{"));
     try!(derives(w, derive, 1));
     try!(writeln!(
         w,
-        "\tpub struct {}(Shared<sys::{}>);",
+        "\tpub struct {}(Shared<{}::{}>);",
         type_name,
+        sys_crate_name,
         glib_name
     ));
     try!(writeln!(w));
     try!(writeln!(w, "\tmatch fn {{"));
-    try!(writeln!(w, "\t\tref => |ptr| sys::{}(ptr),", ref_fn));
-    try!(writeln!(w, "\t\tunref => |ptr| sys::{}(ptr),", unref_fn));
+    try!(writeln!(w, "\t\tref => |ptr| {}::{}(ptr),", sys_crate_name, ref_fn));
+    try!(writeln!(w, "\t\tunref => |ptr| {}::{}(ptr),", sys_crate_name, unref_fn));
     if let Some(ref get_type_fn) = *get_type_fn {
-        try!(writeln!(w, "\t\tget_type => || sys::{}(),", get_type_fn));
+        try!(writeln!(w, "\t\tget_type => || {}::{}(),", sys_crate_name, get_type_fn));
     }
     try!(writeln!(w, "\t}}"));
     try!(writeln!(w, "}}"));

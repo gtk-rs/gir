@@ -2,7 +2,6 @@ use analysis::c_type::{implements_c_type, rustify_pointers};
 use analysis::rust_type::{Result, TypeError};
 use env::Env;
 use library::*;
-use nameutil::sys_crate_name;
 use traits::*;
 
 pub fn used_ffi_type(env: &Env, type_id: TypeId, c_type: &str) -> Option<String> {
@@ -67,7 +66,7 @@ fn ffi_inner(env: &Env, tid: TypeId, inner: &str) -> Result {
             use library::Fundamental::*;
             let inner = match fund {
                 None => "libc::c_void",
-                Boolean => return Ok(format!("{}::gboolean", sys_crate_name("GLib", env))),
+                Boolean => return Ok("glib_sys::gboolean".into()),
                 Int8 => "i8",
                 UInt8 => "u8",
                 Int16 => "i16",
@@ -166,11 +165,7 @@ fn fix_name(env: &Env, type_id: TypeId, name: &str) -> Result {
             Type::PtrArray(..) |
             Type::List(..) |
             Type::SList(..) |
-            Type::HashTable(..) => Ok(format!(
-                "{}::{}",
-                &env.namespaces[env.namespaces.glib_ns_id].sys_crate_name,
-                name
-            )),
+            Type::HashTable(..) => Ok(format!("glib_sys::{}", name)),
             _ => Ok(name.into()),
         }
     } else {

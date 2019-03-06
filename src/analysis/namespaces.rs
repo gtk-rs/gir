@@ -44,24 +44,11 @@ pub fn run(gir: &library::Library) -> Info {
     let mut namespaces = Vec::with_capacity(gir.namespaces.len());
     let mut is_glib_crate = false;
     let mut glib_ns_id = None;
-    let mut is_gobject = false;
 
     for (ns_id, ns) in gir.namespaces.iter().enumerate() {
         let ns_id = ns_id as NsId;
         let crate_name = nameutil::crate_name(&ns.name);
-        let mut is_local_sys = ns_id == MAIN;
-        if is_local_sys && ns.name == "GObject" {
-            is_gobject = true;
-            is_local_sys = false;
-            is_glib_crate = true;
-        } else if is_gobject && ns.name == "GLib" {
-            is_local_sys = true;
-        }
-        let sys_crate_name = if is_local_sys {
-            "sys".to_owned()
-        } else {
-            format!("{}_sys", crate_name)
-        };
+        let sys_crate_name = format!("{}_sys", crate_name);
         let higher_crate_name = match &crate_name[..] {
             "gobject" => "glib".to_owned(),
             _ => crate_name.clone(),
@@ -80,6 +67,8 @@ pub fn run(gir: &library::Library) -> Info {
             if ns_id == MAIN {
                 is_glib_crate = true;
             }
+        } else if ns.name == "GObject" && ns_id == MAIN {
+            is_glib_crate = true;
         }
     }
 

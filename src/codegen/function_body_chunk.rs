@@ -12,7 +12,6 @@ use chunk::{Chunk, Param, TupleMode};
 use chunk::parameter_ffi_call_out;
 use env::Env;
 use library::{self, ParameterDirection};
-use nameutil::sys_crate_name;
 use std::collections::{BTreeMap, HashMap};
 
 #[derive(Clone, Debug)]
@@ -446,12 +445,15 @@ impl Builder {
                                   .skip(1) // to skip the generated this
                                   .map(|p| {
                                       if p.is_real_gpointer(env) {
-                                          Param { name: p.name.clone(),
-                                                  typ: format!("{}::gpointer",
-                                                               sys_crate_name("GLib", env)) }
+                                          Param {
+                                              name: p.name.clone(),
+                                              typ: "glib_sys::gpointer".to_string()
+                                          }
                                       } else {
-                                          Param { name: p.name.clone(),
-                                                  typ: ::analysis::ffi_type::ffi_type(env, p.typ, &p.c_type).expect("failed to write c_type") }
+                                          Param {
+                                              name: p.name.clone(),
+                                              typ: ::analysis::ffi_type::ffi_type(env, p.typ, &p.c_type).expect("failed to write c_type")
+                                          }
                                       }
                                   })
                                   .collect::<Vec<_>>(),
@@ -459,7 +461,7 @@ impl Builder {
             return_value: if trampoline.ret.c_type != "void" {
                 let p = &trampoline.ret;
                 Some(if p.c_type == "gpointer" {
-                    format!("{}::gpointer", sys_crate_name("GLib", env))
+                    "glib_sys::gpointer".to_string()
                 } else {
                     ::analysis::ffi_type::ffi_type(env, p.typ, &p.c_type).expect("failed to write c_type")
                 })
@@ -548,9 +550,6 @@ impl Builder {
         }
 
         let result = Chunk::Tuple(result, TupleMode::WithUnit);
-        let gio_crate_name = sys_crate_name("Gio", env);
-        let gobject_crate_name = sys_crate_name("GObject", env);
-        let glib_crate_name = sys_crate_name("GLib", env);
         let mut body = vec![
             Chunk::Let {
                 name: "error".to_string(),
@@ -610,9 +609,9 @@ impl Builder {
         );
 
         let parameters = vec![
-            Param { name: "_source_object".to_string(), typ: format!("*mut {}::GObject", gobject_crate_name) },
-            Param { name: "res".to_string(), typ: format!("*mut {}::GAsyncResult", gio_crate_name) },
-            Param { name: "user_data".to_string(), typ: format!("{}::gpointer", glib_crate_name) },
+            Param { name: "_source_object".to_string(), typ: "*mut gobject_sys::GObject".to_string() },
+            Param { name: "res".to_string(), typ: "*mut gio_sys::GAsyncResult".to_string() },
+            Param { name: "user_data".to_string(), typ: "glib_sys::gpointer".to_string() },
         ];
 
         chunks.push(Chunk::ExternCFunc {

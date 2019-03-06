@@ -732,7 +732,7 @@ fn analyze_async(
         *trampoline = Some(AsyncTrampoline {
             is_method: func.kind == FunctionKind::Method,
             name: format!("{}_trampoline", func.name),
-            finish_func_name,
+            finish_func_name: format!("{}::{}", env.main_sys_crate_name(), finish_func_name),
             callback_type,
             bound_name,
             output_params,

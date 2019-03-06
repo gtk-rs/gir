@@ -214,7 +214,7 @@ fn transformation_vars(w: &mut Write, analysis: &Trampoline) -> Result<()> {
                 let c_par = &analysis.parameters.c_parameters[transform.ind_c];
                 try!(writeln!(
                     w,
-                    "\tlet {} = from_glib_full(sys::gtk_tree_path_new_from_string({}));",
+                    "\tlet {} = from_glib_full(gtk_sys::gtk_tree_path_new_from_string({}));",
                     transform.name,
                     c_par.name
                 ));
