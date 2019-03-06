@@ -330,11 +330,15 @@ fn generate_unions(w: &mut Write, env: &Env, unions: &[&Union]) -> Result<()> {
             continue;
         }
         let full_name = format!("{}.{}", env.namespaces.main().name, union.name);
-        if !env.type_status_sys(&full_name).need_generate() {
+        let config = env.config.objects.get(&full_name);
+
+        if let Some(false) = config.map(|c| c.status.need_generate()) {
             continue;
         }
+
+        let align = config.and_then(|c| c.align);
         let fields = fields::from_union(env, union);
-        try!(generate_from_fields(w, &fields));
+        try!(generate_from_fields(w, &fields, align));
     }
     Ok(())
 }
@@ -357,11 +361,15 @@ fn generate_classes_structs(w: &mut Write, env: &Env, classes: &[&Class]) -> Res
     }
     for class in classes {
         let full_name = format!("{}.{}", env.namespaces.main().name, class.name);
-        if !env.type_status_sys(&full_name).need_generate() {
+        let config = env.config.objects.get(&full_name);
+
+        if let Some(false) = config.map(|c| c.status.need_generate()) {
             continue;
         }
+
+        let align = config.and_then(|c| c.align);
         let fields = fields::from_class(env, class);
-        try!(generate_from_fields(w, &fields));
+        try!(generate_from_fields(w, &fields, align));
     }
     Ok(())
 }
@@ -400,9 +408,12 @@ fn generate_records(w: &mut Write, env: &Env, records: &[&Record]) -> Result<()>
     }
     for record in records {
         let full_name = format!("{}.{}", env.namespaces.main().name, record.name);
-        if !env.type_status_sys(&full_name).need_generate() {
+        let config = env.config.objects.get(&full_name);
+
+        if let Some(false) = config.map(|c| c.status.need_generate()) {
             continue;
         }
+
         if record.c_type == "GHookList" {
             // 1. GHookList is useful.
             // 2. GHookList contains bitfields.
@@ -414,8 +425,9 @@ fn generate_records(w: &mut Write, env: &Env, records: &[&Record]) -> Result<()>
         } else if record.disguised {
             try!(generate_disguised(w, record));
         } else {
+            let align = config.and_then(|c| c.align);
             let fields = fields::from_record(env, record);
-            try!(generate_from_fields(w, &fields));
+            try!(generate_from_fields(w, &fields, align));
         }
     }
     Ok(())
@@ -453,9 +465,12 @@ fn generate_disguised(w: &mut Write, record: &Record) -> Result<()> {
     writeln!(w)
 }
 
-fn generate_from_fields(w: &mut Write, fields: &fields::Fields) -> Result<()> {
+fn generate_from_fields(w: &mut Write, fields: &fields::Fields, align: Option<u32>) -> Result<()> {
     cfg_condition(w, &fields.cfg_condition, false, 0)?;
     try!(writeln!(w, "#[repr(C)]"));
+    if let Some(align) = align {
+        try!(writeln!(w, "#[repr(align({}))]", align));
+    }
     let traits = fields.derived_traits().join(", ");
     if !traits.is_empty() {
         try!(writeln!(w, "#[derive({traits})]", traits=traits));

@@ -81,6 +81,7 @@ pub struct GObject {
     pub generate_display_trait: bool,
     pub subclassing: bool,
     pub manual_traits: Vec<String>,
+    pub align: Option<u32>,
 }
 
 impl Default for GObject {
@@ -109,6 +110,7 @@ impl Default for GObject {
             generate_display_trait: true,
             subclassing: false,
             manual_traits: Vec::default(),
+            align: None,
         }
     }
 }
@@ -194,6 +196,7 @@ fn parse_object(
             "generate_display_trait",
             "subclassing",
             "manual_traits",
+            "align",
         ],
         &format!("object {}", name),
     );
@@ -287,6 +290,17 @@ fn parse_object(
                 .collect()
         })
         .unwrap_or_else(|_| Vec::new());
+    let align = toml_object
+        .lookup("align")
+        .and_then(|v| v.as_integer())
+        .and_then(|v| {
+            if v.count_ones() != 1 || v > i64::from(u32::max_value()) || v < 0 {
+                warn!("`align` configuration must be a power of two of type u32, found {}", v);
+                None
+            } else {
+                Some(v as u32)
+            }
+        });
 
     if status != GStatus::Manual && ref_mode.is_some() {
         warn!("ref_mode configuration used for non-manual object {}", name);
@@ -324,6 +338,7 @@ fn parse_object(
         generate_display_trait,
         subclassing,
         manual_traits,
+        align,
     }
 }
 
