@@ -2,7 +2,6 @@ use analysis::c_type::{implements_c_type, rustify_pointers};
 use analysis::rust_type::{Result, TypeError};
 use env::Env;
 use library::*;
-use nameutil::ffi_crate_name;
 use traits::*;
 
 pub fn used_ffi_type(env: &Env, type_id: TypeId, c_type: &str) -> Option<String> {
@@ -67,7 +66,7 @@ fn ffi_inner(env: &Env, tid: TypeId, inner: &str) -> Result {
             use library::Fundamental::*;
             let inner = match fund {
                 None => "libc::c_void",
-                Boolean => return Ok(format!("{}::gboolean", ffi_crate_name("GLib", env))),
+                Boolean => return Ok("glib_sys::gboolean".into()),
                 Int8 => "i8",
                 UInt8 => "u8",
                 Int16 => "i16",
@@ -91,7 +90,7 @@ fn ffi_inner(env: &Env, tid: TypeId, inner: &str) -> Result {
                 UniChar => "u32",
                 Utf8 => "libc::c_char",
                 Filename => "libc::c_char",
-                Type => "glib_ffi::GType",
+                Type => "glib_sys::GType",
                 IntPtr => "libc::intptr_t",
                 UIntPtr => "libc::uintptr_t",
                 _ => return Err(TypeError::Unimplemented(inner.into())),
@@ -166,17 +165,13 @@ fn fix_name(env: &Env, type_id: TypeId, name: &str) -> Result {
             Type::PtrArray(..) |
             Type::List(..) |
             Type::SList(..) |
-            Type::HashTable(..) => Ok(format!(
-                "{}::{}",
-                &env.namespaces[env.namespaces.glib_ns_id].ffi_crate_name,
-                name
-            )),
+            Type::HashTable(..) => Ok(format!("glib_sys::{}", name)),
             _ => Ok(name.into()),
         }
     } else {
         let name_with_prefix = format!(
             "{}::{}",
-            &env.namespaces[type_id.ns_id].ffi_crate_name,
+            &env.namespaces[type_id.ns_id].sys_crate_name,
             name
         );
         if env.type_status_sys(&type_id.full_name(&env.library)).ignored() {

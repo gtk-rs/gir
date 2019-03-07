@@ -73,7 +73,11 @@ impl Builder {
     fn chunks_for_get(&self) -> Vec<Chunk> {
         let mut params = Vec::new();
 
-        let cast_target = if self.is_child_property { "ffi::GtkContainer" } else { "gobject_ffi::GObject" };
+        let cast_target = if self.is_child_property {
+            "gtk_sys::GtkContainer"
+        } else {
+            "gobject_sys::GObject"
+        };
         if self.in_trait {
             params.push(Chunk::Custom(format!("self.to_glib_none().0 as *mut {}", cast_target)));
         } else {
@@ -136,7 +140,11 @@ impl Builder {
     fn chunks_for_set(&self) -> Vec<Chunk> {
         let mut params = Vec::new();
 
-        let cast_target = if self.is_child_property { "ffi::GtkContainer" } else { "gobject_ffi::GObject" };
+        let cast_target = if self.is_child_property {
+            "gtk_sys::GtkContainer"
+        } else {
+            "gobject_sys::GObject"
+        };
         if self.in_trait {
             params.push(Chunk::Custom(format!("self.to_glib_none().0 as *mut {}", cast_target)));
         } else {
@@ -177,17 +185,17 @@ impl Builder {
 
     fn get_ffi_func(&self) -> String {
         if self.is_child_property {
-            "gtk_container_child_get_property".to_owned()
+            "gtk_sys::gtk_container_child_get_property".to_owned()
         } else {
-            "gobject_ffi::g_object_get_property".to_owned()
+            "gobject_sys::g_object_get_property".to_owned()
         }
     }
 
     fn set_ffi_func(&self) -> String {
         if self.is_child_property {
-            "gtk_container_child_set_property".to_owned()
+            "gtk_sys::gtk_container_child_set_property".to_owned()
         } else {
-            "gobject_ffi::g_object_set_property".to_owned()
+            "gobject_sys::g_object_set_property".to_owned()
         }
     }
 }

@@ -4,9 +4,11 @@ pub mod conversion_from_glib;
 pub mod parameter_ffi_call_out;
 
 pub use self::chunk::{chunks, Chunk, Param, TupleMode};
+use env::Env;
 
-pub fn ffi_function_todo(name: &str) -> Chunk {
-    let call = Chunk::FfiCallTODO(name.into());
+pub fn ffi_function_todo(env: &Env, name: &str) -> Chunk {
+    let sys_crate_name = env.main_sys_crate_name();
+    let call = Chunk::FfiCallTODO(format!("{}:{}", sys_crate_name, name));
     let unsafe_ = Chunk::UnsafeSmart(chunks(call));
     let block = Chunk::BlockHalf(chunks(unsafe_));
     Chunk::Comment(chunks(block))

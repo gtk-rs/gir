@@ -78,7 +78,7 @@ pub fn analyze(
                 imports.add_used_type(s, prop.version);
             }
             if type_string.is_ok() {
-                imports.add("gobject_ffi", prop.version);
+                imports.add("gobject_sys", prop.version);
                 imports.add("glib::Value", prop.version);
                 imports.add("glib::StaticType", prop.version);
             }
@@ -90,7 +90,7 @@ pub fn analyze(
                 imports.add_used_type(s, prop.version);
             }
             if type_string.is_ok() {
-                imports.add("gobject_ffi", prop.version);
+                imports.add("gobject_sys", prop.version);
                 imports.add("glib::Value", prop.version);
             }
 
@@ -280,7 +280,7 @@ fn analyze_property(
             imports.add("glib::signal::SignalHandlerId", prop_version);
             imports.add("std::mem::transmute", prop_version);
             imports.add("std::boxed::Box as Box_", prop_version);
-            imports.add("glib_ffi", prop_version);
+            imports.add("glib_sys", prop_version);
 
             Some(signals::Info {
                 connect_name: format!("connect_property_{}_notify", name_for_func),

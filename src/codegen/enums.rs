@@ -47,7 +47,7 @@ pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>) {
     }
 
     let mut imports = Imports::new(&env.library);
-    imports.add("ffi", None);
+    imports.add(env.main_sys_crate_name(), None);
     if has_get_quark {
         imports.add("glib::Quark", None);
         imports.add("glib::error::ErrorDomain", None);
@@ -59,7 +59,7 @@ pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>) {
         imports.add("glib::value::SetValue", None);
         imports.add("glib::value::FromValue", None);
         imports.add("glib::value::FromValueOptional", None);
-        imports.add("gobject_ffi", None);
+        imports.add("gobject_sys", None);
     }
     imports.add("glib::translate::*", None);
 
@@ -99,6 +99,7 @@ fn generate_enum(env: &Env, w: &mut Write, enum_: &Enumeration, config: &GObject
 
     let mut members: Vec<Member> = Vec::new();
     let mut vals: HashSet<String> = HashSet::new();
+    let sys_crate_name = env.main_sys_crate_name();
 
     for member in &enum_.members {
         let member_config = config.members.matched(&member.name);
@@ -183,10 +184,11 @@ fn generate_enum(env: &Env, w: &mut Write, enum_: &Enumeration, config: &GObject
         w,
         "#[doc(hidden)]
 impl ToGlib for {name} {{
-    type GlibType = ffi::{ffi_name};
+    type GlibType = {sys_crate_name}::{ffi_name};
 
-    fn to_glib(&self) -> ffi::{ffi_name} {{
+    fn to_glib(&self) -> {sys_crate_name}::{ffi_name} {{
         match *self {{",
+        sys_crate_name = sys_crate_name,
         name = enum_.name,
         ffi_name = enum_.c_type
     ));
@@ -195,9 +197,10 @@ impl ToGlib for {name} {{
         try!(version_condition(w, env, member.version, false, 3));
         try!(writeln!(
             w,
-            "\t\t\t{}::{} => ffi::{},",
+            "\t\t\t{}::{} => {}::{},",
             enum_.name,
             member.name,
+            sys_crate_name,
             member.c_name
         ));
     }
@@ -227,9 +230,10 @@ impl ToGlib for {name} {{
     try!(writeln!(
         w,
         "#[doc(hidden)]
-impl FromGlib<ffi::{ffi_name}> for {name} {{
-    fn from_glib(value: ffi::{ffi_name}) -> Self {{
+impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
+    fn from_glib(value: {sys_crate_name}::{ffi_name}) -> Self {{
         {assert}match value {{",
+        sys_crate_name = sys_crate_name,
         name = enum_.name,
         ffi_name = enum_.c_type,
         assert = assert
@@ -270,7 +274,7 @@ impl FromGlib<ffi::{ffi_name}> for {name} {{
             w,
             "impl ErrorDomain for {name} {{
     fn domain() -> Quark {{
-        {assert}unsafe {{ from_glib(ffi::{get_quark}()) }}
+        {assert}unsafe {{ from_glib({sys_crate_name}::{get_quark}()) }}
     }}
 
     fn code(self) -> i32 {{
@@ -279,6 +283,7 @@ impl FromGlib<ffi::{ffi_name}> for {name} {{
 
     fn from(code: i32) -> Option<Self> {{
         {assert}match code {{",
+            sys_crate_name = sys_crate_name,
             name = enum_.name,
             get_quark = get_quark,
             assert = assert
@@ -323,9 +328,10 @@ impl FromGlib<ffi::{ffi_name}> for {name} {{
             w,
             "impl StaticType for {name} {{
     fn static_type() -> Type {{
-        unsafe {{ from_glib(ffi::{get_type}()) }}
+        unsafe {{ from_glib({sys_crate_name}::{get_type}()) }}
     }}
 }}",
+            sys_crate_name = sys_crate_name,
             name = enum_.name,
             get_type = get_type
         ));
@@ -350,7 +356,7 @@ impl FromGlib<ffi::{ffi_name}> for {name} {{
             w,
             "impl<'a> FromValue<'a> for {name} {{
     unsafe fn from_value(value: &Value) -> Self {{
-        from_glib(gobject_ffi::g_value_get_enum(value.to_glib_none().0))
+        from_glib(gobject_sys::g_value_get_enum(value.to_glib_none().0))
     }}
 }}",
             name = enum_.name,
@@ -363,7 +369,7 @@ impl FromGlib<ffi::{ffi_name}> for {name} {{
             w,
             "impl SetValue for {name} {{
     unsafe fn set_value(value: &mut Value, this: &Self) {{
-        gobject_ffi::g_value_set_enum(value.to_glib_none_mut().0, this.to_glib())
+        gobject_sys::g_value_set_enum(value.to_glib_none_mut().0, this.to_glib())
     }}
 }}",
             name = enum_.name,

@@ -297,14 +297,14 @@ pub fn bounds(
 
 pub fn body_chunk(env: &Env, analysis: &analysis::functions::Info) -> Chunk {
     if analysis.visibility == Visibility::Comment {
-        return ffi_function_todo(&analysis.glib_name);
+        return ffi_function_todo(env, &analysis.glib_name);
     }
 
     let outs_as_return = !analysis.outs.is_empty();
 
     let mut builder = function_body_chunk::Builder::new();
     builder
-        .glib_name(&analysis.glib_name)
+        .glib_name(&format!("{}::{}", env.main_sys_crate_name(), analysis.glib_name))
         .assertion(analysis.assertion)
         .ret(&analysis.ret)
         .transformations(&analysis.parameters.transformations)

@@ -51,4 +51,8 @@ impl Env {
             _ => false,
         }
     }
+
+    pub fn main_sys_crate_name(&self) -> &str {
+        &self.namespaces[MAIN_NAMESPACE].sys_crate_name
+    }
 }

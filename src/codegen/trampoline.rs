@@ -36,7 +36,7 @@ pub fn generate(
     try!(version_condition(w, env, analysis.version, false, 0));
     try!(writeln!(
         w,
-        "unsafe extern \"C\" fn {}<{}F: {}>({}, f: glib_ffi::gpointer){}{}",
+        "unsafe extern \"C\" fn {}<{}F: {}>({}, f: glib_sys::gpointer){}{}",
         analysis.name,
         self_bound,
         func_str,
@@ -176,7 +176,7 @@ fn func_returns(env: &Env, analysis: &Trampoline) -> String {
 fn trampoline_parameters(env: &Env, analysis: &Trampoline) -> String {
     if analysis.is_notify {
         return format!(
-            "{}, _param_spec: glib_ffi::gpointer",
+            "{}, _param_spec: glib_sys::gpointer",
             trampoline_parameter(env, &analysis.parameters.c_parameters[0])
         );
     }
@@ -214,7 +214,7 @@ fn transformation_vars(w: &mut Write, analysis: &Trampoline) -> Result<()> {
                 let c_par = &analysis.parameters.c_parameters[transform.ind_c];
                 try!(writeln!(
                     w,
-                    "\tlet {} = from_glib_full(ffi::gtk_tree_path_new_from_string({}));",
+                    "\tlet {} = from_glib_full(gtk_sys::gtk_tree_path_new_from_string({}));",
                     transform.name,
                     c_par.name
                 ));

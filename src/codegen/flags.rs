@@ -37,7 +37,7 @@ pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>) {
     file_saver::save_to_file(path, env.config.make_backup, |w| {
 
         let mut imports = Imports::new(&env.library);
-        imports.add("ffi", None);
+        imports.add(env.main_sys_crate_name(), None);
         imports.add("glib::translate::*", None);
 
         for config in &configs {
@@ -49,7 +49,7 @@ pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>) {
                     imports.add("glib::value::SetValue", None);
                     imports.add("glib::value::FromValue", None);
                     imports.add("glib::value::FromValueOptional", None);
-                    imports.add("gobject_ffi", None);
+                    imports.add("gobject_sys", None);
                     break;
                 }
             }
@@ -75,6 +75,7 @@ pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>) {
 }
 
 fn generate_flags(env: &Env, w: &mut Write, flags: &Bitfield, config: &GObject) -> Result<()> {
+    let sys_crate_name = env.main_sys_crate_name();
     try!(cfg_deprecated(w, env, flags.deprecated_version, false, 0));
     try!(version_condition(w, env, flags.version, false, 0));
     try!(writeln!(w, "bitflags! {{"));
@@ -120,13 +121,14 @@ fn generate_flags(env: &Env, w: &mut Write, flags: &Bitfield, config: &GObject) 
         w,
         "#[doc(hidden)]
 impl ToGlib for {name} {{
-    type GlibType = ffi::{ffi_name};
+    type GlibType = {sys_crate_name}::{ffi_name};
 
-    fn to_glib(&self) -> ffi::{ffi_name} {{
+    fn to_glib(&self) -> {sys_crate_name}::{ffi_name} {{
         self.bits()
     }}
 }}
 ",
+        sys_crate_name = sys_crate_name,
         name = flags.name,
         ffi_name = flags.c_type
     ));
@@ -142,12 +144,13 @@ impl ToGlib for {name} {{
     try!(writeln!(
         w,
         "#[doc(hidden)]
-impl FromGlib<ffi::{ffi_name}> for {name} {{
-    fn from_glib(value: ffi::{ffi_name}) -> {name} {{
+impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
+    fn from_glib(value: {sys_crate_name}::{ffi_name}) -> {name} {{
         {assert}{name}::from_bits_truncate(value)
     }}
 }}
 ",
+        sys_crate_name = sys_crate_name,
         name = flags.name,
         ffi_name = flags.c_type,
         assert = assert
@@ -160,9 +163,10 @@ impl FromGlib<ffi::{ffi_name}> for {name} {{
             w,
             "impl StaticType for {name} {{
     fn static_type() -> Type {{
-        unsafe {{ from_glib(ffi::{get_type}()) }}
+        unsafe {{ from_glib({sys_crate_name}::{get_type}()) }}
     }}
 }}",
+            sys_crate_name = sys_crate_name,
             name = flags.name,
             get_type = get_type
         ));
@@ -187,7 +191,7 @@ impl FromGlib<ffi::{ffi_name}> for {name} {{
             w,
             "impl<'a> FromValue<'a> for {name} {{
     unsafe fn from_value(value: &Value) -> Self {{
-        from_glib(gobject_ffi::g_value_get_flags(value.to_glib_none().0))
+        from_glib(gobject_sys::g_value_get_flags(value.to_glib_none().0))
     }}
 }}",
             name = flags.name,
@@ -200,7 +204,7 @@ impl FromGlib<ffi::{ffi_name}> for {name} {{
             w,
             "impl SetValue for {name} {{
     unsafe fn set_value(value: &mut Value, this: &Self) {{
-        gobject_ffi::g_value_set_flags(value.to_glib_none_mut().0, this.to_glib())
+        gobject_sys::g_value_set_flags(value.to_glib_none_mut().0, this.to_glib())
     }}
 }}",
             name = flags.name,
