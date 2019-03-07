@@ -134,7 +134,7 @@ impl Builder {
                         Some(format!("Box_<({})>",
                                      calls.iter()
                                           .map(|c| if c.scope.is_call() {
-                                              format!("{}", c.bound_name)
+                                              c.bound_name.clone()
                                           } else {
                                               format!("&{}", c.bound_name)
                                           })
@@ -251,16 +251,14 @@ impl Builder {
                             format!("let {0}_data: Box_<{1}> = Box::new({0});",
                                     trampoline.name, trampoline.bound_name)));
                 }
+            } else if trampoline.scope.is_call() {
+                chunks.push(Chunk::Custom(format!("let {0}_data: &{1} = &{0};",
+                                                  trampoline.name,
+                                                  trampoline.bound_name)));
             } else {
-                if trampoline.scope.is_call() {
-                    chunks.push(Chunk::Custom(format!("let {0}_data: &{1} = &{0};",
-                                                      trampoline.name,
-                                                      trampoline.bound_name)));
-                } else {
-                    chunks.push(Chunk::Custom(format!("let {0}_data: {1} = {0};",
-                                                      trampoline.name,
-                                                      trampoline.bound_name)));
-                }
+                chunks.push(Chunk::Custom(format!("let {0}_data: {1} = {0};",
+                                                  trampoline.name,
+                                                  trampoline.bound_name)));
             }
         }
 
@@ -399,10 +397,8 @@ impl Builder {
                                 if trampoline.ret.c_type != "void" { "let res = " } else { "" },
                                 if trampoline.scope.is_call() { "mut " } else { "" })));
                 }
-            } else if !is_destroy {
-                if trampoline.ret.c_type != "void" {
-                    extra_before_call = "let res = ";
-                }
+            } else if !is_destroy &&  trampoline.ret.c_type != "void" {
+                extra_before_call = "let res = ";
             }
         }
         if !is_destroy {

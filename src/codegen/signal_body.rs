@@ -41,9 +41,9 @@ impl Builder {
     }
 
     fn let_func(&self) -> Chunk {
-        let type_ = format!("Box_<F>");
+        let type_ = "Box_<F>".to_string();
         Chunk::Let {
-            name: "f".to_owned(),
+            name: "f".to_string(),
             is_mut: false,
             value: Box::new(Chunk::Custom("Box_::new(f)".to_owned())),
             type_: Some(Box::new(Chunk::Custom(type_))),

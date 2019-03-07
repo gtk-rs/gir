@@ -34,17 +34,17 @@ impl Parse for Member {
         );
 
         let alias = toml.lookup("alias")
-            .and_then(|val| val.as_bool())
+            .and_then(Value::as_bool)
             .unwrap_or(false);
         let version = toml.lookup("version")
-            .and_then(|v| v.as_str())
+            .and_then(Value::as_str)
             .and_then(|s| s.parse().ok());
         let deprecated_version = toml.lookup("deprecated_version")
-            .and_then(|v| v.as_str())
+            .and_then(Value::as_str)
             .and_then(|s| s.parse().ok());
 
         let ignore = toml.lookup("ignore")
-            .and_then(|val| val.as_bool())
+            .and_then(Value::as_bool)
             .unwrap_or(false);
 
         Some(Member {

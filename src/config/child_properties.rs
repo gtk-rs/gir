@@ -13,8 +13,8 @@ pub struct ChildProperty {
 impl Parse for ChildProperty {
     fn parse(toml: &Value, object_name: &str) -> Option<ChildProperty> {
         let name = toml.lookup("name")
-            .and_then(|v| v.as_str())
-            .map(|s| s.to_owned());
+            .and_then(Value::as_str)
+            .map(ToOwned::to_owned);
         let name = if let Some(name) = name {
             name
         } else {
@@ -28,8 +28,8 @@ impl Parse for ChildProperty {
         );
 
         let type_name = toml.lookup("type")
-            .and_then(|v| v.as_str())
-            .map(|s| s.to_owned());
+            .and_then(Value::as_str)
+            .map(ToOwned::to_owned);
         let type_name = if let Some(type_name) = type_name {
             type_name
         } else {
@@ -41,7 +41,7 @@ impl Parse for ChildProperty {
             return None;
         };
         let doc_hidden = toml.lookup("doc_hidden")
-            .and_then(|val| val.as_bool())
+            .and_then(Value::as_bool)
             .unwrap_or(false);
 
         Some(ChildProperty {
@@ -63,16 +63,16 @@ impl Parse for ChildProperties {
     fn parse(toml_object: &Value, object_name: &str) -> Option<ChildProperties> {
         let child_name = toml_object
             .lookup("child_name")
-            .and_then(|v| v.as_str())
-            .map(|s| s.to_owned());
+            .and_then(Value::as_str)
+            .map(ToOwned::to_owned);
         let child_type = toml_object
             .lookup("child_type")
-            .and_then(|v| v.as_str())
-            .map(|s| s.to_owned());
+            .and_then(Value::as_str)
+            .map(ToOwned::to_owned);
         let mut properties: Vec<ChildProperty> = Vec::new();
         if let Some(configs) = toml_object
             .lookup("child_prop")
-            .and_then(|val| val.as_array())
+            .and_then(Value::as_array)
         {
             for config in configs {
                 if let Some(item) = ChildProperty::parse(config, object_name) {

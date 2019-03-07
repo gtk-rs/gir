@@ -114,7 +114,7 @@ impl Library {
         let c_type = elem.attr("type")
             .or_else(|| elem.attr("type-name"))
             .ok_or_else(|| parser.fail("Missing c:type/glib:type-name attributes"))?;
-        let type_struct = elem.attr("type-struct").map(|s| s.to_owned());
+        let type_struct = elem.attr("type-struct").map(ToOwned::to_owned);
         let get_type = elem.attr_required("get-type")?;
         let version = self.read_version(parser, ns_id, elem)?;
         let deprecated_version = self.read_deprecated_version(parser, ns_id, elem)?;
@@ -230,7 +230,7 @@ impl Library {
     ) -> Result<Option<Type>, String> {
         let record_name = elem.attr_required("name")?;
         let c_type = elem.attr_required("type")?;
-        let get_type = elem.attr("get-type").map(|s| s.to_owned());
+        let get_type = elem.attr("get-type").map(ToOwned::to_owned);
         let gtype_struct_for = elem.attr("is-gtype-struct-for");
         let version = self.read_version(parser, ns_id, elem)?;
         let deprecated_version = self.read_deprecated_version(parser, ns_id, elem)?;
@@ -519,7 +519,7 @@ impl Library {
     ) -> Result<(), String> {
         let interface_name = elem.attr_required("name")?;
         let c_type = elem.attr_required("type")?;
-        let type_struct = elem.attr("type-struct").map(|s| s.to_owned());
+        let type_struct = elem.attr("type-struct").map(ToOwned::to_owned);
         let get_type = elem.attr_required("get-type")?;
         let version = self.read_version(parser, ns_id, elem)?;
         let deprecated_version = self.read_deprecated_version(parser, ns_id, elem)?;

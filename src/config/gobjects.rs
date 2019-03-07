@@ -212,7 +212,7 @@ fn parse_object(
     let functions = Functions::parse(toml_object.lookup("function"), &name);
     let signals = {
         let mut v = Vec::new();
-        if let Some(configs) = toml_object.lookup("signal").and_then(|val| val.as_array()) {
+        if let Some(configs) = toml_object.lookup("signal").and_then(Value::as_array) {
             for config in configs {
                 if let Some(item) = Signal::parse(config, &name, concurrency) {
                     v.push(item);
@@ -231,56 +231,56 @@ fn parse_object(
     };
     let module_name = toml_object
         .lookup("module_name")
-        .and_then(|v| v.as_str())
-        .map(|s| s.to_owned());
+        .and_then(Value::as_str)
+        .map(ToOwned::to_owned);
     let version = toml_object
         .lookup("version")
-        .and_then(|v| v.as_str())
+        .and_then(Value::as_str)
         .and_then(|s| s.parse().ok());
     let cfg_condition = toml_object
         .lookup("cfg_condition")
-        .and_then(|v| v.as_str())
-        .map(|s| s.to_owned());
+        .and_then(Value::as_str)
+        .map(ToOwned::to_owned);
     let generate_trait = toml_object
         .lookup("trait")
-        .and_then(|v| v.as_bool());
+        .and_then(Value::as_bool);
     let final_type = toml_object
         .lookup("final_type")
-        .and_then(|v| v.as_bool())
+        .and_then(Value::as_bool)
         .or_else(|| generate_trait.map(|t| !t));
     let trait_name = toml_object
         .lookup("trait_name")
-        .and_then(|v| v.as_str())
-        .map(|s| s.to_owned());
+        .and_then(Value::as_str)
+        .map(ToOwned::to_owned);
     let concurrency = toml_object
         .lookup("concurrency")
-        .and_then(|v| v.as_str())
+        .and_then(Value::as_str)
         .and_then(|v| v.parse().ok())
         .unwrap_or(concurrency);
     let ref_mode = toml_object
         .lookup("ref_mode")
-        .and_then(|v| v.as_str())
+        .and_then(Value::as_str)
         .and_then(ref_mode_from_str);
     let conversion_type = toml_object
         .lookup("conversion_type")
-        .and_then(|v| v.as_str())
+        .and_then(Value::as_str)
         .and_then(conversion_type_from_str);
     let child_properties = ChildProperties::parse(toml_object, &name);
     let must_use = toml_object
         .lookup("must_use")
-        .and_then(|v| v.as_bool())
+        .and_then(Value::as_bool)
         .unwrap_or(false);
     let use_boxed_functions = toml_object
         .lookup("use_boxed_functions")
-        .and_then(|v| v.as_bool())
+        .and_then(Value::as_bool)
         .unwrap_or(false);
     let generate_display_trait = toml_object
         .lookup("generate_display_trait")
-        .and_then(|v| v.as_bool())
+        .and_then(Value::as_bool)
         .unwrap_or(default_generate_display_trait);
     let subclassing = toml_object
         .lookup("subclassing")
-        .and_then(|v| v.as_bool())
+        .and_then(Value::as_bool)
         .unwrap_or(false);
     let manual_traits = toml_object
         .lookup_vec("manual_traits", "IGNORED ERROR")
@@ -292,7 +292,7 @@ fn parse_object(
         .unwrap_or_else(|_| Vec::new());
     let align = toml_object
         .lookup("align")
-        .and_then(|v| v.as_integer())
+        .and_then(Value::as_integer)
         .and_then(|v| {
             if v.count_ones() != 1 || v > i64::from(u32::max_value()) || v < 0 {
                 warn!("`align` configuration must be a power of two of type u32, found {}", v);

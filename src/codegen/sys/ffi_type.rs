@@ -21,7 +21,7 @@ pub fn ffi_type(env: &Env, tid: library::TypeId, c_type: &str) -> Result {
             {
                 match *env.library.type_(tid) {
                     Type::FixedArray(inner_tid, size, ref inner_c_type) => {
-                        let inner_c_type = inner_c_type.as_ref().map(|ct| ct.as_str())
+                        let inner_c_type = inner_c_type.as_ref().map(String::as_str)
                             .unwrap_or_else(|| c_type);
                         ffi_type(env, inner_tid, inner_c_type)
                             .map_any(|s| format!("[{}; {}]", s, size))
@@ -127,7 +127,7 @@ fn ffi_inner(env: &Env, tid: library::TypeId, mut inner: String) -> Result {
         }
         Type::CArray(inner_tid) => ffi_inner(env, inner_tid, inner),
         Type::FixedArray(inner_tid, size, ref inner_c_type) => {
-            let inner_c_type = inner_c_type.as_ref().map(|ct| ct.as_str())
+            let inner_c_type = inner_c_type.as_ref().map(String::as_str)
                 .unwrap_or_else(|| inner.as_str());
             ffi_type(env, inner_tid, inner_c_type).map_any(|s| format!("[{}; {}]", s, size))
         }
