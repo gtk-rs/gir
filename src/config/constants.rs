@@ -30,14 +30,14 @@ impl Parse for Constant {
         );
 
         let version = toml.lookup("version")
-            .and_then(|v| v.as_str())
+            .and_then(Value::as_str)
             .and_then(|s| s.parse().ok());
         let cfg_condition = toml.lookup("cfg_condition")
-            .and_then(|v| v.as_str())
-            .map(|s| s.to_owned());
+            .and_then(Value::as_str)
+            .map(ToOwned::to_owned);
 
         let ignore = toml.lookup("ignore")
-            .and_then(|val| val.as_bool())
+            .and_then(Value::as_bool)
             .unwrap_or(false);
 
         Some(Constant {

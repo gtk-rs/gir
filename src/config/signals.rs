@@ -56,10 +56,10 @@ impl Parse for Parameter {
         );
 
         let nullable = toml.lookup("nullable")
-            .and_then(|val| val.as_bool())
+            .and_then(Value::as_bool)
             .map(Nullable);
         let transformation = toml.lookup("transformation")
-            .and_then(|val| val.as_str())
+            .and_then(Value::as_str)
             .and_then(|s| {
                 TransformationType::from_str(s)
                     .map_err(|err| {
@@ -69,8 +69,8 @@ impl Parse for Parameter {
                     .ok()
             });
         let new_name = toml.lookup("new_name")
-            .and_then(|val| val.as_str())
-            .map(|s| s.to_owned());
+            .and_then(Value::as_str)
+            .map(ToOwned::to_owned);
 
         Some(Parameter {
             ident,
@@ -135,25 +135,25 @@ impl Signal {
         );
 
         let ignore = toml.lookup("ignore")
-            .and_then(|val| val.as_bool())
+            .and_then(Value::as_bool)
             .unwrap_or(false);
 
         let inhibit = toml.lookup("inhibit")
-            .and_then(|val| val.as_bool())
+            .and_then(Value::as_bool)
             .unwrap_or(false);
         let version = toml.lookup("version")
-            .and_then(|v| v.as_str())
+            .and_then(Value::as_str)
             .and_then(|s| s.parse().ok());
         let parameters = Parameters::parse(toml.lookup("parameter"), object_name);
         let ret = Return::parse(toml.lookup("return"), object_name);
 
         let concurrency = toml.lookup("concurrency")
-            .and_then(|v| v.as_str())
+            .and_then(Value::as_str)
             .and_then(|v| v.parse().ok())
             .unwrap_or(concurrency);
 
         let doc_hidden = toml.lookup("doc_hidden")
-            .and_then(|val| val.as_bool())
+            .and_then(Value::as_bool)
             .unwrap_or(false);
 
         Some(Signal {

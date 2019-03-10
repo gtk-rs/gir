@@ -928,8 +928,8 @@ impl Namespace {
 
     fn add_type(&mut self, name: &str, typ: Option<Type>) -> u32 {
         let glib_name = typ.as_ref()
-            .and_then(|t| t.get_glib_name())
-            .map(|s| s.to_string());
+            .and_then(Type::get_glib_name)
+            .map(ToOwned::to_owned);
         let id = if let Some(id) = self.find_type(name) {
             self.types[id as usize] = typ;
             id

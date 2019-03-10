@@ -23,7 +23,7 @@ pub fn read_external_libraries(toml: &toml::Value) -> Result<Vec<ExternalLibrary
             .collect(),
         None => Vec::new(),
     };
-    let custom_libs = toml.lookup("external_libraries").and_then(|v| v.as_table());
+    let custom_libs = toml.lookup("external_libraries").and_then(toml::Value::as_table);
     if let Some(custom_libs) = custom_libs {
         for custom_lib in custom_libs {
             let crate_name = custom_lib.0;

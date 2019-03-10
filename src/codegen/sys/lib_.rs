@@ -139,7 +139,7 @@ where
     Type: MaybeRef<T>,
 {
     let mut vec: Vec<&T> = Vec::with_capacity(ns.types.len());
-    for typ in ns.types.iter().filter_map(|t| t.as_ref()) {
+    for typ in ns.types.iter().filter_map(Option::as_ref) {
         if let Some(x) = typ.maybe_ref() {
             vec.push(x);
         }

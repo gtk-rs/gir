@@ -10,7 +10,7 @@ pub struct Derive {
 
 impl Parse for Derive {
     fn parse(toml: &Value, object_name: &str) -> Option<Derive> {
-        let names = match toml.lookup("name").and_then(|v| v.as_str()) {
+        let names = match toml.lookup("name").and_then(Value::as_str) {
             Some(names) => names,
             None => {
                 error!(
@@ -26,8 +26,8 @@ impl Parse for Derive {
         );
 
         let cfg_condition = toml.lookup("cfg_condition")
-            .and_then(|v| v.as_str())
-            .map(|s| s.to_owned());
+            .and_then(Value::as_str)
+            .map(ToOwned::to_owned);
 
         let mut names_vec = Vec::new();
         for name in names.split(',') {

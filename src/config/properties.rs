@@ -36,11 +36,11 @@ impl Parse for Property {
 
         let ignore = toml
             .lookup("ignore")
-            .and_then(|val| val.as_bool())
+            .and_then(Value::as_bool)
             .unwrap_or(false);
         let version = toml
             .lookup("version")
-            .and_then(|v| v.as_str())
+            .and_then(Value::as_str)
             .and_then(|s| s.parse().ok());
         let generate = toml.lookup("generate").and_then(|v| {
             PropertyGenerateFlags::parse_flags(v, "generate")

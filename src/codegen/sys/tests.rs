@@ -61,7 +61,7 @@ fn prepare_ctypes(env: &Env) -> Vec<CType> {
     let ns = env.library.namespace(MAIN_NAMESPACE);
     let mut types: Vec<CType> = ns.types
         .iter()
-        .filter_map(|t| t.as_ref())
+        .filter_map(Option::as_ref)
         .filter(|t| !t.is_incomplete(&env.library))
         .filter_map(|t| match *t {
             Type::Alias(_) |

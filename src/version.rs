@@ -36,7 +36,7 @@ impl FromStr for Version {
     fn from_str(s: &str) -> Result<Version, String> {
         if s.contains('.') {
             let mut parts = s.splitn(4, '.')
-                .map(|s| s.parse())
+                .map(str::parse)
                 .take_while(Result::is_ok)
                 .map(Result::unwrap);
             Ok(Version::Full(
