@@ -274,9 +274,15 @@ impl Builder {
                 Ok(ref x) => x.clone(),
                 _ => String::new(),
             };
-            let is_fundamental = add_chunk_for_type(env, par.typ, par, &mut body, &ty_name);
+            let nullable = trampoline.parameters.rust_parameters[par.ind_rust].nullable;
+            let is_fundamental = add_chunk_for_type(env, par.typ, par, &mut body, &ty_name,
+                                                    nullable);
             if ty_name == "GString" {
-                arguments.push(Chunk::Name(format!("{}.as_str()", par.name)));
+                if *nullable {
+                    arguments.push(Chunk::Name(format!("{}.map(|x| x.as_str())", par.name)));
+                } else {
+                    arguments.push(Chunk::Name(format!("{}.as_str()", par.name)));
+                }
                 continue;
             }
             arguments.push(Chunk::Name(format!("{}{}",
@@ -997,6 +1003,7 @@ fn add_chunk_for_type(
     par: &trampoline_parameters::Transformation,
     body: &mut Vec<Chunk>,
     ty_name: &str,
+    nullable: library::Nullable,
 ) -> bool {
     let type_ = env.type_(typ_);
     match *type_ {
@@ -1006,7 +1013,7 @@ fn add_chunk_for_type(
             body.push(Chunk::Custom(format!("let {0} = from_glib({0});", par.name)));
             true
         }
-        library::Type::Alias(ref x) => add_chunk_for_type(env, x.typ, par, body, ty_name),
+        library::Type::Alias(ref x) => add_chunk_for_type(env, x.typ, par, body, ty_name, nullable),
         ref x => {
             let (begin, end) = ::codegen::trampoline_from_glib::from_glib_xxx(par.transfer, true);
             body.push(Chunk::Custom(format!("let {1}{3} = {0}{1}{2};",
@@ -1014,10 +1021,17 @@ fn add_chunk_for_type(
                                             par.name,
                                             end,
                                             if ty_name == "GString" {
-                                                ": GString"
+                                                if *nullable {
+                                                    ": Option<GString>"
+                                                } else {
+                                                    ": GString"
+                                                }
                                             } else {
                                                 ""
                                             })));
+            if ty_name == "GString" && *nullable {
+                body.push(Chunk::Custom(format!("let {0} = {0}.as_ref();", par.name)));
+            }
             x.is_fundamental()
         }
     }
