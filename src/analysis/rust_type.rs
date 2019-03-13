@@ -51,6 +51,11 @@ pub fn rust_type(env: &Env, type_id: library::TypeId) -> Result {
                    library::Concurrency::None)
 }
 
+pub fn rust_type_nullable(env: &Env, type_id: library::TypeId, nullable: Nullable) -> Result {
+    rust_type_full(env, type_id, nullable, RefMode::None, ParameterScope::None,
+                   library::Concurrency::None)
+}
+
 pub fn rust_type_with_scope(
     env: &Env,
     type_id: library::TypeId,
@@ -230,12 +235,19 @@ pub fn rust_type_full(
                 if p.closure.is_some() {
                     continue
                 }
-                match rust_type(env, p.typ) {
+                match rust_type_nullable(env, p.typ, p.nullable) {
                     Ok(x) => {
                         let is_fundamental = p.typ.is_fundamental_type(env);
+                        let y = rust_type(env, p.typ).unwrap_or_else(|_| String::new());
                         s.push(format!("{}{}",
                                        if is_fundamental { "" } else { "&" },
-                                       if x != "GString" { x } else { "&str".to_owned() }));
+                                       if y != "GString" {
+                                           x
+                                       } else if *p.nullable {
+                                           "Option<&str>".to_owned()
+                                       } else {
+                                           "&str".to_owned()
+                                       }));
                     }
                     e => {
                         err = true;
@@ -250,12 +262,21 @@ pub fn rust_type_full(
             } else {
                 "Fn"
             };
-            let mut ret = match rust_type(env, f.ret.typ) {
-                Ok(x) => format!("{}({}) -> {}{}",
-                                 closure_kind,
-                                 s.join(", "),
-                                 if x != "GString" { &x } else { "String" },
-                                 concurrency),
+            let mut ret = match rust_type_nullable(env, f.ret.typ, f.ret.nullable) {
+                Ok(x) => {
+                    let y = rust_type(env, f.ret.typ).unwrap_or_else(|_| String::new());
+                    format!("{}({}) -> {}{}",
+                            closure_kind,
+                            s.join(", "),
+                            if y != "GString" {
+                                &x
+                            } else if *f.ret.nullable {
+                                "Option<String>"
+                            } else {
+                                "String"
+                            },
+                            concurrency)
+                }
                 Err(TypeError::Unimplemented(ref x)) if x == "()" => {
                     format!("{}({}){}",
                             closure_kind,
