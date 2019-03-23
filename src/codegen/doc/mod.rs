@@ -97,7 +97,7 @@ fn generate_doc(w: &mut Write, env: &Env) -> Result<()> {
     let mut generators: Vec<(&str, Box<Fn(&mut Write, &Env) -> Result<()>>)> = Vec::new();
 
     for info in env.analysis.objects.values() {
-        if info.type_id.ns_id == MAIN {
+        if info.type_id.ns_id == MAIN && !env.is_too_low_version(info.deprecated_version) {
             generators.push((
                 &info.name,
                 Box::new(move |w, e| create_object_doc(w, e, info)),
@@ -106,7 +106,7 @@ fn generate_doc(w: &mut Write, env: &Env) -> Result<()> {
     }
 
     for info in env.analysis.records.values() {
-        if info.type_id.ns_id == MAIN {
+        if info.type_id.ns_id == MAIN && !env.is_too_low_version(info.deprecated_version) {
             generators.push((
                 &info.name,
                 Box::new(move |w, e| create_record_doc(w, e, info)),
@@ -117,9 +117,10 @@ fn generate_doc(w: &mut Write, env: &Env) -> Result<()> {
     for (tid, type_) in env.library.namespace_types(MAIN) {
         if let LType::Enumeration(ref enum_) = *type_ {
             if !env.config
-                .objects
-                .get(&tid.full_name(&env.library))
-                .map_or(true, |obj| obj.status.ignored())
+                   .objects
+                   .get(&tid.full_name(&env.library))
+                   .map_or(true, |obj| obj.status.ignored()) &&
+               !env.is_too_low_version(enum_.deprecated_version)
             {
                 generators.push((
                     &enum_.name[..],
@@ -364,6 +365,9 @@ fn create_fn_doc<T>(
 where
     T: FunctionLikeType + ToStripperType,
 {
+    if env.is_too_low_version(*fn_.deprecated_version()) {
+        return Ok(());
+    }
     if fn_.doc().is_none() && fn_.doc_deprecated().is_none() && fn_.ret().doc.is_none()
         && fn_.parameters().iter().all(|p| p.doc.is_none())
     {
@@ -442,6 +446,9 @@ fn create_property_doc(
     property: &Property,
     parent: Option<Box<TypeStruct>>,
 ) -> Result<()> {
+    if env.is_too_low_version(property.deprecated_version) {
+        return Ok(());
+    }
     if property.doc.is_none() && property.doc_deprecated.is_none()
         && (property.readable || property.writable)
     {
