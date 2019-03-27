@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::fs::File;
 use std::io::Read;
 use std::path::{Path, PathBuf};
@@ -8,6 +9,7 @@ use toml;
 use config::error::TomlHelper;
 use git::repo_hash;
 use library::{self, Library};
+use nameutil::set_crate_name_overrides;
 use super::external_libraries::{read_external_libraries, ExternalLibrary};
 use super::WorkMode;
 use super::gobjects;
@@ -65,6 +67,11 @@ impl Config {
             Err(e) => return Err(format!("Error while reading \"{}\": {}",
                                          config_file.display(), e)),
         };
+
+        let overrides = read_crate_name_overrides(&toml);
+        if !overrides.is_empty() {
+            set_crate_name_overrides(overrides);
+        }
 
         let work_mode = match work_mode.into() {
             Some(w) => w,
@@ -242,6 +249,18 @@ fn make_single_version_file(configured: Option<&str>, target_path: &Path) -> Pat
     } else {
         file_dir.join("versions.txt")
     }
+}
+
+fn read_crate_name_overrides(toml: &toml::Value) -> HashMap<String, String> {
+    let mut overrides = HashMap::new();
+    if let Some(a) = toml.lookup("crate_name_overrides").and_then(toml::Value::as_table) {
+        for (key, value) in a {
+            if let Some(s) = value.as_str() {
+                overrides.insert(key.clone(), s.to_string());
+            }
+        }
+    };
+    overrides
 }
 
 #[cfg(test)]
