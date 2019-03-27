@@ -5,6 +5,28 @@ use std::string::String;
 
 use case::*;
 
+static mut CRATE_NAME_OVERRIDES: Option<HashMap<String, String>> = None;
+
+pub(crate) fn set_crate_name_overrides(overrides: HashMap<String, String>) {
+    unsafe {
+        if CRATE_NAME_OVERRIDES.is_some() {
+            panic!("Crate name overrides already set;");
+        }
+        CRATE_NAME_OVERRIDES = Some(overrides);
+    }
+}
+
+fn get_crate_name_override(crate_name: &str) -> Option<String> {
+    unsafe {
+        if let Some(ref overrides) = CRATE_NAME_OVERRIDES {
+            if let Some(crate_name) = overrides.get(crate_name) {
+                return Some(crate_name.clone());
+            }
+        }
+        None
+    }
+}
+
 pub fn split_namespace_name(name: &str) -> (Option<&str>, &str) {
     let mut parts = name.split('.');
     let name = parts.next_back().unwrap();
@@ -34,10 +56,15 @@ pub fn file_name_sys(name: &str) -> String {
 /// Crate name with undescores for `use` statement
 pub fn crate_name(name: &str) -> String {
     let name = name.to_snake();
-    if name.starts_with("g_") {
+    let crate_name = if name.starts_with("g_") {
         format!("g{}", &name[2..])
     } else {
         name
+    };
+    if let Some(crate_name) = get_crate_name_override(&crate_name) {
+        crate_name
+    } else {
+        crate_name
     }
 }
 
@@ -136,6 +163,7 @@ mod tests {
     fn crate_name_works() {
         assert_eq!(crate_name("GdkPixbuf"), "gdk_pixbuf");
         assert_eq!(crate_name("GLib"), "glib");
+        assert_eq!(crate_name("GObject"), "gobject");
         assert_eq!(crate_name("Gtk"), "gtk");
     }
 
