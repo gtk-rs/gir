@@ -480,7 +480,7 @@ impl Builder {
             format!("::<{}>", bounds_names)
         };
         if !is_destroy {
-            if !trampoline.scope.is_call() && *trampoline.nullable {
+            if *trampoline.nullable {
                 chunks.push(Chunk::Custom(format!("let {0} = if {0}_data.is_some() {{ Some({0}_func{1} as _) }} else {{ None }};",
                                                   trampoline.name,
                                                   bounds_str)));
