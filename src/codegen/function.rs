@@ -178,11 +178,7 @@ pub fn declaration(env: &Env, analysis: &analysis::functions::Info) -> String {
 pub fn declaration_futures(env: &Env, analysis: &analysis::functions::Info) -> String {
     let async_future = analysis.async_future.as_ref().unwrap();
 
-    let return_str = if async_future.is_method {
-        format!(" -> Box_<futures_core::Future<Item = (Self, {}), Error = (Self, {})>>", async_future.success_parameters, async_future.error_parameters)
-    } else {
-        format!(" -> Box_<futures_core::Future<Item = {}, Error = {}>>", async_future.success_parameters, async_future.error_parameters)
-    };
+    let return_str = format!(" -> Box_<future::Future<Output = Result<{}, {}>> + std::marker::Unpin>", async_future.success_parameters, async_future.error_parameters);
 
     let mut param_str = String::with_capacity(100);
 
@@ -212,19 +208,12 @@ pub fn declaration_futures(env: &Env, analysis: &analysis::functions::Info) -> S
 
     let (bounds, _) = bounds(&analysis.bounds, skipped_bounds.as_ref(), true, false);
 
-    let where_str = if async_future.is_method {
-        " where Self: Sized + Clone"
-    } else {
-        ""
-    };
-
     format!(
-        "fn {}{}({}){}{}",
+        "fn {}{}({}){}",
         async_future.name,
         bounds,
         param_str,
         return_str,
-        where_str,
     )
 }
 
@@ -390,7 +379,6 @@ pub fn body_chunk_futures(env: &Env, analysis: &analysis::functions::Info) -> St
     try!(writeln!(body, "\tlet send = Fragile::new(send);"));
 
     if async_future.is_method {
-        try!(writeln!(body, "\tlet obj_clone = Fragile::new(obj.clone());"));
         try!(writeln!(body, "\tobj.{}(", analysis.name));
     } else if analysis.type_name.is_ok() {
         try!(writeln!(body, "\tSelf::{}(", analysis.name));
@@ -419,10 +407,6 @@ pub fn body_chunk_futures(env: &Env, analysis: &analysis::functions::Info) -> St
     }
 
     try!(writeln!(body, "\t\tmove |res| {{"));
-    if async_future.is_method {
-        try!(writeln!(body, "\t\t\tlet obj = obj_clone.into_inner();"));
-        try!(writeln!(body, "\t\t\tlet res = res.map(|v| (obj.clone(), v)).map_err(|v| (obj.clone(), v));"));
-    }
     try!(writeln!(body, "\t\t\tlet _ = send.into_inner().send(res);"));
     try!(writeln!(body, "\t\t}},"));
     try!(writeln!(body, "\t);"));
