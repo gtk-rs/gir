@@ -316,6 +316,11 @@ impl Library {
                                 actions.push((tid, fid, Action::SetCType("void*".to_owned())));
                                 continue;
                             }
+                            if let Type::FixedArray(_, _, Some(ref c_type)) = *field_type {
+                                // fixed-size Arrays can only have inner c_type
+                                actions.push((tid, fid, Action::SetCType(c_type.clone())));
+                                continue;
+                            }
                             error!("Field `{}::{}` is missing c:type", name, &field.name);
                         }
                     },
