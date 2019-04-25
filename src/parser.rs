@@ -155,6 +155,7 @@ impl Library {
             }
             "virtual-method" => parser.ignore_element(),
             "doc" => parser.text().map(|t| doc = Some(t)),
+            "source-position" => parser.ignore_element(),
             "union" => {
                 self.read_union(parser, ns_id, elem, Some(class_name), Some(c_type)).map(|mut u| {
                     let field_name = if let Some(field_name) = elem.attr("name") {
@@ -305,6 +306,7 @@ impl Library {
             }
             "doc" => parser.text().map(|t| doc = Some(t)),
             "doc-deprecated" => parser.text().map(|t| doc_deprecated = Some(t)),
+            "source-position" => parser.ignore_element(),
             _ => Err(parser.unexpected_element(elem)),
         })?;
 
@@ -553,6 +555,7 @@ impl Library {
             }
             "doc" => parser.text().map(|t| doc = Some(t)),
             "virtual-method" => parser.ignore_element(),
+            "source-position" => parser.ignore_element(),
             _ => Err(parser.unexpected_element(elem)),
         })?;
 
@@ -593,6 +596,7 @@ impl Library {
             }
             "doc" => parser.text().map(|t| doc = Some(t)),
             "doc-deprecated" => parser.text().map(|t| doc_deprecated = Some(t)),
+            "source-position" => parser.ignore_element(),
             _ => Err(parser.unexpected_element(elem)),
         })?;
 
@@ -640,6 +644,7 @@ impl Library {
             }
             "doc" => parser.text().map(|t| doc = Some(t)),
             "doc-deprecated" => parser.text().map(|t| doc_deprecated = Some(t)),
+            "source-position" => parser.ignore_element(),
             _ => Err(parser.unexpected_element(elem)),
         })?;
 
@@ -709,6 +714,7 @@ impl Library {
             }
             "doc" => parser.text().map(|t| doc = Some(t)),
             "doc-deprecated" => parser.text().map(|t| doc_deprecated = Some(t)),
+            "source-position" => parser.ignore_element(),
             _ => Err(parser.unexpected_element(elem)),
         })?;
 
@@ -834,6 +840,7 @@ impl Library {
             "doc" => parser.text().map(|t| doc = Some(t)),
             "doc-deprecated" => parser.text().map(|t| doc_deprecated = Some(t)),
             "doc-version" => parser.ignore_element(),
+            "source-position" => parser.ignore_element(),
             _ => Err(parser.unexpected_element(elem)),
         })?;
 
