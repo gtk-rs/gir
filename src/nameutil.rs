@@ -55,7 +55,7 @@ pub fn file_name_sys(name: &str) -> String {
 
 /// Crate name with undescores for `use` statement
 pub fn crate_name(name: &str) -> String {
-    let name = name.to_snake();
+    let name = name.replace("-", "_").to_snake();
     let crate_name = if name.starts_with("g_") {
         format!("g{}", &name[2..])
     } else {
