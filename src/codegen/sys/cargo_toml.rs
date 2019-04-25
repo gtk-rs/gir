@@ -106,6 +106,7 @@ fn fill_in(root: &mut Table, env: &Env) {
 fn get_crate_name(config: &Config, root: &Table) -> String {
     if let Some(&Value::Table(ref lib)) = root.get("lib") {
         if let Some(&Value::String(ref lib_name)) = lib.get("name") {
+            //Converting don't needed as library target names cannot contain hyphens
             return lib_name.to_owned();
         }
     }
