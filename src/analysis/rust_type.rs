@@ -262,7 +262,7 @@ pub fn rust_type_full(
             } else {
                 "Fn"
             };
-            let mut ret = match rust_type_nullable(env, f.ret.typ, f.ret.nullable) {
+            let ret = match rust_type_nullable(env, f.ret.typ, f.ret.nullable) {
                 Ok(x) => {
                     let y = rust_type(env, f.ret.typ).unwrap_or_else(|_| String::new());
                     format!("{}({}) -> {}{}",
