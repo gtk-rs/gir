@@ -581,7 +581,7 @@ fn analyze_function(
         imports.add("glib_sys", version);
         imports.add("gobject_sys", version);
         imports.add("std::ptr", version);
-        imports.add_with_constraint("futures_core", version, Some("futures"));
+        imports.add_with_constraint("futures::future", version, Some("futures"));
         imports.add_with_constraint("std::boxed::Box as Box_", version, Some("futures"));
 
         if let Some(ref trampoline) = trampoline {
