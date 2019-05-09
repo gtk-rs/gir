@@ -1,9 +1,9 @@
 use std::io::{Result, Write};
 
-use analysis;
-use library;
-use analysis::special_functions::Type;
-use env::Env;
+use crate::analysis;
+use crate::library;
+use crate::analysis::special_functions::Type;
+use crate::env::Env;
 use super::{function, general, trait_impls};
 
 pub fn generate(w: &mut Write, env: &Env, analysis: &analysis::record::Info) -> Result<()> {

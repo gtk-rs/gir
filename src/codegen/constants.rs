@@ -1,10 +1,10 @@
-use analysis::imports::Imports;
-use env::Env;
+use crate::analysis::imports::Imports;
+use crate::env::Env;
 use std::path::Path;
-use file_saver;
-use codegen::general::{self, cfg_condition, cfg_deprecated, version_condition,
+use crate::file_saver;
+use crate::codegen::general::{self, cfg_condition, cfg_deprecated, version_condition,
                        version_condition_string};
-use library;
+use crate::library;
 
 pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>) {
     let path = root_path.join("constants.rs");

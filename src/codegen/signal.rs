@@ -1,15 +1,15 @@
 use std::io::{Result, Write};
 
-use analysis;
-use library;
-use chunk::Chunk;
-use consts::TYPE_PARAMETERS_START;
-use env::Env;
+use crate::analysis;
+use crate::library;
+use crate::chunk::Chunk;
+use crate::consts::TYPE_PARAMETERS_START;
+use crate::env::Env;
 use super::general::{cfg_deprecated, doc_hidden, version_condition};
 use super::signal_body;
 use super::trampoline::func_string;
-use writer::primitives::tabs;
-use writer::ToCode;
+use crate::writer::primitives::tabs;
+use crate::writer::ToCode;
 
 pub fn generate(
     w: &mut Write,

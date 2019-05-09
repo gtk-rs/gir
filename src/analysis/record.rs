@@ -1,15 +1,15 @@
 use std::ops::Deref;
 
-use config::gobjects::GObject;
-use config::derives::{Derive, Derives};
-use env::Env;
-use library;
-use nameutil::*;
+use crate::config::gobjects::GObject;
+use crate::config::derives::{Derive, Derives};
+use crate::env::Env;
+use crate::library;
+use crate::nameutil::*;
 use super::*;
 use super::imports::Imports;
 use super::info_base::InfoBase;
 use super::record_type::RecordType;
-use traits::*;
+use crate::traits::*;
 
 #[derive(Debug, Default)]
 pub struct Info {

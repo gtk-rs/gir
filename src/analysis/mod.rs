@@ -1,8 +1,8 @@
 use std::collections::BTreeMap;
 
-use env::Env;
-use library;
-use library::{Type, TypeId};
+use crate::env::Env;
+use crate::library;
+use crate::library::{Type, TypeId};
 
 pub mod bounds;
 pub mod c_type;

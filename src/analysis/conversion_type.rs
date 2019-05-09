@@ -1,6 +1,6 @@
-use env;
-use library::*;
-use config::gobjects::GObject;
+use crate::env;
+use crate::library::*;
+use crate::config::gobjects::GObject;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum ConversionType {
@@ -29,8 +29,8 @@ impl ConversionType {
             return conversion_type;
         }
 
-        use library::Type::*;
-        use library::Fundamental::*;
+        use crate::library::Type::*;
+        use crate::library::Fundamental::*;
         match *library.type_(type_id) {
             Fundamental(fund) => match fund {
                 Boolean => ConversionType::Scalar,

@@ -1,16 +1,16 @@
-use config;
-use config::gobjects::GObject;
-use env::Env;
-use library;
-use nameutil::signal_to_snake;
-use parser::is_empty_c_type;
+use crate::config;
+use crate::config::gobjects::GObject;
+use crate::env::Env;
+use crate::library;
+use crate::nameutil::signal_to_snake;
+use crate::parser::is_empty_c_type;
 use super::bounds::{BoundType, Bounds};
 use super::conversion_type::ConversionType;
 use super::ffi_type::used_ffi_type;
 use super::rust_type::{bounds_rust_type, rust_type, used_rust_type};
 use super::trampoline_parameters::{self, Parameters};
-use traits::IntoString;
-use version::Version;
+use crate::traits::IntoString;
+use crate::version::Version;
 
 #[derive(Debug, Clone)]
 pub struct Trampoline {
@@ -91,7 +91,7 @@ pub fn analyze(
             library::ParameterDirection::In,
             library::Transfer::None,
             library::Nullable(false),
-            ::analysis::ref_mode::RefMode::ByRef,
+            crate::analysis::ref_mode::RefMode::ByRef,
             ConversionType::Borrow,
         );
         parameters.transformations.push(transform);

@@ -1,11 +1,11 @@
-use analysis;
-use analysis::ref_mode::RefMode;
-use env::Env;
-use library::{self, ParameterDirection};
-use analysis::conversion_type::ConversionType;
-use analysis::rust_type::parameter_rust_type;
-use traits::*;
-use nameutil;
+use crate::analysis;
+use crate::analysis::ref_mode::RefMode;
+use crate::env::Env;
+use crate::library::{self, ParameterDirection};
+use crate::analysis::conversion_type::ConversionType;
+use crate::analysis::rust_type::parameter_rust_type;
+use crate::traits::*;
+use crate::nameutil;
 
 pub trait ToReturnValue {
     fn to_return_value(&self, env: &Env, is_trampoline: bool) -> String;
@@ -41,7 +41,7 @@ impl ToReturnValue for analysis::return_value::Info {
 pub fn out_parameter_as_return_parts(
     analysis: &analysis::functions::Info,
 ) -> (&'static str, &'static str) {
-    use analysis::out_parameters::Mode::*;
+    use crate::analysis::out_parameters::Mode::*;
     let num_outs = analysis
         .outs
         .iter()

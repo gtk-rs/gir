@@ -1,4 +1,4 @@
-use library;
+use crate::library;
 use super::parameter_ffi_call_out;
 
 #[derive(Clone)]

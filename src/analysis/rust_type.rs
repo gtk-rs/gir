@@ -1,10 +1,10 @@
 use std::result;
 
-use analysis::ref_mode::RefMode;
-use env::Env;
-use library::{self, Nullable, ParameterScope};
+use crate::analysis::ref_mode::RefMode;
+use crate::env::Env;
+use crate::library::{self, Nullable, ParameterScope};
 use super::conversion_type::ConversionType;
-use traits::*;
+use crate::traits::*;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum TypeError {
@@ -78,8 +78,8 @@ pub fn rust_type_full(
     scope: ParameterScope,
     concurrency: library::Concurrency,
 ) -> Result {
-    use library::Type::*;
-    use library::Fundamental::*;
+    use crate::library::Type::*;
+    use crate::library::Fundamental::*;
     let ok = |s: &str| Ok(s.into());
     let err = |s: &str| Err(TypeError::Unimplemented(s.into()));
     let mut skip_option = false;
@@ -342,7 +342,7 @@ pub fn rust_type_full(
 }
 
 pub fn used_rust_type(env: &Env, type_id: library::TypeId, is_in: bool) -> Result {
-    use library::Type::*;
+    use crate::library::Type::*;
     match *env.library.type_(type_id) {
         Fundamental(library::Fundamental::Type) |
         Fundamental(library::Fundamental::Short) |
@@ -376,7 +376,7 @@ pub fn parameter_rust_type(
     ref_mode: RefMode,
     scope: ParameterScope,
 ) -> Result {
-    use library::Type::*;
+    use crate::library::Type::*;
     let type_ = env.library.type_(type_id);
     let rust_type = rust_type_full(env, type_id, nullable, ref_mode, scope,
                                    library::Concurrency::None);

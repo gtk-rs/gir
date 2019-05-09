@@ -8,24 +8,24 @@
 use std::collections::{HashMap, HashSet};
 use std::vec::Vec;
 
-use analysis::bounds::{Bounds, CallbackInfo};
-use analysis::function_parameters::{self, CParameter, Parameters, Transformation, TransformationType};
-use analysis::imports::Imports;
-use analysis::out_parameters;
-use analysis::out_parameters::use_function_return_for_result;
-use analysis::ref_mode::RefMode;
-use analysis::return_value;
-use analysis::rust_type::*;
-use analysis::safety_assertion_mode::SafetyAssertionMode;
-use analysis::signatures::{Signature, Signatures};
-use analysis::trampolines::Trampoline;
-use config;
-use env::Env;
-use library::{self, Function, FunctionKind, Nullable, Parameter, ParameterScope, Transfer, Type};
-use nameutil;
+use crate::analysis::bounds::{Bounds, CallbackInfo};
+use crate::analysis::function_parameters::{self, CParameter, Parameters, Transformation, TransformationType};
+use crate::analysis::imports::Imports;
+use crate::analysis::out_parameters;
+use crate::analysis::out_parameters::use_function_return_for_result;
+use crate::analysis::ref_mode::RefMode;
+use crate::analysis::return_value;
+use crate::analysis::rust_type::*;
+use crate::analysis::safety_assertion_mode::SafetyAssertionMode;
+use crate::analysis::signatures::{Signature, Signatures};
+use crate::analysis::trampolines::Trampoline;
+use crate::config;
+use crate::env::Env;
+use crate::library::{self, Function, FunctionKind, Nullable, Parameter, ParameterScope, Transfer, Type};
+use crate::nameutil;
 use std::borrow::Borrow;
-use traits::*;
-use version::Version;
+use crate::traits::*;
+use crate::version::Version;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Visibility {
@@ -77,7 +77,7 @@ pub struct Info {
     pub cfg_condition: Option<String>,
     pub assertion: SafetyAssertionMode,
     pub doc_hidden: bool,
-    pub async: bool,
+    pub r#async: bool,
     pub trampoline: Option<AsyncTrampoline>,
     pub callbacks: Vec<Trampoline>,
     pub destroys: Vec<Trampoline>,
@@ -147,7 +147,7 @@ fn fixup_gpointer_parameter(
     parameters: &mut Parameters,
     idx: usize
 ) {
-    use analysis::ffi_type;
+    use crate::analysis::ffi_type;
 
     let instance_parameter = idx == 0;
 
@@ -390,11 +390,11 @@ fn analyze_function(
     configured_functions: &[&config::functions::Function],
     imports: &mut Imports,
 ) -> Info {
-    let async = func.parameters.iter()
+    let r#async = func.parameters.iter()
                                .any(|parameter| parameter.scope == ParameterScope::Async &&
                                                 parameter.c_type == "GAsyncReadyCallback");
     let has_callback_parameter =
-        !async && func.parameters.iter()
+        !r#async && func.parameters.iter()
                                  .any(|par| env.library.type_(par.typ).is_function());
     let concurrency = {
         let full_name = type_tid.full_name(&env.library);
@@ -420,7 +420,7 @@ fn analyze_function(
     let mut destroys = Vec::new();
     let mut async_future = None;
 
-    if !async && !has_callback_parameter &&
+    if !r#async && !has_callback_parameter &&
        func.parameters.iter().any(|par| par.c_type == "GDestroyNotify") {
         // In here, We have a DestroyNotify callback but no other callback is provided. A good
         // example of this situation is this function:
@@ -460,7 +460,7 @@ fn analyze_function(
         &params,
         configured_functions,
         disable_length_detect,
-        async,
+        r#async,
         in_trait,
     );
     parameters.analyze_return(env, &ret.parameter);
@@ -485,7 +485,7 @@ fn analyze_function(
         for (pos, par) in parameters.c_parameters.iter().enumerate() {
             // FIXME: It'd be better if we assumed that user data wasn't gpointer all the time so
             //        we could handle it more generically.
-            if async && par.c_type == "gpointer" {
+            if r#async && par.c_type == "gpointer" {
                 continue;
             }
             assert!(
@@ -496,7 +496,7 @@ fn analyze_function(
             if let Ok(s) = used_rust_type(env, par.typ, !par.direction.is_out()) {
                 used_types.push(s);
             }
-            let (to_glib_extra, callback_info) = bounds.add_for_parameter(env, func, par, async,
+            let (to_glib_extra, callback_info) = bounds.add_for_parameter(env, func, par, r#async,
                                                                           library::Concurrency::None);
             if let Some(to_glib_extra) = to_glib_extra {
                 to_glib_extras.insert(pos, to_glib_extra);
@@ -512,7 +512,7 @@ fn analyze_function(
                 &mut async_future,
             );
             let type_error =
-                !(async && *env.library.type_(par.typ) == Type::Fundamental(library::Fundamental::Pointer)) &&
+                !(r#async && *env.library.type_(par.typ) == Type::Fundamental(library::Fundamental::Pointer)) &&
                 parameter_rust_type(env, par.typ, par.direction, Nullable(false), RefMode::None,
                                     par.scope)
                     .is_err();
@@ -520,7 +520,7 @@ fn analyze_function(
                 commented = true;
             }
         }
-        if async && trampoline.is_none() {
+        if r#async && trampoline.is_none() {
             commented = true;
         }
     } else {
@@ -573,7 +573,7 @@ fn analyze_function(
         }
     }
 
-    if async && !commented {
+    if r#async && !commented {
         if env.config.library_name != "Gio" {
             imports.add("gio_sys", version);
             imports.add_with_constraint("gio", version, Some("futures"));
@@ -652,7 +652,7 @@ fn analyze_function(
         cfg_condition,
         assertion,
         doc_hidden,
-        async,
+        r#async,
         trampoline,
         async_future,
         callbacks,
@@ -820,7 +820,7 @@ fn analyze_callback(
             return None;
         }
 
-        let parameters = ::analysis::trampoline_parameters::analyze(env,
+        let parameters = crate::analysis::trampoline_parameters::analyze(env,
                                                                     &func.parameters,
                                                                     par.typ,
                                                                     &[]);
@@ -828,7 +828,7 @@ fn analyze_callback(
             *commented |= func.parameters.iter()
                                          .any(|p| {
                                              if p.closure.is_none() {
-                                                 ::analysis::trampolines::type_error(env, p).is_some()
+                                                 crate::analysis::trampolines::type_error(env, p).is_some()
                                              } else {
                                                  false
                                              }

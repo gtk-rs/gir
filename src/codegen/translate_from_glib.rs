@@ -1,10 +1,10 @@
-use analysis;
-use analysis::rust_type::rust_type;
-use analysis::conversion_type::ConversionType;
-use chunk::conversion_from_glib::Mode;
-use env::Env;
-use library;
-use traits::*;
+use crate::analysis;
+use crate::analysis::rust_type::rust_type;
+use crate::analysis::conversion_type::ConversionType;
+use crate::chunk::conversion_from_glib::Mode;
+use crate::env::Env;
+use crate::library;
+use crate::traits::*;
 
 pub trait TranslateFromGlib {
     fn translate_from_glib_as_function(
@@ -20,7 +20,7 @@ impl TranslateFromGlib for Mode {
         env: &Env,
         array_length: Option<&String>,
     ) -> (String, String) {
-        use analysis::conversion_type::ConversionType::*;
+        use crate::analysis::conversion_type::ConversionType::*;
         match ConversionType::of(env, self.typ) {
             Direct => (String::new(), String::new()),
             Scalar => ("from_glib(".into(), ")".into()),
@@ -81,7 +81,7 @@ impl TranslateFromGlib for analysis::return_value::Info {
 }
 
 fn from_glib_xxx(transfer: library::Transfer, array_length: Option<&String>) -> (String, String) {
-    use library::Transfer;
+    use crate::library::Transfer;
     match (transfer, array_length) {
         (Transfer::None, None) => ("from_glib_none(".into(), ")".into()),
         (Transfer::Full, None) => ("from_glib_full(".into(), ")".into()),

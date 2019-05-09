@@ -2,7 +2,7 @@ use super::ident::Ident;
 use super::parsable::Parse;
 use toml::Value;
 use super::error::TomlHelper;
-use version::Version;
+use crate::version::Version;
 
 #[derive(Clone, Debug)]
 pub struct Constant {

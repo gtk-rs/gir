@@ -1,21 +1,21 @@
 use std::borrow::Cow;
 use std::io::{Result, Write};
 
-use analysis;
-use analysis::namespaces::MAIN;
-use case::CaseExt;
-use config::gobjects::GObject;
-use env::Env;
-use file_saver::save_to_file;
-use library::*;
-use library::Type as LType;
-use nameutil;
+use crate::analysis;
+use crate::analysis::namespaces::MAIN;
+use crate::case::CaseExt;
+use crate::config::gobjects::GObject;
+use crate::env::Env;
+use crate::file_saver::save_to_file;
+use crate::library::*;
+use crate::library::Type as LType;
+use crate::nameutil;
 use regex::{Captures, Regex};
 use self::format::reformat_doc;
 use stripper_lib::Type as SType;
 use stripper_lib::{write_file_name, write_item_doc, TypeStruct};
-use traits::*;
-use version::Version;
+use crate::traits::*;
+use crate::version::Version;
 
 mod format;
 

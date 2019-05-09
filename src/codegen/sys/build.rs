@@ -1,10 +1,10 @@
 use std::io::{Result, Write};
 use std::path::Path;
 
-use env::Env;
-use file_saver::save_to_file;
+use crate::env::Env;
+use crate::file_saver::save_to_file;
 use regex::Regex;
-use codegen::general;
+use crate::codegen::general;
 
 pub fn generate(env: &Env) {
     info!(

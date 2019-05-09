@@ -1,13 +1,13 @@
-use analysis::bounds::Bounds;
-use analysis::imports::Imports;
-use analysis::ref_mode::RefMode;
-use analysis::rust_type::*;
-use codegen::function;
-use config;
-use env::Env;
-use library;
-use nameutil;
-use traits::*;
+use crate::analysis::bounds::Bounds;
+use crate::analysis::imports::Imports;
+use crate::analysis::ref_mode::RefMode;
+use crate::analysis::rust_type::*;
+use crate::codegen::function;
+use crate::config;
+use crate::env::Env;
+use crate::library;
+use crate::nameutil;
+use crate::traits::*;
 
 #[derive(Clone, Debug)]
 pub struct ChildProperty {

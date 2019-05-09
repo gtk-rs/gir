@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use std::path::*;
 use std::string::String;
 
-use case::*;
+use crate::case::*;
 
 static mut CRATE_NAME_OVERRIDES: Option<HashMap<String, String>> = None;
 

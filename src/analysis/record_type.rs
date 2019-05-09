@@ -1,4 +1,4 @@
-use library;
+use crate::library;
 
 pub enum RecordType {
     /// Boxed record that use g_boxed_copy, g_boxed_free.

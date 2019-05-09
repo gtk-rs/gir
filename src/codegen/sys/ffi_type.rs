@@ -1,10 +1,10 @@
-use analysis::c_type::{implements_c_type, rustify_pointers};
-use analysis::namespaces;
-use analysis::rust_type::{Result, TypeError};
-use env::Env;
-use library;
-use library::*;
-use traits::*;
+use crate::analysis::c_type::{implements_c_type, rustify_pointers};
+use crate::analysis::namespaces;
+use crate::analysis::rust_type::{Result, TypeError};
+use crate::env::Env;
+use crate::library;
+use crate::library::*;
+use crate::traits::*;
 
 // FIXME: This module needs redundant allocations audit
 // TODO: ffi_type computations should be cached
@@ -65,7 +65,7 @@ fn ffi_inner(env: &Env, tid: library::TypeId, mut inner: String) -> Result {
     let typ = env.library.type_(tid);
     let res = match *typ {
         Type::Fundamental(fund) => {
-            use library::Fundamental::*;
+            use crate::library::Fundamental::*;
             let inner = match fund {
                 None => "c_void",
                 Boolean => "gboolean",

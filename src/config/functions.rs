@@ -1,13 +1,13 @@
 use std::str::FromStr;
 
-use library::Nullable;
+use crate::library::Nullable;
 use super::error::TomlHelper;
 use super::ident::Ident;
 use super::parameter_matchable::Functionlike;
 use super::parsable::{Parsable, Parse};
 use super::string_type::StringType;
 use toml::Value;
-use version::Version;
+use crate::version::Version;
 
 #[derive(Clone, Debug)]
 pub struct Parameter {
@@ -235,14 +235,14 @@ pub type Functions = Vec<Function>;
 
 #[cfg(test)]
 mod tests {
-    use library::Nullable;
+    use crate::library::Nullable;
     use super::super::ident::Ident;
     use super::super::matchable::Matchable;
     use super::super::parsable::{Parsable, Parse};
     use super::super::parameter_matchable::ParameterMatchable;
     use super::*;
     use toml;
-    use version::Version;
+    use crate::version::Version;
 
     fn functions_toml(input: &str) -> toml::Value {
         let mut value: toml::value::Table = toml::from_str(&input).unwrap();

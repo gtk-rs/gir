@@ -1,15 +1,15 @@
-use analysis::imports::Imports;
-use analysis::namespaces;
-use codegen::general::{self, cfg_deprecated, derives, version_condition, version_condition_string};
-use config::gobjects::GObject;
-use env::Env;
-use file_saver;
-use library::*;
-use nameutil::bitfield_member_name;
+use crate::analysis::imports::Imports;
+use crate::analysis::namespaces;
+use crate::codegen::general::{self, cfg_deprecated, derives, version_condition, version_condition_string};
+use crate::config::gobjects::GObject;
+use crate::env::Env;
+use crate::file_saver;
+use crate::library::*;
+use crate::nameutil::bitfield_member_name;
 use std::io::prelude::*;
 use std::io::Result;
 use std::path::Path;
-use traits::*;
+use crate::traits::*;
 
 pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>) {
     let configs: Vec<&GObject> = env.config

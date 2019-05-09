@@ -1,12 +1,12 @@
 use std::collections::HashMap;
 
-use analysis::types::IsIncomplete;
-use library::*;
-use nameutil;
-use parser::is_empty_c_type;
-use traits::MaybeRefAs;
-use config::Config;
-use config::gobjects::GObject;
+use crate::analysis::types::IsIncomplete;
+use crate::library::*;
+use crate::nameutil;
+use crate::parser::is_empty_c_type;
+use crate::traits::MaybeRefAs;
+use crate::config::Config;
+use crate::config::gobjects::GObject;
 
 impl Namespace {
     fn unresolved(&self) -> Vec<&str> {
@@ -171,7 +171,7 @@ impl Library {
     }
 
     fn is_referenced_type(&self, type_: &Type) -> bool {
-        use library::Type::*;
+        use crate::library::Type::*;
         match *type_ {
             Alias(ref alias) => self.is_referenced_type(self.type_(alias.typ)),
             Record(..) | Union(..) | Class(..) | Interface(..) => true,

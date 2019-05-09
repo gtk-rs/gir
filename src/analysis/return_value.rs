@@ -1,11 +1,11 @@
-use analysis::ref_mode::RefMode;
-use analysis::rust_type::*;
-use analysis::imports::Imports;
-use analysis::namespaces;
-use analysis::override_string_type::override_string_type_return;
-use config;
-use env::Env;
-use library::{self, Nullable, TypeId};
+use crate::analysis::ref_mode::RefMode;
+use crate::analysis::rust_type::*;
+use crate::analysis::imports::Imports;
+use crate::analysis::namespaces;
+use crate::analysis::override_string_type::override_string_type_return;
+use crate::config;
+use crate::env::Env;
+use crate::library::{self, Nullable, TypeId};
 
 #[derive(Clone, Debug, Default)]
 pub struct Info {
@@ -119,8 +119,8 @@ pub fn analyze(
 }
 
 fn can_be_nullable_return(env: &Env, type_id: library::TypeId) -> bool {
-    use library::Type::*;
-    use library::Fundamental::*;
+    use crate::library::Type::*;
+    use crate::library::Fundamental::*;
     match *env.library.type_(type_id) {
         Fundamental(fund) => match fund {
             Pointer => true,

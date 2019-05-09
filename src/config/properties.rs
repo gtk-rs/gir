@@ -4,7 +4,7 @@ use super::error::TomlHelper;
 use super::ident::Ident;
 use super::parsable::Parse;
 use super::property_generate_flags::PropertyGenerateFlags;
-use version::Version;
+use crate::version::Version;
 
 #[derive(Clone, Debug)]
 pub struct Property {
@@ -72,7 +72,7 @@ mod tests {
     use super::super::parsable::{Parsable, Parse};
     use super::*;
     use toml;
-    use version::Version;
+    use crate::version::Version;
 
     fn properties_toml(input: &str) -> toml::Value {
         let mut value: toml::value::Table = toml::from_str(&input).unwrap();

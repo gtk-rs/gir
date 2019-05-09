@@ -6,14 +6,14 @@ use std::str::FromStr;
 use toml;
 
 
-use config::error::TomlHelper;
-use git::repo_hash;
-use library::{self, Library};
-use nameutil::set_crate_name_overrides;
+use crate::config::error::TomlHelper;
+use crate::git::repo_hash;
+use crate::library::{self, Library};
+use crate::nameutil::set_crate_name_overrides;
 use super::external_libraries::{read_external_libraries, ExternalLibrary};
 use super::WorkMode;
 use super::gobjects;
-use version::Version;
+use crate::version::Version;
 
 #[derive(Debug)]
 pub struct Config {

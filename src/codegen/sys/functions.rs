@@ -1,13 +1,13 @@
 use std::io::{Result, Write};
 
-use codegen::general::{cfg_condition, version_condition};
-use config::functions::Function;
-use config::gobjects::GObject;
-use env::Env;
-use library;
-use nameutil;
+use crate::codegen::general::{cfg_condition, version_condition};
+use crate::config::functions::Function;
+use crate::config::gobjects::GObject;
+use crate::env::Env;
+use crate::library;
+use crate::nameutil;
 use super::ffi_type::*;
-use traits::*;
+use crate::traits::*;
 
 //used as glib:get-type in GLib-2.0.gir
 const INTERN: &str = "intern";

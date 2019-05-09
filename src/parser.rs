@@ -2,9 +2,9 @@ use std::mem::replace;
 use std::path::{Path, PathBuf};
 use std::str::FromStr;
 
-use library::*;
-use version::Version;
-use xmlparser::{Element, XmlParser};
+use crate::library::*;
+use crate::version::Version;
+use crate::xmlparser::{Element, XmlParser};
 
 const EMPTY_CTYPE: &str = "/*EMPTY*/";
 

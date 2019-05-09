@@ -1,15 +1,15 @@
-use analysis::imports::Imports;
-use analysis::ref_mode::RefMode;
-use analysis::rust_type::*;
-use analysis::signals;
-use analysis::signatures::{Signature, Signatures};
-use analysis::trampolines;
-use config::{self, GObject, PropertyGenerateFlags};
-use env::Env;
-use library;
-use nameutil;
-use traits::*;
-use version::Version;
+use crate::analysis::imports::Imports;
+use crate::analysis::ref_mode::RefMode;
+use crate::analysis::rust_type::*;
+use crate::analysis::signals;
+use crate::analysis::signatures::{Signature, Signatures};
+use crate::analysis::trampolines;
+use crate::config::{self, GObject, PropertyGenerateFlags};
+use crate::env::Env;
+use crate::library;
+use crate::nameutil;
+use crate::traits::*;
+use crate::version::Version;
 
 #[derive(Debug)]
 pub struct Property {

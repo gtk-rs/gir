@@ -1,13 +1,13 @@
-use config;
-use config::parameter_matchable::ParameterMatchable;
-use env::Env;
-use library;
-use nameutil;
+use crate::config;
+use crate::config::parameter_matchable::ParameterMatchable;
+use crate::env::Env;
+use crate::library;
+use crate::nameutil;
 use super::conversion_type::ConversionType;
 use super::ref_mode::RefMode;
 
-use analysis::rust_type::rust_type;
-pub use config::signals::TransformationType;
+use crate::analysis::rust_type::rust_type;
+pub use crate::config::signals::TransformationType;
 
 #[derive(Clone, Debug)]
 pub struct RustParameter {

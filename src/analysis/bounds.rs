@@ -2,15 +2,15 @@ use std::collections::vec_deque::VecDeque;
 use std::slice::Iter;
 use std::vec::Vec;
 
-use analysis::function_parameters::{async_param_to_remove, CParameter};
-use analysis::functions::{find_function, find_index_to_ignore, finish_function_name};
-use analysis::imports::Imports;
-use analysis::out_parameters::use_function_return_for_result;
-use analysis::rust_type::{bounds_rust_type, rust_type, rust_type_with_scope};
-use consts::TYPE_PARAMETERS_START;
-use env::Env;
-use library::{Class, Concurrency, Function, Fundamental, Nullable, ParameterDirection, Type, TypeId};
-use traits::IntoString;
+use crate::analysis::function_parameters::{async_param_to_remove, CParameter};
+use crate::analysis::functions::{find_function, find_index_to_ignore, finish_function_name};
+use crate::analysis::imports::Imports;
+use crate::analysis::out_parameters::use_function_return_for_result;
+use crate::analysis::rust_type::{bounds_rust_type, rust_type, rust_type_with_scope};
+use crate::consts::TYPE_PARAMETERS_START;
+use crate::env::Env;
+use crate::library::{Class, Concurrency, Function, Fundamental, Nullable, ParameterDirection, Type, TypeId};
+use crate::traits::IntoString;
 
 #[derive(Clone, Eq, Debug, PartialEq)]
 pub enum BoundType {
@@ -76,11 +76,11 @@ impl Bounds {
         env: &Env,
         func: &Function,
         par: &CParameter,
-        async: bool,
+        r#async: bool,
         concurrency: Concurrency,
     ) -> (Option<String>, Option<CallbackInfo>) {
         let type_name = bounds_rust_type(env, par.typ);
-        let mut type_string = if async && async_param_to_remove(&par.name) {
+        let mut type_string = if r#async && async_param_to_remove(&par.name) {
             return (None, None);
         } else if type_name.is_err() {
             return (None, None)
@@ -93,7 +93,7 @@ impl Bounds {
         if !par.instance_parameter && par.direction != ParameterDirection::Out {
             if let Some(bound_type) = Bounds::type_for(env, par.typ, par.nullable) {
                 ret = Some(Bounds::get_to_glib_extra(&bound_type));
-                if async && par.name == "callback" {
+                if r#async && par.name == "callback" {
                     let func_name = func.c_identifier.as_ref().unwrap();
                     let finish_func_name = finish_function_name(func_name);
                     if let Some(function) = find_function(env, &finish_func_name) {
@@ -133,7 +133,7 @@ impl Bounds {
                 }
                 if (!need_is_into_check || !*par.nullable) &&
                    par.c_type != "GDestroyNotify" &&
-                   !self.add_parameter(&par.name, &type_string, bound_type, async) {
+                   !self.add_parameter(&par.name, &type_string, bound_type, r#async) {
                     panic!(
                         "Too many type constraints for {}",
                         func.c_identifier.as_ref().unwrap()
@@ -177,8 +177,8 @@ impl Bounds {
             _ => String::new(),
         }
     }
-    pub fn add_parameter(&mut self, name: &str, type_str: &str, bound_type: BoundType, async: bool) -> bool {
-        if async && name == "callback" {
+    pub fn add_parameter(&mut self, name: &str, type_str: &str, bound_type: BoundType, r#async: bool) -> bool {
+        if r#async && name == "callback" {
             if let Some(alias) = self.unused.pop_front() {
                 self.used.push(Bound {
                     bound_type: BoundType::NoWrapper,

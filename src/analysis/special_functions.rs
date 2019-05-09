@@ -1,9 +1,9 @@
 use std::collections::BTreeMap;
 use std::str::FromStr;
 
-use analysis::functions::Info as FuncInfo;
-use analysis::functions::Visibility;
-use analysis::imports::Imports;
+use crate::analysis::functions::Info as FuncInfo;
+use crate::analysis::functions::Visibility;
+use crate::analysis::imports::Imports;
 
 #[derive(Clone, Copy, Eq, Debug, Ord, PartialEq, PartialOrd)]
 pub enum Type {

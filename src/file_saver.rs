@@ -1,7 +1,7 @@
 use std::fs::{self, File};
 use std::io::{BufWriter, Result, Write};
 use std::path::Path;
-use writer::untabber::Untabber;
+use crate::writer::untabber::Untabber;
 
 pub fn save_to_file<P, F>(path: P, make_backup: bool, mut closure: F)
 where

@@ -2,19 +2,19 @@ use std::collections::HashMap;
 use std::fs;
 use std::io::{Result, Write};
 
-use codegen::general::{self, cfg_condition, version_condition};
-use config::ExternalLibrary;
-use config::constants;
-use env::Env;
-use file_saver::*;
-use library::*;
-use nameutil::*;
+use crate::codegen::general::{self, cfg_condition, version_condition};
+use crate::config::ExternalLibrary;
+use crate::config::constants;
+use crate::env::Env;
+use crate::file_saver::*;
+use crate::library::*;
+use crate::nameutil::*;
 use super::ffi_type::ffi_type;
 use super::fields;
 use super::functions;
 use super::statics;
-use traits::*;
-use version::Version;
+use crate::traits::*;
+use crate::version::Version;
 
 pub fn generate(env: &Env) {
     info!("Generating sys for {}", env.config.library_name);

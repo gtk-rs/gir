@@ -1,16 +1,16 @@
 use std::fmt::Display;
 use std::io::{Result, Write};
 
-use analysis;
-use analysis::general::StatusedTypeId;
-use analysis::imports::Imports;
-use analysis::namespaces;
-use config::Config;
-use config::derives::Derive;
-use env::Env;
-use gir_version::VERSION;
-use version::Version;
-use writer::primitives::tabs;
+use crate::analysis;
+use crate::analysis::general::StatusedTypeId;
+use crate::analysis::imports::Imports;
+use crate::analysis::namespaces;
+use crate::config::Config;
+use crate::config::derives::Derive;
+use crate::env::Env;
+use crate::gir_version::VERSION;
+use crate::version::Version;
+use crate::writer::primitives::tabs;
 
 pub fn start_comments(w: &mut Write, conf: &Config) -> Result<()> {
     if conf.single_version_file.is_some() {
@@ -144,7 +144,7 @@ pub fn define_object_type(
         let interfaces: Vec<String> = parents
             .iter()
             .filter(|p| {
-                use library::*;
+                use crate::library::*;
 
                 match *env.library.type_(p.type_id) {
                     Type::Interface { ..} if !p.status.ignored() => true,
@@ -157,7 +157,7 @@ pub fn define_object_type(
         let parents: Vec<String> = parents
             .iter()
             .filter(|p| {
-                use library::*;
+                use crate::library::*;
 
                 match *env.library.type_(p.type_id) {
                     Type::Class { ..} if !p.status.ignored() => true,

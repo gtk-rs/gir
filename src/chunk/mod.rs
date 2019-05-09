@@ -4,7 +4,7 @@ pub mod conversion_from_glib;
 pub mod parameter_ffi_call_out;
 
 pub use self::chunk::{chunks, Chunk, Param, TupleMode};
-use env::Env;
+use crate::env::Env;
 
 pub fn ffi_function_todo(env: &Env, name: &str) -> Chunk {
     let sys_crate_name = env.main_sys_crate_name();

@@ -3,11 +3,11 @@ use std::io::prelude::*;
 use toml::{self, Value};
 use toml::value::Table;
 
-use config::Config;
-use env::Env;
-use file_saver::save_to_file;
-use nameutil;
-use version::Version;
+use crate::config::Config;
+use crate::env::Env;
+use crate::file_saver::save_to_file;
+use crate::nameutil;
+use crate::version::Version;
 
 pub fn generate(env: &Env) -> String {
     info!(

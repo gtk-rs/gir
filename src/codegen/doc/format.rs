@@ -1,4 +1,4 @@
-use analysis::symbols;
+use crate::analysis::symbols;
 use regex::{Captures, Regex};
 
 const LANGUAGE_SEP_BEGIN: &str = "<!-- language=\"";

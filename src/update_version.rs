@@ -1,7 +1,7 @@
-use config::Config;
-use library::{self, Function, Parameter, Type, MAIN_NAMESPACE};
-use Library;
-use version::Version;
+use crate::config::Config;
+use crate::library::{self, Function, Parameter, Type, MAIN_NAMESPACE};
+use crate::Library;
+use crate::version::Version;
 
 pub fn apply_config(library: &mut Library, cfg: &Config) {
     fix_versions_by_config(library, cfg);
@@ -73,7 +73,7 @@ fn update_function_version(functions: &mut Vec<Function>, lib: *const Library) {
 }
 
 fn fix_versions_by_config(library: &mut Library, cfg: &Config) {
-    use library::Type::*;
+    use crate::library::Type::*;
     for obj in cfg.objects.values() {
         if obj.status.ignored() {
             continue;

@@ -1,17 +1,17 @@
-use analysis::conversion_type::ConversionType;
-use analysis::functions::{AsyncTrampoline, find_index_to_ignore};
-use analysis::function_parameters::CParameter as AnalysisCParameter;
-use analysis::function_parameters::{Transformation, TransformationType};
-use analysis::trampolines::Trampoline;
-use analysis::trampoline_parameters;
-use analysis::out_parameters::Mode;
-use analysis::return_value;
-use analysis::rust_type::rust_type;
-use analysis::safety_assertion_mode::SafetyAssertionMode;
-use chunk::{Chunk, Param, TupleMode};
-use chunk::parameter_ffi_call_out;
-use env::Env;
-use library::{self, ParameterDirection};
+use crate::analysis::conversion_type::ConversionType;
+use crate::analysis::functions::{AsyncTrampoline, find_index_to_ignore};
+use crate::analysis::function_parameters::CParameter as AnalysisCParameter;
+use crate::analysis::function_parameters::{Transformation, TransformationType};
+use crate::analysis::trampolines::Trampoline;
+use crate::analysis::trampoline_parameters;
+use crate::analysis::out_parameters::Mode;
+use crate::analysis::return_value;
+use crate::analysis::rust_type::rust_type;
+use crate::analysis::safety_assertion_mode::SafetyAssertionMode;
+use crate::chunk::{Chunk, Param, TupleMode};
+use crate::chunk::parameter_ffi_call_out;
+use crate::env::Env;
+use crate::library::{self, ParameterDirection};
 use std::collections::{BTreeMap, HashMap};
 use std::collections::hash_map::Entry;
 
@@ -481,7 +481,7 @@ impl Builder {
             }
         }
         if !is_destroy {
-            use writer::to_code::ToCode;
+            use crate::writer::to_code::ToCode;
             body.push(Chunk::Custom(format!("{}{}({}){}",
                                             extra_before_call,
                                             if !*trampoline.nullable {
@@ -507,7 +507,7 @@ impl Builder {
                 body.push(Chunk::Custom("};".to_owned()));
             }
             if trampoline.ret.c_type != "void" {
-                use codegen::trampoline_to_glib::TrampolineToGlib;
+                use crate::codegen::trampoline_to_glib::TrampolineToGlib;
 
                 body.push(Chunk::Custom(format!("res{}", trampoline.ret.trampoline_to_glib(env))));
             }
@@ -527,7 +527,7 @@ impl Builder {
                                       } else {
                                           Param {
                                               name: p.name.clone(),
-                                              typ: ::analysis::ffi_type::ffi_type(env, p.typ, &p.c_type).expect("failed to write c_type")
+                                              typ: crate::analysis::ffi_type::ffi_type(env, p.typ, &p.c_type).expect("failed to write c_type")
                                           }
                                       }
                                   })
@@ -538,7 +538,7 @@ impl Builder {
                 Some(if p.c_type == "gpointer" {
                     "glib_sys::gpointer".to_string()
                 } else {
-                    ::analysis::ffi_type::ffi_type(env, p.typ, &p.c_type).expect("failed to write c_type")
+                    crate::analysis::ffi_type::ffi_type(env, p.typ, &p.c_type).expect("failed to write c_type")
                 })
             } else {
                 None
@@ -906,7 +906,7 @@ impl Builder {
         }
     }
     fn apply_outs_mode(&self, call: Chunk, ret: Option<Chunk>) -> (Chunk, Option<Chunk>) {
-        use analysis::out_parameters::Mode::*;
+        use crate::analysis::out_parameters::Mode::*;
         match self.outs_mode {
             None => (call, ret),
             Normal => (call, ret),
@@ -1017,7 +1017,7 @@ fn c_type_mem_mode_lib(env: &Env, typ: library::TypeId, caller_allocates: bool,
         ConversionType::Pointer => if caller_allocates {
             UninitializedNamed(rust_type(env, typ).unwrap())
         } else {
-            use library::Type::*;
+            use crate::library::Type::*;
             let type_ = env.library.type_(typ);
             match *type_ {
                 Fundamental(fund)
@@ -1049,7 +1049,7 @@ fn type_mem_mode(env: &Env, parameter: &library::Parameter) -> Chunk {
                 name: rust_type(env, parameter.typ).unwrap(),
             }
         } else {
-            use library::Type::*;
+            use crate::library::Type::*;
             let type_ = env.library.type_(parameter.typ);
             match *type_ {
                 Fundamental(fund)
@@ -1088,7 +1088,7 @@ fn add_chunk_for_type(
         }
         library::Type::Alias(ref x) => add_chunk_for_type(env, x.typ, par, body, ty_name, nullable),
         ref x => {
-            let (begin, end) = ::codegen::trampoline_from_glib::from_glib_xxx(par.transfer, true);
+            let (begin, end) = crate::codegen::trampoline_from_glib::from_glib_xxx(par.transfer, true);
             body.push(Chunk::Custom(format!("let {1}{3} = {0}{1}{2};",
                                             begin,
                                             par.name,

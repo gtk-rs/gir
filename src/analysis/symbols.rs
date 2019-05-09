@@ -1,6 +1,6 @@
-use analysis::namespaces::{self, NsId};
-use case::CaseExt;
-use library::*;
+use crate::analysis::namespaces::{self, NsId};
+use crate::case::CaseExt;
+use crate::library::*;
 use std::collections::HashMap;
 
 #[derive(Clone, Debug, Default)]

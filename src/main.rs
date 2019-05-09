@@ -6,9 +6,9 @@ extern crate libgir as gir;
 use std::cell::RefCell;
 use std::str::FromStr;
 
-use gir::{Config, WorkMode};
+use crate::gir::{Config, WorkMode};
 
-use gir::Library;
+use crate::gir::Library;
 use hprof::Profiler;
 
 static USAGE: &'static str = "

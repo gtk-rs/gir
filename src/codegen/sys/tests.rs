@@ -2,11 +2,11 @@ use std::io::prelude::*;
 use std::io;
 use std::path::Path;
 
-use analysis::types::IsIncomplete;
-use codegen::general;
-use env::Env;
-use file_saver::save_to_file;
-use library::{Bitfield, Enumeration, Type, MAIN_NAMESPACE};
+use crate::analysis::types::IsIncomplete;
+use crate::codegen::general;
+use crate::env::Env;
+use crate::file_saver::save_to_file;
+use crate::library::{Bitfield, Enumeration, Type, MAIN_NAMESPACE};
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
 struct CType {

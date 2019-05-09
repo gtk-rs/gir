@@ -1,9 +1,9 @@
 use std::path::Path;
 
-use env::Env;
-use file_saver;
-use codegen::general;
-use codegen::function;
+use crate::env::Env;
+use crate::file_saver;
+use crate::codegen::general;
+use crate::codegen::function;
 
 pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>) {
     info!("Generate global functions");

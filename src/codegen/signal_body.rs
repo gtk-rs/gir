@@ -1,4 +1,4 @@
-use chunk::Chunk;
+use crate::chunk::Chunk;
 
 #[derive(Default)]
 pub struct Builder {

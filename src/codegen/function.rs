@@ -2,21 +2,21 @@ use std::fmt;
 use std::io::{Result, Write};
 use std::result::Result as StdResult;
 
-use library;
-use analysis;
-use analysis::bounds::{Bound, Bounds};
-use analysis::functions::Visibility;
-use analysis::namespaces;
-use chunk::{ffi_function_todo, Chunk};
-use env::Env;
+use crate::library;
+use crate::analysis;
+use crate::analysis::bounds::{Bound, Bounds};
+use crate::analysis::functions::Visibility;
+use crate::analysis::namespaces;
+use crate::chunk::{ffi_function_todo, Chunk};
+use crate::env::Env;
 use super::function_body_chunk;
 use super::general::{
     cfg_condition, cfg_deprecated, doc_hidden, not_version_condition, version_condition,
 };
 use super::parameter::ToParameter;
 use super::return_value::{out_parameters_as_return, ToReturnValue};
-use writer::primitives::tabs;
-use writer::ToCode;
+use crate::writer::primitives::tabs;
+use crate::writer::ToCode;
 
 pub fn generate(
     w: &mut Write,
@@ -217,17 +217,17 @@ pub fn declaration_futures(env: &Env, analysis: &analysis::functions::Info) -> S
     )
 }
 
-pub fn bound_to_string(bound: &Bound, async: bool) -> String {
-    use analysis::bounds::BoundType::*;
+pub fn bound_to_string(bound: &Bound, r#async: bool) -> String {
+    use crate::analysis::bounds::BoundType::*;
 
     match bound.bound_type {
         NoWrapper => {
             format!("{}: {}", bound.alias, bound.type_str)
         }
         IsA(Some(lifetime)) => {
-            format!("{}: IsA<{}> + {}", bound.alias, bound.type_str, if async { "Clone + 'static".into() } else { format!("'{}", lifetime) })
+            format!("{}: IsA<{}> + {}", bound.alias, bound.type_str, if r#async { "Clone + 'static".into() } else { format!("'{}", lifetime) })
         }
-        IsA(None) => format!("{}: IsA<{}>{}", bound.alias, bound.type_str, if async { " + Clone + 'static" } else { "" }),
+        IsA(None) => format!("{}: IsA<{}>{}", bound.alias, bound.type_str, if r#async { " + Clone + 'static" } else { "" }),
         // This case should normally never happened
         AsRef(Some(_/*lifetime*/)) => {
             unreachable!();
@@ -240,10 +240,10 @@ pub fn bound_to_string(bound: &Bound, async: bool) -> String {
 pub fn bounds(
     bounds: &Bounds,
     skip: &[char],
-    async: bool,
+    r#async: bool,
     filter_callback_modified: bool,
 ) -> (String, Vec<String>) {
-    use analysis::bounds::BoundType::*;
+    use crate::analysis::bounds::BoundType::*;
 
     if bounds.is_empty() {
         return (String::new(), Vec::new());
@@ -265,7 +265,7 @@ pub fn bounds(
         .chain(bounds.iter()
                      .filter(|bound| !skip.contains(&bound.alias) && (!filter_callback_modified ||
                                                                       !bound.callback_modified))
-                     .map(|b| bound_to_string(b, async)))
+                     .map(|b| bound_to_string(b, r#async)))
         .collect();
 
     if strs.is_empty() {
@@ -299,7 +299,7 @@ pub fn body_chunk(env: &Env, analysis: &analysis::functions::Info) -> Chunk {
         .transformations(&analysis.parameters.transformations)
         .outs_mode(analysis.outs.mode);
 
-    if analysis.async {
+    if analysis.r#async {
         if let Some(ref trampoline) = analysis.trampoline {
             builder.async_trampoline(trampoline);
         } else {
@@ -329,7 +329,7 @@ pub fn body_chunk(env: &Env, analysis: &analysis::functions::Info) -> Chunk {
 
 pub fn body_chunk_futures(env: &Env, analysis: &analysis::functions::Info) -> StdResult<String, fmt::Error> {
     use std::fmt::Write;
-    use analysis::ref_mode::RefMode;
+    use crate::analysis::ref_mode::RefMode;
 
     let async_future = analysis.async_future.as_ref().unwrap();
 

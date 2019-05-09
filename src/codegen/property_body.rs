@@ -1,5 +1,5 @@
-use analysis;
-use chunk::Chunk;
+use crate::analysis;
+use crate::chunk::Chunk;
 
 #[derive(Default)]
 pub struct Builder {

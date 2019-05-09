@@ -1,5 +1,5 @@
-use config::WorkMode;
-use library::*;
+use crate::config::WorkMode;
+use crate::library::*;
 
 impl Library {
     pub fn preprocessing(&mut self, work_mode: WorkMode) {

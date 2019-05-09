@@ -3,7 +3,7 @@ use toml::Value;
 use super::error::TomlHelper;
 use super::ident::Ident;
 use super::parsable::Parse;
-use version::Version;
+use crate::version::Version;
 
 #[derive(Clone, Debug)]
 pub struct Member {
@@ -71,7 +71,7 @@ mod tests {
     use super::super::parsable::Parse;
     use super::*;
     use toml;
-    use version::Version;
+    use crate::version::Version;
 
     fn toml(input: &str) -> toml::Value {
         let value = toml::from_str(&input);

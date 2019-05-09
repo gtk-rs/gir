@@ -1,6 +1,6 @@
-use analysis::function_parameters::TransformationType;
-use analysis::ref_mode::RefMode;
-use library::Transfer;
+use crate::analysis::function_parameters::TransformationType;
+use crate::analysis::ref_mode::RefMode;
+use crate::library::Transfer;
 
 pub trait TranslateToGlib {
     fn translate_to_glib(&self) -> String;

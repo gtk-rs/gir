@@ -2,10 +2,10 @@ use std::collections::BTreeMap;
 use std::str::FromStr;
 use toml::Value;
 
-use library;
-use library::{Library, TypeId, MAIN_NAMESPACE};
-use config::error::TomlHelper;
-use config::parsable::{Parsable, Parse};
+use crate::library;
+use crate::library::{Library, TypeId, MAIN_NAMESPACE};
+use crate::config::error::TomlHelper;
+use crate::config::parsable::{Parsable, Parse};
 use super::child_properties::ChildProperties;
 use super::derives::Derives;
 use super::functions::Functions;
@@ -13,8 +13,8 @@ use super::constants::Constants;
 use super::members::Members;
 use super::properties::Properties;
 use super::signals::{Signal, Signals};
-use version::Version;
-use analysis::{ref_mode, conversion_type};
+use crate::version::Version;
+use crate::analysis::{ref_mode, conversion_type};
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum GStatus {
@@ -134,7 +134,7 @@ pub fn parse_toml(
 }
 
 fn ref_mode_from_str(ref_mode: &str) -> Option<ref_mode::RefMode> {
-    use analysis::ref_mode::RefMode::*;
+    use crate::analysis::ref_mode::RefMode::*;
 
     match ref_mode {
         "none" => Some(None),
@@ -147,7 +147,7 @@ fn ref_mode_from_str(ref_mode: &str) -> Option<ref_mode::RefMode> {
 }
 
 fn conversion_type_from_str(conversion_type: &str) -> Option<conversion_type::ConversionType> {
-    use analysis::conversion_type::ConversionType::*;
+    use crate::analysis::conversion_type::ConversionType::*;
 
     match conversion_type {
         "direct" => Some(Direct),

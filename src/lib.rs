@@ -17,7 +17,7 @@ extern crate xml;
 /// Log warning only if type in generated library
 macro_rules! warn_main {
     ($tid: expr, $target:expr, $($arg:tt)*) => (
-        if $tid.ns_id == ::library::MAIN_NAMESPACE {
+        if $tid.ns_id == crate::library::MAIN_NAMESPACE {
             warn!($target, $($arg)*);
         }
     );
@@ -48,11 +48,11 @@ mod visitors;
 mod writer;
 mod xmlparser;
 
-pub use analysis::class_hierarchy::run as class_hierarchy_run;
-pub use analysis::namespaces::run as namespaces_run;
-pub use analysis::run as analysis_run;
-pub use analysis::symbols::run as symbols_run;
-pub use codegen::generate as codegen_generate;
-pub use config::{Config, WorkMode};
-pub use env::Env;
-pub use library::Library;
+pub use crate::analysis::class_hierarchy::run as class_hierarchy_run;
+pub use crate::analysis::namespaces::run as namespaces_run;
+pub use crate::analysis::run as analysis_run;
+pub use crate::analysis::symbols::run as symbols_run;
+pub use crate::codegen::generate as codegen_generate;
+pub use crate::config::{Config, WorkMode};
+pub use crate::env::Env;
+pub use crate::library::Library;

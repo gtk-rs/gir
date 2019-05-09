@@ -1,14 +1,14 @@
 use std::str::FromStr;
 use toml::Value;
 
-use library;
-use library::Nullable;
+use crate::library;
+use crate::library::Nullable;
 use super::error::TomlHelper;
 use super::functions::Return;
 use super::ident::Ident;
 use super::parameter_matchable::Functionlike;
 use super::parsable::{Parsable, Parse};
-use version::Version;
+use crate::version::Version;
 
 #[derive(Clone, Copy, Debug)]
 pub enum TransformationType {

@@ -1,19 +1,19 @@
 use std::io::{Result, Write};
 
-use env::Env;
-use library;
-use analysis::bounds::{BoundType, Bounds};
-use analysis::ffi_type::ffi_type;
-use analysis::ref_mode::RefMode;
-use analysis::rust_type::parameter_rust_type;
-use analysis::trampoline_parameters::*;
-use analysis::trampolines::Trampoline;
+use crate::env::Env;
+use crate::library;
+use crate::analysis::bounds::{BoundType, Bounds};
+use crate::analysis::ffi_type::ffi_type;
+use crate::analysis::ref_mode::RefMode;
+use crate::analysis::rust_type::parameter_rust_type;
+use crate::analysis::trampoline_parameters::*;
+use crate::analysis::trampolines::Trampoline;
 use super::general::version_condition;
 use super::return_value::ToReturnValue;
 use super::trampoline_from_glib::TrampolineFromGlib;
 use super::trampoline_to_glib::TrampolineToGlib;
-use traits::IntoString;
-use consts::TYPE_PARAMETERS_START;
+use crate::traits::IntoString;
+use crate::consts::TYPE_PARAMETERS_START;
 
 pub fn generate(
     w: &mut Write,
@@ -205,7 +205,7 @@ fn trampoline_returns(env: &Env, analysis: &Trampoline) -> String {
 }
 
 fn transformation_vars(w: &mut Write, analysis: &Trampoline) -> Result<()> {
-    use analysis::trampoline_parameters::TransformationType::*;
+    use crate::analysis::trampoline_parameters::TransformationType::*;
     for transform in &analysis.parameters.transformations {
         match transform.transformation {
             None => (),

@@ -1,4 +1,4 @@
-use library::*;
+use crate::library::*;
 
 pub trait FunctionsMutVisitor {
     //TODO: remove interrupt functionality if it is not used

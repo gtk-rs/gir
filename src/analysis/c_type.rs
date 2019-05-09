@@ -1,5 +1,5 @@
-use env::Env;
-use library::TypeId;
+use crate::env::Env;
+use crate::library::TypeId;
 
 pub fn rustify_pointers(c_type: &str) -> (String, String) {
     let mut input = c_type.trim();

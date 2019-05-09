@@ -1,14 +1,14 @@
-use env::Env;
+use crate::env::Env;
 use std::cmp::{Ord, Ordering, PartialOrd};
 use std::collections::{BTreeMap, BTreeSet, HashMap};
 use std::collections::HashSet;
 use std::iter::Iterator;
 use std::ops::{Deref, DerefMut};
 use std::str::FromStr;
-use analysis::conversion_type::ConversionType;
-use nameutil::split_namespace_name;
-use traits::*;
-use version::Version;
+use crate::analysis::conversion_type::ConversionType;
+use crate::nameutil::split_namespace_name;
+use crate::traits::*;
+use crate::version::Version;
 use std::fmt;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]

@@ -1,8 +1,8 @@
 use std::path::Path;
 
-use env::Env;
-use file_saver::*;
-use nameutil::*;
+use crate::env::Env;
+use crate::file_saver::*;
+use crate::nameutil::*;
 
 pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>) {
     info!("Generate records");

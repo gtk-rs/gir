@@ -1,10 +1,10 @@
 //! Adds `glib::Priority` as custom type
 //! and attempts replace priority parameters with it in async functions
 
-use analysis::conversion_type::ConversionType;
-use config::WorkMode;
-use library::*;
-use visitors::FunctionsMutVisitor;
+use crate::analysis::conversion_type::ConversionType;
+use crate::config::WorkMode;
+use crate::library::*;
+use crate::visitors::FunctionsMutVisitor;
 
 impl Library {
     pub fn add_glib_priority(&mut self, work_mode: WorkMode) {

@@ -1,11 +1,11 @@
-use analysis::rust_type::*;
-use analysis::types::*;
-use codegen::sys::ffi_type::ffi_type;
-use codegen::sys::functions::function_signature;
-use env::Env;
-use library::*;
-use traits::IntoString;
-use traits::MaybeRefAs;
+use crate::analysis::rust_type::*;
+use crate::analysis::types::*;
+use crate::codegen::sys::ffi_type::ffi_type;
+use crate::codegen::sys::functions::function_signature;
+use crate::env::Env;
+use crate::library::*;
+use crate::traits::IntoString;
+use crate::traits::MaybeRefAs;
 
 pub struct Fields {
     /// Name of union, class, or a record that contains the fields.

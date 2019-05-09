@@ -1,9 +1,9 @@
 use std::vec::Vec;
 
-use chunk::{Chunk, Param, TupleMode};
-use codegen::translate_from_glib::TranslateFromGlib;
-use codegen::translate_to_glib::TranslateToGlib;
-use env::Env;
+use crate::chunk::{Chunk, Param, TupleMode};
+use crate::codegen::translate_from_glib::TranslateFromGlib;
+use crate::codegen::translate_to_glib::TranslateToGlib;
+use crate::env::Env;
 use super::primitives::*;
 
 pub trait ToCode {
@@ -12,7 +12,7 @@ pub trait ToCode {
 
 impl ToCode for Chunk {
     fn to_code(&self, env: &Env) -> Vec<String> {
-        use chunk::Chunk::*;
+        use crate::chunk::Chunk::*;
         match *self {
             Comment(ref chs) => comment_block(&chs.to_code(env)),
             Chunks(ref chs) => chs.to_code(env),

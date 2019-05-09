@@ -1,15 +1,15 @@
 use std::ops::Deref;
 
-use config::gobjects::GObject;
-use env::Env;
-use library;
-use nameutil::*;
+use crate::config::gobjects::GObject;
+use crate::env::Env;
+use crate::library;
+use crate::nameutil::*;
 use super::*;
 use super::child_properties::ChildProperties;
 use super::imports::Imports;
 use super::info_base::InfoBase;
 use super::signatures::Signatures;
-use traits::*;
+use crate::traits::*;
 
 #[derive(Debug, Default)]
 pub struct Info {

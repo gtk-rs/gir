@@ -1,4 +1,4 @@
-use library::*;
+use crate::library::*;
 use std::collections::{HashMap, HashSet};
 use std::iter::{self, Iterator};
 

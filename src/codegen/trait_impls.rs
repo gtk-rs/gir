@@ -1,6 +1,6 @@
 use std::io::{Result, Write};
-use analysis::functions::Info;
-use analysis::special_functions::{Infos, Type};
+use crate::analysis::functions::Info;
+use crate::analysis::special_functions::{Infos, Type};
 
 pub fn generate(
     w: &mut Write,
@@ -94,7 +94,7 @@ fn generate_display(
     func: &Info,
     trait_name: Option<&str>,
 ) -> Result<()> {
-    use analysis::out_parameters::Mode;
+    use crate::analysis::out_parameters::Mode;
 
     let call = generate_call(&func.name, &[], trait_name);
     let body = if let Mode::Throws(_) = func.outs.mode {

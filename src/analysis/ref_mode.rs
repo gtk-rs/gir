@@ -1,8 +1,8 @@
-use library;
-use env;
+use crate::library;
+use crate::env;
 use super::c_type::is_mut_ptr;
 use super::record_type::RecordType;
-use config::gobjects::GObject;
+use crate::config::gobjects::GObject;
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
 pub enum RefMode {
@@ -35,7 +35,7 @@ impl RefMode {
             }
         }
 
-        use library::Type::*;
+        use crate::library::Type::*;
         match *library.type_(tid) {
             Fundamental(library::Fundamental::Utf8) |
             Fundamental(library::Fundamental::Filename) |

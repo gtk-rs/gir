@@ -1,4 +1,4 @@
-use library::*;
+use crate::library::*;
 
 /// Array size limit above which Rust no longer automatically derives traits.
 const RUST_DERIVE_ARRAY_SIZE_LIMIT: u16 = 32;

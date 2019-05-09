@@ -1,10 +1,10 @@
-use env::Env;
-use analysis::bounds::{BoundType, Bounds};
-use analysis::conversion_type::ConversionType;
-use analysis::function_parameters::CParameter;
-use analysis::ref_mode::RefMode;
-use analysis::rust_type::parameter_rust_type;
-use traits::*;
+use crate::env::Env;
+use crate::analysis::bounds::{BoundType, Bounds};
+use crate::analysis::conversion_type::ConversionType;
+use crate::analysis::function_parameters::CParameter;
+use crate::analysis::ref_mode::RefMode;
+use crate::analysis::rust_type::parameter_rust_type;
+use crate::traits::*;
 
 pub trait ToParameter {
     fn to_parameter(&self, env: &Env, bounds: &Bounds) -> String;

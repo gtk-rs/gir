@@ -1,11 +1,11 @@
-use config::gobjects::GObject;
-use env::Env;
-use library;
+use crate::config::gobjects::GObject;
+use crate::env::Env;
+use crate::library;
 use std::cmp;
 use super::*;
 use super::functions::Visibility;
 use super::imports::Imports;
-use version::Version;
+use crate::version::Version;
 
 #[derive(Debug, Default)]
 pub struct InfoBase {

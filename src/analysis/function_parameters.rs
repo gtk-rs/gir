@@ -1,16 +1,16 @@
 use std::collections::HashMap;
 
-use config;
-use config::parameter_matchable::ParameterMatchable;
-use env::Env;
-use library::{self, TypeId, ParameterScope};
-use nameutil;
+use crate::config;
+use crate::config::parameter_matchable::ParameterMatchable;
+use crate::env::Env;
+use crate::library::{self, TypeId, ParameterScope};
+use crate::nameutil;
 use super::conversion_type::ConversionType;
 use super::out_parameters::can_as_return;
 use super::override_string_type::override_string_type_parameter;
 use super::rust_type::rust_type;
 use super::ref_mode::RefMode;
-use traits::IntoString;
+use crate::traits::IntoString;
 
 //TODO: remove unused fields
 #[derive(Clone, Debug)]
@@ -378,11 +378,11 @@ fn is_length(par: &library::Parameter) -> bool {
 }
 
 fn has_length(env: &Env, typ: TypeId) -> bool {
-    use library::Type;
+    use crate::library::Type;
     let typ = env.library.type_(typ);
     match *typ {
         Type::Fundamental(fund) => {
-            use library::Fundamental::*;
+            use crate::library::Fundamental::*;
             match fund {
                 Utf8 => true,
                 Filename => true,

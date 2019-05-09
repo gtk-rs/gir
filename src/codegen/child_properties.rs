@@ -1,16 +1,16 @@
 use std::io::{Result, Write};
 
-use analysis::child_properties::ChildProperty;
-use analysis::rust_type::{parameter_rust_type, rust_type};
-use chunk::Chunk;
-use env::Env;
-use library;
-use writer::primitives::tabs;
-use nameutil;
+use crate::analysis::child_properties::ChildProperty;
+use crate::analysis::rust_type::{parameter_rust_type, rust_type};
+use crate::chunk::Chunk;
+use crate::env::Env;
+use crate::library;
+use crate::writer::primitives::tabs;
+use crate::nameutil;
 use super::general::doc_hidden;
 use super::property_body;
-use traits::IntoString;
-use writer::ToCode;
+use crate::traits::IntoString;
+use crate::writer::ToCode;
 
 pub fn generate(
     w: &mut Write,

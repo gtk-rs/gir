@@ -1,7 +1,7 @@
 use std::vec::Vec;
 
-use analysis::function_parameters::TransformationType;
-use analysis::return_value;
+use crate::analysis::function_parameters::TransformationType;
+use crate::analysis::return_value;
 use super::conversion_from_glib;
 use super::parameter_ffi_call_out;
 

@@ -1,12 +1,12 @@
 use std::io::{Result, Write};
 
-use analysis::rust_type::rust_type;
-use codegen::general::{version_condition, version_condition_string};
-use case::CaseExt;
-use analysis;
-use library;
-use env::Env;
-use nameutil;
+use crate::analysis::rust_type::rust_type;
+use crate::codegen::general::{version_condition, version_condition_string};
+use crate::case::CaseExt;
+use crate::analysis;
+use crate::library;
+use crate::env::Env;
+use crate::nameutil;
 use super::child_properties;
 use super::function;
 use super::general;

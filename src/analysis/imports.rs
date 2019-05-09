@@ -1,9 +1,9 @@
 use std::collections::btree_map::{BTreeMap, Iter};
 
-use library::Library;
-use nameutil::crate_name;
+use crate::library::Library;
+use crate::nameutil::crate_name;
 use super::namespaces;
-use version::Version;
+use crate::version::Version;
 
 /// Provides assistance in generating use declarations.
 ///

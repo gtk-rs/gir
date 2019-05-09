@@ -1,8 +1,8 @@
-use analysis::c_type::{implements_c_type, rustify_pointers};
-use analysis::rust_type::{Result, TypeError};
-use env::Env;
-use library::*;
-use traits::*;
+use crate::analysis::c_type::{implements_c_type, rustify_pointers};
+use crate::analysis::rust_type::{Result, TypeError};
+use crate::env::Env;
+use crate::library::*;
+use crate::traits::*;
 
 pub fn used_ffi_type(env: &Env, type_id: TypeId, c_type: &str) -> Option<String> {
     let (_ptr, inner) = rustify_pointers(c_type);
@@ -63,7 +63,7 @@ fn ffi_inner(env: &Env, tid: TypeId, inner: &str) -> Result {
     let typ = env.library.type_(tid);
     match *typ {
         Type::Fundamental(fund) => {
-            use library::Fundamental::*;
+            use crate::library::Fundamental::*;
             let inner = match fund {
                 None => "libc::c_void",
                 Boolean => return Ok("glib_sys::gboolean".into()),
