@@ -26,23 +26,23 @@ pub fn generate(env: &Env) {
 }
 
 fn generate_lib(w: &mut Write, env: &Env) -> Result<()> {
-    try!(general::start_comments(w, &env.config));
-    try!(statics::begin(w));
+    general::start_comments(w, &env.config)?;
+    statics::begin(w)?;
 
-    try!(generate_extern_crates(w, env));
-    try!(include_custom_modules(w, env));
-    try!(statics::after_extern_crates(w));
+    generate_extern_crates(w, env)?;
+    include_custom_modules(w, env)?;
+    statics::after_extern_crates(w)?;
 
     if env.config.library_name != "GLib" {
-        try!(statics::use_glib(w));
+        statics::use_glib(w)?;
     }
     match &*env.config.library_name {
-        "GLib" => try!(statics::only_for_glib(w)),
-        "GObject" => try!(statics::only_for_gobject(w)),
-        "Gtk" => try!(statics::only_for_gtk(w)),
+        "GLib" => statics::only_for_glib(w)?,
+        "GObject" => statics::only_for_gobject(w)?,
+        "Gtk" => statics::only_for_gtk(w)?,
         _ => (),
     }
-    try!(writeln!(w));
+    writeln!(w)?;
 
     let ns = env.library.namespace(MAIN_NAMESPACE);
     let records = prepare(ns);
@@ -52,33 +52,33 @@ fn generate_lib(w: &mut Write, env: &Env) -> Result<()> {
     let enums = prepare(ns);
     let unions = prepare(ns);
 
-    try!(generate_aliases(w, env, &prepare(ns)));
-    try!(generate_enums(w, env, &enums));
-    try!(generate_constants(w, env, &ns.constants));
-    try!(generate_bitfields(w, env, &bitfields));
-    try!(generate_unions(w, env, &unions));
-    try!(functions::generate_callbacks(w, env, &prepare(ns)));
-    try!(generate_records(w, env, &records));
-    try!(generate_classes_structs(w, env, &classes));
-    try!(generate_interfaces_structs(w, env, &interfaces));
+    generate_aliases(w, env, &prepare(ns))?;
+    generate_enums(w, env, &enums)?;
+    generate_constants(w, env, &ns.constants)?;
+    generate_bitfields(w, env, &bitfields)?;
+    generate_unions(w, env, &unions)?;
+    functions::generate_callbacks(w, env, &prepare(ns))?;
+    generate_records(w, env, &records)?;
+    generate_classes_structs(w, env, &classes)?;
+    generate_interfaces_structs(w, env, &interfaces)?;
 
-    try!(writeln!(w, "extern \"C\" {{"));
-    try!(functions::generate_enums_funcs(w, env, &enums));
-    try!(functions::generate_bitfields_funcs(w, env, &bitfields));
-    try!(functions::generate_unions_funcs(w, env, &unions));
-    try!(functions::generate_records_funcs(w, env, &records));
-    try!(functions::generate_classes_funcs(w, env, &classes));
-    try!(functions::generate_interfaces_funcs(w, env, &interfaces));
-    try!(functions::generate_other_funcs(w, env, &ns.functions));
+    writeln!(w, "extern \"C\" {{")?;
+    functions::generate_enums_funcs(w, env, &enums)?;
+    functions::generate_bitfields_funcs(w, env, &bitfields)?;
+    functions::generate_unions_funcs(w, env, &unions)?;
+    functions::generate_records_funcs(w, env, &records)?;
+    functions::generate_classes_funcs(w, env, &classes)?;
+    functions::generate_interfaces_funcs(w, env, &interfaces)?;
+    functions::generate_other_funcs(w, env, &ns.functions)?;
 
-    try!(writeln!(w, "\n}}"));
+    writeln!(w, "\n}}")?;
 
     Ok(())
 }
 
 fn generate_extern_crates(w: &mut Write, env: &Env) -> Result<()> {
     for library in &env.config.external_libraries {
-        try!(w.write_all(get_extern_crate_string(library).as_bytes()));
+        w.write_all(get_extern_crate_string(library).as_bytes())?;
     }
 
     Ok(())
@@ -93,15 +93,15 @@ fn get_extern_crate_string(library: &ExternalLibrary) -> String {
 }
 
 fn include_custom_modules(w: &mut Write, env: &Env) -> Result<()> {
-    let modules = try!(find_modules(env));
+    let modules = find_modules(env)?;
     if !modules.is_empty() {
-        try!(writeln!(w));
+        writeln!(w)?;
         for module in &modules {
-            try!(writeln!(w, "mod {};", module));
+            writeln!(w, "mod {};", module)?;
         }
-        try!(writeln!(w));
+        writeln!(w)?;
         for module in &modules {
-            try!(writeln!(w, "pub use {}::*;", module));
+            writeln!(w, "pub use {}::*;", module)?;
         }
     }
 
@@ -110,8 +110,8 @@ fn include_custom_modules(w: &mut Write, env: &Env) -> Result<()> {
 
 fn find_modules(env: &Env) -> Result<Vec<String>> {
     let mut vec = Vec::<String>::new();
-    for entry in try!(fs::read_dir(&env.config.auto_path)) {
-        let path = try!(entry).path();
+    for entry in fs::read_dir(&env.config.auto_path)? {
+        let path = entry?.path();
         let ext = match path.extension() {
             Some(ext) => ext,
             None => continue,
@@ -150,7 +150,7 @@ where
 
 fn generate_aliases(w: &mut Write, env: &Env, items: &[&Alias]) -> Result<()> {
     if !items.is_empty() {
-        try!(writeln!(w, "// Aliases"));
+        writeln!(w, "// Aliases")?;
     }
     for item in items {
         let full_name = format!("{}.{}", env.namespaces.main().name, item.name);
@@ -161,16 +161,16 @@ fn generate_aliases(w: &mut Write, env: &Env, items: &[&Alias]) -> Result<()> {
             Ok(x) => ("", x),
             x @ Err(..) => ("//", x.into_string()),
         };
-        try!(writeln!(
+        writeln!(
             w,
             "{}pub type {} = {};",
             comment,
             item.c_identifier,
             c_type
-        ));
+        )?;
     }
     if !items.is_empty() {
-        try!(writeln!(w));
+        writeln!(w)?;
     }
 
     Ok(())
@@ -178,7 +178,7 @@ fn generate_aliases(w: &mut Write, env: &Env, items: &[&Alias]) -> Result<()> {
 
 fn generate_bitfields(w: &mut Write, env: &Env, items: &[&Bitfield]) -> Result<()> {
     if !items.is_empty() {
-        try!(writeln!(w, "// Flags"));
+        writeln!(w, "// Flags")?;
     }
     for item in items {
         let full_name = format!("{}.{}", env.namespaces.main().name, item.name);
@@ -186,7 +186,7 @@ fn generate_bitfields(w: &mut Write, env: &Env, items: &[&Bitfield]) -> Result<(
         if let Some(false) = config.map(|c| c.status.need_generate()) {
             continue;
         }
-        try!(writeln!(w, "pub type {} = c_uint;", item.c_type));
+        writeln!(w, "pub type {} = c_uint;", item.c_type)?;
         for member in &item.members {
             let member_config = config
                 .as_ref()
@@ -196,14 +196,14 @@ fn generate_bitfields(w: &mut Write, env: &Env, items: &[&Bitfield]) -> Result<(
 
             let val: i64 = member.value.parse().unwrap();
 
-            try!(version_condition(w, env, version, false, 0));
-            try!(writeln!(
+            version_condition(w, env, version, false, 0)?;
+            writeln!(
                 w,
                 "pub const {}: {} = {};",
                 member.c_identifier, item.c_type, val as u32,
-            ));
+            )?;
         }
-        try!(writeln!(w));
+        writeln!(w)?;
     }
 
     Ok(())
@@ -224,7 +224,7 @@ fn generate_constant_cfg_configure(
 
 fn generate_constants(w: &mut Write, env: &Env, constants: &[Constant]) -> Result<()> {
     if !constants.is_empty() {
-        try!(writeln!(w, "// Constants"));
+        writeln!(w, "// Constants")?;
     }
     for constant in constants {
         let full_name = format!("{}.{}", env.namespaces.main().name, constant.name);
@@ -268,14 +268,14 @@ fn generate_constants(w: &mut Write, env: &Env, constants: &[Constant]) -> Resul
             generate_constant_cfg_configure (w, &configured_constants, !comment.is_empty())?;
         }
 
-        try!(writeln!(
+        writeln!(
             w,
             "{}pub const {}: {} = {};",
             comment, constant.c_identifier, type_, value
-        ));
+        )?;
     }
     if !constants.is_empty() {
-        try!(writeln!(w));
+        writeln!(w)?;
     }
 
     Ok(())
@@ -283,7 +283,7 @@ fn generate_constants(w: &mut Write, env: &Env, constants: &[Constant]) -> Resul
 
 fn generate_enums(w: &mut Write, env: &Env, items: &[&Enumeration]) -> Result<()> {
     if !items.is_empty() {
-        try!(writeln!(w, "// Enums"));
+        writeln!(w, "// Enums")?;
     }
     for item in items {
         let full_name = format!("{}.{}", env.namespaces.main().name, item.name);
@@ -292,7 +292,7 @@ fn generate_enums(w: &mut Write, env: &Env, items: &[&Enumeration]) -> Result<()
             continue;
         }
         let mut vals: HashMap<String, (String, Option<Version>)> = HashMap::new();
-        try!(writeln!(w, "pub type {} = c_int;", item.c_type));
+        writeln!(w, "pub type {} = c_int;", item.c_type)?;
         for member in &item.members {
             let member_config = config
                 .as_ref()
@@ -305,17 +305,17 @@ fn generate_enums(w: &mut Write, env: &Env, items: &[&Enumeration]) -> Result<()
                 continue;
             }
 
-            try!(version_condition(w, env, version, false, 0));
-            try!(writeln!(
+            version_condition(w, env, version, false, 0)?;
+            writeln!(
                 w,
                 "pub const {}: {} = {};",
                 member.c_identifier,
                 item.c_type,
                 member.value,
-            ));
+            )?;
             vals.insert(member.value.clone(), (member.name.clone(), version));
         }
-        try!(writeln!(w));
+        writeln!(w)?;
     }
 
     Ok(())
@@ -323,7 +323,7 @@ fn generate_enums(w: &mut Write, env: &Env, items: &[&Enumeration]) -> Result<()
 
 fn generate_unions(w: &mut Write, env: &Env, unions: &[&Union]) -> Result<()> {
     if !unions.is_empty() {
-        try!(writeln!(w, "// Unions"));
+        writeln!(w, "// Unions")?;
     }
     for union in unions {
         if union.c_type.is_none() {
@@ -338,7 +338,7 @@ fn generate_unions(w: &mut Write, env: &Env, unions: &[&Union]) -> Result<()> {
 
         let align = config.and_then(|c| c.align);
         let fields = fields::from_union(env, union);
-        try!(generate_from_fields(w, &fields, align));
+        generate_from_fields(w, &fields, align)?;
     }
     Ok(())
 }
@@ -357,7 +357,7 @@ fn generate_debug_impl(w: &mut Write, name: &str, impl_content: &str) -> Result<
 
 fn generate_classes_structs(w: &mut Write, env: &Env, classes: &[&Class]) -> Result<()> {
     if !classes.is_empty() {
-        try!(writeln!(w, "// Classes"));
+        writeln!(w, "// Classes")?;
     }
     for class in classes {
         let full_name = format!("{}.{}", env.namespaces.main().name, class.name);
@@ -369,34 +369,34 @@ fn generate_classes_structs(w: &mut Write, env: &Env, classes: &[&Class]) -> Res
 
         let align = config.and_then(|c| c.align);
         let fields = fields::from_class(env, class);
-        try!(generate_from_fields(w, &fields, align));
+        generate_from_fields(w, &fields, align)?;
     }
     Ok(())
 }
 
 fn generate_interfaces_structs(w: &mut Write, env: &Env, interfaces: &[&Interface]) -> Result<()> {
     if !interfaces.is_empty() {
-        try!(writeln!(w, "// Interfaces"));
+        writeln!(w, "// Interfaces")?;
     }
     for interface in interfaces {
         let full_name = format!("{}.{}", env.namespaces.main().name, interface.name);
         if !env.type_status_sys(&full_name).need_generate() {
             continue;
         }
-        try!(writeln!(
+        writeln!(
             w,
             "#[repr(C)]\npub struct {}(c_void);\n",
             interface.c_type
-        ));
-        try!(generate_debug_impl(
+        )?;
+        generate_debug_impl(
             w,
             &interface.c_type,
             &format!("write!(f, \"{name} @ {{:?}}\", self as *const _)",
                      name=interface.c_type)
-        ));
+        )?;
     }
     if !interfaces.is_empty() {
-        try!(writeln!(w));
+        writeln!(w)?;
     }
 
     Ok(())
@@ -404,7 +404,7 @@ fn generate_interfaces_structs(w: &mut Write, env: &Env, interfaces: &[&Interfac
 
 fn generate_records(w: &mut Write, env: &Env, records: &[&Record]) -> Result<()> {
     if !records.is_empty() {
-        try!(writeln!(w, "// Records"));
+        writeln!(w, "// Records")?;
     }
     for record in records {
         let full_name = format!("{}.{}", env.namespaces.main().name, record.name);
@@ -421,13 +421,13 @@ fn generate_records(w: &mut Write, env: &Env, records: &[&Record]) -> Result<()>
             // 4. ...
             // 5. Thus, we use custom generated GHookList.
             //    Hopefully someone will profit from all this.
-            try!(generate_ghooklist(w));
+            generate_ghooklist(w)?;
         } else if record.disguised {
-            try!(generate_disguised(w, record));
+            generate_disguised(w, record)?;
         } else {
             let align = config.and_then(|c| c.align);
             let fields = fields::from_record(env, record);
-            try!(generate_from_fields(w, &fields, align));
+            generate_from_fields(w, &fields, align)?;
         }
     }
     Ok(())
@@ -458,56 +458,56 @@ impl ::std::fmt::Debug for GHookList {
 }
 
 fn generate_disguised(w: &mut Write, record: &Record) -> Result<()> {
-    try!(writeln!(w, "#[repr(C)]"));
-    try!(writeln!(w, "pub struct _{name}(c_void);", name=record.c_type));
-    try!(writeln!(w));
-    try!(writeln!(w, "pub type {name} = *mut _{name};", name=record.c_type));
+    writeln!(w, "#[repr(C)]")?;
+    writeln!(w, "pub struct _{name}(c_void);", name=record.c_type)?;
+    writeln!(w)?;
+    writeln!(w, "pub type {name} = *mut _{name};", name=record.c_type)?;
     writeln!(w)
 }
 
 fn generate_from_fields(w: &mut Write, fields: &fields::Fields, align: Option<u32>) -> Result<()> {
     cfg_condition(w, &fields.cfg_condition, false, 0)?;
-    try!(writeln!(w, "#[repr(C)]"));
+    writeln!(w, "#[repr(C)]")?;
     if let Some(align) = align {
-        try!(writeln!(w, "#[repr(align({}))]", align));
+        writeln!(w, "#[repr(align({}))]", align)?;
     }
     let traits = fields.derived_traits().join(", ");
     if !traits.is_empty() {
-        try!(writeln!(w, "#[derive({traits})]", traits=traits));
+        writeln!(w, "#[derive({traits})]", traits=traits)?;
     }
     if fields.external {
         // It would be nice to represent those using extern types
         // from RFC 1861, once they are available in stable Rust.
         // https://github.com/rust-lang/rust/issues/43467
-        try!(writeln!(w, "pub struct {name}(c_void);", name=&fields.name));
+        writeln!(w, "pub struct {name}(c_void);", name=&fields.name)?;
     } else {
-        try!(writeln!(w, "pub {kind} {name} {{", kind=fields.kind, name=&fields.name));
+        writeln!(w, "pub {kind} {name} {{", kind=fields.kind, name=&fields.name)?;
         for field in &fields.fields {
-            try!(writeln!(w, "\tpub {field_name}: {field_type},",
+            writeln!(w, "\tpub {field_name}: {field_type},",
                           field_name=&field.name,
-                          field_type=&field.typ));
+                          field_type=&field.typ)?;
         }
         if let Some(ref reason) = fields.truncated {
-            try!(writeln!(w, "\t_truncated_record_marker: c_void,"));
-            try!(writeln!(w, "\t// {}", reason));
+            writeln!(w, "\t_truncated_record_marker: c_void,")?;
+            writeln!(w, "\t// {}", reason)?;
         }
-        try!(writeln!(w, "}}"));
+        writeln!(w, "}}")?;
     }
-    try!(writeln!(w));
+    writeln!(w)?;
 
     cfg_condition(w, &fields.cfg_condition, false, 0)?;
-    try!(writeln!(w, "impl ::std::fmt::Debug for {name} {{", name=&fields.name));
-    try!(writeln!(w, "\tfn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {{"));
-    try!(writeln!(w, "\t\tf.debug_struct(&format!(\"{name} @ {{:?}}\", self as *const _))", name=&fields.name));
+    writeln!(w, "impl ::std::fmt::Debug for {name} {{", name=&fields.name)?;
+    writeln!(w, "\tfn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {{")?;
+    writeln!(w, "\t\tf.debug_struct(&format!(\"{name} @ {{:?}}\", self as *const _))", name=&fields.name)?;
     for field in fields.fields.iter().filter(|f| f.debug) {
         // TODO: We should generate debug for field manually if automatic one is not available.
-        try!(writeln!(w, "\t\t .field(\"{field_name}\", {field_get})",
+        writeln!(w, "\t\t .field(\"{field_name}\", {field_get})",
                       field_name=&field.name,
-                      field_get=&field.access_str()));
+                      field_get=&field.access_str())?;
     }
-    try!(writeln!(w, "\t\t .finish()"));
-    try!(writeln!(w, "\t}}"));
-    try!(writeln!(w, "}}"));
+    writeln!(w, "\t\t .finish()")?;
+    writeln!(w, "\t}}")?;
+    writeln!(w, "}}")?;
     writeln!(w)
 }
 

@@ -21,10 +21,10 @@ pub fn generate(
     analysis: &analysis::object::Info,
     generate_display_trait: bool,
 ) -> Result<()> {
-    try!(general::start_comments(w, &env.config));
-    try!(general::uses(w, env, &analysis.imports));
+    general::start_comments(w, &env.config)?;
+    general::uses(w, env, &analysis.imports)?;
 
-    try!(general::define_object_type(
+    general::define_object_type(
         w,
         env,
         &analysis.name,
@@ -34,38 +34,38 @@ pub fn generate(
         &analysis.get_type,
         analysis.is_interface,
         &analysis.supertypes,
-    ));
+    )?;
 
     if need_generate_inherent(analysis) {
-        try!(writeln!(w));
-        try!(write!(w, "impl {} {{", analysis.name));
+        writeln!(w)?;
+        write!(w, "impl {} {{", analysis.name)?;
         for func_analysis in &analysis.constructors() {
-            try!(function::generate(w, env, func_analysis, false, false, 1));
+            function::generate(w, env, func_analysis, false, false, 1)?;
         }
 
         if !need_generate_trait(analysis) {
             for func_analysis in &analysis.methods() {
-                try!(function::generate(w, env, func_analysis, false, false, 1));
+                function::generate(w, env, func_analysis, false, false, 1)?;
             }
 
             for property in &analysis.properties {
-                try!(properties::generate(w, env, property, false, false, 1));
+                properties::generate(w, env, property, false, false, 1)?;
             }
 
             for child_property in &analysis.child_properties {
-                try!(child_properties::generate(
+                child_properties::generate(
                     w,
                     env,
                     child_property,
                     false,
                     false,
                     1,
-                ));
+                )?;
             }
         }
 
         for func_analysis in &analysis.functions() {
-            try!(function::generate(w, env, func_analysis, false, false, 1));
+            function::generate(w, env, func_analysis, false, false, 1)?;
         }
 
         if !need_generate_trait(analysis) {
@@ -74,7 +74,7 @@ pub fn generate(
                 .iter()
                 .chain(analysis.notify_signals.iter())
             {
-                try!(signal::generate(
+                signal::generate(
                     w,
                     env,
                     signal_analysis,
@@ -82,21 +82,21 @@ pub fn generate(
                     false,
                     false,
                     1,
-                ));
+                )?;
             }
         }
 
-        try!(writeln!(w, "}}"));
+        writeln!(w, "}}")?;
 
-        try!(general::declare_default_from_new(
+        general::declare_default_from_new(
             w,
             env,
             &analysis.name,
             &analysis.functions
-        ));
+        )?;
     }
 
-    try!(trait_impls::generate(
+    trait_impls::generate(
         w,
         &analysis.name,
         &analysis.functions,
@@ -106,10 +106,10 @@ pub fn generate(
         } else {
             None
         },
-    ));
+    )?;
 
     if analysis.concurrency != library::Concurrency::None {
-        try!(writeln!(w));
+        writeln!(w)?;
     }
 
     // TODO: include parent properties.
@@ -119,61 +119,61 @@ pub fn generate(
 
     match analysis.concurrency {
         library::Concurrency::Send | library::Concurrency::SendSync => {
-            try!(writeln!(w, "unsafe impl Send for {} {{}}", analysis.name));
+            writeln!(w, "unsafe impl Send for {} {{}}", analysis.name)?;
         }
         library::Concurrency::SendUnique => {
             if env.namespaces.is_glib_crate {
-                try!(writeln!(w, "unsafe impl ::SendUnique for {} {{", analysis.name));
+                writeln!(w, "unsafe impl ::SendUnique for {} {{", analysis.name)?;
             } else {
-                try!(writeln!(w, "unsafe impl glib::SendUnique for {} {{", analysis.name));
+                writeln!(w, "unsafe impl glib::SendUnique for {} {{", analysis.name)?;
             }
 
-            try!(writeln!(w, "    fn is_unique(&self) -> bool {{"));
-            try!(writeln!(w, "        self.ref_count() == 1"));
-            try!(writeln!(w, "    }}"));
+            writeln!(w, "    fn is_unique(&self) -> bool {{")?;
+            writeln!(w, "        self.ref_count() == 1")?;
+            writeln!(w, "    }}")?;
 
-            try!(writeln!(w, "}}"));
+            writeln!(w, "}}")?;
         },
         _ => (),
     }
 
     if let library::Concurrency::SendSync = analysis.concurrency {
-        try!(writeln!(w, "unsafe impl Sync for {} {{}}", analysis.name));
+        writeln!(w, "unsafe impl Sync for {} {{}}", analysis.name)?;
     }
 
     if !analysis.final_type {
-        try!(writeln!(w));
-        try!(writeln!(w, "pub const NONE_{}: Option<&{}> = None;", analysis.name.to_snake().to_uppercase(), analysis.name));
+        writeln!(w)?;
+        writeln!(w, "pub const NONE_{}: Option<&{}> = None;", analysis.name.to_snake().to_uppercase(), analysis.name)?;
     }
 
     if need_generate_trait(analysis) {
-        try!(writeln!(w));
-        try!(generate_trait(w, env, analysis));
+        writeln!(w)?;
+        generate_trait(w, env, analysis)?;
     }
 
     if !analysis.trampolines.is_empty() {
         for trampoline in &analysis.trampolines {
-            try!(trampoline::generate(
+            trampoline::generate(
                 w,
                 env,
                 trampoline,
                 need_generate_trait(analysis),
                 &analysis.name,
-            ));
+            )?;
         }
     }
 
     if generate_display_trait {
-        try!(writeln!(
+        writeln!(
             w,
             "\nimpl fmt::Display for {} {{",
             analysis.name,
-        ));
+        )?;
         // Generate Display trait implementation.
-        try!(writeln!(w, "\tfn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {{\n\
+        writeln!(w, "\tfn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {{\n\
                             \t\twrite!(f, \"{}\")\n\
                           \t}}\n\
-                        }}", analysis.name));
+                        }}", analysis.name)?;
     }
 
     Ok(())
@@ -258,30 +258,30 @@ fn generate_trait(
     env: &Env,
     analysis: &analysis::object::Info,
 ) -> Result<()> {
-    try!(write!(w, "pub trait {}: 'static {{", analysis.trait_name));
+    write!(w, "pub trait {}: 'static {{", analysis.trait_name)?;
 
     for func_analysis in &analysis.methods() {
-        try!(function::generate(w, env, func_analysis, true, true, 1));
+        function::generate(w, env, func_analysis, true, true, 1)?;
     }
     for property in &analysis.properties {
-        try!(properties::generate(w, env, property, true, true, 1));
+        properties::generate(w, env, property, true, true, 1)?;
     }
     for child_property in &analysis.child_properties {
-        try!(child_properties::generate(
+        child_properties::generate(
             w,
             env,
             child_property,
             true,
             true,
             1,
-        ));
+        )?;
     }
     for signal_analysis in analysis
         .signals
         .iter()
         .chain(analysis.notify_signals.iter())
     {
-        try!(signal::generate(
+        signal::generate(
             w,
             env,
             signal_analysis,
@@ -289,40 +289,40 @@ fn generate_trait(
             true,
             true,
             1,
-        ));
+        )?;
     }
-    try!(writeln!(w, "}}"));
+    writeln!(w, "}}")?;
 
-    try!(writeln!(w));
-    try!(write!(
+    writeln!(w)?;
+    write!(
         w,
         "impl<O: IsA<{}>> {} for O {{",
         analysis.name,
         analysis.trait_name,
-    ));
+    )?;
 
     for func_analysis in &analysis.methods() {
-        try!(function::generate(w, env, func_analysis, true, false, 1));
+        function::generate(w, env, func_analysis, true, false, 1)?;
     }
     for property in &analysis.properties {
-        try!(properties::generate(w, env, property, true, false, 1));
+        properties::generate(w, env, property, true, false, 1)?;
     }
     for child_property in &analysis.child_properties {
-        try!(child_properties::generate(
+        child_properties::generate(
             w,
             env,
             child_property,
             true,
             false,
             1,
-        ));
+        )?;
     }
     for signal_analysis in analysis
         .signals
         .iter()
         .chain(analysis.notify_signals.iter())
     {
-        try!(signal::generate(
+        signal::generate(
             w,
             env,
             signal_analysis,
@@ -330,9 +330,9 @@ fn generate_trait(
             true,
             false,
             1,
-        ));
+        )?;
     }
-    try!(writeln!(w, "}}"));
+    writeln!(w, "}}")?;
 
     Ok(())
 }

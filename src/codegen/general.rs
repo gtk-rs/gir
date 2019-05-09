@@ -44,16 +44,16 @@ from gir-files (https://github.com/gtk-rs/gir-files @ {})",
 }
 
 pub fn uses(w: &mut Write, env: &Env, imports: &Imports) -> Result<()> {
-    try!(writeln!(w));
+    writeln!(w)?;
     for (name, &(ref version, ref constraints)) in imports.iter() {
         if constraints.len() == 1 {
-            try!(writeln!(w, "#[cfg(feature = \"{}\")]", constraints[0]));
+            writeln!(w, "#[cfg(feature = \"{}\")]", constraints[0])?;
         } else if !constraints.is_empty() {
-            try!(writeln!(w, "#[cfg(any({}))]", constraints.iter().map(|c| format!("feature = \"{}\"", c)).collect::<Vec<_>>().join(", ")));
+            writeln!(w, "#[cfg(any({}))]", constraints.iter().map(|c| format!("feature = \"{}\"", c)).collect::<Vec<_>>().join(", "))?;
         }
 
-        try!(version_condition(w, env, *version, false, 0));
-        try!(writeln!(w, "use {};", name));
+        version_condition(w, env, *version, false, 0)?;
+        writeln!(w, "use {};", name)?;
     }
 
     Ok(())
@@ -110,10 +110,10 @@ pub fn define_object_type(
         .cloned()
         .collect();
 
-    try!(writeln!(w));
-    try!(writeln!(w, "glib_wrapper! {{"));
+    writeln!(w)?;
+    writeln!(w, "glib_wrapper! {{")?;
     if parents.is_empty() {
-        try!(writeln!(
+        writeln!(
             w,
             "\tpub struct {}({}<{}::{}{}{}>);",
             type_name,
@@ -122,14 +122,14 @@ pub fn define_object_type(
             glib_name,
             class_name,
             rust_class_name
-        ));
+        )?;
     } else if is_interface {
         let prerequisites: Vec<String> = parents
             .iter()
             .map(|p| format_parent_name(env, p))
             .collect();
 
-        try!(writeln!(
+        writeln!(
             w,
             "\tpub struct {}({}<{}::{}{}{}>) @requires {};",
             type_name,
@@ -139,7 +139,7 @@ pub fn define_object_type(
             class_name,
             rust_class_name,
             prerequisites.join(", ")
-        ));
+        )?;
     } else {
         let interfaces: Vec<String> = parents
             .iter()
@@ -179,7 +179,7 @@ pub fn define_object_type(
             parents_string.push_str(format!(" @implements {}", interfaces.join(", ")).as_str());
         }
 
-        try!(writeln!(
+        writeln!(
             w,
             "\tpub struct {}({}<{}::{}{}{}>){};",
             type_name,
@@ -189,13 +189,13 @@ pub fn define_object_type(
             class_name,
             rust_class_name,
             parents_string,
-        ));
+        )?;
     }
-    try!(writeln!(w));
-    try!(writeln!(w, "\tmatch fn {{"));
-    try!(writeln!(w, "\t\tget_type => || {}::{}(),", sys_crate_name, glib_func_name));
-    try!(writeln!(w, "\t}}"));
-    try!(writeln!(w, "}}"));
+    writeln!(w)?;
+    writeln!(w, "\tmatch fn {{")?;
+    writeln!(w, "\t\tget_type => || {}::{}(),", sys_crate_name, glib_func_name)?;
+    writeln!(w, "\t}}")?;
+    writeln!(w, "}}")?;
 
     Ok(())
 }
@@ -211,31 +211,31 @@ pub fn define_boxed_type(
     derive: &[Derive],
 ) -> Result<()> {
     let sys_crate_name = env.main_sys_crate_name();
-    try!(writeln!(w));
-    try!(writeln!(w, "glib_wrapper! {{"));
+    writeln!(w)?;
+    writeln!(w, "glib_wrapper! {{")?;
 
-    try!(derives(w, derive, 1));
-    try!(writeln!(
+    derives(w, derive, 1)?;
+    writeln!(
         w,
         "\tpub struct {}(Boxed<{}::{}>);",
         type_name,
         sys_crate_name,
         glib_name
-    ));
-    try!(writeln!(w));
-    try!(writeln!(w, "\tmatch fn {{"));
-    try!(writeln!(
+    )?;
+    writeln!(w)?;
+    writeln!(w, "\tmatch fn {{")?;
+    writeln!(
         w,
         "\t\tcopy => |ptr| {}::{}(mut_override(ptr)),",
         sys_crate_name,
         copy_fn
-    ));
-    try!(writeln!(w, "\t\tfree => |ptr| {}::{}(ptr),", sys_crate_name, free_fn));
+    )?;
+    writeln!(w, "\t\tfree => |ptr| {}::{}(ptr),", sys_crate_name, free_fn)?;
     if let Some(ref get_type_fn) = *get_type_fn {
-        try!(writeln!(w, "\t\tget_type => || {}::{}(),", sys_crate_name, get_type_fn));
+        writeln!(w, "\t\tget_type => || {}::{}(),", sys_crate_name, get_type_fn)?;
     }
-    try!(writeln!(w, "\t}}"));
-    try!(writeln!(w, "}}"));
+    writeln!(w, "\t}}")?;
+    writeln!(w, "}}")?;
 
     Ok(())
 }
@@ -249,31 +249,31 @@ pub fn define_auto_boxed_type(
     derive: &[Derive],
 ) -> Result<()> {
     let sys_crate_name = env.main_sys_crate_name();
-    try!(writeln!(w));
-    try!(writeln!(w, "glib_wrapper! {{"));
-    try!(derives(w, derive, 1));
-    try!(writeln!(
+    writeln!(w)?;
+    writeln!(w, "glib_wrapper! {{")?;
+    derives(w, derive, 1)?;
+    writeln!(
         w,
         "\tpub struct {}(Boxed<{}::{}>);",
         type_name,
         sys_crate_name,
         glib_name
-    ));
-    try!(writeln!(w));
-    try!(writeln!(w, "\tmatch fn {{"));
-    try!(writeln!(
+    )?;
+    writeln!(w)?;
+    writeln!(w, "\tmatch fn {{")?;
+    writeln!(
         w,
         "\t\tcopy => |ptr| gobject_sys::g_boxed_copy({}::{}(), ptr as *mut _) as *mut {}::{},",
         sys_crate_name, get_type_fn, sys_crate_name, glib_name
-    ));
-    try!(writeln!(
+    )?;
+    writeln!(
         w,
         "\t\tfree => |ptr| gobject_sys::g_boxed_free({}::{}(), ptr as *mut _),",
         sys_crate_name, get_type_fn
-    ));
-    try!(writeln!(w, "\t\tget_type => || {}::{}(),", sys_crate_name, get_type_fn));
-    try!(writeln!(w, "\t}}"));
-    try!(writeln!(w, "}}"));
+    )?;
+    writeln!(w, "\t\tget_type => || {}::{}(),", sys_crate_name, get_type_fn)?;
+    writeln!(w, "\t}}")?;
+    writeln!(w, "}}")?;
 
     Ok(())
 }
@@ -289,25 +289,25 @@ pub fn define_shared_type(
     derive: &[Derive],
 ) -> Result<()> {
     let sys_crate_name = env.main_sys_crate_name();
-    try!(writeln!(w));
-    try!(writeln!(w, "glib_wrapper! {{"));
-    try!(derives(w, derive, 1));
-    try!(writeln!(
+    writeln!(w)?;
+    writeln!(w, "glib_wrapper! {{")?;
+    derives(w, derive, 1)?;
+    writeln!(
         w,
         "\tpub struct {}(Shared<{}::{}>);",
         type_name,
         sys_crate_name,
         glib_name
-    ));
-    try!(writeln!(w));
-    try!(writeln!(w, "\tmatch fn {{"));
-    try!(writeln!(w, "\t\tref => |ptr| {}::{}(ptr),", sys_crate_name, ref_fn));
-    try!(writeln!(w, "\t\tunref => |ptr| {}::{}(ptr),", sys_crate_name, unref_fn));
+    )?;
+    writeln!(w)?;
+    writeln!(w, "\tmatch fn {{")?;
+    writeln!(w, "\t\tref => |ptr| {}::{}(ptr),", sys_crate_name, ref_fn)?;
+    writeln!(w, "\t\tunref => |ptr| {}::{}(ptr),", sys_crate_name, unref_fn)?;
     if let Some(ref get_type_fn) = *get_type_fn {
-        try!(writeln!(w, "\t\tget_type => || {}::{}(),", sys_crate_name, get_type_fn));
+        writeln!(w, "\t\tget_type => || {}::{}(),", sys_crate_name, get_type_fn)?;
     }
-    try!(writeln!(w, "\t}}"));
-    try!(writeln!(w, "}}"));
+    writeln!(w, "\t}}")?;
+    writeln!(w, "}}")?;
 
     Ok(())
 }
@@ -320,7 +320,7 @@ pub fn cfg_deprecated(
     indent: usize,
 ) -> Result<()> {
     if let Some(s) = cfg_deprecated_string(deprecated, env, commented, indent) {
-        try!(writeln!(w, "{}", s));
+        writeln!(w, "{}", s)?;
     }
     Ok(())
 }
@@ -354,7 +354,7 @@ pub fn version_condition(
     indent: usize,
 ) -> Result<()> {
     if let Some(s) = version_condition_string(env, version, commented, indent) {
-        try!(writeln!(w, "{}", s));
+        writeln!(w, "{}", s)?;
     }
     Ok(())
 }
@@ -393,7 +393,7 @@ pub fn not_version_condition(
             comment,
             v.to_cfg()
         );
-        try!(writeln!(w, "{}", s));
+        writeln!(w, "{}", s)?;
     }
     Ok(())
 }
@@ -406,7 +406,7 @@ pub fn cfg_condition(
 ) -> Result<()> {
     let s = cfg_condition_string(cfg_condition, commented, indent);
     if let Some(s) = s {
-        try!(writeln!(w, "{}", s));
+        writeln!(w, "{}", s)?;
     }
     Ok(())
 }
@@ -444,7 +444,7 @@ pub fn derives(
             ),
             None => format!("#[derive({})]", derive.names.join(", ")),
         };
-        try!(writeln!(w, "{}{}", tabs(indent), s));
+        writeln!(w, "{}{}", tabs(indent), s)?;
     }
     Ok(())
 }
@@ -464,7 +464,7 @@ pub fn doc_hidden(
 
 pub fn write_vec<T: Display>(w: &mut Write, v: &[T]) -> Result<()> {
     for s in v {
-        try!(writeln!(w, "{}", s));
+        writeln!(w, "{}", s)?;
     }
     Ok(())
 }
@@ -478,14 +478,14 @@ pub fn declare_default_from_new(
     if let Some(func) = functions.iter().find(|f| {
         !f.visibility.hidden() && f.name == "new" && f.parameters.rust_parameters.is_empty()
     }) {
-        try!(writeln!(w));
-        try!(cfg_deprecated(w, env, func.deprecated_version, false, 0));
-        try!(version_condition(w, env, func.version, false, 0));
-        try!(writeln!(w, "impl Default for {} {{", name));
-        try!(writeln!(w, "    fn default() -> Self {{"));
-        try!(writeln!(w, "        Self::new()"));
-        try!(writeln!(w, "    }}"));
-        try!(writeln!(w, "}}"));
+        writeln!(w)?;
+        cfg_deprecated(w, env, func.deprecated_version, false, 0)?;
+        version_condition(w, env, func.version, false, 0)?;
+        writeln!(w, "impl Default for {} {{", name)?;
+        writeln!(w, "    fn default() -> Self {{")?;
+        writeln!(w, "        Self::new()")?;
+        writeln!(w, "    }}")?;
+        writeln!(w, "}}")?;
     }
 
     Ok(())

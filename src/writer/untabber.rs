@@ -16,11 +16,11 @@ impl Write for Untabber {
         let mut chunks = buf.split(|b| b == &b'\t').peekable();
         loop {
             match chunks.next() {
-                Some(chunk) => try!(self.orig.write_all(chunk)),
+                Some(chunk) => self.orig.write_all(chunk)?,
                 None => break,
             };
             if chunks.peek().is_some() {
-                try!(self.orig.write_all(TAB.as_bytes()));
+                self.orig.write_all(TAB.as_bytes())?;
             } else {
                 break;
             }

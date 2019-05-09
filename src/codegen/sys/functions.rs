@@ -26,14 +26,14 @@ pub fn generate_records_funcs(
         let name = format!("{}.{}", env.config.library_name, record.name);
         let obj = env.config.objects.get(&name).unwrap_or(&DEFAULT_OBJ);
         let glib_get_type = record.glib_get_type.as_ref().unwrap_or(&intern_str);
-        try!(generate_object_funcs(
+        generate_object_funcs(
             w,
             env,
             obj,
             &record.c_type,
             glib_get_type,
             &record.functions,
-        ));
+        )?;
     }
 
     Ok(())
@@ -43,14 +43,14 @@ pub fn generate_classes_funcs(w: &mut Write, env: &Env, classes: &[&library::Cla
     for klass in classes {
         let name = format!("{}.{}", env.config.library_name, klass.name);
         let obj = env.config.objects.get(&name).unwrap_or(&DEFAULT_OBJ);
-        try!(generate_object_funcs(
+        generate_object_funcs(
             w,
             env,
             obj,
             &klass.c_type,
             &klass.glib_get_type,
             &klass.functions,
-        ));
+        )?;
     }
 
     Ok(())
@@ -66,14 +66,14 @@ pub fn generate_bitfields_funcs(
         let name = format!("{}.{}", env.config.library_name, bitfield.name);
         let obj = env.config.objects.get(&name).unwrap_or(&DEFAULT_OBJ);
         let glib_get_type = bitfield.glib_get_type.as_ref().unwrap_or(&intern_str);
-        try!(generate_object_funcs(
+        generate_object_funcs(
             w,
             env,
             obj,
             &bitfield.c_type,
             glib_get_type,
             &bitfield.functions,
-        ));
+        )?;
     }
 
     Ok(())
@@ -89,14 +89,14 @@ pub fn generate_enums_funcs(
         let name = format!("{}.{}", env.config.library_name, en.name);
         let obj = env.config.objects.get(&name).unwrap_or(&DEFAULT_OBJ);
         let glib_get_type = en.glib_get_type.as_ref().unwrap_or(&intern_str);
-        try!(generate_object_funcs(
+        generate_object_funcs(
             w,
             env,
             obj,
             &en.c_type,
             glib_get_type,
             &en.functions,
-        ));
+        )?;
     }
 
     Ok(())
@@ -112,14 +112,14 @@ pub fn generate_unions_funcs(w: &mut Write, env: &Env, unions: &[&library::Union
         let name = format!("{}.{}", env.config.library_name, union.name);
         let obj = env.config.objects.get(&name).unwrap_or(&DEFAULT_OBJ);
         let glib_get_type = union.glib_get_type.as_ref().unwrap_or(&intern_str);
-        try!(generate_object_funcs(
+        generate_object_funcs(
             w,
             env,
             obj,
             c_type,
             glib_get_type,
             &union.functions,
-        ));
+        )?;
     }
 
     Ok(())
@@ -133,14 +133,14 @@ pub fn generate_interfaces_funcs(
     for interface in interfaces {
         let name = format!("{}.{}", env.config.library_name, interface.name);
         let obj = env.config.objects.get(&name).unwrap_or(&DEFAULT_OBJ);
-        try!(generate_object_funcs(
+        generate_object_funcs(
             w,
             env,
             obj,
             &interface.c_type,
             &interface.glib_get_type,
             &interface.functions,
-        ));
+        )?;
     }
 
     Ok(())
@@ -179,21 +179,21 @@ fn generate_object_funcs(
 ) -> Result<()> {
     let write_get_type = glib_get_type != INTERN;
     if write_get_type || !functions.is_empty() {
-        try!(writeln!(w));
-        try!(writeln!(
+        writeln!(w)?;
+        writeln!(
             w,
             "    //========================================================================="
-        ));
-        try!(writeln!(w, "    // {}", c_type));
-        try!(writeln!(
+        )?;
+        writeln!(w, "    // {}", c_type)?;
+        writeln!(
             w,
             "    //========================================================================="
-        ));
+        )?;
     }
     if write_get_type {
         let configured_functions = obj.functions.matched(&glib_get_type);
         generate_cfg_configure(w, &configured_functions, false)?;
-        try!(writeln!(w, "    pub fn {}() -> GType;", glib_get_type));
+        writeln!(w, "    pub fn {}() -> GType;", glib_get_type)?;
     }
 
     for func in functions {
@@ -205,20 +205,20 @@ fn generate_object_funcs(
 
         let (commented, sig) = function_signature(env, func, false);
         let comment = if commented { "//" } else { "" };
-        try!(version_condition(w, env, func.version, commented, 1));
+        version_condition(w, env, func.version, commented, 1)?;
         let name = func.c_identifier.as_ref().unwrap();
         // since we work with gir-files from Linux, some function names need to be adjusted
         if is_windows_utf8 {
-            try!(writeln!(
+            writeln!(
                 w,
                 "    {}#[cfg(any(windows, feature = \"dox\"))]",
                 comment
-            ));
-            try!(writeln!(w, "    {}pub fn {}_utf8{};", comment, name, sig));
-            try!(version_condition(w, env, func.version, commented, 1));
+            )?;
+            writeln!(w, "    {}pub fn {}_utf8{};", comment, name, sig)?;
+            version_condition(w, env, func.version, commented, 1)?;
         }
         generate_cfg_configure(w, &configured_functions, commented)?;
-        try!(writeln!(w, "    {}pub fn {}{};", comment, name, sig));
+        writeln!(w, "    {}pub fn {}{};", comment, name, sig)?;
     }
 
     Ok(())
@@ -230,21 +230,21 @@ pub fn generate_callbacks(
     callbacks: &[&library::Function],
 ) -> Result<()> {
     if !callbacks.is_empty() {
-        try!(writeln!(w, "// Callbacks"));
+        writeln!(w, "// Callbacks")?;
     }
     for func in callbacks {
         let (commented, sig) = function_signature(env, func, true);
         let comment = if commented { "//" } else { "" };
-        try!(writeln!(
+        writeln!(
             w,
             "{}pub type {} = Option<unsafe extern \"C\" fn{}>;",
             comment,
             func.c_identifier.as_ref().unwrap(),
             sig
-        ));
+        )?;
     }
     if !callbacks.is_empty() {
-        try!(writeln!(w));
+        writeln!(w)?;
     }
 
     Ok(())

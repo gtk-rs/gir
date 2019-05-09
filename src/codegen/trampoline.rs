@@ -22,7 +22,7 @@ pub fn generate(
     in_trait: bool,
     object_name: &str,
 ) -> Result<()> {
-    try!(writeln!(w));
+    writeln!(w)?;
     let (self_bound, end) = if in_trait {
         (format!("{}, ", TYPE_PARAMETERS_START), "")
     } else {
@@ -33,8 +33,8 @@ pub fn generate(
     let func_str = func_string(env, analysis, None, true);
     let ret_str = trampoline_returns(env, analysis);
 
-    try!(version_condition(w, env, analysis.version, false, 0));
-    try!(writeln!(
+    version_condition(w, env, analysis.version, false, 0)?;
+    writeln!(
         w,
         "unsafe extern \"C\" fn {}<{}F: {}>({}, f: glib_sys::gpointer){}{}",
         analysis.name,
@@ -43,20 +43,20 @@ pub fn generate(
         params_str,
         ret_str,
         end,
-    ));
+    )?;
     if in_trait {
-        try!(writeln!(
+        writeln!(
             w,
             "where {}: IsA<{}> {{",
             TYPE_PARAMETERS_START,
             object_name
-        ));
+        )?;
     }
-    try!(writeln!(w, "\tlet f: &F = &*(f as *const F);"));
-    try!(transformation_vars(w, analysis));
+    writeln!(w, "\tlet f: &F = &*(f as *const F);")?;
+    transformation_vars(w, analysis)?;
     let call = trampoline_call_func(env, analysis, in_trait);
-    try!(writeln!(w, "\t{}", call));
-    try!(writeln!(w, "}}"));
+    writeln!(w, "\t{}", call)?;
+    writeln!(w, "}}")?;
 
     Ok(())
 }
@@ -212,12 +212,12 @@ fn transformation_vars(w: &mut Write, analysis: &Trampoline) -> Result<()> {
             Borrow => (),
             TreePath => {
                 let c_par = &analysis.parameters.c_parameters[transform.ind_c];
-                try!(writeln!(
+                writeln!(
                     w,
                     "\tlet {} = from_glib_full(gtk_sys::gtk_tree_path_new_from_string({}));",
                     transform.name,
                     c_par.name
-                ));
+                )?;
             }
         }
     }

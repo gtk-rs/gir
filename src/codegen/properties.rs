@@ -19,14 +19,14 @@ pub fn generate(
     only_declaration: bool,
     indent: usize,
 ) -> Result<()> {
-    try!(generate_prop_func(
+    generate_prop_func(
         w,
         env,
         prop,
         in_trait,
         only_declaration,
         indent,
-    ));
+    )?;
 
     Ok(())
 }
@@ -46,14 +46,14 @@ fn generate_prop_func(
 
     let comment_prefix = if commented { "//" } else { "" };
 
-    try!(writeln!(w));
+    writeln!(w)?;
 
     let decl = declaration(env, prop);
     if !in_trait || only_declaration {
-        try!(cfg_deprecated(w, env, prop.deprecated_version, commented, indent));
+        cfg_deprecated(w, env, prop.deprecated_version, commented, indent)?;
     }
-    try!(version_condition(w, env, prop.version, commented, indent));
-    try!(writeln!(
+    version_condition(w, env, prop.version, commented, indent)?;
+    writeln!(
         w,
         "{}{}{}{}{}",
         tabs(indent),
@@ -61,12 +61,12 @@ fn generate_prop_func(
         pub_prefix,
         decl,
         decl_suffix
-    ));
+    )?;
 
     if !only_declaration {
         let body = body(env, prop, in_trait).to_code(env);
         for s in body {
-            try!(writeln!(w, "{}{}{}", tabs(indent), comment_prefix, s));
+            writeln!(w, "{}{}{}", tabs(indent), comment_prefix, s)?;
         }
     }
 

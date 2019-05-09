@@ -11,7 +11,7 @@ pub struct ExternalLibrary {
 
 pub fn read_external_libraries(toml: &toml::Value) -> Result<Vec<ExternalLibrary>, String> {
     let mut external_libraries = match toml.lookup("options.external_libraries") {
-        Some(a) => try!(a.as_result_vec("options.external_libraries"))
+        Some(a) => a.as_result_vec("options.external_libraries")?
             .iter()
             .filter_map(|v| v.as_str().map(String::from))
             .map(|namespace| {

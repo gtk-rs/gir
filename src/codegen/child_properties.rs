@@ -20,7 +20,7 @@ pub fn generate(
     only_declaration: bool,
     indent: usize,
 ) -> Result<()> {
-    try!(generate_func(
+    generate_func(
         w,
         env,
         prop,
@@ -28,8 +28,8 @@ pub fn generate(
         only_declaration,
         indent,
         true,
-    ));
-    try!(generate_func(
+    )?;
+    generate_func(
         w,
         env,
         prop,
@@ -37,7 +37,7 @@ pub fn generate(
         only_declaration,
         indent,
         false,
-    ));
+    )?;
 
     Ok(())
 }
@@ -60,11 +60,11 @@ fn generate_func(
         ""
     };
 
-    try!(writeln!(w));
+    writeln!(w)?;
 
-    try!(doc_hidden(w, prop.doc_hidden, comment_prefix, indent));
+    doc_hidden(w, prop.doc_hidden, comment_prefix, indent)?;
     let decl = declaration(env, prop, is_get);
-    try!(writeln!(
+    writeln!(
         w,
         "{}{}{}{}{}",
         tabs(indent),
@@ -72,12 +72,12 @@ fn generate_func(
         pub_prefix,
         decl,
         decl_suffix
-    ));
+    )?;
 
     if !only_declaration {
         let body = body(env, prop, in_trait, is_get).to_code(env);
         for s in body {
-            try!(writeln!(w, "{}{}{}", tabs(indent), comment_prefix, s));
+            writeln!(w, "{}{}{}", tabs(indent), comment_prefix, s)?;
         }
     }
 

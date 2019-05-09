@@ -13,40 +13,40 @@ pub fn generate(
         match *type_ {
             Type::Compare => {
                 if specials.get(&Type::Equal).is_none() {
-                    try!(generate_eq_compare(
+                    generate_eq_compare(
                         w,
                         type_name,
                         lookup(functions, name),
                         trait_name,
-                    ));
+                    )?;
                 }
-                try!(generate_ord(
+                generate_ord(
                     w,
                     type_name,
                     lookup(functions, name),
                     trait_name,
-                ));
+                )?;
             }
             Type::Equal => {
-                try!(generate_eq(
+                generate_eq(
                     w,
                     type_name,
                     lookup(functions, name),
                     trait_name
-                ));
+                )?;
             }
-            Type::ToString => try!(generate_display(
+            Type::ToString => generate_display(
                 w,
                 type_name,
                 lookup(functions, name),
                 trait_name,
-            )),
-            Type::Hash => try!(generate_hash(
+            )?,
+            Type::Hash => generate_hash(
                 w,
                 type_name,
                 lookup(functions, name),
                 trait_name,
-            )),
+            )?,
             _ => {}
         }
     }
