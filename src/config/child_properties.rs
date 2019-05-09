@@ -103,10 +103,9 @@ impl Parse for ChildProperties {
 mod tests {
     use super::super::parsable::Parse;
     use super::*;
-    use toml;
 
-    fn toml(input: &str) -> toml::Value {
-        let value = toml::from_str(&input);
+    fn toml(input: &str) -> ::toml::Value {
+        let value = ::toml::from_str(&input);
         assert!(value.is_ok());
         value.unwrap()
     }

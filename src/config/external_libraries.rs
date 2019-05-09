@@ -46,10 +46,9 @@ pub fn read_external_libraries(toml: &toml::Value) -> Result<Vec<ExternalLibrary
 #[cfg(test)]
 mod tests {
     use super::*;
-    use toml;
 
-    fn toml(input: &str) -> toml::Value {
-        let value = toml::from_str(&input);
+    fn toml(input: &str) -> ::toml::Value {
+        let value = ::toml::from_str(&input);
         assert!(value.is_ok());
         value.unwrap()
     }

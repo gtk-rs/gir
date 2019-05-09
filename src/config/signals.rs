@@ -189,10 +189,9 @@ pub type Signals = Vec<Signal>;
 mod tests {
     use super::super::ident::Ident;
     use super::*;
-    use toml;
 
-    fn toml(input: &str) -> toml::Value {
-        let value = input.parse::<toml::Value>();
+    fn toml(input: &str) -> ::toml::Value {
+        let value = input.parse::<::toml::Value>();
         assert!(value.is_ok());
         value.unwrap()
     }

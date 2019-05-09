@@ -71,15 +71,14 @@ mod tests {
     use super::super::matchable::Matchable;
     use super::super::parsable::{Parsable, Parse};
     use super::*;
-    use toml;
     use crate::version::Version;
 
-    fn properties_toml(input: &str) -> toml::Value {
-        let mut value: toml::value::Table = toml::from_str(&input).unwrap();
+    fn properties_toml(input: &str) -> ::toml::Value {
+        let mut value: ::toml::value::Table = ::toml::from_str(&input).unwrap();
         value.remove("f").unwrap()
     }
 
-    fn toml(input: &str) -> toml::Value {
+    fn toml(input: &str) -> ::toml::Value {
         let value = input.parse();
         assert!(value.is_ok());
         value.unwrap()

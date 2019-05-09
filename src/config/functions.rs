@@ -241,16 +241,15 @@ mod tests {
     use super::super::parsable::{Parsable, Parse};
     use super::super::parameter_matchable::ParameterMatchable;
     use super::*;
-    use toml;
     use crate::version::Version;
 
-    fn functions_toml(input: &str) -> toml::Value {
-        let mut value: toml::value::Table = toml::from_str(&input).unwrap();
+    fn functions_toml(input: &str) -> ::toml::Value {
+        let mut value: ::toml::value::Table = ::toml::from_str(&input).unwrap();
         value.remove("f").unwrap()
     }
 
-    fn toml(input: &str) -> toml::Value {
-        let value = toml::from_str(&input);
+    fn toml(input: &str) -> ::toml::Value {
+        let value = ::toml::from_str(&input);
         assert!(value.is_ok());
         value.unwrap()
     }
