@@ -54,12 +54,20 @@ fn fill_empty(root: &mut Table, env: &Env, crate_name: &str) {
 
     let deps = upsert_table(root, "dependencies");
     for ext_lib in &env.config.external_libraries {
-        let ext_package = format!("{}-sys", ext_lib.crate_name);
-        let dep = upsert_table(deps, &*ext_package);
-        if ext_package.ends_with("-sys") {
-            set_string(dep, "git", "https://github.com/gtk-rs/sys");
+        let ext_package = if ext_lib.crate_name == "cairo" {
+            format!("{}-sys-rs", ext_lib.crate_name)
+        } else if ext_lib.crate_name == "gdk_pixbuf" {
+            format!("gdk-pixbuf-sys")
         } else {
-            set_string(dep, "git", format!("https://github.com/gtk-rs/{}", ext_package));
+            format!("{}-sys", ext_lib.crate_name)
+        };
+        let dep = upsert_table(deps, &*ext_package);
+        if ext_lib.crate_name == "cairo" {
+            set_string(dep, "git", "https://github.com/gtk-rs/cairo");
+        } else if ext_package.starts_with("sourceview") {
+            set_string(dep, "git", "https://github.com/gtk-rs/sourceview");
+        } else {
+            set_string(dep, "git", "https://github.com/gtk-rs/sys");
         }
     }
 }
