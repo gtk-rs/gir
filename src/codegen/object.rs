@@ -169,10 +169,7 @@ impl {}Builder {{
     }}
 
     pub fn build(self) -> {} {{
-        let mut n_properties = 0;
-        let mut property_names: Vec<CString> = vec![];
-        let mut names = vec![];
-        let mut values = vec![];", analysis.name)?;
+        let mut properties: Vec<(&str, &dyn ToValue)> = vec![];", analysis.name)?;
         for property in &properties {
             let name = nameutil::mangle_keywords(nameutil::signal_to_snake(&property.name));
             if let Some(version) = property.version {
@@ -181,23 +178,15 @@ impl {}Builder {{
         {{", version.to_feature())?;
             }
             writeln!(w,
-"        if let Some({property}) = self.{property} {{
-            property_names.push(CString::new(\"{}\").unwrap());
-            names.push(property_names[property_names.len() - 1].as_ptr());
-            let property = {property}.to_value();
-            values.push(property.into_raw());
-            n_properties += 1;
-        }}", property.name, property=name)?;
+"        if let Some(ref {property}) = self.{property} {{
+            properties.push((\"{}\", {property}));
+        }}", property = name)?;
             if property.version.is_some() {
                 writeln!(w, "        }}")?;
             }
         }
         writeln!(w,
-"        unsafe {{
-            crate::Object::from_glib_none(gobject_sys::g_object_new_with_properties(
-                {}::static_type().to_glib(), n_properties, names.as_mut_ptr(), values.as_ptr())
-            as *mut _).downcast().expect(\"downcast\")
-        }}
+"        crate::Object::new({}::static_type(), &properties).expect(\"object new\").downcast().expect(\"downcast\")
     }}", analysis.name)?;
         for method in methods {
             writeln!(w, "{}", method)?;
