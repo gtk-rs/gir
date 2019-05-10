@@ -1,7 +1,4 @@
-use std::borrow::Cow;
-use std::collections::HashMap;
-use std::path::*;
-use std::string::String;
+use std::{borrow::Cow, collections::HashMap, path::*, string::String};
 
 use crate::case::*;
 
@@ -111,14 +108,16 @@ lazy_static! {
     static ref KEYWORDS: HashMap<&'static str, String> = {
         let mut map = HashMap::new();
         [
-            "abstract", "alignof", "as", "become", "box", "break", "const",
-            "continue", "crate", "do", "else", "enum", "extern", "false", "final",
-            "fn", "for", "if", "impl", "in", "let", "loop", "macro", "match", "mod",
-            "move", "mut", "offsetof", "override", "priv", "proc", "pub", "pure",
-            "ref", "return", "Self", "self", "sizeof", "static", "struct", "super",
-            "trait", "true", "type", "typeof", "unsafe", "unsized", "use", "virtual",
+            "abstract", "alignof", "as", "become", "box", "break", "const", "continue", "crate",
+            "do", "else", "enum", "extern", "false", "final", "fn", "for", "if", "impl", "in",
+            "let", "loop", "macro", "match", "mod", "move", "mut", "offsetof", "override", "priv",
+            "proc", "pub", "pure", "ref", "return", "Self", "self", "sizeof", "static", "struct",
+            "super", "trait", "true", "type", "typeof", "unsafe", "unsized", "use", "virtual",
             "where", "while", "yield",
-        ].iter().map(|k| map.insert(*k, format!("{}_", k))).count();
+        ]
+        .iter()
+        .map(|k| map.insert(*k, format!("{}_", k)))
+        .count();
         map
     };
 }

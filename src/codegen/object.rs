@@ -1,19 +1,13 @@
 use std::io::{Result, Write};
 
-use crate::analysis::rust_type::rust_type;
-use crate::codegen::general::{version_condition, version_condition_string};
-use crate::case::CaseExt;
-use crate::analysis;
-use crate::library;
-use crate::env::Env;
-use crate::nameutil;
-use super::child_properties;
-use super::function;
-use super::general;
-use super::properties;
-use super::signal;
-use super::trait_impls;
-use super::trampoline;
+use super::{child_properties, function, general, properties, signal, trait_impls, trampoline};
+use crate::{
+    analysis::{self, rust_type::rust_type},
+    case::CaseExt,
+    codegen::general::{version_condition, version_condition_string},
+    env::Env,
+    library, nameutil,
+};
 
 pub fn generate(
     w: &mut Write,
@@ -53,14 +47,7 @@ pub fn generate(
             }
 
             for child_property in &analysis.child_properties {
-                child_properties::generate(
-                    w,
-                    env,
-                    child_property,
-                    false,
-                    false,
-                    1,
-                )?;
+                child_properties::generate(w, env, child_property, false, false, 1)?;
             }
         }
 
@@ -88,12 +75,7 @@ pub fn generate(
 
         writeln!(w, "}}")?;
 
-        general::declare_default_from_new(
-            w,
-            env,
-            &analysis.name,
-            &analysis.functions
-        )?;
+        general::declare_default_from_new(w, env, &analysis.name, &analysis.functions)?;
     }
 
     trait_impls::generate(
@@ -133,7 +115,7 @@ pub fn generate(
             writeln!(w, "    }}")?;
 
             writeln!(w, "}}")?;
-        },
+        }
         _ => (),
     }
 
@@ -143,7 +125,12 @@ pub fn generate(
 
     if !analysis.final_type {
         writeln!(w)?;
-        writeln!(w, "pub const NONE_{}: Option<&{}> = None;", analysis.name.to_snake().to_uppercase(), analysis.name)?;
+        writeln!(
+            w,
+            "pub const NONE_{}: Option<&{}> = None;",
+            analysis.name.to_snake().to_uppercase(),
+            analysis.name
+        )?;
     }
 
     if need_generate_trait(analysis) {
@@ -164,16 +151,16 @@ pub fn generate(
     }
 
     if generate_display_trait {
+        writeln!(w, "\nimpl fmt::Display for {} {{", analysis.name,)?;
+        // Generate Display trait implementation.
         writeln!(
             w,
-            "\nimpl fmt::Display for {} {{",
-            analysis.name,
+            "\tfn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {{\n\
+             \t\twrite!(f, \"{}\")\n\
+             \t}}\n\
+             }}",
+            analysis.name
         )?;
-        // Generate Display trait implementation.
-        writeln!(w, "\tfn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {{\n\
-                            \t\twrite!(f, \"{}\")\n\
-                          \t}}\n\
-                        }}", analysis.name)?;
     }
 
     Ok(())
@@ -183,63 +170,83 @@ pub fn generate(
 fn generate_builder(w: &mut Write, env: &Env, analysis: &analysis::object::Info) -> Result<()> {
     let mut methods = vec![];
     let mut properties = vec![];
-    writeln!(w, "#[cfg(any(feature = \"builders\", feature = \"dox\"))]
-pub struct {}Builder {{", analysis.name)?;
+    writeln!(
+        w,
+        "#[cfg(any(feature = \"builders\", feature = \"dox\"))]
+pub struct {}Builder {{",
+        analysis.name
+    )?;
     for property in &analysis.builder_properties {
         match rust_type(env, property.typ) {
             Ok(type_string) => {
-                let type_string =
-                    match type_string.as_str() {
-                        "GString" => "String",
-                        "Vec<GString>" => "Vec<String>",
-                        typ => typ,
-                    };
-                let (param_type, conversion) =
-                    match type_string {
-                        "String" => ("&str", ".to_string()"),
-                        typ => (typ, ""),
-                    };
+                let type_string = match type_string.as_str() {
+                    "GString" => "String",
+                    "Vec<GString>" => "Vec<String>",
+                    typ => typ,
+                };
+                let (param_type, conversion) = match type_string {
+                    "String" => ("&str", ".to_string()"),
+                    typ => (typ, ""),
+                };
                 let name = nameutil::mangle_keywords(nameutil::signal_to_snake(&property.name));
                 version_condition(w, env, property.version, false, 1)?;
                 writeln!(w, "    {}: Option<{}>,", name, type_string)?;
                 let prefix = version_condition_string(env, property.version, false, 1)
                     .map(|version| format!("{}\n", version))
                     .unwrap_or_default();
-                methods.push(format!("\n{prefix}    pub fn {name}(mut self, {name}: {param_type}) -> Self {{
+                methods.push(format!(
+                    "\n{prefix}    pub fn {name}(mut self, {name}: {param_type}) -> Self {{
         self.{name} = Some({name}{conversion});
         self
-    }}", prefix=prefix, param_type=param_type, name=name, conversion=conversion));
+    }}",
+                    prefix = prefix,
+                    param_type = param_type,
+                    name = name,
+                    conversion = conversion
+                ));
                 properties.push(property);
-            },
+            }
             Err(_) => writeln!(w, "    //{}: /*Unknown type*/,", property.name)?,
         }
     }
-    writeln!(w, "}}\n
+    writeln!(
+        w,
+        "}}\n
 
 #[cfg(any(feature = \"builders\", feature = \"dox\"))]
 impl {}Builder {{
     pub fn new() -> Self {{
-        Self {{", analysis.name)?;
+        Self {{",
+        analysis.name
+    )?;
     for property in &properties {
         version_condition(w, env, property.version, false, 3)?;
         let name = nameutil::mangle_keywords(nameutil::signal_to_snake(&property.name));
         writeln!(w, "            {}: None,", name)?;
     }
-    writeln!(w, "        }}
+    writeln!(
+        w,
+        "        }}
     }}
 
     pub fn build(self) -> {} {{
-        let mut properties: Vec<(&str, &dyn ToValue)> = vec![];", analysis.name)?;
+        let mut properties: Vec<(&str, &dyn ToValue)> = vec![];",
+        analysis.name
+    )?;
     for property in &properties {
         let name = nameutil::mangle_keywords(nameutil::signal_to_snake(&property.name));
         version_condition(w, env, property.version, false, 2)?;
         if property.version.is_some() {
             writeln!(w, "        {{")?;
         }
-        writeln!(w,
-"        if let Some(ref {property}) = self.{property} {{
+        writeln!(
+            w,
+            "        if let Some(ref {property}) = self.{property} {{
             properties.push((\"{}\", {property}));
-        }}", property.name, property = name)?;
+        }}",
+            property.name,
+            property = name
+        )?;
         if property.version.is_some() {
             writeln!(w, "        }}")?;
         }
@@ -253,11 +260,7 @@ impl {}Builder {{
     writeln!(w, "}}")
 }
 
-fn generate_trait(
-    w: &mut Write,
-    env: &Env,
-    analysis: &analysis::object::Info,
-) -> Result<()> {
+fn generate_trait(w: &mut Write, env: &Env, analysis: &analysis::object::Info) -> Result<()> {
     write!(w, "pub trait {}: 'static {{", analysis.trait_name)?;
 
     for func_analysis in &analysis.methods() {
@@ -267,14 +270,7 @@ fn generate_trait(
         properties::generate(w, env, property, true, true, 1)?;
     }
     for child_property in &analysis.child_properties {
-        child_properties::generate(
-            w,
-            env,
-            child_property,
-            true,
-            true,
-            1,
-        )?;
+        child_properties::generate(w, env, child_property, true, true, 1)?;
     }
     for signal_analysis in analysis
         .signals
@@ -297,8 +293,7 @@ fn generate_trait(
     write!(
         w,
         "impl<O: IsA<{}>> {} for O {{",
-        analysis.name,
-        analysis.trait_name,
+        analysis.name, analysis.trait_name,
     )?;
 
     for func_analysis in &analysis.methods() {
@@ -308,14 +303,7 @@ fn generate_trait(
         properties::generate(w, env, property, true, false, 1)?;
     }
     for child_property in &analysis.child_properties {
-        child_properties::generate(
-            w,
-            env,
-            child_property,
-            true,
-            false,
-            1,
-        )?;
+        child_properties::generate(w, env, child_property, true, false, 1)?;
     }
     for signal_analysis in analysis
         .signals
@@ -371,16 +359,21 @@ pub fn generate_reexports(
     };
 
     if let Some(ref class_name) = analysis.rust_class_type {
-        contents.push(format!("pub use self::{}::{{{}, {}{}}};", module_name, analysis.name, class_name, none_type));
+        contents.push(format!(
+            "pub use self::{}::{{{}, {}{}}};",
+            module_name, analysis.name, class_name, none_type
+        ));
     } else {
-        contents.push(format!("pub use self::{}::{{{}{}}};", module_name, analysis.name, none_type));
+        contents.push(format!(
+            "pub use self::{}::{{{}{}}};",
+            module_name, analysis.name, none_type
+        ));
     }
     if need_generate_trait(analysis) {
         contents.extend_from_slice(&cfgs);
         contents.push(format!(
             "pub use self::{}::{};",
-            module_name,
-            analysis.trait_name
+            module_name, analysis.trait_name
         ));
         for cfg in &cfgs {
             traits.push(format!("\t{}", cfg));
@@ -390,7 +383,10 @@ pub fn generate_reexports(
 
     if !analysis.builder_properties.is_empty() {
         contents.extend_from_slice(&cfgs);
-        contents.push(format!("#[cfg(any(feature = \"builders\", feature = \"dox\"))]
-pub use self::{}::{}Builder;", module_name, analysis.name));
+        contents.push(format!(
+            "#[cfg(any(feature = \"builders\", feature = \"dox\"))]
+pub use self::{}::{}Builder;",
+            module_name, analysis.name
+        ));
     }
 }

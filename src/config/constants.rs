@@ -1,8 +1,6 @@
-use super::ident::Ident;
-use super::parsable::Parse;
-use toml::Value;
-use super::error::TomlHelper;
+use super::{error::TomlHelper, ident::Ident, parsable::Parse};
 use crate::version::Version;
+use toml::Value;
 
 #[derive(Clone, Debug)]
 pub struct Constant {
@@ -29,14 +27,17 @@ impl Parse for Constant {
             &format!("function {}", object_name),
         );
 
-        let version = toml.lookup("version")
+        let version = toml
+            .lookup("version")
             .and_then(Value::as_str)
             .and_then(|s| s.parse().ok());
-        let cfg_condition = toml.lookup("cfg_condition")
+        let cfg_condition = toml
+            .lookup("cfg_condition")
             .and_then(Value::as_str)
             .map(ToOwned::to_owned);
 
-        let ignore = toml.lookup("ignore")
+        let ignore = toml
+            .lookup("ignore")
             .and_then(Value::as_bool)
             .unwrap_or(false);
 

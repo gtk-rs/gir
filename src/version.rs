@@ -1,5 +1,7 @@
-use std::fmt::{self, Display, Formatter};
-use std::str::FromStr;
+use std::{
+    fmt::{self, Display, Formatter},
+    str::FromStr,
+};
 
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Version {
@@ -35,7 +37,8 @@ impl FromStr for Version {
     /// Currently always return Ok
     fn from_str(s: &str) -> Result<Version, String> {
         if s.contains('.') {
-            let mut parts = s.splitn(4, '.')
+            let mut parts = s
+                .splitn(4, '.')
                 .map(str::parse)
                 .take_while(Result::is_ok)
                 .map(Result::unwrap);

@@ -1,16 +1,16 @@
-use std::fmt::Display;
-use std::io::{Result, Write};
+use std::{
+    fmt::Display,
+    io::{Result, Write},
+};
 
-use crate::analysis;
-use crate::analysis::general::StatusedTypeId;
-use crate::analysis::imports::Imports;
-use crate::analysis::namespaces;
-use crate::config::Config;
-use crate::config::derives::Derive;
-use crate::env::Env;
-use crate::gir_version::VERSION;
-use crate::version::Version;
-use crate::writer::primitives::tabs;
+use crate::{
+    analysis::{self, general::StatusedTypeId, imports::Imports, namespaces},
+    config::{derives::Derive, Config},
+    env::Env,
+    gir_version::VERSION,
+    version::Version,
+    writer::primitives::tabs,
+};
 
 pub fn start_comments(w: &mut Write, conf: &Config) -> Result<()> {
     if conf.single_version_file.is_some() {
@@ -49,7 +49,15 @@ pub fn uses(w: &mut Write, env: &Env, imports: &Imports) -> Result<()> {
         if constraints.len() == 1 {
             writeln!(w, "#[cfg(feature = \"{}\")]", constraints[0])?;
         } else if !constraints.is_empty() {
-            writeln!(w, "#[cfg(any({}))]", constraints.iter().map(|c| format!("feature = \"{}\"", c)).collect::<Vec<_>>().join(", "))?;
+            writeln!(
+                w,
+                "#[cfg(any({}))]",
+                constraints
+                    .iter()
+                    .map(|c| format!("feature = \"{}\"", c))
+                    .collect::<Vec<_>>()
+                    .join(", ")
+            )?;
         }
 
         version_condition(w, env, *version, false, 0)?;
@@ -59,11 +67,8 @@ pub fn uses(w: &mut Write, env: &Env, imports: &Imports) -> Result<()> {
     Ok(())
 }
 
-fn format_parent_name(
-    env: &Env,
-    p: &StatusedTypeId,
-) -> String {
-   if p.type_id.ns_id == namespaces::MAIN {
+fn format_parent_name(env: &Env, p: &StatusedTypeId) -> String {
+    if p.type_id.ns_id == namespaces::MAIN {
         p.name.clone()
     } else {
         format!(
@@ -116,18 +121,11 @@ pub fn define_object_type(
         writeln!(
             w,
             "\tpub struct {}({}<{}::{}{}{}>);",
-            type_name,
-            kind_name,
-            sys_crate_name,
-            glib_name,
-            class_name,
-            rust_class_name
+            type_name, kind_name, sys_crate_name, glib_name, class_name, rust_class_name
         )?;
     } else if is_interface {
-        let prerequisites: Vec<String> = parents
-            .iter()
-            .map(|p| format_parent_name(env, p))
-            .collect();
+        let prerequisites: Vec<String> =
+            parents.iter().map(|p| format_parent_name(env, p)).collect();
 
         writeln!(
             w,
@@ -147,7 +145,7 @@ pub fn define_object_type(
                 use crate::library::*;
 
                 match *env.library.type_(p.type_id) {
-                    Type::Interface { ..} if !p.status.ignored() => true,
+                    Type::Interface { .. } if !p.status.ignored() => true,
                     _ => false,
                 }
             })
@@ -160,7 +158,7 @@ pub fn define_object_type(
                 use crate::library::*;
 
                 match *env.library.type_(p.type_id) {
-                    Type::Class { ..} if !p.status.ignored() => true,
+                    Type::Class { .. } if !p.status.ignored() => true,
                     _ => false,
                 }
             })
@@ -173,7 +171,7 @@ pub fn define_object_type(
         }
 
         if !interfaces.is_empty() {
-            if !parents.is_empty () {
+            if !parents.is_empty() {
                 parents_string.push(',');
             }
             parents_string.push_str(format!(" @implements {}", interfaces.join(", ")).as_str());
@@ -193,7 +191,11 @@ pub fn define_object_type(
     }
     writeln!(w)?;
     writeln!(w, "\tmatch fn {{")?;
-    writeln!(w, "\t\tget_type => || {}::{}(),", sys_crate_name, glib_func_name)?;
+    writeln!(
+        w,
+        "\t\tget_type => || {}::{}(),",
+        sys_crate_name, glib_func_name
+    )?;
     writeln!(w, "\t}}")?;
     writeln!(w, "}}")?;
 
@@ -218,21 +220,22 @@ pub fn define_boxed_type(
     writeln!(
         w,
         "\tpub struct {}(Boxed<{}::{}>);",
-        type_name,
-        sys_crate_name,
-        glib_name
+        type_name, sys_crate_name, glib_name
     )?;
     writeln!(w)?;
     writeln!(w, "\tmatch fn {{")?;
     writeln!(
         w,
         "\t\tcopy => |ptr| {}::{}(mut_override(ptr)),",
-        sys_crate_name,
-        copy_fn
+        sys_crate_name, copy_fn
     )?;
     writeln!(w, "\t\tfree => |ptr| {}::{}(ptr),", sys_crate_name, free_fn)?;
     if let Some(ref get_type_fn) = *get_type_fn {
-        writeln!(w, "\t\tget_type => || {}::{}(),", sys_crate_name, get_type_fn)?;
+        writeln!(
+            w,
+            "\t\tget_type => || {}::{}(),",
+            sys_crate_name, get_type_fn
+        )?;
     }
     writeln!(w, "\t}}")?;
     writeln!(w, "}}")?;
@@ -255,9 +258,7 @@ pub fn define_auto_boxed_type(
     writeln!(
         w,
         "\tpub struct {}(Boxed<{}::{}>);",
-        type_name,
-        sys_crate_name,
-        glib_name
+        type_name, sys_crate_name, glib_name
     )?;
     writeln!(w)?;
     writeln!(w, "\tmatch fn {{")?;
@@ -271,7 +272,11 @@ pub fn define_auto_boxed_type(
         "\t\tfree => |ptr| gobject_sys::g_boxed_free({}::{}(), ptr as *mut _),",
         sys_crate_name, get_type_fn
     )?;
-    writeln!(w, "\t\tget_type => || {}::{}(),", sys_crate_name, get_type_fn)?;
+    writeln!(
+        w,
+        "\t\tget_type => || {}::{}(),",
+        sys_crate_name, get_type_fn
+    )?;
     writeln!(w, "\t}}")?;
     writeln!(w, "}}")?;
 
@@ -295,16 +300,22 @@ pub fn define_shared_type(
     writeln!(
         w,
         "\tpub struct {}(Shared<{}::{}>);",
-        type_name,
-        sys_crate_name,
-        glib_name
+        type_name, sys_crate_name, glib_name
     )?;
     writeln!(w)?;
     writeln!(w, "\tmatch fn {{")?;
     writeln!(w, "\t\tref => |ptr| {}::{}(ptr),", sys_crate_name, ref_fn)?;
-    writeln!(w, "\t\tunref => |ptr| {}::{}(ptr),", sys_crate_name, unref_fn)?;
+    writeln!(
+        w,
+        "\t\tunref => |ptr| {}::{}(ptr),",
+        sys_crate_name, unref_fn
+    )?;
     if let Some(ref get_type_fn) = *get_type_fn {
-        writeln!(w, "\t\tget_type => || {}::{}(),", sys_crate_name, get_type_fn)?;
+        writeln!(
+            w,
+            "\t\tget_type => || {}::{}(),",
+            sys_crate_name, get_type_fn
+        )?;
     }
     writeln!(w, "\t}}")?;
     writeln!(w, "}}")?;
@@ -430,11 +441,7 @@ pub fn cfg_condition_string(
     }
 }
 
-pub fn derives(
-    w: &mut Write,
-    derives: &[Derive],
-    indent: usize,
-) -> Result<()> {
+pub fn derives(w: &mut Write, derives: &[Derive], indent: usize) -> Result<()> {
     for derive in derives {
         let s = match &derive.cfg_condition {
             Some(condition) => format!(
@@ -494,7 +501,8 @@ pub fn declare_default_from_new(
 /// Escapes string in format suitable for placing inside double quotes.
 pub fn escape_string(s: &str) -> String {
     let mut es = String::with_capacity(s.len() * 2);
-    let _ = s.chars()
+    let _ = s
+        .chars()
         .map(|c| match c {
             '\"' | '\\' => {
                 es.push('\\');
@@ -512,11 +520,8 @@ mod tests {
 
     #[test]
     fn test_escape_string() {
-        assert_eq!(escape_string(""),
-                   "");
-        assert_eq!(escape_string("no escaping here"),
-                   "no escaping here");
-        assert_eq!(escape_string(r#"'"\"#),
-                   r#"'\"\\"#);
+        assert_eq!(escape_string(""), "");
+        assert_eq!(escape_string("no escaping here"), "no escaping here");
+        assert_eq!(escape_string(r#"'"\"#), r#"'\"\\"#);
     }
 }

@@ -1,8 +1,6 @@
 use std::path::Path;
 
-use crate::config::WorkMode;
-use crate::env::Env;
-use crate::file_saver::*;
+use crate::{config::WorkMode, env::Env, file_saver::*};
 
 mod alias;
 mod child_properties;

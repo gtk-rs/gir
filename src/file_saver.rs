@@ -1,7 +1,9 @@
-use std::fs::{self, File};
-use std::io::{BufWriter, Result, Write};
-use std::path::Path;
 use crate::writer::untabber::Untabber;
+use std::{
+    fs::{self, File},
+    io::{BufWriter, Result, Write},
+    path::Path,
+};
 
 pub fn save_to_file<P, F>(path: P, make_backup: bool, mut closure: F)
 where
@@ -21,9 +23,8 @@ where
         .unwrap_or_else(|why| panic!("couldn't create {:?}: {}", path.as_ref(), why));
     let writer = BufWriter::new(file);
     let mut untabber = Untabber::new(Box::new(writer));
-    closure(&mut untabber).unwrap_or_else(|why| {
-        panic!("couldn't write to {:?}: {:?}", path.as_ref(), why)
-    });
+    closure(&mut untabber)
+        .unwrap_or_else(|why| panic!("couldn't write to {:?}: {:?}", path.as_ref(), why));
 }
 
 /// Create .bak file

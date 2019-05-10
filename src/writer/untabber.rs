@@ -1,5 +1,5 @@
-use std::io::{Result, Write};
 use super::TAB;
+use std::io::{Result, Write};
 
 pub struct Untabber {
     orig: Box<Write>,

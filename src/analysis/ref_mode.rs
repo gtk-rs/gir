@@ -1,8 +1,5 @@
-use crate::library;
-use crate::env;
-use super::c_type::is_mut_ptr;
-use super::record_type::RecordType;
-use crate::config::gobjects::GObject;
+use super::{c_type::is_mut_ptr, record_type::RecordType};
+use crate::{config::gobjects::GObject, env, library};
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
 pub enum RefMode {
@@ -37,32 +34,38 @@ impl RefMode {
 
         use crate::library::Type::*;
         match *library.type_(tid) {
-            Fundamental(library::Fundamental::Utf8) |
-            Fundamental(library::Fundamental::Filename) |
-            Fundamental(library::Fundamental::OsString) |
-            Class(..) |
-            Interface(..) |
-            List(..) |
-            SList(..) |
-            CArray(..) => if direction == library::ParameterDirection::In {
-                RefMode::ByRef
-            } else {
-                RefMode::None
-            },
-            Record(ref record) => if direction == library::ParameterDirection::In {
-                if let RecordType::Refcounted = RecordType::of(record) {
+            Fundamental(library::Fundamental::Utf8)
+            | Fundamental(library::Fundamental::Filename)
+            | Fundamental(library::Fundamental::OsString)
+            | Class(..)
+            | Interface(..)
+            | List(..)
+            | SList(..)
+            | CArray(..) => {
+                if direction == library::ParameterDirection::In {
                     RefMode::ByRef
                 } else {
-                    RefMode::ByRefMut
+                    RefMode::None
                 }
-            } else {
-                RefMode::None
-            },
-            Union(..) => if direction == library::ParameterDirection::In {
-                RefMode::ByRefMut
-            } else {
-                RefMode::None
-            },
+            }
+            Record(ref record) => {
+                if direction == library::ParameterDirection::In {
+                    if let RecordType::Refcounted = RecordType::of(record) {
+                        RefMode::ByRef
+                    } else {
+                        RefMode::ByRefMut
+                    }
+                } else {
+                    RefMode::None
+                }
+            }
+            Union(..) => {
+                if direction == library::ParameterDirection::In {
+                    RefMode::ByRefMut
+                } else {
+                    RefMode::None
+                }
+            }
             Alias(ref alias) => RefMode::of(env, alias.typ, direction),
             _ => RefMode::None,
         }

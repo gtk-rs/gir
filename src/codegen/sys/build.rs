@@ -1,10 +1,10 @@
-use std::io::{Result, Write};
-use std::path::Path;
+use std::{
+    io::{Result, Write},
+    path::Path,
+};
 
-use crate::env::Env;
-use crate::file_saver::save_to_file;
+use crate::{codegen::general, env::Env, file_saver::save_to_file};
 use regex::Regex;
-use crate::codegen::general;
 
 pub fn generate(env: &Env) {
     info!(
@@ -15,11 +15,9 @@ pub fn generate(env: &Env) {
     let path = env.config.target_path.join("build.rs");
 
     info!("Generating file {:?}", path);
-    save_to_file(
-        &path,
-        env.config.make_backup,
-        |w| generate_build_script(w, env),
-    );
+    save_to_file(&path, env.config.make_backup, |w| {
+        generate_build_script(w, env)
+    });
 }
 
 fn generate_build_script(w: &mut Write, env: &Env) -> Result<()> {
@@ -49,7 +47,8 @@ fn find() -> Result<(), Error> {
 
     let ns = env.namespaces.main();
     let regex = Regex::new(r"^lib(.+)\.(so.*|dylib)$").expect("Regex failed");
-    let shared_libs: Vec<_> = ns.shared_libs
+    let shared_libs: Vec<_> = ns
+        .shared_libs
         .iter()
         .map(|s| {
             let lib_path = Path::new(s);
@@ -69,30 +68,18 @@ fn find() -> Result<(), Error> {
             .as_ref()
             .expect("Package name doesn't exist")
     )?;
-    writeln!(
-        w,
-        "\tlet shared_libs = [{}];",
-        shared_libs.join(", ")
-    )?;
+    writeln!(w, "\tlet shared_libs = [{}];", shared_libs.join(", "))?;
     write!(w, "\tlet version = ")?;
-    let versions = ns.versions
+    let versions = ns
+        .versions
         .iter()
         .filter(|v| **v >= env.config.min_cfg_version)
         .skip(1)
         .collect::<Vec<_>>();
     for v in versions.iter().rev() {
-        write!(
-            w,
-            "if cfg!({}) {{\n\t\t\"{}\"\n\t}} else ",
-            v.to_cfg(),
-            v
-        )?;
+        write!(w, "if cfg!({}) {{\n\t\t\"{}\"\n\t}} else ", v.to_cfg(), v)?;
     }
-    writeln!(
-        w,
-        "{{\n\t\t\"{}\"\n\t}};",
-        env.config.min_cfg_version
-    )?;
+    writeln!(w, "{{\n\t\t\"{}\"\n\t}};", env.config.min_cfg_version)?;
 
     writeln!(
         w,

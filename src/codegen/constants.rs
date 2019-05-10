@@ -1,10 +1,12 @@
-use crate::analysis::imports::Imports;
-use crate::env::Env;
+use crate::{
+    analysis::imports::Imports,
+    codegen::general::{
+        self, cfg_condition, cfg_deprecated, version_condition, version_condition_string,
+    },
+    env::Env,
+    file_saver, library,
+};
 use std::path::Path;
-use crate::file_saver;
-use crate::codegen::general::{self, cfg_condition, cfg_deprecated, version_condition,
-                       version_condition_string};
-use crate::library;
 
 pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>) {
     let path = root_path.join("constants.rs");
@@ -28,13 +30,7 @@ pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>) {
         for constant in &env.analysis.constants {
             let type_ = env.type_(constant.typ);
             if let library::Type::Fundamental(library::Fundamental::Utf8) = *type_ {
-                cfg_deprecated(
-                    w,
-                    env,
-                    constant.deprecated_version,
-                    false,
-                    0
-                )?;
+                cfg_deprecated(w, env, constant.deprecated_version, false, 0)?;
                 cfg_condition(w, &constant.cfg_condition, false, 0)?;
                 version_condition(w, env, constant.version, false, 0)?;
                 writeln!(w, "lazy_static! {{")?;

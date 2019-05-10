@@ -1,15 +1,15 @@
-use crate::env::Env;
-use std::cmp::{Ord, Ordering, PartialOrd};
-use std::collections::{BTreeMap, BTreeSet, HashMap};
-use std::collections::HashSet;
-use std::iter::Iterator;
-use std::ops::{Deref, DerefMut};
-use std::str::FromStr;
-use crate::analysis::conversion_type::ConversionType;
-use crate::nameutil::split_namespace_name;
-use crate::traits::*;
-use crate::version::Version;
-use std::fmt;
+use crate::{
+    analysis::conversion_type::ConversionType, env::Env, nameutil::split_namespace_name, traits::*,
+    version::Version,
+};
+use std::{
+    cmp::{Ord, Ordering, PartialOrd},
+    collections::{BTreeMap, BTreeSet, HashMap, HashSet},
+    fmt,
+    iter::Iterator,
+    ops::{Deref, DerefMut},
+    str::FromStr,
+};
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum Transfer {
@@ -227,26 +227,26 @@ pub enum Fundamental {
 impl Fundamental {
     pub fn requires_conversion(self) -> bool {
         match self {
-            Fundamental::Int8 |
-            Fundamental::UInt8 |
-            Fundamental::Int16 |
-            Fundamental::UInt16 |
-            Fundamental::Int32 |
-            Fundamental::UInt32 |
-            Fundamental::Int64 |
-            Fundamental::UInt64 |
-            Fundamental::Char |
-            Fundamental::UChar |
-            Fundamental::Short |
-            Fundamental::UShort |
-            Fundamental::Int |
-            Fundamental::UInt |
-            Fundamental::Long |
-            Fundamental::ULong |
-            Fundamental::Size |
-            Fundamental::SSize |
-            Fundamental::Float |
-            Fundamental::Double => false,
+            Fundamental::Int8
+            | Fundamental::UInt8
+            | Fundamental::Int16
+            | Fundamental::UInt16
+            | Fundamental::Int32
+            | Fundamental::UInt32
+            | Fundamental::Int64
+            | Fundamental::UInt64
+            | Fundamental::Char
+            | Fundamental::UChar
+            | Fundamental::Short
+            | Fundamental::UShort
+            | Fundamental::Int
+            | Fundamental::UInt
+            | Fundamental::Long
+            | Fundamental::ULong
+            | Fundamental::Size
+            | Fundamental::SSize
+            | Fundamental::Float
+            | Fundamental::Double => false,
             _ => true,
         }
     }
@@ -590,25 +590,29 @@ pub enum Type {
 
 impl fmt::Display for Type {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", match *self {
-            Type::Fundamental(_) => "Fundamental",
-            Type::Alias(_) => "Alias",
-            Type::Enumeration(_) => "Enumeration",
-            Type::Bitfield(_) => "Bitfield",
-            Type::Record(_) => "Record",
-            Type::Union(_) => "Union",
-            Type::Function(_) => "Function",
-            Type::Interface(_) => "Interface",
-            Type::Class(_) => "Class",
-            Type::Custom(_) => "Custom",
-            Type::Array(_) => "Array",
-            Type::CArray(_) => "CArray",
-            Type::FixedArray(_, _, _) => "FixedArray",
-            Type::PtrArray(_) => "PtrArray",
-            Type::HashTable(_, _) => "HashTable",
-            Type::List(_) => "List",
-            Type::SList(_) => "SList",
-        })
+        write!(
+            f,
+            "{}",
+            match *self {
+                Type::Fundamental(_) => "Fundamental",
+                Type::Alias(_) => "Alias",
+                Type::Enumeration(_) => "Enumeration",
+                Type::Bitfield(_) => "Bitfield",
+                Type::Record(_) => "Record",
+                Type::Union(_) => "Union",
+                Type::Function(_) => "Function",
+                Type::Interface(_) => "Interface",
+                Type::Class(_) => "Class",
+                Type::Custom(_) => "Custom",
+                Type::Array(_) => "Array",
+                Type::CArray(_) => "CArray",
+                Type::FixedArray(_, _, _) => "FixedArray",
+                Type::PtrArray(_) => "PtrArray",
+                Type::HashTable(_, _) => "HashTable",
+                Type::List(_) => "List",
+                Type::SList(_) => "SList",
+            }
+        )
     }
 }
 
@@ -701,11 +705,7 @@ impl Type {
             .unwrap_or_else(|| panic!("No type for '*.{}'", name))
     }
 
-    fn c_array_internal_name(
-        inner: TypeId,
-        size: Option<u16>,
-        c_type: &Option<String>
-    ) -> String {
+    fn c_array_internal_name(inner: TypeId, size: Option<u16>, c_type: &Option<String>) -> String {
         if let Some(size) = size {
             format!("[#{:?}; {};{:?}]", inner, size, c_type)
         } else {
@@ -740,9 +740,8 @@ impl Type {
                 Some((format!("SList(#{:?})", tid), Type::SList(tid)))
             }
             _ => None,
-        }.map(|(name, typ)| {
-            library.add_type(INTERNAL_NAMESPACE, &name, typ)
-        })
+        }
+        .map(|(name, typ)| library.add_type(INTERNAL_NAMESPACE, &name, typ))
     }
 
     pub fn function(library: &mut Library, func: Function) -> TypeId {
@@ -794,12 +793,12 @@ impl Type {
 
     pub fn get_inner_type<'a>(&'a self, env: &'a Env) -> Option<(&'a Type, u16)> {
         match *self {
-            Type::Array(t) |
-            Type::CArray(t) |
-            Type::FixedArray(t, ..) |
-            Type::PtrArray(t) |
-            Type::List(t) |
-            Type::SList(t) => {
+            Type::Array(t)
+            | Type::CArray(t)
+            | Type::FixedArray(t, ..)
+            | Type::PtrArray(t)
+            | Type::List(t)
+            | Type::SList(t) => {
                 let ty = env.type_(t);
                 ty.get_inner_type(env).or_else(|| Some((ty, t.ns_id)))
             }
@@ -927,7 +926,8 @@ impl Namespace {
     }
 
     fn add_type(&mut self, name: &str, typ: Option<Type>) -> u32 {
-        let glib_name = typ.as_ref()
+        let glib_name = typ
+            .as_ref()
             .and_then(Type::get_glib_name)
             .map(ToOwned::to_owned);
         let id = if let Some(id) = self.find_type(name) {
@@ -984,8 +984,15 @@ impl Library {
     }
 
     pub fn show_non_bound_types(&self, env: &Env) {
-        let not_allowed_ending = ["Class", "Private", "Func", "Callback", "Accessible", "Iface",
-                                  "Type"];
+        let not_allowed_ending = [
+            "Class",
+            "Private",
+            "Func",
+            "Callback",
+            "Accessible",
+            "Iface",
+            "Type",
+        ];
         let namespace_name = self.namespaces[MAIN_NAMESPACE as usize].name.clone();
         let mut parents = HashSet::new();
 
@@ -998,10 +1005,11 @@ impl Library {
                 if !not_allowed_ending.iter().any(|s| name.ends_with(s)) {
                     let version = x.get_deprecated_version();
                     let depr_version = version.unwrap_or(env.config.min_cfg_version);
-                    if !env.analysis.objects.contains_key(&full_name) &&
-                       !env.analysis.records.contains_key(&full_name) &&
-                       !env.config.objects.iter().any(|o| o.1.name == full_name) &&
-                       depr_version >= env.config.min_cfg_version {
+                    if !env.analysis.objects.contains_key(&full_name)
+                        && !env.analysis.records.contains_key(&full_name)
+                        && !env.config.objects.iter().any(|o| o.1.name == full_name)
+                        && depr_version >= env.config.min_cfg_version
+                    {
                         check_methods = false;
                         if let Some(version) = version {
                             println!("[NOT GENERATED] {} (deprecated in {})", full_name, version);
@@ -1016,43 +1024,56 @@ impl Library {
                     for &super_tid in env.class_hierarchy.supertypes(tid) {
                         let ty = env.library.type_(super_tid);
                         let ns_id = super_tid.ns_id as usize;
-                        let full_parent_name = format!("{}.{}",
-                                                       self.namespaces[ns_id].name,
-                                                       ty.get_name());
-                        if super_tid != gobject_id &&
-                           env.type_status(&super_tid.full_name(&env.library)).ignored() &&
-                           parents.insert(full_parent_name.clone()) {
+                        let full_parent_name =
+                            format!("{}.{}", self.namespaces[ns_id].name, ty.get_name());
+                        if super_tid != gobject_id
+                            && env
+                                .type_status(&super_tid.full_name(&env.library))
+                                .ignored()
+                            && parents.insert(full_parent_name.clone())
+                        {
                             if let Some(version) = ty.get_deprecated_version() {
-                                println!("[NOT GENERATED PARENT] {} (deprecated in {})",
-                                         full_parent_name, version);
+                                println!(
+                                    "[NOT GENERATED PARENT] {} (deprecated in {})",
+                                    full_parent_name, version
+                                );
                             } else {
                                 println!("[NOT GENERATED PARENT] {}", full_parent_name);
                             }
                         }
                     }
                     if check_methods {
-                        self.not_bound_functions(env, &format!("{}::", full_name), x.functions(),
-                                                 "METHOD");
+                        self.not_bound_functions(
+                            env,
+                            &format!("{}::", full_name),
+                            x.functions(),
+                            "METHOD",
+                        );
                     }
                 }
             }
         }
-        self.not_bound_functions(env, &format!("{}.", namespace_name),
-                                 &self.namespace(MAIN_NAMESPACE).functions, "FUNCTION");
+        self.not_bound_functions(
+            env,
+            &format!("{}.", namespace_name),
+            &self.namespace(MAIN_NAMESPACE).functions,
+            "FUNCTION",
+        );
     }
 
-    fn not_bound_functions(&self, env: &Env, prefix: &str, functions: &[Function],
-                           kind: &str) {
+    fn not_bound_functions(&self, env: &Env, prefix: &str, functions: &[Function], kind: &str) {
         for func in functions {
             let version = func.deprecated_version;
             let depr_version = version.unwrap_or(env.config.min_cfg_version);
 
             if depr_version < env.config.min_cfg_version {
-                continue
+                continue;
             }
 
-            let mut errors = func.parameters.iter()
-                                            .filter_map(|p| {
+            let mut errors = func
+                .parameters
+                .iter()
+                .filter_map(|p| {
                     let mut ty = env.library.type_(p.typ);
                     let mut ns_id = p.typ.ns_id as usize;
                     if let Some((t, n)) = ty.get_inner_type(env) {
@@ -1062,19 +1083,18 @@ impl Library {
                     if ty.is_fundamental() {
                         return None;
                     }
-                    let full_name = format!("{}.{}",
-                                            self.namespaces[ns_id].name,
-                                            ty.get_name());
-                    if env.type_status(&p.typ.full_name(&env.library)).ignored() &&
-                       !env.analysis.objects.contains_key(&full_name) &&
-                       !env.analysis.records.contains_key(&full_name) &&
-                       !env.config.objects.iter().any(|o| o.1.name == full_name) {
+                    let full_name = format!("{}.{}", self.namespaces[ns_id].name, ty.get_name());
+                    if env.type_status(&p.typ.full_name(&env.library)).ignored()
+                        && !env.analysis.objects.contains_key(&full_name)
+                        && !env.analysis.records.contains_key(&full_name)
+                        && !env.config.objects.iter().any(|o| o.1.name == full_name)
+                    {
                         Some(full_name)
                     } else {
                         None
                     }
                 })
-                                            .collect::<Vec<_>>();
+                .collect::<Vec<_>>();
             {
                 let mut ty = env.library.type_(func.ret.typ);
                 let mut ns_id = func.ret.typ.ns_id as usize;
@@ -1083,13 +1103,14 @@ impl Library {
                     ns_id = n as usize;
                 }
                 if !ty.is_fundamental() {
-                    let full_name = format!("{}.{}",
-                                            self.namespaces[ns_id].name,
-                                            ty.get_name());
-                    if env.type_status(&func.ret.typ.full_name(&env.library)).ignored() &&
-                       !env.analysis.objects.contains_key(&full_name) &&
-                       !env.analysis.records.contains_key(&full_name) &&
-                       !env.config.objects.iter().any(|o| o.1.name == full_name) {
+                    let full_name = format!("{}.{}", self.namespaces[ns_id].name, ty.get_name());
+                    if env
+                        .type_status(&func.ret.typ.full_name(&env.library))
+                        .ignored()
+                        && !env.analysis.objects.contains_key(&full_name)
+                        && !env.analysis.records.contains_key(&full_name)
+                        && !env.config.objects.iter().any(|o| o.1.name == full_name)
+                    {
                         errors.push(full_name);
                     }
                 }
@@ -1103,18 +1124,15 @@ impl Library {
                 if errors.len() > 1 {
                     let end = errors.pop().unwrap();
                     let begin = errors.join(", ");
-                    println!("[NOT GENERATED {}] {}{} because of {} and {}",
-                             kind,
-                             full_name,
-                             deprecated_version,
-                             begin,
-                             end);
+                    println!(
+                        "[NOT GENERATED {}] {}{} because of {} and {}",
+                        kind, full_name, deprecated_version, begin, end
+                    );
                 } else {
-                    println!("[NOT GENERATED {}] {}{} because of {}",
-                             kind,
-                             full_name,
-                             deprecated_version,
-                             errors[0]);
+                    println!(
+                        "[NOT GENERATED {}] {}{} because of {}",
+                        kind, full_name, deprecated_version, errors[0]
+                    );
                 }
             }
         }
@@ -1166,12 +1184,9 @@ impl Library {
 
         if let Some(ns) = ns {
             self.find_namespace(ns).and_then(|ns_id| {
-                self.namespace(ns_id).find_type(name).map(|id| {
-                    TypeId {
-                        ns_id,
-                        id,
-                    }
-                })
+                self.namespace(ns_id)
+                    .find_type(name)
+                    .map(|id| TypeId { ns_id, id })
             })
         } else if let Some(id) = self.namespace(current_ns_id).find_type(name) {
             Some(TypeId {
@@ -1196,15 +1211,14 @@ impl Library {
         let (ns, name) = split_namespace_name(name);
 
         if let Some(ns) = ns {
-            let ns_id = self.find_namespace(ns)
+            let ns_id = self
+                .find_namespace(ns)
                 .unwrap_or_else(|| self.add_namespace(ns));
             let ns = self.namespace_mut(ns_id);
-            let id = ns.find_type(name)
+            let id = ns
+                .find_type(name)
                 .unwrap_or_else(|| ns.add_type(name, None));
-            return TypeId {
-                ns_id,
-                id,
-            };
+            return TypeId { ns_id, id };
         }
 
         let id = self.namespace_mut(current_ns_id).add_type(name, None);
@@ -1243,10 +1257,7 @@ impl Library {
         let ns = self.namespace(ns_id);
         Box::new(ns.index.values().map(move |&id| {
             (
-                TypeId {
-                    ns_id,
-                    id,
-                },
+                TypeId { ns_id, id },
                 ns.types[id as usize].as_ref().unwrap(),
             )
         }))

@@ -1,19 +1,10 @@
-use std::fs::File;
-use std::io::prelude::*;
-use toml::{self, Value};
-use toml::value::Table;
+use std::{fs::File, io::prelude::*};
+use toml::{self, value::Table, Value};
 
-use crate::config::Config;
-use crate::env::Env;
-use crate::file_saver::save_to_file;
-use crate::nameutil;
-use crate::version::Version;
+use crate::{config::Config, env::Env, file_saver::save_to_file, nameutil, version::Version};
 
 pub fn generate(env: &Env) -> String {
-    info!(
-        "Generating sys Cargo.toml for {}",
-        env.config.library_name
-    );
+    info!("Generating sys Cargo.toml for {}", env.config.library_name);
 
     let path = env.config.target_path.join("Cargo.toml");
 
@@ -44,7 +35,11 @@ fn fill_empty(root: &mut Table, env: &Env, crate_name: &str) {
         let package = upsert_table(root, "package");
         set_string(package, "name", package_name);
         set_string(package, "version", "0.0.1");
-        set_string(package, "links", nameutil::crate_name(&env.config.library_name));
+        set_string(
+            package,
+            "links",
+            nameutil::crate_name(&env.config.library_name),
+        );
     }
 
     {
@@ -97,7 +92,8 @@ fn fill_in(root: &mut Table, env: &Env) {
 
     {
         let features = upsert_table(root, "features");
-        let versions = env.namespaces
+        let versions = env
+            .namespaces
             .main()
             .versions
             .iter()

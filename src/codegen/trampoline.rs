@@ -1,19 +1,23 @@
 use std::io::{Result, Write};
 
-use crate::env::Env;
-use crate::library;
-use crate::analysis::bounds::{BoundType, Bounds};
-use crate::analysis::ffi_type::ffi_type;
-use crate::analysis::ref_mode::RefMode;
-use crate::analysis::rust_type::parameter_rust_type;
-use crate::analysis::trampoline_parameters::*;
-use crate::analysis::trampolines::Trampoline;
-use super::general::version_condition;
-use super::return_value::ToReturnValue;
-use super::trampoline_from_glib::TrampolineFromGlib;
-use super::trampoline_to_glib::TrampolineToGlib;
-use crate::traits::IntoString;
-use crate::consts::TYPE_PARAMETERS_START;
+use super::{
+    general::version_condition, return_value::ToReturnValue,
+    trampoline_from_glib::TrampolineFromGlib, trampoline_to_glib::TrampolineToGlib,
+};
+use crate::{
+    analysis::{
+        bounds::{BoundType, Bounds},
+        ffi_type::ffi_type,
+        ref_mode::RefMode,
+        rust_type::parameter_rust_type,
+        trampoline_parameters::*,
+        trampolines::Trampoline,
+    },
+    consts::TYPE_PARAMETERS_START,
+    env::Env,
+    library,
+    traits::IntoString,
+};
 
 pub fn generate(
     w: &mut Write,
@@ -37,19 +41,13 @@ pub fn generate(
     writeln!(
         w,
         "unsafe extern \"C\" fn {}<{}F: {}>({}, f: glib_sys::gpointer){}{}",
-        analysis.name,
-        self_bound,
-        func_str,
-        params_str,
-        ret_str,
-        end,
+        analysis.name, self_bound, func_str, params_str, ret_str, end,
     )?;
     if in_trait {
         writeln!(
             w,
             "where {}: IsA<{}> {{",
-            TYPE_PARAMETERS_START,
-            object_name
+            TYPE_PARAMETERS_START, object_name
         )?;
     }
     writeln!(w, "\tlet f: &F = &*(f as *const F);")?;
@@ -77,8 +75,7 @@ pub fn func_string(
             // is sent to. But it will only be ever owned by a single thread
             // at a time, so signals can only be emitted from one thread at
             // a time and Sync is not needed
-            library::Concurrency::Send |
-            library::Concurrency::SendUnique => " + Send",
+            library::Concurrency::Send | library::Concurrency::SendUnique => " + Send",
             // If an object is Sync, it can be shared between threads, and as
             // such our callback can be called from arbitrary threads and needs
             // to be Send *AND* Sync
@@ -88,9 +85,7 @@ pub fn func_string(
 
         format!(
             "Fn({}){}{} + 'static",
-            param_str,
-            return_str,
-            concurrency_str
+            param_str, return_str, concurrency_str
         )
     } else {
         format!("({}){}", param_str, return_str,)
@@ -141,23 +136,30 @@ fn func_parameter(
     match bounds.get_parameter_alias_info(&par.name) {
         Some((t, bound_type)) => match bound_type {
             BoundType::NoWrapper => unreachable!(),
-            BoundType::IsA(_) => if *par.nullable {
-                format!("Option<&{}{}>", mut_str, t)
-            } else if let Some((from, to)) = bound_replace {
-                if from == t {
-                    format!("&{}{}", mut_str, to)
+            BoundType::IsA(_) => {
+                if *par.nullable {
+                    format!("Option<&{}{}>", mut_str, t)
+                } else if let Some((from, to)) = bound_replace {
+                    if from == t {
+                        format!("&{}{}", mut_str, to)
+                    } else {
+                        format!("&{}{}", mut_str, t)
+                    }
                 } else {
                     format!("&{}{}", mut_str, t)
                 }
-            } else {
-                format!("&{}{}", mut_str, t)
-            },
+            }
             BoundType::AsRef(_) => t.to_string(),
         },
         None => {
-            let rust_type =
-                parameter_rust_type(env, par.typ, par.direction, par.nullable, ref_mode,
-                                    library::ParameterScope::None);
+            let rust_type = parameter_rust_type(
+                env,
+                par.typ,
+                par.direction,
+                par.nullable,
+                ref_mode,
+                library::ParameterScope::None,
+            );
             rust_type.into_string().replace("Option<&", "&Option<")
         }
     }
@@ -215,8 +217,7 @@ fn transformation_vars(w: &mut Write, analysis: &Trampoline) -> Result<()> {
                 writeln!(
                     w,
                     "\tlet {} = from_glib_full(gtk_sys::gtk_tree_path_new_from_string({}));",
-                    transform.name,
-                    c_par.name
+                    transform.name, c_par.name
                 )?;
             }
         }

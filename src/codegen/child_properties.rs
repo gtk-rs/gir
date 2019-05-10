@@ -1,16 +1,17 @@
 use std::io::{Result, Write};
 
-use crate::analysis::child_properties::ChildProperty;
-use crate::analysis::rust_type::{parameter_rust_type, rust_type};
-use crate::chunk::Chunk;
-use crate::env::Env;
-use crate::library;
-use crate::writer::primitives::tabs;
-use crate::nameutil;
-use super::general::doc_hidden;
-use super::property_body;
-use crate::traits::IntoString;
-use crate::writer::ToCode;
+use super::{general::doc_hidden, property_body};
+use crate::{
+    analysis::{
+        child_properties::ChildProperty,
+        rust_type::{parameter_rust_type, rust_type},
+    },
+    chunk::Chunk,
+    env::Env,
+    library, nameutil,
+    traits::IntoString,
+    writer::{primitives::tabs, ToCode},
+};
 
 pub fn generate(
     w: &mut Write,
@@ -20,24 +21,8 @@ pub fn generate(
     only_declaration: bool,
     indent: usize,
 ) -> Result<()> {
-    generate_func(
-        w,
-        env,
-        prop,
-        in_trait,
-        only_declaration,
-        indent,
-        true,
-    )?;
-    generate_func(
-        w,
-        env,
-        prop,
-        in_trait,
-        only_declaration,
-        indent,
-        false,
-    )?;
+    generate_func(w, env, prop, in_trait, only_declaration, indent, true)?;
+    generate_func(w, env, prop, in_trait, only_declaration, indent, false)?;
 
     Ok(())
 }
@@ -54,11 +39,7 @@ fn generate_func(
     let pub_prefix = if in_trait { "" } else { "pub " };
     let decl_suffix = if only_declaration { ";" } else { " {" };
     let type_string = rust_type(env, prop.typ);
-    let comment_prefix = if type_string.is_err() {
-        "//"
-    } else {
-        ""
-    };
+    let comment_prefix = if type_string.is_err() { "//" } else { "" };
 
     writeln!(w)?;
 
@@ -99,10 +80,15 @@ fn declaration(env: &Env, prop: &ChildProperty, is_get: bool) -> String {
     }
     let return_str = if is_get {
         let dir = library::ParameterDirection::Return;
-        let ret_type =
-            parameter_rust_type(env, prop.typ, dir, prop.nullable, prop.get_out_ref_mode,
-                                library::ParameterScope::None)
-                .into_string();
+        let ret_type = parameter_rust_type(
+            env,
+            prop.typ,
+            dir,
+            prop.nullable,
+            prop.get_out_ref_mode,
+            library::ParameterScope::None,
+        )
+        .into_string();
         format!(" -> {}", ret_type)
     } else {
         "".to_string()

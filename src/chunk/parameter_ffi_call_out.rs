@@ -1,5 +1,4 @@
-use crate::analysis;
-use crate::library;
+use crate::{analysis, library};
 
 #[derive(Clone, Debug)]
 pub struct Parameter {
@@ -23,7 +22,7 @@ impl Parameter {
 }
 
 impl<'a> From<&'a library::Parameter> for Parameter {
-    fn from(orig: &'a library::Parameter) -> Parameter{
+    fn from(orig: &'a library::Parameter) -> Parameter {
         Parameter {
             name: orig.name.clone(),
             typ: orig.typ,

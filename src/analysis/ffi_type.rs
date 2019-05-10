@@ -1,19 +1,23 @@
-use crate::analysis::c_type::{implements_c_type, rustify_pointers};
-use crate::analysis::rust_type::{Result, TypeError};
-use crate::env::Env;
-use crate::library::*;
-use crate::traits::*;
+use crate::{
+    analysis::{
+        c_type::{implements_c_type, rustify_pointers},
+        rust_type::{Result, TypeError},
+    },
+    env::Env,
+    library::*,
+    traits::*,
+};
 
 pub fn used_ffi_type(env: &Env, type_id: TypeId, c_type: &str) -> Option<String> {
     let (_ptr, inner) = rustify_pointers(c_type);
     let type_ = ffi_inner(env, type_id, &inner);
-    type_
-        .ok()
-        .and_then(|type_name| if type_name.find(':').is_some() {
+    type_.ok().and_then(|type_name| {
+        if type_name.find(':').is_some() {
             Some(type_name)
         } else {
             None
-        })
+        }
+    })
 }
 
 pub fn ffi_type(env: &Env, tid: TypeId, c_type: &str) -> Result {
@@ -21,23 +25,24 @@ pub fn ffi_type(env: &Env, tid: TypeId, c_type: &str) -> Result {
     let res = if ptr.is_empty() {
         if let Some(c_tid) = env.library.find_type(0, c_type) {
             // Fast track plain fundamental types avoiding some checks
-            if env.library
+            if env
+                .library
                 .type_(c_tid)
                 .maybe_ref_as::<Fundamental>()
                 .is_some()
             {
                 match *env.library.type_(tid) {
-                    Type::FixedArray(_, size, _) => ffi_inner(env, c_tid, c_type)
-                        .map_any(|s| format!("[{}; {}]", s, size)),
+                    Type::FixedArray(_, size, _) => {
+                        ffi_inner(env, c_tid, c_type).map_any(|s| format!("[{}; {}]", s, size))
+                    }
                     Type::Class(Class {
                         c_type: ref expected,
                         ..
-                    }) |
-                    Type::Interface(Interface {
+                    })
+                    | Type::Interface(Interface {
                         c_type: ref expected,
                         ..
-                    }) if c_type == "gpointer" =>
-                    {
+                    }) if c_type == "gpointer" => {
                         info!("[c:type `gpointer` instead of `*mut {}`, fixing]", expected);
                         ffi_inner(env, tid, expected).map_any(|s| format!("*mut {}", s))
                     }
@@ -118,63 +123,67 @@ fn ffi_inner(env: &Env, tid: TypeId, inner: &str) -> Result {
         Type::FixedArray(inner_tid, size, _) => {
             ffi_inner(env, inner_tid, inner).map_any(|s| format!("[{}; {}]", s, size))
         }
-        Type::Array(..) |
-        Type::PtrArray(..) |
-        Type::List(..) |
-        Type::SList(..) |
-        Type::HashTable(..) => fix_name(env, tid, inner),
-        _ => if let Some(glib_name) = env.library.type_(tid).get_glib_name() {
-            if inner != glib_name {
-                if implements_c_type(env, tid, inner) {
-                    info!(
-                        "[c:type {} of {} <: {}, fixing]",
-                        glib_name,
-                        env.library.type_(tid).get_name(),
-                        inner
-                    );
-                    fix_name(env, tid, glib_name)
+        Type::Array(..)
+        | Type::PtrArray(..)
+        | Type::List(..)
+        | Type::SList(..)
+        | Type::HashTable(..) => fix_name(env, tid, inner),
+        _ => {
+            if let Some(glib_name) = env.library.type_(tid).get_glib_name() {
+                if inner != glib_name {
+                    if implements_c_type(env, tid, inner) {
+                        info!(
+                            "[c:type {} of {} <: {}, fixing]",
+                            glib_name,
+                            env.library.type_(tid).get_name(),
+                            inner
+                        );
+                        fix_name(env, tid, glib_name)
+                    } else {
+                        let msg = format!(
+                            "[c:type mismatch {} != {} of {}]",
+                            inner,
+                            glib_name,
+                            env.library.type_(tid).get_name()
+                        );
+                        warn_main!(tid, "{}", msg);
+                        Err(TypeError::Mismatch(msg))
+                    }
                 } else {
-                    let msg = format!(
-                        "[c:type mismatch {} != {} of {}]",
-                        inner,
-                        glib_name,
-                        env.library.type_(tid).get_name()
-                    );
-                    warn_main!(tid, "{}", msg);
-                    Err(TypeError::Mismatch(msg))
+                    fix_name(env, tid, inner)
                 }
             } else {
-                fix_name(env, tid, inner)
+                let msg = format!(
+                    "[Missing glib_name of {}, can't match != {}]",
+                    env.library.type_(tid).get_name(),
+                    inner
+                );
+                warn_main!(tid, "{}", msg);
+                Err(TypeError::Mismatch(msg))
             }
-        } else {
-            let msg = format!(
-                "[Missing glib_name of {}, can't match != {}]",
-                env.library.type_(tid).get_name(),
-                inner
-            );
-            warn_main!(tid, "{}", msg);
-            Err(TypeError::Mismatch(msg))
-        },
+        }
     }
 }
 
 fn fix_name(env: &Env, type_id: TypeId, name: &str) -> Result {
     if type_id.ns_id == INTERNAL_NAMESPACE {
         match *env.library.type_(type_id) {
-            Type::Array(..) |
-            Type::PtrArray(..) |
-            Type::List(..) |
-            Type::SList(..) |
-            Type::HashTable(..) => Ok(format!("glib_sys::{}", name)),
+            Type::Array(..)
+            | Type::PtrArray(..)
+            | Type::List(..)
+            | Type::SList(..)
+            | Type::HashTable(..) => Ok(format!("glib_sys::{}", name)),
             _ => Ok(name.into()),
         }
     } else {
         let name_with_prefix = format!(
             "{}::{}",
-            &env.namespaces[type_id.ns_id].sys_crate_name,
-            name
+            &env.namespaces[type_id.ns_id].sys_crate_name, name
         );
-        if env.type_status_sys(&type_id.full_name(&env.library)).ignored() {
+        if env
+            .type_status_sys(&type_id.full_name(&env.library))
+            .ignored()
+        {
             Err(TypeError::Ignored(name_with_prefix))
         } else {
             Ok(name_with_prefix)

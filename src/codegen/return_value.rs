@@ -1,11 +1,12 @@
-use crate::analysis;
-use crate::analysis::ref_mode::RefMode;
-use crate::env::Env;
-use crate::library::{self, ParameterDirection};
-use crate::analysis::conversion_type::ConversionType;
-use crate::analysis::rust_type::parameter_rust_type;
-use crate::traits::*;
-use crate::nameutil;
+use crate::{
+    analysis::{
+        self, conversion_type::ConversionType, ref_mode::RefMode, rust_type::parameter_rust_type,
+    },
+    env::Env,
+    library::{self, ParameterDirection},
+    nameutil,
+    traits::*,
+};
 
 pub trait ToReturnValue {
     fn to_return_value(&self, env: &Env, is_trampoline: bool) -> String;
@@ -13,11 +14,19 @@ pub trait ToReturnValue {
 
 impl ToReturnValue for library::Parameter {
     fn to_return_value(&self, env: &Env, is_trampoline: bool) -> String {
-        let rust_type =
-            parameter_rust_type(env, self.typ, self.direction, self.nullable, RefMode::None,
-                                self.scope);
+        let rust_type = parameter_rust_type(
+            env,
+            self.typ,
+            self.direction,
+            self.nullable,
+            RefMode::None,
+            self.scope,
+        );
         let mut name = rust_type.into_string();
-        if is_trampoline && self.direction == library::ParameterDirection::Return && name == "GString" {
+        if is_trampoline
+            && self.direction == library::ParameterDirection::Return
+            && name == "GString"
+        {
             name = "String".to_owned();
         }
         let type_str = match ConversionType::of(env, self.typ) {
@@ -48,16 +57,20 @@ pub fn out_parameter_as_return_parts(
         .filter(|p| p.array_length.is_none())
         .count();
     match analysis.outs.mode {
-        Normal | Combined => if num_outs > 1 {
-            ("(", ")")
-        } else {
-            ("", "")
-        },
-        Optional => if num_outs > 1 {
-            ("Option<(", ")>")
-        } else {
-            ("Option<", ">")
-        },
+        Normal | Combined => {
+            if num_outs > 1 {
+                ("(", ")")
+            } else {
+                ("", "")
+            }
+        }
+        Optional => {
+            if num_outs > 1 {
+                ("Option<(", ")>")
+            } else {
+                ("Option<", ">")
+            }
+        }
         Throws(..) => {
             if num_outs == 1 + 1 {
                 //if only one parameter except "glib::Error"
@@ -92,10 +105,12 @@ pub fn out_parameters_as_return(env: &Env, analysis: &analysis::functions::Info)
                 .c_parameters
                 .iter()
                 .enumerate()
-                .filter_map(|(pos, orig_par)| if orig_par.name == mangled_par_name {
-                    Some(pos)
-                } else {
-                    None
+                .filter_map(|(pos, orig_par)| {
+                    if orig_par.name == mangled_par_name {
+                        Some(pos)
+                    } else {
+                        None
+                    }
                 })
                 .next()
                 .unwrap();

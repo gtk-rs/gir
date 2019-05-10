@@ -1,20 +1,25 @@
-use crate::analysis::imports::Imports;
-use crate::analysis::namespaces;
-use crate::codegen::general::{self, cfg_deprecated, derives, version_condition, version_condition_string};
-use crate::config::gobjects::GObject;
-use crate::env::Env;
-use crate::file_saver;
-use crate::library::*;
-use crate::nameutil::enum_member_name;
-use std::collections::HashSet;
-use std::io::prelude::*;
-use std::io::Result;
-use std::path::Path;
-use crate::traits::*;
-use crate::version::Version;
+use crate::{
+    analysis::{imports::Imports, namespaces},
+    codegen::general::{
+        self, cfg_deprecated, derives, version_condition, version_condition_string,
+    },
+    config::gobjects::GObject,
+    env::Env,
+    file_saver,
+    library::*,
+    nameutil::enum_member_name,
+    traits::*,
+    version::Version,
+};
+use std::{
+    collections::HashSet,
+    io::{prelude::*, Result},
+    path::Path,
+};
 
 pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>) {
-    let configs: Vec<&GObject> = env.config
+    let configs: Vec<&GObject> = env
+        .config
         .objects
         .values()
         .filter(|c| {
@@ -43,7 +48,7 @@ pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>) {
     }
 
     if !has_any {
-        return
+        return;
     }
 
     let mut imports = Imports::new(&env.library);
@@ -109,7 +114,10 @@ fn generate_enum(env: &Env, w: &mut Write, enum_: &Enumeration, config: &GObject
             continue;
         }
         vals.insert(member.value.clone());
-        let deprecated_version = member_config.iter().filter_map(|m| m.deprecated_version).next();
+        let deprecated_version = member_config
+            .iter()
+            .filter_map(|m| m.deprecated_version)
+            .next();
         let version = member_config.iter().filter_map(|m| m.version).next();
         members.push(Member {
             name: enum_member_name(&member.name),
@@ -123,24 +131,15 @@ fn generate_enum(env: &Env, w: &mut Write, enum_: &Enumeration, config: &GObject
     cfg_deprecated(w, env, enum_.deprecated_version, false, 0)?;
     version_condition(w, env, enum_.version, false, 0)?;
     if config.must_use {
-        writeln!(
-            w,
-            "#[must_use]"
-        )?;
+        writeln!(w, "#[must_use]")?;
     }
 
     if let Some(ref d) = config.derives {
         derives(w, &d, 1)?;
     } else {
-        writeln!(
-            w,
-            "#[derive(Debug, Eq, PartialEq, Ord, PartialOrd, Hash)]"
-        )?;
+        writeln!(w, "#[derive(Debug, Eq, PartialEq, Ord, PartialOrd, Hash)]")?;
     }
-    writeln!(
-            w,
-            "#[derive(Clone, Copy)]"
-    )?;
+    writeln!(w, "#[derive(Clone, Copy)]")?;
 
     writeln!(w, "pub enum {} {{", enum_.name)?;
     for member in &members {
@@ -161,20 +160,25 @@ fn generate_enum(env: &Env, w: &mut Write, enum_: &Enumeration, config: &GObject
         // Generate Display trait implementation.
         cfg_deprecated(w, env, enum_.deprecated_version, false, 0)?;
         version_condition(w, env, enum_.version, false, 0)?;
-        writeln!(w,
-                      "impl fmt::Display for {0} {{\n\
-                          \tfn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {{\n\
-                            \t\twrite!(f, \"{0}::{{}}\", match *self {{", enum_.name)?;
+        writeln!(
+            w,
+            "impl fmt::Display for {0} {{\n\
+             \tfn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {{\n\
+             \t\twrite!(f, \"{0}::{{}}\", match *self {{",
+            enum_.name
+        )?;
         for member in &members {
             cfg_deprecated(w, env, member.deprecated_version, false, 3)?;
             version_condition(w, env, member.version, false, 3)?;
             writeln!(w, "\t\t\t{0}::{1} => \"{1}\",", enum_.name, member.name)?;
         }
-        writeln!(w,
-                      "\t\t\t_ => \"Unknown\",\n\
-                  \t\t}})\n\
-                \t}}\n\
-            }}\n")?;
+        writeln!(
+            w,
+            "\t\t\t_ => \"Unknown\",\n\
+             \t\t}})\n\
+             \t}}\n\
+             }}\n"
+        )?;
     }
 
     // Generate ToGlib trait implementation.
@@ -198,17 +202,10 @@ impl ToGlib for {name} {{
         writeln!(
             w,
             "\t\t\t{}::{} => {}::{},",
-            enum_.name,
-            member.name,
-            sys_crate_name,
-            member.c_name
+            enum_.name, member.name, sys_crate_name, member.c_name
         )?;
     }
-    writeln!(
-        w,
-        "\t\t\t{}::__Unknown(value) => value",
-        enum_.name
-    )?;
+    writeln!(w, "\t\t\t{}::__Unknown(value) => value", enum_.name)?;
     writeln!(
         w,
         "{}",
@@ -244,16 +241,10 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
         writeln!(
             w,
             "\t\t\t{} => {}::{},",
-            member.value,
-            enum_.name,
-            member.name
+            member.value, enum_.name, member.name
         )?;
     }
-    writeln!(
-        w,
-        "\t\t\tvalue => {}::__Unknown(value),",
-        enum_.name
-    )?;
+    writeln!(w, "\t\t\tvalue => {}::__Unknown(value),", enum_.name)?;
     writeln!(
         w,
         "{}",
@@ -295,19 +286,13 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
             writeln!(
                 w,
                 "\t\t\t{} => Some({}::{}),",
-                member.value,
-                enum_.name,
-                member.name
+                member.value, enum_.name, member.name
             )?;
         }
         if has_failed_member {
             writeln!(w, "\t\t\t_ => Some({}::Failed),", enum_.name)?;
         } else {
-            writeln!(
-                w,
-                "\t\t\tvalue => Some({}::__Unknown(value)),",
-                enum_.name
-            )?;
+            writeln!(w, "\t\t\tvalue => Some({}::__Unknown(value)),", enum_.name)?;
         }
 
         writeln!(

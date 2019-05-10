@@ -30,15 +30,13 @@ impl Ident {
                 .map_err(|e| {
                     error!(
                         "Bad pattern `{}` in {} for `{}`: {}",
-                        s,
-                        what,
-                        object_name,
-                        e
+                        s, what, object_name, e
                     );
                     e
                 })
                 .ok(),
-            None => toml.lookup("name")
+            None => toml
+                .lookup("name")
                 .and_then(Value::as_str)
                 .map(|s| Ident::Name(s.into())),
         }

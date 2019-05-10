@@ -52,9 +52,7 @@ pub trait IsIncomplete {
 impl IsIncomplete for Fundamental {
     fn is_incomplete(&self, _lib: &Library) -> bool {
         match *self {
-            Fundamental::None
-            | Fundamental::Unsupported
-            | Fundamental::VarArgs => true,
+            Fundamental::None | Fundamental::Unsupported | Fundamental::VarArgs => true,
             _ => false,
         }
     }
@@ -158,15 +156,15 @@ impl IsIncomplete for Type {
             Type::Union(ref union) => union.is_incomplete(lib),
             Type::Function(ref function) => function.is_incomplete(lib),
             Type::Interface(..) => true,
-            Type::Custom(..) |
-            Type::Enumeration(..) |
-            Type::Bitfield(..) |
-            Type::Array(..) |
-            Type::CArray(..) |
-            Type::PtrArray(..) |
-            Type::HashTable(..) |
-            Type::List(..) |
-            Type::SList(..) => false,
+            Type::Custom(..)
+            | Type::Enumeration(..)
+            | Type::Bitfield(..)
+            | Type::Array(..)
+            | Type::CArray(..)
+            | Type::PtrArray(..)
+            | Type::HashTable(..)
+            | Type::List(..)
+            | Type::SList(..) => false,
         }
     }
 }
@@ -212,18 +210,18 @@ impl IsExternal for Type {
             Type::Record(ref record) => record.is_external(lib),
             Type::Union(ref union) => union.is_external(lib),
             Type::Interface(..) => true,
-            Type::Custom(..) |
-            Type::Fundamental(..) |
-            Type::Enumeration(..) |
-            Type::Bitfield(..) |
-            Type::Function(..) |
-            Type::Array(..) |
-            Type::CArray(..) |
-            Type::FixedArray(..) |
-            Type::PtrArray(..) |
-            Type::HashTable(..) |
-            Type::List(..) |
-            Type::SList(..) => false,
+            Type::Custom(..)
+            | Type::Fundamental(..)
+            | Type::Enumeration(..)
+            | Type::Bitfield(..)
+            | Type::Function(..)
+            | Type::Array(..)
+            | Type::CArray(..)
+            | Type::FixedArray(..)
+            | Type::PtrArray(..)
+            | Type::HashTable(..)
+            | Type::List(..)
+            | Type::SList(..) => false,
         }
     }
 }
@@ -249,7 +247,9 @@ impl ImplementsDebug for Field {
     fn implements_debug(&self, lib: &Library) -> bool {
         match *lib.type_(self.typ) {
             Type::FixedArray(_, size, _) => size <= RUST_DERIVE_ARRAY_SIZE_LIMIT,
-            Type::Function(Function {ref parameters, ..}) => parameters.len() <= RUST_DERIVE_PARAM_SIZE_LIMIT,
+            Type::Function(Function { ref parameters, .. }) => {
+                parameters.len() <= RUST_DERIVE_PARAM_SIZE_LIMIT
+            }
             _ => true,
         }
     }

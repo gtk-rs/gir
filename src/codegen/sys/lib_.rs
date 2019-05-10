@@ -1,20 +1,20 @@
-use std::collections::HashMap;
-use std::fs;
-use std::io::{Result, Write};
+use std::{
+    collections::HashMap,
+    fs,
+    io::{Result, Write},
+};
 
-use crate::codegen::general::{self, cfg_condition, version_condition};
-use crate::config::ExternalLibrary;
-use crate::config::constants;
-use crate::env::Env;
-use crate::file_saver::*;
-use crate::library::*;
-use crate::nameutil::*;
-use super::ffi_type::ffi_type;
-use super::fields;
-use super::functions;
-use super::statics;
-use crate::traits::*;
-use crate::version::Version;
+use super::{ffi_type::ffi_type, fields, functions, statics};
+use crate::{
+    codegen::general::{self, cfg_condition, version_condition},
+    config::{constants, ExternalLibrary},
+    env::Env,
+    file_saver::*,
+    library::*,
+    nameutil::*,
+    traits::*,
+    version::Version,
+};
 
 pub fn generate(env: &Env) {
     info!("Generating sys for {}", env.config.library_name);
@@ -161,13 +161,7 @@ fn generate_aliases(w: &mut Write, env: &Env, items: &[&Alias]) -> Result<()> {
             Ok(x) => ("", x),
             x @ Err(..) => ("//", x.into_string()),
         };
-        writeln!(
-            w,
-            "{}pub type {} = {};",
-            comment,
-            item.c_identifier,
-            c_type
-        )?;
+        writeln!(w, "{}pub type {} = {};", comment, item.c_identifier, c_type)?;
     }
     if !items.is_empty() {
         writeln!(w)?;
@@ -254,7 +248,8 @@ fn generate_constants(w: &mut Write, env: &Env, constants: &[Constant]) -> Resul
             } else {
                 value = format!("{}GFALSE", prefix);
             }
-        } else if env.library
+        } else if env
+            .library
             .type_(constant.typ)
             .maybe_ref_as::<Bitfield>()
             .is_some()
@@ -265,7 +260,7 @@ fn generate_constants(w: &mut Write, env: &Env, constants: &[Constant]) -> Resul
 
         if let Some(obj) = config {
             let configured_constants = obj.constants.matched(&full_name);
-            generate_constant_cfg_configure (w, &configured_constants, !comment.is_empty())?;
+            generate_constant_cfg_configure(w, &configured_constants, !comment.is_empty())?;
         }
 
         writeln!(
@@ -309,9 +304,7 @@ fn generate_enums(w: &mut Write, env: &Env, items: &[&Enumeration]) -> Result<()
             writeln!(
                 w,
                 "pub const {}: {} = {};",
-                member.c_identifier,
-                item.c_type,
-                member.value,
+                member.c_identifier, item.c_type, member.value,
             )?;
             vals.insert(member.value.clone(), (member.name.clone(), version));
         }
@@ -347,12 +340,12 @@ fn generate_debug_impl(w: &mut Write, name: &str, impl_content: &str) -> Result<
     writeln!(
         w,
         "impl ::std::fmt::Debug for {} {{\n\
-            \tfn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {{\n\
-                \t\t{}\n\
-            \t}}\n\
-        }}\n",
-        name,
-        impl_content)
+         \tfn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {{\n\
+         \t\t{}\n\
+         \t}}\n\
+         }}\n",
+        name, impl_content
+    )
 }
 
 fn generate_classes_structs(w: &mut Write, env: &Env, classes: &[&Class]) -> Result<()> {
@@ -383,16 +376,14 @@ fn generate_interfaces_structs(w: &mut Write, env: &Env, interfaces: &[&Interfac
         if !env.type_status_sys(&full_name).need_generate() {
             continue;
         }
-        writeln!(
-            w,
-            "#[repr(C)]\npub struct {}(c_void);\n",
-            interface.c_type
-        )?;
+        writeln!(w, "#[repr(C)]\npub struct {}(c_void);\n", interface.c_type)?;
         generate_debug_impl(
             w,
             &interface.c_type,
-            &format!("write!(f, \"{name} @ {{:?}}\", self as *const _)",
-                     name=interface.c_type)
+            &format!(
+                "write!(f, \"{name} @ {{:?}}\", self as *const _)",
+                name = interface.c_type
+            ),
         )?;
     }
     if !interfaces.is_empty() {
@@ -434,7 +425,8 @@ fn generate_records(w: &mut Write, env: &Env, records: &[&Record]) -> Result<()>
 }
 
 fn generate_ghooklist(w: &mut Write) -> Result<()> {
-    w.write_all(br#"#[repr(C)]
+    w.write_all(
+        br#"#[repr(C)]
 #[derive(Copy, Clone)]
 pub struct GHookList {
     pub seq_id: c_ulong,
@@ -454,14 +446,15 @@ impl ::std::fmt::Debug for GHookList {
     }
 }
 
-"#)
+"#,
+    )
 }
 
 fn generate_disguised(w: &mut Write, record: &Record) -> Result<()> {
     writeln!(w, "#[repr(C)]")?;
-    writeln!(w, "pub struct _{name}(c_void);", name=record.c_type)?;
+    writeln!(w, "pub struct _{name}(c_void);", name = record.c_type)?;
     writeln!(w)?;
-    writeln!(w, "pub type {name} = *mut _{name};", name=record.c_type)?;
+    writeln!(w, "pub type {name} = *mut _{name};", name = record.c_type)?;
     writeln!(w)
 }
 
@@ -473,19 +466,27 @@ fn generate_from_fields(w: &mut Write, fields: &fields::Fields, align: Option<u3
     }
     let traits = fields.derived_traits().join(", ");
     if !traits.is_empty() {
-        writeln!(w, "#[derive({traits})]", traits=traits)?;
+        writeln!(w, "#[derive({traits})]", traits = traits)?;
     }
     if fields.external {
         // It would be nice to represent those using extern types
         // from RFC 1861, once they are available in stable Rust.
         // https://github.com/rust-lang/rust/issues/43467
-        writeln!(w, "pub struct {name}(c_void);", name=&fields.name)?;
+        writeln!(w, "pub struct {name}(c_void);", name = &fields.name)?;
     } else {
-        writeln!(w, "pub {kind} {name} {{", kind=fields.kind, name=&fields.name)?;
+        writeln!(
+            w,
+            "pub {kind} {name} {{",
+            kind = fields.kind,
+            name = &fields.name
+        )?;
         for field in &fields.fields {
-            writeln!(w, "\tpub {field_name}: {field_type},",
-                          field_name=&field.name,
-                          field_type=&field.typ)?;
+            writeln!(
+                w,
+                "\tpub {field_name}: {field_type},",
+                field_name = &field.name,
+                field_type = &field.typ
+            )?;
         }
         if let Some(ref reason) = fields.truncated {
             writeln!(w, "\t_truncated_record_marker: c_void,")?;
@@ -496,14 +497,28 @@ fn generate_from_fields(w: &mut Write, fields: &fields::Fields, align: Option<u3
     writeln!(w)?;
 
     cfg_condition(w, &fields.cfg_condition, false, 0)?;
-    writeln!(w, "impl ::std::fmt::Debug for {name} {{", name=&fields.name)?;
-    writeln!(w, "\tfn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {{")?;
-    writeln!(w, "\t\tf.debug_struct(&format!(\"{name} @ {{:?}}\", self as *const _))", name=&fields.name)?;
+    writeln!(
+        w,
+        "impl ::std::fmt::Debug for {name} {{",
+        name = &fields.name
+    )?;
+    writeln!(
+        w,
+        "\tfn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {{"
+    )?;
+    writeln!(
+        w,
+        "\t\tf.debug_struct(&format!(\"{name} @ {{:?}}\", self as *const _))",
+        name = &fields.name
+    )?;
     for field in fields.fields.iter().filter(|f| f.debug) {
         // TODO: We should generate debug for field manually if automatic one is not available.
-        writeln!(w, "\t\t .field(\"{field_name}\", {field_get})",
-                      field_name=&field.name,
-                      field_get=&field.access_str())?;
+        writeln!(
+            w,
+            "\t\t .field(\"{field_name}\", {field_get})",
+            field_name = &field.name,
+            field_get = &field.access_str()
+        )?;
     }
     writeln!(w, "\t\t .finish()")?;
     writeln!(w, "\t}}")?;

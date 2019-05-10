@@ -1,5 +1,5 @@
-use crate::library;
 use super::parameter_ffi_call_out;
+use crate::library;
 
 #[derive(Clone)]
 pub struct Mode {

@@ -1,12 +1,11 @@
-use crate::config;
-use crate::config::gobjects::GObject;
-use crate::env::Env;
-use crate::library;
-use crate::nameutil;
-use super::trampolines;
-use super::imports::Imports;
-use crate::traits::*;
-use crate::version::Version;
+use super::{imports::Imports, trampolines};
+use crate::{
+    config::{self, gobjects::GObject},
+    env::Env,
+    library, nameutil,
+    traits::*,
+    version::Version,
+};
 
 #[derive(Debug)]
 pub struct Info {

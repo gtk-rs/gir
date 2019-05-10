@@ -1,13 +1,13 @@
 use std::io::{Result, Write};
 
-use crate::codegen::general::{cfg_condition, version_condition};
-use crate::config::functions::Function;
-use crate::config::gobjects::GObject;
-use crate::env::Env;
-use crate::library;
-use crate::nameutil;
 use super::ffi_type::*;
-use crate::traits::*;
+use crate::{
+    codegen::general::{cfg_condition, version_condition},
+    config::{functions::Function, gobjects::GObject},
+    env::Env,
+    library, nameutil,
+    traits::*,
+};
 
 //used as glib:get-type in GLib-2.0.gir
 const INTERN: &str = "intern";
@@ -89,14 +89,7 @@ pub fn generate_enums_funcs(
         let name = format!("{}.{}", env.config.library_name, en.name);
         let obj = env.config.objects.get(&name).unwrap_or(&DEFAULT_OBJ);
         let glib_get_type = en.glib_get_type.as_ref().unwrap_or(&intern_str);
-        generate_object_funcs(
-            w,
-            env,
-            obj,
-            &en.c_type,
-            glib_get_type,
-            &en.functions,
-        )?;
+        generate_object_funcs(w, env, obj, &en.c_type, glib_get_type, &en.functions)?;
     }
 
     Ok(())
@@ -112,14 +105,7 @@ pub fn generate_unions_funcs(w: &mut Write, env: &Env, unions: &[&library::Union
         let name = format!("{}.{}", env.config.library_name, union.name);
         let obj = env.config.objects.get(&name).unwrap_or(&DEFAULT_OBJ);
         let glib_get_type = union.glib_get_type.as_ref().unwrap_or(&intern_str);
-        generate_object_funcs(
-            w,
-            env,
-            obj,
-            c_type,
-            glib_get_type,
-            &union.functions,
-        )?;
+        generate_object_funcs(w, env, obj, c_type, glib_get_type, &union.functions)?;
     }
 
     Ok(())
@@ -209,11 +195,7 @@ fn generate_object_funcs(
         let name = func.c_identifier.as_ref().unwrap();
         // since we work with gir-files from Linux, some function names need to be adjusted
         if is_windows_utf8 {
-            writeln!(
-                w,
-                "    {}#[cfg(any(windows, feature = \"dox\"))]",
-                comment
-            )?;
+            writeln!(w, "    {}#[cfg(any(windows, feature = \"dox\"))]", comment)?;
             writeln!(w, "    {}pub fn {}_utf8{};", comment, name, sig)?;
             version_condition(w, env, func.version, commented, 1)?;
         }

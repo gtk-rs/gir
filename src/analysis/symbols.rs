@@ -1,6 +1,8 @@
-use crate::analysis::namespaces::{self, NsId};
-use crate::case::CaseExt;
-use crate::library::*;
+use crate::{
+    analysis::namespaces::{self, NsId},
+    case::CaseExt,
+    library::*,
+};
 use std::collections::HashMap;
 
 #[derive(Clone, Debug, Default)]
@@ -108,8 +110,8 @@ pub fn run(library: &Library, namespaces: &namespaces::Info) -> Info {
                     ref members,
                     ref functions,
                     ..
-                }) |
-                Type::Bitfield(Bitfield {
+                })
+                | Type::Bitfield(Bitfield {
                     ref name,
                     ref c_type,
                     ref members,
@@ -139,14 +141,14 @@ pub fn run(library: &Library, namespaces: &namespaces::Info) -> Info {
                     ref c_type,
                     ref functions,
                     ..
-                }) |
-                Type::Class(Class {
+                })
+                | Type::Class(Class {
                     ref name,
                     ref c_type,
                     ref functions,
                     ..
-                }) |
-                Type::Interface(Interface {
+                })
+                | Type::Interface(Interface {
                     ref name,
                     ref c_type,
                     ref functions,

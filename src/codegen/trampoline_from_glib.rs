@@ -1,8 +1,9 @@
-use crate::analysis::rust_type::rust_type;
-use crate::analysis::trampoline_parameters::Transformation;
-use crate::env::Env;
-use crate::library;
-use crate::traits::*;
+use crate::{
+    analysis::{rust_type::rust_type, trampoline_parameters::Transformation},
+    env::Env,
+    library,
+    traits::*,
+};
 
 pub trait TrampolineFromGlib {
     fn trampoline_from_glib(&self, env: &Env, need_downcast: bool) -> String;
@@ -46,8 +47,7 @@ pub fn from_glib_xxx(transfer: library::Transfer, is_borrow: bool) -> (String, S
 
 fn is_need_type_name(env: &Env, type_id: library::TypeId) -> bool {
     if type_id.ns_id == library::INTERNAL_NAMESPACE {
-        use crate::library::Type::*;
-        use crate::library::Fundamental::*;
+        use crate::library::{Fundamental::*, Type::*};
         match *env.type_(type_id) {
             Fundamental(fund) if fund == Utf8 => true,
             Fundamental(fund) if fund == Filename => true,

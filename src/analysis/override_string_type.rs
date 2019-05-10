@@ -1,6 +1,4 @@
-use crate::config;
-use crate::env::Env;
-use crate::library::*;
+use crate::{config, env::Env, library::*};
 
 pub fn override_string_type_parameter(
     env: &Env,
@@ -26,16 +24,12 @@ pub fn override_string_type_return(
     apply(env, typ, string_type)
 }
 
-fn apply(
-    env: &Env,
-    type_id: TypeId,
-    string_type: Option<config::StringType>,
-) -> TypeId {
+fn apply(env: &Env, type_id: TypeId, string_type: Option<config::StringType>) -> TypeId {
     use crate::library::*;
     let string_type = if let Some(string_type) = string_type {
         string_type
     } else {
-      return type_id;
+        return type_id;
     };
 
     let replace = {

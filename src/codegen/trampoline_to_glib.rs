@@ -1,6 +1,4 @@
-use crate::analysis::conversion_type::ConversionType;
-use crate::library;
-use crate::env;
+use crate::{analysis::conversion_type::ConversionType, env, library};
 
 pub trait TrampolineToGlib {
     fn trampoline_to_glib(&self, env: &env::Env) -> String;

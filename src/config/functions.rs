@@ -1,13 +1,14 @@
 use std::str::FromStr;
 
-use crate::library::Nullable;
-use super::error::TomlHelper;
-use super::ident::Ident;
-use super::parameter_matchable::Functionlike;
-use super::parsable::{Parsable, Parse};
-use super::string_type::StringType;
+use super::{
+    error::TomlHelper,
+    ident::Ident,
+    parameter_matchable::Functionlike,
+    parsable::{Parsable, Parse},
+    string_type::StringType,
+};
+use crate::{library::Nullable, version::Version};
 use toml::Value;
-use crate::version::Version;
 
 #[derive(Clone, Debug)]
 pub struct Parameter {
@@ -33,22 +34,31 @@ impl Parse for Parameter {
             }
         };
         toml.check_unwanted(
-            &["const", "nullable", "length_of", "name", "pattern", "string_type"],
+            &[
+                "const",
+                "nullable",
+                "length_of",
+                "name",
+                "pattern",
+                "string_type",
+            ],
             &format!("function parameter {}", object_name),
         );
 
-        let constant = toml.lookup("const")
+        let constant = toml
+            .lookup("const")
             .and_then(Value::as_bool)
             .unwrap_or(false);
-        let nullable = toml.lookup("nullable")
+        let nullable = toml
+            .lookup("nullable")
             .and_then(Value::as_bool)
             .map(Nullable);
-        let length_of = toml.lookup("length_of")
+        let length_of = toml
+            .lookup("length_of")
             .and_then(Value::as_str)
             .map(|s| if s == "return" { "" } else { s })
             .map(ToOwned::to_owned);
-        let string_type = toml.lookup("string_type")
-            .and_then(Value::as_str);
+        let string_type = toml.lookup("string_type").and_then(Value::as_str);
         let string_type = match string_type {
             None => None,
             Some(val) => match StringType::from_str(val) {
@@ -60,7 +70,7 @@ impl Parse for Parameter {
                     );
                     None
                 }
-            }
+            },
         };
 
         Some(Parameter {
@@ -101,14 +111,17 @@ impl Return {
         }
 
         let v = toml.unwrap();
-        v.check_unwanted(&["nullable", "bool_return_is_error", "string_type", "type"], "return");
+        v.check_unwanted(
+            &["nullable", "bool_return_is_error", "string_type", "type"],
+            "return",
+        );
 
         let nullable = v.lookup("nullable").and_then(Value::as_bool).map(Nullable);
-        let bool_return_is_error = v.lookup("bool_return_is_error")
+        let bool_return_is_error = v
+            .lookup("bool_return_is_error")
             .and_then(Value::as_str)
             .map(ToOwned::to_owned);
-        let string_type = v.lookup("string_type")
-            .and_then(Value::as_str);
+        let string_type = v.lookup("string_type").and_then(Value::as_str);
         let string_type = match string_type {
             None => None,
             Some(v) => match StringType::from_str(v) {
@@ -117,16 +130,17 @@ impl Return {
                     error!("Error: {} for return", error_str);
                     None
                 }
-            }
+            },
         };
-        let type_name = v.lookup("type")
+        let type_name = v
+            .lookup("type")
             .and_then(Value::as_str)
             .map(ToOwned::to_owned);
         if string_type.is_some() && type_name.is_some() {
             error!(
                 "\"string_type\" and \"type\" parameters can't be passed at the same time for \
                  object {}, only \"type\" will be applied in this case",
-                 object_name
+                object_name
             );
         }
 
@@ -182,24 +196,30 @@ impl Parse for Function {
             &format!("function {}", object_name),
         );
 
-        let ignore = toml.lookup("ignore")
+        let ignore = toml
+            .lookup("ignore")
             .and_then(Value::as_bool)
             .unwrap_or(false);
-        let version = toml.lookup("version")
+        let version = toml
+            .lookup("version")
             .and_then(Value::as_str)
             .and_then(|s| s.parse().ok());
-        let cfg_condition = toml.lookup("cfg_condition")
+        let cfg_condition = toml
+            .lookup("cfg_condition")
             .and_then(Value::as_str)
             .map(ToOwned::to_owned);
         let parameters = Parameters::parse(toml.lookup("parameter"), object_name);
         let ret = Return::parse(toml.lookup("return"), object_name);
-        let doc_hidden = toml.lookup("doc_hidden")
+        let doc_hidden = toml
+            .lookup("doc_hidden")
             .and_then(Value::as_bool)
             .unwrap_or(false);
-        let is_windows_utf8 = toml.lookup("is_windows_utf8")
+        let is_windows_utf8 = toml
+            .lookup("is_windows_utf8")
             .and_then(Value::as_bool)
             .unwrap_or(false);
-        let disable_length_detect = toml.lookup("disable_length_detect")
+        let disable_length_detect = toml
+            .lookup("disable_length_detect")
             .and_then(Value::as_bool)
             .unwrap_or(false);
 
@@ -235,13 +255,16 @@ pub type Functions = Vec<Function>;
 
 #[cfg(test)]
 mod tests {
-    use crate::library::Nullable;
-    use super::super::ident::Ident;
-    use super::super::matchable::Matchable;
-    use super::super::parsable::{Parsable, Parse};
-    use super::super::parameter_matchable::ParameterMatchable;
-    use super::*;
-    use crate::version::Version;
+    use super::{
+        super::{
+            ident::Ident,
+            matchable::Matchable,
+            parameter_matchable::ParameterMatchable,
+            parsable::{Parsable, Parse},
+        },
+        *,
+    };
+    use crate::{library::Nullable, version::Version};
 
     fn functions_toml(input: &str) -> ::toml::Value {
         let mut value: ::toml::value::Table = ::toml::from_str(&input).unwrap();

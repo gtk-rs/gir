@@ -1,19 +1,22 @@
-use crate::analysis::conversion_type::ConversionType;
-use crate::analysis::functions::{AsyncTrampoline, find_index_to_ignore};
-use crate::analysis::function_parameters::CParameter as AnalysisCParameter;
-use crate::analysis::function_parameters::{Transformation, TransformationType};
-use crate::analysis::trampolines::Trampoline;
-use crate::analysis::trampoline_parameters;
-use crate::analysis::out_parameters::Mode;
-use crate::analysis::return_value;
-use crate::analysis::rust_type::rust_type;
-use crate::analysis::safety_assertion_mode::SafetyAssertionMode;
-use crate::chunk::{Chunk, Param, TupleMode};
-use crate::chunk::parameter_ffi_call_out;
-use crate::env::Env;
-use crate::library::{self, ParameterDirection};
-use std::collections::{BTreeMap, HashMap};
-use std::collections::hash_map::Entry;
+use crate::{
+    analysis::{
+        conversion_type::ConversionType,
+        function_parameters::{
+            CParameter as AnalysisCParameter, Transformation, TransformationType,
+        },
+        functions::{find_index_to_ignore, AsyncTrampoline},
+        out_parameters::Mode,
+        return_value,
+        rust_type::rust_type,
+        safety_assertion_mode::SafetyAssertionMode,
+        trampoline_parameters,
+        trampolines::Trampoline,
+    },
+    chunk::{parameter_ffi_call_out, Chunk, Param, TupleMode},
+    env::Env,
+    library::{self, ParameterDirection},
+};
+use std::collections::{hash_map::Entry, BTreeMap, HashMap};
 
 #[derive(Clone, Debug)]
 enum Parameter {
@@ -115,8 +118,10 @@ impl Builder {
 
         // Key: user data index
         // Value: (global position used as id, type, callbacks)
-        let mut group_by_user_data: BTreeMap<usize, (usize, Option<(String, String)>, Vec<&Trampoline>)> =
-            BTreeMap::new();
+        let mut group_by_user_data: BTreeMap<
+            usize,
+            (usize, Option<(String, String)>, Vec<&Trampoline>),
+        > = BTreeMap::new();
 
         // We group arguments by callbacks.
         if !self.callbacks.is_empty() || !self.destroys.is_empty() {
@@ -125,36 +130,51 @@ impl Builder {
                 if group_by_user_data.get(&user_data_index).is_some() {
                     continue;
                 }
-                let calls = self.callbacks.iter()
-                                          .filter(|c| c.user_data_index == user_data_index)
-                                          .collect::<Vec<_>>();
+                let calls = self
+                    .callbacks
+                    .iter()
+                    .filter(|c| c.user_data_index == user_data_index)
+                    .collect::<Vec<_>>();
                 group_by_user_data.insert(
                     user_data_index,
-                    (pos,
-                    if calls.len() > 1 {
-                        if calls.iter().all(|c| c.scope.is_call()) {
-                            Some((format!("&({})",
-                                          calls.iter()
-                                               .map(|c| format!("&{}", c.bound_name))
-                                               .collect::<Vec<_>>()
-                                               .join(", ")),
-                                  format!("&mut ({})",
-                                          calls.iter()
-                                               .map(|c| format!("&mut {}", c.bound_name))
-                                               .collect::<Vec<_>>()
-                                               .join(", "))))
+                    (
+                        pos,
+                        if calls.len() > 1 {
+                            if calls.iter().all(|c| c.scope.is_call()) {
+                                Some((
+                                    format!(
+                                        "&({})",
+                                        calls
+                                            .iter()
+                                            .map(|c| format!("&{}", c.bound_name))
+                                            .collect::<Vec<_>>()
+                                            .join(", ")
+                                    ),
+                                    format!(
+                                        "&mut ({})",
+                                        calls
+                                            .iter()
+                                            .map(|c| format!("&mut {}", c.bound_name))
+                                            .collect::<Vec<_>>()
+                                            .join(", ")
+                                    ),
+                                ))
+                            } else {
+                                let s = format!(
+                                    "Box_<({})>",
+                                    calls
+                                        .iter()
+                                        .map(|c| format!("&{}", c.bound_name))
+                                        .collect::<Vec<_>>()
+                                        .join(", ")
+                                );
+                                Some((s.clone(), s))
+                            }
                         } else {
-                            let s = format!("Box_<({})>",
-                                            calls.iter()
-                                                 .map(|c| format!("&{}", c.bound_name))
-                                                 .collect::<Vec<_>>()
-                                                 .join(", "));
-                            Some((s.clone(), s))
-                        }
-                    } else {
-                        None
-                    },
-                    calls)
+                            None
+                        },
+                        calls,
+                    ),
                 );
             }
         }
@@ -181,82 +201,98 @@ impl Builder {
             // Value: the current pos in the tuple for the given argument.
             let mut poses = HashMap::with_capacity(group_by_user_data.len());
             for trampoline in self.callbacks.iter() {
-                *poses.entry(&trampoline.user_data_index).or_insert_with(|| 0) += 1;
+                *poses
+                    .entry(&trampoline.user_data_index)
+                    .or_insert_with(|| 0) += 1;
             }
-            let mut poses = poses.into_iter().filter(|(_, x)| *x > 1).map(|(x, _)| (x, 0)).collect::<HashMap<_, _>>();
+            let mut poses = poses
+                .into_iter()
+                .filter(|(_, x)| *x > 1)
+                .map(|(x, _)| (x, 0))
+                .collect::<HashMap<_, _>>();
             for trampoline in self.callbacks.iter() {
                 let user_data_index = trampoline.user_data_index;
                 let pos = poses.entry(&trampoline.user_data_index);
-                self.add_trampoline(env,
-                                    &mut chunks,
-                                    trampoline,
-                                    &group_by_user_data[&user_data_index].1,
-                                    match pos {
-                                        Entry::Occupied(ref x) => Some(*x.get()),
-                                        _ => None,
-                                    },
-                                    &bounds,
-                                    &bounds_names,
-                                    false);
-                pos.and_modify(|x| { *x += 1; });
+                self.add_trampoline(
+                    env,
+                    &mut chunks,
+                    trampoline,
+                    &group_by_user_data[&user_data_index].1,
+                    match pos {
+                        Entry::Occupied(ref x) => Some(*x.get()),
+                        _ => None,
+                    },
+                    &bounds,
+                    &bounds_names,
+                    false,
+                );
+                pos.and_modify(|x| {
+                    *x += 1;
+                });
             }
             for destroy in self.destroys.iter() {
-                self.add_trampoline(env,
-                                    &mut chunks,
-                                    destroy,
-                                    &group_by_user_data[&destroy.user_data_index].1,
-                                    None, // doesn't matter for destroy
-                                    &bounds,
-                                    &bounds_names,
-                                    true);
+                self.add_trampoline(
+                    env,
+                    &mut chunks,
+                    destroy,
+                    &group_by_user_data[&destroy.user_data_index].1,
+                    None, // doesn't matter for destroy
+                    &bounds,
+                    &bounds_names,
+                    true,
+                );
             }
             for (_, (pos, full_type, ref calls)) in group_by_user_data.iter() {
                 if calls.len() > 1 {
-                    chunks.push(
-                        Chunk::Let {
-                            name: format!("super_callback{}", pos),
-                            is_mut: false,
-                            value: Box::new(
-                                Chunk::Custom(
-                                    if poses.is_empty() {
-                                        format!("Box_::new(Box_::new(({})))",
-                                                calls.iter()
-                                                     .map(|c| format!("{}_data", c.name))
-                                                     .collect::<Vec<_>>()
-                                                     .join(", "))
-                                    } else if calls.iter().all(|c| c.scope.is_call()) {
-                                        format!("&({})",
-                                                calls.iter()
-                                                     .map(|c| format!("{}_data", c.name))
-                                                     .collect::<Vec<_>>()
-                                                     .join(", "))
-                                    } else {
-                                        format!("Box_::new(({}))",
-                                                calls.iter()
-                                                     .map(|c| format!("{}_data", c.name))
-                                                     .collect::<Vec<_>>()
-                                                     .join(", "))
-                                    })),
-                            type_: Some(Box::new(Chunk::Custom(full_type.clone().map(|x| x.0).unwrap()))),
-                        }
-                    );
+                    chunks.push(Chunk::Let {
+                        name: format!("super_callback{}", pos),
+                        is_mut: false,
+                        value: Box::new(Chunk::Custom(if poses.is_empty() {
+                            format!(
+                                "Box_::new(Box_::new(({})))",
+                                calls
+                                    .iter()
+                                    .map(|c| format!("{}_data", c.name))
+                                    .collect::<Vec<_>>()
+                                    .join(", ")
+                            )
+                        } else if calls.iter().all(|c| c.scope.is_call()) {
+                            format!(
+                                "&({})",
+                                calls
+                                    .iter()
+                                    .map(|c| format!("{}_data", c.name))
+                                    .collect::<Vec<_>>()
+                                    .join(", ")
+                            )
+                        } else {
+                            format!(
+                                "Box_::new(({}))",
+                                calls
+                                    .iter()
+                                    .map(|c| format!("{}_data", c.name))
+                                    .collect::<Vec<_>>()
+                                    .join(", ")
+                            )
+                        })),
+                        type_: Some(Box::new(Chunk::Custom(
+                            full_type.clone().map(|x| x.0).unwrap(),
+                        ))),
+                    });
                 } else if !calls.is_empty() {
                     chunks.push(Chunk::Let {
                         name: format!("super_callback{}", pos),
                         is_mut: false,
-                        value: Box::new(Chunk::Custom(format!("{}{}_data",
-                                                              if calls[0].scope.is_call() {
-                                                                  "&"
-                                                              } else {
-                                                                  ""
-                                                              },
-                                                              calls[0].name))),
-                        type_: Some(Box::new(Chunk::Custom(
-                            if calls[0].scope.is_call() {
-                                format!("&{}", calls[0].bound_name)
-                            } else {
-                                format!("Box_<{}>", calls[0].bound_name)
-                            }))),
+                        value: Box::new(Chunk::Custom(format!(
+                            "{}{}_data",
+                            if calls[0].scope.is_call() { "&" } else { "" },
+                            calls[0].name
+                        ))),
+                        type_: Some(Box::new(Chunk::Custom(if calls[0].scope.is_call() {
+                            format!("&{}", calls[0].bound_name)
+                        } else {
+                            format!("Box_<{}>", calls[0].bound_name)
+                        }))),
                     });
                 }
             }
@@ -267,30 +303,40 @@ impl Builder {
         Chunk::BlockHalf(chunks)
     }
 
-    fn add_trampoline(&self, env: &Env, chunks: &mut Vec<Chunk>, trampoline: &Trampoline,
-                      full_type: &Option<(String, String)>, pos: Option<usize>,
-                      bounds: &str, bounds_names: &str, is_destroy: bool) {
+    fn add_trampoline(
+        &self,
+        env: &Env,
+        chunks: &mut Vec<Chunk>,
+        trampoline: &Trampoline,
+        full_type: &Option<(String, String)>,
+        pos: Option<usize>,
+        bounds: &str,
+        bounds_names: &str,
+        is_destroy: bool,
+    ) {
         if !is_destroy {
             if full_type.is_none() {
                 if trampoline.scope.is_call() {
-                    chunks.push(
-                        Chunk::Custom(
-                            format!("let {0}_data: {1} = {0};",
-                                    trampoline.name, trampoline.bound_name)));
+                    chunks.push(Chunk::Custom(format!(
+                        "let {0}_data: {1} = {0};",
+                        trampoline.name, trampoline.bound_name
+                    )));
                 } else {
-                    chunks.push(
-                        Chunk::Custom(
-                            format!("let {0}_data: Box_<{1}> = Box::new({0});",
-                                    trampoline.name, trampoline.bound_name)));
+                    chunks.push(Chunk::Custom(format!(
+                        "let {0}_data: Box_<{1}> = Box::new({0});",
+                        trampoline.name, trampoline.bound_name
+                    )));
                 }
             } else if trampoline.scope.is_call() {
-                chunks.push(Chunk::Custom(format!("let {0}_data: &{1} = &{0};",
-                                                  trampoline.name,
-                                                  trampoline.bound_name)));
+                chunks.push(Chunk::Custom(format!(
+                    "let {0}_data: &{1} = &{0};",
+                    trampoline.name, trampoline.bound_name
+                )));
             } else {
-                chunks.push(Chunk::Custom(format!("let {0}_data: {1} = {0};",
-                                                  trampoline.name,
-                                                  trampoline.bound_name)));
+                chunks.push(Chunk::Custom(format!(
+                    "let {0}_data: {1} = {0};",
+                    trampoline.name, trampoline.bound_name
+                )));
             }
         }
 
@@ -298,8 +344,9 @@ impl Builder {
         let mut arguments = Vec::new();
 
         for par in trampoline.parameters.transformations.iter() {
-            if par.name == "this" ||
-               trampoline.parameters.c_parameters[par.ind_c].is_real_gpointer(env) {
+            if par.name == "this"
+                || trampoline.parameters.c_parameters[par.ind_c].is_real_gpointer(env)
+            {
                 continue;
             }
             let ty_name = match rust_type(env, par.typ) {
@@ -307,8 +354,8 @@ impl Builder {
                 _ => String::new(),
             };
             let nullable = trampoline.parameters.rust_parameters[par.ind_rust].nullable;
-            let is_fundamental = add_chunk_for_type(env, par.typ, par, &mut body, &ty_name,
-                                                    nullable);
+            let is_fundamental =
+                add_chunk_for_type(env, par.typ, par, &mut body, &ty_name, nullable);
             if ty_name == "GString" {
                 if *nullable {
                     arguments.push(Chunk::Name(format!("{}.map(|x| x.as_str())", par.name)));
@@ -317,93 +364,93 @@ impl Builder {
                 }
                 continue;
             }
-            arguments.push(Chunk::Name(format!("{}{}",
-                                               if is_fundamental { "" } else { "&" },
-                                               par.name)));
+            arguments.push(Chunk::Name(format!(
+                "{}{}",
+                if is_fundamental { "" } else { "&" },
+                par.name
+            )));
         }
 
-        let func = trampoline.parameters
-                             .c_parameters
-                             .last()
-                             .map(|p| p.name.clone())
-                             .unwrap_or_else(|| "Unknown".to_owned());
+        let func = trampoline
+            .parameters
+            .c_parameters
+            .last()
+            .map(|p| p.name.clone())
+            .unwrap_or_else(|| "Unknown".to_owned());
 
         let mut extra_before_call = "";
         if let Some(ref full_type) = full_type {
             if is_destroy || trampoline.scope.is_async() {
-                body.push(
-                    Chunk::Let {
-                        name: format!("{}callback", if is_destroy { "_" } else { "" }),
-                        is_mut: false,
-                        value: Box::new(Chunk::Custom(format!("Box_::from_raw({} as *mut _)", func))),
-                        type_: Some(Box::new(Chunk::Custom(full_type.1.clone()))),
-                    }
-                );
+                body.push(Chunk::Let {
+                    name: format!("{}callback", if is_destroy { "_" } else { "" }),
+                    is_mut: false,
+                    value: Box::new(Chunk::Custom(format!("Box_::from_raw({} as *mut _)", func))),
+                    type_: Some(Box::new(Chunk::Custom(full_type.1.clone()))),
+                });
             } else {
-                body.push(
-                    Chunk::Let {
-                        name: "callback".to_owned(),
-                        is_mut: false,
-                        value: Box::new(
-                            Chunk::Custom(
-                                format!("{}*({} as *mut _)",
-                                        if !trampoline.scope.is_call() {
-                                            "&"
-                                        } else if pos.is_some() {
-                                            "&mut "
-                                        } else {
-                                            ""
-                                        },
-                                        func))),
-                        type_: Some(Box::new(
-                                        Chunk::Custom(
-                                            if !trampoline.scope.is_async() &&
-                                               !trampoline.scope.is_call() {
-                                                format!("&{}", full_type.1)
-                                            } else {
-                                                full_type.1.clone()
-                                            }))),
-                    }
-                );
+                body.push(Chunk::Let {
+                    name: "callback".to_owned(),
+                    is_mut: false,
+                    value: Box::new(Chunk::Custom(format!(
+                        "{}*({} as *mut _)",
+                        if !trampoline.scope.is_call() {
+                            "&"
+                        } else if pos.is_some() {
+                            "&mut "
+                        } else {
+                            ""
+                        },
+                        func
+                    ))),
+                    type_: Some(Box::new(Chunk::Custom(
+                        if !trampoline.scope.is_async() && !trampoline.scope.is_call() {
+                            format!("&{}", full_type.1)
+                        } else {
+                            full_type.1.clone()
+                        },
+                    ))),
+                });
                 if trampoline.scope.is_async() {
-                    body.push(
-                        Chunk::Custom(
-                            format!("let callback = callback{}{};",
-                                    if let Some(pos) = pos {
-                                        format!(".{}", pos)
-                                    } else {
-                                        String::new()
-                                    },
-                                    if *trampoline.nullable {
-                                        ".expect(\"cannot get closure...\")"
-                                    } else {
-                                        ""
-                                    })));
+                    body.push(Chunk::Custom(format!(
+                        "let callback = callback{}{};",
+                        if let Some(pos) = pos {
+                            format!(".{}", pos)
+                        } else {
+                            String::new()
+                        },
+                        if *trampoline.nullable {
+                            ".expect(\"cannot get closure...\")"
+                        } else {
+                            ""
+                        }
+                    )));
                     if trampoline.ret.c_type != "void" {
                         extra_before_call = "let res = ";
                     }
                 } else if !trampoline.scope.is_call() {
                     if *trampoline.nullable {
-                        body.push(
-                            Chunk::Custom(
-                                format!("{}if let Some(ref callback) = callback{} {{",
-                                        if trampoline.ret.c_type != "void" {
-                                            "let res = "
-                                        } else {
-                                            ""
-                                        },
-                                        if let Some(pos) = pos {
-                                            format!(".{}", pos)
-                                        } else {
-                                            String::new()
-                                        })));
+                        body.push(Chunk::Custom(format!(
+                            "{}if let Some(ref callback) = callback{} {{",
+                            if trampoline.ret.c_type != "void" {
+                                "let res = "
+                            } else {
+                                ""
+                            },
+                            if let Some(pos) = pos {
+                                format!(".{}", pos)
+                            } else {
+                                String::new()
+                            }
+                        )));
                     } else {
-                        body.push(Chunk::Custom(format!("let callback = callback{}",
-                                                        if let Some(pos) = pos {
-                                                            format!(".{}", pos)
-                                                        } else {
-                                                            String::new()
-                                                        })));
+                        body.push(Chunk::Custom(format!(
+                            "let callback = callback{}",
+                            if let Some(pos) = pos {
+                                format!(".{}", pos)
+                            } else {
+                                String::new()
+                            }
+                        )));
                         if trampoline.ret.c_type != "void" {
                             body.push(Chunk::Custom("let res = ".to_owned()));
                         }
@@ -415,66 +462,78 @@ impl Builder {
                         ""
                     };
                     if !trampoline.scope.is_async() && *trampoline.nullable {
-                        body.push(Chunk::Custom(
-                            format!("{}if let Some(ref {}callback) = {} {{",
-                                    add,
-                                    if trampoline.scope.is_call() {
-                                        "mut "
-                                    } else {
-                                        ""
-                                    },
-                                    if let Some(pos) = pos {
-                                        format!("(*callback).{}", pos)
-                                    } else {
-                                        "*callback".to_owned()
-                                    })));
+                        body.push(Chunk::Custom(format!(
+                            "{}if let Some(ref {}callback) = {} {{",
+                            add,
+                            if trampoline.scope.is_call() {
+                                "mut "
+                            } else {
+                                ""
+                            },
+                            if let Some(pos) = pos {
+                                format!("(*callback).{}", pos)
+                            } else {
+                                "*callback".to_owned()
+                            }
+                        )));
                     } else {
                         body.push(Chunk::Custom(add.to_owned()));
                     }
                 }
             }
         } else {
-            body.push(
-                Chunk::Let {
-                    name: format!("{}callback", if is_destroy { "_" } else { "" }),
-                    is_mut: false,
-                    value: Box::new(Chunk::Custom(
-                        if is_destroy || trampoline.scope.is_async() {
-                            format!("Box_::from_raw({} as *mut _)", func)
-                        } else if trampoline.scope.is_call() {
-                            format!("{} as *const _ as usize as *mut {}",
-                                    func,
-                                    self.callbacks[0].bound_name)
-                        } else {
-                            format!("&*({} as *mut _)", func)
-                        })),
-                    type_: Some(Box::new(Chunk::Custom(
-                        if is_destroy || trampoline.scope.is_async() {
-                            format!("Box_<{}>", self.callbacks[0].bound_name)
-                        } else if trampoline.scope.is_call() {
-                            format!("*mut {}", self.callbacks[0].bound_name)
-                        } else {
-                            format!("&{}", self.callbacks[0].bound_name)
-                        }))),
-                }
-            );
+            body.push(Chunk::Let {
+                name: format!("{}callback", if is_destroy { "_" } else { "" }),
+                is_mut: false,
+                value: Box::new(Chunk::Custom(
+                    if is_destroy || trampoline.scope.is_async() {
+                        format!("Box_::from_raw({} as *mut _)", func)
+                    } else if trampoline.scope.is_call() {
+                        format!(
+                            "{} as *const _ as usize as *mut {}",
+                            func, self.callbacks[0].bound_name
+                        )
+                    } else {
+                        format!("&*({} as *mut _)", func)
+                    },
+                )),
+                type_: Some(Box::new(Chunk::Custom(
+                    if is_destroy || trampoline.scope.is_async() {
+                        format!("Box_<{}>", self.callbacks[0].bound_name)
+                    } else if trampoline.scope.is_call() {
+                        format!("*mut {}", self.callbacks[0].bound_name)
+                    } else {
+                        format!("&{}", self.callbacks[0].bound_name)
+                    },
+                ))),
+            });
             if !is_destroy && *trampoline.nullable {
                 if trampoline.scope.is_async() {
                     body.push(Chunk::Custom(
-                        "let callback = (*callback).expect(\"cannot get closure...\");".to_owned()));
+                        "let callback = (*callback).expect(\"cannot get closure...\");".to_owned(),
+                    ));
                     if trampoline.ret.c_type != "void" {
                         extra_before_call = "let res = ";
                     }
                 } else {
-                    body.push(Chunk::Custom(
-                        format!("{}if let Some(ref {}callback) = {} {{",
-                                if trampoline.ret.c_type != "void" { "let res = " } else { "" },
-                                if trampoline.scope.is_call() { "mut " } else { "" },
-                                if let Some(pos) = pos {
-                                    format!("(*callback).{}", pos)
-                                } else {
-                                    "*callback".to_owned()
-                                })));
+                    body.push(Chunk::Custom(format!(
+                        "{}if let Some(ref {}callback) = {} {{",
+                        if trampoline.ret.c_type != "void" {
+                            "let res = "
+                        } else {
+                            ""
+                        },
+                        if trampoline.scope.is_call() {
+                            "mut "
+                        } else {
+                            ""
+                        },
+                        if let Some(pos) = pos {
+                            format!("(*callback).{}", pos)
+                        } else {
+                            "*callback".to_owned()
+                        }
+                    )));
                 }
             } else if !is_destroy && trampoline.ret.c_type != "void" {
                 extra_before_call = "let res = ";
@@ -482,63 +541,74 @@ impl Builder {
         }
         if !is_destroy {
             use crate::writer::to_code::ToCode;
-            body.push(Chunk::Custom(format!("{}{}({}){}",
-                                            extra_before_call,
-                                            if !*trampoline.nullable {
-                                                "(*callback)"
-                                            } else if trampoline.scope.is_async() {
-                                                "callback"
-                                            } else {
-                                                "\tcallback"
-                                            },
-                                            arguments.iter()
-                                                     .flat_map(|arg| arg.to_code(env))
-                                                     .collect::<Vec<_>>()
-                                                     .join(", "),
-                                            if !extra_before_call.is_empty() ||
-                                               !*trampoline.nullable {
-                                                ";"
-                                            } else {
-                                                ""
-                                            })));
+            body.push(Chunk::Custom(format!(
+                "{}{}({}){}",
+                extra_before_call,
+                if !*trampoline.nullable {
+                    "(*callback)"
+                } else if trampoline.scope.is_async() {
+                    "callback"
+                } else {
+                    "\tcallback"
+                },
+                arguments
+                    .iter()
+                    .flat_map(|arg| arg.to_code(env))
+                    .collect::<Vec<_>>()
+                    .join(", "),
+                if !extra_before_call.is_empty() || !*trampoline.nullable {
+                    ";"
+                } else {
+                    ""
+                }
+            )));
             if !trampoline.scope.is_async() && *trampoline.nullable {
                 body.push(Chunk::Custom("} else {".to_owned()));
-                body.push(Chunk::Custom("\tpanic!(\"cannot get closure...\")".to_owned()));
+                body.push(Chunk::Custom(
+                    "\tpanic!(\"cannot get closure...\")".to_owned(),
+                ));
                 body.push(Chunk::Custom("};".to_owned()));
             }
             if trampoline.ret.c_type != "void" {
                 use crate::codegen::trampoline_to_glib::TrampolineToGlib;
 
-                body.push(Chunk::Custom(format!("res{}", trampoline.ret.trampoline_to_glib(env))));
+                body.push(Chunk::Custom(format!(
+                    "res{}",
+                    trampoline.ret.trampoline_to_glib(env)
+                )));
             }
         }
 
         let extern_func = Chunk::ExternCFunc {
             name: format!("{}_func", trampoline.name),
-            parameters: trampoline.parameters
-                                  .c_parameters.iter()
-                                  .skip(1) // to skip the generated this
-                                  .map(|p| {
-                                      if p.is_real_gpointer(env) {
-                                          Param {
-                                              name: p.name.clone(),
-                                              typ: "glib_sys::gpointer".to_string()
-                                          }
-                                      } else {
-                                          Param {
-                                              name: p.name.clone(),
-                                              typ: crate::analysis::ffi_type::ffi_type(env, p.typ, &p.c_type).expect("failed to write c_type")
-                                          }
-                                      }
-                                  })
-                                  .collect::<Vec<_>>(),
+            parameters: trampoline
+                .parameters
+                .c_parameters
+                .iter()
+                .skip(1) // to skip the generated this
+                .map(|p| {
+                    if p.is_real_gpointer(env) {
+                        Param {
+                            name: p.name.clone(),
+                            typ: "glib_sys::gpointer".to_string(),
+                        }
+                    } else {
+                        Param {
+                            name: p.name.clone(),
+                            typ: crate::analysis::ffi_type::ffi_type(env, p.typ, &p.c_type)
+                                .expect("failed to write c_type"),
+                        }
+                    }
+                })
+                .collect::<Vec<_>>(),
             body: Box::new(Chunk::Chunks(body)),
             return_value: if trampoline.ret.c_type != "void" {
                 let p = &trampoline.ret;
                 Some(if p.c_type == "gpointer" {
                     "glib_sys::gpointer".to_string()
                 } else {
-                    crate::analysis::ffi_type::ffi_type(env, p.typ, &p.c_type).expect("failed to write c_type")
+                    crate::analysis::ffi_type::ffi_type(env, p.typ, &p.c_type)
+                        .expect("failed to write c_type")
                 })
             } else {
                 None
@@ -554,30 +624,38 @@ impl Builder {
         };
         if !is_destroy {
             if *trampoline.nullable {
-                chunks.push(Chunk::Custom(format!("let {0} = if {0}_data.is_some() {{ Some({0}_func{1} as _) }} else {{ None }};",
-                                                  trampoline.name,
-                                                  bounds_str)));
+                chunks.push(Chunk::Custom(format!(
+                    "let {0} = if {0}_data.is_some() {{ Some({0}_func{1} as _) }} else {{ None }};",
+                    trampoline.name, bounds_str
+                )));
             } else {
-                chunks.push(Chunk::Custom(format!("let {0} = Some({0}_func{1} as _);",
-                                                  trampoline.name,
-                                                  bounds_str)));
+                chunks.push(Chunk::Custom(format!(
+                    "let {0} = Some({0}_func{1} as _);",
+                    trampoline.name, bounds_str
+                )));
             }
         } else {
-            chunks.push(
-                Chunk::Custom(
-                    format!("let destroy_call{} = Some({}_func{} as _);",
-                            trampoline.destroy_index,
-                            trampoline.name,
-                            bounds_str)));
+            chunks.push(Chunk::Custom(format!(
+                "let destroy_call{} = Some({}_func{} as _);",
+                trampoline.destroy_index, trampoline.name, bounds_str
+            )));
         }
     }
 
-    fn add_async_trampoline(&self, env: &Env, chunks: &mut Vec<Chunk>, trampoline: &AsyncTrampoline) {
+    fn add_async_trampoline(
+        &self,
+        env: &Env,
+        chunks: &mut Vec<Chunk>,
+        trampoline: &AsyncTrampoline,
+    ) {
         chunks.push(Chunk::Let {
-                name: "user_data".to_string(),
-                is_mut: false,
-                value: Box::new(Chunk::Custom("Box::new(callback)".into())),
-                type_: Some(Box::new(Chunk::Custom(format!("Box<{}>", trampoline.bound_name)))),
+            name: "user_data".to_string(),
+            is_mut: false,
+            value: Box::new(Chunk::Custom("Box::new(callback)".into())),
+            type_: Some(Box::new(Chunk::Custom(format!(
+                "Box<{}>",
+                trampoline.bound_name
+            )))),
         });
 
         let mut finish_args = vec![];
@@ -588,16 +666,27 @@ impl Builder {
             });
         }
         finish_args.push(Chunk::Name("res".to_string()));
-        finish_args.extend(trampoline.output_params.iter()
-                           .filter(|param| param.direction == ParameterDirection::Out)
-                           .map(|param| Chunk::FfiCallOutParameter{ par: param.into() }));
+        finish_args.extend(
+            trampoline
+                .output_params
+                .iter()
+                .filter(|param| param.direction == ParameterDirection::Out)
+                .map(|param| Chunk::FfiCallOutParameter { par: param.into() }),
+        );
         let index_to_ignore = find_index_to_ignore(&trampoline.output_params);
-        let mut result: Vec<_> = trampoline.output_params.iter().enumerate()
-            .filter(|&(index, param)| param.direction == ParameterDirection::Out && param.name != "error" &&
-                    Some(index) != index_to_ignore)
+        let mut result: Vec<_> = trampoline
+            .output_params
+            .iter()
+            .enumerate()
+            .filter(|&(index, param)| {
+                param.direction == ParameterDirection::Out
+                    && param.name != "error"
+                    && Some(index) != index_to_ignore
+            })
             .map(|(_, param)| {
                 let value = Chunk::Custom(param.name.clone());
-                let mem_mode = c_type_mem_mode_lib(env, param.typ, param.caller_allocates, param.transfer);
+                let mem_mode =
+                    c_type_mem_mode_lib(env, param.typ, param.caller_allocates, param.transfer);
                 if let OutMemMode::UninitializedNamed(_) = mem_mode {
                     value
                 } else {
@@ -607,90 +696,104 @@ impl Builder {
                         value: Box::new(value),
                     }
                 }
-            }).collect();
+            })
+            .collect();
 
         if let Some(ref ffi_ret) = trampoline.ffi_ret {
-            let mem_mode = c_type_mem_mode_lib(env, ffi_ret.typ, ffi_ret.caller_allocates, ffi_ret.transfer);
+            let mem_mode =
+                c_type_mem_mode_lib(env, ffi_ret.typ, ffi_ret.caller_allocates, ffi_ret.transfer);
             let value = Chunk::Name("ret".to_string());
             if let OutMemMode::UninitializedNamed(_) = mem_mode {
                 result.insert(0, value);
             } else {
-                result.insert(0,
+                result.insert(
+                    0,
                     Chunk::FromGlibConversion {
                         mode: ffi_ret.into(),
                         array_length_name: self.array_length(ffi_ret).cloned(),
                         value: Box::new(value),
-                    });
+                    },
+                );
             }
         }
 
         let result = Chunk::Tuple(result, TupleMode::WithUnit);
-        let mut body = vec![
-            Chunk::Let {
-                name: "error".to_string(),
-                is_mut: true,
-                value: Box::new(Chunk::NullMutPtr),
-                type_: None,
-            },
-        ];
-        let output_vars = trampoline.output_params.iter()
+        let mut body = vec![Chunk::Let {
+            name: "error".to_string(),
+            is_mut: true,
+            value: Box::new(Chunk::NullMutPtr),
+            type_: None,
+        }];
+        let output_vars = trampoline
+            .output_params
+            .iter()
             .filter(|param| param.direction == ParameterDirection::Out && param.name != "error")
             .map(|param| (param, type_mem_mode(env, param)))
-            .map(|(param, mode)|
-                 Chunk::Let {
-                     name: param.name.clone(),
-                     is_mut: true,
-                     value: Box::new(mode),
-                     type_: None,
-                 });
+            .map(|(param, mode)| Chunk::Let {
+                name: param.name.clone(),
+                is_mut: true,
+                value: Box::new(mode),
+                type_: None,
+            });
         body.extend(output_vars);
 
-        let ret_name = if trampoline.ffi_ret.is_some() { "ret" } else { "_" };
+        let ret_name = if trampoline.ffi_ret.is_some() {
+            "ret"
+        } else {
+            "_"
+        };
 
-        body.push(
-            Chunk::Let {
-                name: ret_name.to_string(),
-                is_mut: false,
-                value: Box::new(Chunk::FfiCall {
-                    name: trampoline.finish_func_name.clone(),
-                    params: finish_args,
-                }),
-                type_: None,
-            }
-        );
-        body.push(
-            Chunk::Let {
-                name: "result".to_string(),
-                is_mut: false,
-                value: Box::new(Chunk::ErrorResultReturn {
-                    value: Box::new(result),
-                }),
-                type_: None,
-            }
-        );
-        body.push(
-            Chunk::Let {
-                name: "callback".to_string(),
-                is_mut: false,
-                value: Box::new(Chunk::Custom("Box::from_raw(user_data as *mut _)".into())),
-                type_: Some(Box::new(Chunk::Custom(format!("Box<{}>", trampoline.bound_name)))),
-            }
-        );
-        body.push(
-            Chunk::Call {
-                func_name: "callback".to_string(),
-                arguments: vec![Chunk::Name("result".to_string())],
-            }
-        );
+        body.push(Chunk::Let {
+            name: ret_name.to_string(),
+            is_mut: false,
+            value: Box::new(Chunk::FfiCall {
+                name: trampoline.finish_func_name.clone(),
+                params: finish_args,
+            }),
+            type_: None,
+        });
+        body.push(Chunk::Let {
+            name: "result".to_string(),
+            is_mut: false,
+            value: Box::new(Chunk::ErrorResultReturn {
+                value: Box::new(result),
+            }),
+            type_: None,
+        });
+        body.push(Chunk::Let {
+            name: "callback".to_string(),
+            is_mut: false,
+            value: Box::new(Chunk::Custom("Box::from_raw(user_data as *mut _)".into())),
+            type_: Some(Box::new(Chunk::Custom(format!(
+                "Box<{}>",
+                trampoline.bound_name
+            )))),
+        });
+        body.push(Chunk::Call {
+            func_name: "callback".to_string(),
+            arguments: vec![Chunk::Name("result".to_string())],
+        });
 
         let parameters = vec![
-            Param { name: "_source_object".to_string(), typ: "*mut gobject_sys::GObject".to_string() },
-            Param { name: "res".to_string(), typ: "*mut gio_sys::GAsyncResult".to_string() },
-            Param { name: "user_data".to_string(), typ: "glib_sys::gpointer".to_string() },
+            Param {
+                name: "_source_object".to_string(),
+                typ: "*mut gobject_sys::GObject".to_string(),
+            },
+            Param {
+                name: "res".to_string(),
+                typ: "*mut gio_sys::GAsyncResult".to_string(),
+            },
+            Param {
+                name: "user_data".to_string(),
+                typ: "glib_sys::gpointer".to_string(),
+            },
         ];
 
         chunks.push(Chunk::ExternCFunc {
-            name: format!("{}<{}: {}>", trampoline.name, trampoline.bound_name, trampoline.callback_type),
+            name: format!(
+                "{}<{}: {}>",
+                trampoline.name, trampoline.bound_name, trampoline.callback_type
+            ),
             parameters,
             body: Box::new(Chunk::Chunks(body)),
             return_value: None,
@@ -699,19 +802,21 @@ impl Builder {
         let chunk = Chunk::Let {
             name: "callback".to_string(),
             is_mut: false,
-            value: Box::new(Chunk::Name(format!("{}::<{}>", trampoline.name, trampoline.bound_name))),
+            value: Box::new(Chunk::Name(format!(
+                "{}::<{}>",
+                trampoline.name, trampoline.bound_name
+            ))),
             type_: None,
         };
         chunks.push(chunk);
     }
 
     fn array_length(&self, param: &library::Parameter) -> Option<&String> {
-        self.async_trampoline
-            .as_ref()
-            .and_then(|trampoline|
-                 param.array_length
-                     .map(|index| &trampoline.output_params[index as usize].name)
-            )
+        self.async_trampoline.as_ref().and_then(|trampoline| {
+            param
+                .array_length
+                .map(|index| &trampoline.output_params[index as usize].name)
+        })
     }
 
     fn add_assertion(&self, chunks: &mut Vec<Chunk>) {
@@ -787,23 +892,28 @@ impl Builder {
         let mut to_insert = Vec::new();
         for (user_data_index, (pos, _, callbacks)) in calls.iter() {
             let all_call = callbacks.iter().all(|c| c.scope.is_call());
-            to_insert.push((*user_data_index, Chunk::FfiCallParameter {
-                transformation_type: TransformationType::ToGlibDirect {
-                    name: if all_call {
-                        format!("super_callback{} as *const _ as usize as *mut _", pos)
-                    } else {
-                        format!("Box::into_raw(super_callback{}) as *mut _", pos)
+            to_insert.push((
+                *user_data_index,
+                Chunk::FfiCallParameter {
+                    transformation_type: TransformationType::ToGlibDirect {
+                        name: if all_call {
+                            format!("super_callback{} as *const _ as usize as *mut _", pos)
+                        } else {
+                            format!("Box::into_raw(super_callback{}) as *mut _", pos)
+                        },
                     },
-                }}));
+                },
+            ));
         }
         for destroy in self.destroys.iter() {
-            to_insert.push(
-                (destroy.destroy_index,
-                 Chunk::FfiCallParameter {
-                     transformation_type: TransformationType::ToGlibDirect {
-                         name: format!("destroy_call{}", destroy.destroy_index),
-                     }
-                 }));
+            to_insert.push((
+                destroy.destroy_index,
+                Chunk::FfiCallParameter {
+                    transformation_type: TransformationType::ToGlibDirect {
+                        name: format!("destroy_call{}", destroy.destroy_index),
+                    },
+                },
+            ));
         }
         to_insert.sort_unstable_by(|(a, _), (b, _)| a.cmp(b));
         for (pos, data) in to_insert {
@@ -814,20 +924,18 @@ impl Builder {
     fn get_outs(&self) -> Vec<&Parameter> {
         self.parameters
             .iter()
-            .filter(|par| if let Out { .. } = *par {
-                true
-            } else {
-                false
-            })
+            .filter(|par| if let Out { .. } = *par { true } else { false })
             .collect()
     }
     fn get_outs_without_error(&self) -> Vec<&Parameter> {
         self.parameters
             .iter()
-            .filter(|par| if let Out { ref parameter, .. } = *par {
-                !parameter.is_error
-            } else {
-                false
+            .filter(|par| {
+                if let Out { ref parameter, .. } = *par {
+                    !parameter.is_error
+                } else {
+                    false
+                }
             })
             .collect()
     }
@@ -871,7 +979,8 @@ impl Builder {
                 ref mem_mode,
             } = *par
             {
-                if self.transformations
+                if self
+                    .transformations
                     .iter()
                     .any(|tr| match tr.transformation_type {
                         TransformationType::Length {
@@ -879,7 +988,8 @@ impl Builder {
                             ..
                         } if array_length_name == &parameter.name => true,
                         _ => false,
-                    }) {
+                    })
+                {
                     continue;
                 }
 
@@ -1010,62 +1120,75 @@ impl Builder {
     }
 }
 
-fn c_type_mem_mode_lib(env: &Env, typ: library::TypeId, caller_allocates: bool,
-                       transfer: library::Transfer) -> OutMemMode {
+fn c_type_mem_mode_lib(
+    env: &Env,
+    typ: library::TypeId,
+    caller_allocates: bool,
+    transfer: library::Transfer,
+) -> OutMemMode {
     use self::OutMemMode::*;
     match ConversionType::of(env, typ) {
-        ConversionType::Pointer => if caller_allocates {
-            UninitializedNamed(rust_type(env, typ).unwrap())
-        } else {
-            use crate::library::Type::*;
-            let type_ = env.library.type_(typ);
-            match *type_ {
-                Fundamental(fund)
-                    if fund == library::Fundamental::Utf8
-                        || fund == library::Fundamental::OsString
-                        || fund == library::Fundamental::Filename =>
-                        {
-                            if transfer == library::Transfer::Full {
-                                NullMutPtr
-                            } else {
-                                NullPtr
-                            }
+        ConversionType::Pointer => {
+            if caller_allocates {
+                UninitializedNamed(rust_type(env, typ).unwrap())
+            } else {
+                use crate::library::Type::*;
+                let type_ = env.library.type_(typ);
+                match *type_ {
+                    Fundamental(fund)
+                        if fund == library::Fundamental::Utf8
+                            || fund == library::Fundamental::OsString
+                            || fund == library::Fundamental::Filename =>
+                    {
+                        if transfer == library::Transfer::Full {
+                            NullMutPtr
+                        } else {
+                            NullPtr
                         }
-                _ => NullMutPtr,
+                    }
+                    _ => NullMutPtr,
+                }
             }
-        },
+        }
         _ => Uninitialized,
     }
 }
 
 fn c_type_mem_mode(env: &Env, parameter: &AnalysisCParameter) -> OutMemMode {
-    c_type_mem_mode_lib(env, parameter.typ, parameter.caller_allocates, parameter.transfer)
+    c_type_mem_mode_lib(
+        env,
+        parameter.typ,
+        parameter.caller_allocates,
+        parameter.transfer,
+    )
 }
 
 fn type_mem_mode(env: &Env, parameter: &library::Parameter) -> Chunk {
     match ConversionType::of(env, parameter.typ) {
-        ConversionType::Pointer => if parameter.caller_allocates {
-            Chunk::UninitializedNamed {
-                name: rust_type(env, parameter.typ).unwrap(),
-            }
-        } else {
-            use crate::library::Type::*;
-            let type_ = env.library.type_(parameter.typ);
-            match *type_ {
-                Fundamental(fund)
-                    if fund == library::Fundamental::Utf8
-                        || fund == library::Fundamental::OsString
-                        || fund == library::Fundamental::Filename =>
-                        {
-                            if parameter.transfer == library::Transfer::Full {
-                                Chunk::NullMutPtr
-                            } else {
-                                Chunk::NullPtr
-                            }
+        ConversionType::Pointer => {
+            if parameter.caller_allocates {
+                Chunk::UninitializedNamed {
+                    name: rust_type(env, parameter.typ).unwrap(),
+                }
+            } else {
+                use crate::library::Type::*;
+                let type_ = env.library.type_(parameter.typ);
+                match *type_ {
+                    Fundamental(fund)
+                        if fund == library::Fundamental::Utf8
+                            || fund == library::Fundamental::OsString
+                            || fund == library::Fundamental::Filename =>
+                    {
+                        if parameter.transfer == library::Transfer::Full {
+                            Chunk::NullMutPtr
+                        } else {
+                            Chunk::NullPtr
                         }
-                _ => Chunk::NullMutPtr,
+                    }
+                    _ => Chunk::NullMutPtr,
+                }
             }
-        },
+        }
         _ => Chunk::Uninitialized,
     }
 }
@@ -1081,27 +1204,33 @@ fn add_chunk_for_type(
     let type_ = env.type_(typ_);
     match *type_ {
         library::Type::Fundamental(ref x) if !x.requires_conversion() => true,
-        library::Type::Fundamental(library::Fundamental::Boolean) |
-        library::Type::Fundamental(library::Fundamental::UniChar) => {
-            body.push(Chunk::Custom(format!("let {0} = from_glib({0});", par.name)));
+        library::Type::Fundamental(library::Fundamental::Boolean)
+        | library::Type::Fundamental(library::Fundamental::UniChar) => {
+            body.push(Chunk::Custom(format!(
+                "let {0} = from_glib({0});",
+                par.name
+            )));
             true
         }
         library::Type::Alias(ref x) => add_chunk_for_type(env, x.typ, par, body, ty_name, nullable),
         ref x => {
-            let (begin, end) = crate::codegen::trampoline_from_glib::from_glib_xxx(par.transfer, true);
-            body.push(Chunk::Custom(format!("let {1}{3} = {0}{1}{2};",
-                                            begin,
-                                            par.name,
-                                            end,
-                                            if ty_name == "GString" {
-                                                if *nullable {
-                                                    ": Option<GString>"
-                                                } else {
-                                                    ": GString"
-                                                }
-                                            } else {
-                                                ""
-                                            })));
+            let (begin, end) =
+                crate::codegen::trampoline_from_glib::from_glib_xxx(par.transfer, true);
+            body.push(Chunk::Custom(format!(
+                "let {1}{3} = {0}{1}{2};",
+                begin,
+                par.name,
+                end,
+                if ty_name == "GString" {
+                    if *nullable {
+                        ": Option<GString>"
+                    } else {
+                        ": GString"
+                    }
+                } else {
+                    ""
+                }
+            )));
             if ty_name == "GString" && *nullable {
                 body.push(Chunk::Custom(format!("let {0} = {0}.as_ref();", par.name)));
             }

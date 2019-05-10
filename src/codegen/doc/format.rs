@@ -54,8 +54,8 @@ fn get_language<'a>(entry: &'a str, out: &mut String) -> &'a str {
 }
 
 lazy_static! {
-    static ref SYMBOL: Regex = Regex::new(r"(^|[^\\])[@#%]([\w]+\b)([:.]+[\w_-]+\b)?") .unwrap();
-    static ref FUNCTION: Regex = Regex::new(r"(\b[a-z0-9_]+)\(\)") .unwrap();
+    static ref SYMBOL: Regex = Regex::new(r"(^|[^\\])[@#%]([\w]+\b)([:.]+[\w_-]+\b)?").unwrap();
+    static ref FUNCTION: Regex = Regex::new(r"(\b[a-z0-9_]+)\(\)").unwrap();
     static ref GDK_GTK: Regex = Regex::new(r"G[dt]k[A-Z][\w]+\b").unwrap();
     static ref TAGS: Regex = Regex::new(r"<[\w/-]+>").unwrap();
     static ref SPACES: Regex = Regex::new(r"[ ][ ]+").unwrap();

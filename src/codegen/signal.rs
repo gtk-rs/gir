@@ -1,15 +1,18 @@
 use std::io::{Result, Write};
 
-use crate::analysis;
-use crate::library;
-use crate::chunk::Chunk;
-use crate::consts::TYPE_PARAMETERS_START;
-use crate::env::Env;
-use super::general::{cfg_deprecated, doc_hidden, version_condition};
-use super::signal_body;
-use super::trampoline::func_string;
-use crate::writer::primitives::tabs;
-use crate::writer::ToCode;
+use super::{
+    general::{cfg_deprecated, doc_hidden, version_condition},
+    signal_body,
+    trampoline::func_string,
+};
+use crate::{
+    analysis,
+    chunk::Chunk,
+    consts::TYPE_PARAMETERS_START,
+    env::Env,
+    library,
+    writer::{primitives::tabs, ToCode},
+};
 
 pub fn generate(
     w: &mut Write,
@@ -32,13 +35,7 @@ pub fn generate(
     if !in_trait || only_declaration {
         cfg_deprecated(w, env, analysis.deprecated_version, commented, indent)?;
     }
-    version_condition(
-        w,
-        env,
-        analysis.version,
-        commented,
-        indent,
-    )?;
+    version_condition(w, env, analysis.version, commented, indent)?;
     doc_hidden(w, analysis.doc_hidden, comment_prefix, indent)?;
     writeln!(
         w,
@@ -58,19 +55,21 @@ pub fn generate(
                     writeln!(w, "{}{}", tabs(indent), s)?;
                 }
             }
-            _ => if let Err(ref errors) = analysis.trampoline_name {
-                for error in errors {
-                    writeln!(w, "{}{}\t{}", tabs(indent), comment_prefix, error)?;
+            _ => {
+                if let Err(ref errors) = analysis.trampoline_name {
+                    for error in errors {
+                        writeln!(w, "{}{}\t{}", tabs(indent), comment_prefix, error)?;
+                    }
+                    writeln!(w, "{}{}}}", tabs(indent), comment_prefix)?;
+                } else {
+                    writeln!(
+                        w,
+                        "{}{}\tTODO: connect to trampoline\n{0}{1}}}",
+                        tabs(indent),
+                        comment_prefix
+                    )?;
                 }
-                writeln!(w, "{}{}}}", tabs(indent), comment_prefix)?;
-            } else {
-                writeln!(
-                    w,
-                    "{}{}\tTODO: connect to trampoline\n{0}{1}}}",
-                    tabs(indent),
-                    comment_prefix
-                )?;
-            },
+            }
         }
     }
 
@@ -84,13 +83,7 @@ pub fn generate(
         if !in_trait || only_declaration {
             cfg_deprecated(w, env, analysis.deprecated_version, commented, indent)?;
         }
-        version_condition(
-            w,
-            env,
-            analysis.version,
-            commented,
-            indent,
-        )?;
+        version_condition(w, env, analysis.version, commented, indent)?;
 
         let function_type = function_type_string(env, analysis, trampolines, false);
 
@@ -146,11 +139,7 @@ pub fn generate(
                 if trampoline.ret.nullable == library::Nullable(true) {
                     writeln!(w, "{}res.unwrap().get()", tabs(indent + 1),)?;
                 } else {
-                    writeln!(
-                        w,
-                        "{}res.unwrap().get().unwrap()",
-                        tabs(indent + 1),
-                    )?;
+                    writeln!(w, "{}res.unwrap().get().unwrap()", tabs(indent + 1),)?;
                 }
             }
             writeln!(w, "{}}}", tabs(indent))?;
@@ -198,10 +187,7 @@ fn declaration(analysis: &analysis::signals::Info, function_type: &Option<String
     let return_str = " -> SignalHandlerId";
     format!(
         "fn {}<{}>({}){}",
-        analysis.connect_name,
-        bounds,
-        param_str,
-        return_str
+        analysis.connect_name, bounds, param_str, return_str
     )
 }
 

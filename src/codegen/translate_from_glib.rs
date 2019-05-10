@@ -1,10 +1,10 @@
-use crate::analysis;
-use crate::analysis::rust_type::rust_type;
-use crate::analysis::conversion_type::ConversionType;
-use crate::chunk::conversion_from_glib::Mode;
-use crate::env::Env;
-use crate::library;
-use crate::traits::*;
+use crate::{
+    analysis::{self, conversion_type::ConversionType, rust_type::rust_type},
+    chunk::conversion_from_glib::Mode,
+    env::Env,
+    library,
+    traits::*,
+};
 
 pub trait TranslateFromGlib {
     fn translate_from_glib_as_function(
@@ -27,13 +27,15 @@ impl TranslateFromGlib for Mode {
             Pointer => {
                 let trans = from_glib_xxx(self.transfer, array_length);
                 match *env.type_(self.typ) {
-                    library::Type::List(..) |
-                    library::Type::SList(..) |
-                    library::Type::CArray(..) => if array_length.is_some() {
-                        (format!("FromGlibContainer::{}", trans.0), trans.1)
-                    } else {
-                        (format!("FromGlibPtrContainer::{}", trans.0), trans.1)
-                    },
+                    library::Type::List(..)
+                    | library::Type::SList(..)
+                    | library::Type::CArray(..) => {
+                        if array_length.is_some() {
+                            (format!("FromGlibContainer::{}", trans.0), trans.1)
+                        } else {
+                            (format!("FromGlibPtrContainer::{}", trans.0), trans.1)
+                        }
+                    }
                     _ => trans,
                 }
             }
@@ -67,12 +69,10 @@ impl TranslateFromGlib for analysis::return_value::Info {
                     };
                     (prefix, format!("{}.{}", from_glib_xxx.1, suffix_function))
                 }
-                None if self.bool_return_is_error.is_some() => {
-                    (
-                        "glib_result_from_gboolean!(".into(),
-                        format!(", \"{}\")", self.bool_return_is_error.as_ref().unwrap()),
-                    )
-                }
+                None if self.bool_return_is_error.is_some() => (
+                    "glib_result_from_gboolean!(".into(),
+                    format!(", \"{}\")", self.bool_return_is_error.as_ref().unwrap()),
+                ),
                 None => Mode::from(par).translate_from_glib_as_function(env, array_length),
             },
             None => (String::new(), ";".into()),

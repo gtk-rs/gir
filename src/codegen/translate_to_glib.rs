@@ -1,6 +1,7 @@
-use crate::analysis::function_parameters::TransformationType;
-use crate::analysis::ref_mode::RefMode;
-use crate::library::Transfer;
+use crate::{
+    analysis::{function_parameters::TransformationType, ref_mode::RefMode},
+    library::Transfer,
+};
 
 pub trait TranslateToGlib {
     fn translate_to_glib(&self) -> String;
@@ -11,11 +12,7 @@ impl TranslateToGlib for TransformationType {
         use self::TransformationType::*;
         match *self {
             ToGlibDirect { ref name } => name.clone(),
-            ToGlibScalar { ref name, .. } => format!(
-                "{}{}",
-                name,
-                ".to_glib()"
-            ),
+            ToGlibScalar { ref name, .. } => format!("{}{}", name, ".to_glib()"),
             ToGlibPointer {
                 ref name,
                 instance_parameter,
@@ -35,7 +32,13 @@ impl TranslateToGlib for TransformationType {
                 };
 
                 if instance_parameter {
-                    format!("{}self{}{}{}", left, if in_trait { to_glib_extra } else { "".into() }, right, pointer_cast)
+                    format!(
+                        "{}self{}{}{}",
+                        left,
+                        if in_trait { to_glib_extra } else { "".into() },
+                        right,
+                        pointer_cast
+                    )
                 } else {
                     format!("{}{}{}{}{}", left, name, to_glib_extra, right, pointer_cast)
                 }
@@ -49,17 +52,26 @@ impl TranslateToGlib for TransformationType {
     }
 }
 
-fn to_glib_xxx(transfer: Transfer, ref_mode: RefMode, explicit_target_type: &str) -> (String, &'static str) {
+fn to_glib_xxx(
+    transfer: Transfer,
+    ref_mode: RefMode,
+    explicit_target_type: &str,
+) -> (String, &'static str) {
     use self::Transfer::*;
     match transfer {
         None => {
             match ref_mode {
                 RefMode::None => ("".into(), ".to_glib_none_mut().0"), //unreachable!(),
-                RefMode::ByRef => if explicit_target_type.is_empty() {
+                RefMode::ByRef => {
+                    if explicit_target_type.is_empty() {
                         ("".into(), ".to_glib_none().0")
                     } else {
-                        (format!("ToGlibPtr::<{}>::to_glib_none(", explicit_target_type), ").0")
-                    },
+                        (
+                            format!("ToGlibPtr::<{}>::to_glib_none(", explicit_target_type),
+                            ").0",
+                        )
+                    }
+                }
                 RefMode::ByRefMut => ("".into(), ".to_glib_none_mut().0"),
                 RefMode::ByRefImmut => ("mut_override(".into(), ".to_glib_none().0)"),
                 RefMode::ByRefConst => ("const_override(".into(), ".to_glib_none().0)"),

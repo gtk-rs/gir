@@ -1,10 +1,10 @@
 //! Adds `glib::Priority` as custom type
 //! and attempts replace priority parameters with it in async functions
 
-use crate::analysis::conversion_type::ConversionType;
-use crate::config::WorkMode;
-use crate::library::*;
-use crate::visitors::FunctionsMutVisitor;
+use crate::{
+    analysis::conversion_type::ConversionType, config::WorkMode, library::*,
+    visitors::FunctionsMutVisitor,
+};
 
 impl Library {
     pub fn add_glib_priority(&mut self, work_mode: WorkMode) {
@@ -12,9 +12,11 @@ impl Library {
             return;
         }
 
-        let tid_int = self.find_type(0, "*.gint")
+        let tid_int = self
+            .find_type(0, "*.gint")
             .expect("No fundamental type *.gint");
-        let glib_ns_id = self.find_namespace("GLib")
+        let glib_ns_id = self
+            .find_namespace("GLib")
             .expect("Missing `GLib` namespace in add_glib_priority!");
         let tid_priority = self.add_type(
             glib_ns_id,

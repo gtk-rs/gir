@@ -1,6 +1,8 @@
+use crate::analysis::{
+    functions::Info,
+    special_functions::{Infos, Type},
+};
 use std::io::{Result, Write};
-use crate::analysis::functions::Info;
-use crate::analysis::special_functions::{Infos, Type};
 
 pub fn generate(
     w: &mut Write,
@@ -13,40 +15,15 @@ pub fn generate(
         match *type_ {
             Type::Compare => {
                 if specials.get(&Type::Equal).is_none() {
-                    generate_eq_compare(
-                        w,
-                        type_name,
-                        lookup(functions, name),
-                        trait_name,
-                    )?;
+                    generate_eq_compare(w, type_name, lookup(functions, name), trait_name)?;
                 }
-                generate_ord(
-                    w,
-                    type_name,
-                    lookup(functions, name),
-                    trait_name,
-                )?;
+                generate_ord(w, type_name, lookup(functions, name), trait_name)?;
             }
             Type::Equal => {
-                generate_eq(
-                    w,
-                    type_name,
-                    lookup(functions, name),
-                    trait_name
-                )?;
+                generate_eq(w, type_name, lookup(functions, name), trait_name)?;
             }
-            Type::ToString => generate_display(
-                w,
-                type_name,
-                lookup(functions, name),
-                trait_name,
-            )?,
-            Type::Hash => generate_hash(
-                w,
-                type_name,
-                lookup(functions, name),
-                trait_name,
-            )?,
+            Type::ToString => generate_display(w, type_name, lookup(functions, name), trait_name)?,
+            Type::Hash => generate_hash(w, type_name, lookup(functions, name), trait_name)?,
             _ => {}
         }
     }

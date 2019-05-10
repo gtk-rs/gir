@@ -1,17 +1,20 @@
-use crate::analysis::namespaces;
-use crate::analysis::rust_type::rust_type;
-use crate::codegen::general;
-use crate::config::gobjects::GObject;
-use crate::env::Env;
-use crate::file_saver;
-use crate::library::*;
-use std::io::prelude::*;
-use std::io::Result;
-use std::path::Path;
-use crate::traits::*;
+use crate::{
+    analysis::{namespaces, rust_type::rust_type},
+    codegen::general,
+    config::gobjects::GObject,
+    env::Env,
+    file_saver,
+    library::*,
+    traits::*,
+};
+use std::{
+    io::{prelude::*, Result},
+    path::Path,
+};
 
 pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>) {
-    let configs: Vec<&GObject> = env.config
+    let configs: Vec<&GObject> = env
+        .config
         .objects
         .values()
         .filter(|c| {

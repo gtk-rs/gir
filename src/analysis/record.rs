@@ -1,15 +1,16 @@
 use std::ops::Deref;
 
-use crate::config::gobjects::GObject;
-use crate::config::derives::{Derive, Derives};
-use crate::env::Env;
-use crate::library;
-use crate::nameutil::*;
-use super::*;
-use super::imports::Imports;
-use super::info_base::InfoBase;
-use super::record_type::RecordType;
-use crate::traits::*;
+use super::{imports::Imports, info_base::InfoBase, record_type::RecordType, *};
+use crate::{
+    config::{
+        derives::{Derive, Derives},
+        gobjects::GObject,
+    },
+    env::Env,
+    library,
+    nameutil::*,
+    traits::*,
+};
 
 #[derive(Debug, Default)]
 pub struct Info {
@@ -39,20 +40,26 @@ impl Info {
 }
 
 fn filter_derives(derives: &[Derive], names: &[&str]) -> Derives {
-    derives.iter().filter_map(|derive| {
-        let new_names = derive.names.iter().filter(|n| {
-            !names.contains(&n.as_str())
-        }).map(Clone::clone).collect::<Vec<_>>();
+    derives
+        .iter()
+        .filter_map(|derive| {
+            let new_names = derive
+                .names
+                .iter()
+                .filter(|n| !names.contains(&n.as_str()))
+                .map(Clone::clone)
+                .collect::<Vec<_>>();
 
-        if !new_names.is_empty() {
-            Some(Derive {
-                names: new_names,
-                cfg_condition: derive.cfg_condition.clone(),
-            })
-        } else {
-            None
-        }
-    }).collect()
+            if !new_names.is_empty() {
+                Some(Derive {
+                    names: new_names,
+                    cfg_condition: derive.cfg_condition.clone(),
+                })
+            } else {
+                None
+            }
+        })
+        .collect()
 }
 
 pub fn new(env: &Env, obj: &GObject) -> Option<Info> {
@@ -115,12 +122,17 @@ pub fn new(env: &Env, obj: &GObject) -> Option<Info> {
     let mut derives = if let Some(ref derives) = obj.derives {
         derives.clone()
     } else {
-        let derives = vec![
-            Derive {
-                names: vec!["Debug".into(), "PartialEq".into(), "Eq".into(), "PartialOrd".into(), "Ord".into(), "Hash".into()],
-                cfg_condition: None,
-            }
-        ];
+        let derives = vec![Derive {
+            names: vec![
+                "Debug".into(),
+                "PartialEq".into(),
+                "Eq".into(),
+                "PartialOrd".into(),
+                "Ord".into(),
+                "Hash".into(),
+            ],
+            cfg_condition: None,
+        }];
 
         derives
     };
@@ -129,13 +141,13 @@ pub fn new(env: &Env, obj: &GObject) -> Option<Info> {
         match special {
             special_functions::Type::Compare => {
                 derives = filter_derives(&derives, &["PartialOrd", "Ord", "PartialEq", "Eq"]);
-            },
+            }
             special_functions::Type::Equal => {
                 derives = filter_derives(&derives, &["PartialEq", "Eq"]);
-            },
+            }
             special_functions::Type::Hash => {
                 derives = filter_derives(&derives, &["Hash"]);
-            },
+            }
             _ => (),
         }
     }

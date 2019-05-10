@@ -1,14 +1,17 @@
 use std::str::FromStr;
 use toml::Value;
 
-use crate::library;
-use crate::library::Nullable;
-use super::error::TomlHelper;
-use super::functions::Return;
-use super::ident::Ident;
-use super::parameter_matchable::Functionlike;
-use super::parsable::{Parsable, Parse};
-use crate::version::Version;
+use super::{
+    error::TomlHelper,
+    functions::Return,
+    ident::Ident,
+    parameter_matchable::Functionlike,
+    parsable::{Parsable, Parse},
+};
+use crate::{
+    library::{self, Nullable},
+    version::Version,
+};
 
 #[derive(Clone, Copy, Debug)]
 pub enum TransformationType {
@@ -55,10 +58,12 @@ impl Parse for Parameter {
             &format!("parameter {}", object_name),
         );
 
-        let nullable = toml.lookup("nullable")
+        let nullable = toml
+            .lookup("nullable")
             .and_then(Value::as_bool)
             .map(Nullable);
-        let transformation = toml.lookup("transformation")
+        let transformation = toml
+            .lookup("transformation")
             .and_then(Value::as_str)
             .and_then(|s| {
                 TransformationType::from_str(s)
@@ -68,7 +73,8 @@ impl Parse for Parameter {
                     })
                     .ok()
             });
-        let new_name = toml.lookup("new_name")
+        let new_name = toml
+            .lookup("new_name")
             .and_then(Value::as_str)
             .map(ToOwned::to_owned);
 
@@ -134,25 +140,30 @@ impl Signal {
             &format!("signal {}", object_name),
         );
 
-        let ignore = toml.lookup("ignore")
+        let ignore = toml
+            .lookup("ignore")
             .and_then(Value::as_bool)
             .unwrap_or(false);
 
-        let inhibit = toml.lookup("inhibit")
+        let inhibit = toml
+            .lookup("inhibit")
             .and_then(Value::as_bool)
             .unwrap_or(false);
-        let version = toml.lookup("version")
+        let version = toml
+            .lookup("version")
             .and_then(Value::as_str)
             .and_then(|s| s.parse().ok());
         let parameters = Parameters::parse(toml.lookup("parameter"), object_name);
         let ret = Return::parse(toml.lookup("return"), object_name);
 
-        let concurrency = toml.lookup("concurrency")
+        let concurrency = toml
+            .lookup("concurrency")
             .and_then(Value::as_str)
             .and_then(|v| v.parse().ok())
             .unwrap_or(concurrency);
 
-        let doc_hidden = toml.lookup("doc_hidden")
+        let doc_hidden = toml
+            .lookup("doc_hidden")
             .and_then(Value::as_bool)
             .unwrap_or(false);
 
@@ -187,8 +198,7 @@ pub type Signals = Vec<Signal>;
 
 #[cfg(test)]
 mod tests {
-    use super::super::ident::Ident;
-    use super::*;
+    use super::{super::ident::Ident, *};
 
     fn toml(input: &str) -> ::toml::Value {
         let value = input.parse::<::toml::Value>();

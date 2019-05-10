@@ -1,15 +1,18 @@
-use crate::analysis::imports::Imports;
-use crate::analysis::ref_mode::RefMode;
-use crate::analysis::rust_type::*;
-use crate::analysis::signals;
-use crate::analysis::signatures::{Signature, Signatures};
-use crate::analysis::trampolines;
-use crate::config::{self, GObject, PropertyGenerateFlags};
-use crate::env::Env;
-use crate::library;
-use crate::nameutil;
-use crate::traits::*;
-use crate::version::Version;
+use crate::{
+    analysis::{
+        imports::Imports,
+        ref_mode::RefMode,
+        rust_type::*,
+        signals,
+        signatures::{Signature, Signatures},
+        trampolines,
+    },
+    config::{self, GObject, PropertyGenerateFlags},
+    env::Env,
+    library, nameutil,
+    traits::*,
+    version::Version,
+};
 
 #[derive(Debug)]
 pub struct Property {
@@ -117,7 +120,12 @@ fn analyze_property(
     signatures: &Signatures,
     deps: &[library::TypeId],
     generate_builders: bool,
-) -> (Option<Property>, Option<Property>, Option<Property>, Option<signals::Info>) {
+) -> (
+    Option<Property>,
+    Option<Property>,
+    Option<Property>,
+    Option<signals::Info>,
+) {
     let type_name = type_tid.full_name(&env.library);
     let name = prop.name.clone();
 
@@ -141,8 +149,13 @@ fn analyze_property(
     let check_get_func_name = format!("get_{}", name_for_func);
     let check_set_func_name = format!("set_{}", name_for_func);
 
-    let for_builder = env.config.objects.get(&format!("{}Builder", obj.name)).is_some() &&
-        (prop.construct_only || prop.construct || prop.writable) && generate_builders;
+    let for_builder = env
+        .config
+        .objects
+        .get(&format!("{}Builder", obj.name))
+        .is_some()
+        && (prop.construct_only || prop.construct || prop.writable)
+        && generate_builders;
     let mut readable = prop.readable;
     let mut writable = if prop.construct_only {
         false
@@ -169,15 +182,27 @@ fn analyze_property(
     }
 
     if readable {
-        let (has, version) = Signature::has_for_property(env, &check_get_func_name,
-                                                         true, prop.typ, signatures, deps);
+        let (has, version) = Signature::has_for_property(
+            env,
+            &check_get_func_name,
+            true,
+            prop.typ,
+            signatures,
+            deps,
+        );
         if has && (env.is_totally_deprecated(version) || version <= prop_version) {
             readable = false;
         }
     }
     if writable {
-        let (has, version) = Signature::has_for_property(env, &check_set_func_name,
-                                                         false, prop.typ, signatures, deps);
+        let (has, version) = Signature::has_for_property(
+            env,
+            &check_set_func_name,
+            false,
+            prop.typ,
+            signatures,
+            deps,
+        );
         if has && (env.is_totally_deprecated(version) || version <= prop_version) {
             writable = false;
         }

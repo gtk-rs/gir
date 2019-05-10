@@ -1,10 +1,11 @@
 use std::io::{Result, Write};
 
-use crate::analysis;
-use crate::library;
-use crate::analysis::special_functions::Type;
-use crate::env::Env;
 use super::{function, general, trait_impls};
+use crate::{
+    analysis::{self, special_functions::Type},
+    env::Env,
+    library,
+};
 
 pub fn generate(w: &mut Write, env: &Env, analysis: &analysis::record::Info) -> Result<()> {
     let type_ = analysis.type_(&env.library);
@@ -83,12 +84,7 @@ pub fn generate(w: &mut Write, env: &Env, analysis: &analysis::record::Info) -> 
         writeln!(w, "}}")?;
     }
 
-    general::declare_default_from_new(
-        w,
-        env,
-        &analysis.name,
-        &analysis.functions
-    )?;
+    general::declare_default_from_new(w, env, &analysis.name, &analysis.functions)?;
 
     trait_impls::generate(
         w,
@@ -140,8 +136,6 @@ pub fn generate_reexports(
     contents.push(format!("{}mod {};", cfg, module_name));
     contents.push(format!(
         "{}pub use self::{}::{};",
-        cfg,
-        module_name,
-        analysis.name
+        cfg, module_name, analysis.name
     ));
 }

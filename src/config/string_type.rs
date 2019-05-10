@@ -2,9 +2,9 @@ use std::str::FromStr;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum StringType {
-    Utf8,        // &str for input, String for return
-    Filename,      // Path for input, PathBuf for return
-    OsString,      // OsStr for input, OsString for return
+    Utf8,     // &str for input, String for return
+    Filename, // Path for input, PathBuf for return
+    OsString, // OsStr for input, OsString for return
 }
 
 impl FromStr for StringType {

@@ -48,11 +48,13 @@ mod visitors;
 mod writer;
 mod xmlparser;
 
-pub use crate::analysis::class_hierarchy::run as class_hierarchy_run;
-pub use crate::analysis::namespaces::run as namespaces_run;
-pub use crate::analysis::run as analysis_run;
-pub use crate::analysis::symbols::run as symbols_run;
-pub use crate::codegen::generate as codegen_generate;
-pub use crate::config::{Config, WorkMode};
-pub use crate::env::Env;
-pub use crate::library::Library;
+pub use crate::{
+    analysis::{
+        class_hierarchy::run as class_hierarchy_run, namespaces::run as namespaces_run,
+        run as analysis_run, symbols::run as symbols_run,
+    },
+    codegen::generate as codegen_generate,
+    config::{Config, WorkMode},
+    env::Env,
+    library::Library,
+};

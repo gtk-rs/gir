@@ -1,5 +1,5 @@
-use std::vec::Vec;
 use super::defines::*;
+use std::vec::Vec;
 
 //TODO: convert to macro with usage
 //format!(indent!(5, "format:{}"), 6)

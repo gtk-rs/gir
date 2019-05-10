@@ -1,5 +1,5 @@
-use std::path::Path;
 use git2::{Repository, StatusOptions};
+use std::path::Path;
 
 pub fn repo_hash<P: AsRef<Path>>(path: P) -> Result<String, ()> {
     if let Ok(repo) = Repository::open(path) {
@@ -22,7 +22,8 @@ fn dirty(repo: &Repository) -> bool {
             .include_ignored(false)
             .include_untracked(false)
             .include_unmodified(false),
-    )).ok()
-        .map(|s| !s.is_empty())
-        .unwrap_or(false)
+    ))
+    .ok()
+    .map(|s| !s.is_empty())
+    .unwrap_or(false)
 }

@@ -1,16 +1,19 @@
-use crate::config;
-use crate::config::gobjects::GObject;
-use crate::env::Env;
-use crate::library;
-use crate::nameutil::signal_to_snake;
-use crate::parser::is_empty_c_type;
-use super::bounds::{BoundType, Bounds};
-use super::conversion_type::ConversionType;
-use super::ffi_type::used_ffi_type;
-use super::rust_type::{bounds_rust_type, rust_type, used_rust_type};
-use super::trampoline_parameters::{self, Parameters};
-use crate::traits::IntoString;
-use crate::version::Version;
+use super::{
+    bounds::{BoundType, Bounds},
+    conversion_type::ConversionType,
+    ffi_type::used_ffi_type,
+    rust_type::{bounds_rust_type, rust_type, used_rust_type},
+    trampoline_parameters::{self, Parameters},
+};
+use crate::{
+    config::{self, gobjects::GObject},
+    env::Env,
+    library,
+    nameutil::signal_to_snake,
+    parser::is_empty_c_type,
+    traits::IntoString,
+    version::Version,
+};
 
 #[derive(Debug, Clone)]
 pub struct Trampoline {
@@ -75,7 +78,12 @@ pub fn analyze(
 
     if in_trait {
         let type_name = bounds_rust_type(env, type_tid);
-        bounds.add_parameter("this", &type_name.into_string(), BoundType::IsA(None), false);
+        bounds.add_parameter(
+            "this",
+            &type_name.into_string(),
+            BoundType::IsA(None),
+            false,
+        );
     }
 
     let parameters = if is_notify {
@@ -103,9 +111,13 @@ pub fn analyze(
 
     if in_trait {
         let type_name = bounds_rust_type(env, type_tid);
-        bounds.add_parameter("this", &type_name.into_string(), BoundType::IsA(None), false);
+        bounds.add_parameter(
+            "this",
+            &type_name.into_string(),
+            BoundType::IsA(None),
+            false,
+        );
     }
-
 
     for par in &parameters.rust_parameters {
         if let Ok(s) = used_rust_type(env, par.typ, false) {
@@ -121,7 +133,8 @@ pub fn analyze(
     let mut ret_nullable = signal.ret.nullable;
 
     if signal.ret.typ != Default::default() {
-        if let Ok(s) = used_rust_type(env, signal.ret.typ, true) { //No GString
+        if let Ok(s) = used_rust_type(env, signal.ret.typ, true) {
+            //No GString
             used_types.push(s);
         }
         if let Some(s) = used_ffi_type(env, signal.ret.typ, &signal.ret.c_type) {

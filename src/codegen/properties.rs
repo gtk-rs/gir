@@ -1,15 +1,20 @@
 use std::io::{Result, Write};
 
-use crate::analysis::properties::Property;
-use crate::analysis::rust_type::{parameter_rust_type, rust_type};
-use crate::chunk::Chunk;
-use crate::env::Env;
-use super::general::{cfg_deprecated, version_condition};
-use crate::library;
-use crate::writer::primitives::tabs;
-use super::property_body;
-use crate::traits::IntoString;
-use crate::writer::ToCode;
+use super::{
+    general::{cfg_deprecated, version_condition},
+    property_body,
+};
+use crate::{
+    analysis::{
+        properties::Property,
+        rust_type::{parameter_rust_type, rust_type},
+    },
+    chunk::Chunk,
+    env::Env,
+    library,
+    traits::IntoString,
+    writer::{primitives::tabs, ToCode},
+};
 
 pub fn generate(
     w: &mut Write,
@@ -19,14 +24,7 @@ pub fn generate(
     only_declaration: bool,
     indent: usize,
 ) -> Result<()> {
-    generate_prop_func(
-        w,
-        env,
-        prop,
-        in_trait,
-        only_declaration,
-        indent,
-    )?;
+    generate_prop_func(w, env, prop, in_trait, only_declaration, indent)?;
 
     Ok(())
 }
@@ -79,28 +77,35 @@ fn declaration(env: &Env, prop: &Property) -> String {
         "".to_string()
     } else {
         let dir = library::ParameterDirection::In;
-        let param_type =
-            parameter_rust_type(env, prop.typ, dir, prop.nullable, prop.set_in_ref_mode,
-                                library::ParameterScope::None)
-                .into_string();
+        let param_type = parameter_rust_type(
+            env,
+            prop.typ,
+            dir,
+            prop.nullable,
+            prop.set_in_ref_mode,
+            library::ParameterScope::None,
+        )
+        .into_string();
         format!(", {}: {}", prop.var_name, param_type)
     };
     let return_str = if prop.is_get {
         let dir = library::ParameterDirection::Return;
-        let ret_type =
-            parameter_rust_type(env, prop.typ, dir, prop.nullable, prop.get_out_ref_mode,
-                                library::ParameterScope::None)
-                .into_string();
+        let ret_type = parameter_rust_type(
+            env,
+            prop.typ,
+            dir,
+            prop.nullable,
+            prop.get_out_ref_mode,
+            library::ParameterScope::None,
+        )
+        .into_string();
         format!(" -> {}", ret_type)
     } else {
         "".to_string()
     };
     format!(
         "fn {}{}(&self{}){}",
-        prop.func_name,
-        bound,
-        set_param,
-        return_str
+        prop.func_name, bound, set_param, return_str
     )
 }
 

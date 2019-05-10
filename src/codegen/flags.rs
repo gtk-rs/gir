@@ -1,41 +1,42 @@
-use crate::analysis::imports::Imports;
-use crate::analysis::namespaces;
-use crate::codegen::general::{self, cfg_deprecated, derives, version_condition, version_condition_string};
-use crate::config::gobjects::GObject;
-use crate::env::Env;
-use crate::file_saver;
-use crate::library::*;
-use crate::nameutil::bitfield_member_name;
-use std::io::prelude::*;
-use std::io::Result;
-use std::path::Path;
-use crate::traits::*;
+use crate::{
+    analysis::{imports::Imports, namespaces},
+    codegen::general::{
+        self, cfg_deprecated, derives, version_condition, version_condition_string,
+    },
+    config::gobjects::GObject,
+    env::Env,
+    file_saver,
+    library::*,
+    nameutil::bitfield_member_name,
+    traits::*,
+};
+use std::{
+    io::{prelude::*, Result},
+    path::Path,
+};
 
 pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>) {
-    let configs: Vec<&GObject> = env.config
-                                    .objects
-                                    .values()
-                                    .filter(|c| {
-                                        c.status.need_generate()
-                                        && c.type_id.map_or(false,
-                                                            |tid| tid.ns_id == namespaces::MAIN)
-                                    })
-                                    .collect();
-    let has_any = configs.iter()
-                         .any(|c| {
-                             if let Type::Bitfield(_) = *env.library.type_(c.type_id.unwrap()) {
-                                 true
-                             } else {
-                                 false
-                             }
-                         });
+    let configs: Vec<&GObject> = env
+        .config
+        .objects
+        .values()
+        .filter(|c| {
+            c.status.need_generate() && c.type_id.map_or(false, |tid| tid.ns_id == namespaces::MAIN)
+        })
+        .collect();
+    let has_any = configs.iter().any(|c| {
+        if let Type::Bitfield(_) = *env.library.type_(c.type_id.unwrap()) {
+            true
+        } else {
+            false
+        }
+    });
 
     if !has_any {
-        return
+        return;
     }
     let path = root_path.join("flags.rs");
     file_saver::save_to_file(path, env.config.make_backup, |w| {
-
         let mut imports = Imports::new(&env.library);
         imports.add(env.main_sys_crate_name(), None);
         imports.add("glib::translate::*", None);
@@ -80,10 +81,7 @@ fn generate_flags(env: &Env, w: &mut Write, flags: &Bitfield, config: &GObject) 
     version_condition(w, env, flags.version, false, 0)?;
     writeln!(w, "bitflags! {{")?;
     if config.must_use {
-        writeln!(
-            w,
-            "    #[must_use]"
-        )?;
+        writeln!(w, "    #[must_use]")?;
     }
 
     if let Some(ref d) = config.derives {
@@ -100,7 +98,10 @@ fn generate_flags(env: &Env, w: &mut Write, flags: &Bitfield, config: &GObject) 
 
         let name = bitfield_member_name(&member.name);
         let val: i64 = member.value.parse().unwrap();
-        let deprecated_version = member_config.iter().filter_map(|m| m.deprecated_version).next();
+        let deprecated_version = member_config
+            .iter()
+            .filter_map(|m| m.deprecated_version)
+            .next();
         let version = member_config.iter().filter_map(|m| m.version).next();
         cfg_deprecated(w, env, deprecated_version, false, 2)?;
         version_condition(w, env, version, false, 2)?;

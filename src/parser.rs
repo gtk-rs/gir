@@ -1,10 +1,14 @@
-use std::mem::replace;
-use std::path::{Path, PathBuf};
-use std::str::FromStr;
+use std::{
+    mem::replace,
+    path::{Path, PathBuf},
+    str::FromStr,
+};
 
-use crate::library::*;
-use crate::version::Version;
-use crate::xmlparser::{Element, XmlParser};
+use crate::{
+    library::*,
+    version::Version,
+    xmlparser::{Element, XmlParser},
+};
 
 const EMPTY_CTYPE: &str = "/*EMPTY*/";
 
@@ -34,9 +38,9 @@ impl Library {
                             let lib = format!("{}-{}", name, ver);
                             self.read_file(dir, &lib)?;
                         }
-                    },
+                    }
                     (Some(name), None) => includes.push(name.to_owned()),
-                    _ => {},
+                    _ => {}
                 }
                 Ok(())
             }
@@ -48,8 +52,12 @@ impl Library {
                 }
                 Ok(())
             }
-            "namespace" => self.read_namespace(parser, elem, package.take(),
-                                               replace(&mut includes, Vec::new())),
+            "namespace" => self.read_namespace(
+                parser,
+                elem,
+                package.take(),
+                replace(&mut includes, Vec::new()),
+            ),
             _ => Err(parser.unexpected_element(elem)),
         })?;
         Ok(())
@@ -73,8 +81,7 @@ impl Library {
                 ns.shared_library = s.split(',').map(String::from).collect();
             }
             if let Some(s) = elem.attr("identifier-prefixes") {
-                ns.identifier_prefixes =
-                    s.split(',').map(String::from).collect();
+                ns.identifier_prefixes = s.split(',').map(String::from).collect();
             }
             if let Some(s) = elem.attr("symbol-prefixes") {
                 ns.symbol_prefixes = s.split(',').map(String::from).collect();
@@ -109,9 +116,15 @@ impl Library {
         Ok(())
     }
 
-    fn read_class(&mut self, parser: &mut XmlParser, ns_id: u16, elem: &Element) -> Result<(), String> {
+    fn read_class(
+        &mut self,
+        parser: &mut XmlParser,
+        ns_id: u16,
+        elem: &Element,
+    ) -> Result<(), String> {
         let class_name = elem.attr_required("name")?;
-        let c_type = elem.attr("type")
+        let c_type = elem
+            .attr("type")
             .or_else(|| elem.attr("type-name"))
             .ok_or_else(|| parser.fail("Missing c:type/glib:type-name attributes"))?;
         let type_struct = elem.attr("type-struct").map(ToOwned::to_owned);
@@ -130,34 +143,27 @@ impl Library {
         parser.elements(|parser, elem| match elem.name() {
             "constructor" | "function" | "method" => {
                 self.read_function_to_vec(parser, ns_id, elem, &mut fns)
-            },
-            "implements" => {
-                self.read_type(parser, ns_id, elem).map(|r| {
-                    impls.push(r.0);
-                })
             }
-            "signal" => {
-                self.read_signal(parser, ns_id, elem).map(|s| {
-                    signals.push(s)
-                })
-            }
-            "property" => {
-                self.read_property(parser, ns_id, elem).map(|p| {
-                    if let Some(p) = p {
-                        properties.push(p);
-                    }
-                })
-            }
-            "field" => {
-                self.read_field(parser, ns_id, elem).map(|f| {
-                    fields.push(f);
-                })
-            }
+            "implements" => self.read_type(parser, ns_id, elem).map(|r| {
+                impls.push(r.0);
+            }),
+            "signal" => self
+                .read_signal(parser, ns_id, elem)
+                .map(|s| signals.push(s)),
+            "property" => self.read_property(parser, ns_id, elem).map(|p| {
+                if let Some(p) = p {
+                    properties.push(p);
+                }
+            }),
+            "field" => self.read_field(parser, ns_id, elem).map(|f| {
+                fields.push(f);
+            }),
             "virtual-method" => parser.ignore_element(),
             "doc" => parser.text().map(|t| doc = Some(t)),
             "source-position" => parser.ignore_element(),
-            "union" => {
-                self.read_union(parser, ns_id, elem, Some(class_name), Some(c_type)).map(|mut u| {
+            "union" => self
+                .read_union(parser, ns_id, elem, Some(class_name), Some(c_type))
+                .map(|mut u| {
                     let field_name = if let Some(field_name) = elem.attr("name") {
                         field_name.into()
                     } else {
@@ -181,12 +187,13 @@ impl Library {
                         ..Field::default()
                     });
                     union_count += 1;
-                })
-            }
+                }),
             _ => Err(parser.unexpected_element(elem)),
         })?;
 
-        let parent = elem.attr("parent").map(|s| self.find_or_stub_type(ns_id, s));
+        let parent = elem
+            .attr("parent")
+            .map(|s| self.find_or_stub_type(ns_id, s));
         let typ = Type::Class(Class {
             name: class_name.into(),
             c_type: c_type.into(),
@@ -246,8 +253,9 @@ impl Library {
             "constructor" | "function" | "method" => {
                 self.read_function_to_vec(parser, ns_id, elem, &mut fns)
             }
-            "union" => {
-                self.read_union(parser, ns_id, elem, Some(record_name), Some(c_type)).map(|mut u| {
+            "union" => self
+                .read_union(parser, ns_id, elem, Some(record_name), Some(c_type))
+                .map(|mut u| {
                     let field_name = if let Some(field_name) = elem.attr("name") {
                         field_name.into()
                     } else {
@@ -256,30 +264,30 @@ impl Library {
 
                     u = Union {
                         name: format!(
-                                  "{}{}_{}",
-                                  parent_name_prefix
-                                  .map(|s| {
-                                      let mut s = String::from(s);
-                                      s.push('_');
-                                      s
-                                  })
-                                  .unwrap_or_else(String::new),
-                                  record_name,
-                                  field_name
-                                  ),
-                                  c_type: Some(format!(
-                                          "{}{}_{}",
-                                          parent_ctype_prefix
-                                          .map(|s| {
-                                              let mut s = String::from(s);
-                                              s.push('_');
-                                              s
-                                          })
-                                          .unwrap_or_else(String::new),
-                                          c_type,
-                                          field_name
-                                          )),
-                                          ..u
+                            "{}{}_{}",
+                            parent_name_prefix
+                                .map(|s| {
+                                    let mut s = String::from(s);
+                                    s.push('_');
+                                    s
+                                })
+                                .unwrap_or_else(String::new),
+                            record_name,
+                            field_name
+                        ),
+                        c_type: Some(format!(
+                            "{}{}_{}",
+                            parent_ctype_prefix
+                                .map(|s| {
+                                    let mut s = String::from(s);
+                                    s.push('_');
+                                    s
+                                })
+                                .unwrap_or_else(String::new),
+                            c_type,
+                            field_name
+                        )),
+                        ..u
                     };
 
                     let u_doc = u.doc.clone();
@@ -293,8 +301,7 @@ impl Library {
                         ..Field::default()
                     });
                     union_count += 1;
-                })
-            }
+                }),
             "field" => {
                 self.read_field(parser, ns_id, elem).map(|mut f| {
                     // Workaround for wrong GValue c:type
@@ -341,18 +348,19 @@ impl Library {
         // Require a name here
         elem.attr_required("name")?;
 
-        self.read_union(parser, ns_id, elem, None, None).and_then(|mut u| {
-            assert_ne!(u.name, "");
-            // Workaround for missing c:type
-            if u.name == "_Value__data__union" {
-                u.c_type = Some("GValue_data".into());
-            } else if u.c_type.is_none() {
-                return Err(parser.fail("Missing union c:type"));
-            }
-            let union_name = u.name.clone();
-            self.add_type(ns_id, &union_name, Type::Union(u));
-            Ok(())
-        })
+        self.read_union(parser, ns_id, elem, None, None)
+            .and_then(|mut u| {
+                assert_ne!(u.name, "");
+                // Workaround for missing c:type
+                if u.name == "_Value__data__union" {
+                    u.c_type = Some("GValue_data".into());
+                } else if u.c_type.is_none() {
+                    return Err(parser.fail("Missing union c:type"));
+                }
+                let union_name = u.name.clone();
+                self.add_type(ns_id, &union_name, Type::Union(u));
+                Ok(())
+            })
     }
 
     fn read_union(
@@ -374,11 +382,9 @@ impl Library {
 
         parser.elements(|parser, elem| match elem.name() {
             "source-position" => parser.ignore_element(),
-            "field" => {
-                self.read_field(parser, ns_id, elem).map(|f| {
-                    fields.push(f);
-                })
-            }
+            "field" => self.read_field(parser, ns_id, elem).map(|f| {
+                fields.push(f);
+            }),
             "constructor" | "function" | "method" => {
                 self.read_function_to_vec(parser, ns_id, elem, &mut fns)
             }
@@ -389,7 +395,7 @@ impl Library {
                     elem,
                     parent_name_prefix,
                     parent_ctype_prefix,
-                    )? {
+                )? {
                     Some(Type::Record(r)) => r,
                     _ => return Ok(()),
                 };
@@ -402,30 +408,30 @@ impl Library {
 
                 r = Record {
                     name: format!(
-                              "{}{}_{}",
-                              parent_name_prefix
-                              .map(|s| {
-                                  let mut s = String::from(s);
-                                  s.push('_');
-                                  s
-                              })
-                              .unwrap_or_else(String::new),
-                              union_name,
-                              field_name
-                              ),
-                              c_type: format!(
-                                  "{}{}_{}",
-                                  parent_ctype_prefix
-                                  .map(|s| {
-                                      let mut s = String::from(s);
-                                      s.push('_');
-                                      s
-                                  })
-                                  .unwrap_or_else(String::new),
-                                  c_type,
-                                  field_name
-                                  ),
-                                  ..r
+                        "{}{}_{}",
+                        parent_name_prefix
+                            .map(|s| {
+                                let mut s = String::from(s);
+                                s.push('_');
+                                s
+                            })
+                            .unwrap_or_else(String::new),
+                        union_name,
+                        field_name
+                    ),
+                    c_type: format!(
+                        "{}{}_{}",
+                        parent_ctype_prefix
+                            .map(|s| {
+                                let mut s = String::from(s);
+                                s.push('_');
+                                s
+                            })
+                            .unwrap_or_else(String::new),
+                        c_type,
+                        field_name
+                    ),
+                    ..r
                 };
 
                 let r_doc = r.doc.clone();
@@ -457,8 +463,12 @@ impl Library {
         })
     }
 
-    fn read_field(&mut self, parser: &mut XmlParser, ns_id: u16,
-                  elem: &Element) -> Result<Field, String> {
+    fn read_field(
+        &mut self,
+        parser: &mut XmlParser,
+        ns_id: u16,
+        elem: &Element,
+    ) -> Result<Field, String> {
         let field_name = elem.attr_required("name")?;
         let private = elem.attr_bool("private", false);
         let bits = elem.attr("bits").and_then(|s| s.parse().ok());
@@ -479,9 +489,10 @@ impl Library {
                 if typ.is_some() {
                     return Err(parser.fail("Too many <type> elements"));
                 }
-                self.read_function(parser, ns_id, elem.name(), elem).map(|f| {
-                    typ = Some((Type::function(self, f), None, None));
-                })
+                self.read_function(parser, ns_id, elem.name(), elem)
+                    .map(|f| {
+                        typ = Some((Type::function(self, f), None, None));
+                    })
             }
             "doc" => parser.text().map(|t| doc = Some(t)),
             _ => Err(parser.unexpected_element(elem)),
@@ -537,23 +548,17 @@ impl Library {
             "constructor" | "function" | "method" => {
                 self.read_function_to_vec(parser, ns_id, elem, &mut fns)
             }
-            "prerequisite" => {
-                self.read_type(parser, ns_id, elem).map(|r| {
-                    prereqs.push(r.0);
-                })
-            }
-            "signal" => {
-                self.read_signal(parser, ns_id, elem).map(|s| {
-                    signals.push(s)
-                })
-            }
-            "property" => {
-                self.read_property(parser, ns_id, elem).map(|p| {
-                    if let Some(p) = p {
-                        properties.push(p);
-                    }
-                })
-            }
+            "prerequisite" => self.read_type(parser, ns_id, elem).map(|r| {
+                prereqs.push(r.0);
+            }),
+            "signal" => self
+                .read_signal(parser, ns_id, elem)
+                .map(|s| signals.push(s)),
+            "property" => self.read_property(parser, ns_id, elem).map(|p| {
+                if let Some(p) = p {
+                    properties.push(p);
+                }
+            }),
             "doc" => parser.text().map(|t| doc = Some(t)),
             "virtual-method" => parser.ignore_element(),
             "source-position" => parser.ignore_element(),
@@ -578,7 +583,12 @@ impl Library {
         Ok(())
     }
 
-    fn read_bitfield(&mut self, parser: &mut XmlParser, ns_id: u16, elem: &Element) -> Result<(), String> {
+    fn read_bitfield(
+        &mut self,
+        parser: &mut XmlParser,
+        ns_id: u16,
+        elem: &Element,
+    ) -> Result<(), String> {
         let bitfield_name = elem.attr_required("name")?;
         let c_type = elem.attr_required("type")?;
         let get_type = elem.attr("get-type").map(|s| s.into());
@@ -635,11 +645,7 @@ impl Library {
         let mut doc_deprecated = None;
 
         parser.elements(|parser, elem| match elem.name() {
-            "member" => {
-                self.read_member(parser, elem).map(|m| {
-                    members.push(m)
-                })
-            }
+            "member" => self.read_member(parser, elem).map(|m| members.push(m)),
             "constructor" | "function" | "method" => {
                 self.read_function_to_vec(parser, ns_id, elem, &mut fns)
             }
@@ -671,16 +677,12 @@ impl Library {
         ns_id: u16,
         elem: &Element,
     ) -> Result<(), String> {
-        self.read_function_if_not_moved(
-            parser,
-            ns_id,
-            "global",
-            elem,
-        ).map(|func| {
-            if let Some(func) = func {
-                self.add_function(ns_id, func);
-            }
-        })
+        self.read_function_if_not_moved(parser, ns_id, "global", elem)
+            .map(|func| {
+                if let Some(func) = func {
+                    self.add_function(ns_id, func);
+                }
+            })
     }
 
     fn read_constant(
@@ -708,8 +710,9 @@ impl Library {
                 if let Some(c_type) = c_type {
                     inner = Some((typ, c_type, array_length));
                 } else {
-                    return Err(parser.fail_with_position("Missing constant's c:type",
-                                                         elem.position()));
+                    return Err(
+                        parser.fail_with_position("Missing constant's c:type", elem.position())
+                    );
                 }
                 Ok(())
             }
@@ -740,8 +743,12 @@ impl Library {
         }
     }
 
-    fn read_alias(&mut self, parser: &mut XmlParser, ns_id: u16,
-                  elem: &Element) -> Result<(), String> {
+    fn read_alias(
+        &mut self,
+        parser: &mut XmlParser,
+        ns_id: u16,
+        elem: &Element,
+    ) -> Result<(), String> {
         let alias_name = elem.attr_required("name")?;
         let c_identifier = elem.attr_required("type")?;
 
@@ -821,22 +828,14 @@ impl Library {
         let mut doc_deprecated = None;
 
         parser.elements(|parser, elem| match elem.name() {
-            "parameters" => {
-                self.read_parameters(parser, ns_id, false, is_method).map(|mut ps| {
-                    params.append(&mut ps)
-                })
-            }
+            "parameters" => self
+                .read_parameters(parser, ns_id, false, is_method)
+                .map(|mut ps| params.append(&mut ps)),
             "return-value" => {
                 if ret.is_some() {
                     return Err(parser.fail("Too many <return-value> elements"));
                 }
-                ret = Some(self.read_parameter(
-                            parser,
-                            ns_id,
-                            elem,
-                            false,
-                            is_method
-                            )?);
+                ret = Some(self.read_parameter(parser, ns_id, elem, false, is_method)?);
                 Ok(())
             }
             "doc" => parser.text().map(|t| doc = Some(t)),
@@ -905,15 +904,16 @@ impl Library {
         elem: &Element,
     ) -> Result<Option<Function>, String> {
         if elem.attr("moved-to").is_some() {
-            return parser.ignore_element().map(|_| None)
+            return parser.ignore_element().map(|_| None);
         }
-        self.read_function(parser, ns_id, kind_str, elem).and_then(|f| {
-            if f.c_identifier.is_none() {
-                return Err(parser.fail_with_position("Missing c:identifier attribute",
-                                                     elem.position()));
-            }
-            Ok(Some(f))
-        })
+        self.read_function(parser, ns_id, kind_str, elem)
+            .and_then(|f| {
+                if f.c_identifier.is_none() {
+                    return Err(parser
+                        .fail_with_position("Missing c:identifier attribute", elem.position()));
+                }
+                Ok(Some(f))
+            })
     }
 
     fn read_signal(
@@ -933,18 +933,15 @@ impl Library {
         let mut doc_deprecated = None;
 
         parser.elements(|parser, elem| match elem.name() {
-            "parameters" => {
-                self.read_parameters(parser, ns_id, true, false).map(|mut ps| {
-                    params.append(&mut ps)
-                })
-            }
+            "parameters" => self
+                .read_parameters(parser, ns_id, true, false)
+                .map(|mut ps| params.append(&mut ps)),
             "return-value" => {
                 if ret.is_some() {
                     return Err(parser.fail("Too many <return-value> elements"));
                 }
-                self.read_parameter(parser, ns_id, elem, true, false).map(|p| {
-                    ret = Some(p)
-                })
+                self.read_parameter(parser, ns_id, elem, true, false)
+                    .map(|p| ret = Some(p))
             }
             "doc" => parser.text().map(|t| doc = Some(t)),
             "doc-deprecated" => parser.text().map(|t| doc_deprecated = Some(t)),
@@ -975,12 +972,7 @@ impl Library {
     ) -> Result<Vec<Parameter>, String> {
         parser.elements(|parser, elem| match elem.name() {
             "parameter" | "instance-parameter" => {
-                self.read_parameter(
-                    parser,
-                    ns_id,
-                    elem,
-                    allow_no_ctype,
-                    for_method)
+                self.read_parameter(parser, ns_id, elem, allow_no_ctype, for_method)
             }
             _ => Err(parser.unexpected_element(elem)),
         })
@@ -996,7 +988,9 @@ impl Library {
     ) -> Result<Parameter, String> {
         let param_name = elem.attr("name").unwrap_or("");
         let instance_parameter = elem.name() == "instance-parameter";
-        let transfer = elem.attr_from_str("transfer-ownership")?.unwrap_or(Transfer::None);
+        let transfer = elem
+            .attr_from_str("transfer-ownership")?
+            .unwrap_or(Transfer::None);
         let nullable = elem.attr_bool("nullable", false);
         let allow_none = elem.attr_bool("allow-none", false);
         let scope = elem.attr_from_str("scope")?.unwrap_or(ParameterScope::None);
@@ -1017,16 +1011,18 @@ impl Library {
         parser.elements(|parser, elem| match elem.name() {
             "type" | "array" => {
                 if typ.is_some() {
-                    return Err(parser.fail_with_position("Too many <type> elements",
-                                                         elem.position()));
+                    return Err(
+                        parser.fail_with_position("Too many <type> elements", elem.position())
+                    );
                 }
                 typ = Some(self.read_type(parser, ns_id, elem)?);
                 if let Some((tid, None, _)) = typ {
                     if allow_no_ctype {
                         typ = Some((tid, Some(EMPTY_CTYPE.to_owned()), None));
                     } else {
-                        return Err(parser.fail_with_position("Missing c:type attribute",
-                                                             elem.position()));
+                        return Err(
+                            parser.fail_with_position("Missing c:type attribute", elem.position())
+                        );
                     }
                 }
                 Ok(())
@@ -1095,7 +1091,7 @@ impl Library {
         let construct = elem.attr_bool("construct", false);
         let construct_only = elem.attr_bool("construct-only", false);
         let transfer = Transfer::from_str(elem.attr("transfer-ownership").unwrap_or("none"))
-                .or_else(|why| Err(parser.fail(&why)))?;
+            .or_else(|why| Err(parser.fail(&why)))?;
 
         let version = self.read_version(parser, ns_id, elem)?;
         let deprecated_version = self.read_deprecated_version(parser, ns_id, elem)?;
@@ -1107,8 +1103,9 @@ impl Library {
         parser.elements(|parser, elem| match elem.name() {
             "type" | "array" => {
                 if typ.is_some() {
-                    return Err(parser.fail_with_position("Too many <type> elements",
-                                                         elem.position()));
+                    return Err(
+                        parser.fail_with_position("Too many <type> elements", elem.position())
+                    );
                 }
                 if !elem.has_attrs() && elem.name() == "type" {
                     // defend from <type/>
@@ -1156,14 +1153,16 @@ impl Library {
         ns_id: u16,
         elem: &Element,
     ) -> Result<(TypeId, Option<String>, Option<u32>), String> {
-        let type_name =
-            elem.attr("name")
-                .or_else(|| if elem.name() == "array" {
+        let type_name = elem
+            .attr("name")
+            .or_else(|| {
+                if elem.name() == "array" {
                     Some("array")
                 } else {
                     None
-                })
-                .ok_or_else(|| parser.fail_with_position("Missing type name", elem.position()))?;
+                }
+            })
+            .ok_or_else(|| parser.fail_with_position("Missing type name", elem.position()))?;
         let c_type = elem.attr("type").map(|s| s.into());
         let array_length = elem.attr("length").and_then(|s| s.parse().ok());
 
@@ -1193,25 +1192,39 @@ impl Library {
                 )
             } else {
                 let inner = inner.iter().map(|r| r.0).collect();
-                Type::container(self, type_name, inner)
-                    .ok_or_else(|| parser.fail_with_position("Unknown container type", elem.position()))?
+                Type::container(self, type_name, inner).ok_or_else(|| {
+                    parser.fail_with_position("Unknown container type", elem.position())
+                })?
             };
             Ok((tid, c_type, array_length))
         }
     }
 
-    fn read_version(&mut self, parser: &XmlParser, ns_id: u16,
-                    elem: &Element) -> Result<Option<Version>, String> {
+    fn read_version(
+        &mut self,
+        parser: &XmlParser,
+        ns_id: u16,
+        elem: &Element,
+    ) -> Result<Option<Version>, String> {
         self.read_version_attribute(parser, ns_id, elem, "version")
     }
 
-    fn read_deprecated_version(&mut self, parser: &XmlParser, ns_id: u16,
-                               elem: &Element) -> Result<Option<Version>, String> {
+    fn read_deprecated_version(
+        &mut self,
+        parser: &XmlParser,
+        ns_id: u16,
+        elem: &Element,
+    ) -> Result<Option<Version>, String> {
         self.read_version_attribute(parser, ns_id, elem, "deprecated-version")
     }
 
-    fn read_version_attribute(&mut self, parser: &XmlParser, ns_id: u16, elem: &Element,
-                              attr: &str) -> Result<Option<Version>, String> {
+    fn read_version_attribute(
+        &mut self,
+        parser: &XmlParser,
+        ns_id: u16,
+        elem: &Element,
+        attr: &str,
+    ) -> Result<Option<Version>, String> {
         if let Some(v) = elem.attr(attr) {
             match v.parse() {
                 Ok(v) => {

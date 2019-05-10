@@ -1,7 +1,9 @@
-use crate::config::Config;
-use crate::library::{self, Function, Parameter, Type, MAIN_NAMESPACE};
-use crate::Library;
-use crate::version::Version;
+use crate::{
+    config::Config,
+    library::{self, Function, Parameter, Type, MAIN_NAMESPACE},
+    version::Version,
+    Library,
+};
 
 pub fn apply_config(library: &mut Library, cfg: &Config) {
     fix_versions_by_config(library, cfg);
@@ -42,11 +44,13 @@ fn check_versions(param: &Parameter, current_version: &mut Option<Version>, lib:
         _ => None,
     };
     let new_version = match (*current_version, ty_version) {
-        (Some(current_version), Some(ty_version)) => if current_version < ty_version {
-            Some(ty_version)
-        } else {
-            None
-        },
+        (Some(current_version), Some(ty_version)) => {
+            if current_version < ty_version {
+                Some(ty_version)
+            } else {
+                None
+            }
+        }
         (None, Some(ty_version)) => Some(ty_version),
         _ => None,
     };

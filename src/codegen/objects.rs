@@ -1,8 +1,6 @@
 use std::path::Path;
 
-use crate::env::Env;
-use crate::file_saver::*;
-use crate::nameutil::*;
+use crate::{env::Env, file_saver::*, nameutil::*};
 
 pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>, traits: &mut Vec<String>) {
     info!("Generate objects");
@@ -12,9 +10,10 @@ pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>, traits: &
             continue;
         }
 
-        let mod_name = obj.module_name.clone().unwrap_or_else(|| {
-            module_name(split_namespace_name(&class_analysis.full_name).1)
-        });
+        let mod_name = obj
+            .module_name
+            .clone()
+            .unwrap_or_else(|| module_name(split_namespace_name(&class_analysis.full_name).1));
 
         let generate_display_trait = obj.generate_display_trait;
         let mut path = root_path.join(&mod_name);

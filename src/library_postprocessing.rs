@@ -1,21 +1,24 @@
 use std::collections::HashMap;
 
-use crate::analysis::types::IsIncomplete;
-use crate::library::*;
-use crate::nameutil;
-use crate::parser::is_empty_c_type;
-use crate::traits::MaybeRefAs;
-use crate::config::Config;
-use crate::config::gobjects::GObject;
+use crate::{
+    analysis::types::IsIncomplete,
+    config::{gobjects::GObject, Config},
+    library::*,
+    nameutil,
+    parser::is_empty_c_type,
+    traits::MaybeRefAs,
+};
 
 impl Namespace {
     fn unresolved(&self) -> Vec<&str> {
         self.index
             .iter()
-            .filter_map(|(name, &id)| if self.types[id as usize].is_none() {
-                Some(&name[..])
-            } else {
-                None
+            .filter_map(|(name, &id)| {
+                if self.types[id as usize].is_none() {
+                    Some(&name[..])
+                } else {
+                    None
+                }
             })
             .collect()
     }
@@ -43,7 +46,8 @@ impl Library {
     }
 
     fn check_resolved(&self) {
-        let list: Vec<_> = self.index
+        let list: Vec<_> = self
+            .index
             .iter()
             .flat_map(|(name, &id)| {
                 let name = name.clone();
@@ -161,13 +165,13 @@ impl Library {
 
     fn c_type_by_type_id(&self, tid: TypeId) -> Option<String> {
         let type_ = self.type_(tid);
-        type_
-            .get_glib_name()
-            .map(|glib_name| if self.is_referenced_type(type_) {
+        type_.get_glib_name().map(|glib_name| {
+            if self.is_referenced_type(type_) {
                 format!("{}*", glib_name)
             } else {
                 glib_name.to_string()
-            })
+            }
+        })
     }
 
     fn is_referenced_type(&self, type_: &Type) -> bool {
@@ -190,7 +194,7 @@ impl Library {
                 if let Type::Record(ref record) = *type_ {
                     if let Some(ref struct_for) = record.gtype_struct_for {
                         if let Some(struct_for_tid) = self.find_type(ns_id as u16, struct_for) {
-                            structs_and_types.push ((record.c_type.clone(), struct_for_tid));
+                            structs_and_types.push((record.c_type.clone(), struct_for_tid));
                         }
                     }
                 }
@@ -201,13 +205,16 @@ impl Library {
             match *self.type_mut(struct_for_tid) {
                 Type::Class(ref mut klass) => {
                     klass.c_class_type = Some(gtype_struct_c_type);
-                },
+                }
 
                 Type::Interface(ref mut iface) => {
                     iface.c_class_type = Some(gtype_struct_c_type);
-                },
+                }
 
-                ref x => unreachable!("Something other than a class or interface has a class struct: {:?}", x)
+                ref x => unreachable!(
+                    "Something other than a class or interface has a class struct: {:?}",
+                    x
+                ),
             }
         }
     }
@@ -222,26 +229,29 @@ impl Library {
 
                 match *type_ {
                     Type::Class(ref klass) => {
-                        name         = &klass.name;
-                        type_struct  = &klass.type_struct;
+                        name = &klass.name;
+                        type_struct = &klass.type_struct;
                         c_class_type = &klass.c_class_type;
-                    },
+                    }
 
                     Type::Interface(ref iface) => {
-                        name         = &iface.name;
-                        type_struct  = &iface.type_struct;
+                        name = &iface.name;
+                        type_struct = &iface.type_struct;
                         c_class_type = &iface.c_class_type;
-                    },
+                    }
 
-                    _ => { continue; }
+                    _ => {
+                        continue;
+                    }
                 }
 
                 if let Some(ref type_struct) = *type_struct {
                     let type_struct_tid = self.find_type(ns_id as u16, type_struct);
                     if type_struct_tid.is_none() {
-                        panic!("\"{}\" has glib:type-struct=\"{}\" but there is no such record",
-                               name,
-                               type_struct);
+                        panic!(
+                            "\"{}\" has glib:type-struct=\"{}\" but there is no such record",
+                            name, type_struct
+                        );
                     }
 
                     let type_struct_type = self.type_(type_struct_tid.unwrap());
@@ -262,8 +272,10 @@ impl Library {
                             }
                         }
                     } else {
-                        panic!("Element with name=\"{}\" should be a record but it isn't",
-                               type_struct);
+                        panic!(
+                            "Element with name=\"{}\" should be a record but it isn't",
+                            type_struct
+                        );
                     }
                 } else if let Some(ref c) = *c_class_type {
                     panic!("\"{}\" has no glib:type-struct but there is an element with glib:is-gtype-struct-for=\"{}\"",
@@ -291,9 +303,21 @@ impl Library {
                     id: id as u32,
                 };
                 match *type_ {
-                    Type::Class(Class { ref name, ref fields, ..}) |
-                    Type::Record(Record { ref name, ref fields, ..}) |
-                    Type::Union(Union { ref name, ref fields, ..}) => {
+                    Type::Class(Class {
+                        ref name,
+                        ref fields,
+                        ..
+                    })
+                    | Type::Record(Record {
+                        ref name,
+                        ref fields,
+                        ..
+                    })
+                    | Type::Union(Union {
+                        ref name,
+                        ref fields,
+                        ..
+                    }) => {
                         for (fid, field) in fields.iter().enumerate() {
                             if nameutil::needs_mangling(&field.name) {
                                 let new_name = nameutil::mangle_keywords(&*field.name).into_owned();
@@ -323,24 +347,39 @@ impl Library {
                             }
                             error!("Field `{}::{}` is missing c:type", name, &field.name);
                         }
-                    },
-                    _ => {},
+                    }
+                    _ => {}
                 }
             }
         }
         for (tid, fid, action) in actions {
             match *self.type_mut(tid) {
-                Type::Class(Class { ref name, ref mut fields, ..}) |
-                Type::Record(Record { ref name, ref mut fields, ..}) |
-                Type::Union(Union { ref name, ref mut fields, ..}) => {
-                    match action {
-                        Action::SetCType(c_type) => {
-                            warn_main!(tid, "Field `{}::{}` missing c:type assumed to be `{}`",
-                                  name, &fields[fid].name, c_type);
-                            fields[fid].c_type = Some(c_type);
-                        }
-                        Action::SetName(name) => fields[fid].name = name,
+                Type::Class(Class {
+                    ref name,
+                    ref mut fields,
+                    ..
+                })
+                | Type::Record(Record {
+                    ref name,
+                    ref mut fields,
+                    ..
+                })
+                | Type::Union(Union {
+                    ref name,
+                    ref mut fields,
+                    ..
+                }) => match action {
+                    Action::SetCType(c_type) => {
+                        warn_main!(
+                            tid,
+                            "Field `{}::{}` missing c:type assumed to be `{}`",
+                            name,
+                            &fields[fid].name,
+                            c_type
+                        );
+                        fields[fid].c_type = Some(c_type);
                     }
+                    Action::SetName(name) => fields[fid].name = name,
                 },
                 _ => unreachable!("Expected class, record or union"),
             }
@@ -365,15 +404,22 @@ impl Library {
                     id: id as u32,
                 };
                 match *type_ {
-                    Type::Union(Union {ref fields, ..}) if fields.as_slice().is_incomplete(self) =>
-                        unrepresentable.push(tid),
-                    _ => {},
+                    Type::Union(Union { ref fields, .. })
+                        if fields.as_slice().is_incomplete(self) =>
+                    {
+                        unrepresentable.push(tid)
+                    }
+                    _ => {}
                 }
             }
         }
         for tid in unrepresentable {
             match *self.type_mut(tid) {
-                Type::Union(Union {ref name, ref mut fields, ..}) => {
+                Type::Union(Union {
+                    ref name,
+                    ref mut fields,
+                    ..
+                }) => {
                     info!("Type `{}` is not representable.", name);
                     fields.clear();
                 }
@@ -417,7 +463,11 @@ impl Library {
                     let full_name = tid.full_name(self);
                     let obj = config.objects.get(&*full_name);
 
-                    if let Some(GObject { final_type: Some(final_type), ..}) = obj {
+                    if let Some(GObject {
+                        final_type: Some(final_type),
+                        ..
+                    }) = obj
+                    {
                         // The config might also be used to override a type that is wrongly
                         // detected as final type otherwise
                         if *final_type {
@@ -431,7 +481,10 @@ impl Library {
         }
 
         for tid in final_types {
-            if let Type::Class(Class { ref mut final_type, ..}) = *self.type_mut(tid) {
+            if let Type::Class(Class {
+                ref mut final_type, ..
+            }) = *self.type_mut(tid)
+            {
                 *final_type = true;
             } else {
                 unreachable!();

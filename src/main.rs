@@ -3,8 +3,7 @@ extern crate env_logger;
 extern crate hprof;
 extern crate libgir as gir;
 
-use std::cell::RefCell;
-use std::str::FromStr;
+use std::{cell::RefCell, str::FromStr};
 
 use crate::gir::{Config, WorkMode};
 
@@ -42,9 +41,17 @@ fn build_config() -> Result<Config, String> {
         },
     };
 
-    Config::new(args.get_str("-c"), work_mode, args.get_str("-d"),
-                args.get_str("<library>"), args.get_str("<version>"), args.get_str("-o"),
-                args.get_str("--doc-target-path"), args.get_bool("-b"), args.get_bool("-s"))
+    Config::new(
+        args.get_str("-c"),
+        work_mode,
+        args.get_str("-d"),
+        args.get_str("<library>"),
+        args.get_str("<version>"),
+        args.get_str("-o"),
+        args.get_str("--doc-target-path"),
+        args.get_bool("-b"),
+        args.get_bool("-s"),
+    )
 }
 
 #[cfg_attr(test, allow(dead_code))]

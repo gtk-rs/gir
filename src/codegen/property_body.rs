@@ -1,5 +1,4 @@
-use crate::analysis;
-use crate::chunk::Chunk;
+use crate::{analysis, chunk::Chunk};
 
 #[derive(Default)]
 pub struct Builder {
@@ -79,15 +78,24 @@ impl Builder {
             "gobject_sys::GObject"
         };
         if self.in_trait {
-            params.push(Chunk::Custom(format!("self.to_glib_none().0 as *mut {}", cast_target)));
+            params.push(Chunk::Custom(format!(
+                "self.to_glib_none().0 as *mut {}",
+                cast_target
+            )));
         } else {
-            params.push(Chunk::Custom(format!("self.as_ptr() as *mut {}", cast_target)));
+            params.push(Chunk::Custom(format!(
+                "self.as_ptr() as *mut {}",
+                cast_target
+            )));
         }
 
         if self.is_child_property {
             params.push(Chunk::Custom("item.to_glib_none().0 as *mut _".into()));
         }
-        params.push(Chunk::Custom(format!("b\"{}\\0\".as_ptr() as *const _", self.name)));
+        params.push(Chunk::Custom(format!(
+            "b\"{}\\0\".as_ptr() as *const _",
+            self.name
+        )));
         params.push(Chunk::Custom("value.to_glib_none_mut().0".into()));
 
         let mut body = Vec::new();
@@ -106,7 +114,10 @@ impl Builder {
         body.push(Chunk::Let {
             name: "value".into(),
             is_mut: true,
-            value: Box::new(Chunk::Custom(format!("Value::from_type(<{} as StaticType>::static_type())", self.type_))),
+            value: Box::new(Chunk::Custom(format!(
+                "Value::from_type(<{} as StaticType>::static_type())",
+                self.type_
+            ))),
             type_: None,
         });
 
@@ -146,20 +157,28 @@ impl Builder {
             "gobject_sys::GObject"
         };
         if self.in_trait {
-            params.push(Chunk::Custom(format!("self.to_glib_none().0 as *mut {}", cast_target)));
+            params.push(Chunk::Custom(format!(
+                "self.to_glib_none().0 as *mut {}",
+                cast_target
+            )));
         } else {
-            params.push(Chunk::Custom(format!("self.as_ptr() as *mut {}", cast_target)));
+            params.push(Chunk::Custom(format!(
+                "self.as_ptr() as *mut {}",
+                cast_target
+            )));
         }
 
         if self.is_child_property {
             params.push(Chunk::Custom("item.to_glib_none().0 as *mut _".into()));
         }
-        params.push(Chunk::Custom(format!("b\"{}\\0\".as_ptr() as *const _", self.name)));
+        params.push(Chunk::Custom(format!(
+            "b\"{}\\0\".as_ptr() as *const _",
+            self.name
+        )));
         let ref_str = if self.is_ref { "" } else { "&" };
         params.push(Chunk::Custom(format!(
             "Value::from({}{}).to_glib_none().0",
-            ref_str,
-            self.var_name
+            ref_str, self.var_name
         )));
 
         let mut body = Vec::new();
