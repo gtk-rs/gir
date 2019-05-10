@@ -1,9 +1,11 @@
 use std::io::{Result, Write};
 
+use analysis::rust_type::bounds_rust_type;
 use case::CaseExt;
 use analysis;
 use library;
 use env::Env;
+use nameutil;
 use super::child_properties;
 use super::function;
 use super::general;
@@ -107,6 +109,96 @@ pub fn generate(
 
     if analysis.concurrency != library::Concurrency::None {
         try!(writeln!(w));
+    }
+
+    if analysis.properties.iter().any(|property| property.construct || property.construct_only) {
+        let mut methods = vec![];
+        let mut properties = vec![];
+        writeln!(w, "#[cfg(any(feature = \"builders\", feature = \"dox\"))]")?;
+        writeln!(w, "pub struct {}Builder {{", analysis.name)?;
+        for property in &analysis.properties {
+            if (!property.is_get && property.construct) || property.construct_only {
+                match bounds_rust_type(env, property.typ) {
+                    Ok(type_string) => {
+                        let attribute_type =
+                            match type_string.as_str() {
+                                "str" => "String",
+                                _ => &type_string,
+                            };
+                        let name = nameutil::mangle_keywords(nameutil::signal_to_snake(&property.name));
+                        if let Some(version) = property.version {
+                            writeln!(w, "    #[cfg(any(feature = \"{}\", feature = \"dox\"))]", version.to_feature())?;
+                        }
+                        writeln!(w, "    {}: Option<{}>,", name, attribute_type)?;
+                        let prefix =
+                            if let Some(version) = property.version {
+                                format!("    #[cfg(any(feature = \"{}\", feature = \"dox\"))]\n", version.to_feature())
+                            }
+                            else {
+                                String::new()
+                            };
+                        let (type_string, conversion) =
+                            match type_string.as_str() {
+                                "str" => ("&str", ".to_string()"),
+                                _ => (&*type_string, ""),
+                            };
+                        methods.push(format!("{}    pub fn {name}(mut self, {name}: {}) -> Self {{
+        self.{name} = Some({name}{});
+        self
+    }}", prefix, type_string, conversion, name=name));
+                        properties.push(property);
+                    },
+                    Err(_) => writeln!(w, "    //{}: /*Unknown type*/,", property.name)?,
+                }
+            }
+        }
+        writeln!(w, "}}\n")?;
+        writeln!(w, "#[cfg(any(feature = \"builders\", feature = \"dox\"))]")?;
+        writeln!(w, "impl {}Builder {{", analysis.name)?;
+        writeln!(w, "    pub fn new() -> Self {{")?;
+        writeln!(w, "        Self {{")?;
+        for property in &properties {
+            if let Some(version) = property.version {
+                writeln!(w, "            #[cfg(any(feature = \"{}\", feature = \"dox\"))]", version.to_feature())?;
+            }
+            let name = nameutil::mangle_keywords(nameutil::signal_to_snake(&property.name));
+            writeln!(w, "            {}: None,", name)?;
+        }
+        writeln!(w, "        }}")?;
+        writeln!(w, "    }}")?;
+        writeln!(w, "    pub fn build(self) -> {} {{", analysis.name)?;
+        writeln!(w, "        let mut n_properties = 0;")?;
+        writeln!(w, "        let mut property_names: Vec<CString> = vec![];")?;
+        writeln!(w, "        let mut names = vec![];")?;
+        writeln!(w, "        let mut values = vec![];")?;
+        for property in &properties {
+            let name = nameutil::mangle_keywords(nameutil::signal_to_snake(&property.name));
+            if let Some(version) = property.version {
+                writeln!(w, "        #[cfg(any(feature = \"{}\", feature = \"dox\"))]", version.to_feature())?;
+                writeln!(w, "        {{")?;
+            }
+            writeln!(w, "        if let Some({property}) = self.{property} {{", property=name)?;
+            writeln!(w, "            property_names.push(CString::new(\"{}\").unwrap());", property.name)?;
+            writeln!(w, "            names.push(property_names[property_names.len() - 1].as_ptr());")?;
+            writeln!(w, "            let property = {}.to_value();", name)?;
+            writeln!(w, "            values.push(property.into_raw());")?;
+            writeln!(w, "            n_properties += 1;")?;
+            writeln!(w, "        }}")?;
+            if property.version.is_some() {
+                writeln!(w, "        }}")?;
+            }
+        }
+        writeln!(w, "        unsafe {{")?;
+        writeln!(w, "            crate::Object::from_glib_none(gobject_sys::g_object_new_with_properties(")?;
+        writeln!(w, "                {}::static_type().to_glib(), n_properties, names.as_mut_ptr(), values.as_ptr())",
+            analysis.name)?;
+        writeln!(w, "            as *mut _).downcast().expect(\"downcast\")")?;
+        writeln!(w, "        }}")?;
+        writeln!(w, "    }}")?;
+        for method in methods {
+            writeln!(w, "{}", method)?;
+        }
+        writeln!(w, "}}")?;
     }
 
     match analysis.concurrency {
@@ -304,5 +396,18 @@ pub fn generate_reexports(
             traits.push(format!("\t{}", cfg));
         }
         traits.push(format!("\tpub use super::{};", analysis.trait_name));
+    }
+
+    let mut generate_builder = false;
+    for property in &analysis.properties {
+        if (!property.is_get && property.construct) || property.construct_only {
+            generate_builder = true;
+            break;
+        }
+    }
+    if generate_builder {
+        contents.extend_from_slice(&cfgs);
+        contents.push(format!("#[cfg(any(feature = \"builders\", feature = \"dox\"))]
+pub use self::{}::{}Builder;", module_name, analysis.name));
     }
 }

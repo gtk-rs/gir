@@ -161,6 +161,12 @@ pub fn class(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<Info>
     // There's also no point in generating a trait for final types: there are no possible subtypes
     let generate_trait = !final_type && (has_signals || has_methods || !properties.is_empty() || !child_properties.is_empty());
 
+    if properties.iter().any(|property| property.construct || property.construct_only) {
+        imports.add("std::ffi::CString", None);
+        imports.add("glib::object::Cast", None);
+        imports.add("gtk::prelude::ToValue", None);
+    }
+
     if generate_trait {
         imports.add("glib::object::IsA", None);
     }

@@ -1,4 +1,5 @@
 use analysis::bounds::Bound;
+use analysis::function_parameters::TransformationType;
 use analysis::imports::Imports;
 use analysis::ref_mode::RefMode;
 use analysis::rust_type::*;
@@ -9,6 +10,7 @@ use config::{self, GObject, PropertyGenerateFlags};
 use env::Env;
 use library;
 use nameutil;
+use super::conversion_type::ConversionType;
 use traits::*;
 use version::Version;
 
@@ -16,6 +18,7 @@ use version::Version;
 pub struct Property {
     pub name: String,
     pub var_name: String,
+    pub c_type: Option<String>,
     pub typ: library::TypeId,
     pub is_get: bool,
     pub func_name: String,
@@ -25,6 +28,9 @@ pub struct Property {
     pub version: Option<Version>,
     pub deprecated_version: Option<Version>,
     pub bound: Option<Bound>,
+    pub construct: bool,
+    pub construct_only: bool,
+    pub transformation_type: TransformationType,
 }
 
 pub fn analyze(
@@ -189,10 +195,36 @@ fn analyze_property(
         set_in_ref_mode = RefMode::ByRef;
     }
     let nullable = library::Nullable(set_in_ref_mode.is_ref());
+
+    let transformation_type = {
+        let name = nameutil::mangle_keywords(nameutil::signal_to_snake(&name)).to_string();
+        match ConversionType::of(env, prop.typ) {
+            ConversionType::Direct => TransformationType::ToGlibDirect { name: name.clone() },
+            ConversionType::Scalar => TransformationType::ToGlibScalar {
+                name: name.clone(),
+                nullable,
+            },
+            ConversionType::Pointer => TransformationType::ToGlibPointer {
+                name: name.clone(),
+                instance_parameter: false,
+                transfer: library::Transfer::None,
+                ref_mode: set_in_ref_mode,
+                to_glib_extra: String::new(),
+                explicit_target_type: String::new(),
+                pointer_cast: String::new(),
+                in_trait: false,
+                nullable: false,
+            },
+            ConversionType::Borrow => TransformationType::ToGlibBorrow,
+            ConversionType::Unknown => TransformationType::ToGlibUnknown { name: name.clone() },
+        }
+    };
+
     let getter = if readable {
         Some(Property {
             name: name.clone(),
             var_name: String::new(),
+            c_type: prop.c_type.clone(),
             typ: prop.typ,
             is_get: true,
             func_name: get_func_name,
@@ -202,6 +234,9 @@ fn analyze_property(
             version: prop_version,
             deprecated_version: prop.deprecated_version,
             bound: None,
+            construct: prop.construct,
+            construct_only: prop.construct_only,
+            transformation_type: transformation_type.clone(),
         })
     } else {
         None
@@ -211,6 +246,7 @@ fn analyze_property(
         Some(Property {
             name: name.clone(),
             var_name,
+            c_type: prop.c_type.clone(),
             typ: prop.typ,
             is_get: false,
             func_name: set_func_name,
@@ -220,6 +256,9 @@ fn analyze_property(
             version: prop_version,
             deprecated_version: prop.deprecated_version,
             bound: None,
+            construct: prop.construct,
+            construct_only: prop.construct_only,
+            transformation_type,
         })
     } else {
         None
