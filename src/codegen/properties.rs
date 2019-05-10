@@ -74,11 +74,13 @@ fn generate_prop_func(
     Ok(())
 }
 
-pub fn property_type(env: &Env, prop: &Property) -> (String, String) {
+fn declaration(env: &Env, prop: &Property) -> String {
     let mut bound = String::new();
-    let dir = library::ParameterDirection::In;
-    let typ =
-        if let Some(Bound {
+    let set_param = if prop.is_get {
+        "".to_string()
+    } else {
+        let dir = library::ParameterDirection::In;
+        let param_type = if let Some(Bound {
             alias,
             ref type_str,
             ref bound_type,
@@ -126,16 +128,6 @@ pub fn property_type(env: &Env, prop: &Property) -> (String, String) {
                                 library::ParameterScope::None)
                 .into_string()
         };
-    (typ, bound)
-}
-
-fn declaration(env: &Env, prop: &Property) -> String {
-    let mut bound = String::new();
-    let set_param = if prop.is_get {
-        "".to_string()
-    } else {
-        let (param_type, new_bound) = property_type(env, prop);
-        bound = new_bound;
         format!(", {}: {}", prop.var_name, param_type)
     };
     let return_str = if prop.is_get {
