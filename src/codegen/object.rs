@@ -114,8 +114,8 @@ pub fn generate(
     if analysis.properties.iter().any(|property| property.construct || property.construct_only) {
         let mut methods = vec![];
         let mut properties = vec![];
-        writeln!(w, "#[cfg(any(feature = \"builders\", feature = \"dox\"))]")?;
-        writeln!(w, "pub struct {}Builder {{", analysis.name)?;
+        writeln!(w, "#[cfg(any(feature = \"builders\", feature = \"dox\"))]
+pub struct {}Builder {{", analysis.name)?;
         for property in &analysis.properties {
             if (!property.is_get && property.construct) || property.construct_only {
                 match bounds_rust_type(env, property.typ) {
@@ -142,7 +142,7 @@ pub fn generate(
                                 "str" => ("&str", ".to_string()"),
                                 _ => (&*type_string, ""),
                             };
-                        methods.push(format!("{}    pub fn {name}(mut self, {name}: {}) -> Self {{
+                        methods.push(format!("\n{}    pub fn {name}(mut self, {name}: {}) -> Self {{
         self.{name} = Some({name}{});
         self
     }}", prefix, type_string, conversion, name=name));
@@ -152,11 +152,12 @@ pub fn generate(
                 }
             }
         }
-        writeln!(w, "}}\n")?;
-        writeln!(w, "#[cfg(any(feature = \"builders\", feature = \"dox\"))]")?;
-        writeln!(w, "impl {}Builder {{", analysis.name)?;
-        writeln!(w, "    pub fn new() -> Self {{")?;
-        writeln!(w, "        Self {{")?;
+        writeln!(w, "}}\n
+
+#[cfg(any(feature = \"builders\", feature = \"dox\"))]
+impl {}Builder {{
+    pub fn new() -> Self {{
+        Self {{", analysis.name)?;
         for property in &properties {
             if let Some(version) = property.version {
                 writeln!(w, "            #[cfg(any(feature = \"{}\", feature = \"dox\"))]", version.to_feature())?;
@@ -164,37 +165,40 @@ pub fn generate(
             let name = nameutil::mangle_keywords(nameutil::signal_to_snake(&property.name));
             writeln!(w, "            {}: None,", name)?;
         }
-        writeln!(w, "        }}")?;
-        writeln!(w, "    }}")?;
-        writeln!(w, "    pub fn build(self) -> {} {{", analysis.name)?;
-        writeln!(w, "        let mut n_properties = 0;")?;
-        writeln!(w, "        let mut property_names: Vec<CString> = vec![];")?;
-        writeln!(w, "        let mut names = vec![];")?;
-        writeln!(w, "        let mut values = vec![];")?;
+        writeln!(w, "        }}
+    }}
+
+    pub fn build(self) -> {} {{
+        let mut n_properties = 0;
+        let mut property_names: Vec<CString> = vec![];
+        let mut names = vec![];
+        let mut values = vec![];", analysis.name)?;
         for property in &properties {
             let name = nameutil::mangle_keywords(nameutil::signal_to_snake(&property.name));
             if let Some(version) = property.version {
-                writeln!(w, "        #[cfg(any(feature = \"{}\", feature = \"dox\"))]", version.to_feature())?;
-                writeln!(w, "        {{")?;
+                writeln!(w,
+"        #[cfg(any(feature = \"{}\", feature = \"dox\"))]
+        {{", version.to_feature())?;
             }
-            writeln!(w, "        if let Some({property}) = self.{property} {{", property=name)?;
-            writeln!(w, "            property_names.push(CString::new(\"{}\").unwrap());", property.name)?;
-            writeln!(w, "            names.push(property_names[property_names.len() - 1].as_ptr());")?;
-            writeln!(w, "            let property = {}.to_value();", name)?;
-            writeln!(w, "            values.push(property.into_raw());")?;
-            writeln!(w, "            n_properties += 1;")?;
-            writeln!(w, "        }}")?;
+            writeln!(w,
+"        if let Some({property}) = self.{property} {{
+            property_names.push(CString::new(\"{}\").unwrap());
+            names.push(property_names[property_names.len() - 1].as_ptr());
+            let property = {property}.to_value();
+            values.push(property.into_raw());
+            n_properties += 1;
+        }}", property.name, property=name)?;
             if property.version.is_some() {
                 writeln!(w, "        }}")?;
             }
         }
-        writeln!(w, "        unsafe {{")?;
-        writeln!(w, "            crate::Object::from_glib_none(gobject_sys::g_object_new_with_properties(")?;
-        writeln!(w, "                {}::static_type().to_glib(), n_properties, names.as_mut_ptr(), values.as_ptr())",
-            analysis.name)?;
-        writeln!(w, "            as *mut _).downcast().expect(\"downcast\")")?;
-        writeln!(w, "        }}")?;
-        writeln!(w, "    }}")?;
+        writeln!(w,
+"        unsafe {{
+            crate::Object::from_glib_none(gobject_sys::g_object_new_with_properties(
+                {}::static_type().to_glib(), n_properties, names.as_mut_ptr(), values.as_ptr())
+            as *mut _).downcast().expect(\"downcast\")
+        }}
+    }}", analysis.name)?;
         for method in methods {
             writeln!(w, "{}", method)?;
         }
