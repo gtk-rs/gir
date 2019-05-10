@@ -1,4 +1,3 @@
-use std::collections::BTreeMap;
 use std::fs::File;
 use std::io::prelude::*;
 use toml::{self, Value};
@@ -44,7 +43,7 @@ fn fill_empty(root: &mut Table, env: &Env, crate_name: &str) {
     {
         let package = upsert_table(root, "package");
         set_string(package, "name", package_name);
-        set_string(package, "version", "0.2.0");
+        set_string(package, "version", "0.0.1");
         set_string(package, "links", nameutil::crate_name(&env.config.library_name));
     }
 
@@ -55,10 +54,21 @@ fn fill_empty(root: &mut Table, env: &Env, crate_name: &str) {
 
     let deps = upsert_table(root, "dependencies");
     for ext_lib in &env.config.external_libraries {
-        let ext_package = format!("{}-sys", ext_lib.crate_name);
+        let ext_package = if ext_lib.crate_name == "cairo" {
+            format!("{}-sys-rs", ext_lib.crate_name)
+        } else if ext_lib.crate_name == "gdk_pixbuf" {
+            format!("gdk-pixbuf-sys")
+        } else {
+            format!("{}-sys", ext_lib.crate_name)
+        };
         let dep = upsert_table(deps, &*ext_package);
-        set_string(dep, "path", format!("../{}", ext_package));
-        set_string(dep, "version", "0.2.0");
+        if ext_lib.crate_name == "cairo" {
+            set_string(dep, "git", "https://github.com/gtk-rs/cairo");
+        } else if ext_package.starts_with("sourceview") {
+            set_string(dep, "git", "https://github.com/gtk-rs/sourceview");
+        } else {
+            set_string(dep, "git", "https://github.com/gtk-rs/sys");
+        }
     }
 }
 
@@ -129,7 +139,7 @@ fn set_string<S: Into<String>>(table: &mut Table, name: &str, new_value: S) {
 fn upsert_table<S: Into<String>>(parent: &mut Table, name: S) -> &mut Table {
     if let Value::Table(ref mut table) = *parent
         .entry(name.into())
-        .or_insert_with(|| Value::Table(BTreeMap::new()))
+        .or_insert_with(|| Value::Table(toml::map::Map::new()))
     {
         table
     } else {
