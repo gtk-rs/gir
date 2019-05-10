@@ -373,6 +373,7 @@ impl Library {
         let mut struct_count = 1;
 
         parser.elements(|parser, elem| match elem.name() {
+            "source-position" => parser.ignore_element(),
             "field" => {
                 self.read_field(parser, ns_id, elem).map(|f| {
                     fields.push(f);
@@ -748,6 +749,7 @@ impl Library {
         let mut doc = None;
 
         parser.elements(|parser, elem| match elem.name() {
+            "source-position" => parser.ignore_element(),
             "type" | "array" => {
                 if inner.is_some() {
                     return Err(parser.fail("Too many <type> elements"));
