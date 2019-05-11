@@ -1,6 +1,7 @@
 use std::io::{Result, Write};
 
-use analysis::rust_type::bounds_rust_type;
+use analysis::rust_type::rust_type;
+use codegen::general::{version_condition, version_condition_string};
 use case::CaseExt;
 use analysis;
 use library;
@@ -118,34 +119,27 @@ pub fn generate(
         writeln!(w, "#[cfg(any(feature = \"builders\", feature = \"dox\"))]
 pub struct {}Builder {{", analysis.name)?;
         for property in &analysis.builder_properties {
-            match bounds_rust_type(env, property.typ) {
+            match rust_type(env, property.typ) {
                 Ok(type_string) => {
-                    let attribute_type =
+                    let type_string =
                         match type_string.as_str() {
-                            "str" => "String",
-                            _ => &type_string,
+                            "GString" => "String",
+                            "Vec<GString>" => "Vec<String>",
+                            typ => typ,
+                        };
+                    let (param_type, conversion) =
+                        match type_string {
+                            "String" => ("&str", ".to_string()"),
+                            typ => (typ, ""),
                         };
                     let name = nameutil::mangle_keywords(nameutil::signal_to_snake(&property.name));
-                    if let Some(version) = property.version {
-                        writeln!(w, "    #[cfg(any(feature = \"{}\", feature = \"dox\"))]", version.to_feature())?;
-                    }
-                    writeln!(w, "    {}: Option<{}>,", name, attribute_type)?;
-                    let prefix =
-                        if let Some(version) = property.version {
-                            format!("    #[cfg(any(feature = \"{}\", feature = \"dox\"))]\n", version.to_feature())
-                        }
-                        else {
-                            String::new()
-                        };
-                    let (type_string, conversion) =
-                        match type_string.as_str() {
-                            "str" => ("&str", ".to_string()"),
-                            _ => (&*type_string, ""),
-                        };
-                    methods.push(format!("\n{}    pub fn {name}(mut self, {name}: {}) -> Self {{
-    self.{name} = Some({name}{});
-    self
-}}", prefix, type_string, conversion, name=name));
+                    version_condition(w, env, property.version, false, 1)?;
+                    writeln!(w, "    {}: Option<{}>,", name, type_string)?;
+                    let prefix = version_condition_string(env, property.version, false, 1).unwrap_or_default();
+                    methods.push(format!("\n{prefix}    pub fn {name}(mut self, {name}: {param_type}) -> Self {{
+        self.{name} = Some({name}{conversion});
+        self
+    }}", prefix=prefix, param_type=param_type, name=name, conversion=conversion));
                     properties.push(property);
                 },
                 Err(_) => writeln!(w, "    //{}: /*Unknown type*/,", property.name)?,
@@ -158,9 +152,7 @@ impl {}Builder {{
     pub fn new() -> Self {{
         Self {{", analysis.name)?;
         for property in &properties {
-            if let Some(version) = property.version {
-                writeln!(w, "            #[cfg(any(feature = \"{}\", feature = \"dox\"))]", version.to_feature())?;
-            }
+            version_condition(w, env, property.version, false, 3)?;
             let name = nameutil::mangle_keywords(nameutil::signal_to_snake(&property.name));
             writeln!(w, "            {}: None,", name)?;
         }
@@ -171,10 +163,9 @@ impl {}Builder {{
         let mut properties: Vec<(&str, &dyn ToValue)> = vec![];", analysis.name)?;
         for property in &properties {
             let name = nameutil::mangle_keywords(nameutil::signal_to_snake(&property.name));
-            if let Some(version) = property.version {
-                writeln!(w,
-"        #[cfg(any(feature = \"{}\", feature = \"dox\"))]
-        {{", version.to_feature())?;
+            version_condition(w, env, property.version, false, 2)?;
+            if property.version.is_some() {
+                writeln!(w, "        {{")?;
             }
             writeln!(w,
 "        if let Some(ref {property}) = self.{property} {{
