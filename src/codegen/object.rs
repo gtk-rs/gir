@@ -112,76 +112,9 @@ pub fn generate(
         try!(writeln!(w));
     }
 
-    // TODO: include parent and writable properties.
+    // TODO: include parent properties.
     if !analysis.builder_properties.is_empty() {
-        let mut methods = vec![];
-        let mut properties = vec![];
-        writeln!(w, "#[cfg(any(feature = \"builders\", feature = \"dox\"))]
-pub struct {}Builder {{", analysis.name)?;
-        for property in &analysis.builder_properties {
-            match rust_type(env, property.typ) {
-                Ok(type_string) => {
-                    let type_string =
-                        match type_string.as_str() {
-                            "GString" => "String",
-                            "Vec<GString>" => "Vec<String>",
-                            typ => typ,
-                        };
-                    let (param_type, conversion) =
-                        match type_string {
-                            "String" => ("&str", ".to_string()"),
-                            typ => (typ, ""),
-                        };
-                    let name = nameutil::mangle_keywords(nameutil::signal_to_snake(&property.name));
-                    version_condition(w, env, property.version, false, 1)?;
-                    writeln!(w, "    {}: Option<{}>,", name, type_string)?;
-                    let prefix = version_condition_string(env, property.version, false, 1).unwrap_or_default();
-                    methods.push(format!("\n{prefix}    pub fn {name}(mut self, {name}: {param_type}) -> Self {{
-        self.{name} = Some({name}{conversion});
-        self
-    }}", prefix=prefix, param_type=param_type, name=name, conversion=conversion));
-                    properties.push(property);
-                },
-                Err(_) => writeln!(w, "    //{}: /*Unknown type*/,", property.name)?,
-            }
-        }
-        writeln!(w, "}}\n
-
-#[cfg(any(feature = \"builders\", feature = \"dox\"))]
-impl {}Builder {{
-    pub fn new() -> Self {{
-        Self {{", analysis.name)?;
-        for property in &properties {
-            version_condition(w, env, property.version, false, 3)?;
-            let name = nameutil::mangle_keywords(nameutil::signal_to_snake(&property.name));
-            writeln!(w, "            {}: None,", name)?;
-        }
-        writeln!(w, "        }}
-    }}
-
-    pub fn build(self) -> {} {{
-        let mut properties: Vec<(&str, &dyn ToValue)> = vec![];", analysis.name)?;
-        for property in &properties {
-            let name = nameutil::mangle_keywords(nameutil::signal_to_snake(&property.name));
-            version_condition(w, env, property.version, false, 2)?;
-            if property.version.is_some() {
-                writeln!(w, "        {{")?;
-            }
-            writeln!(w,
-"        if let Some(ref {property}) = self.{property} {{
-            properties.push((\"{}\", {property}));
-        }}", property = name)?;
-            if property.version.is_some() {
-                writeln!(w, "        }}")?;
-            }
-        }
-        writeln!(w,
-"        crate::Object::new({}::static_type(), &properties).expect(\"object new\").downcast().expect(\"downcast\")
-    }}", analysis.name)?;
-        for method in methods {
-            writeln!(w, "{}", method)?;
-        }
-        writeln!(w, "}}")?;
+        generate_builder(w, env, analysis)?;
     }
 
     match analysis.concurrency {
@@ -244,6 +177,77 @@ impl {}Builder {{
     }
 
     Ok(())
+}
+
+fn generate_builder(w: &mut Write, env: &Env, analysis: &analysis::object::Info) -> Result<()> {
+    let mut methods = vec![];
+    let mut properties = vec![];
+    writeln!(w, "#[cfg(any(feature = \"builders\", feature = \"dox\"))]
+pub struct {}Builder {{", analysis.name)?;
+    for property in &analysis.builder_properties {
+        match rust_type(env, property.typ) {
+            Ok(type_string) => {
+                let type_string =
+                    match type_string.as_str() {
+                        "GString" => "String",
+                        "Vec<GString>" => "Vec<String>",
+                        typ => typ,
+                    };
+                let (param_type, conversion) =
+                    match type_string {
+                        "String" => ("&str", ".to_string()"),
+                        typ => (typ, ""),
+                    };
+                let name = nameutil::mangle_keywords(nameutil::signal_to_snake(&property.name));
+                version_condition(w, env, property.version, false, 1)?;
+                writeln!(w, "    {}: Option<{}>,", name, type_string)?;
+                let prefix = version_condition_string(env, property.version, false, 1).unwrap_or_default();
+                methods.push(format!("\n{prefix}    pub fn {name}(mut self, {name}: {param_type}) -> Self {{
+        self.{name} = Some({name}{conversion});
+        self
+    }}", prefix=prefix, param_type=param_type, name=name, conversion=conversion));
+                properties.push(property);
+            },
+            Err(_) => writeln!(w, "    //{}: /*Unknown type*/,", property.name)?,
+        }
+    }
+    writeln!(w, "}}\n
+
+#[cfg(any(feature = \"builders\", feature = \"dox\"))]
+impl {}Builder {{
+    pub fn new() -> Self {{
+        Self {{", analysis.name)?;
+    for property in &properties {
+        version_condition(w, env, property.version, false, 3)?;
+        let name = nameutil::mangle_keywords(nameutil::signal_to_snake(&property.name));
+        writeln!(w, "            {}: None,", name)?;
+    }
+    writeln!(w, "        }}
+    }}
+
+    pub fn build(self) -> {} {{
+        let mut properties: Vec<(&str, &dyn ToValue)> = vec![];", analysis.name)?;
+    for property in &properties {
+        let name = nameutil::mangle_keywords(nameutil::signal_to_snake(&property.name));
+        version_condition(w, env, property.version, false, 2)?;
+        if property.version.is_some() {
+            writeln!(w, "        {{")?;
+        }
+        writeln!(w,
+"        if let Some(ref {property}) = self.{property} {{
+            properties.push((\"{}\", {property}));
+        }}", property = name)?;
+        if property.version.is_some() {
+            writeln!(w, "        }}")?;
+        }
+    }
+    writeln!(w,
+"        crate::Object::new({}::static_type(), &properties).expect(\"object new\").downcast().expect(\"downcast\")
+    }}", analysis.name)?;
+    for method in methods {
+        writeln!(w, "{}", method)?;
+    }
+    writeln!(w, "}}")
 }
 
 fn generate_trait(
