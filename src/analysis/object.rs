@@ -30,6 +30,7 @@ pub struct Info {
     pub notify_signals: Vec<signals::Info>,
     pub trampolines: trampolines::Trampolines,
     pub properties: Vec<properties::Property>,
+    pub builder_properties: Vec<properties::Property>,
     pub child_properties: ChildProperties,
     pub signatures: Signatures,
 }
@@ -126,7 +127,7 @@ pub fn class(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<Info>
         obj,
         &mut imports,
     );
-    let (properties, notify_signals) = properties::analyze(
+    let (properties, builder_properties, notify_signals) = properties::analyze(
         env,
         &klass.properties,
         class_tid,
@@ -136,6 +137,7 @@ pub fn class(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<Info>
         &mut imports,
         &signatures,
         deps,
+        true,
     );
 
     let (version, deprecated_version) = info_base::versions(
@@ -161,10 +163,10 @@ pub fn class(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<Info>
     // There's also no point in generating a trait for final types: there are no possible subtypes
     let generate_trait = !final_type && (has_signals || has_methods || !properties.is_empty() || !child_properties.is_empty());
 
-    if properties.iter().any(|property| property.construct || property.construct_only) {
-        imports.add("std::ffi::CString", None);
+    if !builder_properties.is_empty() {
         imports.add("glib::object::Cast", None);
         imports.add("gtk::prelude::ToValue", None);
+        imports.add("glib::StaticType", None);
     }
 
     if generate_trait {
@@ -221,6 +223,7 @@ pub fn class(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<Info>
         notify_signals,
         trampolines,
         properties,
+        builder_properties,
         child_properties,
         signatures,
     };
@@ -284,7 +287,7 @@ pub fn interface(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<I
         obj,
         &mut imports,
     );
-    let (properties, notify_signals) = properties::analyze(
+    let (properties, _, notify_signals) = properties::analyze(
         env,
         &iface.properties,
         iface_tid,
@@ -294,6 +297,7 @@ pub fn interface(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<I
         &mut imports,
         &signatures,
         deps,
+        false,
     );
 
     let (version, deprecated_version) = info_base::versions(

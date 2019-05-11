@@ -111,45 +111,44 @@ pub fn generate(
         try!(writeln!(w));
     }
 
-    if analysis.properties.iter().any(|property| property.construct || property.construct_only) {
+    // TODO: include parent and writable properties.
+    if !analysis.builder_properties.is_empty() {
         let mut methods = vec![];
         let mut properties = vec![];
         writeln!(w, "#[cfg(any(feature = \"builders\", feature = \"dox\"))]
 pub struct {}Builder {{", analysis.name)?;
-        for property in &analysis.properties {
-            if (!property.is_get && property.construct) || property.construct_only {
-                match bounds_rust_type(env, property.typ) {
-                    Ok(type_string) => {
-                        let attribute_type =
-                            match type_string.as_str() {
-                                "str" => "String",
-                                _ => &type_string,
-                            };
-                        let name = nameutil::mangle_keywords(nameutil::signal_to_snake(&property.name));
+        for property in &analysis.builder_properties {
+            match bounds_rust_type(env, property.typ) {
+                Ok(type_string) => {
+                    let attribute_type =
+                        match type_string.as_str() {
+                            "str" => "String",
+                            _ => &type_string,
+                        };
+                    let name = nameutil::mangle_keywords(nameutil::signal_to_snake(&property.name));
+                    if let Some(version) = property.version {
+                        writeln!(w, "    #[cfg(any(feature = \"{}\", feature = \"dox\"))]", version.to_feature())?;
+                    }
+                    writeln!(w, "    {}: Option<{}>,", name, attribute_type)?;
+                    let prefix =
                         if let Some(version) = property.version {
-                            writeln!(w, "    #[cfg(any(feature = \"{}\", feature = \"dox\"))]", version.to_feature())?;
+                            format!("    #[cfg(any(feature = \"{}\", feature = \"dox\"))]\n", version.to_feature())
                         }
-                        writeln!(w, "    {}: Option<{}>,", name, attribute_type)?;
-                        let prefix =
-                            if let Some(version) = property.version {
-                                format!("    #[cfg(any(feature = \"{}\", feature = \"dox\"))]\n", version.to_feature())
-                            }
-                            else {
-                                String::new()
-                            };
-                        let (type_string, conversion) =
-                            match type_string.as_str() {
-                                "str" => ("&str", ".to_string()"),
-                                _ => (&*type_string, ""),
-                            };
-                        methods.push(format!("\n{}    pub fn {name}(mut self, {name}: {}) -> Self {{
-        self.{name} = Some({name}{});
-        self
-    }}", prefix, type_string, conversion, name=name));
-                        properties.push(property);
-                    },
-                    Err(_) => writeln!(w, "    //{}: /*Unknown type*/,", property.name)?,
-                }
+                        else {
+                            String::new()
+                        };
+                    let (type_string, conversion) =
+                        match type_string.as_str() {
+                            "str" => ("&str", ".to_string()"),
+                            _ => (&*type_string, ""),
+                        };
+                    methods.push(format!("\n{}    pub fn {name}(mut self, {name}: {}) -> Self {{
+    self.{name} = Some({name}{});
+    self
+}}", prefix, type_string, conversion, name=name));
+                    properties.push(property);
+                },
+                Err(_) => writeln!(w, "    //{}: /*Unknown type*/,", property.name)?,
             }
         }
         writeln!(w, "}}\n
@@ -391,14 +390,7 @@ pub fn generate_reexports(
         traits.push(format!("\tpub use super::{};", analysis.trait_name));
     }
 
-    let mut generate_builder = false;
-    for property in &analysis.properties {
-        if (!property.is_get && property.construct) || property.construct_only {
-            generate_builder = true;
-            break;
-        }
-    }
-    if generate_builder {
+    if !analysis.builder_properties.is_empty() {
         contents.extend_from_slice(&cfgs);
         contents.push(format!("#[cfg(any(feature = \"builders\", feature = \"dox\"))]
 pub use self::{}::{}Builder;", module_name, analysis.name));

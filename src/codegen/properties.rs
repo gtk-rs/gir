@@ -1,6 +1,5 @@
 use std::io::{Result, Write};
 
-use analysis::bounds::Bound;
 use analysis::properties::Property;
 use analysis::rust_type::{parameter_rust_type, rust_type};
 use chunk::Chunk;
@@ -75,59 +74,15 @@ fn generate_prop_func(
 }
 
 fn declaration(env: &Env, prop: &Property) -> String {
-    let mut bound = String::new();
+    let bound = String::new();
     let set_param = if prop.is_get {
         "".to_string()
     } else {
         let dir = library::ParameterDirection::In;
-        let param_type = if let Some(Bound {
-            alias,
-            ref type_str,
-            ref bound_type,
-            ..
-        }) = prop.bound
-        {
-            use library::Type::*;
-
-            let type_ = env.library.type_(prop.typ);
-            let bound_type = match *type_ {
-                Fundamental(_) => Some(bound_type.clone()),
-                _ => None,
-            };
-            match bound_type {
-                Some(_) => {
-                    let value_bound = if !prop.is_get {
-                        if *prop.nullable {
-                            " + glib::value::SetValueOptional"
-                        } else {
-                            " + glib::value::SetValue"
-                        }
-                    } else {
-                        ""
-                    };
-                    bound = format!(
-                        "<{}: IsA<{}>{}>",
-                        alias,
-                        type_str,
-                        value_bound
-                    );
-                    if *prop.nullable {
-                        format!("Option<&{}>", alias)
-                    } else {
-                        format!("&{}", alias)
-                    }
-                }
-                _ => {
-                    parameter_rust_type(env, prop.typ, dir, prop.nullable, prop.set_in_ref_mode,
-                                        library::ParameterScope::None)
-                        .into_string()
-                }
-            }
-        } else {
+        let param_type =
             parameter_rust_type(env, prop.typ, dir, prop.nullable, prop.set_in_ref_mode,
                                 library::ParameterScope::None)
-                .into_string()
-        };
+                .into_string();
         format!(", {}: {}", prop.var_name, param_type)
     };
     let return_str = if prop.is_get {
