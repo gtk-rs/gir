@@ -1,7 +1,9 @@
+use regex::{Captures, Regex};
 use std::{
     borrow::Cow,
     io::{Result, Write},
 };
+use stripper_lib::{write_file_name, write_item_doc, Type as SType, TypeStruct};
 
 use self::format::reformat_doc;
 use crate::{
@@ -15,8 +17,6 @@ use crate::{
     traits::*,
     version::Version,
 };
-use regex::{Captures, Regex};
-use stripper_lib::{write_file_name, write_item_doc, Type as SType, TypeStruct};
 
 mod format;
 

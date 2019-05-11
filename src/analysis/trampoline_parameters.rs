@@ -1,11 +1,11 @@
 use super::{conversion_type::ConversionType, ref_mode::RefMode};
 use crate::{
+    analysis::rust_type::rust_type,
     config::{self, parameter_matchable::ParameterMatchable},
     env::Env,
     library, nameutil,
 };
 
-use crate::analysis::rust_type::rust_type;
 pub use crate::config::signals::TransformationType;
 
 #[derive(Clone, Debug)]

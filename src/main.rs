@@ -1,11 +1,7 @@
-use libgir as gir;
-
+use hprof::Profiler;
 use std::{cell::RefCell, str::FromStr};
 
-use crate::gir::{Config, WorkMode};
-
-use crate::gir::Library;
-use hprof::Profiler;
+use libgir::{self as gir, Config, Library, WorkMode};
 
 static USAGE: &'static str = "
 Usage: gir [options] [<library> <version>]

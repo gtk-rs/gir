@@ -6,6 +6,7 @@
  */
 
 use std::{
+    borrow::Borrow,
     collections::{HashMap, HashSet},
     vec::Vec,
 };
@@ -30,7 +31,6 @@ use crate::{
     traits::*,
     version::Version,
 };
-use std::borrow::Borrow;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Visibility {

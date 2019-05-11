@@ -1,6 +1,7 @@
+use toml::Value;
+
 use super::{error::TomlHelper, ident::Ident, parsable::Parse};
 use crate::version::Version;
-use toml::Value;
 
 #[derive(Clone, Debug)]
 pub struct Constant {
