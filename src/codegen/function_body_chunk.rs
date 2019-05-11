@@ -13,6 +13,7 @@ use chunk::parameter_ffi_call_out;
 use env::Env;
 use library::{self, ParameterDirection};
 use std::collections::{BTreeMap, HashMap};
+use std::collections::hash_map::Entry;
 
 #[derive(Clone, Debug)]
 enum Parameter {
@@ -170,24 +171,31 @@ impl Builder {
             // Value: the current pos in the tuple for the given argument.
             let mut poses = HashMap::with_capacity(group_by_user_data.len());
             for trampoline in self.callbacks.iter() {
+                *poses.entry(&trampoline.user_data_index).or_insert_with(|| 0) += 1;
+            }
+            let mut poses = poses.into_iter().filter(|(_, x)| *x > 1).map(|(x, _)| (x, 0)).collect::<HashMap<_, _>>();
+            for trampoline in self.callbacks.iter() {
                 let user_data_index = trampoline.user_data_index;
-                let pos = poses.entry(user_data_index).or_insert_with(|| 0);
+                let pos = poses.entry(&trampoline.user_data_index);
                 self.add_trampoline(env,
                                     &mut chunks,
                                     trampoline,
                                     &group_by_user_data[&user_data_index].1,
-                                    *pos,
+                                    match pos {
+                                        Entry::Occupied(ref x) => Some(*x.get()),
+                                        _ => None,
+                                    },
                                     &bounds,
                                     &bounds_names,
                                     false);
-                *pos += 1;
+                pos.and_modify(|x| { *x += 1; });
             }
             for destroy in self.destroys.iter() {
                 self.add_trampoline(env,
                                     &mut chunks,
                                     destroy,
                                     &group_by_user_data[&destroy.user_data_index].1,
-                                    0, // doesn't matter for destroy
+                                    None, // doesn't matter for destroy
                                     &bounds,
                                     &bounds_names,
                                     true);
@@ -236,8 +244,8 @@ impl Builder {
     }
 
     fn add_trampoline(&self, env: &Env, chunks: &mut Vec<Chunk>, trampoline: &Trampoline,
-                      full_type: &Option<String>, pos: usize, bounds: &str, bounds_names: &str,
-                      is_destroy: bool) {
+                      full_type: &Option<String>, pos: Option<usize>,
+                      bounds: &str, bounds_names: &str, is_destroy: bool) {
         if !is_destroy {
             if full_type.is_none() {
                 if trampoline.scope.is_call() {
@@ -334,8 +342,12 @@ impl Builder {
                 if trampoline.scope.is_async() {
                     body.push(
                         Chunk::Custom(
-                            format!("let callback = callback.{}{};",
-                                    pos,
+                            format!("let callback = callback{}{};",
+                                    if let Some(pos) = pos {
+                                        format!(".{}", pos)
+                                    } else {
+                                        String::new()
+                                    },
                                     if *trampoline.nullable {
                                         ".expect(\"cannot get closure...\")"
                                     } else {
@@ -348,15 +360,24 @@ impl Builder {
                     if *trampoline.nullable {
                         body.push(
                             Chunk::Custom(
-                                format!("{}if let Some(ref callback) = callback.{} {{",
+                                format!("{}if let Some(ref callback) = callback{} {{",
                                         if trampoline.ret.c_type != "void" {
                                             "let res = "
                                         } else {
                                             ""
                                         },
-                                        pos)));
+                                        if let Some(pos) = pos {
+                                        format!(".{}", pos)
+                                    } else {
+                                        String::new()
+                                    })));
                     } else {
-                        body.push(Chunk::Custom(format!("let callback = callback.{}", pos)));
+                        body.push(Chunk::Custom(format!("let callback = callback{}",
+                                                        if let Some(pos) = pos {
+                                                            format!(".{}", pos)
+                                                        } else {
+                                                            String::new()
+                                                        })));
                         if trampoline.ret.c_type != "void" {
                             body.push(Chunk::Custom("let res = ".to_owned()));
                         }
@@ -409,7 +430,7 @@ impl Builder {
         }
         if !is_destroy {
             use writer::to_code::ToCode;
-            body.push(Chunk::Custom(format!("{}{}({}){}",
+            body.push(Chunk::Custom(format!("{}{}{}({}){}",
                                             extra_before_call,
                                             if !*trampoline.nullable {
                                                 "(*callback)"
@@ -417,6 +438,11 @@ impl Builder {
                                                 "callback"
                                             } else {
                                                 "\tcallback"
+                                            },
+                                            if let Some(pos) = pos {
+                                                format!(".{}", pos)
+                                            } else {
+                                                String::new()
                                             },
                                             arguments.iter()
                                                      .flat_map(|arg| arg.to_code(env))
