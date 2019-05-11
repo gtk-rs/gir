@@ -84,13 +84,10 @@ impl Bounds {
         concurrency: Concurrency,
     ) -> (Option<String>, Option<CallbackInfo>) {
         let type_name = bounds_rust_type(env, par.typ);
-        let mut type_string = if r#async && async_param_to_remove(&par.name) {
+        if (r#async && async_param_to_remove(&par.name)) || type_name.is_err() {
             return (None, None);
-        } else if type_name.is_err() {
-            return (None, None);
-        } else {
-            type_name.into_string()
-        };
+        }
+        let mut type_string = type_name.into_string();
         let mut callback_info = None;
         let mut ret = None;
         let mut need_is_into_check = false;

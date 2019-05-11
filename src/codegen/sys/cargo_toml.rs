@@ -52,7 +52,7 @@ fn fill_empty(root: &mut Table, env: &Env, crate_name: &str) {
         let ext_package = if ext_lib.crate_name == "cairo" {
             format!("{}-sys-rs", ext_lib.crate_name)
         } else if ext_lib.crate_name == "gdk_pixbuf" {
-            format!("gdk-pixbuf-sys")
+            "gdk-pixbuf-sys".into()
         } else {
             format!("{}-sys", ext_lib.crate_name)
         };
