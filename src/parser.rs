@@ -1,3 +1,4 @@
+use log::{trace, warn};
 use std::{
     mem::replace,
     path::{Path, PathBuf},

@@ -1,3 +1,4 @@
+use log::error;
 use std::str::FromStr;
 use toml::Value;
 

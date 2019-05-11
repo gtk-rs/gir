@@ -1,3 +1,4 @@
+use bitflags::bitflags;
 use std::str::FromStr;
 use toml;
 

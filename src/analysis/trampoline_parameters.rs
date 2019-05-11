@@ -1,3 +1,5 @@
+use log::error;
+
 use super::{conversion_type::ConversionType, ref_mode::RefMode};
 use crate::{
     analysis::rust_type::rust_type,

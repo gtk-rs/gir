@@ -1,3 +1,5 @@
+use log::warn;
+
 use crate::{
     analysis::{
         imports::Imports,

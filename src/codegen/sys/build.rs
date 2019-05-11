@@ -1,3 +1,4 @@
+use log::info;
 use regex::Regex;
 use std::{
     io::{Result, Write},

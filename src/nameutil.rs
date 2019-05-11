@@ -1,3 +1,4 @@
+use lazy_static::lazy_static;
 use std::{borrow::Cow, collections::HashMap, path::*, string::String};
 
 use crate::case::*;

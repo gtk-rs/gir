@@ -1,3 +1,4 @@
+use log::error;
 use regex::Regex;
 use toml::Value;
 

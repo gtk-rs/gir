@@ -1,3 +1,5 @@
+use log::trace;
+
 use crate::{env::Env, library::TypeId};
 
 pub fn rustify_pointers(c_type: &str) -> (String, String) {

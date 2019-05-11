@@ -1,3 +1,5 @@
+use log::error;
+
 use super::{
     bounds::{BoundType, Bounds},
     conversion_type::ConversionType,

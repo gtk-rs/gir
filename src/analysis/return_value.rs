@@ -1,3 +1,5 @@
+use log::error;
+
 use crate::{
     analysis::{
         imports::Imports, namespaces, override_string_type::override_string_type_return,

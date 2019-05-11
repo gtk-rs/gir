@@ -5,18 +5,11 @@
 #![deny(bare_trait_objects)]
 #![deny(elided_lifetimes_in_paths)]
 
-#[macro_use]
-extern crate bitflags;
-#[macro_use]
-extern crate lazy_static;
-#[macro_use]
-extern crate log;
-
 /// Log warning only if type in generated library
 macro_rules! warn_main {
     ($tid: expr, $target:expr, $($arg:tt)*) => (
         if $tid.ns_id == crate::library::MAIN_NAMESPACE {
-            warn!($target, $($arg)*);
+            log::warn!($target, $($arg)*);
         }
     );
 }

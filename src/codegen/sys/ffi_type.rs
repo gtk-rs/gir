@@ -8,6 +8,7 @@ use crate::{
     library::{self, *},
     traits::*,
 };
+use log::{info, trace, warn};
 
 // FIXME: This module needs redundant allocations audit
 // TODO: ffi_type computations should be cached

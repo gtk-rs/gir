@@ -5,6 +5,7 @@
  * method has a different prefix.
  */
 
+use log::warn;
 use std::{
     borrow::Borrow,
     collections::{HashMap, HashSet},

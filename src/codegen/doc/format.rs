@@ -1,3 +1,4 @@
+use lazy_static::lazy_static;
 use regex::{Captures, Regex};
 
 use crate::analysis::symbols;

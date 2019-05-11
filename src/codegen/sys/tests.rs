@@ -1,3 +1,4 @@
+use log::info;
 use std::{
     io::{self, prelude::*},
     path::Path,

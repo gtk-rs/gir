@@ -1,3 +1,4 @@
+use log::info;
 use std::{
     collections::HashMap,
     fs,

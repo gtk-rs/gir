@@ -1,3 +1,5 @@
+use log::{info, trace};
+
 use crate::{
     analysis::{
         c_type::{implements_c_type, rustify_pointers},

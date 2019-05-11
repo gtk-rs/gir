@@ -1,3 +1,4 @@
+use log::info;
 use std::{fs::File, io::prelude::*};
 use toml::{self, value::Table, Value};
 
