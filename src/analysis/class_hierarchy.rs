@@ -66,7 +66,7 @@ fn get_node<'a>(
 }
 
 impl Info {
-    pub fn subtypes<'a>(&'a self, tid: TypeId) -> Box<Iterator<Item = TypeId> + 'a> {
+    pub fn subtypes<'a>(&'a self, tid: TypeId) -> Box<dyn Iterator<Item = TypeId> + 'a> {
         match self.hier.get(&tid) {
             Some(node) => Box::new(node.subs.iter().cloned()),
             None => Box::new(iter::empty()),

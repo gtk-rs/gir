@@ -861,7 +861,7 @@ impl Builder {
         }
     }
 
-    fn generate_call(&self, calls: &FuncParameters) -> Chunk {
+    fn generate_call(&self, calls: &FuncParameters<'_>) -> Chunk {
         let params = self.generate_func_parameters(calls);
         let func = Chunk::FfiCall {
             name: self.glib_name.clone(),
@@ -876,7 +876,7 @@ impl Builder {
             call: Box::new(call),
         }
     }
-    fn generate_func_parameters(&self, calls: &FuncParameters) -> Vec<Chunk> {
+    fn generate_func_parameters(&self, calls: &FuncParameters<'_>) -> Vec<Chunk> {
         let mut params = Vec::new();
         for trans in &self.transformations {
             if !trans.transformation_type.is_to_glib() {

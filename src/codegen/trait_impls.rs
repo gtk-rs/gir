@@ -5,7 +5,7 @@ use crate::analysis::{
 use std::io::{Result, Write};
 
 pub fn generate(
-    w: &mut Write,
+    w: &mut dyn Write,
     type_name: &str,
     functions: &[Info],
     specials: &Infos,
@@ -66,7 +66,7 @@ fn generate_call(func_name: &str, args: &[&str], trait_name: Option<&str>) -> St
 }
 
 fn generate_display(
-    w: &mut Write,
+    w: &mut dyn Write,
     type_name: &str,
     func: &Info,
     trait_name: Option<&str>,
@@ -102,7 +102,7 @@ impl fmt::Display for {type_name} {{
 }
 
 fn generate_hash(
-    w: &mut Write,
+    w: &mut dyn Write,
     type_name: &str,
     func: &Info,
     trait_name: Option<&str>,
@@ -124,7 +124,7 @@ impl hash::Hash for {type_name} {{
 }
 
 fn generate_eq(
-    w: &mut Write,
+    w: &mut dyn Write,
     type_name: &str,
     func: &Info,
     trait_name: Option<&str>,
@@ -148,7 +148,7 @@ impl Eq for {type_name} {{}}",
 }
 
 fn generate_eq_compare(
-    w: &mut Write,
+    w: &mut dyn Write,
     type_name: &str,
     func: &Info,
     trait_name: Option<&str>,
@@ -172,7 +172,7 @@ impl Eq for {type_name} {{}}",
 }
 
 fn generate_ord(
-    w: &mut Write,
+    w: &mut dyn Write,
     type_name: &str,
     func: &Info,
     trait_name: Option<&str>,

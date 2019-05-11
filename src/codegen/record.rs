@@ -7,7 +7,7 @@ use crate::{
     library,
 };
 
-pub fn generate(w: &mut Write, env: &Env, analysis: &analysis::record::Info) -> Result<()> {
+pub fn generate(w: &mut dyn Write, env: &Env, analysis: &analysis::record::Info) -> Result<()> {
     let type_ = analysis.type_(&env.library);
 
     general::start_comments(w, &env.config)?;

@@ -20,7 +20,7 @@ use crate::{
 };
 
 pub fn generate(
-    w: &mut Write,
+    w: &mut dyn Write,
     env: &Env,
     analysis: &Trampoline,
     in_trait: bool,
@@ -206,7 +206,7 @@ fn trampoline_returns(env: &Env, analysis: &Trampoline) -> String {
     }
 }
 
-fn transformation_vars(w: &mut Write, analysis: &Trampoline) -> Result<()> {
+fn transformation_vars(w: &mut dyn Write, analysis: &Trampoline) -> Result<()> {
     use crate::analysis::trampoline_parameters::TransformationType::*;
     for transform in &analysis.parameters.transformations {
         match transform.transformation {

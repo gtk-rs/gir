@@ -135,7 +135,7 @@ impl Imports {
         }
     }
 
-    pub fn iter(&self) -> Iter<String, (Option<Version>, Vec<String>)> {
+    pub fn iter(&self) -> Iter<'_, String, (Option<Version>, Vec<String>)> {
         self.map.iter()
     }
 }

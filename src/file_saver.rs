@@ -8,7 +8,7 @@ use std::{
 pub fn save_to_file<P, F>(path: P, make_backup: bool, mut closure: F)
 where
     P: AsRef<Path>,
-    F: FnMut(&mut Write) -> Result<()>,
+    F: FnMut(&mut dyn Write) -> Result<()>,
 {
     if let Some(parent) = path.as_ref().parent() {
         let _ = fs::create_dir_all(parent);

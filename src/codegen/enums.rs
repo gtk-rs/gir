@@ -93,7 +93,12 @@ pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>) {
     });
 }
 
-fn generate_enum(env: &Env, w: &mut Write, enum_: &Enumeration, config: &GObject) -> Result<()> {
+fn generate_enum(
+    env: &Env,
+    w: &mut dyn Write,
+    enum_: &Enumeration,
+    config: &GObject,
+) -> Result<()> {
     struct Member {
         name: String,
         c_name: String,

@@ -260,10 +260,10 @@ impl Bounds {
     pub fn is_empty(&self) -> bool {
         self.used.is_empty()
     }
-    pub fn iter(&self) -> Iter<Bound> {
+    pub fn iter(&self) -> Iter<'_, Bound> {
         self.used.iter()
     }
-    pub fn iter_lifetimes(&self) -> Iter<char> {
+    pub fn iter_lifetimes(&self) -> Iter<'_, char> {
         self.lifetimes.iter()
     }
 }

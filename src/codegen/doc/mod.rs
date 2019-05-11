@@ -97,9 +97,9 @@ pub fn generate(env: &Env) {
 }
 
 #[allow(clippy::type_complexity)]
-fn generate_doc(w: &mut Write, env: &Env) -> Result<()> {
+fn generate_doc(w: &mut dyn Write, env: &Env) -> Result<()> {
     write_file_name(w, None)?;
-    let mut generators: Vec<(&str, Box<Fn(&mut Write, &Env) -> Result<()>>)> = Vec::new();
+    let mut generators: Vec<(&str, Box<dyn Fn(&mut dyn Write, &Env) -> Result<()>>)> = Vec::new();
 
     for info in env.analysis.objects.values() {
         if info.type_id.ns_id == MAIN && !env.is_totally_deprecated(info.deprecated_version) {
@@ -144,7 +144,7 @@ fn generate_doc(w: &mut Write, env: &Env) -> Result<()> {
     Ok(())
 }
 
-fn create_object_doc(w: &mut Write, env: &Env, info: &analysis::object::Info) -> Result<()> {
+fn create_object_doc(w: &mut dyn Write, env: &Env, info: &analysis::object::Info) -> Result<()> {
     let symbols = env.symbols.borrow();
     let ty = TypeStruct::new(SType::Struct, &info.name);
     let ty_ext = TypeStruct::new(SType::Trait, &info.trait_name);
@@ -253,7 +253,7 @@ fn create_object_doc(w: &mut Write, env: &Env, info: &analysis::object::Info) ->
     Ok(())
 }
 
-fn create_record_doc(w: &mut Write, env: &Env, info: &analysis::record::Info) -> Result<()> {
+fn create_record_doc(w: &mut dyn Write, env: &Env, info: &analysis::record::Info) -> Result<()> {
     let record: &Record = env.library.type_(info.type_id).to_ref_as();
     let ty = record.to_stripper_type();
     let symbols = env.symbols.borrow();
@@ -289,7 +289,7 @@ fn create_record_doc(w: &mut Write, env: &Env, info: &analysis::record::Info) ->
     Ok(())
 }
 
-fn create_enum_doc(w: &mut Write, env: &Env, enum_: &Enumeration) -> Result<()> {
+fn create_enum_doc(w: &mut dyn Write, env: &Env, enum_: &Enumeration) -> Result<()> {
     let ty = enum_.to_stripper_type();
     let symbols = env.symbols.borrow();
 
@@ -338,7 +338,7 @@ lazy_static! {
 }
 
 fn fix_param_names<'a>(doc: &'a str, self_name: &Option<String>) -> Cow<'a, str> {
-    PARAM_NAME.replace_all(doc, |caps: &Captures| {
+    PARAM_NAME.replace_all(doc, |caps: &Captures<'_>| {
         if let Some(ref self_name) = *self_name {
             if &caps[1] == self_name {
                 return "@self".into();
@@ -349,7 +349,7 @@ fn fix_param_names<'a>(doc: &'a str, self_name: &Option<String>) -> Cow<'a, str>
 }
 
 fn create_fn_doc<T>(
-    w: &mut Write,
+    w: &mut dyn Write,
     env: &Env,
     fn_: &T,
     parent: Option<Box<TypeStruct>>,
@@ -432,7 +432,7 @@ where
 }
 
 fn create_property_doc(
-    w: &mut Write,
+    w: &mut dyn Write,
     env: &Env,
     property: &Property,
     parent: Option<Box<TypeStruct>>,

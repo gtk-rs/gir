@@ -589,7 +589,7 @@ pub enum Type {
 }
 
 impl fmt::Display for Type {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             f,
             "{}",
@@ -1240,7 +1240,7 @@ impl Library {
         self.namespace_mut(ns_id).versions.insert(version);
     }
 
-    pub fn types<'a>(&'a self) -> Box<Iterator<Item = (TypeId, &Type)> + 'a> {
+    pub fn types<'a>(&'a self) -> Box<dyn Iterator<Item = (TypeId, &Type)> + 'a> {
         Box::new(self.namespaces.iter().enumerate().flat_map(|(ns_id, ns)| {
             ns.types.iter().enumerate().filter_map(move |(id, type_)| {
                 let tid = TypeId {
@@ -1253,7 +1253,10 @@ impl Library {
     }
 
     /// Types from a single namespace in alphabetical order.
-    pub fn namespace_types<'a>(&'a self, ns_id: u16) -> Box<Iterator<Item = (TypeId, &Type)> + 'a> {
+    pub fn namespace_types<'a>(
+        &'a self,
+        ns_id: u16,
+    ) -> Box<dyn Iterator<Item = (TypeId, &Type)> + 'a> {
         let ns = self.namespace(ns_id);
         Box::new(ns.index.values().map(move |&id| {
             (

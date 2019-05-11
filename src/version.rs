@@ -55,7 +55,7 @@ impl FromStr for Version {
 }
 
 impl Display for Version {
-    fn fmt(&self, f: &mut Formatter) -> Result<(), fmt::Error> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), fmt::Error> {
         use self::Version::*;
         match *self {
             Full(major, minor, 0) => write!(f, "{}.{}", major, minor),

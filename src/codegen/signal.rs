@@ -15,7 +15,7 @@ use crate::{
 };
 
 pub fn generate(
-    w: &mut Write,
+    w: &mut dyn Write,
     env: &Env,
     analysis: &analysis::signals::Info,
     trampolines: &[analysis::trampolines::Trampoline],

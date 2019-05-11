@@ -8,18 +8,16 @@ use std::{
 };
 use xml::{
     self,
-    {
-        attribute::OwnedAttribute,
-        common::{Position, TextPosition},
-        name::OwnedName,
-        reader::{EventReader, XmlEvent},
-    },
+    attribute::OwnedAttribute,
+    common::{Position, TextPosition},
+    name::OwnedName,
+    reader::{EventReader, XmlEvent},
 };
 
 /// NOTE: After parser returns an error its further behaviour is unspecified.
 pub struct XmlParser<'a> {
     /// Inner XML parser doing actual work.
-    parser: EventReader<Box<'a + Read>>,
+    parser: EventReader<Box<dyn 'a + Read>>,
     /// Next event to be returned.
     ///
     /// Takes priority over events returned from inner parser.
@@ -143,7 +141,7 @@ impl Element {
 }
 
 impl<'a> XmlParser<'a> {
-    pub fn from_path(path: &Path) -> Result<XmlParser, String> {
+    pub fn from_path(path: &Path) -> Result<XmlParser<'_>, String> {
         match File::open(&path) {
             Err(e) => Err(format!("Can't open file \"{}\": {}", path.display(), e)),
             Ok(file) => Ok(XmlParser {
@@ -225,7 +223,7 @@ impl<'a> XmlParser<'a> {
 
     pub fn document<R, F>(&mut self, f: F) -> Result<R, String>
     where
-        F: FnOnce(&mut XmlParser, Document) -> Result<R, String>,
+        F: FnOnce(&mut XmlParser<'_>, Document) -> Result<R, String>,
     {
         let doc = self.start_document()?;
         let result = f(self, doc)?;
@@ -249,7 +247,7 @@ impl<'a> XmlParser<'a> {
 
     pub fn elements<R, F>(&mut self, mut f: F) -> Result<Vec<R>, String>
     where
-        F: FnMut(&mut XmlParser, &Element) -> Result<R, String>,
+        F: FnMut(&mut XmlParser<'_>, &Element) -> Result<R, String>,
     {
         let mut results = Vec::new();
         loop {
@@ -266,7 +264,7 @@ impl<'a> XmlParser<'a> {
 
     pub fn element_with_name<R, F>(&mut self, expected_name: &str, f: F) -> Result<R, String>
     where
-        F: FnOnce(&mut XmlParser, &Element) -> Result<R, String>,
+        F: FnOnce(&mut XmlParser<'_>, &Element) -> Result<R, String>,
     {
         let elem = self.start_element()?;
         if expected_name != elem.name.local_name {
@@ -356,7 +354,7 @@ mod tests {
 
     fn with_parser<F, R>(xml: &[u8], f: F) -> Result<R, String>
     where
-        F: FnOnce(XmlParser) -> Result<R, String>,
+        F: FnOnce(XmlParser<'_>) -> Result<R, String>,
     {
         f(XmlParser::new(xml)?)
     }

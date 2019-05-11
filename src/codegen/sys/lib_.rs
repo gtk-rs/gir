@@ -25,7 +25,7 @@ pub fn generate(env: &Env) {
     save_to_file(&path, env.config.make_backup, |w| generate_lib(w, env));
 }
 
-fn generate_lib(w: &mut Write, env: &Env) -> Result<()> {
+fn generate_lib(w: &mut dyn Write, env: &Env) -> Result<()> {
     general::start_comments(w, &env.config)?;
     statics::begin(w)?;
 
@@ -76,7 +76,7 @@ fn generate_lib(w: &mut Write, env: &Env) -> Result<()> {
     Ok(())
 }
 
-fn generate_extern_crates(w: &mut Write, env: &Env) -> Result<()> {
+fn generate_extern_crates(w: &mut dyn Write, env: &Env) -> Result<()> {
     for library in &env.config.external_libraries {
         w.write_all(get_extern_crate_string(library).as_bytes())?;
     }
@@ -92,7 +92,7 @@ fn get_extern_crate_string(library: &ExternalLibrary) -> String {
     )
 }
 
-fn include_custom_modules(w: &mut Write, env: &Env) -> Result<()> {
+fn include_custom_modules(w: &mut dyn Write, env: &Env) -> Result<()> {
     let modules = find_modules(env)?;
     if !modules.is_empty() {
         writeln!(w)?;
@@ -148,7 +148,7 @@ where
     vec
 }
 
-fn generate_aliases(w: &mut Write, env: &Env, items: &[&Alias]) -> Result<()> {
+fn generate_aliases(w: &mut dyn Write, env: &Env, items: &[&Alias]) -> Result<()> {
     if !items.is_empty() {
         writeln!(w, "// Aliases")?;
     }
@@ -170,7 +170,7 @@ fn generate_aliases(w: &mut Write, env: &Env, items: &[&Alias]) -> Result<()> {
     Ok(())
 }
 
-fn generate_bitfields(w: &mut Write, env: &Env, items: &[&Bitfield]) -> Result<()> {
+fn generate_bitfields(w: &mut dyn Write, env: &Env, items: &[&Bitfield]) -> Result<()> {
     if !items.is_empty() {
         writeln!(w, "// Flags")?;
     }
@@ -204,7 +204,7 @@ fn generate_bitfields(w: &mut Write, env: &Env, items: &[&Bitfield]) -> Result<(
 }
 
 fn generate_constant_cfg_configure(
-    w: &mut Write,
+    w: &mut dyn Write,
     configured_constants: &[&constants::Constant],
     commented: bool,
 ) -> Result<()> {
@@ -216,7 +216,7 @@ fn generate_constant_cfg_configure(
     Ok(())
 }
 
-fn generate_constants(w: &mut Write, env: &Env, constants: &[Constant]) -> Result<()> {
+fn generate_constants(w: &mut dyn Write, env: &Env, constants: &[Constant]) -> Result<()> {
     if !constants.is_empty() {
         writeln!(w, "// Constants")?;
     }
@@ -276,7 +276,7 @@ fn generate_constants(w: &mut Write, env: &Env, constants: &[Constant]) -> Resul
     Ok(())
 }
 
-fn generate_enums(w: &mut Write, env: &Env, items: &[&Enumeration]) -> Result<()> {
+fn generate_enums(w: &mut dyn Write, env: &Env, items: &[&Enumeration]) -> Result<()> {
     if !items.is_empty() {
         writeln!(w, "// Enums")?;
     }
@@ -314,7 +314,7 @@ fn generate_enums(w: &mut Write, env: &Env, items: &[&Enumeration]) -> Result<()
     Ok(())
 }
 
-fn generate_unions(w: &mut Write, env: &Env, unions: &[&Union]) -> Result<()> {
+fn generate_unions(w: &mut dyn Write, env: &Env, unions: &[&Union]) -> Result<()> {
     if !unions.is_empty() {
         writeln!(w, "// Unions")?;
     }
@@ -336,7 +336,7 @@ fn generate_unions(w: &mut Write, env: &Env, unions: &[&Union]) -> Result<()> {
     Ok(())
 }
 
-fn generate_debug_impl(w: &mut Write, name: &str, impl_content: &str) -> Result<()> {
+fn generate_debug_impl(w: &mut dyn Write, name: &str, impl_content: &str) -> Result<()> {
     writeln!(
         w,
         "impl ::std::fmt::Debug for {} {{\n\
@@ -348,7 +348,7 @@ fn generate_debug_impl(w: &mut Write, name: &str, impl_content: &str) -> Result<
     )
 }
 
-fn generate_classes_structs(w: &mut Write, env: &Env, classes: &[&Class]) -> Result<()> {
+fn generate_classes_structs(w: &mut dyn Write, env: &Env, classes: &[&Class]) -> Result<()> {
     if !classes.is_empty() {
         writeln!(w, "// Classes")?;
     }
@@ -367,7 +367,11 @@ fn generate_classes_structs(w: &mut Write, env: &Env, classes: &[&Class]) -> Res
     Ok(())
 }
 
-fn generate_interfaces_structs(w: &mut Write, env: &Env, interfaces: &[&Interface]) -> Result<()> {
+fn generate_interfaces_structs(
+    w: &mut dyn Write,
+    env: &Env,
+    interfaces: &[&Interface],
+) -> Result<()> {
     if !interfaces.is_empty() {
         writeln!(w, "// Interfaces")?;
     }
@@ -393,7 +397,7 @@ fn generate_interfaces_structs(w: &mut Write, env: &Env, interfaces: &[&Interfac
     Ok(())
 }
 
-fn generate_records(w: &mut Write, env: &Env, records: &[&Record]) -> Result<()> {
+fn generate_records(w: &mut dyn Write, env: &Env, records: &[&Record]) -> Result<()> {
     if !records.is_empty() {
         writeln!(w, "// Records")?;
     }
@@ -424,7 +428,7 @@ fn generate_records(w: &mut Write, env: &Env, records: &[&Record]) -> Result<()>
     Ok(())
 }
 
-fn generate_ghooklist(w: &mut Write) -> Result<()> {
+fn generate_ghooklist(w: &mut dyn Write) -> Result<()> {
     w.write_all(
         br#"#[repr(C)]
 #[derive(Copy, Clone)]
@@ -450,7 +454,7 @@ impl ::std::fmt::Debug for GHookList {
     )
 }
 
-fn generate_disguised(w: &mut Write, record: &Record) -> Result<()> {
+fn generate_disguised(w: &mut dyn Write, record: &Record) -> Result<()> {
     writeln!(w, "#[repr(C)]")?;
     writeln!(w, "pub struct _{name}(c_void);", name = record.c_type)?;
     writeln!(w)?;
@@ -458,7 +462,11 @@ fn generate_disguised(w: &mut Write, record: &Record) -> Result<()> {
     writeln!(w)
 }
 
-fn generate_from_fields(w: &mut Write, fields: &fields::Fields, align: Option<u32>) -> Result<()> {
+fn generate_from_fields(
+    w: &mut dyn Write,
+    fields: &fields::Fields,
+    align: Option<u32>,
+) -> Result<()> {
     cfg_condition(w, &fields.cfg_condition, false, 0)?;
     writeln!(w, "#[repr(C)]")?;
     if let Some(align) = align {

@@ -90,7 +90,7 @@ fn replace_c_types(entry: &str, symbols: &symbols::Info) -> String {
             .map(symbols::Symbol::full_rust_name)
             .unwrap_or_else(|| s.into())
     };
-    let out = SYMBOL.replace_all(entry, |caps: &Captures| {
+    let out = SYMBOL.replace_all(entry, |caps: &Captures<'_>| {
         format!(
             "{}`{}{}`",
             &caps[1],
@@ -98,8 +98,12 @@ fn replace_c_types(entry: &str, symbols: &symbols::Info) -> String {
             caps.get(3).map(|m| m.as_str()).unwrap_or("")
         )
     });
-    let out = GDK_GTK.replace_all(&out, |caps: &Captures| format!("`{}`", lookup(&caps[0])));
-    let out = FUNCTION.replace_all(&out, |caps: &Captures| format!("`{}`", lookup(&caps[1])));
+    let out = GDK_GTK.replace_all(&out, |caps: &Captures<'_>| {
+        format!("`{}`", lookup(&caps[0]))
+    });
+    let out = FUNCTION.replace_all(&out, |caps: &Captures<'_>| {
+        format!("`{}`", lookup(&caps[1]))
+    });
     let out = TAGS.replace_all(&out, "`$0`");
     SPACES.replace_all(&out, " ").into_owned()
 }

@@ -2,11 +2,11 @@ use super::TAB;
 use std::io::{Result, Write};
 
 pub struct Untabber {
-    orig: Box<Write>,
+    orig: Box<dyn Write>,
 }
 
 impl Untabber {
-    pub fn new(orig: Box<Write>) -> Untabber {
+    pub fn new(orig: Box<dyn Write>) -> Untabber {
         Untabber { orig }
     }
 }

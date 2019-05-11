@@ -75,7 +75,7 @@ pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>) {
     });
 }
 
-fn generate_flags(env: &Env, w: &mut Write, flags: &Bitfield, config: &GObject) -> Result<()> {
+fn generate_flags(env: &Env, w: &mut dyn Write, flags: &Bitfield, config: &GObject) -> Result<()> {
     let sys_crate_name = env.main_sys_crate_name();
     cfg_deprecated(w, env, flags.deprecated_version, false, 0)?;
     version_condition(w, env, flags.version, false, 0)?;

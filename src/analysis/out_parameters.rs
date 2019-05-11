@@ -40,7 +40,7 @@ impl Info {
         self.mode == Mode::None
     }
 
-    pub fn iter(&self) -> Iter<Parameter> {
+    pub fn iter(&self) -> Iter<'_, Parameter> {
         self.params.iter()
     }
 }

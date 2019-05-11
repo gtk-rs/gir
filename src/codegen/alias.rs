@@ -53,7 +53,7 @@ pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>) {
     });
 }
 
-fn generate_alias(env: &Env, w: &mut Write, alias: &Alias, _: &GObject) -> Result<()> {
+fn generate_alias(env: &Env, w: &mut dyn Write, alias: &Alias, _: &GObject) -> Result<()> {
     let typ = rust_type(env, alias.typ).into_string();
     writeln!(w, "pub type {} = {};", alias.name, typ)?;
 

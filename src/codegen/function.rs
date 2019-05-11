@@ -26,7 +26,7 @@ use crate::{
 };
 
 pub fn generate(
-    w: &mut Write,
+    w: &mut dyn Write,
     env: &Env,
     analysis: &analysis::functions::Info,
     in_trait: bool,

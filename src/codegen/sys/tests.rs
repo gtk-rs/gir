@@ -183,7 +183,7 @@ fn is_name_made_up(name: &str) -> bool {
     name.contains('_')
 }
 
-fn generate_manual_h(env: &Env, path: &Path, w: &mut Write) -> io::Result<()> {
+fn generate_manual_h(env: &Env, path: &Path, w: &mut dyn Write) -> io::Result<()> {
     info!("Generating file {:?}", path);
     writeln!(
         w,
@@ -199,7 +199,7 @@ fn generate_manual_h(env: &Env, path: &Path, w: &mut Write) -> io::Result<()> {
     Ok(())
 }
 
-fn generate_layout_c(env: &Env, path: &Path, w: &mut Write) -> io::Result<()> {
+fn generate_layout_c(env: &Env, path: &Path, w: &mut dyn Write) -> io::Result<()> {
     info!("Generating file {:?}", path);
     general::start_comments(w, &env.config)?;
     writeln!(w)?;
@@ -218,7 +218,7 @@ int main() {
     )
 }
 
-fn generate_constant_c(env: &Env, path: &Path, w: &mut Write) -> io::Result<()> {
+fn generate_constant_c(env: &Env, path: &Path, w: &mut dyn Write) -> io::Result<()> {
     info!("Generating file {:?}", path);
     general::start_comments(w, &env.config)?;
     writeln!(w)?;
@@ -255,7 +255,7 @@ int main() {
 fn generate_abi_rs(
     env: &Env,
     path: &Path,
-    w: &mut Write,
+    w: &mut dyn Write,
     crate_name: &str,
     ctypes: &[CType],
     cconsts: &[CConstant],

@@ -20,7 +20,7 @@ pub fn generate(env: &Env) {
     });
 }
 
-fn generate_build_script(w: &mut Write, env: &Env) -> Result<()> {
+fn generate_build_script(w: &mut dyn Write, env: &Env) -> Result<()> {
     general::start_comments(w, &env.config)?;
     writeln!(w)?;
     write!(

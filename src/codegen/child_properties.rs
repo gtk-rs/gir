@@ -14,7 +14,7 @@ use crate::{
 };
 
 pub fn generate(
-    w: &mut Write,
+    w: &mut dyn Write,
     env: &Env,
     prop: &ChildProperty,
     in_trait: bool,
@@ -28,7 +28,7 @@ pub fn generate(
 }
 
 fn generate_func(
-    w: &mut Write,
+    w: &mut dyn Write,
     env: &Env,
     prop: &ChildProperty,
     in_trait: bool,

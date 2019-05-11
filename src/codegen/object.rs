@@ -10,7 +10,7 @@ use crate::{
 };
 
 pub fn generate(
-    w: &mut Write,
+    w: &mut dyn Write,
     env: &Env,
     analysis: &analysis::object::Info,
     generate_display_trait: bool,
@@ -167,7 +167,7 @@ pub fn generate(
 }
 
 // TODO: instead create a Vec<> inside the Builder instead of Options.
-fn generate_builder(w: &mut Write, env: &Env, analysis: &analysis::object::Info) -> Result<()> {
+fn generate_builder(w: &mut dyn Write, env: &Env, analysis: &analysis::object::Info) -> Result<()> {
     let mut methods = vec![];
     let mut properties = vec![];
     writeln!(
@@ -260,7 +260,7 @@ impl {}Builder {{
     writeln!(w, "}}")
 }
 
-fn generate_trait(w: &mut Write, env: &Env, analysis: &analysis::object::Info) -> Result<()> {
+fn generate_trait(w: &mut dyn Write, env: &Env, analysis: &analysis::object::Info) -> Result<()> {
     write!(w, "pub trait {}: 'static {{", analysis.trait_name)?;
 
     for func_analysis in &analysis.methods() {

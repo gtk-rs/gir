@@ -27,7 +27,7 @@ impl Library {
         })
     }
 
-    fn read_repository(&mut self, dir: &Path, parser: &mut XmlParser) -> Result<(), String> {
+    fn read_repository(&mut self, dir: &Path, parser: &mut XmlParser<'_>) -> Result<(), String> {
         let mut package = None;
         let mut includes = Vec::new();
         parser.elements(|parser, elem| match elem.name() {
@@ -65,7 +65,7 @@ impl Library {
 
     fn read_namespace(
         &mut self,
-        parser: &mut XmlParser,
+        parser: &mut XmlParser<'_>,
         elem: &Element,
         package: Option<String>,
         c_includes: Vec<String>,
@@ -118,7 +118,7 @@ impl Library {
 
     fn read_class(
         &mut self,
-        parser: &mut XmlParser,
+        parser: &mut XmlParser<'_>,
         ns_id: u16,
         elem: &Element,
     ) -> Result<(), String> {
@@ -217,7 +217,7 @@ impl Library {
 
     fn read_record_start(
         &mut self,
-        parser: &mut XmlParser,
+        parser: &mut XmlParser<'_>,
         ns_id: u16,
         elem: &Element,
     ) -> Result<(), String> {
@@ -230,7 +230,7 @@ impl Library {
 
     fn read_record(
         &mut self,
-        parser: &mut XmlParser,
+        parser: &mut XmlParser<'_>,
         ns_id: u16,
         elem: &Element,
         parent_name_prefix: Option<&str>,
@@ -341,7 +341,7 @@ impl Library {
 
     fn read_named_union(
         &mut self,
-        parser: &mut XmlParser,
+        parser: &mut XmlParser<'_>,
         ns_id: u16,
         elem: &Element,
     ) -> Result<(), String> {
@@ -365,7 +365,7 @@ impl Library {
 
     fn read_union(
         &mut self,
-        parser: &mut XmlParser,
+        parser: &mut XmlParser<'_>,
         ns_id: u16,
         elem: &Element,
         parent_name_prefix: Option<&str>,
@@ -465,7 +465,7 @@ impl Library {
 
     fn read_field(
         &mut self,
-        parser: &mut XmlParser,
+        parser: &mut XmlParser<'_>,
         ns_id: u16,
         elem: &Element,
     ) -> Result<Field, String> {
@@ -515,7 +515,7 @@ impl Library {
 
     fn read_named_callback(
         &mut self,
-        parser: &mut XmlParser,
+        parser: &mut XmlParser<'_>,
         ns_id: u16,
         elem: &Element,
     ) -> Result<(), String> {
@@ -527,7 +527,7 @@ impl Library {
 
     fn read_interface(
         &mut self,
-        parser: &mut XmlParser,
+        parser: &mut XmlParser<'_>,
         ns_id: u16,
         elem: &Element,
     ) -> Result<(), String> {
@@ -585,7 +585,7 @@ impl Library {
 
     fn read_bitfield(
         &mut self,
-        parser: &mut XmlParser,
+        parser: &mut XmlParser<'_>,
         ns_id: u16,
         elem: &Element,
     ) -> Result<(), String> {
@@ -628,7 +628,7 @@ impl Library {
 
     fn read_enumeration(
         &mut self,
-        parser: &mut XmlParser,
+        parser: &mut XmlParser<'_>,
         ns_id: u16,
         elem: &Element,
     ) -> Result<(), String> {
@@ -673,7 +673,7 @@ impl Library {
 
     fn read_global_function(
         &mut self,
-        parser: &mut XmlParser,
+        parser: &mut XmlParser<'_>,
         ns_id: u16,
         elem: &Element,
     ) -> Result<(), String> {
@@ -687,7 +687,7 @@ impl Library {
 
     fn read_constant(
         &mut self,
-        parser: &mut XmlParser,
+        parser: &mut XmlParser<'_>,
         ns_id: u16,
         elem: &Element,
     ) -> Result<(), String> {
@@ -745,7 +745,7 @@ impl Library {
 
     fn read_alias(
         &mut self,
-        parser: &mut XmlParser,
+        parser: &mut XmlParser<'_>,
         ns_id: u16,
         elem: &Element,
     ) -> Result<(), String> {
@@ -788,7 +788,7 @@ impl Library {
         }
     }
 
-    fn read_member(&self, parser: &mut XmlParser, elem: &Element) -> Result<Member, String> {
+    fn read_member(&self, parser: &mut XmlParser<'_>, elem: &Element) -> Result<Member, String> {
         let member_name = elem.attr_required("name")?;
         let value = elem.attr_required("value")?;
         let c_identifier = elem.attr("identifier").map(|x| x.into());
@@ -810,7 +810,7 @@ impl Library {
 
     fn read_function(
         &mut self,
-        parser: &mut XmlParser,
+        parser: &mut XmlParser<'_>,
         ns_id: u16,
         kind_str: &str,
         elem: &Element,
@@ -885,7 +885,7 @@ impl Library {
 
     fn read_function_to_vec(
         &mut self,
-        parser: &mut XmlParser,
+        parser: &mut XmlParser<'_>,
         ns_id: u16,
         elem: &Element,
         fns: &mut Vec<Function>,
@@ -898,7 +898,7 @@ impl Library {
 
     fn read_function_if_not_moved(
         &mut self,
-        parser: &mut XmlParser,
+        parser: &mut XmlParser<'_>,
         ns_id: u16,
         kind_str: &str,
         elem: &Element,
@@ -918,7 +918,7 @@ impl Library {
 
     fn read_signal(
         &mut self,
-        parser: &mut XmlParser,
+        parser: &mut XmlParser<'_>,
         ns_id: u16,
         elem: &Element,
     ) -> Result<Signal, String> {
@@ -965,7 +965,7 @@ impl Library {
 
     fn read_parameters(
         &mut self,
-        parser: &mut XmlParser,
+        parser: &mut XmlParser<'_>,
         ns_id: u16,
         allow_no_ctype: bool,
         for_method: bool,
@@ -980,7 +980,7 @@ impl Library {
 
     fn read_parameter(
         &mut self,
-        parser: &mut XmlParser,
+        parser: &mut XmlParser<'_>,
         ns_id: u16,
         elem: &Element,
         allow_no_ctype: bool,
@@ -1081,7 +1081,7 @@ impl Library {
 
     fn read_property(
         &mut self,
-        parser: &mut XmlParser,
+        parser: &mut XmlParser<'_>,
         ns_id: u16,
         elem: &Element,
     ) -> Result<Option<Property>, String> {
@@ -1149,7 +1149,7 @@ impl Library {
 
     fn read_type(
         &mut self,
-        parser: &mut XmlParser,
+        parser: &mut XmlParser<'_>,
         ns_id: u16,
         elem: &Element,
     ) -> Result<(TypeId, Option<String>, Option<u32>), String> {
@@ -1202,7 +1202,7 @@ impl Library {
 
     fn read_version(
         &mut self,
-        parser: &XmlParser,
+        parser: &XmlParser<'_>,
         ns_id: u16,
         elem: &Element,
     ) -> Result<Option<Version>, String> {
@@ -1211,7 +1211,7 @@ impl Library {
 
     fn read_deprecated_version(
         &mut self,
-        parser: &XmlParser,
+        parser: &XmlParser<'_>,
         ns_id: u16,
         elem: &Element,
     ) -> Result<Option<Version>, String> {
@@ -1220,7 +1220,7 @@ impl Library {
 
     fn read_version_attribute(
         &mut self,
-        parser: &XmlParser,
+        parser: &XmlParser<'_>,
         ns_id: u16,
         elem: &Element,
         attr: &str,

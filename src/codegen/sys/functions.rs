@@ -17,7 +17,7 @@ lazy_static! {
 }
 
 pub fn generate_records_funcs(
-    w: &mut Write,
+    w: &mut dyn Write,
     env: &Env,
     records: &[&library::Record],
 ) -> Result<()> {
@@ -39,7 +39,11 @@ pub fn generate_records_funcs(
     Ok(())
 }
 
-pub fn generate_classes_funcs(w: &mut Write, env: &Env, classes: &[&library::Class]) -> Result<()> {
+pub fn generate_classes_funcs(
+    w: &mut dyn Write,
+    env: &Env,
+    classes: &[&library::Class],
+) -> Result<()> {
     for klass in classes {
         let name = format!("{}.{}", env.config.library_name, klass.name);
         let obj = env.config.objects.get(&name).unwrap_or(&DEFAULT_OBJ);
@@ -57,7 +61,7 @@ pub fn generate_classes_funcs(w: &mut Write, env: &Env, classes: &[&library::Cla
 }
 
 pub fn generate_bitfields_funcs(
-    w: &mut Write,
+    w: &mut dyn Write,
     env: &Env,
     bitfields: &[&library::Bitfield],
 ) -> Result<()> {
@@ -80,7 +84,7 @@ pub fn generate_bitfields_funcs(
 }
 
 pub fn generate_enums_funcs(
-    w: &mut Write,
+    w: &mut dyn Write,
     env: &Env,
     enums: &[&library::Enumeration],
 ) -> Result<()> {
@@ -95,7 +99,11 @@ pub fn generate_enums_funcs(
     Ok(())
 }
 
-pub fn generate_unions_funcs(w: &mut Write, env: &Env, unions: &[&library::Union]) -> Result<()> {
+pub fn generate_unions_funcs(
+    w: &mut dyn Write,
+    env: &Env,
+    unions: &[&library::Union],
+) -> Result<()> {
     let intern_str = INTERN.to_string();
     for union in unions {
         let c_type = match union.c_type {
@@ -112,7 +120,7 @@ pub fn generate_unions_funcs(w: &mut Write, env: &Env, unions: &[&library::Union
 }
 
 pub fn generate_interfaces_funcs(
-    w: &mut Write,
+    w: &mut dyn Write,
     env: &Env,
     interfaces: &[&library::Interface],
 ) -> Result<()> {
@@ -133,7 +141,7 @@ pub fn generate_interfaces_funcs(
 }
 
 pub fn generate_other_funcs(
-    w: &mut Write,
+    w: &mut dyn Write,
     env: &Env,
     functions: &[library::Function],
 ) -> Result<()> {
@@ -143,7 +151,7 @@ pub fn generate_other_funcs(
 }
 
 fn generate_cfg_configure(
-    w: &mut Write,
+    w: &mut dyn Write,
     configured_functions: &[&Function],
     commented: bool,
 ) -> Result<()> {
@@ -156,7 +164,7 @@ fn generate_cfg_configure(
 }
 
 fn generate_object_funcs(
-    w: &mut Write,
+    w: &mut dyn Write,
     env: &Env,
     obj: &GObject,
     c_type: &str,
@@ -207,7 +215,7 @@ fn generate_object_funcs(
 }
 
 pub fn generate_callbacks(
-    w: &mut Write,
+    w: &mut dyn Write,
     env: &Env,
     callbacks: &[&library::Function],
 ) -> Result<()> {
