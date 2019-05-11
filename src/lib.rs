@@ -4,15 +4,10 @@
 
 #[macro_use]
 extern crate bitflags;
-extern crate git2;
 #[macro_use]
 extern crate lazy_static;
 #[macro_use]
 extern crate log;
-extern crate regex;
-extern crate stripper_lib;
-extern crate toml;
-extern crate xml;
 
 /// Log warning only if type in generated library
 macro_rules! warn_main {

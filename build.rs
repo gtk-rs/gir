@@ -1,5 +1,3 @@
-extern crate git2;
-
 #[path = "src/git.rs"]
 mod git;
 

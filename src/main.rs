@@ -1,6 +1,3 @@
-extern crate docopt;
-extern crate env_logger;
-extern crate hprof;
 extern crate libgir as gir;
 
 use std::{cell::RefCell, str::FromStr};
