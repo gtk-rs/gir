@@ -1,6 +1,3 @@
-use log::info;
-use std::ops::Deref;
-
 use super::{imports::Imports, info_base::InfoBase, record_type::RecordType, *};
 use crate::{
     config::{
@@ -12,6 +9,8 @@ use crate::{
     nameutil::*,
     traits::*,
 };
+use log::info;
+use std::ops::Deref;
 
 #[derive(Debug, Default)]
 pub struct Info {

@@ -1,10 +1,3 @@
-use log::warn;
-use std::{
-    fmt,
-    io::{Result, Write},
-    result::Result as StdResult,
-};
-
 use super::{
     function_body_chunk,
     general::{
@@ -24,6 +17,12 @@ use crate::{
     env::Env,
     library,
     writer::{primitives::tabs, ToCode},
+};
+use log::warn;
+use std::{
+    fmt,
+    io::{Result, Write},
+    result::Result as StdResult,
 };
 
 pub fn generate(

@@ -1,11 +1,10 @@
-use log::info;
-use std::path::Path;
-
 use crate::{
     codegen::{function, general},
     env::Env,
     file_saver,
 };
+use log::info;
+use std::path::Path;
 
 pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>) {
     info!("Generate global functions");

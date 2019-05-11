@@ -1,5 +1,3 @@
-use log::error;
-
 use super::{
     bounds::{BoundType, Bounds},
     conversion_type::ConversionType,
@@ -16,6 +14,7 @@ use crate::{
     traits::IntoString,
     version::Version,
 };
+use log::error;
 
 #[derive(Debug, Clone)]
 pub struct Trampoline {

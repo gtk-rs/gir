@@ -5,13 +5,6 @@
  * method has a different prefix.
  */
 
-use log::warn;
-use std::{
-    borrow::Borrow,
-    collections::{HashMap, HashSet},
-    vec::Vec,
-};
-
 use crate::{
     analysis::{
         bounds::{Bounds, CallbackInfo},
@@ -31,6 +24,11 @@ use crate::{
     nameutil,
     traits::*,
     version::Version,
+};
+use log::warn;
+use std::{
+    borrow::Borrow,
+    collections::{HashMap, HashSet},
 };
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]

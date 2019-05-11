@@ -1,11 +1,10 @@
-use log::info;
-use std::ops::Deref;
-
 use super::{
     child_properties::ChildProperties, imports::Imports, info_base::InfoBase,
     signatures::Signatures, *,
 };
 use crate::{config::gobjects::GObject, env::Env, library, nameutil::*, traits::*};
+use log::info;
+use std::ops::Deref;
 
 #[derive(Debug, Default)]
 pub struct Info {

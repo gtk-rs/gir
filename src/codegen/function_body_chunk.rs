@@ -28,6 +28,7 @@ enum Parameter {
         mem_mode: OutMemMode,
     },
 }
+use self::Parameter::*;
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 enum OutMemMode {
@@ -41,8 +42,6 @@ enum OutMemMode {
 struct ReturnValue {
     pub ret: return_value::Info,
 }
-
-use self::Parameter::*;
 
 #[derive(Default)]
 pub struct Builder {

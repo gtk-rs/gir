@@ -1,5 +1,3 @@
-use std::vec::Vec;
-
 use super::{general::StatusedTypeId, imports::Imports};
 use crate::{
     analysis::{namespaces, rust_type::used_rust_type},

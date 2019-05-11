@@ -1,6 +1,3 @@
-use log::error;
-use std::io::{Result, Write};
-
 use super::{
     general::version_condition, return_value::ToReturnValue,
     trampoline_from_glib::TrampolineFromGlib, trampoline_to_glib::TrampolineToGlib,
@@ -19,6 +16,8 @@ use crate::{
     library,
     traits::IntoString,
 };
+use log::error;
+use std::io::{Result, Write};
 
 pub fn generate(
     w: &mut dyn Write,

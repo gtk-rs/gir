@@ -1,6 +1,3 @@
-use lazy_static::lazy_static;
-use std::io::{Result, Write};
-
 use super::ffi_type::*;
 use crate::{
     codegen::general::{cfg_condition, version_condition},
@@ -9,6 +6,8 @@ use crate::{
     library, nameutil,
     traits::*,
 };
+use lazy_static::lazy_static;
+use std::io::{Result, Write};
 
 //used as glib:get-type in GLib-2.0.gir
 const INTERN: &str = "intern";

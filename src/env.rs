@@ -1,11 +1,10 @@
-use std::cell::RefCell;
-
 use crate::{
     analysis,
     config::{gobjects::GStatus, Config},
     library::*,
     version::Version,
 };
+use std::cell::RefCell;
 
 #[derive(Debug)]
 pub struct Env {

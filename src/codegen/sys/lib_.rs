@@ -1,10 +1,3 @@
-use log::info;
-use std::{
-    collections::HashMap,
-    fs,
-    io::{Result, Write},
-};
-
 use super::{ffi_type::ffi_type, fields, functions, statics};
 use crate::{
     codegen::general::{self, cfg_condition, version_condition},
@@ -15,6 +8,12 @@ use crate::{
     nameutil::*,
     traits::*,
     version::Version,
+};
+use log::info;
+use std::{
+    collections::HashMap,
+    fs,
+    io::{Result, Write},
 };
 
 pub fn generate(env: &Env) {

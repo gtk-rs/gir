@@ -1,12 +1,3 @@
-use std::{
-    collections::HashMap,
-    fs::File,
-    io::Read,
-    path::{Path, PathBuf},
-    str::FromStr,
-};
-use toml;
-
 use super::{
     external_libraries::{read_external_libraries, ExternalLibrary},
     gobjects, WorkMode,
@@ -18,6 +9,14 @@ use crate::{
     nameutil::set_crate_name_overrides,
     version::Version,
 };
+use std::{
+    collections::HashMap,
+    fs::File,
+    io::Read,
+    path::{Path, PathBuf},
+    str::FromStr,
+};
+use toml;
 
 #[derive(Debug)]
 pub struct Config {

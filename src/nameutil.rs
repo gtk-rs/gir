@@ -1,7 +1,6 @@
-use lazy_static::lazy_static;
-use std::{borrow::Cow, collections::HashMap, path::*, string::String};
-
 use crate::case::*;
+use lazy_static::lazy_static;
+use std::{borrow::Cow, collections::HashMap, path::*};
 
 static mut CRATE_NAME_OVERRIDES: Option<HashMap<String, String>> = None;
 

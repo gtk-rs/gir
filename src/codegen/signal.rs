@@ -1,5 +1,3 @@
-use std::io::{Result, Write};
-
 use super::{
     general::{cfg_deprecated, doc_hidden, version_condition},
     signal_body,
@@ -13,6 +11,7 @@ use crate::{
     library,
     writer::{primitives::tabs, ToCode},
 };
+use std::io::{Result, Write};
 
 pub fn generate(
     w: &mut dyn Write,

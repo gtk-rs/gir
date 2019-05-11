@@ -1,11 +1,10 @@
+use crate::{codegen::general, env::Env, file_saver::save_to_file};
 use log::info;
 use regex::Regex;
 use std::{
     io::{Result, Write},
     path::Path,
 };
-
-use crate::{codegen::general, env::Env, file_saver::save_to_file};
 
 pub fn generate(env: &Env) {
     info!(

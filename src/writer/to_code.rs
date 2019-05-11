@@ -1,5 +1,3 @@
-use std::vec::Vec;
-
 use super::primitives::*;
 use crate::{
     chunk::{Chunk, Param, TupleMode},

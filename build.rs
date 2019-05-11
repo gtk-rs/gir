@@ -1,7 +1,7 @@
+use std::{fs::File, io::Write};
+
 #[path = "src/git.rs"]
 mod git;
-
-use std::{fs::File, io::Write};
 
 fn main() {
     let ver = git::repo_hash(".").unwrap_or_else(|_| "???".into());

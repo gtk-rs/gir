@@ -1,7 +1,6 @@
 use hprof::Profiler;
-use std::{cell::RefCell, str::FromStr};
-
 use libgir::{self as gir, Config, Library, WorkMode};
+use std::{cell::RefCell, str::FromStr};
 
 static USAGE: &'static str = "
 Usage: gir [options] [<library> <version>]

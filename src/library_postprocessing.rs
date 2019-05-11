@@ -1,6 +1,3 @@
-use log::{error, info};
-use std::collections::HashMap;
-
 use crate::{
     analysis::types::IsIncomplete,
     config::{gobjects::GObject, Config},
@@ -9,6 +6,8 @@ use crate::{
     parser::is_empty_c_type,
     traits::MaybeRefAs,
 };
+use log::{error, info};
+use std::collections::HashMap;
 
 impl Namespace {
     fn unresolved(&self) -> Vec<&str> {

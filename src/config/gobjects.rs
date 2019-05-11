@@ -1,7 +1,3 @@
-use log::warn;
-use std::{collections::BTreeMap, str::FromStr};
-use toml::Value;
-
 use super::{
     child_properties::ChildProperties,
     constants::Constants,
@@ -20,6 +16,9 @@ use crate::{
     library::{self, Library, TypeId, MAIN_NAMESPACE},
     version::Version,
 };
+use log::warn;
+use std::{collections::BTreeMap, str::FromStr};
+use toml::Value;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum GStatus {

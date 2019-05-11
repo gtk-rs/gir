@@ -1,8 +1,3 @@
-use std::{
-    fmt::Display,
-    io::{Result, Write},
-};
-
 use crate::{
     analysis::{self, general::StatusedTypeId, imports::Imports, namespaces},
     config::{derives::Derive, Config},
@@ -10,6 +5,10 @@ use crate::{
     gir_version::VERSION,
     version::Version,
     writer::primitives::tabs,
+};
+use std::{
+    fmt::Display,
+    io::{Result, Write},
 };
 
 pub fn start_comments(w: &mut dyn Write, conf: &Config) -> Result<()> {

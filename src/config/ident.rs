@@ -1,8 +1,7 @@
+use super::error::TomlHelper;
 use log::error;
 use regex::Regex;
 use toml::Value;
-
-use super::error::TomlHelper;
 
 #[derive(Clone, Debug)]
 pub enum Ident {

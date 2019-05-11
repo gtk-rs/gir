@@ -1,5 +1,3 @@
-use log::{info, trace};
-
 use crate::{
     analysis::{
         c_type::{implements_c_type, rustify_pointers},
@@ -9,6 +7,7 @@ use crate::{
     library::*,
     traits::*,
 };
+use log::{info, trace};
 
 pub fn used_ffi_type(env: &Env, type_id: TypeId, c_type: &str) -> Option<String> {
     let (_ptr, inner) = rustify_pointers(c_type);

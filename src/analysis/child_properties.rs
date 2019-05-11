@@ -1,5 +1,3 @@
-use log::error;
-
 use crate::{
     analysis::{bounds::Bounds, imports::Imports, ref_mode::RefMode, rust_type::*},
     codegen::function,
@@ -8,6 +6,7 @@ use crate::{
     library, nameutil,
     traits::*,
 };
+use log::error;
 
 #[derive(Clone, Debug)]
 pub struct ChildProperty {

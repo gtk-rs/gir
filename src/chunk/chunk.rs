@@ -1,5 +1,3 @@
-use std::vec::Vec;
-
 use super::{conversion_from_glib, parameter_ffi_call_out};
 use crate::analysis::{function_parameters::TransformationType, return_value};
 

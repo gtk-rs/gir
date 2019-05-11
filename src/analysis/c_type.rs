@@ -1,6 +1,5 @@
-use log::trace;
-
 use crate::{env::Env, library::TypeId};
+use log::trace;
 
 pub fn rustify_pointers(c_type: &str) -> (String, String) {
     let mut input = c_type.trim();

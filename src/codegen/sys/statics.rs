@@ -1,6 +1,5 @@
-use std::io::{Result, Write};
-
 use super::super::general::write_vec;
+use std::io::{Result, Write};
 
 pub fn begin(w: &mut dyn Write) -> Result<()> {
     let v = vec![

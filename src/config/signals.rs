@@ -1,7 +1,3 @@
-use log::error;
-use std::str::FromStr;
-use toml::Value;
-
 use super::{
     error::TomlHelper,
     functions::Return,
@@ -13,6 +9,9 @@ use crate::{
     library::{self, Nullable},
     version::Version,
 };
+use log::error;
+use std::str::FromStr;
+use toml::Value;
 
 #[derive(Clone, Copy, Debug)]
 pub enum TransformationType {

@@ -1,5 +1,3 @@
-use std::result;
-
 use super::conversion_type::ConversionType;
 use crate::{
     analysis::ref_mode::RefMode,
@@ -7,6 +5,7 @@ use crate::{
     library::{self, Nullable, ParameterScope},
     traits::*,
 };
+use std::result;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum TypeError {

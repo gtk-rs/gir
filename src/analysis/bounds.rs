@@ -1,5 +1,3 @@
-use std::{collections::vec_deque::VecDeque, slice::Iter, vec::Vec};
-
 use crate::{
     analysis::{
         function_parameters::{async_param_to_remove, CParameter},
@@ -15,6 +13,7 @@ use crate::{
     },
     traits::IntoString,
 };
+use std::{collections::vec_deque::VecDeque, slice::Iter};
 
 #[derive(Clone, Eq, Debug, PartialEq)]
 pub enum BoundType {

@@ -1,5 +1,3 @@
-use std::{slice::Iter, vec::Vec};
-
 use crate::{
     analysis::{
         conversion_type::ConversionType, function_parameters::CParameter,
@@ -12,6 +10,7 @@ use crate::{
     nameutil,
     version::Version,
 };
+use std::slice::Iter;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum Mode {

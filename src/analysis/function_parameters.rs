@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use super::{
     conversion_type::ConversionType, out_parameters::can_as_return,
     override_string_type::override_string_type_parameter, ref_mode::RefMode, rust_type::rust_type,
@@ -11,6 +9,7 @@ use crate::{
     nameutil,
     traits::IntoString,
 };
+use std::collections::HashMap;
 
 //TODO: remove unused fields
 #[derive(Clone, Debug)]

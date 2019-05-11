@@ -1,15 +1,14 @@
-use log::info;
-use std::{
-    io::{self, prelude::*},
-    path::Path,
-};
-
 use crate::{
     analysis::types::IsIncomplete,
     codegen::general,
     env::Env,
     file_saver::save_to_file,
     library::{Bitfield, Enumeration, Type, MAIN_NAMESPACE},
+};
+use log::info;
+use std::{
+    io::{self, prelude::*},
+    path::Path,
 };
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]

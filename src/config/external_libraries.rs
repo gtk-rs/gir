@@ -1,7 +1,6 @@
-use toml;
-
 use super::error::*;
 use crate::nameutil::crate_name;
+use toml;
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct ExternalLibrary {

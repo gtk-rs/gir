@@ -1,5 +1,3 @@
-use std::io::{Result, Write};
-
 use super::{
     general::{cfg_deprecated, version_condition},
     property_body,
@@ -15,6 +13,7 @@ use crate::{
     traits::IntoString,
     writer::{primitives::tabs, ToCode},
 };
+use std::io::{Result, Write};
 
 pub fn generate(
     w: &mut dyn Write,

@@ -1,5 +1,3 @@
-use log::warn;
-
 use crate::{
     analysis::{
         imports::Imports,
@@ -15,6 +13,7 @@ use crate::{
     traits::*,
     version::Version,
 };
+use log::warn;
 
 #[derive(Debug)]
 pub struct Property {

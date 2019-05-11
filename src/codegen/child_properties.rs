@@ -1,5 +1,3 @@
-use std::io::{Result, Write};
-
 use super::{general::doc_hidden, property_body};
 use crate::{
     analysis::{
@@ -12,6 +10,7 @@ use crate::{
     traits::IntoString,
     writer::{primitives::tabs, ToCode},
 };
+use std::io::{Result, Write};
 
 pub fn generate(
     w: &mut dyn Write,

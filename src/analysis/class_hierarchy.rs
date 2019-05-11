@@ -1,7 +1,7 @@
 use crate::library::*;
 use std::{
     collections::{HashMap, HashSet},
-    iter::{self, Iterator},
+    iter,
 };
 
 #[derive(Debug)]

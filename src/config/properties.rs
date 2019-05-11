@@ -1,11 +1,10 @@
-use log::error;
-use toml::Value;
-
 use super::{
     error::TomlHelper, ident::Ident, parsable::Parse,
     property_generate_flags::PropertyGenerateFlags,
 };
 use crate::version::Version;
+use log::error;
+use toml::Value;
 
 #[derive(Clone, Debug)]
 pub struct Property {

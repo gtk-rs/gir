@@ -1,5 +1,3 @@
-use std::io::{Result, Write};
-
 use super::{child_properties, function, general, properties, signal, trait_impls, trampoline};
 use crate::{
     analysis::{self, rust_type::rust_type},
@@ -8,6 +6,7 @@ use crate::{
     env::Env,
     library, nameutil,
 };
+use std::io::{Result, Write};
 
 pub fn generate(
     w: &mut dyn Write,
