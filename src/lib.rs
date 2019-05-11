@@ -2,6 +2,8 @@
 #![allow(clippy::let_and_return)]
 #![allow(clippy::too_many_arguments)]
 #![allow(clippy::write_literal)]
+#![deny(bare_trait_objects)]
+#![deny(elided_lifetimes_in_paths)]
 
 #[macro_use]
 extern crate bitflags;
