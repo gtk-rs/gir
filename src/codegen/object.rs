@@ -113,7 +113,7 @@ pub fn generate(
     }
 
     // TODO: include parent properties.
-    if !analysis.builder_properties.is_empty() {
+    if env.config.objects.get(&format!("{}Builder", analysis.base.full_name)).is_some() && !analysis.builder_properties.is_empty() {
         generate_builder(w, env, analysis)?;
     }
 
@@ -201,7 +201,9 @@ pub struct {}Builder {{", analysis.name)?;
                 let name = nameutil::mangle_keywords(nameutil::signal_to_snake(&property.name));
                 version_condition(w, env, property.version, false, 1)?;
                 writeln!(w, "    {}: Option<{}>,", name, type_string)?;
-                let prefix = version_condition_string(env, property.version, false, 1).unwrap_or_default();
+                let prefix = version_condition_string(env, property.version, false, 1)
+                    .map(|version| format!("{}\n", version))
+                    .unwrap_or_default();
                 methods.push(format!("\n{prefix}    pub fn {name}(mut self, {name}: {param_type}) -> Self {{
         self.{name} = Some({name}{conversion});
         self
