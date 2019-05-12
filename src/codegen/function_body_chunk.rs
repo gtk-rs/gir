@@ -13,6 +13,7 @@ use chunk::parameter_ffi_call_out;
 use env::Env;
 use library::{self, ParameterDirection};
 use std::collections::{BTreeMap, HashMap};
+use std::collections::hash_map::Entry;
 
 #[derive(Clone, Debug)]
 enum Parameter {
@@ -114,7 +115,7 @@ impl Builder {
 
         // Key: user data index
         // Value: (global position used as id, type, callbacks)
-        let mut group_by_user_data: BTreeMap<usize, (usize, Option<String>, Vec<&Trampoline>)> =
+        let mut group_by_user_data: BTreeMap<usize, (usize, Option<(String, String)>, Vec<&Trampoline>)> =
             BTreeMap::new();
 
         // We group arguments by callbacks.
@@ -131,15 +132,25 @@ impl Builder {
                     user_data_index,
                     (pos,
                     if calls.len() > 1 {
-                        Some(format!("Box_<({})>",
-                                     calls.iter()
-                                          .map(|c| if c.scope.is_call() {
-                                              c.bound_name.clone()
-                                          } else {
-                                              format!("&{}", c.bound_name)
-                                          })
-                                          .collect::<Vec<_>>()
-                                          .join(", ")))
+                        if calls.iter().all(|c| c.scope.is_call()) {
+                            Some((format!("&({})",
+                                          calls.iter()
+                                               .map(|c| format!("&{}", c.bound_name))
+                                               .collect::<Vec<_>>()
+                                               .join(", ")),
+                                  format!("&mut ({})",
+                                          calls.iter()
+                                               .map(|c| format!("&mut {}", c.bound_name))
+                                               .collect::<Vec<_>>()
+                                               .join(", "))))
+                        } else {
+                            let s = format!("Box_<({})>",
+                                            calls.iter()
+                                                 .map(|c| format!("&{}", c.bound_name))
+                                                 .collect::<Vec<_>>()
+                                                 .join(", "));
+                            Some((s.clone(), s))
+                        }
                     } else {
                         None
                     },
@@ -170,24 +181,31 @@ impl Builder {
             // Value: the current pos in the tuple for the given argument.
             let mut poses = HashMap::with_capacity(group_by_user_data.len());
             for trampoline in self.callbacks.iter() {
+                *poses.entry(&trampoline.user_data_index).or_insert_with(|| 0) += 1;
+            }
+            let mut poses = poses.into_iter().filter(|(_, x)| *x > 1).map(|(x, _)| (x, 0)).collect::<HashMap<_, _>>();
+            for trampoline in self.callbacks.iter() {
                 let user_data_index = trampoline.user_data_index;
-                let pos = poses.entry(user_data_index).or_insert_with(|| 0);
+                let pos = poses.entry(&trampoline.user_data_index);
                 self.add_trampoline(env,
                                     &mut chunks,
                                     trampoline,
                                     &group_by_user_data[&user_data_index].1,
-                                    *pos,
+                                    match pos {
+                                        Entry::Occupied(ref x) => Some(*x.get()),
+                                        _ => None,
+                                    },
                                     &bounds,
                                     &bounds_names,
                                     false);
-                *pos += 1;
+                pos.and_modify(|x| { *x += 1; });
             }
             for destroy in self.destroys.iter() {
                 self.add_trampoline(env,
                                     &mut chunks,
                                     destroy,
                                     &group_by_user_data[&destroy.user_data_index].1,
-                                    0, // doesn't matter for destroy
+                                    None, // doesn't matter for destroy
                                     &bounds,
                                     &bounds_names,
                                     true);
@@ -200,12 +218,26 @@ impl Builder {
                             is_mut: false,
                             value: Box::new(
                                 Chunk::Custom(
-                                    format!("Box_::new(Box_::new(({})))",
-                                            calls.iter()
-                                                 .map(|c| format!("{}_data", c.name))
-                                                 .collect::<Vec<_>>()
-                                                 .join(", ")))),
-                            type_: Some(Box::new(Chunk::Custom(full_type.clone().unwrap()))),
+                                    if poses.is_empty() {
+                                        format!("Box_::new(Box_::new(({})))",
+                                                calls.iter()
+                                                     .map(|c| format!("{}_data", c.name))
+                                                     .collect::<Vec<_>>()
+                                                     .join(", "))
+                                    } else if calls.iter().all(|c| c.scope.is_call()) {
+                                        format!("&({})",
+                                                calls.iter()
+                                                     .map(|c| format!("{}_data", c.name))
+                                                     .collect::<Vec<_>>()
+                                                     .join(", "))
+                                    } else {
+                                        format!("Box_::new(({}))",
+                                                calls.iter()
+                                                     .map(|c| format!("{}_data", c.name))
+                                                     .collect::<Vec<_>>()
+                                                     .join(", "))
+                                    })),
+                            type_: Some(Box::new(Chunk::Custom(full_type.clone().map(|x| x.0).unwrap()))),
                         }
                     );
                 } else if !calls.is_empty() {
@@ -236,8 +268,8 @@ impl Builder {
     }
 
     fn add_trampoline(&self, env: &Env, chunks: &mut Vec<Chunk>, trampoline: &Trampoline,
-                      full_type: &Option<String>, pos: usize, bounds: &str, bounds_names: &str,
-                      is_destroy: bool) {
+                      full_type: &Option<(String, String)>, pos: Option<usize>,
+                      bounds: &str, bounds_names: &str, is_destroy: bool) {
         if !is_destroy {
             if full_type.is_none() {
                 if trampoline.scope.is_call() {
@@ -304,7 +336,7 @@ impl Builder {
                         name: format!("{}callback", if is_destroy { "_" } else { "" }),
                         is_mut: false,
                         value: Box::new(Chunk::Custom(format!("Box_::from_raw({} as *mut _)", func))),
-                        type_: Some(Box::new(Chunk::Custom(full_type.clone()))),
+                        type_: Some(Box::new(Chunk::Custom(full_type.1.clone()))),
                     }
                 );
             } else {
@@ -317,6 +349,8 @@ impl Builder {
                                 format!("{}*({} as *mut _)",
                                         if !trampoline.scope.is_call() {
                                             "&"
+                                        } else if pos.is_some() {
+                                            "&mut "
                                         } else {
                                             ""
                                         },
@@ -325,17 +359,21 @@ impl Builder {
                                         Chunk::Custom(
                                             if !trampoline.scope.is_async() &&
                                                !trampoline.scope.is_call() {
-                                                format!("&{}", full_type)
+                                                format!("&{}", full_type.1)
                                             } else {
-                                                full_type.clone()
+                                                full_type.1.clone()
                                             }))),
                     }
                 );
                 if trampoline.scope.is_async() {
                     body.push(
                         Chunk::Custom(
-                            format!("let callback = callback.{}{};",
-                                    pos,
+                            format!("let callback = callback{}{};",
+                                    if let Some(pos) = pos {
+                                        format!(".{}", pos)
+                                    } else {
+                                        String::new()
+                                    },
                                     if *trampoline.nullable {
                                         ".expect(\"cannot get closure...\")"
                                     } else {
@@ -348,21 +386,51 @@ impl Builder {
                     if *trampoline.nullable {
                         body.push(
                             Chunk::Custom(
-                                format!("{}if let Some(ref callback) = callback.{} {{",
+                                format!("{}if let Some(ref callback) = callback{} {{",
                                         if trampoline.ret.c_type != "void" {
                                             "let res = "
                                         } else {
                                             ""
                                         },
-                                        pos)));
+                                        if let Some(pos) = pos {
+                                            format!(".{}", pos)
+                                        } else {
+                                            String::new()
+                                        })));
                     } else {
-                        body.push(Chunk::Custom(format!("let callback = callback.{}", pos)));
+                        body.push(Chunk::Custom(format!("let callback = callback{}",
+                                                        if let Some(pos) = pos {
+                                                            format!(".{}", pos)
+                                                        } else {
+                                                            String::new()
+                                                        })));
                         if trampoline.ret.c_type != "void" {
                             body.push(Chunk::Custom("let res = ".to_owned()));
                         }
                     }
-                } else if trampoline.ret.c_type != "void" {
-                    body.push(Chunk::Custom("let res = ".to_owned()));
+                } else {
+                    let add = if trampoline.ret.c_type != "void" {
+                        "let res = "
+                    } else {
+                        ""
+                    };
+                    if !trampoline.scope.is_async() && *trampoline.nullable {
+                        body.push(Chunk::Custom(
+                            format!("{}if let Some(ref {}callback) = {} {{",
+                                    add,
+                                    if trampoline.scope.is_call() {
+                                        "mut "
+                                    } else {
+                                        ""
+                                    },
+                                    if let Some(pos) = pos {
+                                        format!("(*callback).{}", pos)
+                                    } else {
+                                        "*callback".to_owned()
+                                    })));
+                    } else {
+                        body.push(Chunk::Custom(add.to_owned()));
+                    }
                 }
             }
         } else {
@@ -399,11 +467,16 @@ impl Builder {
                     }
                 } else {
                     body.push(Chunk::Custom(
-                        format!("{}if let Some(ref {}callback) = *callback {{",
+                        format!("{}if let Some(ref {}callback) = {} {{",
                                 if trampoline.ret.c_type != "void" { "let res = " } else { "" },
-                                if trampoline.scope.is_call() { "mut " } else { "" })));
+                                if trampoline.scope.is_call() { "mut " } else { "" },
+                                if let Some(pos) = pos {
+                                    format!("(*callback).{}", pos)
+                                } else {
+                                    "*callback".to_owned()
+                                })));
                 }
-            } else if !is_destroy &&  trampoline.ret.c_type != "void" {
+            } else if !is_destroy && trampoline.ret.c_type != "void" {
                 extra_before_call = "let res = ";
             }
         }
@@ -427,7 +500,7 @@ impl Builder {
                                                 ";"
                                             } else {
                                                 ""
-                                            },)));
+                                            })));
             if !trampoline.scope.is_async() && *trampoline.nullable {
                 body.push(Chunk::Custom("} else {".to_owned()));
                 body.push(Chunk::Custom("\tpanic!(\"cannot get closure...\")".to_owned()));
@@ -675,7 +748,7 @@ impl Builder {
 
     fn generate_call(
         &self,
-        calls: &BTreeMap<usize, (usize, Option<String>, Vec<&Trampoline>)>,
+        calls: &BTreeMap<usize, (usize, Option<(String, String)>, Vec<&Trampoline>)>,
     ) -> Chunk {
         let params = self.generate_func_parameters(calls);
         let func = Chunk::FfiCall {
@@ -693,7 +766,7 @@ impl Builder {
     }
     fn generate_func_parameters(
         &self,
-        calls: &BTreeMap<usize, (usize, Option<String>, Vec<&Trampoline>)>,
+        calls: &BTreeMap<usize, (usize, Option<(String, String)>, Vec<&Trampoline>)>,
     ) -> Vec<Chunk> {
         let mut params = Vec::new();
         for trans in &self.transformations {

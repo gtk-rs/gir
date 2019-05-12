@@ -312,6 +312,7 @@ pub fn rust_type_full(
         && !implemented_in_main_namespace(&env.library, type_id)
         && type_id.full_name(&env.library) != "GLib.DestroyNotify"
         && type_id.full_name(&env.library) != "GObject.Callback"
+        && !type_.is_function()
     {
         if env.type_status(&type_id.full_name(&env.library)).ignored() {
             rust_type = Err(TypeError::Ignored(into_inner(rust_type)));

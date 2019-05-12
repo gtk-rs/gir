@@ -6,3 +6,4 @@ tests/gir-files
 tests/sys/*-sys/**
 tests/sys/sys_build/Cargo.lock
 !tests/sys/*-sys/Cargo.toml
+**.DS_Store
