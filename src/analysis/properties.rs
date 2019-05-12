@@ -1,4 +1,3 @@
-use analysis::bounds::Bound;
 use analysis::imports::Imports;
 use analysis::ref_mode::RefMode;
 use analysis::rust_type::*;
@@ -24,7 +23,6 @@ pub struct Property {
     pub set_in_ref_mode: RefMode,
     pub version: Option<Version>,
     pub deprecated_version: Option<Version>,
-    pub bound: Option<Bound>,
 }
 
 pub fn analyze(
@@ -37,9 +35,11 @@ pub fn analyze(
     imports: &mut Imports,
     signatures: &Signatures,
     deps: &[library::TypeId],
-) -> (Vec<Property>, Vec<signals::Info>) {
+    generate_builders: bool,
+) -> (Vec<Property>, Vec<Property>, Vec<signals::Info>) {
     let mut properties = Vec::new();
     let mut notify_signals = Vec::new();
+    let mut builder_properties = Vec::new();
 
     for prop in props {
         let configured_properties = obj.properties.matched(&prop.name);
@@ -51,7 +51,7 @@ pub fn analyze(
             continue;
         }
 
-        let (getter, setter, notify_signal) = analyze_property(
+        let (getter, setter, builder, notify_signal) = analyze_property(
             env,
             prop,
             type_tid,
@@ -62,7 +62,11 @@ pub fn analyze(
             imports,
             signatures,
             deps,
+            generate_builders,
         );
+        if let Some(builder) = builder {
+            builder_properties.push(builder);
+        }
 
         if let Some(notify_signal) = notify_signal {
             notify_signals.push(notify_signal);
@@ -94,18 +98,11 @@ pub fn analyze(
                 imports.add("glib::Value", prop.version);
             }
 
-            if let Some(ref bound, ..) = prop.bound {
-                if bound.bound_type.need_isa() {
-                    imports.add("glib::object::IsA", prop.version);
-                    imports.add("glib", prop.version);
-                }
-            }
-
             properties.push(prop);
         }
     }
 
-    (properties, notify_signals)
+    (properties, builder_properties, notify_signals)
 }
 
 fn analyze_property(
@@ -119,7 +116,8 @@ fn analyze_property(
     imports: &mut Imports,
     signatures: &Signatures,
     deps: &[library::TypeId],
-) -> (Option<Property>, Option<Property>, Option<signals::Info>) {
+    generate_builders: bool,
+) -> (Option<Property>, Option<Property>, Option<Property>, Option<signals::Info>) {
     let type_name = type_tid.full_name(&env.library);
     let name = prop.name.clone();
 
@@ -143,6 +141,8 @@ fn analyze_property(
     let check_get_func_name = format!("get_{}", name_for_func);
     let check_set_func_name = format!("set_{}", name_for_func);
 
+    let for_builder = env.config.objects.get(&format!("{}Builder", obj.name)).is_some() &&
+        (prop.construct_only || prop.construct || prop.writable) && generate_builders;
     let mut readable = prop.readable;
     let mut writable = if prop.construct_only {
         false
@@ -189,6 +189,7 @@ fn analyze_property(
         set_in_ref_mode = RefMode::ByRef;
     }
     let nullable = library::Nullable(set_in_ref_mode.is_ref());
+
     let getter = if readable {
         Some(Property {
             name: name.clone(),
@@ -201,7 +202,6 @@ fn analyze_property(
             set_in_ref_mode,
             version: prop_version,
             deprecated_version: prop.deprecated_version,
-            bound: None,
         })
     } else {
         None
@@ -219,7 +219,6 @@ fn analyze_property(
             set_in_ref_mode,
             version: prop_version,
             deprecated_version: prop.deprecated_version,
-            bound: None,
         })
     } else {
         None
@@ -298,5 +297,25 @@ fn analyze_property(
         None
     };
 
-    (getter, setter, notify_signal)
+    let builder = if for_builder {
+        if let Ok(ref s) = used_rust_type(env, prop.typ, false) {
+            imports.add_used_type(s, prop.version);
+        }
+        Some(Property {
+            name: name.clone(),
+            var_name: String::new(),
+            typ: prop.typ,
+            is_get: false,
+            func_name: String::new(),
+            nullable,
+            get_out_ref_mode,
+            set_in_ref_mode,
+            version: prop_version,
+            deprecated_version: prop.deprecated_version,
+        })
+    } else {
+        None
+    };
+
+    (getter, setter, builder, notify_signal)
 }
