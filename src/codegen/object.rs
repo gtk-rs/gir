@@ -113,7 +113,7 @@ pub fn generate(
     }
 
     // TODO: include parent properties.
-    if env.config.objects.get(&format!("{}Builder", analysis.base.full_name)).is_some() && !analysis.builder_properties.is_empty() {
+    if !analysis.builder_properties.is_empty() {
         generate_builder(w, env, analysis)?;
     }
 
@@ -179,6 +179,7 @@ pub fn generate(
     Ok(())
 }
 
+// TODO: instead create a Vec<> inside the Builder instead of Options.
 fn generate_builder(w: &mut Write, env: &Env, analysis: &analysis::object::Info) -> Result<()> {
     let mut methods = vec![];
     let mut properties = vec![];
@@ -238,7 +239,7 @@ impl {}Builder {{
         writeln!(w,
 "        if let Some(ref {property}) = self.{property} {{
             properties.push((\"{}\", {property}));
-        }}", property = name)?;
+        }}", property.name, property = name)?;
         if property.version.is_some() {
             writeln!(w, "        }}")?;
         }

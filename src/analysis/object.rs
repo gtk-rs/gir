@@ -127,7 +127,7 @@ pub fn class(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<Info>
         obj,
         &mut imports,
     );
-    let (properties, builder_properties, notify_signals) = properties::analyze(
+    let (properties, mut builder_properties, notify_signals) = properties::analyze(
         env,
         &klass.properties,
         class_tid,
@@ -139,6 +139,29 @@ pub fn class(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<Info>
         deps,
         true,
     );
+
+    for &super_tid in env.class_hierarchy.supertypes(class_tid) {
+        let type_ = env.type_(super_tid);
+
+        let super_class: &library::Class = match type_.maybe_ref() {
+            Some(super_class) => super_class,
+            None => continue,
+        };
+
+        let (_, new_builder_properties, _) = properties::analyze(
+            env,
+            &super_class.properties,
+            super_tid,
+            !final_type,
+            &mut trampolines::Trampolines::with_capacity(0),
+            obj,
+            &mut imports,
+            &signatures,
+            deps,
+            true,
+        );
+        builder_properties.extend(new_builder_properties);
+    }
 
     let (version, deprecated_version) = info_base::versions(
         env,
