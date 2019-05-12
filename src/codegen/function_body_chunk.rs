@@ -58,6 +58,16 @@ pub struct Builder {
     assertion: SafetyAssertionMode,
 }
 
+// Key: user data index
+// Value: (global position used as id, type, callbacks)
+type FuncParameters<'a> = BTreeMap<usize, FuncParameter<'a>>;
+
+struct FuncParameter<'a> {
+    pos: usize,
+    full_type: Option<(String, String)>,
+    callbacks: Vec<&'a Trampoline>,
+}
+
 impl Builder {
     pub fn new() -> Builder {
         Default::default()
@@ -116,12 +126,7 @@ impl Builder {
             self.write_out_variables(&mut body);
         }
 
-        // Key: user data index
-        // Value: (global position used as id, type, callbacks)
-        let mut group_by_user_data: BTreeMap<
-            usize,
-            (usize, Option<(String, String)>, Vec<&Trampoline>),
-        > = BTreeMap::new();
+        let mut group_by_user_data = FuncParameters::new();
 
         // We group arguments by callbacks.
         if !self.callbacks.is_empty() || !self.destroys.is_empty() {
@@ -137,9 +142,9 @@ impl Builder {
                     .collect::<Vec<_>>();
                 group_by_user_data.insert(
                     user_data_index,
-                    (
+                    FuncParameter {
                         pos,
-                        if calls.len() > 1 {
+                        full_type: if calls.len() > 1 {
                             if calls.iter().all(|c| c.scope.is_call()) {
                                 Some((
                                     format!(
@@ -173,8 +178,8 @@ impl Builder {
                         } else {
                             None
                         },
-                        calls,
-                    ),
+                        callbacks: calls,
+                    },
                 );
             }
         }
@@ -217,7 +222,7 @@ impl Builder {
                     env,
                     &mut chunks,
                     trampoline,
-                    &group_by_user_data[&user_data_index].1,
+                    &group_by_user_data[&user_data_index].full_type,
                     match pos {
                         Entry::Occupied(ref x) => Some(*x.get()),
                         _ => None,
@@ -235,14 +240,19 @@ impl Builder {
                     env,
                     &mut chunks,
                     destroy,
-                    &group_by_user_data[&destroy.user_data_index].1,
+                    &group_by_user_data[&destroy.user_data_index].full_type,
                     None, // doesn't matter for destroy
                     &bounds,
                     &bounds_names,
                     true,
                 );
             }
-            for (_, (pos, full_type, ref calls)) in group_by_user_data.iter() {
+            for FuncParameter {
+                pos,
+                full_type,
+                callbacks: ref calls,
+            } in group_by_user_data.values()
+            {
                 if calls.len() > 1 {
                     chunks.push(Chunk::Let {
                         name: format!("super_callback{}", pos),
@@ -851,10 +861,7 @@ impl Builder {
         }
     }
 
-    fn generate_call(
-        &self,
-        calls: &BTreeMap<usize, (usize, Option<(String, String)>, Vec<&Trampoline>)>,
-    ) -> Chunk {
+    fn generate_call(&self, calls: &FuncParameters) -> Chunk {
         let params = self.generate_func_parameters(calls);
         let func = Chunk::FfiCall {
             name: self.glib_name.clone(),
@@ -869,10 +876,7 @@ impl Builder {
             call: Box::new(call),
         }
     }
-    fn generate_func_parameters(
-        &self,
-        calls: &BTreeMap<usize, (usize, Option<(String, String)>, Vec<&Trampoline>)>,
-    ) -> Vec<Chunk> {
+    fn generate_func_parameters(&self, calls: &FuncParameters) -> Vec<Chunk> {
         let mut params = Vec::new();
         for trans in &self.transformations {
             if !trans.transformation_type.is_to_glib() {
@@ -890,7 +894,7 @@ impl Builder {
             params.push(chunk);
         }
         let mut to_insert = Vec::new();
-        for (user_data_index, (pos, _, callbacks)) in calls.iter() {
+        for (user_data_index, FuncParameter { pos, callbacks, .. }) in calls.iter() {
             let all_call = callbacks.iter().all(|c| c.scope.is_call());
             to_insert.push((
                 *user_data_index,
