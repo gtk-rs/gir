@@ -1,8 +1,5 @@
+use crate::{env::Env, library, version::Version};
 use std::collections::HashMap;
-
-use env::Env;
-use library;
-use version::Version;
 
 #[derive(Debug)]
 pub struct Signature(Vec<library::TypeId>, library::TypeId, Option<Version>);

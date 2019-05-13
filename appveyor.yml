@@ -12,12 +12,15 @@ install:
   - rustup-init.exe --default-host "%ARCH%-pc-windows-gnu" --default-toolchain %RUST% -y
   - SET PATH=C:\Users\appveyor\.cargo\bin;C:\msys64\mingw%BITS%\bin;%PATH%;C:\msys64\usr\bin
   - SET LIBGIT2_SYS_USE_PKG_CONFIG=1
+  - rustup component add rustfmt clippy
   - rustc -Vv
   - cargo -Vv
   - pacman --noconfirm -S mingw-w64-%ARCH%-gtk3 mingw-w64-%ARCH%-libgit2 mingw-w64-%ARCH%-libsecret
 
 build_script:
   - git clone -q https://github.com/gtk-rs/gir-files tests/gir-files
+  - cargo clippy --release
+  - cargo fmt -- --check
   - cargo build --release
   - cargo test --release
   - cd tests\sys

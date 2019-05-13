@@ -1,11 +1,13 @@
-use analysis::ref_mode::RefMode;
-use analysis::rust_type::*;
-use analysis::imports::Imports;
-use analysis::namespaces;
-use analysis::override_string_type::override_string_type_return;
-use config;
-use env::Env;
-use library::{self, Nullable, TypeId};
+use crate::{
+    analysis::{
+        imports::Imports, namespaces, override_string_type::override_string_type_return,
+        ref_mode::RefMode, rust_type::*,
+    },
+    config,
+    env::Env,
+    library::{self, Nullable, TypeId},
+};
+use log::error;
 
 #[derive(Clone, Debug, Default)]
 pub struct Info {
@@ -23,13 +25,12 @@ pub fn analyze(
     used_types: &mut Vec<String>,
     imports: &mut Imports,
 ) -> Info {
-    let typ = configured_functions.iter()
-                                  .filter_map(|f| f.ret.type_name.as_ref())
-                                  .next()
-                                  .and_then(|typ| env.library.find_type(0, typ))
-                                  .unwrap_or_else(|| override_string_type_return(env,
-                                                                                 func.ret.typ,
-                                                                                 configured_functions));
+    let typ = configured_functions
+        .iter()
+        .filter_map(|f| f.ret.type_name.as_ref())
+        .next()
+        .and_then(|typ| env.library.find_type(0, typ))
+        .unwrap_or_else(|| override_string_type_return(env, func.ret.typ, configured_functions));
     let mut parameter = if typ == Default::default() {
         None
     } else {
@@ -66,15 +67,16 @@ pub fn analyze(
             Nullable(false),
             RefMode::None,
             library::ParameterScope::None,
-        ).is_err()
+        )
+        .is_err()
     };
 
     let bool_return_is_error = configured_functions
         .iter()
         .filter_map(|f| f.ret.bool_return_is_error.as_ref())
         .next();
-    let bool_return_error_message =
-        bool_return_is_error.and_then(|m| if typ != TypeId::tid_bool() {
+    let bool_return_error_message = bool_return_is_error.and_then(|m| {
+        if typ != TypeId::tid_bool() {
             error!(
                 "Ignoring bool_return_is_error configuration for non-bool returning function {}",
                 func.name
@@ -89,7 +91,8 @@ pub fn analyze(
             imports.add(ns, None);
 
             Some(m.clone())
-        });
+        }
+    });
 
     let mut base_tid = None;
 
@@ -119,8 +122,7 @@ pub fn analyze(
 }
 
 fn can_be_nullable_return(env: &Env, type_id: library::TypeId) -> bool {
-    use library::Type::*;
-    use library::Fundamental::*;
+    use crate::library::{Fundamental::*, Type::*};
     match *env.library.type_(type_id) {
         Fundamental(fund) => match fund {
             Pointer => true,

@@ -1,19 +1,22 @@
-use std::collections::HashMap;
-use std::fs::File;
-use std::io::Read;
-use std::path::{Path, PathBuf};
-use std::str::FromStr;
+use super::{
+    external_libraries::{read_external_libraries, ExternalLibrary},
+    gobjects, WorkMode,
+};
+use crate::{
+    config::error::TomlHelper,
+    git::repo_hash,
+    library::{self, Library},
+    nameutil::set_crate_name_overrides,
+    version::Version,
+};
+use std::{
+    collections::HashMap,
+    fs::File,
+    io::Read,
+    path::{Path, PathBuf},
+    str::FromStr,
+};
 use toml;
-
-
-use config::error::TomlHelper;
-use git::repo_hash;
-use library::{self, Library};
-use nameutil::set_crate_name_overrides;
-use super::external_libraries::{read_external_libraries, ExternalLibrary};
-use super::WorkMode;
-use super::gobjects;
-use version::Version;
 
 #[derive(Debug)]
 pub struct Config {
@@ -39,23 +42,27 @@ pub struct Config {
 }
 
 impl Config {
-    pub fn new<'a, S, B, W>(config_file: S,
-                            work_mode: W,
-                            girs_dir: S,
-                            library_name: S,
-                            library_version: S,
-                            target_path: S,
-                            doc_target_path: S,
-                            make_backup: B,
-                            show_statistics: B)
-                            -> Result<Config, String>
-    where S: Into<Option<&'a str>>,
-          B: Into<Option<bool>>,
-          W: Into<Option<WorkMode>> {
+    pub fn new<'a, S, B, W>(
+        config_file: S,
+        work_mode: W,
+        girs_dir: S,
+        library_name: S,
+        library_version: S,
+        target_path: S,
+        doc_target_path: S,
+        make_backup: B,
+        show_statistics: B,
+    ) -> Result<Config, String>
+    where
+        S: Into<Option<&'a str>>,
+        B: Into<Option<bool>>,
+        W: Into<Option<WorkMode>>,
+    {
         let config_file: PathBuf = match config_file.into() {
             Some("") | None => "Gir.toml",
             Some(a) => a,
-        }.into();
+        }
+        .into();
 
         let config_dir = match config_file.parent() {
             Some(path) => path.into(),
@@ -64,8 +71,13 @@ impl Config {
 
         let toml = match read_toml(&config_file) {
             Ok(toml) => toml,
-            Err(e) => return Err(format!("Error while reading \"{}\": {}",
-                                         config_file.display(), e)),
+            Err(e) => {
+                return Err(format!(
+                    "Error while reading \"{}\": {}",
+                    config_file.display(),
+                    e
+                ))
+            }
         };
 
         let overrides = read_crate_name_overrides(&toml);
@@ -78,16 +90,21 @@ impl Config {
             None => {
                 let s = match toml.lookup_str("options.work_mode", "No options.work_mode") {
                     Ok(s) => s,
-                    Err(e) => return Err(format!("Invalid toml file \"{}\": {}",
-                                                 config_file.display(), e))
+                    Err(e) => {
+                        return Err(format!(
+                            "Invalid toml file \"{}\": {}",
+                            config_file.display(),
+                            e
+                        ))
+                    }
                 };
-                try!(WorkMode::from_str(s))
+                WorkMode::from_str(s)?
             }
         };
 
         let girs_dir: PathBuf = match girs_dir.into() {
             Some("") | None => {
-                let path = try!(toml.lookup_str("options.girs_dir", "No options.girs_dir"));
+                let path = toml.lookup_str("options.girs_dir", "No options.girs_dir")?;
                 config_dir.join(path)
             }
             Some(a) => a.into(),
@@ -96,72 +113,71 @@ impl Config {
 
         let (library_name, library_version) = match (library_name.into(), library_version.into()) {
             (Some(""), Some("")) | (None, None) => (
-                try!(toml.lookup_str("options.library", "No options.library")).to_owned(),
-                try!(toml.lookup_str("options.version", "No options.version")).to_owned(),
+                toml.lookup_str("options.library", "No options.library")?
+                    .to_owned(),
+                toml.lookup_str("options.version", "No options.version")?
+                    .to_owned(),
             ),
-            (Some(""), Some(_)) | (Some(_), Some("")) | (None, Some(_)) | (Some(_), None) =>
-                return Err("Library and version can not be specified separately".to_owned()),
+            (Some(""), Some(_)) | (Some(_), Some("")) | (None, Some(_)) | (Some(_), None) => {
+                return Err("Library and version can not be specified separately".to_owned())
+            }
             (Some(a), Some(b)) => (a.to_owned(), b.to_owned()),
         };
 
         let target_path: PathBuf = match target_path.into() {
             Some("") | None => {
-                let path = try!(toml.lookup_str(
-                    "options.target_path",
-                    "No target path specified",
-                ));
+                let path = toml.lookup_str("options.target_path", "No target path specified")?;
                 config_dir.join(path)
             }
             Some(a) => a.into(),
         };
 
         let auto_path = match toml.lookup("options.auto_path") {
-            Some(p) => target_path.join(try!(p.as_result_str("options.auto_path"))),
+            Some(p) => target_path.join(p.as_result_str("options.auto_path")?),
             None if work_mode == WorkMode::Normal => target_path.join("src").join("auto"),
             None => target_path.join("src"),
         };
 
         let doc_target_path: PathBuf = match doc_target_path.into() {
-            Some("") | None => {
-                match toml.lookup("options.doc_target_path") {
-                    Some(p) => config_dir.join(try!(p.as_result_str("options.doc_target_path"))),
-                    None => target_path.join("vendor.md"),
-                }
-            }
+            Some("") | None => match toml.lookup("options.doc_target_path") {
+                Some(p) => config_dir.join(p.as_result_str("options.doc_target_path")?),
+                None => target_path.join("vendor.md"),
+            },
             Some(p) => config_dir.join(p),
         };
 
         let concurrency = match toml.lookup("options.concurrency") {
-            Some(v) => try!(try!(v.as_result_str("options.concurrency")).parse()),
+            Some(v) => v.as_result_str("options.concurrency")?.parse()?,
             None => Default::default(),
         };
 
         let generate_display_trait = match toml.lookup("options.generate_display_trait") {
-            Some(v) => try!(v.as_result_bool("options.generate_display_trait")),
+            Some(v) => v.as_result_bool("options.generate_display_trait")?,
             None => true,
         };
 
         // options.concurrency is the default of all objects if nothing
         // else is configured
-        let mut objects = toml.lookup("object")
+        let mut objects = toml
+            .lookup("object")
             .map(|t| gobjects::parse_toml(t, concurrency, generate_display_trait))
             .unwrap_or_default();
         gobjects::parse_status_shorthands(&mut objects, &toml, concurrency, generate_display_trait);
 
-        let external_libraries = try!(read_external_libraries(&toml));
+        let external_libraries = read_external_libraries(&toml)?;
 
         let min_cfg_version = match toml.lookup("options.min_cfg_version") {
-            Some(v) => try!(try!(v.as_result_str("options.min_cfg_version")).parse()),
+            Some(v) => v.as_result_str("options.min_cfg_version")?.parse()?,
             None => Default::default(),
         };
 
         let generate_safety_asserts = match toml.lookup("options.generate_safety_asserts") {
-            Some(v) => try!(v.as_result_bool("options.generate_safety_asserts")),
+            Some(v) => v.as_result_bool("options.generate_safety_asserts")?,
             None => false,
         };
 
         let deprecate_by_min_version = match toml.lookup("options.deprecate_by_min_version") {
-            Some(v) => try!(v.as_result_bool("options.deprecate_by_min_version")),
+            Some(v) => v.as_result_bool("options.deprecate_by_min_version")?,
             None => false,
         };
 
@@ -204,10 +220,12 @@ impl Config {
     }
 
     pub fn filter_version(&self, version: Option<Version>) -> Option<Version> {
-        version.and_then(|v| if v > self.min_cfg_version {
-            Some(v)
-        } else {
-            None
+        version.and_then(|v| {
+            if v > self.min_cfg_version {
+                Some(v)
+            } else {
+                None
+            }
         })
     }
 
@@ -224,17 +242,27 @@ fn read_toml<P: AsRef<Path>>(filename: P) -> Result<toml::Value, String> {
     match File::open(&filename) {
         Ok(mut f) => {
             if let Err(e) = f.read_to_string(&mut input) {
-                return Err(format!("read_to_string failed on \"{}\": {}",
-                                   filename.as_ref().display(), e))
+                return Err(format!(
+                    "read_to_string failed on \"{}\": {}",
+                    filename.as_ref().display(),
+                    e
+                ));
             }
 
             match toml::from_str(&input) {
                 Ok(toml) => Ok(toml),
-                Err(e) => Err(format!("Invalid toml format in \"{}\": {}",
-                                      filename.as_ref().display(), e)),
+                Err(e) => Err(format!(
+                    "Invalid toml format in \"{}\": {}",
+                    filename.as_ref().display(),
+                    e
+                )),
             }
         }
-        Err(e) => Err(format!("Cannot open file \"{}\": {}", filename.as_ref().display(), e)),
+        Err(e) => Err(format!(
+            "Cannot open file \"{}\": {}",
+            filename.as_ref().display(),
+            e
+        )),
     }
 }
 
@@ -253,7 +281,10 @@ fn make_single_version_file(configured: Option<&str>, target_path: &Path) -> Pat
 
 fn read_crate_name_overrides(toml: &toml::Value) -> HashMap<String, String> {
     let mut overrides = HashMap::new();
-    if let Some(a) = toml.lookup("crate_name_overrides").and_then(toml::Value::as_table) {
+    if let Some(a) = toml
+        .lookup("crate_name_overrides")
+        .and_then(toml::Value::as_table)
+    {
         for (key, value) in a {
             if let Some(s) = value.as_str() {
                 overrides.insert(key.clone(), s.to_string());

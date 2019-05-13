@@ -1,13 +1,12 @@
-use analysis::bounds::Bounds;
-use analysis::imports::Imports;
-use analysis::ref_mode::RefMode;
-use analysis::rust_type::*;
-use codegen::function;
-use config;
-use env::Env;
-use library;
-use nameutil;
-use traits::*;
+use crate::{
+    analysis::{bounds::Bounds, imports::Imports, ref_mode::RefMode, rust_type::*},
+    codegen::function,
+    config,
+    env::Env,
+    library, nameutil,
+    traits::*,
+};
+use log::error;
 
 #[derive(Clone, Debug)]
 pub struct ChildProperty {
@@ -111,8 +110,15 @@ fn analyze_property(
             format!(
                 "{}: {}",
                 prop_name,
-                parameter_rust_type(env, typ, dir, nullable, set_in_ref_mode,
-                                    library::ParameterScope::None).into_string()
+                parameter_rust_type(
+                    env,
+                    typ,
+                    dir,
+                    nullable,
+                    set_in_ref_mode,
+                    library::ParameterScope::None
+                )
+                .into_string()
             )
         };
         Some(ChildProperty {
@@ -132,9 +138,7 @@ fn analyze_property(
         let owner_name = rust_type(env, type_tid).into_string();
         error!(
             "Bad type `{}` of child property `{}` for `{}`",
-            &prop.type_name,
-            name,
-            owner_name
+            &prop.type_name, name, owner_name
         );
         None
     }

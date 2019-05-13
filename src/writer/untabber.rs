@@ -1,12 +1,12 @@
-use std::io::{Result, Write};
 use super::TAB;
+use std::io::{Result, Write};
 
 pub struct Untabber {
-    orig: Box<Write>,
+    orig: Box<dyn Write>,
 }
 
 impl Untabber {
-    pub fn new(orig: Box<Write>) -> Untabber {
+    pub fn new(orig: Box<dyn Write>) -> Untabber {
         Untabber { orig }
     }
 }
@@ -16,11 +16,11 @@ impl Write for Untabber {
         let mut chunks = buf.split(|b| b == &b'\t').peekable();
         loop {
             match chunks.next() {
-                Some(chunk) => try!(self.orig.write_all(chunk)),
+                Some(chunk) => self.orig.write_all(chunk)?,
                 None => break,
             };
             if chunks.peek().is_some() {
-                try!(self.orig.write_all(TAB.as_bytes()));
+                self.orig.write_all(TAB.as_bytes())?;
             } else {
                 break;
             }

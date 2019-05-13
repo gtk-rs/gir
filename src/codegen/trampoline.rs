@@ -1,28 +1,32 @@
+use super::{
+    general::version_condition, return_value::ToReturnValue,
+    trampoline_from_glib::TrampolineFromGlib, trampoline_to_glib::TrampolineToGlib,
+};
+use crate::{
+    analysis::{
+        bounds::{BoundType, Bounds},
+        ffi_type::ffi_type,
+        ref_mode::RefMode,
+        rust_type::parameter_rust_type,
+        trampoline_parameters::*,
+        trampolines::Trampoline,
+    },
+    consts::TYPE_PARAMETERS_START,
+    env::Env,
+    library,
+    traits::IntoString,
+};
+use log::error;
 use std::io::{Result, Write};
 
-use env::Env;
-use library;
-use analysis::bounds::{BoundType, Bounds};
-use analysis::ffi_type::ffi_type;
-use analysis::ref_mode::RefMode;
-use analysis::rust_type::parameter_rust_type;
-use analysis::trampoline_parameters::*;
-use analysis::trampolines::Trampoline;
-use super::general::version_condition;
-use super::return_value::ToReturnValue;
-use super::trampoline_from_glib::TrampolineFromGlib;
-use super::trampoline_to_glib::TrampolineToGlib;
-use traits::IntoString;
-use consts::TYPE_PARAMETERS_START;
-
 pub fn generate(
-    w: &mut Write,
+    w: &mut dyn Write,
     env: &Env,
     analysis: &Trampoline,
     in_trait: bool,
     object_name: &str,
 ) -> Result<()> {
-    try!(writeln!(w));
+    writeln!(w)?;
     let (self_bound, end) = if in_trait {
         (format!("{}, ", TYPE_PARAMETERS_START), "")
     } else {
@@ -33,30 +37,24 @@ pub fn generate(
     let func_str = func_string(env, analysis, None, true);
     let ret_str = trampoline_returns(env, analysis);
 
-    try!(version_condition(w, env, analysis.version, false, 0));
-    try!(writeln!(
+    version_condition(w, env, analysis.version, false, 0)?;
+    writeln!(
         w,
         "unsafe extern \"C\" fn {}<{}F: {}>({}, f: glib_sys::gpointer){}{}",
-        analysis.name,
-        self_bound,
-        func_str,
-        params_str,
-        ret_str,
-        end,
-    ));
+        analysis.name, self_bound, func_str, params_str, ret_str, end,
+    )?;
     if in_trait {
-        try!(writeln!(
+        writeln!(
             w,
             "where {}: IsA<{}> {{",
-            TYPE_PARAMETERS_START,
-            object_name
-        ));
+            TYPE_PARAMETERS_START, object_name
+        )?;
     }
-    try!(writeln!(w, "\tlet f: &F = &*(f as *const F);"));
-    try!(transformation_vars(w, analysis));
+    writeln!(w, "\tlet f: &F = &*(f as *const F);")?;
+    transformation_vars(w, analysis)?;
     let call = trampoline_call_func(env, analysis, in_trait);
-    try!(writeln!(w, "\t{}", call));
-    try!(writeln!(w, "}}"));
+    writeln!(w, "\t{}", call)?;
+    writeln!(w, "}}")?;
 
     Ok(())
 }
@@ -77,8 +75,7 @@ pub fn func_string(
             // is sent to. But it will only be ever owned by a single thread
             // at a time, so signals can only be emitted from one thread at
             // a time and Sync is not needed
-            library::Concurrency::Send |
-            library::Concurrency::SendUnique => " + Send",
+            library::Concurrency::Send | library::Concurrency::SendUnique => " + Send",
             // If an object is Sync, it can be shared between threads, and as
             // such our callback can be called from arbitrary threads and needs
             // to be Send *AND* Sync
@@ -88,9 +85,7 @@ pub fn func_string(
 
         format!(
             "Fn({}){}{} + 'static",
-            param_str,
-            return_str,
-            concurrency_str
+            param_str, return_str, concurrency_str
         )
     } else {
         format!("({}){}", param_str, return_str,)
@@ -141,23 +136,30 @@ fn func_parameter(
     match bounds.get_parameter_alias_info(&par.name) {
         Some((t, bound_type)) => match bound_type {
             BoundType::NoWrapper => unreachable!(),
-            BoundType::IsA(_) => if *par.nullable {
-                format!("Option<&{}{}>", mut_str, t)
-            } else if let Some((from, to)) = bound_replace {
-                if from == t {
-                    format!("&{}{}", mut_str, to)
+            BoundType::IsA(_) => {
+                if *par.nullable {
+                    format!("Option<&{}{}>", mut_str, t)
+                } else if let Some((from, to)) = bound_replace {
+                    if from == t {
+                        format!("&{}{}", mut_str, to)
+                    } else {
+                        format!("&{}{}", mut_str, t)
+                    }
                 } else {
                     format!("&{}{}", mut_str, t)
                 }
-            } else {
-                format!("&{}{}", mut_str, t)
-            },
+            }
             BoundType::AsRef(_) => t.to_string(),
         },
         None => {
-            let rust_type =
-                parameter_rust_type(env, par.typ, par.direction, par.nullable, ref_mode,
-                                    library::ParameterScope::None);
+            let rust_type = parameter_rust_type(
+                env,
+                par.typ,
+                par.direction,
+                par.nullable,
+                ref_mode,
+                library::ParameterScope::None,
+            );
             rust_type.into_string().replace("Option<&", "&Option<")
         }
     }
@@ -204,20 +206,19 @@ fn trampoline_returns(env: &Env, analysis: &Trampoline) -> String {
     }
 }
 
-fn transformation_vars(w: &mut Write, analysis: &Trampoline) -> Result<()> {
-    use analysis::trampoline_parameters::TransformationType::*;
+fn transformation_vars(w: &mut dyn Write, analysis: &Trampoline) -> Result<()> {
+    use crate::analysis::trampoline_parameters::TransformationType::*;
     for transform in &analysis.parameters.transformations {
         match transform.transformation {
             None => (),
             Borrow => (),
             TreePath => {
                 let c_par = &analysis.parameters.c_parameters[transform.ind_c];
-                try!(writeln!(
+                writeln!(
                     w,
                     "\tlet {} = from_glib_full(gtk_sys::gtk_tree_path_new_from_string({}));",
-                    transform.name,
-                    c_par.name
-                ));
+                    transform.name, c_par.name
+                )?;
             }
         }
     }

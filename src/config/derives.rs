@@ -1,6 +1,6 @@
-use super::parsable::Parse;
+use super::{error::TomlHelper, parsable::Parse};
+use log::error;
 use toml::Value;
-use super::error::TomlHelper;
 
 #[derive(Clone, Debug)]
 pub struct Derive {
@@ -13,10 +13,7 @@ impl Parse for Derive {
         let names = match toml.lookup("name").and_then(Value::as_str) {
             Some(names) => names,
             None => {
-                error!(
-                    "No 'name' given for derive for object {}",
-                    object_name
-                );
+                error!("No 'name' given for derive for object {}", object_name);
                 return None;
             }
         };
@@ -25,7 +22,8 @@ impl Parse for Derive {
             &format!("derive {}", object_name),
         );
 
-        let cfg_condition = toml.lookup("cfg_condition")
+        let cfg_condition = toml
+            .lookup("cfg_condition")
             .and_then(Value::as_str)
             .map(ToOwned::to_owned);
 

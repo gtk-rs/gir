@@ -1,9 +1,6 @@
-use std::collections::btree_map::{BTreeMap, Iter};
-
-use library::Library;
-use nameutil::crate_name;
 use super::namespaces;
-use version::Version;
+use crate::{library::Library, nameutil::crate_name, version::Version};
+use std::collections::btree_map::{BTreeMap, Iter};
 
 /// Provides assistance in generating use declarations.
 ///
@@ -45,11 +42,14 @@ impl Imports {
     pub fn add(&mut self, name: &str, version: Option<Version>) {
         if let Some(ref defined) = self.defined {
             if name == defined {
-                return
+                return;
             }
         }
         if let Some(name) = self.strip_crate_name(name) {
-            let entry = self.map.entry(name.to_owned()).or_insert((version, Vec::new()));
+            let entry = self
+                .map
+                .entry(name.to_owned())
+                .or_insert((version, Vec::new()));
             if version < entry.0 {
                 *entry = (version, Vec::new());
             } else {
@@ -62,14 +62,22 @@ impl Imports {
     /// an optional feature constraint.
     ///
     /// For example, if name is `X::Y::Z` then it will be available as `Z`.
-    pub fn add_with_constraint(&mut self, name: &str, version: Option<Version>, constraint: Option<&str>) {
+    pub fn add_with_constraint(
+        &mut self,
+        name: &str,
+        version: Option<Version>,
+        constraint: Option<&str>,
+    ) {
         if let Some(ref defined) = self.defined {
             if name == defined {
-                return
+                return;
             }
         }
         if let Some(name) = self.strip_crate_name(name) {
-            let entry = self.map.entry(name.to_owned()).or_insert((version, Vec::new()));
+            let entry = self
+                .map
+                .entry(name.to_owned())
+                .or_insert((version, Vec::new()));
             if version < entry.0 {
                 *entry = (version, Vec::new());
             } else {
@@ -126,7 +134,7 @@ impl Imports {
         }
     }
 
-    pub fn iter(&self) -> Iter<String, (Option<Version>, Vec<String>)> {
+    pub fn iter(&self) -> Iter<'_, String, (Option<Version>, Vec<String>)> {
         self.map.iter()
     }
 }

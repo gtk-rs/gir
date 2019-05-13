@@ -1,38 +1,35 @@
+use super::{
+    general::{cfg_deprecated, version_condition},
+    property_body,
+};
+use crate::{
+    analysis::{
+        properties::Property,
+        rust_type::{parameter_rust_type, rust_type},
+    },
+    chunk::Chunk,
+    env::Env,
+    library,
+    traits::IntoString,
+    writer::{primitives::tabs, ToCode},
+};
 use std::io::{Result, Write};
 
-use analysis::properties::Property;
-use analysis::rust_type::{parameter_rust_type, rust_type};
-use chunk::Chunk;
-use env::Env;
-use super::general::{cfg_deprecated, version_condition};
-use library;
-use writer::primitives::tabs;
-use super::property_body;
-use traits::IntoString;
-use writer::ToCode;
-
 pub fn generate(
-    w: &mut Write,
+    w: &mut dyn Write,
     env: &Env,
     prop: &Property,
     in_trait: bool,
     only_declaration: bool,
     indent: usize,
 ) -> Result<()> {
-    try!(generate_prop_func(
-        w,
-        env,
-        prop,
-        in_trait,
-        only_declaration,
-        indent,
-    ));
+    generate_prop_func(w, env, prop, in_trait, only_declaration, indent)?;
 
     Ok(())
 }
 
 fn generate_prop_func(
-    w: &mut Write,
+    w: &mut dyn Write,
     env: &Env,
     prop: &Property,
     in_trait: bool,
@@ -46,14 +43,14 @@ fn generate_prop_func(
 
     let comment_prefix = if commented { "//" } else { "" };
 
-    try!(writeln!(w));
+    writeln!(w)?;
 
     let decl = declaration(env, prop);
     if !in_trait || only_declaration {
-        try!(cfg_deprecated(w, env, prop.deprecated_version, commented, indent));
+        cfg_deprecated(w, env, prop.deprecated_version, commented, indent)?;
     }
-    try!(version_condition(w, env, prop.version, commented, indent));
-    try!(writeln!(
+    version_condition(w, env, prop.version, commented, indent)?;
+    writeln!(
         w,
         "{}{}{}{}{}",
         tabs(indent),
@@ -61,12 +58,12 @@ fn generate_prop_func(
         pub_prefix,
         decl,
         decl_suffix
-    ));
+    )?;
 
     if !only_declaration {
         let body = body(env, prop, in_trait).to_code(env);
         for s in body {
-            try!(writeln!(w, "{}{}{}", tabs(indent), comment_prefix, s));
+            writeln!(w, "{}{}{}", tabs(indent), comment_prefix, s)?;
         }
     }
 
@@ -79,28 +76,35 @@ fn declaration(env: &Env, prop: &Property) -> String {
         "".to_string()
     } else {
         let dir = library::ParameterDirection::In;
-        let param_type =
-            parameter_rust_type(env, prop.typ, dir, prop.nullable, prop.set_in_ref_mode,
-                                library::ParameterScope::None)
-                .into_string();
+        let param_type = parameter_rust_type(
+            env,
+            prop.typ,
+            dir,
+            prop.nullable,
+            prop.set_in_ref_mode,
+            library::ParameterScope::None,
+        )
+        .into_string();
         format!(", {}: {}", prop.var_name, param_type)
     };
     let return_str = if prop.is_get {
         let dir = library::ParameterDirection::Return;
-        let ret_type =
-            parameter_rust_type(env, prop.typ, dir, prop.nullable, prop.get_out_ref_mode,
-                                library::ParameterScope::None)
-                .into_string();
+        let ret_type = parameter_rust_type(
+            env,
+            prop.typ,
+            dir,
+            prop.nullable,
+            prop.get_out_ref_mode,
+            library::ParameterScope::None,
+        )
+        .into_string();
         format!(" -> {}", ret_type)
     } else {
         "".to_string()
     };
     format!(
         "fn {}{}(&self{}){}",
-        prop.func_name,
-        bound,
-        set_param,
-        return_str
+        prop.func_name, bound, set_param, return_str
     )
 }
 

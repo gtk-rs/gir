@@ -1,9 +1,7 @@
+use super::{error::TomlHelper, ident::Ident, parsable::Parse};
+use crate::version::Version;
+use log::error;
 use toml::Value;
-
-use super::error::TomlHelper;
-use super::ident::Ident;
-use super::parsable::Parse;
-use version::Version;
 
 #[derive(Clone, Debug)]
 pub struct Member {
@@ -33,17 +31,21 @@ impl Parse for Member {
             &format!("member {}", object_name),
         );
 
-        let alias = toml.lookup("alias")
+        let alias = toml
+            .lookup("alias")
             .and_then(Value::as_bool)
             .unwrap_or(false);
-        let version = toml.lookup("version")
+        let version = toml
+            .lookup("version")
             .and_then(Value::as_str)
             .and_then(|s| s.parse().ok());
-        let deprecated_version = toml.lookup("deprecated_version")
+        let deprecated_version = toml
+            .lookup("deprecated_version")
             .and_then(Value::as_str)
             .and_then(|s| s.parse().ok());
 
-        let ignore = toml.lookup("ignore")
+        let ignore = toml
+            .lookup("ignore")
             .and_then(Value::as_bool)
             .unwrap_or(false);
 
@@ -67,14 +69,14 @@ pub type Members = Vec<Member>;
 
 #[cfg(test)]
 mod tests {
-    use super::super::ident::Ident;
-    use super::super::parsable::Parse;
-    use super::*;
-    use toml;
-    use version::Version;
+    use super::{
+        super::{ident::Ident, parsable::Parse},
+        *,
+    };
+    use crate::version::Version;
 
-    fn toml(input: &str) -> toml::Value {
-        let value = toml::from_str(&input);
+    fn toml(input: &str) -> ::toml::Value {
+        let value = ::toml::from_str(&input);
         assert!(value.is_ok());
         value.unwrap()
     }

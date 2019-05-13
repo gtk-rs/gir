@@ -1,8 +1,5 @@
+use crate::{config::WorkMode, env::Env, file_saver::*};
 use std::path::Path;
-
-use config::WorkMode;
-use env::Env;
-use file_saver::*;
 
 mod alias;
 mod child_properties;
@@ -61,12 +58,12 @@ fn normal_generate(env: &Env) {
 pub fn generate_mod_rs(env: &Env, root_path: &Path, mod_rs: &[String], traits: &[String]) {
     let path = root_path.join("mod.rs");
     save_to_file(path, env.config.make_backup, |w| {
-        try!(general::start_comments(w, &env.config));
-        try!(general::write_vec(w, mod_rs));
-        try!(writeln!(w));
-        try!(writeln!(w, "#[doc(hidden)]"));
-        try!(writeln!(w, "pub mod traits {{"));
-        try!(general::write_vec(w, traits));
+        general::start_comments(w, &env.config)?;
+        general::write_vec(w, mod_rs)?;
+        writeln!(w)?;
+        writeln!(w, "#[doc(hidden)]")?;
+        writeln!(w, "pub mod traits {{")?;
+        general::write_vec(w, traits)?;
         writeln!(w, "}}")
     });
 }

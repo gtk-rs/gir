@@ -1,3 +1,4 @@
+use log::error;
 use toml;
 
 pub trait TomlHelper
@@ -49,11 +50,11 @@ impl TomlHelper for toml::Value {
         Some(value)
     }
     fn lookup_str<'a>(&'a self, option: &'a str, err: &str) -> Result<&'a str, String> {
-        let value = try!(self.lookup(option).ok_or(err));
+        let value = self.lookup(option).ok_or(err)?;
         value.as_result_str(option)
     }
     fn lookup_vec<'a>(&'a self, option: &'a str, err: &str) -> Result<&'a Vec<Self>, String> {
-        let value = try!(self.lookup(option).ok_or(err));
+        let value = self.lookup(option).ok_or(err)?;
         value.as_result_vec(option)
     }
     fn as_result_str<'a>(&'a self, option: &'a str) -> Result<&'a str, String> {

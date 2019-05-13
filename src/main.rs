@@ -1,15 +1,6 @@
-extern crate docopt;
-extern crate env_logger;
-extern crate hprof;
-extern crate libgir as gir;
-
-use std::cell::RefCell;
-use std::str::FromStr;
-
-use gir::{Config, WorkMode};
-
-use gir::Library;
 use hprof::Profiler;
+use libgir::{self as gir, Config, Library, WorkMode};
+use std::{cell::RefCell, str::FromStr};
 
 static USAGE: &'static str = "
 Usage: gir [options] [<library> <version>]
@@ -42,9 +33,17 @@ fn build_config() -> Result<Config, String> {
         },
     };
 
-    Config::new(args.get_str("-c"), work_mode, args.get_str("-d"),
-                args.get_str("<library>"), args.get_str("<version>"), args.get_str("-o"),
-                args.get_str("--doc-target-path"), args.get_bool("-b"), args.get_bool("-s"))
+    Config::new(
+        args.get_str("-c"),
+        work_mode,
+        args.get_str("-d"),
+        args.get_str("<library>"),
+        args.get_str("<version>"),
+        args.get_str("-o"),
+        args.get_str("--doc-target-path"),
+        args.get_bool("-b"),
+        args.get_bool("-s"),
+    )
 }
 
 #[cfg_attr(test, allow(dead_code))]
@@ -79,7 +78,7 @@ fn do_main() -> Result<(), String> {
         let _watcher = statistics.enter("Loading");
 
         library = Library::new(&cfg.library_name);
-        try!(library.read_file(&cfg.girs_dir, &cfg.library_full_name()));
+        library.read_file(&cfg.girs_dir, &cfg.library_full_name())?;
     }
 
     {

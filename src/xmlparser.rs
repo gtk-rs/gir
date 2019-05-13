@@ -1,19 +1,23 @@
-use std::fmt;
-use std::fs::File;
-use std::io::{BufReader, Read};
-use std::path::{Path, PathBuf};
-use std::rc::Rc;
-use std::str;
-use xml::attribute::OwnedAttribute;
-use xml::common::{Position, TextPosition};
-use xml::name::OwnedName;
-use xml::reader::{EventReader, XmlEvent};
-use xml;
+use std::{
+    fmt,
+    fs::File,
+    io::{BufReader, Read},
+    path::{Path, PathBuf},
+    rc::Rc,
+    str,
+};
+use xml::{
+    self,
+    attribute::OwnedAttribute,
+    common::{Position, TextPosition},
+    name::OwnedName,
+    reader::{EventReader, XmlEvent},
+};
 
 /// NOTE: After parser returns an error its further behaviour is unspecified.
 pub struct XmlParser<'a> {
     /// Inner XML parser doing actual work.
-    parser: EventReader<Box<'a + Read>>,
+    parser: EventReader<Box<dyn 'a + Read>>,
     /// Next event to be returned.
     ///
     /// Takes priority over events returned from inner parser.
@@ -101,8 +105,12 @@ impl Element {
             match T::from_str(value_str) {
                 Ok(value) => Ok(Some(value)),
                 Err(error) => {
-                    let message = format!("Attribute `{}` on element <{}> has invalid value: {}",
-                                          name, self.name(), error);
+                    let message = format!(
+                        "Attribute `{}` on element <{}> has invalid value: {}",
+                        name,
+                        self.name(),
+                        error
+                    );
                     Err(self.error_emitter.emit(&message, self.position))
                 }
             }
@@ -110,7 +118,6 @@ impl Element {
             Ok(None)
         }
     }
-
 
     /// Returns element position.
     pub fn position(&self) -> TextPosition {
@@ -124,24 +131,27 @@ impl Element {
                 return Ok(&attr.value);
             }
         }
-        let message = format!("Attribute `{}` on element <{}> is required.", name, self.name());
+        let message = format!(
+            "Attribute `{}` on element <{}> is required.",
+            name,
+            self.name()
+        );
         Err(self.error_emitter.emit(&message, self.position))
     }
 }
 
 impl<'a> XmlParser<'a> {
-    pub fn from_path(path: &Path) -> Result<XmlParser, String> {
+    pub fn from_path(path: &Path) -> Result<XmlParser<'_>, String> {
         match File::open(&path) {
             Err(e) => Err(format!("Can't open file \"{}\": {}", path.display(), e)),
-            Ok(file) =>
-                Ok(XmlParser {
-                    parser: EventReader::new(Box::new(BufReader::new(file))),
-                    peek_event: None,
-                    peek_position: TextPosition::new(),
-                    error_emitter: Rc::new(ErrorEmitter {
-                        path: Some(path.to_owned()),
-                    }),
-                })
+            Ok(file) => Ok(XmlParser {
+                parser: EventReader::new(Box::new(BufReader::new(file))),
+                peek_event: None,
+                peek_position: TextPosition::new(),
+                error_emitter: Rc::new(ErrorEmitter {
+                    path: Some(path.to_owned()),
+                }),
+            }),
         }
     }
 
@@ -151,9 +161,7 @@ impl<'a> XmlParser<'a> {
             parser: EventReader::new(Box::new(read)),
             peek_event: None,
             peek_position: TextPosition::new(),
-            error_emitter: Rc::new(ErrorEmitter {
-                path: None
-            }),
+            error_emitter: Rc::new(ErrorEmitter { path: None }),
         })
     }
 
@@ -215,7 +223,7 @@ impl<'a> XmlParser<'a> {
 
     pub fn document<R, F>(&mut self, f: F) -> Result<R, String>
     where
-        F: FnOnce(&mut XmlParser, Document) -> Result<R, String>,
+        F: FnOnce(&mut XmlParser<'_>, Document) -> Result<R, String>,
     {
         let doc = self.start_document()?;
         let result = f(self, doc)?;
@@ -233,13 +241,13 @@ impl<'a> XmlParser<'a> {
     fn end_document(&mut self) -> Result<(), String> {
         match self.next_event()? {
             XmlEvent::EndDocument { .. } => Ok(()),
-            e => Err(self.unexpected_event(&e))
+            e => Err(self.unexpected_event(&e)),
         }
     }
 
     pub fn elements<R, F>(&mut self, mut f: F) -> Result<Vec<R>, String>
     where
-        F: FnMut(&mut XmlParser, &Element) -> Result<R, String>,
+        F: FnMut(&mut XmlParser<'_>, &Element) -> Result<R, String>,
     {
         let mut results = Vec::new();
         loop {
@@ -256,7 +264,7 @@ impl<'a> XmlParser<'a> {
 
     pub fn element_with_name<R, F>(&mut self, expected_name: &str, f: F) -> Result<R, String>
     where
-        F: FnOnce(&mut XmlParser, &Element) -> Result<R, String>,
+        F: FnOnce(&mut XmlParser<'_>, &Element) -> Result<R, String>,
     {
         let elem = self.start_element()?;
         if expected_name != elem.name.local_name {
@@ -269,14 +277,14 @@ impl<'a> XmlParser<'a> {
 
     fn start_element(&mut self) -> Result<Element, String> {
         match self.next_event() {
-            Ok(XmlEvent::StartElement {name, attributes, .. }) => {
-                Ok(Element {
-                    name,
-                    attributes,
-                    position: self.position(),
-                    error_emitter: self.error_emitter.clone(),
-                })
-            }
+            Ok(XmlEvent::StartElement {
+                name, attributes, ..
+            }) => Ok(Element {
+                name,
+                attributes,
+                position: self.position(),
+                error_emitter: self.error_emitter.clone(),
+            }),
             Ok(e) => Err(self.unexpected_event(&e)),
             Err(e) => Err(e),
         }
@@ -346,7 +354,7 @@ mod tests {
 
     fn with_parser<F, R>(xml: &[u8], f: F) -> Result<R, String>
     where
-        F: FnOnce(XmlParser) -> Result<R, String>,
+        F: FnOnce(XmlParser<'_>) -> Result<R, String>,
     {
         f(XmlParser::new(xml)?)
     }
@@ -360,11 +368,7 @@ mod tests {
 
         fn parse_with_root_name(xml: &[u8], root: &str) -> Result<(), String> {
             with_parser(xml, |mut p| {
-                p.document(|p, _| {
-                    p.element_with_name(root, |_, _elem| {
-                        Ok(())
-                    })
-                })
+                p.document(|p, _| p.element_with_name(root, |_, _elem| Ok(())))
             })
         }
 
@@ -384,12 +388,9 @@ mod tests {
             </a>"#;
 
         with_parser(xml, |mut p| {
-            p.document(|p, _| {
-                p.element_with_name("a", |p, _| {
-                    p.ignore_element()
-                })
-            })
-        }).unwrap();
+            p.document(|p, _| p.element_with_name("a", |p, _| p.ignore_element()))
+        })
+        .unwrap();
     }
 
     #[test]
@@ -404,12 +405,12 @@ mod tests {
         let result: String = with_parser(xml, |mut p| {
             p.document(|p, _| {
                 p.element_with_name("root", |p, _| {
-                    p.elements(|_, elem| {
-                        elem.attr_required("name").map(|s| s.to_owned())
-                    }).map(|v| v.join("."))
+                    p.elements(|_, elem| elem.attr_required("name").map(|s| s.to_owned()))
+                        .map(|v| v.join("."))
                 })
             })
-        }).unwrap();
+        })
+        .unwrap();
 
         assert_eq!("a.b.c", result);
     }
@@ -420,10 +421,9 @@ mod tests {
             <x>hello world!</x>"#;
 
         let result: String = with_parser(xml, |mut p| {
-            p.document(|p, _| {
-                p.element_with_name("x", |p, _| p.text())
-            })
-        }).unwrap();
+            p.document(|p, _| p.element_with_name("x", |p, _| p.text()))
+        })
+        .unwrap();
 
         assert_eq!("hello world!", &result);
     }
@@ -443,7 +443,8 @@ mod tests {
                     Ok(())
                 })
             })
-        }).unwrap();
+        })
+        .unwrap();
     }
 
     #[test]
@@ -459,6 +460,7 @@ mod tests {
                     Ok(())
                 })
             })
-        }).unwrap();
+        })
+        .unwrap();
     }
 }

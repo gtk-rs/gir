@@ -1,8 +1,9 @@
+use crate::{
+    env::Env,
+    library::{self, Type, TypeId},
+};
+use log::error;
 use std::collections::BTreeMap;
-
-use env::Env;
-use library;
-use library::{Type, TypeId};
 
 pub mod bounds;
 pub mod c_type;
@@ -97,7 +98,8 @@ fn analyze_global_functions(env: &mut Env) {
         _ => return,
     };
 
-    let functions: Vec<_> = ns.functions
+    let functions: Vec<_> = ns
+        .functions
         .iter()
         .filter(|f| f.kind == library::FunctionKind::Global)
         .collect();
@@ -155,15 +157,21 @@ fn analyze(env: &mut Env, tid: TypeId, deps: &[TypeId]) {
         None => return,
     };
     match *env.library.type_(tid) {
-        Type::Class(_) => if let Some(info) = object::class(env, obj, deps) {
-            env.analysis.objects.insert(full_name, info);
-        },
-        Type::Interface(_) => if let Some(info) = object::interface(env, obj, deps) {
-            env.analysis.objects.insert(full_name, info);
-        },
-        Type::Record(_) => if let Some(info) = record::new(env, obj) {
-            env.analysis.records.insert(full_name, info);
-        },
+        Type::Class(_) => {
+            if let Some(info) = object::class(env, obj, deps) {
+                env.analysis.objects.insert(full_name, info);
+            }
+        }
+        Type::Interface(_) => {
+            if let Some(info) = object::interface(env, obj, deps) {
+                env.analysis.objects.insert(full_name, info);
+            }
+        }
+        Type::Record(_) => {
+            if let Some(info) = record::new(env, obj) {
+                env.analysis.records.insert(full_name, info);
+            }
+        }
         _ => {}
     }
 }

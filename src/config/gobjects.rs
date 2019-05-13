@@ -1,26 +1,30 @@
-use std::collections::BTreeMap;
-use std::str::FromStr;
+use super::{
+    child_properties::ChildProperties,
+    constants::Constants,
+    derives::Derives,
+    functions::Functions,
+    members::Members,
+    properties::Properties,
+    signals::{Signal, Signals},
+};
+use crate::{
+    analysis::{conversion_type, ref_mode},
+    config::{
+        error::TomlHelper,
+        parsable::{Parsable, Parse},
+    },
+    library::{self, Library, TypeId, MAIN_NAMESPACE},
+    version::Version,
+};
+use log::warn;
+use std::{collections::BTreeMap, str::FromStr};
 use toml::Value;
-
-use library;
-use library::{Library, TypeId, MAIN_NAMESPACE};
-use config::error::TomlHelper;
-use config::parsable::{Parsable, Parse};
-use super::child_properties::ChildProperties;
-use super::derives::Derives;
-use super::functions::Functions;
-use super::constants::Constants;
-use super::members::Members;
-use super::properties::Properties;
-use super::signals::{Signal, Signals};
-use version::Version;
-use analysis::{ref_mode, conversion_type};
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum GStatus {
     Manual, // already generated
     Generate,
-    Generate_Builders,
+    GenerateBuilders,
     Comment,
     Ignore,
 }
@@ -49,7 +53,7 @@ impl FromStr for GStatus {
         match s {
             "manual" => Ok(GStatus::Manual),
             "generate" => Ok(GStatus::Generate),
-            "generate_builders" => Ok(GStatus::Generate_Builders),
+            "generate_builders" => Ok(GStatus::GenerateBuilders),
             "comment" => Ok(GStatus::Comment),
             "ignore" => Ok(GStatus::Ignore),
             e => Err(format!("Wrong object status: \"{}\"", e)),
@@ -134,7 +138,7 @@ pub fn parse_toml(
 }
 
 fn ref_mode_from_str(ref_mode: &str) -> Option<ref_mode::RefMode> {
-    use analysis::ref_mode::RefMode::*;
+    use crate::analysis::ref_mode::RefMode::*;
 
     match ref_mode {
         "none" => Some(None),
@@ -147,7 +151,7 @@ fn ref_mode_from_str(ref_mode: &str) -> Option<ref_mode::RefMode> {
 }
 
 fn conversion_type_from_str(conversion_type: &str) -> Option<conversion_type::ConversionType> {
-    use analysis::conversion_type::ConversionType::*;
+    use crate::analysis::conversion_type::ConversionType::*;
 
     match conversion_type {
         "direct" => Some(Direct),
@@ -243,9 +247,7 @@ fn parse_object(
         .lookup("cfg_condition")
         .and_then(Value::as_str)
         .map(ToOwned::to_owned);
-    let generate_trait = toml_object
-        .lookup("trait")
-        .and_then(Value::as_bool);
+    let generate_trait = toml_object.lookup("trait").and_then(Value::as_bool);
     let final_type = toml_object
         .lookup("final_type")
         .and_then(Value::as_bool)
@@ -297,7 +299,10 @@ fn parse_object(
         .and_then(Value::as_integer)
         .and_then(|v| {
             if v.count_ones() != 1 || v > i64::from(u32::max_value()) || v < 0 {
-                warn!("`align` configuration must be a power of two of type u32, found {}", v);
+                warn!(
+                    "`align` configuration must be a power of two of type u32, found {}",
+                    v
+                );
                 None
             } else {
                 Some(v as u32)
@@ -309,11 +314,17 @@ fn parse_object(
     }
 
     if status != GStatus::Manual && conversion_type.is_some() {
-        warn!("conversion_type configuration used for non-manual object {}", name);
+        warn!(
+            "conversion_type configuration used for non-manual object {}",
+            name
+        );
     }
 
     if generate_trait.is_some() {
-        warn!("`trait` configuration is deprecated and replaced by `final_type` for object {}", name);
+        warn!(
+            "`trait` configuration is deprecated and replaced by `final_type` for object {}",
+            name
+        );
     }
 
     GObject {
@@ -351,7 +362,7 @@ pub fn parse_status_shorthands(
     generate_display_trait: bool,
 ) {
     use self::GStatus::*;
-    for &status in &[Manual, Generate, Generate_Builders, Comment, Ignore] {
+    for &status in &[Manual, Generate, GenerateBuilders, Comment, Ignore] {
         parse_status_shorthand(objects, status, toml, concurrency, generate_display_trait);
     }
 }

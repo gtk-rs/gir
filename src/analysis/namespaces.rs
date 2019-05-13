@@ -1,8 +1,5 @@
+use crate::{library, nameutil, version::Version};
 use std::ops::Index;
-
-use library;
-use nameutil;
-use version::Version;
 
 pub type NsId = u16;
 pub const MAIN: NsId = library::MAIN_NAMESPACE;

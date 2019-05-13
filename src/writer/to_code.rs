@@ -1,10 +1,9 @@
-use std::vec::Vec;
-
-use chunk::{Chunk, Param, TupleMode};
-use codegen::translate_from_glib::TranslateFromGlib;
-use codegen::translate_to_glib::TranslateToGlib;
-use env::Env;
 use super::primitives::*;
+use crate::{
+    chunk::{Chunk, Param, TupleMode},
+    codegen::{translate_from_glib::TranslateFromGlib, translate_to_glib::TranslateToGlib},
+    env::Env,
+};
 
 pub trait ToCode {
     fn to_code(&self, env: &Env) -> Vec<String>;
@@ -12,7 +11,7 @@ pub trait ToCode {
 
 impl ToCode for Chunk {
     fn to_code(&self, env: &Env) -> Vec<String> {
-        use chunk::Chunk::*;
+        use crate::chunk::Chunk::*;
         match *self {
             Comment(ref chs) => comment_block(&chs.to_code(env)),
             Chunks(ref chs) => chs.to_code(env),
@@ -130,20 +129,29 @@ impl ToCode for Chunk {
                 ref trampoline,
                 in_trait,
             } => {
-                let s1 = format!("connect_raw(self.as_ptr() as *mut _, b\"{}\\0\".as_ptr() as *const _,", signal);
+                let s1 = format!(
+                    "connect_raw(self.as_ptr() as *mut _, b\"{}\\0\".as_ptr() as *const _,",
+                    signal
+                );
                 let self_str = if in_trait { "Self, " } else { "" };
                 let s2 = format!(
                     "\tSome(transmute({}::<{}F> as usize)), Box_::into_raw(f))",
-                    trampoline,
-                    self_str
+                    trampoline, self_str
                 );
                 vec![s1, s2]
             }
             Name(ref name) => vec![name.clone()],
-            ExternCFunc { ref name, ref parameters, ref body, ref return_value, ref bounds } => {
+            ExternCFunc {
+                ref name,
+                ref parameters,
+                ref body,
+                ref return_value,
+                ref bounds,
+            } => {
                 let prefix = format!(r#"unsafe extern "C" fn {}{}("#, name, bounds);
                 let suffix = ")".to_string();
-                let params: Vec<_> = parameters.iter()
+                let params: Vec<_> = parameters
+                    .iter()
                     .flat_map(|param| param.to_code(env))
                     .collect();
                 let mut s = format_block_one_line(&prefix, &suffix, &params, "", ", ");
@@ -155,11 +163,15 @@ impl ToCode for Chunk {
                 code.insert(0, s);
                 code
             }
-            Cast { ref name, ref type_ } => vec![format!("{} as {}", name, type_)],
-            Call { ref func_name, ref arguments } => {
-                let args: Vec<_> = arguments.iter()
-                    .flat_map(|arg| arg.to_code(env))
-                    .collect();
+            Cast {
+                ref name,
+                ref type_,
+            } => vec![format!("{} as {}", name, type_)],
+            Call {
+                ref func_name,
+                ref arguments,
+            } => {
+                let args: Vec<_> = arguments.iter().flat_map(|arg| arg.to_code(env)).collect();
                 let s = format_block_one_line("(", ")", &args, "", ",");
                 vec![format!("{}{};", func_name, s)]
             }

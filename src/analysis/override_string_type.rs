@@ -1,6 +1,5 @@
-use config;
-use env::Env;
-use library::*;
+use crate::{config, env::Env, library::*};
+use log::error;
 
 pub fn override_string_type_parameter(
     env: &Env,
@@ -26,20 +25,15 @@ pub fn override_string_type_return(
     apply(env, typ, string_type)
 }
 
-fn apply(
-    env: &Env,
-    type_id: TypeId,
-    string_type: Option<config::StringType>,
-) -> TypeId {
-    use library::*;
+fn apply(env: &Env, type_id: TypeId, string_type: Option<config::StringType>) -> TypeId {
     let string_type = if let Some(string_type) = string_type {
         string_type
     } else {
-      return type_id;
+        return type_id;
     };
 
     let replace = {
-        use config::StringType::*;
+        use crate::config::StringType::*;
         match string_type {
             Utf8 => TypeId::tid_utf8(),
             Filename => TypeId::tid_filename(),
@@ -64,7 +58,6 @@ fn apply(
 }
 
 fn can_overriden_fundamental(env: &Env, type_id: TypeId) -> bool {
-    use library::*;
     match *env.library.type_(type_id) {
         Type::Fundamental(Fundamental::Filename) => true,
         Type::Fundamental(Fundamental::OsString) => true,

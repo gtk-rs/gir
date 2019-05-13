@@ -1,49 +1,33 @@
+use super::{general::doc_hidden, property_body};
+use crate::{
+    analysis::{
+        child_properties::ChildProperty,
+        rust_type::{parameter_rust_type, rust_type},
+    },
+    chunk::Chunk,
+    env::Env,
+    library, nameutil,
+    traits::IntoString,
+    writer::{primitives::tabs, ToCode},
+};
 use std::io::{Result, Write};
 
-use analysis::child_properties::ChildProperty;
-use analysis::rust_type::{parameter_rust_type, rust_type};
-use chunk::Chunk;
-use env::Env;
-use library;
-use writer::primitives::tabs;
-use nameutil;
-use super::general::doc_hidden;
-use super::property_body;
-use traits::IntoString;
-use writer::ToCode;
-
 pub fn generate(
-    w: &mut Write,
+    w: &mut dyn Write,
     env: &Env,
     prop: &ChildProperty,
     in_trait: bool,
     only_declaration: bool,
     indent: usize,
 ) -> Result<()> {
-    try!(generate_func(
-        w,
-        env,
-        prop,
-        in_trait,
-        only_declaration,
-        indent,
-        true,
-    ));
-    try!(generate_func(
-        w,
-        env,
-        prop,
-        in_trait,
-        only_declaration,
-        indent,
-        false,
-    ));
+    generate_func(w, env, prop, in_trait, only_declaration, indent, true)?;
+    generate_func(w, env, prop, in_trait, only_declaration, indent, false)?;
 
     Ok(())
 }
 
 fn generate_func(
-    w: &mut Write,
+    w: &mut dyn Write,
     env: &Env,
     prop: &ChildProperty,
     in_trait: bool,
@@ -54,17 +38,13 @@ fn generate_func(
     let pub_prefix = if in_trait { "" } else { "pub " };
     let decl_suffix = if only_declaration { ";" } else { " {" };
     let type_string = rust_type(env, prop.typ);
-    let comment_prefix = if type_string.is_err() {
-        "//"
-    } else {
-        ""
-    };
+    let comment_prefix = if type_string.is_err() { "//" } else { "" };
 
-    try!(writeln!(w));
+    writeln!(w)?;
 
-    try!(doc_hidden(w, prop.doc_hidden, comment_prefix, indent));
+    doc_hidden(w, prop.doc_hidden, comment_prefix, indent)?;
     let decl = declaration(env, prop, is_get);
-    try!(writeln!(
+    writeln!(
         w,
         "{}{}{}{}{}",
         tabs(indent),
@@ -72,12 +52,12 @@ fn generate_func(
         pub_prefix,
         decl,
         decl_suffix
-    ));
+    )?;
 
     if !only_declaration {
         let body = body(env, prop, in_trait, is_get).to_code(env);
         for s in body {
-            try!(writeln!(w, "{}{}{}", tabs(indent), comment_prefix, s));
+            writeln!(w, "{}{}{}", tabs(indent), comment_prefix, s)?;
         }
     }
 
@@ -99,10 +79,15 @@ fn declaration(env: &Env, prop: &ChildProperty, is_get: bool) -> String {
     }
     let return_str = if is_get {
         let dir = library::ParameterDirection::Return;
-        let ret_type =
-            parameter_rust_type(env, prop.typ, dir, prop.nullable, prop.get_out_ref_mode,
-                                library::ParameterScope::None)
-                .into_string();
+        let ret_type = parameter_rust_type(
+            env,
+            prop.typ,
+            dir,
+            prop.nullable,
+            prop.get_out_ref_mode,
+            library::ParameterScope::None,
+        )
+        .into_string();
         format!(" -> {}", ret_type)
     } else {
         "".to_string()

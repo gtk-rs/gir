@@ -1,5 +1,4 @@
-use config::gobjects::*;
-use library::*;
+use crate::{config::gobjects::*, library::*};
 
 #[derive(Debug, Clone)]
 pub struct StatusedTypeId {

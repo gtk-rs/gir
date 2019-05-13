@@ -1,9 +1,8 @@
-use std::collections::BTreeMap;
-use std::str::FromStr;
-
-use analysis::functions::Info as FuncInfo;
-use analysis::functions::Visibility;
-use analysis::imports::Imports;
+use crate::analysis::{
+    functions::{Info as FuncInfo, Visibility},
+    imports::Imports,
+};
+use std::{collections::BTreeMap, str::FromStr};
 
 #[derive(Clone, Copy, Eq, Debug, Ord, PartialEq, PartialOrd)]
 pub enum Type {
@@ -102,9 +101,9 @@ fn visibility(t: Type, args_len: usize) -> Visibility {
 // Some special functions (e.g. `copy` on refcounted types) should be exposed
 pub fn unhide(functions: &mut Vec<FuncInfo>, specials: &Infos, type_: Type) {
     if let Some(func) = specials.get(&type_) {
-        let func = functions.iter_mut().find(|f| {
-            f.glib_name == *func && f.visibility != Visibility::Comment
-        });
+        let func = functions
+            .iter_mut()
+            .find(|f| f.glib_name == *func && f.visibility != Visibility::Comment);
         if let Some(func) = func {
             func.visibility = Visibility::Public;
         }

@@ -1,10 +1,10 @@
-use std::io::{Result, Write};
-use std::path::Path;
-
-use env::Env;
-use file_saver::save_to_file;
+use crate::{codegen::general, env::Env, file_saver::save_to_file};
+use log::info;
 use regex::Regex;
-use codegen::general;
+use std::{
+    io::{Result, Write},
+    path::Path,
+};
 
 pub fn generate(env: &Env) {
     info!(
@@ -15,17 +15,15 @@ pub fn generate(env: &Env) {
     let path = env.config.target_path.join("build.rs");
 
     info!("Generating file {:?}", path);
-    save_to_file(
-        &path,
-        env.config.make_backup,
-        |w| generate_build_script(w, env),
-    );
+    save_to_file(&path, env.config.make_backup, |w| {
+        generate_build_script(w, env)
+    });
 }
 
-fn generate_build_script(w: &mut Write, env: &Env) -> Result<()> {
-    try!(general::start_comments(w, &env.config));
-    try!(writeln!(w));
-    try!(write!(
+fn generate_build_script(w: &mut dyn Write, env: &Env) -> Result<()> {
+    general::start_comments(w, &env.config)?;
+    writeln!(w)?;
+    write!(
         w,
         "{}",
         r##"extern crate pkg_config;
@@ -45,11 +43,12 @@ fn main() {
 
 fn find() -> Result<(), Error> {
 "##
-    ));
+    )?;
 
     let ns = env.namespaces.main();
     let regex = Regex::new(r"^lib(.+)\.(so.*|dylib)$").expect("Regex failed");
-    let shared_libs: Vec<_> = ns.shared_libs
+    let shared_libs: Vec<_> = ns
+        .shared_libs
         .iter()
         .map(|s| {
             let lib_path = Path::new(s);
@@ -62,37 +61,25 @@ fn find() -> Result<(), Error> {
         })
         .collect();
 
-    try!(writeln!(
+    writeln!(
         w,
         "\tlet package_name = \"{}\";",
         ns.package_name
             .as_ref()
             .expect("Package name doesn't exist")
-    ));
-    try!(writeln!(
-        w,
-        "\tlet shared_libs = [{}];",
-        shared_libs.join(", ")
-    ));
-    try!(write!(w, "\tlet version = "));
-    let versions = ns.versions
+    )?;
+    writeln!(w, "\tlet shared_libs = [{}];", shared_libs.join(", "))?;
+    write!(w, "\tlet version = ")?;
+    let versions = ns
+        .versions
         .iter()
         .filter(|v| **v >= env.config.min_cfg_version)
         .skip(1)
         .collect::<Vec<_>>();
     for v in versions.iter().rev() {
-        try!(write!(
-            w,
-            "if cfg!({}) {{\n\t\t\"{}\"\n\t}} else ",
-            v.to_cfg(),
-            v
-        ));
+        write!(w, "if cfg!({}) {{\n\t\t\"{}\"\n\t}} else ", v.to_cfg(), v)?;
     }
-    try!(writeln!(
-        w,
-        "{{\n\t\t\"{}\"\n\t}};",
-        env.config.min_cfg_version
-    ));
+    writeln!(w, "{{\n\t\t\"{}\"\n\t}};", env.config.min_cfg_version)?;
 
     writeln!(
         w,

@@ -1,10 +1,10 @@
+use super::{
+    error::TomlHelper, ident::Ident, parsable::Parse,
+    property_generate_flags::PropertyGenerateFlags,
+};
+use crate::version::Version;
+use log::error;
 use toml::Value;
-
-use super::error::TomlHelper;
-use super::ident::Ident;
-use super::parsable::Parse;
-use super::property_generate_flags::PropertyGenerateFlags;
-use version::Version;
 
 #[derive(Clone, Debug)]
 pub struct Property {
@@ -67,19 +67,22 @@ pub type Properties = Vec<Property>;
 
 #[cfg(test)]
 mod tests {
-    use super::super::ident::Ident;
-    use super::super::matchable::Matchable;
-    use super::super::parsable::{Parsable, Parse};
-    use super::*;
-    use toml;
-    use version::Version;
+    use super::{
+        super::{
+            ident::Ident,
+            matchable::Matchable,
+            parsable::{Parsable, Parse},
+        },
+        *,
+    };
+    use crate::version::Version;
 
-    fn properties_toml(input: &str) -> toml::Value {
-        let mut value: toml::value::Table = toml::from_str(&input).unwrap();
+    fn properties_toml(input: &str) -> ::toml::Value {
+        let mut value: ::toml::value::Table = ::toml::from_str(&input).unwrap();
         value.remove("f").unwrap()
     }
 
-    fn toml(input: &str) -> toml::Value {
+    fn toml(input: &str) -> ::toml::Value {
         let value = input.parse();
         assert!(value.is_ok());
         value.unwrap()

@@ -1,7 +1,6 @@
+use super::{error::TomlHelper, parsable::Parse};
+use log::error;
 use toml::Value;
-
-use super::error::TomlHelper;
-use super::parsable::Parse;
 
 #[derive(Clone, Debug)]
 pub struct ChildProperty {
@@ -12,7 +11,8 @@ pub struct ChildProperty {
 
 impl Parse for ChildProperty {
     fn parse(toml: &Value, object_name: &str) -> Option<ChildProperty> {
-        let name = toml.lookup("name")
+        let name = toml
+            .lookup("name")
             .and_then(Value::as_str)
             .map(ToOwned::to_owned);
         let name = if let Some(name) = name {
@@ -27,7 +27,8 @@ impl Parse for ChildProperty {
             &format!("child property {}", object_name),
         );
 
-        let type_name = toml.lookup("type")
+        let type_name = toml
+            .lookup("type")
             .and_then(Value::as_str)
             .map(ToOwned::to_owned);
         let type_name = if let Some(type_name) = type_name {
@@ -35,12 +36,12 @@ impl Parse for ChildProperty {
         } else {
             error!(
                 "No type for child property `{}` for `{}`",
-                name,
-                object_name
+                name, object_name
             );
             return None;
         };
-        let doc_hidden = toml.lookup("doc_hidden")
+        let doc_hidden = toml
+            .lookup("doc_hidden")
             .and_then(Value::as_bool)
             .unwrap_or(false);
 
@@ -70,10 +71,7 @@ impl Parse for ChildProperties {
             .and_then(Value::as_str)
             .map(ToOwned::to_owned);
         let mut properties: Vec<ChildProperty> = Vec::new();
-        if let Some(configs) = toml_object
-            .lookup("child_prop")
-            .and_then(Value::as_array)
-        {
+        if let Some(configs) = toml_object.lookup("child_prop").and_then(Value::as_array) {
             for config in configs {
                 if let Some(item) = ChildProperty::parse(config, object_name) {
                     properties.push(item);
@@ -101,12 +99,10 @@ impl Parse for ChildProperties {
 
 #[cfg(test)]
 mod tests {
-    use super::super::parsable::Parse;
-    use super::*;
-    use toml;
+    use super::{super::parsable::Parse, *};
 
-    fn toml(input: &str) -> toml::Value {
-        let value = toml::from_str(&input);
+    fn toml(input: &str) -> ::toml::Value {
+        let value = ::toml::from_str(&input);
         assert!(value.is_ok());
         value.unwrap()
     }

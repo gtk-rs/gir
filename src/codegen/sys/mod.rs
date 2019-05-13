@@ -1,5 +1,4 @@
-use codegen::generate_single_version_file;
-use env::Env;
+use crate::{codegen::generate_single_version_file, env::Env};
 
 mod build;
 mod cargo_toml;

@@ -1,16 +1,15 @@
+use super::{
+    conversion_type::ConversionType, out_parameters::can_as_return,
+    override_string_type::override_string_type_parameter, ref_mode::RefMode, rust_type::rust_type,
+};
+use crate::{
+    config::{self, parameter_matchable::ParameterMatchable},
+    env::Env,
+    library::{self, ParameterScope, TypeId},
+    nameutil,
+    traits::IntoString,
+};
 use std::collections::HashMap;
-
-use config;
-use config::parameter_matchable::ParameterMatchable;
-use env::Env;
-use library::{self, TypeId, ParameterScope};
-use nameutil;
-use super::conversion_type::ConversionType;
-use super::out_parameters::can_as_return;
-use super::override_string_type::override_string_type_parameter;
-use super::rust_type::rust_type;
-use super::ref_mode::RefMode;
-use traits::IntoString;
 
 //TODO: remove unused fields
 #[derive(Clone, Debug)]
@@ -44,7 +43,9 @@ pub struct CParameter {
 
 #[derive(Clone, Debug)]
 pub enum TransformationType {
-    ToGlibDirect { name: String },
+    ToGlibDirect {
+        name: String,
+    },
     ToGlibScalar {
         name: String,
         nullable: library::Nullable,
@@ -62,7 +63,9 @@ pub enum TransformationType {
         nullable: bool,
     },
     ToGlibBorrow,
-    ToGlibUnknown { name: String },
+    ToGlibUnknown {
+        name: String,
+    },
     Length {
         array_name: String,
         array_length_name: String,
@@ -76,13 +79,13 @@ impl TransformationType {
     pub fn is_to_glib(&self) -> bool {
         use self::TransformationType::*;
         match *self {
-            ToGlibDirect { .. } |
-            ToGlibScalar { .. } |
-            ToGlibPointer { .. } |
-            ToGlibBorrow |
-            ToGlibUnknown { .. } |
-            ToSome(_) |
-            IntoRaw(_) => true,
+            ToGlibDirect { .. }
+            | ToGlibScalar { .. }
+            | ToGlibPointer { .. }
+            | ToGlibBorrow
+            | ToGlibUnknown { .. }
+            | ToSome(_)
+            | IntoRaw(_) => true,
             _ => false,
         }
     }
@@ -219,8 +222,8 @@ pub fn analyze(
         }
 
         let immutable = configured_parameters.iter().any(|p| p.constant);
-        let ref_mode = RefMode::without_unneeded_mut(env, par, immutable,
-                                                     in_trait && par.instance_parameter);
+        let ref_mode =
+            RefMode::without_unneeded_mut(env, par, immutable, in_trait && par.instance_parameter);
 
         let nullable_override = configured_parameters
             .iter()
@@ -262,24 +265,22 @@ pub fn analyze(
 
         let mut trans_nullable = false;
         let type_ = env.type_(par.typ);
-        let to_glib_extra = if par.instance_parameter || !*nullable ||
-                               (!type_.is_interface() && !type_.is_class()) {
-            String::new()
-        } else {
-            trans_nullable = *nullable;
-            if !type_.is_final_type() {
-                ".as_ref()".to_owned()
-            } else {
+        let to_glib_extra =
+            if par.instance_parameter || !*nullable || (!type_.is_interface() && !type_.is_class())
+            {
                 String::new()
-            }
-        };
+            } else {
+                trans_nullable = *nullable;
+                if !type_.is_final_type() {
+                    ".as_ref()".to_owned()
+                } else {
+                    String::new()
+                }
+            };
 
         let transformation_type = match ConversionType::of(env, typ) {
             ConversionType::Direct => TransformationType::ToGlibDirect { name },
-            ConversionType::Scalar => TransformationType::ToGlibScalar {
-                name,
-                nullable,
-            },
+            ConversionType::Scalar => TransformationType::ToGlibScalar { name, nullable },
             ConversionType::Pointer => TransformationType::ToGlibPointer {
                 name,
                 instance_parameter: par.instance_parameter,
@@ -302,8 +303,8 @@ pub fn analyze(
         };
         let mut transformation_type = None;
         match transformation.transformation_type {
-            TransformationType::ToGlibDirect { ref name, .. } |
-            TransformationType::ToGlibUnknown { ref name, .. } => {
+            TransformationType::ToGlibDirect { ref name, .. }
+            | TransformationType::ToGlibUnknown { ref name, .. } => {
                 if async_func && name == callback_param_name {
                     // Remove the conversion of callback for async functions.
                     transformation_type = Some(TransformationType::ToSome(name.clone()));
@@ -351,13 +352,13 @@ fn detect_length<'a>(
         return None;
     }
 
-    let array = parameters
-        .get(pos - 1)
-        .and_then(|p| if has_length(env, p.typ) {
+    let array = parameters.get(pos - 1).and_then(|p| {
+        if has_length(env, p.typ) {
             Some(p)
         } else {
             None
-        });
+        }
+    });
     array.map(|p| &p.name)
 }
 
@@ -378,11 +379,11 @@ fn is_length(par: &library::Parameter) -> bool {
 }
 
 fn has_length(env: &Env, typ: TypeId) -> bool {
-    use library::Type;
+    use crate::library::Type;
     let typ = env.library.type_(typ);
     match *typ {
         Type::Fundamental(fund) => {
-            use library::Fundamental::*;
+            use crate::library::Fundamental::*;
             match fund {
                 Utf8 => true,
                 Filename => true,
@@ -390,13 +391,13 @@ fn has_length(env: &Env, typ: TypeId) -> bool {
                 _ => false,
             }
         }
-        Type::CArray(..) |
-        Type::FixedArray(..) |
-        Type::Array(..) |
-        Type::PtrArray(..) |
-        Type::List(..) |
-        Type::SList(..) |
-        Type::HashTable(..) => true,
+        Type::CArray(..)
+        | Type::FixedArray(..)
+        | Type::Array(..)
+        | Type::PtrArray(..)
+        | Type::List(..)
+        | Type::SList(..)
+        | Type::HashTable(..) => true,
         Type::Alias(ref alias) => has_length(env, alias.typ),
         _ => false,
     }

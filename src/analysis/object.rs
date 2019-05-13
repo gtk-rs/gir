@@ -1,15 +1,10 @@
+use super::{
+    child_properties::ChildProperties, imports::Imports, info_base::InfoBase,
+    signatures::Signatures, *,
+};
+use crate::{config::gobjects::GObject, env::Env, library, nameutil::*, traits::*};
+use log::info;
 use std::ops::Deref;
-
-use config::gobjects::GObject;
-use env::Env;
-use library;
-use nameutil::*;
-use super::*;
-use super::child_properties::ChildProperties;
-use super::imports::Imports;
-use super::info_base::InfoBase;
-use super::signatures::Signatures;
-use traits::*;
 
 #[derive(Debug, Default)]
 pub struct Info {
@@ -38,7 +33,8 @@ pub struct Info {
 impl Info {
     pub fn has_signals(&self) -> bool {
         self.signals.iter().any(|s| s.trampoline_name.is_ok())
-            || self.notify_signals
+            || self
+                .notify_signals
                 .iter()
                 .any(|s| s.trampoline_name.is_ok())
     }
@@ -84,7 +80,8 @@ pub fn class(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<Info>
     let supertypes = supertypes::analyze(env, class_tid, &mut imports);
 
     let final_type = klass.final_type;
-    let trait_name = obj.trait_name
+    let trait_name = obj
+        .trait_name
         .as_ref()
         .cloned()
         .unwrap_or_else(|| format!("{}Ext", name));
@@ -108,10 +105,11 @@ pub fn class(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<Info>
     special_functions::unhide(&mut functions, &specials, special_functions::Type::Copy);
     // these are all automatically derived on objects and compare by pointer. If such functions
     // exist they will provide additional functionality
-    for t in &[special_functions::Type::Hash,
-              special_functions::Type::Equal,
-              special_functions::Type::Compare,
-              special_functions::Type::ToString,
+    for t in &[
+        special_functions::Type::Hash,
+        special_functions::Type::Equal,
+        special_functions::Type::Compare,
+        special_functions::Type::ToString,
     ] {
         special_functions::unhide(&mut functions, &specials, *t);
         specials.remove(t);
@@ -184,7 +182,8 @@ pub fn class(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<Info>
     // and child properties: it would be empty
     //
     // There's also no point in generating a trait for final types: there are no possible subtypes
-    let generate_trait = !final_type && (has_signals || has_methods || !properties.is_empty() || !child_properties.is_empty());
+    let generate_trait = !final_type
+        && (has_signals || has_methods || !properties.is_empty() || !child_properties.is_empty());
 
     if !builder_properties.is_empty() {
         imports.add("glib::object::Cast", None);
@@ -282,7 +281,8 @@ pub fn interface(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<I
 
     let supertypes = supertypes::analyze(env, iface_tid, &mut imports);
 
-    let trait_name = obj.trait_name
+    let trait_name = obj
+        .trait_name
         .as_ref()
         .cloned()
         .unwrap_or_else(|| format!("{}Ext", name));

@@ -1,9 +1,5 @@
-use std::vec::Vec;
-
-use analysis::function_parameters::TransformationType;
-use analysis::return_value;
-use super::conversion_from_glib;
-use super::parameter_ffi_call_out;
+use super::{conversion_from_glib, parameter_ffi_call_out};
+use crate::analysis::{function_parameters::TransformationType, return_value};
 
 #[derive(Clone)]
 pub enum Chunk {
@@ -13,7 +9,10 @@ pub enum Chunk {
     UnsafeSmart(Vec<Chunk>), //TODO: remove (will change generated results)
     Unsafe(Vec<Chunk>),
     FfiCallTODO(String),
-    FfiCall { name: String, params: Vec<Chunk> },
+    FfiCall {
+        name: String,
+        params: Vec<Chunk>,
+    },
     FfiCallParameter {
         transformation_type: TransformationType,
     },
@@ -33,7 +32,9 @@ pub enum Chunk {
         type_: Option<Box<Chunk>>,
     },
     Uninitialized,
-    UninitializedNamed { name: String },
+    UninitializedNamed {
+        name: String,
+    },
     NullPtr,
     NullMutPtr,
     Custom(String),
@@ -47,7 +48,9 @@ pub enum Chunk {
         condition: String,
         value: Box<Chunk>,
     },
-    ErrorResultReturn { value: Box<Chunk> },
+    ErrorResultReturn {
+        value: Box<Chunk>,
+    },
     AssertInitializedAndInMainThread,
     AssertSkipInitialized,
     Connect {
@@ -85,9 +88,9 @@ pub fn chunks(ch: Chunk) -> Vec<Chunk> {
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum TupleMode {
-    Auto, // "", "1", "(1,2)"
+    Auto,     // "", "1", "(1,2)"
     WithUnit, // "()", "1", "(1,2)"
     #[deprecated]
     #[allow(dead_code)]
-    Simple,    // "()", "(1)", "(1,2)"
+    Simple, // "()", "(1)", "(1,2)"
 }

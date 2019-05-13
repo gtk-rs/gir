@@ -1,6 +1,4 @@
-use env;
-use library::*;
-use config::gobjects::GObject;
+use crate::{config::gobjects::GObject, env, library::*};
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum ConversionType {
@@ -29,8 +27,7 @@ impl ConversionType {
             return conversion_type;
         }
 
-        use library::Type::*;
-        use library::Fundamental::*;
+        use crate::library::{Fundamental::*, Type::*};
         match *library.type_(type_id) {
             Fundamental(fund) => match fund {
                 Boolean => ConversionType::Scalar,
@@ -78,8 +75,9 @@ impl ConversionType {
             FixedArray(..) => ConversionType::Pointer,
             List(_) => ConversionType::Pointer,
             SList(_) => ConversionType::Pointer,
-            Function(super::library::Function { ref name, .. }) if name == "AsyncReadyCallback" =>
-                ConversionType::Direct,
+            Function(super::library::Function { ref name, .. }) if name == "AsyncReadyCallback" => {
+                ConversionType::Direct
+            }
             Function(_) => ConversionType::Direct,
             Custom(super::library::Custom {
                 conversion_type, ..

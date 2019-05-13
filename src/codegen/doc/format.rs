@@ -1,4 +1,5 @@
-use analysis::symbols;
+use crate::analysis::symbols;
+use lazy_static::lazy_static;
 use regex::{Captures, Regex};
 
 const LANGUAGE_SEP_BEGIN: &str = "<!-- language=\"";
@@ -54,8 +55,8 @@ fn get_language<'a>(entry: &'a str, out: &mut String) -> &'a str {
 }
 
 lazy_static! {
-    static ref SYMBOL: Regex = Regex::new(r"(^|[^\\])[@#%]([\w]+\b)([:.]+[\w_-]+\b)?") .unwrap();
-    static ref FUNCTION: Regex = Regex::new(r"(\b[a-z0-9_]+)\(\)") .unwrap();
+    static ref SYMBOL: Regex = Regex::new(r"(^|[^\\])[@#%]([\w]+\b)([:.]+[\w_-]+\b)?").unwrap();
+    static ref FUNCTION: Regex = Regex::new(r"(\b[a-z0-9_]+)\(\)").unwrap();
     static ref GDK_GTK: Regex = Regex::new(r"G[dt]k[A-Z][\w]+\b").unwrap();
     static ref TAGS: Regex = Regex::new(r"<[\w/-]+>").unwrap();
     static ref SPACES: Regex = Regex::new(r"[ ][ ]+").unwrap();
@@ -90,7 +91,7 @@ fn replace_c_types(entry: &str, symbols: &symbols::Info) -> String {
             .map(symbols::Symbol::full_rust_name)
             .unwrap_or_else(|| s.into())
     };
-    let out = SYMBOL.replace_all(entry, |caps: &Captures| {
+    let out = SYMBOL.replace_all(entry, |caps: &Captures<'_>| {
         format!(
             "{}`{}{}`",
             &caps[1],
@@ -98,8 +99,12 @@ fn replace_c_types(entry: &str, symbols: &symbols::Info) -> String {
             caps.get(3).map(|m| m.as_str()).unwrap_or("")
         )
     });
-    let out = GDK_GTK.replace_all(&out, |caps: &Captures| format!("`{}`", lookup(&caps[0])));
-    let out = FUNCTION.replace_all(&out, |caps: &Captures| format!("`{}`", lookup(&caps[1])));
+    let out = GDK_GTK.replace_all(&out, |caps: &Captures<'_>| {
+        format!("`{}`", lookup(&caps[0]))
+    });
+    let out = FUNCTION.replace_all(&out, |caps: &Captures<'_>| {
+        format!("`{}`", lookup(&caps[1]))
+    });
     let out = TAGS.replace_all(&out, "`$0`");
     SPACES.replace_all(&out, " ").into_owned()
 }

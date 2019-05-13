@@ -1,6 +1,4 @@
-use analysis::conversion_type::ConversionType;
-use library;
-use env;
+use crate::{analysis::conversion_type::ConversionType, env, library};
 
 pub trait TrampolineToGlib {
     fn trampoline_to_glib(&self, env: &env::Env) -> String;
@@ -8,7 +6,7 @@ pub trait TrampolineToGlib {
 
 impl TrampolineToGlib for library::Parameter {
     fn trampoline_to_glib(&self, env: &env::Env) -> String {
-        use analysis::conversion_type::ConversionType::*;
+        use crate::analysis::conversion_type::ConversionType::*;
         match ConversionType::of(env, self.typ) {
             Direct => String::new(),
             Scalar => ".to_glib()".to_owned(),
@@ -20,7 +18,7 @@ impl TrampolineToGlib for library::Parameter {
 }
 
 fn to_glib_xxx(transfer: library::Transfer) -> &'static str {
-    use library::Transfer::*;
+    use crate::library::Transfer::*;
     match transfer {
         None => "/*Not checked*/.to_glib_none().0",
         Full => ".to_glib_full()",

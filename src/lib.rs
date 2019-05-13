@@ -1,24 +1,15 @@
+#![allow(clippy::cyclomatic_complexity)]
 #![allow(clippy::let_and_return)]
 #![allow(clippy::too_many_arguments)]
 #![allow(clippy::write_literal)]
-
-#[macro_use]
-extern crate bitflags;
-extern crate git2;
-#[macro_use]
-extern crate lazy_static;
-#[macro_use]
-extern crate log;
-extern crate regex;
-extern crate stripper_lib;
-extern crate toml;
-extern crate xml;
+#![deny(bare_trait_objects)]
+#![deny(elided_lifetimes_in_paths)]
 
 /// Log warning only if type in generated library
 macro_rules! warn_main {
     ($tid: expr, $target:expr, $($arg:tt)*) => (
-        if $tid.ns_id == ::library::MAIN_NAMESPACE {
-            warn!($target, $($arg)*);
+        if $tid.ns_id == crate::library::MAIN_NAMESPACE {
+            log::warn!($target, $($arg)*);
         }
     );
 }
@@ -48,11 +39,13 @@ mod visitors;
 mod writer;
 mod xmlparser;
 
-pub use analysis::class_hierarchy::run as class_hierarchy_run;
-pub use analysis::namespaces::run as namespaces_run;
-pub use analysis::run as analysis_run;
-pub use analysis::symbols::run as symbols_run;
-pub use codegen::generate as codegen_generate;
-pub use config::{Config, WorkMode};
-pub use env::Env;
-pub use library::Library;
+pub use crate::{
+    analysis::{
+        class_hierarchy::run as class_hierarchy_run, namespaces::run as namespaces_run,
+        run as analysis_run, symbols::run as symbols_run,
+    },
+    codegen::generate as codegen_generate,
+    config::{Config, WorkMode},
+    env::Env,
+    library::Library,
+};

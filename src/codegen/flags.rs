@@ -1,41 +1,42 @@
-use analysis::imports::Imports;
-use analysis::namespaces;
-use codegen::general::{self, cfg_deprecated, derives, version_condition, version_condition_string};
-use config::gobjects::GObject;
-use env::Env;
-use file_saver;
-use library::*;
-use nameutil::bitfield_member_name;
-use std::io::prelude::*;
-use std::io::Result;
-use std::path::Path;
-use traits::*;
+use crate::{
+    analysis::{imports::Imports, namespaces},
+    codegen::general::{
+        self, cfg_deprecated, derives, version_condition, version_condition_string,
+    },
+    config::gobjects::GObject,
+    env::Env,
+    file_saver,
+    library::*,
+    nameutil::bitfield_member_name,
+    traits::*,
+};
+use std::{
+    io::{prelude::*, Result},
+    path::Path,
+};
 
 pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>) {
-    let configs: Vec<&GObject> = env.config
-                                    .objects
-                                    .values()
-                                    .filter(|c| {
-                                        c.status.need_generate()
-                                        && c.type_id.map_or(false,
-                                                            |tid| tid.ns_id == namespaces::MAIN)
-                                    })
-                                    .collect();
-    let has_any = configs.iter()
-                         .any(|c| {
-                             if let Type::Bitfield(_) = *env.library.type_(c.type_id.unwrap()) {
-                                 true
-                             } else {
-                                 false
-                             }
-                         });
+    let configs: Vec<&GObject> = env
+        .config
+        .objects
+        .values()
+        .filter(|c| {
+            c.status.need_generate() && c.type_id.map_or(false, |tid| tid.ns_id == namespaces::MAIN)
+        })
+        .collect();
+    let has_any = configs.iter().any(|c| {
+        if let Type::Bitfield(_) = *env.library.type_(c.type_id.unwrap()) {
+            true
+        } else {
+            false
+        }
+    });
 
     if !has_any {
-        return
+        return;
     }
     let path = root_path.join("flags.rs");
     file_saver::save_to_file(path, env.config.make_backup, |w| {
-
         let mut imports = Imports::new(&env.library);
         imports.add(env.main_sys_crate_name(), None);
         imports.add("glib::translate::*", None);
@@ -55,9 +56,9 @@ pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>) {
             }
         }
 
-        try!(general::start_comments(w, &env.config));
-        try!(general::uses(w, env, &imports));
-        try!(writeln!(w));
+        general::start_comments(w, &env.config)?;
+        general::uses(w, env, &imports)?;
+        writeln!(w)?;
 
         mod_rs.push("\nmod flags;".into());
         for config in &configs {
@@ -66,7 +67,7 @@ pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>) {
                     mod_rs.push(cfg);
                 }
                 mod_rs.push(format!("pub use self::flags::{};", flags.name));
-                try!(generate_flags(env, w, flags, config));
+                generate_flags(env, w, flags, config)?;
             }
         }
 
@@ -74,23 +75,20 @@ pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>) {
     });
 }
 
-fn generate_flags(env: &Env, w: &mut Write, flags: &Bitfield, config: &GObject) -> Result<()> {
+fn generate_flags(env: &Env, w: &mut dyn Write, flags: &Bitfield, config: &GObject) -> Result<()> {
     let sys_crate_name = env.main_sys_crate_name();
-    try!(cfg_deprecated(w, env, flags.deprecated_version, false, 0));
-    try!(version_condition(w, env, flags.version, false, 0));
-    try!(writeln!(w, "bitflags! {{"));
+    cfg_deprecated(w, env, flags.deprecated_version, false, 0)?;
+    version_condition(w, env, flags.version, false, 0)?;
+    writeln!(w, "bitflags! {{")?;
     if config.must_use {
-        try!(writeln!(
-            w,
-            "    #[must_use]"
-        ));
+        writeln!(w, "    #[must_use]")?;
     }
 
     if let Some(ref d) = config.derives {
-        try!(derives(w, &d, 1));
+        derives(w, &d, 1)?;
     }
 
-    try!(writeln!(w, "    pub struct {}: u32 {{", flags.name));
+    writeln!(w, "    pub struct {}: u32 {{", flags.name)?;
     for member in &flags.members {
         let member_config = config.members.matched(&member.name);
         let ignore = member_config.iter().any(|m| m.ignore);
@@ -100,24 +98,27 @@ fn generate_flags(env: &Env, w: &mut Write, flags: &Bitfield, config: &GObject) 
 
         let name = bitfield_member_name(&member.name);
         let val: i64 = member.value.parse().unwrap();
-        let deprecated_version = member_config.iter().filter_map(|m| m.deprecated_version).next();
+        let deprecated_version = member_config
+            .iter()
+            .filter_map(|m| m.deprecated_version)
+            .next();
         let version = member_config.iter().filter_map(|m| m.version).next();
-        try!(cfg_deprecated(w, env, deprecated_version, false, 2));
-        try!(version_condition(w, env, version, false, 2));
-        try!(writeln!(w, "\t\tconst {} = {};", name, val as u32));
+        cfg_deprecated(w, env, deprecated_version, false, 2)?;
+        version_condition(w, env, version, false, 2)?;
+        writeln!(w, "\t\tconst {} = {};", name, val as u32)?;
     }
 
-    try!(writeln!(
+    writeln!(
         w,
         "{}",
         "    }
 }
 "
-    ));
+    )?;
 
-    try!(cfg_deprecated(w, env, flags.deprecated_version, false, 0));
-    try!(version_condition(w, env, flags.version, false, 0));
-    try!(writeln!(
+    cfg_deprecated(w, env, flags.deprecated_version, false, 0)?;
+    version_condition(w, env, flags.version, false, 0)?;
+    writeln!(
         w,
         "#[doc(hidden)]
 impl ToGlib for {name} {{
@@ -131,7 +132,7 @@ impl ToGlib for {name} {{
         sys_crate_name = sys_crate_name,
         name = flags.name,
         ffi_name = flags.c_type
-    ));
+    )?;
 
     let assert = if env.config.generate_safety_asserts {
         "skip_assert_initialized!();\n\t\t"
@@ -139,9 +140,9 @@ impl ToGlib for {name} {{
         ""
     };
 
-    try!(cfg_deprecated(w, env, flags.deprecated_version, false, 0));
-    try!(version_condition(w, env, flags.version, false, 0));
-    try!(writeln!(
+    cfg_deprecated(w, env, flags.deprecated_version, false, 0)?;
+    version_condition(w, env, flags.version, false, 0)?;
+    writeln!(
         w,
         "#[doc(hidden)]
 impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
@@ -154,12 +155,12 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
         name = flags.name,
         ffi_name = flags.c_type,
         assert = assert
-    ));
+    )?;
 
     if let Some(ref get_type) = flags.glib_get_type {
-        try!(cfg_deprecated(w, env, flags.deprecated_version, false, 0));
-        try!(version_condition(w, env, flags.version, false, 0));
-        try!(writeln!(
+        cfg_deprecated(w, env, flags.deprecated_version, false, 0)?;
+        version_condition(w, env, flags.version, false, 0)?;
+        writeln!(
             w,
             "impl StaticType for {name} {{
     fn static_type() -> Type {{
@@ -169,12 +170,12 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
             sys_crate_name = sys_crate_name,
             name = flags.name,
             get_type = get_type
-        ));
-        try!(writeln!(w));
+        )?;
+        writeln!(w)?;
 
-        try!(cfg_deprecated(w, env, flags.deprecated_version, false, 0));
-        try!(version_condition(w, env, flags.version, false, 0));
-        try!(writeln!(
+        cfg_deprecated(w, env, flags.deprecated_version, false, 0)?;
+        version_condition(w, env, flags.version, false, 0)?;
+        writeln!(
             w,
             "impl<'a> FromValueOptional<'a> for {name} {{
     unsafe fn from_value_optional(value: &Value) -> Option<Self> {{
@@ -182,12 +183,12 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
     }}
 }}",
             name = flags.name,
-        ));
-        try!(writeln!(w));
+        )?;
+        writeln!(w)?;
 
-        try!(cfg_deprecated(w, env, flags.deprecated_version, false, 0));
-        try!(version_condition(w, env, flags.version, false, 0));
-        try!(writeln!(
+        cfg_deprecated(w, env, flags.deprecated_version, false, 0)?;
+        version_condition(w, env, flags.version, false, 0)?;
+        writeln!(
             w,
             "impl<'a> FromValue<'a> for {name} {{
     unsafe fn from_value(value: &Value) -> Self {{
@@ -195,12 +196,12 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
     }}
 }}",
             name = flags.name,
-        ));
-        try!(writeln!(w));
+        )?;
+        writeln!(w)?;
 
-        try!(cfg_deprecated(w, env, flags.deprecated_version, false, 0));
-        try!(version_condition(w, env, flags.version, false, 0));
-        try!(writeln!(
+        cfg_deprecated(w, env, flags.deprecated_version, false, 0)?;
+        version_condition(w, env, flags.version, false, 0)?;
+        writeln!(
             w,
             "impl SetValue for {name} {{
     unsafe fn set_value(value: &mut Value, this: &Self) {{
@@ -208,9 +209,9 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
     }}
 }}",
             name = flags.name,
-        ));
+        )?;
 
-        try!(writeln!(w));
+        writeln!(w)?;
     }
 
     Ok(())

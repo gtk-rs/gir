@@ -1,13 +1,13 @@
-use config;
-use config::parameter_matchable::ParameterMatchable;
-use env::Env;
-use library;
-use nameutil;
-use super::conversion_type::ConversionType;
-use super::ref_mode::RefMode;
+use super::{conversion_type::ConversionType, ref_mode::RefMode};
+use crate::{
+    analysis::rust_type::rust_type,
+    config::{self, parameter_matchable::ParameterMatchable},
+    env::Env,
+    library, nameutil,
+};
+use log::error;
 
-use analysis::rust_type::rust_type;
-pub use config::signals::TransformationType;
+pub use crate::config::signals::TransformationType;
 
 #[derive(Clone, Debug)]
 pub struct RustParameter {
@@ -144,10 +144,10 @@ pub fn analyze(
 
         let conversion_type = {
             match *env.library.type_(par.typ) {
-                library::Type::Fundamental(library::Fundamental::Utf8) |
-                library::Type::Record(..) |
-                library::Type::Interface(..) |
-                library::Type::Class(..) => ConversionType::Borrow,
+                library::Type::Fundamental(library::Fundamental::Utf8)
+                | library::Type::Record(..)
+                | library::Type::Interface(..)
+                | library::Type::Class(..) => ConversionType::Borrow,
                 _ => ConversionType::of(env, par.typ),
             }
         };
@@ -196,14 +196,16 @@ fn apply_transformation_type(
     transform.transformation = transformation_type;
     match transformation_type {
         TransformationType::None => (),
-        TransformationType::Borrow => if transform.conversion_type == ConversionType::Pointer {
-            transform.conversion_type = ConversionType::Borrow;
-        } else if transform.conversion_type != ConversionType::Borrow {
-            error!(
-                "Wrong conversion_type for borrow transformation {:?}",
-                transform.conversion_type
-            );
-        },
+        TransformationType::Borrow => {
+            if transform.conversion_type == ConversionType::Pointer {
+                transform.conversion_type = ConversionType::Borrow;
+            } else if transform.conversion_type != ConversionType::Borrow {
+                error!(
+                    "Wrong conversion_type for borrow transformation {:?}",
+                    transform.conversion_type
+                );
+            }
+        }
         TransformationType::TreePath => {
             let type_ = env.type_(transform.typ);
             if let library::Type::Fundamental(library::Fundamental::Utf8) = *type_ {

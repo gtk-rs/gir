@@ -1,16 +1,19 @@
-use std::collections::vec_deque::VecDeque;
-use std::slice::Iter;
-use std::vec::Vec;
-
-use analysis::function_parameters::{async_param_to_remove, CParameter};
-use analysis::functions::{find_function, find_index_to_ignore, finish_function_name};
-use analysis::imports::Imports;
-use analysis::out_parameters::use_function_return_for_result;
-use analysis::rust_type::{bounds_rust_type, rust_type, rust_type_with_scope};
-use consts::TYPE_PARAMETERS_START;
-use env::Env;
-use library::{Class, Concurrency, Function, Fundamental, Nullable, ParameterDirection, Type, TypeId};
-use traits::IntoString;
+use crate::{
+    analysis::{
+        function_parameters::{async_param_to_remove, CParameter},
+        functions::{find_function, find_index_to_ignore, finish_function_name},
+        imports::Imports,
+        out_parameters::use_function_return_for_result,
+        rust_type::{bounds_rust_type, rust_type, rust_type_with_scope},
+    },
+    consts::TYPE_PARAMETERS_START,
+    env::Env,
+    library::{
+        Class, Concurrency, Function, Fundamental, Nullable, ParameterDirection, Type, TypeId,
+    },
+    traits::IntoString,
+};
+use std::{collections::vec_deque::VecDeque, slice::Iter};
 
 #[derive(Clone, Eq, Debug, PartialEq)]
 pub enum BoundType {
@@ -76,24 +79,21 @@ impl Bounds {
         env: &Env,
         func: &Function,
         par: &CParameter,
-        async: bool,
+        r#async: bool,
         concurrency: Concurrency,
     ) -> (Option<String>, Option<CallbackInfo>) {
         let type_name = bounds_rust_type(env, par.typ);
-        let mut type_string = if async && async_param_to_remove(&par.name) {
+        if (r#async && async_param_to_remove(&par.name)) || type_name.is_err() {
             return (None, None);
-        } else if type_name.is_err() {
-            return (None, None)
-        } else {
-            type_name.into_string()
-        };
+        }
+        let mut type_string = type_name.into_string();
         let mut callback_info = None;
         let mut ret = None;
         let mut need_is_into_check = false;
         if !par.instance_parameter && par.direction != ParameterDirection::Out {
             if let Some(bound_type) = Bounds::type_for(env, par.typ, par.nullable) {
                 ret = Some(Bounds::get_to_glib_extra(&bound_type));
-                if async && par.name == "callback" {
+                if r#async && par.name == "callback" {
                     let func_name = func.c_identifier.as_ref().unwrap();
                     let finish_func_name = finish_function_name(func_name);
                     if let Some(function) = find_function(env, &finish_func_name) {
@@ -116,12 +116,12 @@ impl Bounds {
                             bound_name,
                         });
                     }
-                } else if par.c_type == "GDestroyNotify" ||
-                          env.library.type_(par.typ).is_function() {
+                } else if par.c_type == "GDestroyNotify" || env.library.type_(par.typ).is_function()
+                {
                     need_is_into_check = par.c_type != "GDestroyNotify";
                     if let Type::Function(_) = env.library.type_(par.typ) {
                         type_string = rust_type_with_scope(env, par.typ, par.scope, concurrency)
-                                          .into_string();
+                            .into_string();
                         let bound_name = *self.unused.front().unwrap();
                         callback_info = Some(CallbackInfo {
                             callback_type: type_string.clone(),
@@ -131,9 +131,10 @@ impl Bounds {
                         });
                     }
                 }
-                if (!need_is_into_check || !*par.nullable) &&
-                   par.c_type != "GDestroyNotify" &&
-                   !self.add_parameter(&par.name, &type_string, bound_type, async) {
+                if (!need_is_into_check || !*par.nullable)
+                    && par.c_type != "GDestroyNotify"
+                    && !self.add_parameter(&par.name, &type_string, bound_type, r#async)
+                {
                     panic!(
                         "Too many type constraints for {}",
                         func.c_identifier.as_ref().unwrap()
@@ -155,7 +156,7 @@ impl Bounds {
             Type::Fundamental(Fundamental::Filename) => Some(AsRef(None)),
             Type::Fundamental(Fundamental::OsString) => Some(AsRef(None)),
             Type::Fundamental(Fundamental::Utf8) if *nullable => None,
-            Type::Class(Class { final_type, ..}) => {
+            Type::Class(Class { final_type, .. }) => {
                 if final_type {
                     None
                 } else {
@@ -177,8 +178,14 @@ impl Bounds {
             _ => String::new(),
         }
     }
-    pub fn add_parameter(&mut self, name: &str, type_str: &str, bound_type: BoundType, async: bool) -> bool {
-        if async && name == "callback" {
+    pub fn add_parameter(
+        &mut self,
+        name: &str,
+        type_str: &str,
+        bound_type: BoundType,
+        r#async: bool,
+    ) -> bool {
+        if r#async && name == "callback" {
             if let Some(alias) = self.unused.pop_front() {
                 self.used.push(Bound {
                     bound_type: BoundType::NoWrapper,
@@ -218,7 +225,8 @@ impl Bounds {
                     !n.info_for_next_type
                 } else {
                     false
-                }})
+                }
+            })
             .map(|t| (t.alias, t.bound_type.clone()))
     }
     pub fn get_base_alias(&self, alias: char) -> Option<char> {
@@ -229,10 +237,12 @@ impl Bounds {
         self.used
             .iter()
             .find(move |n| n.alias == prev_alias)
-            .and_then(|b| if b.info_for_next_type {
-                Some(b.alias)
-            } else {
-                None
+            .and_then(|b| {
+                if b.info_for_next_type {
+                    Some(b.alias)
+                } else {
+                    None
+                }
             })
     }
     pub fn update_imports(&self, imports: &mut Imports) {
@@ -249,21 +259,25 @@ impl Bounds {
     pub fn is_empty(&self) -> bool {
         self.used.is_empty()
     }
-    pub fn iter(&self) -> Iter<Bound> {
+    pub fn iter(&self) -> Iter<'_, Bound> {
         self.used.iter()
     }
-    pub fn iter_lifetimes(&self) -> Iter<char> {
+    pub fn iter_lifetimes(&self) -> Iter<'_, char> {
         self.lifetimes.iter()
     }
 }
 
 fn find_out_parameters(env: &Env, function: &Function) -> Vec<String> {
     let index_to_ignore = find_index_to_ignore(&function.parameters);
-    function.parameters.iter().enumerate()
-        .filter(|&(index, param)|
-                Some(index) != index_to_ignore &&
-                param.direction == ParameterDirection::Out &&
-                param.name != "error")
+    function
+        .parameters
+        .iter()
+        .enumerate()
+        .filter(|&(index, param)| {
+            Some(index) != index_to_ignore
+                && param.direction == ParameterDirection::Out
+                && param.name != "error"
+        })
         .map(|(_, param)| rust_type(env, param.typ).expect("get rust type from param"))
         .collect()
 }
@@ -277,9 +291,10 @@ fn format_out_parameters(parameters: &[String]) -> String {
 }
 
 fn find_error_type(env: &Env, function: &Function) -> String {
-    let error_param = function.parameters.iter()
-        .find(|param| param.direction == ParameterDirection::Out
-                && param.name == "error")
+    let error_param = function
+        .parameters
+        .iter()
+        .find(|param| param.direction == ParameterDirection::Out && param.name == "error")
         .expect("error type");
     if let Type::Record(ref record) = *env.type_(error_param.typ) {
         return record.name.clone();

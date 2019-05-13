@@ -1,11 +1,10 @@
-use analysis::rust_type::*;
-use analysis::types::*;
-use codegen::sys::ffi_type::ffi_type;
-use codegen::sys::functions::function_signature;
-use env::Env;
-use library::*;
-use traits::IntoString;
-use traits::MaybeRefAs;
+use crate::{
+    analysis::{rust_type::*, types::*},
+    codegen::sys::{ffi_type::ffi_type, functions::function_signature},
+    env::Env,
+    library::*,
+    traits::{IntoString, MaybeRefAs},
+};
 
 pub struct Fields {
     /// Name of union, class, or a record that contains the fields.
@@ -96,7 +95,11 @@ pub fn from_union(env: &Env, union: &Union) -> Fields {
     }
 }
 
-fn analyze_fields(env: &Env, unsafe_access: bool, fields: &[Field]) -> (Vec<FieldInfo>, Option<String>) {
+fn analyze_fields(
+    env: &Env,
+    unsafe_access: bool,
+    fields: &[Field],
+) -> (Vec<FieldInfo>, Option<String>) {
     let mut truncated = None;
     let mut infos = Vec::with_capacity(fields.len());
 
@@ -132,10 +135,12 @@ fn analyze_fields(env: &Env, unsafe_access: bool, fields: &[Field]) -> (Vec<Fiel
     (infos, truncated)
 }
 
-
 fn field_ffi_type(env: &Env, field: &Field) -> Result {
     if field.is_incomplete(&env.library) {
-        return Err(TypeError::Ignored(format!("field {} has incomplete type", &field.name)));
+        return Err(TypeError::Ignored(format!(
+            "field {} has incomplete type",
+            &field.name
+        )));
     }
     if let Some(ref c_type) = field.c_type {
         ffi_type(env, field.typ, c_type)
@@ -148,7 +153,10 @@ fn field_ffi_type(env: &Env, field: &Field) -> Result {
             Ok(signature)
         }
     } else {
-        Err(TypeError::Ignored(format!("field {} has empty c:type", &field.name)))
+        Err(TypeError::Ignored(format!(
+            "field {} has empty c:type",
+            &field.name
+        )))
     }
 }
 

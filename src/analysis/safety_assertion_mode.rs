@@ -1,6 +1,4 @@
-use analysis::function_parameters::Parameters;
-use env::Env;
-use library;
+use crate::{analysis::function_parameters::Parameters, env::Env, library};
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum SafetyAssertionMode {
@@ -18,7 +16,7 @@ impl Default for SafetyAssertionMode {
 impl SafetyAssertionMode {
     pub fn of(env: &Env, is_method: bool, params: &Parameters) -> SafetyAssertionMode {
         use self::SafetyAssertionMode::*;
-        use library::Type::*;
+        use crate::library::Type::*;
         if !env.config.generate_safety_asserts {
             return None;
         }

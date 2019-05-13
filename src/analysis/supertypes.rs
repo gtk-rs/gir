@@ -1,11 +1,9 @@
-use std::vec::Vec;
-
-use analysis::rust_type::used_rust_type;
-use analysis::namespaces;
-use env::Env;
-use super::general::StatusedTypeId;
-use super::imports::Imports;
-use library::TypeId;
+use super::{general::StatusedTypeId, imports::Imports};
+use crate::{
+    analysis::{namespaces, rust_type::used_rust_type},
+    env::Env,
+    library::TypeId,
+};
 
 pub fn analyze(env: &Env, type_id: TypeId, imports: &mut Imports) -> Vec<StatusedTypeId> {
     let mut parents = Vec::new();

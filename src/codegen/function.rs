@@ -1,25 +1,32 @@
-use std::fmt;
-use std::io::{Result, Write};
-use std::result::Result as StdResult;
-
-use library;
-use analysis;
-use analysis::bounds::{Bound, Bounds};
-use analysis::functions::Visibility;
-use analysis::namespaces;
-use chunk::{ffi_function_todo, Chunk};
-use env::Env;
-use super::function_body_chunk;
-use super::general::{
-    cfg_condition, cfg_deprecated, doc_hidden, not_version_condition, version_condition,
+use super::{
+    function_body_chunk,
+    general::{
+        cfg_condition, cfg_deprecated, doc_hidden, not_version_condition, version_condition,
+    },
+    parameter::ToParameter,
+    return_value::{out_parameters_as_return, ToReturnValue},
 };
-use super::parameter::ToParameter;
-use super::return_value::{out_parameters_as_return, ToReturnValue};
-use writer::primitives::tabs;
-use writer::ToCode;
+use crate::{
+    analysis::{
+        self,
+        bounds::{Bound, Bounds},
+        functions::Visibility,
+        namespaces,
+    },
+    chunk::{ffi_function_todo, Chunk},
+    env::Env,
+    library,
+    writer::{primitives::tabs, ToCode},
+};
+use log::warn;
+use std::{
+    fmt,
+    io::{Result, Write},
+    result::Result as StdResult,
+};
 
 pub fn generate(
-    w: &mut Write,
+    w: &mut dyn Write,
     env: &Env,
     analysis: &analysis::functions::Info,
     in_trait: bool,
@@ -40,39 +47,30 @@ pub fn generate(
             commented = true;
             comment_prefix = "//";
         }
-        Visibility::Private => if in_trait {
-            warn!(
-                "Generating trait method for private function {}",
-                analysis.glib_name
-            );
-        } else {
-            pub_prefix = "";
-        },
+        Visibility::Private => {
+            if in_trait {
+                warn!(
+                    "Generating trait method for private function {}",
+                    analysis.glib_name
+                );
+            } else {
+                pub_prefix = "";
+            }
+        }
         Visibility::Hidden => return Ok(()),
     }
     let declaration = declaration(env, analysis);
     let suffix = if only_declaration { ";" } else { " {" };
 
-    try!(writeln!(w));
+    writeln!(w)?;
     if !in_trait || only_declaration {
-        try!(cfg_deprecated(w, env, analysis.deprecated_version, commented, indent));
+        cfg_deprecated(w, env, analysis.deprecated_version, commented, indent)?;
     }
-    try!(cfg_condition(w, &analysis.cfg_condition, commented, indent));
-    try!(version_condition(
-        w,
-        env,
-        analysis.version,
-        commented,
-        indent,
-    ));
-    try!(not_version_condition(
-        w,
-        analysis.not_version,
-        commented,
-        indent,
-    ));
-    try!(doc_hidden(w, analysis.doc_hidden, comment_prefix, indent));
-    try!(writeln!(
+    cfg_condition(w, &analysis.cfg_condition, commented, indent)?;
+    version_condition(w, env, analysis.version, commented, indent)?;
+    not_version_condition(w, analysis.not_version, commented, indent)?;
+    doc_hidden(w, analysis.doc_hidden, comment_prefix, indent)?;
+    writeln!(
         w,
         "{}{}{}{}{}",
         tabs(indent),
@@ -80,12 +78,12 @@ pub fn generate(
         pub_prefix,
         declaration,
         suffix,
-    ));
+    )?;
 
     if !only_declaration {
         let body = body_chunk(env, analysis).to_code(env);
         for s in body {
-            try!(writeln!(w, "{}{}", tabs(indent), s));
+            writeln!(w, "{}{}", tabs(indent), s)?;
         }
     }
 
@@ -93,28 +91,22 @@ pub fn generate(
         let declaration = declaration_futures(env, analysis);
         let suffix = if only_declaration { ";" } else { " {" };
 
-        try!(writeln!(w));
+        writeln!(w)?;
         if !in_trait || only_declaration {
-            try!(cfg_deprecated(w, env, analysis.deprecated_version, commented, indent));
+            cfg_deprecated(w, env, analysis.deprecated_version, commented, indent)?;
         }
 
-        try!(writeln!(w, "{}{}#[cfg(feature = \"futures\")]", tabs(indent), comment_prefix));
-        try!(cfg_condition(w, &analysis.cfg_condition, commented, indent));
-        try!(version_condition(
+        writeln!(
             w,
-            env,
-            analysis.version,
-            commented,
-            indent,
-        ));
-        try!(not_version_condition(
-            w,
-            analysis.not_version,
-            commented,
-            indent,
-        ));
-        try!(doc_hidden(w, analysis.doc_hidden, comment_prefix, indent));
-        try!(writeln!(
+            "{}{}#[cfg(feature = \"futures\")]",
+            tabs(indent),
+            comment_prefix
+        )?;
+        cfg_condition(w, &analysis.cfg_condition, commented, indent)?;
+        version_condition(w, env, analysis.version, commented, indent)?;
+        not_version_condition(w, analysis.not_version, commented, indent)?;
+        doc_hidden(w, analysis.doc_hidden, comment_prefix, indent)?;
+        writeln!(
             w,
             "{}{}{}{}{}",
             tabs(indent),
@@ -122,18 +114,18 @@ pub fn generate(
             pub_prefix,
             declaration,
             suffix
-        ));
+        )?;
 
         if !only_declaration {
             let body = body_chunk_futures(env, analysis).unwrap();
             for s in body.lines() {
                 if !s.is_empty() {
-                    try!(writeln!(w, "{}{}{}", tabs(indent+1), comment_prefix, s));
+                    writeln!(w, "{}{}{}", tabs(indent + 1), comment_prefix, s)?;
                 } else {
-                    try!(writeln!(w));
+                    writeln!(w)?;
                 }
             }
-            try!(writeln!(w, "{}{}}}", tabs(indent), comment_prefix));
+            writeln!(w, "{}{}}}", tabs(indent), comment_prefix)?;
         }
     }
 
@@ -168,17 +160,17 @@ pub fn declaration(env: &Env, analysis: &analysis::functions::Info) -> String {
 
     format!(
         "fn {}{}({}){}",
-        analysis.name,
-        bounds,
-        param_str,
-        return_str,
+        analysis.name, bounds, param_str, return_str,
     )
 }
 
 pub fn declaration_futures(env: &Env, analysis: &analysis::functions::Info) -> String {
     let async_future = analysis.async_future.as_ref().unwrap();
 
-    let return_str = format!(" -> Box_<future::Future<Output = Result<{}, {}>> + std::marker::Unpin>", async_future.success_parameters, async_future.error_parameters);
+    let return_str = format!(
+        " -> Box_<future::Future<Output = Result<{}, {}>> + std::marker::Unpin>",
+        async_future.success_parameters, async_future.error_parameters
+    );
 
     let mut param_str = String::with_capacity(100);
 
@@ -210,26 +202,33 @@ pub fn declaration_futures(env: &Env, analysis: &analysis::functions::Info) -> S
 
     format!(
         "fn {}{}({}){}",
-        async_future.name,
-        bounds,
-        param_str,
-        return_str,
+        async_future.name, bounds, param_str, return_str,
     )
 }
 
-pub fn bound_to_string(bound: &Bound, async: bool) -> String {
-    use analysis::bounds::BoundType::*;
+pub fn bound_to_string(bound: &Bound, r#async: bool) -> String {
+    use crate::analysis::bounds::BoundType::*;
 
     match bound.bound_type {
-        NoWrapper => {
-            format!("{}: {}", bound.alias, bound.type_str)
-        }
-        IsA(Some(lifetime)) => {
-            format!("{}: IsA<{}> + {}", bound.alias, bound.type_str, if async { "Clone + 'static".into() } else { format!("'{}", lifetime) })
-        }
-        IsA(None) => format!("{}: IsA<{}>{}", bound.alias, bound.type_str, if async { " + Clone + 'static" } else { "" }),
+        NoWrapper => format!("{}: {}", bound.alias, bound.type_str),
+        IsA(Some(lifetime)) => format!(
+            "{}: IsA<{}> + {}",
+            bound.alias,
+            bound.type_str,
+            if r#async {
+                "Clone + 'static".into()
+            } else {
+                format!("'{}", lifetime)
+            }
+        ),
+        IsA(None) => format!(
+            "{}: IsA<{}>{}",
+            bound.alias,
+            bound.type_str,
+            if r#async { " + Clone + 'static" } else { "" }
+        ),
         // This case should normally never happened
-        AsRef(Some(_/*lifetime*/)) => {
+        AsRef(Some(_ /*lifetime*/)) => {
             unreachable!();
             // format!("{}: AsRef<{}> + '{}", bound.alias, bound.type_str, lifetime)
         }
@@ -240,20 +239,20 @@ pub fn bound_to_string(bound: &Bound, async: bool) -> String {
 pub fn bounds(
     bounds: &Bounds,
     skip: &[char],
-    async: bool,
+    r#async: bool,
     filter_callback_modified: bool,
 ) -> (String, Vec<String>) {
-    use analysis::bounds::BoundType::*;
+    use crate::analysis::bounds::BoundType::*;
 
     if bounds.is_empty() {
         return (String::new(), Vec::new());
     }
 
-    let skip_lifetimes = bounds.iter()
+    let skip_lifetimes = bounds
+        .iter()
         .filter(|bound| skip.contains(&bound.alias))
         .filter_map(|bound| match bound.bound_type {
-            IsA(Some(lifetime)) |
-            AsRef(Some(lifetime)) => Some(lifetime),
+            IsA(Some(lifetime)) | AsRef(Some(lifetime)) => Some(lifetime),
             _ => None,
         })
         .collect::<Vec<_>>();
@@ -262,24 +261,34 @@ pub fn bounds(
         .iter_lifetimes()
         .filter(|s| !skip_lifetimes.contains(s))
         .map(|s| format!("'{}", s))
-        .chain(bounds.iter()
-                     .filter(|bound| !skip.contains(&bound.alias) && (!filter_callback_modified ||
-                                                                      !bound.callback_modified))
-                     .map(|b| bound_to_string(b, async)))
+        .chain(
+            bounds
+                .iter()
+                .filter(|bound| {
+                    !skip.contains(&bound.alias)
+                        && (!filter_callback_modified || !bound.callback_modified)
+                })
+                .map(|b| bound_to_string(b, r#async)),
+        )
         .collect();
 
     if strs.is_empty() {
         (String::new(), Vec::new())
     } else {
-        let bounds = bounds.iter_lifetimes()
-                           .filter(|s| !skip_lifetimes.contains(s))
-                           .map(|s| format!("'{}", s))
-                           .chain(bounds.iter()
-                                        .filter(|bound| !skip.contains(&bound.alias) &&
-                                                        (!filter_callback_modified ||
-                                                         !bound.callback_modified))
-                                        .map(|b| b.alias.to_string()))
-                           .collect::<Vec<_>>();
+        let bounds = bounds
+            .iter_lifetimes()
+            .filter(|s| !skip_lifetimes.contains(s))
+            .map(|s| format!("'{}", s))
+            .chain(
+                bounds
+                    .iter()
+                    .filter(|bound| {
+                        !skip.contains(&bound.alias)
+                            && (!filter_callback_modified || !bound.callback_modified)
+                    })
+                    .map(|b| b.alias.to_string()),
+            )
+            .collect::<Vec<_>>();
         (format!("<{}>", strs.join(", ")), bounds)
     }
 }
@@ -293,17 +302,24 @@ pub fn body_chunk(env: &Env, analysis: &analysis::functions::Info) -> Chunk {
 
     let mut builder = function_body_chunk::Builder::new();
     builder
-        .glib_name(&format!("{}::{}", env.main_sys_crate_name(), analysis.glib_name))
+        .glib_name(&format!(
+            "{}::{}",
+            env.main_sys_crate_name(),
+            analysis.glib_name
+        ))
         .assertion(analysis.assertion)
         .ret(&analysis.ret)
         .transformations(&analysis.parameters.transformations)
         .outs_mode(analysis.outs.mode);
 
-    if analysis.async {
+    if analysis.r#async {
         if let Some(ref trampoline) = analysis.trampoline {
             builder.async_trampoline(trampoline);
         } else {
-            warn!("Async function {} has no associated _finish function", analysis.name);
+            warn!(
+                "Async function {} has no associated _finish function",
+                analysis.name
+            );
         }
     } else {
         for trampoline in analysis.callbacks.iter() {
@@ -327,21 +343,24 @@ pub fn body_chunk(env: &Env, analysis: &analysis::functions::Info) -> Chunk {
     builder.generate(env, bounds, bounds_names.join(", "))
 }
 
-pub fn body_chunk_futures(env: &Env, analysis: &analysis::functions::Info) -> StdResult<String, fmt::Error> {
+pub fn body_chunk_futures(
+    env: &Env,
+    analysis: &analysis::functions::Info,
+) -> StdResult<String, fmt::Error> {
+    use crate::analysis::ref_mode::RefMode;
     use std::fmt::Write;
-    use analysis::ref_mode::RefMode;
 
     let async_future = analysis.async_future.as_ref().unwrap();
 
     let mut body = String::new();
 
     if env.config.library_name != "Gio" {
-        try!(writeln!(body, "use gio::GioFuture;"));
+        writeln!(body, "use gio::GioFuture;")?;
     } else {
-        try!(writeln!(body, "use GioFuture;"));
+        writeln!(body, "use GioFuture;")?;
     }
-    try!(writeln!(body, "use fragile::Fragile;"));
-    try!(writeln!(body));
+    writeln!(body, "use fragile::Fragile;")?;
+    writeln!(body)?;
 
     let skip = if async_future.is_method { 1 } else { 0 };
 
@@ -354,65 +373,76 @@ pub fn body_chunk_futures(env: &Env, analysis: &analysis::functions::Info) -> St
         let c_par = &analysis.parameters.c_parameters[par.ind_c];
 
         let type_ = env.type_(par.typ);
-        let is_str = if let library::Type::Fundamental(library::Fundamental::Utf8) = *type_ { true } else { false };
+        let is_str = if let library::Type::Fundamental(library::Fundamental::Utf8) = *type_ {
+            true
+        } else {
+            false
+        };
 
         if *c_par.nullable {
-            try!(writeln!(body, "let {} = {}.map(ToOwned::to_owned);", par.name, par.name));
+            writeln!(
+                body,
+                "let {} = {}.map(ToOwned::to_owned);",
+                par.name, par.name
+            )?;
         } else if is_str {
-            try!(writeln!(body, "let {} = String::from({});", par.name, par.name));
+            writeln!(body, "let {} = String::from({});", par.name, par.name)?;
         } else if c_par.ref_mode != RefMode::None {
-            try!(writeln!(body, "let {} = {}.clone();", par.name, par.name));
+            writeln!(body, "let {} = {}.clone();", par.name, par.name)?;
         }
     }
 
     if async_future.is_method {
-        try!(writeln!(body, "GioFuture::new(self, move |obj, send| {{"));
+        writeln!(body, "GioFuture::new(self, move |obj, send| {{")?;
     } else {
-        try!(writeln!(body, "GioFuture::new(&(), move |_obj, send| {{"));
+        writeln!(body, "GioFuture::new(&(), move |_obj, send| {{")?;
     }
 
     if env.config.library_name != "Gio" {
-        try!(writeln!(body, "\tlet cancellable = gio::Cancellable::new();"));
+        writeln!(body, "\tlet cancellable = gio::Cancellable::new();")?;
     } else {
-        try!(writeln!(body, "\tlet cancellable = Cancellable::new();"));
+        writeln!(body, "\tlet cancellable = Cancellable::new();")?;
     }
-    try!(writeln!(body, "\tlet send = Fragile::new(send);"));
+    writeln!(body, "\tlet send = Fragile::new(send);")?;
 
     if async_future.is_method {
-        try!(writeln!(body, "\tobj.{}(", analysis.name));
+        writeln!(body, "\tobj.{}(", analysis.name)?;
     } else if analysis.type_name.is_ok() {
-        try!(writeln!(body, "\tSelf::{}(", analysis.name));
+        writeln!(body, "\tSelf::{}(", analysis.name)?;
     } else {
-        try!(writeln!(body, "\t{}(", analysis.name));
+        writeln!(body, "\t{}(", analysis.name)?;
     }
 
     // Skip the instance parameter
     for par in analysis.parameters.rust_parameters.iter().skip(skip) {
         if par.name == "cancellable" {
-            try!(writeln!(body, "\t\tSome(&cancellable),"));
+            writeln!(body, "\t\tSome(&cancellable),")?;
         } else if par.name == "callback" {
             continue;
         } else {
             let c_par = &analysis.parameters.c_parameters[par.ind_c];
 
             if *c_par.nullable {
-                try!(writeln!(body, "\t\t{}.as_ref().map(::std::borrow::Borrow::borrow),",
-                              par.name));
+                writeln!(
+                    body,
+                    "\t\t{}.as_ref().map(::std::borrow::Borrow::borrow),",
+                    par.name
+                )?;
             } else if c_par.ref_mode != RefMode::None {
-                try!(writeln!(body, "\t\t&{},", par.name));
+                writeln!(body, "\t\t&{},", par.name)?;
             } else {
-                try!(writeln!(body, "\t\t{},", par.name));
+                writeln!(body, "\t\t{},", par.name)?;
             }
         }
     }
 
-    try!(writeln!(body, "\t\tmove |res| {{"));
-    try!(writeln!(body, "\t\t\tlet _ = send.into_inner().send(res);"));
-    try!(writeln!(body, "\t\t}},"));
-    try!(writeln!(body, "\t);"));
-    try!(writeln!(body));
-    try!(writeln!(body, "\tcancellable"));
-    try!(writeln!(body, "}})"));
+    writeln!(body, "\t\tmove |res| {{")?;
+    writeln!(body, "\t\t\tlet _ = send.into_inner().send(res);")?;
+    writeln!(body, "\t\t}},")?;
+    writeln!(body, "\t);")?;
+    writeln!(body)?;
+    writeln!(body, "\tcancellable")?;
+    writeln!(body, "}})")?;
 
     Ok(body)
 }

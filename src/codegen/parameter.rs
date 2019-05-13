@@ -1,10 +1,14 @@
-use env::Env;
-use analysis::bounds::{BoundType, Bounds};
-use analysis::conversion_type::ConversionType;
-use analysis::function_parameters::CParameter;
-use analysis::ref_mode::RefMode;
-use analysis::rust_type::parameter_rust_type;
-use traits::*;
+use crate::{
+    analysis::{
+        bounds::{BoundType, Bounds},
+        conversion_type::ConversionType,
+        function_parameters::CParameter,
+        ref_mode::RefMode,
+        rust_type::parameter_rust_type,
+    },
+    env::Env,
+    traits::*,
+};
 
 pub trait ToParameter {
     fn to_parameter(&self, env: &Env, bounds: &Bounds) -> String;
@@ -22,18 +26,14 @@ impl ToParameter for CParameter {
         } else {
             let type_str: String;
             match bounds.get_parameter_alias_info(&self.name) {
-                Some((t, bound_type)) => {
-                    match bound_type {
-                        BoundType::NoWrapper => type_str = t.to_string(),
-                        BoundType::IsA(_) if *self.nullable => {
-                            type_str = format!("Option<&{}{}>", mut_str, t)
-                        }
-                        BoundType::IsA(_) => {
-                            type_str = format!("&{}{}", mut_str, t)
-                        }
-                        BoundType::AsRef(_) => type_str = t.to_string(),
+                Some((t, bound_type)) => match bound_type {
+                    BoundType::NoWrapper => type_str = t.to_string(),
+                    BoundType::IsA(_) if *self.nullable => {
+                        type_str = format!("Option<&{}{}>", mut_str, t)
                     }
-                }
+                    BoundType::IsA(_) => type_str = format!("&{}{}", mut_str, t),
+                    BoundType::AsRef(_) => type_str = t.to_string(),
+                },
                 None => {
                     let rust_type = parameter_rust_type(
                         env,

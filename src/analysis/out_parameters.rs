@@ -1,18 +1,16 @@
+use crate::{
+    analysis::{
+        conversion_type::ConversionType, function_parameters::CParameter,
+        functions::is_carray_with_direct_elements, imports::Imports, ref_mode::RefMode,
+        return_value, rust_type::parameter_rust_type,
+    },
+    config,
+    env::Env,
+    library::*,
+    nameutil,
+    version::Version,
+};
 use std::slice::Iter;
-use std::vec::Vec;
-
-use analysis::conversion_type::ConversionType;
-use analysis::function_parameters::CParameter;
-use analysis::functions::is_carray_with_direct_elements;
-use analysis::imports::Imports;
-use analysis::ref_mode::RefMode;
-use analysis::return_value;
-use analysis::rust_type::parameter_rust_type;
-use config;
-use env::Env;
-use library::*;
-use nameutil;
-use version::Version;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum Mode {
@@ -41,7 +39,7 @@ impl Info {
         self.mode == Mode::None
     }
 
-    pub fn iter(&self) -> Iter<Parameter> {
+    pub fn iter(&self) -> Iter<'_, Parameter> {
         self.params.iter()
     }
 }
@@ -155,7 +153,8 @@ pub fn can_as_return(env: &Env, par: &Parameter) -> bool {
                 Nullable(false),
                 RefMode::None,
                 par.scope,
-            ).is_ok()
+            )
+            .is_ok()
         }
         Borrow => false,
         Unknown => false,

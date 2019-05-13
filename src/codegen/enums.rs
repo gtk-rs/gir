@@ -1,20 +1,25 @@
-use analysis::imports::Imports;
-use analysis::namespaces;
-use codegen::general::{self, cfg_deprecated, derives, version_condition, version_condition_string};
-use config::gobjects::GObject;
-use env::Env;
-use file_saver;
-use library::*;
-use nameutil::enum_member_name;
-use std::collections::HashSet;
-use std::io::prelude::*;
-use std::io::Result;
-use std::path::Path;
-use traits::*;
-use version::Version;
+use crate::{
+    analysis::{imports::Imports, namespaces},
+    codegen::general::{
+        self, cfg_deprecated, derives, version_condition, version_condition_string,
+    },
+    config::gobjects::GObject,
+    env::Env,
+    file_saver,
+    library::*,
+    nameutil::enum_member_name,
+    traits::*,
+    version::Version,
+};
+use std::{
+    collections::HashSet,
+    io::{prelude::*, Result},
+    path::Path,
+};
 
 pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>) {
-    let configs: Vec<&GObject> = env.config
+    let configs: Vec<&GObject> = env
+        .config
         .objects
         .values()
         .filter(|c| {
@@ -43,7 +48,7 @@ pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>) {
     }
 
     if !has_any {
-        return
+        return;
     }
 
     let mut imports = Imports::new(&env.library);
@@ -69,9 +74,9 @@ pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>) {
 
     let path = root_path.join("enums.rs");
     file_saver::save_to_file(path, env.config.make_backup, |w| {
-        try!(general::start_comments(w, &env.config));
-        try!(general::uses(w, env, &imports));
-        try!(writeln!(w));
+        general::start_comments(w, &env.config)?;
+        general::uses(w, env, &imports)?;
+        writeln!(w)?;
 
         mod_rs.push("\nmod enums;".into());
         for config in &configs {
@@ -80,7 +85,7 @@ pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>) {
                     mod_rs.push(cfg);
                 }
                 mod_rs.push(format!("pub use self::enums::{};", enum_.name));
-                try!(generate_enum(env, w, enum_, config));
+                generate_enum(env, w, enum_, config)?;
             }
         }
 
@@ -88,7 +93,12 @@ pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>) {
     });
 }
 
-fn generate_enum(env: &Env, w: &mut Write, enum_: &Enumeration, config: &GObject) -> Result<()> {
+fn generate_enum(
+    env: &Env,
+    w: &mut dyn Write,
+    enum_: &Enumeration,
+    config: &GObject,
+) -> Result<()> {
     struct Member {
         name: String,
         c_name: String,
@@ -109,7 +119,10 @@ fn generate_enum(env: &Env, w: &mut Write, enum_: &Enumeration, config: &GObject
             continue;
         }
         vals.insert(member.value.clone());
-        let deprecated_version = member_config.iter().filter_map(|m| m.deprecated_version).next();
+        let deprecated_version = member_config
+            .iter()
+            .filter_map(|m| m.deprecated_version)
+            .next();
         let version = member_config.iter().filter_map(|m| m.version).next();
         members.push(Member {
             name: enum_member_name(&member.name),
@@ -120,67 +133,63 @@ fn generate_enum(env: &Env, w: &mut Write, enum_: &Enumeration, config: &GObject
         });
     }
 
-    try!(cfg_deprecated(w, env, enum_.deprecated_version, false, 0));
-    try!(version_condition(w, env, enum_.version, false, 0));
+    cfg_deprecated(w, env, enum_.deprecated_version, false, 0)?;
+    version_condition(w, env, enum_.version, false, 0)?;
     if config.must_use {
-        try!(writeln!(
-            w,
-            "#[must_use]"
-        ));
+        writeln!(w, "#[must_use]")?;
     }
 
     if let Some(ref d) = config.derives {
-        try!(derives(w, &d, 1));
+        derives(w, &d, 1)?;
     } else {
-        try!(writeln!(
-            w,
-            "#[derive(Debug, Eq, PartialEq, Ord, PartialOrd, Hash)]"
-        ));
+        writeln!(w, "#[derive(Debug, Eq, PartialEq, Ord, PartialOrd, Hash)]")?;
     }
-    try!(writeln!(
-            w,
-            "#[derive(Clone, Copy)]"
-    ));
+    writeln!(w, "#[derive(Clone, Copy)]")?;
 
-    try!(writeln!(w, "pub enum {} {{", enum_.name));
+    writeln!(w, "pub enum {} {{", enum_.name)?;
     for member in &members {
-        try!(cfg_deprecated(w, env, member.deprecated_version, false, 1));
-        try!(version_condition(w, env, member.version, false, 1));
-        try!(writeln!(w, "\t{},", member.name));
+        cfg_deprecated(w, env, member.deprecated_version, false, 1)?;
+        version_condition(w, env, member.version, false, 1)?;
+        writeln!(w, "\t{},", member.name)?;
     }
-    try!(writeln!(
+    writeln!(
         w,
         "{}",
         "    #[doc(hidden)]
     __Unknown(i32),
 }
 "
-    ));
+    )?;
 
     if config.generate_display_trait {
         // Generate Display trait implementation.
-        try!(cfg_deprecated(w, env, enum_.deprecated_version, false, 0));
-        try!(version_condition(w, env, enum_.version, false, 0));
-        try!(writeln!(w,
-                      "impl fmt::Display for {0} {{\n\
-                          \tfn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {{\n\
-                            \t\twrite!(f, \"{0}::{{}}\", match *self {{", enum_.name));
+        cfg_deprecated(w, env, enum_.deprecated_version, false, 0)?;
+        version_condition(w, env, enum_.version, false, 0)?;
+        writeln!(
+            w,
+            "impl fmt::Display for {0} {{\n\
+             \tfn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {{\n\
+             \t\twrite!(f, \"{0}::{{}}\", match *self {{",
+            enum_.name
+        )?;
         for member in &members {
-            try!(cfg_deprecated(w, env, member.deprecated_version, false, 3));
-            try!(version_condition(w, env, member.version, false, 3));
-            try!(writeln!(w, "\t\t\t{0}::{1} => \"{1}\",", enum_.name, member.name));
+            cfg_deprecated(w, env, member.deprecated_version, false, 3)?;
+            version_condition(w, env, member.version, false, 3)?;
+            writeln!(w, "\t\t\t{0}::{1} => \"{1}\",", enum_.name, member.name)?;
         }
-        try!(writeln!(w,
-                      "\t\t\t_ => \"Unknown\",\n\
-                  \t\t}})\n\
-                \t}}\n\
-            }}\n"));
+        writeln!(
+            w,
+            "\t\t\t_ => \"Unknown\",\n\
+             \t\t}})\n\
+             \t}}\n\
+             }}\n"
+        )?;
     }
 
     // Generate ToGlib trait implementation.
-    try!(cfg_deprecated(w, env, enum_.deprecated_version, false, 0));
-    try!(version_condition(w, env, enum_.version, false, 0));
-    try!(writeln!(
+    cfg_deprecated(w, env, enum_.deprecated_version, false, 0)?;
+    version_condition(w, env, enum_.version, false, 0)?;
+    writeln!(
         w,
         "#[doc(hidden)]
 impl ToGlib for {name} {{
@@ -191,32 +200,25 @@ impl ToGlib for {name} {{
         sys_crate_name = sys_crate_name,
         name = enum_.name,
         ffi_name = enum_.c_type
-    ));
+    )?;
     for member in &members {
-        try!(cfg_deprecated(w, env, member.deprecated_version, false, 3));
-        try!(version_condition(w, env, member.version, false, 3));
-        try!(writeln!(
+        cfg_deprecated(w, env, member.deprecated_version, false, 3)?;
+        version_condition(w, env, member.version, false, 3)?;
+        writeln!(
             w,
             "\t\t\t{}::{} => {}::{},",
-            enum_.name,
-            member.name,
-            sys_crate_name,
-            member.c_name
-        ));
+            enum_.name, member.name, sys_crate_name, member.c_name
+        )?;
     }
-    try!(writeln!(
-        w,
-        "\t\t\t{}::__Unknown(value) => value",
-        enum_.name
-    ));
-    try!(writeln!(
+    writeln!(w, "\t\t\t{}::__Unknown(value) => value", enum_.name)?;
+    writeln!(
         w,
         "{}",
         "        }
     }
 }
 "
-    ));
+    )?;
 
     let assert = if env.config.generate_safety_asserts {
         "skip_assert_initialized!();\n\t\t"
@@ -225,9 +227,9 @@ impl ToGlib for {name} {{
     };
 
     // Generate FromGlib trait implementation.
-    try!(cfg_deprecated(w, env, enum_.deprecated_version, false, 0));
-    try!(version_condition(w, env, enum_.version, false, 0));
-    try!(writeln!(
+    cfg_deprecated(w, env, enum_.deprecated_version, false, 0)?;
+    version_condition(w, env, enum_.version, false, 0)?;
+    writeln!(
         w,
         "#[doc(hidden)]
 impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
@@ -237,40 +239,34 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
         name = enum_.name,
         ffi_name = enum_.c_type,
         assert = assert
-    ));
+    )?;
     for member in &members {
-        try!(cfg_deprecated(w, env, member.deprecated_version, false, 3));
-        try!(version_condition(w, env, member.version, false, 3));
-        try!(writeln!(
+        cfg_deprecated(w, env, member.deprecated_version, false, 3)?;
+        version_condition(w, env, member.version, false, 3)?;
+        writeln!(
             w,
             "\t\t\t{} => {}::{},",
-            member.value,
-            enum_.name,
-            member.name
-        ));
+            member.value, enum_.name, member.name
+        )?;
     }
-    try!(writeln!(
-        w,
-        "\t\t\tvalue => {}::__Unknown(value),",
-        enum_.name
-    ));
-    try!(writeln!(
+    writeln!(w, "\t\t\tvalue => {}::__Unknown(value),", enum_.name)?;
+    writeln!(
         w,
         "{}",
         "        }
     }
 }
 "
-    ));
+    )?;
 
     // Generate ErrorDomain trait implementation.
     if let Some(ref get_quark) = get_error_quark_name(enum_) {
         let get_quark = get_quark.replace("-", "_");
         let has_failed_member = members.iter().any(|m| m.name == "Failed");
 
-        try!(cfg_deprecated(w, env, enum_.deprecated_version, false, 0));
-        try!(version_condition(w, env, enum_.version, false, 0));
-        try!(writeln!(
+        cfg_deprecated(w, env, enum_.deprecated_version, false, 0)?;
+        version_condition(w, env, enum_.version, false, 0)?;
+        writeln!(
             w,
             "impl ErrorDomain for {name} {{
     fn domain() -> Quark {{
@@ -287,44 +283,38 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
             name = enum_.name,
             get_quark = get_quark,
             assert = assert
-        ));
+        )?;
 
         for member in &members {
-            try!(cfg_deprecated(w, env, member.deprecated_version, false, 3));
-            try!(version_condition(w, env, member.version, false, 3));
-            try!(writeln!(
+            cfg_deprecated(w, env, member.deprecated_version, false, 3)?;
+            version_condition(w, env, member.version, false, 3)?;
+            writeln!(
                 w,
                 "\t\t\t{} => Some({}::{}),",
-                member.value,
-                enum_.name,
-                member.name
-            ));
+                member.value, enum_.name, member.name
+            )?;
         }
         if has_failed_member {
-            try!(writeln!(w, "\t\t\t_ => Some({}::Failed),", enum_.name));
+            writeln!(w, "\t\t\t_ => Some({}::Failed),", enum_.name)?;
         } else {
-            try!(writeln!(
-                w,
-                "\t\t\tvalue => Some({}::__Unknown(value)),",
-                enum_.name
-            ));
+            writeln!(w, "\t\t\tvalue => Some({}::__Unknown(value)),", enum_.name)?;
         }
 
-        try!(writeln!(
+        writeln!(
             w,
             "{}",
             "        }
     }
 }
 "
-        ));
+        )?;
     }
 
     // Generate StaticType trait implementation.
     if let Some(ref get_type) = enum_.glib_get_type {
-        try!(cfg_deprecated(w, env, enum_.deprecated_version, false, 0));
-        try!(version_condition(w, env, enum_.version, false, 0));
-        try!(writeln!(
+        cfg_deprecated(w, env, enum_.deprecated_version, false, 0)?;
+        version_condition(w, env, enum_.version, false, 0)?;
+        writeln!(
             w,
             "impl StaticType for {name} {{
     fn static_type() -> Type {{
@@ -334,12 +324,12 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
             sys_crate_name = sys_crate_name,
             name = enum_.name,
             get_type = get_type
-        ));
-        try!(writeln!(w));
+        )?;
+        writeln!(w)?;
 
-        try!(cfg_deprecated(w, env, enum_.deprecated_version, false, 0));
-        try!(version_condition(w, env, enum_.version, false, 0));
-        try!(writeln!(
+        cfg_deprecated(w, env, enum_.deprecated_version, false, 0)?;
+        version_condition(w, env, enum_.version, false, 0)?;
+        writeln!(
             w,
             "impl<'a> FromValueOptional<'a> for {name} {{
     unsafe fn from_value_optional(value: &Value) -> Option<Self> {{
@@ -347,12 +337,12 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
     }}
 }}",
             name = enum_.name,
-        ));
-        try!(writeln!(w));
+        )?;
+        writeln!(w)?;
 
-        try!(cfg_deprecated(w, env, enum_.deprecated_version, false, 0));
-        try!(version_condition(w, env, enum_.version, false, 0));
-        try!(writeln!(
+        cfg_deprecated(w, env, enum_.deprecated_version, false, 0)?;
+        version_condition(w, env, enum_.version, false, 0)?;
+        writeln!(
             w,
             "impl<'a> FromValue<'a> for {name} {{
     unsafe fn from_value(value: &Value) -> Self {{
@@ -360,12 +350,12 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
     }}
 }}",
             name = enum_.name,
-        ));
-        try!(writeln!(w));
+        )?;
+        writeln!(w)?;
 
-        try!(cfg_deprecated(w, env, enum_.deprecated_version, false, 0));
-        try!(version_condition(w, env, enum_.version, false, 0));
-        try!(writeln!(
+        cfg_deprecated(w, env, enum_.deprecated_version, false, 0)?;
+        version_condition(w, env, enum_.version, false, 0)?;
+        writeln!(
             w,
             "impl SetValue for {name} {{
     unsafe fn set_value(value: &mut Value, this: &Self) {{
@@ -373,8 +363,8 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
     }}
 }}",
             name = enum_.name,
-        ));
-        try!(writeln!(w));
+        )?;
+        writeln!(w)?;
     }
 
     Ok(())

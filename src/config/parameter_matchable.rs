@@ -1,5 +1,4 @@
-use super::ident::Ident;
-use super::matchable::Matchable;
+use super::{ident::Ident, matchable::Matchable};
 
 pub trait Functionlike {
     type Parameter;

@@ -1,9 +1,11 @@
+use crate::analysis::{
+    functions::Info,
+    special_functions::{Infos, Type},
+};
 use std::io::{Result, Write};
-use analysis::functions::Info;
-use analysis::special_functions::{Infos, Type};
 
 pub fn generate(
-    w: &mut Write,
+    w: &mut dyn Write,
     type_name: &str,
     functions: &[Info],
     specials: &Infos,
@@ -13,40 +15,15 @@ pub fn generate(
         match *type_ {
             Type::Compare => {
                 if specials.get(&Type::Equal).is_none() {
-                    try!(generate_eq_compare(
-                        w,
-                        type_name,
-                        lookup(functions, name),
-                        trait_name,
-                    ));
+                    generate_eq_compare(w, type_name, lookup(functions, name), trait_name)?;
                 }
-                try!(generate_ord(
-                    w,
-                    type_name,
-                    lookup(functions, name),
-                    trait_name,
-                ));
+                generate_ord(w, type_name, lookup(functions, name), trait_name)?;
             }
             Type::Equal => {
-                try!(generate_eq(
-                    w,
-                    type_name,
-                    lookup(functions, name),
-                    trait_name
-                ));
+                generate_eq(w, type_name, lookup(functions, name), trait_name)?;
             }
-            Type::ToString => try!(generate_display(
-                w,
-                type_name,
-                lookup(functions, name),
-                trait_name,
-            )),
-            Type::Hash => try!(generate_hash(
-                w,
-                type_name,
-                lookup(functions, name),
-                trait_name,
-            )),
+            Type::ToString => generate_display(w, type_name, lookup(functions, name), trait_name)?,
+            Type::Hash => generate_hash(w, type_name, lookup(functions, name), trait_name)?,
             _ => {}
         }
     }
@@ -89,12 +66,12 @@ fn generate_call(func_name: &str, args: &[&str], trait_name: Option<&str>) -> St
 }
 
 fn generate_display(
-    w: &mut Write,
+    w: &mut dyn Write,
     type_name: &str,
     func: &Info,
     trait_name: Option<&str>,
 ) -> Result<()> {
-    use analysis::out_parameters::Mode;
+    use crate::analysis::out_parameters::Mode;
 
     let call = generate_call(&func.name, &[], trait_name);
     let body = if let Mode::Throws(_) = func.outs.mode {
@@ -125,7 +102,7 @@ impl fmt::Display for {type_name} {{
 }
 
 fn generate_hash(
-    w: &mut Write,
+    w: &mut dyn Write,
     type_name: &str,
     func: &Info,
     trait_name: Option<&str>,
@@ -147,7 +124,7 @@ impl hash::Hash for {type_name} {{
 }
 
 fn generate_eq(
-    w: &mut Write,
+    w: &mut dyn Write,
     type_name: &str,
     func: &Info,
     trait_name: Option<&str>,
@@ -171,7 +148,7 @@ impl Eq for {type_name} {{}}",
 }
 
 fn generate_eq_compare(
-    w: &mut Write,
+    w: &mut dyn Write,
     type_name: &str,
     func: &Info,
     trait_name: Option<&str>,
@@ -195,7 +172,7 @@ impl Eq for {type_name} {{}}",
 }
 
 fn generate_ord(
-    w: &mut Write,
+    w: &mut dyn Write,
     type_name: &str,
     func: &Info,
     trait_name: Option<&str>,
