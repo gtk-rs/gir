@@ -187,8 +187,8 @@ pub fn class(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<Info>
 
     if !builder_properties.is_empty() {
         imports.add("glib::object::Cast", None);
-        imports.add("gtk::prelude::ToValue", None);
         imports.add("glib::StaticType", None);
+        imports.add("glib::ToValue", None);
     }
 
     if generate_trait {
