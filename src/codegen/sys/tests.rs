@@ -3,7 +3,7 @@ use crate::{
     codegen::general,
     env::Env,
     file_saver::save_to_file,
-    library::{Bitfield, Enumeration, Type, MAIN_NAMESPACE},
+    library::{self, Bitfield, Enumeration, Namespace, Type, MAIN_NAMESPACE},
 };
 use log::info;
 use std::{
@@ -68,40 +68,44 @@ fn prepare_ctypes(env: &Env) -> Vec<CType> {
         .filter_map(Option::as_ref)
         .filter(|t| !t.is_incomplete(&env.library))
         .filter_map(|t| match *t {
+            Type::Record(library::Record { disguised, .. }) if !disguised => {
+                prepare_ctype(env, ns, t)
+            }
             Type::Alias(_)
             | Type::Class(_)
-            | Type::Record(_)
             | Type::Union(_)
             | Type::Enumeration(_)
             | Type::Bitfield(_)
-            | Type::Interface(_) => {
-                let full_name = format!("{}.{}", &ns.name, t.get_name());
-                if env.type_status_sys(&full_name).ignored() {
-                    return None;
-                }
-                let name = match t.get_glib_name() {
-                    None => return None,
-                    Some(name) => name,
-                };
-                if is_name_made_up(name) {
-                    return None;
-                }
-                let cfg_condition = env
-                    .config
-                    .objects
-                    .get(&full_name)
-                    .and_then(|obj| obj.cfg_condition.clone());
-                Some(CType {
-                    name: name.to_owned(),
-                    cfg_condition,
-                })
-            }
+            | Type::Interface(_) => prepare_ctype(env, ns, t),
             _ => None,
         })
         .collect();
 
     types.sort();
     types
+}
+
+fn prepare_ctype(env: &Env, ns: &Namespace, t: &Type) -> Option<CType> {
+    let full_name = format!("{}.{}", ns.name, t.get_name());
+    if env.type_status_sys(&full_name).ignored() {
+        return None;
+    }
+    let name = match t.get_glib_name() {
+        None => return None,
+        Some(name) => name,
+    };
+    if is_name_made_up(name) {
+        return None;
+    }
+    let cfg_condition = env
+        .config
+        .objects
+        .get(&full_name)
+        .and_then(|obj| obj.cfg_condition.clone());
+    Some(CType {
+        name: name.to_owned(),
+        cfg_condition,
+    })
 }
 
 fn prepare_cconsts(env: &Env) -> Vec<CConstant> {

@@ -463,17 +463,28 @@ impl Library {
                     let full_name = tid.full_name(self);
                     let obj = config.objects.get(&*full_name);
 
-                    if let Some(GObject {
+                    let is_final = if let Some(GObject {
                         final_type: Some(final_type),
                         ..
                     }) = obj
                     {
                         // The config might also be used to override a type that is wrongly
                         // detected as final type otherwise
-                        if *final_type {
-                            final_types.push(tid);
+                        *final_type
+                    } else if klass.type_struct.is_none() {
+                        !self.has_subtypes(tid)
+                    } else if let Some(class_record_tid) =
+                        self.find_type(ns_id as u16, klass.type_struct.as_ref().unwrap())
+                    {
+                        if let Type::Record(ref record) = self.type_(class_record_tid) {
+                            record.disguised && !self.has_subtypes(tid)
+                        } else {
+                            unreachable!("Type {} with non-record class", full_name);
                         }
-                    } else if klass.c_class_type.is_none() && !self.has_subtypes(tid) {
+                    } else {
+                        unreachable!("Can't find class for {}", full_name);
+                    };
+                    if is_final {
                         final_types.push(tid);
                     }
                 }

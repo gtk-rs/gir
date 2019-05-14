@@ -242,6 +242,7 @@ impl Library {
         let gtype_struct_for = elem.attr("is-gtype-struct-for");
         let version = self.read_version(parser, ns_id, elem)?;
         let deprecated_version = self.read_deprecated_version(parser, ns_id, elem)?;
+        let disguised = elem.attr_bool("disguised", false);
 
         let mut fields = Vec::new();
         let mut fns = Vec::new();
@@ -316,11 +317,6 @@ impl Library {
             "source-position" => parser.ignore_element(),
             _ => Err(parser.unexpected_element(elem)),
         })?;
-
-        // Currently g-ir-scanner is too eager to mark all typedef to non-complete
-        // types as disguised, so we limit this behaviour to the two most common cases.
-        // https://gitlab.gnome.org/GNOME/gobject-introspection/issues/101
-        let disguised = c_type == "GdkAtom" || c_type == "GIConv";
 
         let typ = Type::Record(Record {
             name: record_name.into(),
