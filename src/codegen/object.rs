@@ -188,9 +188,13 @@ pub struct {}Builder {{",
                     typ => (typ, ""),
                 };
                 let name = nameutil::mangle_keywords(nameutil::signal_to_snake(&property.name));
-                version_condition(w, env, property.version, false, 1)?;
+                let version_condition_string =
+                    version_condition_string(env, property.version, false, 1);
+                if let Some(ref version_condition_string) = version_condition_string {
+                    writeln!(w, "{}", version_condition_string)?;
+                }
                 writeln!(w, "    {}: Option<{}>,", name, type_string)?;
-                let prefix = version_condition_string(env, property.version, false, 1)
+                let prefix = version_condition_string
                     .map(|version| format!("{}\n", version))
                     .unwrap_or_default();
                 methods.push(format!(
