@@ -150,13 +150,7 @@ fn analyze_property(
     let check_get_func_name = format!("get_{}", name_for_func);
     let check_set_func_name = format!("set_{}", name_for_func);
 
-    let for_builder = env
-        .config
-        .objects
-        .get(&format!("{}Builder", obj.name))
-        .is_some()
-        && (prop.construct_only || prop.construct || prop.writable)
-        && generate_builders;
+    let for_builder = generate_builders && (prop.construct_only || prop.construct || prop.writable);
     let mut readable = prop.readable;
     let mut writable = if prop.construct_only {
         false

@@ -125,6 +125,11 @@ pub fn class(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<Info>
         obj,
         &mut imports,
     );
+    let generate_builders = env
+        .config
+        .objects
+        .get(&format!("{}Builder", obj.name))
+        .is_some();
     let (properties, mut builder_properties, notify_signals) = properties::analyze(
         env,
         &klass.properties,
@@ -135,7 +140,7 @@ pub fn class(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<Info>
         &mut imports,
         &signatures,
         deps,
-        true,
+        generate_builders,
     );
 
     for &super_tid in env.class_hierarchy.supertypes(class_tid) {
@@ -156,7 +161,7 @@ pub fn class(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<Info>
             &mut imports,
             &signatures,
             deps,
-            true,
+            generate_builders,
         );
         builder_properties.extend(new_builder_properties);
     }
