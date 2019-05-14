@@ -8,6 +8,7 @@ use std::collections::BTreeMap;
 pub mod bounds;
 pub mod c_type;
 pub mod child_properties;
+pub mod class_builder;
 pub mod class_hierarchy;
 pub mod constants;
 pub mod conversion_type;

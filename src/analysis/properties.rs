@@ -39,11 +39,9 @@ pub fn analyze(
     imports: &mut Imports,
     signatures: &Signatures,
     deps: &[library::TypeId],
-    generate_builders: bool,
-) -> (Vec<Property>, Vec<Property>, Vec<signals::Info>) {
+) -> (Vec<Property>, Vec<signals::Info>) {
     let mut properties = Vec::new();
     let mut notify_signals = Vec::new();
-    let mut builder_properties = Vec::new();
 
     for prop in props {
         let configured_properties = obj.properties.matched(&prop.name);
@@ -55,7 +53,7 @@ pub fn analyze(
             continue;
         }
 
-        let (getter, setter, builder, notify_signal) = analyze_property(
+        let (getter, setter, notify_signal) = analyze_property(
             env,
             prop,
             type_tid,
@@ -66,11 +64,7 @@ pub fn analyze(
             imports,
             signatures,
             deps,
-            generate_builders,
         );
-        if let Some(builder) = builder {
-            builder_properties.push(builder);
-        }
 
         if let Some(notify_signal) = notify_signal {
             notify_signals.push(notify_signal);
@@ -106,7 +100,7 @@ pub fn analyze(
         }
     }
 
-    (properties, builder_properties, notify_signals)
+    (properties, notify_signals)
 }
 
 fn analyze_property(
@@ -120,13 +114,7 @@ fn analyze_property(
     imports: &mut Imports,
     signatures: &Signatures,
     deps: &[library::TypeId],
-    generate_builders: bool,
-) -> (
-    Option<Property>,
-    Option<Property>,
-    Option<Property>,
-    Option<signals::Info>,
-) {
+) -> (Option<Property>, Option<Property>, Option<signals::Info>) {
     let type_name = type_tid.full_name(&env.library);
     let name = prop.name.clone();
 
@@ -150,7 +138,6 @@ fn analyze_property(
     let check_get_func_name = format!("get_{}", name_for_func);
     let check_set_func_name = format!("set_{}", name_for_func);
 
-    let for_builder = generate_builders && (prop.construct_only || prop.construct || prop.writable);
     let mut readable = prop.readable;
     let mut writable = if prop.construct_only {
         false
@@ -203,12 +190,7 @@ fn analyze_property(
         }
     }
 
-    let get_out_ref_mode = RefMode::of(env, prop.typ, library::ParameterDirection::Return);
-    let mut set_in_ref_mode = RefMode::of(env, prop.typ, library::ParameterDirection::In);
-    if set_in_ref_mode == RefMode::ByRefMut {
-        set_in_ref_mode = RefMode::ByRef;
-    }
-    let nullable = library::Nullable(set_in_ref_mode.is_ref());
+    let (get_out_ref_mode, set_in_ref_mode, nullable) = get_property_ref_modes(env, prop);
 
     let getter = if readable {
         Some(Property {
@@ -317,25 +299,18 @@ fn analyze_property(
         None
     };
 
-    let builder = if for_builder {
-        if let Ok(ref s) = used_rust_type(env, prop.typ, false) {
-            imports.add_used_type(s, prop.version);
-        }
-        Some(Property {
-            name: name.clone(),
-            var_name: String::new(),
-            typ: prop.typ,
-            is_get: false,
-            func_name: String::new(),
-            nullable,
-            get_out_ref_mode,
-            set_in_ref_mode,
-            version: prop_version,
-            deprecated_version: prop.deprecated_version,
-        })
-    } else {
-        None
-    };
+    (getter, setter, notify_signal)
+}
 
-    (getter, setter, builder, notify_signal)
+pub fn get_property_ref_modes(
+    env: &Env,
+    prop: &library::Property,
+) -> (RefMode, RefMode, library::Nullable) {
+    let get_out_ref_mode = RefMode::of(env, prop.typ, library::ParameterDirection::Return);
+    let mut set_in_ref_mode = RefMode::of(env, prop.typ, library::ParameterDirection::In);
+    if set_in_ref_mode == RefMode::ByRefMut {
+        set_in_ref_mode = RefMode::ByRef;
+    }
+    let nullable = library::Nullable(set_in_ref_mode.is_ref());
+    (get_out_ref_mode, set_in_ref_mode, nullable)
 }
