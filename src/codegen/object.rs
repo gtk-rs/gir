@@ -261,9 +261,14 @@ impl {}Builder {{
             writeln!(w, "        }}")?;
         }
     }
+    let glib_crate_name = if env.namespaces.is_glib_crate {
+        "crate"
+    } else {
+        "glib"
+    };
     writeln!(w,
-"        crate::Object::new({}::static_type(), &properties).expect(\"object new\").downcast().expect(\"downcast\")
-    }}", analysis.name)?;
+"        {}::Object::new({}::static_type(), &properties).expect(\"object new\").downcast().expect(\"downcast\")
+    }}", glib_crate_name, analysis.name)?;
     for method in methods {
         writeln!(w, "{}", method)?;
     }
