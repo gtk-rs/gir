@@ -214,7 +214,7 @@ pub struct {}Builder {{",
     }
     writeln!(
         w,
-        "}}\n
+        "}}
 
 #[cfg(any(feature = \"builders\", feature = \"dox\"))]
 impl {}Builder {{
@@ -238,19 +238,26 @@ impl {}Builder {{
     )?;
     for property in &properties {
         let name = nameutil::mangle_keywords(nameutil::signal_to_snake(&property.name));
-        version_condition(w, env, property.version, false, 2)?;
-        if property.version.is_some() {
+        let version_condition_string = version_condition_string(env, property.version, false, 2);
+        let condition_tabs = if version_condition_string.is_some() {
+            "\t"
+        } else {
+            ""
+        };
+        if let Some(ref version_condition_string) = version_condition_string {
+            writeln!(w, "{}", version_condition_string)?;
             writeln!(w, "        {{")?;
         }
         writeln!(
             w,
-            "        if let Some(ref {property}) = self.{property} {{
-            properties.push((\"{}\", {property}));
-        }}",
-            property.name,
-            property = name
+            "{tabs}        if let Some(ref {field}) = self.{field} {{
+{tabs}            properties.push((\"{name}\", {field}));
+{tabs}        }}",
+            name = property.name,
+            field = name,
+            tabs = condition_tabs
         )?;
-        if property.version.is_some() {
+        if version_condition_string.is_some() {
             writeln!(w, "        }}")?;
         }
     }
