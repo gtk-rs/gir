@@ -20,8 +20,7 @@ pub fn analyze(
     let generate_builders = env
         .config
         .objects
-        .get(&format!("{}Builder", obj.name))
-        .is_some();
+        .contains_key(&format!("{}Builder", obj.name));
     if !generate_builders {
         return Vec::new();
     }
@@ -89,7 +88,9 @@ fn analyze_property(
         return None;
     }
     if let Ok(ref s) = used_rust_type(env, prop.typ, false) {
-        imports.add_used_type(s, prop.version);
+        if !s.contains("GString") {
+            imports.add_used_type(s, prop.version);
+        }
     }
 
     let (get_out_ref_mode, set_in_ref_mode, nullable) = get_property_ref_modes(env, prop);

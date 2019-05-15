@@ -1016,6 +1016,15 @@ impl Library {
                         } else {
                             println!("[NOT GENERATED] {}", full_name);
                         }
+                    } else if let Type::Class(Class { properties, .. }) = x {
+                        let builder_name = format!("{}Builder", full_name);
+                        if !env.config.objects.contains_key(&builder_name)
+                            && properties
+                                .iter()
+                                .any(|prop| prop.construct_only || prop.construct || prop.writable)
+                        {
+                            println!("[NOT GENERATED BUILDER] {}", builder_name);
+                        }
                     }
                 }
                 if let Some(tid) = env.library.find_type(0, &full_name) {
