@@ -89,13 +89,13 @@ pub fn generate(
         },
     )?;
 
-    if analysis.concurrency != library::Concurrency::None {
+    if !analysis.builder_properties.is_empty() {
         writeln!(w)?;
+        generate_builder(w, env, analysis)?;
     }
 
-    // TODO: include parent properties.
-    if !analysis.builder_properties.is_empty() {
-        generate_builder(w, env, analysis)?;
+    if analysis.concurrency != library::Concurrency::None {
+        writeln!(w)?;
     }
 
     match analysis.concurrency {
@@ -169,12 +169,7 @@ pub fn generate(
 fn generate_builder(w: &mut dyn Write, env: &Env, analysis: &analysis::object::Info) -> Result<()> {
     let mut methods = vec![];
     let mut properties = vec![];
-    writeln!(
-        w,
-        "#[cfg(any(feature = \"builders\", feature = \"dox\"))]
-pub struct {}Builder {{",
-        analysis.name
-    )?;
+    writeln!(w, "pub struct {}Builder {{", analysis.name)?;
     for property in &analysis.builder_properties {
         match rust_type(env, property.typ) {
             Ok(type_string) => {
@@ -216,7 +211,6 @@ pub struct {}Builder {{",
         w,
         "}}
 
-#[cfg(any(feature = \"builders\", feature = \"dox\"))]
 impl {}Builder {{
     pub fn new() -> Self {{
         Self {{",
@@ -399,8 +393,7 @@ pub fn generate_reexports(
     if !analysis.builder_properties.is_empty() {
         contents.extend_from_slice(&cfgs);
         contents.push(format!(
-            "#[cfg(any(feature = \"builders\", feature = \"dox\"))]
-pub use self::{}::{}Builder;",
+            "pub use self::{}::{}Builder;",
             module_name, analysis.name
         ));
     }

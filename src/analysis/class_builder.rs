@@ -20,8 +20,7 @@ pub fn analyze(
     let generate_builders = env
         .config
         .objects
-        .get(&format!("{}Builder", obj.name))
-        .is_some();
+        .contains_key(&format!("{}Builder", obj.name));
     if !generate_builders {
         return Vec::new();
     }
