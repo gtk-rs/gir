@@ -188,9 +188,13 @@ pub struct {}Builder {{",
                     typ => (typ, ""),
                 };
                 let name = nameutil::mangle_keywords(nameutil::signal_to_snake(&property.name));
-                version_condition(w, env, property.version, false, 1)?;
+                let version_condition_string =
+                    version_condition_string(env, property.version, false, 1);
+                if let Some(ref version_condition_string) = version_condition_string {
+                    writeln!(w, "{}", version_condition_string)?;
+                }
                 writeln!(w, "    {}: Option<{}>,", name, type_string)?;
-                let prefix = version_condition_string(env, property.version, false, 1)
+                let prefix = version_condition_string
                     .map(|version| format!("{}\n", version))
                     .unwrap_or_default();
                 methods.push(format!(
@@ -210,7 +214,7 @@ pub struct {}Builder {{",
     }
     writeln!(
         w,
-        "}}\n
+        "}}
 
 #[cfg(any(feature = \"builders\", feature = \"dox\"))]
 impl {}Builder {{
@@ -234,25 +238,37 @@ impl {}Builder {{
     )?;
     for property in &properties {
         let name = nameutil::mangle_keywords(nameutil::signal_to_snake(&property.name));
-        version_condition(w, env, property.version, false, 2)?;
-        if property.version.is_some() {
+        let version_condition_string = version_condition_string(env, property.version, false, 2);
+        let condition_tabs = if version_condition_string.is_some() {
+            "\t"
+        } else {
+            ""
+        };
+        if let Some(ref version_condition_string) = version_condition_string {
+            writeln!(w, "{}", version_condition_string)?;
             writeln!(w, "        {{")?;
         }
         writeln!(
             w,
-            "        if let Some(ref {property}) = self.{property} {{
-            properties.push((\"{}\", {property}));
-        }}",
-            property.name,
-            property = name
+            "{tabs}        if let Some(ref {field}) = self.{field} {{
+{tabs}            properties.push((\"{name}\", {field}));
+{tabs}        }}",
+            name = property.name,
+            field = name,
+            tabs = condition_tabs
         )?;
-        if property.version.is_some() {
+        if version_condition_string.is_some() {
             writeln!(w, "        }}")?;
         }
     }
+    let glib_crate_name = if env.namespaces.is_glib_crate {
+        "crate"
+    } else {
+        "glib"
+    };
     writeln!(w,
-"        crate::Object::new({}::static_type(), &properties).expect(\"object new\").downcast().expect(\"downcast\")
-    }}", analysis.name)?;
+"        {}::Object::new({}::static_type(), &properties).expect(\"object new\").downcast().expect(\"downcast\")
+    }}", glib_crate_name, analysis.name)?;
     for method in methods {
         writeln!(w, "{}", method)?;
     }

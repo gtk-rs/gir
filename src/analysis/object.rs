@@ -125,7 +125,7 @@ pub fn class(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<Info>
         obj,
         &mut imports,
     );
-    let (properties, mut builder_properties, notify_signals) = properties::analyze(
+    let (properties, notify_signals) = properties::analyze(
         env,
         &klass.properties,
         class_tid,
@@ -135,31 +135,10 @@ pub fn class(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<Info>
         &mut imports,
         &signatures,
         deps,
-        true,
     );
 
-    for &super_tid in env.class_hierarchy.supertypes(class_tid) {
-        let type_ = env.type_(super_tid);
-
-        let super_class: &library::Class = match type_.maybe_ref() {
-            Some(super_class) => super_class,
-            None => continue,
-        };
-
-        let (_, new_builder_properties, _) = properties::analyze(
-            env,
-            &super_class.properties,
-            super_tid,
-            !final_type,
-            &mut trampolines::Trampolines::with_capacity(0),
-            obj,
-            &mut imports,
-            &signatures,
-            deps,
-            true,
-        );
-        builder_properties.extend(new_builder_properties);
-    }
+    let builder_properties =
+        class_builder::analyze(env, &klass.properties, class_tid, obj, &mut imports);
 
     let (version, deprecated_version) = info_base::versions(
         env,
@@ -187,8 +166,8 @@ pub fn class(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<Info>
 
     if !builder_properties.is_empty() {
         imports.add("glib::object::Cast", None);
-        imports.add("gtk::prelude::ToValue", None);
         imports.add("glib::StaticType", None);
+        imports.add("glib::ToValue", None);
     }
 
     if generate_trait {
@@ -310,7 +289,7 @@ pub fn interface(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<I
         obj,
         &mut imports,
     );
-    let (properties, _, notify_signals) = properties::analyze(
+    let (properties, notify_signals) = properties::analyze(
         env,
         &iface.properties,
         iface_tid,
@@ -320,7 +299,6 @@ pub fn interface(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<I
         &mut imports,
         &signatures,
         deps,
-        false,
     );
 
     let (version, deprecated_version) = info_base::versions(
