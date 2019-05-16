@@ -1,10 +1,14 @@
 use super::{child_properties, function, general, properties, signal, trait_impls, trampoline};
 use crate::{
-    analysis::{self, rust_type::rust_type},
+    analysis::{
+        self,
+        rust_type::{rust_type, rust_type_full},
+    },
     case::CaseExt,
     codegen::general::{version_condition, version_condition_string},
     env::Env,
     library, nameutil,
+    traits::IntoString,
 };
 use std::io::{Result, Write};
 
@@ -178,10 +182,24 @@ fn generate_builder(w: &mut dyn Write, env: &Env, analysis: &analysis::object::I
                     "Vec<GString>" => "Vec<String>",
                     typ => typ,
                 };
-                let (param_type, conversion) = match type_string {
-                    "String" => ("&str", ".to_string()"),
-                    typ => (typ, ""),
+                let mut param_type = rust_type_full(
+                    env,
+                    property.typ,
+                    library::Nullable(false),
+                    property.set_in_ref_mode,
+                    library::ParameterScope::None,
+                    library::Concurrency::None,
+                )
+                .into_string();
+                let (param_type_override, conversion) = match &param_type[..] {
+                    "&str" => (None, ".to_string()"),
+                    "&[&str]" => (Some("Vec<String>"), ""),
+                    typ if typ.starts_with('&') => (None, ".clone()"),
+                    _ => (None, ""),
                 };
+                if let Some(param_type_override) = param_type_override {
+                    param_type = param_type_override.to_string();
+                }
                 let name = nameutil::mangle_keywords(nameutil::signal_to_snake(&property.name));
                 let version_condition_string =
                     version_condition_string(env, property.version, false, 1);
