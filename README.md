@@ -2,6 +2,10 @@
 
 The `GIR` is used to generate both the sys level crate and a safe API crate to use the sys level (FFI) crate.
 
+## How to use
+
+This README files is more about the options and little overview. If you want a tutorial on how to generate a crate using `gir`, we recommend you to read this [tutorial](https://gtk-rs.org/docs-src/tutorial/gir_tutorial) instead.
+
 ## Introduction to `gir` generation
 
 Using `gir` requires both a `*.toml` and a `*.gir` for generation of the bindings.
