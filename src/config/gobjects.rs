@@ -24,7 +24,6 @@ use toml::Value;
 pub enum GStatus {
     Manual,
     Generate,
-    Comment,
     Ignore,
 }
 
@@ -34,9 +33,6 @@ impl GStatus {
     }
     pub fn need_generate(self) -> bool {
         self == GStatus::Generate
-    }
-    pub fn normal(self) -> bool {
-        self == GStatus::Generate || self == GStatus::Manual
     }
 }
 
@@ -52,7 +48,6 @@ impl FromStr for GStatus {
         match s {
             "manual" => Ok(GStatus::Manual),
             "generate" => Ok(GStatus::Generate),
-            "comment" => Ok(GStatus::Comment),
             "ignore" => Ok(GStatus::Ignore),
             e => Err(format!("Wrong object status: \"{}\"", e)),
         }
@@ -368,7 +363,7 @@ pub fn parse_status_shorthands(
     generate_display_trait: bool,
 ) {
     use self::GStatus::*;
-    for &status in &[Manual, Generate, Comment, Ignore] {
+    for &status in &[Manual, Generate, Ignore] {
         parse_status_shorthand(objects, status, toml, concurrency, generate_display_trait);
     }
 }
