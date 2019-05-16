@@ -24,7 +24,6 @@ use toml::Value;
 pub enum GStatus {
     Manual,
     Generate,
-    Builders,
     Comment,
     Ignore,
 }
@@ -53,7 +52,6 @@ impl FromStr for GStatus {
         match s {
             "manual" => Ok(GStatus::Manual),
             "generate" => Ok(GStatus::Generate),
-            "builders" => Ok(GStatus::Builders),
             "comment" => Ok(GStatus::Comment),
             "ignore" => Ok(GStatus::Ignore),
             e => Err(format!("Wrong object status: \"{}\"", e)),
@@ -88,6 +86,7 @@ pub struct GObject {
     pub subclassing: bool,
     pub manual_traits: Vec<String>,
     pub align: Option<u32>,
+    pub generate_builder: bool,
 }
 
 impl Default for GObject {
@@ -117,6 +116,7 @@ impl Default for GObject {
             subclassing: false,
             manual_traits: Vec::default(),
             align: None,
+            generate_builder: false,
         }
     }
 }
@@ -203,6 +203,7 @@ fn parse_object(
             "subclassing",
             "manual_traits",
             "align",
+            "generate_builder",
         ],
         &format!("object {}", name),
     );
@@ -308,6 +309,10 @@ fn parse_object(
                 Some(v as u32)
             }
         });
+    let generate_builder = toml_object
+        .lookup("generate_builder")
+        .and_then(Value::as_bool)
+        .unwrap_or(false);
 
     if status != GStatus::Manual && ref_mode.is_some() {
         warn!("ref_mode configuration used for non-manual object {}", name);
@@ -352,6 +357,7 @@ fn parse_object(
         subclassing,
         manual_traits,
         align,
+        generate_builder,
     }
 }
 
@@ -362,7 +368,7 @@ pub fn parse_status_shorthands(
     generate_display_trait: bool,
 ) {
     use self::GStatus::*;
-    for &status in &[Manual, Generate, Builders, Comment, Ignore] {
+    for &status in &[Manual, Generate, Comment, Ignore] {
         parse_status_shorthand(objects, status, toml, concurrency, generate_display_trait);
     }
 }
@@ -391,6 +397,25 @@ fn parse_status_shorthand(
                     );
                 }
                 Some(_) => panic!("Bad name in {}: {} already defined", name, name_),
+            }
+        }
+    }
+}
+
+pub fn parse_builders(objects: &mut GObjects, toml: &Value) {
+    let option_name = "options.builders";
+    let suffix = "Builder";
+    if let Some(a) = toml.lookup(option_name).map(|a| a.as_array().unwrap()) {
+        for name in a.iter().map(|s| s.as_str().unwrap()) {
+            // Support both object name and builder name
+            let obj_name = if name.ends_with(suffix) {
+                &name[..name.len() - suffix.len()]
+            } else {
+                name
+            };
+            match objects.get_mut(obj_name) {
+                Some(obj) => obj.generate_builder = true,
+                None => panic!("Bad name in {}: object {} not defined", option_name, name),
             }
         }
     }

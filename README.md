@@ -126,12 +126,18 @@ manual = ["Gtk.Button"]
 
 So in here, both `GtkWidget` and `GtkWindow` will be fully generated and functions/methods using `GtkButton` will be uncommented. To generate code for all global functions, add `Gtk.*` to the `generate` array.
 
-To also generate a `Builder` struct for a widget, it needs to be added in the `builders` array:
+To also generate a `Builder` struct for a widget, it needs to be added in the `builders` array or set `generate_builder` flag in object configuration:
 
 ```toml
 builders = [
-    "Gtk.WindowBuilder",
+    "Gtk.AboutDialog",    # generated object name
+    "Gtk.WindowBuilder",  # or name with suffix Builder
 ]
+
+[[object]]
+name = "Gtk.TreeView"
+status = "generate"
+generate_builder = true
 ```
 
 Sometimes Gir understands the object definition incorrectly or the `.gir` file contains an incomplete or wrong definition, to fix it, you can use the full object configuration:
@@ -156,6 +162,8 @@ version = "3.12"
 cfg_condition = "mycond"
 # if you want to override default option Ex. for write your own Display implementation
 generate_display_trait = false
+# if you want to generate builder with name SomeClassBuilder
+generate_builder = true
     # define overrides for function
     [[object.function]]
     # filter functions from object

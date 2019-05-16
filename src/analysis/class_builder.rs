@@ -17,11 +17,7 @@ pub fn analyze(
     obj: &GObject,
     imports: &mut Imports,
 ) -> Vec<Property> {
-    let generate_builders = env
-        .config
-        .objects
-        .contains_key(&format!("{}Builder", obj.name));
-    if !generate_builders {
+    if !obj.generate_builder {
         return Vec::new();
     }
 
