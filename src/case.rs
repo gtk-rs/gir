@@ -31,13 +31,11 @@ impl CaseExt for str {
                 true
             } else if c.is_lowercase() {
                 false
-            } else if c == '.' {
-                true
             } else {
                 upper
             };
 
-            if !upper && next_upper && c != '.' {
+            if !upper && next_upper {
                 s.push('_');
             } else if upper && !next_upper && upper_count >= 3 {
                 let n = s.len() - s.chars().next_back().unwrap().len_utf8();
@@ -96,10 +94,6 @@ mod tests {
             ("FooBarBaz", "foo_bar_baz"),
             ("aBcDe", "a_bc_de"),
             ("aXXbYYc", "a_xxb_yyc"),
-            ("options.GenerateBuilders", "options.generate_builders"),
-            ("options.Generate", "options.generate"),
-            ("options.Manual", "options.manual"),
-            ("options.Ignore", "options.ignore"),
         ];
 
         for &(input, expected) in &cases {

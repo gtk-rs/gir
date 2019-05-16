@@ -9,7 +9,6 @@ use super::{
 };
 use crate::{
     analysis::{conversion_type, ref_mode},
-    case::CaseExt,
     config::{
         error::TomlHelper,
         parsable::{Parsable, Parse},
@@ -375,7 +374,7 @@ fn parse_status_shorthand(
     concurrency: library::Concurrency,
     generate_display_trait: bool,
 ) {
-    let name = format!("options.{:?}", status).to_snake();
+    let name = format!("options.{:?}", status).to_ascii_lowercase();
     if let Some(a) = toml.lookup(&name).map(|a| a.as_array().unwrap()) {
         for name_ in a.iter().map(|s| s.as_str().unwrap()) {
             match objects.get(name_) {
