@@ -22,9 +22,9 @@ use toml::Value;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum GStatus {
-    Manual, // already generated
+    Manual,
     Generate,
-    GenerateBuilders,
+    Builders,
     Comment,
     Ignore,
 }
@@ -53,7 +53,7 @@ impl FromStr for GStatus {
         match s {
             "manual" => Ok(GStatus::Manual),
             "generate" => Ok(GStatus::Generate),
-            "generate_builders" => Ok(GStatus::GenerateBuilders),
+            "builders" => Ok(GStatus::Builders),
             "comment" => Ok(GStatus::Comment),
             "ignore" => Ok(GStatus::Ignore),
             e => Err(format!("Wrong object status: \"{}\"", e)),
@@ -362,7 +362,7 @@ pub fn parse_status_shorthands(
     generate_display_trait: bool,
 ) {
     use self::GStatus::*;
-    for &status in &[Manual, Generate, GenerateBuilders, Comment, Ignore] {
+    for &status in &[Manual, Generate, Builders, Comment, Ignore] {
         parse_status_shorthand(objects, status, toml, concurrency, generate_display_trait);
     }
 }

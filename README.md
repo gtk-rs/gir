@@ -126,10 +126,10 @@ manual = ["Gtk.Button"]
 
 So in here, both `GtkWidget` and `GtkWindow` will be fully generated and functions/methods using `GtkButton` will be uncommented. To generate code for all global functions, add `Gtk.*` to the `generate` array.
 
-To also generate a `Builder` struct for a widget, it needs to be added in the `generate_builders` array:
+To also generate a `Builder` struct for a widget, it needs to be added in the `builders` array:
 
 ```toml
-generate_builders = [
+builders = [
     "Gtk.WindowBuilder",
 ]
 ```
