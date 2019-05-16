@@ -613,12 +613,10 @@ impl Builder {
             body: Box::new(Chunk::Chunks(body)),
             return_value: if trampoline.ret.c_type != "void" {
                 let p = &trampoline.ret;
-                Some(if p.c_type == "gpointer" {
-                    "glib_sys::gpointer".to_string()
-                } else {
+                Some(
                     crate::analysis::ffi_type::ffi_type(env, p.typ, &p.c_type)
-                        .expect("failed to write c_type")
-                })
+                        .expect("failed to write c_type"),
+                )
             } else {
                 None
             },
