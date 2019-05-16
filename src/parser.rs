@@ -702,16 +702,17 @@ impl Library {
                 if inner.is_some() {
                     return Err(parser.fail_with_position(
                         "Too many <type> inner elements in <constant> element",
-                        elem.position()));
+                        elem.position(),
+                    ));
                 }
                 let (typ, c_type, array_length) = self.read_type(parser, ns_id, elem)?;
                 if let Some(c_type) = c_type {
                     inner = Some((typ, c_type, array_length));
                 } else {
-                    return Err(
-                        parser.fail_with_position("Missing <constant> element's c:type",
-                                                  elem.position())
-                    );
+                    return Err(parser.fail_with_position(
+                        "Missing <constant> element's c:type",
+                        elem.position(),
+                    ));
                 }
                 Ok(())
             }
@@ -738,8 +739,10 @@ impl Library {
             );
             Ok(())
         } else {
-            Err(parser.fail_with_position("Missing <type> element inside <constant> element",
-                                          elem.position()))
+            Err(parser.fail_with_position(
+                "Missing <type> element inside <constant> element",
+                elem.position(),
+            ))
         }
     }
 
@@ -761,7 +764,8 @@ impl Library {
                 if inner.is_some() {
                     return Err(parser.fail_with_position(
                         "Too many <type> inner elements in <alias> element",
-                        elem.position()));
+                        elem.position(),
+                    ));
                 }
                 let (typ, c_type, array_length) = self.read_type(parser, ns_id, elem)?;
                 if let Some(c_type) = c_type {
@@ -788,7 +792,8 @@ impl Library {
         } else {
             Err(parser.fail_with_position(
                 "Missing <type> element inside <alias> element",
-                elem.position()))
+                elem.position(),
+            ))
         }
     }
 
@@ -839,7 +844,8 @@ impl Library {
                 if ret.is_some() {
                     return Err(parser.fail_with_position(
                         "Too many <return-value> elements inside <function> element",
-                        elem.position()));
+                        elem.position(),
+                    ));
                 }
                 ret = Some(self.read_parameter(parser, ns_id, elem, false, is_method)?);
                 Ok(())
@@ -887,7 +893,8 @@ impl Library {
         } else {
             Err(parser.fail_with_position(
                 "Missing <return-value> element in <function> element",
-                elem.position()))
+                elem.position(),
+            ))
         }
     }
 
@@ -917,10 +924,13 @@ impl Library {
         self.read_function(parser, ns_id, kind_str, elem)
             .and_then(|f| {
                 if f.c_identifier.is_none() {
-                    return Err(parser
-                        .fail_with_position(
-                            &format!("Missing c:identifier attribute in <{}> element", elem.name()),
-                            elem.position()));
+                    return Err(parser.fail_with_position(
+                        &format!(
+                            "Missing c:identifier attribute in <{}> element",
+                            elem.name()
+                        ),
+                        elem.position(),
+                    ));
                 }
                 Ok(Some(f))
             })
@@ -950,7 +960,8 @@ impl Library {
                 if ret.is_some() {
                     return Err(parser.fail_with_position(
                         "Too many <return-value> elements in <signal> element",
-                        elem.position()));
+                        elem.position(),
+                    ));
                 }
                 self.read_parameter(parser, ns_id, elem, true, false)
                     .map(|p| ret = Some(p))
@@ -973,7 +984,8 @@ impl Library {
         } else {
             Err(parser.fail_with_position(
                 "Missing <return-value> element in <signal> element",
-                elem.position()))
+                elem.position(),
+            ))
         }
     }
 
@@ -1025,22 +1037,20 @@ impl Library {
         parser.elements(|parser, elem| match elem.name() {
             "type" | "array" => {
                 if typ.is_some() {
-                    return Err(
-                        parser.fail_with_position(
-                            &format!("Too many <type> elements in <{}> element", elem.name()),
-                            elem.position())
-                    );
+                    return Err(parser.fail_with_position(
+                        &format!("Too many <type> elements in <{}> element", elem.name()),
+                        elem.position(),
+                    ));
                 }
                 typ = Some(self.read_type(parser, ns_id, elem)?);
                 if let Some((tid, None, _)) = typ {
                     if allow_no_ctype {
                         typ = Some((tid, Some(EMPTY_CTYPE.to_owned()), None));
                     } else {
-                        return Err(
-                            parser.fail_with_position(
-                                &format!("Missing c:type attribute in <{}> element", elem.name()),
-                                elem.position())
-                        );
+                        return Err(parser.fail_with_position(
+                            &format!("Missing c:type attribute in <{}> element", elem.name()),
+                            elem.position(),
+                        ));
                     }
                 }
                 Ok(())
@@ -1095,7 +1105,8 @@ impl Library {
         } else {
             Err(parser.fail_with_position(
                 &format!("Missing <type> element in <{}> element", elem.name()),
-                elem.position()))
+                elem.position(),
+            ))
         }
     }
 
@@ -1123,11 +1134,10 @@ impl Library {
         parser.elements(|parser, elem| match elem.name() {
             "type" | "array" => {
                 if typ.is_some() {
-                    return Err(
-                        parser.fail_with_position(
-                            "Too many <type> elements in <property> element",
-                            elem.position())
-                    );
+                    return Err(parser.fail_with_position(
+                        "Too many <type> elements in <property> element",
+                        elem.position(),
+                    ));
                 }
                 if !elem.has_attrs() && elem.name() == "type" {
                     // defend from <type/>
@@ -1167,7 +1177,8 @@ impl Library {
         } else {
             Err(parser.fail_with_position(
                 "Missing <type> element in <property> element",
-                elem.position()))
+                elem.position(),
+            ))
         }
     }
 
@@ -1189,7 +1200,8 @@ impl Library {
             .ok_or_else(|| {
                 parser.fail_with_position(
                     "<type> element is missing a name attribute",
-                    elem.position())
+                    elem.position(),
+                )
             })?;
         let c_type = elem.attr("type").map(|s| s.into());
         let array_length = elem.attr("length").and_then(|s| s.parse().ok());
@@ -1203,7 +1215,8 @@ impl Library {
             if type_name == "array" {
                 Err(parser.fail_with_position(
                     "<type> element is missing an inner element type",
-                    elem.position()))
+                    elem.position(),
+                ))
             } else {
                 Ok((
                     self.find_or_stub_type(ns_id, type_name),
