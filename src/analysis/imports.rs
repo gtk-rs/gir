@@ -55,6 +55,9 @@ impl Imports {
             } else {
                 *entry = (entry.0, Vec::new());
             }
+            // Since there is no constraint on this import, if any constraint
+            // is present, we can just remove it.
+            entry.1.clear();
         }
     }
 
@@ -74,21 +77,31 @@ impl Imports {
             }
         }
         if let Some(name) = self.strip_crate_name(name) {
-            let entry = self
-                .map
-                .entry(name.to_owned())
-                .or_insert((version, Vec::new()));
-            if version < entry.0 {
-                *entry = (version, Vec::new());
-            } else {
-                *entry = (entry.0, Vec::new());
-            }
-
-            if let Some(constraint) = constraint {
+            let entry = if let Some(constraint) = constraint {
                 let constraint = String::from(constraint);
-                if !entry.1.contains(&constraint) {
+                let entry = self
+                    .map
+                    .entry(name.to_owned())
+                    .or_insert((version, vec![constraint.clone()]));
+                // If the import is already present but doesn't have any constraint,
+                // we don't want to add one. Otherwise, we just check if the constraint
+                // is already present or not before adding it.
+                if !entry.1.is_empty() && !entry.1.iter().any(|x| x == &constraint) {
                     entry.1.push(constraint);
                 }
+                entry
+            } else {
+                let entry = self
+                    .map
+                    .entry(name.to_owned())
+                    .or_insert((version, Vec::new()));
+                // Since there is no constraint on this import, if any constraint
+                // is present, we can just remove it.
+                entry.1.clear();
+                entry
+            };
+            if version < entry.0 {
+                entry.0 = version;
             }
         }
     }
