@@ -227,7 +227,8 @@ fn analyze_property(
     };
 
     if !generate_trait && (writable || readable || notifiable) {
-        imports.add("glib::object::ObjectType", prop_version);
+        //Don't bring trait into scope to resolve conflict with OSTree::ObjectType
+        imports.add("glib::object::ObjectType as _", prop_version);
     }
 
     let notify_signal = if notifiable {
