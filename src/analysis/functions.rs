@@ -181,7 +181,7 @@ fn fixup_gpointer_parameter(
             transfer: Transfer::None,
             ref_mode: RefMode::ByRef,
             to_glib_extra: String::new(),
-            explicit_target_type: format!("*mut {}", ffi_name),
+            explicit_target_type: format!("*const {}", ffi_name),
             pointer_cast: " as glib_sys::gconstpointer".into(),
             in_trait: false,
             nullable: false,
