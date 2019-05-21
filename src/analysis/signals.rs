@@ -102,8 +102,8 @@ fn analyze_signal(
         if in_trait {
             imports.add("glib::object::Cast", version);
         } else {
-            //Don't bring trait into scope to resolve conflict with OSTree::ObjectType
-            imports.add("glib::object::ObjectType as _", version);
+            //To resolve a conflict with OSTree::ObjectType
+            imports.add("glib::object::ObjectType as ObjectType_", version);
         }
         imports.add("glib::signal::connect_raw", version);
         imports.add("glib::signal::SignalHandlerId", version);
