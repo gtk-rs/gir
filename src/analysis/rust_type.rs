@@ -274,9 +274,17 @@ pub fn rust_type_full(
                         let y = rust_type(env, p.typ).unwrap_or_else(|_| String::new());
                         s.push(format!(
                             "{}{}",
-                            if is_fundamental { "" } else { "&" },
+                            if is_fundamental || *p.nullable {
+                                ""
+                            } else {
+                                "&"
+                            },
                             if y != "GString" {
-                                x
+                                if !is_fundamental && *p.nullable {
+                                    x.replace("Option<", "Option<&")
+                                } else {
+                                    x
+                                }
                             } else if *p.nullable {
                                 "Option<&str>".to_owned()
                             } else {
