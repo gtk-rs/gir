@@ -373,6 +373,10 @@ impl Builder {
                 }
                 continue;
             }
+            if *nullable && !is_fundamental {
+                arguments.push(Chunk::Name(format!("{}.as_ref()", par.name)));
+                continue;
+            }
             arguments.push(Chunk::Name(format!(
                 "{}{}",
                 if is_fundamental { "" } else { "&" },
@@ -1217,20 +1221,23 @@ fn add_chunk_for_type(
         ref x => {
             let (begin, end) =
                 crate::codegen::trampoline_from_glib::from_glib_xxx(par.transfer, true);
+
+            let type_name;
+            if ty_name == "GString" {
+                if *nullable {
+                    type_name = String::from(": Option<GString>");
+                } else {
+                    type_name = String::from(": GString");
+                }
+            } else if par.transfer == library::Transfer::None && *nullable {
+                type_name = format!(": Option<{}>", ty_name);
+            } else {
+                type_name = String::from("");
+            }
+
             body.push(Chunk::Custom(format!(
                 "let {1}{3} = {0}{1}{2};",
-                begin,
-                par.name,
-                end,
-                if ty_name == "GString" {
-                    if *nullable {
-                        ": Option<GString>"
-                    } else {
-                        ": GString"
-                    }
-                } else {
-                    ""
-                }
+                begin, par.name, end, type_name
             )));
             if ty_name == "GString" && *nullable {
                 body.push(Chunk::Custom(format!("let {0} = {0}.as_ref();", par.name)));
