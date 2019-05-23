@@ -524,7 +524,14 @@ fn analyze_function(
         }
     }
 
-    fixup_special_functions(env, imports, name.as_str(), type_tid, is_boxed, &mut parameters);
+    fixup_special_functions(
+        env,
+        imports,
+        name.as_str(),
+        type_tid,
+        is_boxed,
+        &mut parameters,
+    );
 
     // Key: destroy callback index
     // Value: associated user data index
