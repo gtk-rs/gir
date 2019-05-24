@@ -80,12 +80,11 @@ pub fn new(env: &Env, obj: &GObject) -> Option<Info> {
         None => return None,
     };
 
-    let use_boxed_functions =
-        obj.use_boxed_functions || RecordType::of(&record) == RecordType::AutoBoxed;
+    let is_boxed = obj.use_boxed_functions || RecordType::of(&record) == RecordType::AutoBoxed;
 
     let mut imports = Imports::with_defined(&env.library, &name);
     imports.add(env.main_sys_crate_name(), None);
-    if record.glib_get_type.is_some() && use_boxed_functions {
+    if record.glib_get_type.is_some() && is_boxed {
         imports.add("gobject_sys", None);
     }
 
@@ -94,7 +93,7 @@ pub fn new(env: &Env, obj: &GObject) -> Option<Info> {
         &record.functions,
         record_tid,
         false,
-        use_boxed_functions,
+        is_boxed,
         obj,
         &mut imports,
         None,
