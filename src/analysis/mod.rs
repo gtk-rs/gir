@@ -117,6 +117,7 @@ fn analyze_global_functions(env: &mut Env) {
         &functions,
         TypeId::tid_none(),
         false,
+        false,
         obj,
         &mut imports,
         None,

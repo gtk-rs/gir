@@ -1,5 +1,6 @@
 use crate::library;
 
+#[derive(PartialEq, Eq)]
 pub enum RecordType {
     /// Boxed record that use g_boxed_copy, g_boxed_free.
     /// Must have glib_get_type function

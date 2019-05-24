@@ -105,6 +105,7 @@ pub fn analyze<F: Borrow<library::Function>>(
     functions: &[F],
     type_tid: library::TypeId,
     in_trait: bool,
+    is_boxed: bool,
     obj: &config::gobjects::GObject,
     imports: &mut Imports,
     mut signatures: Option<&mut Signatures>,
@@ -145,7 +146,7 @@ pub fn analyze<F: Borrow<library::Function>>(
             func,
             type_tid,
             in_trait,
-            obj.use_boxed_functions,
+            is_boxed,
             &configured_functions,
             imports,
         );

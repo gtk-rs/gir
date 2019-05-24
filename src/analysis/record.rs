@@ -80,16 +80,13 @@ pub fn new(env: &Env, obj: &GObject) -> Option<Info> {
         None => return None,
     };
 
-    let use_boxed_functions = obj.use_boxed_functions;
+    let use_boxed_functions =
+        obj.use_boxed_functions || RecordType::of(&record) == RecordType::AutoBoxed;
 
     let mut imports = Imports::with_defined(&env.library, &name);
     imports.add(env.main_sys_crate_name(), None);
-    if record.glib_get_type.is_some() {
-        if use_boxed_functions {
-            imports.add("gobject_sys", None);
-        } else if let RecordType::AutoBoxed = RecordType::of(&record) {
-            imports.add("gobject_sys", None);
-        }
+    if record.glib_get_type.is_some() && use_boxed_functions {
+        imports.add("gobject_sys", None);
     }
 
     let mut functions = functions::analyze(
@@ -97,6 +94,7 @@ pub fn new(env: &Env, obj: &GObject) -> Option<Info> {
         &record.functions,
         record_tid,
         false,
+        use_boxed_functions,
         obj,
         &mut imports,
         None,
@@ -171,7 +169,7 @@ pub fn new(env: &Env, obj: &GObject) -> Option<Info> {
         base,
         glib_get_type: record.glib_get_type.clone(),
         derives,
-        use_boxed_functions,
+        use_boxed_functions: obj.use_boxed_functions,
     };
 
     Some(info)
