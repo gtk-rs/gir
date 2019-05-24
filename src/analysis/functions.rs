@@ -105,6 +105,7 @@ pub fn analyze<F: Borrow<library::Function>>(
     functions: &[F],
     type_tid: library::TypeId,
     in_trait: bool,
+    is_boxed: bool,
     obj: &config::gobjects::GObject,
     imports: &mut Imports,
     mut signatures: Option<&mut Signatures>,
@@ -145,6 +146,7 @@ pub fn analyze<F: Borrow<library::Function>>(
             func,
             type_tid,
             in_trait,
+            is_boxed,
             &configured_functions,
             imports,
         );
@@ -158,6 +160,7 @@ pub fn analyze<F: Borrow<library::Function>>(
 fn fixup_gpointer_parameter(
     env: &Env,
     type_tid: library::TypeId,
+    is_boxed: bool,
     parameters: &mut Parameters,
     idx: usize,
 ) {
@@ -167,6 +170,7 @@ fn fixup_gpointer_parameter(
 
     let glib_name = env.library.type_(type_tid).get_glib_name().unwrap();
     let ffi_name = ffi_type::ffi_type(env, type_tid, &glib_name).unwrap();
+    let pointer_type = if is_boxed { "*const" } else { "*mut" };
     parameters.rust_parameters[idx].typ = type_tid;
     parameters.c_parameters[idx].typ = type_tid;
     parameters.c_parameters[idx].instance_parameter = instance_parameter;
@@ -181,7 +185,7 @@ fn fixup_gpointer_parameter(
             transfer: Transfer::None,
             ref_mode: RefMode::ByRef,
             to_glib_extra: String::new(),
-            explicit_target_type: format!("*mut {}", ffi_name),
+            explicit_target_type: format!("{} {}", pointer_type, ffi_name),
             pointer_cast: " as glib_sys::gconstpointer".into(),
             in_trait: false,
             nullable: false,
@@ -194,6 +198,7 @@ fn fixup_special_functions(
     imports: &mut Imports,
     name: &str,
     type_tid: library::TypeId,
+    is_boxed: bool,
     parameters: &mut Parameters,
 ) {
     // Workaround for some _hash() / _compare() / _equal() functions taking
@@ -202,7 +207,7 @@ fn fixup_special_functions(
         && parameters.c_parameters.len() == 1
         && parameters.c_parameters[0].c_type == "gconstpointer"
     {
-        fixup_gpointer_parameter(env, type_tid, parameters, 0);
+        fixup_gpointer_parameter(env, type_tid, is_boxed, parameters, 0);
         imports.add("glib_sys", None);
     }
 
@@ -211,8 +216,8 @@ fn fixup_special_functions(
         && parameters.c_parameters[0].c_type == "gconstpointer"
         && parameters.c_parameters[1].c_type == "gconstpointer"
     {
-        fixup_gpointer_parameter(env, type_tid, parameters, 0);
-        fixup_gpointer_parameter(env, type_tid, parameters, 1);
+        fixup_gpointer_parameter(env, type_tid, is_boxed, parameters, 0);
+        fixup_gpointer_parameter(env, type_tid, is_boxed, parameters, 1);
         imports.add("glib_sys", None);
     }
 }
@@ -425,6 +430,7 @@ fn analyze_function(
     func: &library::Function,
     type_tid: library::TypeId,
     in_trait: bool,
+    is_boxed: bool,
     configured_functions: &[&config::functions::Function],
     imports: &mut Imports,
 ) -> Info {
@@ -519,7 +525,14 @@ fn analyze_function(
         }
     }
 
-    fixup_special_functions(env, imports, name.as_str(), type_tid, &mut parameters);
+    fixup_special_functions(
+        env,
+        imports,
+        name.as_str(),
+        type_tid,
+        is_boxed,
+        &mut parameters,
+    );
 
     // Key: destroy callback index
     // Value: associated user data index
