@@ -32,11 +32,13 @@ pub fn generate(w: &mut dyn Write, env: &Env, analysis: &analysis::record::Info)
         analysis.specials.get(&Type::Ref),
         analysis.specials.get(&Type::Unref),
     ) {
+        
+        let c_type = if type_.disguised { "_".to_string() + &type_.c_type } else { type_.c_type.to_string() };
         general::define_shared_type(
             w,
             env,
             &analysis.name,
-            &type_.c_type,
+            &c_type,
             ref_fn,
             unref_fn,
             &analysis.glib_get_type,
