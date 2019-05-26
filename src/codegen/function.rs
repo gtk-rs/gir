@@ -59,7 +59,7 @@ pub fn generate(
         }
         Visibility::Hidden => return Ok(()),
     }
-    let declaration = declaration(env, analysis);
+    let declaration = declaration(env, analysis, only_declaration);
     let suffix = if only_declaration { ";" } else { " {" };
 
     writeln!(w)?;
@@ -88,7 +88,7 @@ pub fn generate(
     }
 
     if analysis.async_future.is_some() {
-        let declaration = declaration_futures(env, analysis);
+        let declaration = declaration_futures(env, analysis, only_declaration);
         let suffix = if only_declaration { ";" } else { " {" };
 
         writeln!(w)?;
@@ -132,7 +132,11 @@ pub fn generate(
     Ok(())
 }
 
-pub fn declaration(env: &Env, analysis: &analysis::functions::Info) -> String {
+pub fn declaration(
+    env: &Env,
+    analysis: &analysis::functions::Info,
+    only_declaration: bool,
+) -> String {
     let outs_as_return = !analysis.outs.is_empty();
     let return_str = if outs_as_return {
         out_parameters_as_return(env, analysis)
@@ -154,7 +158,7 @@ pub fn declaration(env: &Env, analysis: &analysis::functions::Info) -> String {
             param_str.push_str(", ")
         }
         let c_par = &analysis.parameters.c_parameters[par.ind_c];
-        let s = c_par.to_parameter(env, &analysis.bounds);
+        let s = c_par.to_parameter(env, &analysis.bounds, only_declaration);
         param_str.push_str(&s);
     }
 
@@ -164,7 +168,11 @@ pub fn declaration(env: &Env, analysis: &analysis::functions::Info) -> String {
     )
 }
 
-pub fn declaration_futures(env: &Env, analysis: &analysis::functions::Info) -> String {
+pub fn declaration_futures(
+    env: &Env,
+    analysis: &analysis::functions::Info,
+    only_declaration: bool,
+) -> String {
     let async_future = analysis.async_future.as_ref().unwrap();
 
     let return_str = format!(
@@ -194,7 +202,7 @@ pub fn declaration_futures(env: &Env, analysis: &analysis::functions::Info) -> S
             param_str.push_str(", ")
         }
 
-        let s = c_par.to_parameter(env, &analysis.bounds);
+        let s = c_par.to_parameter(env, &analysis.bounds, only_declaration);
         param_str.push_str(&s);
     }
 

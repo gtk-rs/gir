@@ -11,11 +11,11 @@ use crate::{
 };
 
 pub trait ToParameter {
-    fn to_parameter(&self, env: &Env, bounds: &Bounds) -> String;
+    fn to_parameter(&self, env: &Env, bounds: &Bounds, only_declaration: bool) -> String;
 }
 
 impl ToParameter for CParameter {
-    fn to_parameter(&self, env: &Env, bounds: &Bounds) -> String {
+    fn to_parameter(&self, env: &Env, bounds: &Bounds, only_declaration: bool) -> String {
         let mut_str = if self.ref_mode == RefMode::ByRefMut {
             "mut "
         } else {
@@ -50,11 +50,21 @@ impl ToParameter for CParameter {
                     }
                 }
             }
-            format_parameter(&self.name, &type_str)
+            let name_mod = if !only_declaration
+                && self.ref_mode == RefMode::ByRefMut
+                && !type_str.starts_with("&mut ")
+                && !type_str.starts_with("/*")
+            {
+                "mut "
+            } else {
+                ""
+            };
+
+            format_parameter(name_mod, &self.name, &type_str)
         }
     }
 }
 
-fn format_parameter(name: &str, type_str: &str) -> String {
-    format!("{}: {}", name, type_str)
+fn format_parameter(name_mod: &str, name: &str, type_str: &str) -> String {
+    format!("{}{}: {}", name_mod, name, type_str)
 }
