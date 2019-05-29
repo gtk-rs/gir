@@ -278,7 +278,7 @@ fn find_out_parameters(env: &Env, function: &Function) -> Vec<String> {
                 && param.direction == ParameterDirection::Out
                 && param.name != "error"
         })
-        .map(|(_, param)| rust_type(env, param.typ).expect("get rust type from param"))
+        .map(|(_, param)| rust_type(env, param.typ).into_string())
         .collect()
 }
 
