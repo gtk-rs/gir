@@ -168,7 +168,7 @@ pub fn declaration_futures(env: &Env, analysis: &analysis::functions::Info) -> S
     let async_future = analysis.async_future.as_ref().unwrap();
 
     let return_str = format!(
-        " -> Box_<future::Future<Output = Result<{}, {}>> + std::marker::Unpin>",
+        " -> Box_<dyn future::Future<Output = Result<{}, {}>> + std::marker::Unpin>",
         async_future.success_parameters, async_future.error_parameters
     );
 
