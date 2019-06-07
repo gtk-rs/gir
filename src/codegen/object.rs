@@ -1,4 +1,4 @@
-use super::{child_properties, function, general, properties, signal, trait_impls, trampoline};
+use super::{child_properties, function, general, properties, signal, trait_impls};
 use crate::{
     analysis::{
         self,
@@ -64,15 +64,7 @@ pub fn generate(
                 .iter()
                 .chain(analysis.notify_signals.iter())
             {
-                signal::generate(
-                    w,
-                    env,
-                    signal_analysis,
-                    &analysis.trampolines,
-                    false,
-                    false,
-                    1,
-                )?;
+                signal::generate(w, env, signal_analysis, false, false, 1)?;
             }
         }
 
@@ -139,18 +131,6 @@ pub fn generate(
     if need_generate_trait(analysis) {
         writeln!(w)?;
         generate_trait(w, env, analysis)?;
-    }
-
-    if !analysis.trampolines.is_empty() {
-        for trampoline in &analysis.trampolines {
-            trampoline::generate(
-                w,
-                env,
-                trampoline,
-                need_generate_trait(analysis),
-                &analysis.name,
-            )?;
-        }
     }
 
     if generate_display_trait {
@@ -304,15 +284,7 @@ fn generate_trait(w: &mut dyn Write, env: &Env, analysis: &analysis::object::Inf
         .iter()
         .chain(analysis.notify_signals.iter())
     {
-        signal::generate(
-            w,
-            env,
-            signal_analysis,
-            &analysis.trampolines,
-            true,
-            true,
-            1,
-        )?;
+        signal::generate(w, env, signal_analysis, true, true, 1)?;
     }
     writeln!(w, "}}")?;
 
@@ -337,15 +309,7 @@ fn generate_trait(w: &mut dyn Write, env: &Env, analysis: &analysis::object::Inf
         .iter()
         .chain(analysis.notify_signals.iter())
     {
-        signal::generate(
-            w,
-            env,
-            signal_analysis,
-            &analysis.trampolines,
-            true,
-            false,
-            1,
-        )?;
+        signal::generate(w, env, signal_analysis, true, false, 1)?;
     }
     writeln!(w, "}}")?;
 

@@ -36,6 +36,8 @@ pub struct Trampoline {
     pub user_data_index: usize,
     pub destroy_index: usize,
     pub nullable: library::Nullable,
+    /// This field is used to give the type name when generating the "IsA<X>" part.
+    pub type_name: String,
 }
 
 pub type Trampolines = Vec<Trampoline>;
@@ -46,11 +48,10 @@ pub fn analyze(
     type_tid: library::TypeId,
     in_trait: bool,
     configured_signals: &[&config::signals::Signal],
-    trampolines: &mut Trampolines,
     obj: &GObject,
     used_types: &mut Vec<String>,
     version: Option<Version>,
-) -> Result<String, Vec<String>> {
+) -> Result<Trampoline, Vec<String>> {
     let errors = closure_errors(env, signal);
     if !errors.is_empty() {
         warn_main!(
@@ -163,7 +164,7 @@ pub fn analyze(
     };
 
     let trampoline = Trampoline {
-        name: name.clone(),
+        name: name,
         parameters,
         ret,
         bounds,
@@ -176,9 +177,9 @@ pub fn analyze(
         user_data_index: 0,
         destroy_index: 0,
         nullable: library::Nullable(false),
+        type_name: env.library.type_(type_tid).get_name(),
     };
-    trampolines.push(trampoline);
-    Ok(name)
+    Ok(trampoline)
 }
 
 fn closure_errors(env: &Env, signal: &library::Signal) -> Vec<String> {

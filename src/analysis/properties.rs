@@ -34,7 +34,6 @@ pub fn analyze(
     props: &[library::Property],
     type_tid: library::TypeId,
     generate_trait: bool,
-    trampolines: &mut trampolines::Trampolines,
     obj: &GObject,
     imports: &mut Imports,
     signatures: &Signatures,
@@ -59,7 +58,6 @@ pub fn analyze(
             type_tid,
             &configured_properties,
             generate_trait,
-            trampolines,
             obj,
             imports,
             signatures,
@@ -109,7 +107,6 @@ fn analyze_property(
     type_tid: library::TypeId,
     configured_properties: &[&config::properties::Property],
     generate_trait: bool,
-    trampolines: &mut trampolines::Trampolines,
     obj: &GObject,
     imports: &mut Imports,
     signatures: &Signatures,
@@ -233,7 +230,7 @@ fn analyze_property(
 
     let notify_signal = if notifiable {
         let mut used_types: Vec<String> = Vec::with_capacity(4);
-        let trampoline_name = trampolines::analyze(
+        let trampoline = trampolines::analyze(
             env,
             &library::Signal {
                 name: format!("notify::{}", name),
@@ -267,13 +264,12 @@ fn analyze_property(
             type_tid,
             generate_trait,
             &[],
-            trampolines,
             obj,
             &mut used_types,
             prop_version,
         );
 
-        if trampoline_name.is_ok() {
+        if trampoline.is_ok() {
             imports.add_used_types(&used_types, prop_version);
             if generate_trait {
                 imports.add("glib::object::Cast", prop_version);
@@ -287,7 +283,7 @@ fn analyze_property(
             Some(signals::Info {
                 connect_name: format!("connect_property_{}_notify", name_for_func),
                 signal_name: format!("notify::{}", name),
-                trampoline_name,
+                trampoline,
                 action_emit_name: None,
                 version: prop_version,
                 deprecated_version: prop.deprecated_version,

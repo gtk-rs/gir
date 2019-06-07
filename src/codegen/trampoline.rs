@@ -1,6 +1,6 @@
 use super::{
-    general::version_condition, return_value::ToReturnValue,
-    trampoline_from_glib::TrampolineFromGlib, trampoline_to_glib::TrampolineToGlib,
+    return_value::ToReturnValue, trampoline_from_glib::TrampolineFromGlib,
+    trampoline_to_glib::TrampolineToGlib,
 };
 use crate::{
     analysis::{
@@ -15,6 +15,7 @@ use crate::{
     env::Env,
     library,
     traits::IntoString,
+    writer::primitives::tabs,
 };
 use log::error;
 use std::io::{Result, Write};
@@ -24,37 +25,36 @@ pub fn generate(
     env: &Env,
     analysis: &Trampoline,
     in_trait: bool,
-    object_name: &str,
+    indent: usize,
 ) -> Result<()> {
-    writeln!(w)?;
     let (self_bound, end) = if in_trait {
         (format!("{}, ", TYPE_PARAMETERS_START), "")
     } else {
         (String::new(), " {")
     };
 
+    let prepend = tabs(indent);
     let params_str = trampoline_parameters(env, analysis);
     let func_str = func_string(env, analysis, None, true);
     let ret_str = trampoline_returns(env, analysis);
 
-    version_condition(w, env, analysis.version, false, 0)?;
     writeln!(
         w,
-        "unsafe extern \"C\" fn {}<{}F: {}>({}, f: glib_sys::gpointer){}{}",
-        analysis.name, self_bound, func_str, params_str, ret_str, end,
+        "{}unsafe extern \"C\" fn {}<{}F: {}>({}, f: glib_sys::gpointer){}{}",
+        prepend, analysis.name, self_bound, func_str, params_str, ret_str, end,
     )?;
     if in_trait {
         writeln!(
             w,
-            "where {}: IsA<{}> {{",
-            TYPE_PARAMETERS_START, object_name
+            "{0}\twhere {1}: IsA<{2}>\n{0}{{",
+            prepend, TYPE_PARAMETERS_START, analysis.type_name
         )?;
     }
-    writeln!(w, "\tlet f: &F = &*(f as *const F);")?;
-    transformation_vars(w, analysis)?;
+    writeln!(w, "{}\tlet f: &F = &*(f as *const F);", prepend)?;
+    transformation_vars(w, analysis, &prepend)?;
     let call = trampoline_call_func(env, analysis, in_trait);
-    writeln!(w, "\t{}", call)?;
-    writeln!(w, "}}")?;
+    writeln!(w, "{}\t{}", prepend, call)?;
+    writeln!(w, "{}}}", prepend)?;
 
     Ok(())
 }
@@ -206,7 +206,7 @@ fn trampoline_returns(env: &Env, analysis: &Trampoline) -> String {
     }
 }
 
-fn transformation_vars(w: &mut dyn Write, analysis: &Trampoline) -> Result<()> {
+fn transformation_vars(w: &mut dyn Write, analysis: &Trampoline, prepend: &str) -> Result<()> {
     use crate::analysis::trampoline_parameters::TransformationType::*;
     for transform in &analysis.parameters.transformations {
         match transform.transformation {
@@ -216,8 +216,8 @@ fn transformation_vars(w: &mut dyn Write, analysis: &Trampoline) -> Result<()> {
                 let c_par = &analysis.parameters.c_parameters[transform.ind_c];
                 writeln!(
                     w,
-                    "\tlet {} = from_glib_full(gtk_sys::gtk_tree_path_new_from_string({}));",
-                    transform.name, c_par.name
+                    "{}\tlet {} = from_glib_full(gtk_sys::gtk_tree_path_new_from_string({}));",
+                    prepend, transform.name, c_par.name
                 )?;
             }
         }
