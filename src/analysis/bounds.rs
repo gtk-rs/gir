@@ -93,7 +93,7 @@ impl Bounds {
         if !par.instance_parameter && par.direction != ParameterDirection::Out {
             if let Some(bound_type) = Bounds::type_for(env, par.typ, par.nullable) {
                 ret = Some(Bounds::get_to_glib_extra(&bound_type));
-                if r#async && par.name == "callback" {
+                if r#async && (par.name == "callback" || par.name.ends_with("_callback")) {
                     let func_name = func.c_identifier.as_ref().unwrap();
                     let finish_func_name = finish_function_name(func_name);
                     if let Some(function) = find_function(env, &finish_func_name) {
