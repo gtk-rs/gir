@@ -1,7 +1,7 @@
 use super::{
     general::{cfg_deprecated, doc_hidden, version_condition},
     signal_body,
-    trampoline::func_string,
+    trampoline::{self, func_string},
 };
 use crate::{
     analysis,
@@ -17,16 +17,15 @@ pub fn generate(
     w: &mut dyn Write,
     env: &Env,
     analysis: &analysis::signals::Info,
-    trampolines: &[analysis::trampolines::Trampoline],
     in_trait: bool,
     only_declaration: bool,
     indent: usize,
 ) -> Result<()> {
-    let commented = analysis.trampoline_name.is_err();
+    let commented = analysis.trampoline.is_err();
     let comment_prefix = if commented { "//" } else { "" };
     let pub_prefix = if in_trait { "" } else { "pub " };
 
-    let function_type = function_type_string(env, analysis, trampolines, true);
+    let function_type = function_type_string(env, analysis, true);
     let declaration = declaration(analysis, &function_type);
     let suffix = if only_declaration { ";" } else { " {" };
 
@@ -47,6 +46,11 @@ pub fn generate(
     )?;
 
     if !only_declaration {
+        if !commented {
+            if let Ok(ref trampoline) = analysis.trampoline {
+                trampoline::generate(w, env, trampoline, in_trait, 2)?;
+            }
+        }
         match function_type {
             Some(_) => {
                 let body = body(analysis, in_trait).to_code(env);
@@ -55,7 +59,7 @@ pub fn generate(
                 }
             }
             _ => {
-                if let Err(ref errors) = analysis.trampoline_name {
+                if let Err(ref errors) = analysis.trampoline {
                     for error in errors {
                         writeln!(w, "{}{}\t{}", tabs(indent), comment_prefix, error)?;
                     }
@@ -84,7 +88,7 @@ pub fn generate(
         }
         version_condition(w, env, analysis.version, commented, indent)?;
 
-        let function_type = function_type_string(env, analysis, trampolines, false);
+        let function_type = function_type_string(env, analysis, false);
 
         writeln!(
             w,
@@ -98,12 +102,11 @@ pub fn generate(
         )?;
 
         if !only_declaration {
-            let trampoline_name = analysis.trampoline_name.as_ref().unwrap();
-            let trampoline = match trampolines.iter().find(|t| *trampoline_name == t.name) {
-                Some(trampoline) => trampoline,
-                None => panic!(
-                    "Internal error: can't find trampoline '{}'",
-                    trampoline_name
+            let trampoline = match analysis.trampoline.as_ref() {
+                Ok(trampoline) => trampoline,
+                Err(_) => panic!(
+                    "Internal error: can't find trampoline for signal '{}'",
+                    analysis.signal_name,
                 ),
             };
             let mut args = String::with_capacity(100);
@@ -151,19 +154,17 @@ pub fn generate(
 fn function_type_string(
     env: &Env,
     analysis: &analysis::signals::Info,
-    trampolines: &[analysis::trampolines::Trampoline],
     closure: bool,
 ) -> Option<String> {
-    if analysis.trampoline_name.is_err() {
+    if analysis.trampoline.is_err() {
         return None;
     }
 
-    let trampoline_name = analysis.trampoline_name.as_ref().unwrap();
-    let trampoline = match trampolines.iter().find(|t| *trampoline_name == t.name) {
-        Some(trampoline) => trampoline,
-        None => panic!(
-            "Internal error: can't find trampoline '{}'",
-            trampoline_name
+    let trampoline = match analysis.trampoline.as_ref() {
+        Ok(trampoline) => trampoline,
+        Err(_) => panic!(
+            "Internal error: can't find trampoline for signal '{}'",
+            analysis.signal_name
         ),
     };
 
@@ -202,7 +203,7 @@ fn body(analysis: &analysis::signals::Info, in_trait: bool) -> Chunk {
 
     builder
         .signal_name(&analysis.signal_name)
-        .trampoline_name(analysis.trampoline_name.as_ref().unwrap())
+        .trampoline_name(&analysis.trampoline.as_ref().unwrap().name)
         .in_trait(in_trait);
 
     builder.generate()

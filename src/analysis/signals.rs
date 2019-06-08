@@ -1,5 +1,6 @@
 use super::{imports::Imports, trampolines};
 use crate::{
+    analysis::trampolines::Trampoline,
     config::{self, gobjects::GObject},
     env::Env,
     library, nameutil,
@@ -12,7 +13,7 @@ pub struct Info {
     pub connect_name: String,
     pub signal_name: String,
     pub action_emit_name: Option<String>,
-    pub trampoline_name: Result<String, Vec<String>>,
+    pub trampoline: Result<Trampoline, Vec<String>>,
     pub version: Option<Version>,
     pub deprecated_version: Option<Version>,
     pub doc_hidden: bool,
@@ -23,7 +24,6 @@ pub fn analyze(
     signals: &[library::Signal],
     type_tid: library::TypeId,
     in_trait: bool,
-    trampolines: &mut trampolines::Trampolines,
     obj: &GObject,
     imports: &mut Imports,
 ) -> Vec<Info> {
@@ -44,7 +44,6 @@ pub fn analyze(
             type_tid,
             in_trait,
             &configured_signals,
-            trampolines,
             obj,
             imports,
         );
@@ -62,7 +61,6 @@ fn analyze_signal(
     type_tid: library::TypeId,
     in_trait: bool,
     configured_signals: &[&config::signals::Signal],
-    trampolines: &mut trampolines::Trampolines,
     obj: &GObject,
     imports: &mut Imports,
 ) -> Option<Info> {
@@ -76,13 +74,12 @@ fn analyze_signal(
     let doc_hidden = configured_signals.iter().any(|f| f.doc_hidden);
 
     let connect_name = format!("connect_{}", nameutil::signal_to_snake(&signal.name));
-    let trampoline_name = trampolines::analyze(
+    let trampoline = trampolines::analyze(
         env,
         signal,
         type_tid,
         in_trait,
         configured_signals,
-        trampolines,
         obj,
         &mut used_types,
         version,
@@ -97,7 +94,7 @@ fn analyze_signal(
         None
     };
 
-    if trampoline_name.is_ok() {
+    if trampoline.is_ok() {
         imports.add_used_types(&used_types, version);
         if in_trait {
             imports.add("glib::object::Cast", version);
@@ -115,7 +112,7 @@ fn analyze_signal(
     let info = Info {
         connect_name,
         signal_name: signal.name.clone(),
-        trampoline_name,
+        trampoline,
         action_emit_name,
         version,
         deprecated_version,

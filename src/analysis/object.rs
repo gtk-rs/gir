@@ -23,7 +23,6 @@ pub struct Info {
     pub has_functions: bool,
     pub signals: Vec<signals::Info>,
     pub notify_signals: Vec<signals::Info>,
-    pub trampolines: trampolines::Trampolines,
     pub properties: Vec<properties::Property>,
     pub builder_properties: Vec<properties::Property>,
     pub child_properties: ChildProperties,
@@ -32,11 +31,8 @@ pub struct Info {
 
 impl Info {
     pub fn has_signals(&self) -> bool {
-        self.signals.iter().any(|s| s.trampoline_name.is_ok())
-            || self
-                .notify_signals
-                .iter()
-                .any(|s| s.trampoline_name.is_ok())
+        self.signals.iter().any(|s| s.trampoline.is_ok())
+            || self.notify_signals.iter().any(|s| s.trampoline.is_ok())
     }
 
     pub fn has_action_signals(&self) -> bool {
@@ -86,8 +82,6 @@ pub fn class(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<Info>
         .cloned()
         .unwrap_or_else(|| format!("{}Ext", name));
 
-    let mut trampolines =
-        trampolines::Trampolines::with_capacity(klass.signals.len() + klass.properties.len());
     let mut signatures = Signatures::with_capacity(klass.functions.len());
 
     let mut functions = functions::analyze(
@@ -122,7 +116,6 @@ pub fn class(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<Info>
         &klass.signals,
         class_tid,
         !final_type,
-        &mut trampolines,
         obj,
         &mut imports,
     );
@@ -131,7 +124,6 @@ pub fn class(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<Info>
         &klass.properties,
         class_tid,
         !final_type,
-        &mut trampolines,
         obj,
         &mut imports,
         &signatures,
@@ -155,8 +147,8 @@ pub fn class(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<Info>
     let has_methods = functions
         .iter()
         .any(|f| f.kind == library::FunctionKind::Method);
-    let has_signals = signals.iter().any(|s| s.trampoline_name.is_ok())
-        || notify_signals.iter().any(|s| s.trampoline_name.is_ok());
+    let has_signals = signals.iter().any(|s| s.trampoline.is_ok())
+        || notify_signals.iter().any(|s| s.trampoline.is_ok());
 
     // There's no point in generating a trait if there are no signals, methods, properties
     // and child properties: it would be empty
@@ -223,7 +215,6 @@ pub fn class(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<Info>
         has_functions,
         signals,
         notify_signals,
-        trampolines,
         properties,
         builder_properties,
         child_properties,
@@ -267,7 +258,6 @@ pub fn interface(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<I
         .cloned()
         .unwrap_or_else(|| format!("{}Ext", name));
 
-    let mut trampolines = trampolines::Trampolines::with_capacity(iface.signals.len());
     let mut signatures = Signatures::with_capacity(iface.functions.len());
 
     let functions = functions::analyze(
@@ -282,21 +272,12 @@ pub fn interface(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<I
         Some(deps),
     );
 
-    let signals = signals::analyze(
-        env,
-        &iface.signals,
-        iface_tid,
-        true,
-        &mut trampolines,
-        obj,
-        &mut imports,
-    );
+    let signals = signals::analyze(env, &iface.signals, iface_tid, true, obj, &mut imports);
     let (properties, notify_signals) = properties::analyze(
         env,
         &iface.properties,
         iface_tid,
         true,
-        &mut trampolines,
         obj,
         &mut imports,
         &signatures,
@@ -346,7 +327,6 @@ pub fn interface(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<I
         has_functions,
         signals,
         notify_signals,
-        trampolines,
         properties,
         signatures,
         ..Default::default()
