@@ -300,6 +300,21 @@ status = "generate"
 use_boxed_functions = true
 ```
 
+Some boxed types are passed as `out` parameters to functions and the caller is
+required to allocate them. For this it is necessary to provide Rust
+expressions in the configuration for initializing newly allocated memory for
+them, and to free any resources that might be stored in values of that boxed
+types. By default the memory is zero-initialized and it is valid to provide an
+empty closure like below.
+
+```toml
+[[object]]
+name = "Gtk.TreeIter"
+status = "generate"
+init_function_expression = "|_ptr| ()"
+clear_function_expression = "|_ptr| ()"
+```
+
 For global functions, the members can be configured by configuring the `Gtk.*` object:
 
 ```toml

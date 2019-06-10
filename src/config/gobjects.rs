@@ -81,6 +81,8 @@ pub struct GObject {
     pub manual_traits: Vec<String>,
     pub align: Option<u32>,
     pub generate_builder: bool,
+    pub init_function_expression: Option<String>,
+    pub clear_function_expression: Option<String>,
 }
 
 impl Default for GObject {
@@ -110,6 +112,8 @@ impl Default for GObject {
             manual_traits: Vec::default(),
             align: None,
             generate_builder: false,
+            init_function_expression: None,
+            clear_function_expression: None,
         }
     }
 }
@@ -196,6 +200,8 @@ fn parse_object(
             "manual_traits",
             "align",
             "generate_builder",
+            "init_function_expression",
+            "clear_function_expression",
         ],
         &format!("object {}", name),
     );
@@ -301,6 +307,22 @@ fn parse_object(
         .lookup("generate_builder")
         .and_then(Value::as_bool)
         .unwrap_or(false);
+    let init_function_expression = toml_object
+        .lookup("init_function_expression")
+        .and_then(Value::as_str)
+        .map(ToOwned::to_owned);
+    let clear_function_expression = toml_object
+        .lookup("clear_function_expression")
+        .and_then(Value::as_str)
+        .map(ToOwned::to_owned);
+
+    if (init_function_expression.is_some() && clear_function_expression.is_none())
+        || (init_function_expression.is_none() && clear_function_expression.is_some())
+    {
+        panic!(
+            "`init_function_expression` and `clear_function_expression` both have to be provided"
+        );
+    }
 
     if status != GStatus::Manual && ref_mode.is_some() {
         warn!("ref_mode configuration used for non-manual object {}", name);
@@ -345,6 +367,8 @@ fn parse_object(
         manual_traits,
         align,
         generate_builder,
+        init_function_expression,
+        clear_function_expression,
     }
 }
 

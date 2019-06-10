@@ -208,6 +208,8 @@ pub fn define_boxed_type(
     glib_name: &str,
     copy_fn: &str,
     free_fn: &str,
+    init_function_expression: &Option<String>,
+    clear_function_expression: &Option<String>,
     get_type_fn: &Option<String>,
     derive: &[Derive],
 ) -> Result<()> {
@@ -229,6 +231,14 @@ pub fn define_boxed_type(
         sys_crate_name, copy_fn
     )?;
     writeln!(w, "\t\tfree => |ptr| {}::{}(ptr),", sys_crate_name, free_fn)?;
+
+    if let (Some(init_function_expression), Some(clear_function_expression)) =
+        (init_function_expression, clear_function_expression)
+    {
+        writeln!(w, "\t\tinit => {},", init_function_expression,)?;
+        writeln!(w, "\t\tclear => {},", clear_function_expression,)?;
+    }
+
     if let Some(ref get_type_fn) = *get_type_fn {
         writeln!(
             w,
@@ -247,6 +257,8 @@ pub fn define_auto_boxed_type(
     env: &Env,
     type_name: &str,
     glib_name: &str,
+    init_function_expression: &Option<String>,
+    clear_function_expression: &Option<String>,
     get_type_fn: &str,
     derive: &[Derive],
 ) -> Result<()> {
@@ -271,6 +283,14 @@ pub fn define_auto_boxed_type(
         "\t\tfree => |ptr| gobject_sys::g_boxed_free({}::{}(), ptr as *mut _),",
         sys_crate_name, get_type_fn
     )?;
+
+    if let (Some(init_function_expression), Some(clear_function_expression)) =
+        (init_function_expression, clear_function_expression)
+    {
+        writeln!(w, "\t\tinit => {},", init_function_expression,)?;
+        writeln!(w, "\t\tclear => {},", clear_function_expression,)?;
+    }
+
     writeln!(
         w,
         "\t\tget_type => || {}::{}(),",
