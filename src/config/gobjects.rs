@@ -78,7 +78,6 @@ pub struct GObject {
     pub conversion_type: Option<conversion_type::ConversionType>,
     pub use_boxed_functions: bool,
     pub generate_display_trait: bool,
-    pub subclassing: bool,
     pub manual_traits: Vec<String>,
     pub align: Option<u32>,
     pub generate_builder: bool,
@@ -108,7 +107,6 @@ impl Default for GObject {
             conversion_type: None,
             use_boxed_functions: false,
             generate_display_trait: true,
-            subclassing: false,
             manual_traits: Vec::default(),
             align: None,
             generate_builder: false,
@@ -195,7 +193,6 @@ fn parse_object(
             "must_use",
             "use_boxed_functions",
             "generate_display_trait",
-            "subclassing",
             "manual_traits",
             "align",
             "generate_builder",
@@ -278,10 +275,6 @@ fn parse_object(
         .lookup("generate_display_trait")
         .and_then(Value::as_bool)
         .unwrap_or(default_generate_display_trait);
-    let subclassing = toml_object
-        .lookup("subclassing")
-        .and_then(Value::as_bool)
-        .unwrap_or(false);
     let manual_traits = toml_object
         .lookup_vec("manual_traits", "IGNORED ERROR")
         .map(|v| {
@@ -349,7 +342,6 @@ fn parse_object(
         conversion_type,
         use_boxed_functions,
         generate_display_trait,
-        subclassing,
         manual_traits,
         align,
         generate_builder,
