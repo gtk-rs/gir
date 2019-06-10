@@ -18,6 +18,8 @@ pub struct Info {
     pub glib_get_type: Option<String>,
     pub use_boxed_functions: bool,
     pub derives: Derives,
+    pub init_function_expression: Option<String>,
+    pub clear_function_expression: Option<String>,
 }
 
 impl Deref for Info {
@@ -169,6 +171,8 @@ pub fn new(env: &Env, obj: &GObject) -> Option<Info> {
         glib_get_type: record.glib_get_type.clone(),
         derives,
         use_boxed_functions: obj.use_boxed_functions,
+        init_function_expression: obj.init_function_expression.clone(),
+        clear_function_expression: obj.clear_function_expression.clone(),
     };
 
     Some(info)

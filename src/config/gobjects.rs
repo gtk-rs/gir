@@ -78,10 +78,11 @@ pub struct GObject {
     pub conversion_type: Option<conversion_type::ConversionType>,
     pub use_boxed_functions: bool,
     pub generate_display_trait: bool,
-    pub subclassing: bool,
     pub manual_traits: Vec<String>,
     pub align: Option<u32>,
     pub generate_builder: bool,
+    pub init_function_expression: Option<String>,
+    pub clear_function_expression: Option<String>,
 }
 
 impl Default for GObject {
@@ -108,10 +109,11 @@ impl Default for GObject {
             conversion_type: None,
             use_boxed_functions: false,
             generate_display_trait: true,
-            subclassing: false,
             manual_traits: Vec::default(),
             align: None,
             generate_builder: false,
+            init_function_expression: None,
+            clear_function_expression: None,
         }
     }
 }
@@ -195,10 +197,11 @@ fn parse_object(
             "must_use",
             "use_boxed_functions",
             "generate_display_trait",
-            "subclassing",
             "manual_traits",
             "align",
             "generate_builder",
+            "init_function_expression",
+            "clear_function_expression",
         ],
         &format!("object {}", name),
     );
@@ -278,10 +281,6 @@ fn parse_object(
         .lookup("generate_display_trait")
         .and_then(Value::as_bool)
         .unwrap_or(default_generate_display_trait);
-    let subclassing = toml_object
-        .lookup("subclassing")
-        .and_then(Value::as_bool)
-        .unwrap_or(false);
     let manual_traits = toml_object
         .lookup_vec("manual_traits", "IGNORED ERROR")
         .map(|v| {
@@ -308,6 +307,22 @@ fn parse_object(
         .lookup("generate_builder")
         .and_then(Value::as_bool)
         .unwrap_or(false);
+    let init_function_expression = toml_object
+        .lookup("init_function_expression")
+        .and_then(Value::as_str)
+        .map(ToOwned::to_owned);
+    let clear_function_expression = toml_object
+        .lookup("clear_function_expression")
+        .and_then(Value::as_str)
+        .map(ToOwned::to_owned);
+
+    if (init_function_expression.is_some() && clear_function_expression.is_none())
+        || (init_function_expression.is_none() && clear_function_expression.is_some())
+    {
+        panic!(
+            "`init_function_expression` and `clear_function_expression` both have to be provided"
+        );
+    }
 
     if status != GStatus::Manual && ref_mode.is_some() {
         warn!("ref_mode configuration used for non-manual object {}", name);
@@ -349,10 +364,11 @@ fn parse_object(
         conversion_type,
         use_boxed_functions,
         generate_display_trait,
-        subclassing,
         manual_traits,
         align,
         generate_builder,
+        init_function_expression,
+        clear_function_expression,
     }
 }
 
