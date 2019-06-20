@@ -126,10 +126,32 @@ fn find() -> Result<(), Error> {
                 println!("cargo:rustc-link-lib=dylib={}", lib_);
             }
             Ok(())
+        }"##
+    )?;
+    if ns.name == "GObject" {
+        writeln!(w,"{}", r##"        Err(err) => {
+            #[cfg(target_os = "macos")]
+            {
+                let _ = writeln!(
+                    io::stderr(),
+                    "Failed to run pkg-config\n\
+                     If you're using homebrew, try running `brew info libffi` and follow the instructions.\n\
+                     See https://github.com/Homebrew/homebrew-core/issues/40179 for more details\n"
+                );
+            }
+            Err(err)
         }
-        Err(err) => Err(err),
+    }
+}
+"##)
+    } else {
+        writeln!(
+            w,
+            "{}",
+            r##"        Err(err) => Err(err),
     }
 }
 "##
-    )
+        )
+    }
 }
