@@ -14,6 +14,7 @@ pub struct Property {
     pub ignore: bool,
     pub version: Option<Version>,
     pub generate: Option<PropertyGenerateFlags>,
+    pub doc_trait_name: Option<String>,
 }
 
 impl Parse for Property {
@@ -30,7 +31,14 @@ impl Parse for Property {
         };
 
         toml.check_unwanted(
-            &["ignore", "version", "name", "pattern", "generate"],
+            &[
+                "ignore",
+                "version",
+                "name",
+                "pattern",
+                "generate",
+                "doc_trait_name",
+            ],
             &format!("property {}", object_name),
         );
 
@@ -47,12 +55,17 @@ impl Parse for Property {
                 .map_err(|e| error!("{} for object {}", e, object_name))
                 .ok()
         });
+        let doc_trait_name = toml
+            .lookup("doc_trait_name")
+            .and_then(Value::as_str)
+            .map(ToOwned::to_owned);
 
         Some(Property {
             ident,
             ignore,
             version,
             generate,
+            doc_trait_name,
         })
     }
 }

@@ -185,6 +185,9 @@ generate_builder = true
     doc_hidden = true
     # disable length_of autodetection
     disable_length_detect = true
+    # write function docs to trait other than default "xxxExt",
+    # also works in [object.signal] and [object.property]
+    doc_trait_name = "SocketListenerExtManual"
         # override for parameter
         [[object.function.parameter]]
         # filter by name
