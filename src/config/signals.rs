@@ -107,6 +107,7 @@ pub struct Signal {
     pub ret: Return,
     pub concurrency: library::Concurrency,
     pub doc_hidden: bool,
+    pub doc_trait_name: Option<String>,
 }
 
 impl Signal {
@@ -136,6 +137,7 @@ impl Signal {
                 "name",
                 "pattern",
                 "concurrency",
+                "doc_trait_name",
             ],
             &format!("signal {}", object_name),
         );
@@ -166,6 +168,10 @@ impl Signal {
             .lookup("doc_hidden")
             .and_then(Value::as_bool)
             .unwrap_or(false);
+        let doc_trait_name = toml
+            .lookup("doc_trait_name")
+            .and_then(Value::as_str)
+            .map(ToOwned::to_owned);
 
         Some(Signal {
             ident,
@@ -176,6 +182,7 @@ impl Signal {
             ret,
             concurrency,
             doc_hidden,
+            doc_trait_name,
         })
     }
 }

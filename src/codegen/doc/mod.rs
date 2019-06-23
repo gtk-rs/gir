@@ -155,6 +155,12 @@ fn create_object_doc(w: &mut dyn Write, env: &Env, info: &analysis::object::Info
     let signals: &[Signal];
     let properties: &[Property];
 
+    let obj = env
+        .config
+        .objects
+        .get(&info.full_name)
+        .expect("Object not found");
+
     match *env.library.type_(info.type_id) {
         Type::Class(ref cl) => {
             doc = cl.doc.as_ref();
@@ -239,17 +245,54 @@ fn create_object_doc(w: &mut dyn Write, env: &Env, info: &analysis::object::Info
 
     for function in functions {
         let ty = if has_trait && function.parameters.iter().any(|p| p.instance_parameter) {
-            ty_ext.clone()
+            let configured_functions = obj.functions.matched(&function.name);
+            if let Some(trait_name) = configured_functions
+                .iter()
+                .filter_map(|f| f.doc_trait_name.as_ref())
+                .next()
+            {
+                TypeStruct::new(SType::Trait, trait_name)
+            } else {
+                ty_ext.clone()
+            }
         } else {
             ty.clone()
         };
         create_fn_doc(w, env, function, Some(Box::new(ty)))?;
     }
     for signal in signals {
-        create_fn_doc(w, env, signal, Some(Box::new(ty_ext.clone())))?;
+        let ty = if has_trait {
+            let configured_signals = obj.signals.matched(&signal.name);
+            if let Some(trait_name) = configured_signals
+                .iter()
+                .filter_map(|f| f.doc_trait_name.as_ref())
+                .next()
+            {
+                TypeStruct::new(SType::Trait, trait_name)
+            } else {
+                ty_ext.clone()
+            }
+        } else {
+            ty.clone()
+        };
+        create_fn_doc(w, env, signal, Some(Box::new(ty)))?;
     }
     for property in properties {
-        create_property_doc(w, env, property, Some(Box::new(ty_ext.clone())))?;
+        let ty = if has_trait {
+            let configured_properties = obj.properties.matched(&property.name);
+            if let Some(trait_name) = configured_properties
+                .iter()
+                .filter_map(|f| f.doc_trait_name.as_ref())
+                .next()
+            {
+                TypeStruct::new(SType::Trait, trait_name)
+            } else {
+                ty_ext.clone()
+            }
+        } else {
+            ty.clone()
+        };
+        create_property_doc(w, env, property, Some(Box::new(ty)))?;
     }
     Ok(())
 }
@@ -447,19 +490,20 @@ fn create_property_doc(
     {
         return Ok(());
     }
+    let name_for_func = nameutil::signal_to_snake(&property.name);
     let mut v = Vec::with_capacity(2);
 
     let symbols = env.symbols.borrow();
     if property.readable {
         v.push(TypeStruct {
             parent: parent.clone(),
-            ..TypeStruct::new(SType::Fn, &format!("get_property_{}", property.name))
+            ..TypeStruct::new(SType::Fn, &format!("get_property_{}", name_for_func))
         });
     }
     if property.writable {
         v.push(TypeStruct {
             parent,
-            ..TypeStruct::new(SType::Fn, &format!("set_property_{}", property.name))
+            ..TypeStruct::new(SType::Fn, &format!("set_property_{}", name_for_func))
         });
     }
 
