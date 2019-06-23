@@ -246,10 +246,20 @@ fn create_object_doc(w: &mut dyn Write, env: &Env, info: &analysis::object::Info
         create_fn_doc(w, env, function, Some(Box::new(ty)))?;
     }
     for signal in signals {
-        create_fn_doc(w, env, signal, Some(Box::new(ty_ext.clone())))?;
+        let ty = if has_trait {
+            ty_ext.clone()
+        } else {
+            ty.clone()
+        };
+        create_fn_doc(w, env, signal, Some(Box::new(ty)))?;
     }
     for property in properties {
-        create_property_doc(w, env, property, Some(Box::new(ty_ext.clone())))?;
+        let ty = if has_trait {
+            ty_ext.clone()
+        } else {
+            ty.clone()
+        };
+        create_property_doc(w, env, property, Some(Box::new(ty)))?;
     }
     Ok(())
 }
