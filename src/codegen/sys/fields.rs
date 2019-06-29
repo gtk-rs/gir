@@ -57,11 +57,12 @@ impl FieldInfo {
 
 pub fn from_record(env: &Env, record: &Record) -> Fields {
     let (fields, truncated) = analyze_fields(env, false, &record.fields);
+    let derives_copy = truncated.is_none() && record.derives_copy(&env.library);
     Fields {
         name: record.c_type.clone(),
         external: record.is_external(&env.library),
         truncated,
-        derives_copy: record.derives_copy(&env.library),
+        derives_copy,
         kind: "struct",
         cfg_condition: get_gobject_cfg_condition(env, &record.name),
         fields,
@@ -70,12 +71,12 @@ pub fn from_record(env: &Env, record: &Record) -> Fields {
 
 pub fn from_class(env: &Env, klass: &Class) -> Fields {
     let (fields, truncated) = analyze_fields(env, false, &klass.fields);
-
+    let derives_copy = truncated.is_none() && klass.derives_copy(&env.library);
     Fields {
         name: klass.c_type.clone(),
         external: klass.is_external(&env.library),
         truncated,
-        derives_copy: klass.derives_copy(&env.library),
+        derives_copy,
         kind: "struct",
         cfg_condition: get_gobject_cfg_condition(env, &klass.name),
         fields,
@@ -84,11 +85,12 @@ pub fn from_class(env: &Env, klass: &Class) -> Fields {
 
 pub fn from_union(env: &Env, union: &Union) -> Fields {
     let (fields, truncated) = analyze_fields(env, true, &union.fields);
+    let derives_copy = truncated.is_none() && union.derives_copy(&env.library);
     Fields {
         name: union.c_type.as_ref().unwrap().clone(),
         external: union.is_external(&env.library),
         truncated,
-        derives_copy: union.derives_copy(&env.library),
+        derives_copy,
         kind: "union",
         cfg_condition: None,
         fields,
