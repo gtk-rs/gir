@@ -335,6 +335,7 @@ pub struct Alias {
     pub typ: TypeId,
     pub target_c_type: String,
     pub doc: Option<String>,
+    pub doc_deprecated: Option<String>,
 }
 
 #[derive(Debug)]

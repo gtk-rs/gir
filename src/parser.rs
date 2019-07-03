@@ -766,6 +766,7 @@ impl Library {
 
         let mut inner = None;
         let mut doc = None;
+        let mut doc_deprecated = None;
 
         parser.elements(|parser, elem| match elem.name() {
             "source-position" => parser.ignore_element(),
@@ -785,6 +786,7 @@ impl Library {
                 Ok(())
             }
             "doc" => parser.text().map(|t| doc = Some(t)),
+            "doc-deprecated" => parser.text().map(|t| doc_deprecated = Some(t)),
             "attribute" => parser.ignore_element(),
             _ => Err(parser.unexpected_element(elem)),
         })?;
@@ -796,6 +798,7 @@ impl Library {
                 typ,
                 target_c_type: c_type,
                 doc,
+                doc_deprecated,
             });
             self.add_type(ns_id, alias_name, typ);
             Ok(())
