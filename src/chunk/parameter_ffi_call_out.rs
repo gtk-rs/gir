@@ -7,16 +7,21 @@ pub struct Parameter {
     pub transfer: library::Transfer,
     pub caller_allocates: bool,
     pub is_error: bool,
+    pub is_uninitialized: bool,
 }
 
 impl Parameter {
-    pub fn new(orig: &analysis::function_parameters::CParameter) -> Parameter {
+    pub fn new(
+        orig: &analysis::function_parameters::CParameter,
+        is_uninitialized: bool,
+    ) -> Parameter {
         Parameter {
             name: orig.name.clone(),
             typ: orig.typ,
             transfer: orig.transfer,
             caller_allocates: orig.caller_allocates,
             is_error: orig.is_error,
+            is_uninitialized,
         }
     }
 }
@@ -29,6 +34,7 @@ impl<'a> From<&'a library::Parameter> for Parameter {
             transfer: orig.transfer,
             caller_allocates: orig.caller_allocates,
             is_error: orig.is_error,
+            is_uninitialized: false,
         }
     }
 }
