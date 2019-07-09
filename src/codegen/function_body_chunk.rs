@@ -38,6 +38,15 @@ enum OutMemMode {
     NullMutPtr,
 }
 
+impl OutMemMode {
+    fn is_uninitialized(&self) -> bool {
+        match *self {
+            OutMemMode::Uninitialized => true,
+            _ => false,
+        }
+    }
+}
+
 #[derive(Clone, Default)]
 struct ReturnValue {
     pub ret: return_value::Info,
@@ -102,7 +111,10 @@ impl Builder {
     pub fn out_parameter(&mut self, env: &Env, parameter: &AnalysisCParameter) -> &mut Builder {
         let mem_mode = c_type_mem_mode(env, parameter);
         self.parameters.push(Parameter::Out {
-            parameter: parameter_ffi_call_out::Parameter::new(parameter),
+            parameter: parameter_ffi_call_out::Parameter::new(
+                parameter,
+                mem_mode.is_uninitialized(),
+            ),
             mem_mode,
         });
         self.outs_as_return = true;
@@ -121,9 +133,11 @@ impl Builder {
     pub fn generate(&self, env: &Env, bounds: String, bounds_names: String) -> Chunk {
         let mut body = Vec::new();
 
-        if self.outs_as_return {
-            self.write_out_variables(&mut body);
-        }
+        let mut uninitialized_vars = if self.outs_as_return {
+            self.write_out_variables(&mut body)
+        } else {
+            Vec::new()
+        };
 
         let mut group_by_user_data = FuncParameters::new();
 
@@ -184,11 +198,12 @@ impl Builder {
         }
 
         let call = self.generate_call(&group_by_user_data);
-        let call = self.generate_call_conversion(call);
-        let ret = self.generate_out_return();
-        let (call, ret) = self.apply_outs_mode(call, ret);
+        let call = self.generate_call_conversion(call, &mut uninitialized_vars);
+        let ret = self.generate_out_return(&mut uninitialized_vars);
+        let (call, ret) = self.apply_outs_mode(call, ret, &mut uninitialized_vars);
 
         body.push(call);
+        self.write_out_uninitialized(&mut body, uninitialized_vars);
         if let Some(chunk) = ret {
             body.push(chunk);
         }
@@ -310,6 +325,32 @@ impl Builder {
         }
         chunks.push(unsafe_);
         Chunk::BlockHalf(chunks)
+    }
+
+    fn write_out_uninitialized(&self, body: &mut Vec<Chunk>, uninitialized_vars: Vec<String>) {
+        for uninitialized_var in uninitialized_vars {
+            body.push(Chunk::Let {
+                name: uninitialized_var.clone(),
+                is_mut: false,
+                value: Box::new(Chunk::Custom(format!(
+                    "{}.assume_init()",
+                    uninitialized_var
+                ))),
+                type_: None,
+            });
+        }
+    }
+
+    fn remove_extra_assume_init(
+        &self,
+        array_length_name: &Option<String>,
+        uninitialized_vars: &mut Vec<String>,
+    ) {
+        // To prevent to call twice `.assume_init()` on the length variable, we need to
+        // remove them from the `uninitialized_vars` array.
+        if let Some(ref array_length_name) = *array_length_name {
+            uninitialized_vars.retain(|x| x != array_length_name);
+        }
     }
 
     fn add_trampoline(
@@ -670,6 +711,7 @@ impl Builder {
         });
 
         let mut finish_args = vec![];
+        let mut uninitialized_vars = Vec::new();
         if trampoline.is_method {
             finish_args.push(Chunk::Cast {
                 name: "_source_object".to_string(),
@@ -682,7 +724,15 @@ impl Builder {
                 .output_params
                 .iter()
                 .filter(|param| param.direction == ParameterDirection::Out)
-                .map(|param| Chunk::FfiCallOutParameter { par: param.into() }),
+                .map(|param| {
+                    let kind = type_mem_mode(env, param);
+                    let mut par: parameter_ffi_call_out::Parameter = param.into();
+                    if kind.is_uninitialized() {
+                        par.is_uninitialized = true;
+                        uninitialized_vars.push(param.name.clone());
+                    }
+                    Chunk::FfiCallOutParameter { par }
+                }),
         );
         let index_to_ignore = find_index_to_ignore(&trampoline.output_params);
         let mut result: Vec<_> = trampoline
@@ -701,9 +751,11 @@ impl Builder {
                 if let OutMemMode::UninitializedNamed(_) = mem_mode {
                     value
                 } else {
+                    let array_length_name = self.array_length(param).cloned();
+                    self.remove_extra_assume_init(&array_length_name, &mut uninitialized_vars);
                     Chunk::FromGlibConversion {
                         mode: param.into(),
-                        array_length_name: self.array_length(param).cloned(),
+                        array_length_name,
                         value: Box::new(value),
                     }
                 }
@@ -717,11 +769,13 @@ impl Builder {
             if let OutMemMode::UninitializedNamed(_) = mem_mode {
                 result.insert(0, value);
             } else {
+                let array_length_name = self.array_length(ffi_ret).cloned();
+                self.remove_extra_assume_init(&array_length_name, &mut uninitialized_vars);
                 result.insert(
                     0,
                     Chunk::FromGlibConversion {
                         mode: ffi_ret.into(),
-                        array_length_name: self.array_length(ffi_ret).cloned(),
+                        array_length_name,
                         value: Box::new(value),
                     },
                 );
@@ -748,7 +802,7 @@ impl Builder {
             });
         body.extend(output_vars);
 
-        let ret_name = if trampoline.ffi_ret.is_some() {
+        let ret_name = if trampoline.ffi_ret.is_some() || !uninitialized_vars.is_empty() {
             "ret"
         } else {
             "_"
@@ -763,6 +817,7 @@ impl Builder {
             }),
             type_: None,
         });
+        self.write_out_uninitialized(&mut body, uninitialized_vars);
         body.push(Chunk::Let {
             name: "result".to_string(),
             is_mut: false,
@@ -870,10 +925,12 @@ impl Builder {
         };
         func
     }
-    fn generate_call_conversion(&self, call: Chunk) -> Chunk {
+    fn generate_call_conversion(&self, call: Chunk, uninitialized_vars: &mut Vec<String>) -> Chunk {
+        let array_length_name = self.find_array_length_name("");
+        self.remove_extra_assume_init(&array_length_name, uninitialized_vars);
         Chunk::FfiCallConversion {
             ret: self.ret.ret.clone(),
-            array_length_name: self.find_array_length_name(""),
+            array_length_name,
             call: Box::new(call),
         }
     }
@@ -944,8 +1001,10 @@ impl Builder {
             })
             .collect()
     }
-    fn write_out_variables(&self, v: &mut Vec<Chunk>) {
+    fn write_out_variables(&self, v: &mut Vec<Chunk>) -> Vec<String> {
+        let mut ret = Vec::new();
         let outs = self.get_outs();
+
         for par in outs {
             if let Out {
                 ref parameter,
@@ -953,6 +1012,9 @@ impl Builder {
             } = *par
             {
                 let val = self.get_uninitialized(mem_mode);
+                if val.is_uninitialized() {
+                    ret.push(parameter.name.clone());
+                }
                 let chunk = Chunk::Let {
                     name: parameter.name.clone(),
                     is_mut: true,
@@ -962,6 +1024,7 @@ impl Builder {
                 v.push(chunk);
             }
         }
+        ret
     }
     fn get_uninitialized(&self, mem_mode: &OutMemMode) -> Chunk {
         use self::OutMemMode::*;
@@ -972,7 +1035,7 @@ impl Builder {
             NullMutPtr => Chunk::NullMutPtr,
         }
     }
-    fn generate_out_return(&self) -> Option<Chunk> {
+    fn generate_out_return(&self, uninitialized_vars: &mut Vec<String>) -> Option<Chunk> {
         if !self.outs_as_return {
             return None;
         }
@@ -998,7 +1061,7 @@ impl Builder {
                     continue;
                 }
 
-                chs.push(self.out_parameter_to_return(parameter, mem_mode));
+                chs.push(self.out_parameter_to_return(parameter, mem_mode, uninitialized_vars));
             }
         }
         let chunk = Chunk::Tuple(chs, TupleMode::Auto);
@@ -1008,19 +1071,27 @@ impl Builder {
         &self,
         parameter: &parameter_ffi_call_out::Parameter,
         mem_mode: &OutMemMode,
+        uninitialized_vars: &mut Vec<String>,
     ) -> Chunk {
         let value = Chunk::Custom(parameter.name.clone());
         if let OutMemMode::UninitializedNamed(_) = *mem_mode {
             value
         } else {
+            let array_length_name = self.find_array_length_name(&parameter.name);
+            self.remove_extra_assume_init(&array_length_name, uninitialized_vars);
             Chunk::FromGlibConversion {
                 mode: parameter.into(),
-                array_length_name: self.find_array_length_name(&parameter.name),
+                array_length_name,
                 value: Box::new(value),
             }
         }
     }
-    fn apply_outs_mode(&self, call: Chunk, ret: Option<Chunk>) -> (Chunk, Option<Chunk>) {
+    fn apply_outs_mode(
+        &self,
+        call: Chunk,
+        ret: Option<Chunk>,
+        uninitialized_vars: &mut Vec<String>,
+    ) -> (Chunk, Option<Chunk>) {
         use crate::analysis::out_parameters::Mode::*;
         match self.outs_mode {
             None => (call, ret),
@@ -1064,6 +1135,7 @@ impl Builder {
                 } else {
                     panic!("Call without Chunk::FfiCallConversion")
                 };
+                self.remove_extra_assume_init(&array_length_name, uninitialized_vars);
                 let call = if use_ret {
                     Chunk::Let {
                         name: "ret".into(),

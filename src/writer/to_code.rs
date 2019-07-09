@@ -39,6 +39,8 @@ impl ToCode for Chunk {
             FfiCallOutParameter { ref par } => {
                 let s = if par.caller_allocates {
                     format!("{}.to_glib_none_mut().0", par.name)
+                } else if par.is_uninitialized && !par.is_error {
+                    format!("{}.as_mut_ptr()", par.name)
                 } else {
                     format!("&mut {}", par.name)
                 };
@@ -73,7 +75,7 @@ impl ToCode for Chunk {
                 let s = format_block_one_line(&prefix, ";", &value_strings, "", "");
                 vec![s]
             }
-            Uninitialized => vec!["mem::uninitialized()".into()],
+            Uninitialized => vec!["mem::MaybeUninit::uninit()".into()],
             UninitializedNamed { ref name } => {
                 let s = format!("{}::uninitialized()", name);
                 vec![s]

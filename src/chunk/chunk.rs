@@ -1,7 +1,7 @@
 use super::{conversion_from_glib, parameter_ffi_call_out};
 use crate::analysis::{function_parameters::TransformationType, return_value};
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub enum Chunk {
     Comment(Vec<Chunk>),
     Chunks(Vec<Chunk>),
@@ -74,6 +74,15 @@ pub enum Chunk {
         func_name: String,
         arguments: Vec<Chunk>,
     },
+}
+
+impl Chunk {
+    pub fn is_uninitialized(&self) -> bool {
+        match *self {
+            Chunk::Uninitialized => true,
+            _ => false,
+        }
+    }
 }
 
 #[derive(Clone, Debug)]

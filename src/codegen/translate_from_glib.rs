@@ -82,21 +82,20 @@ impl TranslateFromGlib for analysis::return_value::Info {
 
 fn from_glib_xxx(transfer: library::Transfer, array_length: Option<&String>) -> (String, String) {
     use crate::library::Transfer;
+    let good_print = |name: &str| format!(", {}.assume_init() as usize)", name);
     match (transfer, array_length) {
         (Transfer::None, None) => ("from_glib_none(".into(), ")".into()),
         (Transfer::Full, None) => ("from_glib_full(".into(), ")".into()),
         (Transfer::Container, None) => ("from_glib_container(".into(), ")".into()),
-        (Transfer::None, Some(array_length_name)) => (
-            "from_glib_none_num(".into(),
-            format!(", {} as usize)", array_length_name),
-        ),
-        (Transfer::Full, Some(array_length_name)) => (
-            "from_glib_full_num(".into(),
-            format!(", {} as usize)", array_length_name),
-        ),
+        (Transfer::None, Some(array_length_name)) => {
+            ("from_glib_none_num(".into(), good_print(array_length_name))
+        }
+        (Transfer::Full, Some(array_length_name)) => {
+            ("from_glib_full_num(".into(), good_print(array_length_name))
+        }
         (Transfer::Container, Some(array_length_name)) => (
             "from_glib_container_num(".into(),
-            format!(", {} as usize)", array_length_name),
+            good_print(array_length_name),
         ),
     }
 }
