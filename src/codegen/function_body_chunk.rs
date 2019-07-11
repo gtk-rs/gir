@@ -34,6 +34,7 @@ use self::Parameter::*;
 enum OutMemMode {
     Uninitialized,
     UninitializedNamed(String),
+    UninitializedPrimitive(&'static str),
     NullPtr,
     NullMutPtr,
 }
@@ -1027,12 +1028,16 @@ impl Builder {
         ret
     }
     fn get_uninitialized(&self, mem_mode: &OutMemMode) -> Chunk {
-        use self::OutMemMode::*;
         match *mem_mode {
-            Uninitialized => Chunk::Uninitialized,
-            UninitializedNamed(ref name) => Chunk::UninitializedNamed { name: name.clone() },
-            NullPtr => Chunk::NullPtr,
-            NullMutPtr => Chunk::NullMutPtr,
+            OutMemMode::Uninitialized => Chunk::Uninitialized,
+            OutMemMode::UninitializedNamed(ref name) => {
+                Chunk::UninitializedNamed { name: name.clone() }
+            }
+            OutMemMode::UninitializedPrimitive(init_value) => Chunk::UninitializedPrimitive {
+                init_value: init_value.clone(),
+            },
+            OutMemMode::NullPtr => Chunk::NullPtr,
+            OutMemMode::NullMutPtr => Chunk::NullMutPtr,
         }
     }
     fn generate_out_return(&self, uninitialized_vars: &mut Vec<String>) -> Option<Chunk> {
@@ -1203,11 +1208,10 @@ fn c_type_mem_mode_lib(
     caller_allocates: bool,
     transfer: library::Transfer,
 ) -> OutMemMode {
-    use self::OutMemMode::*;
     match ConversionType::of(env, typ) {
         ConversionType::Pointer => {
             if caller_allocates {
-                UninitializedNamed(rust_type(env, typ).unwrap())
+                OutMemMode::UninitializedNamed(rust_type(env, typ).unwrap())
             } else {
                 use crate::library::Type::*;
                 let type_ = env.library.type_(typ);
@@ -1218,16 +1222,23 @@ fn c_type_mem_mode_lib(
                             || fund == library::Fundamental::Filename =>
                     {
                         if transfer == library::Transfer::Full {
-                            NullMutPtr
+                            OutMemMode::NullMutPtr
                         } else {
-                            NullPtr
+                            OutMemMode::NullPtr
                         }
                     }
-                    _ => NullMutPtr,
+                    _ => OutMemMode::NullMutPtr,
                 }
             }
         }
-        _ => Uninitialized,
+        _ => {
+            let type_ = env.library.type_(typ);
+            if let Some(initialization) = type_.get_initialization() {
+                OutMemMode::UninitializedPrimitive(initialization)
+            } else {
+                OutMemMode::Uninitialized
+            }
+        }
     }
 }
 
@@ -1266,7 +1277,16 @@ fn type_mem_mode(env: &Env, parameter: &library::Parameter) -> Chunk {
                 }
             }
         }
-        _ => Chunk::Uninitialized,
+        _ => {
+            let type_ = env.library.type_(parameter.typ);
+            if let Some(initialization) = type_.get_initialization() {
+                Chunk::UninitializedPrimitive {
+                    init_value: initialization,
+                }
+            } else {
+                Chunk::Uninitialized
+            }
+        }
     }
 }
 

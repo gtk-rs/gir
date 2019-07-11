@@ -250,6 +250,32 @@ impl Fundamental {
             _ => true,
         }
     }
+
+    pub fn get_initialization(self) -> Option<&'static str> {
+        match self {
+            Fundamental::Boolean
+            | Fundamental::Int8
+            | Fundamental::UInt8
+            | Fundamental::Int16
+            | Fundamental::UInt16
+            | Fundamental::Int32
+            | Fundamental::UInt32
+            | Fundamental::Int64
+            | Fundamental::UInt64
+            | Fundamental::Char
+            | Fundamental::UChar
+            | Fundamental::Short
+            | Fundamental::UShort
+            | Fundamental::Int
+            | Fundamental::UInt
+            | Fundamental::Long
+            | Fundamental::ULong
+            | Fundamental::Size
+            | Fundamental::SSize => Some("0"),
+            Fundamental::Float | Fundamental::Double => Some("0."),
+            _ => None,
+        }
+    }
 }
 
 const FUNDAMENTAL: &[(&str, Fundamental)] = &[
@@ -626,7 +652,7 @@ impl Type {
             Enumeration(ref enum_) => enum_.name.clone(),
             Bitfield(ref bit_field) => bit_field.name.clone(),
             Record(ref rec) => rec.name.clone(),
-            Union(ref union) => union.name.clone(),
+            Union(ref union_) => union_.name.clone(),
             Function(ref func) => func.name.clone(),
             Interface(ref interface) => interface.name.clone(),
             Array(type_id) => format!("Array {:?}", type_id),
@@ -832,6 +858,13 @@ impl Type {
         match *self {
             Type::Class(Class { final_type, .. }) => final_type,
             _ => false,
+        }
+    }
+
+    pub fn get_initialization(&self) -> Option<&'static str> {
+        match *self {
+            Type::Fundamental(x) => x.get_initialization(),
+            _ => None,
         }
     }
 }

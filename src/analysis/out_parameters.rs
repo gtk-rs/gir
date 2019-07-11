@@ -118,12 +118,12 @@ pub fn analyze_imports(
         if par.direction == ParameterDirection::Out {
             match *env.library.type_(par.typ) {
                 Type::Bitfield(..) | Type::Enumeration(..) => imports.add("std::mem", version),
-                Type::Fundamental(fund)
-                    if fund != Fundamental::Utf8
-                        && fund != Fundamental::OsString
-                        && fund != Fundamental::Filename =>
-                {
-                    imports.add("std::mem", version)
+                Type::Fundamental(ty) => {
+                    // UTF8 strings requires an integer, however the associated integer is
+                    // initialized with "0" and therefore doesn't require the import.
+                    if ty.get_initialization().is_none() && ty != Fundamental::Utf8 {
+                        imports.add("std::mem", version)
+                    }
                 }
                 _ if !par.caller_allocates => match ConversionType::of(env, par.typ) {
                     ConversionType::Direct | ConversionType::Scalar => (),

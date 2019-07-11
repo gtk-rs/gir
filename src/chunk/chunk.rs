@@ -32,6 +32,9 @@ pub enum Chunk {
         type_: Option<Box<Chunk>>,
     },
     Uninitialized,
+    UninitializedPrimitive {
+        init_value: &'static str,
+    },
     UninitializedNamed {
         name: String,
     },

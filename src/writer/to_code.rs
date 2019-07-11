@@ -80,6 +80,7 @@ impl ToCode for Chunk {
                 let s = format!("{}::uninitialized()", name);
                 vec![s]
             }
+            UninitializedPrimitive { ref init_value } => vec![init_value.to_string()],
             NullPtr => vec!["ptr::null()".into()],
             NullMutPtr => vec!["ptr::null_mut()".into()],
             Custom(ref string) => vec![string.clone()],
