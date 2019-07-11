@@ -139,6 +139,7 @@ impl Library {
         let mut impls = Vec::new();
         let mut fields = Vec::new();
         let mut doc = None;
+        let mut doc_deprecated = None;
         let mut union_count = 1;
 
         parser.elements(|parser, elem| match elem.name() {
@@ -161,6 +162,7 @@ impl Library {
             }),
             "virtual-method" => parser.ignore_element(),
             "doc" => parser.text().map(|t| doc = Some(t)),
+            "doc-deprecated" => parser.text().map(|t| doc_deprecated = Some(t)),
             "source-position" => parser.ignore_element(),
             "union" => self
                 .read_union(parser, ns_id, elem, Some(class_name), Some(c_type))
@@ -210,6 +212,7 @@ impl Library {
             implements: impls,
             final_type: false, // this will be set during postprocessing
             doc,
+            doc_deprecated,
             version,
             deprecated_version,
         });
@@ -544,6 +547,7 @@ impl Library {
         let mut properties = Vec::new();
         let mut prereqs = Vec::new();
         let mut doc = None;
+        let mut doc_deprecated = None;
 
         parser.elements(|parser, elem| match elem.name() {
             "constructor" | "function" | "method" => {
@@ -561,6 +565,7 @@ impl Library {
                 }
             }),
             "doc" => parser.text().map(|t| doc = Some(t)),
+            "doc-deprecated" => parser.text().map(|t| doc_deprecated = Some(t)),
             "virtual-method" => parser.ignore_element(),
             "source-position" => parser.ignore_element(),
             "attribute" => parser.ignore_element(),
@@ -578,6 +583,7 @@ impl Library {
             properties,
             prerequisites: prereqs,
             doc,
+            doc_deprecated,
             version,
             deprecated_version,
         });

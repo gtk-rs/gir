@@ -151,6 +151,7 @@ fn create_object_doc(w: &mut dyn Write, env: &Env, info: &analysis::object::Info
     let ty_ext = TypeStruct::new(SType::Trait, &info.trait_name);
     let has_trait = info.generate_trait;
     let doc;
+    let doc_deprecated;
     let functions: &[Function];
     let signals: &[Signal];
     let properties: &[Property];
@@ -164,12 +165,14 @@ fn create_object_doc(w: &mut dyn Write, env: &Env, info: &analysis::object::Info
     match *env.library.type_(info.type_id) {
         Type::Class(ref cl) => {
             doc = cl.doc.as_ref();
+            doc_deprecated = cl.doc_deprecated.as_ref();
             functions = &cl.functions;
             signals = &cl.signals;
             properties = &cl.properties;
         }
         Type::Interface(ref iface) => {
             doc = iface.doc.as_ref();
+            doc_deprecated = iface.doc_deprecated.as_ref();
             functions = &iface.functions;
             signals = &iface.signals;
             properties = &iface.properties;
@@ -182,6 +185,11 @@ fn create_object_doc(w: &mut dyn Write, env: &Env, info: &analysis::object::Info
     write_item_doc(w, &ty, |w| {
         if let Some(ver) = info.deprecated_version {
             write!(w, "`[Deprecated since {}]` ", ver)?;
+        }
+        if let Some(doc) = doc_deprecated {
+            writeln!(w, "{}", reformat_doc(doc, &symbols))?;
+        } else if doc_deprecated.is_some() {
+            write!(w, "`[Deprecated]` ")?;
         }
         if let Some(doc) = doc {
             writeln!(w, "{}", reformat_doc(doc, &symbols))?;
@@ -212,6 +220,8 @@ fn create_object_doc(w: &mut dyn Write, env: &Env, info: &analysis::object::Info
         write_item_doc(w, &ty_ext, |w| {
             if let Some(ver) = info.deprecated_version {
                 write!(w, "`[Deprecated since {}]` ", ver)?;
+            } else if doc_deprecated.is_some() {
+                write!(w, "`[Deprecated]` ")?;
             }
             writeln!(w, "Trait containing all `{}` methods.", ty.name)?;
 

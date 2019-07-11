@@ -501,6 +501,7 @@ pub struct Interface {
     pub version: Option<Version>,
     pub deprecated_version: Option<Version>,
     pub doc: Option<String>,
+    pub doc_deprecated: Option<String>,
 }
 
 #[derive(Default, Debug)]
@@ -520,6 +521,7 @@ pub struct Class {
     pub version: Option<Version>,
     pub deprecated_version: Option<Version>,
     pub doc: Option<String>,
+    pub doc_deprecated: Option<String>,
 }
 
 #[derive(Debug)]
