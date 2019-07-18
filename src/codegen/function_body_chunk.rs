@@ -718,13 +718,20 @@ impl Builder {
                 type_: "*mut _".to_string(),
             });
         }
-        finish_args.push(Chunk::Name("res".to_string()));
+        let mut found_async_result = false;
         finish_args.extend(
             trampoline
                 .output_params
                 .iter()
-                .filter(|param| param.direction == ParameterDirection::Out)
+                .filter(|param| {
+                    param.direction == ParameterDirection::Out
+                        || param.typ.full_name(&env.library) == "Gio.AsyncResult"
+                })
                 .map(|param| {
+                    if param.typ.full_name(&env.library) == "Gio.AsyncResult" {
+                        found_async_result = true;
+                        return Chunk::Name("res".to_string());
+                    }
                     let kind = type_mem_mode(env, param);
                     let mut par: parameter_ffi_call_out::Parameter = param.into();
                     if kind.is_uninitialized() {
@@ -733,6 +740,10 @@ impl Builder {
                     }
                     Chunk::FfiCallOutParameter { par }
                 }),
+        );
+        assert!(
+            found_async_result,
+            "The check *wasn't* performed in analysis part: Guillaume was wrong!"
         );
         let index_to_ignore = find_index_to_ignore(&trampoline.output_params);
         let mut result: Vec<_> = trampoline
@@ -802,7 +813,7 @@ impl Builder {
             });
         body.extend(output_vars);
 
-        let ret_name = if trampoline.ffi_ret.is_some() || !uninitialized_vars.is_empty() {
+        let ret_name = if trampoline.ffi_ret.is_some() {
             "ret"
         } else {
             "_"
