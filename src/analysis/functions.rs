@@ -691,16 +691,8 @@ fn analyze_function(
 
     if !commented {
         if !destroys.is_empty() || !callbacks.is_empty() {
-            if callbacks.iter().any(|c| c.scope.is_async() && *c.nullable) {
-                warn_main!(
-                    type_tid,
-                    "{}: gir cannot generate nullable async callback...",
-                    func.c_identifier.as_ref().unwrap_or(&func.name)
-                );
-                commented = true;
-            }
-            if !commented && callbacks.iter().any(|c| !c.scope.is_call()) {
-                imports.add("std::boxed::Box as Box_");
+            if callbacks.iter().any(|c| !c.scope.is_call()) {
+                imports.add("std::boxed::Box as Box_", None);
             }
         }
         if !commented {

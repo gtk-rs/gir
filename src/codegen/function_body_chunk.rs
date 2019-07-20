@@ -229,7 +229,7 @@ impl Builder {
                 .filter(|(_, x)| *x > 1)
                 .map(|(x, _)| (x, 0))
                 .collect::<HashMap<_, _>>();
-            for trampoline in self.callbacks.iter() {
+            for (callback_pos, trampoline) in self.callbacks.iter().enumerate() {
                 let user_data_index = trampoline.user_data_index;
                 let pos = poses.entry(&trampoline.user_data_index);
                 self.add_trampoline(
@@ -244,12 +244,13 @@ impl Builder {
                     &bounds,
                     &bounds_names,
                     false,
+                    &self.callbacks[callback_pos].bound_name,
                 );
                 pos.and_modify(|x| {
                     *x += 1;
                 });
             }
-            for destroy in self.destroys.iter() {
+            for (callback_pos, destroy) in self.destroys.iter().enumerate() {
                 self.add_trampoline(
                     env,
                     &mut chunks,
@@ -259,6 +260,7 @@ impl Builder {
                     &bounds,
                     &bounds_names,
                     true,
+                    &self.callbacks[callback_pos].bound_name,
                 );
             }
             for FuncParameter {
@@ -363,6 +365,7 @@ impl Builder {
         bounds: &str,
         bounds_names: &str,
         is_destroy: bool,
+        bound_name: &str,
     ) {
         if !is_destroy {
             if full_type.is_none() {
@@ -545,7 +548,7 @@ impl Builder {
                     } else if trampoline.scope.is_call() {
                         format!(
                             "{} as *const _ as usize as *mut {}",
-                            func, self.callbacks[0].bound_name
+                            func, bound_name
                         )
                     } else {
                         format!("&*({} as *mut _)", func)
@@ -553,11 +556,11 @@ impl Builder {
                 )),
                 type_: Some(Box::new(Chunk::Custom(
                     if is_destroy || trampoline.scope.is_async() {
-                        format!("Box_<{}>", self.callbacks[0].bound_name)
+                        format!("Box_<{}>", bound_name)
                     } else if trampoline.scope.is_call() {
-                        format!("*mut {}", self.callbacks[0].bound_name)
+                        format!("*mut {}", bound_name)
                     } else {
-                        format!("&{}", self.callbacks[0].bound_name)
+                        format!("&{}", bound_name)
                     },
                 ))),
             });
