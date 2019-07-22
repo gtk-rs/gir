@@ -279,7 +279,13 @@ pub fn analyze(
             };
 
         let transformation_type = match ConversionType::of(env, typ) {
-            ConversionType::Direct => TransformationType::ToGlibDirect { name },
+            ConversionType::Direct => {
+                if par.c_type != "GLib.Pid" {
+                    TransformationType::ToGlibDirect { name }
+                } else {
+                    TransformationType::ToGlibScalar { name, nullable }
+                }
+            }
             ConversionType::Scalar => TransformationType::ToGlibScalar { name, nullable },
             ConversionType::Pointer => TransformationType::ToGlibPointer {
                 name,
