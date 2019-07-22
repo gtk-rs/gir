@@ -1300,6 +1300,13 @@ fn add_chunk_for_type(
             )));
             true
         }
+        library::Type::Alias(_) if ty_name == "glib::Pid" => {
+            body.push(Chunk::Custom(format!(
+                "let {0} = glib::FromGlib::from_glib({0});",
+                par.name
+            )));
+            true
+        }
         library::Type::Alias(ref x) => add_chunk_for_type(env, x.typ, par, body, ty_name, nullable),
         ref x => {
             let (begin, end) =
