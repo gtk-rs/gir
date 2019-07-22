@@ -224,6 +224,21 @@ fn fixup_special_functions(
     }
 }
 
+fn find_callback_bound_to_destructor(
+    callbacks: &[Trampoline],
+    destroy: &mut Trampoline,
+    destroy_index: usize,
+) -> bool {
+    for call in callbacks {
+        if call.destroy_index == destroy_index {
+            destroy.nullable = call.nullable;
+            destroy.bound_name = call.bound_name.clone();
+            return true;
+        }
+    }
+    false
+}
+
 fn analyze_callbacks(
     env: &Env,
     func: &library::Function,
@@ -262,6 +277,7 @@ fn analyze_callbacks(
             Some(n) => &n,
             None => &func.name,
         };
+        let mut destructors_to_update = Vec::new();
         for pos in 0..parameters.c_parameters.len() {
             // If it is a user data parameter, we ignore it.
             if cross_user_data_check.values().any(|p| *p == pos) || user_data_indexes.contains(&pos)
@@ -345,17 +361,15 @@ fn analyze_callbacks(
                         warn_main!(
                             type_tid,
                             "`{}`: no user data point to the destroy callback",
-                            func_name
+                            func_name,
                         );
                         *commented = true;
                     }
                     // We check if the user trampoline is there. If so, we change the destroy
                     // nullable value if needed.
-                    for call in callbacks.iter() {
-                        if call.destroy_index == pos {
-                            callback.nullable = call.nullable;
-                            break;
-                        }
+                    if !find_callback_bound_to_destructor(&callbacks, &mut callback, pos) {
+                        // Maybe the linked callback is after so we store it just in case...
+                        destructors_to_update.push((pos, destroys.len()));
                     }
                     destroys.push(callback);
                     to_remove.push(pos);
@@ -372,6 +386,19 @@ fn analyze_callbacks(
                     par.scope,
                 )
                 .is_err();
+            }
+        }
+        for (destroy_index, pos_in_destroys) in destructors_to_update {
+            if !find_callback_bound_to_destructor(
+                &callbacks,
+                &mut destroys[pos_in_destroys],
+                destroy_index,
+            ) {
+                warn_main!(
+                    type_tid,
+                    "`{}`: destructor without linked callback",
+                    func_name
+                );
             }
         }
     }
@@ -692,7 +719,7 @@ fn analyze_function(
     if !commented {
         if !destroys.is_empty() || !callbacks.is_empty() {
             if callbacks.iter().any(|c| !c.scope.is_call()) {
-                imports.add("std::boxed::Box as Box_", None);
+                imports.add("std::boxed::Box as Box_");
             }
         }
         if !commented {
