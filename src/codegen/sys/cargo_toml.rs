@@ -92,19 +92,44 @@ fn fill_in(root: &mut Table, env: &Env) {
 
     {
         let features = upsert_table(root, "features");
-        let versions = env
+        let mut versions = env
             .namespaces
             .main()
             .versions
             .iter()
-            .filter(|&&v| v > env.config.min_cfg_version);
-        versions.fold(None::<Version>, |prev, &version| {
-            let prev_array: Vec<Value> =
-                prev.iter().map(|v| Value::String(v.to_feature())).collect();
-            features.insert(version.to_feature(), Value::Array(prev_array));
-            Some(version)
-        });
+            .filter(|&&v| v > env.config.min_cfg_version)
+            .collect::<Vec<_>>();
+        versions.sort_unstable();
+        let max_version = versions.last().map(|x| *x);
+        versions
+            .into_iter()
+            .fold(None::<Version>, |prev, &version| {
+                let prev_array: Vec<Value> =
+                    prev.iter().map(|v| Value::String(v.to_feature())).collect();
+                features.insert(version.to_feature(), Value::Array(prev_array));
+                Some(version)
+            });
         features.insert("dox".to_string(), Value::Array(Vec::new()));
+        features.insert("docs-rs".to_string(), Value::Array(Vec::new()));
+
+        let docs_rs_metadata = upsert_table(root, "package.metadata.docs.rs");
+        let mut docs_rs_features = env.config.docs_rs_features.clone();
+        docs_rs_features.push("docs-rs".to_owned());
+        docs_rs_features.push("dox".to_owned());
+        if let Some(version) = max_version {
+            docs_rs_features.push(version.to_feature());
+        }
+        docs_rs_features.sort_unstable();
+        docs_rs_features.dedup(); // we remove duplicates if there is any
+        docs_rs_metadata.insert(
+            "features".to_string(),
+            Value::Array(
+                docs_rs_features
+                    .into_iter()
+                    .map(|s| Value::String(s))
+                    .collect::<Vec<_>>(),
+            ),
+        );
     }
 }
 

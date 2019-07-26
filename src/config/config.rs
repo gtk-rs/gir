@@ -39,6 +39,7 @@ pub struct Config {
     pub concurrency: library::Concurrency,
     pub single_version_file: Option<PathBuf>,
     pub generate_display_trait: bool,
+    pub docs_rs_features: Vec<String>,
 }
 
 impl Config {
@@ -156,6 +157,22 @@ impl Config {
             None => true,
         };
 
+        let mut docs_rs_features = Vec::new();
+        for v in match toml.lookup("options.docs_rs_features") {
+            Some(v) => v.as_result_vec("options.docs_rs_features")?.as_slice(),
+            None => &[],
+        } {
+            docs_rs_features.push(match v.as_str() {
+                Some(s) => s.to_owned(),
+                None => {
+                    return Err(format!(
+                        "Invalid `docs_rs_features` value element, expected a string, found {}",
+                        v.type_str()
+                    ))
+                }
+            });
+        }
+
         // options.concurrency is the default of all objects if nothing
         // else is configured
         let mut objects = toml
@@ -213,6 +230,7 @@ impl Config {
             concurrency,
             single_version_file,
             generate_display_trait,
+            docs_rs_features,
         })
     }
 
