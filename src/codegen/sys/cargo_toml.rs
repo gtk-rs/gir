@@ -110,11 +110,9 @@ fn fill_in(root: &mut Table, env: &Env) {
                 Some(version)
             });
         features.insert("dox".to_string(), Value::Array(Vec::new()));
-        features.insert("docs-rs".to_string(), Value::Array(Vec::new()));
 
         let docs_rs_metadata = upsert_table(root, "package.metadata.docs.rs");
         let mut docs_rs_features = env.config.docs_rs_features.clone();
-        docs_rs_features.push("docs-rs".to_owned());
         docs_rs_features.push("dox".to_owned());
         if let Some(version) = max_version {
             docs_rs_features.push(version.to_feature());
