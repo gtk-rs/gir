@@ -208,7 +208,7 @@ fn fixup_special_functions(
         && parameters.c_parameters[0].c_type == "gconstpointer"
     {
         fixup_gpointer_parameter(env, type_tid, is_boxed, parameters, 0);
-        imports.add("glib_sys", None);
+        imports.add("glib_sys");
     }
 
     if (name == "compare" || name == "equal" || name == "is_equal")
@@ -218,7 +218,7 @@ fn fixup_special_functions(
     {
         fixup_gpointer_parameter(env, type_tid, is_boxed, parameters, 0);
         fixup_gpointer_parameter(env, type_tid, is_boxed, parameters, 1);
-        imports.add("glib_sys", None);
+        imports.add("glib_sys");
     }
 }
 
@@ -495,6 +495,8 @@ fn analyze_function(
     let doc_hidden = configured_functions.iter().any(|f| f.doc_hidden);
     let disable_length_detect = configured_functions.iter().any(|f| f.disable_length_detect);
 
+    imports.set_defaults(&version, &cfg_condition);
+
     let ret = return_value::analyze(
         env,
         func,
@@ -646,24 +648,24 @@ fn analyze_function(
         commented = true;
     } else if !commented {
         if !outs.is_empty() {
-            out_parameters::analyze_imports(env, &func.parameters, func.version, imports);
+            out_parameters::analyze_imports(env, &func.parameters, imports);
         }
         if let Some(AsyncTrampoline {
             ref output_params, ..
         }) = trampoline
         {
-            out_parameters::analyze_imports(env, output_params, func.version, imports);
+            out_parameters::analyze_imports(env, output_params, imports);
         }
     }
 
     if r#async && !commented {
         if env.config.library_name != "Gio" {
-            imports.add("gio_sys", version);
+            imports.add("gio_sys");
             imports.add_with_constraint("gio", version, Some("futures"));
         }
-        imports.add("glib_sys", version);
-        imports.add("gobject_sys", version);
-        imports.add("std::ptr", version);
+        imports.add("glib_sys");
+        imports.add("gobject_sys");
+        imports.add("std::ptr");
         imports.add_with_constraint("futures::future", version, Some("futures"));
         imports.add_with_constraint("std::boxed::Box as Box_", version, Some("futures"));
 
@@ -692,7 +694,7 @@ fn analyze_function(
                 commented = true;
             }
             if !commented && callbacks.iter().any(|c| !c.scope.is_call()) {
-                imports.add("std::boxed::Box as Box_", None);
+                imports.add("std::boxed::Box as Box_");
             }
         }
         if !commented {
@@ -704,11 +706,11 @@ fn analyze_function(
                 }
             }
 
-            imports.add_used_types(&used_types, version);
+            imports.add_used_types(&used_types);
             if ret.base_tid.is_some() {
-                imports.add("glib::object::Cast", None);
+                imports.add("glib::object::Cast");
             }
-            imports.add("glib::translate::*", version);
+            imports.add("glib::translate::*");
             bounds.update_imports(imports);
         }
     }
@@ -720,6 +722,8 @@ fn analyze_function(
     };
     let is_method = func.kind == library::FunctionKind::Method;
     let assertion = SafetyAssertionMode::of(env, is_method, &parameters);
+
+    imports.reset_defaults();
 
     Info {
         name,
@@ -976,7 +980,7 @@ fn analyze_callback(
         } else {
             if !*commented {
                 for import in imports_to_add {
-                    imports.add_used_type(&import, None);
+                    imports.add_used_type(&import);
                 }
             }
             Some((

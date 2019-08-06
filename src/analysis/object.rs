@@ -67,10 +67,10 @@ pub fn class(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<Info>
     };
 
     let mut imports = Imports::with_defined(&env.library, &name);
-    imports.add("glib::translate::*", None);
-    imports.add(env.main_sys_crate_name(), None);
+    imports.add("glib::translate::*");
+    imports.add(env.main_sys_crate_name());
     if obj.generate_display_trait {
-        imports.add("std::fmt", None);
+        imports.add("std::fmt");
     }
 
     let supertypes = supertypes::analyze(env, class_tid, &mut imports);
@@ -158,17 +158,17 @@ pub fn class(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<Info>
         && (has_signals || has_methods || !properties.is_empty() || !child_properties.is_empty());
 
     if !builder_properties.is_empty() {
-        imports.add("glib::object::Cast", None);
-        imports.add("glib::StaticType", None);
-        imports.add("glib::ToValue", None);
+        imports.add("glib::object::Cast");
+        imports.add("glib::StaticType");
+        imports.add("glib::ToValue");
     }
 
     if generate_trait {
-        imports.add("glib::object::IsA", None);
+        imports.add("glib::object::IsA");
     }
 
     if obj.concurrency == library::Concurrency::SendUnique {
-        imports.add("glib::ObjectExt", None);
+        imports.add("glib::ObjectExt");
     }
 
     let rust_class_type = Some(format!("{}Class", name));
@@ -243,11 +243,11 @@ pub fn interface(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<I
     };
 
     let mut imports = Imports::with_defined(&env.library, &name);
-    imports.add("glib::translate::*", None);
-    imports.add(env.main_sys_crate_name(), None);
-    imports.add("glib::object::IsA", None);
+    imports.add("glib::translate::*");
+    imports.add(env.main_sys_crate_name());
+    imports.add("glib::object::IsA");
     if obj.generate_display_trait {
-        imports.add("std::fmt", None);
+        imports.add("std::fmt");
     }
 
     let supertypes = supertypes::analyze(env, iface_tid, &mut imports);
@@ -293,7 +293,7 @@ pub fn interface(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<I
     );
 
     if obj.concurrency == library::Concurrency::SendUnique {
-        imports.add("glib::ObjectExt", None);
+        imports.add("glib::ObjectExt");
     }
 
     let base = InfoBase {

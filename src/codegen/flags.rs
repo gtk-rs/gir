@@ -38,19 +38,19 @@ pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>) {
     let path = root_path.join("flags.rs");
     file_saver::save_to_file(path, env.config.make_backup, |w| {
         let mut imports = Imports::new(&env.library);
-        imports.add(env.main_sys_crate_name(), None);
-        imports.add("glib::translate::*", None);
+        imports.add(env.main_sys_crate_name());
+        imports.add("glib::translate::*");
 
         for config in &configs {
             if let Type::Bitfield(ref flags) = *env.library.type_(config.type_id.unwrap()) {
                 if flags.glib_get_type.is_some() {
-                    imports.add("glib::Type", None);
-                    imports.add("glib::StaticType", None);
-                    imports.add("glib::value::Value", None);
-                    imports.add("glib::value::SetValue", None);
-                    imports.add("glib::value::FromValue", None);
-                    imports.add("glib::value::FromValueOptional", None);
-                    imports.add("gobject_sys", None);
+                    imports.add("glib::Type");
+                    imports.add("glib::StaticType");
+                    imports.add("glib::value::Value");
+                    imports.add("glib::value::SetValue");
+                    imports.add("glib::value::FromValue");
+                    imports.add("glib::value::FromValueOptional");
+                    imports.add("gobject_sys");
                     break;
                 }
             }

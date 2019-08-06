@@ -52,24 +52,24 @@ pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>) {
     }
 
     let mut imports = Imports::new(&env.library);
-    imports.add(env.main_sys_crate_name(), None);
+    imports.add(env.main_sys_crate_name());
     if has_get_quark {
-        imports.add("glib::Quark", None);
-        imports.add("glib::error::ErrorDomain", None);
+        imports.add("glib::Quark");
+        imports.add("glib::error::ErrorDomain");
     }
     if has_get_type {
-        imports.add("glib::Type", None);
-        imports.add("glib::StaticType", None);
-        imports.add("glib::value::Value", None);
-        imports.add("glib::value::SetValue", None);
-        imports.add("glib::value::FromValue", None);
-        imports.add("glib::value::FromValueOptional", None);
-        imports.add("gobject_sys", None);
+        imports.add("glib::Type");
+        imports.add("glib::StaticType");
+        imports.add("glib::value::Value");
+        imports.add("glib::value::SetValue");
+        imports.add("glib::value::FromValue");
+        imports.add("glib::value::FromValueOptional");
+        imports.add("gobject_sys");
     }
-    imports.add("glib::translate::*", None);
+    imports.add("glib::translate::*");
 
     if generate_display_trait {
-        imports.add("std::fmt", None);
+        imports.add("std::fmt");
     }
 
     let path = root_path.join("enums.rs");

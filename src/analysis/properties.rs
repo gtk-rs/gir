@@ -68,32 +68,10 @@ pub fn analyze(
             notify_signals.push(notify_signal);
         }
 
-        if getter.is_none() && setter.is_none() {
-            continue;
-        }
-
-        let type_string = rust_type(env, prop.typ);
         if let Some(prop) = getter {
-            if let Ok(ref s) = used_rust_type(env, prop.typ, false) {
-                imports.add_used_type(s, prop.version);
-            }
-            if type_string.is_ok() {
-                imports.add("gobject_sys", prop.version);
-                imports.add("glib::Value", prop.version);
-                imports.add("glib::StaticType", prop.version);
-            }
-
             properties.push(prop);
         }
         if let Some(prop) = setter {
-            if let Ok(ref s) = used_rust_type(env, prop.typ, true) {
-                imports.add_used_type(s, prop.version);
-            }
-            if type_string.is_ok() {
-                imports.add("gobject_sys", prop.version);
-                imports.add("glib::Value", prop.version);
-            }
-
             properties.push(prop);
         }
     }
@@ -128,6 +106,9 @@ fn analyze_property(
     let generate_set = generate.is_some();
     let generate = generate.unwrap_or_else(PropertyGenerateFlags::all);
 
+    imports.set_defaults(&prop_version, &None);
+
+    let type_string = rust_type(env, prop.typ);
     let name_for_func = nameutil::signal_to_snake(&name);
     let var_name = nameutil::mangle_keywords(&*name_for_func).into_owned();
     let get_func_name = format!("get_property_{}", name_for_func);
@@ -190,6 +171,15 @@ fn analyze_property(
     let (get_out_ref_mode, set_in_ref_mode, nullable) = get_property_ref_modes(env, prop);
 
     let getter = if readable {
+        if let Ok(ref s) = used_rust_type(env, prop.typ, false) {
+            imports.add_used_type(s);
+        }
+        if type_string.is_ok() {
+            imports.add("gobject_sys");
+            imports.add("glib::Value");
+            imports.add("glib::StaticType");
+        }
+
         Some(Property {
             name: name.clone(),
             var_name: String::new(),
@@ -207,6 +197,14 @@ fn analyze_property(
     };
 
     let setter = if writable {
+        if let Ok(ref s) = used_rust_type(env, prop.typ, true) {
+            imports.add_used_type(s);
+        }
+        if type_string.is_ok() {
+            imports.add("gobject_sys");
+            imports.add("glib::Value");
+        }
+
         Some(Property {
             name: name.clone(),
             var_name,
@@ -225,7 +223,7 @@ fn analyze_property(
 
     if !generate_trait && (writable || readable || notifiable) {
         //To resolve a conflict with OSTree::ObjectType
-        imports.add("glib::object::ObjectType as ObjectType_", prop_version);
+        imports.add("glib::object::ObjectType as ObjectType_");
     }
 
     let notify_signal = if notifiable {
@@ -270,15 +268,15 @@ fn analyze_property(
         );
 
         if trampoline.is_ok() {
-            imports.add_used_types(&used_types, prop_version);
+            imports.add_used_types(&used_types);
             if generate_trait {
-                imports.add("glib::object::Cast", prop_version);
+                imports.add("glib::object::Cast");
             }
-            imports.add("glib::signal::connect_raw", prop_version);
-            imports.add("glib::signal::SignalHandlerId", prop_version);
-            imports.add("std::mem::transmute", prop_version);
-            imports.add("std::boxed::Box as Box_", prop_version);
-            imports.add("glib_sys", prop_version);
+            imports.add("glib::signal::connect_raw");
+            imports.add("glib::signal::SignalHandlerId");
+            imports.add("std::mem::transmute");
+            imports.add("std::boxed::Box as Box_");
+            imports.add("glib_sys");
 
             Some(signals::Info {
                 connect_name: format!("connect_property_{}_notify", name_for_func),
@@ -295,6 +293,8 @@ fn analyze_property(
     } else {
         None
     };
+
+    imports.reset_defaults();
 
     (getter, setter, notify_signal)
 }

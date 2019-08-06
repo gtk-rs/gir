@@ -59,9 +59,9 @@ pub fn analyze(
     }
 
     if !properties.is_empty() {
-        imports.add("glib::object::IsA", None);
+        imports.add("glib::object::IsA");
         if let Some(s) = child_type.and_then(|typ| used_rust_type(env, typ, true).ok()) {
-            imports.add_used_type(&s, None);
+            imports.add_used_type(&s);
         }
     }
 
@@ -81,10 +81,10 @@ fn analyze_property(
         let prop_name = nameutil::signal_to_snake(&*prop.name);
         let doc_hidden = prop.doc_hidden;
 
-        imports.add("glib::Value", None);
-        imports.add("glib::StaticType", None);
+        imports.add("glib::Value");
+        imports.add("glib::StaticType");
         if let Ok(s) = used_rust_type(env, typ, false) {
-            imports.add_used_type(&s, None);
+            imports.add_used_type(&s);
         }
 
         let get_out_ref_mode = RefMode::of(env, typ, library::ParameterDirection::Return);

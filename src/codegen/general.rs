@@ -44,14 +44,15 @@ from gir-files (https://github.com/gtk-rs/gir-files @ {})",
 
 pub fn uses(w: &mut dyn Write, env: &Env, imports: &Imports) -> Result<()> {
     writeln!(w)?;
-    for (name, &(ref version, ref constraints)) in imports.iter() {
-        if constraints.len() == 1 {
-            writeln!(w, "#[cfg(feature = \"{}\")]", constraints[0])?;
-        } else if !constraints.is_empty() {
+    for (name, ref scope) in imports.iter() {
+        if scope.constraints.len() == 1 {
+            writeln!(w, "#[cfg(feature = \"{}\")]", scope.constraints[0])?;
+        } else if !scope.constraints.is_empty() {
             writeln!(
                 w,
                 "#[cfg(any({}))]",
-                constraints
+                scope
+                    .constraints
                     .iter()
                     .map(|c| format!("feature = \"{}\"", c))
                     .collect::<Vec<_>>()
@@ -59,7 +60,7 @@ pub fn uses(w: &mut dyn Write, env: &Env, imports: &Imports) -> Result<()> {
             )?;
         }
 
-        version_condition(w, env, *version, false, 0)?;
+        version_condition(w, env, scope.version, false, 0)?;
         writeln!(w, "use {};", name)?;
     }
 
