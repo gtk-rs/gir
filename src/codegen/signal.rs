@@ -138,11 +138,19 @@ pub fn generate(
             )?;
 
             if trampoline.ret.typ != Default::default() {
-                if trampoline.ret.nullable == library::Nullable(true) {
-                    writeln!(w, "{}res.unwrap().get()", tabs(indent + 1),)?;
+                let unwrap = if trampoline.ret.nullable == library::Nullable(true) {
+                    ""
                 } else {
-                    writeln!(w, "{}res.unwrap().get().unwrap()", tabs(indent + 1),)?;
-                }
+                    ".unwrap()"
+                };
+
+                writeln!(
+                    w,
+                    "{}res.unwrap().get().expect(\"Return Value for `{}`\"){}",
+                    tabs(indent + 1),
+                    emit_name,
+                    unwrap,
+                )?;
             }
             writeln!(w, "{}}}", tabs(indent))?;
         }
