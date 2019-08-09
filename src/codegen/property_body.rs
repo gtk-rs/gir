@@ -138,7 +138,10 @@ impl Builder {
         } else {
             ".unwrap()"
         };
-        body.push(Chunk::Custom(format!("value.get(){}", unwrap)));
+        body.push(Chunk::Custom(format!(
+            "value.get().expect(\"Return Value for property `{}` getter\"){}",
+            self.name, unwrap,
+        )));
 
         let unsafe_ = Chunk::Unsafe(body);
 
