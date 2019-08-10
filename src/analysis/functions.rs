@@ -495,7 +495,7 @@ fn analyze_function(
     let doc_hidden = configured_functions.iter().any(|f| f.doc_hidden);
     let disable_length_detect = configured_functions.iter().any(|f| f.disable_length_detect);
 
-    imports.set_defaults(&version, &cfg_condition);
+    imports.set_defaults(version, &cfg_condition);
 
     let ret = return_value::analyze(
         env,

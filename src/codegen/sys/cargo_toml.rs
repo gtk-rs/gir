@@ -100,7 +100,7 @@ fn fill_in(root: &mut Table, env: &Env) {
             .filter(|&&v| v > env.config.min_cfg_version)
             .collect::<Vec<_>>();
         versions.sort_unstable();
-        let max_version = versions.last().map(|x| *x);
+        let max_version = versions.last().copied();
         versions
             .into_iter()
             .fold(None::<Version>, |prev, &version| {
@@ -124,7 +124,7 @@ fn fill_in(root: &mut Table, env: &Env) {
             Value::Array(
                 docs_rs_features
                     .into_iter()
-                    .map(|s| Value::String(s))
+                    .map(Value::String)
                     .collect::<Vec<_>>(),
             ),
         );

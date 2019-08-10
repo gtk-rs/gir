@@ -2,7 +2,7 @@ use hprof::Profiler;
 use libgir::{self as gir, Config, Library, WorkMode};
 use std::{cell::RefCell, str::FromStr};
 
-static USAGE: &'static str = "
+static USAGE: &str = "
 Usage: gir [options] [<library> <version>]
        gir (-h | --help)
 

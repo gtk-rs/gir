@@ -78,11 +78,12 @@ pub fn extract(functions: &mut Vec<FuncInfo>) -> Infos {
         }
     }
 
-    if destroy.is_some() && has_copy && !has_free {
-        let (glib_name, pos) = destroy.unwrap();
-        let ty_ = Type::from_str("destroy").unwrap();
-        update_func(&mut functions[pos], ty_);
-        specials.insert(ty_, glib_name);
+    if has_copy && !has_free {
+        if let Some((glib_name, pos)) = destroy {
+            let ty_ = Type::from_str("destroy").unwrap();
+            update_func(&mut functions[pos], ty_);
+            specials.insert(ty_, glib_name);
+        }
     }
 
     specials

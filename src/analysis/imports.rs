@@ -39,14 +39,14 @@ impl Imports {
         }
     }
 
-    pub fn set_defaults(&mut self, version: &Option<Version>, constraint: &Option<String>) {
+    pub fn set_defaults(&mut self, version: Option<Version>, constraint: &Option<String>) {
         let constraints = if let Some(constraint) = constraint {
             vec![constraint.clone()]
         } else {
             vec![]
         };
         self.defaults = ImportConditions {
-            version: version.clone(),
+            version,
             constraints,
         };
     }
