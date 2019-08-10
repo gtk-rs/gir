@@ -373,7 +373,7 @@ impl Builder {
                     )));
                 } else {
                     chunks.push(Chunk::Custom(format!(
-                        "let {0}_data: Box_<{1}> = Box::new({0});",
+                        "let {0}_data: Box_<{1}> = Box_::new({0});",
                         trampoline.name, trampoline.bound_name
                     )));
                 }
@@ -703,9 +703,9 @@ impl Builder {
         chunks.push(Chunk::Let {
             name: "user_data".to_string(),
             is_mut: false,
-            value: Box::new(Chunk::Custom("Box::new(callback)".into())),
+            value: Box::new(Chunk::Custom("Box_::new(callback)".into())),
             type_: Some(Box::new(Chunk::Custom(format!(
-                "Box<{}>",
+                "Box_<{}>",
                 trampoline.bound_name
             )))),
         });
@@ -840,9 +840,9 @@ impl Builder {
         body.push(Chunk::Let {
             name: "callback".to_string(),
             is_mut: false,
-            value: Box::new(Chunk::Custom("Box::from_raw(user_data as *mut _)".into())),
+            value: Box::new(Chunk::Custom("Box_::from_raw(user_data as *mut _)".into())),
             type_: Some(Box::new(Chunk::Custom(format!(
-                "Box<{}>",
+                "Box_<{}>",
                 trampoline.bound_name
             )))),
         });
@@ -972,7 +972,7 @@ impl Builder {
                         name: if all_call {
                             format!("super_callback{} as *const _ as usize as *mut _", pos)
                         } else {
-                            format!("Box::into_raw(super_callback{}) as *mut _", pos)
+                            format!("Box_::into_raw(super_callback{}) as *mut _", pos)
                         },
                     },
                 },

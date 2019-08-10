@@ -666,8 +666,8 @@ fn analyze_function(
         imports.add("glib_sys");
         imports.add("gobject_sys");
         imports.add("std::ptr");
+        imports.add("std::boxed::Box as Box_");
         imports.add_with_constraint("futures::future", version, Some("futures"));
-        imports.add_with_constraint("std::boxed::Box as Box_", version, Some("futures"));
 
         if let Some(ref trampoline) = trampoline {
             for par in &trampoline.output_params {

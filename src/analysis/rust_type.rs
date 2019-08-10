@@ -343,7 +343,7 @@ pub fn rust_type_full(
                 if scope.is_call() {
                     format!("Option<&mut dyn ({})>", ret)
                 } else {
-                    format!("Option<Box<dyn {} + 'static>>", ret)
+                    format!("Option<Box_<dyn {} + 'static>>", ret)
                 }
             } else {
                 format!("{}{}", ret, if scope.is_call() { "" } else { " + 'static" })
