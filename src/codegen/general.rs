@@ -45,18 +45,11 @@ from gir-files (https://github.com/gtk-rs/gir-files @ {})",
 pub fn uses(w: &mut dyn Write, env: &Env, imports: &Imports) -> Result<()> {
     writeln!(w)?;
     for (name, ref scope) in imports.iter() {
-        if scope.constraints.len() == 1 {
-            writeln!(w, "#[cfg(feature = \"{}\")]", scope.constraints[0])?;
-        } else if !scope.constraints.is_empty() {
+        if !scope.constraints.is_empty() {
             writeln!(
                 w,
-                "#[cfg(any({}))]",
-                scope
-                    .constraints
-                    .iter()
-                    .map(|c| format!("feature = \"{}\"", c))
-                    .collect::<Vec<_>>()
-                    .join(", ")
+                "#[cfg(any({},feature = \"dox\"))]",
+                scope.constraints.join(", ")
             )?;
         }
 
