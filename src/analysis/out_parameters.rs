@@ -8,7 +8,6 @@ use crate::{
     env::Env,
     library::*,
     nameutil,
-    version::Version,
 };
 use std::slice::Iter;
 
@@ -108,26 +107,21 @@ pub fn analyze(
     (info, unsupported_outs)
 }
 
-pub fn analyze_imports(
-    env: &Env,
-    parameters: &[Parameter],
-    version: Option<Version>,
-    imports: &mut Imports,
-) {
+pub fn analyze_imports(env: &Env, parameters: &[Parameter], imports: &mut Imports) {
     for par in parameters {
         if par.direction == ParameterDirection::Out {
             match *env.library.type_(par.typ) {
-                Type::Bitfield(..) | Type::Enumeration(..) => imports.add("std::mem", version),
+                Type::Bitfield(..) | Type::Enumeration(..) => imports.add("std::mem"),
                 Type::Fundamental(fund)
                     if fund != Fundamental::Utf8
                         && fund != Fundamental::OsString
                         && fund != Fundamental::Filename =>
                 {
-                    imports.add("std::mem", version)
+                    imports.add("std::mem")
                 }
                 _ if !par.caller_allocates => match ConversionType::of(env, par.typ) {
                     ConversionType::Direct | ConversionType::Scalar => (),
-                    _ => imports.add("std::ptr", version),
+                    _ => imports.add("std::ptr"),
                 },
                 _ => (),
             }

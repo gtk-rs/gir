@@ -46,7 +46,7 @@ impl TranslateToGlib for TransformationType {
             ToGlibBorrow => "/*Not applicable conversion Borrow*/".to_owned(),
             ToGlibUnknown { ref name } => format!("/*Unknown conversion*/{}", name),
             ToSome(ref name) => format!("Some({})", name),
-            IntoRaw(ref name) => format!("Box::into_raw({}) as *mut _", name),
+            IntoRaw(ref name) => format!("Box_::into_raw({}) as *mut _", name),
             _ => unreachable!("Unexpected transformation type {:?}", self),
         }
     }

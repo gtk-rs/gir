@@ -164,7 +164,7 @@ pub fn analyze(
     };
 
     let trampoline = Trampoline {
-        name: name,
+        name,
         parameters,
         ret,
         bounds,

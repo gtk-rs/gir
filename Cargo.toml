@@ -16,7 +16,7 @@ docopt = "1.0"
 xml-rs = "0.8"
 toml = { version = "0.5" , features = ["preserve_order"] }
 env_logger = "0.6"
-git2 = { version = "0.8", default-features = false }
+git2 = { version = "0.9", default-features = false }
 lazy_static = "1.0"
 log = "0.4"
 regex = "1.0"
@@ -24,7 +24,7 @@ hprof = "0.1"
 rustdoc-stripper = { git = "https://github.com/GuillaumeGomez/rustdoc-stripper" }
 
 [build-dependencies]
-git2 = { version = "0.8", default-features = false }
+git2 = { version = "0.9", default-features = false }
 
 [profile.release]
 codegen-units = 4

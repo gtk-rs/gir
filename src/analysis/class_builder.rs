@@ -85,7 +85,7 @@ fn analyze_property(
     }
     if let Ok(ref s) = used_rust_type(env, prop.typ, false) {
         if !s.contains("GString") {
-            imports.add_used_type(s, prop.version);
+            imports.add_used_type_with_version(s, prop.version);
         }
     }
 

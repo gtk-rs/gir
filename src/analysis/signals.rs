@@ -73,6 +73,8 @@ fn analyze_signal(
     let deprecated_version = signal.deprecated_version;
     let doc_hidden = configured_signals.iter().any(|f| f.doc_hidden);
 
+    imports.set_defaults(version, &None);
+
     let connect_name = format!("connect_{}", nameutil::signal_to_snake(&signal.name));
     let trampoline = trampolines::analyze(
         env,
@@ -86,28 +88,29 @@ fn analyze_signal(
     );
 
     let action_emit_name = if signal.is_action {
-        imports.add("glib", version);
-        imports.add("gobject_sys", version);
-        imports.add("glib::object::ObjectExt", version);
+        imports.add("glib");
+        imports.add("gobject_sys");
+        imports.add("glib::object::ObjectExt");
         Some(format!("emit_{}", nameutil::signal_to_snake(&signal.name)))
     } else {
         None
     };
 
     if trampoline.is_ok() {
-        imports.add_used_types(&used_types, version);
+        imports.add_used_types(&used_types);
         if in_trait {
-            imports.add("glib::object::Cast", version);
+            imports.add("glib::object::Cast");
         } else {
             //To resolve a conflict with OSTree::ObjectType
-            imports.add("glib::object::ObjectType as ObjectType_", version);
+            imports.add("glib::object::ObjectType as ObjectType_");
         }
-        imports.add("glib::signal::connect_raw", version);
-        imports.add("glib::signal::SignalHandlerId", version);
-        imports.add("std::mem::transmute", version);
-        imports.add("std::boxed::Box as Box_", version);
-        imports.add("glib_sys", version);
+        imports.add("glib::signal::connect_raw");
+        imports.add("glib::signal::SignalHandlerId");
+        imports.add("std::mem::transmute");
+        imports.add("std::boxed::Box as Box_");
+        imports.add("glib_sys");
     }
+    imports.reset_defaults();
 
     let info = Info {
         connect_name,

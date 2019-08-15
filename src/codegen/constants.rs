@@ -17,8 +17,8 @@ pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>) {
     }
 
     let sys_crate_name = env.main_sys_crate_name();
-    imports.add(sys_crate_name, None);
-    imports.add("std::ffi::CStr", None);
+    imports.add(sys_crate_name);
+    imports.add("std::ffi::CStr");
 
     file_saver::save_to_file(path, env.config.make_backup, |w| {
         general::start_comments(w, &env.config)?;

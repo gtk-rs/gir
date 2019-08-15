@@ -88,7 +88,7 @@ pub fn analyze(
             } else {
                 "glib"
             };
-            imports.add(ns, None);
+            imports.add(ns);
 
             Some(m.clone())
         }

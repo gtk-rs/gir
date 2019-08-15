@@ -16,7 +16,8 @@ pub struct Imports {
     ///
     /// NOTE: Currently we don't need to support more than one such name.
     defined: Option<String>,
-    map: BTreeMap<String, (Option<Version>, Vec<String>)>,
+    defaults: ImportConditions,
+    map: BTreeMap<String, ImportConditions>,
 }
 
 impl Imports {
@@ -24,6 +25,7 @@ impl Imports {
         Imports {
             crate_name: make_crate_name(gir),
             defined: None,
+            defaults: ImportConditions::default(),
             map: BTreeMap::new(),
         }
     }
@@ -32,32 +34,66 @@ impl Imports {
         Imports {
             crate_name: make_crate_name(gir),
             defined: Some(name.to_owned()),
+            defaults: ImportConditions::default(),
             map: BTreeMap::new(),
         }
+    }
+
+    pub fn set_defaults(&mut self, version: Option<Version>, constraint: &Option<String>) {
+        let constraints = if let Some(constraint) = constraint {
+            vec![constraint.clone()]
+        } else {
+            vec![]
+        };
+        self.defaults = ImportConditions {
+            version,
+            constraints,
+        };
+    }
+
+    pub fn reset_defaults(&mut self) {
+        self.defaults.clear();
     }
 
     /// Declares that name should be available through its last path component.
     ///
     /// For example, if name is `X::Y::Z` then it will be available as `Z`.
-    pub fn add(&mut self, name: &str, version: Option<Version>) {
+    /// Uses defaults
+    pub fn add(&mut self, name: &str) {
         if let Some(ref defined) = self.defined {
             if name == defined {
                 return;
             }
         }
         if let Some(name) = self.strip_crate_name(name) {
+            let defaults = &self.defaults;
             let entry = self
                 .map
                 .entry(name.to_owned())
-                .or_insert((version, Vec::new()));
-            if version < entry.0 {
-                *entry = (version, Vec::new());
-            } else {
-                *entry = (entry.0, Vec::new());
+                .or_insert_with(|| defaults.clone());
+            entry.update_version(self.defaults.version);
+            entry.update_constraints(self.defaults.constraints.clone());
+        }
+    }
+
+    /// Declares that name should be available through its last path component.
+    ///
+    /// For example, if name is `X::Y::Z` then it will be available as `Z`.
+    pub fn add_with_version(&mut self, name: &str, version: Option<Version>) {
+        if let Some(ref defined) = self.defined {
+            if name == defined {
+                return;
             }
+        }
+        if let Some(name) = self.strip_crate_name(name) {
+            let entry = self.map.entry(name.to_owned()).or_insert(ImportConditions {
+                version,
+                constraints: Vec::new(),
+            });
+            entry.update_version(version);
             // Since there is no constraint on this import, if any constraint
             // is present, we can just remove it.
-            entry.1.clear();
+            entry.constraints.clear();
         }
     }
 
@@ -79,51 +115,59 @@ impl Imports {
         if let Some(name) = self.strip_crate_name(name) {
             let entry = if let Some(constraint) = constraint {
                 let constraint = String::from(constraint);
-                let entry = self
-                    .map
-                    .entry(name.to_owned())
-                    .or_insert((version, vec![constraint.clone()]));
-                // If the import is already present but doesn't have any constraint,
-                // we don't want to add one. Otherwise, we just check if the constraint
-                // is already present or not before adding it.
-                if !entry.1.is_empty() && !entry.1.iter().any(|x| x == &constraint) {
-                    entry.1.push(constraint);
-                }
+                let entry = self.map.entry(name.to_owned()).or_insert(ImportConditions {
+                    version,
+                    constraints: vec![constraint.clone()],
+                });
+                entry.add_constraint(constraint);
                 entry
             } else {
-                let entry = self
-                    .map
-                    .entry(name.to_owned())
-                    .or_insert((version, Vec::new()));
+                let entry = self.map.entry(name.to_owned()).or_insert(ImportConditions {
+                    version,
+                    constraints: Vec::new(),
+                });
                 // Since there is no constraint on this import, if any constraint
                 // is present, we can just remove it.
-                entry.1.clear();
+                entry.constraints.clear();
                 entry
             };
-            if version < entry.0 {
-                entry.0 = version;
-            }
+            entry.update_version(version);
         }
     }
 
     /// Declares that name should be available through its full path.
     ///
     /// For example, if name is `X::Y` then it will be available as `X::Y`.
-    pub fn add_used_type(&mut self, used_type: &str, version: Option<Version>) {
+    pub fn add_used_type(&mut self, used_type: &str) {
         if let Some(i) = used_type.find("::") {
             if i == 0 {
-                self.add(&used_type[2..], version);
+                self.add(&used_type[2..]);
             } else {
-                self.add(&used_type[..i], version);
+                self.add(&used_type[..i]);
             }
         } else {
-            self.add(used_type, version);
+            self.add(used_type);
         }
     }
 
-    pub fn add_used_types(&mut self, used_types: &[String], version: Option<Version>) {
+    pub fn add_used_types(&mut self, used_types: &[String]) {
         for s in used_types {
-            self.add_used_type(s, version);
+            self.add_used_type(s);
+        }
+    }
+
+    /// Declares that name should be available through its full path.
+    ///
+    /// For example, if name is `X::Y` then it will be available as `X::Y`.
+    pub fn add_used_type_with_version(&mut self, used_type: &str, version: Option<Version>) {
+        if let Some(i) = used_type.find("::") {
+            if i == 0 {
+                self.add_with_version(&used_type[2..], version);
+            } else {
+                self.add_with_version(&used_type[..i], version);
+            }
+        } else {
+            self.add_with_version(used_type, version);
         }
     }
 
@@ -147,8 +191,60 @@ impl Imports {
         }
     }
 
-    pub fn iter(&self) -> Iter<'_, String, (Option<Version>, Vec<String>)> {
+    pub fn iter(&self) -> Iter<'_, String, ImportConditions> {
         self.map.iter()
+    }
+}
+
+#[derive(Clone, Debug, Default)]
+pub struct ImportConditions {
+    pub version: Option<Version>,
+    pub constraints: Vec<String>,
+}
+
+impl ImportConditions {
+    fn clear(&mut self) {
+        *self = ImportConditions::default();
+    }
+
+    fn update_version(&mut self, version: Option<Version>) {
+        if version < self.version {
+            self.version = version;
+        }
+    }
+
+    fn add_constraint(&mut self, constraint: String) {
+        // If the import is already present but doesn't have any constraint,
+        // we don't want to add one.
+        if self.constraints.is_empty() {
+            return;
+        }
+        // Otherwise, we just check if the constraint
+        // is already present or not before adding it.
+        if !self.constraints.iter().any(|x| x == &constraint) {
+            self.constraints.push(constraint);
+        }
+    }
+
+    fn update_constraints(&mut self, constraints: Vec<String>) {
+        // If the import is already present but doesn't have any constraint,
+        // we don't want to add one.
+        if self.constraints.is_empty() {
+            return;
+        }
+        if constraints.is_empty() {
+            // Since there is no constraint on this import, if any constraint
+            // is present, we can just remove it.
+            self.constraints.clear();
+        } else {
+            // Otherwise, we just check if the constraint
+            // is already present or not before adding it.
+            for constraint in constraints {
+                if !self.constraints.iter().any(|x| x == &constraint) {
+                    self.constraints.push(constraint.clone());
+                }
+            }
+        }
     }
 }
 

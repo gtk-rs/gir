@@ -98,7 +98,7 @@ pub fn generate(
 
         writeln!(
             w,
-            "{}{}#[cfg(feature = \"futures\")]",
+            "{}{}#[cfg(any(feature = \"futures\", feature = \"dox\"))]",
             tabs(indent),
             comment_prefix
         )?;

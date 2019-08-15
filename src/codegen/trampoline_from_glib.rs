@@ -27,8 +27,6 @@ impl TrampolineFromGlib for Transformation {
                     } else {
                         left = format!("{}::{}", type_name, left);
                     }
-                } else {
-                    left = format!("{}", left);
                 }
                 if need_downcast {
                     right = format!("{}.unsafe_cast()", right);
