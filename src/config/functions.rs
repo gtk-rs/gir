@@ -167,6 +167,7 @@ pub struct Function {
     pub is_windows_utf8: bool,
     pub disable_length_detect: bool,
     pub doc_trait_name: Option<String>,
+    pub no_future: bool,
 }
 
 impl Parse for Function {
@@ -194,6 +195,7 @@ impl Parse for Function {
                 "disable_length_detect",
                 "pattern",
                 "doc_trait_name",
+                "no_future",
             ],
             &format!("function {}", object_name),
         );
@@ -228,6 +230,10 @@ impl Parse for Function {
             .lookup("doc_trait_name")
             .and_then(Value::as_str)
             .map(ToOwned::to_owned);
+        let no_future = toml
+            .lookup("no_future")
+            .and_then(Value::as_bool)
+            .unwrap_or(false);
 
         Some(Function {
             ident,
@@ -240,6 +246,7 @@ impl Parse for Function {
             is_windows_utf8,
             disable_length_detect,
             doc_trait_name,
+            no_future,
         })
     }
 }
