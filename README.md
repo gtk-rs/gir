@@ -188,6 +188,8 @@ generate_builder = true
     # write function docs to trait other than default "xxxExt",
     # also works in [object.signal] and [object.property]
     doc_trait_name = "SocketListenerExtManual"
+    # disable generation of future for async function
+    no_future = true
         # override for parameter
         [[object.function.parameter]]
         # filter by name

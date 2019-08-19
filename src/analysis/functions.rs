@@ -496,6 +496,7 @@ fn analyze_function(
         .next();
     let doc_hidden = configured_functions.iter().any(|f| f.doc_hidden);
     let disable_length_detect = configured_functions.iter().any(|f| f.disable_length_detect);
+    let no_future = configured_functions.iter().any(|f| f.no_future);
 
     imports.set_defaults(version, &cfg_condition);
 
@@ -571,6 +572,7 @@ fn analyze_function(
                 callback_info,
                 &mut commented,
                 &mut trampoline,
+                no_future,
                 &mut async_future,
             );
             let type_error = !(r#async
@@ -669,7 +671,9 @@ fn analyze_function(
         imports.add("gobject_sys");
         imports.add("std::ptr");
         imports.add("std::boxed::Box as Box_");
-        imports.add_with_constraint("futures::future", version, Some(CONSTRAINT_FUTURES));
+        if async_future.is_some() {
+            imports.add_with_constraint("futures::future", version, Some(CONSTRAINT_FUTURES));
+        }
 
         if let Some(ref trampoline) = trampoline {
             for par in &trampoline.output_params {
@@ -776,6 +780,7 @@ fn analyze_async(
     callback_info: Option<CallbackInfo>,
     commented: &mut bool,
     trampoline: &mut Option<AsyncTrampoline>,
+    no_future: bool,
     async_future: &mut Option<AsyncFuture>,
 ) -> bool {
     if let Some(CallbackInfo {
@@ -840,12 +845,14 @@ fn analyze_async(
             ffi_ret,
         });
 
-        *async_future = Some(AsyncFuture {
-            is_method: func.kind == FunctionKind::Method,
-            name: format!("{}_future", func.name),
-            success_parameters,
-            error_parameters,
-        });
+        if !no_future {
+            *async_future = Some(AsyncFuture {
+                is_method: func.kind == FunctionKind::Method,
+                name: format!("{}_future", func.name),
+                success_parameters,
+                error_parameters,
+            });
+        }
         true
     } else {
         false
