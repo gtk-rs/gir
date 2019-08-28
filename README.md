@@ -488,3 +488,7 @@ It also replaces FFI crates' name.
 [crate_name_overrides]
 "web_kit2_web_extension" = "webkit2_webextension"
 ```
+
+## GIR format reference
+
+It can always be useful to look at the [reference](https://gi.readthedocs.io/en/latest/annotations/giannotations.html), right?
