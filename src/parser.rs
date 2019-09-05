@@ -124,10 +124,7 @@ impl Library {
         elem: &Element,
     ) -> Result<(), String> {
         let class_name = elem.attr_required("name")?;
-        let c_type = elem
-            .attr("type")
-            .or_else(|| elem.attr("type-name"))
-            .ok_or_else(|| parser.fail("Missing c:type/glib:type-name attributes"))?;
+        let c_type = self.read_object_c_type(parser, elem)?;
         let type_struct = elem.attr("type-struct").map(ToOwned::to_owned);
         let get_type = elem.attr_required("get-type")?;
         let version = self.read_version(parser, ns_id, elem)?;
@@ -374,7 +371,7 @@ impl Library {
         parent_ctype_prefix: Option<&str>,
     ) -> Result<Union, String> {
         let union_name = elem.attr("name").unwrap_or("");
-        let c_type = elem.attr("type").unwrap_or("");
+        let c_type = self.read_object_c_type(parser, elem).unwrap_or("");
         let get_type = elem.attr("get-type").map(|s| s.into());
 
         let mut fields = Vec::new();
@@ -536,7 +533,7 @@ impl Library {
         elem: &Element,
     ) -> Result<(), String> {
         let interface_name = elem.attr_required("name")?;
-        let c_type = elem.attr_required("type")?;
+        let c_type = self.read_object_c_type(parser, elem)?;
         let type_struct = elem.attr("type-struct").map(ToOwned::to_owned);
         let get_type = elem.attr_required("get-type")?;
         let version = self.read_version(parser, ns_id, elem)?;
@@ -598,7 +595,7 @@ impl Library {
         elem: &Element,
     ) -> Result<(), String> {
         let bitfield_name = elem.attr_required("name")?;
-        let c_type = elem.attr_required("type")?;
+        let c_type = self.read_object_c_type(parser, elem)?;
         let get_type = elem.attr("get-type").map(|s| s.into());
         let version = self.read_version(parser, ns_id, elem)?;
         let deprecated_version = self.read_deprecated_version(parser, ns_id, elem)?;
@@ -642,7 +639,7 @@ impl Library {
         elem: &Element,
     ) -> Result<(), String> {
         let enum_name = elem.attr_required("name")?;
-        let c_type = elem.attr_required("type")?;
+        let c_type = self.read_object_c_type(parser, elem)?;
         let get_type = elem.attr("get-type").map(|s| s.into());
         let version = self.read_version(parser, ns_id, elem)?;
         let deprecated_version = self.read_deprecated_version(parser, ns_id, elem)?;
@@ -1303,6 +1300,21 @@ impl Library {
         } else {
             Ok(None)
         }
+    }
+
+    fn read_object_c_type<'a>(
+        &mut self,
+        parser: &mut XmlParser<'_>,
+        elem: &'a Element,
+    ) -> Result<&'a str, String> {
+        elem.attr("type")
+            .or_else(|| elem.attr("type-name"))
+            .ok_or_else(|| {
+                parser.fail(&format!(
+                    "Missing `c:type`/`glib:type-name` attributes on element <{}>",
+                    elem.name()
+                ))
+            })
     }
 }
 
