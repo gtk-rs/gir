@@ -491,4 +491,4 @@ It also replaces FFI crates' name.
 
 ## GIR format reference
 
-It can always be useful to look at the [reference](https://gi.readthedocs.io/en/latest/annotations/giannotations.html), right?
+It can always be useful to look at the [reference](https://gi.readthedocs.io/en/latest/annotations/giannotations.html) or [schema](https://gitlab.gnome.org/GNOME/gobject-introspection/blob/master/docs/gir-1.2.rnc), right?
