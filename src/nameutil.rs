@@ -106,7 +106,6 @@ pub fn mangle_keywords<'a, S: Into<Cow<'a, str>>>(name: S) -> Cow<'a, str> {
 
 lazy_static! {
     static ref KEYWORDS: HashMap<&'static str, String> = {
-        let mut map = HashMap::new();
         [
             "abstract", "alignof", "as", "become", "box", "break", "const", "continue", "crate",
             "do", "else", "enum", "extern", "false", "final", "fn", "for", "if", "impl", "in",
@@ -116,9 +115,8 @@ lazy_static! {
             "where", "while", "yield",
         ]
         .iter()
-        .map(|k| map.insert(*k, format!("{}_", k)))
-        .count();
-        map
+        .map(|k| (*k, format!("{}_", k)))
+        .collect()
     };
 }
 
