@@ -833,7 +833,8 @@ impl Type {
     pub fn is_final_type(&self) -> bool {
         match *self {
             Type::Class(Class { final_type, .. }) => final_type,
-            _ => false,
+            Type::Interface(..) => false,
+            _ => true,
         }
     }
 }

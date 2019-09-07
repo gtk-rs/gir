@@ -1,5 +1,6 @@
 use crate::{
     analysis::{
+        bounds::PropertyBound,
         imports::Imports,
         ref_mode::RefMode,
         rust_type::*,
@@ -25,6 +26,7 @@ pub struct Property {
     pub nullable: library::Nullable,
     pub get_out_ref_mode: RefMode,
     pub set_in_ref_mode: RefMode,
+    pub set_bound: Option<PropertyBound>,
     pub version: Option<Version>,
     pub deprecated_version: Option<Version>,
 }
@@ -189,6 +191,7 @@ fn analyze_property(
             nullable,
             get_out_ref_mode,
             set_in_ref_mode,
+            set_bound: None,
             version: prop_version,
             deprecated_version: prop.deprecated_version,
         })
@@ -200,9 +203,21 @@ fn analyze_property(
         if let Ok(ref s) = used_rust_type(env, prop.typ, true) {
             imports.add_used_type(s);
         }
+        let set_bound = PropertyBound::get(env, prop.typ);
         if type_string.is_ok() {
             imports.add("gobject_sys");
             imports.add("glib::Value");
+            if set_bound.is_some() {
+                imports.add("glib::object::IsA");
+                imports.add("glib::value::SetValueOptional");
+                if !*nullable {
+                    //TODO: support nonnulable setter if found any
+                    warn!(
+                        "Non nulable setter for property generated as nullable \"{}.{}\"",
+                        type_name, name
+                    );
+                }
+            }
         }
 
         Some(Property {
@@ -214,6 +229,7 @@ fn analyze_property(
             nullable,
             get_out_ref_mode,
             set_in_ref_mode,
+            set_bound,
             version: prop_version,
             deprecated_version: prop.deprecated_version,
         })

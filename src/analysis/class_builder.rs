@@ -100,6 +100,7 @@ fn analyze_property(
         nullable,
         get_out_ref_mode,
         set_in_ref_mode,
+        set_bound: None,
         version: prop_version,
         deprecated_version: prop.deprecated_version,
     })

@@ -267,6 +267,25 @@ impl Bounds {
     }
 }
 
+#[derive(Clone, Debug)]
+pub struct PropertyBound {
+    pub alias: char,
+    pub type_str: String,
+}
+
+impl PropertyBound {
+    pub fn get(env: &Env, type_id: TypeId) -> Option<PropertyBound> {
+        let type_ = env.type_(type_id);
+        if type_.is_final_type() {
+            return None;
+        }
+        Some(PropertyBound {
+            alias: TYPE_PARAMETERS_START,
+            type_str: bounds_rust_type(env, type_id).into_string(),
+        })
+    }
+}
+
 fn find_out_parameters(env: &Env, function: &Function) -> Vec<String> {
     let index_to_ignore = find_index_to_ignore(&function.parameters);
     function

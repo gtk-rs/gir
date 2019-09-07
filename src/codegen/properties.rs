@@ -71,10 +71,18 @@ fn generate_prop_func(
 }
 
 fn declaration(env: &Env, prop: &Property) -> String {
-    let bound = String::new();
+    let bound: String;
     let set_param = if prop.is_get {
-        "".to_string()
+        bound = String::new();
+        String::new()
+    } else if let Some(ref set_bound) = prop.set_bound {
+        bound = format!(
+            "<{}: IsA<{}> + SetValueOptional>",
+            set_bound.alias, set_bound.type_str
+        );
+        format!(", {}: Option<&{}>", prop.var_name, set_bound.alias)
     } else {
+        bound = String::new();
         let dir = library::ParameterDirection::In;
         let param_type = parameter_rust_type(
             env,
