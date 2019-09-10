@@ -514,16 +514,13 @@ pub fn declare_default_from_new(
 /// Escapes string in format suitable for placing inside double quotes.
 pub fn escape_string(s: &str) -> String {
     let mut es = String::with_capacity(s.len() * 2);
-    let _ = s
-        .chars()
-        .map(|c| match c {
-            '\"' | '\\' => {
-                es.push('\\');
-                es.push(c)
-            }
-            _ => es.push(c),
-        })
-        .count();
+    for c in s.chars() {
+        match c {
+            '\"' | '\\' => es.push('\\'),
+            _ => (),
+        }
+        es.push(c)
+    }
     es
 }
 
