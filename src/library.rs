@@ -1021,13 +1021,17 @@ impl Library {
                             println!("[NOT GENERATED] {}", full_name);
                         }
                     } else if let Type::Class(Class { properties, .. }) = x {
-                        let builder_name = format!("{}Builder", full_name);
-                        if !env.config.objects.contains_key(&builder_name)
+                        if !env
+                            .config
+                            .objects
+                            .get(&full_name)
+                            .map(|obj| obj.generate_builder)
+                            .unwrap_or_else(|| false)
                             && properties
                                 .iter()
                                 .any(|prop| prop.construct_only || prop.construct || prop.writable)
                         {
-                            println!("[NOT GENERATED BUILDER] {}", builder_name);
+                            println!("[NOT GENERATED BUILDER] {}Builder", full_name);
                         }
                     }
                 }
