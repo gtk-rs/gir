@@ -9,6 +9,7 @@ use crate::{
     library,
     traits::*,
 };
+use std::collections::HashSet;
 
 pub fn analyze(
     env: &Env,
@@ -21,32 +22,45 @@ pub fn analyze(
         return Vec::new();
     }
 
-    let mut builder_properties = analyze_class(env, props, obj, imports);
+    let mut names = HashSet::<String>::new();
+    let mut builder_properties = analyze_properties(env, props, obj, imports, &mut names);
 
     for &super_tid in env.class_hierarchy.supertypes(type_tid) {
         let type_ = env.type_(super_tid);
 
-        let super_class: &library::Class = match type_.maybe_ref() {
-            Some(super_class) => super_class,
-            None => continue,
+        let super_properties = match type_ {
+            library::Type::Class(class) => &class.properties,
+            library::Type::Interface(iface) => &iface.properties,
+            _ => continue,
         };
+        let super_obj =
+            if let Some(super_obj) = env.config.objects.get(&super_tid.full_name(&env.library)) {
+                super_obj
+            } else {
+                continue;
+            };
 
-        let new_builder_properties = analyze_class(env, &super_class.properties, obj, imports);
+        let new_builder_properties =
+            analyze_properties(env, super_properties, super_obj, imports, &mut names);
         builder_properties.extend(new_builder_properties);
     }
 
     builder_properties
 }
 
-pub fn analyze_class(
+fn analyze_properties(
     env: &Env,
     props: &[library::Property],
     obj: &GObject,
     imports: &mut Imports,
+    names: &mut HashSet<String>,
 ) -> Vec<Property> {
     let mut builder_properties = Vec::new();
 
     for prop in props {
+        if names.contains(&prop.name) {
+            continue;
+        }
         let configured_properties = obj.properties.matched(&prop.name);
         if configured_properties.iter().any(|f| f.ignore) {
             continue;
@@ -58,6 +72,7 @@ pub fn analyze_class(
         let builder = analyze_property(env, prop, &configured_properties, imports);
         if let Some(builder) = builder {
             builder_properties.push(builder);
+            names.insert(prop.name.clone());
         }
     }
 
@@ -85,7 +100,7 @@ fn analyze_property(
     }
     if let Ok(ref s) = used_rust_type(env, prop.typ, false) {
         if !s.contains("GString") {
-            imports.add_used_type_with_version(s, prop.version);
+            imports.add_used_type_with_version(s, prop_version);
         }
     }
 
