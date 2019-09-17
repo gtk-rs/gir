@@ -33,10 +33,15 @@ pub fn analyze(
             library::Type::Interface(iface) => &iface.properties,
             _ => continue,
         };
+        let super_obj =
+            if let Some(super_obj) = env.config.objects.get(&super_tid.full_name(&env.library)) {
+                super_obj
+            } else {
+                continue;
+            };
 
-        //Note: used config of child object to provide more control
         let new_builder_properties =
-            analyze_properties(env, super_properties, obj, imports, &mut names);
+            analyze_properties(env, super_properties, super_obj, imports, &mut names);
         builder_properties.extend(new_builder_properties);
     }
 
