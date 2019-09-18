@@ -108,7 +108,11 @@ fn fill_in(root: &mut Table, env: &Env) {
     }
 
     {
-        let docs_rs_metadata = upsert_table(root, "package.metadata.docs.rs");
+        // Small trick to prevent having double quotes around it since toml doesn't like having '.'
+        let docs_rs_metadata = upsert_table(root, "package");
+        let docs_rs_metadata = upsert_table(docs_rs_metadata, "metadata");
+        let docs_rs_metadata = upsert_table(docs_rs_metadata, "docs");
+        let docs_rs_metadata = upsert_table(docs_rs_metadata, "rs");
         let mut docs_rs_features = env.config.docs_rs_features.clone();
         docs_rs_features.push("dox".to_owned());
         docs_rs_metadata.insert(
