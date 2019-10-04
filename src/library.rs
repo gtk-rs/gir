@@ -1298,5 +1298,4 @@ mod tests {
         assert_eq!(TypeId::tid_filename().full_name(&lib), "*.Filename");
         assert_eq!(TypeId::tid_os_string().full_name(&lib), "*.OsString");
     }
-
 }
