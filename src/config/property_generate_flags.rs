@@ -87,5 +87,4 @@ mod tests {
             Err("Wrong property generate flag \"bad\"".into())
         );
     }
-
 }
