@@ -110,7 +110,7 @@ fn analyze_property(
     let mut bounds = Bounds::default();
     if let Some(bound) = Bounds::type_for(env, prop.typ, nullable) {
         imports.add("glib::object::IsA");
-        bounds.add_parameter(&name, &type_str.into_string(), bound, false);
+        bounds.add_parameter(&prop.name, &type_str.into_string(), bound, false);
     }
 
     Some(Property {
