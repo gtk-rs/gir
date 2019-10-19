@@ -1302,7 +1302,7 @@ fn add_chunk_for_type(
         }
         library::Type::Alias(_) if ty_name == "glib::Pid" => {
             body.push(Chunk::Custom(format!(
-                "let {0} = glib::FromGlib::from_glib({0});",
+                "let {0} = from_glib({0});",
                 par.name
             )));
             true
