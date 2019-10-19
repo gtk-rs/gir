@@ -179,7 +179,7 @@ pub fn rust_type_full(
             }
         }
         Enumeration(..) | Bitfield(..) | Record(..) | Union(..) | Class(..) | Interface(..) => {
-            let name = type_.get_name().to_owned();
+            let name = type_.get_name();
             if env.type_status(&type_id.full_name(&env.library)).ignored() {
                 Err(TypeError::Ignored(name))
             } else {
@@ -238,10 +238,10 @@ pub fn rust_type_full(
                         Ok(format!("Vec<{}>", s))
                     }
                 } else {
-                    Err(TypeError::Unimplemented(type_.get_name().to_owned()))
+                    Err(TypeError::Unimplemented(type_.get_name()))
                 }
             } else {
-                Err(TypeError::Unimplemented(type_.get_name().to_owned()))
+                Err(TypeError::Unimplemented(type_.get_name()))
             }
         }
         Custom(library::Custom { ref name, .. }) => Ok(name.clone()),
@@ -349,7 +349,7 @@ pub fn rust_type_full(
                 format!("{}{}", ret, if scope.is_call() { "" } else { " + 'static" })
             })
         }
-        _ => Err(TypeError::Unimplemented(type_.get_name().to_owned())),
+        _ => Err(TypeError::Unimplemented(type_.get_name())),
     };
 
     if type_id.ns_id != library::MAIN_NAMESPACE
@@ -487,7 +487,7 @@ pub fn parameter_rust_type(
         }
         Function(_) => rust_type,
         Custom(..) => rust_type.map_any(|s| format_parameter(s, direction)),
-        _ => Err(TypeError::Unimplemented(type_.get_name().to_owned())),
+        _ => Err(TypeError::Unimplemented(type_.get_name())),
     }
 }
 
