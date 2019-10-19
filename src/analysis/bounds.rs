@@ -202,7 +202,6 @@ impl Bounds {
         if self.used.iter().any(|n| n.parameter_name == name) {
             return false;
         }
-        let type_str = type_str.to_owned();
         if let Some(alias) = self.unused.pop_front() {
             self.used.push(Bound {
                 bound_type,

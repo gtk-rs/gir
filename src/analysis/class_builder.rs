@@ -85,8 +85,6 @@ fn analyze_property(
     configured_properties: &[&config::properties::Property],
     imports: &mut Imports,
 ) -> Option<Property> {
-    let name = prop.name.clone();
-
     let prop_version = configured_properties
         .iter()
         .filter_map(|f| f.version)
@@ -107,7 +105,7 @@ fn analyze_property(
     let (get_out_ref_mode, set_in_ref_mode, nullable) = get_property_ref_modes(env, prop);
 
     Some(Property {
-        name: name.clone(),
+        name: prop.name.clone(),
         var_name: String::new(),
         typ: prop.typ,
         is_get: false,
