@@ -85,8 +85,6 @@ fn analyze_property(
     configured_properties: &[&config::properties::Property],
     imports: &mut Imports,
 ) -> Option<Property> {
-    //let name = prop.name.clone();
-
     let prop_version = configured_properties
         .iter()
         .filter_map(|f| f.version)
