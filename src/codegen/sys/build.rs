@@ -140,7 +140,10 @@ fn find() -> Result<(), Error> {
         }"##
     )?;
     if ns.name == "GObject" {
-        writeln!(w,"{}", r##"        Err(err) => {
+        writeln!(
+            w,
+            "{}",
+            r##"        Err(err) => {
             #[cfg(target_os = "macos")]
             {
                 let _ = writeln!(
@@ -154,7 +157,8 @@ fn find() -> Result<(), Error> {
         }
     }
 }
-"##)
+"##
+        )
     } else {
         writeln!(
             w,

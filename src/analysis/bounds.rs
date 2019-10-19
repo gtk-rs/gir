@@ -170,6 +170,7 @@ impl Bounds {
             _ => None,
         }
     }
+
     fn get_to_glib_extra(bound_type: &BoundType) -> String {
         use self::BoundType::*;
         match *bound_type {
@@ -178,6 +179,7 @@ impl Bounds {
             _ => String::new(),
         }
     }
+
     pub fn add_parameter(
         &mut self,
         name: &str,
@@ -216,6 +218,7 @@ impl Bounds {
             false
         }
     }
+
     pub fn get_parameter_alias_info(&self, name: &str) -> Option<(char, BoundType)> {
         self.used
             .iter()
@@ -228,6 +231,7 @@ impl Bounds {
             })
             .map(|t| (t.alias, t.bound_type.clone()))
     }
+
     pub fn get_base_alias(&self, alias: char) -> Option<char> {
         if alias == TYPE_PARAMETERS_START {
             return None;
@@ -244,6 +248,7 @@ impl Bounds {
                 }
             })
     }
+
     pub fn update_imports(&self, imports: &mut Imports) {
         //TODO: import with versions
         use self::BoundType::*;
@@ -255,12 +260,15 @@ impl Bounds {
             }
         }
     }
+
     pub fn is_empty(&self) -> bool {
         self.used.is_empty()
     }
+
     pub fn iter(&self) -> Iter<'_, Bound> {
         self.used.iter()
     }
+
     pub fn iter_lifetimes(&self) -> Iter<'_, char> {
         self.lifetimes.iter()
     }

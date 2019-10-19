@@ -1,6 +1,6 @@
 use crate::{
     analysis::{
-        bounds::PropertyBound,
+        bounds::{Bounds, PropertyBound},
         imports::Imports,
         ref_mode::RefMode,
         rust_type::*,
@@ -26,6 +26,7 @@ pub struct Property {
     pub nullable: library::Nullable,
     pub get_out_ref_mode: RefMode,
     pub set_in_ref_mode: RefMode,
+    pub bounds: Bounds,
     pub set_bound: Option<PropertyBound>,
     pub version: Option<Version>,
     pub deprecated_version: Option<Version>,
@@ -192,6 +193,7 @@ fn analyze_property(
             get_out_ref_mode,
             set_in_ref_mode,
             set_bound: None,
+            bounds: Bounds::default(),
             version: prop_version,
             deprecated_version: prop.deprecated_version,
         })
@@ -230,6 +232,7 @@ fn analyze_property(
             get_out_ref_mode,
             set_in_ref_mode,
             set_bound,
+            bounds: Bounds::default(),
             version: prop_version,
             deprecated_version: prop.deprecated_version,
         })

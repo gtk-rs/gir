@@ -1,5 +1,6 @@
 use crate::{
     analysis::{
+        bounds::Bounds,
         imports::Imports,
         properties::{get_property_ref_modes, Property},
         rust_type::*,
@@ -96,13 +97,21 @@ fn analyze_property(
     if !for_builder {
         return None;
     }
-    if let Ok(ref s) = used_rust_type(env, prop.typ, false) {
+    imports.set_defaults(prop_version, &None);
+    let type_str = used_rust_type(env, prop.typ, false);
+    if let Ok(ref s) = type_str {
         if !s.contains("GString") {
-            imports.add_used_type_with_version(s, prop_version);
+            imports.add_used_type(s);
         }
     }
 
     let (get_out_ref_mode, set_in_ref_mode, nullable) = get_property_ref_modes(env, prop);
+
+    let mut bounds = Bounds::default();
+    if let Some(bound) = Bounds::type_for(env, prop.typ, nullable) {
+        imports.add("glib::object::IsA");
+        bounds.add_parameter(&name, &type_str.into_string(), bound, false);
+    }
 
     Some(Property {
         name: prop.name.clone(),
@@ -114,6 +123,7 @@ fn analyze_property(
         get_out_ref_mode,
         set_in_ref_mode,
         set_bound: None,
+        bounds,
         version: prop_version,
         deprecated_version: prop.deprecated_version,
     })
