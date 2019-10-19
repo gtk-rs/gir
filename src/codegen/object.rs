@@ -171,11 +171,19 @@ fn generate_builder(w: &mut dyn Write, env: &Env, analysis: &analysis::object::I
                     library::Concurrency::None,
                 )
                 .into_string();
-                let (param_type_override, conversion) = match &param_type[..] {
-                    "&str" => (None, ".to_string()"),
-                    "&[&str]" => (Some("Vec<String>"), ""),
-                    typ if typ.starts_with('&') => (None, ".clone()"),
-                    _ => (None, ""),
+                let (param_type_override, bounds, conversion) = match &param_type[..] {
+                    "&str" => (None, String::new(), ".to_string()"),
+                    "&[&str]" => (Some("Vec<String>".to_string()), String::new(), ""),
+                    _ if !property.bounds.is_empty() => {
+                        let (bounds, _) = function::bounds(&property.bounds, &[], false, false);
+                        let alias = property
+                            .bounds
+                            .get_parameter_alias_info(&property.name)
+                            .map(|(alias, _)| format!("&{}", alias));
+                        (alias, bounds, ".clone().upcast()")
+                    }
+                    typ if typ.starts_with('&') => (None, String::new(), ".clone()"),
+                    _ => (None, String::new(), ""),
                 };
                 if let Some(param_type_override) = param_type_override {
                     param_type = param_type_override.to_string();
@@ -191,14 +199,15 @@ fn generate_builder(w: &mut dyn Write, env: &Env, analysis: &analysis::object::I
                     .map(|version| format!("{}\n", version))
                     .unwrap_or_default();
                 methods.push(format!(
-                    "\n{prefix}    pub fn {name}(mut self, {name}: {param_type}) -> Self {{
+                    "\n{prefix}    pub fn {name}{bounds}(mut self, {name}: {param_type}) -> Self {{
         self.{name} = Some({name}{conversion});
         self
     }}",
                     prefix = prefix,
                     param_type = param_type,
                     name = name,
-                    conversion = conversion
+                    conversion = conversion,
+                    bounds = bounds
                 ));
                 properties.push(property);
             }
