@@ -387,9 +387,17 @@ pub fn body_chunk_futures(
     }
 
     if async_future.is_method {
-        writeln!(body, "Box_::pin({}::new(self, move |obj, send| {{", gio_future_name)?;
+        writeln!(
+            body,
+            "Box_::pin({}::new(self, move |obj, send| {{",
+            gio_future_name
+        )?;
     } else {
-        writeln!(body, "Box_::pin({}::new(&(), move |_obj, send| {{", gio_future_name)?;
+        writeln!(
+            body,
+            "Box_::pin({}::new(&(), move |_obj, send| {{",
+            gio_future_name
+        )?;
     }
 
     if env.config.library_name != "Gio" {
