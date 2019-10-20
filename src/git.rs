@@ -4,8 +4,8 @@ use std::ffi::CString;
 use std::mem;
 use std::ops::Deref;
 use std::os::raw::{c_char, c_int, c_uint, c_void};
-use std::ptr;
 use std::path::Path;
+use std::ptr;
 use std::slice;
 use std::str;
 
@@ -53,12 +53,20 @@ struct git_status_options {
     baseline: *mut c_void,
 }
 
-#[link(name="git2")]
+#[link(name = "git2")]
 extern "C" {
     fn git_repository_open(out: *mut git_repository, path: *const c_char) -> c_int;
-    fn git_revparse_single(out: *mut git_object, repo: git_repository, spec: *const c_char) -> c_int;
+    fn git_revparse_single(
+        out: *mut git_object,
+        repo: git_repository,
+        spec: *const c_char,
+    ) -> c_int;
     fn git_object_short_id(out: *mut git_buf, obj: git_object) -> c_int;
-    fn git_status_list_new(out: *mut git_status_list, repo: git_repository, opts: *const git_status_options) -> c_int;
+    fn git_status_list_new(
+        out: *mut git_status_list,
+        repo: git_repository,
+        opts: *const git_status_options,
+    ) -> c_int;
     fn git_status_init_options(opts: *mut git_status_options, version: c_uint) -> c_int;
     fn git_libgit2_init() -> c_int;
     fn git_buf_dispose(buffer: *mut git_buf);
@@ -77,13 +85,11 @@ fn init() {
     use std::sync::Once;
 
     static INIT: Once = Once::new();
-    INIT.call_once(||
-        unsafe {
-            if git_libgit2_init() < 0 {
-                panic!("Cannot initialize libgit2");
-            }
+    INIT.call_once(|| unsafe {
+        if git_libgit2_init() < 0 {
+            panic!("Cannot initialize libgit2");
         }
-    );
+    });
 }
 
 impl StatusOptions {

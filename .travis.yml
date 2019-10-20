@@ -8,6 +8,7 @@ addons:
     packages:
     - libgtk-3-dev
     - libssh2-1-dev
+    - libgit2-dev
 script:
   - test "$TRAVIS_RUST_VERSION" == "nightly" || rustup component add rustfmt clippy
   - test "$TRAVIS_RUST_VERSION" == "nightly" || cargo clippy --release
