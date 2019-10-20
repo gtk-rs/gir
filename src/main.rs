@@ -1,15 +1,17 @@
-use std::{cell::RefCell, str::FromStr};
 use std::env;
 use std::process;
+use std::{cell::RefCell, str::FromStr};
 
 use getopts::Options;
 use hprof::Profiler;
 use libgir::{self as gir, Config, Library, WorkMode};
 
 fn print_usage(program: &str, opts: Options) {
-
-    let brief = format!("Usage: {program} [options] [<library> <version>]
-       {program} (-h | --help)", program = program);
+    let brief = format!(
+        "Usage: {program} [options] [<library> <version>]
+       {program} (-h | --help)",
+        program = program
+    );
     print!("{}", opts.usage(&brief));
 }
 
@@ -18,10 +20,20 @@ fn build_config() -> Result<Config, String> {
     let program = args[0].clone();
 
     let mut options = Options::new();
-    options.optopt("c", "config", "Config file path (default: Gir.toml)", "CONFIG");
+    options.optopt(
+        "c",
+        "config",
+        "Config file path (default: Gir.toml)",
+        "CONFIG",
+    );
     options.optflag("h", "help", "Show this message");
     options.optopt("d", "gir-directory", "Directory for girs", "GIRSPATH");
-    options.optopt("m", "mode", "Work mode: doc, normal, sys or not_bound", "MODE");
+    options.optopt(
+        "m",
+        "mode",
+        "Work mode: doc, normal, sys or not_bound",
+        "MODE",
+    );
     options.optopt("o", "target", "Target path", "PATH");
     options.optopt("p", "doc-target-path", "Doc target path", "PATH");
     options.optflag("b", "make-backup", "Make backup before generating");
@@ -55,7 +67,10 @@ fn build_config() -> Result<Config, String> {
         matches.free.get(0).as_ref().map(|string| string.as_str()),
         matches.free.get(1).as_ref().map(|string| string.as_str()),
         matches.opt_str("o").as_ref().map(|string| string.as_str()),
-        matches.opt_str("doc-target-path").as_ref().map(|string| string.as_str()),
+        matches
+            .opt_str("doc-target-path")
+            .as_ref()
+            .map(|string| string.as_str()),
         matches.opt_present("b"),
         matches.opt_present("s"),
     )

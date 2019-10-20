@@ -15,7 +15,7 @@ bitflags = "1.0"
 getopts = "0.2.21"
 xml-rs = "0.8"
 toml = { version = "0.5" , features = ["preserve_order"] }
-env_logger = "0.7"
+env_logger = { version = "0.7", default-features = false }
 git2 = { version = "0.10", default-features = false }
 lazy_static = "1.0"
 log = "0.4"
