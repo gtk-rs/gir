@@ -15,6 +15,16 @@ fn print_usage(program: &str, opts: Options) {
     print!("{}", opts.usage(&brief));
 }
 
+trait OptionStr {
+    fn as_str_ref(&self) -> Option<&str>;
+}
+
+impl<S: AsRef<str>> OptionStr for Option<S> {
+    fn as_str_ref(&self) -> Option<&str> {
+        self.as_ref().map(|string| string.as_ref())
+    }
+}
+
 fn build_config() -> Result<Config, String> {
     let args: Vec<_> = env::args().collect();
     let program = args[0].clone();
@@ -61,16 +71,13 @@ fn build_config() -> Result<Config, String> {
     };
 
     Config::new(
-        matches.opt_str("c").as_ref().map(|string| string.as_str()),
+        matches.opt_str("c").as_str_ref(),
         work_mode,
-        matches.opt_str("d").as_ref().map(|string| string.as_str()),
-        matches.free.get(0).as_ref().map(|string| string.as_str()),
-        matches.free.get(1).as_ref().map(|string| string.as_str()),
-        matches.opt_str("o").as_ref().map(|string| string.as_str()),
-        matches
-            .opt_str("doc-target-path")
-            .as_ref()
-            .map(|string| string.as_str()),
+        matches.opt_str("d").as_str_ref(),
+        matches.free.get(0).as_str_ref(),
+        matches.free.get(1).as_str_ref(),
+        matches.opt_str("o").as_str_ref(),
+        matches.opt_str("doc-target-path").as_str_ref(),
         matches.opt_present("b"),
         matches.opt_present("s"),
     )
