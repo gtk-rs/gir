@@ -545,7 +545,7 @@ impl Builder {
                     } else if trampoline.scope.is_call() {
                         format!(
                             "{} as *const _ as usize as *mut {}",
-                            func, self.callbacks[0].bound_name
+                            func, trampoline.bound_name
                         )
                     } else {
                         format!("&*({} as *mut _)", func)
@@ -553,11 +553,11 @@ impl Builder {
                 )),
                 type_: Some(Box::new(Chunk::Custom(
                     if is_destroy || trampoline.scope.is_async() {
-                        format!("Box_<{}>", self.callbacks[0].bound_name)
+                        format!("Box_<{}>", trampoline.bound_name)
                     } else if trampoline.scope.is_call() {
-                        format!("*mut {}", self.callbacks[0].bound_name)
+                        format!("*mut {}", trampoline.bound_name)
                     } else {
-                        format!("&{}", self.callbacks[0].bound_name)
+                        format!("&{}", trampoline.bound_name)
                     },
                 ))),
             });
@@ -1302,7 +1302,7 @@ fn add_chunk_for_type(
         }
         library::Type::Alias(_) if ty_name == "glib::Pid" => {
             body.push(Chunk::Custom(format!(
-                "let {0} = glib::FromGlib::from_glib({0});",
+                "let {0} = from_glib({0});",
                 par.name
             )));
             true

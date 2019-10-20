@@ -90,6 +90,7 @@ impl Bounds {
         let mut callback_info = None;
         let mut ret = None;
         let mut need_is_into_check = false;
+
         if !par.instance_parameter && par.direction != ParameterDirection::Out {
             if let Some(bound_type) = Bounds::type_for(env, par.typ, par.nullable) {
                 ret = Some(Bounds::get_to_glib_extra(&bound_type));
