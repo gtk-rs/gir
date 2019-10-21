@@ -584,7 +584,9 @@ fn analyze_function(
                 func.c_identifier.as_ref().unwrap()
             );
             if let Ok(s) = used_rust_type(env, par.typ, !par.direction.is_out()) {
-                used_types.push(s);
+                if !s.ends_with("GString") {
+                    used_types.push(s);
+                }
             }
             let (to_glib_extra, callback_info) =
                 bounds.add_for_parameter(env, func, par, r#async, library::Concurrency::None);
