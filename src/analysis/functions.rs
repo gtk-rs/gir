@@ -584,7 +584,7 @@ fn analyze_function(
                 func.c_identifier.as_ref().unwrap()
             );
             if let Ok(s) = used_rust_type(env, par.typ, !par.direction.is_out()) {
-                if !s.ends_with("GString") {
+                if !s.ends_with("GString") || par.c_type == "gchar***" {
                     used_types.push(s);
                 }
             }
