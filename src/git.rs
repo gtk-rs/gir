@@ -1,29 +1,32 @@
-use git2::{Repository, StatusOptions};
 use std::path::Path;
+use std::process::Command;
 
-pub fn repo_hash<P: AsRef<Path>>(path: P) -> Result<String, ()> {
-    if let Ok(repo) = Repository::open(path) {
-        if let Ok(buf) = repo.revparse_single("HEAD").and_then(|obj| obj.short_id()) {
-            if let Some(s) = buf.as_str() {
-                if dirty(&repo) {
-                    return Ok(format!("{}+", s));
-                } else {
-                    return Ok(s.into());
-                }
-            }
-        }
+pub fn repo_hash<P: AsRef<Path>>(path: P) -> Option<String> {
+    let git_path = path.as_ref().to_str();
+    let mut args = match git_path {
+        Some(path) => vec!["-C", path],
+        None => vec![],
+    };
+    args.extend(&["rev-parse", "--short", "HEAD"]);
+    let hash = String::from_utf8(Command::new("git").args(&args).output().ok()?.stdout).ok()?;
+    let hash = hash.trim_end_matches('\n');
+
+    if dirty(path) {
+        Some(format!("{}+", hash))
+    } else {
+        Some(hash.into())
     }
-    Err(())
 }
 
-fn dirty(repo: &Repository) -> bool {
-    repo.statuses(Some(
-        StatusOptions::new()
-            .include_ignored(false)
-            .include_untracked(false)
-            .include_unmodified(false),
-    ))
-    .ok()
-    .map(|s| !s.is_empty())
-    .unwrap_or(false)
+fn dirty<P: AsRef<Path>>(path: P) -> bool {
+    let path = path.as_ref().to_str();
+    let mut args = match path {
+        Some(path) => vec!["-C", path],
+        None => vec![],
+    };
+    args.extend(&["ls-files", "-m"]);
+    match Command::new("git").args(&args).output() {
+        Ok(modified_files) => !modified_files.stdout.is_empty(),
+        Err(_) => false,
+    }
 }

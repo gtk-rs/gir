@@ -110,7 +110,7 @@ impl Config {
             }
             Some(a) => a.into(),
         };
-        let girs_version = repo_hash(&girs_dir).unwrap_or_else(|_| "???".into());
+        let girs_version = repo_hash(&girs_dir).unwrap_or_else(|| "???".into());
 
         let (library_name, library_version) = match (library_name.into(), library_version.into()) {
             (Some(""), Some("")) | (None, None) => (
