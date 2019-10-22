@@ -584,7 +584,9 @@ fn analyze_function(
                 func.c_identifier.as_ref().unwrap()
             );
             if let Ok(s) = used_rust_type(env, par.typ, !par.direction.is_out()) {
-                used_types.push(s);
+                if !s.ends_with("GString") || par.c_type == "gchar***" {
+                    used_types.push(s);
+                }
             }
             let (to_glib_extra, callback_info) =
                 bounds.add_for_parameter(env, func, par, r#async, library::Concurrency::None);
@@ -977,10 +979,8 @@ fn analyze_callback(
             }
         }
         if let Ok(s) = used_rust_type(env, func.ret.typ, false) {
-            if s != "GString" {
+            if !s.ends_with("GString") {
                 imports_to_add.push(s);
-            } else {
-                imports_to_add.push("String".to_owned());
             }
         }
         let user_data_index = par.user_data_index.unwrap_or_else(|| 0);
