@@ -10,6 +10,7 @@ use crate::{
         bounds::{Bounds, CallbackInfo},
         function_parameters::{self, CParameter, Parameters, Transformation, TransformationType},
         imports::Imports,
+        is_gpointer,
         out_parameters::{self, use_function_return_for_result},
         ref_mode::RefMode,
         return_value,
@@ -575,7 +576,7 @@ fn analyze_function(
         for (pos, par) in parameters.c_parameters.iter().enumerate() {
             // FIXME: It'd be better if we assumed that user data wasn't gpointer all the time so
             //        we could handle it more generically.
-            if r#async && par.c_type == "gpointer" {
+            if r#async && is_gpointer(&par.c_type) {
                 continue;
             }
             assert!(
@@ -903,7 +904,7 @@ fn analyze_callback(
                                user_data,
                                c_parameters.len());
                     return None;
-                } else if c_parameters[user_data].0.c_type != "gpointer" {
+                } else if !is_gpointer(&c_parameters[user_data].0.c_type) {
                     *commented = true;
                     warn_main!(
                         type_tid,

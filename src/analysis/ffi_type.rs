@@ -1,6 +1,7 @@
 use crate::{
     analysis::{
         c_type::{implements_c_type, rustify_pointers},
+        is_gpointer,
         rust_type::{Result, TypeError},
     },
     env::Env,
@@ -43,7 +44,7 @@ pub fn ffi_type(env: &Env, tid: TypeId, c_type: &str) -> Result {
                     | Type::Interface(Interface {
                         c_type: ref expected,
                         ..
-                    }) if c_type == "gpointer" => {
+                    }) if is_gpointer(c_type) => {
                         info!("[c:type `gpointer` instead of `*mut {}`, fixing]", expected);
                         ffi_inner(env, tid, expected).map_any(|s| format!("*mut {}", s))
                     }

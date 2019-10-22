@@ -1,5 +1,6 @@
 use super::{conversion_type::ConversionType, ref_mode::RefMode};
 use crate::{
+    analysis::is_gpointer,
     analysis::rust_type::rust_type,
     config::{self, parameter_matchable::ParameterMatchable},
     env::Env,
@@ -27,7 +28,7 @@ pub struct CParameter {
 
 impl CParameter {
     pub fn is_real_gpointer(&self, env: &Env) -> bool {
-        self.c_type == "gpointer" && rust_type(env, self.typ).is_err()
+        is_gpointer(&self.c_type) && rust_type(env, self.typ).is_err()
     }
 }
 
