@@ -187,3 +187,7 @@ fn is_all_deps_analyzed(env: &mut Env, deps: &[TypeId]) -> bool {
     }
     true
 }
+
+pub fn is_gpointer(s: &str) -> bool {
+    s == "gpointer" || s == "void*"
+}
