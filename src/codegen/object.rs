@@ -151,11 +151,8 @@ pub fn generate(
 fn generate_builder(w: &mut dyn Write, env: &Env, analysis: &analysis::object::Info) -> Result<()> {
     let mut methods = vec![];
     let mut properties = vec![];
-    if analysis.functions.iter().any(|f| {
-        !f.visibility.hidden() && f.name == "new" && f.parameters.rust_parameters.is_empty()
-    }) {
-        writeln!(w, "#[derive(Default)]")?;
-    }
+    general::declare_default_from_new(w, env, &analysis.name, &analysis.functions)?;
+    writeln!(w)?;
     writeln!(w, "pub struct {}Builder {{", analysis.name)?;
     for property in &analysis.builder_properties {
         match rust_type(env, property.typ) {
