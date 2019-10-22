@@ -7,6 +7,7 @@ use crate::{
     nameutil,
     traits::*,
 };
+use std::cmp;
 
 pub trait ToReturnValue {
     fn to_return_value(&self, env: &Env, is_trampoline: bool) -> String;
@@ -51,11 +52,21 @@ pub fn out_parameter_as_return_parts(
     analysis: &analysis::functions::Info,
 ) -> (&'static str, &'static str) {
     use crate::analysis::out_parameters::Mode::*;
-    let num_outs = analysis
+    let num_out_args = analysis
         .outs
         .iter()
         .filter(|p| p.array_length.is_none())
         .count();
+    let num_out_sizes = analysis
+        .outs
+        .iter()
+        .filter(|p| p.array_length.is_some())
+        .count();
+    // We need to differentiate between array(s)'s size arguments and normal ones. If we have 2
+    // "normal" arguments and one "size" argument, we still need to wrap them into "()" so we take
+    // that into account. If the opposite, it means that there are two arguments in any case so
+    // we need "()" too.
+    let num_outs = cmp::max(num_out_args, num_out_sizes);
     match analysis.outs.mode {
         Normal | Combined => {
             if num_outs > 1 {
