@@ -14,7 +14,7 @@ use crate::{
     },
     chunk::{parameter_ffi_call_out, Chunk, Param, TupleMode},
     env::Env,
-    library::{self, ParameterDirection},
+    library::{self, ParameterDirection, TypeId},
 };
 use std::collections::{hash_map::Entry, BTreeMap, HashMap};
 
@@ -134,7 +134,7 @@ impl Builder {
         let mut body = Vec::new();
 
         let mut uninitialized_vars = if self.outs_as_return {
-            self.write_out_variables(&mut body)
+            self.write_out_variables(&mut body, env)
         } else {
             Vec::new()
         };
@@ -327,14 +327,20 @@ impl Builder {
         Chunk::BlockHalf(chunks)
     }
 
-    fn write_out_uninitialized(&self, body: &mut Vec<Chunk>, uninitialized_vars: Vec<String>) {
-        for uninitialized_var in uninitialized_vars {
+    fn write_out_uninitialized(
+        &self,
+        body: &mut Vec<Chunk>,
+        uninitialized_vars: Vec<(String, bool)>,
+    ) {
+        for (uninitialized_var, need_from_glib) in uninitialized_vars {
             body.push(Chunk::Let {
                 name: uninitialized_var.clone(),
                 is_mut: false,
                 value: Box::new(Chunk::Custom(format!(
-                    "{}.assume_init()",
-                    uninitialized_var
+                    "{}{}.assume_init(){}",
+                    if need_from_glib { "from_glib(" } else { "" },
+                    uninitialized_var,
+                    if need_from_glib { ")" } else { "" },
                 ))),
                 type_: None,
             });
@@ -344,12 +350,12 @@ impl Builder {
     fn remove_extra_assume_init(
         &self,
         array_length_name: &Option<String>,
-        uninitialized_vars: &mut Vec<String>,
+        uninitialized_vars: &mut Vec<(String, bool)>,
     ) {
         // To prevent to call twice `.assume_init()` on the length variable, we need to
         // remove them from the `uninitialized_vars` array.
         if let Some(ref array_length_name) = *array_length_name {
-            uninitialized_vars.retain(|x| x != array_length_name);
+            uninitialized_vars.retain(|(x, _)| x != array_length_name);
         }
     }
 
@@ -736,7 +742,10 @@ impl Builder {
                     let mut par: parameter_ffi_call_out::Parameter = param.into();
                     if kind.is_uninitialized() {
                         par.is_uninitialized = true;
-                        uninitialized_vars.push(param.name.clone());
+                        uninitialized_vars.push((
+                            param.name.clone(),
+                            self.check_if_need_glib_conversion(env, param.typ),
+                        ));
                     }
                     Chunk::FfiCallOutParameter { par }
                 }),
@@ -936,7 +945,11 @@ impl Builder {
         };
         func
     }
-    fn generate_call_conversion(&self, call: Chunk, uninitialized_vars: &mut Vec<String>) -> Chunk {
+    fn generate_call_conversion(
+        &self,
+        call: Chunk,
+        uninitialized_vars: &mut Vec<(String, bool)>,
+    ) -> Chunk {
         let array_length_name = self.find_array_length_name("");
         self.remove_extra_assume_init(&array_length_name, uninitialized_vars);
         Chunk::FfiCallConversion {
@@ -1012,7 +1025,15 @@ impl Builder {
             })
             .collect()
     }
-    fn write_out_variables(&self, v: &mut Vec<Chunk>) -> Vec<String> {
+    fn check_if_need_glib_conversion(&self, env: &Env, typ: TypeId) -> bool {
+        // TODO: maybe improve this part to potentially handle more cases than just glib::Pid?
+        let type_ = env.type_(typ);
+        match type_ {
+            library::Type::Alias(a) if a.c_identifier == "GPid" => true,
+            _ => false,
+        }
+    }
+    fn write_out_variables(&self, v: &mut Vec<Chunk>, env: &Env) -> Vec<(String, bool)> {
         let mut ret = Vec::new();
         let outs = self.get_outs();
 
@@ -1024,7 +1045,10 @@ impl Builder {
             {
                 let val = self.get_uninitialized(mem_mode);
                 if val.is_uninitialized() {
-                    ret.push(parameter.name.clone());
+                    ret.push((
+                        parameter.name.clone(),
+                        self.check_if_need_glib_conversion(env, parameter.typ),
+                    ));
                 }
                 let chunk = Chunk::Let {
                     name: parameter.name.clone(),
@@ -1046,7 +1070,7 @@ impl Builder {
             NullMutPtr => Chunk::NullMutPtr,
         }
     }
-    fn generate_out_return(&self, uninitialized_vars: &mut Vec<String>) -> Option<Chunk> {
+    fn generate_out_return(&self, uninitialized_vars: &mut Vec<(String, bool)>) -> Option<Chunk> {
         if !self.outs_as_return {
             return None;
         }
@@ -1082,7 +1106,7 @@ impl Builder {
         &self,
         parameter: &parameter_ffi_call_out::Parameter,
         mem_mode: &OutMemMode,
-        uninitialized_vars: &mut Vec<String>,
+        uninitialized_vars: &mut Vec<(String, bool)>,
     ) -> Chunk {
         let value = Chunk::Custom(parameter.name.clone());
         if let OutMemMode::UninitializedNamed(_) = *mem_mode {
@@ -1101,7 +1125,7 @@ impl Builder {
         &self,
         call: Chunk,
         ret: Option<Chunk>,
-        uninitialized_vars: &mut Vec<String>,
+        uninitialized_vars: &mut Vec<(String, bool)>,
     ) -> (Chunk, Option<Chunk>) {
         use crate::analysis::out_parameters::Mode::*;
         match self.outs_mode {
