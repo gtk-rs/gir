@@ -1,6 +1,7 @@
 use crate::{
     analysis::{
-        self, conversion_type::ConversionType, ref_mode::RefMode, rust_type::parameter_rust_type,
+        self, conversion_type::ConversionType, namespaces, ref_mode::RefMode,
+        rust_type::parameter_rust_type,
     },
     env::Env,
     library::{self, ParameterDirection},
@@ -50,6 +51,7 @@ impl ToReturnValue for analysis::return_value::Info {
 
 pub fn out_parameter_as_return_parts(
     analysis: &analysis::functions::Info,
+    is_glib_crate: bool,
 ) -> (&'static str, &'static str) {
     use crate::analysis::out_parameters::Mode::*;
     let num_out_args = analysis
@@ -85,9 +87,23 @@ pub fn out_parameter_as_return_parts(
         Throws(..) => {
             if num_outs == 1 + 1 {
                 //if only one parameter except "glib::Error"
-                ("Result<", ", Error>")
+                (
+                    "Result<",
+                    if is_glib_crate {
+                        ", Error>"
+                    } else {
+                        ", glib::Error>"
+                    },
+                )
             } else {
-                ("Result<(", "), Error>")
+                (
+                    "Result<(",
+                    if is_glib_crate {
+                        "), Error>"
+                    } else {
+                        "), glib::Error>"
+                    },
+                )
             }
         }
         None => unreachable!(),
@@ -95,7 +111,8 @@ pub fn out_parameter_as_return_parts(
 }
 
 pub fn out_parameters_as_return(env: &Env, analysis: &analysis::functions::Info) -> String {
-    let (prefix, suffix) = out_parameter_as_return_parts(analysis);
+    let (prefix, suffix) =
+        out_parameter_as_return_parts(analysis, env.namespaces.glib_ns_id == namespaces::MAIN);
     let mut return_str = String::with_capacity(100);
     return_str.push_str(" -> ");
     return_str.push_str(prefix);

@@ -323,8 +323,8 @@ fn find_error_type(env: &Env, function: &Function) -> String {
         .iter()
         .find(|param| param.direction == ParameterDirection::Out && param.name == "error")
         .expect("error type");
-    if let Type::Record(ref record) = *env.type_(error_param.typ) {
-        return record.name.clone();
+    if let Type::Record(_) = *env.type_(error_param.typ) {
+        return rust_type(env, error_param.typ).into_string();
     }
     panic!("cannot find error type")
 }

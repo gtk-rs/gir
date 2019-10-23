@@ -58,7 +58,7 @@ impl Imports {
     /// Declares that name should be available through its last path component.
     ///
     /// For example, if name is `X::Y::Z` then it will be available as `Z`.
-    /// Uses defaults
+    /// Uses defaults.
     pub fn add(&mut self, name: &str) {
         if let Some(ref defined) = self.defined {
             if name == defined {
