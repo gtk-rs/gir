@@ -1,5 +1,6 @@
 use super::conversion_type::ConversionType;
 use crate::{
+    analysis::namespaces,
     analysis::ref_mode::RefMode,
     env::Env,
     library::{self, Nullable, ParameterScope},
@@ -258,7 +259,12 @@ pub fn rust_type_full(
 
             let full_name = type_id.full_name(&env.library);
             if full_name == "Gio.AsyncReadyCallback" {
-                return Ok("FnOnce(Result<(), Error>) + 'static".to_owned());
+                return Ok(if env.namespaces.glib_ns_id == namespaces::MAIN {
+                    "FnOnce(Result<(), Error>) + 'static"
+                } else {
+                    "FnOnce(Result<(), glib::Error>) + 'static"
+                }
+                .to_owned());
             } else if full_name == "GLib.DestroyNotify" {
                 return Ok(format!("Fn(){} + 'static", concurrency));
             }
@@ -354,7 +360,6 @@ pub fn rust_type_full(
 
     if type_id.ns_id != library::MAIN_NAMESPACE
         && type_id.ns_id != library::INTERNAL_NAMESPACE
-        && !implemented_in_main_namespace(&env.library, type_id)
         && type_id.full_name(&env.library) != "GLib.DestroyNotify"
         && type_id.full_name(&env.library) != "GObject.Callback"
         && !type_.is_function()
@@ -498,9 +503,4 @@ fn format_parameter(rust_type: String, direction: library::ParameterDirection) -
     } else {
         rust_type
     }
-}
-
-//TODO: remove
-fn implemented_in_main_namespace(library: &library::Library, type_id: library::TypeId) -> bool {
-    type_id.full_name(library) == "GLib.Error"
 }
