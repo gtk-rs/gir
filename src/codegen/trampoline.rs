@@ -169,7 +169,7 @@ fn func_returns(env: &Env, analysis: &Trampoline) -> String {
     if analysis.ret.typ == Default::default() {
         String::new()
     } else if analysis.inhibit {
-        " -> Inhibit".into()
+        " -> glib::signal::Inhibit".into()
     } else {
         analysis.ret.to_return_value(env, true)
     }
