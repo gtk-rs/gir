@@ -73,7 +73,6 @@ pub fn analyze(
         if signal.ret.typ != library::TypeId::tid_bool() {
             error!("Wrong return type for Inhibit for signal '{}'", signal.name);
         }
-        used_types.push("::signal::Inhibit".into());
     }
 
     let mut bounds: Bounds = Default::default();
