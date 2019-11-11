@@ -32,8 +32,6 @@ use std::{
     collections::{HashMap, HashSet},
 };
 
-pub const CONSTRAINT_FUTURES: &str = "feature = \"futures\"";
-
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Visibility {
     Public,
@@ -695,15 +693,13 @@ fn analyze_function(
     if r#async && !commented {
         if env.config.library_name != "Gio" {
             imports.add("gio_sys");
-            imports.add_with_constraint("gio", version, Some(CONSTRAINT_FUTURES));
+            imports.add_with_constraint("gio", version, None);
         }
         imports.add("glib_sys");
         imports.add("gobject_sys");
         imports.add("std::ptr");
         imports.add("std::boxed::Box as Box_");
-        if async_future.is_some() {
-            imports.add_with_constraint("futures::future", version, Some(CONSTRAINT_FUTURES));
-        }
+        imports.add("std::pin::Pin");
 
         if let Some(ref trampoline) = trampoline {
             for par in &trampoline.output_params {
