@@ -98,7 +98,7 @@ pub fn generate(
 
         writeln!(
             w,
-            "{}{}#[cfg(any(feature = \"futures\", feature = \"dox\"))]",
+            "{}{}",
             tabs(indent),
             comment_prefix
         )?;
@@ -168,7 +168,7 @@ pub fn declaration_futures(env: &Env, analysis: &analysis::functions::Info) -> S
     let async_future = analysis.async_future.as_ref().unwrap();
 
     let return_str = format!(
-        " -> Box_<dyn future::Future<Output = Result<{}, {}>> + std::marker::Unpin>",
+        " -> Pin<Box_<dyn std::future::Future<Output = Result<{}, {}>> + 'static>>",
         async_future.success_parameters, async_future.error_parameters
     );
 
