@@ -14,7 +14,7 @@ script:
   - test "$TRAVIS_RUST_VERSION" == "nightly" || cargo fmt -- --check
   - cargo build --release
   - cargo test --release
-  - git clone -q https://github.com/gkoz/gir-files tests/gir-files
+  - git clone -q https://github.com/gtk-rs/gir-files tests/gir-files
   - ./tests/sys/test.sh
   # check if generation generated something buildable
   - git clone -q https://github.com/gtk-rs/gtk gtk-test
