@@ -96,12 +96,7 @@ pub fn generate(
             cfg_deprecated(w, env, analysis.deprecated_version, commented, indent)?;
         }
 
-        writeln!(
-            w,
-            "{}{}",
-            tabs(indent),
-            comment_prefix
-        )?;
+        writeln!(w, "{}{}", tabs(indent), comment_prefix)?;
         cfg_condition(w, &analysis.cfg_condition, commented, indent)?;
         version_condition(w, env, analysis.version, commented, indent)?;
         not_version_condition(w, analysis.not_version, commented, indent)?;
