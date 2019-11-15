@@ -87,7 +87,8 @@ fn fill_in(root: &mut Table, env: &Env) {
     {
         let dev_deps = upsert_table(root, "dev-dependencies");
         set_string(dev_deps, "shell-words", "0.1.0");
-        set_string(dev_deps, "tempdir", "0.3");
+        set_string(dev_deps, "tempfile", "3");
+        unset(dev_deps, "tempdir");
     }
 
     {
@@ -149,6 +150,10 @@ fn set_string<S: Into<String>>(table: &mut Table, name: &str, new_value: S) {
         return;
     }
     table.insert(name.into(), Value::String(new_value.into()));
+}
+
+fn unset(table: &mut Table, name: &str) {
+    table.remove(name);
 }
 
 fn upsert_table<S: Into<String>>(parent: &mut Table, name: S) -> &mut Table {

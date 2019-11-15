@@ -273,13 +273,14 @@ fn generate_abi_rs(
 
     writeln!(w, "extern crate {};", crate_name)?;
     writeln!(w, "extern crate shell_words;")?;
-    writeln!(w, "extern crate tempdir;")?;
+    writeln!(w, "extern crate tempfile;")?;
     writeln!(w, "use std::env;")?;
     writeln!(w, "use std::error::Error;")?;
     writeln!(w, "use std::path::Path;")?;
     writeln!(w, "use std::mem::{{align_of, size_of}};")?;
     writeln!(w, "use std::process::Command;")?;
     writeln!(w, "use std::str;")?;
+    writeln!(w, "use tempfile::Builder;")?;
     writeln!(w, "use {}::*;\n", crate_name)?;
     writeln!(w, "static PACKAGES: &[&str] = &[\"{}\"];", package_name)?;
     writeln!(
@@ -401,7 +402,7 @@ impl Results {
 
 #[test]
 fn cross_validate_constants_with_c() {
-    let tmpdir = tempdir::TempDir::new("abi").expect("temporary directory");
+    let tmpdir = Builder::new().prefix("abi").tempdir().expect("temporary directory");
     let cc = Compiler::new().expect("configured compiler");
 
     assert_eq!("1",
@@ -434,7 +435,7 @@ fn cross_validate_constants_with_c() {
 
 #[test]
 fn cross_validate_layout_with_c() {
-    let tmpdir = tempdir::TempDir::new("abi").expect("temporary directory");
+    let tmpdir = Builder::new().prefix("abi").tempdir().expect("temporary directory");
     let cc = Compiler::new().expect("configured compiler");
 
     assert_eq!(Layout {size: 1, alignment: 1},
