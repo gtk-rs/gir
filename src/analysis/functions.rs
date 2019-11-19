@@ -514,6 +514,11 @@ fn analyze_function(
         .filter_map(|f| f.version)
         .min()
         .or(func.version);
+    let name = configured_functions
+        .iter()
+        .filter_map(|f| f.rename.clone())
+        .next()
+        .unwrap_or_else(|| name);
     let version = env.config.filter_version(version);
     let deprecated_version = func.deprecated_version;
     let cfg_condition = configured_functions

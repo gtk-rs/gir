@@ -168,6 +168,7 @@ pub struct Function {
     pub disable_length_detect: bool,
     pub doc_trait_name: Option<String>,
     pub no_future: bool,
+    pub rename: Option<String>,
 }
 
 impl Parse for Function {
@@ -196,6 +197,7 @@ impl Parse for Function {
                 "pattern",
                 "doc_trait_name",
                 "no_future",
+                "rename",
             ],
             &format!("function {}", object_name),
         );
@@ -234,6 +236,10 @@ impl Parse for Function {
             .lookup("no_future")
             .and_then(Value::as_bool)
             .unwrap_or(false);
+        let rename = toml
+            .lookup("rename")
+            .and_then(Value::as_str)
+            .map(ToOwned::to_owned);
 
         Some(Function {
             ident,
@@ -247,6 +253,7 @@ impl Parse for Function {
             disable_length_detect,
             doc_trait_name,
             no_future,
+            rename,
         })
     }
 }
@@ -527,5 +534,17 @@ pattern='par\d+'
         assert_eq!(m.matched_parameters("par2").len(), 4);
         assert_eq!(m.matched_parameters("par3").len(), 3);
         assert_eq!(m.matched_parameters("par4").len(), 2);
+    }
+
+    #[test]
+    fn functions_parse_rename() {
+        let toml = toml(
+            r#"
+name = "func1"
+rename = "another"
+"#,
+        );
+        let f = Function::parse(&toml, "a").unwrap();
+        assert_eq!(f.rename, Some("another".to_owned()));
     }
 }
