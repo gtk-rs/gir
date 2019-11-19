@@ -190,6 +190,8 @@ generate_builder = true
     doc_trait_name = "SocketListenerExtManual"
     # disable generation of future for async function
     no_future = true
+    # to rename the generated function
+    rename = "something_else"
         # override for parameter
         [[object.function.parameter]]
         # filter by name
