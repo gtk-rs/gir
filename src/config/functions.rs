@@ -153,6 +153,21 @@ impl Return {
     }
 }
 
+fn check_rename(rename: &Option<String>, object_name: &str, function_name: &Ident) -> bool {
+    if let Some(ref rename) = rename {
+        for c in &["\t", "\n", " "] {
+            if rename.contains(c) {
+                error!(
+                    "Invalid 'rename' value given to {}::{}: forbidden character '{:?}'",
+                    object_name, function_name, c
+                );
+                return false;
+            }
+        }
+    }
+    true
+}
+
 #[derive(Clone, Debug)]
 pub struct Function {
     pub ident: Ident,
@@ -240,6 +255,9 @@ impl Parse for Function {
             .lookup("rename")
             .and_then(Value::as_str)
             .map(ToOwned::to_owned);
+        if !check_rename(&rename, object_name, &ident) {
+            return None;
+        }
 
         Some(Function {
             ident,
@@ -546,5 +564,17 @@ rename = "another"
         );
         let f = Function::parse(&toml, "a").unwrap();
         assert_eq!(f.rename, Some("another".to_owned()));
+    }
+
+    #[test]
+    fn functions_parse_rename_fail() {
+        let toml = toml(
+            r#"
+name = "func1"
+rename = "anoth er"
+"#,
+        );
+        let f = Function::parse(&toml, "a");
+        assert!(f.is_none());
     }
 }

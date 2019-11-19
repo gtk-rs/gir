@@ -1,12 +1,23 @@
 use super::error::TomlHelper;
 use log::error;
 use regex::Regex;
+use std::fmt;
 use toml::Value;
 
 #[derive(Clone, Debug)]
 pub enum Ident {
     Name(String),
     Pattern(Regex),
+}
+
+impl fmt::Display for Ident {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match *self {
+            Ident::Name(ref name) => write!(f, "{}", name),
+            // TODO: maybe store the regex string to display it here?
+            Ident::Pattern(_) => write!(f, "Regex"),
+        }
+    }
 }
 
 impl PartialEq for Ident {
