@@ -435,10 +435,7 @@ where
     if st.name != fn_name {
         st.name = fn_name.to_owned();
     }
-    let ty = TypeStruct {
-        parent,
-        ..st
-    };
+    let ty = TypeStruct { parent, ..st };
     let self_name: Option<String> = fn_
         .parameters()
         .iter()
