@@ -254,8 +254,10 @@ fn create_object_doc(w: &mut dyn Write, env: &Env, info: &analysis::object::Info
     };
 
     for function in functions {
+        let configured_functions = obj.functions.matched(&function.name);
         let ty = if has_trait && function.parameters.iter().any(|p| p.instance_parameter) {
-            let configured_functions = obj.functions.matched(&function.name);
+            // We use "original_name" here to be sure to get the correct object since the "name"
+            // field could have been renamed.
             if let Some(trait_name) = configured_functions
                 .iter()
                 .filter_map(|f| f.doc_trait_name.as_ref())
@@ -268,7 +270,12 @@ fn create_object_doc(w: &mut dyn Write, env: &Env, info: &analysis::object::Info
         } else {
             ty.clone()
         };
-        create_fn_doc(w, env, function, Some(Box::new(ty)))?;
+        let fn_name = configured_functions
+            .iter()
+            .filter_map(|f| f.rename.as_ref())
+            .next()
+            .unwrap_or_else(|| &function.name);
+        create_fn_doc(w, env, function, Some(Box::new(ty)), &fn_name)?;
     }
     for signal in signals {
         let ty = if has_trait {
@@ -285,7 +292,7 @@ fn create_object_doc(w: &mut dyn Write, env: &Env, info: &analysis::object::Info
         } else {
             ty.clone()
         };
-        create_fn_doc(w, env, signal, Some(Box::new(ty)))?;
+        create_fn_doc(w, env, signal, Some(Box::new(ty)), &signal.name)?;
     }
     for property in properties {
         let ty = if has_trait {
@@ -338,7 +345,7 @@ fn create_record_doc(w: &mut dyn Write, env: &Env, info: &analysis::record::Info
         ..ty
     };
     for function in &record.functions {
-        create_fn_doc(w, env, function, Some(Box::new(ty.clone())))?;
+        create_fn_doc(w, env, function, Some(Box::new(ty.clone())), &function.name)?;
     }
     Ok(())
 }
@@ -407,6 +414,7 @@ fn create_fn_doc<T>(
     env: &Env,
     fn_: &T,
     parent: Option<Box<TypeStruct>>,
+    fn_name: &str,
 ) -> Result<()>
 where
     T: FunctionLikeType + ToStripperType,
@@ -423,10 +431,11 @@ where
     }
 
     let symbols = env.symbols.borrow();
-    let ty = TypeStruct {
-        parent,
-        ..fn_.to_stripper_type()
-    };
+    let mut st = fn_.to_stripper_type();
+    if st.name != fn_name {
+        st.name = fn_name.to_owned();
+    }
+    let ty = TypeStruct { parent, ..st };
     let self_name: Option<String> = fn_
         .parameters()
         .iter()
