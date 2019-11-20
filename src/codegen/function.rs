@@ -349,12 +349,11 @@ pub fn body_chunk_futures(
 
     let mut body = String::new();
 
-    if env.config.library_name != "Gio" {
-        writeln!(body, "use gio::GioFuture;")?;
+    let gio_future_name = if env.config.library_name != "Gio" {
+        "gio::GioFuture"
     } else {
-        writeln!(body, "use GioFuture;")?;
-    }
-    writeln!(body, "use fragile::Fragile;")?;
+        "crate::GioFuture"
+    };
     writeln!(body)?;
 
     let skip = if async_future.is_method { 1 } else { 0 };
@@ -388,9 +387,9 @@ pub fn body_chunk_futures(
     }
 
     if async_future.is_method {
-        writeln!(body, "GioFuture::new(self, move |obj, send| {{")?;
+        writeln!(body, "Box_::pin({}::new(self, move |obj, send| {{", gio_future_name)?;
     } else {
-        writeln!(body, "GioFuture::new(&(), move |_obj, send| {{")?;
+        writeln!(body, "Box_::pin({}::new(&(), move |_obj, send| {{", gio_future_name)?;
     }
 
     if env.config.library_name != "Gio" {
@@ -398,8 +397,6 @@ pub fn body_chunk_futures(
     } else {
         writeln!(body, "\tlet cancellable = Cancellable::new();")?;
     }
-    writeln!(body, "\tlet send = Fragile::new(send);")?;
-
     if async_future.is_method {
         writeln!(body, "\tobj.{}(", analysis.name)?;
     } else if analysis.type_name.is_ok() {
@@ -432,12 +429,12 @@ pub fn body_chunk_futures(
     }
 
     writeln!(body, "\t\tmove |res| {{")?;
-    writeln!(body, "\t\t\tlet _ = send.into_inner().send(res);")?;
+    writeln!(body, "\t\t\tsend.resolve(res);")?;
     writeln!(body, "\t\t}},")?;
     writeln!(body, "\t);")?;
     writeln!(body)?;
     writeln!(body, "\tcancellable")?;
-    writeln!(body, "}})")?;
+    writeln!(body, "}}))")?;
 
     Ok(body)
 }
