@@ -5,7 +5,7 @@ use crate::{
         rust_type::{rust_type, rust_type_full},
     },
     case::CaseExt,
-    codegen::general::{version_condition, version_condition_string},
+    codegen::general::version_condition_string,
     env::Env,
     library, nameutil,
     traits::IntoString,
@@ -153,6 +153,7 @@ pub fn generate(
 fn generate_builder(w: &mut dyn Write, env: &Env, analysis: &analysis::object::Info) -> Result<()> {
     let mut methods = vec![];
     let mut properties = vec![];
+    writeln!(w, "#[derive(Clone, Default)]")?;
     writeln!(w, "pub struct {}Builder {{", analysis.name)?;
     for property in &analysis.builder_properties {
         match rust_type(env, property.typ) {
@@ -220,19 +221,15 @@ fn generate_builder(w: &mut dyn Write, env: &Env, analysis: &analysis::object::I
 
 impl {}Builder {{
     pub fn new() -> Self {{
-        Self {{",
+        Self::default()
+    }}
+",
         analysis.name
     )?;
-    for property in &properties {
-        version_condition(w, env, property.version, false, 3)?;
-        let name = nameutil::mangle_keywords(nameutil::signal_to_snake(&property.name));
-        writeln!(w, "            {}: None,", name)?;
-    }
+
     writeln!(
         w,
-        "        }}
-    }}
-
+        "
     pub fn build(self) -> {} {{
         let mut properties: Vec<(&str, &dyn ToValue)> = vec![];",
         analysis.name
