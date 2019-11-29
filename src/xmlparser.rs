@@ -37,13 +37,7 @@ struct ErrorEmitter {
 impl ErrorEmitter {
     pub fn emit(&self, message: &str, position: TextPosition) -> String {
         let enriched = match self.path {
-            Some(ref path) => format!(
-                "{} at line {}:{}: {}",
-                path.display(),
-                position.row,
-                position.column,
-                message
-            ),
+            Some(ref path) => format!("{} at line {}: {}", path.display(), position, message),
             None => format!("{} {}", position, message),
         };
         format!("GirXml: {}", enriched)
