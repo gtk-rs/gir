@@ -1,6 +1,61 @@
 use super::namespaces;
 use crate::{library::Library, nameutil::crate_name, version::Version};
-use std::collections::btree_map::{BTreeMap, Iter};
+use std::cmp::Ordering;
+use std::collections::btree_map::BTreeMap;
+use std::vec::IntoIter;
+
+fn is_first_char_up(s: &str) -> bool {
+    s.chars().next().unwrap().is_uppercase()
+}
+
+fn check_up_eq(a: &str, b: &str) -> Ordering {
+    let is_a_up = is_first_char_up(a);
+    let is_b_up = is_first_char_up(b);
+    if is_a_up != is_b_up {
+        if is_a_up {
+            return Ordering::Greater;
+        }
+        return Ordering::Less;
+    }
+    Ordering::Equal
+}
+
+/// This function is used by the `Imports` type to generate output like `cargo fmt` would.
+///
+/// For example:
+///
+/// ```text
+/// use gdk; // lowercases come first.
+/// use Window;
+///
+/// use gdk::foo; // lowercases come first here as well.
+/// use gdk::Foo;
+/// ```
+fn compare_imports(a: &(&String, &ImportConditions), b: &(&String, &ImportConditions)) -> Ordering {
+    let s = check_up_eq(a.0, b.0);
+    if s != Ordering::Equal {
+        return s;
+    }
+    let mut a = a.0.split("::");
+    let mut b = b.0.split("::");
+    loop {
+        match (a.next(), b.next()) {
+            (Some(a), Some(b)) => {
+                let s = check_up_eq(a, b);
+                if s != Ordering::Equal {
+                    break s;
+                }
+                let s = a.partial_cmp(b).unwrap();
+                if s != Ordering::Equal {
+                    break s;
+                }
+            }
+            (Some(_), None) => break Ordering::Greater,
+            (None, Some(_)) => break Ordering::Less,
+            (None, None) => break Ordering::Equal,
+        }
+    }
+}
 
 /// Provides assistance in generating use declarations.
 ///
@@ -191,8 +246,10 @@ impl Imports {
         }
     }
 
-    pub fn iter(&self) -> Iter<'_, String, ImportConditions> {
-        self.map.iter()
+    pub fn iter(&self) -> IntoIter<(&String, &ImportConditions)> {
+        let mut imports = self.map.iter().collect::<Vec<_>>();
+        imports.sort_by(compare_imports);
+        imports.into_iter()
     }
 }
 
