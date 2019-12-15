@@ -225,7 +225,7 @@ impl Library {
         elem: &Element,
     ) -> Result<(), String> {
         if let Some(typ) = self.read_record(parser, ns_id, elem, None, None)? {
-            let name = typ.get_name().clone();
+            let name = typ.get_name();
             self.add_type(ns_id, &name, typ);
         }
         Ok(())

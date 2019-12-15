@@ -274,8 +274,8 @@ fn create_object_doc(w: &mut dyn Write, env: &Env, info: &analysis::object::Info
             .iter()
             .filter_map(|f| f.rename.as_ref())
             .next()
-            .unwrap_or_else(|| &function.name);
-        create_fn_doc(w, env, function, Some(Box::new(ty)), &fn_name)?;
+            .cloned();
+        create_fn_doc(w, env, function, Some(Box::new(ty)), fn_name)?;
     }
     for signal in signals {
         let ty = if has_trait {
@@ -292,7 +292,7 @@ fn create_object_doc(w: &mut dyn Write, env: &Env, info: &analysis::object::Info
         } else {
             ty.clone()
         };
-        create_fn_doc(w, env, signal, Some(Box::new(ty)), &signal.name)?;
+        create_fn_doc(w, env, signal, Some(Box::new(ty)), None)?;
     }
     for property in properties {
         let ty = if has_trait {
@@ -345,7 +345,7 @@ fn create_record_doc(w: &mut dyn Write, env: &Env, info: &analysis::record::Info
         ..ty
     };
     for function in &record.functions {
-        create_fn_doc(w, env, function, Some(Box::new(ty.clone())), &function.name)?;
+        create_fn_doc(w, env, function, Some(Box::new(ty.clone())), None)?;
     }
     Ok(())
 }
@@ -414,7 +414,7 @@ fn create_fn_doc<T>(
     env: &Env,
     fn_: &T,
     parent: Option<Box<TypeStruct>>,
-    fn_name: &str,
+    name_override: Option<String>,
 ) -> Result<()>
 where
     T: FunctionLikeType + ToStripperType,
@@ -432,8 +432,8 @@ where
 
     let symbols = env.symbols.borrow();
     let mut st = fn_.to_stripper_type();
-    if st.name != fn_name {
-        st.name = fn_name.to_owned();
+    if let Some(name_override) = name_override {
+        st.name = name_override;
     }
     let ty = TypeStruct { parent, ..st };
     let self_name: Option<String> = fn_
