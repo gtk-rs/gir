@@ -340,7 +340,7 @@ impl Library {
                                 actions.push((tid, fid, Action::SetCType("void*".to_owned())));
                                 continue;
                             }
-                            if let Type::FixedArray(_, _, Some(ref c_type)) = *field_type {
+                            if let Type::FixedArray(..) = *field_type {
                                 // fixed-size Arrays can only have inner c_type
                                 // HACK: field c_type used only in sys mode for pointer checking
                                 // so any string without * will work
