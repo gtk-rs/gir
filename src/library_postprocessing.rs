@@ -342,7 +342,10 @@ impl Library {
                             }
                             if let Type::FixedArray(_, _, Some(ref c_type)) = *field_type {
                                 // fixed-size Arrays can only have inner c_type
-                                actions.push((tid, fid, Action::SetCType(c_type.clone())));
+                                // HACK: field c_type used only in sys mode for pointer checking
+                                // so any string without * will work
+                                let array_c_type = "fixed_array".to_owned();
+                                actions.push((tid, fid, Action::SetCType(array_c_type)));
                                 continue;
                             }
                             error!("Field `{}::{}` is missing c:type", name, &field.name);
