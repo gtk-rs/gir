@@ -213,6 +213,9 @@ generate_builder = true
         # convert bool return types to Result<(), glib::BoolError> with
         # the given error message on failure
         bool_return_is_error = "Function failed doing what it is supposed to do"
+        # convert Option return types to Result<T, glib::BoolError> with
+        # the given error message on failure
+        nullable_return_is_error = "Function failed doing what it is supposed to do"
         # change string type. Variants: "utf8", "filename", "os_string"
         string_type = "os_string"
         # overwrite type

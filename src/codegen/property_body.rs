@@ -105,6 +105,7 @@ impl Builder {
             base_tid: None,
             commented: false,
             bool_return_is_error: None,
+            nullable_return_is_error: None,
         };
         let ffi_call = Chunk::FfiCall {
             name: self.get_ffi_func(),
@@ -195,6 +196,7 @@ impl Builder {
             base_tid: None,
             commented: false,
             bool_return_is_error: None,
+            nullable_return_is_error: None,
         };
         body.push(Chunk::FfiCallConversion {
             ret: return_info,
