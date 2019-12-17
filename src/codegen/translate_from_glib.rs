@@ -67,12 +67,36 @@ impl TranslateFromGlib for analysis::return_value::Info {
                     } else {
                         "unsafe_cast()"
                     };
-                    (prefix, format!("{}.{}", from_glib_xxx.1, suffix_function))
+
+                    if let Some(ref msg) = self.nullable_return_is_error {
+                        assert!(*par.nullable);
+                        (
+                            prefix,
+                            format!(
+                                "{}.{}.ok_or_else(|| glib_bool_error!(\"{}\"))",
+                                from_glib_xxx.1, suffix_function, msg
+                            ),
+                        )
+                    } else {
+                        (prefix, format!("{}.{}", from_glib_xxx.1, suffix_function))
+                    }
                 }
                 None if self.bool_return_is_error.is_some() => (
                     "glib_result_from_gboolean!(".into(),
                     format!(", \"{}\")", self.bool_return_is_error.as_ref().unwrap()),
                 ),
+                None if self.nullable_return_is_error.is_some() => {
+                    let res = Mode::from(par).translate_from_glib_as_function(env, array_length);
+                    if let Some(ref msg) = self.nullable_return_is_error {
+                        assert!(*par.nullable);
+                        (
+                            format!("Option::<_>::{}", res.0),
+                            format!("{}.ok_or_else(|| glib_bool_error!(\"{}\"))", res.1, msg),
+                        )
+                    } else {
+                        res
+                    }
+                }
                 None => Mode::from(par).translate_from_glib_as_function(env, array_length),
             },
             None => (String::new(), ";".into()),

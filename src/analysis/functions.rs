@@ -721,10 +721,10 @@ fn analyze_function(
     }
 
     if !commented {
-        if !destroys.is_empty() || !callbacks.is_empty() {
-            if callbacks.iter().any(|c| !c.scope.is_call()) {
-                imports.add("std::boxed::Box as Box_");
-            }
+        if (!destroys.is_empty() || !callbacks.is_empty())
+            && callbacks.iter().any(|c| !c.scope.is_call())
+        {
+            imports.add("std::boxed::Box as Box_");
         }
         if !commented {
             for transformation in &mut parameters.transformations {

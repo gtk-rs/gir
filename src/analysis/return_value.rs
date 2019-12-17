@@ -15,6 +15,7 @@ pub struct Info {
     pub base_tid: Option<library::TypeId>, // Some only if need downcast
     pub commented: bool,
     pub bool_return_is_error: Option<String>,
+    pub nullable_return_is_error: Option<String>,
 }
 
 pub fn analyze(
@@ -94,6 +95,29 @@ pub fn analyze(
         }
     });
 
+    let nullable_return_is_error = configured_functions
+        .iter()
+        .filter_map(|f| f.ret.nullable_return_is_error.as_ref())
+        .next();
+    let nullable_return_error_message = nullable_return_is_error.and_then(|m| {
+        if let Some(library::Parameter { nullable: Nullable(false), ..}) = parameter {
+            error!(
+                "Ignoring nullable_return_is_error configuration for non-none returning function {}",
+                func.name
+            );
+            None
+        } else {
+            let ns = if env.namespaces.glib_ns_id == namespaces::MAIN {
+                "BoolError"
+            } else {
+                "glib"
+            };
+            imports.add(ns);
+
+            Some(m.clone())
+        }
+    });
+
     let mut base_tid = None;
 
     if func.kind == library::FunctionKind::Constructor {
@@ -118,6 +142,7 @@ pub fn analyze(
         base_tid,
         commented,
         bool_return_is_error: bool_return_error_message,
+        nullable_return_is_error: nullable_return_error_message,
     }
 }
 

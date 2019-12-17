@@ -95,6 +95,7 @@ pub type Parameters = Vec<Parameter>;
 pub struct Return {
     pub nullable: Option<Nullable>,
     pub bool_return_is_error: Option<String>,
+    pub nullable_return_is_error: Option<String>,
     pub string_type: Option<StringType>,
     pub type_name: Option<String>,
 }
@@ -105,6 +106,7 @@ impl Return {
             return Return {
                 nullable: None,
                 bool_return_is_error: None,
+                nullable_return_is_error: None,
                 string_type: None,
                 type_name: None,
             };
@@ -112,13 +114,23 @@ impl Return {
 
         let v = toml.unwrap();
         v.check_unwanted(
-            &["nullable", "bool_return_is_error", "string_type", "type"],
+            &[
+                "nullable",
+                "bool_return_is_error",
+                "nullable_return_is_error",
+                "string_type",
+                "type",
+            ],
             "return",
         );
 
         let nullable = v.lookup("nullable").and_then(Value::as_bool).map(Nullable);
         let bool_return_is_error = v
             .lookup("bool_return_is_error")
+            .and_then(Value::as_str)
+            .map(ToOwned::to_owned);
+        let nullable_return_is_error = v
+            .lookup("nullable_return_is_error")
             .and_then(Value::as_str)
             .map(ToOwned::to_owned);
         let string_type = v.lookup("string_type").and_then(Value::as_str);
@@ -147,6 +159,7 @@ impl Return {
         Return {
             nullable,
             bool_return_is_error,
+            nullable_return_is_error,
             string_type,
             type_name,
         }

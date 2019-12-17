@@ -69,10 +69,8 @@ pub fn analyze(
 
     //TODO: move to object.signal.return config
     let inhibit = configured_signals.iter().any(|f| f.inhibit);
-    if inhibit {
-        if signal.ret.typ != library::TypeId::tid_bool() {
-            error!("Wrong return type for Inhibit for signal '{}'", signal.name);
-        }
+    if inhibit && signal.ret.typ != library::TypeId::tid_bool() {
+        error!("Wrong return type for Inhibit for signal '{}'", signal.name);
     }
 
     let mut bounds: Bounds = Default::default();

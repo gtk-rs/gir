@@ -1,6 +1,7 @@
 use super::{conversion_from_glib, parameter_ffi_call_out};
 use crate::analysis::{function_parameters::TransformationType, return_value};
 
+#[allow(clippy::large_enum_variant)]
 #[derive(Clone, Debug)]
 pub enum Chunk {
     Comment(Vec<Chunk>),

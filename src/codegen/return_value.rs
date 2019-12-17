@@ -43,13 +43,29 @@ impl ToReturnValue for library::Parameter {
 impl ToReturnValue for analysis::return_value::Info {
     fn to_return_value(&self, env: &Env, is_trampoline: bool) -> String {
         match self.parameter {
-            Some(ref par) => par.to_return_value(env, is_trampoline),
+            Some(ref par) => {
+                let name = par.to_return_value(env, is_trampoline);
+                if self.nullable_return_is_error.is_some() && name.starts_with(" -> Option<") {
+                    // Change ` -> Option<T>` to ` -> Result<T, glib::BoolError>`
+                    format!(
+                        " -> Result<{}, {}BoolError>",
+                        &name[11..(name.len() - 1)],
+                        if env.namespaces.glib_ns_id == namespaces::MAIN {
+                            ""
+                        } else {
+                            "glib::"
+                        }
+                    )
+                } else {
+                    name
+                }
+            }
             None => String::new(),
         }
     }
 }
 
-pub fn out_parameter_as_return_parts(
+fn out_parameter_as_return_parts(
     analysis: &analysis::functions::Info,
     is_glib_crate: bool,
 ) -> (&'static str, &'static str) {
@@ -79,7 +95,21 @@ pub fn out_parameter_as_return_parts(
         }
         Optional => {
             if num_outs > 1 {
-                ("Option<(", ")>")
+                if analysis.ret.nullable_return_is_error.is_some() {
+                    if is_glib_crate {
+                        ("Result<(", "), BoolError>")
+                    } else {
+                        ("Result<(", "), glib::BoolError>")
+                    }
+                } else {
+                    ("Option<(", ")>")
+                }
+            } else if analysis.ret.nullable_return_is_error.is_some() {
+                if is_glib_crate {
+                    ("Result<", ", BoolError>")
+                } else {
+                    ("Result<", ", glib::BoolError>")
+                }
             } else {
                 ("Option<", ">")
             }
