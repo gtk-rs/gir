@@ -10,8 +10,8 @@ use crate::{
     traits::*,
     version::Version,
 };
-use lazy_static::lazy_static;
 use log::{error, info};
+use once_cell::sync::Lazy;
 use regex::{Captures, Regex};
 use std::{
     borrow::Cow,
@@ -394,9 +394,7 @@ fn create_enum_doc(w: &mut dyn Write, env: &Env, enum_: &Enumeration) -> Result<
     Ok(())
 }
 
-lazy_static! {
-    static ref PARAM_NAME: Regex = Regex::new(r"@(\w+)\b").unwrap();
-}
+static PARAM_NAME: Lazy<Regex> = Lazy::new(|| Regex::new(r"@(\w+)\b").unwrap());
 
 fn fix_param_names<'a>(doc: &'a str, self_name: &Option<String>) -> Cow<'a, str> {
     PARAM_NAME.replace_all(doc, |caps: &Captures<'_>| {

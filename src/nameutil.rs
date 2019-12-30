@@ -1,5 +1,5 @@
 use crate::case::*;
-use lazy_static::lazy_static;
+use once_cell::sync::Lazy;
 use std::{borrow::Cow, collections::HashMap, path::*};
 
 static mut CRATE_NAME_OVERRIDES: Option<HashMap<String, String>> = None;
@@ -104,21 +104,18 @@ pub fn mangle_keywords<'a, S: Into<Cow<'a, str>>>(name: S) -> Cow<'a, str> {
     }
 }
 
-lazy_static! {
-    static ref KEYWORDS: HashMap<&'static str, String> = {
-        [
-            "abstract", "alignof", "as", "become", "box", "break", "const", "continue", "crate",
-            "do", "else", "enum", "extern", "false", "final", "fn", "for", "if", "impl", "in",
-            "let", "loop", "macro", "match", "mod", "move", "mut", "offsetof", "override", "priv",
-            "proc", "pub", "pure", "ref", "return", "Self", "self", "sizeof", "static", "struct",
-            "super", "trait", "true", "type", "typeof", "unsafe", "unsized", "use", "virtual",
-            "where", "while", "yield",
-        ]
-        .iter()
-        .map(|k| (*k, format!("{}_", k)))
-        .collect()
-    };
-}
+static KEYWORDS: Lazy<HashMap<&'static str, String>> = Lazy::new(|| {
+    [
+        "abstract", "alignof", "as", "become", "box", "break", "const", "continue", "crate", "do",
+        "else", "enum", "extern", "false", "final", "fn", "for", "if", "impl", "in", "let", "loop",
+        "macro", "match", "mod", "move", "mut", "offsetof", "override", "priv", "proc", "pub",
+        "pure", "ref", "return", "Self", "self", "sizeof", "static", "struct", "super", "trait",
+        "true", "type", "typeof", "unsafe", "unsized", "use", "virtual", "where", "while", "yield",
+    ]
+    .iter()
+    .map(|k| (*k, format!("{}_", k)))
+    .collect()
+});
 
 pub fn signal_to_snake(signal: &str) -> String {
     signal.replace("::", "_").replace('-', "_")

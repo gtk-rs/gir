@@ -1,5 +1,5 @@
 use crate::analysis::symbols;
-use lazy_static::lazy_static;
+use once_cell::sync::Lazy;
 use regex::{Captures, Regex};
 
 const LANGUAGE_SEP_BEGIN: &str = "<!-- language=\"";
@@ -54,14 +54,6 @@ fn get_language<'a>(entry: &'a str, out: &mut String) -> &'a str {
     entry
 }
 
-lazy_static! {
-    static ref SYMBOL: Regex = Regex::new(r"(^|[^\\])[@#%]([\w]+\b)([:.]+[\w_-]+\b)?").unwrap();
-    static ref FUNCTION: Regex = Regex::new(r"(\b[a-z0-9_]+)\(\)").unwrap();
-    static ref GDK_GTK: Regex = Regex::new(r"G[dt]k[A-Z][\w]+\b").unwrap();
-    static ref TAGS: Regex = Regex::new(r"<[\w/-]+>").unwrap();
-    static ref SPACES: Regex = Regex::new(r"[ ][ ]+").unwrap();
-}
-
 fn format(mut input: &str, symbols: &symbols::Info) -> String {
     let mut ret = String::with_capacity(input.len());
     loop {
@@ -83,6 +75,13 @@ fn format(mut input: &str, symbols: &symbols::Info) -> String {
         }
     }
 }
+
+static SYMBOL: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"(^|[^\\])[@#%]([\w]+\b)([:.]+[\w_-]+\b)?").unwrap());
+static FUNCTION: Lazy<Regex> = Lazy::new(|| Regex::new(r"(\b[a-z0-9_]+)\(\)").unwrap());
+static GDK_GTK: Lazy<Regex> = Lazy::new(|| Regex::new(r"G[dt]k[A-Z][\w]+\b").unwrap());
+static TAGS: Lazy<Regex> = Lazy::new(|| Regex::new(r"<[\w/-]+>").unwrap());
+static SPACES: Lazy<Regex> = Lazy::new(|| Regex::new(r"[ ][ ]+").unwrap());
 
 fn replace_c_types(entry: &str, symbols: &symbols::Info) -> String {
     let lookup = |s: &str| -> String {

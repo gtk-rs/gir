@@ -33,16 +33,14 @@ pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>) {
                 cfg_deprecated(w, env, constant.deprecated_version, false, 0)?;
                 cfg_condition(w, &constant.cfg_condition, false, 0)?;
                 version_condition(w, env, constant.version, false, 0)?;
-                writeln!(w, "lazy_static! {{")?;
                 writeln!(
                     w,
-                    "    pub static ref {name}: &'static str = \
-                     unsafe{{CStr::from_ptr({sys_crate_name}::{c_id}).to_str().unwrap()}};",
+                    "pub static {name}: once_cell::sync::Lazy<&'static str> = once_cell::sync::Lazy::new(|| \
+                     unsafe{{CStr::from_ptr({sys_crate_name}::{c_id}).to_str().unwrap()}});",
                     sys_crate_name = sys_crate_name,
                     name = constant.name,
                     c_id = constant.glib_name
                 )?;
-                writeln!(w, "}}")?;
                 if let Some(cfg) = version_condition_string(env, constant.version, false, 0) {
                     mod_rs.push(cfg);
                 }

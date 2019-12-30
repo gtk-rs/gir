@@ -16,7 +16,7 @@ getopts = "0.2.21"
 xml-rs = "0.8"
 toml = { version = "0.5" , features = ["preserve_order"] }
 env_logger = { version = "0.7", default-features = false }
-lazy_static = "1.0"
+once_cell = "1.0"
 log = "0.4"
 regex = "1.0"
 hprof = "0.1"
