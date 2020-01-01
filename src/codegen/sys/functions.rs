@@ -6,15 +6,13 @@ use crate::{
     library, nameutil,
     traits::*,
 };
-use lazy_static::lazy_static;
+use once_cell::sync::Lazy;
 use std::io::{Result, Write};
 
 //used as glib:get-type in GLib-2.0.gir
 const INTERN: &str = "intern";
 
-lazy_static! {
-    static ref DEFAULT_OBJ: GObject = Default::default();
-}
+static DEFAULT_OBJ: Lazy<GObject> = Lazy::new(Default::default);
 
 pub fn generate_records_funcs(
     w: &mut dyn Write,
