@@ -12,7 +12,7 @@ use std::io::{Result, Write};
 //used as glib:get-type in GLib-2.0.gir
 const INTERN: &str = "intern";
 
-static DEFAULT_OBJ: Lazy<GObject> = Lazy::new(|| Default::default());
+static DEFAULT_OBJ: Lazy<GObject> = Lazy::new(Default::default);
 
 pub fn generate_records_funcs(
     w: &mut dyn Write,
