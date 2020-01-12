@@ -754,7 +754,8 @@ impl Builder {
             found_async_result,
             "The check *wasn't* performed in analysis part: Guillaume was wrong!"
         );
-        let index_to_ignore = find_index_to_ignore(&trampoline.output_params);
+        let index_to_ignore =
+            find_index_to_ignore(&trampoline.output_params, trampoline.ffi_ret.as_ref());
         let mut result: Vec<_> = trampoline
             .output_params
             .iter()

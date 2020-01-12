@@ -295,7 +295,7 @@ impl PropertyBound {
 }
 
 fn find_out_parameters(env: &Env, function: &Function) -> Vec<String> {
-    let index_to_ignore = find_index_to_ignore(&function.parameters);
+    let index_to_ignore = find_index_to_ignore(&function.parameters, Some(&function.ret));
     function
         .parameters
         .iter()

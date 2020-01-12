@@ -1103,9 +1103,10 @@ pub fn finish_function_name(mut func_name: &str) -> String {
     format!("{}_finish", &func_name)
 }
 
-pub fn find_index_to_ignore(parameters: &[Parameter]) -> Option<usize> {
+pub fn find_index_to_ignore(parameters: &[Parameter], ret: Option<&Parameter>) -> Option<usize> {
     parameters
         .iter()
+        .chain(ret)
         .find(|param| param.array_length.is_some())
         .and_then(|param| param.array_length.map(|length| length as usize))
 }
