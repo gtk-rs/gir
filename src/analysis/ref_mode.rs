@@ -41,6 +41,7 @@ impl RefMode {
             | Interface(..)
             | List(..)
             | SList(..)
+            | PtrArray(..)
             | CArray(..) => {
                 if direction == library::ParameterDirection::In {
                     RefMode::ByRef

@@ -29,6 +29,7 @@ impl TranslateFromGlib for Mode {
                 match *env.type_(self.typ) {
                     library::Type::List(..)
                     | library::Type::SList(..)
+                    | library::Type::PtrArray(..)
                     | library::Type::CArray(..) => {
                         if array_length.is_some() {
                             (format!("FromGlibContainer::{}", trans.0), trans.1)

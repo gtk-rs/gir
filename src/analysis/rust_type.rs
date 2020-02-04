@@ -187,7 +187,7 @@ pub fn rust_type_full(
                 Ok(name)
             }
         }
-        List(inner_tid) | SList(inner_tid) | CArray(inner_tid)
+        List(inner_tid) | SList(inner_tid) | CArray(inner_tid) | PtrArray(inner_tid)
             if ConversionType::of(env, inner_tid) == ConversionType::Pointer =>
         {
             skip_option = true;
@@ -410,7 +410,7 @@ pub fn used_rust_type(env: &Env, type_id: library::TypeId, is_in: bool) -> Resul
         | Enumeration(..)
         | Interface(..) => rust_type(env, type_id),
         //process inner types as return parameters
-        List(inner_tid) | SList(inner_tid) | CArray(inner_tid) => {
+        List(inner_tid) | SList(inner_tid) | CArray(inner_tid) | PtrArray(inner_tid) => {
             used_rust_type(env, inner_tid, false)
         }
         Custom(..) => rust_type(env, type_id),
@@ -481,7 +481,7 @@ pub fn parameter_rust_type(
             library::ParameterDirection::In | library::ParameterDirection::Return => rust_type,
             _ => Err(TypeError::Unimplemented(into_inner(rust_type))),
         },
-        CArray(..) => match direction {
+        CArray(..) | PtrArray(..) => match direction {
             library::ParameterDirection::In
             | library::ParameterDirection::Out
             | library::ParameterDirection::Return => rust_type,
