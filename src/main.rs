@@ -48,6 +48,7 @@ fn build_config() -> Result<Config, String> {
     options.optopt("p", "doc-target-path", "Doc target path", "PATH");
     options.optflag("b", "make-backup", "Make backup before generating");
     options.optflag("s", "stats", "Show statistics");
+    options.optflag("", "disable_format", "Disable formatting generated code");
 
     let matches = match options.parse(&args[1..]) {
         Ok(matches) => matches,
@@ -80,6 +81,7 @@ fn build_config() -> Result<Config, String> {
         matches.opt_str("doc-target-path").as_str_ref(),
         matches.opt_present("b"),
         matches.opt_present("s"),
+        matches.opt_present("disable_format"),
     )
 }
 
@@ -103,6 +105,7 @@ fn do_main() -> Result<(), String> {
         Ok(cfg) => cfg,
         Err(err) => return Err(err),
     };
+    cfg.check_disable_format();
 
     let statistics = Profiler::new("Gir");
     statistics.start_frame();
@@ -163,7 +166,7 @@ fn do_main() -> Result<(), String> {
     }
 
     if env.config.work_mode != WorkMode::Sys {
-        let _watcher = statistics.enter("Analysing");
+        let _watcher = statistics.enter("Analyzing");
         gir::analysis_run(&mut env);
     }
 

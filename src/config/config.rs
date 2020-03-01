@@ -9,6 +9,7 @@ use crate::{
     nameutil::set_crate_name_overrides,
     version::Version,
 };
+use log::warn;
 use std::{
     collections::HashMap,
     fs::File,
@@ -40,6 +41,7 @@ pub struct Config {
     pub single_version_file: Option<PathBuf>,
     pub generate_display_trait: bool,
     pub docs_rs_features: Vec<String>,
+    pub disable_format: bool,
 }
 
 impl Config {
@@ -53,6 +55,7 @@ impl Config {
         doc_target_path: S,
         make_backup: B,
         show_statistics: B,
+        disable_format: B,
     ) -> Result<Config, String>
     where
         S: Into<Option<&'a str>>,
@@ -211,6 +214,15 @@ impl Config {
             None => None,
         };
 
+        let disable_format: bool = if let Some(disable_format) = disable_format.into() {
+            disable_format
+        } else {
+            match toml.lookup("options.disable_format") {
+                Some(v) => v.as_result_bool("options.disable_format")?,
+                None => false,
+            }
+        };
+
         Ok(Config {
             work_mode,
             girs_dir,
@@ -231,6 +243,7 @@ impl Config {
             single_version_file,
             generate_display_trait,
             docs_rs_features,
+            disable_format,
         })
     }
 
@@ -250,6 +263,15 @@ impl Config {
 
     pub fn resolve_type_ids(&mut self, library: &Library) {
         gobjects::resolve_type_ids(&mut self.objects, library)
+    }
+
+    pub fn check_disable_format(&mut self) {
+        if !self.disable_format {
+            if !crate::fmt::check_rustfmt() {
+                warn!("Rustfmt not found, options.disable_format set to true");
+                self.disable_format = true;
+            }
+        }
     }
 }
 

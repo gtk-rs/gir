@@ -5,26 +5,31 @@ use std::{
     path::Path,
 };
 
-pub fn save_to_file<P, F>(path: P, make_backup: bool, mut closure: F)
+pub fn save_to_file<P, F>(path: P, make_backup: bool, format: bool, mut closure: F)
 where
     P: AsRef<Path>,
     F: FnMut(&mut dyn Write) -> Result<()>,
 {
-    if let Some(parent) = path.as_ref().parent() {
+    let path = path.as_ref();
+    if let Some(parent) = path.parent() {
         let _ = fs::create_dir_all(parent);
     }
 
     if make_backup {
-        let _backuped = create_backup(&path).unwrap_or_else(|why| {
-            panic!("couldn't create backup for {:?}: {:?}", path.as_ref(), why)
-        });
+        let _backuped = create_backup(&path)
+            .unwrap_or_else(|why| panic!("couldn't create backup for {:?}: {:?}", path, why));
     }
-    let file = File::create(&path)
-        .unwrap_or_else(|why| panic!("couldn't create {:?}: {}", path.as_ref(), why));
-    let writer = BufWriter::new(file);
-    let mut untabber = Untabber::new(Box::new(writer));
-    closure(&mut untabber)
-        .unwrap_or_else(|why| panic!("couldn't write to {:?}: {:?}", path.as_ref(), why));
+    {
+        let file =
+            File::create(&path).unwrap_or_else(|why| panic!("couldn't create {:?}: {}", path, why));
+        let writer = BufWriter::new(file);
+        let mut untabber = Untabber::new(Box::new(writer));
+        closure(&mut untabber)
+            .unwrap_or_else(|why| panic!("couldn't write to {:?}: {:?}", path, why));
+    }
+    if format {
+        crate::fmt::format(path);
+    }
 }
 
 /// Create .bak file

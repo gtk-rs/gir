@@ -15,9 +15,12 @@ pub fn generate(env: &Env) {
     let path = env.config.target_path.join("build.rs");
 
     info!("Generating file {:?}", path);
-    save_to_file(&path, env.config.make_backup, |w| {
-        generate_build_script(w, env)
-    });
+    save_to_file(
+        &path,
+        env.config.make_backup,
+        !env.config.disable_format,
+        |w| generate_build_script(w, env),
+    );
 }
 
 fn generate_build_script(w: &mut dyn Write, env: &Env) -> Result<()> {

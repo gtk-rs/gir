@@ -2,6 +2,7 @@ target
 /gio
 /gtk
 /src/gir_version.rs
+/.vscode
 tests/gir-files
 tests/sys/*-sys/**
 tests/sys/sys_build/Cargo.lock

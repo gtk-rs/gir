@@ -36,43 +36,48 @@ pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>) {
         return;
     }
     let path = root_path.join("flags.rs");
-    file_saver::save_to_file(path, env.config.make_backup, |w| {
-        let mut imports = Imports::new(&env.library);
-        imports.add(env.main_sys_crate_name());
-        imports.add("glib::translate::*");
+    file_saver::save_to_file(
+        path,
+        env.config.make_backup,
+        !env.config.disable_format,
+        |w| {
+            let mut imports = Imports::new(&env.library);
+            imports.add(env.main_sys_crate_name());
+            imports.add("glib::translate::*");
 
-        for config in &configs {
-            if let Type::Bitfield(ref flags) = *env.library.type_(config.type_id.unwrap()) {
-                if flags.glib_get_type.is_some() {
-                    imports.add("glib::Type");
-                    imports.add("glib::StaticType");
-                    imports.add("glib::value::Value");
-                    imports.add("glib::value::SetValue");
-                    imports.add("glib::value::FromValue");
-                    imports.add("glib::value::FromValueOptional");
-                    imports.add("gobject_sys");
-                    break;
+            for config in &configs {
+                if let Type::Bitfield(ref flags) = *env.library.type_(config.type_id.unwrap()) {
+                    if flags.glib_get_type.is_some() {
+                        imports.add("glib::Type");
+                        imports.add("glib::StaticType");
+                        imports.add("glib::value::Value");
+                        imports.add("glib::value::SetValue");
+                        imports.add("glib::value::FromValue");
+                        imports.add("glib::value::FromValueOptional");
+                        imports.add("gobject_sys");
+                        break;
+                    }
                 }
             }
-        }
 
-        general::start_comments(w, &env.config)?;
-        general::uses(w, env, &imports)?;
-        writeln!(w)?;
+            general::start_comments(w, &env.config)?;
+            general::uses(w, env, &imports)?;
+            writeln!(w)?;
 
-        mod_rs.push("\nmod flags;".into());
-        for config in &configs {
-            if let Type::Bitfield(ref flags) = *env.library.type_(config.type_id.unwrap()) {
-                if let Some(cfg) = version_condition_string(env, flags.version, false, 0) {
-                    mod_rs.push(cfg);
+            mod_rs.push("\nmod flags;".into());
+            for config in &configs {
+                if let Type::Bitfield(ref flags) = *env.library.type_(config.type_id.unwrap()) {
+                    if let Some(cfg) = version_condition_string(env, flags.version, false, 0) {
+                        mod_rs.push(cfg);
+                    }
+                    mod_rs.push(format!("pub use self::flags::{};", flags.name));
+                    generate_flags(env, w, flags, config)?;
                 }
-                mod_rs.push(format!("pub use self::flags::{};", flags.name));
-                generate_flags(env, w, flags, config)?;
             }
-        }
 
-        Ok(())
-    });
+            Ok(())
+        },
+    );
 }
 
 fn generate_flags(env: &Env, w: &mut dyn Write, flags: &Bitfield, config: &GObject) -> Result<()> {
