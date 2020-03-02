@@ -267,8 +267,8 @@ impl Config {
 
     pub fn check_disable_format(&mut self) {
         if !self.disable_format {
-            if !crate::fmt::check_rustfmt() {
-                warn!("Rustfmt not found, options.disable_format set to true");
+            if !crate::fmt::check_fmt() {
+                warn!("Formatter not found, options.disable_format set to true");
                 self.disable_format = true;
             }
         }

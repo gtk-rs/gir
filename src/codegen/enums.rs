@@ -73,29 +73,24 @@ pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>) {
     }
 
     let path = root_path.join("enums.rs");
-    file_saver::save_to_file(
-        path,
-        env.config.make_backup,
-        !env.config.disable_format,
-        |w| {
-            general::start_comments(w, &env.config)?;
-            general::uses(w, env, &imports)?;
-            writeln!(w)?;
+    file_saver::save_to_file(path, env.config.make_backup, |w| {
+        general::start_comments(w, &env.config)?;
+        general::uses(w, env, &imports)?;
+        writeln!(w)?;
 
-            mod_rs.push("\nmod enums;".into());
-            for config in &configs {
-                if let Type::Enumeration(ref enum_) = *env.library.type_(config.type_id.unwrap()) {
-                    if let Some(cfg) = version_condition_string(env, enum_.version, false, 0) {
-                        mod_rs.push(cfg);
-                    }
-                    mod_rs.push(format!("pub use self::enums::{};", enum_.name));
-                    generate_enum(env, w, enum_, config)?;
+        mod_rs.push("\nmod enums;".into());
+        for config in &configs {
+            if let Type::Enumeration(ref enum_) = *env.library.type_(config.type_id.unwrap()) {
+                if let Some(cfg) = version_condition_string(env, enum_.version, false, 0) {
+                    mod_rs.push(cfg);
                 }
+                mod_rs.push(format!("pub use self::enums::{};", enum_.name));
+                generate_enum(env, w, enum_, config)?;
             }
+        }
 
-            Ok(())
-        },
-    );
+        Ok(())
+    });
 }
 
 fn generate_enum(

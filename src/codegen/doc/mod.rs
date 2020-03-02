@@ -92,12 +92,9 @@ impl_function_like_type!(Signal);
 
 pub fn generate(env: &Env) {
     info!("Generating documentation {:?}", env.config.doc_target_path);
-    save_to_file(
-        &env.config.doc_target_path,
-        env.config.make_backup,
-        false,
-        |w| generate_doc(w, env),
-    );
+    save_to_file(&env.config.doc_target_path, env.config.make_backup, |w| {
+        generate_doc(w, env)
+    });
 }
 
 #[allow(clippy::type_complexity)]

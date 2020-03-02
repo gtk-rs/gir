@@ -34,28 +34,23 @@ pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>) {
     }
 
     let path = root_path.join("alias.rs");
-    file_saver::save_to_file(
-        path,
-        env.config.make_backup,
-        !env.config.disable_format,
-        |w| {
-            general::start_comments(w, &env.config)?;
-            writeln!(w)?;
-            writeln!(w, "#[allow(unused_imports)]")?;
-            writeln!(w, "use auto::*;")?;
-            writeln!(w)?;
+    file_saver::save_to_file(path, env.config.make_backup, |w| {
+        general::start_comments(w, &env.config)?;
+        writeln!(w)?;
+        writeln!(w, "#[allow(unused_imports)]")?;
+        writeln!(w, "use auto::*;")?;
+        writeln!(w)?;
 
-            mod_rs.push("\nmod alias;".into());
-            for config in &configs {
-                if let Type::Alias(ref alias) = *env.library.type_(config.type_id.unwrap()) {
-                    mod_rs.push(format!("pub use self::alias::{};", alias.name));
-                    generate_alias(env, w, alias, config)?;
-                }
+        mod_rs.push("\nmod alias;".into());
+        for config in &configs {
+            if let Type::Alias(ref alias) = *env.library.type_(config.type_id.unwrap()) {
+                mod_rs.push(format!("pub use self::alias::{};", alias.name));
+                generate_alias(env, w, alias, config)?;
             }
+        }
 
-            Ok(())
-        },
-    );
+        Ok(())
+    });
 }
 
 fn generate_alias(env: &Env, w: &mut dyn Write, alias: &Alias, _: &GObject) -> Result<()> {

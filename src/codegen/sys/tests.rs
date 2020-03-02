@@ -39,28 +39,25 @@ pub fn generate(env: &Env, crate_name: &str) {
 
     let manual_h = tests.join("manual.h");
     if !manual_h.exists() {
-        save_to_file(&manual_h, env.config.make_backup, false, |w| {
+        save_to_file(&manual_h, env.config.make_backup, |w| {
             generate_manual_h(env, &manual_h, w)
         });
     }
 
     let layout_c = tests.join("layout.c");
-    save_to_file(&layout_c, env.config.make_backup, false, |w| {
+    save_to_file(&layout_c, env.config.make_backup, |w| {
         generate_layout_c(env, &layout_c, w)
     });
 
     let constant_c = tests.join("constant.c");
-    save_to_file(&constant_c, env.config.make_backup, false, |w| {
+    save_to_file(&constant_c, env.config.make_backup, |w| {
         generate_constant_c(env, &constant_c, w)
     });
 
     let abi_rs = tests.join("abi.rs");
-    save_to_file(
-        &abi_rs,
-        env.config.make_backup,
-        !env.config.disable_format,
-        |w| generate_abi_rs(env, &abi_rs, w, crate_name, &ctypes, &cconsts),
-    );
+    save_to_file(&abi_rs, env.config.make_backup, |w| {
+        generate_abi_rs(env, &abi_rs, w, crate_name, &ctypes, &cconsts)
+    });
 }
 
 fn prepare_ctypes(env: &Env) -> Vec<CType> {

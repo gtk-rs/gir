@@ -15,6 +15,14 @@ impl WorkMode {
             _ => false,
         }
     }
+
+    pub fn is_generate_rust_files(self) -> bool {
+        match self {
+            WorkMode::Normal => true,
+            WorkMode::Sys => true,
+            _ => false,
+        }
+    }
 }
 
 impl Default for WorkMode {

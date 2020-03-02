@@ -57,25 +57,20 @@ fn normal_generate(env: &Env) {
 
 pub fn generate_mod_rs(env: &Env, root_path: &Path, mod_rs: &[String], traits: &[String]) {
     let path = root_path.join("mod.rs");
-    save_to_file(
-        path,
-        env.config.make_backup,
-        !env.config.disable_format,
-        |w| {
-            general::start_comments(w, &env.config)?;
-            general::write_vec(w, mod_rs)?;
-            writeln!(w)?;
-            writeln!(w, "#[doc(hidden)]")?;
-            writeln!(w, "pub mod traits {{")?;
-            general::write_vec(w, traits)?;
-            writeln!(w, "}}")
-        },
-    );
+    save_to_file(path, env.config.make_backup, |w| {
+        general::start_comments(w, &env.config)?;
+        general::write_vec(w, mod_rs)?;
+        writeln!(w)?;
+        writeln!(w, "#[doc(hidden)]")?;
+        writeln!(w, "pub mod traits {{")?;
+        general::write_vec(w, traits)?;
+        writeln!(w, "}}")
+    });
 }
 
 pub fn generate_single_version_file(env: &Env) {
     if let Some(ref path) = env.config.single_version_file {
-        save_to_file(path, env.config.make_backup, false, |w| {
+        save_to_file(path, env.config.make_backup, |w| {
             general::single_version_file(w, &env.config)
         });
     }

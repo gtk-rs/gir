@@ -175,6 +175,11 @@ fn do_main() -> Result<(), String> {
         gir::codegen_generate(&env);
     }
 
+    if !env.config.disable_format && env.config.work_mode.is_generate_rust_files() {
+        let _watcher = statistics.enter("Formatting");
+        gir::fmt::format(&env.config.target_path);
+    }
+
     drop(watcher_total);
     statistics.end_frame();
 

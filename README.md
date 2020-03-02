@@ -119,7 +119,7 @@ single_version_file = true
 # which do not have an override for `generate_display_trait`
 # (defaults to "true")
 generate_display_trait = true
-# Disable running rustfmt on generated files
+# Disable running `cargo fmt` on generated files
 # (defaults to false)
 disable_format = true
 ```

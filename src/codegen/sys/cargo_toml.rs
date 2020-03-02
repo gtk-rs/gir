@@ -21,7 +21,7 @@ pub fn generate(env: &Env) -> String {
     }
     fill_in(&mut root_table, env);
 
-    save_to_file(&path, env.config.make_backup, false, |w| {
+    save_to_file(&path, env.config.make_backup, |w| {
         w.write_all(toml::to_string(&root_table).unwrap().as_bytes())
     });
 

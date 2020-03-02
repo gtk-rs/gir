@@ -15,23 +15,18 @@ pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>) {
     };
 
     let path = root_path.join("functions.rs");
-    file_saver::save_to_file(
-        path,
-        env.config.make_backup,
-        !env.config.disable_format,
-        |w| {
-            general::start_comments(w, &env.config)?;
-            general::uses(w, env, &functions.imports)?;
+    file_saver::save_to_file(path, env.config.make_backup, |w| {
+        general::start_comments(w, &env.config)?;
+        general::uses(w, env, &functions.imports)?;
 
-            writeln!(w)?;
+        writeln!(w)?;
 
-            mod_rs.push("\npub mod functions;".into());
+        mod_rs.push("\npub mod functions;".into());
 
-            for func_analysis in &functions.functions {
-                function::generate(w, env, func_analysis, false, false, 0)?;
-            }
+        for func_analysis in &functions.functions {
+            function::generate(w, env, func_analysis, false, false, 0)?;
+        }
 
-            Ok(())
-        },
-    );
+        Ok(())
+    });
 }

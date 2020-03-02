@@ -2,15 +2,19 @@ use log::warn;
 use std::path::Path;
 use std::process::Command;
 
-const RUSTFMT: &str = "rustfmt";
-
-pub fn check_rustfmt() -> bool {
-    let output = Command::new(RUSTFMT).arg("--version").output();
-    output.is_ok()
+/// Check if `cargo fmt` available
+pub fn check_fmt() -> bool {
+    let output = Command::new("cargo").arg("fmt").arg("--version").output();
+    if let Ok(output) = output {
+        output.status.success()
+    } else {
+        false
+    }
 }
 
+/// Run `cargo fmt` on path
 pub fn format(path: &Path) {
-    let output = Command::new(RUSTFMT).arg("-q").arg(path).output();
+    let output = Command::new("cargo").arg("fmt").current_dir(path).output();
     match output {
         Ok(output) if output.status.success() => {}
         Ok(output) => {
@@ -21,6 +25,6 @@ pub fn format(path: &Path) {
                 String::from_utf8_lossy(&output.stderr)
             );
         }
-        Err(_) => { /*We checked rustfmt presence in check_rustfmt, so can ignore errors*/ }
+        Err(_) => { /*We checked `cargo` fmt presence in check_fmt, so can ignore errors*/ }
     }
 }
