@@ -26,6 +26,7 @@ mod consts;
 mod custom_type_glib_priority;
 mod env;
 mod file_saver;
+pub mod fmt;
 mod git;
 pub mod library;
 mod library_postprocessing;

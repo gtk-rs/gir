@@ -119,6 +119,9 @@ single_version_file = true
 # which do not have an override for `generate_display_trait`
 # (defaults to "true")
 generate_display_trait = true
+# Disable running `cargo fmt` on generated files
+# (defaults to false)
+disable_format = true
 ```
 
 This mode generates only the specified objects. You can either add the object's fullname to the `generate` array or add it to the `manual` array (but in this case, it won't be generated, just used in other functions/methods instead of generating an "ignored" argument). Example:
