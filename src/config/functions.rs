@@ -96,6 +96,7 @@ pub struct Return {
     pub nullable: Option<Nullable>,
     pub bool_return_is_error: Option<String>,
     pub nullable_return_is_error: Option<String>,
+    pub use_return_for_result: Option<bool>,
     pub string_type: Option<StringType>,
     pub type_name: Option<String>,
 }
@@ -107,6 +108,7 @@ impl Return {
                 nullable: None,
                 bool_return_is_error: None,
                 nullable_return_is_error: None,
+                use_return_for_result: None,
                 string_type: None,
                 type_name: None,
             };
@@ -118,6 +120,7 @@ impl Return {
                 "nullable",
                 "bool_return_is_error",
                 "nullable_return_is_error",
+                "use_return_for_result",
                 "string_type",
                 "type",
             ],
@@ -133,6 +136,7 @@ impl Return {
             .lookup("nullable_return_is_error")
             .and_then(Value::as_str)
             .map(ToOwned::to_owned);
+        let use_return_for_result = v.lookup("use_return_for_result").and_then(Value::as_bool);
         let string_type = v.lookup("string_type").and_then(Value::as_str);
         let string_type = match string_type {
             None => None,
@@ -160,6 +164,7 @@ impl Return {
             nullable,
             bool_return_is_error,
             nullable_return_is_error,
+            use_return_for_result,
             string_type,
             type_name,
         }

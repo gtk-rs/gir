@@ -219,6 +219,10 @@ generate_builder = true
         # convert Option return types to Result<T, glib::BoolError> with
         # the given error message on failure
         nullable_return_is_error = "Function failed doing what it is supposed to do"
+        # always include the return value of throwing functions in the returned Result<...>,
+        # without this option bool and guint return values are assumed to indicate success or error,
+        # and are not included in the returned Result<...>
+        use_return_for_result = true
         # change string type. Variants: "utf8", "filename", "os_string"
         string_type = "os_string"
         # overwrite type

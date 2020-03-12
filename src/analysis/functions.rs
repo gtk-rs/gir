@@ -294,8 +294,14 @@ fn analyze_callbacks(
             }
             let rust_type = env.library.type_(par.typ);
             let callback_info = if !*par.nullable || !rust_type.is_function() {
-                let (to_glib_extra, callback_info) =
-                    bounds.add_for_parameter(env, func, par, false, concurrency);
+                let (to_glib_extra, callback_info) = bounds.add_for_parameter(
+                    env,
+                    func,
+                    par,
+                    false,
+                    concurrency,
+                    configured_functions,
+                );
                 if let Some(to_glib_extra) = to_glib_extra {
                     if par.c_type != "GDestroyNotify" {
                         to_glib_extras.insert(pos, to_glib_extra);
@@ -592,8 +598,14 @@ fn analyze_function(
                     used_types.push(s);
                 }
             }
-            let (to_glib_extra, callback_info) =
-                bounds.add_for_parameter(env, func, par, r#async, library::Concurrency::None);
+            let (to_glib_extra, callback_info) = bounds.add_for_parameter(
+                env,
+                func,
+                par,
+                r#async,
+                library::Concurrency::None,
+                configured_functions,
+            );
             if let Some(to_glib_extra) = to_glib_extra {
                 to_glib_extras.insert(pos, to_glib_extra);
             }
@@ -607,6 +619,7 @@ fn analyze_function(
                 &mut trampoline,
                 no_future,
                 &mut async_future,
+                configured_functions,
             );
             let type_error = !(r#async
                 && *env.library.type_(par.typ) == Type::Fundamental(library::Fundamental::Pointer))
@@ -805,6 +818,7 @@ fn analyze_async(
     trampoline: &mut Option<AsyncTrampoline>,
     no_future: bool,
     async_future: &mut Option<AsyncFuture>,
+    configured_functions: &[&config::functions::Function],
 ) -> bool {
     if let Some(CallbackInfo {
         callback_type,
@@ -820,7 +834,12 @@ fn analyze_async(
         let mut output_params = vec![];
         let mut ffi_ret = None;
         if let Some(function) = find_function(env, &finish_func_name) {
-            if use_function_return_for_result(env, function.ret.typ) {
+            if use_function_return_for_result(
+                env,
+                function.ret.typ,
+                &func.name,
+                configured_functions,
+            ) {
                 ffi_ret = Some(function.ret.clone());
             }
 
