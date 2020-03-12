@@ -9,6 +9,7 @@ use crate::{
     library::*,
     nameutil,
 };
+use log::error;
 use std::slice::Iter;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -58,7 +59,7 @@ pub fn analyze(
         .filter_map(|f| f.ret.nullable)
         .next();
     if func.throws {
-        let use_ret = use_return_value_for_result(env, func_ret);
+        let use_ret = use_return_value_for_result(env, func_ret, &func.name, configured_functions);
         info.mode = Mode::Throws(use_ret);
     } else if func.ret.typ == TypeId::tid_none() {
         info.mode = Mode::Normal;
@@ -155,15 +156,35 @@ pub fn can_as_return(env: &Env, par: &Parameter) -> bool {
     }
 }
 
-pub fn use_return_value_for_result(env: &Env, ret: &return_value::Info) -> bool {
-    if let Some(ref par) = ret.parameter {
-        use_function_return_for_result(env, par.typ)
-    } else {
-        false
-    }
+pub fn use_return_value_for_result(
+    env: &Env,
+    ret: &return_value::Info,
+    func_name: &str,
+    configured_functions: &[&config::functions::Function],
+) -> bool {
+    let typ = ret.parameter.as_ref().map(|x| x.typ).unwrap_or_default();
+    use_function_return_for_result(env, typ, func_name, configured_functions)
 }
 
-pub fn use_function_return_for_result(env: &Env, typ: TypeId) -> bool {
+pub fn use_function_return_for_result(
+    env: &Env,
+    typ: TypeId,
+    func_name: &str,
+    configured_functions: &[&config::functions::Function],
+) -> bool {
+    // Configuration takes precendence over everything.
+    let use_return_for_result = configured_functions
+        .iter()
+        .filter_map(|f| f.ret.use_return_for_result.as_ref())
+        .next();
+    if let Some(use_return_for_result) = use_return_for_result {
+        if typ == Default::default() {
+            error!("Function \"{}\": use_return_for_result set to true, but function has no return value", func_name);
+            return false;
+        }
+        return *use_return_for_result;
+    }
+
     if typ == Default::default() {
         return false;
     }

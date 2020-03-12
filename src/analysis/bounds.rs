@@ -6,6 +6,7 @@ use crate::{
         out_parameters::use_function_return_for_result,
         rust_type::{bounds_rust_type, rust_type, rust_type_with_scope},
     },
+    config,
     consts::TYPE_PARAMETERS_START,
     env::Env,
     library::{
@@ -81,6 +82,7 @@ impl Bounds {
         par: &CParameter,
         r#async: bool,
         concurrency: Concurrency,
+        configured_functions: &[&config::functions::Function],
     ) -> (Option<String>, Option<CallbackInfo>) {
         let type_name = bounds_rust_type(env, par.typ);
         if (r#async && async_param_to_remove(&par.name)) || type_name.is_err() {
@@ -99,7 +101,12 @@ impl Bounds {
                     let finish_func_name = finish_function_name(func_name);
                     if let Some(function) = find_function(env, &finish_func_name) {
                         let mut out_parameters = find_out_parameters(env, function);
-                        if use_function_return_for_result(env, function.ret.typ) {
+                        if use_function_return_for_result(
+                            env,
+                            function.ret.typ,
+                            &func.name,
+                            configured_functions,
+                        ) {
                             out_parameters
                                 .insert(0, rust_type(env, function.ret.typ).into_string());
                         }
