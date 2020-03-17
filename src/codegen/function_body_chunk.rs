@@ -414,14 +414,17 @@ impl Builder {
                 add_chunk_for_type(env, par.typ, par, &mut body, &ty_name, nullable);
             if ty_name == "GString" {
                 if *nullable {
-                    arguments.push(Chunk::Name(format!("{}.map(|x| x.as_str())", par.name)));
+                    arguments.push(Chunk::Name(format!(
+                        "{}.as_ref().map(|x| x.as_str())",
+                        par.name
+                    )));
                 } else {
                     arguments.push(Chunk::Name(format!("{}.as_str()", par.name)));
                 }
                 continue;
             }
             if *nullable && !is_fundamental {
-                arguments.push(Chunk::Name(format!("{}.as_ref()", par.name)));
+                arguments.push(Chunk::Name(format!("{}.as_ref().as_ref()", par.name)));
                 continue;
             }
             arguments.push(Chunk::Name(format!(
@@ -1340,12 +1343,24 @@ fn add_chunk_for_type(
             let type_name;
             if ty_name == "GString" {
                 if *nullable {
-                    type_name = String::from(": Option<GString>");
+                    if par.conversion_type == ConversionType::Borrow {
+                        type_name = String::from(": Borrowed<Option<GString>>");
+                    } else {
+                        type_name = String::from(": Option<GString>");
+                    }
                 } else {
-                    type_name = String::from(": GString");
+                    if par.conversion_type == ConversionType::Borrow {
+                        type_name = String::from(": Borrowed<GString>");
+                    } else {
+                        type_name = String::from(": GString");
+                    }
                 }
             } else if par.transfer == library::Transfer::None && *nullable {
-                type_name = format!(": Option<{}>", ty_name);
+                if par.conversion_type == ConversionType::Borrow {
+                    type_name = format!(": Borrowed<Option<{}>>", ty_name);
+                } else {
+                    type_name = format!(": Option<{}>", ty_name);
+                }
             } else {
                 type_name = String::from("");
             }
