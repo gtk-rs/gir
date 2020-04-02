@@ -26,7 +26,12 @@ impl<S: AsRef<str>> OptionStr for Option<S> {
     }
 }
 
-fn build_config() -> Result<(Option<Config>, Option<String>), String> {
+enum RunKind {
+    Config(Config),
+    CheckGirFile(String),
+}
+
+fn build_config() -> Result<RunKind, String> {
     let args: Vec<_> = env::args().collect();
     let program = args[0].clone();
 
@@ -63,7 +68,7 @@ fn build_config() -> Result<(Option<Config>, Option<String>), String> {
     };
 
     if let Some(check_gir_file) = matches.opt_str("check-gir-file") {
-        return Ok((None, Some(check_gir_file)));
+        return Ok(RunKind::CheckGirFile(check_gir_file));
     }
 
     if matches.opt_present("h") {
@@ -94,7 +99,7 @@ fn build_config() -> Result<(Option<Config>, Option<String>), String> {
         matches.opt_present("s"),
         matches.opt_present("disable-format"),
     )
-    .map(|x| (Some(x), None))
+    .map(|x| RunKind::Config(x))
 }
 
 #[cfg_attr(test, allow(dead_code))]
@@ -140,9 +145,8 @@ fn do_main() -> Result<(), String> {
     env_logger::init();
 
     let mut cfg = match build_config() {
-        Ok((_, Some(check_gir_file))) => return run_check(&check_gir_file),
-        Ok((Some(cfg), None)) => cfg,
-        Ok((None, None)) => unreachable!(),
+        Ok(RunKind::CheckGirFile(check_gir_file)) => return run_check(&check_gir_file),
+        Ok(RunKind::Config(cfg)) => cfg,
         Err(err) => return Err(err),
     };
     cfg.check_disable_format();
