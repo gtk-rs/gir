@@ -1,4 +1,5 @@
 use std::env;
+use std::path::PathBuf;
 use std::process;
 use std::{cell::RefCell, str::FromStr};
 
@@ -25,7 +26,7 @@ impl<S: AsRef<str>> OptionStr for Option<S> {
     }
 }
 
-fn build_config() -> Result<Config, String> {
+fn build_config() -> Result<(Option<Config>, Option<String>), String> {
     let args: Vec<_> = env::args().collect();
     let program = args[0].clone();
 
@@ -49,11 +50,16 @@ fn build_config() -> Result<Config, String> {
     options.optflag("b", "make-backup", "Make backup before generating");
     options.optflag("s", "stats", "Show statistics");
     options.optflag("", "disable-format", "Disable formatting generated code");
+    options.optopt("", "check-gir-file", "Check if the given `.gir` file is valid", "PATH");
 
     let matches = match options.parse(&args[1..]) {
         Ok(matches) => matches,
         Err(e) => return Err(e.to_string()),
     };
+
+    if let Some(check_gir_file) = matches.opt_str("check-gir-file") {
+        return Ok((None, Some(check_gir_file)));
+    }
 
     if matches.opt_present("h") {
         print_usage(&program, options);
@@ -82,7 +88,7 @@ fn build_config() -> Result<Config, String> {
         matches.opt_present("b"),
         matches.opt_present("s"),
         matches.opt_present("disable-format"),
-    )
+    ).map(|x| (Some(x), None))
 }
 
 #[cfg_attr(test, allow(dead_code))]
@@ -94,6 +100,27 @@ fn main() {
     }
 }
 
+fn run_check(check_gir_file: &str) -> Result<(), String> {
+    let path = PathBuf::from(check_gir_file);
+    if !path.is_file() {
+        return Err(format!("`{}`: file not found", check_gir_file));
+    }
+    let lib_name = match path.file_stem() {
+        Some(f) => f,
+        None => return Err(format!("Failed to get file stem from `{}`", check_gir_file)),
+    };
+    let lib_name = match lib_name.to_str() {
+        Some(l) => l,
+        None => return Err("failed to convert OsStr to str".to_owned()),
+    };
+    let mut library = Library::new(lib_name);
+    let parent = match path.parent() {
+        Some(p) => p,
+        None => return Err(format!("Failed to get parent directory from `{}`", check_gir_file)),
+    };
+    return library.read_file(&parent, &lib_name);
+}
+
 fn do_main() -> Result<(), String> {
     if std::env::var_os("RUST_LOG").is_none() {
         std::env::set_var("RUST_LOG", "gir=warn");
@@ -102,7 +129,9 @@ fn do_main() -> Result<(), String> {
     env_logger::init();
 
     let mut cfg = match build_config() {
-        Ok(cfg) => cfg,
+        Ok((_, Some(check_gir_file))) => return run_check(&check_gir_file),
+        Ok((Some(cfg), None)) => cfg,
+        Ok((None, None)) => unreachable!(),
         Err(err) => return Err(err),
     };
     cfg.check_disable_format();
