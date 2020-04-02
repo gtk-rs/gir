@@ -118,7 +118,7 @@ fn run_check(check_gir_file: &str) -> Result<(), String> {
         Some(p) => p,
         None => return Err(format!("Failed to get parent directory from `{}`", check_gir_file)),
     };
-    return library.read_file(&parent, &lib_name);
+    return library.read_file(&parent, &mut vec![lib_name.to_owned()]);
 }
 
 fn do_main() -> Result<(), String> {
@@ -147,7 +147,7 @@ fn do_main() -> Result<(), String> {
         let _watcher = statistics.enter("Loading");
 
         library = Library::new(&cfg.library_name);
-        library.read_file(&cfg.girs_dir, &cfg.library_full_name())?;
+        library.read_file(&cfg.girs_dir, &mut vec![cfg.library_full_name()])?;
     }
 
     {

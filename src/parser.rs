@@ -17,17 +17,17 @@ pub fn is_empty_c_type(c_type: &str) -> bool {
 }
 
 impl Library {
-    pub fn read_file(&mut self, dir: &Path, lib: &str) -> Result<(), String> {
-        let file_name = make_file_name(dir, lib);
+    pub fn read_file(&mut self, dir: &Path, libs: &mut Vec<String>) -> Result<(), String> {
+        let file_name = make_file_name(dir, &libs[libs.len() - 1]);
         let mut p = XmlParser::from_path(&file_name)?;
         p.document(|p, _| {
             p.element_with_name("repository", |parser, _elem| {
-                self.read_repository(dir, parser)
+                self.read_repository(dir, parser, libs)
             })
         })
     }
 
-    fn read_repository(&mut self, dir: &Path, parser: &mut XmlParser<'_>) -> Result<(), String> {
+    fn read_repository(&mut self, dir: &Path, parser: &mut XmlParser<'_>, libs: &mut Vec<String>) -> Result<(), String> {
         let mut package = None;
         let mut includes = Vec::new();
         parser.elements(|parser, elem| match elem.name() {
@@ -36,7 +36,12 @@ impl Library {
                     (Some(name), Some(ver)) => {
                         if self.find_namespace(name).is_none() {
                             let lib = format!("{}-{}", name, ver);
-                            self.read_file(dir, &lib)?;
+                            if libs.iter().any(|x| *x == lib) {
+                                return Err(format!("`{}` includes itself (full path:`{}`)!", lib, libs.join("::")));
+                            }
+                            libs.push(lib);
+                            self.read_file(dir, libs)?;
+                            libs.pop();
                         }
                     }
                     (Some(name), None) => includes.push(name.to_owned()),
