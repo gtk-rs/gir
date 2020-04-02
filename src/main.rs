@@ -50,7 +50,12 @@ fn build_config() -> Result<(Option<Config>, Option<String>), String> {
     options.optflag("b", "make-backup", "Make backup before generating");
     options.optflag("s", "stats", "Show statistics");
     options.optflag("", "disable-format", "Disable formatting generated code");
-    options.optopt("", "check-gir-file", "Check if the given `.gir` file is valid", "PATH");
+    options.optopt(
+        "",
+        "check-gir-file",
+        "Check if the given `.gir` file is valid",
+        "PATH",
+    );
 
     let matches = match options.parse(&args[1..]) {
         Ok(matches) => matches,
@@ -88,7 +93,8 @@ fn build_config() -> Result<(Option<Config>, Option<String>), String> {
         matches.opt_present("b"),
         matches.opt_present("s"),
         matches.opt_present("disable-format"),
-    ).map(|x| (Some(x), None))
+    )
+    .map(|x| (Some(x), None))
 }
 
 #[cfg_attr(test, allow(dead_code))]
@@ -116,7 +122,12 @@ fn run_check(check_gir_file: &str) -> Result<(), String> {
     let mut library = Library::new(lib_name);
     let parent = match path.parent() {
         Some(p) => p,
-        None => return Err(format!("Failed to get parent directory from `{}`", check_gir_file)),
+        None => {
+            return Err(format!(
+                "Failed to get parent directory from `{}`",
+                check_gir_file
+            ))
+        }
     };
     return library.read_file(&parent, &mut vec![lib_name.to_owned()]);
 }

@@ -27,7 +27,12 @@ impl Library {
         })
     }
 
-    fn read_repository(&mut self, dir: &Path, parser: &mut XmlParser<'_>, libs: &mut Vec<String>) -> Result<(), String> {
+    fn read_repository(
+        &mut self,
+        dir: &Path,
+        parser: &mut XmlParser<'_>,
+        libs: &mut Vec<String>,
+    ) -> Result<(), String> {
         let mut package = None;
         let mut includes = Vec::new();
         parser.elements(|parser, elem| match elem.name() {
@@ -37,7 +42,11 @@ impl Library {
                         if self.find_namespace(name).is_none() {
                             let lib = format!("{}-{}", name, ver);
                             if libs.iter().any(|x| *x == lib) {
-                                return Err(format!("`{}` includes itself (full path:`{}`)!", lib, libs.join("::")));
+                                return Err(format!(
+                                    "`{}` includes itself (full path:`{}`)!",
+                                    lib,
+                                    libs.join("::")
+                                ));
                             }
                             libs.push(lib);
                             self.read_file(dir, libs)?;
