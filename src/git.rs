@@ -8,7 +8,11 @@ pub fn repo_hash<P: AsRef<Path>>(path: P) -> Option<String> {
         None => vec![],
     };
     args.extend(&["rev-parse", "--short", "HEAD"]);
-    let hash = String::from_utf8(Command::new("git").args(&args).output().ok()?.stdout).ok()?;
+    let output = Command::new("git").args(&args).output().ok()?;
+    if !output.status.success() {
+        return None;
+    }
+    let hash = String::from_utf8(output.stdout).ok()?;
     let hash = hash.trim_end_matches('\n');
 
     if dirty(path) {
