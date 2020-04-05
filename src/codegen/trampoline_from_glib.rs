@@ -28,14 +28,19 @@ impl TrampolineFromGlib for Transformation {
                         left = format!("{}::{}", type_name, left);
                     }
                 }
-                if need_downcast {
-                    right = format!("{}.unsafe_cast()", right);
-                }
 
-                if !nullable || !is_borrow {
+                if !nullable {
                     left = format!("&{}", left);
+                } else if nullable && is_borrow {
+                    right = format!("{}.as_ref().as_ref()", right);
                 } else {
                     right = format!("{}.as_ref()", right);
+                }
+
+                if need_downcast && is_borrow {
+                    right = format!("{}.unsafe_cast_ref()", right);
+                } else if need_downcast {
+                    right = format!("{}.unsafe_cast()", right);
                 }
 
                 format!("{}{}{}", left, self.name, right)
