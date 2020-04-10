@@ -145,6 +145,7 @@ fn generate_enum(
         writeln!(w, "#[derive(Debug, Eq, PartialEq, Ord, PartialOrd, Hash)]")?;
     }
     writeln!(w, "#[derive(Clone, Copy)]")?;
+    writeln!(w, "#[non_exhaustive]")?;
 
     writeln!(w, "pub enum {} {{", enum_.name)?;
     for member in &members {
