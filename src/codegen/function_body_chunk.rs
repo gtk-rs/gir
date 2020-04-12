@@ -912,10 +912,7 @@ impl Builder {
     fn add_assertion(&self, chunks: &mut Vec<Chunk>) {
         match self.assertion {
             SafetyAssertionMode::None => (),
-            SafetyAssertionMode::Skip => chunks.insert(0, Chunk::AssertSkipInitialized),
-            SafetyAssertionMode::InMainThread => {
-                chunks.insert(0, Chunk::AssertInitializedAndInMainThread)
-            }
+            x => chunks.insert(0, Chunk::AssertInit(x)),
         }
     }
 

@@ -37,4 +37,11 @@ impl SafetyAssertionMode {
 
         InMainThread
     }
+
+    pub fn is_none(&self) -> bool {
+        match *self {
+            SafetyAssertionMode::None => true,
+            _ => false,
+        }
+    }
 }

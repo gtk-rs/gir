@@ -1,4 +1,5 @@
 use super::primitives::*;
+use super::safety_assertion_mode_to_str;
 use crate::{
     chunk::{Chunk, Param, TupleMode},
     codegen::{translate_from_glib::TranslateFromGlib, translate_to_glib::TranslateToGlib},
@@ -122,10 +123,7 @@ impl ToCode for Chunk {
                 let s = format_block_one_line(prefix, suffix, &value_strings, "", "");
                 vec![s]
             }
-            AssertInitializedAndInMainThread => {
-                vec!["assert_initialized_main_thread!();".to_string()]
-            }
-            AssertSkipInitialized => vec!["skip_assert_initialized!();".to_string()],
+            AssertInit(x) => vec![safety_assertion_mode_to_str(x).to_owned()],
             Connect {
                 ref signal,
                 ref trampoline,

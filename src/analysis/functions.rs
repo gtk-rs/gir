@@ -63,6 +63,7 @@ pub struct AsyncFuture {
     pub name: String,
     pub success_parameters: String,
     pub error_parameters: String,
+    pub assertion: SafetyAssertionMode,
 }
 
 #[derive(Debug)]
@@ -620,6 +621,7 @@ fn analyze_function(
                 no_future,
                 &mut async_future,
                 configured_functions,
+                &parameters,
             );
             let type_error = !(r#async
                 && *env.library.type_(par.typ) == Type::Fundamental(library::Fundamental::Pointer))
@@ -819,6 +821,7 @@ fn analyze_async(
     no_future: bool,
     async_future: &mut Option<AsyncFuture>,
     configured_functions: &[&config::functions::Function],
+    parameters: &function_parameters::Parameters,
 ) -> bool {
     if let Some(CallbackInfo {
         callback_type,
@@ -877,8 +880,10 @@ fn analyze_async(
             *commented = true;
             return false;
         }
+        let is_method = func.kind == FunctionKind::Method;
+
         *trampoline = Some(AsyncTrampoline {
-            is_method: func.kind == FunctionKind::Method,
+            is_method,
             name: format!("{}_trampoline", func.name),
             finish_func_name: format!("{}::{}", env.main_sys_crate_name(), finish_func_name),
             callback_type,
@@ -889,10 +894,16 @@ fn analyze_async(
 
         if !no_future {
             *async_future = Some(AsyncFuture {
-                is_method: func.kind == FunctionKind::Method,
+                is_method,
                 name: format!("{}_future", func.name),
                 success_parameters,
                 error_parameters,
+                assertion: match SafetyAssertionMode::of(env, is_method, &parameters) {
+                    SafetyAssertionMode::None => SafetyAssertionMode::None,
+                    // "_future" functions calls the "async" one which has the init check, so no
+                    // need to do it twice.
+                    _ => SafetyAssertionMode::Skip,
+                },
             });
         }
         true

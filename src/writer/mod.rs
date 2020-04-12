@@ -7,3 +7,13 @@ pub use self::{
     defines::{MAX_TEXT_WIDTH, TAB, TAB_SIZE},
     to_code::ToCode,
 };
+
+use crate::analysis::safety_assertion_mode::SafetyAssertionMode;
+
+pub fn safety_assertion_mode_to_str(s: SafetyAssertionMode) -> &'static str {
+    match s {
+        SafetyAssertionMode::None => "",
+        SafetyAssertionMode::Skip => "skip_assert_initialized!();",
+        SafetyAssertionMode::InMainThread => "assert_initialized_main_thread!();",
+    }
+}

@@ -1,4 +1,5 @@
 use super::{conversion_from_glib, parameter_ffi_call_out};
+use crate::analysis::safety_assertion_mode::SafetyAssertionMode;
 use crate::analysis::{function_parameters::TransformationType, return_value};
 
 #[allow(clippy::large_enum_variant)]
@@ -52,8 +53,7 @@ pub enum Chunk {
     ErrorResultReturn {
         value: Box<Chunk>,
     },
-    AssertInitializedAndInMainThread,
-    AssertSkipInitialized,
+    AssertInit(SafetyAssertionMode),
     Connect {
         signal: String,
         trampoline: String,
