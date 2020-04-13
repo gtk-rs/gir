@@ -135,7 +135,7 @@ impl ToCode for Chunk {
                 );
                 let self_str = if in_trait { "Self, " } else { "" };
                 let s2 = format!(
-                    "\tSome(*(&{}::<{}F> as *const _ as *const _)), Box_::into_raw(f))",
+                    "\tSome(transmute::<_, unsafe extern \"C\" fn()>({}::<{}F> as *const ())), Box_::into_raw(f))",
                     trampoline, self_str
                 );
                 vec![s1, s2]
