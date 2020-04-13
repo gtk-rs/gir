@@ -106,6 +106,7 @@ fn analyze_signal(
         }
         imports.add("glib::signal::connect_raw");
         imports.add("glib::signal::SignalHandlerId");
+        imports.add("std::mem::transmute");
         imports.add("std::boxed::Box as Box_");
         imports.add("glib_sys");
     }
