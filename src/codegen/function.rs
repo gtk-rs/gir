@@ -16,7 +16,7 @@ use crate::{
     chunk::{ffi_function_todo, Chunk},
     env::Env,
     library,
-    writer::{primitives::tabs, ToCode},
+    writer::{primitives::tabs, safety_assertion_mode_to_str, ToCode},
 };
 use log::warn;
 use std::{
@@ -356,6 +356,13 @@ pub fn body_chunk_futures(
     };
     writeln!(body)?;
 
+    if !async_future.assertion.is_none() {
+        writeln!(
+            body,
+            "{}",
+            safety_assertion_mode_to_str(async_future.assertion)
+        )?;
+    }
     let skip = if async_future.is_method { 1 } else { 0 };
 
     // Skip the instance parameter
