@@ -23,3 +23,11 @@ script:
   - ../target/release/gir -d ../gtk-gir-files/  -o .
   - rm ../Cargo.*
   - cargo build
+  # This part is used to check that no unforeseen failures appear.
+  # A good example was the transmute calls removal for callbacks.
+  - cd ..
+  - git clone -q https://github.com/gtk-rs/gio
+  - cd gio
+  - git submodule update --init
+  - ../target/release/gir -d gir-files  -o .
+  - cargo test
