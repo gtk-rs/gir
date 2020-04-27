@@ -837,6 +837,20 @@ impl Type {
             _ => true,
         }
     }
+
+    pub fn is_enumeration(&self) -> bool {
+        match *self {
+            Type::Enumeration(_) => true,
+            _ => false,
+        }
+    }
+
+    pub fn is_bitfield(&self) -> bool {
+        match *self {
+            Type::Bitfield(_) => true,
+            _ => false,
+        }
+    }
 }
 
 macro_rules! impl_maybe_ref {
@@ -996,6 +1010,7 @@ impl Library {
             "Accessible",
             "Iface",
             "Type",
+            "Interface",
         ];
         let namespace_name = self.namespaces[MAIN_NAMESPACE as usize].name.clone();
         let mut parents = HashSet::new();
@@ -1006,7 +1021,10 @@ impl Library {
                 let full_name = format!("{}.{}", namespace_name, name);
                 let mut check_methods = true;
 
-                if !not_allowed_ending.iter().any(|s| name.ends_with(s)) {
+                if !not_allowed_ending.iter().any(|s| name.ends_with(s))
+                    || x.is_enumeration()
+                    || x.is_bitfield()
+                {
                     let version = x.get_deprecated_version();
                     let depr_version = version.unwrap_or(env.config.min_cfg_version);
                     if !env.analysis.objects.contains_key(&full_name)
