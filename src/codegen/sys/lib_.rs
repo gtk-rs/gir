@@ -7,11 +7,9 @@ use crate::{
     library::*,
     nameutil::*,
     traits::*,
-    version::Version,
 };
 use log::info;
 use std::{
-    collections::HashMap,
     fs,
     io::{Result, Write},
 };
@@ -286,7 +284,6 @@ fn generate_enums(w: &mut dyn Write, env: &Env, items: &[&Enumeration]) -> Resul
         if let Some(false) = config.map(|c| c.status.need_generate()) {
             continue;
         }
-        let mut vals: HashMap<String, (String, Option<Version>)> = HashMap::new();
         writeln!(w, "pub type {} = c_int;", item.c_type)?;
         for member in &item.members {
             let member_config = config
@@ -296,7 +293,7 @@ fn generate_enums(w: &mut dyn Write, env: &Env, items: &[&Enumeration]) -> Resul
             let is_alias = member_config.iter().any(|m| m.alias);
             let version = member_config.iter().filter_map(|m| m.version).next();
 
-            if is_alias || vals.contains_key(&member.value) {
+            if is_alias {
                 continue;
             }
 
@@ -306,7 +303,6 @@ fn generate_enums(w: &mut dyn Write, env: &Env, items: &[&Enumeration]) -> Resul
                 "pub const {}: {} = {};",
                 member.c_identifier, item.c_type, member.value,
             )?;
-            vals.insert(member.value.clone(), (member.name.clone(), version));
         }
         writeln!(w)?;
     }
