@@ -121,6 +121,10 @@ pub fn signal_to_snake(signal: &str) -> String {
     signal.replace("::", "_").replace('-', "_")
 }
 
+pub fn lib_name_to_toml(name: &str) -> String {
+    name.to_string().replace("-", "_").replace(".", "_")
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -170,5 +174,10 @@ mod tests {
     fn signal_to_snake_works() {
         assert_eq!(signal_to_snake("changed"), "changed");
         assert_eq!(signal_to_snake("move-active"), "move_active");
+    }
+
+    #[test]
+    fn lib_name_to_toml_works() {
+        assert_eq!(lib_name_to_toml("gstreamer-1.0"), "gstreamer_1_0");
     }
 }

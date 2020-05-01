@@ -82,7 +82,8 @@ fn fill_in(root: &mut Table, env: &Env) {
 
     {
         let build_deps = upsert_table(root, "build-dependencies");
-        set_string(build_deps, "pkg-config", "0.3.7");
+        set_string(build_deps, "system-deps", "1.3");
+        unset(build_deps, "pkg-config");
     }
 
     {
@@ -105,6 +106,29 @@ fn fill_in(root: &mut Table, env: &Env) {
             Some(version)
         });
         features.insert("dox".to_string(), Value::Array(Vec::new()));
+    }
+
+    {
+        let meta = upsert_table(root, "package");
+        let meta = upsert_table(meta, "metadata");
+        let meta = upsert_table(meta, "system-deps");
+
+        let ns = env.namespaces.main();
+        let lib_name = ns.package_name.as_ref().unwrap();
+
+        let meta = upsert_table(meta, nameutil::lib_name_to_toml(lib_name));
+        set_string(meta, "name", lib_name);
+        set_string(meta, "version", env.config.min_cfg_version.to_string());
+
+        let versions = upsert_table(meta, "feature-versions");
+        env.namespaces
+            .main()
+            .versions
+            .iter()
+            .filter(|&&v| v > env.config.min_cfg_version)
+            .for_each(|v| {
+                set_string(versions, &v.to_feature(), v.to_string());
+            });
     }
 
     {
