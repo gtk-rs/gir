@@ -25,6 +25,7 @@ pub struct Info {
     pub notify_signals: Vec<signals::Info>,
     pub properties: Vec<properties::Property>,
     pub builder_properties: Vec<properties::Property>,
+    pub builder_postprocess: Option<String>,
     pub child_properties: ChildProperties,
     pub signatures: Signatures,
 }
@@ -217,6 +218,7 @@ pub fn class(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<Info>
         notify_signals,
         properties,
         builder_properties,
+        builder_postprocess: obj.builder_postprocess.clone(),
         child_properties,
         signatures,
     };
