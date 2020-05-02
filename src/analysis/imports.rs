@@ -31,6 +31,7 @@ fn check_up_eq(a: &str, b: &str) -> Ordering {
 /// use gdk::foo; // lowercases come first here as well.
 /// use gdk::Foo;
 /// ```
+#[allow(clippy::trivially_copy_pass_by_ref)] // because of the way this is used, the refs are needed
 fn compare_imports(a: &(&String, &ImportConditions), b: &(&String, &ImportConditions)) -> Ordering {
     let s = check_up_eq(a.0, b.0);
     if s != Ordering::Equal {

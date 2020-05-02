@@ -448,10 +448,7 @@ const = true
         assert_eq!(pars[2].ident, Ident::Name("par3".into()));
         assert_eq!(pars[2].constant, true);
         assert_eq!(pars[2].nullable, Some(Nullable(true)));
-        if let Ident::Pattern(_) = pars[3].ident {
-        } else {
-            assert!(false, "Pattern don't parsed");
-        }
+        assert!(matches!(pars[3].ident, Ident::Pattern(_)));
         assert_eq!(pars[3].constant, true);
         assert_eq!(pars[3].nullable, None);
     }
@@ -508,10 +505,7 @@ pattern = 'bad_func4[\w+'
         assert_eq!(fns.len(), 3);
         assert_eq!(fns[0].ident, Ident::Name("func1".into()));
         assert_eq!(fns[1].ident, Ident::Name("func2".into()));
-        if let Ident::Pattern(_) = fns[2].ident {
-        } else {
-            assert!(false, "Pattern don't parsed");
-        }
+        assert!(matches!(fns[2].ident, Ident::Pattern(_)));
     }
 
     #[test]

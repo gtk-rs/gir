@@ -91,7 +91,7 @@ mod tests {
     #[test]
     fn test_tabs() {
         assert_eq!(tabs(0), "");
-        assert_eq!(tabs(1), format!("{}", TAB));
+        assert_eq!(tabs(1), TAB);
         assert_eq!(tabs(2), format!("{0}{0}", TAB));
     }
 
