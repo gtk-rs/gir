@@ -18,13 +18,13 @@ Keep it in mind that since `gir` is still under development, it generates warnin
 
 ## `gir` Modes
 
-There are two main modes of generation for `gir`; *FFI* and *API*.
+There are two main modes of generation for `gir`; _FFI_ and _API_.
 
-There is also a third one used for documentation generation: *doc* and a fourth one used to display all not bound types in your crate: *not_bound*.
+There is also a third one used for documentation generation: _doc_ and a fourth one used to display all not bound types in your crate: _not_bound_.
 
-The *FFI* mode is what creates the low-level FFI bindings from the supplied `*.gir` file - these are essentially direct calls in to the related C library and are typically unsafe. The resulting crate is typically appended with `-sys`.
+The _FFI_ mode is what creates the low-level FFI bindings from the supplied `*.gir` file - these are essentially direct calls in to the related C library and are typically unsafe. The resulting crate is typically appended with `-sys`.
 
-The *API* mode generates another crate for a layer on top of these unsafe (*sys*) bindings which makes them safe for use in general Rust.
+The _API_ mode generates another crate for a layer on top of these unsafe (_sys_) bindings which makes them safe for use in general Rust.
 
 ### The FFI mode TOML config
 
@@ -146,6 +146,20 @@ name = "Gtk.TreeView"
 status = "generate"
 generate_builder = true
 ```
+
+If there is some work which has to be done post-construction before the builder's
+`build` method returns, you can set the `builder_postprocess` value in the object configuration:
+
+```toml
+[[object]]
+name = "Gtk.Application"
+status = "generate"
+generage_builder = true
+builder_postprocess = "Application::register_startup_hook(&ret);"
+```
+
+For the duration of the code in `builder_postprocess` the binding `ret` will be the
+value to be returned from the `build` method.
 
 Sometimes Gir understands the object definition incorrectly or the `.gir` file contains an incomplete or wrong definition, to fix it, you can use the full object configuration:
 
@@ -295,7 +309,7 @@ version = "3.12"
 For enumerations and bitflags, you can also configure additional `#[derive()]`
 clauses optionally conditioned to a `cfg`.
 
-``` toml
+```toml
 [[object]]
 name = "Gst.Format"
 status = "generate"
@@ -457,6 +471,7 @@ It'll generate a markdown file if everything went fine. That's where all this cr
 And now your crate should be completely documented as expected!
 
 If you defining traits manually you can add them to "Implements" section for classes and interfaces:
+
 ```toml
 [[object]]
 name = "Gtk.Assistant"

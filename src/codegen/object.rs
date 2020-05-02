@@ -264,9 +264,18 @@ impl {}Builder {{
     } else {
         "glib"
     };
-    writeln!(w,
-"        {}::Object::new({}::static_type(), &properties).expect(\"object new\").downcast().expect(\"downcast\")
-    }}", glib_crate_name, analysis.name)?;
+    writeln!(
+        w,
+        r#"        let ret = {}::Object::new({}::static_type(), &properties)
+            .expect("object new")
+            .downcast::<{}>()
+            .expect("downcast");"#,
+        glib_crate_name, analysis.name, analysis.name
+    )?;
+    if let Some(code) = analysis.builder_postprocess.as_ref() {
+        writeln!(w, "        {{\n            {}\n        }}", code)?;
+    }
+    writeln!(w, "    ret\n    }}")?;
     for method in methods {
         writeln!(w, "{}", method)?;
     }
