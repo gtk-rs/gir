@@ -4,7 +4,7 @@ use crate::{
         functions::{find_function, find_index_to_ignore, finish_function_name},
         imports::Imports,
         out_parameters::use_function_return_for_result,
-        rust_type::{bounds_rust_type, rust_type, rust_type_with_scope},
+        rust_type::{bounds_rust_type, rust_type, rust_type_nullable, rust_type_with_scope},
     },
     config,
     consts::TYPE_PARAMETERS_START,
@@ -107,8 +107,11 @@ impl Bounds {
                             &func.name,
                             configured_functions,
                         ) {
-                            out_parameters
-                                .insert(0, rust_type(env, function.ret.typ).into_string());
+                            out_parameters.insert(
+                                0,
+                                rust_type_nullable(env, function.ret.typ, function.ret.nullable)
+                                    .into_string(),
+                            );
                         }
                         let parameters = format_out_parameters(&out_parameters);
                         let error_type = find_error_type(env, function);
@@ -312,7 +315,7 @@ fn find_out_parameters(env: &Env, function: &Function) -> Vec<String> {
                 && param.direction == ParameterDirection::Out
                 && param.name != "error"
         })
-        .map(|(_, param)| rust_type(env, param.typ).into_string())
+        .map(|(_, param)| rust_type_nullable(env, param.typ, param.nullable).into_string())
         .collect()
 }
 
