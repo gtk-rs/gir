@@ -77,15 +77,15 @@ pub fn define_object_type(
     env: &Env,
     type_name: &str,
     glib_name: &str,
-    glib_class_name: &Option<&str>,
-    rust_class_name: &Option<&str>,
+    glib_class_name: Option<&str>,
+    rust_class_name: Option<&str>,
     glib_func_name: &str,
     is_interface: bool,
     parents: &[StatusedTypeId],
 ) -> Result<()> {
     let sys_crate_name = env.main_sys_crate_name();
     let class_name = {
-        if let Some(s) = *glib_class_name {
+        if let Some(s) = glib_class_name {
             format!(", {}::{}", sys_crate_name, s)
         } else {
             "".to_string()
@@ -93,7 +93,7 @@ pub fn define_object_type(
     };
 
     let rust_class_name = {
-        if let Some(s) = *rust_class_name {
+        if let Some(s) = rust_class_name {
             format!(", {}", s)
         } else {
             "".to_string()

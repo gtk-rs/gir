@@ -1345,12 +1345,10 @@ fn add_chunk_for_type(
                     } else {
                         type_name = String::from(": Option<GString>");
                     }
+                } else if par.conversion_type == ConversionType::Borrow {
+                    type_name = String::from(": Borrowed<GString>");
                 } else {
-                    if par.conversion_type == ConversionType::Borrow {
-                        type_name = String::from(": Borrowed<GString>");
-                    } else {
-                        type_name = String::from(": GString");
-                    }
+                    type_name = String::from(": GString");
                 }
             } else if par.transfer == library::Transfer::None && *nullable {
                 if par.conversion_type == ConversionType::Borrow {

@@ -26,6 +26,7 @@ impl<S: AsRef<str>> OptionStr for Option<S> {
     }
 }
 
+#[allow(clippy::large_enum_variant)]
 enum RunKind {
     Config(Config),
     CheckGirFile(String),
@@ -99,7 +100,7 @@ fn build_config() -> Result<RunKind, String> {
         matches.opt_present("s"),
         matches.opt_present("disable-format"),
     )
-    .map(|x| RunKind::Config(x))
+    .map(RunKind::Config)
 }
 
 #[cfg_attr(test, allow(dead_code))]
@@ -134,7 +135,8 @@ fn run_check(check_gir_file: &str) -> Result<(), String> {
             ))
         }
     };
-    return library.read_file(&parent, &mut vec![lib_name.to_owned()]);
+
+    library.read_file(&parent, &mut vec![lib_name.to_owned()])
 }
 
 fn do_main() -> Result<(), String> {

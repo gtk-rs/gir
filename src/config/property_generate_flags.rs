@@ -1,7 +1,6 @@
 use super::error::TomlHelper;
 use bitflags::bitflags;
 use std::str::FromStr;
-use toml;
 
 bitflags! {
     pub struct PropertyGenerateFlags: u32 {
@@ -49,7 +48,6 @@ impl PropertyGenerateFlags {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use toml;
 
     fn parse(val: &str) -> Result<PropertyGenerateFlags, String> {
         let input = format!("generate={}", val);
