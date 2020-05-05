@@ -44,6 +44,7 @@ pub struct Config {
     pub split_build_rs: bool,
     pub extra_versions: Vec<Version>,
     pub lib_version_overrides: HashMap<Version, Version>,
+    pub feature_dependencies: HashMap<Version, Vec<String>>,
 }
 
 impl Config {
@@ -232,6 +233,7 @@ impl Config {
 
         let extra_versions = read_extra_versions(&toml)?;
         let lib_version_overrides = read_lib_version_overrides(&toml)?;
+        let feature_dependencies = read_feature_dependencies(&toml)?;
 
         Ok(Config {
             work_mode,
@@ -257,6 +259,7 @@ impl Config {
             split_build_rs,
             extra_versions,
             lib_version_overrides,
+            feature_dependencies,
         })
     }
 
@@ -377,6 +380,35 @@ fn read_lib_version_overrides(toml: &toml::Value) -> Result<HashMap<Version, Ver
             .lookup_str("lib_version", "No lib_version in lib_version_overrides")?
             .parse()?;
         map.insert(cfg, lib);
+    }
+
+    Ok(map)
+}
+
+fn read_feature_dependencies(toml: &toml::Value) -> Result<HashMap<Version, Vec<String>>, String> {
+    let v = match toml.lookup("feature_dependencies") {
+        Some(a) => a.as_result_vec("feature_dependencies")?,
+        None => return Ok(Default::default()),
+    };
+
+    let mut map = HashMap::with_capacity(v.len());
+    for o in v {
+        let cfg = o
+            .lookup_str("version", "No version in feature_dependencies")?
+            .parse()?;
+        let dependencies: Result<Vec<String>, String> = o
+            .lookup_vec("dependencies", "No dependencies in feature_dependencies")?
+            .iter()
+            .map(|v| {
+                v.as_str()
+                    .ok_or_else(|| {
+                        "feature_dependencies.dependencies expected to be array of string"
+                            .to_string()
+                    })
+                    .map(str::to_owned)
+            })
+            .collect();
+        map.insert(cfg, dependencies?);
     }
 
     Ok(map)

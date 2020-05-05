@@ -1,7 +1,7 @@
 use super::collect_versions;
 use crate::{config::Config, env::Env, file_saver::save_to_file, nameutil, version::Version};
 use log::info;
-use std::{fs::File, io::prelude::*};
+use std::{collections::HashMap, fs::File, io::prelude::*};
 use toml::{self, value::Table, Value};
 
 pub fn generate(env: &Env) -> String {
@@ -97,7 +97,10 @@ fn fill_in(root: &mut Table, env: &Env) {
         let versions = collect_versions(env);
         versions.keys().fold(None::<Version>, |prev, &version| {
             let prev_array: Vec<Value> =
-                prev.iter().map(|v| Value::String(v.to_feature())).collect();
+                get_feature_dependencies(version, prev, &env.config.feature_dependencies)
+                    .iter()
+                    .map(|s| Value::String(s.clone()))
+                    .collect();
             features.insert(version.to_feature(), Value::Array(prev_array));
             Some(version)
         });
@@ -122,6 +125,21 @@ fn fill_in(root: &mut Table, env: &Env) {
             ),
         );
     }
+}
+
+fn get_feature_dependencies(
+    version: Version,
+    prev_version: Option<Version>,
+    feature_dependencies: &HashMap<Version, Vec<String>>,
+) -> Vec<String> {
+    let mut vec = Vec::with_capacity(10);
+    if let Some(v) = prev_version {
+        vec.push(v.to_feature());
+    }
+    if let Some(dependencies) = feature_dependencies.get(&version) {
+        vec.extend_from_slice(dependencies);
+    }
+    vec
 }
 
 /// Returns the name of crate being currently generated.
