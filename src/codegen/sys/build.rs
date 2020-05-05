@@ -1,6 +1,5 @@
-use crate::{
-    analysis::namespaces::Namespace, codegen::general, env::Env, file_saver::save_to_file,
-};
+use super::collect_versions;
+use crate::{codegen::general, env::Env, file_saver::save_to_file};
 use log::info;
 use regex::Regex;
 use std::{
@@ -109,7 +108,7 @@ fn find() -> Result<(), Error> {
     if split_build_rs {
         writeln!(w, "build_version::version();")?;
     } else {
-        write_version(w, env, ns, true)?;
+        write_version(w, env, true)?;
     }
 
     writeln!(
@@ -194,21 +193,21 @@ fn find() -> Result<(), Error> {
 fn generate_build_version(w: &mut dyn Write, env: &Env) -> Result<()> {
     general::start_comments(w, &env.config)?;
     writeln!(w)?;
-    let ns = env.namespaces.main();
     writeln!(w, "pub fn version() -> &'static str {{")?;
-    write_version(w, env, ns, false)?;
+    write_version(w, env, false)?;
     writeln!(w, "}}")
 }
 
-fn write_version(w: &mut dyn Write, env: &Env, ns: &Namespace, for_let: bool) -> Result<()> {
-    let versions = ns
-        .versions
-        .iter()
-        .filter(|v| **v >= env.config.min_cfg_version)
-        .skip(1)
-        .collect::<Vec<_>>();
-    for v in versions.iter().rev() {
-        write!(w, "if cfg!({}) {{\n\t\t\"{}\"\n\t}} else ", v.to_cfg(), v)?;
+fn write_version(w: &mut dyn Write, env: &Env, for_let: bool) -> Result<()> {
+    let versions = collect_versions(env);
+
+    for (version, lib_version) in versions.iter().rev() {
+        write!(
+            w,
+            "if cfg!({}) {{\n\t\t\"{}\"\n\t}} else ",
+            version.to_cfg(),
+            lib_version
+        )?;
     }
     let end = if for_let { ";" } else { "" };
     writeln!(w, "{{\n\t\t\"{}\"\n\t}}{}", env.config.min_cfg_version, end)

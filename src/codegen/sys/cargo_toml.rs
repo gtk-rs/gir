@@ -1,3 +1,4 @@
+use super::collect_versions;
 use crate::{config::Config, env::Env, file_saver::save_to_file, nameutil, version::Version};
 use log::info;
 use std::{fs::File, io::prelude::*};
@@ -93,13 +94,8 @@ fn fill_in(root: &mut Table, env: &Env) {
 
     {
         let features = upsert_table(root, "features");
-        let versions = env
-            .namespaces
-            .main()
-            .versions
-            .iter()
-            .filter(|&&v| v > env.config.min_cfg_version);
-        versions.fold(None::<Version>, |prev, &version| {
+        let versions = collect_versions(env);
+        versions.keys().fold(None::<Version>, |prev, &version| {
             let prev_array: Vec<Value> =
                 prev.iter().map(|v| Value::String(v.to_feature())).collect();
             features.insert(version.to_feature(), Value::Array(prev_array));

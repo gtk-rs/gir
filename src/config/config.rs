@@ -42,6 +42,8 @@ pub struct Config {
     pub docs_rs_features: Vec<String>,
     pub disable_format: bool,
     pub split_build_rs: bool,
+    pub extra_versions: Vec<Version>,
+    pub lib_version_overrides: HashMap<Version, Version>,
 }
 
 impl Config {
@@ -228,6 +230,9 @@ impl Config {
             None => false,
         };
 
+        let extra_versions = read_extra_versions(&toml)?;
+        let lib_version_overrides = read_lib_version_overrides(&toml)?;
+
         Ok(Config {
             work_mode,
             girs_dir,
@@ -250,6 +255,8 @@ impl Config {
             docs_rs_features,
             disable_format,
             split_build_rs,
+            extra_versions,
+            lib_version_overrides,
         })
     }
 
@@ -337,6 +344,42 @@ fn read_crate_name_overrides(toml: &toml::Value) -> HashMap<String, String> {
         }
     };
     overrides
+}
+
+fn read_extra_versions(toml: &toml::Value) -> Result<Vec<Version>, String> {
+    match toml.lookup("options.extra_versions") {
+        Some(a) => a
+            .as_result_vec("options.extra_versions")?
+            .iter()
+            .map(|v| {
+                v.as_str().ok_or_else(|| {
+                    "options.extra_versions expected to be array of string".to_string()
+                })
+            })
+            .map(|s| s.and_then(str::parse))
+            .collect(),
+        None => Ok(Vec::new()),
+    }
+}
+
+fn read_lib_version_overrides(toml: &toml::Value) -> Result<HashMap<Version, Version>, String> {
+    let v = match toml.lookup("lib_version_overrides") {
+        Some(a) => a.as_result_vec("lib_version_overrides")?,
+        None => return Ok(Default::default()),
+    };
+
+    let mut map = HashMap::with_capacity(v.len());
+    for o in v {
+        let cfg = o
+            .lookup_str("version", "No version in lib_version_overrides")?
+            .parse()?;
+        let lib = o
+            .lookup_str("lib_version", "No lib_version in lib_version_overrides")?
+            .parse()?;
+        map.insert(cfg, lib);
+    }
+
+    Ok(map)
 }
 
 #[cfg(test)]
