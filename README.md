@@ -63,6 +63,21 @@ work_mode = "sys"
 # and build.rs that generated only if not exists.
 # Defaults to false
 split_build_rs = false
+#Adds extra versions to features
+extra_versions = [
+   "3.15",
+   "3.17",
+]
+#Change library version for version
+[[lib_version_overrides]]
+version = "3.16"
+lib_version = "3.16.1"
+#Add extra dependencies to feature
+[[feature_dependencies]]
+version = "3.16"
+dependencies = [
+  "glib-sys/v3_16"
+]
 ```
 
 You can mark some functions that has suffix `_utf8` on Windows:

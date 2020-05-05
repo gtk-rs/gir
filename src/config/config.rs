@@ -42,10 +42,13 @@ pub struct Config {
     pub docs_rs_features: Vec<String>,
     pub disable_format: bool,
     pub split_build_rs: bool,
+    pub extra_versions: Vec<Version>,
+    pub lib_version_overrides: HashMap<Version, Version>,
+    pub feature_dependencies: HashMap<Version, Vec<String>>,
 }
 
 impl Config {
-    pub fn new<'a, S, B, W>(
+    pub fn new<'a, S, W>(
         config_file: S,
         work_mode: W,
         girs_dir: S,
@@ -53,13 +56,12 @@ impl Config {
         library_version: S,
         target_path: S,
         doc_target_path: S,
-        make_backup: B,
-        show_statistics: B,
-        disable_format: B,
+        make_backup: bool,
+        show_statistics: bool,
+        disable_format: bool,
     ) -> Result<Config, String>
     where
         S: Into<Option<&'a str>>,
-        B: Into<Option<bool>>,
         W: Into<Option<WorkMode>>,
     {
         let config_file: PathBuf = match config_file.into() {
@@ -214,12 +216,12 @@ impl Config {
             None => None,
         };
 
-        let disable_format: bool = if let Some(disable_format) = disable_format.into() {
-            disable_format
+        let disable_format: bool = if disable_format {
+            true
         } else {
             match toml.lookup("options.disable_format") {
                 Some(v) => v.as_result_bool("options.disable_format")?,
-                None => false,
+                None => true,
             }
         };
 
@@ -227,6 +229,10 @@ impl Config {
             Some(v) => v.as_result_bool("options.split_build_rs")?,
             None => false,
         };
+
+        let extra_versions = read_extra_versions(&toml)?;
+        let lib_version_overrides = read_lib_version_overrides(&toml)?;
+        let feature_dependencies = read_feature_dependencies(&toml)?;
 
         Ok(Config {
             work_mode,
@@ -240,16 +246,19 @@ impl Config {
             external_libraries,
             objects,
             min_cfg_version,
-            make_backup: make_backup.into().unwrap_or(false),
+            make_backup,
             generate_safety_asserts,
             deprecate_by_min_version,
-            show_statistics: show_statistics.into().unwrap_or(false),
+            show_statistics,
             concurrency,
             single_version_file,
             generate_display_trait,
             docs_rs_features,
             disable_format,
             split_build_rs,
+            extra_versions,
+            lib_version_overrides,
+            feature_dependencies,
         })
     }
 
@@ -337,6 +346,71 @@ fn read_crate_name_overrides(toml: &toml::Value) -> HashMap<String, String> {
         }
     };
     overrides
+}
+
+fn read_extra_versions(toml: &toml::Value) -> Result<Vec<Version>, String> {
+    match toml.lookup("options.extra_versions") {
+        Some(a) => a
+            .as_result_vec("options.extra_versions")?
+            .iter()
+            .map(|v| {
+                v.as_str().ok_or_else(|| {
+                    "options.extra_versions expected to be array of string".to_string()
+                })
+            })
+            .map(|s| s.and_then(str::parse))
+            .collect(),
+        None => Ok(Vec::new()),
+    }
+}
+
+fn read_lib_version_overrides(toml: &toml::Value) -> Result<HashMap<Version, Version>, String> {
+    let v = match toml.lookup("lib_version_overrides") {
+        Some(a) => a.as_result_vec("lib_version_overrides")?,
+        None => return Ok(Default::default()),
+    };
+
+    let mut map = HashMap::with_capacity(v.len());
+    for o in v {
+        let cfg = o
+            .lookup_str("version", "No version in lib_version_overrides")?
+            .parse()?;
+        let lib = o
+            .lookup_str("lib_version", "No lib_version in lib_version_overrides")?
+            .parse()?;
+        map.insert(cfg, lib);
+    }
+
+    Ok(map)
+}
+
+fn read_feature_dependencies(toml: &toml::Value) -> Result<HashMap<Version, Vec<String>>, String> {
+    let v = match toml.lookup("feature_dependencies") {
+        Some(a) => a.as_result_vec("feature_dependencies")?,
+        None => return Ok(Default::default()),
+    };
+
+    let mut map = HashMap::with_capacity(v.len());
+    for o in v {
+        let cfg = o
+            .lookup_str("version", "No version in feature_dependencies")?
+            .parse()?;
+        let dependencies: Result<Vec<String>, String> = o
+            .lookup_vec("dependencies", "No dependencies in feature_dependencies")?
+            .iter()
+            .map(|v| {
+                v.as_str()
+                    .ok_or_else(|| {
+                        "feature_dependencies.dependencies expected to be array of string"
+                            .to_string()
+                    })
+                    .map(str::to_owned)
+            })
+            .collect();
+        map.insert(cfg, dependencies?);
+    }
+
+    Ok(map)
 }
 
 #[cfg(test)]
