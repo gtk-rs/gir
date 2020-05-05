@@ -275,17 +275,23 @@ fn generate_constants(w: &mut dyn Write, env: &Env, constants: &[Constant]) -> R
 }
 
 fn generate_enums(w: &mut dyn Write, env: &Env, items: &[&Enumeration]) -> Result<()> {
-    if !items.is_empty() {
-        writeln!(w, "// Enums")?;
+    use proc_macro2::{Ident, Literal, Span};
+    use quote::quote;
+
+    if items.is_empty() {
+        return Ok(());
     }
-    for item in items {
+
+    let enums = items.iter().map(|item| {
         let full_name = format!("{}.{}", env.namespaces.main().name, item.name);
         let config = env.config.objects.get(&full_name);
         if let Some(false) = config.map(|c| c.status.need_generate()) {
-            continue;
+            return quote! {};
         }
-        writeln!(w, "pub type {} = c_int;", item.c_type)?;
-        for member in &item.members {
+
+        let c_type = Ident::new(&item.c_type, Span::call_site());
+
+        let members = item.members.iter().map(|member| {
             let member_config = config
                 .as_ref()
                 .map(|c| c.members.matched(&member.name))
@@ -294,18 +300,40 @@ fn generate_enums(w: &mut dyn Write, env: &Env, items: &[&Enumeration]) -> Resul
             let version = member_config.iter().filter_map(|m| m.version).next();
 
             if is_alias {
-                continue;
+                return quote! {};
             }
 
-            version_condition(w, env, version, false, 0)?;
-            writeln!(
-                w,
-                "pub const {}: {} = {};",
-                member.c_identifier, item.c_type, member.value,
-            )?;
+            let c_identifier = Ident::new(&member.c_identifier, Span::call_site());
+            let value = Literal::i32_unsuffixed(member.value.parse().unwrap());
+
+            let version_condition = match version {
+                Some(v) if v > env.config.min_cfg_version => {
+                    let v = v.to_cfg();
+                    quote! {
+                        #[cfg(any(#v, feature = "dox"))]
+                    }
+                }
+                _ => quote! {},
+            };
+
+            quote! {
+                #version_condition
+                pub const #c_identifier: #c_type = #value;
+            }
+        });
+
+        quote! {
+            pub type #c_type = c_int;
+
+            #(#members)*
         }
-        writeln!(w)?;
-    }
+    });
+
+    let tokens = quote! {
+        #(#enums)*
+    };
+
+    writeln!(w, "// Enums\n{}", tokens)?;
 
     Ok(())
 }

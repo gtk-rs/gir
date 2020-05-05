@@ -21,6 +21,8 @@ log = "0.4"
 regex = "1.0"
 hprof = "0.1"
 rustdoc-stripper = { git = "https://github.com/GuillaumeGomez/rustdoc-stripper" }
+quote = "1.0"
+proc-macro2 = "1.0"
 
 [profile.release]
 codegen-units = 4
