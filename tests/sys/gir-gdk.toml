@@ -5,6 +5,7 @@ library = "Gdk"
 version = "3.0"
 min_cfg_version = "3.4"
 target_path = "./gdk-sys"
+split_build_rs = true
 external_libraries = [
    "GLib",
    "GObject",
