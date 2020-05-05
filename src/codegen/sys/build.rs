@@ -109,7 +109,7 @@ fn find() -> Result<(), Error> {
     if split_build_rs {
         writeln!(w, "build_version::version();")?;
     } else {
-        write_version(w, env, ns)?;
+        write_version(w, env, ns, true)?;
     }
 
     writeln!(
@@ -195,12 +195,12 @@ fn generate_build_version(w: &mut dyn Write, env: &Env) -> Result<()> {
     general::start_comments(w, &env.config)?;
     writeln!(w)?;
     let ns = env.namespaces.main();
-    writeln!(w, "pub fn version() -> &str {{")?;
-    write_version(w, env, ns)?;
+    writeln!(w, "pub fn version() -> &'static str {{")?;
+    write_version(w, env, ns, false)?;
     writeln!(w, "}}")
 }
 
-fn write_version(w: &mut dyn Write, env: &Env, ns: &Namespace) -> Result<()> {
+fn write_version(w: &mut dyn Write, env: &Env, ns: &Namespace, for_let: bool) -> Result<()> {
     let versions = ns
         .versions
         .iter()
@@ -210,5 +210,6 @@ fn write_version(w: &mut dyn Write, env: &Env, ns: &Namespace) -> Result<()> {
     for v in versions.iter().rev() {
         write!(w, "if cfg!({}) {{\n\t\t\"{}\"\n\t}} else ", v.to_cfg(), v)?;
     }
-    writeln!(w, "{{\n\t\t\"{}\"\n\t}};", env.config.min_cfg_version)
+    let end = if for_let { ";" } else { "" };
+    writeln!(w, "{{\n\t\t\"{}\"\n\t}}{}", env.config.min_cfg_version, end)
 }
