@@ -41,6 +41,7 @@ pub struct Config {
     pub generate_display_trait: bool,
     pub docs_rs_features: Vec<String>,
     pub disable_format: bool,
+    pub split_build_rs: bool,
 }
 
 impl Config {
@@ -222,6 +223,11 @@ impl Config {
             }
         };
 
+        let split_build_rs = match toml.lookup("options.split_build_rs") {
+            Some(v) => v.as_result_bool("options.split_build_rs")?,
+            None => false,
+        };
+
         Ok(Config {
             work_mode,
             girs_dir,
@@ -243,6 +249,7 @@ impl Config {
             generate_display_trait,
             docs_rs_features,
             disable_format,
+            split_build_rs,
         })
     }
 
