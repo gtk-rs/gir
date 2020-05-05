@@ -1,4 +1,6 @@
-use crate::{codegen::general, env::Env, file_saver::save_to_file};
+use crate::{
+    analysis::namespaces::Namespace, codegen::general, env::Env, file_saver::save_to_file,
+};
 use log::info;
 use regex::Regex;
 use std::{
@@ -12,18 +14,31 @@ pub fn generate(env: &Env) {
         env.config.library_name
     );
 
+    let split_build_rs = env.config.split_build_rs;
     let path = env.config.target_path.join("build.rs");
 
-    info!("Generating file {:?}", path);
-    save_to_file(&path, env.config.make_backup, |w| {
-        generate_build_script(w, env)
-    });
+    if !split_build_rs || !path.exists() {
+        info!("Generating file {:?}", path);
+        save_to_file(&path, env.config.make_backup, |w| {
+            generate_build_script(w, env, split_build_rs)
+        });
+    }
+
+    if split_build_rs {
+        let path = env.config.target_path.join("build_version.rs");
+        info!("Generating file {:?}", path);
+        save_to_file(&path, env.config.make_backup, |w| {
+            generate_build_version(w, env)
+        });
+    }
 }
 
-fn generate_build_script(w: &mut dyn Write, env: &Env) -> Result<()> {
-    general::start_comments(w, &env.config)?;
-    writeln!(w)?;
-    write!(
+fn generate_build_script(w: &mut dyn Write, env: &Env, split_build_rs: bool) -> Result<()> {
+    if !split_build_rs {
+        general::start_comments(w, &env.config)?;
+        writeln!(w)?;
+    }
+    writeln!(
         w,
         "{}",
         r##"#[cfg(not(feature = "dox"))]
@@ -38,8 +53,18 @@ use std::io::prelude::*;
 #[cfg(not(feature = "dox"))]
 use std::io;
 #[cfg(not(feature = "dox"))]
-use std::process;
+use std::process;"##
+    )?;
 
+    if split_build_rs {
+        writeln!(w)?;
+        writeln!(w, "mod build_version;")?;
+    }
+
+    write!(
+        w,
+        "{}",
+        r##"
 #[cfg(feature = "dox")]
 fn main() {} // prevent linking libraries to avoid documentation failure
 
@@ -81,16 +106,11 @@ fn find() -> Result<(), Error> {
     )?;
     writeln!(w, "\tlet shared_libs = [{}];", shared_libs.join(", "))?;
     write!(w, "\tlet version = ")?;
-    let versions = ns
-        .versions
-        .iter()
-        .filter(|v| **v >= env.config.min_cfg_version)
-        .skip(1)
-        .collect::<Vec<_>>();
-    for v in versions.iter().rev() {
-        write!(w, "if cfg!({}) {{\n\t\t\"{}\"\n\t}} else ", v.to_cfg(), v)?;
+    if split_build_rs {
+        writeln!(w, "build_version::version();")?;
+    } else {
+        write_version(w, env, ns)?;
     }
-    writeln!(w, "{{\n\t\t\"{}\"\n\t}};", env.config.min_cfg_version)?;
 
     writeln!(
         w,
@@ -169,4 +189,26 @@ fn find() -> Result<(), Error> {
 "##
         )
     }
+}
+
+fn generate_build_version(w: &mut dyn Write, env: &Env) -> Result<()> {
+    general::start_comments(w, &env.config)?;
+    writeln!(w)?;
+    let ns = env.namespaces.main();
+    writeln!(w, "pub fn version() -> &str {{")?;
+    write_version(w, env, ns)?;
+    writeln!(w, "}}")
+}
+
+fn write_version(w: &mut dyn Write, env: &Env, ns: &Namespace) -> Result<()> {
+    let versions = ns
+        .versions
+        .iter()
+        .filter(|v| **v >= env.config.min_cfg_version)
+        .skip(1)
+        .collect::<Vec<_>>();
+    for v in versions.iter().rev() {
+        write!(w, "if cfg!({}) {{\n\t\t\"{}\"\n\t}} else ", v.to_cfg(), v)?;
+    }
+    writeln!(w, "{{\n\t\t\"{}\"\n\t}};", env.config.min_cfg_version)
 }
