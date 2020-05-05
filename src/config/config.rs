@@ -48,7 +48,7 @@ pub struct Config {
 }
 
 impl Config {
-    pub fn new<'a, S, B, W>(
+    pub fn new<'a, S, W>(
         config_file: S,
         work_mode: W,
         girs_dir: S,
@@ -56,13 +56,12 @@ impl Config {
         library_version: S,
         target_path: S,
         doc_target_path: S,
-        make_backup: B,
-        show_statistics: B,
-        disable_format: B,
+        make_backup: bool,
+        show_statistics: bool,
+        disable_format: bool,
     ) -> Result<Config, String>
     where
         S: Into<Option<&'a str>>,
-        B: Into<Option<bool>>,
         W: Into<Option<WorkMode>>,
     {
         let config_file: PathBuf = match config_file.into() {
@@ -217,12 +216,12 @@ impl Config {
             None => None,
         };
 
-        let disable_format: bool = if let Some(disable_format) = disable_format.into() {
-            disable_format
+        let disable_format: bool = if disable_format {
+            true
         } else {
             match toml.lookup("options.disable_format") {
                 Some(v) => v.as_result_bool("options.disable_format")?,
-                None => false,
+                None => true,
             }
         };
 
@@ -247,10 +246,10 @@ impl Config {
             external_libraries,
             objects,
             min_cfg_version,
-            make_backup: make_backup.into().unwrap_or(false),
+            make_backup,
             generate_safety_asserts,
             deprecate_by_min_version,
-            show_statistics: show_statistics.into().unwrap_or(false),
+            show_statistics,
             concurrency,
             single_version_file,
             generate_display_trait,
