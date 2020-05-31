@@ -14,7 +14,7 @@ impl FromStr for StringType {
             "utf8" => Ok(StringType::Utf8),
             "filename" => Ok(StringType::Filename),
             "os_string" => Ok(StringType::OsString),
-            _ => Err("Wrong string type".into()),
+            _ => Err(format!("Wrong string type '{}'", s)),
         }
     }
 }

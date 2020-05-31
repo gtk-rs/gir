@@ -17,9 +17,9 @@ pub enum Type {
 }
 
 impl FromStr for Type {
-    type Err = ();
+    type Err = String;
 
-    fn from_str(s: &str) -> Result<Type, ()> {
+    fn from_str(s: &str) -> Result<Type, String> {
         use self::Type::*;
         match s {
             "compare" => Ok(Compare),
@@ -31,7 +31,7 @@ impl FromStr for Type {
             "to_string" => Ok(ToString),
             "unref" => Ok(Unref),
             "hash" => Ok(Hash),
-            _ => Err(()),
+            _ => Err(format!("Unknown type '{}'", s)),
         }
     }
 }

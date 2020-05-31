@@ -26,7 +26,7 @@ impl FromStr for Transfer {
             "none" => Ok(None),
             "container" => Ok(Container),
             "full" => Ok(Full),
-            _ => Err("Unknown ownership transfer mode".into()),
+            _ => Err(format!("Unknown ownership transfer mode '{}'", name)),
         }
     }
 }
@@ -53,7 +53,7 @@ impl FromStr for ParameterDirection {
             "in" => Ok(In),
             "out" => Ok(Out),
             "inout" => Ok(InOut),
-            _ => Err("Unknown parameter direction".into()),
+            _ => Err(format!("Unknown parameter direction '{}'", name)),
         }
     }
 }
@@ -153,7 +153,7 @@ impl FromStr for FunctionKind {
             "method" => Ok(Method),
             "callback" => Ok(Function),
             "global" => Ok(Global),
-            _ => Err("Unknown function kind".into()),
+            _ => Err(format!("Unknown function kind '{}'", name)),
         }
     }
 }
@@ -175,7 +175,7 @@ impl FromStr for Concurrency {
             "send-unique" => Ok(SendUnique),
             "send" => Ok(Send),
             "send+sync" => Ok(SendSync),
-            _ => Err("Unknown concurrency kind".into()),
+            _ => Err(format!("Unknown concurrency kind '{}'", name)),
         }
     }
 }
