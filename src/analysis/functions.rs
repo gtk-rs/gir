@@ -535,6 +535,10 @@ fn analyze_function(
     let doc_hidden = configured_functions.iter().any(|f| f.doc_hidden);
     let disable_length_detect = configured_functions.iter().any(|f| f.disable_length_detect);
     let no_future = configured_functions.iter().any(|f| f.no_future);
+    let assertion = configured_functions
+        .iter()
+        .filter_map(|f| f.assertion)
+        .next();
 
     imports.set_defaults(version, &cfg_condition);
 
@@ -765,7 +769,8 @@ fn analyze_function(
         Visibility::Public
     };
     let is_method = func.kind == library::FunctionKind::Method;
-    let assertion = SafetyAssertionMode::of(env, is_method, &parameters);
+    let assertion =
+        assertion.unwrap_or_else(|| SafetyAssertionMode::of(env, is_method, &parameters));
 
     imports.reset_defaults();
 

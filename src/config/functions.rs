@@ -5,7 +5,9 @@ use super::{
     parsable::{Parsable, Parse},
     string_type::StringType,
 };
-use crate::{library::Nullable, version::Version};
+use crate::{
+    analysis::safety_assertion_mode::SafetyAssertionMode, library::Nullable, version::Version,
+};
 use log::error;
 use std::str::FromStr;
 use toml::Value;
@@ -202,6 +204,7 @@ pub struct Function {
     pub doc_trait_name: Option<String>,
     pub no_future: bool,
     pub rename: Option<String>,
+    pub assertion: Option<SafetyAssertionMode>,
 }
 
 impl Parse for Function {
@@ -231,6 +234,7 @@ impl Parse for Function {
                 "doc_trait_name",
                 "no_future",
                 "rename",
+                "assertion",
             ],
             &format!("function {}", object_name),
         );
@@ -277,6 +281,16 @@ impl Parse for Function {
             return None;
         }
 
+        let assertion = toml
+            .lookup("assertion")
+            .and_then(Value::as_str)
+            .map(|s| s.parse::<SafetyAssertionMode>())
+            .transpose();
+        if let Err(ref err) = assertion {
+            error!("{}", err);
+        }
+        let assertion = assertion.ok().flatten();
+
         Some(Function {
             ident,
             ignore,
@@ -290,6 +304,7 @@ impl Parse for Function {
             doc_trait_name,
             no_future,
             rename,
+            assertion,
         })
     }
 }

@@ -229,6 +229,9 @@ generate_builder = true
     no_future = true
     # to rename the generated function
     rename = "something_else"
+    # to override the default safety assertions: "none", "skip",
+    # "in-main-thread"
+    assertions = "in-main-thread"
         # override for parameter
         [[object.function.parameter]]
         # filter by name
