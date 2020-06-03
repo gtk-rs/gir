@@ -414,10 +414,7 @@ impl Builder {
                 add_chunk_for_type(env, par.typ, par, &mut body, &ty_name, nullable);
             if ty_name == "GString" {
                 if *nullable {
-                    arguments.push(Chunk::Name(format!(
-                        "{}.as_ref().map(|x| x.as_str())",
-                        par.name
-                    )));
+                    arguments.push(Chunk::Name(format!("{}.as_ref().as_deref()", par.name)));
                 } else {
                     arguments.push(Chunk::Name(format!("{}.as_str()", par.name)));
                 }
@@ -1364,9 +1361,6 @@ fn add_chunk_for_type(
                 "let {1}{3} = {0}{1}{2};",
                 begin, par.name, end, type_name
             )));
-            if ty_name == "GString" && *nullable {
-                body.push(Chunk::Custom(format!("let {0} = {0}.as_ref();", par.name)));
-            }
             x.is_fundamental()
         }
     }

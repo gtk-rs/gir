@@ -20,8 +20,8 @@ impl TrampolineFromGlib for Transformation {
                 let is_borrow = self.conversion_type == Borrow;
                 let need_type_name = need_type_name || (is_borrow && nullable);
                 let (mut left, mut right) = from_glib_xxx(self.transfer, is_borrow);
+                let type_name = rust_type(env, self.typ).into_string();
                 if need_type_name {
-                    let type_name = rust_type(env, self.typ).into_string();
                     if is_borrow && nullable {
                         left = format!("Option::<{}>::{}", type_name, left);
                     } else {
@@ -32,7 +32,13 @@ impl TrampolineFromGlib for Transformation {
                 if !nullable {
                     left = format!("&{}", left);
                 } else if nullable && is_borrow {
-                    right = format!("{}.as_ref().as_ref()", right);
+                    if type_name == "GString" {
+                        right = format!("{}.as_ref().as_deref()", right);
+                    } else {
+                        right = format!("{}.as_ref().as_ref()", right);
+                    }
+                } else if type_name == "GString" {
+                    right = format!("{}.as_deref()", right);
                 } else {
                     right = format!("{}.as_ref()", right);
                 }
