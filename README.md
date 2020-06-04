@@ -247,7 +247,7 @@ generate_builder = true
         string_type = "os_string"
 
         # override for return value
-        [[object.function.return]]
+        [object.function.return]
         # allow to remove/add Option<> to return value
         nullable = true
         # convert bool return types to Result<(), glib::BoolError> with
