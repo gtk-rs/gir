@@ -203,6 +203,7 @@ fn generate_manual_h(env: &Env, path: &Path, w: &mut dyn Write) -> io::Result<()
     Ok(())
 }
 
+#[allow(clippy::write_literal)]
 fn generate_layout_c(env: &Env, path: &Path, w: &mut dyn Write) -> io::Result<()> {
     info!("Generating file {:?}", path);
     general::start_comments(w, &env.config)?;
@@ -222,6 +223,7 @@ int main() {
     )
 }
 
+#[allow(clippy::write_literal)]
 fn generate_constant_c(env: &Env, path: &Path, w: &mut dyn Write) -> io::Result<()> {
     info!("Generating file {:?}", path);
     general::start_comments(w, &env.config)?;
@@ -256,6 +258,7 @@ int main() {
     )
 }
 
+#[allow(clippy::write_literal)]
 fn generate_abi_rs(
     env: &Env,
     path: &Path,

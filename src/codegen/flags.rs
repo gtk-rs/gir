@@ -75,6 +75,7 @@ pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>) {
     });
 }
 
+#[allow(clippy::write_literal)]
 fn generate_flags(env: &Env, w: &mut dyn Write, flags: &Bitfield, config: &GObject) -> Result<()> {
     let sys_crate_name = env.main_sys_crate_name();
     cfg_deprecated(w, env, flags.deprecated_version, false, 0)?;

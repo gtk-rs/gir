@@ -93,6 +93,7 @@ pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>) {
     });
 }
 
+#[allow(clippy::write_literal)]
 fn generate_enum(
     env: &Env,
     w: &mut dyn Write,
