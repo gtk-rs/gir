@@ -113,6 +113,8 @@ fn analyze_property(
         bounds.add_parameter(&prop.name, &type_str.into_string(), bound, false);
     }
 
+    imports.reset_defaults();
+
     Some(Property {
         name: prop.name.clone(),
         var_name: String::new(),
