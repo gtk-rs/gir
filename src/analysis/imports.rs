@@ -136,7 +136,7 @@ impl Imports {
                 .entry(name.to_owned())
                 .or_insert_with(|| defaults.clone());
             entry.update_version(self.defaults.version);
-            entry.update_constraints(self.defaults.constraints.clone());
+            entry.update_constraints(&self.defaults.constraints);
         }
     }
 
@@ -299,7 +299,8 @@ pub struct ImportConditions {
 
 impl ImportConditions {
     fn clear(&mut self) {
-        *self = ImportConditions::default();
+        self.version = None;
+        self.constraints.clear();
     }
 
     fn update_version(&mut self, version: Option<Version>) {
@@ -321,7 +322,7 @@ impl ImportConditions {
         }
     }
 
-    fn update_constraints(&mut self, constraints: Vec<String>) {
+    fn update_constraints(&mut self, constraints: &[String]) {
         // If the import is already present but doesn't have any constraint,
         // we don't want to add one.
         if self.constraints.is_empty() {
@@ -335,7 +336,7 @@ impl ImportConditions {
             // Otherwise, we just check if the constraint
             // is already present or not before adding it.
             for constraint in constraints {
-                if !self.constraints.iter().any(|x| x == &constraint) {
+                if !self.constraints.iter().any(|x| x == constraint) {
                     self.constraints.push(constraint.clone());
                 }
             }
