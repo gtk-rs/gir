@@ -109,7 +109,7 @@ fn analyze_property(
     let generate_set = generate.is_some();
     let generate = generate.unwrap_or_else(PropertyGenerateFlags::all);
 
-    imports.set_defaults(prop_version, &None);
+    let imports = &mut imports.with_defaults(prop_version, &None);
 
     let type_string = rust_type(env, prop.typ);
     let name_for_func = nameutil::signal_to_snake(&name);
@@ -312,8 +312,6 @@ fn analyze_property(
     } else {
         None
     };
-
-    imports.reset_defaults();
 
     (getter, setter, notify_signal)
 }

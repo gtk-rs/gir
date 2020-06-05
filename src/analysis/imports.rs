@@ -2,6 +2,7 @@ use super::namespaces;
 use crate::{library::Library, nameutil::crate_name, version::Version};
 use std::cmp::Ordering;
 use std::collections::btree_map::BTreeMap;
+use std::ops::{Deref, DerefMut};
 use std::vec::IntoIter;
 
 fn is_first_char_up(s: &str) -> bool {
@@ -95,7 +96,12 @@ impl Imports {
         }
     }
 
-    pub fn set_defaults(&mut self, version: Option<Version>, constraint: &Option<String>) {
+    #[must_use = "ImportsWithDefault must live while defaults are needed"]
+    pub fn with_defaults(
+        &mut self,
+        version: Option<Version>,
+        constraint: &Option<String>,
+    ) -> ImportsWithDefault<'_> {
         let constraints = if let Some(constraint) = constraint {
             vec![constraint.clone()]
         } else {
@@ -105,9 +111,11 @@ impl Imports {
             version,
             constraints,
         };
+
+        ImportsWithDefault::new(self)
     }
 
-    pub fn reset_defaults(&mut self) {
+    fn reset_defaults(&mut self) {
         self.defaults.clear();
     }
 
@@ -251,6 +259,35 @@ impl Imports {
         let mut imports = self.map.iter().collect::<Vec<_>>();
         imports.sort_by(compare_imports);
         imports.into_iter()
+    }
+}
+
+pub struct ImportsWithDefault<'a> {
+    imports: &'a mut Imports,
+}
+
+impl<'a> ImportsWithDefault<'a> {
+    fn new(imports: &'a mut Imports) -> Self {
+        Self { imports }
+    }
+}
+
+impl Drop for ImportsWithDefault<'_> {
+    fn drop(&mut self) {
+        self.imports.reset_defaults()
+    }
+}
+
+impl Deref for ImportsWithDefault<'_> {
+    type Target = Imports;
+    fn deref(&self) -> &Self::Target {
+        self.imports
+    }
+}
+
+impl DerefMut for ImportsWithDefault<'_> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        self.imports
     }
 }
 

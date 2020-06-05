@@ -97,7 +97,7 @@ fn analyze_property(
     if !for_builder {
         return None;
     }
-    imports.set_defaults(prop_version, &None);
+    let imports = &mut imports.with_defaults(prop_version, &None);
     let type_str = used_rust_type(env, prop.typ, false);
     if let Ok(ref s) = type_str {
         if !s.contains("GString") {
@@ -112,8 +112,6 @@ fn analyze_property(
         imports.add("glib::object::IsA");
         bounds.add_parameter(&prop.name, &type_str.into_string(), bound, false);
     }
-
-    imports.reset_defaults();
 
     Some(Property {
         name: prop.name.clone(),

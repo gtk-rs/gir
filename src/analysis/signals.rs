@@ -73,7 +73,7 @@ fn analyze_signal(
     let deprecated_version = signal.deprecated_version;
     let doc_hidden = configured_signals.iter().any(|f| f.doc_hidden);
 
-    imports.set_defaults(version, &None);
+    let imports = &mut imports.with_defaults(version, &None);
 
     let connect_name = format!("connect_{}", nameutil::signal_to_snake(&signal.name));
     let trampoline = trampolines::analyze(
@@ -110,7 +110,6 @@ fn analyze_signal(
         imports.add("std::boxed::Box as Box_");
         imports.add("glib_sys");
     }
-    imports.reset_defaults();
 
     let info = Info {
         connect_name,
