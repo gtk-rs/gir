@@ -32,6 +32,7 @@ pub fn generate(env: &Env) {
     }
 }
 
+#[allow(clippy::write_literal)]
 fn generate_build_script(w: &mut dyn Write, env: &Env, split_build_rs: bool) -> Result<()> {
     if !split_build_rs {
         general::start_comments(w, &env.config)?;

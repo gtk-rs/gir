@@ -536,7 +536,10 @@ impl Library {
         elem: &Element,
     ) -> Result<(), String> {
         self.read_function_if_not_moved(parser, ns_id, elem.name(), elem)?
-            .map(|func| self.add_type(ns_id, &func.name.clone(), Type::Function(func)));
+            .map(|func| {
+                let name = func.name.clone();
+                self.add_type(ns_id, &name, Type::Function(func))
+            });
 
         Ok(())
     }
