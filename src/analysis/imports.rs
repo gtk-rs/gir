@@ -2,6 +2,7 @@ use super::namespaces;
 use crate::{library::Library, nameutil::crate_name, version::Version};
 use std::cmp::Ordering;
 use std::collections::btree_map::BTreeMap;
+use std::ops::{Deref, DerefMut};
 use std::vec::IntoIter;
 
 fn is_first_char_up(s: &str) -> bool {
@@ -95,7 +96,12 @@ impl Imports {
         }
     }
 
-    pub fn set_defaults(&mut self, version: Option<Version>, constraint: &Option<String>) {
+    #[must_use = "ImportsWithDefault must live while defaults are needed"]
+    pub fn with_defaults(
+        &mut self,
+        version: Option<Version>,
+        constraint: &Option<String>,
+    ) -> ImportsWithDefault<'_> {
         let constraints = if let Some(constraint) = constraint {
             vec![constraint.clone()]
         } else {
@@ -105,9 +111,11 @@ impl Imports {
             version,
             constraints,
         };
+
+        ImportsWithDefault::new(self)
     }
 
-    pub fn reset_defaults(&mut self) {
+    fn reset_defaults(&mut self) {
         self.defaults.clear();
     }
 
@@ -128,7 +136,7 @@ impl Imports {
                 .entry(name.to_owned())
                 .or_insert_with(|| defaults.clone());
             entry.update_version(self.defaults.version);
-            entry.update_constraints(self.defaults.constraints.clone());
+            entry.update_constraints(&self.defaults.constraints);
         }
     }
 
@@ -254,6 +262,35 @@ impl Imports {
     }
 }
 
+pub struct ImportsWithDefault<'a> {
+    imports: &'a mut Imports,
+}
+
+impl<'a> ImportsWithDefault<'a> {
+    fn new(imports: &'a mut Imports) -> Self {
+        Self { imports }
+    }
+}
+
+impl Drop for ImportsWithDefault<'_> {
+    fn drop(&mut self) {
+        self.imports.reset_defaults()
+    }
+}
+
+impl Deref for ImportsWithDefault<'_> {
+    type Target = Imports;
+    fn deref(&self) -> &Self::Target {
+        self.imports
+    }
+}
+
+impl DerefMut for ImportsWithDefault<'_> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        self.imports
+    }
+}
+
 #[derive(Clone, Debug, Default)]
 pub struct ImportConditions {
     pub version: Option<Version>,
@@ -262,7 +299,8 @@ pub struct ImportConditions {
 
 impl ImportConditions {
     fn clear(&mut self) {
-        *self = ImportConditions::default();
+        self.version = None;
+        self.constraints.clear();
     }
 
     fn update_version(&mut self, version: Option<Version>) {
@@ -284,7 +322,7 @@ impl ImportConditions {
         }
     }
 
-    fn update_constraints(&mut self, constraints: Vec<String>) {
+    fn update_constraints(&mut self, constraints: &[String]) {
         // If the import is already present but doesn't have any constraint,
         // we don't want to add one.
         if self.constraints.is_empty() {
@@ -298,7 +336,7 @@ impl ImportConditions {
             // Otherwise, we just check if the constraint
             // is already present or not before adding it.
             for constraint in constraints {
-                if !self.constraints.iter().any(|x| x == &constraint) {
+                if !self.constraints.iter().any(|x| x == constraint) {
                     self.constraints.push(constraint.clone());
                 }
             }

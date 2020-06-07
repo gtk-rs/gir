@@ -540,7 +540,7 @@ fn analyze_function(
         .filter_map(|f| f.assertion)
         .next();
 
-    imports.set_defaults(version, &cfg_condition);
+    let imports = &mut imports.with_defaults(version, &cfg_condition);
 
     let ret = return_value::analyze(
         env,
@@ -771,8 +771,6 @@ fn analyze_function(
     let is_method = func.kind == library::FunctionKind::Method;
     let assertion =
         assertion.unwrap_or_else(|| SafetyAssertionMode::of(env, is_method, &parameters));
-
-    imports.reset_defaults();
 
     Info {
         name,
