@@ -140,6 +140,7 @@ impl Library {
     ) -> Result<(), String> {
         let class_name = elem.attr_required("name")?;
         let c_type = self.read_object_c_type(parser, elem)?;
+        let symbol_prefix = elem.attr_required("symbol-prefix").map(ToOwned::to_owned)?;
         let type_struct = elem.attr("type-struct").map(ToOwned::to_owned);
         let get_type = elem.attr_required("get-type")?;
         let version = self.read_version(parser, ns_id, elem)?;
@@ -227,6 +228,7 @@ impl Library {
             doc_deprecated,
             version,
             deprecated_version,
+            symbol_prefix,
         });
         self.add_type(ns_id, class_name, typ);
         Ok(())
@@ -255,6 +257,7 @@ impl Library {
     ) -> Result<Option<Type>, String> {
         let record_name = elem.attr_required("name")?;
         let c_type = elem.attr_required("type")?;
+        let symbol_prefix = elem.attr("symbol-prefix").map(ToOwned::to_owned);
         let get_type = elem.attr("get-type").map(ToOwned::to_owned);
         let gtype_struct_for = elem.attr("is-gtype-struct-for");
         let version = self.read_version(parser, ns_id, elem)?;
@@ -348,6 +351,7 @@ impl Library {
             doc,
             doc_deprecated,
             disguised,
+            symbol_prefix,
         });
 
         Ok(Some(typ))
@@ -388,6 +392,7 @@ impl Library {
         let union_name = elem.attr("name").unwrap_or("");
         let c_type = self.read_object_c_type(parser, elem).unwrap_or("");
         let get_type = elem.attr("get-type").map(|s| s.into());
+        let symbol_prefix = elem.attr("symbol-prefix").map(ToOwned::to_owned);
 
         let mut fields = Vec::new();
         let mut fns = Vec::new();
@@ -475,6 +480,7 @@ impl Library {
             fields,
             functions: fns,
             doc,
+            symbol_prefix,
         })
     }
 
@@ -552,6 +558,7 @@ impl Library {
     ) -> Result<(), String> {
         let interface_name = elem.attr_required("name")?;
         let c_type = self.read_object_c_type(parser, elem)?;
+        let symbol_prefix = elem.attr_required("symbol-prefix").map(ToOwned::to_owned)?;
         let type_struct = elem.attr("type-struct").map(ToOwned::to_owned);
         let get_type = elem.attr_required("get-type")?;
         let version = self.read_version(parser, ns_id, elem)?;
@@ -601,6 +608,7 @@ impl Library {
             doc_deprecated,
             version,
             deprecated_version,
+            symbol_prefix,
         });
         self.add_type(ns_id, interface_name, typ);
         Ok(())
@@ -614,6 +622,7 @@ impl Library {
     ) -> Result<(), String> {
         let bitfield_name = elem.attr_required("name")?;
         let c_type = self.read_object_c_type(parser, elem)?;
+        let symbol_prefix = elem.attr("symbol-prefix").map(ToOwned::to_owned);
         let get_type = elem.attr("get-type").map(|s| s.into());
         let version = self.read_version(parser, ns_id, elem)?;
         let deprecated_version = self.read_deprecated_version(parser, ns_id, elem)?;
@@ -645,6 +654,7 @@ impl Library {
             doc,
             doc_deprecated,
             glib_get_type: get_type,
+            symbol_prefix,
         });
         self.add_type(ns_id, bitfield_name, typ);
         Ok(())
@@ -658,6 +668,7 @@ impl Library {
     ) -> Result<(), String> {
         let enum_name = elem.attr_required("name")?;
         let c_type = self.read_object_c_type(parser, elem)?;
+        let symbol_prefix = elem.attr("symbol-prefix").map(ToOwned::to_owned);
         let get_type = elem.attr("get-type").map(|s| s.into());
         let version = self.read_version(parser, ns_id, elem)?;
         let deprecated_version = self.read_deprecated_version(parser, ns_id, elem)?;
@@ -691,6 +702,7 @@ impl Library {
             doc_deprecated,
             error_domain,
             glib_get_type: get_type,
+            symbol_prefix,
         });
         self.add_type(ns_id, enum_name, typ);
         Ok(())
