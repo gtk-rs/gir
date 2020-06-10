@@ -23,11 +23,13 @@ pub fn generate_records_funcs(
     for record in records {
         let name = format!("{}.{}", env.config.library_name, record.name);
         let obj = env.config.objects.get(&name).unwrap_or(&DEFAULT_OBJ);
+        let version = std::cmp::max(record.version, obj.version);
         let glib_get_type = record.glib_get_type.as_ref().unwrap_or(&intern_str);
         generate_object_funcs(
             w,
             env,
             obj,
+            version,
             &record.c_type,
             glib_get_type,
             &record.functions,
@@ -45,10 +47,12 @@ pub fn generate_classes_funcs(
     for klass in classes {
         let name = format!("{}.{}", env.config.library_name, klass.name);
         let obj = env.config.objects.get(&name).unwrap_or(&DEFAULT_OBJ);
+        let version = std::cmp::max(klass.version, obj.version);
         generate_object_funcs(
             w,
             env,
             obj,
+            version,
             &klass.c_type,
             &klass.glib_get_type,
             &klass.functions,
@@ -67,11 +71,13 @@ pub fn generate_bitfields_funcs(
     for bitfield in bitfields {
         let name = format!("{}.{}", env.config.library_name, bitfield.name);
         let obj = env.config.objects.get(&name).unwrap_or(&DEFAULT_OBJ);
+        let version = std::cmp::max(bitfield.version, obj.version);
         let glib_get_type = bitfield.glib_get_type.as_ref().unwrap_or(&intern_str);
         generate_object_funcs(
             w,
             env,
             obj,
+            version,
             &bitfield.c_type,
             glib_get_type,
             &bitfield.functions,
@@ -90,8 +96,17 @@ pub fn generate_enums_funcs(
     for en in enums {
         let name = format!("{}.{}", env.config.library_name, en.name);
         let obj = env.config.objects.get(&name).unwrap_or(&DEFAULT_OBJ);
+        let version = std::cmp::max(en.version, obj.version);
         let glib_get_type = en.glib_get_type.as_ref().unwrap_or(&intern_str);
-        generate_object_funcs(w, env, obj, &en.c_type, glib_get_type, &en.functions)?;
+        generate_object_funcs(
+            w,
+            env,
+            obj,
+            version,
+            &en.c_type,
+            glib_get_type,
+            &en.functions,
+        )?;
     }
 
     Ok(())
@@ -111,7 +126,15 @@ pub fn generate_unions_funcs(
         let name = format!("{}.{}", env.config.library_name, union.name);
         let obj = env.config.objects.get(&name).unwrap_or(&DEFAULT_OBJ);
         let glib_get_type = union.glib_get_type.as_ref().unwrap_or(&intern_str);
-        generate_object_funcs(w, env, obj, c_type, glib_get_type, &union.functions)?;
+        generate_object_funcs(
+            w,
+            env,
+            obj,
+            obj.version,
+            c_type,
+            glib_get_type,
+            &union.functions,
+        )?;
     }
 
     Ok(())
@@ -125,10 +148,12 @@ pub fn generate_interfaces_funcs(
     for interface in interfaces {
         let name = format!("{}.{}", env.config.library_name, interface.name);
         let obj = env.config.objects.get(&name).unwrap_or(&DEFAULT_OBJ);
+        let version = std::cmp::max(interface.version, obj.version);
         generate_object_funcs(
             w,
             env,
             obj,
+            version,
             &interface.c_type,
             &interface.glib_get_type,
             &interface.functions,
@@ -145,7 +170,7 @@ pub fn generate_other_funcs(
 ) -> Result<()> {
     let name = format!("{}.*", env.config.library_name);
     let obj = env.config.objects.get(&name).unwrap_or(&DEFAULT_OBJ);
-    generate_object_funcs(w, env, obj, "Other functions", INTERN, functions)
+    generate_object_funcs(w, env, obj, None, "Other functions", INTERN, functions)
 }
 
 fn generate_cfg_configure(
@@ -165,6 +190,7 @@ fn generate_object_funcs(
     w: &mut dyn Write,
     env: &Env,
     obj: &GObject,
+    version: Option<crate::version::Version>,
     c_type: &str,
     glib_get_type: &str,
     functions: &[library::Function],
@@ -183,9 +209,17 @@ fn generate_object_funcs(
         )?;
     }
     if write_get_type {
-        let configured_functions = obj.functions.matched(&glib_get_type);
-        generate_cfg_configure(w, &configured_functions, false)?;
-        writeln!(w, "    pub fn {}() -> GType;", glib_get_type)?;
+        let configured_functions = obj.functions.matched("get_type");
+
+        if !configured_functions.iter().any(|f| f.ignore) {
+            let version = std::iter::once(version)
+                .chain(configured_functions.iter().map(|f| f.version))
+                .max()
+                .flatten();
+            version_condition(w, env, version, false, 1)?;
+            generate_cfg_configure(w, &configured_functions, false)?;
+            writeln!(w, "    pub fn {}() -> GType;", glib_get_type)?;
+        }
     }
 
     for func in functions {

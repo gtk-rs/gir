@@ -363,6 +363,7 @@ pub struct Member {
 pub struct Enumeration {
     pub name: String,
     pub c_type: String,
+    pub symbol_prefix: Option<String>,
     pub members: Vec<Member>,
     pub functions: Vec<Function>,
     pub version: Option<Version>,
@@ -377,6 +378,7 @@ pub struct Enumeration {
 pub struct Bitfield {
     pub name: String,
     pub c_type: String,
+    pub symbol_prefix: Option<String>,
     pub members: Vec<Member>,
     pub functions: Vec<Function>,
     pub version: Option<Version>,
@@ -390,6 +392,7 @@ pub struct Bitfield {
 pub struct Record {
     pub name: String,
     pub c_type: String,
+    pub symbol_prefix: Option<String>,
     pub glib_get_type: Option<String>,
     pub gtype_struct_for: Option<String>,
     pub fields: Vec<Field>,
@@ -418,6 +421,7 @@ pub struct Field {
 pub struct Union {
     pub name: String,
     pub c_type: Option<String>,
+    pub symbol_prefix: Option<String>,
     pub glib_get_type: Option<String>,
     pub fields: Vec<Field>,
     pub functions: Vec<Function>,
@@ -491,6 +495,7 @@ pub struct Signal {
 pub struct Interface {
     pub name: String,
     pub c_type: String,
+    pub symbol_prefix: String,
     pub type_struct: Option<String>,
     pub c_class_type: Option<String>,
     pub glib_get_type: String,
@@ -508,6 +513,7 @@ pub struct Interface {
 pub struct Class {
     pub name: String,
     pub c_type: String,
+    pub symbol_prefix: String,
     pub type_struct: Option<String>,
     pub c_class_type: Option<String>,
     pub glib_get_type: String,
