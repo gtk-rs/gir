@@ -195,7 +195,7 @@ pub fn define_object_type(
     Ok(())
 }
 
-pub fn define_boxed_type(
+fn define_boxed_type_internal(
     w: &mut dyn Write,
     env: &Env,
     type_name: &str,
@@ -204,11 +204,10 @@ pub fn define_boxed_type(
     free_fn: &str,
     init_function_expression: &Option<String>,
     clear_function_expression: &Option<String>,
-    get_type_fn: &Option<String>,
+    get_type_fn: Option<&str>,
     derive: &[Derive],
 ) -> Result<()> {
     let sys_crate_name = env.main_sys_crate_name();
-    writeln!(w)?;
     writeln!(w, "glib_wrapper! {{")?;
 
     derives(w, derive, 1)?;
@@ -233,7 +232,7 @@ pub fn define_boxed_type(
         writeln!(w, "\t\tclear => {},", clear_function_expression,)?;
     }
 
-    if let Some(ref get_type_fn) = *get_type_fn {
+    if let Some(ref get_type_fn) = get_type_fn {
         writeln!(
             w,
             "\t\tget_type => || {}::{}(),",
@@ -242,6 +241,82 @@ pub fn define_boxed_type(
     }
     writeln!(w, "\t}}")?;
     writeln!(w, "}}")?;
+
+    Ok(())
+}
+
+pub fn define_boxed_type(
+    w: &mut dyn Write,
+    env: &Env,
+    type_name: &str,
+    glib_name: &str,
+    copy_fn: &str,
+    free_fn: &str,
+    init_function_expression: &Option<String>,
+    clear_function_expression: &Option<String>,
+    get_type_fn: Option<(String, Option<Version>)>,
+    derive: &[Derive],
+) -> Result<()> {
+    writeln!(w)?;
+
+    if let Some((ref get_type_fn, get_type_version)) = get_type_fn {
+        if get_type_version.is_some() {
+            version_condition(w, env, get_type_version, false, 0)?;
+            define_boxed_type_internal(
+                w,
+                env,
+                type_name,
+                glib_name,
+                copy_fn,
+                free_fn,
+                init_function_expression,
+                clear_function_expression,
+                Some(&get_type_fn),
+                derive,
+            )?;
+
+            writeln!(w)?;
+            not_version_condition_no_dox(w, get_type_version, false, 0)?;
+            define_boxed_type_internal(
+                w,
+                env,
+                type_name,
+                glib_name,
+                copy_fn,
+                free_fn,
+                init_function_expression,
+                clear_function_expression,
+                None,
+                derive,
+            )?;
+        } else {
+            define_boxed_type_internal(
+                w,
+                env,
+                type_name,
+                glib_name,
+                copy_fn,
+                free_fn,
+                init_function_expression,
+                clear_function_expression,
+                Some(&get_type_fn),
+                derive,
+            )?;
+        }
+    } else {
+        define_boxed_type_internal(
+            w,
+            env,
+            type_name,
+            glib_name,
+            copy_fn,
+            free_fn,
+            init_function_expression,
+            clear_function_expression,
+            None,
+            derive,
+        )?;
+    }
 
     Ok(())
 }
@@ -296,18 +371,17 @@ pub fn define_auto_boxed_type(
     Ok(())
 }
 
-pub fn define_shared_type(
+fn define_shared_type_internal(
     w: &mut dyn Write,
     env: &Env,
     type_name: &str,
     glib_name: &str,
     ref_fn: &str,
     unref_fn: &str,
-    get_type_fn: &Option<String>,
+    get_type_fn: Option<&str>,
     derive: &[Derive],
 ) -> Result<()> {
     let sys_crate_name = env.main_sys_crate_name();
-    writeln!(w)?;
     writeln!(w, "glib_wrapper! {{")?;
     derives(w, derive, 1)?;
     writeln!(
@@ -323,7 +397,7 @@ pub fn define_shared_type(
         "\t\tunref => |ptr| {}::{}(ptr),",
         sys_crate_name, unref_fn
     )?;
-    if let Some(ref get_type_fn) = *get_type_fn {
+    if let Some(ref get_type_fn) = get_type_fn {
         writeln!(
             w,
             "\t\tget_type => || {}::{}(),",
@@ -332,6 +406,56 @@ pub fn define_shared_type(
     }
     writeln!(w, "\t}}")?;
     writeln!(w, "}}")?;
+
+    Ok(())
+}
+
+pub fn define_shared_type(
+    w: &mut dyn Write,
+    env: &Env,
+    type_name: &str,
+    glib_name: &str,
+    ref_fn: &str,
+    unref_fn: &str,
+    get_type_fn: Option<(String, Option<Version>)>,
+    derive: &[Derive],
+) -> Result<()> {
+    writeln!(w)?;
+
+    if let Some((ref get_type_fn, get_type_version)) = get_type_fn {
+        if get_type_version.is_some() {
+            version_condition(w, env, get_type_version, false, 0)?;
+            define_shared_type_internal(
+                w,
+                env,
+                type_name,
+                glib_name,
+                ref_fn,
+                unref_fn,
+                Some(&get_type_fn),
+                derive,
+            )?;
+
+            writeln!(w)?;
+            not_version_condition_no_dox(w, get_type_version, false, 0)?;
+            define_shared_type_internal(
+                w, env, type_name, glib_name, ref_fn, unref_fn, None, derive,
+            )?;
+        } else {
+            define_shared_type_internal(
+                w,
+                env,
+                type_name,
+                glib_name,
+                ref_fn,
+                unref_fn,
+                Some(&get_type_fn),
+                derive,
+            )?;
+        }
+    } else {
+        define_shared_type_internal(w, env, type_name, glib_name, ref_fn, unref_fn, None, derive)?;
+    }
 
     Ok(())
 }
@@ -413,6 +537,25 @@ pub fn not_version_condition(
         let comment = if commented { "//" } else { "" };
         let s = format!(
             "{}{}#[cfg(any(not({}), feature = \"dox\"))]",
+            tabs(indent),
+            comment,
+            v.to_cfg()
+        );
+        writeln!(w, "{}", s)?;
+    }
+    Ok(())
+}
+
+pub fn not_version_condition_no_dox(
+    w: &mut dyn Write,
+    version: Option<Version>,
+    commented: bool,
+    indent: usize,
+) -> Result<()> {
+    if let Some(v) = version {
+        let comment = if commented { "//" } else { "" };
+        let s = format!(
+            "{}{}#[cfg(not(any({}, feature = \"dox\")))]",
             tabs(indent),
             comment,
             v.to_cfg()

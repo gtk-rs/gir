@@ -8,6 +8,7 @@ use crate::{
     library,
     nameutil::*,
     traits::*,
+    version::Version,
 };
 use log::info;
 use std::ops::Deref;
@@ -15,7 +16,7 @@ use std::ops::Deref;
 #[derive(Debug, Default)]
 pub struct Info {
     pub base: InfoBase,
-    pub glib_get_type: Option<String>,
+    pub glib_get_type: Option<(String, Option<Version>)>,
     pub use_boxed_functions: bool,
     pub derives: Derives,
     pub init_function_expression: Option<String>,
@@ -153,6 +154,48 @@ pub fn new(env: &Env, obj: &GObject) -> Option<Info> {
 
     special_functions::analyze_imports(&specials, &mut imports);
 
+    let glib_get_type = if let Some(ref glib_get_type) = record.glib_get_type {
+        let configured_functions = obj.functions.matched("get_type");
+        let get_type_version = configured_functions
+            .iter()
+            .map(|f| f.version)
+            .max()
+            .flatten();
+
+        Some((glib_get_type.clone(), get_type_version))
+    } else {
+        None
+    };
+
+    // Check if we have to make use of the GType and the generic
+    // boxed functions.
+    if obj.use_boxed_functions
+        || ((specials.get(&special_functions::Type::Ref).is_none()
+            || specials.get(&special_functions::Type::Unref).is_none())
+            && (specials.get(&special_functions::Type::Copy).is_none()
+                || specials.get(&special_functions::Type::Free).is_none()))
+    {
+        if let Some((_, get_type_version)) = glib_get_type {
+            if get_type_version > version {
+                // FIXME: Ideally we would update it here but that requires fixing *all* the
+                // versions of functions in this and other types that use this type somewhere in
+                // the signature. Similar code exists for before the analysis already but that
+                // doesn't apply directly here.
+                //
+                // As the get_type function only has a version if explicitly configured let's just
+                // panic here. It's easy enough for the user to move the version configuration from
+                // the function to the type.
+                panic!(
+                    "Have to use get_type function for {} but version is higher than for the type ({:?} > {:?})",
+                    full_name, get_type_version, version
+                );
+            }
+        } else {
+            error!("Missing memory management functions for {}", full_name);
+            return None;
+        }
+    }
+
     let base = InfoBase {
         full_name,
         type_id: record_tid,
@@ -168,7 +211,7 @@ pub fn new(env: &Env, obj: &GObject) -> Option<Info> {
 
     let info = Info {
         base,
-        glib_get_type: record.glib_get_type.clone(),
+        glib_get_type,
         derives,
         use_boxed_functions: obj.use_boxed_functions,
         init_function_expression: obj.init_function_expression.clone(),

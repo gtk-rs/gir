@@ -35,6 +35,7 @@ pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>) {
     if !has_any {
         return;
     }
+
     let path = root_path.join("flags.rs");
     file_saver::save_to_file(path, env.config.make_backup, |w| {
         let mut imports = Imports::new(&env.library);
@@ -159,8 +160,14 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
     )?;
 
     if let Some(ref get_type) = flags.glib_get_type {
+        let configured_functions = config.functions.matched("get_type");
+        let version = std::iter::once(flags.version)
+            .chain(configured_functions.iter().map(|f| f.version))
+            .max()
+            .flatten();
+
         cfg_deprecated(w, env, flags.deprecated_version, false, 0)?;
-        version_condition(w, env, flags.version, false, 0)?;
+        version_condition(w, env, version, false, 0)?;
         writeln!(
             w,
             "impl StaticType for {name} {{
@@ -175,7 +182,7 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
         writeln!(w)?;
 
         cfg_deprecated(w, env, flags.deprecated_version, false, 0)?;
-        version_condition(w, env, flags.version, false, 0)?;
+        version_condition(w, env, version, false, 0)?;
         writeln!(
             w,
             "impl<'a> FromValueOptional<'a> for {name} {{
@@ -188,7 +195,7 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
         writeln!(w)?;
 
         cfg_deprecated(w, env, flags.deprecated_version, false, 0)?;
-        version_condition(w, env, flags.version, false, 0)?;
+        version_condition(w, env, version, false, 0)?;
         writeln!(
             w,
             "impl<'a> FromValue<'a> for {name} {{
@@ -201,7 +208,7 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
         writeln!(w)?;
 
         cfg_deprecated(w, env, flags.deprecated_version, false, 0)?;
-        version_condition(w, env, flags.version, false, 0)?;
+        version_condition(w, env, version, false, 0)?;
         writeln!(
             w,
             "impl SetValue for {name} {{
