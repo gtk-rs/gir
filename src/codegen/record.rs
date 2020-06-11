@@ -13,7 +13,7 @@ pub fn generate(w: &mut dyn Write, env: &Env, analysis: &analysis::record::Info)
     general::uses(w, env, &analysis.imports)?;
 
     if analysis.use_boxed_functions {
-        if let Some(ref glib_get_type) = analysis.glib_get_type {
+        if let Some((ref glib_get_type, _)) = analysis.glib_get_type {
             general::define_auto_boxed_type(
                 w,
                 env,
@@ -41,7 +41,13 @@ pub fn generate(w: &mut dyn Write, env: &Env, analysis: &analysis::record::Info)
             &type_.c_type,
             ref_fn,
             unref_fn,
-            &analysis.glib_get_type,
+            analysis.glib_get_type.as_ref().map(|(f, v)| {
+                if v > &analysis.version {
+                    (f.clone(), *v)
+                } else {
+                    (f.clone(), None)
+                }
+            }),
             &analysis.derives,
         )?;
     } else if let (Some(copy_fn), Some(free_fn)) = (
@@ -57,10 +63,16 @@ pub fn generate(w: &mut dyn Write, env: &Env, analysis: &analysis::record::Info)
             free_fn,
             &analysis.init_function_expression,
             &analysis.clear_function_expression,
-            &analysis.glib_get_type,
+            analysis.glib_get_type.as_ref().map(|(f, v)| {
+                if v > &analysis.version {
+                    (f.clone(), *v)
+                } else {
+                    (f.clone(), None)
+                }
+            }),
             &analysis.derives,
         )?;
-    } else if let Some(ref glib_get_type) = analysis.glib_get_type {
+    } else if let Some((ref glib_get_type, _)) = analysis.glib_get_type {
         general::define_auto_boxed_type(
             w,
             env,
@@ -72,7 +84,8 @@ pub fn generate(w: &mut dyn Write, env: &Env, analysis: &analysis::record::Info)
             &analysis.derives,
         )?;
     } else {
-        panic!(
+        // This is checked in analysis::record already
+        unreachable!(
             "Missing memory management functions for {}",
             analysis.full_name
         );

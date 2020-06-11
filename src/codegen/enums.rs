@@ -314,8 +314,14 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
 
     // Generate StaticType trait implementation.
     if let Some(ref get_type) = enum_.glib_get_type {
+        let configured_functions = config.functions.matched("get_type");
+        let version = std::iter::once(enum_.version)
+            .chain(configured_functions.iter().map(|f| f.version))
+            .max()
+            .flatten();
+
         cfg_deprecated(w, env, enum_.deprecated_version, false, 0)?;
-        version_condition(w, env, enum_.version, false, 0)?;
+        version_condition(w, env, version, false, 0)?;
         writeln!(
             w,
             "impl StaticType for {name} {{
@@ -330,7 +336,7 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
         writeln!(w)?;
 
         cfg_deprecated(w, env, enum_.deprecated_version, false, 0)?;
-        version_condition(w, env, enum_.version, false, 0)?;
+        version_condition(w, env, version, false, 0)?;
         writeln!(
             w,
             "impl<'a> FromValueOptional<'a> for {name} {{
@@ -343,7 +349,7 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
         writeln!(w)?;
 
         cfg_deprecated(w, env, enum_.deprecated_version, false, 0)?;
-        version_condition(w, env, enum_.version, false, 0)?;
+        version_condition(w, env, version, false, 0)?;
         writeln!(
             w,
             "impl<'a> FromValue<'a> for {name} {{
@@ -356,7 +362,7 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
         writeln!(w)?;
 
         cfg_deprecated(w, env, enum_.deprecated_version, false, 0)?;
-        version_condition(w, env, enum_.version, false, 0)?;
+        version_condition(w, env, version, false, 0)?;
         writeln!(
             w,
             "impl SetValue for {name} {{
