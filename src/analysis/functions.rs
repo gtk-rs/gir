@@ -459,6 +459,14 @@ fn analyze_callbacks(
     }
 }
 
+fn rename_constructor(name: String) -> String {
+    if name.starts_with("new_from") || name.starts_with("new_with") {
+        name[4..].to_string()
+    } else {
+        name
+    }
+}
+
 fn analyze_function(
     env: &Env,
     name: String,
@@ -525,7 +533,10 @@ fn analyze_function(
         .iter()
         .filter_map(|f| f.rename.clone())
         .next()
-        .unwrap_or_else(|| name);
+        .unwrap_or_else(|| match func.kind {
+            library::FunctionKind::Constructor => rename_constructor(name),
+            _ => name,
+        });
     let version = env.config.filter_version(version);
     let deprecated_version = func.deprecated_version;
     let cfg_condition = configured_functions
