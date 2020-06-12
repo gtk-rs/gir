@@ -231,13 +231,13 @@ fn generate_object_funcs(
 
         let (commented, sig) = function_signature(env, func, false);
         let comment = if commented { "//" } else { "" };
-        version_condition(w, env, func.version, commented, 1)?;
+        version_condition(w, env, std::cmp::max(func.version, version), commented, 1)?;
         let name = func.c_identifier.as_ref().unwrap();
         // since we work with gir-files from Linux, some function names need to be adjusted
         if is_windows_utf8 {
             writeln!(w, "    {}#[cfg(any(windows, feature = \"dox\"))]", comment)?;
             writeln!(w, "    {}pub fn {}_utf8{};", comment, name, sig)?;
-            version_condition(w, env, func.version, commented, 1)?;
+            version_condition(w, env, std::cmp::max(func.version, version), commented, 1)?;
         }
         generate_cfg_configure(w, &configured_functions, commented)?;
         writeln!(w, "    {}pub fn {}{};", comment, name, sig)?;
