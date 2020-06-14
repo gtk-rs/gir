@@ -23,7 +23,7 @@ pub fn generate_records_funcs(
     for record in records {
         let name = format!("{}.{}", env.config.library_name, record.name);
         let obj = env.config.objects.get(&name).unwrap_or(&DEFAULT_OBJ);
-        let version = std::cmp::max(record.version, obj.version);
+        let version = obj.version.or(record.version);
         let glib_get_type = record.glib_get_type.as_ref().unwrap_or(&intern_str);
         generate_object_funcs(
             w,
@@ -47,7 +47,7 @@ pub fn generate_classes_funcs(
     for klass in classes {
         let name = format!("{}.{}", env.config.library_name, klass.name);
         let obj = env.config.objects.get(&name).unwrap_or(&DEFAULT_OBJ);
-        let version = std::cmp::max(klass.version, obj.version);
+        let version = obj.version.or(klass.version);
         generate_object_funcs(
             w,
             env,
@@ -71,7 +71,7 @@ pub fn generate_bitfields_funcs(
     for bitfield in bitfields {
         let name = format!("{}.{}", env.config.library_name, bitfield.name);
         let obj = env.config.objects.get(&name).unwrap_or(&DEFAULT_OBJ);
-        let version = std::cmp::max(bitfield.version, obj.version);
+        let version = obj.version.or(bitfield.version);
         let glib_get_type = bitfield.glib_get_type.as_ref().unwrap_or(&intern_str);
         generate_object_funcs(
             w,
@@ -96,7 +96,7 @@ pub fn generate_enums_funcs(
     for en in enums {
         let name = format!("{}.{}", env.config.library_name, en.name);
         let obj = env.config.objects.get(&name).unwrap_or(&DEFAULT_OBJ);
-        let version = std::cmp::max(en.version, obj.version);
+        let version = obj.version.or(en.version);
         let glib_get_type = en.glib_get_type.as_ref().unwrap_or(&intern_str);
         generate_object_funcs(
             w,
@@ -148,7 +148,7 @@ pub fn generate_interfaces_funcs(
     for interface in interfaces {
         let name = format!("{}.{}", env.config.library_name, interface.name);
         let obj = env.config.objects.get(&name).unwrap_or(&DEFAULT_OBJ);
-        let version = std::cmp::max(interface.version, obj.version);
+        let version = obj.version.or(interface.version);
         generate_object_funcs(
             w,
             env,
@@ -231,13 +231,25 @@ fn generate_object_funcs(
 
         let (commented, sig) = function_signature(env, func, false);
         let comment = if commented { "//" } else { "" };
-        version_condition(w, env, std::cmp::max(func.version, version), commented, 1)?;
+
+        // If a version was configured for this function specifically then use that,
+        // otherwise use the (fixed up!) version of the function, if any, otherwise
+        // use the version of the type.
+        let version = configured_functions
+            .iter()
+            .map(|f| f.version)
+            .max()
+            .flatten()
+            .or(func.version)
+            .or(version);
+
+        version_condition(w, env, version, commented, 1)?;
         let name = func.c_identifier.as_ref().unwrap();
         // since we work with gir-files from Linux, some function names need to be adjusted
         if is_windows_utf8 {
             writeln!(w, "    {}#[cfg(any(windows, feature = \"dox\"))]", comment)?;
             writeln!(w, "    {}pub fn {}_utf8{};", comment, name, sig)?;
-            version_condition(w, env, std::cmp::max(func.version, version), commented, 1)?;
+            version_condition(w, env, version, commented, 1)?;
         }
         generate_cfg_configure(w, &configured_functions, commented)?;
         writeln!(w, "    {}pub fn {}{};", comment, name, sig)?;
