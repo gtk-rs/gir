@@ -429,25 +429,6 @@ fn parse_status_shorthand(
     }
 }
 
-pub fn parse_builders(objects: &mut GObjects, toml: &Value) {
-    let builder_suffix = "Builder";
-    let option_name = "options.builders";
-    if let Some(a) = toml.lookup(option_name).map(|a| a.as_array().unwrap()) {
-        for name in a.iter().map(|s| s.as_str().unwrap()) {
-            // Support both object name and builder name
-            let obj_name = if name.ends_with(builder_suffix) {
-                &name[..name.len() - builder_suffix.len()]
-            } else {
-                name
-            };
-            match objects.get_mut(obj_name) {
-                Some(obj) => obj.generate_builder = true,
-                None => panic!("Bad name in {}: object {} not defined", option_name, name),
-            }
-        }
-    }
-}
-
 pub fn resolve_type_ids(objects: &mut GObjects, library: &Library) {
     let ns = library.namespace(MAIN_NAMESPACE);
     let global_functions_name = format!("{}.*", ns.name);

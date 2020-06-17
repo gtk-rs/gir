@@ -185,7 +185,6 @@ impl Config {
             .map(|t| gobjects::parse_toml(t, concurrency, generate_display_trait))
             .unwrap_or_default();
         gobjects::parse_status_shorthands(&mut objects, &toml, concurrency, generate_display_trait);
-        gobjects::parse_builders(&mut objects, &toml);
 
         let external_libraries = read_external_libraries(&toml)?;
 
