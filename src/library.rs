@@ -528,6 +528,7 @@ pub struct Class {
     pub deprecated_version: Option<Version>,
     pub doc: Option<String>,
     pub doc_deprecated: Option<String>,
+    pub is_abstract: bool,
 }
 
 #[derive(Debug)]
@@ -841,6 +842,13 @@ impl Type {
             Type::Class(Class { final_type, .. }) => final_type,
             Type::Interface(..) => false,
             _ => true,
+        }
+    }
+
+    pub fn is_abstract(&self) -> bool {
+        match *self {
+            Type::Class(Class { is_abstract, .. }) => is_abstract,
+            _ => false,
         }
     }
 

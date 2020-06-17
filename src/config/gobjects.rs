@@ -437,6 +437,20 @@ pub fn resolve_type_ids(objects: &mut GObjects, library: &Library) {
         let type_id = library.find_type(0, name);
         if type_id.is_none() && name != &global_functions_name {
             warn!("Configured object `{}` missing from the library", name);
+        } else if !object.ignore_builder {
+            if let Some(ref type_id) = type_id {
+                if library.type_(*type_id).is_abstract() {
+                    if object.generate_builder {
+                        warn!(
+                            "Cannot generate builder for `{}` because it's a base class",
+                            name
+                        );
+                    }
+                    // We set this to `true` to avoid having the "not_bound" mode saying that this
+                    // builder should be generated.
+                    object.ignore_builder = true;
+                }
+            }
         }
         object.type_id = type_id;
     }
