@@ -145,6 +145,7 @@ impl Library {
         let get_type = elem.attr_required("get-type")?;
         let version = self.read_version(parser, ns_id, elem)?;
         let deprecated_version = self.read_deprecated_version(parser, ns_id, elem)?;
+        let is_abstract = elem.attr("abstract").map(|x| x == "1").unwrap_or(false);
 
         let mut fns = Vec::new();
         let mut signals = Vec::new();
@@ -229,6 +230,7 @@ impl Library {
             version,
             deprecated_version,
             symbol_prefix,
+            is_abstract,
         });
         self.add_type(ns_id, class_name, typ);
         Ok(())

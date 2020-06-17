@@ -19,7 +19,7 @@ pub fn analyze(
     obj: &GObject,
     imports: &mut Imports,
 ) -> Vec<Property> {
-    if !obj.generate_builder {
+    if !obj.generate_builder || obj.ignore_builder {
         return Vec::new();
     }
 
