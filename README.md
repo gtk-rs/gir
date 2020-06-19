@@ -153,18 +153,22 @@ manual = ["Gtk.Button"]
 
 So in here, both `GtkWidget` and `GtkWindow` will be fully generated and functions/methods using `GtkButton` will be uncommented. To generate code for all global functions, add `Gtk.*` to the `generate` array.
 
-To also generate a `Builder` struct for a widget, it needs to be added in the `builders` array or set `generate_builder` flag in object configuration:
+To also generate a `Builder` struct for a widget, it needs to be set with the `generate_builder` flag in object configuration:
 
 ```toml
-builders = [
-    "Gtk.AboutDialog",    # generated object name
-    "Gtk.WindowBuilder",  # or name with suffix Builder
-]
-
 [[object]]
 name = "Gtk.TreeView"
 status = "generate"
 generate_builder = true
+```
+
+If you want to remove warning messages about the not bound `Builders` during the generation you don't want to be generated, you can ignore them with the `ignore_builder` flag in object configuration:
+
+```toml
+[[object]]
+name = "Gtk.TreeView"
+status = "generate"
+ignore_builder = true
 ```
 
 If there is some work which has to be done post-construction before the builder's
