@@ -121,10 +121,8 @@ fn fill_in(root: &mut Table, env: &Env) {
         set_string(meta, "version", env.config.min_cfg_version.to_string());
 
         let versions = upsert_table(meta, "feature-versions");
-        env.namespaces
-            .main()
-            .versions
-            .iter()
+        collect_versions(env)
+            .keys()
             .filter(|&&v| v > env.config.min_cfg_version)
             .for_each(|v| {
                 set_string(versions, &v.to_feature(), v.to_string());
