@@ -122,10 +122,10 @@ fn fill_in(root: &mut Table, env: &Env) {
 
         let versions = upsert_table(meta, "feature-versions");
         collect_versions(env)
-            .keys()
-            .filter(|&&v| v > env.config.min_cfg_version)
-            .for_each(|v| {
-                set_string(versions, &v.to_feature(), v.to_string());
+            .iter()
+            .filter(|(&v, _)| v > env.config.min_cfg_version)
+            .for_each(|(v, lib_version)| {
+                set_string(versions, &v.to_feature(), lib_version.to_string());
             });
     }
 
