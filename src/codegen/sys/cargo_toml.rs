@@ -83,7 +83,6 @@ fn fill_in(root: &mut Table, env: &Env) {
     {
         let build_deps = upsert_table(root, "build-dependencies");
         set_string(build_deps, "system-deps", "1.3");
-        unset(build_deps, "pkg-config");
     }
 
     {
