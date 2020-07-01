@@ -134,6 +134,19 @@ fn generate_doc(w: &mut dyn Write, env: &Env) -> Result<()> {
                     Box::new(move |w, e| create_enum_doc(w, e, enum_)),
                 ));
             }
+        } else if let LType::Bitfield(ref bitfield) = *type_ {
+            if !env
+                .config
+                .objects
+                .get(&tid.full_name(&env.library))
+                .map_or(true, |obj| obj.status.ignored())
+                && !env.is_totally_deprecated(bitfield.deprecated_version)
+            {
+                generators.push((
+                    &bitfield.name[..],
+                    Box::new(move |w, e| create_bitfield_doc(w, e, bitfield)),
+                ));
+            }
         }
     }
 
@@ -387,6 +400,50 @@ fn create_enum_doc(w: &mut dyn Write, env: &Env, enum_: &Enumeration) -> Result<
     }
 
     if let Some(version) = enum_.version {
+        if version > env.config.min_cfg_version {
+            writeln!(w, "\nFeature: `{}`\n", version.to_feature())?;
+        }
+    }
+    Ok(())
+}
+
+fn create_bitfield_doc(w: &mut dyn Write, env: &Env, bitfield: &Bitfield) -> Result<()> {
+    let ty = bitfield.to_stripper_type();
+    let symbols = env.symbols.borrow();
+
+    write_item_doc(w, &ty, |w| {
+        if let Some(ref doc) = bitfield.doc {
+            writeln!(w, "{}", reformat_doc(doc, &symbols))?;
+        }
+        if let Some(ver) = bitfield.deprecated_version {
+            writeln!(w, "\n# Deprecated since {}\n", ver)?;
+        } else if bitfield.doc_deprecated.is_some() {
+            writeln!(w, "\n# Deprecated\n")?;
+        }
+        if let Some(ref doc) = bitfield.doc_deprecated {
+            writeln!(w, "{}", reformat_doc(doc, &symbols))?;
+        }
+        Ok(())
+    })?;
+
+    for member in &bitfield.members {
+        let mut sub_ty = TypeStruct {
+            name: member.name.to_camel(),
+            ..member.to_stripper_type()
+        };
+
+        if member.doc.is_some() {
+            sub_ty.parent = Some(Box::new(ty.clone()));
+            write_item_doc(w, &sub_ty, |w| {
+                if let Some(ref doc) = member.doc {
+                    writeln!(w, "{}", reformat_doc(doc, &symbols))?;
+                }
+                Ok(())
+            })?;
+        }
+    }
+
+    if let Some(version) = bitfield.version {
         if version > env.config.min_cfg_version {
             writeln!(w, "\nFeature: `{}`\n", version.to_feature())?;
         }
