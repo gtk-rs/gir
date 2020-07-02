@@ -383,13 +383,13 @@ fn create_enum_doc(w: &mut dyn Write, env: &Env, enum_: &Enumeration) -> Result<
     })?;
 
     for member in &enum_.members {
-        let mut sub_ty = TypeStruct {
-            name: member.name.to_camel(),
-            ..member.to_stripper_type()
-        };
-
         if member.doc.is_some() {
-            sub_ty.parent = Some(Box::new(ty.clone()));
+            let sub_ty = TypeStruct {
+                name: member.name.to_camel(),
+                parent: Some(Box::new(ty.clone())),
+                ty: SType::Variant,
+                args: Vec::new(),
+            };
             write_item_doc(w, &sub_ty, |w| {
                 if let Some(ref doc) = member.doc {
                     writeln!(w, "{}", reformat_doc(doc, &symbols))?;
