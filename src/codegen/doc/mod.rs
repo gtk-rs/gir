@@ -79,7 +79,6 @@ macro_rules! impl_function_like_type {
     };
 }
 
-impl_to_stripper_type!(Member, Const);
 impl_to_stripper_type!(Enumeration, Enum);
 impl_to_stripper_type!(Bitfield, Struct);
 impl_to_stripper_type!(Record, Struct);
@@ -427,13 +426,13 @@ fn create_bitfield_doc(w: &mut dyn Write, env: &Env, bitfield: &Bitfield) -> Res
     })?;
 
     for member in &bitfield.members {
-        let mut sub_ty = TypeStruct {
-            name: nameutil::bitfield_member_name(&member.name),
-            ..member.to_stripper_type()
-        };
-
         if member.doc.is_some() {
-            sub_ty.parent = Some(Box::new(ty.clone()));
+            let sub_ty = TypeStruct {
+                name: nameutil::bitfield_member_name(&member.name),
+                parent: Some(Box::new(ty.clone())),
+                ty: SType::Const,
+                args: Vec::new(),
+            };
             write_item_doc(w, &sub_ty, |w| {
                 if let Some(ref doc) = member.doc {
                     writeln!(w, "{}", reformat_doc(doc, &symbols))?;
