@@ -79,9 +79,9 @@ macro_rules! impl_function_like_type {
     };
 }
 
-impl_to_stripper_type!(Member, Variant);
+impl_to_stripper_type!(Member, Const);
 impl_to_stripper_type!(Enumeration, Enum);
-impl_to_stripper_type!(Bitfield, Type);
+impl_to_stripper_type!(Bitfield, Struct);
 impl_to_stripper_type!(Record, Struct);
 impl_to_stripper_type!(Class, Struct);
 impl_to_stripper_type!(Function, Fn);
@@ -428,7 +428,7 @@ fn create_bitfield_doc(w: &mut dyn Write, env: &Env, bitfield: &Bitfield) -> Res
 
     for member in &bitfield.members {
         let mut sub_ty = TypeStruct {
-            name: member.name.to_camel(),
+            name: nameutil::bitfield_member_name(&member.name),
             ..member.to_stripper_type()
         };
 
