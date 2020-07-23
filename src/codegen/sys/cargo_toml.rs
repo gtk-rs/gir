@@ -87,7 +87,7 @@ fn fill_in(root: &mut Table, env: &Env) {
 
     {
         let dev_deps = upsert_table(root, "dev-dependencies");
-        set_string(dev_deps, "shell-words", "0.1.0");
+        set_string(dev_deps, "shell-words", "1.0.0");
         set_string(dev_deps, "tempfile", "3");
         unset(dev_deps, "tempdir");
     }
