@@ -41,10 +41,6 @@ fn generate_build_script(w: &mut dyn Write, env: &Env, split_build_rs: bool) -> 
 extern crate system_deps;
 
 #[cfg(not(feature = "dox"))]
-use std::io::prelude::*;
-#[cfg(not(feature = "dox"))]
-use std::io;
-#[cfg(not(feature = "dox"))]
 use std::process;"##
     )?;
 
