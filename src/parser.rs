@@ -875,7 +875,7 @@ impl Library {
     ) -> Result<Function, String> {
         let fn_name = elem.attr_required("name")?;
         let c_identifier = elem.attr("identifier").or_else(|| elem.attr("type"));
-        let kind = FunctionKind::from_str(kind_str).or_else(|why| Err(parser.fail(&why)))?;
+        let kind = FunctionKind::from_str(kind_str).map_err(|why| parser.fail(&why))?;
         let is_method = kind == FunctionKind::Method;
         let version = self.read_version(parser, ns_id, elem)?;
         let deprecated_version = self.read_deprecated_version(parser, ns_id, elem)?;
@@ -1078,7 +1078,7 @@ impl Library {
             Ok(ParameterDirection::Return)
         } else {
             ParameterDirection::from_str(elem.attr("direction").unwrap_or("in"))
-                .or_else(|why| Err(parser.fail_with_position(&why, elem.position())))
+                .map_err(|why| parser.fail_with_position(&why, elem.position()))
         }?;
 
         let mut typ = None;
@@ -1174,7 +1174,7 @@ impl Library {
         let construct = elem.attr_bool("construct", false);
         let construct_only = elem.attr_bool("construct-only", false);
         let transfer = Transfer::from_str(elem.attr("transfer-ownership").unwrap_or("none"))
-            .or_else(|why| Err(parser.fail_with_position(&why, elem.position())))?;
+            .map_err(|why| parser.fail_with_position(&why, elem.position()))?;
 
         let version = self.read_version(parser, ns_id, elem)?;
         let deprecated_version = self.read_deprecated_version(parser, ns_id, elem)?;
