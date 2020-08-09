@@ -1,5 +1,8 @@
 # GIR
 
+"[GObject introspection (abbreviated ‘GIR’)](https://developer.gnome.org/programming-guidelines/stable/introspection.html.en) is a system which extracts APIs from C code and produces binary type libraries which can be used by non-C language bindings, and other tools, to introspect or wrap the original C libraries. It uses a system of annotations in documentation comments in the C code to expose extra information about the APIs which is not machine readable from the code itself."
+
+
 The `GIR` is used to generate both the sys level crate and a safe API crate to use the sys level (FFI) crate.
 
 ## How to use
