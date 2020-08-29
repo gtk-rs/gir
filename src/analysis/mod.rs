@@ -12,6 +12,7 @@ pub mod class_builder;
 pub mod class_hierarchy;
 pub mod constants;
 pub mod conversion_type;
+pub mod enums;
 pub mod ffi_type;
 pub mod function_parameters;
 pub mod functions;
@@ -44,6 +45,7 @@ pub struct Analysis {
     pub records: BTreeMap<String, record::Info>,
     pub global_functions: Option<info_base::InfoBase>,
     pub constants: Vec<constants::Info>,
+    pub enumerations: Vec<enums::Info>,
 }
 
 pub fn run(env: &mut Env) {
@@ -171,6 +173,11 @@ fn analyze(env: &mut Env, tid: TypeId, deps: &[TypeId]) {
         Type::Record(_) => {
             if let Some(info) = record::new(env, obj) {
                 env.analysis.records.insert(full_name, info);
+            }
+        }
+        Type::Enumeration(_) => {
+            if let Some(info) = enums::new(env, obj) {
+                env.analysis.enumerations.push(info);
             }
         }
         _ => {}
