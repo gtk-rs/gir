@@ -1,7 +1,7 @@
 use super::function;
 use crate::{
     analysis::enums::Info,
-    analysis::{imports::Imports, namespaces},
+    analysis::namespaces,
     codegen::general::{
         self, cfg_deprecated, derives, version_condition, version_condition_no_doc,
         version_condition_string,
@@ -55,7 +55,9 @@ pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>) {
         return;
     }
 
-    let mut imports = Imports::new(&env.library);
+    // TODO: We should do this just once in analysis without mutation necessary afterwards
+    let mut imports = env.analysis.enum_imports.clone();
+
     if has_get_quark {
         imports.add("glib::Quark");
         imports.add("glib::error::ErrorDomain");

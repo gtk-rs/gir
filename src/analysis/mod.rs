@@ -2,6 +2,7 @@ use crate::{
     env::Env,
     library::{self, Type, TypeId},
 };
+use imports::Imports;
 use log::error;
 use std::collections::BTreeMap;
 
@@ -46,6 +47,7 @@ pub struct Analysis {
     pub global_functions: Option<info_base::InfoBase>,
     pub constants: Vec<constants::Info>,
     pub enumerations: Vec<enums::Info>,
+    pub enum_imports: Imports,
 }
 
 pub fn run(env: &mut Env) {
@@ -62,6 +64,8 @@ pub fn run(env: &mut Env) {
         to_analyze.push((tid, deps));
     }
 
+    let mut enum_imports = Imports::new(&env.library);
+
     let mut analyzed = 1;
     while analyzed > 0 {
         analyzed = 0;
@@ -71,12 +75,15 @@ pub fn run(env: &mut Env) {
                 new_to_analyze.push((tid, deps.clone()));
                 continue;
             }
-            analyze(env, tid, deps);
+            analyze(env, tid, deps, &mut enum_imports);
             analyzed += 1;
         }
 
         to_analyze = new_to_analyze;
     }
+
+    env.analysis.enum_imports = enum_imports;
+
     if !to_analyze.is_empty() {
         error!(
             "Not analyzed {} objects due unfinished dependencies",
@@ -153,7 +160,7 @@ fn analyze_constants(env: &mut Env) {
     env.analysis.constants = constants::analyze(env, &constants, obj);
 }
 
-fn analyze(env: &mut Env, tid: TypeId, deps: &[TypeId]) {
+fn analyze(env: &mut Env, tid: TypeId, deps: &[TypeId], enum_imports: &mut Imports) {
     let full_name = tid.full_name(&env.library);
     let obj = match env.config.objects.get(&*full_name) {
         Some(obj) => obj,
@@ -176,7 +183,8 @@ fn analyze(env: &mut Env, tid: TypeId, deps: &[TypeId]) {
             }
         }
         Type::Enumeration(_) => {
-            if let Some(info) = enums::new(env, obj) {
+            // Cannot mutably borrow env.analysis.enum_imports here
+            if let Some(info) = enums::new(env, obj, enum_imports) {
                 env.analysis.enumerations.push(info);
             }
         }

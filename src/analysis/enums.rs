@@ -26,7 +26,7 @@ impl Info {
     }
 }
 
-pub fn new(env: &Env, obj: &GObject) -> Option<Info> {
+pub fn new(env: &Env, obj: &GObject, imports: &mut Imports) -> Option<Info> {
     info!("Analyzing enumeration {}", obj.name);
 
     let enumeration_tid = env.library.find_type(0, &obj.name)?;
@@ -35,8 +35,6 @@ pub fn new(env: &Env, obj: &GObject) -> Option<Info> {
 
     let name = split_namespace_name(&obj.name).1;
 
-    let mut imports = Imports::with_defined(&env.library, name);
-
     let mut functions = functions::analyze(
         env,
         &enumeration.functions,
@@ -44,13 +42,13 @@ pub fn new(env: &Env, obj: &GObject) -> Option<Info> {
         false,
         false,
         obj,
-        &mut imports,
+        imports,
         None,
         None,
     );
     let specials = special_functions::extract(&mut functions);
 
-    special_functions::analyze_imports(&specials, &mut imports);
+    special_functions::analyze_imports(&specials, imports);
 
     let (version, deprecated_version) = info_base::versions(
         env,
@@ -66,7 +64,8 @@ pub fn new(env: &Env, obj: &GObject) -> Option<Info> {
         name: name.to_owned(),
         functions,
         specials,
-        imports,
+        // TODO: Don't use!
+        imports: Imports::new(&env.library),
         version,
         deprecated_version,
         cfg_condition: obj.cfg_condition.clone(),
