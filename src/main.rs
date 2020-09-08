@@ -158,14 +158,13 @@ fn do_main() -> Result<(), String> {
 
     let watcher_total = statistics.enter("Total");
 
-    let mut library;
-
-    {
+    let mut library = {
         let _watcher = statistics.enter("Loading");
 
-        library = Library::new(&cfg.library_name);
+        let mut library = Library::new(&cfg.library_name);
         library.read_file(&cfg.girs_dir, &mut vec![cfg.library_full_name()])?;
-    }
+        library
+    };
 
     {
         let _watcher = statistics.enter("Preprocessing");
@@ -192,24 +191,22 @@ fn do_main() -> Result<(), String> {
         gir::update_version::check_function_real_version(&mut library);
     }
 
-    let mut env;
-
-    {
+    let mut env = {
         let _watcher = statistics.enter("Namespace/symbol/class analysis");
 
         let namespaces = gir::namespaces_run(&library);
         let symbols = gir::symbols_run(&library, &namespaces);
         let class_hierarchy = gir::class_hierarchy_run(&library);
 
-        env = gir::Env {
+        gir::Env {
             library,
             config: cfg,
             namespaces,
             symbols: RefCell::new(symbols),
             class_hierarchy,
             analysis: Default::default(),
-        };
-    }
+        }
+    };
 
     if env.config.work_mode != WorkMode::Sys {
         let _watcher = statistics.enter("Analyzing");
