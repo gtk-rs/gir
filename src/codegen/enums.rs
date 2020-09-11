@@ -167,16 +167,21 @@ fn generate_enum(
         "\
     #[doc(hidden)]
     __Unknown(i32),
-}}
-"
+}}"
     )?;
 
-    version_condition(w, env, enum_.version, false, 0)?;
-    write!(w, "impl {} {{", analysis.name)?;
-    for func_analysis in &analysis.functions() {
-        function::generate(w, env, func_analysis, false, false, 1)?;
+    let functions = analysis.functions();
+
+    if !functions.is_empty() {
+        writeln!(w)?;
+        version_condition(w, env, enum_.version, false, 0)?;
+        write!(w, "impl {} {{", analysis.name)?;
+        for func_analysis in functions {
+            function::generate(w, env, func_analysis, false, false, 1)?;
+        }
+        writeln!(w, "}}")?;
     }
-    writeln!(w, "}}")?;
+
     writeln!(w)?;
 
     if config.generate_display_trait {
