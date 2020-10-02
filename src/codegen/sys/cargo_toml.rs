@@ -39,7 +39,7 @@ fn fill_empty(root: &mut Table, env: &Env, crate_name: &str) {
         set_string(
             package,
             "links",
-            nameutil::crate_name(&env.config.library_name),
+            nameutil::shared_libs_to_links(&env.namespaces.main().shared_libs),
         );
     }
 

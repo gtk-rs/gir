@@ -138,6 +138,17 @@ pub fn shared_lib_name_to_link_name(name: &str) -> &str {
     s
 }
 
+pub fn shared_libs_to_links(shared_libs: &[String]) -> String {
+    // https://github.com/rust-lang/cargo/issues/4533
+    // links = ["foo", "bar"] or ['foo', 'bar'] is not supported.
+    // Pick the first element
+    if let Some(shared_lib) = shared_libs.get(0) {
+        return format!("\"{}\"", shared_lib_name_to_link_name(&shared_lib));
+    }
+
+    panic!("empty list of shared library");
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -201,5 +212,26 @@ mod tests {
             shared_lib_name_to_link_name("libgdk_pixbuf-2.0.so.0"),
             "gdk_pixbuf-2.0"
         );
+    }
+
+    #[test]
+    fn shared_libs_to_links_works() {
+        let libs = vec![
+            String::from("libgobject-2.0.so.0"),
+            String::from("libglib-2.0.so.0"),
+        ];
+        // https://github.com/rust-lang/cargo/issues/4533
+        // list is not supported. Pick the first one
+        assert_eq!(shared_libs_to_links(&libs), "\"gobject-2.0\"");
+
+        let libs = vec![String::from("libgio-2.0.so.0")];
+        assert_eq!(shared_libs_to_links(&libs), "\"gio-2.0\"");
+    }
+
+    #[test]
+    #[should_panic]
+    fn shared_libs_to_links_panic() {
+        let libs = vec![];
+        shared_libs_to_links(&libs);
     }
 }
