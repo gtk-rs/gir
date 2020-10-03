@@ -125,6 +125,30 @@ pub fn lib_name_to_toml(name: &str) -> String {
     name.to_string().replace("-", "_").replace(".", "_")
 }
 
+pub fn shared_lib_name_to_link_name(name: &str) -> &str {
+    let mut s = name;
+
+    if s.starts_with("lib") {
+        s = &s[3..];
+    }
+
+    let offset = s.find(".so").unwrap_or_else(|| s.len());
+    s = &s[..offset];
+
+    s
+}
+
+pub fn shared_libs_to_links(shared_libs: &[String]) -> String {
+    // https://github.com/rust-lang/cargo/issues/4533
+    // links = ["foo", "bar"] or ['foo', 'bar'] is not supported.
+    // Pick the first element
+    if let Some(shared_lib) = shared_libs.get(0) {
+        return format!("\"{}\"", shared_lib_name_to_link_name(&shared_lib));
+    }
+
+    panic!("empty list of shared library");
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -179,5 +203,35 @@ mod tests {
     #[test]
     fn lib_name_to_toml_works() {
         assert_eq!(lib_name_to_toml("gstreamer-1.0"), "gstreamer_1_0");
+    }
+
+    #[test]
+    fn shared_lib_name_to_link_name_works() {
+        assert_eq!(shared_lib_name_to_link_name("libatk-1.0.so.0"), "atk-1.0");
+        assert_eq!(
+            shared_lib_name_to_link_name("libgdk_pixbuf-2.0.so.0"),
+            "gdk_pixbuf-2.0"
+        );
+    }
+
+    #[test]
+    fn shared_libs_to_links_works() {
+        let libs = vec![
+            String::from("libgobject-2.0.so.0"),
+            String::from("libglib-2.0.so.0"),
+        ];
+        // https://github.com/rust-lang/cargo/issues/4533
+        // list is not supported. Pick the first one
+        assert_eq!(shared_libs_to_links(&libs), "\"gobject-2.0\"");
+
+        let libs = vec![String::from("libgio-2.0.so.0")];
+        assert_eq!(shared_libs_to_links(&libs), "\"gio-2.0\"");
+    }
+
+    #[test]
+    #[should_panic]
+    fn shared_libs_to_links_panic() {
+        let libs = vec![];
+        shared_libs_to_links(&libs);
     }
 }
