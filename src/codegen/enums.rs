@@ -33,7 +33,7 @@ pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>) {
     for config in &configs {
         if let Type::Enumeration(ref enum_) = *env.library.type_(config.type_id.unwrap()) {
             has_any = true;
-            if get_error_quark_name(enum_).is_some() {
+            if enum_.error_domain.is_some() {
                 has_get_quark = true;
             }
             if enum_.glib_get_type.is_some() {
@@ -262,8 +262,7 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
     )?;
 
     // Generate ErrorDomain trait implementation.
-    if let Some(ref get_quark) = get_error_quark_name(enum_) {
-        let get_quark = get_quark.replace("-", "_");
+    if let Some(ref domain) = enum_.error_domain {
         let has_failed_member = members.iter().any(|m| m.name == "Failed");
 
         cfg_deprecated(w, env, enum_.deprecated_version, false, 0)?;
@@ -272,8 +271,35 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
             w,
             "impl ErrorDomain for {name} {{
     fn domain() -> Quark {{
-        {assert}unsafe {{ from_glib({sys_crate_name}::{get_quark}()) }}
-    }}
+        {assert}",
+            name = enum_.name,
+            assert = assert
+        )?;
+
+        match domain {
+            ErrorDomain::Quark(ref quark) => {
+                writeln!(
+                    w,
+                    "        static QUARK: once_cell::sync::Lazy<glib_sys::GQuark> = once_cell::sync::Lazy::new(|| unsafe {{
+            glib_sys::g_quark_from_static_string(b\"{}\\0\".as_ptr() as *const _)
+        }});
+        from_glib(*QUARK)",
+                    quark = quark
+                )?;
+            }
+            ErrorDomain::Function(ref f) => {
+                writeln!(
+                    w,
+                    "        unsafe {{ from_glib({sys_crate_name}::{get_quark}()) }}",
+                    sys_crate_name = sys_crate_name,
+                    get_quark = f
+                )?;
+            }
+        }
+
+        writeln!(
+            w,
+            "    }}
 
     fn code(self) -> i32 {{
         self.to_glib()
@@ -281,9 +307,6 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
 
     fn from(code: i32) -> Option<Self> {{
         {assert}match code {{",
-            sys_crate_name = sys_crate_name,
-            name = enum_.name,
-            get_quark = get_quark,
             assert = assert
         )?;
 
@@ -376,13 +399,4 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
     }
 
     Ok(())
-}
-
-fn get_error_quark_name(enum_: &Enumeration) -> Option<String> {
-    enum_
-        .functions
-        .iter()
-        .find(|f| f.name == "quark")
-        .and_then(|f| f.c_identifier.clone())
-        .or_else(|| enum_.error_domain.clone())
 }

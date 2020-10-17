@@ -360,6 +360,12 @@ pub struct Member {
 }
 
 #[derive(Debug)]
+pub enum ErrorDomain {
+    Quark(String),
+    Function(String),
+}
+
+#[derive(Debug)]
 pub struct Enumeration {
     pub name: String,
     pub c_type: String,
@@ -370,7 +376,7 @@ pub struct Enumeration {
     pub deprecated_version: Option<Version>,
     pub doc: Option<String>,
     pub doc_deprecated: Option<String>,
-    pub error_domain: Option<String>,
+    pub error_domain: Option<ErrorDomain>,
     pub glib_get_type: Option<String>,
 }
 

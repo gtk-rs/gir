@@ -674,7 +674,9 @@ impl Library {
         let get_type = elem.attr("get-type").map(|s| s.into());
         let version = self.read_version(parser, ns_id, elem)?;
         let deprecated_version = self.read_deprecated_version(parser, ns_id, elem)?;
-        let error_domain = elem.attr("error-domain").map(String::from);
+        let error_domain = elem
+            .attr("error-domain")
+            .map(|s| ErrorDomain::Quark(String::from(s)));
 
         let mut members = Vec::new();
         let mut fns = Vec::new();
