@@ -144,6 +144,7 @@ pub fn analyze<F: Borrow<library::Function>>(
 
         let mut info = analyze_function(
             env,
+            obj,
             name,
             func,
             type_tid,
@@ -469,6 +470,7 @@ fn rename_constructor(name: String) -> String {
 
 fn analyze_function(
     env: &Env,
+    obj: &config::gobjects::GObject,
     name: String,
     func: &library::Function,
     type_tid: library::TypeId,
@@ -485,17 +487,11 @@ fn analyze_function(
             .parameters
             .iter()
             .any(|par| env.library.type_(par.typ).is_function());
-    let concurrency = {
-        let full_name = type_tid.full_name(&env.library);
-        match env.config.objects.get(&*full_name) {
-            Some(obj) => match env.library.type_(type_tid) {
-                library::Type::Class(_)
-                | library::Type::Interface(_)
-                | library::Type::Record(_) => obj.concurrency,
-                _ => library::Concurrency::None,
-            },
-            None => library::Concurrency::SendSync,
+    let concurrency = match env.library.type_(type_tid) {
+        library::Type::Class(_) | library::Type::Interface(_) | library::Type::Record(_) => {
+            obj.concurrency
         }
+        _ => library::Concurrency::None,
     };
 
     let mut commented = false;
@@ -555,6 +551,7 @@ fn analyze_function(
 
     let ret = return_value::analyze(
         env,
+        obj,
         func,
         type_tid,
         configured_functions,

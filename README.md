@@ -139,6 +139,13 @@ single_version_file = true
 # which do not have an override for `generate_display_trait`
 # (defaults to "true")
 generate_display_trait = true
+# Trust the nullability information about return values. If this is disabled
+# then any pointer return type is assumed to be nullable unless there is an
+# explicit override for it.
+# This has to be used carefully as many libraries are missing nullable
+# annotations for return values, which then will cause a panic once an
+# unexpected NULL is returned.
+trust_return_value_nullability = false
 # Disable running `cargo fmt` on generated files
 # (defaults to false)
 disable_format = true
@@ -209,6 +216,9 @@ cfg_condition = "mycond"
 generate_display_trait = false
 # if you want to generate builder with name SomeClassBuilder
 generate_builder = true
+# trust return value nullability annotations for this specific type.
+# See above for details and use with care
+trust_return_value_nullability = false
     # define overrides for function
     [[object.function]]
     # filter functions from object
