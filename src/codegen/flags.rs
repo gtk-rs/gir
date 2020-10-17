@@ -24,13 +24,9 @@ pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>) {
             c.status.need_generate() && c.type_id.map_or(false, |tid| tid.ns_id == namespaces::MAIN)
         })
         .collect();
-    let has_any = configs.iter().any(|c| {
-        if let Type::Bitfield(_) = *env.library.type_(c.type_id.unwrap()) {
-            true
-        } else {
-            false
-        }
-    });
+    let has_any = configs
+        .iter()
+        .any(|c| matches!(*env.library.type_(c.type_id.unwrap()), Type::Bitfield(_)));
 
     if !has_any {
         return;

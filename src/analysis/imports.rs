@@ -247,8 +247,8 @@ impl Imports {
         let rest = &name[prefix.len()..];
         if rest.is_empty() {
             None
-        } else if rest.starts_with("::") {
-            Some(&rest["::".len()..])
+        } else if let Some(prefix) = rest.strip_prefix("::") {
+            Some(prefix)
         } else {
             // It was false positive, return the whole name.
             Some(name)

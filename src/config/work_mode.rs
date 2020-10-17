@@ -10,18 +10,11 @@ pub enum WorkMode {
 
 impl WorkMode {
     pub fn is_normal(self) -> bool {
-        match self {
-            WorkMode::Normal => true,
-            _ => false,
-        }
+        matches!(self, WorkMode::Normal)
     }
 
     pub fn is_generate_rust_files(self) -> bool {
-        match self {
-            WorkMode::Normal => true,
-            WorkMode::Sys => true,
-            _ => false,
-        }
+        matches!(self, WorkMode::Normal | WorkMode::Sys)
     }
 }
 

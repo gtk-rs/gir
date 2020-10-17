@@ -27,10 +27,7 @@ pub enum BoundType {
 
 impl BoundType {
     pub fn need_isa(&self) -> bool {
-        match *self {
-            BoundType::IsA(_) => true,
-            _ => false,
-        }
+        matches!(*self, BoundType::IsA(_))
     }
 }
 

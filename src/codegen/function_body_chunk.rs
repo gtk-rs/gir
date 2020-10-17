@@ -40,10 +40,7 @@ enum OutMemMode {
 
 impl OutMemMode {
     fn is_uninitialized(&self) -> bool {
-        match *self {
-            OutMemMode::Uninitialized => true,
-            _ => false,
-        }
+        matches!(*self, OutMemMode::Uninitialized)
     }
 }
 
@@ -1008,7 +1005,7 @@ impl Builder {
     fn get_outs(&self) -> Vec<&Parameter> {
         self.parameters
             .iter()
-            .filter(|par| if let Out { .. } = *par { true } else { false })
+            .filter(|par| matches!(*par, Out { .. }))
             .collect()
     }
     fn get_outs_without_error(&self) -> Vec<&Parameter> {
@@ -1025,11 +1022,10 @@ impl Builder {
     }
     fn check_if_need_glib_conversion(&self, env: &Env, typ: TypeId) -> bool {
         // TODO: maybe improve this part to potentially handle more cases than just glib::Pid?
-        let type_ = env.type_(typ);
-        match type_ {
-            library::Type::Alias(a) if a.c_identifier == "GPid" => true,
-            _ => false,
-        }
+        matches!(
+            env.type_(typ),
+            library::Type::Alias(a) if a.c_identifier == "GPid"
+        )
     }
     fn write_out_variables(&self, v: &mut Vec<Chunk>, env: &Env) -> Vec<(String, bool)> {
         let mut ret = Vec::new();
@@ -1080,17 +1076,15 @@ impl Builder {
                 ref mem_mode,
             } = *par
             {
-                if self
-                    .transformations
-                    .iter()
-                    .any(|tr| match tr.transformation_type {
+                if self.transformations.iter().any(|tr| {
+                    matches!(
+                        tr.transformation_type,
                         TransformationType::Length {
                             ref array_length_name,
                             ..
-                        } if array_length_name == &parameter.name => true,
-                        _ => false,
-                    })
-                {
+                        } if array_length_name == &parameter.name
+                    )
+                }) {
                     continue;
                 }
 

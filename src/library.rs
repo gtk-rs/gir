@@ -86,17 +86,11 @@ pub enum ParameterScope {
 
 impl ParameterScope {
     pub fn is_call(self) -> bool {
-        match self {
-            ParameterScope::Call => true,
-            _ => false,
-        }
+        matches!(self, ParameterScope::Call)
     }
 
     pub fn is_async(self) -> bool {
-        match self {
-            ParameterScope::Async => true,
-            _ => false,
-        }
+        matches!(self, ParameterScope::Async)
     }
 }
 
@@ -226,29 +220,29 @@ pub enum Fundamental {
 
 impl Fundamental {
     pub fn requires_conversion(self) -> bool {
-        match self {
+        !matches!(
+            self,
             Fundamental::Int8
-            | Fundamental::UInt8
-            | Fundamental::Int16
-            | Fundamental::UInt16
-            | Fundamental::Int32
-            | Fundamental::UInt32
-            | Fundamental::Int64
-            | Fundamental::UInt64
-            | Fundamental::Char
-            | Fundamental::UChar
-            | Fundamental::Short
-            | Fundamental::UShort
-            | Fundamental::Int
-            | Fundamental::UInt
-            | Fundamental::Long
-            | Fundamental::ULong
-            | Fundamental::Size
-            | Fundamental::SSize
-            | Fundamental::Float
-            | Fundamental::Double => false,
-            _ => true,
-        }
+                | Fundamental::UInt8
+                | Fundamental::Int16
+                | Fundamental::UInt16
+                | Fundamental::Int32
+                | Fundamental::UInt32
+                | Fundamental::Int64
+                | Fundamental::UInt64
+                | Fundamental::Char
+                | Fundamental::UChar
+                | Fundamental::Short
+                | Fundamental::UShort
+                | Fundamental::Int
+                | Fundamental::UInt
+                | Fundamental::Long
+                | Fundamental::ULong
+                | Fundamental::Size
+                | Fundamental::SSize
+                | Fundamental::Float
+                | Fundamental::Double
+        )
     }
 }
 
@@ -786,10 +780,7 @@ impl Type {
     }
 
     pub fn is_fundamental(&self) -> bool {
-        match *self {
-            Type::Fundamental(_) => true,
-            _ => false,
-        }
+        matches!(*self, Type::Fundamental(_))
     }
 
     /// If the type is an Alias containing a fundamental, it'll return true (whereas
@@ -810,31 +801,22 @@ impl Type {
             | Type::List(t)
             | Type::SList(t) => {
                 let ty = env.type_(t);
-                ty.get_inner_type(env).or_else(|| Some((ty, t.ns_id)))
+                ty.get_inner_type(env).or(Some((ty, t.ns_id)))
             }
             _ => None,
         }
     }
 
     pub fn is_function(&self) -> bool {
-        match *self {
-            Type::Function(_) => true,
-            _ => false,
-        }
+        matches!(*self, Type::Function(_))
     }
 
     pub fn is_class(&self) -> bool {
-        match *self {
-            Type::Class(_) => true,
-            _ => false,
-        }
+        matches!(*self, Type::Class(_))
     }
 
     pub fn is_interface(&self) -> bool {
-        match *self {
-            Type::Interface(_) => true,
-            _ => false,
-        }
+        matches!(*self, Type::Interface(_))
     }
 
     pub fn is_final_type(&self) -> bool {
@@ -853,17 +835,11 @@ impl Type {
     }
 
     pub fn is_enumeration(&self) -> bool {
-        match *self {
-            Type::Enumeration(_) => true,
-            _ => false,
-        }
+        matches!(*self, Type::Enumeration(_))
     }
 
     pub fn is_bitfield(&self) -> bool {
-        match *self {
-            Type::Bitfield(_) => true,
-            _ => false,
-        }
+        matches!(*self, Type::Bitfield(_))
     }
 }
 
