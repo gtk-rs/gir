@@ -78,16 +78,14 @@ pub enum TransformationType {
 impl TransformationType {
     pub fn is_to_glib(&self) -> bool {
         use self::TransformationType::*;
-        match *self {
+        matches!(*self,
             ToGlibDirect { .. }
             | ToGlibScalar { .. }
             | ToGlibPointer { .. }
             | ToGlibBorrow
             | ToGlibUnknown { .. }
             | ToSome(_)
-            | IntoRaw(_) => true,
-            _ => false,
-        }
+            | IntoRaw(_))
     }
 
     pub fn set_to_glib_extra(&mut self, to_glib_extra_: &str) {

@@ -60,12 +60,12 @@ fn format(mut input: &str, symbols: &symbols::Info) -> String {
         let (before, after) = try_split(input, "`");
         ret.push_str(&replace_c_types(before, symbols));
         if let Some(after) = after {
-            ret.push_str("`");
+            ret.push('`');
             let (before, after) = try_split(after, "`");
             // don't touch anything enclosed in backticks
             ret.push_str(before);
             if let Some(after) = after {
-                ret.push_str("`");
+                ret.push('`');
                 input = after;
             } else {
                 return ret;

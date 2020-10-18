@@ -51,10 +51,10 @@ pub trait IsIncomplete {
 
 impl IsIncomplete for Fundamental {
     fn is_incomplete(&self, _lib: &Library) -> bool {
-        match *self {
-            Fundamental::None | Fundamental::Unsupported | Fundamental::VarArgs => true,
-            _ => false,
-        }
+        matches!(
+            *self,
+            Fundamental::None | Fundamental::Unsupported | Fundamental::VarArgs
+        )
     }
 }
 
@@ -131,10 +131,12 @@ impl IsIncomplete for Union {
 impl IsIncomplete for Function {
     fn is_incomplete(&self, lib: &Library) -> bool {
         //Checking p.typ.is_incomplete(lib) cause recursive check on GScannerMsgFunc
-        self.parameters.iter().any(|p| match lib.type_(p.typ) {
-            Type::Fundamental(Fundamental::Unsupported)
-            | Type::Fundamental(Fundamental::VarArgs) => true,
-            _ => false,
+        self.parameters.iter().any(|p| {
+            matches!(
+                lib.type_(p.typ),
+                Type::Fundamental(Fundamental::Unsupported)
+                    | Type::Fundamental(Fundamental::VarArgs)
+            )
         })
     }
 }

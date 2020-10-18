@@ -53,9 +53,6 @@ impl SafetyAssertionMode {
     }
 
     pub fn is_none(self) -> bool {
-        match self {
-            SafetyAssertionMode::None => true,
-            _ => false,
-        }
+        matches!(self, SafetyAssertionMode::None)
     }
 }

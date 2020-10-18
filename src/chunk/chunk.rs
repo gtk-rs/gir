@@ -79,10 +79,7 @@ pub enum Chunk {
 
 impl Chunk {
     pub fn is_uninitialized(&self) -> bool {
-        match *self {
-            Chunk::Uninitialized => true,
-            _ => false,
-        }
+        matches!(*self, Chunk::Uninitialized)
     }
 }
 

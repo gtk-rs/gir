@@ -53,8 +53,8 @@ pub fn file_name_sys(name: &str) -> String {
 /// Crate name with undescores for `use` statement
 pub fn crate_name(name: &str) -> String {
     let name = name.replace("-", "_").to_snake();
-    let crate_name = if name.starts_with("g_") {
-        format!("g{}", &name[2..])
+    let crate_name = if let Some(name_without_prefix) = name.strip_prefix("g_") {
+        name_without_prefix.to_owned()
     } else {
         name
     };

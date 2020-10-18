@@ -137,10 +137,10 @@ pub fn define_object_type(
             .filter(|p| {
                 use crate::library::*;
 
-                match *env.library.type_(p.type_id) {
-                    Type::Interface { .. } if !p.status.ignored() => true,
-                    _ => false,
-                }
+                matches!(
+                    *env.library.type_(p.type_id),
+                    Type::Interface { .. } if !p.status.ignored()
+                )
             })
             .map(|p| format_parent_name(env, p))
             .collect();
@@ -150,10 +150,10 @@ pub fn define_object_type(
             .filter(|p| {
                 use crate::library::*;
 
-                match *env.library.type_(p.type_id) {
-                    Type::Class { .. } if !p.status.ignored() => true,
-                    _ => false,
-                }
+                matches!(
+                    *env.library.type_(p.type_id),
+                    Type::Class { .. } if !p.status.ignored()
+                )
             })
             .map(|p| format_parent_name(env, p))
             .collect();

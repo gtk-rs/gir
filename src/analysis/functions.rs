@@ -1029,7 +1029,7 @@ fn analyze_callback(
                 imports_to_add.push(s);
             }
         }
-        let user_data_index = par.user_data_index.unwrap_or_else(|| 0);
+        let user_data_index = par.user_data_index.unwrap_or(0);
         if par.c_type != "GDestroyNotify" && c_parameters.len() <= user_data_index {
             warn_main!(
                 type_tid,
