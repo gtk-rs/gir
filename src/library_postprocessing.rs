@@ -36,6 +36,7 @@ impl Library {
         self.fix_fields();
         self.make_unrepresentable_types_opaque();
         self.mark_final_types(config);
+        self.update_error_domain_functions();
     }
 
     fn fix_gtype(&mut self) {
@@ -500,6 +501,131 @@ impl Library {
             }) = *self.type_mut(tid)
             {
                 *final_type = true;
+            } else {
+                unreachable!();
+            }
+        }
+    }
+
+    fn update_error_domain_functions(&mut self) {
+        // Find find all error domains that have corresponding functions
+        let mut error_domains = vec![];
+        for (ns_id, ns) in self.namespaces.iter().enumerate() {
+            'next_enum: for (id, type_) in ns.types.iter().enumerate() {
+                let type_ = type_.as_ref().unwrap(); //Always contains something
+                let enum_tid = TypeId {
+                    ns_id: ns_id as u16,
+                    id: id as u32,
+                };
+
+                if let Type::Enumeration(ref enum_) = *type_ {
+                    if let Some(ErrorDomain::Quark(ref domain)) = enum_.error_domain {
+                        let domain = domain.replace("-", "_");
+
+                        let mut function_candidates = vec![];
+                        function_candidates.push(domain.clone());
+                        if !domain.ends_with("_quark") {
+                            function_candidates.push(format!("{}_quark", domain));
+                        }
+                        if !domain.ends_with("_error_quark") {
+                            if domain.ends_with("_quark") {
+                                function_candidates
+                                    .push(format!("{}_error_quark", &domain[..(domain.len() - 6)]));
+                            } else {
+                                function_candidates.push(format!("{}_error_quark", domain));
+                            }
+                        }
+                        if let Some(domain) = domain.strip_suffix("_error_quark") {
+                            function_candidates.push(domain.to_owned());
+                        }
+                        if let Some(domain) = domain.strip_suffix("_quark") {
+                            function_candidates.push(domain.to_owned());
+                        }
+
+                        if let Some(func) = ns.functions.iter().find(|f| {
+                            function_candidates
+                                .iter()
+                                .any(|c| f.c_identifier.as_ref() == Some(c))
+                        }) {
+                            error_domains.push((
+                                ns_id,
+                                enum_tid,
+                                None,
+                                func.c_identifier.as_ref().unwrap().clone(),
+                            ));
+                            continue 'next_enum;
+                        }
+
+                        // Quadratic in number of types...
+                        for (id, type_) in ns.types.iter().enumerate() {
+                            let type_ = type_.as_ref().unwrap(); //Always contains something
+                            let domain_tid = TypeId {
+                                ns_id: ns_id as u16,
+                                id: id as u32,
+                            };
+
+                            let functions = match *type_ {
+                                Type::Enumeration(Enumeration { ref functions, .. })
+                                | Type::Class(Class { ref functions, .. })
+                                | Type::Record(Record { ref functions, .. })
+                                | Type::Interface(Interface { ref functions, .. }) => functions,
+                                _ => continue,
+                            };
+
+                            if let Some(func) = functions.iter().find(|f| {
+                                function_candidates
+                                    .iter()
+                                    .any(|c| f.c_identifier.as_ref() == Some(c))
+                            }) {
+                                error_domains.push((
+                                    ns_id,
+                                    enum_tid,
+                                    Some(domain_tid),
+                                    func.c_identifier.as_ref().unwrap().clone(),
+                                ));
+                                continue 'next_enum;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        for (ns_id, enum_tid, domain_tid, function_name) in error_domains {
+            if let Some(domain_tid) = domain_tid {
+                match *self.type_mut(domain_tid) {
+                    Type::Enumeration(Enumeration {
+                        ref mut functions, ..
+                    })
+                    | Type::Class(Class {
+                        ref mut functions, ..
+                    })
+                    | Type::Record(Record {
+                        ref mut functions, ..
+                    })
+                    | Type::Interface(Interface {
+                        ref mut functions, ..
+                    }) => {
+                        let pos = functions
+                            .iter()
+                            .position(|f| f.c_identifier.as_ref() == Some(&function_name))
+                            .unwrap();
+                        functions.remove(pos);
+                    }
+                    _ => unreachable!(),
+                }
+            } else {
+                let pos = self.namespaces[ns_id]
+                    .functions
+                    .iter()
+                    .position(|f| f.c_identifier.as_ref() == Some(&function_name))
+                    .unwrap();
+                self.namespaces[ns_id].functions.remove(pos);
+            }
+
+            if let Type::Enumeration(ref mut enum_) = *self.type_mut(enum_tid) {
+                assert!(enum_.error_domain.is_some());
+                enum_.error_domain = Some(ErrorDomain::Function(function_name));
             } else {
                 unreachable!();
             }
