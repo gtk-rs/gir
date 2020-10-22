@@ -181,7 +181,6 @@ fn analyze_property(
             imports.add_used_type(s);
         }
         if type_string.is_ok() {
-            imports.add("glib::Value");
             imports.add("glib::StaticType");
         }
 
@@ -208,17 +207,14 @@ fn analyze_property(
             imports.add_used_type(s);
         }
         let set_bound = PropertyBound::get(env, prop.typ);
-        if type_string.is_ok() {
-            imports.add("glib::Value");
-            if set_bound.is_some() {
-                imports.add("glib::object::IsA");
-                if !*nullable {
-                    //TODO: support nonnulable setter if found any
-                    warn!(
-                        "Non nulable setter for property generated as nullable \"{}.{}\"",
-                        type_name, name
-                    );
-                }
+        if type_string.is_ok() && set_bound.is_some() {
+            imports.add("glib::object::IsA");
+            if !*nullable {
+                //TODO: support non-nullable setter if found any
+                warn!(
+                    "Non nullable setter for property generated as nullable \"{}.{}\"",
+                    type_name, name
+                );
             }
         }
 
