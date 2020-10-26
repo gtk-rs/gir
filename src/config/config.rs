@@ -39,6 +39,7 @@ pub struct Config {
     pub concurrency: library::Concurrency,
     pub single_version_file: Option<PathBuf>,
     pub generate_display_trait: bool,
+    pub trust_return_value_nullability: bool,
     pub docs_rs_features: Vec<String>,
     pub disable_format: bool,
     pub split_build_rs: bool,
@@ -162,6 +163,12 @@ impl Config {
             None => true,
         };
 
+        let trust_return_value_nullability =
+            match toml.lookup("options.trust_return_value_nullability") {
+                Some(v) => v.as_result_bool("options.trust_return_value_nullability")?,
+                None => false,
+            };
+
         let mut docs_rs_features = Vec::new();
         for v in match toml.lookup("options.docs_rs_features") {
             Some(v) => v.as_result_vec("options.docs_rs_features")?.as_slice(),
@@ -182,9 +189,22 @@ impl Config {
         // else is configured
         let mut objects = toml
             .lookup("object")
-            .map(|t| gobjects::parse_toml(t, concurrency, generate_display_trait))
+            .map(|t| {
+                gobjects::parse_toml(
+                    t,
+                    concurrency,
+                    generate_display_trait,
+                    trust_return_value_nullability,
+                )
+            })
             .unwrap_or_default();
-        gobjects::parse_status_shorthands(&mut objects, &toml, concurrency, generate_display_trait);
+        gobjects::parse_status_shorthands(
+            &mut objects,
+            &toml,
+            concurrency,
+            generate_display_trait,
+            trust_return_value_nullability,
+        );
 
         let external_libraries = read_external_libraries(&toml)?;
 
@@ -252,6 +272,7 @@ impl Config {
             concurrency,
             single_version_file,
             generate_display_trait,
+            trust_return_value_nullability,
             docs_rs_features,
             disable_format,
             split_build_rs,

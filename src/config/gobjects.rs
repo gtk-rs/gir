@@ -78,6 +78,7 @@ pub struct GObject {
     pub conversion_type: Option<conversion_type::ConversionType>,
     pub use_boxed_functions: bool,
     pub generate_display_trait: bool,
+    pub trust_return_value_nullability: bool,
     pub manual_traits: Vec<String>,
     pub align: Option<u32>,
     pub generate_builder: bool,
@@ -111,6 +112,7 @@ impl Default for GObject {
             conversion_type: None,
             use_boxed_functions: false,
             generate_display_trait: true,
+            trust_return_value_nullability: false,
             manual_traits: Vec::default(),
             align: None,
             generate_builder: false,
@@ -129,10 +131,16 @@ pub fn parse_toml(
     toml_objects: &Value,
     concurrency: library::Concurrency,
     generate_display_trait: bool,
+    trust_return_value_nullability: bool,
 ) -> GObjects {
     let mut objects = GObjects::new();
     for toml_object in toml_objects.as_array().unwrap() {
-        let gobject = parse_object(toml_object, concurrency, generate_display_trait);
+        let gobject = parse_object(
+            toml_object,
+            concurrency,
+            generate_display_trait,
+            trust_return_value_nullability,
+        );
         objects.insert(gobject.name.clone(), gobject);
     }
     objects
@@ -168,6 +176,7 @@ fn parse_object(
     toml_object: &Value,
     concurrency: library::Concurrency,
     default_generate_display_trait: bool,
+    trust_return_value_nullability: bool,
 ) -> GObject {
     let name: String = toml_object
         .lookup("name")
@@ -201,6 +210,7 @@ fn parse_object(
             "must_use",
             "use_boxed_functions",
             "generate_display_trait",
+            "trust_return_value_nullability",
             "manual_traits",
             "align",
             "generate_builder",
@@ -287,6 +297,10 @@ fn parse_object(
         .lookup("generate_display_trait")
         .and_then(Value::as_bool)
         .unwrap_or(default_generate_display_trait);
+    let trust_return_value_nullability = toml_object
+        .lookup("trust_return_value_nullability")
+        .and_then(Value::as_bool)
+        .unwrap_or(trust_return_value_nullability);
     let manual_traits = toml_object
         .lookup_vec("manual_traits", "IGNORED ERROR")
         .map(|v| {
@@ -378,6 +392,7 @@ fn parse_object(
         conversion_type,
         use_boxed_functions,
         generate_display_trait,
+        trust_return_value_nullability,
         manual_traits,
         align,
         generate_builder,
@@ -393,10 +408,18 @@ pub fn parse_status_shorthands(
     toml: &Value,
     concurrency: library::Concurrency,
     generate_display_trait: bool,
+    trust_return_value_nullability: bool,
 ) {
     use self::GStatus::*;
     for &status in &[Manual, Generate, Ignore] {
-        parse_status_shorthand(objects, status, toml, concurrency, generate_display_trait);
+        parse_status_shorthand(
+            objects,
+            status,
+            toml,
+            concurrency,
+            generate_display_trait,
+            trust_return_value_nullability,
+        );
     }
 }
 
@@ -406,6 +429,7 @@ fn parse_status_shorthand(
     toml: &Value,
     concurrency: library::Concurrency,
     generate_display_trait: bool,
+    trust_return_value_nullability: bool,
 ) {
     let option_name = format!("options.{:?}", status).to_ascii_lowercase();
     if let Some(a) = toml.lookup(&option_name).map(|a| a.as_array().unwrap()) {
@@ -419,6 +443,7 @@ fn parse_status_shorthand(
                             status,
                             concurrency,
                             generate_display_trait,
+                            trust_return_value_nullability,
                             ..Default::default()
                         },
                     );
