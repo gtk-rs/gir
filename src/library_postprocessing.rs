@@ -1,6 +1,6 @@
 use crate::{
     analysis::types::IsIncomplete,
-    config::{gobjects::GObject, Config},
+    config::{gobjects::GObject, Config, WorkMode},
     library::*,
     nameutil,
     parser::is_empty_c_type,
@@ -36,7 +36,7 @@ impl Library {
         self.fix_fields();
         self.make_unrepresentable_types_opaque();
         self.mark_final_types(config);
-        self.update_error_domain_functions();
+        self.update_error_domain_functions(config);
     }
 
     fn fix_gtype(&mut self) {
@@ -507,7 +507,7 @@ impl Library {
         }
     }
 
-    fn update_error_domain_functions(&mut self) {
+    fn update_error_domain_functions(&mut self, config: &Config) {
         // Find find all error domains that have corresponding functions
         let mut error_domains = vec![];
         for (ns_id, ns) in self.namespaces.iter().enumerate() {
@@ -592,35 +592,37 @@ impl Library {
         }
 
         for (ns_id, enum_tid, domain_tid, function_name) in error_domains {
-            if let Some(domain_tid) = domain_tid {
-                match *self.type_mut(domain_tid) {
-                    Type::Enumeration(Enumeration {
-                        ref mut functions, ..
-                    })
-                    | Type::Class(Class {
-                        ref mut functions, ..
-                    })
-                    | Type::Record(Record {
-                        ref mut functions, ..
-                    })
-                    | Type::Interface(Interface {
-                        ref mut functions, ..
-                    }) => {
-                        let pos = functions
-                            .iter()
-                            .position(|f| f.c_identifier.as_ref() == Some(&function_name))
-                            .unwrap();
-                        functions.remove(pos);
+            if config.work_mode != WorkMode::Sys {
+                if let Some(domain_tid) = domain_tid {
+                    match *self.type_mut(domain_tid) {
+                        Type::Enumeration(Enumeration {
+                            ref mut functions, ..
+                        })
+                        | Type::Class(Class {
+                            ref mut functions, ..
+                        })
+                        | Type::Record(Record {
+                            ref mut functions, ..
+                        })
+                        | Type::Interface(Interface {
+                            ref mut functions, ..
+                        }) => {
+                            let pos = functions
+                                .iter()
+                                .position(|f| f.c_identifier.as_ref() == Some(&function_name))
+                                .unwrap();
+                            functions.remove(pos);
+                        }
+                        _ => unreachable!(),
                     }
-                    _ => unreachable!(),
+                } else {
+                    let pos = self.namespaces[ns_id]
+                        .functions
+                        .iter()
+                        .position(|f| f.c_identifier.as_ref() == Some(&function_name))
+                        .unwrap();
+                    self.namespaces[ns_id].functions.remove(pos);
                 }
-            } else {
-                let pos = self.namespaces[ns_id]
-                    .functions
-                    .iter()
-                    .position(|f| f.c_identifier.as_ref() == Some(&function_name))
-                    .unwrap();
-                self.namespaces[ns_id].functions.remove(pos);
             }
 
             if let Type::Enumeration(ref mut enum_) = *self.type_mut(enum_tid) {
