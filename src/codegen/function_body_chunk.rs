@@ -1064,6 +1064,8 @@ impl Builder {
             NullMutPtr => Chunk::NullMutPtr,
         }
     }
+
+    #[allow(clippy::blocks_in_if_conditions)]
     fn generate_out_return(&self, uninitialized_vars: &mut Vec<(String, bool)>) -> Option<Chunk> {
         if !self.outs_as_return {
             return None;
