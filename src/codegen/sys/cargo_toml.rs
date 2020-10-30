@@ -82,7 +82,7 @@ fn fill_in(root: &mut Table, env: &Env) {
 
     {
         let build_deps = upsert_table(root, "build-dependencies");
-        set_string(build_deps, "system-deps", "1.3");
+        set_string(build_deps, "system-deps", "2.0");
     }
 
     {
@@ -119,12 +119,15 @@ fn fill_in(root: &mut Table, env: &Env) {
         set_string(meta, "name", lib_name);
         set_string(meta, "version", env.config.min_cfg_version.to_string());
 
-        let versions = upsert_table(meta, "feature-versions");
+        // Old version API
+        unset(meta, "feature-versions");
+
         collect_versions(env)
             .iter()
             .filter(|(&v, _)| v > env.config.min_cfg_version)
             .for_each(|(v, lib_version)| {
-                set_string(versions, &v.to_feature(), lib_version.to_string());
+                let version_section = upsert_table(meta, &v.to_feature());
+                set_string(version_section, "version", lib_version.to_string());
             });
     }
 
