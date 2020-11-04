@@ -1,6 +1,7 @@
 use super::{
     error::TomlHelper,
     functions::Return,
+    gobjects::GStatus,
     ident::Ident,
     parameter_matchable::Functionlike,
     parsable::{Parsable, Parse},
@@ -98,9 +99,7 @@ pub type Parameters = Vec<Parameter>;
 #[derive(Clone, Debug)]
 pub struct Signal {
     pub ident: Ident,
-    //true - ignore this signal
-    //false(default) - process this signal
-    pub ignore: bool,
+    pub status: GStatus,
     pub inhibit: bool,
     pub version: Option<Version>,
     pub parameters: Parameters,
@@ -129,6 +128,7 @@ impl Signal {
         toml.check_unwanted(
             &[
                 "ignore",
+                "manual",
                 "inhibit",
                 "version",
                 "parameter",
@@ -142,10 +142,23 @@ impl Signal {
             &format!("signal {}", object_name),
         );
 
-        let ignore = toml
-            .lookup("ignore")
-            .and_then(Value::as_bool)
-            .unwrap_or(false);
+        let status = {
+            if toml
+                .lookup("ignore")
+                .and_then(Value::as_bool)
+                .unwrap_or(false)
+            {
+                GStatus::Ignore
+            } else if toml
+                .lookup("manual")
+                .and_then(Value::as_bool)
+                .unwrap_or(false)
+            {
+                GStatus::Manual
+            } else {
+                GStatus::Generate
+            }
+        };
 
         let inhibit = toml
             .lookup("inhibit")
@@ -175,7 +188,7 @@ impl Signal {
 
         Some(Signal {
             ident,
-            ignore,
+            status,
             inhibit,
             version,
             parameters,
@@ -222,7 +235,7 @@ name = "signal1"
         );
         let f = Signal::parse(&toml, "a", Default::default()).unwrap();
         assert_eq!(f.ident, Ident::Name("signal1".into()));
-        assert_eq!(f.ignore, false);
+        assert!(f.status.need_generate());
     }
 
     #[test]
@@ -234,6 +247,18 @@ ignore = true
 "#,
         );
         let f = Signal::parse(&toml, "a", Default::default()).unwrap();
-        assert_eq!(f.ignore, true);
+        assert!(f.status.ignored());
+    }
+
+    #[test]
+    fn signal_parse_manual() {
+        let toml = toml(
+            r#"
+name = "signal1"
+manual = true
+"#,
+        );
+        let f = Signal::parse(&toml, "a", Default::default()).unwrap();
+        assert!(f.status.manual());
     }
 }

@@ -63,7 +63,10 @@ fn analyze_properties(
             continue;
         }
         let configured_properties = obj.properties.matched(&prop.name);
-        if configured_properties.iter().any(|f| f.ignore) {
+        if !configured_properties
+            .iter()
+            .all(|f| f.status.need_generate())
+        {
             continue;
         }
 

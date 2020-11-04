@@ -21,21 +21,21 @@ impl InfoBase {
     pub fn constructors(&self) -> Vec<&functions::Info> {
         self.functions
             .iter()
-            .filter(|f| f.kind == library::FunctionKind::Constructor)
+            .filter(|f| f.status.need_generate() && f.kind == library::FunctionKind::Constructor)
             .collect()
     }
 
     pub fn methods(&self) -> Vec<&functions::Info> {
         self.functions
             .iter()
-            .filter(|f| f.kind == library::FunctionKind::Method)
+            .filter(|f| f.status.need_generate() && f.kind == library::FunctionKind::Method)
             .collect()
     }
 
     pub fn functions(&self) -> Vec<&functions::Info> {
         self.functions
             .iter()
-            .filter(|f| f.kind == library::FunctionKind::Function)
+            .filter(|f| f.status.need_generate() && f.kind == library::FunctionKind::Function)
             .collect()
     }
 }

@@ -31,6 +31,9 @@ impl GStatus {
     pub fn ignored(self) -> bool {
         self == GStatus::Ignore
     }
+    pub fn manual(self) -> bool {
+        self == GStatus::Manual
+    }
     pub fn need_generate(self) -> bool {
         self == GStatus::Generate
     }

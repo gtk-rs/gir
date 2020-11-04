@@ -31,7 +31,7 @@ pub fn analyze(
 
     for signal in signals {
         let configured_signals = obj.signals.matched(&signal.name);
-        if configured_signals.iter().any(|f| f.ignore) {
+        if !configured_signals.iter().all(|f| f.status.need_generate()) {
             continue;
         }
         if env.is_totally_deprecated(signal.deprecated_version) {
