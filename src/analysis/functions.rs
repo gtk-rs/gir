@@ -491,7 +491,7 @@ fn analyze_function(
         library::Type::Class(_) | library::Type::Interface(_) | library::Type::Record(_) => {
             obj.concurrency
         }
-        _ => library::Concurrency::None,
+        _ => library::Concurrency::SendSync,
     };
 
     let mut commented = false;
