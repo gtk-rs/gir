@@ -1,4 +1,4 @@
-use super::{error::TomlHelper, ident::Ident, parsable::Parse};
+use super::{error::TomlHelper, gobjects::GStatus, ident::Ident, parsable::Parse};
 use crate::version::Version;
 use log::error;
 use toml::Value;
@@ -10,7 +10,7 @@ pub struct Member {
     pub alias: bool,
     pub version: Option<Version>,
     pub deprecated_version: Option<Version>,
-    pub ignore: bool,
+    pub status: GStatus,
 }
 
 impl Parse for Member {
@@ -44,17 +44,30 @@ impl Parse for Member {
             .and_then(Value::as_str)
             .and_then(|s| s.parse().ok());
 
-        let ignore = toml
-            .lookup("ignore")
-            .and_then(Value::as_bool)
-            .unwrap_or(false);
+        let status = {
+            if toml
+                .lookup("ignore")
+                .and_then(Value::as_bool)
+                .unwrap_or(false)
+            {
+                GStatus::Ignore
+            } else if toml
+                .lookup("manual")
+                .and_then(Value::as_bool)
+                .unwrap_or(false)
+            {
+                GStatus::Manual
+            } else {
+                GStatus::Generate
+            }
+        };
 
         Some(Member {
             ident,
             alias,
             version,
             deprecated_version,
-            ignore,
+            status,
         })
     }
 }

@@ -12,26 +12,30 @@ pub fn generate(
     trait_name: Option<&str>,
 ) -> Result<()> {
     for (type_, name) in specials.iter() {
-        match *type_ {
-            Type::Compare => {
-                if specials.get(&Type::Equal).is_none() {
-                    generate_eq_compare(w, type_name, lookup(functions, name), trait_name)?;
+        if let Some(info) = lookup(functions, name) {
+            match *type_ {
+                Type::Compare => {
+                    if specials.get(&Type::Equal).is_none() {
+                        generate_eq_compare(w, type_name, info, trait_name)?;
+                    }
+                    generate_ord(w, type_name, info, trait_name)?;
                 }
-                generate_ord(w, type_name, lookup(functions, name), trait_name)?;
+                Type::Equal => {
+                    generate_eq(w, type_name, info, trait_name)?;
+                }
+                Type::ToString => generate_display(w, type_name, info, trait_name)?,
+                Type::Hash => generate_hash(w, type_name, info, trait_name)?,
+                _ => {}
             }
-            Type::Equal => {
-                generate_eq(w, type_name, lookup(functions, name), trait_name)?;
-            }
-            Type::ToString => generate_display(w, type_name, lookup(functions, name), trait_name)?,
-            Type::Hash => generate_hash(w, type_name, lookup(functions, name), trait_name)?,
-            _ => {}
         }
     }
     Ok(())
 }
 
-fn lookup<'a>(functions: &'a [Info], name: &str) -> &'a Info {
-    functions.iter().find(|f| f.glib_name == name).unwrap()
+fn lookup<'a>(functions: &'a [Info], name: &str) -> Option<&'a Info> {
+    functions
+        .iter()
+        .find(|f| f.status.need_generate() && f.glib_name == name)
 }
 
 fn generate_call(func_name: &str, args: &[&str], trait_name: Option<&str>) -> String {

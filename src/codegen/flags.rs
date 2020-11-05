@@ -89,8 +89,8 @@ fn generate_flags(env: &Env, w: &mut dyn Write, flags: &Bitfield, config: &GObje
     writeln!(w, "    pub struct {}: u32 {{", flags.name)?;
     for member in &flags.members {
         let member_config = config.members.matched(&member.name);
-        let ignore = member_config.iter().any(|m| m.ignore);
-        if ignore {
+        let generate = member_config.iter().all(|m| m.status.need_generate());
+        if !generate {
             continue;
         }
 

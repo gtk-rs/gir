@@ -23,7 +23,13 @@ impl TranslateFromGlib for Mode {
         use crate::analysis::conversion_type::ConversionType::*;
         match ConversionType::of(env, self.typ) {
             Direct => (String::new(), String::new()),
-            Scalar => ("from_glib(".into(), ")".into()),
+            Scalar => match env.library.type_(self.typ) {
+                library::Type::Fundamental(library::Fundamental::UniChar) => (
+                    "std::convert::TryFrom::try_from(".into(),
+                    ").expect(\"conversion from an invalid Unicode value attempted\")".into(),
+                ),
+                _ => ("from_glib(".into(), ")".into()),
+            },
             Pointer => {
                 let trans = from_glib_xxx(self.transfer, array_length);
                 match *env.type_(self.typ) {

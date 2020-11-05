@@ -211,7 +211,10 @@ fn generate_object_funcs(
     if write_get_type {
         let configured_functions = obj.functions.matched("get_type");
 
-        if !configured_functions.iter().any(|f| f.ignore) {
+        if configured_functions
+            .iter()
+            .all(|f| f.status.need_generate())
+        {
             let version = std::iter::once(version)
                 .chain(configured_functions.iter().map(|f| f.version))
                 .max()
@@ -224,7 +227,10 @@ fn generate_object_funcs(
 
     for func in functions {
         let configured_functions = obj.functions.matched(&func.name);
-        if configured_functions.iter().any(|f| f.ignore) {
+        if !configured_functions
+            .iter()
+            .all(|f| f.status.need_generate())
+        {
             continue;
         }
         let is_windows_utf8 = configured_functions.iter().any(|f| f.is_windows_utf8);

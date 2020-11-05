@@ -19,7 +19,7 @@ use crate::{
         signatures::{Signature, Signatures},
         trampolines::Trampoline,
     },
-    config,
+    config::{self, gobjects::GStatus},
     env::Env,
     library::{self, Function, FunctionKind, Nullable, Parameter, ParameterScope, Transfer, Type},
     nameutil,
@@ -70,6 +70,7 @@ pub struct AsyncFuture {
 pub struct Info {
     pub name: String,
     pub glib_name: String,
+    pub status: GStatus,
     pub kind: library::FunctionKind,
     pub visibility: Visibility,
     pub type_name: Result,
@@ -115,12 +116,21 @@ pub fn analyze<F: Borrow<library::Function>>(
 ) -> Vec<Info> {
     let mut funcs = Vec::new();
 
-    for func in functions {
+    'func: for func in functions {
         let func = func.borrow();
         let configured_functions = obj.functions.matched(&func.name);
-        if configured_functions.iter().any(|f| f.ignore) {
-            continue;
+        let mut status = GStatus::Generate;
+        for f in configured_functions.iter() {
+            match f.status {
+                GStatus::Ignore => continue 'func,
+                GStatus::Manual => {
+                    status = GStatus::Manual;
+                    break;
+                }
+                GStatus::Generate => (),
+            }
         }
+
         if env.is_totally_deprecated(func.deprecated_version) {
             continue;
         }
@@ -146,6 +156,7 @@ pub fn analyze<F: Borrow<library::Function>>(
             env,
             obj,
             name,
+            status,
             func,
             type_tid,
             in_trait,
@@ -472,6 +483,7 @@ fn analyze_function(
     env: &Env,
     obj: &config::gobjects::GObject,
     name: String,
+    status: GStatus,
     func: &library::Function,
     type_tid: library::TypeId,
     in_trait: bool,
@@ -594,86 +606,89 @@ fn analyze_function(
     let mut cross_user_data_check: HashMap<usize, usize> = HashMap::new();
     let mut user_data_indexes: HashSet<usize> = HashSet::new();
 
-    if !has_callback_parameter {
-        for (pos, par) in parameters.c_parameters.iter().enumerate() {
-            // FIXME: It'd be better if we assumed that user data wasn't gpointer all the time so
-            //        we could handle it more generically.
-            if r#async && is_gpointer(&par.c_type) {
-                continue;
-            }
-            assert!(
-                !par.instance_parameter || pos == 0,
-                "Wrong instance parameter in {}",
-                func.c_identifier.as_ref().unwrap()
-            );
-            if let Ok(s) = used_rust_type(env, par.typ, !par.direction.is_out()) {
-                if !s.ends_with("GString") || par.c_type == "gchar***" {
-                    used_types.push(s);
+    if status.need_generate() {
+        if !has_callback_parameter {
+            for (pos, par) in parameters.c_parameters.iter().enumerate() {
+                // FIXME: It'd be better if we assumed that user data wasn't gpointer all the time so
+                //        we could handle it more generically.
+                if r#async && is_gpointer(&par.c_type) {
+                    continue;
+                }
+                assert!(
+                    !par.instance_parameter || pos == 0,
+                    "Wrong instance parameter in {}",
+                    func.c_identifier.as_ref().unwrap()
+                );
+                if let Ok(s) = used_rust_type(env, par.typ, !par.direction.is_out()) {
+                    if !s.ends_with("GString") || par.c_type == "gchar***" {
+                        used_types.push(s);
+                    }
+                }
+                let (to_glib_extra, callback_info) = bounds.add_for_parameter(
+                    env,
+                    func,
+                    par,
+                    r#async,
+                    library::Concurrency::None,
+                    configured_functions,
+                );
+                if let Some(to_glib_extra) = to_glib_extra {
+                    to_glib_extras.insert(pos, to_glib_extra);
+                }
+
+                analyze_async(
+                    env,
+                    func,
+                    type_tid,
+                    callback_info,
+                    &mut commented,
+                    &mut trampoline,
+                    no_future,
+                    &mut async_future,
+                    configured_functions,
+                    &parameters,
+                );
+                let type_error = !(r#async
+                    && *env.library.type_(par.typ)
+                        == Type::Fundamental(library::Fundamental::Pointer))
+                    && parameter_rust_type(
+                        env,
+                        par.typ,
+                        par.direction,
+                        Nullable(false),
+                        RefMode::None,
+                        par.scope,
+                    )
+                    .is_err();
+                if type_error {
+                    commented = true;
                 }
             }
-            let (to_glib_extra, callback_info) = bounds.add_for_parameter(
-                env,
-                func,
-                par,
-                r#async,
-                library::Concurrency::None,
-                configured_functions,
-            );
-            if let Some(to_glib_extra) = to_glib_extra {
-                to_glib_extras.insert(pos, to_glib_extra);
-            }
-
-            analyze_async(
-                env,
-                func,
-                type_tid,
-                callback_info,
-                &mut commented,
-                &mut trampoline,
-                no_future,
-                &mut async_future,
-                configured_functions,
-                &parameters,
-            );
-            let type_error = !(r#async
-                && *env.library.type_(par.typ) == Type::Fundamental(library::Fundamental::Pointer))
-                && parameter_rust_type(
-                    env,
-                    par.typ,
-                    par.direction,
-                    Nullable(false),
-                    RefMode::None,
-                    par.scope,
-                )
-                .is_err();
-            if type_error {
+            if r#async && trampoline.is_none() {
                 commented = true;
             }
+        } else {
+            analyze_callbacks(
+                env,
+                func,
+                &mut cross_user_data_check,
+                &mut user_data_indexes,
+                &mut parameters,
+                &mut used_types,
+                &mut bounds,
+                &mut to_glib_extras,
+                imports,
+                &mut destroys,
+                &mut callbacks,
+                &mut params,
+                configured_functions,
+                disable_length_detect,
+                in_trait,
+                &mut commented,
+                concurrency,
+                type_tid,
+            );
         }
-        if r#async && trampoline.is_none() {
-            commented = true;
-        }
-    } else {
-        analyze_callbacks(
-            env,
-            func,
-            &mut cross_user_data_check,
-            &mut user_data_indexes,
-            &mut parameters,
-            &mut used_types,
-            &mut bounds,
-            &mut to_glib_extras,
-            imports,
-            &mut destroys,
-            &mut callbacks,
-            &mut params,
-            configured_functions,
-            disable_length_detect,
-            in_trait,
-            &mut commented,
-            concurrency,
-            type_tid,
-        );
     }
 
     for par in &parameters.rust_parameters {
@@ -710,7 +725,7 @@ fn analyze_function(
             func.c_identifier.as_ref().unwrap_or(&func.name)
         );
         commented = true;
-    } else if !commented {
+    } else if status.need_generate() && !commented {
         if !outs.is_empty() {
             out_parameters::analyze_imports(env, &func.parameters, imports);
         }
@@ -722,7 +737,7 @@ fn analyze_function(
         }
     }
 
-    if r#async && !commented {
+    if r#async && status.need_generate() && !commented {
         if env.config.library_name != "Gio" {
             imports.add("gio_sys");
             imports.add_with_constraint("gio", version, None);
@@ -747,7 +762,7 @@ fn analyze_function(
         }
     }
 
-    if !commented {
+    if status.need_generate() && !commented {
         if (!destroys.is_empty() || !callbacks.is_empty())
             && callbacks.iter().any(|c| !c.scope.is_call())
         {
@@ -783,6 +798,7 @@ fn analyze_function(
     Info {
         name,
         glib_name: func.c_identifier.as_ref().unwrap().clone(),
+        status,
         kind: func.kind,
         visibility,
         type_name: rust_type(env, type_tid),

@@ -33,6 +33,10 @@ pub fn generate(
     only_declaration: bool,
     indent: usize,
 ) -> Result<()> {
+    if !analysis.status.need_generate() {
+        return Ok(());
+    }
+
     if analysis.is_async_finish(env) {
         return Ok(());
     }

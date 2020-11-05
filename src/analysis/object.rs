@@ -147,7 +147,7 @@ pub fn class(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<Info>
 
     let has_methods = functions
         .iter()
-        .any(|f| f.kind == library::FunctionKind::Method);
+        .any(|f| f.kind == library::FunctionKind::Method && f.status.need_generate());
     let has_signals = signals.iter().any(|s| s.trampoline.is_ok())
         || notify_signals.iter().any(|s| s.trampoline.is_ok());
 

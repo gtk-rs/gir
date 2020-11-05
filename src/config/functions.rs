@@ -1,5 +1,6 @@
 use super::{
     error::TomlHelper,
+    gobjects::GStatus,
     ident::Ident,
     parameter_matchable::Functionlike,
     parsable::{Parsable, Parse},
@@ -191,9 +192,7 @@ fn check_rename(rename: &Option<String>, object_name: &str, function_name: &Iden
 #[derive(Clone, Debug)]
 pub struct Function {
     pub ident: Ident,
-    //true - ignore this function,
-    //false(default) - process this function
-    pub ignore: bool,
+    pub status: GStatus,
     pub version: Option<Version>,
     pub cfg_condition: Option<String>,
     pub parameters: Parameters,
@@ -222,6 +221,7 @@ impl Parse for Function {
         toml.check_unwanted(
             &[
                 "ignore",
+                "manual",
                 "version",
                 "cfg_condition",
                 "parameter",
@@ -239,10 +239,23 @@ impl Parse for Function {
             &format!("function {}", object_name),
         );
 
-        let ignore = toml
-            .lookup("ignore")
-            .and_then(Value::as_bool)
-            .unwrap_or(false);
+        let status = {
+            if toml
+                .lookup("ignore")
+                .and_then(Value::as_bool)
+                .unwrap_or(false)
+            {
+                GStatus::Ignore
+            } else if toml
+                .lookup("manual")
+                .and_then(Value::as_bool)
+                .unwrap_or(false)
+            {
+                GStatus::Manual
+            } else {
+                GStatus::Generate
+            }
+        };
         let version = toml
             .lookup("version")
             .and_then(Value::as_str)
@@ -293,7 +306,7 @@ impl Parse for Function {
 
         Some(Function {
             ident,
-            ignore,
+            status,
             version,
             parameters,
             ret,
@@ -359,7 +372,20 @@ ignore = true
         );
         let f = Function::parse(&toml, "a").unwrap();
         assert_eq!(f.ident, Ident::Name("func1".into()));
-        assert_eq!(f.ignore, true);
+        assert!(f.status.ignored());
+    }
+
+    #[test]
+    fn function_parse_manual() {
+        let toml = toml(
+            r#"
+name = "func1"
+manual = true
+"#,
+        );
+        let f = Function::parse(&toml, "a").unwrap();
+        assert_eq!(f.ident, Ident::Name("func1".into()));
+        assert!(f.status.manual());
     }
 
     #[test]
@@ -371,6 +397,7 @@ name = "func1"
         );
         let f = Function::parse(&toml, "a").unwrap();
         assert_eq!(f.version, None);
+        assert!(f.status.need_generate());
     }
 
     #[test]

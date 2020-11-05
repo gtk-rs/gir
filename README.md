@@ -395,6 +395,23 @@ status = "generate"
     ignore = true
 ```
 
+Which will prevent gir from generating `stock_list_ids`. If you want to specify
+that a function will be manually implemented, you can use:
+
+
+```toml
+[[object]]
+name = "Gtk.Entry"
+status = "generate"
+    [[object.function]]
+    name = "get_invisible_char"
+    manual = true
+```
+
+This will prevent gir from generating `get_invisible_char` and it won't generate
+`get_property_invisible_char` which would have been generated if we had used
+"ignore = true".
+
 Note that you must not place `Gtk.*` into the `generate` array and
 additionally configure its members.
 

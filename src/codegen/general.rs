@@ -639,7 +639,10 @@ pub fn declare_default_from_new(
     functions: &[analysis::functions::Info],
 ) -> Result<()> {
     if let Some(func) = functions.iter().find(|f| {
-        !f.visibility.hidden() && f.name == "new" && f.parameters.rust_parameters.is_empty()
+        !f.visibility.hidden()
+            && f.status.need_generate()
+            && f.name == "new"
+            && f.parameters.rust_parameters.is_empty()
     }) {
         writeln!(w)?;
         cfg_deprecated(w, env, func.deprecated_version, false, 0)?;

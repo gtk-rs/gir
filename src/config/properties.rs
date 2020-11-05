@@ -1,5 +1,5 @@
 use super::{
-    error::TomlHelper, ident::Ident, parsable::Parse,
+    error::TomlHelper, gobjects::GStatus, ident::Ident, parsable::Parse,
     property_generate_flags::PropertyGenerateFlags,
 };
 use crate::version::Version;
@@ -9,9 +9,7 @@ use toml::Value;
 #[derive(Clone, Debug)]
 pub struct Property {
     pub ident: Ident,
-    //true - ignore this property,
-    //false(default) - process this property
-    pub ignore: bool,
+    pub status: GStatus,
     pub version: Option<Version>,
     pub generate: Option<PropertyGenerateFlags>,
     pub doc_trait_name: Option<String>,
@@ -33,6 +31,7 @@ impl Parse for Property {
         toml.check_unwanted(
             &[
                 "ignore",
+                "manual",
                 "version",
                 "name",
                 "pattern",
@@ -42,10 +41,23 @@ impl Parse for Property {
             &format!("property {}", object_name),
         );
 
-        let ignore = toml
-            .lookup("ignore")
-            .and_then(Value::as_bool)
-            .unwrap_or(false);
+        let status = {
+            if toml
+                .lookup("ignore")
+                .and_then(Value::as_bool)
+                .unwrap_or(false)
+            {
+                GStatus::Ignore
+            } else if toml
+                .lookup("manual")
+                .and_then(Value::as_bool)
+                .unwrap_or(false)
+            {
+                GStatus::Manual
+            } else {
+                GStatus::Generate
+            }
+        };
         let version = toml
             .lookup("version")
             .and_then(Value::as_str)
@@ -62,7 +74,7 @@ impl Parse for Property {
 
         Some(Property {
             ident,
-            ignore,
+            status,
             version,
             generate,
             doc_trait_name,
@@ -111,7 +123,20 @@ ignore = true
         );
         let p = Property::parse(&toml, "a").unwrap();
         assert_eq!(p.ident, Ident::Name("prop1".into()));
-        assert_eq!(p.ignore, true);
+        assert!(p.status.ignored());
+    }
+
+    #[test]
+    fn property_parse_manual() {
+        let toml = toml(
+            r#"
+name = "prop1"
+manual = true
+"#,
+        );
+        let p = Property::parse(&toml, "a").unwrap();
+        assert_eq!(p.ident, Ident::Name("prop1".into()));
+        assert!(p.status.manual());
     }
 
     #[test]
@@ -123,6 +148,7 @@ name = "prop1"
         );
         let p = Property::parse(&toml, "a").unwrap();
         assert_eq!(p.version, None);
+        assert!(p.status.need_generate());
     }
 
     #[test]

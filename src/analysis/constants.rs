@@ -22,7 +22,10 @@ pub fn analyze<F: Borrow<library::Constant>>(
         let constant = constant.borrow();
         let configured_constants = obj.constants.matched(&constant.name);
 
-        if configured_constants.iter().any(|c| c.ignore) {
+        if !configured_constants
+            .iter()
+            .all(|c| c.status.need_generate())
+        {
             continue;
         }
 

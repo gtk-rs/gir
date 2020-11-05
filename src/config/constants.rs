@@ -1,4 +1,4 @@
-use super::{error::TomlHelper, ident::Ident, parsable::Parse};
+use super::{error::TomlHelper, gobjects::GStatus, ident::Ident, parsable::Parse};
 use crate::version::Version;
 use log::error;
 use toml::Value;
@@ -6,7 +6,7 @@ use toml::Value;
 #[derive(Clone, Debug)]
 pub struct Constant {
     pub ident: Ident,
-    pub ignore: bool,
+    pub status: GStatus,
     pub version: Option<Version>,
     pub cfg_condition: Option<String>,
 }
@@ -24,7 +24,14 @@ impl Parse for Constant {
             }
         };
         toml.check_unwanted(
-            &["ignore", "name", "version", "cfg_condition", "pattern"],
+            &[
+                "ignore",
+                "manual",
+                "name",
+                "version",
+                "cfg_condition",
+                "pattern",
+            ],
             &format!("function {}", object_name),
         );
 
@@ -37,14 +44,27 @@ impl Parse for Constant {
             .and_then(Value::as_str)
             .map(ToOwned::to_owned);
 
-        let ignore = toml
-            .lookup("ignore")
-            .and_then(Value::as_bool)
-            .unwrap_or(false);
+        let status = {
+            if toml
+                .lookup("ignore")
+                .and_then(Value::as_bool)
+                .unwrap_or(false)
+            {
+                GStatus::Ignore
+            } else if toml
+                .lookup("manual")
+                .and_then(Value::as_bool)
+                .unwrap_or(false)
+            {
+                GStatus::Manual
+            } else {
+                GStatus::Generate
+            }
+        };
 
         Some(Constant {
             ident,
-            ignore,
+            status,
             version,
             cfg_condition,
         })

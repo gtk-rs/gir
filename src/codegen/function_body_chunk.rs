@@ -1310,10 +1310,17 @@ fn add_chunk_for_type(
     let type_ = env.type_(typ_);
     match *type_ {
         library::Type::Fundamental(ref x) if !x.requires_conversion() => true,
-        library::Type::Fundamental(library::Fundamental::Boolean)
-        | library::Type::Fundamental(library::Fundamental::UniChar) => {
+        library::Type::Fundamental(library::Fundamental::Boolean) => {
             body.push(Chunk::Custom(format!(
                 "let {0} = from_glib({0});",
+                par.name
+            )));
+            true
+        }
+        library::Type::Fundamental(library::Fundamental::UniChar) => {
+            body.push(Chunk::Custom(format!(
+                "let {0} = std::convert::TryFrom::try_from({0})\
+                     .expect(\"conversion from an invalid Unicode value attempted\");",
                 par.name
             )));
             true
