@@ -27,7 +27,6 @@ pub fn generate(
         &analysis.name,
         &analysis.c_type,
         analysis.c_class_type.as_deref(),
-        analysis.rust_class_type.as_deref(),
         &analysis.get_type,
         analysis.is_interface,
         &analysis.supertypes,
@@ -364,17 +363,10 @@ pub fn generate_reexports(
         String::new()
     };
 
-    if let Some(ref class_name) = analysis.rust_class_type {
-        contents.push(format!(
-            "pub use self::{}::{{{}, {}{}}};",
-            module_name, analysis.name, class_name, none_type
-        ));
-    } else {
-        contents.push(format!(
-            "pub use self::{}::{{{}{}}};",
-            module_name, analysis.name, none_type
-        ));
-    }
+    contents.push(format!(
+        "pub use self::{}::{{{}{}}};",
+        module_name, analysis.name, none_type
+    ));
     if need_generate_trait(analysis) {
         contents.extend_from_slice(&cfgs);
         contents.push(format!(
