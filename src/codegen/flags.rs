@@ -114,7 +114,6 @@ fn generate_flags(env: &Env, w: &mut dyn Write, flags: &Bitfield, config: &GObje
 "
     )?;
 
-    cfg_deprecated(w, env, flags.deprecated_version, false, 0)?;
     version_condition(w, env, flags.version, false, 0)?;
     writeln!(
         w,
@@ -138,7 +137,6 @@ impl ToGlib for {name} {{
         ""
     };
 
-    cfg_deprecated(w, env, flags.deprecated_version, false, 0)?;
     version_condition(w, env, flags.version, false, 0)?;
     writeln!(
         w,
@@ -162,7 +160,6 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
             .max()
             .flatten();
 
-        cfg_deprecated(w, env, flags.deprecated_version, false, 0)?;
         version_condition(w, env, version, false, 0)?;
         writeln!(
             w,
@@ -177,7 +174,6 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
         )?;
         writeln!(w)?;
 
-        cfg_deprecated(w, env, flags.deprecated_version, false, 0)?;
         version_condition(w, env, version, false, 0)?;
         writeln!(
             w,
@@ -190,7 +186,6 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
         )?;
         writeln!(w)?;
 
-        cfg_deprecated(w, env, flags.deprecated_version, false, 0)?;
         version_condition(w, env, version, false, 0)?;
         writeln!(
             w,
@@ -203,7 +198,6 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
         )?;
         writeln!(w)?;
 
-        cfg_deprecated(w, env, flags.deprecated_version, false, 0)?;
         version_condition(w, env, version, false, 0)?;
         writeln!(
             w,

@@ -645,7 +645,6 @@ pub fn declare_default_from_new(
             && f.parameters.rust_parameters.is_empty()
     }) {
         writeln!(w)?;
-        cfg_deprecated(w, env, func.deprecated_version, false, 0)?;
         version_condition(w, env, func.version, false, 0)?;
         writeln!(w, "impl Default for {} {{", name)?;
         writeln!(w, "    fn default() -> Self {{")?;
