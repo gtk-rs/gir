@@ -78,7 +78,6 @@ pub fn define_object_type(
     type_name: &str,
     glib_name: &str,
     glib_class_name: Option<&str>,
-    rust_class_name: Option<&str>,
     glib_func_name: &str,
     is_interface: bool,
     parents: &[StatusedTypeId],
@@ -87,14 +86,6 @@ pub fn define_object_type(
     let class_name = {
         if let Some(s) = glib_class_name {
             format!(", {}::{}", sys_crate_name, s)
-        } else {
-            "".to_string()
-        }
-    };
-
-    let rust_class_name = {
-        if let Some(s) = rust_class_name {
-            format!(", {}", s)
         } else {
             "".to_string()
         }
@@ -113,8 +104,8 @@ pub fn define_object_type(
     if parents.is_empty() {
         writeln!(
             w,
-            "\tpub struct {}({}<{}::{}{}{}>);",
-            type_name, kind_name, sys_crate_name, glib_name, class_name, rust_class_name
+            "\tpub struct {}({}<{}::{}{}>);",
+            type_name, kind_name, sys_crate_name, glib_name, class_name
         )?;
     } else if is_interface {
         let prerequisites: Vec<String> =
@@ -122,13 +113,12 @@ pub fn define_object_type(
 
         writeln!(
             w,
-            "\tpub struct {}({}<{}::{}{}{}>) @requires {};",
+            "\tpub struct {}({}<{}::{}{}>) @requires {};",
             type_name,
             kind_name,
             sys_crate_name,
             glib_name,
             class_name,
-            rust_class_name,
             prerequisites.join(", ")
         )?;
     } else {
@@ -172,14 +162,8 @@ pub fn define_object_type(
 
         writeln!(
             w,
-            "\tpub struct {}({}<{}::{}{}{}>){};",
-            type_name,
-            kind_name,
-            sys_crate_name,
-            glib_name,
-            class_name,
-            rust_class_name,
-            parents_string,
+            "\tpub struct {}({}<{}::{}{}>){};",
+            type_name, kind_name, sys_crate_name, glib_name, class_name, parents_string,
         )?;
     }
     writeln!(w)?;
