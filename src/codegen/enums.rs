@@ -165,7 +165,6 @@ fn generate_enum(
 
     if config.generate_display_trait {
         // Generate Display trait implementation.
-        cfg_deprecated(w, env, enum_.deprecated_version, false, 0)?;
         version_condition(w, env, enum_.version, false, 0)?;
         writeln!(
             w,
@@ -175,7 +174,6 @@ fn generate_enum(
             enum_.name
         )?;
         for member in &members {
-            cfg_deprecated(w, env, member.deprecated_version, false, 3)?;
             version_condition(w, env, member.version, false, 3)?;
             writeln!(w, "\t\t\t{0}::{1} => \"{1}\",", enum_.name, member.name)?;
         }
@@ -189,7 +187,6 @@ fn generate_enum(
     }
 
     // Generate ToGlib trait implementation.
-    cfg_deprecated(w, env, enum_.deprecated_version, false, 0)?;
     version_condition(w, env, enum_.version, false, 0)?;
     writeln!(
         w,
@@ -204,7 +201,6 @@ impl ToGlib for {name} {{
         ffi_name = enum_.c_type
     )?;
     for member in &members {
-        cfg_deprecated(w, env, member.deprecated_version, false, 3)?;
         version_condition(w, env, member.version, false, 3)?;
         writeln!(
             w,
@@ -229,7 +225,6 @@ impl ToGlib for {name} {{
     };
 
     // Generate FromGlib trait implementation.
-    cfg_deprecated(w, env, enum_.deprecated_version, false, 0)?;
     version_condition(w, env, enum_.version, false, 0)?;
     writeln!(
         w,
@@ -243,7 +238,6 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
         assert = assert
     )?;
     for member in &members {
-        cfg_deprecated(w, env, member.deprecated_version, false, 3)?;
         version_condition(w, env, member.version, false, 3)?;
         writeln!(
             w,
@@ -265,7 +259,6 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
     if let Some(ref domain) = enum_.error_domain {
         let has_failed_member = members.iter().any(|m| m.name == "Failed");
 
-        cfg_deprecated(w, env, enum_.deprecated_version, false, 0)?;
         version_condition(w, env, enum_.version, false, 0)?;
         writeln!(
             w,
@@ -311,7 +304,6 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
         )?;
 
         for member in &members {
-            cfg_deprecated(w, env, member.deprecated_version, false, 3)?;
             version_condition(w, env, member.version, false, 3)?;
             writeln!(
                 w,
@@ -343,7 +335,6 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
             .max()
             .flatten();
 
-        cfg_deprecated(w, env, enum_.deprecated_version, false, 0)?;
         version_condition(w, env, version, false, 0)?;
         writeln!(
             w,
@@ -358,7 +349,6 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
         )?;
         writeln!(w)?;
 
-        cfg_deprecated(w, env, enum_.deprecated_version, false, 0)?;
         version_condition(w, env, version, false, 0)?;
         writeln!(
             w,
@@ -371,7 +361,6 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
         )?;
         writeln!(w)?;
 
-        cfg_deprecated(w, env, enum_.deprecated_version, false, 0)?;
         version_condition(w, env, version, false, 0)?;
         writeln!(
             w,
@@ -384,7 +373,6 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
         )?;
         writeln!(w)?;
 
-        cfg_deprecated(w, env, enum_.deprecated_version, false, 0)?;
         version_condition(w, env, version, false, 0)?;
         writeln!(
             w,
