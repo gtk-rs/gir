@@ -51,6 +51,11 @@ pub fn uses(w: &mut dyn Write, env: &Env, imports: &Imports) -> Result<()> {
                 "#[cfg(any({},feature = \"dox\"))]",
                 scope.constraints.join(", ")
             )?;
+            writeln!(
+                w,
+                "#[cfg_attr(feature = \"dox\", doc(cfg({})))]",
+                scope.constraints.join(", ")
+            )?;
         }
 
         version_condition(w, env, scope.version, false, 0)?;
@@ -517,7 +522,8 @@ pub fn version_condition_string(
         Some(v) if v > env.config.min_cfg_version => {
             let comment = if commented { "//" } else { "" };
             Some(format!(
-                "{}{}#[cfg(any({}, feature = \"dox\"))]",
+                "{0}{1}#[cfg(any({2}, feature = \"dox\"))]\n\
+                 {0}{1}#[cfg_attr(feature = \"dox\", doc(cfg({2})))]",
                 tabs(indent),
                 comment,
                 v.to_cfg()
@@ -536,7 +542,8 @@ pub fn not_version_condition(
     if let Some(v) = version {
         let comment = if commented { "//" } else { "" };
         let s = format!(
-            "{}{}#[cfg(any(not({}), feature = \"dox\"))]",
+            "{0}{1}#[cfg(any(not({2}), feature = \"dox\"))]\n\
+             {0}{1}#[cfg_attr(feature = \"dox\", doc(cfg(not({2}))))]",
             tabs(indent),
             comment,
             v.to_cfg()
@@ -587,7 +594,8 @@ pub fn cfg_condition_string(
         Some(v) => {
             let comment = if commented { "//" } else { "" };
             Some(format!(
-                "{}{}#[cfg(any({}, feature = \"dox\"))]",
+                "{0}{1}#[cfg(any({2}, feature = \"dox\"))]\n\
+                 {0}{1}#[cfg_attr(feature = \"dox\", doc(cfg({2})))]",
                 tabs(indent),
                 comment,
                 v
