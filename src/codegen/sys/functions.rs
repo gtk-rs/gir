@@ -254,6 +254,11 @@ fn generate_object_funcs(
         // since we work with gir-files from Linux, some function names need to be adjusted
         if is_windows_utf8 {
             writeln!(w, "    {}#[cfg(any(windows, feature = \"dox\"))]", comment)?;
+            writeln!(
+                w,
+                "    {}#[cfg_attr(feature = \"dox\", doc(cfg(windows)))]",
+                comment
+            )?;
             writeln!(w, "    {}pub fn {}_utf8{};", comment, name, sig)?;
             version_condition(w, env, version, commented, 1)?;
         }
