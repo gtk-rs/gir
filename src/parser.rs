@@ -122,7 +122,7 @@ impl Library {
                 "function" => self.read_global_function(parser, ns_id, elem),
                 "constant" => self.read_constant(parser, ns_id, elem),
                 "alias" => self.read_alias(parser, ns_id, elem),
-                "function-macro" => parser.ignore_element(),
+                "function-macro" | "docsection" => parser.ignore_element(),
                 _ => {
                     warn!("<{} name={:?}>", elem.name(), elem.attr("name"));
                     parser.ignore_element()
