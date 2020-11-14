@@ -35,6 +35,9 @@ pub fn new(env: &Env, obj: &GObject, imports: &mut Imports) -> Option<Info> {
 
     let name = split_namespace_name(&obj.name).1;
 
+    // Mark the type as available within the enum namespace:
+    imports.add_defined(&format!("crate::{}", name));
+
     let mut functions = functions::analyze(
         env,
         &enumeration.functions,

@@ -3,6 +3,7 @@ use crate::{library::Library, nameutil::crate_name, version::Version};
 use std::borrow::Cow;
 use std::cmp::Ordering;
 use std::collections::btree_map::BTreeMap;
+use std::collections::HashSet;
 use std::ops::{Deref, DerefMut};
 use std::vec::IntoIter;
 
@@ -70,10 +71,8 @@ fn compare_imports(a: &(&String, &ImportConditions), b: &(&String, &ImportCondit
 pub struct Imports {
     /// Name of the current crate.
     crate_name: String,
-    /// Name defined within current module. It doesn't need use declaration.
-    ///
-    /// NOTE: Currently we don't need to support more than one such name.
-    defined: Option<String>,
+    /// Names defined within current module. It doesn't need use declaration.
+    defined: HashSet<String>,
     defaults: ImportConditions,
     map: BTreeMap<String, ImportConditions>,
 }
@@ -82,7 +81,7 @@ impl Imports {
     pub fn new(gir: &Library) -> Imports {
         Imports {
             crate_name: make_crate_name(gir),
-            defined: None,
+            defined: HashSet::new(),
             defaults: ImportConditions::default(),
             map: BTreeMap::new(),
         }
@@ -91,7 +90,7 @@ impl Imports {
     pub fn with_defined(gir: &Library, name: &str) -> Imports {
         Imports {
             crate_name: make_crate_name(gir),
-            defined: Some(name.to_owned()),
+            defined: std::iter::once(name.to_owned()).collect(),
             defaults: ImportConditions::default(),
             map: BTreeMap::new(),
         }
@@ -127,12 +126,22 @@ impl Imports {
         // The ffi namespace is used directly, including it is a programmer error.
         assert_ne!(name, "crate::ffi");
 
-        if !name.contains("::") && name != "xlib" {
+        if (!name.contains("::") && name != "xlib") || self.defined.contains(name) {
             false
-        } else if let Some(ref defined) = self.defined {
-            !((name.starts_with("crate::") && &name[7..] == defined) || name == defined)
+        } else if let Some(name) = name.strip_prefix("crate::") {
+            !self.defined.contains(name)
         } else {
             true
+        }
+    }
+
+    /// Declares that `name` is defined in scope
+    ///
+    /// Removes existing imports from `self.map` and marks `name` as
+    /// available to counter future import "requests".
+    pub fn add_defined(&mut self, name: &str) {
+        if self.defined.insert(name.to_owned()) {
+            self.map.remove(name);
         }
     }
 
