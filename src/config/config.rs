@@ -12,8 +12,7 @@ use crate::{
 use log::warn;
 use std::{
     collections::HashMap,
-    fs::File,
-    io::Read,
+    fs,
     path::{Path, PathBuf},
     str::FromStr,
 };
@@ -312,32 +311,16 @@ fn read_toml<P: AsRef<Path>>(filename: P) -> Result<toml::Value, String> {
     if !filename.as_ref().is_file() {
         return Err("Config don't exists or not file".to_owned());
     }
-    let mut input = String::new();
-    match File::open(&filename) {
-        Ok(mut f) => {
-            if let Err(e) = f.read_to_string(&mut input) {
-                return Err(format!(
-                    "read_to_string failed on \"{}\": {}",
-                    filename.as_ref().display(),
-                    e
-                ));
-            }
+    let input = fs::read(&filename)
+        .map_err(|e| format!("Failed to read file \"{:?}\": {}", filename.as_ref(), e))?;
 
-            match toml::from_str(&input) {
-                Ok(toml) => Ok(toml),
-                Err(e) => Err(format!(
-                    "Invalid toml format in \"{}\": {}",
-                    filename.as_ref().display(),
-                    e
-                )),
-            }
-        }
-        Err(e) => Err(format!(
-            "Cannot open file \"{}\": {}",
+    toml::from_slice(&input).map_err(|e| {
+        format!(
+            "Invalid toml format in \"{}\": {}",
             filename.as_ref().display(),
             e
-        )),
-    }
+        )
+    })
 }
 
 fn make_single_version_file(configured: Option<&str>, target_path: &Path) -> PathBuf {

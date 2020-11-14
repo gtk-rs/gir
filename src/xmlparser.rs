@@ -308,9 +308,7 @@ impl<'a> XmlParser<'a> {
                     }
                 }
                 Err(_) => {
-                    if let Err(e) = self.next_event() {
-                        return Err(e);
-                    }
+                    self.next_event()?;
                     unreachable!();
                 }
                 _ if result.is_empty() => {
