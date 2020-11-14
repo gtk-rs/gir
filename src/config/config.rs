@@ -173,15 +173,10 @@ impl Config {
             Some(v) => v.as_result_vec("options.docs_rs_features")?.as_slice(),
             None => &[],
         } {
-            docs_rs_features.push(match v.as_str() {
-                Some(s) => s.to_owned(),
-                None => {
-                    return Err(format!(
-                        "Invalid `docs_rs_features` value element, expected a string, found {}",
-                        v.type_str()
-                    ))
-                }
-            });
+            docs_rs_features.push(v.as_str().map(|s| s.to_owned()).ok_or(format!(
+                "Invalid `docs_rs_features` value element, expected a string, found {}",
+                v.type_str()
+            ))?);
         }
 
         // options.concurrency is the default of all objects if nothing

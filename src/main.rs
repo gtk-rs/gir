@@ -117,24 +117,17 @@ fn run_check(check_gir_file: &str) -> Result<(), String> {
     if !path.is_file() {
         return Err(format!("`{}`: file not found", check_gir_file));
     }
-    let lib_name = match path.file_stem() {
-        Some(f) => f,
-        None => return Err(format!("Failed to get file stem from `{}`", check_gir_file)),
-    };
-    let lib_name = match lib_name.to_str() {
-        Some(l) => l,
-        None => return Err("failed to convert OsStr to str".to_owned()),
-    };
+    let lib_name = path
+        .file_stem()
+        .ok_or(format!("Failed to get file stem from `{}`", check_gir_file))?;
+    let lib_name = lib_name
+        .to_str()
+        .ok_or("failed to convert OsStr to str".to_owned())?;
     let mut library = Library::new(lib_name);
-    let parent = match path.parent() {
-        Some(p) => p,
-        None => {
-            return Err(format!(
-                "Failed to get parent directory from `{}`",
-                check_gir_file
-            ))
-        }
-    };
+    let parent = path.parent().ok_or(format!(
+        "Failed to get parent directory from `{}`",
+        check_gir_file
+    ))?;
 
     library.read_file(&parent, &mut vec![lib_name.to_owned()])
 }
