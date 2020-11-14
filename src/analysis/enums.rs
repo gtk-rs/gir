@@ -29,6 +29,17 @@ impl Info {
 pub fn new(env: &Env, obj: &GObject, imports: &mut Imports) -> Option<Info> {
     info!("Analyzing enumeration {}", obj.name);
 
+    if !obj.status.need_generate() {
+        return None;
+    }
+
+    if !obj
+        .type_id
+        .map_or(false, |tid| tid.ns_id == namespaces::MAIN)
+    {
+        return None;
+    }
+
     let enumeration_tid = env.library.find_type(0, &obj.name)?;
     let type_ = env.type_(enumeration_tid);
     let enumeration: &library::Enumeration = type_.maybe_ref()?;
@@ -37,6 +48,25 @@ pub fn new(env: &Env, obj: &GObject, imports: &mut Imports) -> Option<Info> {
 
     // Mark the type as available within the enum namespace:
     imports.add_defined(&format!("crate::{}", name));
+
+    let has_get_quark = enumeration.error_domain.is_some();
+    if has_get_quark {
+        imports.add("glib::Quark");
+        imports.add("glib::error::ErrorDomain");
+    }
+
+    let has_get_type = enumeration.glib_get_type.is_some();
+    if has_get_type {
+        imports.add("glib::Type");
+        imports.add("glib::StaticType");
+        imports.add("glib::value::SetValue");
+        imports.add("glib::value::FromValue");
+        imports.add("glib::value::FromValueOptional");
+    }
+
+    if obj.generate_display_trait {
+        imports.add("std::fmt");
+    }
 
     let mut functions = functions::analyze(
         env,

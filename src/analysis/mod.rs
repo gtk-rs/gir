@@ -65,6 +65,7 @@ pub fn run(env: &mut Env) {
     }
 
     let mut enum_imports = Imports::new(&env.library);
+    enum_imports.add("glib::translate::*");
 
     let mut analyzed = 1;
     while analyzed > 0 {

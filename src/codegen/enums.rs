@@ -1,7 +1,6 @@
 use super::function;
 use crate::{
     analysis::enums::Info,
-    analysis::namespaces,
     codegen::general::{
         self, cfg_deprecated, derives, version_condition, version_condition_no_doc,
         version_condition_string,
@@ -21,72 +20,19 @@ use std::{
 };
 
 pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>) {
-    fn should_keep(c: &GObject) -> bool {
-        c.status.need_generate() && c.type_id.map_or(false, |tid| tid.ns_id == namespaces::MAIN)
-    }
-
-    let mut has_get_quark = false;
-    let mut has_any = false;
-    let mut has_get_type = false;
-    let mut generate_display_trait = false;
-
-    for enum_analysis in &env.analysis.enumerations {
-        let config = &env.config.objects[&enum_analysis.full_name];
-        if !should_keep(config) {
-            continue;
-        }
-
-        let enum_ = enum_analysis.type_(&env.library);
-        has_any = true;
-        if enum_.error_domain.is_some() {
-            has_get_quark = true;
-        }
-        if enum_.glib_get_type.is_some() {
-            has_get_type = true;
-        }
-        generate_display_trait |= config.generate_display_trait;
-
-        if has_get_type && has_get_quark {
-            break;
-        }
-    }
-
-    if !has_any {
+    if env.analysis.enumerations.is_empty() {
         return;
-    }
-
-    // TODO: We should do this just once in analysis without mutation necessary afterwards
-    let mut imports = env.analysis.enum_imports.clone();
-
-    if has_get_quark {
-        imports.add("glib::Quark");
-        imports.add("glib::error::ErrorDomain");
-    }
-    if has_get_type {
-        imports.add("glib::Type");
-        imports.add("glib::StaticType");
-        imports.add("glib::value::SetValue");
-        imports.add("glib::value::FromValue");
-        imports.add("glib::value::FromValueOptional");
-    }
-    imports.add("glib::translate::*");
-
-    if generate_display_trait {
-        imports.add("std::fmt");
     }
 
     let path = root_path.join("enums.rs");
     file_saver::save_to_file(path, env.config.make_backup, |w| {
         general::start_comments(w, &env.config)?;
-        general::uses(w, env, &imports)?;
+        general::uses(w, env, &env.analysis.enum_imports)?;
         writeln!(w)?;
 
         mod_rs.push("\nmod enums;".into());
         for enum_analysis in &env.analysis.enumerations {
             let config = &env.config.objects[&enum_analysis.full_name];
-            if !should_keep(config) {
-                continue;
-            }
             let enum_ = enum_analysis.type_(&env.library);
 
             if let Some(cfg) = version_condition_string(env, enum_.version, false, 0) {
