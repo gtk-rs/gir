@@ -63,10 +63,7 @@ fn build_config() -> Result<RunKind, String> {
         "PATH",
     );
 
-    let matches = match options.parse(&args[1..]) {
-        Ok(matches) => matches,
-        Err(e) => return Err(e.to_string()),
-    };
+    let matches = options.parse(&args[1..]).map_err(|e| e.to_string())?;
 
     if let Some(check_gir_file) = matches.opt_str("check-gir-file") {
         return Ok(RunKind::CheckGirFile(check_gir_file));
