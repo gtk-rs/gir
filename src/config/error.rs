@@ -37,14 +37,8 @@ impl TomlHelper for toml::Value {
     fn lookup<'a>(&'a self, option: &str) -> Option<&'a toml::Value> {
         let mut value = self;
         for opt in option.split('.') {
-            let table = match value.as_table() {
-                Some(table) => table,
-                None => return None,
-            };
-            value = match table.get(opt) {
-                Some(value) => value,
-                None => return None,
-            };
+            let table = value.as_table()?;
+            value = table.get(opt)?;
         }
         Some(value)
     }

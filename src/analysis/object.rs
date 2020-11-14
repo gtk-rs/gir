@@ -52,19 +52,13 @@ pub fn class(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<Info>
     info!("Analyzing class {}", obj.name);
     let full_name = obj.name.clone();
 
-    let class_tid = match env.library.find_type(0, &full_name) {
-        Some(tid) => tid,
-        None => return None,
-    };
+    let class_tid = env.library.find_type(0, &full_name)?;
 
     let type_ = env.type_(class_tid);
 
     let name: String = split_namespace_name(&full_name).1.into();
 
-    let klass: &library::Class = match type_.maybe_ref() {
-        Some(klass) => klass,
-        None => return None,
-    };
+    let klass: &library::Class = type_.maybe_ref()?;
 
     let mut imports = Imports::with_defined(&env.library, &name);
     imports.add("glib::translate::*");
@@ -226,19 +220,13 @@ pub fn interface(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<I
     info!("Analyzing interface {}", obj.name);
     let full_name = obj.name.clone();
 
-    let iface_tid = match env.library.find_type(0, &full_name) {
-        Some(tid) => tid,
-        None => return None,
-    };
+    let iface_tid = env.library.find_type(0, &full_name)?;
 
     let type_ = env.type_(iface_tid);
 
     let name: String = split_namespace_name(&full_name).1.into();
 
-    let iface: &library::Interface = match type_.maybe_ref() {
-        Some(iface) => iface,
-        None => return None,
-    };
+    let iface: &library::Interface = type_.maybe_ref()?;
 
     let mut imports = Imports::with_defined(&env.library, &name);
     imports.add("glib::translate::*");
