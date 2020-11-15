@@ -16,22 +16,22 @@ pub trait ToParameter {
 
 impl ToParameter for CParameter {
     fn to_parameter(&self, env: &Env, bounds: &Bounds) -> String {
-        let mut_str = if self.ref_mode == RefMode::ByRefMut {
-            "mut "
-        } else {
-            ""
+        let ref_str = match self.ref_mode {
+            RefMode::ByRefMut => "&mut ",
+            RefMode::None => "",
+            _ => "&",
         };
         if self.instance_parameter {
-            format!("&{}self", mut_str)
+            format!("{}self", ref_str)
         } else {
             let type_str: String;
             match bounds.get_parameter_alias_info(&self.name) {
                 Some((t, bound_type)) => match bound_type {
                     BoundType::NoWrapper => type_str = t.to_string(),
                     BoundType::IsA(_) if *self.nullable => {
-                        type_str = format!("Option<&{}{}>", mut_str, t)
+                        type_str = format!("Option<{}{}>", ref_str, t)
                     }
-                    BoundType::IsA(_) => type_str = format!("&{}{}", mut_str, t),
+                    BoundType::IsA(_) => type_str = format!("{}{}", ref_str, t),
                     BoundType::AsRef(_) => type_str = t.to_string(),
                 },
                 None => {
