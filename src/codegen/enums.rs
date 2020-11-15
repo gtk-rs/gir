@@ -130,6 +130,7 @@ fn generate_enum(
 
     trait_impls::generate(
         w,
+        env,
         &analysis.name,
         &analysis.functions,
         &analysis.specials,
