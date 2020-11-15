@@ -1,4 +1,4 @@
-use super::function;
+use super::{function, trait_impls};
 use crate::{
     analysis::enums::Info,
     codegen::general::{
@@ -127,6 +127,14 @@ fn generate_enum(
         }
         writeln!(w, "}}")?;
     }
+
+    trait_impls::generate(
+        w,
+        &analysis.name,
+        &analysis.functions,
+        &analysis.specials,
+        None,
+    )?;
 
     writeln!(w)?;
 
