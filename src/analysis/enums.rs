@@ -1,5 +1,6 @@
-use super::{imports::Imports, info_base::InfoBase, *};
+use super::{function_parameters::TransformationType, imports::Imports, info_base::InfoBase, *};
 use crate::{config::gobjects::GObject, env::Env, library, nameutil::*, traits::*};
+
 use log::info;
 use std::ops::Deref;
 
@@ -79,6 +80,38 @@ pub fn new(env: &Env, obj: &GObject, imports: &mut Imports) -> Option<Info> {
         None,
         None,
     );
+
+    // Gir does not currently mark the first parameter of associated enum functions -
+    // that are identical to its enum type - as instance parameter since most languages
+    // do not support this.
+    for f in &mut functions {
+        if f.parameters.c_parameters.is_empty() {
+            continue;
+        }
+
+        let first_param = &mut f.parameters.c_parameters[0];
+
+        if first_param.typ == enumeration_tid {
+            first_param.instance_parameter = true;
+
+            let t = f
+                .parameters
+                .transformations
+                .iter_mut()
+                .find(|t| t.ind_c == 0)
+                .unwrap();
+
+            if let TransformationType::ToGlibScalar { name, .. } = &mut t.transformation_type {
+                *name = "self".to_owned();
+            } else {
+                panic!(
+                    "Enumeration function instance param must be passed as scalar, not {:?}",
+                    t.transformation_type
+                );
+            }
+        }
+    }
+
     let specials = special_functions::extract(&mut functions);
 
     special_functions::analyze_imports(&specials, imports);
