@@ -88,7 +88,7 @@ fn generate_display(
             call
         )
     } else {
-        format!("write!(f, \"{{}}\", {})", call)
+        format!("f.write_str(&{})", call)
     };
 
     writeln!(
