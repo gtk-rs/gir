@@ -119,7 +119,7 @@ fn run_check(check_gir_file: &str) -> Result<(), String> {
         .ok_or(format!("Failed to get file stem from `{}`", check_gir_file))?;
     let lib_name = lib_name
         .to_str()
-        .ok_or("failed to convert OsStr to str".to_owned())?;
+        .ok_or_else(|| "failed to convert OsStr to str".to_owned())?;
     let mut library = Library::new(lib_name);
     let parent = path.parent().ok_or(format!(
         "Failed to get parent directory from `{}`",
