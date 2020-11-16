@@ -27,16 +27,11 @@ impl PropertyGenerateFlags {
         let array = toml.as_result_vec(option)?;
         let mut val = PropertyGenerateFlags::empty();
         for v in array {
-            let s = match v.as_str() {
-                Some(s) => s,
-                None => {
-                    return Err(format!(
-                        "Invalid `{}` value element, expected a string, found {}",
-                        option,
-                        v.type_str()
-                    ))
-                }
-            };
+            let s = v.as_str().ok_or(format!(
+                "Invalid `{}` value element, expected a string, found {}",
+                option,
+                v.type_str()
+            ))?;
             match PropertyGenerateFlags::from_str(s) {
                 Ok(v) => val |= v,
                 e @ Err(_) => return e,

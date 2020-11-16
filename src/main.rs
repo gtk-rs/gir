@@ -63,10 +63,7 @@ fn build_config() -> Result<RunKind, String> {
         "PATH",
     );
 
-    let matches = match options.parse(&args[1..]) {
-        Ok(matches) => matches,
-        Err(e) => return Err(e.to_string()),
-    };
+    let matches = options.parse(&args[1..]).map_err(|e| e.to_string())?;
 
     if let Some(check_gir_file) = matches.opt_str("check-gir-file") {
         return Ok(RunKind::CheckGirFile(check_gir_file));
@@ -117,32 +114,24 @@ fn run_check(check_gir_file: &str) -> Result<(), String> {
     if !path.is_file() {
         return Err(format!("`{}`: file not found", check_gir_file));
     }
-    let lib_name = match path.file_stem() {
-        Some(f) => f,
-        None => return Err(format!("Failed to get file stem from `{}`", check_gir_file)),
-    };
-    let lib_name = match lib_name.to_str() {
-        Some(l) => l,
-        None => return Err("failed to convert OsStr to str".to_owned()),
-    };
+    let lib_name = path
+        .file_stem()
+        .ok_or(format!("Failed to get file stem from `{}`", check_gir_file))?;
+    let lib_name = lib_name
+        .to_str()
+        .ok_or_else(|| "failed to convert OsStr to str".to_owned())?;
     let mut library = Library::new(lib_name);
-    let parent = match path.parent() {
-        Some(p) => p,
-        None => {
-            return Err(format!(
-                "Failed to get parent directory from `{}`",
-                check_gir_file
-            ))
-        }
-    };
+    let parent = path.parent().ok_or(format!(
+        "Failed to get parent directory from `{}`",
+        check_gir_file
+    ))?;
 
     library.read_file(&parent, &mut vec![lib_name.to_owned()])
 }
 
 fn do_main() -> Result<(), String> {
     if std::env::var_os("RUST_LOG").is_none() {
-        std::env::set_var("RUST_LOG", "gir=warn");
-        std::env::set_var("RUST_LOG", "libgir=warn");
+        std::env::set_var("RUST_LOG", "gir=warn,libgir=warn");
     }
     env_logger::init();
 
@@ -158,14 +147,13 @@ fn do_main() -> Result<(), String> {
 
     let watcher_total = statistics.enter("Total");
 
-    let mut library;
-
-    {
+    let mut library = {
         let _watcher = statistics.enter("Loading");
 
-        library = Library::new(&cfg.library_name);
+        let mut library = Library::new(&cfg.library_name);
         library.read_file(&cfg.girs_dir, &mut vec![cfg.library_full_name()])?;
-    }
+        library
+    };
 
     {
         let _watcher = statistics.enter("Preprocessing");
@@ -192,24 +180,22 @@ fn do_main() -> Result<(), String> {
         gir::update_version::check_function_real_version(&mut library);
     }
 
-    let mut env;
-
-    {
+    let mut env = {
         let _watcher = statistics.enter("Namespace/symbol/class analysis");
 
         let namespaces = gir::namespaces_run(&library);
         let symbols = gir::symbols_run(&library, &namespaces);
         let class_hierarchy = gir::class_hierarchy_run(&library);
 
-        env = gir::Env {
+        gir::Env {
             library,
             config: cfg,
             namespaces,
             symbols: RefCell::new(symbols),
             class_hierarchy,
             analysis: Default::default(),
-        };
-    }
+        }
+    };
 
     if env.config.work_mode != WorkMode::Sys {
         let _watcher = statistics.enter("Analyzing");

@@ -69,19 +69,13 @@ pub fn new(env: &Env, obj: &GObject) -> Option<Info> {
     info!("Analyzing record {}", obj.name);
     let full_name = obj.name.clone();
 
-    let record_tid = match env.library.find_type(0, &full_name) {
-        Some(tid) => tid,
-        None => return None,
-    };
+    let record_tid = env.library.find_type(0, &full_name)?;
 
     let type_ = env.type_(record_tid);
 
     let name: String = split_namespace_name(&full_name).1.into();
 
-    let record: &library::Record = match type_.maybe_ref() {
-        Some(record) => record,
-        None => return None,
-    };
+    let record: &library::Record = type_.maybe_ref()?;
 
     let is_boxed = obj.use_boxed_functions || RecordType::of(&record) == RecordType::AutoBoxed;
 

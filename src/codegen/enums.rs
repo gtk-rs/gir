@@ -156,10 +156,10 @@ fn generate_enum(
     }
     writeln!(
         w,
-        "{}",
-        "    #[doc(hidden)]
+        "\
+    #[doc(hidden)]
     __Unknown(i32),
-}
+}}
 "
     )?;
 
@@ -208,13 +208,13 @@ impl ToGlib for {name} {{
             enum_.name, member.name, sys_crate_name, member.c_name
         )?;
     }
-    writeln!(w, "\t\t\t{}::__Unknown(value) => value", enum_.name)?;
+    writeln!(w, "\t\t\t{}::__Unknown(value) => value,", enum_.name)?;
     writeln!(
         w,
-        "{}",
-        "        }
-    }
-}
+        "\
+        }}
+    }}
+}}
 "
     )?;
 
@@ -248,10 +248,10 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
     writeln!(w, "\t\t\tvalue => {}::__Unknown(value),", enum_.name)?;
     writeln!(
         w,
-        "{}",
-        "        }
-    }
-}
+        "\
+        }}
+    }}
+}}
 "
     )?;
 
@@ -319,10 +319,10 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
 
         writeln!(
             w,
-            "{}",
-            "        }
-    }
-}
+            "\
+        }}
+    }}
+}}
 "
         )?;
     }

@@ -90,10 +90,8 @@ fn prepare_ctype(env: &Env, ns: &Namespace, t: &Type) -> Option<CType> {
     if env.type_status_sys(&full_name).ignored() {
         return None;
     }
-    let name = match t.get_glib_name() {
-        None => return None,
-        Some(name) => name,
-    };
+    let name = t.get_glib_name()?;
+
     if is_name_made_up(name) {
         return None;
     }
