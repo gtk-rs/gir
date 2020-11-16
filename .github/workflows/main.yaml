@@ -72,15 +72,15 @@ jobs:
       matrix:
         os: [ubuntu-20.04]
         toolchain: [nightly, stable]
-        include:
-          - os: windows-latest
-            toolchain: stable-i686-pc-windows-gnu
-            bits: 32
-            arch: i686
-          - os: windows-latest
-            toolchain: stable-x86_64-pc-windows-gnu
-            bits: 64
-            arch: x86_64
+        # include:
+        #   - os: windows-latest
+        #     toolchain: stable-i686-pc-windows-gnu
+        #     bits: 32
+        #     arch: i686
+        #   - os: windows-latest
+        #     toolchain: stable-x86_64-pc-windows-gnu
+        #     bits: 64
+        #     arch: x86_64
 
     defaults:
       run:
