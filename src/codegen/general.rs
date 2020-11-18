@@ -496,6 +496,24 @@ pub fn version_condition(
     Ok(())
 }
 
+pub fn version_condition_no_doc(
+    w: &mut dyn Write,
+    env: &Env,
+    version: Option<Version>,
+    commented: bool,
+    indent: usize,
+) -> Result<()> {
+    match version {
+        Some(v) if v > env.config.min_cfg_version => {
+            if let Some(s) = cfg_condition_string_no_doc(&Some(v.to_cfg()), commented, indent) {
+                writeln!(w, "{}", s)?
+            }
+        }
+        _ => {}
+    }
+    Ok(())
+}
+
 pub fn version_condition_string(
     env: &Env,
     version: Option<Version>,
@@ -554,6 +572,25 @@ pub fn cfg_condition(
         writeln!(w, "{}", s)?;
     }
     Ok(())
+}
+
+pub fn cfg_condition_string_no_doc(
+    cfg_condition: &Option<String>,
+    commented: bool,
+    indent: usize,
+) -> Option<String> {
+    match cfg_condition.as_ref() {
+        Some(v) => {
+            let comment = if commented { "//" } else { "" };
+            Some(format!(
+                "{0}{1}#[cfg(any({2}, feature = \"dox\"))]",
+                tabs(indent),
+                comment,
+                v
+            ))
+        }
+        None => None,
+    }
 }
 
 pub fn cfg_condition_string(

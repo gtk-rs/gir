@@ -1,7 +1,8 @@
 use crate::{
     analysis::{imports::Imports, namespaces},
     codegen::general::{
-        self, cfg_deprecated, derives, version_condition, version_condition_string,
+        self, cfg_deprecated, derives, version_condition, version_condition_no_doc,
+        version_condition_string,
     },
     config::gobjects::GObject,
     env::Env,
@@ -174,7 +175,7 @@ fn generate_enum(
             enum_.name
         )?;
         for member in &members {
-            version_condition(w, env, member.version, false, 3)?;
+            version_condition_no_doc(w, env, member.version, false, 3)?;
             writeln!(w, "\t\t\t{0}::{1} => \"{1}\",", enum_.name, member.name)?;
         }
         writeln!(
@@ -201,7 +202,7 @@ impl ToGlib for {name} {{
         ffi_name = enum_.c_type
     )?;
     for member in &members {
-        version_condition(w, env, member.version, false, 3)?;
+        version_condition_no_doc(w, env, member.version, false, 3)?;
         writeln!(
             w,
             "\t\t\t{}::{} => {}::{},",
@@ -238,7 +239,7 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
         assert = assert
     )?;
     for member in &members {
-        version_condition(w, env, member.version, false, 3)?;
+        version_condition_no_doc(w, env, member.version, false, 3)?;
         writeln!(
             w,
             "\t\t\t{} => {}::{},",
@@ -304,7 +305,7 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
         )?;
 
         for member in &members {
-            version_condition(w, env, member.version, false, 3)?;
+            version_condition_no_doc(w, env, member.version, false, 3)?;
             writeln!(
                 w,
                 "\t\t\t{} => Some({}::{}),",
