@@ -92,7 +92,7 @@ pub fn new(env: &Env, obj: &GObject) -> Option<Info> {
         None,
         None,
     );
-    let specials = special_functions::extract(&mut functions);
+    let specials = special_functions::extract(&mut functions, type_);
 
     let (version, deprecated_version) = info_base::versions(
         env,

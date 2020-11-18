@@ -119,11 +119,20 @@ fn generate_enum(
     let functions = analysis.functions();
 
     if !functions.is_empty() {
+        let static_tostring = analysis
+            .specials
+            .get(&crate::analysis::special_functions::Type::Display)
+            .and_then(|f| if f.returns_static_ref { Some(f) } else { None });
+
         writeln!(w)?;
         version_condition(w, env, enum_.version, false, 0)?;
         write!(w, "impl {} {{", analysis.name)?;
         for func_analysis in functions {
-            function::generate(w, env, func_analysis, false, false, 1)?;
+            if Some(&func_analysis.glib_name) == static_tostring.map(|t| &t.glib_name) {
+                function::generate_static_to_str(w, env, func_analysis)?;
+            } else {
+                function::generate(w, env, func_analysis, false, false, 1)?;
+            }
         }
         writeln!(w, "}}")?;
     }

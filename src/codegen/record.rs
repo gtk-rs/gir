@@ -39,8 +39,8 @@ pub fn generate(w: &mut dyn Write, env: &Env, analysis: &analysis::record::Info)
             env,
             &analysis.name,
             &type_.c_type,
-            ref_fn,
-            unref_fn,
+            &ref_fn.glib_name,
+            &unref_fn.glib_name,
             analysis.glib_get_type.as_ref().map(|(f, v)| {
                 if v > &analysis.version {
                     (f.clone(), *v)
@@ -59,8 +59,8 @@ pub fn generate(w: &mut dyn Write, env: &Env, analysis: &analysis::record::Info)
             env,
             &analysis.name,
             &type_.c_type,
-            copy_fn,
-            free_fn,
+            &copy_fn.glib_name,
+            &free_fn.glib_name,
             &analysis.init_function_expression,
             &analysis.clear_function_expression,
             analysis.glib_get_type.as_ref().map(|(f, v)| {

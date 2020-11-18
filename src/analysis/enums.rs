@@ -1,5 +1,5 @@
 use super::{function_parameters::TransformationType, imports::Imports, info_base::InfoBase, *};
-use crate::{config::gobjects::GObject, env::Env, library, nameutil::*, traits::*};
+use crate::{config::gobjects::GObject, env::Env, nameutil::*, traits::*};
 
 use log::info;
 use std::ops::Deref;
@@ -112,7 +112,7 @@ pub fn new(env: &Env, obj: &GObject, imports: &mut Imports) -> Option<Info> {
         }
     }
 
-    let specials = special_functions::extract(&mut functions);
+    let specials = special_functions::extract(&mut functions, type_);
 
     special_functions::analyze_imports(&specials, imports);
 

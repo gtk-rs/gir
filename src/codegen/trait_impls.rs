@@ -16,8 +16,8 @@ pub fn generate(
     specials: &Infos,
     trait_name: Option<&str>,
 ) -> Result<()> {
-    for (type_, name) in specials.iter() {
-        if let Some(info) = lookup(functions, name) {
+    for (type_, special_info) in specials.iter() {
+        if let Some(info) = lookup(functions, &special_info.glib_name) {
             match *type_ {
                 Type::Compare => {
                     if !specials.contains_key(&Type::Equal) {
@@ -40,7 +40,7 @@ pub fn generate(
 fn lookup<'a>(functions: &'a [Info], name: &str) -> Option<&'a Info> {
     functions
         .iter()
-        .find(|f| f.status.need_generate() && f.glib_name == name)
+        .find(|f| !f.status.ignored() && f.glib_name == name)
 }
 
 fn generate_call(func_name: &str, args: &[&str], trait_name: Option<&str>) -> String {
