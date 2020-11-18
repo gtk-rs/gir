@@ -1,6 +1,5 @@
 use super::conversion_type::ConversionType;
 use crate::{
-    analysis::namespaces,
     analysis::ref_mode::RefMode,
     env::Env,
     library::{self, Nullable, ParameterScope},
@@ -142,8 +141,10 @@ pub fn rust_type_full(
                 Utf8 => {
                     if ref_mode.is_ref() {
                         ok("str")
+                    } else if env.library.is_glib_crate() {
+                        ok("crate::GString")
                     } else {
-                        ok("GString")
+                        ok("glib::GString")
                     }
                 }
                 Filename => {
@@ -160,11 +161,11 @@ pub fn rust_type_full(
                         ok("std::ffi::OsString")
                     }
                 }
-                Type if env.namespaces.glib_ns_id == library::MAIN_NAMESPACE => ok("types::Type"),
+                Type if env.library.is_glib_crate() => ok("crate::types::Type"),
                 Type => ok("glib::types::Type"),
-                Char if env.namespaces.glib_ns_id == library::MAIN_NAMESPACE => ok("Char"),
+                Char if env.library.is_glib_crate() => ok("crate::Char"),
                 Char => ok("glib::Char"),
-                UChar if env.namespaces.glib_ns_id == library::MAIN_NAMESPACE => ok("UChar"),
+                UChar if env.library.is_glib_crate() => ok("crate::UChar"),
                 UChar => ok("glib::UChar"),
                 Unsupported => err("Unsupported"),
                 _ => err(&format!("Fundamental: {:?}", fund)),
@@ -259,8 +260,8 @@ pub fn rust_type_full(
 
             let full_name = type_id.full_name(&env.library);
             if full_name == "Gio.AsyncReadyCallback" {
-                return Ok(if env.namespaces.glib_ns_id == namespaces::MAIN {
-                    "FnOnce(Result<(), Error>) + 'static"
+                return Ok(if env.library.is_glib_crate() {
+                    "FnOnce(Result<(), crate::Error>) + 'static"
                 } else {
                     "FnOnce(Result<(), glib::Error>) + 'static"
                 }
@@ -285,7 +286,7 @@ pub fn rust_type_full(
                             } else {
                                 "&"
                             },
-                            if y != "GString" {
+                            if !y.ends_with("GString") {
                                 if !is_fundamental && *p.nullable {
                                     x.replace("Option<", "Option<&")
                                 } else {
@@ -318,7 +319,7 @@ pub fn rust_type_full(
                         "{}({}) -> {}{}",
                         closure_kind,
                         s.join(", "),
-                        if y != "GString" {
+                        if !y.ends_with("GString") {
                             &x
                         } else if *f.ret.nullable {
                             "Option<String>"
@@ -414,7 +415,14 @@ pub fn used_rust_type(env: &Env, type_id: library::TypeId, is_in: bool) -> Resul
             used_rust_type(env, inner_tid, false)
         }
         Custom(..) => rust_type(env, type_id),
-        Fundamental(library::Fundamental::Utf8) if !is_in => Ok("::glib::GString".into()),
+        Fundamental(library::Fundamental::Utf8) if !is_in => Ok(format!(
+            "{}::GString",
+            if env.library.is_glib_crate() {
+                "crate"
+            } else {
+                "glib"
+            }
+        )),
         _ => Err(TypeError::Ignored("Don't need use".to_owned())),
     }
 }

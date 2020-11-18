@@ -38,9 +38,6 @@ fn generate_build_script(w: &mut dyn Write, env: &Env, split_build_rs: bool) -> 
         w,
         "{}",
         r##"#[cfg(not(feature = "dox"))]
-extern crate system_deps;
-
-#[cfg(not(feature = "dox"))]
 use std::process;"##
     )?;
 

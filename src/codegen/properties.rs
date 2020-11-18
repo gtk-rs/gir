@@ -117,7 +117,7 @@ fn declaration(env: &Env, prop: &Property) -> String {
 }
 
 fn body(env: &Env, prop: &Property, in_trait: bool) -> Chunk {
-    let mut builder = property_body::Builder::new();
+    let mut builder = property_body::Builder::new(env);
     builder
         .name(&prop.name)
         .in_trait(in_trait)

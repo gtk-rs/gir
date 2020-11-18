@@ -53,6 +53,10 @@ impl Env {
     }
 
     pub fn main_sys_crate_name(&self) -> &str {
-        &self.namespaces[MAIN_NAMESPACE].sys_crate_name
+        if &self.namespaces[MAIN_NAMESPACE].sys_crate_name != "gobject_ffi" {
+            "ffi"
+        } else {
+            "gobject_ffi"
+        }
     }
 }

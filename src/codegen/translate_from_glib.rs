@@ -89,7 +89,14 @@ impl TranslateFromGlib for analysis::return_value::Info {
                     }
                 }
                 None if self.bool_return_is_error.is_some() => (
-                    "glib_result_from_gboolean!(".into(),
+                    format!(
+                        "{}::glib_result_from_gboolean!(",
+                        if env.library.is_glib_crate() {
+                            "crate"
+                        } else {
+                            "glib"
+                        }
+                    ),
                     format!(", \"{}\")", self.bool_return_is_error.as_ref().unwrap()),
                 ),
                 None if self.nullable_return_is_error.is_some() => {

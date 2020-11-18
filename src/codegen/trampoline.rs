@@ -40,8 +40,19 @@ pub fn generate(
 
     writeln!(
         w,
-        "{}unsafe extern \"C\" fn {}<{}F: {}>({}, f: glib_sys::gpointer){}{}",
-        prepend, analysis.name, self_bound, func_str, params_str, ret_str, end,
+        "{}unsafe extern \"C\" fn {}<{}F: {}>({}, f: {}ffi::gpointer){}{}",
+        prepend,
+        analysis.name,
+        self_bound,
+        func_str,
+        params_str,
+        if env.library.is_glib_crate() {
+            ""
+        } else {
+            "glib::"
+        },
+        ret_str,
+        end,
     )?;
     if in_trait {
         writeln!(
@@ -178,8 +189,13 @@ fn func_returns(env: &Env, analysis: &Trampoline) -> String {
 fn trampoline_parameters(env: &Env, analysis: &Trampoline) -> String {
     if analysis.is_notify {
         return format!(
-            "{}, _param_spec: glib_sys::gpointer",
-            trampoline_parameter(env, &analysis.parameters.c_parameters[0])
+            "{}, _param_spec: {}ffi::gpointer",
+            trampoline_parameter(env, &analysis.parameters.c_parameters[0]),
+            if env.library.is_glib_crate() {
+                ""
+            } else {
+                "glib::"
+            },
         );
     }
 

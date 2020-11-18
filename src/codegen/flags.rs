@@ -35,8 +35,9 @@ pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>) {
     let path = root_path.join("flags.rs");
     file_saver::save_to_file(path, env.config.make_backup, |w| {
         let mut imports = Imports::new(&env.library);
-        imports.add(env.main_sys_crate_name());
+        imports.add(&format!("crate::{}", env.main_sys_crate_name()));
         imports.add("glib::translate::*");
+        imports.add("bitflags::bitflags");
 
         for config in &configs {
             if let Type::Bitfield(ref flags) = *env.library.type_(config.type_id.unwrap()) {
@@ -47,7 +48,7 @@ pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>) {
                     imports.add("glib::value::SetValue");
                     imports.add("glib::value::FromValue");
                     imports.add("glib::value::FromValueOptional");
-                    imports.add("gobject_sys");
+                    imports.add("glib::gobject_ffi");
                     break;
                 }
             }
@@ -191,10 +192,15 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
             w,
             "impl<'a> FromValue<'a> for {name} {{
     unsafe fn from_value(value: &Value) -> Self {{
-        from_glib(gobject_sys::g_value_get_flags(value.to_glib_none().0))
+        from_glib({glib}gobject_ffi::g_value_get_flags(value.to_glib_none().0))
     }}
 }}",
             name = flags.name,
+            glib = if env.library.is_glib_crate() {
+                ""
+            } else {
+                "glib::"
+            },
         )?;
         writeln!(w)?;
 
@@ -203,10 +209,15 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
             w,
             "impl SetValue for {name} {{
     unsafe fn set_value(value: &mut Value, this: &Self) {{
-        gobject_sys::g_value_set_flags(value.to_glib_none_mut().0, this.to_glib())
+        {glib}gobject_ffi::g_value_set_flags(value.to_glib_none_mut().0, this.to_glib())
     }}
 }}",
             name = flags.name,
+            glib = if env.library.is_glib_crate() {
+                ""
+            } else {
+                "glib::"
+            },
         )?;
 
         writeln!(w)?;

@@ -409,7 +409,7 @@ impl Builder {
             let nullable = trampoline.parameters.rust_parameters[par.ind_rust].nullable;
             let is_fundamental =
                 add_chunk_for_type(env, par.typ, par, &mut body, &ty_name, nullable);
-            if ty_name == "GString" {
+            if ty_name.ends_with("GString") {
                 if *nullable {
                     arguments.push(Chunk::Name(format!("{}.as_ref().as_deref()", par.name)));
                 } else {
@@ -647,7 +647,14 @@ impl Builder {
                     if p.is_real_gpointer(env) {
                         Param {
                             name: p.name.clone(),
-                            typ: "glib_sys::gpointer".to_string(),
+                            typ: format!(
+                                "{}ffi::gpointer",
+                                if env.library.is_glib_crate() {
+                                    ""
+                                } else {
+                                    "glib::"
+                                }
+                            ),
                         }
                     } else {
                         Param {
@@ -861,15 +868,36 @@ impl Builder {
         let parameters = vec![
             Param {
                 name: "_source_object".to_string(),
-                typ: "*mut gobject_sys::GObject".to_string(),
+                typ: format!(
+                    "*mut {}gobject_ffi::GObject",
+                    if env.library.is_glib_crate() {
+                        ""
+                    } else {
+                        "glib::"
+                    }
+                ),
             },
             Param {
                 name: "res".to_string(),
-                typ: "*mut gio_sys::GAsyncResult".to_string(),
+                typ: format!(
+                    "*mut {}ffi::GAsyncResult",
+                    if env.library.is_crate("Gio") {
+                        ""
+                    } else {
+                        "gio::"
+                    }
+                ),
             },
             Param {
                 name: "user_data".to_string(),
-                typ: "glib_sys::gpointer".to_string(),
+                typ: format!(
+                    "{}ffi::gpointer",
+                    if env.library.is_glib_crate() {
+                        ""
+                    } else {
+                        "glib::"
+                    }
+                ),
             },
         ];
 
@@ -1338,15 +1366,15 @@ fn add_chunk_for_type(
                 crate::codegen::trampoline_from_glib::from_glib_xxx(par.transfer, true);
 
             let type_name;
-            if ty_name == "GString" {
+            if ty_name.ends_with("GString") {
                 if *nullable {
                     if par.conversion_type == ConversionType::Borrow {
-                        type_name = String::from(": Borrowed<Option<GString>>");
+                        type_name = String::from(": Borrowed<Option<glib::GString>>");
                     } else {
-                        type_name = String::from(": Option<GString>");
+                        type_name = String::from(": Option<glib::GString>");
                     }
                 } else if par.conversion_type == ConversionType::Borrow {
-                    type_name = String::from(": Borrowed<GString>");
+                    type_name = String::from(": Borrowed<glib::GString>");
                 } else {
                     type_name = String::from(": GString");
                 }

@@ -8,7 +8,6 @@ pub fn begin(w: &mut dyn Write) -> Result<()> {
         "#![allow(clippy::approx_constant, clippy::type_complexity, clippy::unreadable_literal)]",
         "#![cfg_attr(feature = \"dox\", feature(doc_cfg))]",
         "",
-        "extern crate libc;",
     ];
 
     write_vec(w, &v)

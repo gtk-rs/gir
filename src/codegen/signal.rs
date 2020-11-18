@@ -125,13 +125,14 @@ pub fn generate(
 
             writeln!(
                 w,
-                "{}let {} = unsafe {{ glib::Object::from_glib_borrow(self.as_ptr() as *mut gobject_sys::GObject).emit(\"{}\", &[{}]).unwrap() }};",
+                "{}let {} = unsafe {{ glib::Object::from_glib_borrow(self.as_ptr() as *mut {}gobject_ffi::GObject).emit(\"{}\", &[{}]).unwrap() }};",
                 tabs(indent + 1),
                 if trampoline.ret.typ != Default::default() {
                     "res"
                 } else {
                     "_"
                 },
+                if env.library.is_glib_crate() { "" } else { "glib::" },
                 analysis.signal_name,
                 args,
             )?;

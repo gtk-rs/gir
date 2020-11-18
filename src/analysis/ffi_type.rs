@@ -73,7 +73,16 @@ fn ffi_inner(env: &Env, tid: TypeId, inner: &str) -> Result {
             use crate::library::Fundamental::*;
             let inner = match fund {
                 None => "libc::c_void",
-                Boolean => return Ok("glib_sys::gboolean".into()),
+                Boolean => {
+                    return Ok(format!(
+                        "{}ffi::gboolean",
+                        if env.library.is_glib_crate() {
+                            ""
+                        } else {
+                            "glib::"
+                        }
+                    ))
+                }
                 Int8 => "i8",
                 UInt8 => "u8",
                 Int16 => "i16",
@@ -97,7 +106,16 @@ fn ffi_inner(env: &Env, tid: TypeId, inner: &str) -> Result {
                 UniChar => "u32",
                 Utf8 => "libc::c_char",
                 Filename => "libc::c_char",
-                Type => "glib_sys::GType",
+                Type => {
+                    return Ok(format!(
+                        "{}ffi::GType",
+                        if env.library.is_glib_crate() {
+                            ""
+                        } else {
+                            "glib::"
+                        }
+                    ))
+                }
                 IntPtr => "libc::intptr_t",
                 UIntPtr => "libc::uintptr_t",
                 _ => return Err(TypeError::Unimplemented(inner.into())),
@@ -174,14 +192,37 @@ fn fix_name(env: &Env, type_id: TypeId, name: &str) -> Result {
             | Type::PtrArray(..)
             | Type::List(..)
             | Type::SList(..)
-            | Type::HashTable(..) => Ok(format!("glib_sys::{}", name)),
+            | Type::HashTable(..) => Ok(format!(
+                "{}ffi::{}",
+                if env.library.is_glib_crate() {
+                    ""
+                } else {
+                    "glib::"
+                },
+                name
+            )),
             _ => Ok(name.into()),
         }
     } else {
-        let name_with_prefix = format!(
-            "{}::{}",
-            &env.namespaces[type_id.ns_id].sys_crate_name, name
-        );
+        let sys_crate_name = &env.namespaces[type_id.ns_id].sys_crate_name;
+        let sys_crate_name = if sys_crate_name == "gobject_ffi" {
+            format!(
+                "{}::gobject_ffi",
+                if env.library.is_glib_crate() {
+                    "crate"
+                } else {
+                    "glib"
+                }
+            )
+        } else if type_id.ns_id == MAIN_NAMESPACE {
+            sys_crate_name.to_owned()
+        } else {
+            format!(
+                "{}::{}",
+                env.namespaces[type_id.ns_id].crate_name, sys_crate_name
+            )
+        };
+        let name_with_prefix = format!("{}::{}", sys_crate_name, name);
         if env
             .type_status_sys(&type_id.full_name(&env.library))
             .ignored()

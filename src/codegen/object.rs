@@ -158,8 +158,8 @@ fn generate_builder(w: &mut dyn Write, env: &Env, analysis: &analysis::object::I
         match rust_type(env, property.typ) {
             Ok(type_string) => {
                 let type_string = match type_string.as_str() {
-                    "GString" => "String",
-                    "Vec<GString>" => "Vec<String>",
+                    s if s.ends_with("GString") => "String",
+                    "Vec<GString>" | "Vec<glib::GString>" | "Vec<crate::GString>" => "Vec<String>",
                     typ => typ,
                 };
                 let mut param_type = rust_type_full(

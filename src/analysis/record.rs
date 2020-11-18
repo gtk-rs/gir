@@ -80,10 +80,7 @@ pub fn new(env: &Env, obj: &GObject) -> Option<Info> {
     let is_boxed = obj.use_boxed_functions || RecordType::of(&record) == RecordType::AutoBoxed;
 
     let mut imports = Imports::with_defined(&env.library, &name);
-    imports.add(env.main_sys_crate_name());
-    if record.glib_get_type.is_some() && is_boxed {
-        imports.add("gobject_sys");
-    }
+    imports.add(&format!("crate::{}", env.main_sys_crate_name()));
 
     let mut functions = functions::analyze(
         env,

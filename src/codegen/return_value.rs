@@ -27,7 +27,7 @@ impl ToReturnValue for library::Parameter {
         let mut name = rust_type.into_string();
         if is_trampoline
             && self.direction == library::ParameterDirection::Return
-            && name == "GString"
+            && name.ends_with("GString")
         {
             name = "String".to_owned();
         }
@@ -97,7 +97,7 @@ fn out_parameter_as_return_parts(
             if num_outs > 1 {
                 if analysis.ret.nullable_return_is_error.is_some() {
                     if is_glib_crate {
-                        ("Result<(", "), BoolError>")
+                        ("Result<(", "), crate::BoolError>")
                     } else {
                         ("Result<(", "), glib::BoolError>")
                     }
@@ -106,7 +106,7 @@ fn out_parameter_as_return_parts(
                 }
             } else if analysis.ret.nullable_return_is_error.is_some() {
                 if is_glib_crate {
-                    ("Result<", ", BoolError>")
+                    ("Result<", ", crate::BoolError>")
                 } else {
                     ("Result<", ", glib::BoolError>")
                 }
@@ -120,7 +120,7 @@ fn out_parameter_as_return_parts(
                 (
                     "Result<",
                     if is_glib_crate {
-                        ", Error>"
+                        ", crate::Error>"
                     } else {
                         ", glib::Error>"
                     },
@@ -129,7 +129,7 @@ fn out_parameter_as_return_parts(
                 (
                     "Result<(",
                     if is_glib_crate {
-                        "), Error>"
+                        "), crate::Error>"
                     } else {
                         "), glib::Error>"
                     },

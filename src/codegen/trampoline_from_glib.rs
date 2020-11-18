@@ -32,12 +32,12 @@ impl TrampolineFromGlib for Transformation {
                 if !nullable {
                     left = format!("&{}", left);
                 } else if nullable && is_borrow {
-                    if type_name == "GString" {
+                    if type_name.ends_with("GString") {
                         right = format!("{}.as_ref().as_deref()", right);
                     } else {
                         right = format!("{}.as_ref().as_ref()", right);
                     }
-                } else if type_name == "GString" {
+                } else if type_name.ends_with("GString") {
                     right = format!("{}.as_deref()", right);
                 } else {
                     right = format!("{}.as_ref()", right);

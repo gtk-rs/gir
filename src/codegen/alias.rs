@@ -38,7 +38,7 @@ pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>) {
         general::start_comments(w, &env.config)?;
         writeln!(w)?;
         writeln!(w, "#[allow(unused_imports)]")?;
-        writeln!(w, "use auto::*;")?;
+        writeln!(w, "use crate::auto::*;")?;
         writeln!(w)?;
 
         mod_rs.push("\nmod alias;".into());
