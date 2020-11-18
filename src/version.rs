@@ -12,12 +12,7 @@ pub enum Version {
 
 impl Version {
     pub fn to_cfg(self) -> String {
-        use self::Version::*;
-        match self {
-            Full(major, minor, 0) => format!("feature = \"v{}_{}\"", major, minor),
-            Full(major, minor, patch) => format!("feature = \"v{}_{}_{}\"", major, minor, patch),
-            Short(major) => format!("feature = \"v{}\"", major),
-        }
+        format!("feature = \"{}\"", self.to_feature())
     }
 
     pub fn to_feature(self) -> String {
