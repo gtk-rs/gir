@@ -600,29 +600,25 @@ pub enum Type {
 
 impl fmt::Display for Type {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(
-            f,
-            "{}",
-            match *self {
-                Type::Fundamental(_) => "Fundamental",
-                Type::Alias(_) => "Alias",
-                Type::Enumeration(_) => "Enumeration",
-                Type::Bitfield(_) => "Bitfield",
-                Type::Record(_) => "Record",
-                Type::Union(_) => "Union",
-                Type::Function(_) => "Function",
-                Type::Interface(_) => "Interface",
-                Type::Class(_) => "Class",
-                Type::Custom(_) => "Custom",
-                Type::Array(_) => "Array",
-                Type::CArray(_) => "CArray",
-                Type::FixedArray(_, _, _) => "FixedArray",
-                Type::PtrArray(_) => "PtrArray",
-                Type::HashTable(_, _) => "HashTable",
-                Type::List(_) => "List",
-                Type::SList(_) => "SList",
-            }
-        )
+        f.write_str(match self {
+            Type::Fundamental(_) => "Fundamental",
+            Type::Alias(_) => "Alias",
+            Type::Enumeration(_) => "Enumeration",
+            Type::Bitfield(_) => "Bitfield",
+            Type::Record(_) => "Record",
+            Type::Union(_) => "Union",
+            Type::Function(_) => "Function",
+            Type::Interface(_) => "Interface",
+            Type::Class(_) => "Class",
+            Type::Custom(_) => "Custom",
+            Type::Array(_) => "Array",
+            Type::CArray(_) => "CArray",
+            Type::FixedArray(_, _, _) => "FixedArray",
+            Type::PtrArray(_) => "PtrArray",
+            Type::HashTable(_, _) => "HashTable",
+            Type::List(_) => "List",
+            Type::SList(_) => "SList",
+        })
     }
 }
 

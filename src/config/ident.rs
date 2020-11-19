@@ -12,10 +12,10 @@ pub enum Ident {
 
 impl fmt::Display for Ident {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match *self {
-            Ident::Name(ref name) => write!(f, "{}", name),
+        match self {
+            Ident::Name(name) => f.write_str(name),
             // TODO: maybe store the regex string to display it here?
-            Ident::Pattern(_) => write!(f, "Regex"),
+            Ident::Pattern(_) => f.write_str("Regex"),
         }
     }
 }
