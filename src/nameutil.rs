@@ -106,11 +106,12 @@ pub fn mangle_keywords<'a, S: Into<Cow<'a, str>>>(name: S) -> Cow<'a, str> {
 
 static KEYWORDS: Lazy<HashMap<&'static str, String>> = Lazy::new(|| {
     [
-        "abstract", "alignof", "as", "become", "box", "break", "const", "continue", "crate", "do",
-        "else", "enum", "extern", "false", "final", "fn", "for", "if", "impl", "in", "let", "loop",
-        "macro", "match", "mod", "move", "mut", "offsetof", "override", "priv", "proc", "pub",
-        "pure", "ref", "return", "Self", "self", "sizeof", "static", "struct", "super", "trait",
-        "true", "type", "typeof", "unsafe", "unsized", "use", "virtual", "where", "while", "yield",
+        "abstract", "alignof", "as", "async", "await", "become", "box", "break", "const",
+        "continue", "crate", "do", "dyn", "else", "enum", "extern", "false", "final", "fn", "for",
+        "if", "impl", "in", "let", "loop", "macro", "match", "mod", "move", "mut", "offsetof",
+        "override", "priv", "proc", "pub", "pure", "ref", "return", "Self", "self", "sizeof",
+        "static", "struct", "super", "trait", "true", "try", "type", "typeof", "unsafe", "unsized",
+        "use", "virtual", "where", "while", "yield",
     ]
     .iter()
     .map(|k| (*k, format!("{}_", k)))
