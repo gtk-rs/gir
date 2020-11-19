@@ -214,7 +214,6 @@ fn analyze_property(
             imports.add("glib::Value");
             if set_bound.is_some() {
                 imports.add("glib::object::IsA");
-                imports.add("glib::value::SetValueOptional");
                 if !*nullable {
                     //TODO: support nonnulable setter if found any
                     warn!(
