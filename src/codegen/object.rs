@@ -5,7 +5,7 @@ use crate::{
         rust_type::{rust_type, rust_type_full},
     },
     case::CaseExt,
-    codegen::general::version_condition_string,
+    codegen::general::{version_condition_no_doc, version_condition_string},
     env::Env,
     library, nameutil,
     traits::IntoString,
@@ -235,28 +235,16 @@ impl {}Builder {{
     )?;
     for property in &properties {
         let name = nameutil::mangle_keywords(nameutil::signal_to_snake(&property.name));
-        let version_condition_string = version_condition_string(env, property.version, false, 2);
-        let condition_tabs = if version_condition_string.is_some() {
-            "\t"
-        } else {
-            ""
-        };
-        if let Some(ref version_condition_string) = version_condition_string {
-            writeln!(w, "{}", version_condition_string)?;
-            writeln!(w, "        {{")?;
-        }
+        version_condition_no_doc(w, env, property.version, false, 2)?;
         writeln!(
             w,
-            "{tabs}        if let Some(ref {field}) = self.{field} {{
-{tabs}            properties.push((\"{name}\", {field}));
-{tabs}        }}",
+            "\
+            if let Some(ref {field}) = self.{field} {{
+                properties.push((\"{name}\", {field}));
+            }}",
             name = property.name,
-            field = name,
-            tabs = condition_tabs
+            field = name
         )?;
-        if version_condition_string.is_some() {
-            writeln!(w, "        }}")?;
-        }
     }
     let glib_crate_name = if env.namespaces.is_glib_crate {
         "crate"

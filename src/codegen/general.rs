@@ -496,6 +496,24 @@ pub fn version_condition(
     Ok(())
 }
 
+pub fn version_condition_no_doc(
+    w: &mut dyn Write,
+    env: &Env,
+    version: Option<Version>,
+    commented: bool,
+    indent: usize,
+) -> Result<()> {
+    match version {
+        Some(v) if v > env.config.min_cfg_version => {
+            if let Some(s) = cfg_condition_string_no_doc(&Some(v.to_cfg()), commented, indent) {
+                writeln!(w, "{}", s)?
+            }
+        }
+        _ => {}
+    }
+    Ok(())
+}
+
 pub fn version_condition_string(
     env: &Env,
     version: Option<Version>,
@@ -504,14 +522,7 @@ pub fn version_condition_string(
 ) -> Option<String> {
     match version {
         Some(v) if v > env.config.min_cfg_version => {
-            let comment = if commented { "//" } else { "" };
-            Some(format!(
-                "{0}{1}#[cfg(any({2}, feature = \"dox\"))]\n\
-                 {0}{1}#[cfg_attr(feature = \"dox\", doc(cfg({2})))]",
-                tabs(indent),
-                comment,
-                v.to_cfg()
-            ))
+            cfg_condition_string(&Some(v.to_cfg()), commented, indent)
         }
         _ => None,
     }
@@ -523,15 +534,9 @@ pub fn not_version_condition(
     commented: bool,
     indent: usize,
 ) -> Result<()> {
-    if let Some(v) = version {
-        let comment = if commented { "//" } else { "" };
-        let s = format!(
-            "{0}{1}#[cfg(any(not({2}), feature = \"dox\"))]\n\
-             {0}{1}#[cfg_attr(feature = \"dox\", doc(cfg(not({2}))))]",
-            tabs(indent),
-            comment,
-            v.to_cfg()
-        );
+    if let Some(s) = version.and_then(|v| {
+        cfg_condition_string(&Some(format!("not({})", v.to_cfg())), commented, indent)
+    }) {
         writeln!(w, "{}", s)?;
     }
     Ok(())
@@ -567,6 +572,25 @@ pub fn cfg_condition(
         writeln!(w, "{}", s)?;
     }
     Ok(())
+}
+
+pub fn cfg_condition_string_no_doc(
+    cfg_condition: &Option<String>,
+    commented: bool,
+    indent: usize,
+) -> Option<String> {
+    match cfg_condition.as_ref() {
+        Some(v) => {
+            let comment = if commented { "//" } else { "" };
+            Some(format!(
+                "{0}{1}#[cfg(any({2}, feature = \"dox\"))]",
+                tabs(indent),
+                comment,
+                v
+            ))
+        }
+        None => None,
+    }
 }
 
 pub fn cfg_condition_string(
