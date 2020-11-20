@@ -3,6 +3,7 @@ use crate::{
     config::{derives::Derive, Config},
     env::Env,
     gir_version::VERSION,
+    nameutil::{use_glib_if_needed, use_glib_type},
     version::Version,
     writer::primitives::tabs,
 };
@@ -105,15 +106,7 @@ pub fn define_object_type(
         .collect();
 
     writeln!(w)?;
-    writeln!(
-        w,
-        "{}::glib_wrapper! {{",
-        if env.library.is_glib_crate() {
-            "crate"
-        } else {
-            "glib"
-        }
-    )?;
+    writeln!(w, "{} {{", use_glib_type(env, "glib_wrapper!"))?;
     if parents.is_empty() {
         writeln!(
             w,
@@ -205,15 +198,7 @@ fn define_boxed_type_internal(
     derive: &[Derive],
 ) -> Result<()> {
     let sys_crate_name = env.main_sys_crate_name();
-    writeln!(
-        w,
-        "{}::glib_wrapper! {{",
-        if env.library.is_glib_crate() {
-            "crate"
-        } else {
-            "glib"
-        }
-    )?;
+    writeln!(w, "{} {{", use_glib_type(env, "glib_wrapper!"))?;
 
     derives(w, derive, 1)?;
     writeln!(
@@ -338,15 +323,7 @@ pub fn define_auto_boxed_type(
 ) -> Result<()> {
     let sys_crate_name = env.main_sys_crate_name();
     writeln!(w)?;
-    writeln!(
-        w,
-        "{}::glib_wrapper! {{",
-        if env.library.is_glib_crate() {
-            "crate"
-        } else {
-            "glib"
-        }
-    )?;
+    writeln!(w, "{} {{", use_glib_type(env, "glib_wrapper!"))?;
     derives(w, derive, 1)?;
     writeln!(
         w,
@@ -357,12 +334,8 @@ pub fn define_auto_boxed_type(
     writeln!(w, "\tmatch fn {{")?;
     writeln!(
         w,
-        "\t\tcopy => |ptr| {}gobject_ffi::g_boxed_copy({}::{}(), ptr as *mut _) as *mut {}::{},",
-        if env.library.is_glib_crate() {
-            ""
-        } else {
-            "glib::"
-        },
+        "\t\tcopy => |ptr| {}({}::{}(), ptr as *mut _) as *mut {}::{},",
+        use_glib_if_needed(env, "gobject_ffi::g_boxed_copy"),
         sys_crate_name,
         get_type_fn,
         sys_crate_name,
@@ -370,12 +343,8 @@ pub fn define_auto_boxed_type(
     )?;
     writeln!(
         w,
-        "\t\tfree => |ptr| {}gobject_ffi::g_boxed_free({}::{}(), ptr as *mut _),",
-        if env.library.is_glib_crate() {
-            ""
-        } else {
-            "glib::"
-        },
+        "\t\tfree => |ptr| {}({}::{}(), ptr as *mut _),",
+        use_glib_if_needed(env, "gobject_ffi::g_boxed_free"),
         sys_crate_name,
         get_type_fn
     )?;
@@ -409,15 +378,7 @@ fn define_shared_type_internal(
     derive: &[Derive],
 ) -> Result<()> {
     let sys_crate_name = env.main_sys_crate_name();
-    writeln!(
-        w,
-        "{}::glib_wrapper! {{",
-        if env.library.is_glib_crate() {
-            "crate"
-        } else {
-            "glib"
-        }
-    )?;
+    writeln!(w, "{} {{", use_glib_type(env, "glib_wrapper!"))?;
     derives(w, derive, 1)?;
     writeln!(
         w,

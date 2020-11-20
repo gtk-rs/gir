@@ -7,7 +7,7 @@ use crate::{
     env::Env,
     file_saver,
     library::*,
-    nameutil::bitfield_member_name,
+    nameutil::{bitfield_member_name, use_glib_if_needed},
     traits::*,
 };
 use std::{
@@ -196,11 +196,7 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
     }}
 }}",
             name = flags.name,
-            glib = if env.library.is_glib_crate() {
-                ""
-            } else {
-                "glib::"
-            },
+            glib = use_glib_if_needed(env, ""),
         )?;
         writeln!(w)?;
 
@@ -213,11 +209,7 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
     }}
 }}",
             name = flags.name,
-            glib = if env.library.is_glib_crate() {
-                ""
-            } else {
-                "glib::"
-            },
+            glib = use_glib_if_needed(env, ""),
         )?;
 
         writeln!(w)?;

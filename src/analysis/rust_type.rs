@@ -3,6 +3,7 @@ use crate::{
     analysis::ref_mode::RefMode,
     env::Env,
     library::{self, Nullable, ParameterScope},
+    nameutil::use_glib_type,
     traits::*,
 };
 use std::result;
@@ -141,10 +142,8 @@ pub fn rust_type_full(
                 Utf8 => {
                     if ref_mode.is_ref() {
                         ok("str")
-                    } else if env.library.is_glib_crate() {
-                        ok("crate::GString")
                     } else {
-                        ok("glib::GString")
+                        Ok(use_glib_type(env, "GString"))
                     }
                 }
                 Filename => {
@@ -161,12 +160,9 @@ pub fn rust_type_full(
                         ok("std::ffi::OsString")
                     }
                 }
-                Type if env.library.is_glib_crate() => ok("crate::types::Type"),
-                Type => ok("glib::types::Type"),
-                Char if env.library.is_glib_crate() => ok("crate::Char"),
-                Char => ok("glib::Char"),
-                UChar if env.library.is_glib_crate() => ok("crate::UChar"),
-                UChar => ok("glib::UChar"),
+                Type => Ok(use_glib_type(env, "types::Type")),
+                Char => Ok(use_glib_type(env, "Char")),
+                UChar => Ok(use_glib_type(env, "UChar")),
                 Unsupported => err("Unsupported"),
                 _ => err(&format!("Fundamental: {:?}", fund)),
             }
@@ -260,12 +256,10 @@ pub fn rust_type_full(
 
             let full_name = type_id.full_name(&env.library);
             if full_name == "Gio.AsyncReadyCallback" {
-                return Ok(if env.library.is_glib_crate() {
-                    "FnOnce(Result<(), crate::Error>) + 'static"
-                } else {
-                    "FnOnce(Result<(), glib::Error>) + 'static"
-                }
-                .to_owned());
+                return Ok(format!(
+                    "FnOnce(Result<(), {}>) + 'static",
+                    use_glib_type(env, "Error"),
+                ));
             } else if full_name == "GLib.DestroyNotify" {
                 return Ok(format!("Fn(){} + 'static", concurrency));
             }
@@ -415,14 +409,7 @@ pub fn used_rust_type(env: &Env, type_id: library::TypeId, is_in: bool) -> Resul
             used_rust_type(env, inner_tid, false)
         }
         Custom(..) => rust_type(env, type_id),
-        Fundamental(library::Fundamental::Utf8) if !is_in => Ok(format!(
-            "{}::GString",
-            if env.library.is_glib_crate() {
-                "crate"
-            } else {
-                "glib"
-            }
-        )),
+        Fundamental(library::Fundamental::Utf8) if !is_in => Ok(use_glib_type(env, "GString")),
         _ => Err(TypeError::Ignored("Don't need use".to_owned())),
     }
 }

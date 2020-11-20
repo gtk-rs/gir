@@ -14,6 +14,7 @@ use crate::{
     consts::TYPE_PARAMETERS_START,
     env::Env,
     library,
+    nameutil::use_glib_if_needed,
     traits::IntoString,
     writer::primitives::tabs,
 };
@@ -40,17 +41,13 @@ pub fn generate(
 
     writeln!(
         w,
-        "{}unsafe extern \"C\" fn {}<{}F: {}>({}, f: {}ffi::gpointer){}{}",
+        "{}unsafe extern \"C\" fn {}<{}F: {}>({}, f: {}){}{}",
         prepend,
         analysis.name,
         self_bound,
         func_str,
         params_str,
-        if env.library.is_glib_crate() {
-            ""
-        } else {
-            "glib::"
-        },
+        use_glib_if_needed(env, "ffi::gpointer"),
         ret_str,
         end,
     )?;
@@ -189,13 +186,9 @@ fn func_returns(env: &Env, analysis: &Trampoline) -> String {
 fn trampoline_parameters(env: &Env, analysis: &Trampoline) -> String {
     if analysis.is_notify {
         return format!(
-            "{}, _param_spec: {}ffi::gpointer",
+            "{}, _param_spec: {}",
             trampoline_parameter(env, &analysis.parameters.c_parameters[0]),
-            if env.library.is_glib_crate() {
-                ""
-            } else {
-                "glib::"
-            },
+            use_glib_if_needed(env, "ffi::gpointer"),
         );
     }
 

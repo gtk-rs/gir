@@ -9,6 +9,7 @@ use crate::{
     consts::TYPE_PARAMETERS_START,
     env::Env,
     library,
+    nameutil::use_glib_if_needed,
     writer::{primitives::tabs, ToCode},
 };
 use std::io::{Result, Write};
@@ -125,14 +126,14 @@ pub fn generate(
 
             writeln!(
                 w,
-                "{}let {} = unsafe {{ glib::Object::from_glib_borrow(self.as_ptr() as *mut {}gobject_ffi::GObject).emit(\"{}\", &[{}]).unwrap() }};",
+                "{}let {} = unsafe {{ glib::Object::from_glib_borrow(self.as_ptr() as *mut {}).emit(\"{}\", &[{}]).unwrap() }};",
                 tabs(indent + 1),
                 if trampoline.ret.typ != Default::default() {
                     "res"
                 } else {
                     "_"
                 },
-                if env.library.is_glib_crate() { "" } else { "glib::" },
+                use_glib_if_needed(env, "gobject_ffi::GObject"),
                 analysis.signal_name,
                 args,
             )?;

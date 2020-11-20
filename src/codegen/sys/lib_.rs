@@ -249,16 +249,11 @@ fn generate_constants(w: &mut dyn Write, env: &Env, constants: &[Constant]) -> R
                 general::escape_string(&value)
             );
         } else if type_ == "gboolean" {
-            let prefix = if env.library.is_glib_crate() {
-                ""
+            value = if value == "true" {
+                use_glib_if_needed(env, "GTRUE")
             } else {
-                "glib::"
+                use_glib_if_needed(env, "GFALSE")
             };
-            if value == "true" {
-                value = format!("{}GTRUE", prefix);
-            } else {
-                value = format!("{}GFALSE", prefix);
-            }
         } else if env
             .library
             .type_(constant.typ)

@@ -7,7 +7,7 @@ use crate::{
     env::Env,
     file_saver,
     library::*,
-    nameutil::enum_member_name,
+    nameutil::{enum_member_name, use_glib_if_needed},
     traits::*,
     version::Version,
 };
@@ -277,7 +277,7 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
             {0}ffi::g_quark_from_static_string(b\"{1}\\0\".as_ptr() as *const _)
         }});
         from_glib(*QUARK)",
-                    if env.library.is_glib_crate() { "" } else { "glib::" },
+                    use_glib_if_needed(env, ""),
                     quark,
                 )?;
             }
@@ -371,11 +371,7 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
     }}
 }}",
             name = enum_.name,
-            glib = if env.library.is_glib_crate() {
-                ""
-            } else {
-                "glib::"
-            },
+            glib = use_glib_if_needed(env, ""),
         )?;
         writeln!(w)?;
 
@@ -388,11 +384,7 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
     }}
 }}",
             name = enum_.name,
-            glib = if env.library.is_glib_crate() {
-                ""
-            } else {
-                "glib::"
-            },
+            glib = use_glib_if_needed(env, ""),
         )?;
         writeln!(w)?;
     }

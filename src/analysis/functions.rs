@@ -201,12 +201,8 @@ fn fixup_gpointer_parameter(
             to_glib_extra: String::new(),
             explicit_target_type: format!("{} {}", pointer_type, ffi_name),
             pointer_cast: format!(
-                " as {}ffi::gconstpointer",
-                if env.library.is_glib_crate() {
-                    ""
-                } else {
-                    "glib::"
-                }
+                " as {}",
+                nameutil::use_glib_if_needed(env, "ffi::gconstpointer")
             ),
             in_trait: false,
             nullable: false,

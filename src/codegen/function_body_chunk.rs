@@ -15,6 +15,7 @@ use crate::{
     chunk::{parameter_ffi_call_out, Chunk, Param, TupleMode},
     env::Env,
     library::{self, ParameterDirection, TypeId},
+    nameutil::use_glib_if_needed,
 };
 use std::collections::{hash_map::Entry, BTreeMap, HashMap};
 
@@ -647,14 +648,7 @@ impl Builder {
                     if p.is_real_gpointer(env) {
                         Param {
                             name: p.name.clone(),
-                            typ: format!(
-                                "{}ffi::gpointer",
-                                if env.library.is_glib_crate() {
-                                    ""
-                                } else {
-                                    "glib::"
-                                }
-                            ),
+                            typ: use_glib_if_needed(env, "ffi::gpointer"),
                         }
                     } else {
                         Param {
@@ -868,14 +862,7 @@ impl Builder {
         let parameters = vec![
             Param {
                 name: "_source_object".to_string(),
-                typ: format!(
-                    "*mut {}gobject_ffi::GObject",
-                    if env.library.is_glib_crate() {
-                        ""
-                    } else {
-                        "glib::"
-                    }
-                ),
+                typ: format!("*mut {}", use_glib_if_needed(env, "gobject_ffi::GObject")),
             },
             Param {
                 name: "res".to_string(),
@@ -890,14 +877,7 @@ impl Builder {
             },
             Param {
                 name: "user_data".to_string(),
-                typ: format!(
-                    "{}ffi::gpointer",
-                    if env.library.is_glib_crate() {
-                        ""
-                    } else {
-                        "glib::"
-                    }
-                ),
+                typ: use_glib_if_needed(env, "ffi::gpointer"),
             },
         ];
 

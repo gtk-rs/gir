@@ -150,6 +150,30 @@ pub fn shared_libs_to_links(shared_libs: &[String]) -> String {
     panic!("empty list of shared library");
 }
 
+pub fn use_glib_type(env: &crate::env::Env, import: &str) -> String {
+    format!(
+        "{}::{}",
+        if env.library.is_glib_crate() {
+            "crate"
+        } else {
+            "glib"
+        },
+        import
+    )
+}
+
+pub fn use_glib_if_needed(env: &crate::env::Env, import: &str) -> String {
+    format!(
+        "{}{}",
+        if env.library.is_glib_crate() {
+            ""
+        } else {
+            "glib::"
+        },
+        import
+    )
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
