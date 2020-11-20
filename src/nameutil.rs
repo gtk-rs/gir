@@ -174,6 +174,10 @@ pub fn use_glib_if_needed(env: &crate::env::Env, import: &str) -> String {
     )
 }
 
+pub fn is_gstring(name: &str) -> bool {
+    name == "GString" || name.ends_with("::GString")
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

@@ -27,7 +27,7 @@ impl ToReturnValue for library::Parameter {
         let mut name = rust_type.into_string();
         if is_trampoline
             && self.direction == library::ParameterDirection::Return
-            && name.ends_with("GString")
+            && nameutil::is_gstring(&name)
         {
             name = "String".to_owned();
         }

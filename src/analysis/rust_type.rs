@@ -3,7 +3,7 @@ use crate::{
     analysis::ref_mode::RefMode,
     env::Env,
     library::{self, Nullable, ParameterScope},
-    nameutil::use_glib_type,
+    nameutil::{is_gstring, use_glib_type},
     traits::*,
 };
 use std::result;
@@ -280,7 +280,7 @@ pub fn rust_type_full(
                             } else {
                                 "&"
                             },
-                            if !y.ends_with("GString") {
+                            if !is_gstring(&y) {
                                 if !is_fundamental && *p.nullable {
                                     x.replace("Option<", "Option<&")
                                 } else {
@@ -313,7 +313,7 @@ pub fn rust_type_full(
                         "{}({}) -> {}{}",
                         closure_kind,
                         s.join(", "),
-                        if !y.ends_with("GString") {
+                        if !is_gstring(&y) {
                             &x
                         } else if *f.ret.nullable {
                             "Option<String>"

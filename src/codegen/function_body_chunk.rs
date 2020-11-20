@@ -15,7 +15,7 @@ use crate::{
     chunk::{parameter_ffi_call_out, Chunk, Param, TupleMode},
     env::Env,
     library::{self, ParameterDirection, TypeId},
-    nameutil::use_glib_if_needed,
+    nameutil::{is_gstring, use_glib_if_needed},
 };
 use std::collections::{hash_map::Entry, BTreeMap, HashMap};
 
@@ -410,7 +410,7 @@ impl Builder {
             let nullable = trampoline.parameters.rust_parameters[par.ind_rust].nullable;
             let is_fundamental =
                 add_chunk_for_type(env, par.typ, par, &mut body, &ty_name, nullable);
-            if ty_name.ends_with("GString") {
+            if is_gstring(&ty_name) {
                 if *nullable {
                     arguments.push(Chunk::Name(format!("{}.as_ref().as_deref()", par.name)));
                 } else {
@@ -1346,7 +1346,7 @@ fn add_chunk_for_type(
                 crate::codegen::trampoline_from_glib::from_glib_xxx(par.transfer, true);
 
             let type_name;
-            if ty_name.ends_with("GString") {
+            if is_gstring(ty_name) {
                 if *nullable {
                     if par.conversion_type == ConversionType::Borrow {
                         type_name = String::from(": Borrowed<Option<glib::GString>>");
