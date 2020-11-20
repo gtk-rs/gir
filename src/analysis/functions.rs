@@ -731,9 +731,6 @@ fn analyze_function(
     }
 
     if r#async && status.need_generate() && !commented {
-        if env.config.library_name != "Gio" {
-            imports.add_with_constraint("gio", version, None);
-        }
         imports.add("std::ptr");
         imports.add("std::boxed::Box as Box_");
         imports.add("std::pin::Pin");
