@@ -1,4 +1,9 @@
-use crate::{analysis, chunk::Chunk, env::Env};
+use crate::{
+    analysis,
+    chunk::Chunk,
+    env::Env,
+    nameutil::{use_glib_type, use_gtk_type},
+};
 
 pub struct Builder<'a> {
     name: String,
@@ -90,23 +95,9 @@ impl<'a> Builder<'a> {
         let mut params = Vec::new();
 
         let cast_target = if self.is_child_property {
-            format!(
-                "{}::ffi::GtkContainer",
-                if self.env.library.is_crate("Gtk") {
-                    "crate"
-                } else {
-                    "gtk"
-                }
-            )
+            use_gtk_type(&self.env, "ffi::GtkContainer")
         } else {
-            format!(
-                "{}::gobject_ffi::GObject",
-                if self.env.library.is_glib_crate() {
-                    "crate"
-                } else {
-                    "glib "
-                }
-            )
+            use_glib_type(&self.env, "gobject_ffi::GObject")
         };
         if self.in_trait {
             params.push(Chunk::Custom(format!(
@@ -190,23 +181,9 @@ impl<'a> Builder<'a> {
         let mut params = Vec::new();
 
         let cast_target = if self.is_child_property {
-            format!(
-                "{}::ffi::GtkContainer",
-                if self.env.library.is_crate("Gtk") {
-                    "crate"
-                } else {
-                    "gtk"
-                }
-            )
+            use_gtk_type(&self.env, "ffi::GtkContainer")
         } else {
-            format!(
-                "{}::gobject_ffi::GObject",
-                if self.env.library.is_glib_crate() {
-                    "crate"
-                } else {
-                    "glib"
-                }
-            )
+            use_glib_type(&self.env, "gobject_ffi::GObject")
         };
         if self.in_trait {
             params.push(Chunk::Custom(format!(
@@ -257,45 +234,17 @@ impl<'a> Builder<'a> {
 
     fn get_ffi_func(&self) -> String {
         if self.is_child_property {
-            format!(
-                "{}::ffi::gtk_container_child_get_property",
-                if self.env.library.is_crate("Gtk") {
-                    "crate"
-                } else {
-                    "gtk"
-                }
-            )
+            use_gtk_type(&self.env, "ffi::gtk_container_child_get_property")
         } else {
-            format!(
-                "{}::gobject_ffi::g_object_get_property",
-                if self.env.library.is_glib_crate() {
-                    "crate"
-                } else {
-                    "glib"
-                }
-            )
+            use_glib_type(&self.env, "gobject_ffi::g_object_get_property")
         }
     }
 
     fn set_ffi_func(&self) -> String {
         if self.is_child_property {
-            format!(
-                "{}::ffi::gtk_container_child_set_property",
-                if self.env.library.is_crate("Gtk") {
-                    "crate"
-                } else {
-                    "gtk"
-                }
-            )
+            use_gtk_type(&self.env, "ffi::gtk_container_child_set_property")
         } else {
-            format!(
-                "{}::gobject_ffi::g_object_set_property",
-                if self.env.library.is_glib_crate() {
-                    "crate"
-                } else {
-                    "glib"
-                }
-            )
+            use_glib_type(&self.env, "gobject_ffi::g_object_set_property")
         }
     }
 }

@@ -174,6 +174,30 @@ pub fn use_glib_if_needed(env: &crate::env::Env, import: &str) -> String {
     )
 }
 
+pub fn use_gio_type(env: &crate::env::Env, import: &str) -> String {
+    format!(
+        "{}::{}",
+        if env.library.is_crate("Gio") {
+            "crate"
+        } else {
+            "gio"
+        },
+        import
+    )
+}
+
+pub fn use_gtk_type(env: &crate::env::Env, import: &str) -> String {
+    format!(
+        "{}::{}",
+        if env.library.is_crate("Gtk") {
+            "crate"
+        } else {
+            "gtk"
+        },
+        import
+    )
+}
+
 pub fn is_gstring(name: &str) -> bool {
     name == "GString" || name.ends_with("::GString")
 }

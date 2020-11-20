@@ -15,7 +15,7 @@ use crate::{
     chunk::{parameter_ffi_call_out, Chunk, Param, TupleMode},
     env::Env,
     library::{self, ParameterDirection, TypeId},
-    nameutil::{is_gstring, use_glib_if_needed},
+    nameutil::{is_gstring, use_gio_type, use_glib_if_needed},
 };
 use std::collections::{hash_map::Entry, BTreeMap, HashMap};
 
@@ -866,14 +866,7 @@ impl Builder {
             },
             Param {
                 name: "res".to_string(),
-                typ: format!(
-                    "*mut {}ffi::GAsyncResult",
-                    if env.library.is_crate("Gio") {
-                        ""
-                    } else {
-                        "gio::"
-                    }
-                ),
+                typ: format!("*mut {}", use_gio_type(env, "ffi::GAsyncResult")),
             },
             Param {
                 name: "user_data".to_string(),
