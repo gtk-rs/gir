@@ -5,7 +5,7 @@ use crate::{
     },
     env::Env,
     library::{self, ParameterDirection},
-    nameutil,
+    nameutil::{is_gstring, mangle_keywords, use_glib_type},
     traits::*,
 };
 use std::cmp;
@@ -27,7 +27,7 @@ impl ToReturnValue for library::Parameter {
         let mut name = rust_type.into_string();
         if is_trampoline
             && self.direction == library::ParameterDirection::Return
-            && nameutil::is_gstring(&name)
+            && is_gstring(&name)
         {
             name = "String".to_owned();
         }
@@ -67,8 +67,8 @@ impl ToReturnValue for analysis::return_value::Info {
 
 fn out_parameter_as_return_parts(
     analysis: &analysis::functions::Info,
-    is_glib_crate: bool,
-) -> (&'static str, &'static str) {
+    env: &Env,
+) -> (&'static str, String) {
     use crate::analysis::out_parameters::Mode::*;
     let num_out_args = analysis
         .outs
@@ -88,52 +88,33 @@ fn out_parameter_as_return_parts(
     match analysis.outs.mode {
         Normal | Combined => {
             if num_outs > 1 {
-                ("(", ")")
+                ("(", ")".to_owned())
             } else {
-                ("", "")
+                ("", String::new())
             }
         }
         Optional => {
             if num_outs > 1 {
                 if analysis.ret.nullable_return_is_error.is_some() {
-                    if is_glib_crate {
-                        ("Result<(", "), crate::BoolError>")
-                    } else {
-                        ("Result<(", "), glib::BoolError>")
-                    }
+                    (
+                        "Result<(",
+                        format!("), {}>", use_glib_type(env, "BoolError")),
+                    )
                 } else {
-                    ("Option<(", ")>")
+                    ("Option<(", ")>".to_owned())
                 }
             } else if analysis.ret.nullable_return_is_error.is_some() {
-                if is_glib_crate {
-                    ("Result<", ", crate::BoolError>")
-                } else {
-                    ("Result<", ", glib::BoolError>")
-                }
+                ("Result<", format!(", {}>", use_glib_type(env, "BoolError")))
             } else {
-                ("Option<", ">")
+                ("Option<", ">".to_owned())
             }
         }
         Throws(..) => {
             if num_outs == 1 + 1 {
                 //if only one parameter except "glib::Error"
-                (
-                    "Result<",
-                    if is_glib_crate {
-                        ", crate::Error>"
-                    } else {
-                        ", glib::Error>"
-                    },
-                )
+                ("Result<", format!(", {}>", use_glib_type(env, "Error")))
             } else {
-                (
-                    "Result<(",
-                    if is_glib_crate {
-                        "), crate::Error>"
-                    } else {
-                        "), glib::Error>"
-                    },
-                )
+                ("Result<(", format!("), {}>", use_glib_type(env, "Error")))
             }
         }
         None => unreachable!(),
@@ -141,8 +122,7 @@ fn out_parameter_as_return_parts(
 }
 
 pub fn out_parameters_as_return(env: &Env, analysis: &analysis::functions::Info) -> String {
-    let (prefix, suffix) =
-        out_parameter_as_return_parts(analysis, env.namespaces.glib_ns_id == namespaces::MAIN);
+    let (prefix, suffix) = out_parameter_as_return_parts(analysis, env);
     let mut return_str = String::with_capacity(100);
     return_str.push_str(" -> ");
     return_str.push_str(prefix);
@@ -157,7 +137,7 @@ pub fn out_parameters_as_return(env: &Env, analysis: &analysis::functions::Info)
     for (pos, par) in analysis.outs.iter().filter(|par| !par.is_error).enumerate() {
         // The actual return value is inserted with an empty name at position 0
         if !par.name.is_empty() {
-            let mangled_par_name = nameutil::mangle_keywords(par.name.as_str());
+            let mangled_par_name = mangle_keywords(par.name.as_str());
             let param_pos = analysis
                 .parameters
                 .c_parameters
@@ -184,7 +164,7 @@ pub fn out_parameters_as_return(env: &Env, analysis: &analysis::functions::Info)
         let s = out_parameter_as_return(par, env);
         return_str.push_str(&s);
     }
-    return_str.push_str(suffix);
+    return_str.push_str(&suffix);
     return_str
 }
 
