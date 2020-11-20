@@ -388,12 +388,7 @@ fn has_length(env: &Env, typ: TypeId) -> bool {
     match *typ {
         Type::Fundamental(fund) => {
             use crate::library::Fundamental::*;
-            match fund {
-                Utf8 => true,
-                Filename => true,
-                OsString => true,
-                _ => false,
-            }
+            matches!(fund, Utf8 | Filename | OsString)
         }
         Type::CArray(..)
         | Type::FixedArray(..)
