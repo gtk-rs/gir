@@ -81,8 +81,11 @@ impl TranslateFromGlib for analysis::return_value::Info {
                         (
                             prefix,
                             format!(
-                                "{}.{}.ok_or_else(|| glib_bool_error!(\"{}\"))",
-                                from_glib_xxx.1, suffix_function, msg
+                                "{}.{}.ok_or_else(|| {}(\"{}\"))",
+                                from_glib_xxx.1,
+                                suffix_function,
+                                use_glib_type(env, "glib_bool_error!"),
+                                msg
                             ),
                         )
                     } else {
@@ -99,7 +102,12 @@ impl TranslateFromGlib for analysis::return_value::Info {
                         assert!(*par.nullable);
                         (
                             format!("Option::<_>::{}", res.0),
-                            format!("{}.ok_or_else(|| glib_bool_error!(\"{}\"))", res.1, msg),
+                            format!(
+                                "{}.ok_or_else(|| {}(\"{}\"))",
+                                res.1,
+                                use_glib_type(env, "glib_bool_error!"),
+                                msg
+                            ),
                         )
                     } else {
                         res
