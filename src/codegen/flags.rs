@@ -7,7 +7,7 @@ use crate::{
     env::Env,
     file_saver,
     library::*,
-    nameutil::{bitfield_member_name, use_glib_if_needed},
+    nameutil::{bitfield_member_name, use_glib_type},
     traits::*,
 };
 use std::{
@@ -48,7 +48,6 @@ pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>) {
                     imports.add("glib::value::SetValue");
                     imports.add("glib::value::FromValue");
                     imports.add("glib::value::FromValueOptional");
-                    imports.add("glib::gobject_ffi");
                     break;
                 }
             }
@@ -192,11 +191,11 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
             w,
             "impl<'a> FromValue<'a> for {name} {{
     unsafe fn from_value(value: &Value) -> Self {{
-        from_glib({glib}gobject_ffi::g_value_get_flags(value.to_glib_none().0))
+        from_glib({glib}(value.to_glib_none().0))
     }}
 }}",
             name = flags.name,
-            glib = use_glib_if_needed(env, ""),
+            glib = use_glib_type(env, "gobject_ffi::g_value_get_flags"),
         )?;
         writeln!(w)?;
 
@@ -205,11 +204,11 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
             w,
             "impl SetValue for {name} {{
     unsafe fn set_value(value: &mut Value, this: &Self) {{
-        {glib}gobject_ffi::g_value_set_flags(value.to_glib_none_mut().0, this.to_glib())
+        {glib}(value.to_glib_none_mut().0, this.to_glib())
     }}
 }}",
             name = flags.name,
-            glib = use_glib_if_needed(env, ""),
+            glib = use_glib_type(env, "gobject_ffi::g_value_set_flags"),
         )?;
 
         writeln!(w)?;

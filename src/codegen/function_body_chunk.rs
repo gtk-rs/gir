@@ -15,7 +15,7 @@ use crate::{
     chunk::{parameter_ffi_call_out, Chunk, Param, TupleMode},
     env::Env,
     library::{self, ParameterDirection, TypeId},
-    nameutil::{is_gstring, use_gio_type, use_glib_if_needed},
+    nameutil::{is_gstring, use_gio_type, use_glib_if_needed, use_glib_type},
 };
 use std::collections::{hash_map::Entry, BTreeMap, HashMap};
 
@@ -862,7 +862,7 @@ impl Builder {
         let parameters = vec![
             Param {
                 name: "_source_object".to_string(),
-                typ: format!("*mut {}", use_glib_if_needed(env, "gobject_ffi::GObject")),
+                typ: format!("*mut {}", use_glib_type(env, "gobject_ffi::GObject")),
             },
             Param {
                 name: "res".to_string(),

@@ -9,7 +9,7 @@ use crate::{
     consts::TYPE_PARAMETERS_START,
     env::Env,
     library,
-    nameutil::use_glib_if_needed,
+    nameutil::use_glib_type,
     writer::{primitives::tabs, ToCode},
 };
 use std::io::{Result, Write};
@@ -133,7 +133,7 @@ pub fn generate(
                 } else {
                     "_"
                 },
-                use_glib_if_needed(env, "gobject_ffi::GObject"),
+                use_glib_type(env, "gobject_ffi::GObject"),
                 analysis.signal_name,
                 args,
             )?;

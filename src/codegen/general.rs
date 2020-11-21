@@ -3,7 +3,7 @@ use crate::{
     config::{derives::Derive, Config},
     env::Env,
     gir_version::VERSION,
-    nameutil::{use_glib_if_needed, use_glib_type},
+    nameutil::use_glib_type,
     version::Version,
     writer::primitives::tabs,
 };
@@ -335,7 +335,7 @@ pub fn define_auto_boxed_type(
     writeln!(
         w,
         "\t\tcopy => |ptr| {}({}::{}(), ptr as *mut _) as *mut {}::{},",
-        use_glib_if_needed(env, "gobject_ffi::g_boxed_copy"),
+        use_glib_type(env, "gobject_ffi::g_boxed_copy"),
         sys_crate_name,
         get_type_fn,
         sys_crate_name,
@@ -344,7 +344,7 @@ pub fn define_auto_boxed_type(
     writeln!(
         w,
         "\t\tfree => |ptr| {}({}::{}(), ptr as *mut _),",
-        use_glib_if_needed(env, "gobject_ffi::g_boxed_free"),
+        use_glib_type(env, "gobject_ffi::g_boxed_free"),
         sys_crate_name,
         get_type_fn
     )?;
