@@ -1,20 +1,15 @@
-use super::{function_parameters::TransformationType, imports::Imports, info_base::InfoBase, *};
+use super::{function_parameters::TransformationType, imports::Imports, *};
 use crate::{config::gobjects::GObject, env::Env, nameutil::*, traits::*};
 
 use log::info;
-use std::ops::Deref;
 
 #[derive(Debug, Default)]
 pub struct Info {
-    pub base: InfoBase,
-}
-
-impl Deref for Info {
-    type Target = InfoBase;
-
-    fn deref(&self) -> &InfoBase {
-        &self.base
-    }
+    pub full_name: String,
+    pub type_id: library::TypeId,
+    pub name: String,
+    pub functions: Vec<functions::Info>,
+    pub specials: special_functions::Infos,
 }
 
 impl Info {
@@ -116,29 +111,13 @@ pub fn new(env: &Env, obj: &GObject, imports: &mut Imports) -> Option<Info> {
 
     special_functions::analyze_imports(&specials, imports);
 
-    let (version, deprecated_version) = info_base::versions(
-        env,
-        obj,
-        &functions,
-        enumeration.version,
-        enumeration.deprecated_version,
-    );
-
-    let base = InfoBase {
+    let info = Info {
         full_name: obj.name.clone(),
         type_id: enumeration_tid,
         name: name.to_owned(),
         functions,
         specials,
-        // TODO: Don't use!
-        imports: Imports::new(&env.library),
-        version,
-        deprecated_version,
-        cfg_condition: obj.cfg_condition.clone(),
-        concurrency: obj.concurrency,
     };
-
-    let info = Info { base };
 
     Some(info)
 }

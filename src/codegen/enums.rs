@@ -116,7 +116,11 @@ fn generate_enum(
 }}"
     )?;
 
-    let functions = analysis.functions();
+    let functions = analysis
+        .functions
+        .iter()
+        .filter(|f| f.status.need_generate())
+        .collect::<Vec<_>>();
 
     if !functions.is_empty() {
         let static_tostring = analysis
