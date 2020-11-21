@@ -64,9 +64,6 @@ pub fn run(env: &mut Env) {
         to_analyze.push((tid, deps));
     }
 
-    let mut enum_imports = Imports::new(&env.library);
-    enum_imports.add("glib::translate::*");
-
     let mut analyzed = 1;
     while analyzed > 0 {
         analyzed = 0;
@@ -76,14 +73,12 @@ pub fn run(env: &mut Env) {
                 new_to_analyze.push((tid, deps.clone()));
                 continue;
             }
-            analyze(env, tid, deps, &mut enum_imports);
+            analyze(env, tid, deps);
             analyzed += 1;
         }
 
         to_analyze = new_to_analyze;
     }
-
-    env.analysis.enum_imports = enum_imports;
 
     if !to_analyze.is_empty() {
         error!(
@@ -93,10 +88,35 @@ pub fn run(env: &mut Env) {
         return;
     }
 
+    analyze_enums(env);
+
     analyze_constants(env);
 
     // Analyze free functions as the last step once all types are analyzed
     analyze_global_functions(env);
+}
+
+fn analyze_enums(env: &mut Env) {
+    let mut imports = Imports::new(&env.library);
+    imports.add("glib::translate::*");
+
+    for obj in env.config.objects.values() {
+        if obj.status.ignored() {
+            continue;
+        }
+        let tid = match env.library.find_type(0, &obj.name) {
+            Some(x) => x,
+            None => continue,
+        };
+
+        if let Type::Enumeration(_) = env.library.type_(tid) {
+            if let Some(info) = enums::new(env, obj, &mut imports) {
+                env.analysis.enumerations.push(info);
+            }
+        }
+    }
+
+    env.analysis.enum_imports = imports;
 }
 
 fn analyze_global_functions(env: &mut Env) {
@@ -161,7 +181,7 @@ fn analyze_constants(env: &mut Env) {
     env.analysis.constants = constants::analyze(env, &constants, obj);
 }
 
-fn analyze(env: &mut Env, tid: TypeId, deps: &[TypeId], enum_imports: &mut Imports) {
+fn analyze(env: &mut Env, tid: TypeId, deps: &[TypeId]) {
     let full_name = tid.full_name(&env.library);
     let obj = match env.config.objects.get(&*full_name) {
         Some(obj) => obj,
@@ -181,12 +201,6 @@ fn analyze(env: &mut Env, tid: TypeId, deps: &[TypeId], enum_imports: &mut Impor
         Type::Record(_) => {
             if let Some(info) = record::new(env, obj) {
                 env.analysis.records.insert(full_name, info);
-            }
-        }
-        Type::Enumeration(_) => {
-            // Cannot mutably borrow env.analysis.enum_imports here
-            if let Some(info) = enums::new(env, obj, enum_imports) {
-                env.analysis.enumerations.push(info);
             }
         }
         _ => {}
