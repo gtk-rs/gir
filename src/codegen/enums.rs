@@ -8,7 +8,7 @@ use crate::{
     env::Env,
     file_saver,
     library::*,
-    nameutil::enum_member_name,
+    nameutil::{enum_member_name, use_glib_if_needed, use_glib_type},
     traits::*,
     version::Version,
 };
@@ -53,7 +53,7 @@ pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>) {
     }
 
     let mut imports = Imports::new(&env.library);
-    imports.add(env.main_sys_crate_name());
+    imports.add(&format!("crate::{}", env.main_sys_crate_name()));
     if has_get_quark {
         imports.add("glib::Quark");
         imports.add("glib::error::ErrorDomain");
@@ -65,7 +65,6 @@ pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>) {
         imports.add("glib::value::SetValue");
         imports.add("glib::value::FromValue");
         imports.add("glib::value::FromValueOptional");
-        imports.add("gobject_sys");
     }
     imports.add("glib::translate::*");
 
@@ -274,11 +273,12 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
             ErrorDomain::Quark(ref quark) => {
                 writeln!(
                     w,
-                    "        static QUARK: once_cell::sync::Lazy<glib_sys::GQuark> = once_cell::sync::Lazy::new(|| unsafe {{
-            glib_sys::g_quark_from_static_string(b\"{}\\0\".as_ptr() as *const _)
+                    "        static QUARK: once_cell::sync::Lazy<{0}ffi::GQuark> = once_cell::sync::Lazy::new(|| unsafe {{
+            {0}ffi::g_quark_from_static_string(b\"{1}\\0\".as_ptr() as *const _)
         }});
         from_glib(*QUARK)",
-                    quark = quark
+                    use_glib_if_needed(env, ""),
+                    quark,
                 )?;
             }
             ErrorDomain::Function(ref f) => {
@@ -367,10 +367,11 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
             w,
             "impl<'a> FromValue<'a> for {name} {{
     unsafe fn from_value(value: &Value) -> Self {{
-        from_glib(gobject_sys::g_value_get_enum(value.to_glib_none().0))
+        from_glib({glib}(value.to_glib_none().0))
     }}
 }}",
             name = enum_.name,
+            glib = use_glib_type(env, "gobject_ffi::g_value_get_enum"),
         )?;
         writeln!(w)?;
 
@@ -379,10 +380,11 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
             w,
             "impl SetValue for {name} {{
     unsafe fn set_value(value: &mut Value, this: &Self) {{
-        gobject_sys::g_value_set_enum(value.to_glib_none_mut().0, this.to_glib())
+        {glib}(value.to_glib_none_mut().0, this.to_glib())
     }}
 }}",
             name = enum_.name,
+            glib = use_glib_type(env, "gobject_ffi::g_value_set_enum"),
         )?;
         writeln!(w)?;
     }

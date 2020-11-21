@@ -15,6 +15,7 @@ use crate::{
     chunk::{parameter_ffi_call_out, Chunk, Param, TupleMode},
     env::Env,
     library::{self, ParameterDirection, TypeId},
+    nameutil::{is_gstring, use_gio_type, use_glib_if_needed, use_glib_type},
 };
 use std::collections::{hash_map::Entry, BTreeMap, HashMap};
 
@@ -409,7 +410,7 @@ impl Builder {
             let nullable = trampoline.parameters.rust_parameters[par.ind_rust].nullable;
             let is_fundamental =
                 add_chunk_for_type(env, par.typ, par, &mut body, &ty_name, nullable);
-            if ty_name == "GString" {
+            if is_gstring(&ty_name) {
                 if *nullable {
                     arguments.push(Chunk::Name(format!("{}.as_ref().as_deref()", par.name)));
                 } else {
@@ -647,7 +648,7 @@ impl Builder {
                     if p.is_real_gpointer(env) {
                         Param {
                             name: p.name.clone(),
-                            typ: "glib_sys::gpointer".to_string(),
+                            typ: use_glib_if_needed(env, "ffi::gpointer"),
                         }
                     } else {
                         Param {
@@ -861,15 +862,15 @@ impl Builder {
         let parameters = vec![
             Param {
                 name: "_source_object".to_string(),
-                typ: "*mut gobject_sys::GObject".to_string(),
+                typ: format!("*mut {}", use_glib_type(env, "gobject_ffi::GObject")),
             },
             Param {
                 name: "res".to_string(),
-                typ: "*mut gio_sys::GAsyncResult".to_string(),
+                typ: format!("*mut {}", use_gio_type(env, "ffi::GAsyncResult")),
             },
             Param {
                 name: "user_data".to_string(),
-                typ: "glib_sys::gpointer".to_string(),
+                typ: use_glib_if_needed(env, "ffi::gpointer"),
             },
         ];
 
@@ -1338,15 +1339,15 @@ fn add_chunk_for_type(
                 crate::codegen::trampoline_from_glib::from_glib_xxx(par.transfer, true);
 
             let type_name;
-            if ty_name == "GString" {
+            if is_gstring(ty_name) {
                 if *nullable {
                     if par.conversion_type == ConversionType::Borrow {
-                        type_name = String::from(": Borrowed<Option<GString>>");
+                        type_name = String::from(": Borrowed<Option<glib::GString>>");
                     } else {
-                        type_name = String::from(": Option<GString>");
+                        type_name = String::from(": Option<glib::GString>");
                     }
                 } else if par.conversion_type == ConversionType::Borrow {
-                    type_name = String::from(": Borrowed<GString>");
+                    type_name = String::from(": Borrowed<glib::GString>");
                 } else {
                     type_name = String::from(": GString");
                 }

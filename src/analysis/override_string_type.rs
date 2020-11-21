@@ -58,10 +58,10 @@ fn apply(env: &Env, type_id: TypeId, string_type: Option<config::StringType>) ->
 }
 
 fn can_overriden_fundamental(env: &Env, type_id: TypeId) -> bool {
-    match *env.library.type_(type_id) {
-        Type::Fundamental(Fundamental::Filename) => true,
-        Type::Fundamental(Fundamental::OsString) => true,
-        Type::Fundamental(Fundamental::Utf8) => true,
-        _ => false,
-    }
+    matches!(
+        *env.library.type_(type_id),
+        Type::Fundamental(Fundamental::Filename)
+            | Type::Fundamental(Fundamental::OsString)
+            | Type::Fundamental(Fundamental::Utf8)
+    )
 }

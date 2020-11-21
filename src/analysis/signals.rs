@@ -88,8 +88,6 @@ fn analyze_signal(
     );
 
     let action_emit_name = if signal.is_action {
-        imports.add("glib");
-        imports.add("gobject_sys");
         imports.add("glib::object::ObjectExt");
         Some(format!("emit_{}", nameutil::signal_to_snake(&signal.name)))
     } else {
@@ -108,7 +106,6 @@ fn analyze_signal(
         imports.add("glib::signal::SignalHandlerId");
         imports.add("std::mem::transmute");
         imports.add("std::boxed::Box as Box_");
-        imports.add("glib_sys");
     }
 
     let info = Info {

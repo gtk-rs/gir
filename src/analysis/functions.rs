@@ -200,7 +200,10 @@ fn fixup_gpointer_parameter(
             ref_mode: RefMode::ByRef,
             to_glib_extra: String::new(),
             explicit_target_type: format!("{} {}", pointer_type, ffi_name),
-            pointer_cast: " as glib_sys::gconstpointer".into(),
+            pointer_cast: format!(
+                " as {}",
+                nameutil::use_glib_if_needed(env, "ffi::gconstpointer")
+            ),
             in_trait: false,
             nullable: false,
         },
@@ -209,7 +212,6 @@ fn fixup_gpointer_parameter(
 
 fn fixup_special_functions(
     env: &Env,
-    imports: &mut Imports,
     name: &str,
     type_tid: library::TypeId,
     is_boxed: bool,
@@ -222,7 +224,6 @@ fn fixup_special_functions(
         && parameters.c_parameters[0].c_type == "gconstpointer"
     {
         fixup_gpointer_parameter(env, type_tid, is_boxed, parameters, 0);
-        imports.add("glib_sys");
     }
 
     if (name == "compare" || name == "equal" || name == "is_equal")
@@ -232,7 +233,6 @@ fn fixup_special_functions(
     {
         fixup_gpointer_parameter(env, type_tid, is_boxed, parameters, 0);
         fixup_gpointer_parameter(env, type_tid, is_boxed, parameters, 1);
-        imports.add("glib_sys");
     }
 }
 
@@ -592,14 +592,7 @@ fn analyze_function(
         }
     }
 
-    fixup_special_functions(
-        env,
-        imports,
-        name.as_str(),
-        type_tid,
-        is_boxed,
-        &mut parameters,
-    );
+    fixup_special_functions(env, name.as_str(), type_tid, is_boxed, &mut parameters);
 
     // Key: destroy callback index
     // Value: associated user data index
@@ -738,12 +731,6 @@ fn analyze_function(
     }
 
     if r#async && status.need_generate() && !commented {
-        if env.config.library_name != "Gio" {
-            imports.add("gio_sys");
-            imports.add_with_constraint("gio", version, None);
-        }
-        imports.add("glib_sys");
-        imports.add("gobject_sys");
         imports.add("std::ptr");
         imports.add("std::boxed::Box as Box_");
         imports.add("std::pin::Pin");

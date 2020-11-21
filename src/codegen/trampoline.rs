@@ -14,6 +14,7 @@ use crate::{
     consts::TYPE_PARAMETERS_START,
     env::Env,
     library,
+    nameutil::{use_glib_if_needed, use_gtk_type},
     traits::IntoString,
     writer::primitives::tabs,
 };
@@ -40,8 +41,15 @@ pub fn generate(
 
     writeln!(
         w,
-        "{}unsafe extern \"C\" fn {}<{}F: {}>({}, f: glib_sys::gpointer){}{}",
-        prepend, analysis.name, self_bound, func_str, params_str, ret_str, end,
+        "{}unsafe extern \"C\" fn {}<{}F: {}>({}, f: {}){}{}",
+        prepend,
+        analysis.name,
+        self_bound,
+        func_str,
+        params_str,
+        use_glib_if_needed(env, "ffi::gpointer"),
+        ret_str,
+        end,
     )?;
     if in_trait {
         writeln!(
@@ -51,7 +59,7 @@ pub fn generate(
         )?;
     }
     writeln!(w, "{}\tlet f: &F = &*(f as *const F);", prepend)?;
-    transformation_vars(w, analysis, &prepend)?;
+    transformation_vars(w, env, analysis, &prepend)?;
     let call = trampoline_call_func(env, analysis, in_trait);
     writeln!(w, "{}\t{}", prepend, call)?;
     writeln!(w, "{}}}", prepend)?;
@@ -178,8 +186,9 @@ fn func_returns(env: &Env, analysis: &Trampoline) -> String {
 fn trampoline_parameters(env: &Env, analysis: &Trampoline) -> String {
     if analysis.is_notify {
         return format!(
-            "{}, _param_spec: glib_sys::gpointer",
-            trampoline_parameter(env, &analysis.parameters.c_parameters[0])
+            "{}, _param_spec: {}",
+            trampoline_parameter(env, &analysis.parameters.c_parameters[0]),
+            use_glib_if_needed(env, "ffi::gpointer"),
         );
     }
 
@@ -206,7 +215,12 @@ fn trampoline_returns(env: &Env, analysis: &Trampoline) -> String {
     }
 }
 
-fn transformation_vars(w: &mut dyn Write, analysis: &Trampoline, prepend: &str) -> Result<()> {
+fn transformation_vars(
+    w: &mut dyn Write,
+    env: &Env,
+    analysis: &Trampoline,
+    prepend: &str,
+) -> Result<()> {
     use crate::analysis::trampoline_parameters::TransformationType::*;
     for transform in &analysis.parameters.transformations {
         match transform.transformation {
@@ -216,8 +230,11 @@ fn transformation_vars(w: &mut dyn Write, analysis: &Trampoline, prepend: &str) 
                 let c_par = &analysis.parameters.c_parameters[transform.ind_c];
                 writeln!(
                     w,
-                    "{}\tlet {} = from_glib_full(gtk_sys::gtk_tree_path_new_from_string({}));",
-                    prepend, transform.name, c_par.name
+                    "{}\tlet {} = from_glib_full({}({}));",
+                    prepend,
+                    transform.name,
+                    use_gtk_type(env, "ffi::gtk_tree_path_new_from_string"),
+                    c_par.name
                 )?;
             }
         }

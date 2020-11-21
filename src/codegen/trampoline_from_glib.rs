@@ -2,6 +2,7 @@ use crate::{
     analysis::{rust_type::rust_type, trampoline_parameters::Transformation},
     env::Env,
     library,
+    nameutil::is_gstring,
     traits::*,
 };
 
@@ -32,12 +33,12 @@ impl TrampolineFromGlib for Transformation {
                 if !nullable {
                     left = format!("&{}", left);
                 } else if nullable && is_borrow {
-                    if type_name == "GString" {
+                    if is_gstring(&type_name) {
                         right = format!("{}.as_ref().as_deref()", right);
                     } else {
                         right = format!("{}.as_ref().as_ref()", right);
                     }
-                } else if type_name == "GString" {
+                } else if is_gstring(&type_name) {
                     right = format!("{}.as_deref()", right);
                 } else {
                     right = format!("{}.as_ref()", right);

@@ -41,6 +41,7 @@ fn fill_empty(root: &mut Table, env: &Env, crate_name: &str) {
             "links",
             nameutil::shared_libs_to_links(&env.namespaces.main().shared_libs),
         );
+        set_string(package, "edition", "2018");
     }
 
     {

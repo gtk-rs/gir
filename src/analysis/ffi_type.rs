@@ -6,6 +6,7 @@ use crate::{
     },
     env::Env,
     library::*,
+    nameutil::{use_glib_if_needed, use_glib_type},
     traits::*,
 };
 use log::{info, trace};
@@ -73,7 +74,7 @@ fn ffi_inner(env: &Env, tid: TypeId, inner: &str) -> Result {
             use crate::library::Fundamental::*;
             let inner = match fund {
                 None => "libc::c_void",
-                Boolean => return Ok("glib_sys::gboolean".into()),
+                Boolean => return Ok(use_glib_if_needed(env, "ffi::gboolean")),
                 Int8 => "i8",
                 UInt8 => "u8",
                 Int16 => "i16",
@@ -97,7 +98,7 @@ fn ffi_inner(env: &Env, tid: TypeId, inner: &str) -> Result {
                 UniChar => "u32",
                 Utf8 => "libc::c_char",
                 Filename => "libc::c_char",
-                Type => "glib_sys::GType",
+                Type => return Ok(use_glib_if_needed(env, "ffi::GType")),
                 IntPtr => "libc::intptr_t",
                 UIntPtr => "libc::uintptr_t",
                 _ => return Err(TypeError::Unimplemented(inner.into())),
@@ -174,14 +175,22 @@ fn fix_name(env: &Env, type_id: TypeId, name: &str) -> Result {
             | Type::PtrArray(..)
             | Type::List(..)
             | Type::SList(..)
-            | Type::HashTable(..) => Ok(format!("glib_sys::{}", name)),
+            | Type::HashTable(..) => Ok(use_glib_if_needed(env, &format!("ffi::{}", name))),
             _ => Ok(name.into()),
         }
     } else {
-        let name_with_prefix = format!(
-            "{}::{}",
-            &env.namespaces[type_id.ns_id].sys_crate_name, name
-        );
+        let sys_crate_name = &env.namespaces[type_id.ns_id].sys_crate_name;
+        let sys_crate_name = if sys_crate_name == "gobject_ffi" {
+            use_glib_type(env, "gobject_ffi")
+        } else if type_id.ns_id == MAIN_NAMESPACE {
+            sys_crate_name.to_owned()
+        } else {
+            format!(
+                "{}::{}",
+                env.namespaces[type_id.ns_id].crate_name, sys_crate_name
+            )
+        };
+        let name_with_prefix = format!("{}::{}", sys_crate_name, name);
         if env
             .type_status_sys(&type_id.full_name(&env.library))
             .ignored()

@@ -106,11 +106,12 @@ pub fn mangle_keywords<'a, S: Into<Cow<'a, str>>>(name: S) -> Cow<'a, str> {
 
 static KEYWORDS: Lazy<HashMap<&'static str, String>> = Lazy::new(|| {
     [
-        "abstract", "alignof", "as", "become", "box", "break", "const", "continue", "crate", "do",
-        "else", "enum", "extern", "false", "final", "fn", "for", "if", "impl", "in", "let", "loop",
-        "macro", "match", "mod", "move", "mut", "offsetof", "override", "priv", "proc", "pub",
-        "pure", "ref", "return", "Self", "self", "sizeof", "static", "struct", "super", "trait",
-        "true", "type", "typeof", "unsafe", "unsized", "use", "virtual", "where", "while", "yield",
+        "abstract", "alignof", "as", "async", "await", "become", "box", "break", "const",
+        "continue", "crate", "do", "dyn", "else", "enum", "extern", "false", "final", "fn", "for",
+        "if", "impl", "in", "let", "loop", "macro", "match", "mod", "move", "mut", "offsetof",
+        "override", "priv", "proc", "pub", "pure", "ref", "return", "Self", "self", "sizeof",
+        "static", "struct", "super", "trait", "true", "try", "type", "typeof", "unsafe", "unsized",
+        "use", "virtual", "where", "while", "yield",
     ]
     .iter()
     .map(|k| (*k, format!("{}_", k)))
@@ -147,6 +148,58 @@ pub fn shared_libs_to_links(shared_libs: &[String]) -> String {
     }
 
     panic!("empty list of shared library");
+}
+
+pub fn use_glib_type(env: &crate::env::Env, import: &str) -> String {
+    format!(
+        "{}::{}",
+        if env.library.is_glib_crate() {
+            "crate"
+        } else {
+            "glib"
+        },
+        import
+    )
+}
+
+pub fn use_glib_if_needed(env: &crate::env::Env, import: &str) -> String {
+    format!(
+        "{}{}",
+        if env.library.is_glib_crate() {
+            ""
+        } else {
+            "glib::"
+        },
+        import
+    )
+}
+
+pub fn use_gio_type(env: &crate::env::Env, import: &str) -> String {
+    format!(
+        "{}::{}",
+        if env.library.is_crate("Gio") {
+            "crate"
+        } else {
+            "gio"
+        },
+        import
+    )
+}
+
+pub fn use_gtk_type(env: &crate::env::Env, import: &str) -> String {
+    format!(
+        "{}::{}",
+        if env.library.is_crate("Gtk") {
+            "crate"
+        } else {
+            "gtk"
+        },
+        import
+    )
+}
+
+pub fn is_gstring(name: &str) -> bool {
+    name == "GString" || name.ends_with("::GString")
 }
 
 #[cfg(test)]

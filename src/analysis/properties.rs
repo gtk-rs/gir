@@ -181,7 +181,6 @@ fn analyze_property(
             imports.add_used_type(s);
         }
         if type_string.is_ok() {
-            imports.add("gobject_sys");
             imports.add("glib::Value");
             imports.add("glib::StaticType");
         }
@@ -210,7 +209,6 @@ fn analyze_property(
         }
         let set_bound = PropertyBound::get(env, prop.typ);
         if type_string.is_ok() {
-            imports.add("gobject_sys");
             imports.add("glib::Value");
             if set_bound.is_some() {
                 imports.add("glib::object::IsA");
@@ -297,7 +295,6 @@ fn analyze_property(
             imports.add("glib::signal::SignalHandlerId");
             imports.add("std::mem::transmute");
             imports.add("std::boxed::Box as Box_");
-            imports.add("glib_sys");
 
             Some(signals::Info {
                 connect_name: format!("connect_property_{}_notify", name_for_func),

@@ -106,7 +106,7 @@ fn declaration(env: &Env, prop: &ChildProperty, is_get: bool) -> String {
 }
 
 fn body(env: &Env, prop: &ChildProperty, in_trait: bool, is_get: bool) -> Chunk {
-    let mut builder = property_body::Builder::new_for_child_property();
+    let mut builder = property_body::Builder::new_for_child_property(env);
     let prop_name = nameutil::signal_to_snake(&*prop.name);
     builder
         .name(&prop.name)

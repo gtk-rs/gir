@@ -192,9 +192,5 @@ pub fn use_function_return_for_result(
         return true;
     }
     let type_ = env.type_(typ);
-    match &*type_.get_name() {
-        "UInt" => false,
-        "Boolean" => false,
-        _ => true,
-    }
+    !matches!(&*type_.get_name(), "UInt" | "Boolean")
 }

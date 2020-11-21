@@ -1,7 +1,11 @@
-use crate::{analysis, chunk::Chunk};
+use crate::{
+    analysis,
+    chunk::Chunk,
+    env::Env,
+    nameutil::{use_glib_type, use_gtk_type},
+};
 
-#[derive(Default)]
-pub struct Builder {
+pub struct Builder<'a> {
     name: String,
     in_trait: bool,
     var_name: String,
@@ -10,52 +14,70 @@ pub struct Builder {
     type_: String,
     is_ref: bool,
     is_nullable: bool,
+    env: &'a Env,
 }
 
 #[allow(clippy::wrong_self_convention)]
-impl Builder {
-    pub fn new() -> Builder {
-        Default::default()
-    }
-
-    pub fn new_for_child_property() -> Builder {
-        Builder {
-            is_child_property: true,
-            ..Default::default()
+impl<'a> Builder<'a> {
+    pub fn new(env: &'a Env) -> Self {
+        Self {
+            env,
+            name: Default::default(),
+            in_trait: Default::default(),
+            var_name: Default::default(),
+            is_get: Default::default(),
+            is_child_property: Default::default(),
+            type_: Default::default(),
+            is_ref: Default::default(),
+            is_nullable: Default::default(),
         }
     }
 
-    pub fn name(&mut self, name: &str) -> &mut Builder {
+    pub fn new_for_child_property(env: &'a Env) -> Self {
+        Self {
+            is_child_property: true,
+            env,
+            name: Default::default(),
+            in_trait: Default::default(),
+            var_name: Default::default(),
+            is_get: Default::default(),
+            type_: Default::default(),
+            is_ref: Default::default(),
+            is_nullable: Default::default(),
+        }
+    }
+
+    pub fn name(&mut self, name: &str) -> &mut Self {
         self.name = name.into();
         self
     }
 
-    pub fn in_trait(&mut self, value: bool) -> &mut Builder {
+    pub fn in_trait(&mut self, value: bool) -> &mut Self {
         self.in_trait = value;
         self
     }
 
-    pub fn var_name(&mut self, name: &str) -> &mut Builder {
+    pub fn var_name(&mut self, name: &str) -> &mut Self {
         self.var_name = name.into();
         self
     }
 
-    pub fn is_get(&mut self, value: bool) -> &mut Builder {
+    pub fn is_get(&mut self, value: bool) -> &mut Self {
         self.is_get = value;
         self
     }
 
-    pub fn type_(&mut self, type_: &str) -> &mut Builder {
+    pub fn type_(&mut self, type_: &str) -> &mut Self {
         self.type_ = type_.into();
         self
     }
 
-    pub fn is_ref(&mut self, value: bool) -> &mut Builder {
+    pub fn is_ref(&mut self, value: bool) -> &mut Self {
         self.is_ref = value;
         self
     }
 
-    pub fn is_nullable(&mut self, value: bool) -> &mut Builder {
+    pub fn is_nullable(&mut self, value: bool) -> &mut Self {
         self.is_nullable = value;
         self
     }
@@ -73,9 +95,9 @@ impl Builder {
         let mut params = Vec::new();
 
         let cast_target = if self.is_child_property {
-            "gtk_sys::GtkContainer"
+            use_gtk_type(&self.env, "ffi::GtkContainer")
         } else {
-            "gobject_sys::GObject"
+            use_glib_type(&self.env, "gobject_ffi::GObject")
         };
         if self.in_trait {
             params.push(Chunk::Custom(format!(
@@ -131,7 +153,10 @@ impl Builder {
         let unwrap = if self.is_nullable {
             // This one is strictly speaking nullable, but
             // we represent that with an empty Vec instead
-            if self.type_ == "Vec<GString>" {
+            if ["Vec<GString>", "Vec<crate::GString>", "Vec<glib::GString>"]
+                .iter()
+                .any(|&x| x == self.type_)
+            {
                 ".unwrap()"
             } else {
                 ""
@@ -156,9 +181,9 @@ impl Builder {
         let mut params = Vec::new();
 
         let cast_target = if self.is_child_property {
-            "gtk_sys::GtkContainer"
+            use_gtk_type(&self.env, "ffi::GtkContainer")
         } else {
-            "gobject_sys::GObject"
+            use_glib_type(&self.env, "gobject_ffi::GObject")
         };
         if self.in_trait {
             params.push(Chunk::Custom(format!(
@@ -209,17 +234,17 @@ impl Builder {
 
     fn get_ffi_func(&self) -> String {
         if self.is_child_property {
-            "gtk_sys::gtk_container_child_get_property".to_owned()
+            use_gtk_type(&self.env, "ffi::gtk_container_child_get_property")
         } else {
-            "gobject_sys::g_object_get_property".to_owned()
+            use_glib_type(&self.env, "gobject_ffi::g_object_get_property")
         }
     }
 
     fn set_ffi_func(&self) -> String {
         if self.is_child_property {
-            "gtk_sys::gtk_container_child_set_property".to_owned()
+            use_gtk_type(&self.env, "ffi::gtk_container_child_set_property")
         } else {
-            "gobject_sys::g_object_set_property".to_owned()
+            use_glib_type(&self.env, "gobject_ffi::g_object_set_property")
         }
     }
 }

@@ -97,7 +97,7 @@ fn generate_extern_crates(w: &mut dyn Write, env: &Env) -> Result<()> {
 
 fn get_extern_crate_string(library: &ExternalLibrary) -> String {
     format!(
-        "extern crate {}_sys as {};\n",
+        "use {}_sys as {};\n",
         library.crate_name.replace("-", "_"),
         crate_name(&library.namespace)
     )
@@ -249,16 +249,11 @@ fn generate_constants(w: &mut dyn Write, env: &Env, constants: &[Constant]) -> R
                 general::escape_string(&value)
             );
         } else if type_ == "gboolean" {
-            let prefix = if env.config.library_name == "GLib" {
-                ""
+            value = if value == "true" {
+                use_glib_if_needed(env, "GTRUE")
             } else {
-                "glib::"
+                use_glib_if_needed(env, "GFALSE")
             };
-            if value == "true" {
-                value = format!("{}GTRUE", prefix);
-            } else {
-                value = format!("{}GFALSE", prefix);
-            }
         } else if env
             .library
             .type_(constant.typ)
@@ -555,7 +550,7 @@ mod tests {
         };
         assert_eq!(
             get_extern_crate_string(&lib),
-            "extern crate gdk_sys as gdk;\n".to_owned()
+            "use gdk_sys as gdk;\n".to_owned()
         );
 
         let lib = ExternalLibrary {
@@ -564,7 +559,7 @@ mod tests {
         };
         assert_eq!(
             get_extern_crate_string(&lib),
-            "extern crate gdk_pixbuf_sys as gdk_pixbuf;\n".to_owned()
+            "use gdk_pixbuf_sys as gdk_pixbuf;\n".to_owned()
         );
 
         let lib = ExternalLibrary {
@@ -573,7 +568,7 @@ mod tests {
         };
         assert_eq!(
             get_extern_crate_string(&lib),
-            "extern crate some_crate_sys as gdk_pixbuf;\n".to_owned()
+            "use some_crate_sys as gdk_pixbuf;\n".to_owned()
         );
     }
 }

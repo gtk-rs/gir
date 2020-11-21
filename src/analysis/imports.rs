@@ -1,5 +1,6 @@
 use super::namespaces;
 use crate::{library::Library, nameutil::crate_name, version::Version};
+use std::borrow::Cow;
 use std::cmp::Ordering;
 use std::collections::btree_map::BTreeMap;
 use std::ops::{Deref, DerefMut};
@@ -119,21 +120,41 @@ impl Imports {
         self.defaults.clear();
     }
 
+    /// The goals of this function is to discard unwanted imports like "ffi" and "crate". It
+    /// also extends the checks in case you are implementing "X". For example, you don't want to
+    /// import "X" or "crate::X" in this case.
+    fn common_checks(&self, name: &str) -> bool {
+        if name == "crate::ffi" || (!name.contains("::") && name != "xlib") {
+            false
+        } else if let Some(ref defined) = self.defined {
+            !((name.starts_with("crate::") && &name[7..] == defined) || name == defined)
+        } else {
+            true
+        }
+    }
+
     /// Declares that name should be available through its last path component.
     ///
     /// For example, if name is `X::Y::Z` then it will be available as `Z`.
     /// Uses defaults.
     pub fn add(&mut self, name: &str) {
-        if let Some(ref defined) = self.defined {
-            if name == defined {
-                return;
-            }
+        if !self.common_checks(name) {
+            return;
         }
-        if let Some(name) = self.strip_crate_name(name) {
+        if let Some(mut name) = self.strip_crate_name(name) {
+            if name == "xlib" {
+                name = if self.crate_name == "gdk_x11" {
+                    // Dirty little hack to allow to have correct import for GDKX11.
+                    Cow::Borrowed("x11::xlib")
+                } else {
+                    // gtk has a module named "xlib" which is why this hack is needed too.
+                    Cow::Borrowed("crate::xlib")
+                };
+            }
             let defaults = &self.defaults;
             let entry = self
                 .map
-                .entry(name.to_owned())
+                .entry(name.into_owned())
                 .or_insert_with(|| defaults.clone());
             entry.update_version(self.defaults.version);
             entry.update_constraints(&self.defaults.constraints);
@@ -144,16 +165,17 @@ impl Imports {
     ///
     /// For example, if name is `X::Y::Z` then it will be available as `Z`.
     pub fn add_with_version(&mut self, name: &str, version: Option<Version>) {
-        if let Some(ref defined) = self.defined {
-            if name == defined {
-                return;
-            }
+        if !self.common_checks(name) {
+            return;
         }
         if let Some(name) = self.strip_crate_name(name) {
-            let entry = self.map.entry(name.to_owned()).or_insert(ImportConditions {
-                version,
-                constraints: Vec::new(),
-            });
+            let entry = self
+                .map
+                .entry(name.into_owned())
+                .or_insert(ImportConditions {
+                    version,
+                    constraints: Vec::new(),
+                });
             entry.update_version(version);
             // Since there is no constraint on this import, if any constraint
             // is present, we can just remove it.
@@ -171,25 +193,29 @@ impl Imports {
         version: Option<Version>,
         constraint: Option<&str>,
     ) {
-        if let Some(ref defined) = self.defined {
-            if name == defined {
-                return;
-            }
+        if !self.common_checks(name) {
+            return;
         }
         if let Some(name) = self.strip_crate_name(name) {
             let entry = if let Some(constraint) = constraint {
                 let constraint = String::from(constraint);
-                let entry = self.map.entry(name.to_owned()).or_insert(ImportConditions {
-                    version,
-                    constraints: vec![constraint.clone()],
-                });
+                let entry = self
+                    .map
+                    .entry(name.into_owned())
+                    .or_insert(ImportConditions {
+                        version,
+                        constraints: vec![constraint.clone()],
+                    });
                 entry.add_constraint(constraint);
                 entry
             } else {
-                let entry = self.map.entry(name.to_owned()).or_insert(ImportConditions {
-                    version,
-                    constraints: Vec::new(),
-                });
+                let entry = self
+                    .map
+                    .entry(name.into_owned())
+                    .or_insert(ImportConditions {
+                        version,
+                        constraints: Vec::new(),
+                    });
                 // Since there is no constraint on this import, if any constraint
                 // is present, we can just remove it.
                 entry.constraints.clear();
@@ -210,7 +236,7 @@ impl Imports {
                 self.add(&used_type[..i]);
             }
         } else {
-            self.add(used_type);
+            self.add(&format!("crate::{}", used_type));
         }
     }
 
@@ -231,7 +257,7 @@ impl Imports {
                 self.add_with_version(&used_type[..i], version);
             }
         } else {
-            self.add_with_version(used_type, version);
+            self.add_with_version(&format!("crate::{}", used_type), version);
         }
     }
 
@@ -239,19 +265,19 @@ impl Imports {
     ///
     /// Returns `None` if name matches crate name exactly. Otherwise returns
     /// name with crate name prefix stripped or full name if there was no match.
-    fn strip_crate_name<'a>(&self, name: &'a str) -> Option<&'a str> {
+    fn strip_crate_name<'a>(&self, name: &'a str) -> Option<Cow<'a, str>> {
         let prefix = &self.crate_name;
         if !name.starts_with(prefix) {
-            return Some(name);
+            return Some(Cow::Borrowed(name));
         }
         let rest = &name[prefix.len()..];
         if rest.is_empty() {
             None
-        } else if let Some(prefix) = rest.strip_prefix("::") {
-            Some(prefix)
+        } else if rest.starts_with("::") {
+            Some(Cow::Owned(format!("crate{}", rest)))
         } else {
             // It was false positive, return the whole name.
-            Some(name)
+            Some(Cow::Borrowed(name))
         }
     }
 
@@ -345,10 +371,9 @@ impl ImportConditions {
 }
 
 fn make_crate_name(gir: &Library) -> String {
-    let name = gir.namespace(namespaces::MAIN).name.as_str();
-    if name == "GObject" {
+    if gir.is_glib_crate() {
         crate_name("GLib")
     } else {
-        crate_name(name)
+        crate_name(gir.namespace(namespaces::MAIN).name.as_str())
     }
 }

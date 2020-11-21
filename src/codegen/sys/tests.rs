@@ -272,9 +272,6 @@ fn generate_abi_rs(
     general::start_comments(w, &env.config)?;
     writeln!(w)?;
 
-    writeln!(w, "extern crate {};", crate_name)?;
-    writeln!(w, "extern crate shell_words;")?;
-    writeln!(w, "extern crate tempfile;")?;
     writeln!(w, "use std::env;")?;
     writeln!(w, "use std::error::Error;")?;
     writeln!(w, "use std::path::Path;")?;

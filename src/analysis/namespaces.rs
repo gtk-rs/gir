@@ -46,10 +46,9 @@ pub fn run(gir: &library::Library) -> Info {
     for (ns_id, ns) in gir.namespaces.iter().enumerate() {
         let ns_id = ns_id as NsId;
         let crate_name = nameutil::crate_name(&ns.name);
-        let sys_crate_name = format!("{}_sys", crate_name);
-        let higher_crate_name = match &crate_name[..] {
-            "gobject" => "glib".to_owned(),
-            _ => crate_name.clone(),
+        let (sys_crate_name, higher_crate_name) = match &crate_name[..] {
+            "gobject" => ("gobject_ffi".to_owned(), "glib".to_owned()),
+            _ => ("ffi".to_owned(), crate_name.clone()),
         };
         namespaces.push(Namespace {
             name: ns.name.clone(),

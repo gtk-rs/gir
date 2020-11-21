@@ -1296,6 +1296,14 @@ impl Library {
             )
         }))
     }
+
+    pub fn is_crate(&self, crate_name: &str) -> bool {
+        self.namespace(MAIN_NAMESPACE).name == crate_name
+    }
+
+    pub fn is_glib_crate(&self) -> bool {
+        self.is_crate("GObject") || self.is_crate("GLib")
+    }
 }
 
 #[cfg(test)]
