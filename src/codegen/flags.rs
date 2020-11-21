@@ -1,5 +1,6 @@
+use super::{function, trait_impls};
 use crate::{
-    analysis::{imports::Imports, namespaces},
+    analysis::flags::Info,
     codegen::general::{
         self, cfg_deprecated, derives, version_condition, version_condition_string,
     },
@@ -16,54 +17,26 @@ use std::{
 };
 
 pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>) {
-    let configs: Vec<&GObject> = env
-        .config
-        .objects
-        .values()
-        .filter(|c| {
-            c.status.need_generate() && c.type_id.map_or(false, |tid| tid.ns_id == namespaces::MAIN)
-        })
-        .collect();
-    let has_any = configs
-        .iter()
-        .any(|c| matches!(*env.library.type_(c.type_id.unwrap()), Type::Bitfield(_)));
-
-    if !has_any {
+    if env.analysis.flags.is_empty() {
         return;
     }
 
     let path = root_path.join("flags.rs");
     file_saver::save_to_file(path, env.config.make_backup, |w| {
-        let mut imports = Imports::new(&env.library);
-        imports.add("glib::translate::*");
-        imports.add("bitflags::bitflags");
-
-        for config in &configs {
-            if let Type::Bitfield(ref flags) = *env.library.type_(config.type_id.unwrap()) {
-                if flags.glib_get_type.is_some() {
-                    imports.add("glib::Type");
-                    imports.add("glib::StaticType");
-                    imports.add("glib::value::SetValue");
-                    imports.add("glib::value::FromValue");
-                    imports.add("glib::value::FromValueOptional");
-                    break;
-                }
-            }
-        }
-
         general::start_comments(w, &env.config)?;
-        general::uses(w, env, &imports)?;
+        general::uses(w, env, &env.analysis.flags_imports)?;
         writeln!(w)?;
 
         mod_rs.push("\nmod flags;".into());
-        for config in &configs {
-            if let Type::Bitfield(ref flags) = *env.library.type_(config.type_id.unwrap()) {
-                if let Some(cfg) = version_condition_string(env, flags.version, false, 0) {
-                    mod_rs.push(cfg);
-                }
-                mod_rs.push(format!("pub use self::flags::{};", flags.name));
-                generate_flags(env, w, flags, config)?;
+        for flags_analysis in &env.analysis.flags {
+            let config = &env.config.objects[&flags_analysis.full_name];
+            let flags = flags_analysis.type_(&env.library);
+
+            if let Some(cfg) = version_condition_string(env, flags.version, false, 0) {
+                mod_rs.push(cfg);
             }
+            mod_rs.push(format!("pub use self::flags::{};", flags.name));
+            generate_flags(env, w, flags, config, flags_analysis)?;
         }
 
         Ok(())
@@ -71,7 +44,13 @@ pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>) {
 }
 
 #[allow(clippy::write_literal)]
-fn generate_flags(env: &Env, w: &mut dyn Write, flags: &Bitfield, config: &GObject) -> Result<()> {
+fn generate_flags(
+    env: &Env,
+    w: &mut dyn Write,
+    flags: &Bitfield,
+    config: &GObject,
+    analysis: &Info,
+) -> Result<()> {
     let sys_crate_name = env.main_sys_crate_name();
     cfg_deprecated(w, env, flags.deprecated_version, false, 0)?;
     version_condition(w, env, flags.version, false, 0)?;
@@ -106,11 +85,45 @@ fn generate_flags(env: &Env, w: &mut dyn Write, flags: &Bitfield, config: &GObje
 
     writeln!(
         w,
-        "{}",
-        "    }
-}
-"
+        "    }}
+}}"
     )?;
+
+    let functions = analysis
+        .functions
+        .iter()
+        .filter(|f| f.status.need_generate())
+        .collect::<Vec<_>>();
+
+    if !functions.is_empty() {
+        let static_tostring = analysis
+            .specials
+            .get(&crate::analysis::special_functions::Type::Display)
+            .and_then(|f| if f.returns_static_ref { Some(f) } else { None });
+
+        writeln!(w)?;
+        version_condition(w, env, flags.version, false, 0)?;
+        write!(w, "impl {} {{", analysis.name)?;
+        for func_analysis in functions {
+            if Some(&func_analysis.glib_name) == static_tostring.map(|t| &t.glib_name) {
+                function::generate_static_to_str(w, env, func_analysis)?;
+            } else {
+                function::generate(w, env, func_analysis, false, false, 1)?;
+            }
+        }
+        writeln!(w, "}}")?;
+    }
+
+    trait_impls::generate(
+        w,
+        env,
+        &analysis.name,
+        &analysis.functions,
+        &analysis.specials,
+        None,
+    )?;
+
+    writeln!(w)?;
 
     version_condition(w, env, flags.version, false, 0)?;
     writeln!(

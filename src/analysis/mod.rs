@@ -15,6 +15,7 @@ pub mod constants;
 pub mod conversion_type;
 pub mod enums;
 pub mod ffi_type;
+pub mod flags;
 pub mod function_parameters;
 pub mod functions;
 pub mod general;
@@ -48,6 +49,9 @@ pub struct Analysis {
     pub constants: Vec<constants::Info>,
     pub enumerations: Vec<enums::Info>,
     pub enum_imports: Imports,
+
+    pub flags: Vec<flags::Info>,
+    pub flags_imports: Imports,
 }
 
 pub fn run(env: &mut Env) {
@@ -90,6 +94,8 @@ pub fn run(env: &mut Env) {
 
     analyze_enums(env);
 
+    analyze_flags(env);
+
     analyze_constants(env);
 
     // Analyze free functions as the last step once all types are analyzed
@@ -117,6 +123,30 @@ fn analyze_enums(env: &mut Env) {
     }
 
     env.analysis.enum_imports = imports;
+}
+
+fn analyze_flags(env: &mut Env) {
+    let mut imports = Imports::new(&env.library);
+    imports.add("glib::translate::*");
+    imports.add("bitflags::bitflags");
+
+    for obj in env.config.objects.values() {
+        if obj.status.ignored() {
+            continue;
+        }
+        let tid = match env.library.find_type(0, &obj.name) {
+            Some(x) => x,
+            None => continue,
+        };
+
+        if let Type::Bitfield(_) = env.library.type_(tid) {
+            if let Some(info) = flags::new(env, obj, &mut imports) {
+                env.analysis.flags.push(info);
+            }
+        }
+    }
+
+    env.analysis.flags_imports = imports;
 }
 
 fn analyze_global_functions(env: &mut Env) {
