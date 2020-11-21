@@ -124,7 +124,7 @@ impl Imports {
     /// also extends the checks in case you are implementing "X". For example, you don't want to
     /// import "X" or "crate::X" in this case.
     fn common_checks(&self, name: &str) -> bool {
-        if name == "crate" || name == "ffi" {
+        if !name.contains("::") && name != "xlib" {
             false
         } else if let Some(ref defined) = self.defined {
             !((name.starts_with("crate::") && &name[7..] == defined) || name == defined)
