@@ -27,7 +27,7 @@ impl Parse for Member {
         };
 
         toml.check_unwanted(
-            &["alias", "version", "name", "pattern", "ignore"],
+            &["alias", "version", "name", "pattern", "ignore", "manual"],
             &format!("member {}", object_name),
         );
 
