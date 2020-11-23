@@ -28,15 +28,16 @@ build = "build.rs"
 links = "secret"
 name = "secret-sys"
 version = "0.2.0"
+edition = "2018"
 [package.metadata.system-deps.libsecret_1]
 name = "libsecret-1"
 version = "0.0"
 
 [package.metadata.system-deps.libsecret_1.v0_18_6]
 version = "0.18.6"
+
 [package.metadata.system-deps.libsecret_1.v0_19]
 version = "0.19"
-
 [package.metadata.docs.rs]
 features = ["dox"]
 
