@@ -110,6 +110,7 @@ pub fn generate(w: &mut dyn Write, env: &Env, analysis: &analysis::record::Info)
 
     trait_impls::generate(
         w,
+        env,
         &analysis.name,
         &analysis.functions,
         &analysis.specials,
