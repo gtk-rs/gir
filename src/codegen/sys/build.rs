@@ -37,7 +37,7 @@ fn generate_build_script(w: &mut dyn Write, env: &Env, split_build_rs: bool) -> 
     writeln!(
         w,
         "{}",
-        r##"#[cfg(not(feature = "dox"))]
+        r##"#[cfg(any(not(doc), doctest))]
 use std::process;"##
     )?;
 
@@ -50,10 +50,10 @@ use std::process;"##
         w,
         "{}",
         r##"
-#[cfg(feature = "dox")]
+#[cfg(all(not(doctest), doc))]
 fn main() {} // prevent linking libraries to avoid documentation failure
 
-#[cfg(not(feature = "dox"))]
+#[cfg(any(not(doc), doctest))]
 fn main() {
     if let Err(s) = system_deps::Config::new().probe() {
         let _ = eprintln!("{}", s);

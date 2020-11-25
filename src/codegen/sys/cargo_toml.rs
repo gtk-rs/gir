@@ -105,7 +105,6 @@ fn fill_in(root: &mut Table, env: &Env) {
             features.insert(version.to_feature(), Value::Array(prev_array));
             Some(version)
         });
-        features.insert("dox".to_string(), Value::Array(Vec::new()));
     }
 
     {
@@ -138,8 +137,7 @@ fn fill_in(root: &mut Table, env: &Env) {
         let docs_rs_metadata = upsert_table(docs_rs_metadata, "metadata");
         let docs_rs_metadata = upsert_table(docs_rs_metadata, "docs");
         let docs_rs_metadata = upsert_table(docs_rs_metadata, "rs");
-        let mut docs_rs_features = env.config.docs_rs_features.clone();
-        docs_rs_features.push("dox".to_owned());
+        let docs_rs_features = env.config.docs_rs_features.clone();
         docs_rs_metadata.insert(
             "features".to_string(),
             Value::Array(
