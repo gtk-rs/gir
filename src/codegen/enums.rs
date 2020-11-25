@@ -61,7 +61,6 @@ pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>) {
     if has_get_type {
         imports.add("glib::Type");
         imports.add("glib::StaticType");
-        imports.add("glib::value::Value");
         imports.add("glib::value::SetValue");
         imports.add("glib::value::FromValue");
         imports.add("glib::value::FromValueOptional");
@@ -354,11 +353,12 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
         writeln!(
             w,
             "impl<'a> FromValueOptional<'a> for {name} {{
-    unsafe fn from_value_optional(value: &Value) -> Option<Self> {{
+    unsafe fn from_value_optional(value: &{gvalue}) -> Option<Self> {{
         Some(FromValue::from_value(value))
     }}
 }}",
             name = enum_.name,
+            gvalue = use_glib_type(env, "Value"),
         )?;
         writeln!(w)?;
 
@@ -366,12 +366,13 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
         writeln!(
             w,
             "impl<'a> FromValue<'a> for {name} {{
-    unsafe fn from_value(value: &Value) -> Self {{
+    unsafe fn from_value(value: &{gvalue}) -> Self {{
         from_glib({glib}(value.to_glib_none().0))
     }}
 }}",
             name = enum_.name,
             glib = use_glib_type(env, "gobject_ffi::g_value_get_enum"),
+            gvalue = use_glib_type(env, "Value"),
         )?;
         writeln!(w)?;
 
@@ -379,12 +380,13 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
         writeln!(
             w,
             "impl SetValue for {name} {{
-    unsafe fn set_value(value: &mut Value, this: &Self) {{
+    unsafe fn set_value(value: &mut {gvalue}, this: &Self) {{
         {glib}(value.to_glib_none_mut().0, this.to_glib())
     }}
 }}",
             name = enum_.name,
             glib = use_glib_type(env, "gobject_ffi::g_value_set_enum"),
+            gvalue = use_glib_type(env, "Value"),
         )?;
         writeln!(w)?;
     }

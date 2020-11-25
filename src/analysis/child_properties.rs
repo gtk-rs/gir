@@ -81,7 +81,6 @@ fn analyze_property(
         let prop_name = nameutil::signal_to_snake(&*prop.name);
         let doc_hidden = prop.doc_hidden;
 
-        imports.add("glib::Value");
         imports.add("glib::StaticType");
         if let Ok(s) = used_rust_type(env, typ, false) {
             imports.add_used_type(&s);

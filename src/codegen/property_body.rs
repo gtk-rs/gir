@@ -138,7 +138,7 @@ impl<'a> Builder<'a> {
             name: "value".into(),
             is_mut: true,
             value: Box::new(Chunk::Custom(format!(
-                "Value::from_type(<{} as StaticType>::static_type())",
+                "glib::Value::from_type(<{} as StaticType>::static_type())",
                 self.type_
             ))),
             type_: None,
@@ -206,7 +206,7 @@ impl<'a> Builder<'a> {
         )));
         let ref_str = if self.is_ref { "" } else { "&" };
         params.push(Chunk::Custom(format!(
-            "Value::from({}{}).to_glib_none().0",
+            "glib::Value::from({}{}).to_glib_none().0",
             ref_str, self.var_name
         )));
 
