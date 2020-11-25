@@ -845,7 +845,7 @@ fn analyze_async(
     }) = callback_info
     {
         // Checks for /*Ignored*/ or other error comments
-        *commented |= callback_type.find("/*").is_some();
+        *commented |= callback_type.contains("/*");
         let func_name = func.c_identifier.as_ref().unwrap();
         let finish_func_name = finish_function_name(func_name);
         let mut output_params = vec![];

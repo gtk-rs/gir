@@ -375,11 +375,8 @@ fn is_length(par: &library::Parameter) -> bool {
     if len >= 3 && &par.name[len - 3..len] == "len" {
         return true;
     }
-    if par.name.find("length").is_some() {
-        return true;
-    }
 
-    false
+    par.name.contains("length")
 }
 
 fn has_length(env: &Env, typ: TypeId) -> bool {
