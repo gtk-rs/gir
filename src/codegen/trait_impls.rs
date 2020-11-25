@@ -89,11 +89,12 @@ fn generate_display(
     let call = generate_call(&func.name, &[], trait_name);
     let body = if let Mode::Throws(_) = func.outs.mode {
         format!(
-            "if let Ok(val) = {} {{
-            write!(f, \"{{}}\", val)
-        }} else {{
-            Err(fmt::Error)
-        }}",
+            "\
+            if let Ok(val) = {} {{
+                f.write_str(val)
+            }} else {{
+                Err(fmt::Error)
+            }}",
             call
         )
     } else {

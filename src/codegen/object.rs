@@ -139,7 +139,7 @@ pub fn generate(
         writeln!(
             w,
             "\tfn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {{\n\
-             \t\twrite!(f, \"{}\")\n\
+             \t\tf.write_str(\"{}\")\n\
              \t}}\n\
              }}",
             analysis.name
