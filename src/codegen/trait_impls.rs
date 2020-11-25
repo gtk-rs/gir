@@ -1,11 +1,16 @@
-use crate::analysis::{
-    functions::Info,
-    special_functions::{Infos, Type},
+use super::general::version_condition;
+use crate::{
+    analysis::{
+        functions::Info,
+        special_functions::{Infos, Type},
+    },
+    Env,
 };
 use std::io::{Result, Write};
 
 pub fn generate(
     w: &mut dyn Write,
+    env: &Env,
     type_name: &str,
     functions: &[Info],
     specials: &Infos,
@@ -15,16 +20,16 @@ pub fn generate(
         if let Some(info) = lookup(functions, name) {
             match *type_ {
                 Type::Compare => {
-                    if specials.get(&Type::Equal).is_none() {
-                        generate_eq_compare(w, type_name, info, trait_name)?;
+                    if !specials.contains_key(&Type::Equal) {
+                        generate_eq_compare(w, env, type_name, info, trait_name)?;
                     }
-                    generate_ord(w, type_name, info, trait_name)?;
+                    generate_ord(w, env, type_name, info, trait_name)?;
                 }
                 Type::Equal => {
-                    generate_eq(w, type_name, info, trait_name)?;
+                    generate_eq(w, env, type_name, info, trait_name)?;
                 }
-                Type::ToString => generate_display(w, type_name, info, trait_name)?,
-                Type::Hash => generate_hash(w, type_name, info, trait_name)?,
+                Type::ToString => generate_display(w, env, type_name, info, trait_name)?,
+                Type::Hash => generate_hash(w, env, type_name, info, trait_name)?,
                 _ => {}
             }
         }
@@ -71,10 +76,14 @@ fn generate_call(func_name: &str, args: &[&str], trait_name: Option<&str>) -> St
 
 fn generate_display(
     w: &mut dyn Write,
+    env: &Env,
     type_name: &str,
     func: &Info,
     trait_name: Option<&str>,
 ) -> Result<()> {
+    writeln!(w)?;
+    version_condition(w, env, func.version, false, 0)?;
+
     use crate::analysis::out_parameters::Mode;
 
     let call = generate_call(&func.name, &[], trait_name);
@@ -93,7 +102,7 @@ fn generate_display(
 
     writeln!(
         w,
-        "
+        "\
 impl fmt::Display for {type_name} {{
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {{
@@ -107,15 +116,19 @@ impl fmt::Display for {type_name} {{
 
 fn generate_hash(
     w: &mut dyn Write,
+    env: &Env,
     type_name: &str,
     func: &Info,
     trait_name: Option<&str>,
 ) -> Result<()> {
+    writeln!(w)?;
+    version_condition(w, env, func.version, false, 0)?;
+
     let call = generate_call(&func.name, &[], trait_name);
 
     writeln!(
         w,
-        "
+        "\
 impl hash::Hash for {type_name} {{
     #[inline]
     fn hash<H>(&self, state: &mut H) where H: hash::Hasher {{
@@ -129,15 +142,19 @@ impl hash::Hash for {type_name} {{
 
 fn generate_eq(
     w: &mut dyn Write,
+    env: &Env,
     type_name: &str,
     func: &Info,
     trait_name: Option<&str>,
 ) -> Result<()> {
+    writeln!(w)?;
+    version_condition(w, env, func.version, false, 0)?;
+
     let call = generate_call(&func.name, &["other"], trait_name);
 
     writeln!(
         w,
-        "
+        "\
 impl PartialEq for {type_name} {{
     #[inline]
     fn eq(&self, other: &Self) -> bool {{
@@ -153,15 +170,19 @@ impl Eq for {type_name} {{}}",
 
 fn generate_eq_compare(
     w: &mut dyn Write,
+    env: &Env,
     type_name: &str,
     func: &Info,
     trait_name: Option<&str>,
 ) -> Result<()> {
+    writeln!(w)?;
+    version_condition(w, env, func.version, false, 0)?;
+
     let call = generate_call(&func.name, &["other"], trait_name);
 
     writeln!(
         w,
-        "
+        "\
 impl PartialEq for {type_name} {{
     #[inline]
     fn eq(&self, other: &Self) -> bool {{
@@ -177,15 +198,19 @@ impl Eq for {type_name} {{}}",
 
 fn generate_ord(
     w: &mut dyn Write,
+    env: &Env,
     type_name: &str,
     func: &Info,
     trait_name: Option<&str>,
 ) -> Result<()> {
+    writeln!(w)?;
+    version_condition(w, env, func.version, false, 0)?;
+
     let call = generate_call(&func.name, &["other"], trait_name);
 
     writeln!(
         w,
-        "
+        "\
 impl PartialOrd for {type_name} {{
     #[inline]
     fn partial_cmp(&self, other: &Self) -> Option<cmp::Ordering> {{
