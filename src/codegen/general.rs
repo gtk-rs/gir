@@ -49,12 +49,12 @@ pub fn uses(w: &mut dyn Write, env: &Env, imports: &Imports) -> Result<()> {
         if !scope.constraints.is_empty() {
             writeln!(
                 w,
-                "#[cfg(any({}, all(not(doctest), doc)))]",
+                "#[cfg(any({},feature = \"dox\"))]",
                 scope.constraints.join(", ")
             )?;
             writeln!(
                 w,
-                "#[cfg_attr(all(not(doctest), doc), doc(cfg({})))]",
+                "#[cfg_attr(feature = \"dox\", doc(cfg({})))]",
                 scope.constraints.join(", ")
             )?;
         }
@@ -558,7 +558,7 @@ pub fn not_version_condition_no_dox(
     if let Some(v) = version {
         let comment = if commented { "//" } else { "" };
         let s = format!(
-            "{}{}#[cfg(not(any({}, all(not(doctest), doc))))]",
+            "{}{}#[cfg(not(any({}, feature = \"dox\")))]",
             tabs(indent),
             comment,
             v.to_cfg()
@@ -590,7 +590,7 @@ pub fn cfg_condition_string_no_doc(
         Some(v) => {
             let comment = if commented { "//" } else { "" };
             Some(format!(
-                "{0}{1}#[cfg(any({2}, all(not(doctest), doc)))]",
+                "{0}{1}#[cfg(any({2}, feature = \"dox\"))]",
                 tabs(indent),
                 comment,
                 v
@@ -609,8 +609,8 @@ pub fn cfg_condition_string(
         Some(v) => {
             let comment = if commented { "//" } else { "" };
             Some(format!(
-                "{0}{1}#[cfg(any({2}, all(not(doctest), doc)))]\n\
-                 {0}{1}#[cfg_attr(all(not(doctest), doc), doc(cfg({2})))]",
+                "{0}{1}#[cfg(any({2}, feature = \"dox\"))]\n\
+                 {0}{1}#[cfg_attr(feature = \"dox\", doc(cfg({2})))]",
                 tabs(indent),
                 comment,
                 v
