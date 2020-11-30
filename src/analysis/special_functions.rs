@@ -14,7 +14,7 @@ pub enum Type {
     Equal,
     Free,
     Ref,
-    ToString,
+    Display,
     Unref,
     Hash,
 }
@@ -31,7 +31,7 @@ impl FromStr for Type {
             "free" | "destroy" => Ok(Free),
             "is_equal" => Ok(Equal),
             "ref" | "ref_" => Ok(Ref),
-            "to_string" => Ok(ToString),
+            "to_string" => Ok(Display),
             "unref" => Ok(Unref),
             "hash" => Ok(Hash),
             _ => Err(format!("Unknown type '{}'", s)),
@@ -46,7 +46,7 @@ fn update_func(func: &mut FuncInfo, type_: Type) -> bool {
         func.visibility = visibility(type_);
     }
 
-    if type_ == Type::ToString {
+    if type_ == Type::Display {
         if func.parameters.c_parameters.len() != 1 {
             return false;
         }
@@ -114,7 +114,7 @@ fn visibility(t: Type) -> Visibility {
     match t {
         Copy | Free | Ref | Unref => Visibility::Hidden,
         Hash | Compare | Equal => Visibility::Private,
-        ToString => Visibility::Public,
+        Display => Visibility::Public,
     }
 }
 
@@ -135,7 +135,7 @@ pub fn analyze_imports(specials: &Infos, imports: &mut Imports) {
     for type_ in specials.keys() {
         match *type_ {
             Compare => imports.add("std::cmp"),
-            ToString => imports.add("std::fmt"),
+            Display => imports.add("std::fmt"),
             Hash => imports.add("std::hash"),
             _ => {}
         }

@@ -98,7 +98,7 @@ pub fn class(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<Info>
         special_functions::Type::Hash,
         special_functions::Type::Equal,
         special_functions::Type::Compare,
-        special_functions::Type::ToString,
+        special_functions::Type::Display,
     ] {
         special_functions::unhide(&mut functions, &specials, *t);
         specials.remove(t);

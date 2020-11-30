@@ -28,7 +28,7 @@ pub fn generate(
                 Type::Equal => {
                     generate_eq(w, env, type_name, info, trait_name)?;
                 }
-                Type::ToString => generate_display(w, env, type_name, info, trait_name)?,
+                Type::Display => generate_display(w, env, type_name, info, trait_name)?,
                 Type::Hash => generate_hash(w, env, type_name, info, trait_name)?,
                 _ => {}
             }
