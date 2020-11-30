@@ -1,6 +1,9 @@
-use crate::analysis::{
-    functions::{Info as FuncInfo, Visibility},
-    imports::Imports,
+use crate::{
+    analysis::{
+        functions::{Info as FuncInfo, Visibility},
+        imports::Imports,
+    },
+    library::TypeId,
 };
 use std::{collections::BTreeMap, str::FromStr};
 
@@ -40,13 +43,30 @@ pub type Infos = BTreeMap<Type, String>; // Type => glib_name
 
 fn update_func(func: &mut FuncInfo, type_: Type) -> bool {
     if func.visibility != Visibility::Comment {
-        func.visibility = visibility(type_, func.parameters.c_parameters.len());
+        func.visibility = visibility(type_);
     }
-    // I assume `to_string` functions never return `NULL`
+
     if type_ == Type::ToString {
+        if func.parameters.c_parameters.len() != 1 {
+            return false;
+        }
+        if !func.parameters.c_parameters[0].instance_parameter {
+            return false;
+        }
+        if !func
+            .ret
+            .parameter
+            .as_ref()
+            .map_or(false, |p| p.typ == TypeId::tid_utf8())
+        {
+            return false;
+        }
+
         if let Some(par) = func.ret.parameter.as_mut() {
+            // I assume `to_string` functions never return `NULL`
             *par.nullable = false;
         }
+
         if func.visibility != Visibility::Private {
             return false;
         }
@@ -89,12 +109,11 @@ pub fn extract(functions: &mut Vec<FuncInfo>) -> Infos {
     specials
 }
 
-fn visibility(t: Type, args_len: usize) -> Visibility {
+fn visibility(t: Type) -> Visibility {
     use self::Type::*;
     match t {
         Copy | Free | Ref | Unref => Visibility::Hidden,
         Hash | Compare | Equal => Visibility::Private,
-        ToString if args_len == 1 => Visibility::Private,
         ToString => Visibility::Public,
     }
 }
