@@ -1,6 +1,7 @@
 use super::{function, trait_impls};
 use crate::{
     analysis::flags::Info,
+    analysis::special_functions::Type,
     codegen::general::{
         self, cfg_deprecated, derives, version_condition, version_condition_string,
     },
@@ -96,10 +97,13 @@ fn generate_flags(
         .collect::<Vec<_>>();
 
     if !functions.is_empty() {
-        let static_tostring = analysis
-            .specials
-            .get(&crate::analysis::special_functions::Type::Display)
-            .and_then(|f| if f.returns_static_ref { Some(f) } else { None });
+        let static_tostring = analysis.specials.get(&Type::Display).and_then(|f| {
+            if f.returns_static_ref {
+                Some(f)
+            } else {
+                None
+            }
+        });
 
         writeln!(w)?;
         version_condition(w, env, flags.version, false, 0)?;
@@ -125,7 +129,7 @@ fn generate_flags(
 
     writeln!(w)?;
 
-    if config.generate_display_trait {
+    if config.generate_display_trait && !analysis.specials.contains_key(&Type::Display) {
         // Generate Display trait implementation.
         version_condition(w, env, flags.version, false, 0)?;
         writeln!(

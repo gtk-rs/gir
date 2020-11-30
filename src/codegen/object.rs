@@ -1,5 +1,6 @@
 use super::{child_properties, function, general, properties, signal, trait_impls};
 use crate::{
+    analysis::special_functions::Type,
     analysis::{
         self,
         rust_type::{rust_type, rust_type_full},
@@ -133,7 +134,7 @@ pub fn generate(
         generate_trait(w, env, analysis)?;
     }
 
-    if generate_display_trait {
+    if generate_display_trait && !analysis.specials.contains_key(&Type::Display) {
         writeln!(w, "\nimpl fmt::Display for {} {{", analysis.name,)?;
         // Generate Display trait implementation.
         writeln!(
