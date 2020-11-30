@@ -125,6 +125,20 @@ fn generate_flags(
 
     writeln!(w)?;
 
+    if config.generate_display_trait {
+        // Generate Display trait implementation.
+        version_condition(w, env, flags.version, false, 0)?;
+        writeln!(
+            w,
+            "impl fmt::Display for {0} {{\n\
+            \tfn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {{\n\
+            \t\t<Self as fmt::Debug>::fmt(self, f)\n\
+            \t}}\n\
+            }}\n",
+            flags.name
+        )?;
+    }
+
     version_condition(w, env, flags.version, false, 0)?;
     writeln!(
         w,
