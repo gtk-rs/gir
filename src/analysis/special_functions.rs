@@ -4,6 +4,7 @@ use crate::{
         imports::Imports,
     },
     library::{Type as LibType, TypeId},
+    version::Version,
 };
 use std::{collections::BTreeMap, str::FromStr};
 
@@ -52,6 +53,7 @@ impl Type {
 pub struct Info {
     pub glib_name: String,
     pub returns_static_ref: bool,
+    pub version: Option<Version>,
 }
 
 pub type Infos = BTreeMap<Type, Info>;
@@ -144,6 +146,7 @@ pub fn extract(functions: &mut Vec<FuncInfo>, parent_type: &LibType) -> Infos {
                 Info {
                     glib_name: func.glib_name.clone(),
                     returns_static_ref,
+                    version: func.version,
                 },
             );
         }
@@ -152,12 +155,14 @@ pub fn extract(functions: &mut Vec<FuncInfo>, parent_type: &LibType) -> Infos {
     if has_copy && !has_free {
         if let Some((glib_name, pos)) = destroy {
             let ty_ = Type::from_str("destroy").unwrap();
-            update_func(&mut functions[pos], ty_, parent_type);
+            let func = &mut functions[pos];
+            update_func(func, ty_, parent_type);
             specials.insert(
                 ty_,
                 Info {
                     glib_name,
                     returns_static_ref: false,
+                    version: func.version,
                 },
             );
         }
@@ -191,14 +196,14 @@ pub fn analyze_imports(specials: &Infos, imports: &mut Imports) {
     use self::Type::*;
     for (type_, info) in specials {
         match *type_ {
-            Compare => imports.add("std::cmp"),
+            Compare => imports.add_with_version("std::cmp", info.version),
             Display => {
-                imports.add("std::fmt");
+                imports.add_with_version("std::fmt", info.version);
                 if info.returns_static_ref {
-                    imports.add("std::ffi::CStr");
+                    imports.add_with_version("std::ffi::CStr", info.version);
                 }
             }
-            Hash => imports.add("std::hash"),
+            Hash => imports.add_with_version("std::hash", info.version),
             _ => {}
         }
     }
