@@ -23,6 +23,17 @@ impl Version {
             Short(major) => format!("v{}", major),
         }
     }
+
+    /// Returns `inner_version` if it is stricter than `outer_version`, `None` otherwise
+    pub fn if_stricter_than(
+        inner_version: Option<Self>,
+        outer_version: Option<Self>,
+    ) -> Option<Self> {
+        match (inner_version, outer_version) {
+            (Some(inner_version), Some(outer_version)) if inner_version <= outer_version => None,
+            (inner_version, _) => inner_version,
+        }
+    }
 }
 
 impl FromStr for Version {

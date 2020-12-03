@@ -24,7 +24,7 @@ pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>) {
         mod_rs.push("\npub mod functions;".into());
 
         for func_analysis in &functions.functions {
-            function::generate(w, env, func_analysis, None, false, false, 0)?;
+            function::generate(w, env, func_analysis, None, None, false, false, 0)?;
         }
 
         Ok(())

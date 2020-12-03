@@ -138,6 +138,7 @@ fn generate_enum(
                 env,
                 func_analysis,
                 Some(&analysis.specials),
+                enum_.version,
                 false,
                 false,
                 1,

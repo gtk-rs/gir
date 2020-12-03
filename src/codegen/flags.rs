@@ -106,6 +106,7 @@ fn generate_flags(
                 env,
                 func_analysis,
                 Some(&analysis.specials),
+                flags.version,
                 false,
                 false,
                 1,

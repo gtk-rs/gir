@@ -94,6 +94,7 @@ pub fn generate(w: &mut dyn Write, env: &Env, analysis: &analysis::record::Info)
                 env,
                 func_analysis,
                 Some(&analysis.specials),
+                analysis.version,
                 false,
                 false,
                 1,

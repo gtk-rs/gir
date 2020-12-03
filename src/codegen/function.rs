@@ -18,6 +18,7 @@ use crate::{
     chunk::{ffi_function_todo, Chunk},
     env::Env,
     library,
+    version::Version,
     writer::{primitives::tabs, safety_assertion_mode_to_str, ToCode},
 };
 use log::warn;
@@ -32,6 +33,7 @@ pub fn generate(
     env: &Env,
     analysis: &analysis::functions::Info,
     special_functions: Option<&analysis::special_functions::Infos>,
+    scope_version: Option<Version>,
     in_trait: bool,
     only_declaration: bool,
     indent: usize,
@@ -45,7 +47,7 @@ pub fn generate(
     }
 
     if let Some(special_functions) = special_functions {
-        if special_functions::generate(w, env, analysis, special_functions)? {
+        if special_functions::generate(w, env, analysis, special_functions, scope_version)? {
             return Ok(());
         }
     }
@@ -81,7 +83,8 @@ pub fn generate(
         cfg_deprecated(w, env, analysis.deprecated_version, commented, indent)?;
     }
     cfg_condition(w, &analysis.cfg_condition, commented, indent)?;
-    version_condition(w, env, analysis.version, commented, indent)?;
+    let version = Version::if_stricter_than(analysis.version, scope_version);
+    version_condition(w, env, version, commented, indent)?;
     not_version_condition(w, analysis.not_version, commented, indent)?;
     doc_hidden(w, analysis.doc_hidden, comment_prefix, indent)?;
     if !in_trait || only_declaration {
@@ -116,7 +119,7 @@ pub fn generate(
 
         writeln!(w, "{}{}", tabs(indent), comment_prefix)?;
         cfg_condition(w, &analysis.cfg_condition, commented, indent)?;
-        version_condition(w, env, analysis.version, commented, indent)?;
+        version_condition(w, env, version, commented, indent)?;
         not_version_condition(w, analysis.not_version, commented, indent)?;
         doc_hidden(w, analysis.doc_hidden, comment_prefix, indent)?;
         writeln!(
