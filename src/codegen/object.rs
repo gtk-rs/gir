@@ -20,7 +20,7 @@ pub fn generate(
     generate_display_trait: bool,
 ) -> Result<()> {
     general::start_comments(w, &env.config)?;
-    general::uses(w, env, &analysis.imports)?;
+    general::uses(w, env, &analysis.imports, analysis.version)?;
 
     general::define_object_type(
         w,

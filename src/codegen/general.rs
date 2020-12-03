@@ -65,7 +65,12 @@ pub fn single_version_file(w: &mut dyn Write, conf: &Config, prefix: &str) -> Re
     )
 }
 
-pub fn uses(w: &mut dyn Write, env: &Env, imports: &Imports) -> Result<()> {
+pub fn uses(
+    w: &mut dyn Write,
+    env: &Env,
+    imports: &Imports,
+    outer_version: Option<Version>,
+) -> Result<()> {
     writeln!(w)?;
     for (name, ref scope) in imports.iter() {
         if !scope.constraints.is_empty() {
@@ -80,8 +85,9 @@ pub fn uses(w: &mut dyn Write, env: &Env, imports: &Imports) -> Result<()> {
                 scope.constraints.join(", ")
             )?;
         }
+        let version = Version::if_stricter_than(scope.version, outer_version);
 
-        version_condition(w, env, scope.version, false, 0)?;
+        version_condition(w, env, version, false, 0)?;
         writeln!(w, "use {};", name)?;
     }
 

@@ -17,7 +17,7 @@ pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>) {
     let path = root_path.join("functions.rs");
     file_saver::save_to_file(path, env.config.make_backup, |w| {
         general::start_comments(w, &env.config)?;
-        general::uses(w, env, &functions.imports)?;
+        general::uses(w, env, &functions.imports, None)?;
 
         writeln!(w)?;
 
