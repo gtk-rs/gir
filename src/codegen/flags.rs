@@ -35,7 +35,6 @@ pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>) {
     let path = root_path.join("flags.rs");
     file_saver::save_to_file(path, env.config.make_backup, |w| {
         let mut imports = Imports::new(&env.library);
-        imports.add(&format!("crate::{}", env.main_sys_crate_name()));
         imports.add("glib::translate::*");
         imports.add("bitflags::bitflags");
 

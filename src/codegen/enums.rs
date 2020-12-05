@@ -53,7 +53,6 @@ pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>) {
     }
 
     let mut imports = Imports::new(&env.library);
-    imports.add(&format!("crate::{}", env.main_sys_crate_name()));
     if has_get_quark {
         imports.add("glib::Quark");
         imports.add("glib::error::ErrorDomain");

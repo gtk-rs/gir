@@ -80,7 +80,6 @@ pub fn new(env: &Env, obj: &GObject) -> Option<Info> {
     let is_boxed = obj.use_boxed_functions || RecordType::of(&record) == RecordType::AutoBoxed;
 
     let mut imports = Imports::with_defined(&env.library, &name);
-    imports.add(&format!("crate::{}", env.main_sys_crate_name()));
 
     let mut functions = functions::analyze(
         env,

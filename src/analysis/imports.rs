@@ -120,11 +120,14 @@ impl Imports {
         self.defaults.clear();
     }
 
-    /// The goals of this function is to discard unwanted imports like "ffi" and "crate". It
+    /// The goals of this function is to discard unwanted imports like "crate". It
     /// also extends the checks in case you are implementing "X". For example, you don't want to
     /// import "X" or "crate::X" in this case.
     fn common_checks(&self, name: &str) -> bool {
-        if name == "crate::ffi" || (!name.contains("::") && name != "xlib") {
+        // The ffi namespace is used directly, including it is a programmer error.
+        assert_ne!(name, "crate::ffi");
+
+        if !name.contains("::") && name != "xlib" {
             false
         } else if let Some(ref defined) = self.defined {
             !((name.starts_with("crate::") && &name[7..] == defined) || name == defined)
