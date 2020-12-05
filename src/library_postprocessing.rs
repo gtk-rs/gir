@@ -356,6 +356,7 @@ impl Library {
                 }
             }
         }
+        let ignore_missing_ctype = ["padding", "reserved", "_padding", "_reserved"];
         for (tid, fid, action) in actions {
             match *self.type_mut(tid) {
                 Type::Class(Class {
@@ -374,13 +375,16 @@ impl Library {
                     ..
                 }) => match action {
                     Action::SetCType(c_type) => {
-                        warn_main!(
-                            tid,
-                            "Field `{}::{}` missing c:type assumed to be `{}`",
-                            name,
-                            &fields[fid].name,
-                            c_type
-                        );
+                        // Don't be verbose when internal fields such as padding don't provide a c-type
+                        if !ignore_missing_ctype.contains(&fields[fid].name.as_str()) {
+                            warn_main!(
+                                tid,
+                                "Field `{}::{}` missing c:type assumed to be `{}`",
+                                name,
+                                &fields[fid].name,
+                                c_type
+                            );
+                        }
                         fields[fid].c_type = Some(c_type);
                     }
                     Action::SetName(name) => fields[fid].name = name,
