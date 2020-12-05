@@ -450,8 +450,8 @@ impl Library {
 
     fn mark_final_types(&mut self, config: &Config) {
         // Here we mark all class types as final types if configured so in the config or
-        // otherwise if there is no public class struct for the type and there are no
-        // known subtypes.
+        // otherwise if there is no public class struct for the type or the instance struct
+        // has no fields (i.e. is not known!), and there are no known subtypes.
         //
         // Final types can't have any subclasses and we handle them slightly different
         // for that reason.
@@ -481,16 +481,23 @@ impl Library {
                         *final_type
                     } else if klass.type_struct.is_none() {
                         !self.has_subtypes(tid)
-                    } else if let Some(class_record_tid) =
-                        self.find_type(ns_id as u16, klass.type_struct.as_ref().unwrap())
-                    {
-                        if let Type::Record(ref record) = self.type_(class_record_tid) {
-                            record.disguised && !self.has_subtypes(tid)
-                        } else {
-                            unreachable!("Type {} with non-record class", full_name);
-                        }
                     } else {
-                        unreachable!("Can't find class for {}", full_name);
+                        let has_subtypes = self.has_subtypes(tid);
+                        let instance_struct_known = !klass.fields.is_empty();
+
+                        let class_struct_known = if let Some(class_record_tid) =
+                            self.find_type(ns_id as u16, klass.type_struct.as_ref().unwrap())
+                        {
+                            if let Type::Record(ref record) = self.type_(class_record_tid) {
+                                !record.disguised
+                            } else {
+                                unreachable!("Type {} with non-record class", full_name);
+                            }
+                        } else {
+                            unreachable!("Can't find class for {}", full_name);
+                        };
+
+                        !has_subtypes && (!instance_struct_known || !class_struct_known)
                     };
                     if is_final {
                         final_types.push(tid);
