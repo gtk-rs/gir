@@ -3,6 +3,7 @@ use crate::{
         functions::{Info as FuncInfo, Visibility},
         imports::Imports,
     },
+    config::GObject,
     library::{Type as LibType, TypeId},
     version::Version,
 };
@@ -58,7 +59,7 @@ pub struct Info {
 
 pub type Infos = BTreeMap<Type, Info>;
 
-fn update_func(func: &mut FuncInfo, type_: Type, parent_type: &LibType) -> bool {
+fn update_func(func: &mut FuncInfo, type_: Type, parent_type: &LibType, obj: &GObject) -> bool {
     if func.visibility != Visibility::Comment {
         func.visibility = visibility(type_);
     }
@@ -86,7 +87,9 @@ fn update_func(func: &mut FuncInfo, type_: Type, parent_type: &LibType) -> bool 
             // As to not change old code behaviour, assume non-nullability outside
             // enums and flags only. Function inside enums and flags have been
             // appropriately marked in Gir.
-            if !matches!(parent_type, LibType::Enumeration(_) | LibType::Bitfield(_)) {
+            if !obj.trust_return_value_nullability
+                && !matches!(parent_type, LibType::Enumeration(_) | LibType::Bitfield(_))
+            {
                 if let Some(par) = func.ret.parameter.as_mut() {
                     *par.nullable = false;
                 }
@@ -106,7 +109,7 @@ fn update_func(func: &mut FuncInfo, type_: Type, parent_type: &LibType) -> bool 
     true
 }
 
-pub fn extract(functions: &mut Vec<FuncInfo>, parent_type: &LibType) -> Infos {
+pub fn extract(functions: &mut Vec<FuncInfo>, parent_type: &LibType, obj: &GObject) -> Infos {
     let mut specials = Infos::new();
     let mut has_copy = false;
     let mut has_free = false;
@@ -118,7 +121,7 @@ pub fn extract(functions: &mut Vec<FuncInfo>, parent_type: &LibType) -> Infos {
                 destroy = Some((func.glib_name.clone(), pos));
                 continue;
             }
-            if !update_func(func, type_, parent_type) {
+            if !update_func(func, type_, parent_type, obj) {
                 continue;
             }
             if func.name == "copy" {
@@ -156,7 +159,7 @@ pub fn extract(functions: &mut Vec<FuncInfo>, parent_type: &LibType) -> Infos {
         if let Some((glib_name, pos)) = destroy {
             let ty_ = Type::from_str("destroy").unwrap();
             let func = &mut functions[pos];
-            update_func(func, ty_, parent_type);
+            update_func(func, ty_, parent_type, obj);
             specials.insert(
                 ty_,
                 Info {

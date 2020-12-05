@@ -101,7 +101,7 @@ pub fn new(env: &Env, obj: &GObject, imports: &mut Imports) -> Option<Info> {
         }
     }
 
-    let specials = special_functions::extract(&mut functions, type_);
+    let specials = special_functions::extract(&mut functions, type_, obj);
 
     special_functions::analyze_imports(&specials, imports);
 

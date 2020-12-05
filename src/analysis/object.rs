@@ -88,7 +88,7 @@ pub fn class(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<Info>
         Some(&mut signatures),
         Some(deps),
     );
-    let mut specials = special_functions::extract(&mut functions, type_);
+    let mut specials = special_functions::extract(&mut functions, type_, obj);
     // `copy` will duplicate an object while `clone` just adds a reference
     special_functions::unhide(&mut functions, &specials, special_functions::Type::Copy);
     // these are all automatically derived on objects and compare by pointer. If such functions
