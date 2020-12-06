@@ -37,12 +37,28 @@ pub fn generate(
         writeln!(w)?;
         write!(w, "impl {} {{", analysis.name)?;
         for func_analysis in &analysis.constructors() {
-            function::generate(w, env, func_analysis, false, false, 1)?;
+            function::generate(
+                w,
+                env,
+                func_analysis,
+                Some(&analysis.specials),
+                false,
+                false,
+                1,
+            )?;
         }
 
         if !need_generate_trait(analysis) {
             for func_analysis in &analysis.methods() {
-                function::generate(w, env, func_analysis, false, false, 1)?;
+                function::generate(
+                    w,
+                    env,
+                    func_analysis,
+                    Some(&analysis.specials),
+                    false,
+                    false,
+                    1,
+                )?;
             }
 
             for property in &analysis.properties {
@@ -55,7 +71,15 @@ pub fn generate(
         }
 
         for func_analysis in &analysis.functions() {
-            function::generate(w, env, func_analysis, false, false, 1)?;
+            function::generate(
+                w,
+                env,
+                func_analysis,
+                Some(&analysis.specials),
+                false,
+                false,
+                1,
+            )?;
         }
 
         if !need_generate_trait(analysis) {
@@ -134,7 +158,7 @@ pub fn generate(
         generate_trait(w, env, analysis)?;
     }
 
-    if generate_display_trait && !analysis.specials.contains_key(&Type::Display) {
+    if generate_display_trait && !analysis.specials.has_trait(Type::Display) {
         writeln!(w, "\nimpl fmt::Display for {} {{", analysis.name,)?;
         // Generate Display trait implementation.
         writeln!(
@@ -275,7 +299,15 @@ fn generate_trait(w: &mut dyn Write, env: &Env, analysis: &analysis::object::Inf
     write!(w, "pub trait {}: 'static {{", analysis.trait_name)?;
 
     for func_analysis in &analysis.methods() {
-        function::generate(w, env, func_analysis, true, true, 1)?;
+        function::generate(
+            w,
+            env,
+            func_analysis,
+            Some(&analysis.specials),
+            true,
+            true,
+            1,
+        )?;
     }
     for property in &analysis.properties {
         properties::generate(w, env, property, true, true, 1)?;
@@ -300,7 +332,15 @@ fn generate_trait(w: &mut dyn Write, env: &Env, analysis: &analysis::object::Inf
     )?;
 
     for func_analysis in &analysis.methods() {
-        function::generate(w, env, func_analysis, true, false, 1)?;
+        function::generate(
+            w,
+            env,
+            func_analysis,
+            Some(&analysis.specials),
+            true,
+            false,
+            1,
+        )?;
     }
     for property in &analysis.properties {
         properties::generate(w, env, property, true, false, 1)?;

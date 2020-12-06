@@ -99,7 +99,7 @@ pub fn class(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<Info>
         special_functions::Type::Compare,
     ] {
         special_functions::unhide(&mut functions, &specials, *t);
-        specials.remove(t);
+        specials.traits_mut().remove(t);
     }
     special_functions::analyze_imports(&specials, &mut imports);
 

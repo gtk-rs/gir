@@ -124,23 +124,19 @@ fn generate_enum(
         .collect::<Vec<_>>();
 
     if !functions.is_empty() {
-        let static_tostring = analysis.specials.get(&Type::Display).and_then(|f| {
-            if f.returns_static_ref {
-                Some(f)
-            } else {
-                None
-            }
-        });
-
         writeln!(w)?;
         version_condition(w, env, enum_.version, false, 0)?;
         write!(w, "impl {} {{", analysis.name)?;
         for func_analysis in functions {
-            if Some(&func_analysis.glib_name) == static_tostring.map(|t| &t.glib_name) {
-                function::generate_static_to_str(w, env, func_analysis)?;
-            } else {
-                function::generate(w, env, func_analysis, false, false, 1)?;
-            }
+            function::generate(
+                w,
+                env,
+                func_analysis,
+                Some(&analysis.specials),
+                false,
+                false,
+                1,
+            )?;
         }
         writeln!(w, "}}")?;
     }
@@ -156,7 +152,7 @@ fn generate_enum(
 
     writeln!(w)?;
 
-    if config.generate_display_trait && !analysis.specials.contains_key(&Type::Display) {
+    if config.generate_display_trait && !analysis.specials.has_trait(Type::Display) {
         // Generate Display trait implementation.
         version_condition(w, env, enum_.version, false, 0)?;
         writeln!(

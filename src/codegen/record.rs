@@ -31,8 +31,8 @@ pub fn generate(w: &mut dyn Write, env: &Env, analysis: &analysis::record::Info)
             );
         }
     } else if let (Some(ref_fn), Some(unref_fn)) = (
-        analysis.specials.get(&Type::Ref),
-        analysis.specials.get(&Type::Unref),
+        analysis.specials.traits().get(&Type::Ref),
+        analysis.specials.traits().get(&Type::Unref),
     ) {
         general::define_shared_type(
             w,
@@ -51,8 +51,8 @@ pub fn generate(w: &mut dyn Write, env: &Env, analysis: &analysis::record::Info)
             &analysis.derives,
         )?;
     } else if let (Some(copy_fn), Some(free_fn)) = (
-        analysis.specials.get(&Type::Copy),
-        analysis.specials.get(&Type::Free),
+        analysis.specials.traits().get(&Type::Copy),
+        analysis.specials.traits().get(&Type::Free),
     ) {
         general::define_boxed_type(
             w,
@@ -100,7 +100,15 @@ pub fn generate(w: &mut dyn Write, env: &Env, analysis: &analysis::record::Info)
         write!(w, "impl {} {{", analysis.name)?;
 
         for func_analysis in &analysis.functions {
-            function::generate(w, env, func_analysis, false, false, 1)?;
+            function::generate(
+                w,
+                env,
+                func_analysis,
+                Some(&analysis.specials),
+                false,
+                false,
+                1,
+            )?;
         }
 
         writeln!(w, "}}")?;

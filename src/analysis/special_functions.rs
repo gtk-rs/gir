@@ -33,7 +33,7 @@ impl FromStr for Type {
             "free" | "destroy" => Ok(Free),
             "is_equal" => Ok(Equal),
             "ref" | "ref_" => Ok(Ref),
-            "to_string" => Ok(Display),
+            "to_string" | "to_str" | "name" | "get_name" => Ok(Display),
             "unref" => Ok(Unref),
             "hash" => Ok(Hash),
             _ => Err(format!("Unknown type '{}'", s)),
@@ -41,23 +41,50 @@ impl FromStr for Type {
     }
 }
 
-impl Type {
-    fn extract(s: &str) -> Option<Self> {
-        s.parse().ok().or_else(|| match s {
-            "get_name" | "name" => Some(Self::Display),
-            _ => None,
-        })
-    }
-}
-
 #[derive(Debug, Clone)]
-pub struct Info {
+pub struct TraitInfo {
     pub glib_name: String,
-    pub returns_static_ref: bool,
     pub version: Option<Version>,
 }
 
-pub type Infos = BTreeMap<Type, Info>;
+type TraitInfos = BTreeMap<Type, TraitInfo>;
+
+#[derive(Clone, Copy, Eq, Debug, Ord, PartialEq, PartialOrd)]
+pub enum FunctionType {
+    StaticStringify,
+}
+
+#[derive(Debug, Clone)]
+pub struct FunctionInfo {
+    pub type_: FunctionType,
+    pub version: Option<Version>,
+}
+
+type FunctionInfos = BTreeMap<String, FunctionInfo>;
+
+#[derive(Debug, Default)]
+pub struct Infos {
+    traits: TraitInfos,
+    functions: FunctionInfos,
+}
+
+impl Infos {
+    pub fn traits(&self) -> &TraitInfos {
+        &self.traits
+    }
+
+    pub fn traits_mut(&mut self) -> &mut TraitInfos {
+        &mut self.traits
+    }
+
+    pub fn has_trait(&self, type_: Type) -> bool {
+        self.traits.contains_key(&type_)
+    }
+
+    pub fn functions(&self) -> &FunctionInfos {
+        &self.functions
+    }
+}
 
 fn update_func(func: &mut FuncInfo, type_: Type, parent_type: &LibType, obj: &GObject) -> bool {
     if func.visibility != Visibility::Comment {
@@ -71,52 +98,42 @@ fn update_func(func: &mut FuncInfo, type_: Type, parent_type: &LibType, obj: &GO
         if !func.parameters.c_parameters[0].instance_parameter {
             return false;
         }
-        if !func
-            .ret
-            .parameter
-            .as_ref()
-            .map_or(false, |p| p.typ == TypeId::tid_utf8())
-        {
-            return false;
-        }
 
-        if func.name == "to_string" {
-            // Rename to to_str to make sure it doesn't clash with ToString::to_string
-            func.name = "to_str".to_owned();
+        if let Some(ret) = func.ret.parameter.as_mut() {
+            if ret.typ != TypeId::tid_utf8() {
+                return false;
+            }
 
-            // As to not change old code behaviour, assume non-nullability outside
-            // enums and flags only. Function inside enums and flags have been
-            // appropriately marked in Gir.
-            if !obj.trust_return_value_nullability
-                && !matches!(parent_type, LibType::Enumeration(_) | LibType::Bitfield(_))
-            {
-                if let Some(par) = func.ret.parameter.as_mut() {
-                    *par.nullable = false;
+            if func.name == "to_string" {
+                // Rename to to_str to make sure it doesn't clash with ToString::to_string
+                func.name = "to_str".to_owned();
+
+                // As to not change old code behaviour, assume non-nullability outside
+                // enums and flags only, and exclusively for to_string. Function inside
+                // enums and flags have been appropriately marked in Gir.
+                if !obj.trust_return_value_nullability
+                    && !matches!(parent_type, LibType::Enumeration(_) | LibType::Bitfield(_))
+                {
+                    *ret.nullable = false;
                 }
             }
-        }
 
-        // Cannot generate Display implementation for Option<>
-        if func
-            .ret
-            .parameter
-            .as_ref()
-            .map_or(false, |ret| *ret.nullable)
-        {
-            return false;
+            // Cannot generate Display implementation for Option<>
+            return !*ret.nullable;
         }
     }
+
     true
 }
 
 pub fn extract(functions: &mut Vec<FuncInfo>, parent_type: &LibType, obj: &GObject) -> Infos {
-    let mut specials = Infos::new();
+    let mut specials = Infos::default();
     let mut has_copy = false;
     let mut has_free = false;
     let mut destroy = None;
 
     for (pos, func) in functions.iter_mut().enumerate() {
-        if let Some(type_) = Type::extract(&func.name) {
+        if let Ok(type_) = func.name.parse() {
             if func.name == "destroy" {
                 destroy = Some((func.glib_name.clone(), pos));
                 continue;
@@ -130,25 +147,35 @@ pub fn extract(functions: &mut Vec<FuncInfo>, parent_type: &LibType, obj: &GObje
                 has_free = true;
             }
 
-            let return_transfer_none = func.ret.parameter.as_ref().map_or(false, |ret| {
-                ret.transfer == crate::library::Transfer::None
-                // This is enforced already, otherwise no impl Display can be generated.
-                && !*ret.nullable
-            });
+            let return_transfer_none = func
+                .ret
+                .parameter
+                .as_ref()
+                .map_or(false, |ret| ret.transfer == crate::library::Transfer::None);
 
             // Assume only enumerations and bitfields can return static strings
-            let returns_static_ref = type_ == Type::Display
-                && return_transfer_none
+            let returns_static_ref = return_transfer_none
                 && matches!(parent_type, LibType::Enumeration(_) | LibType::Bitfield(_))
                 // We cannot mandate returned lifetime if this is not generated.
                 // (And this prevents an unused std::ffi::CStr from being emitted below)
                 && func.status.need_generate();
 
-            specials.insert(
+            if returns_static_ref {
+                // Override the function with a &'static (non allocating) -returning string
+                // if the transfer type is none and it matches the above heuristics.
+                specials.functions.insert(
+                    func.glib_name.clone(),
+                    FunctionInfo {
+                        type_: FunctionType::StaticStringify,
+                        version: func.version,
+                    },
+                );
+            }
+
+            specials.traits.insert(
                 type_,
-                Info {
+                TraitInfo {
                     glib_name: func.glib_name.clone(),
-                    returns_static_ref,
                     version: func.version,
                 },
             );
@@ -160,11 +187,10 @@ pub fn extract(functions: &mut Vec<FuncInfo>, parent_type: &LibType, obj: &GObje
             let ty_ = Type::from_str("destroy").unwrap();
             let func = &mut functions[pos];
             update_func(func, ty_, parent_type, obj);
-            specials.insert(
+            specials.traits.insert(
                 ty_,
-                Info {
+                TraitInfo {
                     glib_name,
-                    returns_static_ref: false,
                     version: func.version,
                 },
             );
@@ -185,7 +211,7 @@ fn visibility(t: Type) -> Visibility {
 
 // Some special functions (e.g. `copy` on refcounted types) should be exposed
 pub fn unhide(functions: &mut Vec<FuncInfo>, specials: &Infos, type_: Type) {
-    if let Some(func) = specials.get(&type_) {
+    if let Some(func) = specials.traits().get(&type_) {
         let func = functions
             .iter_mut()
             .find(|f| f.glib_name == func.glib_name && f.visibility != Visibility::Comment);
@@ -196,18 +222,20 @@ pub fn unhide(functions: &mut Vec<FuncInfo>, specials: &Infos, type_: Type) {
 }
 
 pub fn analyze_imports(specials: &Infos, imports: &mut Imports) {
-    use self::Type::*;
-    for (type_, info) in specials {
+    for (type_, info) in specials.traits() {
+        use self::Type::*;
         match *type_ {
             Compare => imports.add_with_version("std::cmp", info.version),
-            Display => {
-                imports.add_with_version("std::fmt", info.version);
-                if info.returns_static_ref {
-                    imports.add_with_version("std::ffi::CStr", info.version);
-                }
-            }
+            Display => imports.add_with_version("std::fmt", info.version),
             Hash => imports.add_with_version("std::hash", info.version),
             _ => {}
+        }
+    }
+    for info in specials.functions().values() {
+        match info.type_ {
+            FunctionType::StaticStringify => {
+                imports.add_with_version("std::ffi::CStr", info.version)
+            }
         }
     }
 }

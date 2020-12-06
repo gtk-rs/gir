@@ -16,11 +16,11 @@ pub fn generate(
     specials: &Infos,
     trait_name: Option<&str>,
 ) -> Result<()> {
-    for (type_, special_info) in specials.iter() {
+    for (type_, special_info) in specials.traits().iter() {
         if let Some(info) = lookup(functions, &special_info.glib_name) {
             match *type_ {
                 Type::Compare => {
-                    if !specials.contains_key(&Type::Equal) {
+                    if !specials.has_trait(Type::Equal) {
                         generate_eq_compare(w, env, type_name, info, trait_name)?;
                     }
                     generate_ord(w, env, type_name, info, trait_name)?;

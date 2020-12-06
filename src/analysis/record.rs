@@ -102,8 +102,8 @@ pub fn new(env: &Env, obj: &GObject) -> Option<Info> {
         record.deprecated_version,
     );
 
-    let is_shared = specials.get(&special_functions::Type::Ref).is_some()
-        && specials.get(&special_functions::Type::Unref).is_some();
+    let is_shared = specials.has_trait(special_functions::Type::Ref)
+        && specials.has_trait(special_functions::Type::Unref);
     if is_shared {
         // `copy` will duplicate a struct while `clone` just adds a reference
         special_functions::unhide(&mut functions, &specials, special_functions::Type::Copy);
@@ -127,7 +127,7 @@ pub fn new(env: &Env, obj: &GObject) -> Option<Info> {
         derives
     };
 
-    for special in specials.keys() {
+    for special in specials.traits().keys() {
         match special {
             special_functions::Type::Compare => {
                 derives = filter_derives(&derives, &["PartialOrd", "Ord", "PartialEq", "Eq"]);
@@ -160,10 +160,9 @@ pub fn new(env: &Env, obj: &GObject) -> Option<Info> {
     // Check if we have to make use of the GType and the generic
     // boxed functions.
     if obj.use_boxed_functions
-        || ((specials.get(&special_functions::Type::Ref).is_none()
-            || specials.get(&special_functions::Type::Unref).is_none())
-            && (specials.get(&special_functions::Type::Copy).is_none()
-                || specials.get(&special_functions::Type::Free).is_none()))
+        || !is_shared
+            && (!specials.has_trait(special_functions::Type::Copy)
+                || !specials.has_trait(special_functions::Type::Free))
     {
         if let Some((_, get_type_version)) = glib_get_type {
             if get_type_version > version {
