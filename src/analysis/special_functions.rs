@@ -33,7 +33,6 @@ impl FromStr for Type {
             "free" | "destroy" => Ok(Free),
             "is_equal" => Ok(Equal),
             "ref" | "ref_" => Ok(Ref),
-            "to_string" | "to_str" | "name" | "get_name" => Ok(Display),
             "unref" => Ok(Unref),
             "hash" => Ok(Hash),
             _ => Err(format!("Unknown type '{}'", s)),
@@ -86,43 +85,46 @@ impl Infos {
     }
 }
 
-fn update_func(func: &mut FuncInfo, type_: Type, parent_type: &LibType, obj: &GObject) -> bool {
+/// Returns true on functions that take an instance as single argument and
+/// return a string as result.
+fn is_stringify(func: &mut FuncInfo, parent_type: &LibType, obj: &GObject) -> bool {
+    if func.parameters.c_parameters.len() != 1 {
+        return false;
+    }
+    if !func.parameters.c_parameters[0].instance_parameter {
+        return false;
+    }
+
+    if let Some(ret) = func.ret.parameter.as_mut() {
+        if ret.typ != TypeId::tid_utf8() {
+            return false;
+        }
+
+        if func.name == "to_string" {
+            // Rename to to_str to make sure it doesn't clash with ToString::to_string
+            func.name = "to_str".to_owned();
+
+            // As to not change old code behaviour, assume non-nullability outside
+            // enums and flags only, and exclusively for to_string. Function inside
+            // enums and flags have been appropriately marked in Gir.
+            if !obj.trust_return_value_nullability
+                && !matches!(parent_type, LibType::Enumeration(_) | LibType::Bitfield(_))
+            {
+                *ret.nullable = false;
+            }
+        }
+
+        // Cannot generate Display implementation for Option<>
+        !*ret.nullable
+    } else {
+        false
+    }
+}
+
+fn update_func(func: &mut FuncInfo, type_: Type) -> bool {
     if func.visibility != Visibility::Comment {
         func.visibility = visibility(type_);
     }
-
-    if type_ == Type::Display {
-        if func.parameters.c_parameters.len() != 1 {
-            return false;
-        }
-        if !func.parameters.c_parameters[0].instance_parameter {
-            return false;
-        }
-
-        if let Some(ret) = func.ret.parameter.as_mut() {
-            if ret.typ != TypeId::tid_utf8() {
-                return false;
-            }
-
-            if func.name == "to_string" {
-                // Rename to to_str to make sure it doesn't clash with ToString::to_string
-                func.name = "to_str".to_owned();
-
-                // As to not change old code behaviour, assume non-nullability outside
-                // enums and flags only, and exclusively for to_string. Function inside
-                // enums and flags have been appropriately marked in Gir.
-                if !obj.trust_return_value_nullability
-                    && !matches!(parent_type, LibType::Enumeration(_) | LibType::Bitfield(_))
-                {
-                    *ret.nullable = false;
-                }
-            }
-
-            // Cannot generate Display implementation for Option<>
-            return !*ret.nullable;
-        }
-    }
-
     true
 }
 
@@ -133,20 +135,7 @@ pub fn extract(functions: &mut Vec<FuncInfo>, parent_type: &LibType, obj: &GObje
     let mut destroy = None;
 
     for (pos, func) in functions.iter_mut().enumerate() {
-        if let Ok(type_) = func.name.parse() {
-            if func.name == "destroy" {
-                destroy = Some((func.glib_name.clone(), pos));
-                continue;
-            }
-            if !update_func(func, type_, parent_type, obj) {
-                continue;
-            }
-            if func.name == "copy" {
-                has_copy = true;
-            } else if func.name == "free" {
-                has_free = true;
-            }
-
+        if is_stringify(func, parent_type, obj) {
             let return_transfer_none = func
                 .ret
                 .parameter
@@ -172,6 +161,34 @@ pub fn extract(functions: &mut Vec<FuncInfo>, parent_type: &LibType, obj: &GObje
                 );
             }
 
+            // Some stringifying functions can serve as Display implementation
+            if matches!(
+                func.name.as_str(),
+                "to_string" | "to_str" | "name" | "get_name"
+            ) {
+                // FUTURE: Decide which function gets precedence if multiple Display prospects exist.
+                specials.traits.insert(
+                    Type::Display,
+                    TraitInfo {
+                        glib_name: func.glib_name.clone(),
+                        version: func.version,
+                    },
+                );
+            }
+        } else if let Ok(type_) = func.name.parse() {
+            if func.name == "destroy" {
+                destroy = Some((func.glib_name.clone(), pos));
+                continue;
+            }
+            if !update_func(func, type_) {
+                continue;
+            }
+            if func.name == "copy" {
+                has_copy = true;
+            } else if func.name == "free" {
+                has_free = true;
+            }
+
             specials.traits.insert(
                 type_,
                 TraitInfo {
@@ -186,7 +203,7 @@ pub fn extract(functions: &mut Vec<FuncInfo>, parent_type: &LibType, obj: &GObje
         if let Some((glib_name, pos)) = destroy {
             let ty_ = Type::from_str("destroy").unwrap();
             let func = &mut functions[pos];
-            update_func(func, ty_, parent_type, obj);
+            update_func(func, ty_);
             specials.traits.insert(
                 ty_,
                 TraitInfo {
