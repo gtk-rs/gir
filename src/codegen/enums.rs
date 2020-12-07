@@ -219,7 +219,7 @@ impl ToGlib for {name} {{
         w,
         "#[doc(hidden)]
 impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
-    fn from_glib(value: {sys_crate_name}::{ffi_name}) -> Self {{
+    unsafe fn from_glib(value: {sys_crate_name}::{ffi_name}) -> Self {{
         {assert}match value {{",
         sys_crate_name = sys_crate_name,
         name = enum_.name,
@@ -265,7 +265,7 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
                     "        static QUARK: once_cell::sync::Lazy<{0}ffi::GQuark> = once_cell::sync::Lazy::new(|| unsafe {{
             {0}ffi::g_quark_from_static_string(b\"{1}\\0\".as_ptr() as *const _)
         }});
-        from_glib(*QUARK)",
+        unsafe {{ from_glib(*QUARK) }}",
                     use_glib_if_needed(env, ""),
                     quark,
                 )?;
