@@ -62,7 +62,6 @@ pub fn class(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<Info>
 
     let mut imports = Imports::with_defined(&env.library, &name);
     imports.add("glib::translate::*");
-    imports.add(&format!("crate::{}", env.main_sys_crate_name()));
     if obj.generate_display_trait {
         imports.add("std::fmt");
     }
@@ -89,7 +88,7 @@ pub fn class(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<Info>
         Some(&mut signatures),
         Some(deps),
     );
-    let mut specials = special_functions::extract(&mut functions);
+    let mut specials = special_functions::extract(&mut functions, type_, obj);
     // `copy` will duplicate an object while `clone` just adds a reference
     special_functions::unhide(&mut functions, &specials, special_functions::Type::Copy);
     // these are all automatically derived on objects and compare by pointer. If such functions
@@ -98,10 +97,9 @@ pub fn class(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<Info>
         special_functions::Type::Hash,
         special_functions::Type::Equal,
         special_functions::Type::Compare,
-        special_functions::Type::ToString,
     ] {
         special_functions::unhide(&mut functions, &specials, *t);
-        specials.remove(t);
+        specials.traits_mut().remove(t);
     }
     special_functions::analyze_imports(&specials, &mut imports);
 
@@ -230,7 +228,6 @@ pub fn interface(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<I
 
     let mut imports = Imports::with_defined(&env.library, &name);
     imports.add("glib::translate::*");
-    imports.add(&format!("crate::{}", env.main_sys_crate_name()));
     imports.add("glib::object::IsA");
     if obj.generate_display_trait {
         imports.add("std::fmt");

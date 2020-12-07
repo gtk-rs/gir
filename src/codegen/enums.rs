@@ -1,5 +1,7 @@
+use super::{function, trait_impls};
 use crate::{
-    analysis::{imports::Imports, namespaces},
+    analysis::enums::Info,
+    analysis::special_functions::Type,
     codegen::general::{
         self, cfg_deprecated, derives, version_condition, version_condition_no_doc,
         version_condition_string,
@@ -19,73 +21,26 @@ use std::{
 };
 
 pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>) {
-    let configs: Vec<&GObject> = env
-        .config
-        .objects
-        .values()
-        .filter(|c| {
-            c.status.need_generate() && c.type_id.map_or(false, |tid| tid.ns_id == namespaces::MAIN)
-        })
-        .collect();
-    let mut has_get_quark = false;
-    let mut has_any = false;
-    let mut has_get_type = false;
-    let mut generate_display_trait = false;
-    for config in &configs {
-        if let Type::Enumeration(ref enum_) = *env.library.type_(config.type_id.unwrap()) {
-            has_any = true;
-            if enum_.error_domain.is_some() {
-                has_get_quark = true;
-            }
-            if enum_.glib_get_type.is_some() {
-                has_get_type = true;
-            }
-            generate_display_trait |= config.generate_display_trait;
-
-            if has_get_type && has_get_quark {
-                break;
-            }
-        }
-    }
-
-    if !has_any {
+    if env.analysis.enumerations.is_empty() {
         return;
-    }
-
-    let mut imports = Imports::new(&env.library);
-    imports.add(&format!("crate::{}", env.main_sys_crate_name()));
-    if has_get_quark {
-        imports.add("glib::Quark");
-        imports.add("glib::error::ErrorDomain");
-    }
-    if has_get_type {
-        imports.add("glib::Type");
-        imports.add("glib::StaticType");
-        imports.add("glib::value::SetValue");
-        imports.add("glib::value::FromValue");
-        imports.add("glib::value::FromValueOptional");
-    }
-    imports.add("glib::translate::*");
-
-    if generate_display_trait {
-        imports.add("std::fmt");
     }
 
     let path = root_path.join("enums.rs");
     file_saver::save_to_file(path, env.config.make_backup, |w| {
         general::start_comments(w, &env.config)?;
-        general::uses(w, env, &imports)?;
+        general::uses(w, env, &env.analysis.enum_imports)?;
         writeln!(w)?;
 
         mod_rs.push("\nmod enums;".into());
-        for config in &configs {
-            if let Type::Enumeration(ref enum_) = *env.library.type_(config.type_id.unwrap()) {
-                if let Some(cfg) = version_condition_string(env, enum_.version, false, 0) {
-                    mod_rs.push(cfg);
-                }
-                mod_rs.push(format!("pub use self::enums::{};", enum_.name));
-                generate_enum(env, w, enum_, config)?;
+        for enum_analysis in &env.analysis.enumerations {
+            let config = &env.config.objects[&enum_analysis.full_name];
+            let enum_ = enum_analysis.type_(&env.library);
+
+            if let Some(cfg) = version_condition_string(env, enum_.version, false, 0) {
+                mod_rs.push(cfg);
             }
+            mod_rs.push(format!("pub use self::enums::{};", enum_.name));
+            generate_enum(env, w, enum_, config, enum_analysis)?;
         }
 
         Ok(())
@@ -98,6 +53,7 @@ fn generate_enum(
     w: &mut dyn Write,
     enum_: &Enumeration,
     config: &GObject,
+    analysis: &Info,
 ) -> Result<()> {
     struct Member {
         name: String,
@@ -158,11 +114,45 @@ fn generate_enum(
         "\
     #[doc(hidden)]
     __Unknown(i32),
-}}
-"
+}}"
     )?;
 
-    if config.generate_display_trait {
+    let functions = analysis
+        .functions
+        .iter()
+        .filter(|f| f.status.need_generate())
+        .collect::<Vec<_>>();
+
+    if !functions.is_empty() {
+        writeln!(w)?;
+        version_condition(w, env, enum_.version, false, 0)?;
+        write!(w, "impl {} {{", analysis.name)?;
+        for func_analysis in functions {
+            function::generate(
+                w,
+                env,
+                func_analysis,
+                Some(&analysis.specials),
+                false,
+                false,
+                1,
+            )?;
+        }
+        writeln!(w, "}}")?;
+    }
+
+    trait_impls::generate(
+        w,
+        env,
+        &analysis.name,
+        &analysis.functions,
+        &analysis.specials,
+        None,
+    )?;
+
+    writeln!(w)?;
+
+    if config.generate_display_trait && !analysis.specials.has_trait(Type::Display) {
         // Generate Display trait implementation.
         version_condition(w, env, enum_.version, false, 0)?;
         writeln!(

@@ -31,16 +31,16 @@ pub fn generate(w: &mut dyn Write, env: &Env, analysis: &analysis::record::Info)
             );
         }
     } else if let (Some(ref_fn), Some(unref_fn)) = (
-        analysis.specials.get(&Type::Ref),
-        analysis.specials.get(&Type::Unref),
+        analysis.specials.traits().get(&Type::Ref),
+        analysis.specials.traits().get(&Type::Unref),
     ) {
         general::define_shared_type(
             w,
             env,
             &analysis.name,
             &type_.c_type,
-            ref_fn,
-            unref_fn,
+            &ref_fn.glib_name,
+            &unref_fn.glib_name,
             analysis.glib_get_type.as_ref().map(|(f, v)| {
                 if v > &analysis.version {
                     (f.clone(), *v)
@@ -51,16 +51,16 @@ pub fn generate(w: &mut dyn Write, env: &Env, analysis: &analysis::record::Info)
             &analysis.derives,
         )?;
     } else if let (Some(copy_fn), Some(free_fn)) = (
-        analysis.specials.get(&Type::Copy),
-        analysis.specials.get(&Type::Free),
+        analysis.specials.traits().get(&Type::Copy),
+        analysis.specials.traits().get(&Type::Free),
     ) {
         general::define_boxed_type(
             w,
             env,
             &analysis.name,
             &type_.c_type,
-            copy_fn,
-            free_fn,
+            &copy_fn.glib_name,
+            &free_fn.glib_name,
             &analysis.init_function_expression,
             &analysis.clear_function_expression,
             analysis.glib_get_type.as_ref().map(|(f, v)| {
@@ -100,7 +100,15 @@ pub fn generate(w: &mut dyn Write, env: &Env, analysis: &analysis::record::Info)
         write!(w, "impl {} {{", analysis.name)?;
 
         for func_analysis in &analysis.functions {
-            function::generate(w, env, func_analysis, false, false, 1)?;
+            function::generate(
+                w,
+                env,
+                func_analysis,
+                Some(&analysis.specials),
+                false,
+                false,
+                1,
+            )?;
         }
 
         writeln!(w, "}}")?;

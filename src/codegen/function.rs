@@ -5,6 +5,7 @@ use super::{
     },
     parameter::ToParameter,
     return_value::{out_parameters_as_return, ToReturnValue},
+    special_functions,
 };
 use crate::{
     analysis::{
@@ -29,6 +30,7 @@ pub fn generate(
     w: &mut dyn Write,
     env: &Env,
     analysis: &analysis::functions::Info,
+    special_functions: Option<&analysis::special_functions::Infos>,
     in_trait: bool,
     only_declaration: bool,
     indent: usize,
@@ -39,6 +41,12 @@ pub fn generate(
 
     if analysis.is_async_finish(env) {
         return Ok(());
+    }
+
+    if let Some(special_functions) = special_functions {
+        if special_functions::generate(w, env, analysis, special_functions)? {
+            return Ok(());
+        }
     }
 
     let mut commented = false;

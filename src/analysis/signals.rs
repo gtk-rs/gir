@@ -47,9 +47,7 @@ pub fn analyze(
             obj,
             imports,
         );
-        if let Some(info) = info {
-            sns.push(info);
-        }
+        sns.push(info);
     }
 
     sns
@@ -63,7 +61,7 @@ fn analyze_signal(
     configured_signals: &[&config::signals::Signal],
     obj: &GObject,
     imports: &mut Imports,
-) -> Option<Info> {
+) -> Info {
     let mut used_types: Vec<String> = Vec::with_capacity(4);
     let version = configured_signals
         .iter()
@@ -117,5 +115,6 @@ fn analyze_signal(
         deprecated_version,
         doc_hidden,
     };
-    Some(info)
+
+    info
 }
