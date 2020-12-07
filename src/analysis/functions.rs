@@ -69,6 +69,7 @@ pub struct AsyncFuture {
 #[derive(Debug)]
 pub struct Info {
     pub name: String,
+    pub new_name: Option<String>,
     pub glib_name: String,
     pub status: GStatus,
     pub kind: library::FunctionKind,
@@ -93,6 +94,10 @@ pub struct Info {
 }
 
 impl Info {
+    pub fn codegen_name(&self) -> &str {
+        self.new_name.as_ref().unwrap_or(&self.name)
+    }
+
     pub fn is_async_finish(&self, env: &Env) -> bool {
         let has_async_result = self
             .parameters
@@ -471,18 +476,10 @@ fn analyze_callbacks(
     }
 }
 
-fn rename_constructor(name: String) -> String {
-    if name.starts_with("new_from") || name.starts_with("new_with") {
-        name[4..].to_string()
-    } else {
-        name
-    }
-}
-
 fn analyze_function(
     env: &Env,
     obj: &config::gobjects::GObject,
-    name: String,
+    mut name: String,
     status: GStatus,
     func: &library::Function,
     type_tid: library::TypeId,
@@ -537,14 +534,19 @@ fn analyze_function(
         .filter_map(|f| f.version)
         .min()
         .or(func.version);
-    let name = configured_functions
+
+    let new_name = configured_functions
         .iter()
         .filter_map(|f| f.rename.clone())
-        .next()
-        .unwrap_or_else(|| match func.kind {
-            library::FunctionKind::Constructor => rename_constructor(name),
-            _ => name,
-        });
+        .next();
+    if new_name.is_none() {
+        if let library::FunctionKind::Constructor = func.kind {
+            if name.starts_with("new_from") || name.starts_with("new_with") {
+                name = name[4..].to_string();
+            }
+        }
+    };
+
     let version = env.config.filter_version(version);
     let deprecated_version = func.deprecated_version;
     let cfg_condition = configured_functions
@@ -784,6 +786,7 @@ fn analyze_function(
 
     Info {
         name,
+        new_name,
         glib_name: func.c_identifier.as_ref().unwrap().clone(),
         status,
         kind: func.kind,
