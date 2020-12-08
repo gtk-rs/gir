@@ -86,7 +86,7 @@ fn generate_display(
 
     use crate::analysis::out_parameters::Mode;
 
-    let call = generate_call(&func.name, &[], trait_name);
+    let call = generate_call(func.codegen_name(), &[], trait_name);
     let body = if let Mode::Throws(_) = func.outs.mode {
         format!(
             "\

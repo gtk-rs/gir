@@ -635,6 +635,16 @@ pub fn derives(w: &mut dyn Write, derives: &[Derive], indent: usize) -> Result<(
     Ok(())
 }
 
+pub fn doc_alias(w: &mut dyn Write, name: &str, comment_prefix: &str, indent: usize) -> Result<()> {
+    writeln!(
+        w,
+        "{}{}#[doc(alias = \"{}\")]",
+        tabs(indent),
+        comment_prefix,
+        name,
+    )
+}
+
 pub fn doc_hidden(
     w: &mut dyn Write,
     doc_hidden: bool,

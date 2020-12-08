@@ -1,7 +1,8 @@
 use super::{
     function_body_chunk,
     general::{
-        cfg_condition, cfg_deprecated, doc_hidden, not_version_condition, version_condition,
+        cfg_condition, cfg_deprecated, doc_alias, doc_hidden, not_version_condition,
+        version_condition,
     },
     parameter::ToParameter,
     return_value::{out_parameters_as_return, ToReturnValue},
@@ -82,6 +83,9 @@ pub fn generate(
     version_condition(w, env, analysis.version, commented, indent)?;
     not_version_condition(w, analysis.not_version, commented, indent)?;
     doc_hidden(w, analysis.doc_hidden, comment_prefix, indent)?;
+    if !in_trait || only_declaration {
+        doc_alias(w, &analysis.glib_name, comment_prefix, indent)?;
+    }
     writeln!(
         w,
         "{}{}{}{}{}",
@@ -167,7 +171,10 @@ pub fn declaration(env: &Env, analysis: &analysis::functions::Info) -> String {
 
     format!(
         "fn {}{}({}){}",
-        analysis.name, bounds, param_str, return_str,
+        analysis.codegen_name(),
+        bounds,
+        param_str,
+        return_str,
     )
 }
 
