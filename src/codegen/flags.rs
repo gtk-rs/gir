@@ -167,7 +167,7 @@ impl ToGlib for {name} {{
         w,
         "#[doc(hidden)]
 impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
-    fn from_glib(value: {sys_crate_name}::{ffi_name}) -> {name} {{
+    unsafe fn from_glib(value: {sys_crate_name}::{ffi_name}) -> {name} {{
         {assert}{name}::from_bits_truncate(value)
     }}
 }}
