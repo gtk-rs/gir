@@ -117,8 +117,9 @@ fn fill_in(root: &mut Table, env: &Env) {
         let lib_name = ns.package_name.as_ref().unwrap();
 
         let meta = upsert_table(meta, nameutil::lib_name_to_toml(lib_name));
-        meta.get_mut("name")
-            .get_or_insert(&mut Value::String(lib_name.to_owned()));
+        if !meta.contains_key("name") {
+            set_string(meta, "name", lib_name);
+        }
         set_string(meta, "version", env.config.min_cfg_version.to_string());
 
         // Old version API
