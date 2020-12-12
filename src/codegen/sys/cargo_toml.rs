@@ -117,10 +117,11 @@ fn fill_in(root: &mut Table, env: &Env) {
         let lib_name = ns.package_name.as_ref().unwrap();
 
         let meta = upsert_table(meta, nameutil::lib_name_to_toml(lib_name));
-        if !meta.contains_key("name") {
-            set_string(meta, "name", lib_name);
-        }
-        set_string(meta, "version", env.config.min_cfg_version.to_string());
+        // Allow both the name and version of a system dep to be overridden by hand
+        meta.entry("name")
+            .or_insert_with(|| Value::String(lib_name.to_owned()));
+        meta.entry("version")
+            .or_insert_with(|| Value::String(env.config.min_cfg_version.to_string()));
 
         // Old version API
         unset(meta, "feature-versions");
@@ -130,7 +131,10 @@ fn fill_in(root: &mut Table, env: &Env) {
             .filter(|(&v, _)| v > env.config.min_cfg_version)
             .for_each(|(v, lib_version)| {
                 let version_section = upsert_table(meta, &v.to_feature());
-                set_string(version_section, "version", lib_version.to_string());
+                // Allow system-deps version for this feature level to be overridden by hand
+                version_section
+                    .entry("version")
+                    .or_insert_with(|| Value::String(lib_version.to_string()));
             });
     }
 
@@ -186,10 +190,6 @@ fn get_crate_name(config: &Config, root: &Table) -> String {
 }
 
 fn set_string<S: Into<String>>(table: &mut Table, name: &str, new_value: S) {
-    if let Some(v) = table.get_mut(name) {
-        *v = Value::String(new_value.into());
-        return;
-    }
     table.insert(name.into(), Value::String(new_value.into()));
 }
 
