@@ -279,11 +279,9 @@ impl {}Builder {{
     };
     writeln!(
         w,
-        r#"        let ret = {}::Object::new({}::static_type(), &properties)
-            .expect("object new")
-            .downcast::<{}>()
-            .expect("downcast");"#,
-        glib_crate_name, analysis.name, analysis.name
+        r#"        let ret = {}::Object::new::<{}>(&properties)
+            .expect("object new");"#,
+        glib_crate_name, analysis.name
     )?;
     if let Some(code) = analysis.builder_postprocess.as_ref() {
         writeln!(w, "        {{\n            {}\n        }}", code)?;
