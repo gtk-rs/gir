@@ -106,7 +106,7 @@ pub fn define_object_type(
         .collect();
 
     writeln!(w)?;
-    writeln!(w, "{} {{", use_glib_type(env, "glib_wrapper!"))?;
+    writeln!(w, "{} {{", use_glib_type(env, "wrapper!"))?;
     if parents.is_empty() {
         writeln!(
             w,
@@ -198,7 +198,7 @@ fn define_boxed_type_internal(
     derive: &[Derive],
 ) -> Result<()> {
     let sys_crate_name = env.main_sys_crate_name();
-    writeln!(w, "{} {{", use_glib_type(env, "glib_wrapper!"))?;
+    writeln!(w, "{} {{", use_glib_type(env, "wrapper!"))?;
 
     derives(w, derive, 1)?;
     writeln!(
@@ -323,7 +323,7 @@ pub fn define_auto_boxed_type(
 ) -> Result<()> {
     let sys_crate_name = env.main_sys_crate_name();
     writeln!(w)?;
-    writeln!(w, "{} {{", use_glib_type(env, "glib_wrapper!"))?;
+    writeln!(w, "{} {{", use_glib_type(env, "wrapper!"))?;
     derives(w, derive, 1)?;
     writeln!(
         w,
@@ -378,7 +378,7 @@ fn define_shared_type_internal(
     derive: &[Derive],
 ) -> Result<()> {
     let sys_crate_name = env.main_sys_crate_name();
-    writeln!(w, "{} {{", use_glib_type(env, "glib_wrapper!"))?;
+    writeln!(w, "{} {{", use_glib_type(env, "wrapper!"))?;
     derives(w, derive, 1)?;
     writeln!(
         w,

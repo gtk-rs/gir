@@ -84,7 +84,7 @@ impl TranslateFromGlib for analysis::return_value::Info {
                                 "{}.{}.ok_or_else(|| {}(\"{}\"))",
                                 from_glib_xxx.1,
                                 suffix_function,
-                                use_glib_type(env, "glib_bool_error!"),
+                                use_glib_type(env, "bool_error!"),
                                 msg
                             ),
                         )
@@ -93,7 +93,7 @@ impl TranslateFromGlib for analysis::return_value::Info {
                     }
                 }
                 None if self.bool_return_is_error.is_some() => (
-                    use_glib_type(env, "glib_result_from_gboolean!("),
+                    use_glib_type(env, "result_from_gboolean!("),
                     format!(", \"{}\")", self.bool_return_is_error.as_ref().unwrap()),
                 ),
                 None if self.nullable_return_is_error.is_some() => {
@@ -105,7 +105,7 @@ impl TranslateFromGlib for analysis::return_value::Info {
                             format!(
                                 "{}.ok_or_else(|| {}(\"{}\"))",
                                 res.1,
-                                use_glib_type(env, "glib_bool_error!"),
+                                use_glib_type(env, "bool_error!"),
                                 msg
                             ),
                         )
