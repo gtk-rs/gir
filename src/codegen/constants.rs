@@ -1,7 +1,7 @@
 use crate::{
     analysis::imports::Imports,
     codegen::general::{
-        self, cfg_condition, cfg_deprecated, version_condition, version_condition_string,
+        self, cfg_condition, cfg_deprecated, doc_alias, version_condition, version_condition_string,
     },
     env::Env,
     file_saver, library,
@@ -32,6 +32,7 @@ pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>) {
                 cfg_deprecated(w, env, constant.deprecated_version, false, 0)?;
                 cfg_condition(w, &constant.cfg_condition, false, 0)?;
                 version_condition(w, env, constant.version, false, 0)?;
+                doc_alias(w, &constant.glib_name, "", 0)?;
                 writeln!(
                     w,
                     "pub static {name}: once_cell::sync::Lazy<&'static str> = once_cell::sync::Lazy::new(|| \

@@ -3,7 +3,7 @@ use crate::{
     analysis::enums::Info,
     analysis::special_functions::Type,
     codegen::general::{
-        self, cfg_deprecated, derives, version_condition, version_condition_no_doc,
+        self, cfg_deprecated, derives, doc_alias, version_condition, version_condition_no_doc,
         version_condition_string,
     },
     config::gobjects::GObject,
@@ -102,11 +102,13 @@ fn generate_enum(
     }
     writeln!(w, "#[derive(Clone, Copy)]")?;
     writeln!(w, "#[non_exhaustive]")?;
+    doc_alias(w, &enum_.c_type, "", 0)?;
 
     writeln!(w, "pub enum {} {{", enum_.name)?;
     for member in &members {
         cfg_deprecated(w, env, member.deprecated_version, false, 1)?;
         version_condition(w, env, member.version, false, 1)?;
+        doc_alias(w, &member.c_name, "", 1)?;
         writeln!(w, "\t{},", member.name)?;
     }
     writeln!(
