@@ -46,10 +46,20 @@ impl Ident {
                     e
                 })
                 .ok(),
-            None => toml
-                .lookup("name")
-                .and_then(Value::as_str)
-                .map(|s| Ident::Name(s.into())),
+            None => match toml.lookup("name").and_then(Value::as_str) {
+                Some(name) => {
+                    if name.contains(['.', '+', '*'].as_ref()) {
+                        error!(
+                            "Should be `pattern` instead of `name` in {} for `{}`",
+                            what, object_name
+                        );
+                        None
+                    } else {
+                        Some(Ident::Name(name.into()))
+                    }
+                }
+                None => None,
+            },
         }
     }
 

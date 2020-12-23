@@ -184,12 +184,13 @@ pattern = 'prop\d+'
 "#,
         );
         let props = Properties::parse(Some(&toml), "a");
-        assert_eq!(props.len(), 4);
+        assert_eq!(props.len(), 3);
 
         assert_eq!(props.matched("prop1").len(), 2);
         assert_eq!(props.matched("prop2").len(), 2);
         assert_eq!(props.matched("prop3").len(), 1);
-        assert_eq!(props.matched("p1.5").len(), 1);
+        // "p1.5" is an invalid name
+        assert_eq!(props.matched("p1.5").len(), 0);
         assert_eq!(props.matched("none").len(), 0);
     }
 }
