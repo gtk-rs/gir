@@ -55,24 +55,24 @@ library = "GtkSource"
 version = "3.0"
 min_cfg_version = "3.0"
 target_path = "."
-#Path where lib.rs generated (defaults to <target_path>/src)
-#auto_path = "src"
+# Path where lib.rs generated (defaults to <target_path>/src)
+# auto_path = "src"
 work_mode = "sys"
-#If true then build.rs will be splitted into 2 parts:
+# If true then build.rs will be splitted into 2 parts:
 # always generated build_version.rs,
 # and build.rs that generated only if not exists.
 # Defaults to false
 split_build_rs = false
-#Adds extra versions to features
+# Adds extra versions to features
 extra_versions = [
    "3.15",
    "3.17",
 ]
-#Change library version for version
+# Change library version for version
 [[lib_version_overrides]]
 version = "3.16"
 lib_version = "3.16.1"
-#Add extra dependencies to feature
+# Add extra dependencies to feature
 [[feature_dependencies]]
 version = "3.16"
 dependencies = [
@@ -126,8 +126,8 @@ library = "Gtk"
 version = "3.0"
 min_cfg_version = "3.4"
 target_path = "."
-#Path where objects generated (defaults to <target_path>/src/auto)
-#auto_path = "src/auto"
+# Path where objects generated (defaults to <target_path>/src/auto)
+# auto_path = "src/auto"
 work_mode = "normal"
 generate_safety_asserts = true
 deprecate_by_min_version = true
@@ -255,7 +255,7 @@ trust_return_value_nullability = false
         # allow to make parameter immutable
         const = true
         # parameter is calculated as length of string or array and removed from function declaration
-        #  ( for length of return value use "return" )
+        # (for length of return value use "return")
         length_of = "str"
         # change string type. Variants: "utf8", "filename", "os_string"
         string_type = "os_string"
