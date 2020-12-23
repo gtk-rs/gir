@@ -565,12 +565,13 @@ pattern = 'func\d+'
 "#,
         );
         let fns = Functions::parse(Some(&toml), "a");
-        assert_eq!(fns.len(), 4);
+        assert_eq!(fns.len(), 3);
 
         assert_eq!(fns.matched("func1").len(), 2);
         assert_eq!(fns.matched("func2").len(), 2);
         assert_eq!(fns.matched("func3").len(), 1);
-        assert_eq!(fns.matched("f1.5").len(), 1);
+        // "f1.5" is not a valid name
+        assert_eq!(fns.matched("f1.5").len(), 0);
         assert_eq!(fns.matched("none").len(), 0);
     }
 
