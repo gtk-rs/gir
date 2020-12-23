@@ -113,7 +113,7 @@ pub fn analyze(
             None
         } else {
             let ns = if env.namespaces.glib_ns_id == namespaces::MAIN {
-                "BoolError"
+                "crate::BoolError"
             } else {
                 "glib"
             };
