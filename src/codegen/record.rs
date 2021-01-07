@@ -12,7 +12,7 @@ pub fn generate(w: &mut dyn Write, env: &Env, analysis: &analysis::record::Info)
     general::start_comments(w, &env.config)?;
     general::uses(w, env, &analysis.imports)?;
 
-    if analysis.use_boxed_functions {
+    if analysis.is_boxed {
         if let Some((ref glib_get_type, _)) = analysis.glib_get_type {
             general::define_auto_boxed_type(
                 w,
@@ -70,17 +70,6 @@ pub fn generate(w: &mut dyn Write, env: &Env, analysis: &analysis::record::Info)
                     (f.clone(), None)
                 }
             }),
-            &analysis.derives,
-        )?;
-    } else if let Some((ref glib_get_type, _)) = analysis.glib_get_type {
-        general::define_auto_boxed_type(
-            w,
-            env,
-            &analysis.name,
-            &type_.c_type,
-            &analysis.init_function_expression,
-            &analysis.clear_function_expression,
-            glib_get_type,
             &analysis.derives,
         )?;
     } else {

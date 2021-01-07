@@ -17,7 +17,7 @@ use std::ops::Deref;
 pub struct Info {
     pub base: InfoBase,
     pub glib_get_type: Option<(String, Option<Version>)>,
-    pub use_boxed_functions: bool,
+    pub is_boxed: bool,
     pub derives: Derives,
     pub init_function_expression: Option<String>,
     pub clear_function_expression: Option<String>,
@@ -202,7 +202,7 @@ pub fn new(env: &Env, obj: &GObject) -> Option<Info> {
         base,
         glib_get_type,
         derives,
-        use_boxed_functions: obj.use_boxed_functions,
+        is_boxed,
         init_function_expression: obj.init_function_expression.clone(),
         clear_function_expression: obj.clear_function_expression.clone(),
     };
