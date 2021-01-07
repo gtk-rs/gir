@@ -202,6 +202,7 @@ pub struct Function {
     pub disable_length_detect: bool,
     pub doc_trait_name: Option<String>,
     pub no_future: bool,
+    pub unsafe_: bool,
     pub rename: Option<String>,
     pub assertion: Option<SafetyAssertionMode>,
 }
@@ -233,6 +234,7 @@ impl Parse for Function {
                 "pattern",
                 "doc_trait_name",
                 "no_future",
+                "unsafe",
                 "rename",
                 "assertion",
             ],
@@ -286,6 +288,10 @@ impl Parse for Function {
             .lookup("no_future")
             .and_then(Value::as_bool)
             .unwrap_or(false);
+        let unsafe_ = toml
+            .lookup("unsafe")
+            .and_then(Value::as_bool)
+            .unwrap_or(false);
         let rename = toml
             .lookup("rename")
             .and_then(Value::as_str)
@@ -316,6 +322,7 @@ impl Parse for Function {
             disable_length_detect,
             doc_trait_name,
             no_future,
+            unsafe_,
             rename,
             assertion,
         })

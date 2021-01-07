@@ -72,6 +72,7 @@ pub fn generate(
         }
         Visibility::Hidden => return Ok(()),
     }
+    let unsafe_ = if analysis.unsafe_ { "unsafe " } else { "" };
     let declaration = declaration(env, analysis);
     let suffix = if only_declaration { ";" } else { " {" };
 
@@ -88,10 +89,11 @@ pub fn generate(
     }
     writeln!(
         w,
-        "{}{}{}{}{}",
+        "{}{}{}{}{}{}",
         tabs(indent),
         comment_prefix,
         pub_prefix,
+        unsafe_,
         declaration,
         suffix,
     )?;
@@ -324,6 +326,7 @@ pub fn body_chunk(env: &Env, analysis: &analysis::functions::Info) -> Chunk {
         .assertion(analysis.assertion)
         .ret(&analysis.ret)
         .transformations(&analysis.parameters.transformations)
+        .in_unsafe(analysis.unsafe_)
         .outs_mode(analysis.outs.mode);
 
     if analysis.r#async {
