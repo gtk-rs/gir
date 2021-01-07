@@ -104,7 +104,7 @@ impl Info {
             .rust_parameters
             .iter()
             .any(|param| param.typ.full_name(&env.library) == "Gio.AsyncResult");
-        self.name.ends_with("_finish") && has_async_result
+        (self.name.ends_with("_finish") || self.name.ends_with("_finish_utf8")) && has_async_result
     }
 }
 
