@@ -77,7 +77,7 @@ pub fn new(env: &Env, obj: &GObject) -> Option<Info> {
 
     let record: &library::Record = type_.maybe_ref()?;
 
-    let is_boxed = obj.use_boxed_functions || RecordType::of(&record) == RecordType::AutoBoxed;
+    let is_boxed = RecordType::of(&record) == RecordType::AutoBoxed;
 
     let mut imports = Imports::with_defined(&env.library, &name);
 
@@ -159,10 +159,9 @@ pub fn new(env: &Env, obj: &GObject) -> Option<Info> {
 
     // Check if we have to make use of the GType and the generic
     // boxed functions.
-    if obj.use_boxed_functions
-        || !is_shared
-            && (!specials.has_trait(special_functions::Type::Copy)
-                || !specials.has_trait(special_functions::Type::Free))
+    if !is_shared
+        && (!specials.has_trait(special_functions::Type::Copy)
+            || !specials.has_trait(special_functions::Type::Free))
     {
         if let Some((_, get_type_version)) = glib_get_type {
             if get_type_version > version {
