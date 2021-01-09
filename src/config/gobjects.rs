@@ -79,7 +79,6 @@ pub struct GObject {
     pub ref_mode: Option<ref_mode::RefMode>,
     pub must_use: bool,
     pub conversion_type: Option<conversion_type::ConversionType>,
-    pub use_boxed_functions: bool,
     pub generate_display_trait: bool,
     pub trust_return_value_nullability: bool,
     pub manual_traits: Vec<String>,
@@ -113,7 +112,6 @@ impl Default for GObject {
             ref_mode: None,
             must_use: false,
             conversion_type: None,
-            use_boxed_functions: false,
             generate_display_trait: true,
             trust_return_value_nullability: false,
             manual_traits: Vec::default(),
@@ -211,7 +209,6 @@ fn parse_object(
             "trait_name",
             "cfg_condition",
             "must_use",
-            "use_boxed_functions",
             "generate_display_trait",
             "trust_return_value_nullability",
             "manual_traits",
@@ -290,10 +287,6 @@ fn parse_object(
     let child_properties = ChildProperties::parse(toml_object, &name);
     let must_use = toml_object
         .lookup("must_use")
-        .and_then(Value::as_bool)
-        .unwrap_or(false);
-    let use_boxed_functions = toml_object
-        .lookup("use_boxed_functions")
         .and_then(Value::as_bool)
         .unwrap_or(false);
     let generate_display_trait = toml_object
@@ -393,7 +386,6 @@ fn parse_object(
         ref_mode,
         must_use,
         conversion_type,
-        use_boxed_functions,
         generate_display_trait,
         trust_return_value_nullability,
         manual_traits,

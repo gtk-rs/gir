@@ -17,7 +17,7 @@ use std::ops::Deref;
 pub struct Info {
     pub base: InfoBase,
     pub glib_get_type: Option<(String, Option<Version>)>,
-    pub use_boxed_functions: bool,
+    pub is_boxed: bool,
     pub derives: Derives,
     pub init_function_expression: Option<String>,
     pub clear_function_expression: Option<String>,
@@ -77,7 +77,7 @@ pub fn new(env: &Env, obj: &GObject) -> Option<Info> {
 
     let record: &library::Record = type_.maybe_ref()?;
 
-    let is_boxed = obj.use_boxed_functions || RecordType::of(&record) == RecordType::AutoBoxed;
+    let is_boxed = RecordType::of(&record) == RecordType::AutoBoxed;
 
     let mut imports = Imports::with_defined(&env.library, &name);
 
@@ -159,10 +159,9 @@ pub fn new(env: &Env, obj: &GObject) -> Option<Info> {
 
     // Check if we have to make use of the GType and the generic
     // boxed functions.
-    if obj.use_boxed_functions
-        || !is_shared
-            && (!specials.has_trait(special_functions::Type::Copy)
-                || !specials.has_trait(special_functions::Type::Free))
+    if !is_shared
+        && (!specials.has_trait(special_functions::Type::Copy)
+            || !specials.has_trait(special_functions::Type::Free))
     {
         if let Some((_, get_type_version)) = glib_get_type {
             if get_type_version > version {
@@ -202,7 +201,7 @@ pub fn new(env: &Env, obj: &GObject) -> Option<Info> {
         base,
         glib_get_type,
         derives,
-        use_boxed_functions: obj.use_boxed_functions,
+        is_boxed,
         init_function_expression: obj.init_function_expression.clone(),
         clear_function_expression: obj.clear_function_expression.clone(),
     };

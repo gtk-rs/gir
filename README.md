@@ -355,18 +355,10 @@ status = "generate"
     cfg_condition = "feature = \"ser_de\""
 ```
 
-Gir auto-detects copy and free functions by looking up `type_name_copy` and `type_name_free` functions.
-If the relevant functions are not named that way, and the type is defined with `G_DEFINE_BOXED_TYPE`,
-`use_boxed_functions=true` can be used to call `g_boxed_copy` and `g_boxed_free` instead.
-
-```toml
-[[object]]
-name = "GstSdp.SDPMessage"
-status = "generate"
-# generates `copy` and `free` function by `g_boxed_copy` and `g_boxed_free`
-# only works if record has `glib:get-type` defined
-use_boxed_functions = true
-```
+Gir auto-detects `copy`/`free` or `ref`/`unref` function pairs for memory management
+on records. It falls back to generic `g_boxed_copy`/`g_boxed_free` if these are not
+found, based on an existing implementation of `get_type`. Otherwise no record
+implementation can be generated.
 
 Some boxed types are passed as `out` parameters to functions and the caller is
 required to allocate them. For this it is necessary to provide Rust
