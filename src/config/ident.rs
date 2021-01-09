@@ -7,15 +7,14 @@ use toml::Value;
 #[derive(Clone, Debug)]
 pub enum Ident {
     Name(String),
-    Pattern(Regex),
+    Pattern(Box<Regex>),
 }
 
 impl fmt::Display for Ident {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Ident::Name(name) => f.write_str(name),
-            // TODO: maybe store the regex string to display it here?
-            Ident::Pattern(_) => f.write_str("Regex"),
+            Ident::Pattern(regex) => write!(f, "Regex {}", regex),
         }
     }
 }
@@ -37,6 +36,7 @@ impl Ident {
     pub fn parse(toml: &Value, object_name: &str, what: &str) -> Option<Ident> {
         match toml.lookup("pattern").and_then(Value::as_str) {
             Some(s) => Regex::new(&format!("^{}$", s))
+                .map(Box::new)
                 .map(Ident::Pattern)
                 .map_err(|e| {
                     error!(
