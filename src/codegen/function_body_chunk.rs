@@ -60,6 +60,7 @@ pub struct Builder {
     transformations: Vec<Transformation>,
     ret: ReturnValue,
     outs_as_return: bool,
+    in_unsafe: bool,
     outs_mode: Mode,
     assertion: SafetyAssertionMode,
 }
@@ -126,6 +127,10 @@ impl Builder {
 
     pub fn outs_mode(&mut self, mode: Mode) -> &mut Builder {
         self.outs_mode = mode;
+        self
+    }
+    pub fn in_unsafe(&mut self, in_unsafe: bool) -> &mut Builder {
+        self.in_unsafe = in_unsafe;
         self
     }
     pub fn generate(&self, env: &Env, bounds: String, bounds_names: String) -> Chunk {
@@ -205,8 +210,6 @@ impl Builder {
         if let Some(chunk) = ret {
             body.push(chunk);
         }
-
-        let unsafe_ = Chunk::Unsafe(body);
 
         let mut chunks = Vec::new();
 
@@ -321,7 +324,12 @@ impl Builder {
         } else if let Some(ref trampoline) = self.async_trampoline {
             self.add_async_trampoline(env, &mut chunks, trampoline);
         }
-        chunks.push(unsafe_);
+
+        chunks.push(if self.in_unsafe {
+            Chunk::Chunks(body)
+        } else {
+            Chunk::Unsafe(body)
+        });
         Chunk::BlockHalf(chunks)
     }
 

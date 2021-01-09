@@ -86,6 +86,7 @@ pub struct Info {
     pub assertion: SafetyAssertionMode,
     pub doc_hidden: bool,
     pub r#async: bool,
+    pub unsafe_: bool,
     pub trampoline: Option<AsyncTrampoline>,
     pub callbacks: Vec<Trampoline>,
     pub destroys: Vec<Trampoline>,
@@ -556,6 +557,7 @@ fn analyze_function(
     let doc_hidden = configured_functions.iter().any(|f| f.doc_hidden);
     let disable_length_detect = configured_functions.iter().any(|f| f.disable_length_detect);
     let no_future = configured_functions.iter().any(|f| f.no_future);
+    let unsafe_ = configured_functions.iter().any(|f| f.unsafe_);
     let assertion = configured_functions
         .iter()
         .filter_map(|f| f.assertion)
@@ -803,6 +805,7 @@ fn analyze_function(
         assertion,
         doc_hidden,
         r#async,
+        unsafe_,
         trampoline,
         async_future,
         callbacks,

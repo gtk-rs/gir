@@ -259,6 +259,8 @@ trust_return_value_nullability = false
         length_of = "str"
         # change string type. Variants: "utf8", "filename", "os_string"
         string_type = "os_string"
+        # make function unsafe to call (emits `fn unsafe`)
+        unsafe = true
 
         # override for return value
         [object.function.return]
