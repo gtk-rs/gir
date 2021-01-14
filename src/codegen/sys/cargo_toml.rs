@@ -105,7 +105,16 @@ fn fill_in(root: &mut Table, env: &Env) {
             features.insert(version.to_feature(), Value::Array(prev_array));
             Some(version)
         });
-        features.insert("dox".to_string(), Value::Array(Vec::new()));
+        features.insert(
+            "dox".to_string(),
+            Value::Array(
+                env.config
+                    .dox_feature_dependencies
+                    .iter()
+                    .map(|s| Value::String(s.clone()))
+                    .collect(),
+            ),
+        );
     }
 
     {
