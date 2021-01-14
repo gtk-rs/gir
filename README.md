@@ -78,6 +78,10 @@ version = "3.16"
 dependencies = [
   "glib-sys/v3_16"
 ]
+# Add features to the "dox" feature declaration in `Cargo.toml`. So with the following
+# config, it'll generate:
+# dox = ["whatever"]
+dox_feature_dependencies = ["whatever"]
 ```
 
 You can mark some functions that has suffix `_utf8` on Windows:
