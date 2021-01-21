@@ -20,8 +20,9 @@ use std::{
 #[derive(Debug)]
 pub struct Config {
     pub work_mode: WorkMode,
-    pub girs_dir: PathBuf,
-    pub girs_version: String, //Version in girs_dir, detected by git
+    pub girs_dirs: Vec<PathBuf>,
+    // Version in girs_dirs, detected by git
+    pub girs_version: String,
     pub library_name: String,
     pub library_version: String,
     pub target_path: PathBuf,
@@ -52,7 +53,7 @@ impl Config {
     pub fn new<'a, S, W>(
         config_file: S,
         work_mode: W,
-        girs_dir: S,
+        girs_dirs: &[String],
         library_name: S,
         library_version: S,
         target_path: S,
@@ -109,14 +110,20 @@ impl Config {
             }
         };
 
-        let girs_dir: PathBuf = match girs_dir.into() {
-            Some("") | None => {
-                let path = toml.lookup_str("options.girs_dir", "No options.girs_dir")?;
-                config_dir.join(path)
-            }
-            Some(a) => a.into(),
-        };
-        let girs_version = repo_hash(&girs_dir).unwrap_or_else(|| "???".into());
+        let mut girs_dirs: Vec<PathBuf> = girs_dirs
+            .iter()
+            .filter(|x| !x.is_empty())
+            .map(|x| PathBuf::from(&x))
+            .collect();
+        if girs_dirs.is_empty() {
+            let path = toml.lookup_str("options.girs_dir", "No options.girs_dir")?;
+            girs_dirs.push(config_dir.join(path));
+        }
+        let girs_version = girs_dirs
+            .iter()
+            .filter_map(repo_hash)
+            .next()
+            .unwrap_or_else(|| "???".into());
 
         let (library_name, library_version) = match (library_name.into(), library_version.into()) {
             (Some(""), Some("")) | (None, None) => (
@@ -251,7 +258,7 @@ impl Config {
 
         Ok(Config {
             work_mode,
-            girs_dir,
+            girs_dirs,
             girs_version,
             library_name,
             library_version,
