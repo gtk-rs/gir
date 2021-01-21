@@ -50,7 +50,7 @@ You can specify a few other options:
 
 ```toml
 [options]
-girs_dir = "../gir-files"
+girs_directories = ["../gir-files"]
 library = "GtkSource"
 version = "3.0"
 min_cfg_version = "3.0"
@@ -125,7 +125,7 @@ This mode requires you to write another TOML file. [gtk/Gir.toml](https://github
 
 ```toml
 [options]
-girs_dir = "gir-files"
+girs_directories = ["gir-files"]
 library = "Gtk"
 version = "3.0"
 min_cfg_version = "3.4"

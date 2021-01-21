@@ -116,8 +116,14 @@ impl Config {
             .map(|x| PathBuf::from(&x))
             .collect();
         if girs_dirs.is_empty() {
-            let path = toml.lookup_str("options.girs_dir", "No options.girs_dir")?;
-            girs_dirs.push(config_dir.join(path));
+            let dirs =
+                toml.lookup_vec("options.girs_directories", "No options.girs_directories")?;
+            for dir in dirs {
+                let dir = dir.as_str().ok_or_else(|| {
+                    "options.girs_dirs expected to be array of string".to_string()
+                })?;
+                girs_dirs.push(config_dir.join(dir));
+            }
         }
         let girs_version = girs_dirs
             .iter()

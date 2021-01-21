@@ -46,7 +46,7 @@ fn build_config() -> Result<RunKind, String> {
     options.optflag("h", "help", "Show this message");
     options.optmulti(
         "d",
-        "gir-directories",
+        "girs-directories",
         "Directories for GIR files",
         "GIRSPATH",
     );
