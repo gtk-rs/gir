@@ -59,7 +59,7 @@ pub fn generate(w: &mut dyn Write, env: &Env, analysis: &analysis::record::Info)
             env,
             &analysis.name,
             &type_.c_type,
-            &copy_fn.glib_name,
+            &copy_fn,
             &free_fn.glib_name,
             &analysis.init_function_expression,
             &analysis.clear_function_expression,

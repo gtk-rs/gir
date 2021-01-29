@@ -1,5 +1,7 @@
 use crate::{
-    analysis::{self, general::StatusedTypeId, imports::Imports, namespaces},
+    analysis::{
+        self, general::StatusedTypeId, imports::Imports, namespaces, special_functions::TraitInfo,
+    },
     config::{derives::Derive, Config},
     env::Env,
     gir_version::VERSION,
@@ -190,7 +192,7 @@ fn define_boxed_type_internal(
     env: &Env,
     type_name: &str,
     glib_name: &str,
-    copy_fn: &str,
+    copy_fn: &TraitInfo,
     free_fn: &str,
     init_function_expression: &Option<String>,
     clear_function_expression: &Option<String>,
@@ -208,10 +210,15 @@ fn define_boxed_type_internal(
     )?;
     writeln!(w)?;
     writeln!(w, "\tmatch fn {{")?;
+    let mut_ov = if copy_fn.first_parameter_mut {
+        "mut_override(ptr)"
+    } else {
+        "ptr"
+    };
     writeln!(
         w,
-        "\t\tcopy => |ptr| {}::{}(mut_override(ptr)),",
-        sys_crate_name, copy_fn
+        "\t\tcopy => |ptr| {}::{}({}),",
+        sys_crate_name, copy_fn.glib_name, mut_ov
     )?;
     writeln!(w, "\t\tfree => |ptr| {}::{}(ptr),", sys_crate_name, free_fn)?;
 
@@ -240,7 +247,7 @@ pub fn define_boxed_type(
     env: &Env,
     type_name: &str,
     glib_name: &str,
-    copy_fn: &str,
+    copy_fn: &TraitInfo,
     free_fn: &str,
     init_function_expression: &Option<String>,
     clear_function_expression: &Option<String>,
