@@ -72,6 +72,7 @@ fn analyze_signal(
     let doc_hidden = configured_signals.iter().any(|f| f.doc_hidden);
 
     let imports = &mut imports.with_defaults(version, &None);
+    imports.add("glib::translate::*");
 
     let connect_name = format!("connect_{}", nameutil::signal_to_snake(&signal.name));
     let trampoline = trampolines::analyze(
