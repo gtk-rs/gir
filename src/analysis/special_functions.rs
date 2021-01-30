@@ -44,6 +44,7 @@ impl FromStr for Type {
 pub struct TraitInfo {
     pub glib_name: String,
     pub version: Option<Version>,
+    pub first_parameter_mut: bool,
 }
 
 type TraitInfos = BTreeMap<Type, TraitInfo>;
@@ -172,6 +173,7 @@ pub fn extract(functions: &mut Vec<FuncInfo>, parent_type: &LibType, obj: &GObje
                     TraitInfo {
                         glib_name: func.glib_name.clone(),
                         version: func.version,
+                        first_parameter_mut: false,
                     },
                 );
             }
@@ -189,11 +191,18 @@ pub fn extract(functions: &mut Vec<FuncInfo>, parent_type: &LibType, obj: &GObje
                 has_free = true;
             }
 
+            let first_parameter_mut = func
+                .parameters
+                .c_parameters
+                .first()
+                .map_or(false, |p| p.ref_mode == super::ref_mode::RefMode::ByRefMut);
+
             specials.traits.insert(
                 type_,
                 TraitInfo {
                     glib_name: func.glib_name.clone(),
                     version: func.version,
+                    first_parameter_mut,
                 },
             );
         }
@@ -209,6 +218,7 @@ pub fn extract(functions: &mut Vec<FuncInfo>, parent_type: &LibType, obj: &GObje
                 TraitInfo {
                     glib_name,
                     version: func.version,
+                    first_parameter_mut: true,
                 },
             );
         }
