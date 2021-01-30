@@ -113,6 +113,7 @@ fn analyze_property(
     let generate = generate.unwrap_or_else(PropertyGenerateFlags::all);
 
     let imports = &mut imports.with_defaults(prop_version, &None);
+    imports.add("glib::translate::*");
 
     let type_string = rust_type(env, prop.typ);
     let name_for_func = nameutil::signal_to_snake(&name);

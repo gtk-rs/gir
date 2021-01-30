@@ -104,7 +104,6 @@ pub fn run(env: &mut Env) {
 
 fn analyze_enums(env: &mut Env) {
     let mut imports = Imports::new(&env.library);
-    imports.add("glib::translate::*");
 
     for obj in env.config.objects.values() {
         if obj.status.ignored() {
@@ -127,8 +126,6 @@ fn analyze_enums(env: &mut Env) {
 
 fn analyze_flags(env: &mut Env) {
     let mut imports = Imports::new(&env.library);
-    imports.add("glib::translate::*");
-    imports.add("bitflags::bitflags");
 
     for obj in env.config.objects.values() {
         if obj.status.ignored() {

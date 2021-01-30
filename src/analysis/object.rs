@@ -18,7 +18,6 @@ pub struct Info {
     pub generate_trait: bool,
     pub trait_name: String,
     pub has_constructors: bool,
-    pub has_methods: bool,
     pub has_functions: bool,
     pub signals: Vec<signals::Info>,
     pub notify_signals: Vec<signals::Info>,
@@ -61,7 +60,6 @@ pub fn class(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<Info>
     let klass: &library::Class = type_.maybe_ref()?;
 
     let mut imports = Imports::with_defined(&env.library, &name);
-    imports.add("glib::translate::*");
     if obj.generate_display_trait {
         imports.add("std::fmt");
     }
@@ -200,7 +198,6 @@ pub fn class(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<Info>
         generate_trait,
         trait_name,
         has_constructors,
-        has_methods,
         has_functions,
         signals,
         notify_signals,
@@ -227,7 +224,6 @@ pub fn interface(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<I
     let iface: &library::Interface = type_.maybe_ref()?;
 
     let mut imports = Imports::with_defined(&env.library, &name);
-    imports.add("glib::translate::*");
     imports.add("glib::object::IsA");
     if obj.generate_display_trait {
         imports.add("std::fmt");
@@ -292,7 +288,6 @@ pub fn interface(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<I
         concurrency: obj.concurrency,
     };
 
-    let has_methods = !base.methods().is_empty();
     let has_functions = !base.functions().is_empty();
 
     let info = Info {
@@ -305,7 +300,6 @@ pub fn interface(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<I
         final_type: false,
         generate_trait: true,
         trait_name,
-        has_methods,
         has_functions,
         signals,
         notify_signals,

@@ -32,6 +32,8 @@ use std::{
     collections::{HashMap, HashSet},
 };
 
+use super::special_functions;
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Visibility {
     Public,
@@ -759,22 +761,24 @@ fn analyze_function(
         {
             imports.add("std::boxed::Box as Box_");
         }
-        if !commented {
-            for transformation in &mut parameters.transformations {
-                if let Some(to_glib_extra) = to_glib_extras.get(&transformation.ind_c) {
-                    transformation
-                        .transformation_type
-                        .set_to_glib_extra(to_glib_extra);
-                }
-            }
 
-            imports.add_used_types(&used_types);
-            if ret.base_tid.is_some() {
-                imports.add("glib::object::Cast");
+        for transformation in &mut parameters.transformations {
+            if let Some(to_glib_extra) = to_glib_extras.get(&transformation.ind_c) {
+                transformation
+                    .transformation_type
+                    .set_to_glib_extra(to_glib_extra);
             }
-            imports.add("glib::translate::*");
-            bounds.update_imports(imports);
         }
+
+        imports.add_used_types(&used_types);
+        if ret.base_tid.is_some() {
+            imports.add("glib::object::Cast");
+        }
+
+        if func.name.parse::<special_functions::Type>().is_err() {
+            imports.add("glib::translate::*");
+        }
+        bounds.update_imports(imports);
     }
 
     let visibility = if commented {
