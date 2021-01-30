@@ -46,6 +46,8 @@ pub fn new(env: &Env, obj: &GObject, imports: &mut Imports) -> Option<Info> {
     imports.add_defined(&format!("crate::{}", name));
 
     let imports = &mut imports.with_defaults(flags.version, &None);
+    imports.add("glib::translate::*");
+    imports.add("bitflags::bitflags");
 
     let has_get_type = flags.glib_get_type.is_some();
     if has_get_type {

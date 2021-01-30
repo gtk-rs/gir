@@ -46,6 +46,7 @@ pub fn new(env: &Env, obj: &GObject, imports: &mut Imports) -> Option<Info> {
     imports.add_defined(&format!("crate::{}", name));
 
     let imports = &mut imports.with_defaults(enumeration.version, &None);
+    imports.add("glib::translate::*");
 
     let has_get_quark = enumeration.error_domain.is_some();
     if has_get_quark {
