@@ -45,6 +45,8 @@ pub fn new(env: &Env, obj: &GObject, imports: &mut Imports) -> Option<Info> {
     // Mark the type as available within the bitfield namespace:
     imports.add_defined(&format!("crate::{}", name));
 
+    let imports = &mut imports.with_defaults(flags.version, &None);
+
     let has_get_type = flags.glib_get_type.is_some();
     if has_get_type {
         imports.add("glib::Type");
