@@ -233,10 +233,94 @@ pub trait DerivesCopy {
     fn derives_copy(&self, lib: &Library) -> bool;
 }
 
-impl<T: IsIncomplete> DerivesCopy for T {
+impl DerivesCopy for Fundamental {
     fn derives_copy(&self, lib: &Library) -> bool {
-        // Copy is derived for all complete types.
         !self.is_incomplete(lib)
+            && !matches!(
+                self,
+                Fundamental::Pointer
+                    | Fundamental::VarArgs
+                    | Fundamental::Utf8
+                    | Fundamental::Filename
+                    | Fundamental::IntPtr
+                    | Fundamental::UIntPtr
+                    | Fundamental::OsString
+                    | Fundamental::Unsupported
+            )
+    }
+}
+
+impl DerivesCopy for Alias {
+    fn derives_copy(&self, lib: &Library) -> bool {
+        !self.is_incomplete(lib) && !self.is_ptr()
+    }
+}
+
+impl DerivesCopy for Field {
+    fn derives_copy(&self, lib: &Library) -> bool {
+        !self.is_incomplete(lib) && !self.is_ptr()
+    }
+}
+
+impl<'a> DerivesCopy for &'a [Field] {
+    fn derives_copy(&self, lib: &Library) -> bool {
+        !self.is_incomplete(lib) && !self.iter().any(|field| field.is_ptr())
+    }
+}
+
+impl DerivesCopy for Class {
+    fn derives_copy(&self, lib: &Library) -> bool {
+        !self.is_incomplete(lib) && self.fields.as_slice().derives_copy(lib)
+    }
+}
+
+impl DerivesCopy for Record {
+    fn derives_copy(&self, lib: &Library) -> bool {
+        !self.is_incomplete(lib) && self.fields.as_slice().derives_copy(lib)
+    }
+}
+
+impl DerivesCopy for Union {
+    fn derives_copy(&self, lib: &Library) -> bool {
+        !self.is_incomplete(lib) && self.fields.as_slice().derives_copy(lib)
+    }
+}
+
+impl DerivesCopy for Function {
+    fn derives_copy(&self, lib: &Library) -> bool {
+        !self.is_incomplete(lib)
+    }
+}
+
+impl DerivesCopy for TypeId {
+    fn derives_copy(&self, lib: &Library) -> bool {
+        !self.is_incomplete(lib) && lib.type_(*self).derives_copy(lib)
+    }
+}
+
+impl DerivesCopy for Type {
+    fn derives_copy(&self, lib: &Library) -> bool {
+        if self.is_incomplete(lib) {
+            return false;
+        }
+
+        match *self {
+            Type::Fundamental(ref fundamental) => fundamental.derives_copy(lib),
+            Type::Alias(ref alias) => alias.derives_copy(lib),
+            Type::FixedArray(tid, ..) => tid.derives_copy(lib),
+            Type::Class(ref klass) => klass.derives_copy(lib),
+            Type::Record(ref record) => record.derives_copy(lib),
+            Type::Union(ref union) => union.derives_copy(lib),
+            Type::Function(ref function) => function.derives_copy(lib),
+            Type::Enumeration(..) | Type::Bitfield(..) | Type::Interface(..) => true,
+            Type::Custom(..)
+            | Type::Array(..)
+            | Type::CArray(..)
+            | Type::PtrArray(..)
+            | Type::HashTable(..)
+            | Type::List(..)
+            | Type::SList(..) => false,
+        }
     }
 }
 

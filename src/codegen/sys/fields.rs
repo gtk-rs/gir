@@ -13,6 +13,7 @@ pub struct Fields {
     pub external: bool,
     /// Reason for truncating the representation, if any.
     pub truncated: Option<String>,
+    derives_clone: bool,
     derives_copy: bool,
     /// "struct" or "union"
     pub kind: &'static str,
@@ -38,6 +39,8 @@ impl Fields {
         let mut traits = Vec::new();
         if self.derives_copy {
             traits.push("Copy");
+        }
+        if self.derives_clone {
             traits.push("Clone");
         }
         traits
@@ -58,11 +61,13 @@ impl FieldInfo {
 pub fn from_record(env: &Env, record: &Record) -> Fields {
     let (fields, truncated) = analyze_fields(env, false, &record.fields);
     let derives_copy = truncated.is_none() && record.derives_copy(&env.library);
+    let derives_clone = truncated.is_none() && !record.is_incomplete(&env.library);
     Fields {
         name: record.c_type.clone(),
         external: record.is_external(&env.library),
         truncated,
         derives_copy,
+        derives_clone,
         kind: "struct",
         cfg_condition: get_gobject_cfg_condition(env, &record.name),
         fields,
@@ -72,11 +77,13 @@ pub fn from_record(env: &Env, record: &Record) -> Fields {
 pub fn from_class(env: &Env, klass: &Class) -> Fields {
     let (fields, truncated) = analyze_fields(env, false, &klass.fields);
     let derives_copy = truncated.is_none() && klass.derives_copy(&env.library);
+    let derives_clone = truncated.is_none() && !klass.is_incomplete(&env.library);
     Fields {
         name: klass.c_type.clone(),
         external: klass.is_external(&env.library),
         truncated,
         derives_copy,
+        derives_clone,
         kind: "struct",
         cfg_condition: get_gobject_cfg_condition(env, &klass.name),
         fields,
@@ -86,11 +93,13 @@ pub fn from_class(env: &Env, klass: &Class) -> Fields {
 pub fn from_union(env: &Env, union: &Union) -> Fields {
     let (fields, truncated) = analyze_fields(env, true, &union.fields);
     let derives_copy = truncated.is_none() && union.derives_copy(&env.library);
+    let derives_clone = truncated.is_none() && !union.is_incomplete(&env.library);
     Fields {
         name: union.c_type.as_ref().unwrap().clone(),
         external: union.is_external(&env.library),
         truncated,
         derives_copy,
+        derives_clone,
         kind: "union",
         cfg_condition: None,
         fields,
