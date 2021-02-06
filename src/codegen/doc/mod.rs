@@ -167,6 +167,7 @@ fn create_object_doc(w: &mut dyn Write, env: &Env, info: &analysis::object::Info
     let functions: &[Function];
     let signals: &[Signal];
     let properties: &[Property];
+    let is_abstract;
 
     let obj = env
         .config
@@ -181,6 +182,7 @@ fn create_object_doc(w: &mut dyn Write, env: &Env, info: &analysis::object::Info
             functions = &cl.functions;
             signals = &cl.signals;
             properties = &cl.properties;
+            is_abstract = env.library.type_(info.type_id).is_abstract();
         }
         Type::Interface(ref iface) => {
             doc = iface.doc.as_ref();
@@ -188,6 +190,7 @@ fn create_object_doc(w: &mut dyn Write, env: &Env, info: &analysis::object::Info
             functions = &iface.functions;
             signals = &iface.signals;
             properties = &iface.properties;
+            is_abstract = false;
         }
         _ => unreachable!(),
     }
@@ -207,6 +210,12 @@ fn create_object_doc(w: &mut dyn Write, env: &Env, info: &analysis::object::Info
             writeln!(w, "{}", reformat_doc(doc, &symbols))?;
         } else {
             writeln!(w)?;
+        }
+        if is_abstract {
+            writeln!(
+                w,
+                "\nThis is an Abstract Base Class, you cannot instantiate it."
+            )?;
         }
         if let Some(version) = info.version {
             writeln!(w, "\nFeature: `{}`", version.to_feature())?;
