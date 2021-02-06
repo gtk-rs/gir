@@ -69,4 +69,3 @@ features = ["dox"]
 
 [dev-dependencies]
 shell-words = "1.0.0"
-tempfile = "3"

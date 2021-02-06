@@ -83,14 +83,13 @@ fn fill_in(root: &mut Table, env: &Env) {
 
     {
         let build_deps = upsert_table(root, "build-dependencies");
+        set_string(build_deps, "cc", "1.0");
         set_string(build_deps, "system-deps", "3");
     }
 
     {
         let dev_deps = upsert_table(root, "dev-dependencies");
         set_string(dev_deps, "shell-words", "1.0.0");
-        set_string(dev_deps, "tempfile", "3");
-        unset(dev_deps, "tempdir");
     }
 
     {
@@ -115,6 +114,7 @@ fn fill_in(root: &mut Table, env: &Env) {
                     .collect(),
             ),
         );
+        features.insert("abi-tests".to_string(), Value::Array(Vec::new()));
     }
 
     {

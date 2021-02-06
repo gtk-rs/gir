@@ -13,9 +13,9 @@ mod tests;
 pub fn generate(env: &Env) {
     generate_single_version_file(env);
     lib_::generate(env);
-    build::generate(env);
     let crate_name = cargo_toml::generate(env);
-    tests::generate(env, &crate_name);
+    let has_abi_tests = tests::generate(env, &crate_name);
+    build::generate(env, has_abi_tests);
 }
 
 pub fn collect_versions(env: &Env) -> BTreeMap<Version, Version> {
