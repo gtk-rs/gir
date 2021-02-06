@@ -317,6 +317,8 @@ impl Compiler {
     pub fn new() -> Result<Compiler, Box<dyn Error>> {
         let mut args = get_var("CC", "cc")?;
         args.push("-Wno-deprecated-declarations".to_owned());
+        // For _Generic
+        args.push("-std=c11".to_owned());
         // For %z support in printf when using MinGW.
         args.push("-D__USE_MINGW_ANSI_STDIO".to_owned());
         args.extend(get_var("CFLAGS", "")?);
