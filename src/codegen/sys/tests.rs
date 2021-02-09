@@ -411,7 +411,7 @@ fn cross_validate_constants_with_c() {
     let mut c_constants: Vec<(String, String)> = Vec::new();
 
     for l in get_c_output("constant").unwrap().lines() {
-        let mut words = l.trim().split(";");
+        let mut words = l.trim().split(';');
         let name = words.next().expect("Failed to parse name").to_owned();
         let value = words
             .next()
@@ -451,7 +451,7 @@ fn cross_validate_layout_with_c() {
     let mut c_layouts = Vec::new();
 
     for l in get_c_output("layout").unwrap().lines() {
-        let mut words = l.trim().split(";");
+        let mut words = l.trim().split(';');
         let name = words.next().expect("Failed to parse name").to_owned();
         let size = words
             .next()
