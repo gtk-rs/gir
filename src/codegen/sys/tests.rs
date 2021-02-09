@@ -276,7 +276,6 @@ fn generate_constant_c(
     _Generic((CONSTANT_NAME), \
         char *: "%s", \
         const char *: "%s", \
-        char: "%c", \
         signed char: "%hhd", \
         unsigned char: "%hhu", \
         short int: "%hd", \
