@@ -108,7 +108,10 @@ fn generate_enum(
     for member in &members {
         cfg_deprecated(w, env, member.deprecated_version, false, 1)?;
         version_condition(w, env, member.version, false, 1)?;
-        doc_alias(w, &member.c_name, "", 1)?;
+        // Don't generate a doc_alias if the C name is the same as the Rust one
+        if member.c_name != member.name {
+            doc_alias(w, &member.c_name, "", 1)?;
+        }
         writeln!(w, "\t{},", member.name)?;
     }
     writeln!(
