@@ -98,7 +98,7 @@ impl Bounds {
                     let finish_func_name = finish_function_name(func_name);
                     if let Some(function) = find_function(env, &finish_func_name) {
                         // FIXME: This should work completely based on the analysis of the finish() function
-                        // but that a) happens afterwards and b) is not accessable from here either.
+                        // but that a) happens afterwards and b) is not accessible from here either.
                         let mut out_parameters =
                             find_out_parameters(env, function, configured_functions);
                         if use_function_return_for_result(
@@ -321,7 +321,7 @@ fn find_out_parameters(
         })
         .map(|(_, param)| {
             // FIXME: This should work completely based on the analysis of the finish() function
-            // but that a) happens afterwards and b) is not accessable from here either.
+            // but that a) happens afterwards and b) is not accessible from here either.
             let nullable = configured_functions
                 .iter()
                 .find_map(|f| f.parameters.iter().find_map(|p| p.nullable))
