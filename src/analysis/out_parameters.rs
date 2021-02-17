@@ -80,9 +80,11 @@ pub fn analyze(
         if can_as_return(env, par) {
             let mut par = par.clone();
             par.name = nameutil::mangle_keywords(&*par.name).into_owned();
-            //TODO: temporary solution for string_type override
+            // FIXME: temporary solution for string_type, nullable override. This should completely
+            // work based on the analyzed parameters instead of the library parameters.
             if let Some(c_par) = func_c_params.iter().find(|c_par| c_par.name == par.name) {
                 par.typ = c_par.typ;
+                par.nullable = c_par.nullable;
             }
             info.params.push(par);
         } else {
