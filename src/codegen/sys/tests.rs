@@ -27,12 +27,12 @@ struct CConstant {
     value: String,
 }
 
-pub fn generate(env: &Env, crate_name: &str) {
+pub fn generate(env: &Env, crate_name: &str) -> bool {
     let ctypes = prepare_ctypes(env);
     let cconsts = prepare_cconsts(env);
 
     if ctypes.is_empty() && cconsts.is_empty() {
-        return;
+        return false;
     }
 
     let tests = env.config.target_path.join("tests");
@@ -58,6 +58,8 @@ pub fn generate(env: &Env, crate_name: &str) {
     save_to_file(&abi_rs, env.config.make_backup, |w| {
         generate_abi_rs(env, &abi_rs, w, crate_name, &ctypes, &cconsts)
     });
+
+    true
 }
 
 fn prepare_ctypes(env: &Env) -> Vec<CType> {
@@ -213,20 +215,45 @@ fn generate_layout_c(
     writeln!(w)?;
     writeln!(w, "#include \"manual.h\"")?;
     writeln!(w, "#include <stdalign.h>")?;
-    writeln!(w, "#include <stdio.h>")?;
-    writeln!(w)?;
-    writeln!(w, "{}", r"int main() {")?;
+    writeln!(
+        w,
+        "{}",
+        r####"
+typedef struct {
+    const char *name;
+    size_t size;
+    size_t alignent;
+} Layout;
 
-    for ctype in ctypes {
-        writeln!(
+const Layout LAYOUTS[] = {"####
+    )?;
+
+    let n = ctypes.len();
+    for (i, ctype) in ctypes.iter().enumerate() {
+        write!(w, "{}", "    { ")?;
+        write!(
             w,
-            "    printf(\"%s;%zu;%zu\\n\", \"{ctype}\", sizeof({ctype}), alignof({ctype}));",
+            "\"{ctype}\", sizeof({ctype}), alignof({ctype})",
             ctype = ctype.name
         )?;
+
+        if i == n - 1 {
+            writeln!(w, "{}", " }")?;
+        } else {
+            writeln!(w, "{}", " },")?;
+        }
     }
 
-    writeln!(w, "    return 0;")?;
-    writeln!(w, "{}", r"}")
+    writeln!(
+        w,
+        "{}",
+        r####"};
+
+const Layout *c_layouts(size_t *n) {
+    *n = sizeof(LAYOUTS) / sizeof(Layout);
+    return LAYOUTS;
+}"####
+    )
 }
 
 #[allow(clippy::write_literal)]
@@ -240,42 +267,71 @@ fn generate_constant_c(
     general::start_comments(w, &env.config)?;
     writeln!(w)?;
     writeln!(w, "#include \"manual.h\"")?;
-    writeln!(w, "#include <stdio.h>")?;
+    writeln!(w, "#include <glib.h>")?;
     writeln!(
         w,
         "{}",
         r####"
-#define PRINT_CONSTANT(CONSTANT_NAME) \
-    printf("%s;", #CONSTANT_NAME); \
-    printf(_Generic((CONSTANT_NAME), \
-                    char *: "%s", \
-                    const char *: "%s", \
-                    char: "%c", \
-                    signed char: "%hhd", \
-                    unsigned char: "%hhu", \
-                    short int: "%hd", \
-                    unsigned short int: "%hu", \
-                    int: "%d", \
-                    unsigned int: "%u", \
-                    long: "%ld", \
-                    unsigned long: "%lu", \
-                    long long: "%lld", \
-                    unsigned long long: "%llu", \
-                    double: "%f", \
-                    long double: "%ld"), \
-           CONSTANT_NAME); \
-    printf("\n");
-"####
+#define FORMAT_CONSTANT(CONSTANT_NAME) \
+    _Generic((CONSTANT_NAME), \
+        char *: "%s", \
+        const char *: "%s", \
+        signed char: "%hhd", \
+        unsigned char: "%hhu", \
+        short int: "%hd", \
+        unsigned short int: "%hu", \
+        int: "%d", \
+        unsigned int: "%u", \
+        long: "%ld", \
+        unsigned long: "%lu", \
+        long long: "%lld", \
+        unsigned long long: "%llu", \
+        double: "%f", \
+        long double: "%ld")
+
+typedef struct {
+    char *name;
+    char *value;
+} Constant;
+
+Constant *c_constants(size_t *n) {"####
     )?;
+    writeln!(w, "    *n = {};", cconsts.len())?;
 
-    writeln!(w, "{}", r"int main() {")?;
+    // We are leaking this, but for a test it does not matter
+    writeln!(w, "{}", "    Constant *res = g_new0(Constant, *n);")?;
 
-    for cconst in cconsts {
-        writeln!(w, "    PRINT_CONSTANT({name});", name = cconst.name,)?;
+    for (i, cconst) in cconsts.iter().enumerate() {
+        writeln!(
+            w,
+            "    res[{index}].name = g_strdup(\"{name}\");",
+            index = i,
+            name = cconst.name
+        )?;
+        writeln!(
+            w,
+            "    res[{index}].value = g_strdup_printf(FORMAT_CONSTANT({name}), {name});",
+            index = i,
+            name = cconst.name,
+        )?;
     }
 
-    writeln!(w, "    return 0;")?;
-    writeln!(w, "{}", r"}")
+    writeln!(w, "{}", "    return res;")?;
+    writeln!(w, "{}", "}")?;
+
+    writeln!(
+        w,
+        "{}",
+        r####"
+void c_constants_free(Constant *constants, size_t n) {
+    size_t i;
+    for (i = 0; i < n; i++) {
+        g_free(constants[i].name);
+        g_free(constants[i].value);
+    }
+    g_free(constants);
+}"####
+    )
 }
 
 #[allow(clippy::write_literal)]
@@ -287,96 +343,84 @@ fn generate_abi_rs(
     ctypes: &[CType],
     cconsts: &[CConstant],
 ) -> io::Result<()> {
-    let ns = env.library.namespace(MAIN_NAMESPACE);
-    let package_name = ns.package_name.as_ref().expect("Missing package name");
-
     info!("Generating file {:?}", path);
     general::start_comments(w, &env.config)?;
     writeln!(w)?;
 
-    writeln!(w, "use std::env;")?;
-    writeln!(w, "use std::error::Error;")?;
-    writeln!(w, "use std::ffi::OsString;")?;
-    writeln!(w, "use std::path::Path;")?;
     writeln!(w, "use std::mem::{{align_of, size_of}};")?;
-    writeln!(w, "use std::process::Command;")?;
     writeln!(w, "use std::str;")?;
-    writeln!(w, "use tempfile::Builder;")?;
-    writeln!(w, "use {}::*;\n", crate_name)?;
-    writeln!(w, "static PACKAGES: &[&str] = &[\"{}\"];", package_name)?;
+    writeln!(w, "use {}::*;", crate_name)?;
     writeln!(
         w,
         "{}",
         r####"
-#[derive(Clone, Debug)]
-struct Compiler {
-    pub args: Vec<String>,
-}
-
-impl Compiler {
-    pub fn new() -> Result<Compiler, Box<dyn Error>> {
-        let mut args = get_var("CC", "cc")?;
-        args.push("-Wno-deprecated-declarations".to_owned());
-        // For _Generic
-        args.push("-std=c11".to_owned());
-        // For %z support in printf when using MinGW.
-        args.push("-D__USE_MINGW_ANSI_STDIO".to_owned());
-        args.extend(get_var("CFLAGS", "")?);
-        args.extend(get_var("CPPFLAGS", "")?);
-        args.extend(pkg_config_cflags(PACKAGES)?);
-        Ok(Compiler { args })
+mod c_abi {
+    #[derive(Copy, Clone, Debug, Eq, PartialEq)]
+    #[repr(C)]
+    pub struct CConstant {
+        pub name: *const libc::c_char,
+        pub value: *const libc::c_char,
     }
 
-    pub fn compile(&self, src: &Path, out: &Path) -> Result<(), Box<dyn Error>> {
-        let mut cmd = self.to_command();
-        cmd.arg(src);
-        cmd.arg("-o");
-        cmd.arg(out);
-        let status = cmd.spawn()?.wait()?;
-        if !status.success() {
-            return Err(format!("compilation command {:?} failed, {}", &cmd, status).into());
+    #[derive(Copy, Clone, Debug, Eq, PartialEq)]
+    #[repr(C)]
+    pub struct CLayout {
+        pub name: *const libc::c_char,
+        pub size: usize,
+        pub alignment: usize,
+    }
+
+    extern "C" {
+        pub fn c_constants(n: *mut usize) -> *mut CConstant;
+        pub fn c_constants_free(c: *mut CConstant, n: usize);
+        pub fn c_layouts(n: *mut usize) -> *const CLayout;
+    }
+}
+
+fn c_constants() -> Vec<(String, String)> {
+    let mut res: Vec<(String, String)> = Vec::new();
+
+    unsafe {
+        let mut n = 0;
+        let p = c_abi::c_constants(&mut n);
+        let constants = std::slice::from_raw_parts(p, n);
+
+        for c in constants {
+            let c_name = std::ffi::CStr::from_ptr(c.name);
+            let c_value = std::ffi::CStr::from_ptr(c.value);
+            res.push((c_name.to_str().unwrap().to_owned(), c_value.to_str().unwrap().to_owned()));
         }
-        Ok(())
+
+        c_abi::c_constants_free(p, n);
     }
 
-    fn to_command(&self) -> Command {
-        let mut cmd = Command::new(&self.args[0]);
-        cmd.args(&self.args[1..]);
-        cmd
-    }
+    res
 }
-
-fn get_var(name: &str, default: &str) -> Result<Vec<String>, Box<dyn Error>> {
-    match env::var(name) {
-        Ok(value) => Ok(shell_words::split(&value)?),
-        Err(env::VarError::NotPresent) => Ok(shell_words::split(default)?),
-        Err(err) => Err(format!("{} {}", name, err).into()),
-    }
-}
-
-fn pkg_config_cflags(packages: &[&str]) -> Result<Vec<String>, Box<dyn Error>> {
-    if packages.is_empty() {
-        return Ok(Vec::new());
-    }
-    let pkg_config = env::var_os("PKG_CONFIG")
-        .unwrap_or_else(|| OsString::from("pkg-config"));
-    let mut cmd = Command::new(pkg_config);
-    cmd.arg("--cflags");
-    cmd.args(packages);
-    let out = cmd.output()?;
-    if !out.status.success() {
-        return Err(format!("command {:?} returned {}",
-                           &cmd, out.status).into());
-    }
-    let stdout = str::from_utf8(&out.stdout)?;
-    Ok(shell_words::split(stdout.trim())?)
-}
-
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
 struct Layout {
     size: usize,
     alignment: usize,
+}
+
+fn c_layouts() -> Vec<(String, Layout)> {
+    let mut res = Vec::new();
+
+    unsafe {
+        let mut n = 0;
+        let p = c_abi::c_layouts(&mut n);
+        let layouts = std::slice::from_raw_parts(p, n);
+
+        for l in layouts {
+            let c_name = std::ffi::CStr::from_ptr(l.name);
+            let name = c_name.to_str().unwrap().to_owned();
+            let size = l.size;
+            let alignment = l.alignment;
+            res.push((name, Layout { size, alignment }));
+        }
+    }
+
+    res
 }
 
 #[derive(Copy, Clone, Debug, Default, Eq, PartialEq)]
@@ -408,22 +452,10 @@ impl Results {
 
 #[test]
 fn cross_validate_constants_with_c() {
-    let mut c_constants: Vec<(String, String)> = Vec::new();
-
-    for l in get_c_output("constant").unwrap().lines() {
-        let mut words = l.trim().split(';');
-        let name = words.next().expect("Failed to parse name").to_owned();
-        let value = words
-            .next()
-            .and_then(|s| s.parse().ok())
-            .expect("Failed to parse value");
-        c_constants.push((name, value));
-    }
-
     let mut results = Results::default();
 
     for ((rust_name, rust_value), (c_name, c_value)) in
-        RUST_CONSTANTS.iter().zip(c_constants.iter())
+        RUST_CONSTANTS.iter().zip(c_constants().iter())
     {
         if rust_name != c_name {
             results.record_failed();
@@ -448,26 +480,10 @@ fn cross_validate_constants_with_c() {
 
 #[test]
 fn cross_validate_layout_with_c() {
-    let mut c_layouts = Vec::new();
-
-    for l in get_c_output("layout").unwrap().lines() {
-        let mut words = l.trim().split(';');
-        let name = words.next().expect("Failed to parse name").to_owned();
-        let size = words
-            .next()
-            .and_then(|s| s.parse().ok())
-            .expect("Failed to parse size");
-        let alignment = words
-            .next()
-            .and_then(|s| s.parse().ok())
-            .expect("Failed to parse alignment");
-        c_layouts.push((name, Layout { size, alignment }));
-    }
-
     let mut results = Results::default();
 
     for ((rust_name, rust_layout), (c_name, c_layout)) in
-        RUST_LAYOUTS.iter().zip(c_layouts.iter())
+        RUST_LAYOUTS.iter().zip(c_layouts().iter())
     {
         if rust_name != c_name {
             results.record_failed();
@@ -488,23 +504,6 @@ fn cross_validate_layout_with_c() {
     }
 
     results.expect_total_success();
-}
-
-fn get_c_output(name: &str) -> Result<String, Box<dyn Error>> {
-    let tmpdir = Builder::new().prefix("abi").tempdir()?;
-    let exe = tmpdir.path().join(name);
-    let c_file = Path::new("tests").join(name).with_extension("c");
-
-    let cc = Compiler::new().expect("configured compiler");
-    cc.compile(&c_file, &exe)?;
-
-    let mut abi_cmd = Command::new(exe);
-    let output = abi_cmd.output()?;
-    if !output.status.success() {
-        return Err(format!("command {:?} failed, {:?}", &abi_cmd, &output).into());
-    }
-
-    Ok(String::from_utf8(output.stdout)?)
 }
 
 const RUST_LAYOUTS: &[(&str, Layout)] = &["####
