@@ -126,7 +126,7 @@ pub fn generate(
 
             writeln!(
                 w,
-                "{}let {} = unsafe {{ glib::Object::from_glib_borrow(self.as_ptr() as *mut {}).emit(\"{}\", &[{}]).unwrap() }};",
+                "{}let {} = unsafe {{ glib::Object::from_glib_borrow(self.as_ptr() as *mut {}).emit_by_name(\"{}\", &[{}]).unwrap() }};",
                 tabs(indent + 1),
                 if trampoline.ret.typ != Default::default() {
                     "res"
