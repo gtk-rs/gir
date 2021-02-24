@@ -294,15 +294,19 @@ fn generate_abi_rs(
     general::start_comments(w, &env.config)?;
     writeln!(w)?;
 
+    if !ctypes.is_empty() {
+        writeln!(w, "use {}::*;", crate_name)?;
+        writeln!(w, "use std::mem::{{align_of, size_of}};")?;
+    }
+
     writeln!(w, "use std::env;")?;
     writeln!(w, "use std::error::Error;")?;
     writeln!(w, "use std::ffi::OsString;")?;
     writeln!(w, "use std::path::Path;")?;
-    writeln!(w, "use std::mem::{{align_of, size_of}};")?;
     writeln!(w, "use std::process::Command;")?;
     writeln!(w, "use std::str;")?;
     writeln!(w, "use tempfile::Builder;")?;
-    writeln!(w, "use {}::*;\n", crate_name)?;
+    writeln!(w)?;
     writeln!(w, "static PACKAGES: &[&str] = &[\"{}\"];", package_name)?;
     writeln!(
         w,
