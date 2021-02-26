@@ -191,7 +191,11 @@ fn function_type_string(
 
 fn declaration(analysis: &analysis::signals::Info, function_type: &Option<String>) -> String {
     let bounds = bounds(function_type);
-    let param_str = "&self, f: F";
+    let param_str = if !analysis.is_detailed {
+        "&self, f: F"
+    } else {
+        "&self, detail: Option<&str>, f: F"
+    };
     let return_str = " -> SignalHandlerId";
     format!(
         "fn {}<{}>({}){}",
@@ -212,7 +216,8 @@ fn body(analysis: &analysis::signals::Info, in_trait: bool) -> Chunk {
     builder
         .signal_name(&analysis.signal_name)
         .trampoline_name(&analysis.trampoline.as_ref().unwrap().name)
-        .in_trait(in_trait);
+        .in_trait(in_trait)
+        .is_detailed(analysis.is_detailed);
 
     builder.generate()
 }

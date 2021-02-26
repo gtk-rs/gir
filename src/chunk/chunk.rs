@@ -58,6 +58,7 @@ pub enum Chunk {
         signal: String,
         trampoline: String,
         in_trait: bool,
+        is_detailed: bool,
     },
     Name(String),
     ExternCFunc {

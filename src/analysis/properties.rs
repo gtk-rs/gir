@@ -270,6 +270,7 @@ fn analyze_property(
                     destroy: None,
                 },
                 is_action: false,
+                is_detailed: false, // well, technically this *is* an instance of a detailed signal, but we "pre-detailed" it
                 version: prop_version,
                 deprecated_version: prop.deprecated_version,
                 doc: None,
@@ -301,6 +302,7 @@ fn analyze_property(
                 version: prop_version,
                 deprecated_version: prop.deprecated_version,
                 doc_hidden: false,
+                is_detailed: false, // see above comment
             })
         } else {
             None

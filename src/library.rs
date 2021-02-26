@@ -485,6 +485,7 @@ pub struct Signal {
     pub parameters: Vec<Parameter>,
     pub ret: Parameter,
     pub is_action: bool,
+    pub is_detailed: bool,
     pub version: Option<Version>,
     pub deprecated_version: Option<Version>,
     pub doc: Option<String>,

@@ -996,6 +996,7 @@ impl Library {
     ) -> Result<Signal, String> {
         let signal_name = elem.attr_required("name")?;
         let is_action = elem.attr_bool("action", false);
+        let is_detailed = elem.attr_bool("detailed", false);
         let version = self.read_version(parser, ns_id, elem)?;
         let deprecated_version = self.read_deprecated_version(parser, ns_id, elem)?;
 
@@ -1029,6 +1030,7 @@ impl Library {
                 parameters: params,
                 ret,
                 is_action,
+                is_detailed,
                 version,
                 deprecated_version,
                 doc,

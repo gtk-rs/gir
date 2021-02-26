@@ -5,6 +5,7 @@ pub struct Builder {
     signal_name: String,
     trampoline_name: String,
     in_trait: bool,
+    is_detailed: bool,
 }
 
 impl Builder {
@@ -24,6 +25,11 @@ impl Builder {
 
     pub fn in_trait(&mut self, value: bool) -> &mut Builder {
         self.in_trait = value;
+        self
+    }
+
+    pub fn is_detailed(&mut self, value: bool) -> &mut Builder {
+        self.is_detailed = value;
         self
     }
 
@@ -55,6 +61,7 @@ impl Builder {
             signal: self.signal_name.clone(),
             trampoline: self.trampoline_name.clone(),
             in_trait: self.in_trait,
+            is_detailed: self.is_detailed,
         }
     }
 }
