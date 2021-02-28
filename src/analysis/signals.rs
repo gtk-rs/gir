@@ -17,6 +17,7 @@ pub struct Info {
     pub version: Option<Version>,
     pub deprecated_version: Option<Version>,
     pub doc_hidden: bool,
+    pub is_detailed: bool,
 }
 
 pub fn analyze(
@@ -115,6 +116,7 @@ fn analyze_signal(
         version,
         deprecated_version,
         doc_hidden,
+        is_detailed: signal.is_detailed,
     };
 
     info
