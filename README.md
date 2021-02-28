@@ -248,7 +248,7 @@ trust_return_value_nullability = false
     # to rename the generated function
     rename = "something_else"
     # to override the default safety assertions: "none", "skip",
-    # "in-main-thread"
+    # "not-initialized", "in-main-thread"
     assertions = "in-main-thread"
         # override for parameter
         [[object.function.parameter]]

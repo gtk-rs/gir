@@ -5,6 +5,7 @@ use std::str::FromStr;
 pub enum SafetyAssertionMode {
     None,
     Skip,
+    NotInitialized,
     InMainThread,
 }
 
@@ -15,6 +16,7 @@ impl FromStr for SafetyAssertionMode {
         match name {
             "none" => Ok(None),
             "skip" => Ok(Skip),
+            "not-initialized" => Ok(NotInitialized),
             "in-main-thread" => Ok(InMainThread),
             _ => Err(format!("Unknown safety assertion mode '{}'", name)),
         }
