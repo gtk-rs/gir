@@ -249,7 +249,7 @@ trust_return_value_nullability = false
     rename = "something_else"
     # to override the default safety assertions: "none", "skip",
     # "not-initialized", "in-main-thread"
-    assertions = "in-main-thread"
+    assertion = "in-main-thread"
         # override for parameter
         [[object.function.parameter]]
         # filter by name
