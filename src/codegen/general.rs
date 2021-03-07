@@ -121,9 +121,8 @@ pub fn define_object_type(
 
         writeln!(
             w,
-            "\tpub struct {}({}<{}::{}{}>) @requires {};",
+            "\tpub struct {}(Interface<{}::{}{}>) @requires {};",
             type_name,
-            kind_name,
             sys_crate_name,
             glib_name,
             class_name,
@@ -170,8 +169,8 @@ pub fn define_object_type(
 
         writeln!(
             w,
-            "\tpub struct {}({}<{}::{}{}>){};",
-            type_name, kind_name, sys_crate_name, glib_name, class_name, parents_string,
+            "\tpub struct {}(Object<{}::{}{}>){};",
+            type_name, sys_crate_name, glib_name, class_name, parents_string,
         )?;
     }
     writeln!(w)?;
