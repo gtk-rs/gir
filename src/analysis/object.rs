@@ -293,7 +293,7 @@ pub fn interface(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<I
     let info = Info {
         base,
         c_type: iface.c_type.clone(),
-        c_class_type: None,
+        c_class_type: iface.c_class_type.clone(),
         get_type: iface.glib_get_type.clone(),
         is_interface: true,
         supertypes,
