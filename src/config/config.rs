@@ -18,11 +18,30 @@ use std::{
 };
 
 #[derive(Debug)]
+pub struct GirVersion {
+    pub gir_dir: PathBuf,
+    hash: Option<String>,
+}
+
+impl GirVersion {
+    pub fn get_hash(&self) -> &str {
+        self.hash.as_deref().unwrap_or("???")
+    }
+
+    pub fn get_repository_url(&self) -> Option<&str> {
+        match self.gir_dir.file_name() {
+            Some(r) if r == "gir-files" => Some("https://github.com/gtk-rs/gir-files"),
+            _ => None,
+        }
+    }
+}
+
+#[derive(Debug)]
 pub struct Config {
     pub work_mode: WorkMode,
     pub girs_dirs: Vec<PathBuf>,
     // Version in girs_dirs, detected by git
-    pub girs_version: String,
+    pub girs_version: Vec<GirVersion>,
     pub library_name: String,
     pub library_version: String,
     pub target_path: PathBuf,
@@ -125,11 +144,14 @@ impl Config {
                 girs_dirs.push(config_dir.join(dir));
             }
         }
-        let girs_version = girs_dirs
+        let mut girs_version = girs_dirs
             .iter()
-            .filter_map(repo_hash)
-            .next()
-            .unwrap_or_else(|| "???".into());
+            .map(|d| GirVersion {
+                gir_dir: d.clone(),
+                hash: repo_hash(d),
+            })
+            .collect::<Vec<_>>();
+        girs_version.sort_by(|a, b| a.gir_dir.partial_cmp(&b.gir_dir).unwrap());
 
         let (library_name, library_version) = match (library_name.into(), library_version.into()) {
             (Some(""), Some("")) | (None, None) => (

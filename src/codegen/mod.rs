@@ -72,7 +72,7 @@ pub fn generate_mod_rs(env: &Env, root_path: &Path, mod_rs: &[String], traits: &
 pub fn generate_single_version_file(env: &Env) {
     if let Some(ref path) = env.config.single_version_file {
         save_to_file(path, env.config.make_backup, |w| {
-            general::single_version_file(w, &env.config)
+            general::single_version_file(w, &env.config, "")
         });
     }
 }
