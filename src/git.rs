@@ -35,3 +35,16 @@ fn dirty(path: impl AsRef<Path>) -> bool {
         Err(_) => false,
     }
 }
+
+// This file is also compiled from build.rs where this function is unused
+#[allow(dead_code)]
+pub(crate) fn repo_remote_url(path: impl AsRef<Path>) -> Option<String> {
+    let output = ["upstream", "origin"].iter().find_map(|remote| {
+        let output = git_command(path.as_ref(), &["remote", "get-url", remote]).ok()?;
+        // XXX: Use `.then_some` when it is stabilized
+        output.status.success().then(|| output)
+    })?;
+    String::from_utf8(output.stdout)
+        .ok()
+        .map(|s| s.trim_end_matches('\n').into())
+}

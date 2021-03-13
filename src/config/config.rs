@@ -4,7 +4,7 @@ use super::{
 };
 use crate::{
     config::error::TomlHelper,
-    git::repo_hash,
+    git::{repo_hash, repo_remote_url},
     library::{self, Library},
     nameutil::set_crate_name_overrides,
     version::Version,
@@ -63,16 +63,18 @@ pub struct GirVersion {
     pub gir_dir: PathBuf,
     file_name: Option<String>,
     hash: Option<String>,
+    url: Option<String>,
 }
 
 impl GirVersion {
-    fn new(gir_dir: &Path, hash: Option<String>) -> Self {
+    fn new(gir_dir: &Path) -> Self {
         Self {
             gir_dir: normalize_path(gir_dir),
             file_name: gir_dir
                 .file_name()
                 .map(|s| s.to_str().expect("OsStr::to_str failed").to_owned()),
-            hash,
+            hash: repo_hash(gir_dir),
+            url: repo_remote_url(gir_dir),
         }
     }
 
@@ -81,10 +83,7 @@ impl GirVersion {
     }
 
     pub fn get_repository_url(&self) -> Option<&str> {
-        match self.file_name {
-            Some(ref r) if r == "gir-files" => Some("https://github.com/gtk-rs/gir-files"),
-            _ => None,
-        }
+        self.url.as_deref()
     }
 }
 
@@ -198,7 +197,7 @@ impl Config {
         }
         let mut girs_version = girs_dirs
             .iter()
-            .map(|d| GirVersion::new(d, repo_hash(d)))
+            .map(|d| GirVersion::new(d))
             .collect::<Vec<_>>();
         girs_version.sort_by(|a, b| a.gir_dir.partial_cmp(&b.gir_dir).unwrap());
 
