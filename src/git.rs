@@ -1,16 +1,21 @@
+use std::io::Result;
 use std::path::Path;
-use std::process::Command;
+use std::process::{Command, Output};
 
-pub fn repo_hash<P: AsRef<Path>>(path: P) -> Option<String> {
+fn git_command(path: impl AsRef<Path>, subcommand: &[&str]) -> Result<Output> {
     let git_path = path
         .as_ref()
         .to_str()
         .expect("Repository path must be a valid UTF-8 string");
 
     let mut args = vec!["-C", git_path];
-    args.extend(&["rev-parse", "--short", "HEAD"]);
+    args.extend(subcommand);
 
-    let output = Command::new("git").args(&args).output().ok()?;
+    Command::new("git").args(&args).output()
+}
+
+pub fn repo_hash(path: impl AsRef<Path>) -> Option<String> {
+    let output = git_command(path.as_ref(), &["rev-parse", "--short", "HEAD"]).ok()?;
     if !output.status.success() {
         return None;
     }
@@ -24,14 +29,8 @@ pub fn repo_hash<P: AsRef<Path>>(path: P) -> Option<String> {
     }
 }
 
-fn dirty<P: AsRef<Path>>(path: P) -> bool {
-    let path = path.as_ref().to_str();
-    let mut args = match path {
-        Some(path) => vec!["-C", path],
-        None => vec![],
-    };
-    args.extend(&["ls-files", "-m"]);
-    match Command::new("git").args(&args).output() {
+fn dirty(path: impl AsRef<Path>) -> bool {
+    match git_command(path.as_ref(), &["ls-files", "-m"]) {
         Ok(modified_files) => !modified_files.stdout.is_empty(),
         Err(_) => false,
     }
