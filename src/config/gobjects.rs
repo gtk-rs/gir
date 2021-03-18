@@ -132,6 +132,7 @@ pub fn parse_toml(
     toml_objects: &Value,
     concurrency: library::Concurrency,
     generate_display_trait: bool,
+    generate_builder: bool,
     trust_return_value_nullability: bool,
 ) -> GObjects {
     let mut objects = GObjects::new();
@@ -140,6 +141,7 @@ pub fn parse_toml(
             toml_object,
             concurrency,
             generate_display_trait,
+            generate_builder,
             trust_return_value_nullability,
         );
         objects.insert(gobject.name.clone(), gobject);
@@ -177,6 +179,7 @@ fn parse_object(
     toml_object: &Value,
     concurrency: library::Concurrency,
     default_generate_display_trait: bool,
+    generate_builder: bool,
     trust_return_value_nullability: bool,
 ) -> GObject {
     let name: String = toml_object
@@ -322,7 +325,7 @@ fn parse_object(
     let generate_builder = toml_object
         .lookup("generate_builder")
         .and_then(Value::as_bool)
-        .unwrap_or(false);
+        .unwrap_or(generate_builder);
     let ignore_builder = toml_object
         .lookup("ignore_builder")
         .and_then(Value::as_bool)
@@ -403,6 +406,7 @@ pub fn parse_status_shorthands(
     toml: &Value,
     concurrency: library::Concurrency,
     generate_display_trait: bool,
+    generate_builder: bool,
     trust_return_value_nullability: bool,
 ) {
     use self::GStatus::*;
@@ -413,6 +417,7 @@ pub fn parse_status_shorthands(
             toml,
             concurrency,
             generate_display_trait,
+            generate_builder,
             trust_return_value_nullability,
         );
     }
@@ -424,6 +429,7 @@ fn parse_status_shorthand(
     toml: &Value,
     concurrency: library::Concurrency,
     generate_display_trait: bool,
+    generate_builder: bool,
     trust_return_value_nullability: bool,
 ) {
     let option_name = format!("options.{:?}", status).to_ascii_lowercase();
@@ -439,6 +445,7 @@ fn parse_status_shorthand(
                             concurrency,
                             generate_display_trait,
                             trust_return_value_nullability,
+                            generate_builder,
                             ..Default::default()
                         },
                     );

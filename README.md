@@ -153,6 +153,10 @@ trust_return_value_nullability = false
 # Disable running `cargo fmt` on generated files
 # (defaults to false)
 disable_format = true
+# Always generate a Builder if possible. This is mostly a convenient setter as most of the 
+# time you might want the Builder to be generated. Ignoring none-desired ones can still be done with per object `generate_builder` configuration.
+# (defaults to false)
+generate_builder = true
 ```
 
 This mode generates only the specified objects. You can either add the object's fullname to the `generate` array or add it to the `manual` array (but in this case, it won't be generated, just used in other functions/methods instead of generating an "ignored" argument). Example:
