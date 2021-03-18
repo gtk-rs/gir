@@ -18,10 +18,30 @@ use std::{
 };
 
 #[derive(Debug)]
+pub struct GirVersion {
+    pub gir_dir: PathBuf,
+    hash: Option<String>,
+}
+
+impl GirVersion {
+    pub fn get_hash(&self) -> &str {
+        self.hash.as_deref().unwrap_or("???")
+    }
+
+    pub fn get_repository_url(&self) -> Option<&str> {
+        match self.gir_dir.file_name() {
+            Some(r) if r == "gir-files" => Some("https://github.com/gtk-rs/gir-files"),
+            _ => None,
+        }
+    }
+}
+
+#[derive(Debug)]
 pub struct Config {
     pub work_mode: WorkMode,
-    pub girs_dir: PathBuf,
-    pub girs_version: String, //Version in girs_dir, detected by git
+    pub girs_dirs: Vec<PathBuf>,
+    // Version in girs_dirs, detected by git
+    pub girs_version: Vec<GirVersion>,
     pub library_name: String,
     pub library_version: String,
     pub target_path: PathBuf,
@@ -52,7 +72,7 @@ impl Config {
     pub fn new<'a, S, W>(
         config_file: S,
         work_mode: W,
-        girs_dir: S,
+        girs_dirs: &[String],
         library_name: S,
         library_version: S,
         target_path: S,
@@ -109,14 +129,29 @@ impl Config {
             }
         };
 
-        let girs_dir: PathBuf = match girs_dir.into() {
-            Some("") | None => {
-                let path = toml.lookup_str("options.girs_dir", "No options.girs_dir")?;
-                config_dir.join(path)
+        let mut girs_dirs: Vec<PathBuf> = girs_dirs
+            .iter()
+            .filter(|x| !x.is_empty())
+            .map(|x| PathBuf::from(&x))
+            .collect();
+        if girs_dirs.is_empty() {
+            let dirs =
+                toml.lookup_vec("options.girs_directories", "No options.girs_directories")?;
+            for dir in dirs {
+                let dir = dir.as_str().ok_or_else(|| {
+                    "options.girs_dirs expected to be array of string".to_string()
+                })?;
+                girs_dirs.push(config_dir.join(dir));
             }
-            Some(a) => a.into(),
-        };
-        let girs_version = repo_hash(&girs_dir).unwrap_or_else(|| "???".into());
+        }
+        let mut girs_version = girs_dirs
+            .iter()
+            .map(|d| GirVersion {
+                gir_dir: d.clone(),
+                hash: repo_hash(d),
+            })
+            .collect::<Vec<_>>();
+        girs_version.sort_by(|a, b| a.gir_dir.partial_cmp(&b.gir_dir).unwrap());
 
         let (library_name, library_version) = match (library_name.into(), library_version.into()) {
             (Some(""), Some("")) | (None, None) => (
@@ -251,7 +286,7 @@ impl Config {
 
         Ok(Config {
             work_mode,
-            girs_dir,
+            girs_dirs,
             girs_version,
             library_name,
             library_version,

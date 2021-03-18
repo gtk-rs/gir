@@ -44,7 +44,12 @@ fn build_config() -> Result<RunKind, String> {
         "CONFIG",
     );
     options.optflag("h", "help", "Show this message");
-    options.optopt("d", "gir-directory", "Directory for girs", "GIRSPATH");
+    options.optmulti(
+        "d",
+        "girs-directories",
+        "Directories for GIR files",
+        "GIRSPATH",
+    );
     options.optopt(
         "m",
         "mode",
@@ -88,7 +93,7 @@ fn build_config() -> Result<RunKind, String> {
     Config::new(
         matches.opt_str("c").as_str_ref(),
         work_mode,
-        matches.opt_str("d").as_str_ref(),
+        &matches.opt_strs("d"),
         matches.free.get(0).as_str_ref(),
         matches.free.get(1).as_str_ref(),
         matches.opt_str("o").as_str_ref(),
@@ -126,7 +131,7 @@ fn run_check(check_gir_file: &str) -> Result<(), String> {
         check_gir_file
     ))?;
 
-    library.read_file(&parent, &mut vec![lib_name.to_owned()])
+    library.read_file(&[parent], &mut vec![lib_name.to_owned()])
 }
 
 fn do_main() -> Result<(), String> {
@@ -151,7 +156,7 @@ fn do_main() -> Result<(), String> {
         let _watcher = statistics.enter("Loading");
 
         let mut library = Library::new(&cfg.library_name);
-        library.read_file(&cfg.girs_dir, &mut vec![cfg.library_full_name()])?;
+        library.read_file(&cfg.girs_dirs, &mut vec![cfg.library_full_name()])?;
         library
     };
 

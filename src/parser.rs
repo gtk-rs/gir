@@ -17,19 +17,30 @@ pub fn is_empty_c_type(c_type: &str) -> bool {
 }
 
 impl Library {
-    pub fn read_file(&mut self, dir: &Path, libs: &mut Vec<String>) -> Result<(), String> {
-        let file_name = make_file_name(dir, &libs[libs.len() - 1]);
-        let mut p = XmlParser::from_path(&file_name)?;
-        p.document(|p, _| {
-            p.element_with_name("repository", |parser, _elem| {
-                self.read_repository(dir, parser, libs)
-            })
-        })
+    pub fn read_file<P: AsRef<Path>>(
+        &mut self,
+        dirs: &[P],
+        libs: &mut Vec<String>,
+    ) -> Result<(), String> {
+        for dir in dirs {
+            let dir: &Path = dir.as_ref();
+            let file_name = make_file_name(dir, &libs[libs.len() - 1]);
+            let mut parser = match XmlParser::from_path(&file_name) {
+                Ok(p) => p,
+                _ => continue,
+            };
+            return parser.document(|p, _| {
+                p.element_with_name("repository", |sub_parser, _elem| {
+                    self.read_repository(dirs, sub_parser, libs)
+                })
+            });
+        }
+        Err(format!("Couldn't find `{}`...", &libs[libs.len() - 1]))
     }
 
-    fn read_repository(
+    fn read_repository<P: AsRef<Path>>(
         &mut self,
-        dir: &Path,
+        dirs: &[P],
         parser: &mut XmlParser<'_>,
         libs: &mut Vec<String>,
     ) -> Result<(), String> {
@@ -49,7 +60,7 @@ impl Library {
                                 ));
                             }
                             libs.push(lib);
-                            self.read_file(dir, libs)?;
+                            self.read_file(dirs, libs)?;
                             libs.pop();
                         }
                     }

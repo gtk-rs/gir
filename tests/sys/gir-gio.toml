@@ -1,6 +1,6 @@
 [options]
 work_mode = "sys"
-girs_dir = "../gir-files"
+girs_directories = ["../gir-files"]
 library = "Gio"
 version = "2.0"
 min_cfg_version = "2.32"
