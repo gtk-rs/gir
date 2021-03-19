@@ -13,55 +13,24 @@ use log::warn;
 use std::{
     collections::HashMap,
     fs,
-    path::{Component, Path, PathBuf},
+    path::{Path, PathBuf},
     str::FromStr,
 };
 
-fn canonicalize(path: &Path) -> String {
-    let mut parts: Vec<String> = Vec::new();
-
-    for component in path.components() {
-        match component {
-            Component::RootDir | Component::CurDir => {}
-            Component::ParentDir => {
-                parts.pop();
-            }
-            c => parts.push(
-                c.as_os_str()
-                    .to_str()
-                    .expect("OsStr::to_str failed")
-                    .to_owned(),
-            ),
-        }
-    }
-    parts.join("/")
-}
-
 #[derive(Debug)]
 pub struct GirVersion {
-    pub gir_dir: String,
-    file_name: Option<String>,
+    pub gir_dir: PathBuf,
     hash: Option<String>,
 }
 
 impl GirVersion {
-    fn new(gir_dir: &Path, hash: Option<String>) -> Self {
-        Self {
-            gir_dir: canonicalize(gir_dir),
-            file_name: gir_dir
-                .file_name()
-                .map(|s| s.to_str().expect("OsStr::to_str failed").to_owned()),
-            hash,
-        }
-    }
-
     pub fn get_hash(&self) -> &str {
         self.hash.as_deref().unwrap_or("???")
     }
 
     pub fn get_repository_url(&self) -> Option<&str> {
-        match self.file_name {
-            Some(ref r) if r == "gir-files" => Some("https://github.com/gtk-rs/gir-files"),
+        match self.gir_dir.file_name() {
+            Some(r) if r == "gir-files" => Some("https://github.com/gtk-rs/gir-files"),
             _ => None,
         }
     }
@@ -177,7 +146,10 @@ impl Config {
         }
         let mut girs_version = girs_dirs
             .iter()
-            .map(|d| GirVersion::new(&d, repo_hash(d)))
+            .map(|d| GirVersion {
+                gir_dir: d.clone(),
+                hash: repo_hash(d),
+            })
             .collect::<Vec<_>>();
         girs_version.sort_by(|a, b| a.gir_dir.partial_cmp(&b.gir_dir).unwrap());
 
