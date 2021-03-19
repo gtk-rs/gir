@@ -33,7 +33,7 @@ pub fn start_comments_no_version(w: &mut dyn Write, conf: &Config) -> Result<()>
             .map(|info| {
                 format!(
                     "// from {}{}\n",
-                    info.gir_dir.display(),
+                    info.gir_dir,
                     info.get_repository_url()
                         .map_or_else(String::new, |url| format!(" ({})", url)),
                 )
@@ -55,7 +55,7 @@ pub fn single_version_file(w: &mut dyn Write, conf: &Config, prefix: &str) -> Re
                 format!(
                     "{}from {} ({}@ {})\n",
                     prefix,
-                    info.gir_dir.display(),
+                    info.gir_dir,
                     info.get_repository_url()
                         .map_or_else(String::new, |u| format!("{} ", u)),
                     info.get_hash(),
