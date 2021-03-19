@@ -177,13 +177,13 @@ status = "generate"
 generate_builder = true
 ```
 
-If you want to remove warning messages about the not bound `Builders` during the generation you don't want to be generated, you can ignore them with the `ignore_builder` flag in object configuration:
+If you want to remove warning messages about the not bound `Builders` during the generation you don't want to be generated, you can ignore them with the `generate_builder` flag in object configuration:
 
 ```toml
 [[object]]
 name = "Gtk.TreeView"
 status = "generate"
-ignore_builder = true
+generate_builder = false
 ```
 
 If there is some work which has to be done post-construction before the builder's
@@ -193,7 +193,7 @@ If there is some work which has to be done post-construction before the builder'
 [[object]]
 name = "Gtk.Application"
 status = "generate"
-generage_builder = true
+generate_builder = true
 builder_postprocess = "Application::register_startup_hook(&ret);"
 ```
 

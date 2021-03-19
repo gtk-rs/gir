@@ -1036,7 +1036,7 @@ impl Library {
                             .config
                             .objects
                             .get(&full_name)
-                            .map(|obj| obj.generate_builder || obj.ignore_builder)
+                            .map(|obj| obj.generate_builder)
                             .unwrap_or_else(|| false)
                             && properties
                                 .iter()
