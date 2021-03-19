@@ -13,24 +13,76 @@ use log::warn;
 use std::{
     collections::HashMap,
     fs,
-    path::{Path, PathBuf},
+    path::{Component, Path, PathBuf},
     str::FromStr,
 };
+
+/// Performs canonicalization by removing `foo/../` and `./` components
+/// from `path`, without hitting the file system. It does not turn relative
+/// paths into absolute paths.
+fn normalize_path(path: impl AsRef<Path>) -> PathBuf {
+    let mut parts: Vec<Component<'_>> = vec![];
+
+    for component in path.as_ref().components() {
+        match (component, parts.last()) {
+            (Component::CurDir, _) | (Component::ParentDir, Some(Component::RootDir)) => {}
+            (Component::ParentDir, None) | (Component::ParentDir, Some(Component::ParentDir)) => {
+                parts.push(Component::ParentDir)
+            }
+            (Component::ParentDir, Some(_)) => {
+                parts
+                    .pop()
+                    .expect("Cannot navigate outside of base directory!");
+            }
+            (c, _) => parts.push(c),
+        }
+    }
+    parts.iter().collect()
+}
+
+#[test]
+fn test_normalize_path() {
+    assert_eq!(normalize_path("foo/../bar").as_os_str(), "bar");
+    assert_eq!(normalize_path("foo/./bar").as_os_str(), "foo/bar");
+    assert_eq!(normalize_path("./foo").as_os_str(), "foo");
+    assert_eq!(
+        normalize_path("foo/../bar/baz/../qux").as_os_str(),
+        "bar/qux"
+    );
+    assert_eq!(
+        normalize_path("foo/bar/baz/../../qux").as_os_str(),
+        "foo/qux"
+    );
+    assert_eq!(normalize_path("/foo/../bar").as_os_str(), "/bar");
+    assert_eq!(normalize_path("/../bar").as_os_str(), "/bar");
+    assert_eq!(normalize_path("foo/../../bar").as_os_str(), "../bar");
+}
 
 #[derive(Debug)]
 pub struct GirVersion {
     pub gir_dir: PathBuf,
+    file_name: Option<String>,
     hash: Option<String>,
 }
 
 impl GirVersion {
+    fn new(gir_dir: &Path, hash: Option<String>) -> Self {
+        Self {
+            gir_dir: normalize_path(gir_dir),
+            file_name: gir_dir
+                .file_name()
+                .map(|s| s.to_str().expect("OsStr::to_str failed").to_owned()),
+            hash,
+        }
+    }
+
     pub fn get_hash(&self) -> &str {
         self.hash.as_deref().unwrap_or("???")
     }
 
     pub fn get_repository_url(&self) -> Option<&str> {
-        match self.gir_dir.file_name() {
-            Some(r) if r == "gir-files" => Some("https://github.com/gtk-rs/gir-files"),
+        match self.file_name {
+            Some(ref r) if r == "gir-files" => Some("https://github.com/gtk-rs/gir-files"),
             _ => None,
         }
     }
@@ -146,10 +198,7 @@ impl Config {
         }
         let mut girs_version = girs_dirs
             .iter()
-            .map(|d| GirVersion {
-                gir_dir: d.clone(),
-                hash: repo_hash(d),
-            })
+            .map(|d| GirVersion::new(d, repo_hash(d)))
             .collect::<Vec<_>>();
         girs_version.sort_by(|a, b| a.gir_dir.partial_cmp(&b.gir_dir).unwrap());
 
