@@ -202,6 +202,11 @@ impl Config {
             Some(a) => a.into(),
         };
 
+        let generate_builder: bool = toml
+            .lookup("options.generate_builder")
+            .and_then(|a| a.as_bool())
+            .unwrap_or(false);
+
         let auto_path = match toml.lookup("options.auto_path") {
             Some(p) => target_path.join(p.as_result_str("options.auto_path")?),
             None if work_mode == WorkMode::Normal => target_path.join("src").join("auto"),
@@ -252,6 +257,7 @@ impl Config {
                     t,
                     concurrency,
                     generate_display_trait,
+                    generate_builder,
                     trust_return_value_nullability,
                 )
             })
@@ -261,6 +267,7 @@ impl Config {
             &toml,
             concurrency,
             generate_display_trait,
+            generate_builder,
             trust_return_value_nullability,
         );
 

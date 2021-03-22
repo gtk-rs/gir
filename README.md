@@ -153,6 +153,10 @@ trust_return_value_nullability = false
 # Disable running `cargo fmt` on generated files
 # (defaults to false)
 disable_format = true
+# Always generate a Builder if possible. This is mostly a convenient setter as most of the 
+# time you might want the Builder to be generated. Ignoring none-desired ones can still be done with per object `generate_builder` configuration.
+# (defaults to false)
+generate_builder = true
 ```
 
 This mode generates only the specified objects. You can either add the object's fullname to the `generate` array or add it to the `manual` array (but in this case, it won't be generated, just used in other functions/methods instead of generating an "ignored" argument). Example:
@@ -173,13 +177,13 @@ status = "generate"
 generate_builder = true
 ```
 
-If you want to remove warning messages about the not bound `Builders` during the generation you don't want to be generated, you can ignore them with the `ignore_builder` flag in object configuration:
+If you want to remove warning messages about the not bound `Builders` during the generation you don't want to be generated, you can ignore them with the `generate_builder` flag in object configuration:
 
 ```toml
 [[object]]
 name = "Gtk.TreeView"
 status = "generate"
-ignore_builder = true
+generate_builder = false
 ```
 
 If there is some work which has to be done post-construction before the builder's
@@ -189,7 +193,7 @@ If there is some work which has to be done post-construction before the builder'
 [[object]]
 name = "Gtk.Application"
 status = "generate"
-generage_builder = true
+generate_builder = true
 builder_postprocess = "Application::register_startup_hook(&ret);"
 ```
 

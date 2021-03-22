@@ -84,7 +84,6 @@ pub struct GObject {
     pub manual_traits: Vec<String>,
     pub align: Option<u32>,
     pub generate_builder: bool,
-    pub ignore_builder: bool,
     pub builder_postprocess: Option<String>,
     pub init_function_expression: Option<String>,
     pub clear_function_expression: Option<String>,
@@ -117,7 +116,6 @@ impl Default for GObject {
             manual_traits: Vec::default(),
             align: None,
             generate_builder: false,
-            ignore_builder: false,
             builder_postprocess: None,
             init_function_expression: None,
             clear_function_expression: None,
@@ -132,6 +130,7 @@ pub fn parse_toml(
     toml_objects: &Value,
     concurrency: library::Concurrency,
     generate_display_trait: bool,
+    generate_builder: bool,
     trust_return_value_nullability: bool,
 ) -> GObjects {
     let mut objects = GObjects::new();
@@ -140,6 +139,7 @@ pub fn parse_toml(
             toml_object,
             concurrency,
             generate_display_trait,
+            generate_builder,
             trust_return_value_nullability,
         );
         objects.insert(gobject.name.clone(), gobject);
@@ -177,6 +177,7 @@ fn parse_object(
     toml_object: &Value,
     concurrency: library::Concurrency,
     default_generate_display_trait: bool,
+    generate_builder: bool,
     trust_return_value_nullability: bool,
 ) -> GObject {
     let name: String = toml_object
@@ -214,7 +215,6 @@ fn parse_object(
             "manual_traits",
             "align",
             "generate_builder",
-            "ignore_builder",
             "builder_postprocess",
             "init_function_expression",
             "clear_function_expression",
@@ -322,11 +322,8 @@ fn parse_object(
     let generate_builder = toml_object
         .lookup("generate_builder")
         .and_then(Value::as_bool)
-        .unwrap_or(false);
-    let ignore_builder = toml_object
-        .lookup("ignore_builder")
-        .and_then(Value::as_bool)
-        .unwrap_or(false);
+        .unwrap_or(generate_builder);
+
     let builder_postprocess = toml_object
         .lookup("builder_postprocess")
         .and_then(Value::as_str)
@@ -394,7 +391,6 @@ fn parse_object(
         builder_postprocess,
         init_function_expression,
         clear_function_expression,
-        ignore_builder,
     }
 }
 
@@ -403,6 +399,7 @@ pub fn parse_status_shorthands(
     toml: &Value,
     concurrency: library::Concurrency,
     generate_display_trait: bool,
+    generate_builder: bool,
     trust_return_value_nullability: bool,
 ) {
     use self::GStatus::*;
@@ -413,6 +410,7 @@ pub fn parse_status_shorthands(
             toml,
             concurrency,
             generate_display_trait,
+            generate_builder,
             trust_return_value_nullability,
         );
     }
@@ -424,6 +422,7 @@ fn parse_status_shorthand(
     toml: &Value,
     concurrency: library::Concurrency,
     generate_display_trait: bool,
+    generate_builder: bool,
     trust_return_value_nullability: bool,
 ) {
     let option_name = format!("options.{:?}", status).to_ascii_lowercase();
@@ -439,6 +438,7 @@ fn parse_status_shorthand(
                             concurrency,
                             generate_display_trait,
                             trust_return_value_nullability,
+                            generate_builder,
                             ..Default::default()
                         },
                     );
@@ -457,18 +457,16 @@ pub fn resolve_type_ids(objects: &mut GObjects, library: &Library) {
         let type_id = library.find_type(0, name);
         if type_id.is_none() && name != &global_functions_name {
             warn!("Configured object `{}` missing from the library", name);
-        } else if !object.ignore_builder {
+        } else if object.generate_builder {
             if let Some(ref type_id) = type_id {
                 if library.type_(*type_id).is_abstract() {
-                    if object.generate_builder {
-                        warn!(
-                            "Cannot generate builder for `{}` because it's a base class",
-                            name
-                        );
-                    }
-                    // We set this to `true` to avoid having the "not_bound" mode saying that this
+                    warn!(
+                        "Cannot generate builder for `{}` because it's a base class",
+                        name
+                    );
+                    // We set this to `false` to avoid having the "not_bound" mode saying that this
                     // builder should be generated.
-                    object.ignore_builder = true;
+                    object.generate_builder = false;
                 }
             }
         }
