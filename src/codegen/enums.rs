@@ -154,6 +154,7 @@ fn generate_enum(
         &analysis.functions,
         &analysis.specials,
         None,
+        None,
     )?;
 
     writeln!(w)?;

@@ -122,6 +122,7 @@ fn generate_flags(
         &analysis.functions,
         &analysis.specials,
         None,
+        None,
     )?;
 
     writeln!(w)?;

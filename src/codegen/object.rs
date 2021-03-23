@@ -111,6 +111,7 @@ pub fn generate(
         } else {
             None
         },
+        analysis.version,
     )?;
 
     if !analysis.builder_properties.is_empty() {
