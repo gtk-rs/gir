@@ -169,12 +169,7 @@ impl<'a> Builder<'a> {
             self.name, unwrap,
         )));
 
-        let unsafe_ = Chunk::Unsafe(body);
-
-        let mut chunks = Vec::new();
-        chunks.push(unsafe_);
-
-        chunks
+        vec![Chunk::Unsafe(body)]
     }
 
     fn chunks_for_set(&self) -> Vec<Chunk> {

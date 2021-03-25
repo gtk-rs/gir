@@ -10,6 +10,7 @@ pub enum Chunk {
     BlockHalf(Vec<Chunk>),   //Block without open bracket, temporary
     UnsafeSmart(Vec<Chunk>), //TODO: remove (will change generated results)
     Unsafe(Vec<Chunk>),
+    #[allow(clippy::upper_case_acronyms)]
     FfiCallTODO(String),
     FfiCall {
         name: String,

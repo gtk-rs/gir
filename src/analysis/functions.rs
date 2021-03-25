@@ -1105,10 +1105,8 @@ fn analyze_callback(
                     nullable: par.nullable,
                     type_name: env.library.type_(type_tid).get_name(),
                 },
-                match par.destroy_index {
-                    Some(destroy_index) => Some(c_parameters[destroy_index].1),
-                    None => None,
-                },
+                par.destroy_index
+                    .map(|destroy_index| c_parameters[destroy_index].1),
             ))
         }
     } else {
