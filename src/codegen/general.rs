@@ -504,15 +504,15 @@ pub fn cfg_deprecated_string(
     let comment = if commented { "//" } else { "" };
     if env.is_too_low_version(deprecated) {
         Some(format!("{}{}#[deprecated]", tabs(indent), comment))
-    } else if let Some(v) = deprecated {
-        Some(format!(
-            "{}{}#[cfg_attr({}, deprecated)]",
-            tabs(indent),
-            comment,
-            v.to_cfg()
-        ))
     } else {
-        None
+        deprecated.map(|v| {
+            format!(
+                "{}{}#[cfg_attr({}, deprecated)]",
+                tabs(indent),
+                comment,
+                v.to_cfg(),
+            )
+        })
     }
 }
 

@@ -533,8 +533,7 @@ impl Library {
                     if let Some(ErrorDomain::Quark(ref domain)) = enum_.error_domain {
                         let domain = domain.replace("-", "_");
 
-                        let mut function_candidates = vec![];
-                        function_candidates.push(domain.clone());
+                        let mut function_candidates = vec![domain.clone()];
                         if !domain.ends_with("_quark") {
                             function_candidates.push(format!("{}_quark", domain));
                         }

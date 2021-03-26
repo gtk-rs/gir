@@ -245,11 +245,9 @@ fn parse_object(
     };
     let members = Members::parse(toml_object.lookup("member"), &name);
     let properties = Properties::parse(toml_object.lookup("property"), &name);
-    let derives = if let Some(derives) = toml_object.lookup("derive") {
-        Some(Derives::parse(Some(derives), &name))
-    } else {
-        None
-    };
+    let derives = toml_object
+        .lookup("derive")
+        .map(|derives| Derives::parse(Some(derives), &name));
     let module_name = toml_object
         .lookup("module_name")
         .and_then(Value::as_str)

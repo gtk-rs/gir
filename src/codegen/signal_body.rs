@@ -34,16 +34,9 @@ impl Builder {
     }
 
     pub fn generate(&self) -> Chunk {
-        let mut body = Vec::new();
+        let unsafe_ = Chunk::Unsafe(vec![self.let_func(), self.connect()]);
 
-        body.push(self.let_func());
-        body.push(self.connect());
-
-        let unsafe_ = Chunk::Unsafe(body);
-
-        let mut chunks = Vec::new();
-        chunks.push(unsafe_);
-        Chunk::BlockHalf(chunks)
+        Chunk::BlockHalf(vec![unsafe_])
     }
 
     fn let_func(&self) -> Chunk {

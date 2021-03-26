@@ -169,7 +169,7 @@ jobs:
           path: gtk-rs
         if: matrix.os == 'ubuntu-20.04'
       - name: "Attempt to rebuild GTK gir"
-        run: cd gtk-rs && python3 generator.py --no-fmt --gir-path ../target/release/gir --gir-files-directory ../tests/gir-files/ && rm ../Cargo.* && cargo build
+        run: cd gtk-rs && python3 generator.py --no-fmt --gir-path ../target/release/gir --gir-files-directories ../tests/gir-files/ && rm ../Cargo.* && cargo build
         if: matrix.os == 'ubuntu-20.04'
       - name: "Rebuild gio"
         run: cd gtk-rs/gio && cargo test
