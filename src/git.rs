@@ -36,15 +36,34 @@ fn dirty(path: impl AsRef<Path>) -> bool {
     }
 }
 
+fn gitmodules_config(subcommand: &[&str]) -> Option<String> {
+    let mut args = vec!["config", "-f", ".gitmodules", "-z"];
+    args.extend(subcommand);
+    let output = git_command(Path::new("."), &args).ok()?;
+
+    if !output.status.success() {
+        return None;
+    }
+
+    let mut result = String::from_utf8(output.stdout).ok()?;
+    assert_eq!(result.pop(), Some('\0'));
+    Some(result)
+}
+
 // This file is also compiled from build.rs where this function is unused
 #[allow(dead_code)]
 pub(crate) fn repo_remote_url(path: impl AsRef<Path>) -> Option<String> {
-    let output = ["upstream", "origin"].iter().find_map(|remote| {
-        let output = git_command(path.as_ref(), &["remote", "get-url", remote]).ok()?;
-        // XXX: Use `.then_some` when it is stabilized
-        output.status.success().then(|| output)
-    })?;
-    String::from_utf8(output.stdout)
-        .ok()
-        .map(|s| s.trim_end_matches('\n').into())
+    // Find the subsection that defines the module for the given path:
+    let key_for_path = gitmodules_config(&[
+        "--name-only",
+        "--get-regexp",
+        r"submodule\..+\.path",
+        &format!("^{}$", path.as_ref().display()),
+    ])?;
+
+    let subsection = key_for_path
+        .strip_suffix(".path")
+        .expect("submodule.<subsection>.path should end with '.path'");
+
+    gitmodules_config(&["--get", &format!("{}.url", subsection)])
 }
