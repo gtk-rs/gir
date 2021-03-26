@@ -10,7 +10,7 @@ pub fn generate(w: &mut dyn Write, env: &Env, analysis: &analysis::record::Info)
     let type_ = analysis.type_(&env.library);
 
     general::start_comments(w, &env.config)?;
-    general::uses(w, env, &analysis.imports)?;
+    general::uses(w, env, &analysis.imports, type_.version)?;
 
     if analysis.is_boxed {
         if let Some((ref glib_get_type, _)) = analysis.glib_get_type {
@@ -94,6 +94,7 @@ pub fn generate(w: &mut dyn Write, env: &Env, analysis: &analysis::record::Info)
                 env,
                 func_analysis,
                 Some(&analysis.specials),
+                analysis.version,
                 false,
                 false,
                 1,
@@ -112,6 +113,7 @@ pub fn generate(w: &mut dyn Write, env: &Env, analysis: &analysis::record::Info)
         &analysis.functions,
         &analysis.specials,
         None,
+        analysis.version,
     )?;
 
     if analysis.concurrency != library::Concurrency::None {

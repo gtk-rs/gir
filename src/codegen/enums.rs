@@ -28,7 +28,7 @@ pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>) {
     let path = root_path.join("enums.rs");
     file_saver::save_to_file(path, env.config.make_backup, |w| {
         general::start_comments(w, &env.config)?;
-        general::uses(w, env, &env.analysis.enum_imports)?;
+        general::uses(w, env, &env.analysis.enum_imports, None)?;
         writeln!(w)?;
 
         mod_rs.push("\nmod enums;".into());
@@ -138,6 +138,7 @@ fn generate_enum(
                 env,
                 func_analysis,
                 Some(&analysis.specials),
+                enum_.version,
                 false,
                 false,
                 1,
@@ -152,6 +153,7 @@ fn generate_enum(
         &analysis.name,
         &analysis.functions,
         &analysis.specials,
+        None,
         None,
     )?;
 

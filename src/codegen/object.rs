@@ -20,7 +20,7 @@ pub fn generate(
     generate_display_trait: bool,
 ) -> Result<()> {
     general::start_comments(w, &env.config)?;
-    general::uses(w, env, &analysis.imports)?;
+    general::uses(w, env, &analysis.imports, analysis.version)?;
 
     general::define_object_type(
         w,
@@ -42,6 +42,7 @@ pub fn generate(
                 env,
                 func_analysis,
                 Some(&analysis.specials),
+                analysis.version,
                 false,
                 false,
                 1,
@@ -55,6 +56,7 @@ pub fn generate(
                     env,
                     func_analysis,
                     Some(&analysis.specials),
+                    analysis.version,
                     false,
                     false,
                     1,
@@ -76,6 +78,7 @@ pub fn generate(
                 env,
                 func_analysis,
                 Some(&analysis.specials),
+                analysis.version,
                 false,
                 false,
                 1,
@@ -108,6 +111,7 @@ pub fn generate(
         } else {
             None
         },
+        analysis.version,
     )?;
 
     if !analysis.builder_properties.is_empty() {
@@ -302,6 +306,7 @@ fn generate_trait(w: &mut dyn Write, env: &Env, analysis: &analysis::object::Inf
             env,
             func_analysis,
             Some(&analysis.specials),
+            analysis.version,
             true,
             true,
             1,
@@ -335,6 +340,7 @@ fn generate_trait(w: &mut dyn Write, env: &Env, analysis: &analysis::object::Inf
             env,
             func_analysis,
             Some(&analysis.specials),
+            analysis.version,
             true,
             false,
             1,

@@ -1,9 +1,10 @@
-use super::general::version_condition;
 use crate::{
     analysis::{
         functions::Info,
         special_functions::{Infos, Type},
     },
+    codegen::general::version_condition,
+    version::Version,
     Env,
 };
 use std::io::{Result, Write};
@@ -15,21 +16,24 @@ pub fn generate(
     functions: &[Info],
     specials: &Infos,
     trait_name: Option<&str>,
+    scope_version: Option<Version>,
 ) -> Result<()> {
     for (type_, special_info) in specials.traits().iter() {
         if let Some(info) = lookup(functions, &special_info.glib_name) {
             match *type_ {
                 Type::Compare => {
                     if !specials.has_trait(Type::Equal) {
-                        generate_eq_compare(w, env, type_name, info, trait_name)?;
+                        generate_eq_compare(w, env, type_name, info, trait_name, scope_version)?;
                     }
-                    generate_ord(w, env, type_name, info, trait_name)?;
+                    generate_ord(w, env, type_name, info, trait_name, scope_version)?;
                 }
                 Type::Equal => {
-                    generate_eq(w, env, type_name, info, trait_name)?;
+                    generate_eq(w, env, type_name, info, trait_name, scope_version)?;
                 }
-                Type::Display => generate_display(w, env, type_name, info, trait_name)?,
-                Type::Hash => generate_hash(w, env, type_name, info, trait_name)?,
+                Type::Display => {
+                    generate_display(w, env, type_name, info, trait_name, scope_version)?
+                }
+                Type::Hash => generate_hash(w, env, type_name, info, trait_name, scope_version)?,
                 _ => {}
             }
         }
@@ -80,9 +84,11 @@ fn generate_display(
     type_name: &str,
     func: &Info,
     trait_name: Option<&str>,
+    scope_version: Option<Version>,
 ) -> Result<()> {
     writeln!(w)?;
-    version_condition(w, env, func.version, false, 0)?;
+    let version = Version::if_stricter_than(func.version, scope_version);
+    version_condition(w, env, version, false, 0)?;
 
     use crate::analysis::out_parameters::Mode;
 
@@ -121,9 +127,11 @@ fn generate_hash(
     type_name: &str,
     func: &Info,
     trait_name: Option<&str>,
+    scope_version: Option<Version>,
 ) -> Result<()> {
     writeln!(w)?;
-    version_condition(w, env, func.version, false, 0)?;
+    let version = Version::if_stricter_than(func.version, scope_version);
+    version_condition(w, env, version, false, 0)?;
 
     let call = generate_call(&func.name, &[], trait_name);
 
@@ -147,9 +155,11 @@ fn generate_eq(
     type_name: &str,
     func: &Info,
     trait_name: Option<&str>,
+    scope_version: Option<Version>,
 ) -> Result<()> {
     writeln!(w)?;
-    version_condition(w, env, func.version, false, 0)?;
+    let version = Version::if_stricter_than(func.version, scope_version);
+    version_condition(w, env, version, false, 0)?;
 
     let call = generate_call(&func.name, &["other"], trait_name);
 
@@ -175,9 +185,11 @@ fn generate_eq_compare(
     type_name: &str,
     func: &Info,
     trait_name: Option<&str>,
+    scope_version: Option<Version>,
 ) -> Result<()> {
     writeln!(w)?;
-    version_condition(w, env, func.version, false, 0)?;
+    let version = Version::if_stricter_than(func.version, scope_version);
+    version_condition(w, env, version, false, 0)?;
 
     let call = generate_call(&func.name, &["other"], trait_name);
 
@@ -203,9 +215,11 @@ fn generate_ord(
     type_name: &str,
     func: &Info,
     trait_name: Option<&str>,
+    scope_version: Option<Version>,
 ) -> Result<()> {
     writeln!(w)?;
-    version_condition(w, env, func.version, false, 0)?;
+    let version = Version::if_stricter_than(func.version, scope_version);
+    version_condition(w, env, version, false, 0)?;
 
     let call = generate_call(&func.name, &["other"], trait_name);
 
