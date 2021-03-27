@@ -2,12 +2,14 @@ use std::path::Path;
 use std::process::Command;
 
 pub fn repo_hash<P: AsRef<Path>>(path: P) -> Option<String> {
-    let git_path = path.as_ref().to_str();
-    let mut args = match git_path {
-        Some(path) => vec!["-C", path],
-        None => vec![],
-    };
+    let git_path = path
+        .as_ref()
+        .to_str()
+        .expect("Repository path must be a valid UTF-8 string");
+
+    let mut args = vec!["-C", git_path];
     args.extend(&["rev-parse", "--short", "HEAD"]);
+
     let output = Command::new("git").args(&args).output().ok()?;
     if !output.status.success() {
         return None;
