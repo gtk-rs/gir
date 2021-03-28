@@ -217,9 +217,6 @@ fn create_object_doc(w: &mut dyn Write, env: &Env, info: &analysis::object::Info
                 "\nThis is an Abstract Base Class, you cannot instantiate it."
             )?;
         }
-        if let Some(version) = info.version {
-            writeln!(w, "\nFeature: `{}`", version.to_feature())?;
-        }
 
         let impl_self = if has_trait { Some(info.type_id) } else { None };
         let mut implements = impl_self
@@ -245,10 +242,6 @@ fn create_object_doc(w: &mut dyn Write, env: &Env, info: &analysis::object::Info
                 write!(w, "`[Deprecated]` ")?;
             }
             writeln!(w, "Trait containing all `{}` methods.", ty.name)?;
-
-            if let Some(version) = info.version {
-                writeln!(w, "\nFeature: `{}`", version.to_feature())?;
-            }
 
             let mut implementors = Some(info.type_id)
                 .into_iter()
@@ -355,9 +348,6 @@ fn create_record_doc(w: &mut dyn Write, env: &Env, info: &analysis::record::Info
         if let Some(ref doc) = record.doc_deprecated {
             writeln!(w, "{}", reformat_doc(doc, &symbols))?;
         }
-        if let Some(version) = info.version {
-            writeln!(w, "\nFeature: `{}`", version.to_feature())?;
-        }
         Ok(())
     })?;
 
@@ -407,11 +397,6 @@ fn create_enum_doc(w: &mut dyn Write, env: &Env, enum_: &Enumeration) -> Result<
         }
     }
 
-    if let Some(version) = enum_.version {
-        if version > env.config.min_cfg_version {
-            writeln!(w, "\nFeature: `{}`\n", version.to_feature())?;
-        }
-    }
     Ok(())
 }
 
@@ -451,11 +436,6 @@ fn create_bitfield_doc(w: &mut dyn Write, env: &Env, bitfield: &Bitfield) -> Res
         }
     }
 
-    if let Some(version) = bitfield.version {
-        if version > env.config.min_cfg_version {
-            writeln!(w, "\nFeature: `{}`\n", version.to_feature())?;
-        }
-    }
     Ok(())
 }
 
@@ -512,11 +492,6 @@ where
                 "{}",
                 reformat_doc(&fix_param_names(doc, &self_name), &symbols)
             )?;
-        }
-        if let Some(version) = *fn_.version() {
-            if version > env.config.min_cfg_version {
-                writeln!(w, "\nFeature: `{}`\n", version.to_feature())?;
-            }
         }
         if let Some(ver) = *fn_.deprecated_version() {
             writeln!(w, "\n# Deprecated since {}\n", ver)?;
@@ -597,11 +572,6 @@ fn create_property_doc(
                     "{}",
                     reformat_doc(&fix_param_names(doc, &None), &symbols)
                 )?;
-            }
-            if let Some(version) = property.version {
-                if version > env.config.min_cfg_version {
-                    writeln!(w, "\nFeature: `{}`\n", version.to_feature())?;
-                }
             }
             if let Some(ver) = property.deprecated_version {
                 writeln!(w, "\n# Deprecated since {}\n", ver)?;
