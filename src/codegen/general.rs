@@ -495,15 +495,15 @@ pub fn cfg_deprecated(
     commented: bool,
     indent: usize,
 ) -> Result<()> {
-    if let Some(s) = cfg_deprecated_string(deprecated, env, commented, indent) {
+    if let Some(s) = cfg_deprecated_string(env, deprecated, commented, indent) {
         writeln!(w, "{}", s)?;
     }
     Ok(())
 }
 
 pub fn cfg_deprecated_string(
-    deprecated: Option<Version>,
     env: &Env,
+    deprecated: Option<Version>,
     commented: bool,
     indent: usize,
 ) -> Option<String> {
