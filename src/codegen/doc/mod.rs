@@ -256,8 +256,8 @@ fn create_object_doc(w: &mut dyn Write, env: &Env, info: &analysis::object::Info
                 .filter(|&tid| !env.type_status(&tid.full_name(&env.library)).ignored())
                 .map(|tid| {
                     format!(
-                        "[`{name}`](struct.{name}.html)",
-                        name = env.library.type_(tid).get_name()
+                        "[`{n}`](struct@crate::{n})",
+                        n = env.library.type_(tid).get_name()
                     )
                 })
                 .collect::<Vec<_>>();
@@ -635,23 +635,12 @@ fn get_type_trait_for_implements(env: &Env, tid: TypeId) -> String {
         format!("{}Ext", env.library.type_(tid).get_name())
     };
     if tid.ns_id == MAIN_NAMESPACE {
-        implements_link(&trait_name)
+        format!("[`{n}`](trait@crate::{n})", n = &trait_name)
     } else if let Some(symbol) = env.symbols.borrow().by_tid(tid) {
-        let mut full_trait_name = symbol.full_rust_name();
-        let crate_path = if let Some(crate_name) = symbol.crate_name() {
-            if crate_name == "gobject" {
-                "../glib/object".to_owned()
-            } else {
-                format!("../{}", crate_name)
-            }
-        } else {
-            error!("Type {} don't have crate", tid.full_name(&env.library));
-            "unknown".to_owned()
-        };
-        full_trait_name.push_str("Ext");
-        implements_ext_link(&full_trait_name, &trait_name, &crate_path)
+        let full_trait_name = symbol.full_rust_name();
+        format!("[`trait@{}Ext`]", &full_trait_name)
     } else {
-        error!("Type {} don't have crate", tid.full_name(&env.library));
+        error!("Type {} doesn't have crate", tid.full_name(&env.library));
         format!("`{}`", trait_name)
     }
 }
@@ -676,27 +665,6 @@ pub fn get_type_manual_traits_for_implements(
     manual_trait_iters
         .into_iter()
         .flatten()
-        .map(|name| get_type_manual_trait_for_implements(name))
+        .map(|name| format!("[`{n}`](trait@crate::{n})", n = name))
         .collect()
-}
-
-fn get_type_manual_trait_for_implements(name: &str) -> String {
-    if let Some(pos) = name.rfind("::") {
-        let crate_path = format!("../{}/prelude", &name[..pos]);
-        let trait_name = &name[pos + 2..];
-        implements_ext_link(name, trait_name, &crate_path)
-    } else {
-        implements_ext_link(name, name, "prelude")
-    }
-}
-
-fn implements_link(trait_name: &str) -> String {
-    format!("[`{name}`](trait.{name}.html)", name = trait_name)
-}
-
-fn implements_ext_link(full_trait_name: &str, short_trait_name: &str, crate_path: &str) -> String {
-    format!(
-        "[`{}`]({}/trait.{}.html)",
-        full_trait_name, crate_path, short_trait_name,
-    )
 }
