@@ -508,18 +508,19 @@ pub fn cfg_deprecated_string(
     indent: usize,
 ) -> Option<String> {
     let comment = if commented { "//" } else { "" };
-    if env.is_too_low_version(deprecated) {
-        Some(format!("{}{}#[deprecated]", tabs(indent), comment))
-    } else {
-        deprecated.map(|v| {
+    deprecated.map(|v| {
+        if env.is_too_low_version(Some(v)) {
+            format!("{}{}#[deprecated = \"Since {}\"]", tabs(indent), comment, v)
+        } else {
             format!(
-                "{}{}#[cfg_attr({}, deprecated)]",
+                "{}{}#[cfg_attr({}, deprecated = \"Since {}\")]",
                 tabs(indent),
                 comment,
                 v.to_cfg(),
+                v,
             )
-        })
-    }
+        }
+    })
 }
 
 pub fn version_condition(
