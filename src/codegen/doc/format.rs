@@ -93,8 +93,30 @@ fn replace_c_types(entry: &str, symbols: &symbols::Info) -> String {
 
     let out = SYMBOL.replace_all(entry, |caps: &Captures<'_>| {
         let member = caps.get(4).map(|m| m.as_str()).unwrap_or("");
+        let sym = symbols.by_c_name(&caps[3]);
         match &caps[2] {
-            "@" | "#" | "%" => format!("{}`{}{}`", &caps[1], lookup(&caps[3]), member),
+            /* References to members, enum variants or methods within the same type. */
+            "@" => {
+                if let Some(sym) = sym {
+                    format!(
+                        "{}[`{n}{m}`](Self::{n}{m})",
+                        &caps[1],
+                        n = sym.name(),
+                        m = member
+                    )
+                } else {
+                    format!("{}`{}{}`", &caps[1], &caps[3], member)
+                }
+            }
+            "#" | "%" => {
+                format!(
+                    "{}`{}{}`",
+                    &caps[1],
+                    sym.map(symbols::Symbol::full_rust_name)
+                        .unwrap_or_else(|| caps[3].into()),
+                    member
+                )
+            }
             u => panic!("Unknown reference type {}", u),
         }
     });

@@ -38,6 +38,10 @@ impl Symbol {
     pub fn crate_name(&self) -> Option<&String> {
         self.crate_name.as_ref()
     }
+
+    pub fn name(&self) -> &str {
+        &self.name
+    }
 }
 
 #[derive(Debug)]
