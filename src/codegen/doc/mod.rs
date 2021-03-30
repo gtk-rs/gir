@@ -637,7 +637,6 @@ fn get_type_trait_for_implements(env: &Env, tid: TypeId) -> String {
         let mut full_trait_name = symbol.full_rust_name();
         let crate_path = if let Some(crate_name) = symbol.crate_name() {
             if crate_name == "gobject" {
-                full_trait_name = full_trait_name.replace("gobject", "glib::object");
                 "../glib/object".to_owned()
             } else {
                 format!("../{}", crate_name)

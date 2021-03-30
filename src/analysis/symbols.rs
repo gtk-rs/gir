@@ -16,7 +16,11 @@ impl Symbol {
     pub fn full_rust_name(&self) -> String {
         let mut ret = String::new();
         if let Some(ref s) = self.crate_name {
-            ret.push_str(s);
+            if s == "gobject" {
+                ret.push_str("glib::object");
+            } else {
+                ret.push_str(s);
+            }
             ret.push_str("::");
         }
         if let Some(ref s) = self.owner_name {
