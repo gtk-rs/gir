@@ -39,6 +39,10 @@ impl Symbol {
         self.crate_name.as_ref()
     }
 
+    pub fn owner_name(&self) -> Option<&str> {
+        self.owner_name.as_deref()
+    }
+
     pub fn name(&self) -> &str {
         &self.name
     }
