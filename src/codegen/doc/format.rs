@@ -77,11 +77,11 @@ fn format(mut input: &str, symbols: &symbols::Info) -> String {
 }
 
 static SYMBOL: Lazy<Regex> =
-    Lazy::new(|| Regex::new(r"(^|[^\\])[@#%]([\w]+\b)([:.]+[\w_-]+\b)?").unwrap());
+    Lazy::new(|| Regex::new(r"(^|[^\\])([@#%])(\w+\b)([:.]+[\w-]+\b)?").unwrap());
 static FUNCTION: Lazy<Regex> = Lazy::new(|| Regex::new(r"(\b[a-z0-9_]+)\(\)").unwrap());
-static GDK_GTK: Lazy<Regex> = Lazy::new(|| Regex::new(r"G[dt]k[A-Z][\w]+\b").unwrap());
+static GDK_GTK: Lazy<Regex> = Lazy::new(|| Regex::new(r"G[dt]k[A-Z]\w+\b").unwrap());
 static TAGS: Lazy<Regex> = Lazy::new(|| Regex::new(r"<[\w/-]+>").unwrap());
-static SPACES: Lazy<Regex> = Lazy::new(|| Regex::new(r"[ ][ ]+").unwrap());
+static SPACES: Lazy<Regex> = Lazy::new(|| Regex::new(r"[ ]{2,}").unwrap());
 
 fn replace_c_types(entry: &str, symbols: &symbols::Info) -> String {
     let lookup = |s: &str| -> String {
@@ -90,13 +90,13 @@ fn replace_c_types(entry: &str, symbols: &symbols::Info) -> String {
             .map(symbols::Symbol::full_rust_name)
             .unwrap_or_else(|| s.into())
     };
+
     let out = SYMBOL.replace_all(entry, |caps: &Captures<'_>| {
-        format!(
-            "{}`{}{}`",
-            &caps[1],
-            lookup(&caps[2]),
-            caps.get(3).map(|m| m.as_str()).unwrap_or("")
-        )
+        let member = caps.get(4).map(|m| m.as_str()).unwrap_or("");
+        match &caps[2] {
+            "@" | "#" | "%" => format!("{}`{}{}`", &caps[1], lookup(&caps[3]), member),
+            u => panic!("Unknown reference type {}", u),
+        }
     });
     let out = GDK_GTK.replace_all(&out, |caps: &Captures<'_>| {
         format!("`{}`", lookup(&caps[0]))
