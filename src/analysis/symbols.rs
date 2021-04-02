@@ -16,7 +16,11 @@ impl Symbol {
     pub fn full_rust_name(&self) -> String {
         let mut ret = String::new();
         if let Some(ref s) = self.crate_name {
-            ret.push_str(s);
+            if s == "gobject" {
+                ret.push_str("glib::object");
+            } else {
+                ret.push_str(s);
+            }
             ret.push_str("::");
         }
         if let Some(ref s) = self.owner_name {
@@ -33,6 +37,14 @@ impl Symbol {
 
     pub fn crate_name(&self) -> Option<&String> {
         self.crate_name.as_ref()
+    }
+
+    pub fn owner_name(&self) -> Option<&str> {
+        self.owner_name.as_deref()
+    }
+
+    pub fn name(&self) -> &str {
+        &self.name
     }
 }
 

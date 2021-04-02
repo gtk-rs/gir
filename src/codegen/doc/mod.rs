@@ -202,12 +202,12 @@ fn create_object_doc(w: &mut dyn Write, env: &Env, info: &analysis::object::Info
             write!(w, "`[Deprecated since {}]` ", ver)?;
         }
         if let Some(doc) = doc_deprecated {
-            writeln!(w, "{}", reformat_doc(doc, &symbols))?;
+            writeln!(w, "{}", reformat_doc(doc, &symbols, &info.name))?;
         } else if doc_deprecated.is_some() {
             write!(w, "`[Deprecated]` ")?;
         }
         if let Some(doc) = doc {
-            writeln!(w, "{}", reformat_doc(doc, &symbols))?;
+            writeln!(w, "{}", reformat_doc(doc, &symbols, &info.name))?;
         } else {
             writeln!(w)?;
         }
@@ -345,7 +345,7 @@ fn create_record_doc(w: &mut dyn Write, env: &Env, info: &analysis::record::Info
             if let Some(ver) = info.deprecated_version {
                 write!(w, "`[Deprecated since {}]` ", ver)?;
             }
-            writeln!(w, "{}", reformat_doc(doc, &symbols))?;
+            writeln!(w, "{}", reformat_doc(doc, &symbols, &info.name))?;
         }
         if let Some(ver) = info.deprecated_version {
             writeln!(w, "\n# Deprecated since {}\n", ver)?;
@@ -353,7 +353,7 @@ fn create_record_doc(w: &mut dyn Write, env: &Env, info: &analysis::record::Info
             writeln!(w, "\n# Deprecated\n")?;
         }
         if let Some(ref doc) = record.doc_deprecated {
-            writeln!(w, "{}", reformat_doc(doc, &symbols))?;
+            writeln!(w, "{}", reformat_doc(doc, &symbols, &info.name))?;
         }
         if let Some(version) = info.version {
             writeln!(w, "\nFeature: `{}`", version.to_feature())?;
@@ -377,7 +377,7 @@ fn create_enum_doc(w: &mut dyn Write, env: &Env, enum_: &Enumeration) -> Result<
 
     write_item_doc(w, &ty, |w| {
         if let Some(ref doc) = enum_.doc {
-            writeln!(w, "{}", reformat_doc(doc, &symbols))?;
+            writeln!(w, "{}", reformat_doc(doc, &symbols, &enum_.name))?;
         }
         if let Some(ver) = enum_.deprecated_version {
             writeln!(w, "\n# Deprecated since {}\n", ver)?;
@@ -385,7 +385,7 @@ fn create_enum_doc(w: &mut dyn Write, env: &Env, enum_: &Enumeration) -> Result<
             writeln!(w, "\n# Deprecated\n")?;
         }
         if let Some(ref doc) = enum_.doc_deprecated {
-            writeln!(w, "{}", reformat_doc(doc, &symbols))?;
+            writeln!(w, "{}", reformat_doc(doc, &symbols, &enum_.name))?;
         }
         Ok(())
     })?;
@@ -400,7 +400,7 @@ fn create_enum_doc(w: &mut dyn Write, env: &Env, enum_: &Enumeration) -> Result<
             };
             write_item_doc(w, &sub_ty, |w| {
                 if let Some(ref doc) = member.doc {
-                    writeln!(w, "{}", reformat_doc(doc, &symbols))?;
+                    writeln!(w, "{}", reformat_doc(doc, &symbols, &enum_.name))?;
                 }
                 Ok(())
             })?;
@@ -421,7 +421,7 @@ fn create_bitfield_doc(w: &mut dyn Write, env: &Env, bitfield: &Bitfield) -> Res
 
     write_item_doc(w, &ty, |w| {
         if let Some(ref doc) = bitfield.doc {
-            writeln!(w, "{}", reformat_doc(doc, &symbols))?;
+            writeln!(w, "{}", reformat_doc(doc, &symbols, &bitfield.name))?;
         }
         if let Some(ver) = bitfield.deprecated_version {
             writeln!(w, "\n# Deprecated since {}\n", ver)?;
@@ -429,7 +429,7 @@ fn create_bitfield_doc(w: &mut dyn Write, env: &Env, bitfield: &Bitfield) -> Res
             writeln!(w, "\n# Deprecated\n")?;
         }
         if let Some(ref doc) = bitfield.doc_deprecated {
-            writeln!(w, "{}", reformat_doc(doc, &symbols))?;
+            writeln!(w, "{}", reformat_doc(doc, &symbols, &bitfield.name))?;
         }
         Ok(())
     })?;
@@ -444,7 +444,7 @@ fn create_bitfield_doc(w: &mut dyn Write, env: &Env, bitfield: &Bitfield) -> Res
             };
             write_item_doc(w, &sub_ty, |w| {
                 if let Some(ref doc) = member.doc {
-                    writeln!(w, "{}", reformat_doc(doc, &symbols))?;
+                    writeln!(w, "{}", reformat_doc(doc, &symbols, &bitfield.name))?;
                 }
                 Ok(())
             })?;
@@ -493,6 +493,8 @@ where
         return Ok(());
     }
 
+    let parent_name = parent.as_ref().map_or("", |p| &p.name).to_owned();
+
     let symbols = env.symbols.borrow();
     let mut st = fn_.to_stripper_type();
     if let Some(name_override) = name_override {
@@ -510,7 +512,7 @@ where
             writeln!(
                 w,
                 "{}",
-                reformat_doc(&fix_param_names(doc, &self_name), &symbols)
+                reformat_doc(&fix_param_names(doc, &self_name), &symbols, &parent_name)
             )?;
         }
         if let Some(version) = *fn_.version() {
@@ -527,7 +529,7 @@ where
             writeln!(
                 w,
                 "{}",
-                reformat_doc(&fix_param_names(doc, &self_name), &symbols)
+                reformat_doc(&fix_param_names(doc, &self_name), &symbols, &parent_name)
             )?;
         }
 
@@ -540,7 +542,7 @@ where
                 writeln!(
                     w,
                     "{}",
-                    reformat_doc(&fix_param_names(doc, &self_name), &symbols)
+                    reformat_doc(&fix_param_names(doc, &self_name), &symbols, &parent_name)
                 )?;
             }
         }
@@ -550,7 +552,7 @@ where
             writeln!(
                 w,
                 "{}",
-                reformat_doc(&fix_param_names(doc, &self_name), &symbols)
+                reformat_doc(&fix_param_names(doc, &self_name), &symbols, &parent_name)
             )?;
         }
         Ok(())
@@ -572,6 +574,7 @@ fn create_property_doc(
     {
         return Ok(());
     }
+    let parent_name = parent.as_ref().map_or("", |p| &p.name).to_owned();
     let name_for_func = nameutil::signal_to_snake(&property.name);
     let mut v = Vec::with_capacity(2);
 
@@ -595,7 +598,7 @@ fn create_property_doc(
                 writeln!(
                     w,
                     "{}",
-                    reformat_doc(&fix_param_names(doc, &None), &symbols)
+                    reformat_doc(&fix_param_names(doc, &None), &symbols, &parent_name)
                 )?;
             }
             if let Some(version) = property.version {
@@ -612,7 +615,7 @@ fn create_property_doc(
                 writeln!(
                     w,
                     "{}",
-                    reformat_doc(&fix_param_names(doc, &None), &symbols)
+                    reformat_doc(&fix_param_names(doc, &None), &symbols, &parent_name)
                 )?;
             }
             Ok(())
@@ -637,7 +640,6 @@ fn get_type_trait_for_implements(env: &Env, tid: TypeId) -> String {
         let mut full_trait_name = symbol.full_rust_name();
         let crate_path = if let Some(crate_name) = symbol.crate_name() {
             if crate_name == "gobject" {
-                full_trait_name = full_trait_name.replace("gobject", "glib::object");
                 "../glib/object".to_owned()
             } else {
                 format!("../{}", crate_name)
