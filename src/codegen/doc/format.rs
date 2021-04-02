@@ -138,7 +138,7 @@ fn replace_c_types(entry: &str, symbols: &symbols::Info, in_type: &str) -> Strin
         format!("`{}`", lookup(&caps[0]))
     });
     let out = FUNCTION.replace_all(&out, |caps: &Captures<'_>| {
-        format!("`{}`", lookup(&caps[1]))
+        format!("`{}()`", lookup(&caps[1]))
     });
     let out = TAGS.replace_all(&out, "`$0`");
     SPACES.replace_all(&out, " ").into_owned()
