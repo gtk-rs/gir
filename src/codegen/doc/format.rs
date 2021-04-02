@@ -138,7 +138,15 @@ fn replace_c_types(entry: &str, symbols: &symbols::Info, in_type: &str) -> Strin
         format!("`{}`", lookup(&caps[0]))
     });
     let out = FUNCTION.replace_all(&out, |caps: &Captures<'_>| {
-        format!("`{}()`", lookup(&caps[1]))
+        if let Some(sym) = symbols.by_c_name(&caps[1]) {
+            if sym.owner_name() == Some(in_type) {
+                format!("[`{f}()`](Self::{f}())", f = sym.name())
+            } else {
+                format!("[`{f}()`](crate::{f}())", f = sym.full_rust_name())
+            }
+        } else {
+            format!("`{}()`", &caps[1])
+        }
     });
     let out = TAGS.replace_all(&out, "`$0`");
     SPACES.replace_all(&out, " ").into_owned()
