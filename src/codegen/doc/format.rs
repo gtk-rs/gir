@@ -134,44 +134,42 @@ fn replace_c_types(entry: &str, symbols: &symbols::Info, in_type: &str) -> Strin
     let out = SYMBOL.replace_all(&out, |caps: &Captures<'_>| {
         let member = caps.get(4).map(|m| m.as_str()).unwrap_or("");
         let sym = symbols.by_c_name(&caps[3]);
-        match &caps[2] {
-            /* References to members, enum variants or methods within the same type. */
-            "@" => {
-                if let Some(sym) = sym {
+
+        if let Some(sym) = sym {
+            if sym.owner_name() == Some(in_type) {
+                // `#` or `%` symbols should probably have been `@` to denote
+                // that it is a reference within the current type.
+                format!(
+                    "{}[`{n}{m}`](Self::{n}{m})",
+                    &caps[1],
+                    n = sym.name(),
+                    m = member
+                )
+            } else {
+                match &caps[2] {
                     // Catch invalid @ references that have a C symbol available but do not belong
                     // to the current type (and can hence not use `Self::`). For now generate XXX
                     // but with a valid global link so that the can be easily spotted in the code.
                     // assert_eq!(sym.owner_name(), Some(in_type));
-                    if sym.owner_name() != Some(in_type) {
-                        format!(
-                            "{}[`crate::{}{}`] (XXX: @-reference does not belong to {}!)",
-                            &caps[1],
-                            sym.full_rust_name(),
-                            member,
-                            in_type,
-                        )
-                    } else {
-                        format!(
-                            "{}[`{n}{m}`](Self::{n}{m})",
-                            &caps[1],
-                            n = sym.name(),
-                            m = member
-                        )
-                    }
-                } else {
-                    format!("{}`{}{}`", &caps[1], &caps[3], member)
+                    "@" => format!(
+                        "{}[`crate::{}{}`] (XXX: @-reference does not belong to {}!)",
+                        &caps[1],
+                        sym.full_rust_name(),
+                        member,
+                        in_type,
+                    ),
+                    "#" => format!(
+                        "{}[`{n}{m}`](crate::{n}{m})",
+                        &caps[1],
+                        n = sym.full_rust_name(),
+                        m = member,
+                    ),
+                    "%" => format!("{}[`{}{}`]", &caps[1], sym.full_rust_name(), member,),
+                    c => panic!("Unknown symbol reference {}", c),
                 }
             }
-            "#" | "%" => {
-                format!(
-                    "{}`{}{}`",
-                    &caps[1],
-                    sym.map(symbols::Symbol::full_rust_name)
-                        .unwrap_or_else(|| caps[3].into()),
-                    member
-                )
-            }
-            u => panic!("Unknown reference type {}", u),
+        } else {
+            format!("{}`{}{}`", &caps[1], &caps[3], member)
         }
     });
     let out = GDK_GTK.replace_all(&out, |caps: &Captures<'_>| {
