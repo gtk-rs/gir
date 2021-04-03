@@ -67,14 +67,15 @@ pub struct GirVersion {
 }
 
 impl GirVersion {
-    fn new(gir_dir: &Path) -> Self {
+    fn new(gir_dir: impl AsRef<Path>) -> Self {
+        let gir_dir = normalize_path(gir_dir);
         Self {
-            gir_dir: normalize_path(gir_dir),
             file_name: gir_dir
                 .file_name()
                 .map(|s| s.to_str().expect("OsStr::to_str failed").to_owned()),
-            hash: repo_hash(gir_dir),
-            url: repo_remote_url(gir_dir),
+            hash: repo_hash(&gir_dir),
+            url: repo_remote_url(&gir_dir),
+            gir_dir,
         }
     }
 
@@ -195,10 +196,7 @@ impl Config {
                 girs_dirs.push(config_dir.join(dir));
             }
         }
-        let mut girs_version = girs_dirs
-            .iter()
-            .map(|d| GirVersion::new(d))
-            .collect::<Vec<_>>();
+        let mut girs_version = girs_dirs.iter().map(GirVersion::new).collect::<Vec<_>>();
         girs_version.sort_by(|a, b| a.gir_dir.partial_cmp(&b.gir_dir).unwrap());
 
         let (library_name, library_version) = match (library_name.into(), library_version.into()) {
