@@ -571,6 +571,7 @@ fn analyze_function(
         .filter_map(|f| f.version)
         .min()
         .or(func.version);
+
     let version = env.config.filter_version(version);
     let deprecated_version = func.deprecated_version;
     let cfg_condition = configured_functions

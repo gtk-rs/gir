@@ -197,7 +197,7 @@ fn generate_bitfields(w: &mut dyn Write, env: &Env, items: &[&Bitfield]) -> Resu
                 .as_ref()
                 .map(|c| c.members.matched(&member.name))
                 .unwrap_or_else(Vec::new);
-            let version = member_config.iter().filter_map(|m| m.version).next();
+            let version = member_config.iter().find_map(|m| m.version);
 
             let val: i64 = member.value.parse().unwrap();
 
@@ -221,8 +221,7 @@ fn generate_constant_cfg_configure(
 ) -> Result<()> {
     let cfg_condition_ = configured_constants
         .iter()
-        .filter_map(|f| f.cfg_condition.clone())
-        .next();
+        .find_map(|f| f.cfg_condition.clone());
     cfg_condition(w, &cfg_condition_, commented, 1)?;
     Ok(())
 }
@@ -299,7 +298,7 @@ fn generate_enums(w: &mut dyn Write, env: &Env, items: &[&Enumeration]) -> Resul
                 .map(|c| c.members.matched(&member.name))
                 .unwrap_or_else(Vec::new);
             let is_alias = member_config.iter().any(|m| m.alias);
-            let version = member_config.iter().filter_map(|m| m.version).next();
+            let version = member_config.iter().find_map(|m| m.version);
 
             if is_alias {
                 continue;

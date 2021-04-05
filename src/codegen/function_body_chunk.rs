@@ -1213,25 +1213,22 @@ impl Builder {
     }
 
     fn find_array_length_name(&self, array_name_: &str) -> Option<String> {
-        self.transformations
-            .iter()
-            .filter_map(|tr| {
-                if let TransformationType::Length {
-                    ref array_name,
-                    ref array_length_name,
-                    ..
-                } = tr.transformation_type
-                {
-                    if array_name == array_name_ {
-                        Some(array_length_name.clone())
-                    } else {
-                        None
-                    }
+        self.transformations.iter().find_map(|tr| {
+            if let TransformationType::Length {
+                ref array_name,
+                ref array_length_name,
+                ..
+            } = tr.transformation_type
+            {
+                if array_name == array_name_ {
+                    Some(array_length_name.clone())
                 } else {
                     None
                 }
-            })
-            .next()
+            } else {
+                None
+            }
+        })
     }
 }
 

@@ -54,10 +54,7 @@ pub fn analyze(
     let mut info: Info = Default::default();
     let mut unsupported_outs = false;
 
-    let nullable_override = configured_functions
-        .iter()
-        .filter_map(|f| f.ret.nullable)
-        .next();
+    let nullable_override = configured_functions.iter().find_map(|f| f.ret.nullable);
     if func.throws {
         let use_ret = use_return_value_for_result(env, func_ret, &func.name, configured_functions);
         info.mode = Mode::Throws(use_ret);
@@ -182,8 +179,7 @@ pub fn use_function_return_for_result(
     // Configuration takes precendence over everything.
     let use_return_for_result = configured_functions
         .iter()
-        .filter_map(|f| f.ret.use_return_for_result.as_ref())
-        .next();
+        .find_map(|f| f.ret.use_return_for_result.as_ref());
     if let Some(use_return_for_result) = use_return_for_result {
         if typ == Default::default() {
             error!("Function \"{}\": use_return_for_result set to true, but function has no return value", func_name);

@@ -47,8 +47,7 @@ pub fn analyze<F: Borrow<library::Constant>>(
         let deprecated_version = constant.deprecated_version;
         let cfg_condition = configured_constants
             .iter()
-            .filter_map(|c| c.cfg_condition.clone())
-            .next();
+            .find_map(|c| c.cfg_condition.clone());
 
         let name = nameutil::mangle_keywords(&*constant.name).into_owned();
 

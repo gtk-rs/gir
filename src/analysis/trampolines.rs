@@ -140,10 +140,7 @@ pub fn analyze(
             used_types.push(s);
         }
 
-        let nullable_override = configured_signals
-            .iter()
-            .filter_map(|f| f.ret.nullable)
-            .next();
+        let nullable_override = configured_signals.iter().find_map(|f| f.ret.nullable);
         if let Some(nullable) = nullable_override {
             ret_nullable = nullable;
         }

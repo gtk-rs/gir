@@ -192,8 +192,7 @@ pub fn analyze(
 
         let mut array_name = configured_parameters
             .iter()
-            .filter_map(|p| p.length_of.as_ref())
-            .next();
+            .find_map(|p| p.length_of.as_ref());
         if array_name.is_none() {
             array_name = array_lengths.get(&(pos as u32))
         }
@@ -225,10 +224,7 @@ pub fn analyze(
         let ref_mode =
             RefMode::without_unneeded_mut(env, par, immutable, in_trait && par.instance_parameter);
 
-        let nullable_override = configured_parameters
-            .iter()
-            .filter_map(|p| p.nullable)
-            .next();
+        let nullable_override = configured_parameters.iter().find_map(|p| p.nullable);
         let nullable = nullable_override.unwrap_or(par.nullable);
 
         let c_par = CParameter {

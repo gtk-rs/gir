@@ -139,8 +139,7 @@ pub fn analyze(
         let nullable_override = configured_signals
             .matched_parameters(&name)
             .iter()
-            .filter_map(|p| p.nullable)
-            .next();
+            .find_map(|p| p.nullable);
         let nullable = nullable_override.unwrap_or(par.nullable);
 
         let conversion_type = {
@@ -156,13 +155,11 @@ pub fn analyze(
         let new_name = configured_signals
             .matched_parameters(&name)
             .iter()
-            .filter_map(|p| p.new_name.clone())
-            .next();
+            .find_map(|p| p.new_name.clone());
         let transformation_override = configured_signals
             .matched_parameters(&name)
             .iter()
-            .filter_map(|p| p.transformation)
-            .next();
+            .find_map(|p| p.transformation);
 
         let mut transform = parameters.prepare_transformation(
             par.typ,

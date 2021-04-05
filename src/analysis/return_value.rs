@@ -29,8 +29,7 @@ pub fn analyze(
 ) -> Info {
     let typ = configured_functions
         .iter()
-        .filter_map(|f| f.ret.type_name.as_ref())
-        .next()
+        .find_map(|f| f.ret.type_name.as_ref())
         .and_then(|typ| env.library.find_type(0, typ))
         .unwrap_or_else(|| override_string_type_return(env, func.ret.typ, configured_functions));
     let mut parameter = if typ == Default::default() {
@@ -49,10 +48,7 @@ pub fn analyze(
             }
         }
 
-        let nullable_override = configured_functions
-            .iter()
-            .filter_map(|f| f.ret.nullable)
-            .next();
+        let nullable_override = configured_functions.iter().find_map(|f| f.ret.nullable);
         if let Some(val) = nullable_override {
             nullable = val;
         }
@@ -79,8 +75,7 @@ pub fn analyze(
 
     let bool_return_is_error = configured_functions
         .iter()
-        .filter_map(|f| f.ret.bool_return_is_error.as_ref())
-        .next();
+        .find_map(|f| f.ret.bool_return_is_error.as_ref());
     let bool_return_error_message = bool_return_is_error.and_then(|m| {
         if typ != TypeId::tid_bool() {
             error!(
@@ -102,8 +97,7 @@ pub fn analyze(
 
     let nullable_return_is_error = configured_functions
         .iter()
-        .filter_map(|f| f.ret.nullable_return_is_error.as_ref())
-        .next();
+        .find_map(|f| f.ret.nullable_return_is_error.as_ref());
     let nullable_return_error_message = nullable_return_is_error.and_then(|m| {
         if let Some(library::Parameter { nullable: Nullable(false), ..}) = parameter {
             error!(
@@ -127,10 +121,7 @@ pub fn analyze(
 
     if func.kind == library::FunctionKind::Constructor {
         if let Some(par) = parameter {
-            let nullable_override = configured_functions
-                .iter()
-                .filter_map(|f| f.ret.nullable)
-                .next();
+            let nullable_override = configured_functions.iter().find_map(|f| f.ret.nullable);
             if par.typ != type_tid {
                 base_tid = Some(par.typ);
             }

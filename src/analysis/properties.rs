@@ -106,10 +106,7 @@ fn analyze_property(
         .min()
         .or(prop.version)
         .or(Some(env.config.min_cfg_version));
-    let generate = configured_properties
-        .iter()
-        .filter_map(|f| f.generate)
-        .next();
+    let generate = configured_properties.iter().find_map(|f| f.generate);
     let generate_set = generate.is_some();
     let generate = generate.unwrap_or_else(PropertyGenerateFlags::all);
 

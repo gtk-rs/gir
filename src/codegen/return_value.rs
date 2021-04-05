@@ -143,14 +143,13 @@ pub fn out_parameters_as_return(env: &Env, analysis: &analysis::functions::Info)
                 .c_parameters
                 .iter()
                 .enumerate()
-                .filter_map(|(pos, orig_par)| {
+                .find_map(|(pos, orig_par)| {
                     if orig_par.name == mangled_par_name {
                         Some(pos)
                     } else {
                         None
                     }
                 })
-                .next()
                 .unwrap();
             if array_lengths.contains(&(param_pos as u32)) {
                 skip += 1;

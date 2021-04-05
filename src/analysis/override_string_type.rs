@@ -6,10 +6,7 @@ pub fn override_string_type_parameter(
     typ: TypeId,
     configured_parameters: &[&config::functions::Parameter],
 ) -> TypeId {
-    let string_type = configured_parameters
-        .iter()
-        .filter_map(|p| p.string_type)
-        .next();
+    let string_type = configured_parameters.iter().find_map(|p| p.string_type);
     apply(env, typ, string_type)
 }
 
@@ -18,10 +15,7 @@ pub fn override_string_type_return(
     typ: TypeId,
     configured_functions: &[&config::functions::Function],
 ) -> TypeId {
-    let string_type = configured_functions
-        .iter()
-        .filter_map(|f| f.ret.string_type)
-        .next();
+    let string_type = configured_functions.iter().find_map(|f| f.ret.string_type);
     apply(env, typ, string_type)
 }
 
