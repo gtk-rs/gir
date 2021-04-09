@@ -122,13 +122,6 @@ impl<'a> Builder<'a> {
 
         let mut body = Vec::new();
 
-        let return_info = analysis::return_value::Info {
-            parameter: None,
-            base_tid: None,
-            commented: false,
-            bool_return_is_error: None,
-            nullable_return_is_error: None,
-        };
         let ffi_call = Chunk::FfiCall {
             name: self.get_ffi_func(),
             params,
@@ -145,7 +138,7 @@ impl<'a> Builder<'a> {
         });
 
         body.push(Chunk::FfiCallConversion {
-            ret: return_info,
+            ret: analysis::return_value::Info::default(),
             array_length_name: None,
             call: Box::new(ffi_call),
         });
@@ -196,15 +189,8 @@ impl<'a> Builder<'a> {
             name: self.set_ffi_func(),
             params,
         };
-        let return_info = analysis::return_value::Info {
-            parameter: None,
-            base_tid: None,
-            commented: false,
-            bool_return_is_error: None,
-            nullable_return_is_error: None,
-        };
         body.push(Chunk::FfiCallConversion {
-            ret: return_info,
+            ret: analysis::return_value::Info::default(),
             array_length_name: None,
             call: Box::new(ffi_call),
         });

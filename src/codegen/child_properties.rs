@@ -5,7 +5,8 @@ use super::{
 use crate::{
     analysis::{
         child_properties::ChildProperty,
-        rust_type::{parameter_rust_type, rust_type},
+        rust_type::{parameter_rust_type, rust_type_default},
+        try_from_glib::TryFromGlib,
     },
     chunk::Chunk,
     env::Env,
@@ -40,7 +41,7 @@ fn generate_func(
 ) -> Result<()> {
     let pub_prefix = if in_trait { "" } else { "pub " };
     let decl_suffix = if only_declaration { ";" } else { " {" };
-    let type_string = rust_type(env, prop.typ);
+    let type_string = rust_type_default(env, prop.typ);
     let comment_prefix = if type_string.is_err() { "//" } else { "" };
 
     writeln!(w)?;
@@ -89,7 +90,7 @@ fn declaration(env: &Env, prop: &ChildProperty, is_get: bool) -> String {
         format!("set_{}_{}", prop.child_name, prop.prop_name)
     };
     let mut bounds = if let Some(typ) = prop.child_type {
-        let child_type = rust_type(env, typ).into_string();
+        let child_type = rust_type_default(env, typ).into_string();
         format!("T: IsA<{}>", child_type)
     } else {
         "T: IsA<Widget>".to_string()
@@ -106,6 +107,7 @@ fn declaration(env: &Env, prop: &ChildProperty, is_get: bool) -> String {
             prop.nullable,
             prop.get_out_ref_mode,
             library::ParameterScope::None,
+            &TryFromGlib::from_type_defaults(env, prop.typ),
         )
         .into_string();
         format!(" -> {}", ret_type)
@@ -135,8 +137,8 @@ fn body(env: &Env, prop: &ChildProperty, in_trait: bool, is_get: bool) -> Chunk 
         .is_ref(prop.set_in_ref_mode.is_ref())
         .is_nullable(*prop.nullable);
 
-    if let Ok(type_) = rust_type(env, prop.typ) {
-        builder.type_(&type_);
+    if let Ok(type_) = rust_type_default(env, prop.typ) {
+        builder.type_(type_.as_str());
     } else {
         builder.type_("/*Unknown type*/");
     }

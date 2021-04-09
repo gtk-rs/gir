@@ -169,7 +169,7 @@ fn generate_aliases(w: &mut dyn Write, env: &Env, items: &[&Alias]) -> Result<()
             continue;
         }
         let (comment, c_type) = match ffi_type(env, item.typ, &item.target_c_type) {
-            Ok(x) => ("", x),
+            Ok(x) => ("", x.into_string()),
             x @ Err(..) => ("//", x.into_string()),
         };
         writeln!(w, "{}pub type {} = {};", comment, item.c_identifier, c_type)?;
@@ -237,7 +237,7 @@ fn generate_constants(w: &mut dyn Write, env: &Env, constants: &[Constant]) -> R
             continue;
         }
         let (comment, mut type_) = match ffi_type(env, constant.typ, &constant.c_type) {
-            Ok(x) => ("", x),
+            Ok(x) => ("", x.into_string()),
             x @ Err(..) => ("//", x.into_string()),
         };
         let mut value = constant.value.clone();

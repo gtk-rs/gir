@@ -1,9 +1,13 @@
 use crate::{
-    analysis::{bounds::Bounds, imports::Imports, ref_mode::RefMode, rust_type::*},
+    analysis::{
+        bounds::Bounds, imports::Imports, ref_mode::RefMode, rust_type::*,
+        try_from_glib::TryFromGlib,
+    },
     codegen::function,
     config,
     env::Env,
-    library, nameutil,
+    library::{self, ParameterDirection},
+    nameutil,
     traits::*,
 };
 use log::error;
@@ -48,7 +52,7 @@ pub fn analyze(
         .as_ref()
         .and_then(|name| env.library.find_type(0, name));
     if config.child_type.is_some() && child_type.is_none() {
-        let owner_name = rust_type(env, type_tid).into_string();
+        let owner_name = rust_type_default(env, type_tid).into_string();
         let child_type: &str = config.child_type.as_ref().unwrap();
         error!("Bad child type `{}` for `{}`", child_type, owner_name);
         return properties;
@@ -64,8 +68,16 @@ pub fn analyze(
 
     if !properties.is_empty() {
         imports.add("glib::object::IsA");
-        if let Some(s) = child_type.and_then(|typ| used_rust_type(env, typ, true).ok()) {
-            imports.add_used_type(&s);
+        if let Some(rust_type) = child_type.and_then(|typ| {
+            used_rust_type(
+                env,
+                typ,
+                ParameterDirection::Return,
+                &TryFromGlib::default(),
+            )
+            .ok()
+        }) {
+            imports.add_used_types(rust_type.used_types());
         }
     }
 
@@ -95,8 +107,10 @@ fn analyze_property(
         let doc_hidden = prop.doc_hidden;
 
         imports.add("glib::StaticType");
-        if let Ok(s) = used_rust_type(env, typ, false) {
-            imports.add_used_type(&s);
+        if let Ok(rust_type) =
+            used_rust_type(env, typ, ParameterDirection::In, &TryFromGlib::default())
+        {
+            imports.add_used_types(rust_type.used_types());
         }
 
         let get_out_ref_mode = RefMode::of(env, typ, library::ParameterDirection::Return);
@@ -116,7 +130,7 @@ fn analyze_property(
         let nullable = library::Nullable(set_in_ref_mode.is_ref());
 
         let mut bounds_str = String::new();
-        let dir = library::ParameterDirection::In;
+        let dir = ParameterDirection::In;
         let set_params = if let Some(bound) = Bounds::type_for(env, typ, nullable) {
             let r_type = bounds_rust_type(env, typ).into_string();
             let mut bounds = Bounds::default();
@@ -137,7 +151,8 @@ fn analyze_property(
                     dir,
                     nullable,
                     set_in_ref_mode,
-                    library::ParameterScope::None
+                    library::ParameterScope::None,
+                    &TryFromGlib::from_type_defaults(env, typ),
                 )
                 .into_string()
             )
@@ -159,7 +174,7 @@ fn analyze_property(
             to_glib_extra: String::new(),
         })
     } else {
-        let owner_name = rust_type(env, type_tid).into_string();
+        let owner_name = rust_type_default(env, type_tid).into_string();
         error!(
             "Bad type `{}` of child property `{}` for `{}`",
             &prop.type_name, name, owner_name

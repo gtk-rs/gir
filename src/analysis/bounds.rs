@@ -5,6 +5,7 @@ use crate::{
         imports::Imports,
         out_parameters::use_function_return_for_result,
         rust_type::{bounds_rust_type, rust_type, rust_type_nullable, rust_type_with_scope},
+        try_from_glib::TryFromGlib,
     },
     config,
     consts::TYPE_PARAMETERS_START,
@@ -109,8 +110,14 @@ impl Bounds {
                         ) {
                             out_parameters.insert(
                                 0,
-                                rust_type_nullable(env, function.ret.typ, function.ret.nullable)
-                                    .into_string(),
+                                rust_type_nullable(
+                                    env,
+                                    function.ret.typ,
+                                    function.ret.direction,
+                                    function.ret.nullable,
+                                    &TryFromGlib::default(),
+                                )
+                                .into_string(),
                             );
                         }
                         let parameters = format_out_parameters(&out_parameters);
@@ -131,8 +138,15 @@ impl Bounds {
                 {
                     need_is_into_check = par.c_type != "GDestroyNotify";
                     if let Type::Function(_) = env.library.type_(par.typ) {
-                        type_string = rust_type_with_scope(env, par.typ, par.scope, concurrency)
-                            .into_string();
+                        type_string = rust_type_with_scope(
+                            env,
+                            par.typ,
+                            par.direction,
+                            par.scope,
+                            concurrency,
+                            &par.try_from_glib,
+                        )
+                        .into_string();
                         let bound_name = *self.unused.front().unwrap();
                         callback_info = Some(CallbackInfo {
                             callback_type: type_string.clone(),
@@ -327,7 +341,14 @@ fn find_out_parameters(
                 .find_map(|f| f.parameters.iter().find_map(|p| p.nullable))
                 .unwrap_or(param.nullable);
 
-            rust_type_nullable(env, param.typ, nullable).into_string()
+            rust_type_nullable(
+                env,
+                param.typ,
+                param.direction,
+                nullable,
+                &TryFromGlib::default(),
+            )
+            .into_string()
         })
         .collect()
 }
@@ -347,7 +368,13 @@ fn find_error_type(env: &Env, function: &Function) -> String {
         .find(|param| param.direction == ParameterDirection::Out && param.name == "error")
         .expect("error type");
     if let Type::Record(_) = *env.type_(error_param.typ) {
-        return rust_type(env, error_param.typ).into_string();
+        return rust_type(
+            env,
+            error_param.typ,
+            error_param.direction,
+            &TryFromGlib::default(),
+        )
+        .into_string();
     }
     panic!("cannot find error type")
 }

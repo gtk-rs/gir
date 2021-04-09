@@ -1,5 +1,7 @@
 use crate::{
-    analysis::{self, conversion_type::ConversionType, rust_type::rust_type},
+    analysis::{
+        self, conversion_type::ConversionType, rust_type::rust_type, try_from_glib::TryFromGlib,
+    },
     chunk::conversion_from_glib::Mode,
     env::Env,
     library,
@@ -31,6 +33,30 @@ impl TranslateFromGlib for Mode {
                 ),
                 _ => ("from_glib(".into(), ")".into()),
             },
+            Option => {
+                let (pre, post) = match &self.try_from_glib {
+                    TryFromGlib::Option => ("from_glib(", ")"),
+                    TryFromGlib::OptionMandatory => (
+                        "Option::<_>::from_glib(",
+                        ").expect(\"mandatory glib value is None\")",
+                    ),
+                    other => panic!("Unexpected {:?} for ConversionType::Option", other),
+                };
+                (pre.to_string(), post.to_string())
+            }
+            Result { .. } => {
+                let (pre, post) = match &self.try_from_glib {
+                    TryFromGlib::Result { ok_type, .. } => {
+                        (format!("{}::try_from_glib(", &ok_type), ")")
+                    }
+                    TryFromGlib::ResultInfallible { ok_type, .. } => (
+                        format!("{}::try_from_glib(", &ok_type),
+                        ").unwrap_or_else(|err| panic!(\"infallible {}\", err))",
+                    ),
+                    other => panic!("Unexpected {:?} for ConversionType::Result", other),
+                };
+                (pre, post.to_string())
+            }
             Pointer => {
                 let trans = from_glib_xxx(self.transfer, array_length);
                 match *env.type_(self.typ) {
@@ -62,22 +88,22 @@ impl TranslateFromGlib for analysis::return_value::Info {
         match self.parameter {
             Some(ref par) => match self.base_tid {
                 Some(tid) => {
-                    let rust_type = rust_type(env, tid);
-                    let from_glib_xxx = from_glib_xxx(par.transfer, None);
+                    let rust_type = rust_type(env, tid, par.lib_par.direction, &par.try_from_glib);
+                    let from_glib_xxx = from_glib_xxx(par.lib_par.transfer, None);
 
-                    let prefix = if *par.nullable {
+                    let prefix = if *par.lib_par.nullable {
                         format!("Option::<{}>::{}", rust_type.into_string(), from_glib_xxx.0)
                     } else {
                         format!("{}::{}", rust_type.into_string(), from_glib_xxx.0)
                     };
-                    let suffix_function = if *par.nullable {
+                    let suffix_function = if *par.lib_par.nullable {
                         "map(|o| o.unsafe_cast())"
                     } else {
                         "unsafe_cast()"
                     };
 
                     if let Some(ref msg) = self.nullable_return_is_error {
-                        assert!(*par.nullable);
+                        assert!(*par.lib_par.nullable);
                         (
                             prefix,
                             format!(
@@ -99,7 +125,7 @@ impl TranslateFromGlib for analysis::return_value::Info {
                 None if self.nullable_return_is_error.is_some() => {
                     let res = Mode::from(par).translate_from_glib_as_function(env, array_length);
                     if let Some(ref msg) = self.nullable_return_is_error {
-                        assert!(*par.nullable);
+                        assert!(*par.lib_par.nullable);
                         (
                             format!("Option::<_>::{}", res.0),
                             format!(

@@ -1,8 +1,8 @@
-use super::{general::StatusedTypeId, imports::Imports};
+use super::{general::StatusedTypeId, imports::Imports, try_from_glib::TryFromGlib};
 use crate::{
     analysis::{namespaces, rust_type::used_rust_type},
     env::Env,
-    library::TypeId,
+    library::{ParameterDirection, TypeId},
 };
 
 pub fn analyze(env: &Env, type_id: TypeId, imports: &mut Imports) -> Vec<StatusedTypeId> {
@@ -24,8 +24,15 @@ pub fn analyze(env: &Env, type_id: TypeId, imports: &mut Imports) -> Vec<Statuse
         });
 
         if !status.ignored() && super_tid.ns_id == namespaces::MAIN {
-            if let Ok(s) = used_rust_type(env, super_tid, true) {
-                imports.add(&format!("crate::{}", s));
+            if let Ok(rust_type) = used_rust_type(
+                env,
+                super_tid,
+                ParameterDirection::In,
+                &TryFromGlib::default(),
+            ) {
+                for import in rust_type.into_used_types() {
+                    imports.add(&format!("crate::{}", import));
+                }
             }
         }
     }

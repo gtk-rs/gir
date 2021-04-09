@@ -1,11 +1,26 @@
-use crate::{config::gobjects::GObject, env, library::*};
+use crate::{env, library::*};
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+use std::sync::Arc;
+
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub enum ConversionType {
-    Direct,  //coded without conversion
-    Scalar,  //coded with from_glib
-    Pointer, //coded with from_glib_xxx
-    Borrow,  //same as Pointer, except that use from_glib_borrow instead from_glib_none
+    /// Coded without conversion.
+    Direct,
+    /// Coded with from_glib.
+    Scalar,
+    /// Type implementing TryFromGlib<Error=GlibNoneError>.
+    Option,
+    /// Type implementing TryFromGlib<Err> where Err is neither GlibNoneError
+    /// nor GlibNoneOrInvalidError. Embeds the Error type name.
+    /// Defaults to the object's type for the `Ok` variant if `ok_type` is `None`.
+    Result {
+        ok_type: Arc<str>,
+        err_type: Arc<str>,
+    },
+    /// Coded with from_glib_xxx.
+    Pointer,
+    // Same as Pointer, except that use from_glib_borrow instead from_glib_none.
+    Borrow,
     Unknown,
 }
 
@@ -19,16 +34,17 @@ impl ConversionType {
     pub fn of(env: &env::Env, type_id: TypeId) -> ConversionType {
         let library = &env.library;
 
-        if let Some(&GObject {
-            conversion_type: Some(conversion_type),
-            ..
-        }) = env.config.objects.get(&type_id.full_name(library))
+        if let Some(conversion_type) = env
+            .config
+            .objects
+            .get(&type_id.full_name(library))
+            .and_then(|gobject| gobject.conversion_type.clone())
         {
             return conversion_type;
         }
 
         use crate::library::{Fundamental::*, Type::*};
-        match *library.type_(type_id) {
+        match library.type_(type_id) {
             Fundamental(fund) => match fund {
                 Boolean => ConversionType::Scalar,
                 Int8 => ConversionType::Direct,
@@ -82,8 +98,12 @@ impl ConversionType {
             Function(_) => ConversionType::Direct,
             Custom(super::library::Custom {
                 conversion_type, ..
-            }) => conversion_type,
+            }) => conversion_type.clone(),
             _ => ConversionType::Unknown,
         }
+    }
+
+    pub fn can_use_to_generate(&self) -> bool {
+        matches!(self, ConversionType::Option | ConversionType::Result { .. })
     }
 }

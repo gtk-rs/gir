@@ -42,6 +42,7 @@ impl ToParameter for CParameter {
                         self.nullable,
                         self.ref_mode,
                         self.scope,
+                        &self.try_from_glib,
                     );
                     let type_name = rust_type.into_string();
                     type_str = match ConversionType::of(env, self.typ) {

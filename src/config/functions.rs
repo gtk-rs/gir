@@ -7,7 +7,9 @@ use super::{
     string_type::StringType,
 };
 use crate::{
-    analysis::safety_assertion_mode::SafetyAssertionMode, library::Nullable, version::Version,
+    analysis::safety_assertion_mode::SafetyAssertionMode,
+    library::{Infallible, Mandatory, Nullable},
+    version::Version,
 };
 use log::error;
 use std::str::FromStr;
@@ -20,6 +22,8 @@ pub struct Parameter {
     //false(default) - parameter can be changed in FFI function
     pub constant: bool,
     pub nullable: Option<Nullable>,
+    pub mandatory: Option<Mandatory>,
+    pub infallible: Option<Infallible>,
     pub length_of: Option<String>,
     pub string_type: Option<StringType>,
 }
@@ -40,6 +44,8 @@ impl Parse for Parameter {
             &[
                 "const",
                 "nullable",
+                "mandatory",
+                "infallible",
                 "length_of",
                 "name",
                 "pattern",
@@ -56,6 +62,14 @@ impl Parse for Parameter {
             .lookup("nullable")
             .and_then(Value::as_bool)
             .map(Nullable);
+        let mandatory = toml
+            .lookup("mandatory")
+            .and_then(Value::as_bool)
+            .map(Mandatory);
+        let infallible = toml
+            .lookup("infallible")
+            .and_then(Value::as_bool)
+            .map(Infallible);
         let length_of = toml
             .lookup("length_of")
             .and_then(Value::as_str)
@@ -80,6 +94,8 @@ impl Parse for Parameter {
             ident,
             constant,
             nullable,
+            mandatory,
+            infallible,
             length_of,
             string_type,
         })
@@ -97,6 +113,8 @@ pub type Parameters = Vec<Parameter>;
 #[derive(Clone, Debug)]
 pub struct Return {
     pub nullable: Option<Nullable>,
+    pub mandatory: Option<Mandatory>,
+    pub infallible: Option<Infallible>,
     pub bool_return_is_error: Option<String>,
     pub nullable_return_is_error: Option<String>,
     pub use_return_for_result: Option<bool>,
@@ -109,6 +127,8 @@ impl Return {
         if toml.is_none() {
             return Return {
                 nullable: None,
+                mandatory: None,
+                infallible: None,
                 bool_return_is_error: None,
                 nullable_return_is_error: None,
                 use_return_for_result: None,
@@ -121,6 +141,8 @@ impl Return {
         v.check_unwanted(
             &[
                 "nullable",
+                "mandatory",
+                "infallible",
                 "bool_return_is_error",
                 "nullable_return_is_error",
                 "use_return_for_result",
@@ -131,6 +153,14 @@ impl Return {
         );
 
         let nullable = v.lookup("nullable").and_then(Value::as_bool).map(Nullable);
+        let mandatory = v
+            .lookup("mandatory")
+            .and_then(Value::as_bool)
+            .map(Mandatory);
+        let infallible = v
+            .lookup("infallible")
+            .and_then(Value::as_bool)
+            .map(Infallible);
         let bool_return_is_error = v
             .lookup("bool_return_is_error")
             .and_then(Value::as_str)
@@ -165,6 +195,8 @@ impl Return {
 
         Return {
             nullable,
+            mandatory,
+            infallible,
             bool_return_is_error,
             nullable_return_is_error,
             use_return_for_result,
@@ -658,5 +690,179 @@ bypass_auto_rename = true
         let f = Function::parse(&toml, "a").unwrap();
         assert_eq!(f.ident, Ident::Name("func1".into()));
         assert!(f.bypass_auto_rename);
+    }
+
+    #[test]
+    fn parse_return_mandatory_default() {
+        let toml = toml(
+            r#"
+name = "func1"
+"#,
+        );
+        let f = Function::parse(&toml, "a");
+        let f = f.unwrap();
+        assert!(f.ret.mandatory.is_none());
+    }
+
+    #[test]
+    fn parse_return_mandatory() {
+        let toml = toml(
+            r#"
+name = "func1"
+    [return]
+    mandatory = true
+"#,
+        );
+        let f = Function::parse(&toml, "a");
+        let f = f.unwrap();
+        assert_eq!(f.ret.mandatory, Some(Mandatory(true)));
+    }
+
+    #[test]
+    fn parse_return_non_mandatory() {
+        let toml = toml(
+            r#"
+name = "func1"
+    [return]
+    mandatory = false
+"#,
+        );
+        let f = Function::parse(&toml, "a");
+        let f = f.unwrap();
+        assert_eq!(f.ret.mandatory, Some(Mandatory(false)));
+    }
+
+    #[test]
+    fn parse_parameter_mandatory_default() {
+        let toml = toml(
+            r#"
+name = "func1"
+    [[parameter]]
+    name = "param1"
+"#,
+        );
+        let f = Function::parse(&toml, "a");
+        let f = f.unwrap();
+        let param1 = &f.parameters[0];
+        assert!(param1.mandatory.is_none());
+    }
+
+    #[test]
+    fn parse_parameter_mandatory() {
+        let toml = toml(
+            r#"
+name = "func1"
+    [[parameter]]
+    name = "param1"
+    mandatory = true
+"#,
+        );
+        let f = Function::parse(&toml, "a");
+        let f = f.unwrap();
+        let param1 = &f.parameters[0];
+        assert_eq!(param1.mandatory, Some(Mandatory(true)));
+    }
+
+    #[test]
+    fn parse_parameter_non_mandatory() {
+        let toml = toml(
+            r#"
+name = "func1"
+    [[parameter]]
+    name = "param1"
+    mandatory = false
+"#,
+        );
+        let f = Function::parse(&toml, "a");
+        let f = f.unwrap();
+        let param1 = &f.parameters[0];
+        assert_eq!(param1.mandatory, Some(Mandatory(false)));
+    }
+
+    #[test]
+    fn parse_return_infallible_default() {
+        let toml = toml(
+            r#"
+name = "func1"
+"#,
+        );
+        let f = Function::parse(&toml, "a");
+        let f = f.unwrap();
+        assert!(f.ret.infallible.is_none());
+    }
+
+    #[test]
+    fn parse_return_infallible() {
+        let toml = toml(
+            r#"
+name = "func1"
+    [return]
+    infallible = true
+"#,
+        );
+        let f = Function::parse(&toml, "a");
+        let f = f.unwrap();
+        assert_eq!(f.ret.infallible, Some(Infallible(true)));
+    }
+
+    #[test]
+    fn parse_return_faillible() {
+        let toml = toml(
+            r#"
+name = "func1"
+    [return]
+    infallible = false
+"#,
+        );
+        let f = Function::parse(&toml, "a");
+        let f = f.unwrap();
+        assert_eq!(f.ret.infallible, Some(Infallible(false)));
+    }
+
+    #[test]
+    fn parse_parameter_infallible_default() {
+        let toml = toml(
+            r#"
+name = "func1"
+    [[parameter]]
+    name = "param1"
+"#,
+        );
+        let f = Function::parse(&toml, "a");
+        let f = f.unwrap();
+        let param1 = &f.parameters[0];
+        assert!(param1.infallible.is_none());
+    }
+
+    #[test]
+    fn parse_parameter_infallible() {
+        let toml = toml(
+            r#"
+name = "func1"
+    [[parameter]]
+    name = "param1"
+    infallible = true
+"#,
+        );
+        let f = Function::parse(&toml, "a");
+        let f = f.unwrap();
+        let param1 = &f.parameters[0];
+        assert_eq!(param1.infallible, Some(Infallible(true)));
+    }
+
+    #[test]
+    fn parse_parameter_faillible() {
+        let toml = toml(
+            r#"
+name = "func1"
+    [[parameter]]
+    name = "param1"
+    infallible = false
+"#,
+        );
+        let f = Function::parse(&toml, "a");
+        let f = f.unwrap();
+        let param1 = &f.parameters[0];
+        assert_eq!(param1.infallible, Some(Infallible(false)));
     }
 }

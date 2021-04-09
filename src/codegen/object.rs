@@ -3,7 +3,8 @@ use crate::{
     analysis::special_functions::Type,
     analysis::{
         self,
-        rust_type::{rust_type, rust_type_full},
+        rust_type::{rust_type_default, rust_type_full},
+        try_from_glib::TryFromGlib,
     },
     case::CaseExt,
     codegen::general::{version_condition_no_doc, version_condition_string},
@@ -185,20 +186,27 @@ fn generate_builder(w: &mut dyn Write, env: &Env, analysis: &analysis::object::I
     writeln!(w, "#[derive(Clone, Default)]")?;
     writeln!(w, "pub struct {}Builder {{", analysis.name)?;
     for property in &analysis.builder_properties {
-        match rust_type(env, property.typ) {
+        match rust_type_default(env, property.typ) {
             Ok(type_string) => {
                 let type_string = match type_string.as_str() {
                     s if nameutil::is_gstring(s) => "String",
                     "Vec<GString>" | "Vec<glib::GString>" | "Vec<crate::GString>" => "Vec<String>",
                     typ => typ,
                 };
+                let direction = if property.is_get {
+                    library::ParameterDirection::In
+                } else {
+                    library::ParameterDirection::Out
+                };
                 let mut param_type = rust_type_full(
                     env,
                     property.typ,
+                    direction,
                     library::Nullable(false),
                     property.set_in_ref_mode,
                     library::ParameterScope::None,
                     library::Concurrency::None,
+                    &TryFromGlib::default(),
                 )
                 .into_string();
                 let (param_type_override, bounds, conversion) = match &param_type[..] {

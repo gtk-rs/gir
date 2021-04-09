@@ -1,15 +1,47 @@
 use super::{
     conversion_type::ConversionType, out_parameters::can_as_return,
-    override_string_type::override_string_type_parameter, ref_mode::RefMode, rust_type::rust_type,
+    override_string_type::override_string_type_parameter, ref_mode::RefMode,
+    rust_type::rust_type_default, try_from_glib::TryFromGlib,
 };
 use crate::{
+    analysis,
     config::{self, parameter_matchable::ParameterMatchable},
     env::Env,
-    library::{self, ParameterScope, TypeId},
+    library::{self, Nullable, ParameterScope, TypeId},
     nameutil,
     traits::IntoString,
 };
 use std::collections::HashMap;
+
+#[derive(Clone, Debug)]
+pub struct Parameter {
+    pub lib_par: library::Parameter,
+    pub try_from_glib: TryFromGlib,
+}
+
+impl Parameter {
+    pub fn from_parameter(
+        env: &Env,
+        lib_par: &library::Parameter,
+        configured_parameters: &[&config::functions::Parameter],
+    ) -> Self {
+        Parameter {
+            lib_par: lib_par.clone(),
+            try_from_glib: TryFromGlib::from_parameter(env, lib_par.typ, configured_parameters),
+        }
+    }
+
+    pub fn from_return_value(
+        env: &Env,
+        lib_par: &library::Parameter,
+        configured_functions: &[&config::functions::Function],
+    ) -> Self {
+        Parameter {
+            lib_par: lib_par.clone(),
+            try_from_glib: TryFromGlib::from_return_value(env, lib_par.typ, configured_functions),
+        }
+    }
+}
 
 //TODO: remove unused fields
 #[derive(Clone, Debug)]
@@ -39,6 +71,7 @@ pub struct CParameter {
 
     //analysis fields
     pub ref_mode: RefMode,
+    pub try_from_glib: TryFromGlib,
 }
 
 #[derive(Clone, Debug)]
@@ -124,17 +157,19 @@ impl Parameters {
         }
     }
 
-    pub fn analyze_return(&mut self, env: &Env, ret: &Option<library::Parameter>) {
-        let array_length = if let Some(array_length) = ret.as_ref().and_then(|r| r.array_length) {
-            array_length
-        } else {
-            return;
+    pub fn analyze_return(&mut self, env: &Env, ret: &Option<analysis::Parameter>) {
+        let ret_data = ret
+            .as_ref()
+            .map(|r| (r.lib_par.array_length, &r.try_from_glib));
+
+        let (ind_c, try_from_glib) = match ret_data {
+            Some((Some(array_length), try_from_glib)) => (array_length as usize, try_from_glib),
+            _ => return,
         };
 
-        let ind_c = array_length as usize;
-
-        let par = if let Some(par) = self.c_parameters.get(ind_c) {
-            par
+        let c_par = if let Some(c_par) = self.c_parameters.get_mut(ind_c) {
+            c_par.try_from_glib = try_from_glib.clone();
+            c_par
         } else {
             return;
         };
@@ -142,7 +177,7 @@ impl Parameters {
         let transformation = Transformation {
             ind_c,
             ind_rust: None,
-            transformation_type: get_length_type(env, "", &par.name, par.typ),
+            transformation_type: get_length_type(env, "", &c_par.name, c_par.typ),
         };
         self.transformations.push(transformation);
     }
@@ -214,8 +249,12 @@ pub fn analyze(
         let mut caller_allocates = par.caller_allocates;
         let mut transfer = par.transfer;
         let conversion = ConversionType::of(env, typ);
-        if conversion == ConversionType::Direct || conversion == ConversionType::Scalar {
-            //For simply types no reason to have these flags
+        if let ConversionType::Direct
+        | ConversionType::Scalar
+        | ConversionType::Option
+        | ConversionType::Result { .. } = conversion
+        {
+            //For simple types no reason to have these flags
             caller_allocates = false;
             transfer = library::Transfer::None;
         }
@@ -241,6 +280,7 @@ pub fn analyze(
             scope: par.scope,
             user_data_index: par.closure,
             destroy_index: par.destroy,
+            try_from_glib: TryFromGlib::from_parameter(env, typ, &configured_parameters),
         };
         parameters.c_parameters.push(c_par);
 
@@ -274,7 +314,7 @@ pub fn analyze(
                 }
             };
 
-        let transformation_type = match ConversionType::of(env, typ) {
+        let transformation_type = match conversion {
             ConversionType::Direct => {
                 if par.c_type != "GLib.Pid" {
                     TransformationType::ToGlibDirect { name }
@@ -283,6 +323,12 @@ pub fn analyze(
                 }
             }
             ConversionType::Scalar => TransformationType::ToGlibScalar { name, nullable },
+            ConversionType::Option | ConversionType::Result { .. } => {
+                TransformationType::ToGlibScalar {
+                    name,
+                    nullable: Nullable(false),
+                }
+            }
             ConversionType::Pointer => TransformationType::ToGlibPointer {
                 name,
                 instance_parameter: par.instance_parameter,
@@ -336,7 +382,7 @@ fn get_length_type(
     length_name: &str,
     length_typ: TypeId,
 ) -> TransformationType {
-    let array_length_type = rust_type(env, length_typ).into_string();
+    let array_length_type = rust_type_default(env, length_typ).into_string();
     TransformationType::Length {
         array_name: array_name.to_string(),
         array_length_name: length_name.to_string(),

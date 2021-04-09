@@ -1,6 +1,6 @@
 use crate::{
     analysis::{
-        imports::Imports, namespaces, override_string_type::override_string_type_return,
+        self, imports::Imports, namespaces, override_string_type::override_string_type_return,
         ref_mode::RefMode, rust_type::*,
     },
     config,
@@ -11,7 +11,7 @@ use log::error;
 
 #[derive(Clone, Debug, Default)]
 pub struct Info {
-    pub parameter: Option<library::Parameter>,
+    pub parameter: Option<analysis::Parameter>,
     pub base_tid: Option<library::TypeId>, // Some only if need downcast
     pub commented: bool,
     pub bool_return_is_error: Option<String>,
@@ -35,10 +35,6 @@ pub fn analyze(
     let mut parameter = if typ == Default::default() {
         None
     } else {
-        if let Ok(s) = used_rust_type(env, typ, false) {
-            used_types.push(s);
-        }
-
         let mut nullable = func.ret.nullable;
         if !obj.trust_return_value_nullability {
             // Since GIRs are bad at specifying return value nullability, assume
@@ -59,19 +55,7 @@ pub fn analyze(
         })
     };
 
-    let commented = if typ == Default::default() {
-        false
-    } else {
-        parameter_rust_type(
-            env,
-            typ,
-            func.ret.direction,
-            Nullable(false),
-            RefMode::None,
-            library::ParameterScope::None,
-        )
-        .is_err()
-    };
+    let mut commented = false;
 
     let bool_return_is_error = configured_functions
         .iter()
@@ -132,6 +116,26 @@ pub fn analyze(
             });
         }
     }
+
+    let parameter = parameter.as_ref().map(|lib_par| {
+        let par = analysis::Parameter::from_return_value(env, lib_par, configured_functions);
+        if let Ok(rust_type) = used_rust_type(env, typ, par.lib_par.direction, &par.try_from_glib) {
+            used_types.extend(rust_type.into_used_types());
+        }
+
+        commented = parameter_rust_type(
+            env,
+            typ,
+            func.ret.direction,
+            Nullable(false),
+            RefMode::None,
+            library::ParameterScope::None,
+            &par.try_from_glib,
+        )
+        .is_err();
+
+        par
+    });
 
     Info {
         parameter,

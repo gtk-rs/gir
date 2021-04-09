@@ -1,12 +1,13 @@
 use super::conversion_type::ConversionType;
 use crate::{
-    analysis::ref_mode::RefMode,
+    analysis::{ref_mode::RefMode, try_from_glib::TryFromGlib},
     env::Env,
-    library::{self, Nullable, ParameterScope},
+    library::{self, Nullable, ParameterDirection, ParameterScope},
     nameutil::{is_gstring, use_glib_type},
     traits::*,
 };
-use std::result;
+
+use std::{borrow::Borrow, result};
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum TypeError {
@@ -15,12 +16,132 @@ pub enum TypeError {
     Unimplemented(String),
 }
 
-pub type Result = result::Result<String, TypeError>;
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+pub struct RustType {
+    inner: String,
+    used_types: Vec<String>,
+}
+
+impl RustType {
+    fn new_and_use(rust_type: impl ToString) -> Self {
+        RustType {
+            inner: rust_type.to_string(),
+            used_types: vec![rust_type.to_string()],
+        }
+    }
+
+    fn new_with_uses(rust_type: impl ToString, uses: &[impl ToString]) -> Self {
+        RustType {
+            inner: rust_type.to_string(),
+            used_types: uses.iter().map(ToString::to_string).collect(),
+        }
+    }
+
+    fn check(
+        env: &Env,
+        type_id: library::TypeId,
+        type_name: impl ToString,
+    ) -> result::Result<String, TypeError> {
+        let mut type_name = type_name.to_string();
+
+        if type_id.ns_id != library::MAIN_NAMESPACE
+            && type_id.ns_id != library::INTERNAL_NAMESPACE
+            && type_id.full_name(&env.library) != "GLib.DestroyNotify"
+            && type_id.full_name(&env.library) != "GObject.Callback"
+        {
+            type_name = format!(
+                "{}::{}",
+                env.namespaces[type_id.ns_id].higher_crate_name,
+                type_name.as_str()
+            );
+
+            if env.type_status(&type_id.full_name(&env.library)).ignored() {
+                return Err(TypeError::Ignored(type_name));
+            }
+        }
+
+        Ok(type_name)
+    }
+
+    fn try_new_and_use(env: &Env, type_id: library::TypeId) -> Result {
+        Self::check(env, type_id, env.library.type_(type_id).get_name()).map(|type_name| RustType {
+            inner: type_name.clone(),
+            used_types: vec![type_name],
+        })
+    }
+
+    fn try_new_and_use_with_name(
+        env: &Env,
+        type_id: library::TypeId,
+        type_name: impl ToString,
+    ) -> Result {
+        Self::check(env, type_id, type_name).map(|type_name| RustType {
+            inner: type_name.clone(),
+            used_types: vec![type_name],
+        })
+    }
+
+    pub fn used_types(&self) -> &Vec<String> {
+        &self.used_types
+    }
+
+    pub fn into_used_types(self) -> Vec<String> {
+        self.used_types
+    }
+
+    pub fn as_str(&self) -> &str {
+        self.inner.as_str()
+    }
+
+    #[inline]
+    pub fn alter_type(mut self, op: impl FnOnce(String) -> String) -> Self {
+        self.inner = op(self.inner);
+        self
+    }
+
+    #[inline]
+    fn format_parameter(self, direction: ParameterDirection) -> Self {
+        if direction.is_out() {
+            self.alter_type(|type_| format!("&mut {}", type_))
+        } else {
+            self
+        }
+    }
+
+    #[inline]
+    fn apply_ref_mode(self, ref_mode: RefMode) -> Self {
+        match ref_mode {
+            RefMode::None | RefMode::ByRefFake => self,
+            RefMode::ByRef | RefMode::ByRefImmut | RefMode::ByRefConst => {
+                self.alter_type(|typ_| format!("&{}", typ_))
+            }
+            RefMode::ByRefMut => self.alter_type(|typ_| format!("&mut {}", typ_)),
+        }
+    }
+}
+
+impl<T: ToString> From<T> for RustType {
+    fn from(rust_type: T) -> Self {
+        RustType {
+            inner: rust_type.to_string(),
+            used_types: Vec::new(),
+        }
+    }
+}
+
+impl IntoString for RustType {
+    fn into_string(self) -> String {
+        self.inner
+    }
+}
+
+pub type Result = result::Result<RustType, TypeError>;
 
 fn into_inner(res: Result) -> String {
     use self::TypeError::*;
     match res {
-        Ok(s) | Err(Ignored(s)) | Err(Mismatch(s)) | Err(Unimplemented(s)) => s,
+        Ok(rust_type) => rust_type.into_string(),
+        Err(Ignored(s)) | Err(Mismatch(s)) | Err(Unimplemented(s)) => s,
     }
 }
 
@@ -28,7 +149,7 @@ impl IntoString for Result {
     fn into_string(self) -> String {
         use self::TypeError::*;
         match self {
-            Ok(s) => s,
+            Ok(s) => s.into_string(),
             Err(Ignored(s)) => format!("/*Ignored*/{}", s),
             Err(Mismatch(s)) => format!("/*Metadata mismatch*/{}", s),
             Err(Unimplemented(s)) => format!("/*Unimplemented*/{}", s),
@@ -36,53 +157,88 @@ impl IntoString for Result {
     }
 }
 
-impl MapAny<String> for Result {
-    fn map_any<F: FnOnce(String) -> String>(self, op: F) -> Result {
+impl MapAny<RustType> for Result {
+    fn map_any<F: FnOnce(RustType) -> RustType>(self, op: F) -> Result {
         use self::TypeError::*;
         match self {
-            Ok(s) => Ok(op(s)),
-            Err(Ignored(s)) => Err(Ignored(op(s))),
-            Err(Mismatch(s)) => Err(Mismatch(op(s))),
-            Err(Unimplemented(s)) => Err(Unimplemented(op(s))),
+            Ok(rust_type) => Ok(op(rust_type)),
+            Err(Ignored(s)) => Err(Ignored(op(s.into()).into_string())),
+            Err(Mismatch(s)) => Err(Mismatch(op(s.into()).into_string())),
+            Err(Unimplemented(s)) => Err(Unimplemented(op(s.into()).into_string())),
         }
     }
 }
 
-pub fn rust_type(env: &Env, type_id: library::TypeId) -> Result {
+pub fn rust_type(
+    env: &Env,
+    type_id: library::TypeId,
+    direction: ParameterDirection,
+    // FIXME probably could just use ConversionType
+    // and embed TryFromGlib in it so that would be easier to evolve
+    try_from_glib: &TryFromGlib,
+) -> Result {
     rust_type_full(
         env,
         type_id,
+        direction,
         Nullable(false),
         RefMode::None,
         ParameterScope::None,
         library::Concurrency::None,
+        try_from_glib,
     )
 }
 
-pub fn rust_type_nullable(env: &Env, type_id: library::TypeId, nullable: Nullable) -> Result {
+pub fn rust_type_default(env: &Env, type_id: library::TypeId) -> Result {
     rust_type_full(
         env,
         type_id,
+        ParameterDirection::InOut,
+        Nullable(false),
+        RefMode::None,
+        ParameterScope::None,
+        library::Concurrency::None,
+        &TryFromGlib::default(),
+    )
+}
+
+pub fn rust_type_nullable(
+    env: &Env,
+    type_id: library::TypeId,
+    direction: ParameterDirection,
+    nullable: Nullable,
+    try_from_glib: &TryFromGlib,
+) -> Result {
+    rust_type_full(
+        env,
+        type_id,
+        direction,
         nullable,
         RefMode::None,
         ParameterScope::None,
         library::Concurrency::None,
+        try_from_glib,
     )
 }
 
 pub fn rust_type_with_scope(
     env: &Env,
     type_id: library::TypeId,
+    direction: ParameterDirection,
     scope: ParameterScope,
     concurrency: library::Concurrency,
+    try_from_glib: &TryFromGlib,
 ) -> Result {
     rust_type_full(
         env,
         type_id,
+        // FIXME could be default()?
+        direction,
         Nullable(false),
         RefMode::None,
         scope,
         concurrency,
+        try_from_glib,
     )
 }
 
@@ -90,23 +246,30 @@ pub fn bounds_rust_type(env: &Env, type_id: library::TypeId) -> Result {
     rust_type_full(
         env,
         type_id,
+        ParameterDirection::InOut,
         Nullable(false),
         RefMode::ByRefFake,
         ParameterScope::None,
         library::Concurrency::None,
+        &TryFromGlib::default(),
     )
 }
 
 pub fn rust_type_full(
     env: &Env,
     type_id: library::TypeId,
+    direction: ParameterDirection,
     nullable: Nullable,
     ref_mode: RefMode,
     scope: ParameterScope,
     concurrency: library::Concurrency,
+    // FIXME probably could just use ConversionType
+    // and embed TryFromGlib in it so that would be easier to evolve
+    try_from_glib: &TryFromGlib,
 ) -> Result {
     use crate::library::{Fundamental::*, Type::*};
-    let ok = |s: &str| Ok(s.into());
+    let ok = |s: &str| Ok(RustType::from(s));
+    let ok_and_use = |s: &str| Ok(RustType::new_and_use(s));
     let err = |s: &str| Err(TypeError::Unimplemented(s.into()));
     let mut skip_option = false;
     let type_ = env.library.type_(type_id);
@@ -127,10 +290,10 @@ pub fn rust_type_full(
                 Int => ok("i32"),  //maybe dependent on target system
                 UInt => ok("u32"), //maybe dependent on target system
 
-                Short => ok("libc::c_short"), //depends of target system
-                UShort => ok("libc::c_ushort"), //depends of target system
-                Long => ok("libc::c_long"),   //depends of target system
-                ULong => ok("libc::c_ulong"), //depends of target system
+                Short => ok_and_use("libc::c_short"), //depends of target system
+                UShort => ok_and_use("libc::c_ushort"), //depends o f target system
+                Long => ok_and_use("libc::c_long"),   //depends of target system
+                ULong => ok_and_use("libc::c_ulong"), //depends of target system
 
                 Size => ok("usize"),  //depends of target system
                 SSize => ok("isize"), //depends of target system
@@ -143,48 +306,65 @@ pub fn rust_type_full(
                     if ref_mode.is_ref() {
                         ok("str")
                     } else {
-                        Ok(use_glib_type(env, "GString"))
+                        ok_and_use(&use_glib_type(env, "GString"))
                     }
                 }
                 Filename => {
                     if ref_mode.is_ref() {
-                        ok("std::path::Path")
+                        ok_and_use("std::path::Path")
                     } else {
-                        ok("std::path::PathBuf")
+                        ok_and_use("std::path::PathBuf")
                     }
                 }
                 OsString => {
                     if ref_mode.is_ref() {
-                        ok("std::ffi::OsStr")
+                        ok_and_use("std::ffi::OsStr")
                     } else {
-                        ok("std::ffi::OsString")
+                        ok_and_use("std::ffi::OsString")
                     }
                 }
-                Type => Ok(use_glib_type(env, "types::Type")),
-                Char => Ok(use_glib_type(env, "Char")),
-                UChar => Ok(use_glib_type(env, "UChar")),
+                Type => ok_and_use(&use_glib_type(env, "types::Type")),
+                Char => ok_and_use(&use_glib_type(env, "Char")),
+                UChar => ok_and_use(&use_glib_type(env, "UChar")),
                 Unsupported => err("Unsupported"),
                 _ => err(&format!("Fundamental: {:?}", fund)),
             }
         }
-        Alias(ref alias) => rust_type_full(env, alias.typ, nullable, ref_mode, scope, concurrency)
-            .map_any(|_| alias.name.clone()),
+        Alias(ref alias) => {
+            RustType::try_new_and_use(env, type_id)
+                .and_then(|alias_rust_type| {
+                    rust_type_full(
+                        env,
+                        alias.typ,
+                        direction,
+                        nullable,
+                        ref_mode,
+                        scope,
+                        concurrency,
+                        try_from_glib,
+                    ).map_any(|_| alias_rust_type)
+                })
+        }
         Record(library::Record { ref c_type, .. }) if c_type == "GVariantType" => {
-            if ref_mode.is_ref() {
-                ok("VariantTy")
+            let type_name = if ref_mode.is_ref() {
+                "VariantTy"
             } else {
-                ok("VariantType")
-            }
+                "VariantType"
+            };
+            RustType::try_new_and_use_with_name(env, type_id, type_name)
         }
         Enumeration(..) | Bitfield(..) | Record(..) | Union(..) | Class(..) | Interface(..) => {
-            let name = type_.get_name();
-            if env.type_status(&type_id.full_name(&env.library)).ignored() {
-                Err(TypeError::Ignored(name))
-            } else {
-                Ok(name)
-            }
+            RustType::try_new_and_use(env, type_id)
+                .and_then(|rust_type| {
+                    if env.type_status(&type_id.full_name(&env.library)).ignored() {
+                        Err(TypeError::Ignored(rust_type.into_string()))
+                    } else {
+                        Ok(rust_type)
+                    }
+                })
         }
         List(inner_tid) | SList(inner_tid) | CArray(inner_tid) | PtrArray(inner_tid)
+            // FIXME these invocations of ConversionType::of could use the provided argument
             if ConversionType::of(env, inner_tid) == ConversionType::Pointer =>
         {
             skip_option = true;
@@ -195,16 +375,18 @@ pub fn rust_type_full(
             rust_type_full(
                 env,
                 inner_tid,
+                direction,
                 Nullable(false),
                 inner_ref_mode,
                 scope,
                 concurrency,
+                &TryFromGlib::default(),
             )
-            .map_any(|s| {
+            .map_any(|rust_type| {
                 if ref_mode.is_ref() {
-                    format!("[{}]", s)
+                    format!("[{}]", rust_type.as_str()).into()
                 } else {
-                    format!("Vec<{}>", s)
+                    format!("Vec<{}>", rust_type.as_str()).into()
                 }
             })
         }
@@ -231,9 +413,9 @@ pub fn rust_type_full(
                 if let Some(s) = array_type {
                     skip_option = true;
                     if ref_mode.is_ref() {
-                        Ok(format!("[{}]", s))
+                        Ok(format!("[{}]", s).into())
                     } else {
-                        Ok(format!("Vec<{}>", s))
+                        Ok(format!("Vec<{}>", s).into())
                     }
                 } else {
                     Err(TypeError::Unimplemented(type_.get_name()))
@@ -242,7 +424,7 @@ pub fn rust_type_full(
                 Err(TypeError::Unimplemented(type_.get_name()))
             }
         }
-        Custom(library::Custom { ref name, .. }) => Ok(name.clone()),
+        Custom(library::Custom { ref name, .. }) => RustType::try_new_and_use_with_name(env, type_id, name),
         Function(ref f) => {
             let concurrency = match concurrency {
                 _ if scope.is_call() => "",
@@ -256,35 +438,36 @@ pub fn rust_type_full(
 
             let full_name = type_id.full_name(&env.library);
             if full_name == "Gio.AsyncReadyCallback" {
+                // FIXME need to use the result from use_glib_type(env, "Error")?
                 return Ok(format!(
                     "FnOnce(Result<(), {}>) + 'static",
                     use_glib_type(env, "Error"),
-                ));
+                ).into());
             } else if full_name == "GLib.DestroyNotify" {
-                return Ok(format!("Fn(){} + 'static", concurrency));
+                return Ok(format!("Fn(){} + 'static", concurrency).into());
             }
-            let mut s = Vec::with_capacity(f.parameters.len());
+            let mut params = Vec::with_capacity(f.parameters.len());
             let mut err = false;
             for p in f.parameters.iter() {
                 if p.closure.is_some() {
                     continue;
                 }
-                match rust_type_nullable(env, p.typ, p.nullable) {
-                    Ok(x) => {
+                match rust_type_nullable(env, p.typ, p.direction, p.nullable, &TryFromGlib::default()) {
+                    Ok(p_rust_type) => {
                         let is_fundamental = p.typ.is_fundamental_type(env);
-                        let y = rust_type(env, p.typ).unwrap_or_else(|_| String::new());
-                        s.push(format!(
+                        let y = rust_type_default(env, p.typ).unwrap_or_else(|_| RustType::default());
+                        params.push(format!(
                             "{}{}",
                             if is_fundamental || *p.nullable {
                                 ""
                             } else {
                                 "&"
                             },
-                            if !is_gstring(&y) {
+                            if !is_gstring(y.as_str()) {
                                 if !is_fundamental && *p.nullable {
-                                    x.replace("Option<", "Option<&")
+                                    p_rust_type.into_string().replace("Option<", "Option<&")
                                 } else {
-                                    x
+                                    p_rust_type.into_string()
                                 }
                             } else if *p.nullable {
                                 "Option<&str>".to_owned()
@@ -295,7 +478,7 @@ pub fn rust_type_full(
                     }
                     e => {
                         err = true;
-                        s.push(e.into_string());
+                        params.push(e.into_string());
                     }
                 }
             }
@@ -306,15 +489,15 @@ pub fn rust_type_full(
             } else {
                 "Fn"
             };
-            let ret = match rust_type_nullable(env, f.ret.typ, f.ret.nullable) {
-                Ok(x) => {
-                    let y = rust_type(env, f.ret.typ).unwrap_or_else(|_| String::new());
+            let ret = match rust_type_nullable(env, f.ret.typ, f.ret.direction, f.ret.nullable, &TryFromGlib::default()) {
+                Ok(ret_rust_type) => {
+                    let y = rust_type_default(env, f.ret.typ).unwrap_or_else(|_| RustType::default());
                     format!(
                         "{}({}) -> {}{}",
                         closure_kind,
-                        s.join(", "),
-                        if !is_gstring(&y) {
-                            &x
+                        params.join(", "),
+                        if !is_gstring(&y.as_str()) {
+                            ret_rust_type.as_str()
                         } else if *f.ret.nullable {
                             "Option<String>"
                         } else {
@@ -324,14 +507,14 @@ pub fn rust_type_full(
                     )
                 }
                 Err(TypeError::Unimplemented(ref x)) if x == "()" => {
-                    format!("{}({}){}", closure_kind, s.join(", "), concurrency)
+                    format!("{}({}){}", closure_kind, params.join(", "), concurrency)
                 }
                 e => {
                     err = true;
                     format!(
                         "{}({}) -> {}{}",
                         closure_kind,
-                        s.join(", "),
+                        params.join(", "),
                         e.into_string(),
                         concurrency
                     )
@@ -348,35 +531,41 @@ pub fn rust_type_full(
                 }
             } else {
                 format!("{}{}", ret, if scope.is_call() { "" } else { " + 'static" })
-            })
+            }.into())
         }
         _ => Err(TypeError::Unimplemented(type_.get_name())),
     };
 
-    if type_id.ns_id != library::MAIN_NAMESPACE
-        && type_id.ns_id != library::INTERNAL_NAMESPACE
-        && type_id.full_name(&env.library) != "GLib.DestroyNotify"
-        && type_id.full_name(&env.library) != "GObject.Callback"
-        && !type_.is_function()
-    {
-        if env.type_status(&type_id.full_name(&env.library)).ignored() {
-            rust_type = Err(TypeError::Ignored(into_inner(rust_type)));
+    match try_from_glib.or_type_defaults(env, type_id).borrow() {
+        TryFromGlib::Option => {
+            rust_type = rust_type.map_any(|rust_type| {
+                rust_type
+                    .alter_type(|typ_| format!("Option<{}>", typ_))
+                    .apply_ref_mode(ref_mode)
+            });
         }
-        rust_type = rust_type
-            .map_any(|s| format!("{}::{}", env.namespaces[type_id.ns_id].higher_crate_name, s));
+        TryFromGlib::Result { ok_type, err_type } if !direction.is_in() => {
+            rust_type = rust_type.map_any(|_| {
+                RustType::new_with_uses(
+                    format!("Result<{}, {}>", &ok_type, &err_type),
+                    &[ok_type, err_type],
+                )
+            });
+        }
+        TryFromGlib::ResultInfallible { ok_type } => {
+            let new_rust_type = RustType::new_and_use(ok_type).apply_ref_mode(ref_mode);
+            rust_type = rust_type.map_any(|_| new_rust_type);
+        }
+        _ => {
+            rust_type = rust_type.map_any(|rust_type| rust_type.apply_ref_mode(ref_mode));
+        }
     }
 
-    match ref_mode {
-        RefMode::None | RefMode::ByRefFake => {}
-        RefMode::ByRef | RefMode::ByRefImmut | RefMode::ByRefConst => {
-            rust_type = rust_type.map_any(|s| format!("&{}", s))
-        }
-        RefMode::ByRefMut => rust_type = rust_type.map_any(|s| format!("&mut {}", s)),
-    }
     if *nullable && !skip_option {
         match ConversionType::of(env, type_id) {
             ConversionType::Pointer | ConversionType::Scalar => {
-                rust_type = rust_type.map_any(|s| format!("Option<{}>", s))
+                rust_type = rust_type
+                    .map_any(|rust_type| rust_type.alter_type(|typ_| format!("Option<{}>", typ_)));
             }
             _ => (),
         }
@@ -385,7 +574,13 @@ pub fn rust_type_full(
     rust_type
 }
 
-pub fn used_rust_type(env: &Env, type_id: library::TypeId, is_in: bool) -> Result {
+// FIXME should be possible to get ride of this function in favor of rust_type
+pub fn used_rust_type(
+    env: &Env,
+    type_id: library::TypeId,
+    direction: ParameterDirection,
+    try_from_glib: &TryFromGlib,
+) -> Result {
     use crate::library::Type::*;
     match *env.library.type_(type_id) {
         Fundamental(library::Fundamental::Type)
@@ -403,13 +598,20 @@ pub fn used_rust_type(env: &Env, type_id: library::TypeId, is_in: bool) -> Resul
         | Union(..)
         | Class(..)
         | Enumeration(..)
-        | Interface(..) => rust_type(env, type_id),
+        | Interface(..) => rust_type(env, type_id, direction, try_from_glib),
         //process inner types as return parameters
         List(inner_tid) | SList(inner_tid) | CArray(inner_tid) | PtrArray(inner_tid) => {
-            used_rust_type(env, inner_tid, false)
+            used_rust_type(
+                env,
+                inner_tid,
+                ParameterDirection::Out,
+                &TryFromGlib::default(),
+            )
         }
-        Custom(..) => rust_type(env, type_id),
-        Fundamental(library::Fundamental::Utf8) if !is_in => Ok(use_glib_type(env, "GString")),
+        Custom(..) => rust_type_default(env, type_id),
+        Fundamental(library::Fundamental::Utf8) if !direction.is_in() => {
+            Ok(use_glib_type(env, "GString").into())
+        }
         _ => Err(TypeError::Ignored("Don't need use".to_owned())),
     }
 }
@@ -417,48 +619,58 @@ pub fn used_rust_type(env: &Env, type_id: library::TypeId, is_in: bool) -> Resul
 pub fn parameter_rust_type(
     env: &Env,
     type_id: library::TypeId,
-    direction: library::ParameterDirection,
+    direction: ParameterDirection,
     nullable: Nullable,
     ref_mode: RefMode,
     scope: ParameterScope,
+    try_from_glib: &TryFromGlib,
 ) -> Result {
     use crate::library::Type::*;
     let type_ = env.library.type_(type_id);
     let rust_type = rust_type_full(
         env,
         type_id,
+        direction,
         nullable,
         ref_mode,
         scope,
         library::Concurrency::None,
+        try_from_glib,
     );
     match *type_ {
         Fundamental(fund) => {
             if (fund == library::Fundamental::Utf8
                 || fund == library::Fundamental::OsString
                 || fund == library::Fundamental::Filename)
-                && (direction == library::ParameterDirection::InOut
-                    || (direction == library::ParameterDirection::Out
-                        && ref_mode == RefMode::ByRefMut))
+                && (direction == ParameterDirection::InOut
+                    || (direction == ParameterDirection::Out && ref_mode == RefMode::ByRefMut))
             {
                 return Err(TypeError::Unimplemented(into_inner(rust_type)));
             }
-            rust_type.map_any(|s| format_parameter(s, direction))
+            rust_type.map_any(|rust_type| rust_type.format_parameter(direction))
         }
 
         Alias(ref alias) => rust_type
-            .and_then(|s| {
-                parameter_rust_type(env, alias.typ, direction, nullable, ref_mode, scope)
-                    .map_any(|_| s)
+            .and_then(|rust_type| {
+                parameter_rust_type(
+                    env,
+                    alias.typ,
+                    direction,
+                    nullable,
+                    ref_mode,
+                    scope,
+                    try_from_glib,
+                )
+                .map_any(|_| rust_type)
             })
-            .map_any(|s| format_parameter(s, direction)),
+            .map_any(|rust_type| rust_type.format_parameter(direction)),
 
         Enumeration(..) | Union(..) | Bitfield(..) => {
-            rust_type.map_any(|s| format_parameter(s, direction))
+            rust_type.map_any(|rust_type| rust_type.format_parameter(direction))
         }
 
         Record(..) => {
-            if direction == library::ParameterDirection::InOut {
+            if direction == ParameterDirection::InOut {
                 Err(TypeError::Unimplemented(into_inner(rust_type)))
             } else {
                 rust_type
@@ -466,36 +678,25 @@ pub fn parameter_rust_type(
         }
 
         Class(..) | Interface(..) => match direction {
-            library::ParameterDirection::In
-            | library::ParameterDirection::Out
-            | library::ParameterDirection::Return => rust_type,
+            ParameterDirection::In | ParameterDirection::Out | ParameterDirection::Return => {
+                rust_type
+            }
             _ => Err(TypeError::Unimplemented(into_inner(rust_type))),
         },
 
         List(..) | SList(..) => match direction {
-            library::ParameterDirection::In | library::ParameterDirection::Return => rust_type,
+            ParameterDirection::In | ParameterDirection::Return => rust_type,
             _ => Err(TypeError::Unimplemented(into_inner(rust_type))),
         },
         CArray(..) | PtrArray(..) => match direction {
-            library::ParameterDirection::In
-            | library::ParameterDirection::Out
-            | library::ParameterDirection::Return => rust_type,
+            ParameterDirection::In | ParameterDirection::Out | ParameterDirection::Return => {
+                rust_type
+            }
             _ => Err(TypeError::Unimplemented(into_inner(rust_type))),
         },
-        Function(ref func) if func.name == "AsyncReadyCallback" => {
-            Ok("AsyncReadyCallback".to_string())
-        }
+        Function(ref func) if func.name == "AsyncReadyCallback" => Ok("AsyncReadyCallback".into()),
         Function(_) => rust_type,
-        Custom(..) => rust_type.map_any(|s| format_parameter(s, direction)),
+        Custom(..) => rust_type.map(|rust_type| rust_type.format_parameter(direction)),
         _ => Err(TypeError::Unimplemented(type_.get_name())),
-    }
-}
-
-#[inline]
-fn format_parameter(rust_type: String, direction: library::ParameterDirection) -> String {
-    if direction.is_out() {
-        format!("&mut {}", rust_type)
-    } else {
-        rust_type
     }
 }

@@ -14,6 +14,7 @@ use crate::{
         bounds::{Bound, Bounds},
         functions::Visibility,
         namespaces,
+        try_from_glib::TryFromGlib,
     },
     chunk::{ffi_function_todo, Chunk},
     env::Env,
@@ -161,8 +162,18 @@ pub fn declaration(env: &Env, analysis: &analysis::functions::Info) -> String {
         } else {
             " -> Result<(), glib::error::BoolError>".into()
         }
+    } else if let Some(return_type) = analysis.ret.to_return_value(
+        env,
+        analysis
+            .ret
+            .parameter
+            .as_ref()
+            .map_or(&TryFromGlib::Default, |par| &par.try_from_glib),
+        false,
+    ) {
+        format!(" -> {}", return_type)
     } else {
-        analysis.ret.to_return_value(env, false)
+        String::new()
     };
     let mut param_str = String::with_capacity(100);
 
@@ -354,7 +365,7 @@ pub fn body_chunk(env: &Env, analysis: &analysis::functions::Info) -> Chunk {
     }
 
     for par in &analysis.parameters.c_parameters {
-        if outs_as_return && analysis.outs.iter().any(|p| p.name == par.name) {
+        if outs_as_return && analysis.outs.iter().any(|out| out.lib_par.name == par.name) {
             builder.out_parameter(env, par);
         } else {
             builder.parameter();

@@ -10,6 +10,7 @@ use crate::{
         rust_type::parameter_rust_type,
         trampoline_parameters::*,
         trampolines::Trampoline,
+        try_from_glib::TryFromGlib,
     },
     consts::TYPE_PARAMETERS_START,
     env::Env,
@@ -167,7 +168,9 @@ fn func_parameter(
                 par.nullable,
                 ref_mode,
                 library::ParameterScope::None,
+                &TryFromGlib::from_type_defaults(env, par.typ),
             );
+
             rust_type.into_string()
         }
     }
@@ -178,8 +181,14 @@ fn func_returns(env: &Env, analysis: &Trampoline) -> String {
         String::new()
     } else if analysis.inhibit {
         " -> glib::signal::Inhibit".into()
+    } else if let Some(return_type) =
+        analysis
+            .ret
+            .to_return_value(env, &TryFromGlib::default(), true)
+    {
+        format!(" -> {}", return_type)
     } else {
-        analysis.ret.to_return_value(env, true)
+        String::new()
     }
 }
 

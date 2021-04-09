@@ -4,6 +4,7 @@ use crate::{
         imports::Imports,
         properties::{get_property_ref_modes, Property},
         rust_type::*,
+        try_from_glib::TryFromGlib,
     },
     config::{self, GObject},
     env::Env,
@@ -101,10 +102,15 @@ fn analyze_property(
         return None;
     }
     let imports = &mut imports.with_defaults(prop_version, &None);
-    let type_str = used_rust_type(env, prop.typ, false);
-    if let Ok(ref s) = type_str {
-        if !s.contains("GString") {
-            imports.add_used_type(s);
+    let rust_type_res = used_rust_type(
+        env,
+        prop.typ,
+        library::ParameterDirection::Out,
+        &TryFromGlib::default(),
+    );
+    if let Ok(ref rust_type) = rust_type_res {
+        if !rust_type.as_str().contains("GString") {
+            imports.add_used_types(rust_type.used_types());
         }
     }
 
@@ -113,7 +119,7 @@ fn analyze_property(
     let mut bounds = Bounds::default();
     if let Some(bound) = Bounds::type_for(env, prop.typ, nullable) {
         imports.add("glib::object::IsA");
-        bounds.add_parameter(&prop.name, &type_str.into_string(), bound, false);
+        bounds.add_parameter(&prop.name, &rust_type_res.into_string(), bound, false);
     }
 
     Some(Property {

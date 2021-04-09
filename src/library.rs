@@ -40,8 +40,12 @@ pub enum ParameterDirection {
 }
 
 impl ParameterDirection {
+    pub fn is_in(self) -> bool {
+        matches!(self, ParameterDirection::In | ParameterDirection::InOut)
+    }
+
     pub fn is_out(self) -> bool {
-        self == ParameterDirection::Out || self == ParameterDirection::InOut
+        matches!(self, ParameterDirection::Out | ParameterDirection::InOut)
     }
 }
 
@@ -126,6 +130,26 @@ impl Deref for Nullable {
 impl DerefMut for Nullable {
     fn deref_mut(&mut self) -> &mut bool {
         &mut self.0
+    }
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct Mandatory(pub bool);
+
+impl Deref for Mandatory {
+    type Target = bool;
+    fn deref(&self) -> &bool {
+        &self.0
+    }
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct Infallible(pub bool);
+
+impl Deref for Infallible {
+    type Target = bool;
+    fn deref(&self) -> &bool {
+        &self.0
     }
 }
 

@@ -1,12 +1,14 @@
 use crate::{
     analysis::{
-        conversion_type::ConversionType, function_parameters::CParameter,
+        self, conversion_type::ConversionType, function_parameters::CParameter,
         functions::is_carray_with_direct_elements, imports::Imports, ref_mode::RefMode,
-        return_value, rust_type::parameter_rust_type,
+        return_value, rust_type::parameter_rust_type, try_from_glib::TryFromGlib,
     },
-    config,
+    config::{self, parameter_matchable::ParameterMatchable},
     env::Env,
-    library::*,
+    library::{
+        self, Function, Fundamental, Nullable, ParameterDirection, Type, TypeId, INTERNAL_NAMESPACE,
+    },
     nameutil,
 };
 use log::error;
@@ -31,7 +33,7 @@ impl Default for Mode {
 #[derive(Debug, Default)]
 pub struct Info {
     pub mode: Mode,
-    pub params: Vec<Parameter>,
+    pub params: Vec<analysis::Parameter>,
 }
 
 impl Info {
@@ -39,7 +41,7 @@ impl Info {
         self.mode == Mode::None
     }
 
-    pub fn iter(&self) -> Iter<'_, Parameter> {
+    pub fn iter(&self) -> Iter<'_, analysis::Parameter> {
         self.params.iter()
     }
 }
@@ -70,20 +72,28 @@ pub fn analyze(
         info.mode = Mode::Combined;
     }
 
-    for par in &func.parameters {
-        if par.direction != ParameterDirection::Out {
+    for lib_par in &func.parameters {
+        if lib_par.direction != ParameterDirection::Out {
             continue;
         }
-        if can_as_return(env, par) {
-            let mut par = par.clone();
-            par.name = nameutil::mangle_keywords(&*par.name).into_owned();
+        if can_as_return(env, &lib_par) {
+            let mut lib_par = lib_par.clone();
+            lib_par.name = nameutil::mangle_keywords(&lib_par.name).into_owned();
+            let configured_parameters = configured_functions.matched_parameters(&lib_par.name);
+            let mut out =
+                analysis::Parameter::from_parameter(env, &lib_par, &configured_parameters);
+
             // FIXME: temporary solution for string_type, nullable override. This should completely
             // work based on the analyzed parameters instead of the library parameters.
-            if let Some(c_par) = func_c_params.iter().find(|c_par| c_par.name == par.name) {
-                par.typ = c_par.typ;
-                par.nullable = c_par.nullable;
+            if let Some(c_par) = func_c_params
+                .iter()
+                .find(|c_par| c_par.name == lib_par.name)
+            {
+                out.lib_par.typ = c_par.typ;
+                out.lib_par.nullable = c_par.nullable;
             }
-            info.params.push(par);
+
+            info.params.push(out);
         } else {
             unsupported_outs = true;
         }
@@ -93,13 +103,14 @@ pub fn analyze(
         info.mode = Mode::None;
     }
     if info.mode == Mode::Combined || info.mode == Mode::Throws(true) {
-        let mut ret = func.ret.clone();
+        let mut ret = analysis::Parameter::from_return_value(env, &func.ret, &configured_functions);
+
         //TODO: fully switch to use analyzed returns (it add too many Return<Option<>>)
         if let Some(ref par) = func_ret.parameter {
-            ret.typ = par.typ;
+            ret.lib_par.typ = par.lib_par.typ;
         }
         if let Some(val) = nullable_override {
-            ret.nullable = val;
+            ret.lib_par.nullable = val;
         }
         info.params.insert(0, ret);
     }
@@ -107,7 +118,11 @@ pub fn analyze(
     (info, unsupported_outs)
 }
 
-pub fn analyze_imports(env: &Env, parameters: &[Parameter], imports: &mut Imports) {
+pub fn analyze_imports<'a>(
+    env: &Env,
+    parameters: impl IntoIterator<Item = &'a library::Parameter>,
+    imports: &mut Imports,
+) {
     for par in parameters {
         if par.direction == ParameterDirection::Out {
             analyze_type_imports(env, par.typ, par.caller_allocates, imports);
@@ -127,18 +142,20 @@ fn analyze_type_imports(env: &Env, typ: TypeId, caller_allocates: bool, imports:
             imports.add("std::mem")
         }
         _ if !caller_allocates => match ConversionType::of(env, typ) {
-            ConversionType::Direct | ConversionType::Scalar => (),
+            ConversionType::Direct
+            | ConversionType::Scalar
+            | ConversionType::Option
+            | ConversionType::Result { .. } => (),
             _ => imports.add("std::ptr"),
         },
         _ => (),
     }
 }
 
-pub fn can_as_return(env: &Env, par: &Parameter) -> bool {
+pub fn can_as_return(env: &Env, par: &library::Parameter) -> bool {
     use super::conversion_type::ConversionType::*;
     match ConversionType::of(env, par.typ) {
-        Direct => true,
-        Scalar => true,
+        Direct | Scalar | Option | Result { .. } => true,
         Pointer => {
             // Disallow fundamental arrays without length
             if is_carray_with_direct_elements(env, par.typ) && par.array_length.is_none() {
@@ -152,6 +169,7 @@ pub fn can_as_return(env: &Env, par: &Parameter) -> bool {
                 Nullable(false),
                 RefMode::None,
                 par.scope,
+                &TryFromGlib::default(),
             )
             .is_ok()
         }
@@ -166,7 +184,11 @@ pub fn use_return_value_for_result(
     func_name: &str,
     configured_functions: &[&config::functions::Function],
 ) -> bool {
-    let typ = ret.parameter.as_ref().map(|x| x.typ).unwrap_or_default();
+    let typ = ret
+        .parameter
+        .as_ref()
+        .map(|par| par.lib_par.typ)
+        .unwrap_or_default();
     use_function_return_for_result(env, typ, func_name, configured_functions)
 }
 

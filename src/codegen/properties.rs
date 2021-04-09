@@ -5,7 +5,8 @@ use super::{
 use crate::{
     analysis::{
         properties::Property,
-        rust_type::{parameter_rust_type, rust_type},
+        rust_type::{parameter_rust_type, rust_type_default},
+        try_from_glib::TryFromGlib,
     },
     chunk::Chunk,
     env::Env,
@@ -38,7 +39,7 @@ fn generate_prop_func(
 ) -> Result<()> {
     let pub_prefix = if in_trait { "" } else { "pub " };
     let decl_suffix = if only_declaration { ";" } else { " {" };
-    let type_string = rust_type(env, prop.typ);
+    let type_string = rust_type_default(env, prop.typ);
     let commented = type_string.is_err();
 
     let comment_prefix = if commented { "//" } else { "" };
@@ -98,6 +99,7 @@ fn declaration(env: &Env, prop: &Property) -> String {
             prop.nullable,
             prop.set_in_ref_mode,
             library::ParameterScope::None,
+            &TryFromGlib::from_type_defaults(env, prop.typ),
         )
         .into_string();
         format!(", {}: {}", prop.var_name, param_type)
@@ -111,6 +113,7 @@ fn declaration(env: &Env, prop: &Property) -> String {
             prop.nullable,
             prop.get_out_ref_mode,
             library::ParameterScope::None,
+            &TryFromGlib::from_type_defaults(env, prop.typ),
         )
         .into_string();
         format!(" -> {}", ret_type)
@@ -133,8 +136,8 @@ fn body(env: &Env, prop: &Property, in_trait: bool) -> Chunk {
         .is_ref(prop.set_in_ref_mode.is_ref())
         .is_nullable(*prop.nullable);
 
-    if let Ok(type_) = rust_type(env, prop.typ) {
-        builder.type_(&type_);
+    if let Ok(type_) = rust_type_default(env, prop.typ) {
+        builder.type_(type_.as_str());
     } else {
         builder.type_("/*Unknown type*/");
     }

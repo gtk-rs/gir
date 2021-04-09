@@ -2,8 +2,9 @@ use super::{
     bounds::{BoundType, Bounds},
     conversion_type::ConversionType,
     ffi_type::used_ffi_type,
-    rust_type::{bounds_rust_type, rust_type, used_rust_type},
+    rust_type::{bounds_rust_type, rust_type_default, used_rust_type},
     trampoline_parameters::{self, Parameters},
+    try_from_glib::TryFromGlib,
 };
 use crate::{
     config::{self, gobjects::GObject},
@@ -92,6 +93,7 @@ pub fn analyze(
         let c_type = format!("{}*", owner.get_glib_name().unwrap());
 
         let transform = parameters.prepare_transformation(
+            env,
             type_tid,
             "this".to_owned(),
             c_type,
@@ -119,25 +121,30 @@ pub fn analyze(
     }
 
     for par in &parameters.rust_parameters {
-        if let Ok(s) = used_rust_type(env, par.typ, false) {
-            used_types.push(s);
+        if let Ok(rust_type) = used_rust_type(env, par.typ, par.direction, &par.try_from_glib) {
+            used_types.extend(rust_type.into_used_types());
         }
     }
     for par in &parameters.c_parameters {
-        if let Some(s) = used_ffi_type(env, par.typ, &par.c_type) {
-            used_types.push(s);
+        if let Some(ffi_type) = used_ffi_type(env, par.typ, &par.c_type) {
+            used_types.push(ffi_type);
         }
     }
 
     let mut ret_nullable = signal.ret.nullable;
 
     if signal.ret.typ != Default::default() {
-        if let Ok(s) = used_rust_type(env, signal.ret.typ, true) {
+        if let Ok(rust_type) = used_rust_type(
+            env,
+            signal.ret.typ,
+            library::ParameterDirection::Out,
+            &TryFromGlib::default(),
+        ) {
             //No GString
-            used_types.push(s);
+            used_types.extend(rust_type.into_used_types());
         }
-        if let Some(s) = used_ffi_type(env, signal.ret.typ, &signal.ret.c_type) {
-            used_types.push(s);
+        if let Some(ffi_type) = used_ffi_type(env, signal.ret.typ, &signal.ret.c_type) {
+            used_types.push(ffi_type);
         }
 
         let nullable_override = configured_signals.iter().find_map(|f| f.ret.nullable);
@@ -211,7 +218,7 @@ pub fn type_error(env: &Env, par: &library::Parameter) -> Option<&'static str> {
     } else if ConversionType::of(env, par.typ) == ConversionType::Unknown {
         Some("Unknown conversion")
     } else {
-        match rust_type(env, par.typ) {
+        match rust_type_default(env, par.typ) {
             Err(Ignored(_)) => Some("Ignored"),
             Err(Mismatch(_)) => Some("Mismatch"),
             Err(Unimplemented(_)) => Some("Unimplemented"),
