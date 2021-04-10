@@ -148,7 +148,7 @@ fn generate_flags(
 impl ToGlib for {name} {{
     type GlibType = {sys_crate_name}::{ffi_name};
 
-    fn to_glib(&self) -> {sys_crate_name}::{ffi_name} {{
+    fn to_glib(self) -> {sys_crate_name}::{ffi_name} {{
         self.bits()
     }}
 }}

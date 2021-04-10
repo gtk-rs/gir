@@ -190,8 +190,8 @@ fn generate_enum(
 impl ToGlib for {name} {{
     type GlibType = {sys_crate_name}::{ffi_name};
 
-    fn to_glib(&self) -> {sys_crate_name}::{ffi_name} {{
-        match *self {{",
+    fn to_glib(self) -> {sys_crate_name}::{ffi_name} {{
+        match self {{",
         sys_crate_name = sys_crate_name,
         name = enum_.name,
         ffi_name = enum_.c_type
