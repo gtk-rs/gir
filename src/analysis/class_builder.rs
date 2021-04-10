@@ -122,6 +122,7 @@ fn analyze_property(
         typ: prop.typ,
         is_get: false,
         func_name: String::new(),
+        func_name_alias: None,
         nullable,
         get_out_ref_mode,
         set_in_ref_mode,

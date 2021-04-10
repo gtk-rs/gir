@@ -23,6 +23,7 @@ pub struct Property {
     pub typ: library::TypeId,
     pub is_get: bool,
     pub func_name: String,
+    pub func_name_alias: Option<String>,
     pub nullable: library::Nullable,
     pub get_out_ref_mode: RefMode,
     pub set_in_ref_mode: RefMode,
@@ -117,11 +118,21 @@ fn analyze_property(
 
     let type_string = rust_type(env, prop.typ);
     let name_for_func = nameutil::signal_to_snake(&name);
-    let var_name = nameutil::mangle_keywords(&*name_for_func).into_owned();
-    let get_func_name = format!("get_property_{}", name_for_func);
-    let set_func_name = format!("set_property_{}", name_for_func);
-    let check_get_func_name = format!("get_{}", name_for_func);
-    let check_set_func_name = format!("set_{}", name_for_func);
+
+    let mut get_prop_name = Some(format!("get_property_{}", name_for_func));
+
+    let bypass_auto_rename = configured_properties.iter().any(|f| f.bypass_auto_rename);
+    let (check_get_func_names, mut get_func_name) = if bypass_auto_rename {
+        (
+            vec![format!("get_{}", name_for_func)],
+            get_prop_name.take().expect("defined 10 lines above"),
+        )
+    } else {
+        get_func_name(&name_for_func, prop.typ == library::TypeId::tid_bool())
+    };
+
+    let mut set_func_name = format!("set_{}", name_for_func);
+    let mut set_prop_name = Some(format!("set_property_{}", name_for_func));
 
     let mut readable = prop.readable;
     let mut writable = if prop.construct_only {
@@ -149,29 +160,49 @@ fn analyze_property(
     }
 
     if readable {
-        let (has, version) = Signature::has_for_property(
-            env,
-            &check_get_func_name,
-            true,
-            prop.typ,
-            signatures,
-            deps,
-        );
-        if has && (env.is_totally_deprecated(version) || version <= prop_version) {
-            readable = false;
+        for check_get_func_name in check_get_func_names {
+            let (has, version) = Signature::has_for_property(
+                env,
+                &check_get_func_name,
+                true,
+                prop.typ,
+                signatures,
+                deps,
+            );
+            if has {
+                // There is a matching get func
+                if env.is_totally_deprecated(version) || version <= prop_version {
+                    // And its availability covers the property's availability
+                    // => don't generate the get property.
+                    readable = false;
+                } else {
+                    // The property is required in earlier versions than the getter
+                    // => we need both, but there will be a name clash due to auto renaming
+                    // => keep the get_property name.
+                    if let Some(get_prop_name) = get_prop_name.take() {
+                        get_func_name = get_prop_name;
+                    }
+                }
+            }
         }
     }
     if writable {
-        let (has, version) = Signature::has_for_property(
-            env,
-            &check_set_func_name,
-            false,
-            prop.typ,
-            signatures,
-            deps,
-        );
-        if has && (env.is_totally_deprecated(version) || version <= prop_version) {
-            writable = false;
+        let (has, version) =
+            Signature::has_for_property(env, &set_func_name, false, prop.typ, signatures, deps);
+        if has {
+            // There is a matching set func
+            if env.is_totally_deprecated(version) || version <= prop_version {
+                // And its availability covers the property's availability
+                // => don't generate the set property.
+                writable = false;
+            } else {
+                // The property is required in earlier versions than the setter
+                // => we need both, but there will be a name clash due to auto renaming
+                // => keep the set_property name.
+                if let Some(set_prop_name) = set_prop_name.take() {
+                    set_func_name = set_prop_name;
+                }
+            }
         }
     }
 
@@ -191,6 +222,7 @@ fn analyze_property(
             typ: prop.typ,
             is_get: true,
             func_name: get_func_name,
+            func_name_alias: get_prop_name,
             nullable,
             get_out_ref_mode,
             set_in_ref_mode,
@@ -221,10 +253,11 @@ fn analyze_property(
 
         Some(Property {
             name: name.clone(),
-            var_name,
+            var_name: nameutil::mangle_keywords(&*name_for_func).into_owned(),
             typ: prop.typ,
             is_get: false,
             func_name: set_func_name,
+            func_name_alias: set_prop_name,
             nullable,
             get_out_ref_mode,
             set_in_ref_mode,
@@ -312,6 +345,42 @@ fn analyze_property(
     };
 
     (getter, setter, notify_signal)
+}
+
+/// Returns (the list of get functions to check, the desired get function name).
+fn get_func_name(prop_name: &str, is_bool_getter: bool) -> (Vec<String>, String) {
+    let get_rename_res = getter_rules::try_rename_getter_suffix(&prop_name, is_bool_getter);
+    match get_rename_res {
+        Ok(new_name) => {
+            let new_name = new_name.unwrap();
+            let mut check_get_func_names = vec![
+                format!("get_{}", prop_name),
+                prop_name.to_string(),
+                format!("get_{}", new_name),
+                new_name.clone(),
+            ];
+
+            if is_bool_getter {
+                check_get_func_names.push(format!("is_{}", prop_name));
+                check_get_func_names.push(format!("is_{}", new_name));
+            }
+            (check_get_func_names, new_name)
+        }
+        Err(_) => {
+            let mut check_get_func_names =
+                vec![format!("get_{}", prop_name), prop_name.to_string()];
+
+            // Name is reserved
+            let get_func_name = if is_bool_getter {
+                let get_func_name = format!("is_{}", prop_name);
+                check_get_func_names.push(get_func_name.clone());
+                get_func_name
+            } else {
+                format!("get_{}", prop_name)
+            };
+            (check_get_func_names, get_func_name)
+        }
+    }
 }
 
 pub fn get_property_ref_modes(
