@@ -563,7 +563,10 @@ fn analyze_function(
                 new_name = try_getter_rename(func, &name);
             }
             library::FunctionKind::Constructor => {
-                if name.starts_with("new_from") || name.starts_with("new_with") {
+                if name.starts_with("new_from")
+                    || name.starts_with("new_with")
+                    || name.starts_with("new_for")
+                {
                     name = name[4..].to_string();
                 }
             }
