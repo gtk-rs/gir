@@ -13,7 +13,7 @@ edition = "2018"
 [dependencies]
 bitflags = "1.0"
 getopts = "0.2.21"
-getter_rules = { default-features = false, package = "fix-getters-rules", git = "https://github.com/fengalin/fix-getters", tag = "0.1.0" }
+getter_rules = { default-features = false, package = "fix-getters-rules", git = "https://github.com/fengalin/fix-getters", tag = "0.2.0" }
 xml-rs = "0.8"
 toml = { version = "0.5" , features = ["preserve_order"] }
 env_logger = { version = "0.7", default-features = false }

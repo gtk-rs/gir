@@ -44,8 +44,8 @@ dependencies = [
 
 [[package]]
 name = "fix-getters-rules"
-version = "0.1.0"
-source = "git+https://github.com/fengalin/fix-getters?tag=0.1.0#ab8a8cceaf45b5ba98f8030541100437b1ecdb0f"
+version = "0.2.0"
+source = "git+https://github.com/fengalin/fix-getters?tag=0.2.0#b62c0a889aeb1a4a56a9fb148a6761f4f4c2437a"
 dependencies = [
  "once_cell",
 ]
