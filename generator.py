@@ -5,24 +5,13 @@ import argparse
 import subprocess
 import sys
 
-
-NOTHING_TO_BE_DONE = 0
-NEED_UPDATE = 1
-FAILURE = 2
-
 DEFAULT_GIR_FILES_DIRECTORY = Path("./gir-files")
 DEFAULT_GIR_DIRECTORY = Path("./gir/")
 DEFAULT_GIR_PATH = DEFAULT_GIR_DIRECTORY / "target/release/gir"
 
 
 def run_command(command, folder=None):
-    if folder is None:
-        folder = "."
-    ret = subprocess.run(command, cwd=folder)
-    if ret.returncode != 0:
-        print("Command `{}` failed with `{}`...".format(command, ret))
-        return False
-    return True
+    return subprocess.run(command, cwd=folder, check=True)
 
 
 def spawn_process(command):
@@ -42,37 +31,28 @@ def ask_yes_no_question(question, conf):
     return line.strip().lower() == "y"
 
 
-def def_check_submodule(submodule_path, conf):
+def update_submodule(submodule_path, conf):
     if any(submodule_path.iterdir()):
-        return NOTHING_TO_BE_DONE
+        return False
     print("=> Initializing {} submodule...".format(submodule_path))
-    if not run_command(["git", "submodule", "update", "--init", submodule_path]):
-        return FAILURE
+    run_command(["git", "submodule", "update", "--init", submodule_path])
     print("<= Done!")
 
     if ask_yes_no_question(
         "Do you want to update {} submodule?".format(submodule_path), conf
     ):
         print("=> Updating submodule...")
-        if not run_command(["git", "reset", "--hard", "HEAD"], submodule_path):
-            return FAILURE
-        if not run_command(["git", "pull", "-f", "origin", "master"], submodule_path):
-            return FAILURE
+        run_command(["git", "reset", "--hard", "HEAD"], submodule_path)
+        run_command(["git", "pull", "-f", "origin", "master"], submodule_path)
         print("<= Done!")
-        return NEED_UPDATE
-    return NOTHING_TO_BE_DONE
+        return True
+    return False
 
 
-def build_gir_if_needed(updated_submodule):
-    if updated_submodule == FAILURE:
-        return False
+def build_gir():
     print("=> Building gir...")
-    if update_workspace():
-        print("<= Done!")
-    else:
-        print("<= Failed...")
-        return False
-    return True
+    update_workspace()
+    print("<= Done!")
 
 
 def regen_crates(path, conf):
@@ -190,12 +170,11 @@ def main():
     conf = parse_args()
 
     if not conf.gir_files_paths:
-        if def_check_submodule(DEFAULT_GIR_FILES_DIRECTORY, conf) == FAILURE:
-            return 1
+        update_submodule(DEFAULT_GIR_FILES_DIRECTORY, conf)
 
     if conf.gir_path == DEFAULT_GIR_PATH:
-        if not build_gir_if_needed(def_check_submodule(DEFAULT_GIR_DIRECTORY, conf)):
-            return 1
+        update_submodule(DEFAULT_GIR_DIRECTORY, conf)
+        build_gir()
 
     print("=> Regenerating crates...")
     for path in conf.path:
@@ -204,10 +183,13 @@ def main():
         for log, p in processes:
             print("==> {}".format(log))
             stdout, stderr = p.communicate()
+            stdout = stdout.decode("utf-8")
+            stderr = stderr.decode("utf-8")
+            assert p.returncode == 0, stderr.strip()
             # Gir doesn't print anything to stdout. If it does, this is likely out of
             # order with stderr, unless the printer/logging flushes in between.
-            assert stdout == b""
-            print(stderr.decode("utf-8"), end="")
+            assert not stdout, "`gir` printed unexpected stdout: {}".format(stdout)
+            print(stderr, end="")
 
     if not conf.no_fmt and not run_command(["cargo", "fmt"]):
         return 1
@@ -217,4 +199,8 @@ def main():
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    try:
+        main()
+    except Exception as e:
+        print("Error: {}".format(e), file=sys.stderr)
+        sys.exit(1)
