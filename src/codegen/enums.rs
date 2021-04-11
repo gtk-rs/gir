@@ -182,15 +182,15 @@ fn generate_enum(
         )?;
     }
 
-    // Generate ToGlib trait implementation.
+    // Generate IntoGlib trait implementation.
     version_condition(w, env, enum_.version, false, 0)?;
     writeln!(
         w,
         "#[doc(hidden)]
-impl ToGlib for {name} {{
+impl IntoGlib for {name} {{
     type GlibType = {sys_crate_name}::{ffi_name};
 
-    fn to_glib(self) -> {sys_crate_name}::{ffi_name} {{
+    fn into_glib(self) -> {sys_crate_name}::{ffi_name} {{
         match self {{",
         sys_crate_name = sys_crate_name,
         name = enum_.name,
@@ -292,7 +292,7 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
             "    }}
 
     fn code(self) -> i32 {{
-        self.to_glib()
+        self.into_glib()
     }}
 
     fn from(code: i32) -> Option<Self> {{
@@ -382,7 +382,7 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
     fn to_value(&self) -> {gvalue} {{
         let mut value = {gvalue}::for_value_type::<{name}>();
         unsafe {{
-            {glib}(value.to_glib_none_mut().0, self.to_glib());
+            {glib}(value.to_glib_none_mut().0, self.into_glib());
         }}
         value
     }}
