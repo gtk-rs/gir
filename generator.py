@@ -77,16 +77,34 @@ def regen_crates(path, conf):
             if not regen_crates(entry, conf):
                 return False
     elif path.match("Gir*.toml"):
-        print('==> Regenerating "{}"...'.format(path))
-
         args = [conf.gir_path, "-c", path, "-o", path.parent] + [
             d for path in conf.gir_files_paths for d in ("-d", path)
         ]
+        error = False
         if path.parent.name.endswith("sys"):
             args.extend(["-m", "sys"])
-        error = False
+        elif conf.with_docs:
+            # Update docs/**/docs.md for non-sys crates
+
+            doc_path = "docs.md"
+            if isinstance(conf.with_docs, Path):
+                # doc-target-path is relative to `-c`
+                path_depth = len(path.parent.parts)
+                doc_path = Path(
+                    *[".."] * path_depth, conf.with_docs, path.parent, doc_path
+                )
+            print(
+                "==> Regenerating documentation for `{}` into `{}`...".format(
+                    path, doc_path
+                )
+            )
+            doc_args = args + ["-m", "doc", "--doc-target-path", doc_path]
+            error |= not run_command(doc_args)
+
+        print('==> Regenerating "{}"...'.format(path))
+
         try:
-            error = not run_command(args)
+            error |= not run_command(args)
         except Exception as err:
             print("The following error occurred: {}".format(err))
             error = True
@@ -157,6 +175,15 @@ def parse_args():
         "--no-fmt",
         action="store_true",
         help="If set, this script will not run `cargo fmt`",
+    )
+    parser.add_argument(
+        "--with-docs",
+        metavar="output_path",
+        nargs="?",
+        const=True,
+        default=False,
+        type=directory_path,
+        help="Build documentation with `gir -m doc`. Optionally takes an output directory",
     )
 
     return parser.parse_args()
