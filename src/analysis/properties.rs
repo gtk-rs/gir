@@ -214,6 +214,7 @@ fn analyze_property(
         }
         if type_string.is_ok() {
             imports.add("glib::StaticType");
+            imports.add("glib::ToValue");
         }
 
         Some(Property {
@@ -238,6 +239,9 @@ fn analyze_property(
     let setter = if writable {
         if let Ok(ref s) = used_rust_type(env, prop.typ, true) {
             imports.add_used_type(s);
+        }
+        if type_string.is_ok() {
+            imports.add("glib::ToValue");
         }
         let set_bound = PropertyBound::get(env, prop.typ);
         if type_string.is_ok() && set_bound.is_some() {

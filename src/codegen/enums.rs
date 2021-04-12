@@ -349,41 +349,52 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
         version_condition(w, env, version, false, 0)?;
         writeln!(
             w,
-            "impl<'a> FromValueOptional<'a> for {name} {{
-    unsafe fn from_value_optional(value: &{gvalue}) -> Option<Self> {{
-        Some(FromValue::from_value(value))
-    }}
+            "impl {valuetype} for {name} {{
+    type Type = Self;
 }}",
             name = enum_.name,
-            gvalue = use_glib_type(env, "Value"),
+            valuetype = use_glib_type(env, "value::ValueType"),
         )?;
         writeln!(w)?;
 
         version_condition(w, env, version, false, 0)?;
         writeln!(
             w,
-            "impl<'a> FromValue<'a> for {name} {{
-    unsafe fn from_value(value: &{gvalue}) -> Self {{
-        from_glib({glib}(value.to_glib_none().0))
+            "unsafe impl<'a> FromValue<'a> for {name} {{
+    type Checker = {genericwrongvaluetypechecker}<Self>;
+
+    unsafe fn from_value(value: &'a {gvalue}) -> Self {{
+        {assert}from_glib({glib}(value.to_glib_none().0))
     }}
 }}",
             name = enum_.name,
             glib = use_glib_type(env, "gobject_ffi::g_value_get_enum"),
             gvalue = use_glib_type(env, "Value"),
+            genericwrongvaluetypechecker = use_glib_type(env, "value::GenericValueTypeChecker"),
+            assert = assert,
         )?;
         writeln!(w)?;
 
         version_condition(w, env, version, false, 0)?;
         writeln!(
             w,
-            "impl SetValue for {name} {{
-    unsafe fn set_value(value: &mut {gvalue}, this: &Self) {{
-        {glib}(value.to_glib_none_mut().0, this.to_glib())
+            "impl ToValue for {name} {{
+    fn to_value(&self) -> {gvalue} {{
+        let mut value = {gvalue}::for_value_type::<{name}>();
+        unsafe {{
+            {glib}(value.to_glib_none_mut().0, self.to_glib());
+        }}
+        value
+    }}
+
+    fn value_type(&self) -> {gtype} {{
+        Self::static_type()
     }}
 }}",
             name = enum_.name,
             glib = use_glib_type(env, "gobject_ffi::g_value_set_enum"),
             gvalue = use_glib_type(env, "Value"),
+            gtype = use_glib_type(env, "Type"),
         )?;
         writeln!(w)?;
     }

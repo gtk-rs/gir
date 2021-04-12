@@ -8,7 +8,6 @@ use crate::{
     chunk::Chunk,
     consts::TYPE_PARAMETERS_START,
     env::Env,
-    library,
     nameutil::use_glib_type,
     writer::{primitives::tabs, ToCode},
 };
@@ -139,18 +138,11 @@ pub fn generate(
             )?;
 
             if trampoline.ret.typ != Default::default() {
-                let unwrap = if trampoline.ret.nullable == library::Nullable(true) {
-                    ""
-                } else {
-                    ".unwrap()"
-                };
-
                 writeln!(
                     w,
-                    "{}res.unwrap().get().expect(\"Return Value for `{}`\"){}",
+                    "{}res.unwrap().get().expect(\"Return Value for `{}`\")",
                     tabs(indent + 1),
                     emit_name,
-                    unwrap,
                 )?;
             }
             writeln!(w, "{}}}", tabs(indent))?;
