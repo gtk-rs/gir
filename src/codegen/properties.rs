@@ -1,5 +1,5 @@
 use super::{
-    general::{cfg_deprecated, version_condition},
+    general::{cfg_deprecated, doc_alias, version_condition},
     property_body,
 };
 use crate::{
@@ -50,6 +50,11 @@ fn generate_prop_func(
         cfg_deprecated(w, env, prop.deprecated_version, commented, indent)?;
     }
     version_condition(w, env, prop.version, commented, indent)?;
+    if !in_trait || only_declaration {
+        if let Some(func_name_alias) = prop.func_name_alias.as_ref() {
+            doc_alias(w, func_name_alias, comment_prefix, indent)?;
+        }
+    }
     writeln!(
         w,
         "{}{}{}{}{}",

@@ -12,6 +12,7 @@ pub struct Property {
     pub status: GStatus,
     pub version: Option<Version>,
     pub generate: Option<PropertyGenerateFlags>,
+    pub bypass_auto_rename: bool,
     pub doc_trait_name: Option<String>,
 }
 
@@ -36,6 +37,7 @@ impl Parse for Property {
                 "name",
                 "pattern",
                 "generate",
+                "bypass_auto_rename",
                 "doc_trait_name",
             ],
             &format!("property {}", object_name),
@@ -67,6 +69,10 @@ impl Parse for Property {
                 .map_err(|e| error!("{} for object {}", e, object_name))
                 .ok()
         });
+        let bypass_auto_rename = toml
+            .lookup("bypass_auto_rename")
+            .and_then(Value::as_bool)
+            .unwrap_or(false);
         let doc_trait_name = toml
             .lookup("doc_trait_name")
             .and_then(Value::as_str)
@@ -77,6 +83,7 @@ impl Parse for Property {
             status,
             version,
             generate,
+            bypass_auto_rename,
             doc_trait_name,
         })
     }
@@ -137,6 +144,19 @@ manual = true
         let p = Property::parse(&toml, "a").unwrap();
         assert_eq!(p.ident, Ident::Name("prop1".into()));
         assert!(p.status.manual());
+    }
+
+    #[test]
+    fn property_bypass_auto_rename() {
+        let toml = toml(
+            r#"
+name = "prop1"
+bypass_auto_rename = true
+"#,
+        );
+        let f = Property::parse(&toml, "a").unwrap();
+        assert_eq!(f.ident, Ident::Name("prop1".into()));
+        assert!(f.bypass_auto_rename);
     }
 
     #[test]

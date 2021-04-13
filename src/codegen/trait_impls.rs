@@ -133,7 +133,7 @@ fn generate_hash(
     let version = Version::if_stricter_than(func.version, scope_version);
     version_condition(w, env, version, false, 0)?;
 
-    let call = generate_call(&func.name, &[], trait_name);
+    let call = generate_call(&func.codegen_name(), &[], trait_name);
 
     writeln!(
         w,
@@ -161,7 +161,7 @@ fn generate_eq(
     let version = Version::if_stricter_than(func.version, scope_version);
     version_condition(w, env, version, false, 0)?;
 
-    let call = generate_call(&func.name, &["other"], trait_name);
+    let call = generate_call(&func.codegen_name(), &["other"], trait_name);
 
     writeln!(
         w,
@@ -191,7 +191,7 @@ fn generate_eq_compare(
     let version = Version::if_stricter_than(func.version, scope_version);
     version_condition(w, env, version, false, 0)?;
 
-    let call = generate_call(&func.name, &["other"], trait_name);
+    let call = generate_call(&func.codegen_name(), &["other"], trait_name);
 
     writeln!(
         w,
@@ -221,7 +221,7 @@ fn generate_ord(
     let version = Version::if_stricter_than(func.version, scope_version);
     version_condition(w, env, version, false, 0)?;
 
-    let call = generate_call(&func.name, &["other"], trait_name);
+    let call = generate_call(&func.codegen_name(), &["other"], trait_name);
 
     writeln!(
         w,

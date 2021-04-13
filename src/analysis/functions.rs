@@ -479,6 +479,24 @@ fn analyze_callbacks(
     }
 }
 
+fn try_getter_rename(func: &library::Function, name: &str) -> Option<String> {
+    let nb_in_params = func
+        .parameters
+        .iter()
+        .filter(|param| library::ParameterDirection::In == param.direction)
+        .fold(0, |acc, _| acc + 1);
+    if nb_in_params == 1 {
+        // This could be a getter
+        let is_bool_getter = (func.parameters.len() == nb_in_params)
+            && (func.ret.typ == library::TypeId::tid_bool());
+        return getter_rules::try_rename_would_be_getter(name, is_bool_getter)
+            .ok()
+            .map(getter_rules::NewName::unwrap);
+    }
+
+    None
+}
+
 fn analyze_function(
     env: &Env,
     obj: &config::gobjects::GObject,
@@ -532,24 +550,35 @@ fn analyze_function(
         );
         commented = true;
     }
+
+    let mut new_name = configured_functions
+        .iter()
+        .filter_map(|f| f.rename.clone())
+        .next();
+
+    let bypass_auto_rename = configured_functions.iter().any(|f| f.bypass_auto_rename);
+    if !bypass_auto_rename && new_name.is_none() {
+        match func.kind {
+            library::FunctionKind::Method => {
+                new_name = try_getter_rename(func, &name);
+            }
+            library::FunctionKind::Constructor => {
+                if name.starts_with("new_from")
+                    || name.starts_with("new_with")
+                    || name.starts_with("new_for")
+                {
+                    name = name[4..].to_string();
+                }
+            }
+            _ => (),
+        }
+    }
+
     let version = configured_functions
         .iter()
         .filter_map(|f| f.version)
         .min()
         .or(func.version);
-
-    let new_name = configured_functions
-        .iter()
-        .filter_map(|f| f.rename.clone())
-        .next();
-    if new_name.is_none() {
-        if let library::FunctionKind::Constructor = func.kind {
-            if name.starts_with("new_from") || name.starts_with("new_with") {
-                name = name[4..].to_string();
-            }
-        }
-    };
-
     let version = env.config.filter_version(version);
     let deprecated_version = func.deprecated_version;
     let cfg_condition = configured_functions

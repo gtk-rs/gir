@@ -43,6 +43,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "fix-getters-rules"
+version = "0.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "87e1feab7e3b7ff36202ce259b5aa51130c6970543d8aad407970a270f116632"
+dependencies = [
+ "once_cell",
+]
+
+[[package]]
 name = "getopts"
 version = "0.2.21"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -57,6 +66,7 @@ version = "0.0.1"
 dependencies = [
  "bitflags",
  "env_logger",
+ "fix-getters-rules",
  "getopts",
  "hprof",
  "log 0.4.14",

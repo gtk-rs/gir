@@ -57,7 +57,7 @@ pub(super) fn generate_static_to_str(
 \t\t}}
 \t}}",
         visibility = visibility,
-        rust_fn_name = function.name,
+        rust_fn_name = function.codegen_name(),
         ns = env.main_sys_crate_name(),
         glib_fn_name = function.glib_name,
     )?;

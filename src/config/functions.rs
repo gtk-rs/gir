@@ -204,6 +204,7 @@ pub struct Function {
     pub no_future: bool,
     pub unsafe_: bool,
     pub rename: Option<String>,
+    pub bypass_auto_rename: bool,
     pub assertion: Option<SafetyAssertionMode>,
 }
 
@@ -236,6 +237,7 @@ impl Parse for Function {
                 "no_future",
                 "unsafe",
                 "rename",
+                "bypass_auto_rename",
                 "assertion",
             ],
             &format!("function {}", object_name),
@@ -296,6 +298,10 @@ impl Parse for Function {
             .lookup("rename")
             .and_then(Value::as_str)
             .map(ToOwned::to_owned);
+        let bypass_auto_rename = toml
+            .lookup("bypass_auto_rename")
+            .and_then(Value::as_bool)
+            .unwrap_or(false);
         if !check_rename(&rename, object_name, &ident) {
             return None;
         }
@@ -324,6 +330,7 @@ impl Parse for Function {
             no_future,
             unsafe_,
             rename,
+            bypass_auto_rename,
             assertion,
         })
     }
@@ -638,5 +645,18 @@ rename = "anoth er"
         );
         let f = Function::parse(&toml, "a");
         assert!(f.is_none());
+    }
+
+    #[test]
+    fn function_bypass_auto_rename() {
+        let toml = toml(
+            r#"
+name = "func1"
+bypass_auto_rename = true
+"#,
+        );
+        let f = Function::parse(&toml, "a").unwrap();
+        assert_eq!(f.ident, Ident::Name("func1".into()));
+        assert!(f.bypass_auto_rename);
     }
 }
