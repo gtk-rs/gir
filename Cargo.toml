@@ -7,7 +7,7 @@ authors = [
 	"Guillaume Gomez <guillaume1.gomez@gmail.com>",
 ]
 build = "build.rs"
-exclude = ["Gir*.toml", "tests/**/*", "*.md"]
+exclude = ["Gir*.toml", "tests/**/*", "*.md", "generator.py"]
 edition = "2018"
 
 [dependencies]
