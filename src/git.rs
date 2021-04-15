@@ -1,5 +1,7 @@
+use std::ffi::OsString;
 use std::io::Result;
-use std::path::Path;
+use std::os::unix::prelude::OsStringExt;
+use std::path::{Path, PathBuf};
 use std::process::{Command, Output};
 
 fn git_command(path: impl AsRef<Path>, subcommand: &[&str]) -> Result<Output> {
@@ -50,8 +52,25 @@ fn gitmodules_config(subcommand: &[&str]) -> Option<String> {
     Some(result)
 }
 
-// This file is also compiled from build.rs where this function is unused
-#[allow(dead_code)]
+pub fn toplevel(path: impl AsRef<Path>) -> Option<PathBuf> {
+    let mut output = git_command(path, &["rev-parse", "--show-toplevel"]).ok()?;
+
+    if !output.status.success() {
+        return None;
+    }
+
+    assert_eq!(
+        output
+            .stdout
+            .pop()
+            .map(|c| c as u32)
+            .and_then(std::char::from_u32),
+        Some('\n')
+    );
+    let toplevel = OsString::from_vec(output.stdout);
+    Some(toplevel.into())
+}
+
 pub(crate) fn repo_remote_url(path: impl AsRef<Path>) -> Option<String> {
     // Find the subsection that defines the module for the given path:
     let key_for_path = gitmodules_config(&[

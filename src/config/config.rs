@@ -4,7 +4,7 @@ use super::{
 };
 use crate::{
     config::error::TomlHelper,
-    git::{repo_hash, repo_remote_url},
+    git::{repo_hash, repo_remote_url, toplevel},
     library::{self, Library},
     nameutil::set_crate_name_overrides,
     version::Version,
@@ -69,18 +69,19 @@ pub struct GirVersion {
 impl GirVersion {
     fn new(gir_dir: impl AsRef<Path>) -> Self {
         let gir_dir = normalize_path(gir_dir);
+        let is_submodule = toplevel(&gir_dir) != Path::new(".").canonicalize().ok();
         Self {
             file_name: gir_dir
                 .file_name()
                 .map(|s| s.to_str().expect("OsStr::to_str failed").to_owned()),
-            hash: repo_hash(&gir_dir),
-            url: repo_remote_url(&gir_dir),
+            hash: is_submodule.then(|| repo_hash(&gir_dir).unwrap_or_else(|| "???".to_string())),
+            url: is_submodule.then(|| repo_remote_url(&gir_dir)).flatten(),
             gir_dir,
         }
     }
 
-    pub fn get_hash(&self) -> &str {
-        self.hash.as_deref().unwrap_or("???")
+    pub fn get_hash(&self) -> Option<&str> {
+        self.hash.as_deref()
     }
 
     pub fn get_repository_url(&self) -> Option<&str> {
