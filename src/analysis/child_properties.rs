@@ -11,6 +11,8 @@ use log::error;
 #[derive(Clone, Debug)]
 pub struct ChildProperty {
     pub name: String,
+    pub prop_name: String,
+    pub getter_name: String,
     pub typ: library::TypeId,
     pub child_name: String,
     pub child_type: Option<library::TypeId>,
@@ -53,7 +55,9 @@ pub fn analyze(
     }
 
     for prop in &config.properties {
-        if let Some(prop) = analyze_property(env, prop, child_name, child_type, type_tid, imports) {
+        if let Some(prop) =
+            analyze_property(env, prop, child_name, child_type, type_tid, config, imports)
+        {
             properties.push(prop);
         }
     }
@@ -74,11 +78,20 @@ fn analyze_property(
     child_name: &str,
     child_type: Option<library::TypeId>,
     type_tid: library::TypeId,
+    config: &config::ChildProperties,
     imports: &mut Imports,
 ) -> Option<ChildProperty> {
     let name = prop.name.clone();
+    let prop_name = nameutil::signal_to_snake(&*prop.name);
+    let getter_rename = config
+        .properties
+        .iter()
+        .find(|cp| cp.name == name)
+        .and_then(|cp| cp.rename_getter.clone());
+    let is_getter_renamed = getter_rename.is_some();
+    let mut getter_name = getter_rename.unwrap_or_else(|| prop_name.clone());
+
     if let Some(typ) = env.library.find_type(0, &prop.type_name) {
-        let prop_name = nameutil::signal_to_snake(&*prop.name);
         let doc_hidden = prop.doc_hidden;
 
         imports.add("glib::StaticType");
@@ -87,6 +100,15 @@ fn analyze_property(
         }
 
         let get_out_ref_mode = RefMode::of(env, typ, library::ParameterDirection::Return);
+        if !is_getter_renamed {
+            if let Ok(new_name) = getter_rules::try_rename_getter_suffix(
+                &getter_name,
+                typ == library::TypeId::tid_bool(),
+            ) {
+                getter_name = new_name.unwrap();
+            }
+        }
+
         let mut set_in_ref_mode = RefMode::of(env, typ, library::ParameterDirection::In);
         if set_in_ref_mode == RefMode::ByRefMut {
             set_in_ref_mode = RefMode::ByRef;
@@ -120,8 +142,11 @@ fn analyze_property(
                 .into_string()
             )
         };
+
         Some(ChildProperty {
             name,
+            prop_name,
+            getter_name,
             typ,
             child_name: child_name.to_owned(),
             child_type,

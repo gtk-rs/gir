@@ -44,9 +44,9 @@ dependencies = [
 
 [[package]]
 name = "fix-getters-rules"
-version = "0.2.1"
+version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "87e1feab7e3b7ff36202ce259b5aa51130c6970543d8aad407970a270f116632"
+checksum = "691efe0fd1a0dfa0ce8a0c3aca1383dcb76316aea6656d2509f933e59b2be366"
 dependencies = [
  "once_cell",
 ]
