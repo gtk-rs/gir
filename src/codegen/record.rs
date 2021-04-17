@@ -73,8 +73,7 @@ pub fn generate(w: &mut dyn Write, env: &Env, analysis: &analysis::record::Info)
             &analysis.derives,
         )?;
     } else {
-        // This is checked in analysis::record already
-        unreachable!(
+        panic!(
             "Missing memory management functions for {}",
             analysis.full_name
         );
