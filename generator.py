@@ -65,18 +65,18 @@ def regen_crates(path, conf):
             d for path in conf.gir_files_paths for d in ("-d", path)
         ]
 
-        if path.parent.name.endswith("sys"):
-            args.extend(["-m", "sys"])
-        elif conf.with_docs:
+        is_sys_crate = path.parent.name.endswith("sys")
+
+        if conf.docs:
             # Update docs/**/docs.md for non-sys crates
+            if is_sys_crate:
+                return processes
 
             doc_path = "docs.md"
-            if isinstance(conf.with_docs, Path):
+            if isinstance(conf.docs, Path):
                 # doc-target-path is relative to `-c`
                 path_depth = len(path.parent.parts)
-                doc_path = Path(
-                    *[".."] * path_depth, conf.with_docs, path.parent, doc_path
-                )
+                doc_path = Path(*[".."] * path_depth, conf.docs, path.parent, doc_path)
             doc_args = args + ["-m", "doc", "--doc-target-path", doc_path]
             processes.append(
                 (
@@ -86,8 +86,10 @@ def regen_crates(path, conf):
                     spawn_process(doc_args),
                 )
             )
-
-        processes.append(("Regenerating `{}`...".format(path), spawn_process(args)))
+        else:
+            if is_sys_crate:
+                args.extend(["-m", "sys"])
+            processes.append(("Regenerating `{}`...".format(path), spawn_process(args)))
 
     else:
         raise Exception("`{}` is not a valid Gir*.toml file".format(path))
@@ -106,6 +108,17 @@ def directory_path(path):
     path = Path(path)
     if not path.is_dir():
         raise argparse.ArgumentTypeError("`{}` directory not found".format(path))
+    return path
+
+
+def directory_output_path(path):
+    """
+    Creates an output directory if it doesn't exist yet.
+
+    Fails if the directory cannot be created or the path exists but is not a directory.
+    """
+    path = Path(path)
+    path.mkdir(parents=True, exist_ok=True)
     return path
 
 
@@ -154,12 +167,12 @@ def parse_args():
         help="If set, this script will not run `cargo fmt`",
     )
     parser.add_argument(
-        "--with-docs",
+        "--docs",
         metavar="output_path",
         nargs="?",
         const=True,
         default=False,
-        type=directory_path,
+        type=directory_output_path,
         help="Build documentation with `gir -m doc`. Optionally takes an output directory",
     )
 
