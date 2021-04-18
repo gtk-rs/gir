@@ -281,8 +281,7 @@ fn create_object_doc(w: &mut dyn Write, env: &Env, info: &analysis::object::Info
             // field could have been renamed.
             if let Some(trait_name) = configured_functions
                 .iter()
-                .filter_map(|f| f.doc_trait_name.as_ref())
-                .next()
+                .find_map(|f| f.doc_trait_name.as_ref())
             {
                 TypeStruct::new(SType::Trait, trait_name)
             } else {
@@ -291,20 +290,22 @@ fn create_object_doc(w: &mut dyn Write, env: &Env, info: &analysis::object::Info
         } else {
             ty.clone()
         };
-        let fn_name = configured_functions
-            .iter()
-            .filter_map(|f| f.rename.as_ref())
-            .next()
-            .cloned();
-        create_fn_doc(w, env, function, Some(Box::new(ty)), fn_name)?;
+        if let Some(c_identifier) = &function.c_identifier {
+            // Retrieve the new_name computed during analysis, if any
+            let fn_new_name = info
+                .functions
+                .iter()
+                .find(|f| &f.glib_name == c_identifier)
+                .and_then(|analysed_f| analysed_f.new_name.clone());
+            create_fn_doc(w, env, function, Some(Box::new(ty)), fn_new_name)?;
+        }
     }
     for signal in signals {
         let ty = if has_trait {
             let configured_signals = obj.signals.matched(&signal.name);
             if let Some(trait_name) = configured_signals
                 .iter()
-                .filter_map(|f| f.doc_trait_name.as_ref())
-                .next()
+                .find_map(|f| f.doc_trait_name.as_ref())
             {
                 TypeStruct::new(SType::Trait, trait_name)
             } else {
@@ -320,8 +321,7 @@ fn create_object_doc(w: &mut dyn Write, env: &Env, info: &analysis::object::Info
             let configured_properties = obj.properties.matched(&property.name);
             if let Some(trait_name) = configured_properties
                 .iter()
-                .filter_map(|f| f.doc_trait_name.as_ref())
-                .next()
+                .find_map(|f| f.doc_trait_name.as_ref())
             {
                 TypeStruct::new(SType::Trait, trait_name)
             } else {

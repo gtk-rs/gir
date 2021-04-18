@@ -500,7 +500,7 @@ fn try_getter_rename(func: &library::Function, name: &str) -> Option<String> {
 fn analyze_function(
     env: &Env,
     obj: &config::gobjects::GObject,
-    mut name: String,
+    name: String,
     status: GStatus,
     func: &library::Function,
     type_tid: library::TypeId,
@@ -551,10 +551,7 @@ fn analyze_function(
         commented = true;
     }
 
-    let mut new_name = configured_functions
-        .iter()
-        .filter_map(|f| f.rename.clone())
-        .next();
+    let mut new_name = configured_functions.iter().find_map(|f| f.rename.clone());
 
     let bypass_auto_rename = configured_functions.iter().any(|f| f.bypass_auto_rename);
     if !bypass_auto_rename && new_name.is_none() {
@@ -567,7 +564,7 @@ fn analyze_function(
                     || name.starts_with("new_with")
                     || name.starts_with("new_for")
                 {
-                    name = name[4..].to_string();
+                    new_name = Some(name[4..].to_string());
                 }
             }
             _ => (),
@@ -583,16 +580,12 @@ fn analyze_function(
     let deprecated_version = func.deprecated_version;
     let cfg_condition = configured_functions
         .iter()
-        .filter_map(|f| f.cfg_condition.clone())
-        .next();
+        .find_map(|f| f.cfg_condition.clone());
     let doc_hidden = configured_functions.iter().any(|f| f.doc_hidden);
     let disable_length_detect = configured_functions.iter().any(|f| f.disable_length_detect);
     let no_future = configured_functions.iter().any(|f| f.no_future);
     let unsafe_ = configured_functions.iter().any(|f| f.unsafe_);
-    let assertion = configured_functions
-        .iter()
-        .filter_map(|f| f.assertion)
-        .next();
+    let assertion = configured_functions.iter().find_map(|f| f.assertion);
 
     let imports = &mut imports.with_defaults(version, &cfg_condition);
 
