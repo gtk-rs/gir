@@ -52,14 +52,19 @@ pub fn single_version_file(w: &mut dyn Write, conf: &Config, prefix: &str) -> Re
         conf.girs_version
             .iter()
             .map(|info| {
-                format!(
-                    "{}from {} ({}@ {})\n",
-                    prefix,
-                    info.gir_dir.display(),
-                    info.get_repository_url()
-                        .map_or_else(String::new, |u| format!("{} ", u)),
-                    info.get_hash(),
-                )
+                match (info.get_repository_url(), info.get_hash()) {
+                    (Some(url), Some(hash)) => format!(
+                        "{}from {} ({} @ {})\n",
+                        prefix,
+                        info.gir_dir.display(),
+                        url,
+                        hash,
+                    ),
+                    (None, Some(hash)) => {
+                        format!("{}from {} (@ {})\n", prefix, info.gir_dir.display(), hash,)
+                    }
+                    _ => format!("{}from {}\n", prefix, info.gir_dir.display()),
+                }
             })
             .collect::<String>(),
     )

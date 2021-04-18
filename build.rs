@@ -1,5 +1,7 @@
 use std::{fs::File, io::Write};
 
+// Build.rs does not use all provided functions
+#[allow(dead_code)]
 #[path = "src/git.rs"]
 mod git;
 
