@@ -180,7 +180,6 @@ pub fn new(env: &Env, obj: &GObject) -> Option<Info> {
             }
         } else {
             error!("Missing memory management functions for {}", full_name);
-            return None;
         }
     }
 
