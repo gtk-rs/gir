@@ -4,6 +4,7 @@ from pathlib import Path
 import argparse
 import subprocess
 import sys
+import asyncio
 
 DEFAULT_GIR_FILES_DIRECTORY = Path("./gir-files")
 DEFAULT_GIR_DIRECTORY = Path("./gir/")
@@ -14,8 +15,29 @@ def run_command(command, folder=None):
     return subprocess.run(command, cwd=folder, check=True)
 
 
-def spawn_process(command):
-    return subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+async def spawn_process(exe, args):
+    p = await asyncio.create_subprocess_exec(
+        exe,
+        *args,
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.PIPE,
+    )
+
+    stdout, stderr = await p.communicate()
+    stdout = stdout.decode("utf-8")
+    stderr = stderr.decode("utf-8")
+    assert p.returncode == 0, stderr.strip()
+    return stdout, stderr
+
+
+async def spawn_gir(gir_exe, args):
+    stdout, stderr = await spawn_process(gir_exe, args)
+    # Gir doesn't print anything to stdout. If it does, this is likely out of
+    # order with stderr, unless the printer/logging flushes in between.
+    assert not stdout, "`gir` printed unexpected stdout: {}".format(stdout)
+    if stderr:
+        return "===> stderr:\n\n" + stderr + "\n"
+    return ""
 
 
 def update_workspace():
@@ -55,13 +77,24 @@ def build_gir():
     print("<= Done!")
 
 
+async def regenerate_crate_docs(gir_exe, crate_dir, base_gir_args, doc_path):
+    doc_args = base_gir_args + ["-m", "doc", "--doc-target-path", doc_path]
+
+    logs = "==> Regenerating documentation for `{}` into `{}`...\n".format(
+        crate_dir, doc_path
+    )
+    logs += await spawn_gir(gir_exe, doc_args)
+
+    return logs
+
+
 def regen_crates(path, conf):
     processes = []
     if path.is_dir():
         for entry in path.rglob("Gir*.toml"):
             processes += regen_crates(entry, conf)
     elif path.match("Gir*.toml"):
-        args = [conf.gir_path, "-c", path, "-o", path.parent] + [
+        args = ["-c", path, "-o", path.parent] + [
             d for path in conf.gir_files_paths for d in ("-d", path)
         ]
 
@@ -72,24 +105,26 @@ def regen_crates(path, conf):
             if is_sys_crate:
                 return processes
 
+            # Generate into docs.md instead of the default vendor.md
             doc_path = "docs.md"
             if isinstance(conf.docs, Path):
                 # doc-target-path is relative to `-c`
                 path_depth = len(path.parent.parts)
                 doc_path = Path(*[".."] * path_depth, conf.docs, path.parent, doc_path)
-            doc_args = args + ["-m", "doc", "--doc-target-path", doc_path]
+
             processes.append(
-                (
-                    "Regenerating documentation for `{}` into `{}`...".format(
-                        path, doc_path
-                    ),
-                    spawn_process(doc_args),
-                )
+                regenerate_crate_docs(conf.gir_path, path.parent, args, doc_path)
             )
         else:
             if is_sys_crate:
                 args.extend(["-m", "sys"])
-            processes.append(("Regenerating `{}`...".format(path), spawn_process(args)))
+
+            async def regenerate_crate(path, args):
+                return "==> Regenerating `{}`...\n".format(path) + await spawn_gir(
+                    conf.gir_path, args
+                )
+
+            processes.append(regenerate_crate(path, args))
 
     else:
         raise Exception("`{}` is not a valid Gir*.toml file".format(path))
@@ -179,7 +214,7 @@ def parse_args():
     return parser.parse_args()
 
 
-def main():
+async def main():
     conf = parse_args()
 
     if not conf.gir_files_paths:
@@ -192,17 +227,9 @@ def main():
     print("=> Regenerating crates...")
     for path in conf.path:
         print("=> Looking in path `{}`".format(path))
-        processes = regen_crates(path, conf)
-        for log, p in processes:
-            print("==> {}".format(log))
-            stdout, stderr = p.communicate()
-            stdout = stdout.decode("utf-8")
-            stderr = stderr.decode("utf-8")
-            assert p.returncode == 0, stderr.strip()
-            # Gir doesn't print anything to stdout. If it does, this is likely out of
-            # order with stderr, unless the printer/logging flushes in between.
-            assert not stdout, "`gir` printed unexpected stdout: {}".format(stdout)
-            print(stderr, end="")
+        # Collect and print the results as soon as they trickle in, one process at a time:
+        for coro in asyncio.as_completed(regen_crates(path, conf)):
+            print(await coro, end="")
 
     if not conf.no_fmt and not run_command(["cargo", "fmt"]):
         return 1
@@ -213,7 +240,7 @@ def main():
 
 if __name__ == "__main__":
     try:
-        main()
+        asyncio.run(main())
     except Exception as e:
         print("Error: {}".format(e), file=sys.stderr)
         sys.exit(1)
