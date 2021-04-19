@@ -77,13 +77,28 @@ def build_gir():
     print("<= Done!")
 
 
-async def regenerate_crate_docs(gir_exe, crate_dir, base_gir_args, doc_path):
+async def regenerate_crate_docs(gir_exe, crate_dir, base_gir_args):
+    doc_path = "docs.md"
+    # Generate into docs.md instead of the default vendor.md
     doc_args = base_gir_args + ["-m", "doc", "--doc-target-path", doc_path]
+
+    # The above `gir -m doc` generates docs.md relative to the directory containing Gir.toml
+    doc_path = crate_dir / doc_path
+    embed_args = ["-g", "-m", "-o", doc_path, "-d", crate_dir / "src"]
 
     logs = "==> Regenerating documentation for `{}` into `{}`...\n".format(
         crate_dir, doc_path
     )
     logs += await spawn_gir(gir_exe, doc_args)
+
+    logs += "==> Embedding documentation from `{}` into `{}`...\n".format(
+        doc_path, crate_dir
+    )
+    stdout, stderr = await spawn_process("rustdoc-stripper", embed_args)
+    if stdout:
+        logs += "===> stdout:\n\n" + stdout + "\n"
+    if stderr:
+        logs += "===> stderr:\n\n" + stderr + "\n"
 
     return logs
 
@@ -100,21 +115,12 @@ def regen_crates(path, conf):
 
         is_sys_crate = path.parent.name.endswith("sys")
 
-        if conf.docs:
-            # Update docs/**/docs.md for non-sys crates
+        if conf.embed_docs:
+            # Embedding documentation only applies to non-sys crates
             if is_sys_crate:
                 return processes
 
-            # Generate into docs.md instead of the default vendor.md
-            doc_path = "docs.md"
-            if isinstance(conf.docs, Path):
-                # doc-target-path is relative to `-c`
-                path_depth = len(path.parent.parts)
-                doc_path = Path(*[".."] * path_depth, conf.docs, path.parent, doc_path)
-
-            processes.append(
-                regenerate_crate_docs(conf.gir_path, path.parent, args, doc_path)
-            )
+            processes.append(regenerate_crate_docs(conf.gir_path, path.parent, args))
         else:
             if is_sys_crate:
                 args.extend(["-m", "sys"])
@@ -143,17 +149,6 @@ def directory_path(path):
     path = Path(path)
     if not path.is_dir():
         raise argparse.ArgumentTypeError("`{}` directory not found".format(path))
-    return path
-
-
-def directory_output_path(path):
-    """
-    Creates an output directory if it doesn't exist yet.
-
-    Fails if the directory cannot be created or the path exists but is not a directory.
-    """
-    path = Path(path)
-    path.mkdir(parents=True, exist_ok=True)
     return path
 
 
@@ -202,13 +197,9 @@ def parse_args():
         help="If set, this script will not run `cargo fmt`",
     )
     parser.add_argument(
-        "--docs",
-        metavar="output_path",
-        nargs="?",
-        const=True,
-        default=False,
-        type=directory_output_path,
-        help="Build documentation with `gir -m doc`. Optionally takes an output directory",
+        "--embed-docs",
+        action="store_true",
+        help="Build documentation with `gir -m doc`, and embed it with `rustdoc-stripper -g`",
     )
 
     return parser.parse_args()
