@@ -13,7 +13,7 @@ edition = "2018"
 [dependencies]
 bitflags = "1.0"
 getopts = "0.2.21"
-getter_rules = { default-features = false, package = "fix-getters-rules", version = "0.2.1" }
+getter_rules = { package = "fix-getters-rules", version = "0.3.0", default-features = false }
 xml-rs = "0.8"
 toml = { version = "0.5" , features = ["preserve_order"] }
 env_logger = { version = "0.7", default-features = false }

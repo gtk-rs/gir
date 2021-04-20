@@ -6,7 +6,7 @@ use crate::{
     },
     chunk::Chunk,
     env::Env,
-    library, nameutil,
+    library,
     traits::IntoString,
     writer::{primitives::tabs, ToCode},
 };
@@ -65,9 +65,11 @@ fn generate_func(
 }
 
 fn declaration(env: &Env, prop: &ChildProperty, is_get: bool) -> String {
-    let get_set = if is_get { "get" } else { "set" };
-    let prop_name = nameutil::signal_to_snake(&*prop.name);
-    let func_name = format!("{}_{}_{}", get_set, prop.child_name, prop_name);
+    let func_name = if is_get {
+        format!("{}_{}", prop.child_name, prop.getter_name)
+    } else {
+        format!("set_{}_{}", prop.child_name, prop.prop_name)
+    };
     let mut bounds = if let Some(typ) = prop.child_type {
         let child_type = rust_type(env, typ).into_string();
         format!("T: IsA<{}>", child_type)
@@ -107,11 +109,10 @@ fn declaration(env: &Env, prop: &ChildProperty, is_get: bool) -> String {
 
 fn body(env: &Env, prop: &ChildProperty, in_trait: bool, is_get: bool) -> Chunk {
     let mut builder = property_body::Builder::new_for_child_property(env);
-    let prop_name = nameutil::signal_to_snake(&*prop.name);
     builder
         .name(&prop.name)
         .in_trait(in_trait)
-        .var_name(&prop_name)
+        .var_name(&prop.prop_name)
         .is_get(is_get)
         .is_ref(prop.set_in_ref_mode.is_ref())
         .is_nullable(*prop.nullable);

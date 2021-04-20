@@ -5,6 +5,7 @@ use toml::Value;
 #[derive(Clone, Debug)]
 pub struct ChildProperty {
     pub name: String,
+    pub rename_getter: Option<String>,
     pub type_name: String,
     pub doc_hidden: bool,
 }
@@ -23,7 +24,7 @@ impl Parse for ChildProperty {
         };
 
         toml.check_unwanted(
-            &["name", "type", "doc_hidden"],
+            &["name", "type", "doc_hidden", "rename_getter"],
             &format!("child property {}", object_name),
         );
 
@@ -44,11 +45,16 @@ impl Parse for ChildProperty {
             .lookup("doc_hidden")
             .and_then(Value::as_bool)
             .unwrap_or(false);
+        let rename_getter = toml
+            .lookup("rename_getter")
+            .and_then(Value::as_str)
+            .map(ToOwned::to_owned);
 
         Some(ChildProperty {
             name,
             type_name,
             doc_hidden,
+            rename_getter,
         })
     }
 }
