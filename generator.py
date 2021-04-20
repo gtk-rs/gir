@@ -17,8 +17,8 @@ def run_command(command, folder=None):
 
 async def spawn_process(exe, args):
     p = await asyncio.create_subprocess_exec(
-        exe,
-        *args,
+        str(exe),
+        *(str(arg) for arg in args),
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.PIPE,
     )
