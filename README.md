@@ -6,6 +6,8 @@ The `GIR` is used to generate both the sys level crate and a safe API crate to u
 
 This README files is more about the options and little overview. If you want a tutorial on how to generate a crate using `gir`, we recommend you to read this [tutorial](https://gtk-rs.org/docs-src/tutorial/gir_tutorial) instead.
 
+`gir` includes a wrapper script `./generator.py` that detects `Gir.toml` configurations in the current directory (or the path(s) passed on the command-line) and generates "normal" or "sys" crates for it. Alternatively `--embed-docs` can be passed to prepare source-code for a documentation build by moving all documentation into it. For a complete overview of available options, pass `--help`.
+
 ## Introduction to `gir` generation
 
 Using `gir` requires both a `*.toml` and a `*.gir` for generation of the bindings.
@@ -153,7 +155,7 @@ trust_return_value_nullability = false
 # Disable running `cargo fmt` on generated files
 # (defaults to false)
 disable_format = true
-# Always generate a Builder if possible. This is mostly a convenient setter as most of the 
+# Always generate a Builder if possible. This is mostly a convenient setter as most of the
 # time you might want the Builder to be generated. Ignoring none-desired ones can still be done with per object `generate_builder` configuration.
 # (defaults to false)
 generate_builder = true
