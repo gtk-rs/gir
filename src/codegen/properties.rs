@@ -1,5 +1,5 @@
 use super::{
-    general::{cfg_deprecated, doc_alias, version_condition},
+    general::{cfg_condition_string, cfg_deprecated, doc_alias, version_condition},
     property_body,
 };
 use crate::{
@@ -49,7 +49,14 @@ fn generate_prop_func(
     if !in_trait || only_declaration {
         cfg_deprecated(w, env, prop.deprecated_version, commented, indent)?;
     }
-    version_condition(w, env, prop.version, commented, indent)?;
+    // In case the property is originated from a parent class/interface from another library
+    if let Some(cfg_condition) = prop.parent_crate_feature() {
+        if let Some(s) = cfg_condition_string(&Some(cfg_condition), commented, indent) {
+            writeln!(w, "{}", s)?
+        }
+    } else {
+        version_condition(w, env, prop.version, commented, indent)?;
+    }
     if !in_trait || only_declaration {
         if let Some(func_name_alias) = prop.func_name_alias.as_ref() {
             doc_alias(w, func_name_alias, comment_prefix, indent)?;

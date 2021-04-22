@@ -24,7 +24,7 @@ pub fn analyze(
     }
 
     let mut names = HashSet::<String>::new();
-    let mut builder_properties = analyze_properties(env, props, obj, imports, &mut names);
+    let mut builder_properties = analyze_properties(env, props, obj, imports, &mut names, None);
 
     for &super_tid in env.class_hierarchy.supertypes(type_tid) {
         let type_ = env.type_(super_tid);
@@ -41,8 +41,14 @@ pub fn analyze(
                 continue;
             };
 
-        let new_builder_properties =
-            analyze_properties(env, super_properties, super_obj, imports, &mut names);
+        let new_builder_properties = analyze_properties(
+            env,
+            super_properties,
+            super_obj,
+            imports,
+            &mut names,
+            Some(super_obj),
+        );
         builder_properties.extend(new_builder_properties);
     }
 
@@ -55,6 +61,7 @@ fn analyze_properties(
     obj: &GObject,
     imports: &mut Imports,
     names: &mut HashSet<String>,
+    parent_object: Option<&GObject>,
 ) -> Vec<Property> {
     let mut builder_properties = Vec::new();
 
@@ -73,7 +80,7 @@ fn analyze_properties(
         if env.is_totally_deprecated(prop.deprecated_version) {
             continue;
         }
-        let builder = analyze_property(env, prop, &configured_properties, imports);
+        let builder = analyze_property(env, prop, &configured_properties, imports, parent_object);
         if let Some(builder) = builder {
             builder_properties.push(builder);
             names.insert(prop.name.clone());
@@ -88,6 +95,7 @@ fn analyze_property(
     prop: &library::Property,
     configured_properties: &[&config::properties::Property],
     imports: &mut Imports,
+    parent_object: Option<&GObject>,
 ) -> Option<Property> {
     let prop_version = configured_properties
         .iter()
@@ -116,6 +124,21 @@ fn analyze_property(
         bounds.add_parameter(&prop.name, &type_str.into_string(), bound, false);
     }
 
+    let feature_prefix = parent_object.and_then(|o| {
+        let crate_name = o
+            .name
+            .split('.')
+            .collect::<Vec<&str>>()
+            .get(0)
+            .unwrap()
+            .to_lowercase();
+        if crate_name == env.config.library_name.to_lowercase() {
+            None
+        } else {
+            Some(crate_name)
+        }
+    });
+
     Some(Property {
         name: prop.name.clone(),
         var_name: String::new(),
@@ -130,5 +153,6 @@ fn analyze_property(
         bounds,
         version: prop_version,
         deprecated_version: prop.deprecated_version,
+        parent_crate: feature_prefix,
     })
 }

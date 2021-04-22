@@ -31,6 +31,18 @@ pub struct Property {
     pub set_bound: Option<PropertyBound>,
     pub version: Option<Version>,
     pub deprecated_version: Option<Version>,
+    pub parent_crate: Option<String>,
+}
+
+impl Property {
+    pub fn parent_crate_feature(&self) -> Option<String> {
+        if let Some(parent_crate) = &self.parent_crate {
+            self.version
+                .map(|v| format!("feature = \"{}_{}\"", parent_crate, v.to_feature()))
+        } else {
+            None
+        }
+    }
 }
 
 pub fn analyze(
@@ -106,6 +118,7 @@ fn analyze_property(
         .min()
         .or(prop.version)
         .or(Some(env.config.min_cfg_version));
+
     let generate = configured_properties
         .iter()
         .filter_map(|f| f.generate)
@@ -230,6 +243,7 @@ fn analyze_property(
             bounds: Bounds::default(),
             version: prop_version,
             deprecated_version: prop.deprecated_version,
+            parent_crate: None,
         })
     } else {
         None
@@ -265,6 +279,7 @@ fn analyze_property(
             bounds: Bounds::default(),
             version: prop_version,
             deprecated_version: prop.deprecated_version,
+            parent_crate: None,
         })
     } else {
         None

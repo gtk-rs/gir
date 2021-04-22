@@ -6,7 +6,10 @@ use crate::{
         rust_type::{rust_type, rust_type_full},
     },
     case::CaseExt,
-    codegen::general::{version_condition_no_doc, version_condition_string},
+    codegen::general::{
+        cfg_condition_string, cfg_condition_string_no_doc, version_condition_no_doc,
+        version_condition_string,
+    },
     env::Env,
     library, nameutil,
     traits::IntoString,
@@ -220,7 +223,12 @@ fn generate_builder(w: &mut dyn Write, env: &Env, analysis: &analysis::object::I
                 }
                 let name = nameutil::mangle_keywords(nameutil::signal_to_snake(&property.name));
                 let version_condition_string =
-                    version_condition_string(env, property.version, false, 1);
+                    if let Some(cfg_condition) = property.parent_crate_feature() {
+                        // In case the property is originated from a parent class/interface from another library
+                        cfg_condition_string(&Some(cfg_condition), false, 1)
+                    } else {
+                        version_condition_string(env, property.version, false, 1)
+                    };
                 if let Some(ref version_condition_string) = version_condition_string {
                     writeln!(w, "{}", version_condition_string)?;
                 }
@@ -265,7 +273,14 @@ impl {}Builder {{
     )?;
     for property in &properties {
         let name = nameutil::mangle_keywords(nameutil::signal_to_snake(&property.name));
-        version_condition_no_doc(w, env, property.version, false, 2)?;
+        // In case the property is originated from a parent class/interface from another library
+        if let Some(cfg_condition) = property.parent_crate_feature() {
+            if let Some(s) = cfg_condition_string_no_doc(&Some(cfg_condition), false, 2) {
+                writeln!(w, "{}", s)?
+            }
+        } else {
+            version_condition_no_doc(w, env, property.version, false, 2)?;
+        }
         writeln!(
             w,
             "\
