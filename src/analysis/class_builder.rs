@@ -101,8 +101,7 @@ fn analyze_property(
         .iter()
         .filter_map(|f| f.version)
         .min()
-        .or(prop.version)
-        .or(Some(env.config.min_cfg_version));
+        .or(prop.version);
 
     let for_builder = prop.construct_only || prop.construct || prop.writable;
     if !for_builder {
