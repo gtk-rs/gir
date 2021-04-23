@@ -33,6 +33,7 @@ impl FromStr for Transfer {
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum ParameterDirection {
+    None,
     In,
     Out,
     InOut,

@@ -3,8 +3,7 @@ use crate::{
         bounds::Bounds,
         imports::Imports,
         properties::{get_property_ref_modes, Property},
-        rust_type::*,
-        try_from_glib::TryFromGlib,
+        rust_type::RustType,
     },
     config::{self, GObject},
     env::Env,
@@ -102,12 +101,7 @@ fn analyze_property(
         return None;
     }
     let imports = &mut imports.with_defaults(prop_version, &None);
-    let rust_type_res = used_rust_type(
-        env,
-        prop.typ,
-        library::ParameterDirection::Out,
-        &TryFromGlib::default(),
-    );
+    let rust_type_res = RustType::try_new(env, prop.typ);
     if let Ok(ref rust_type) = rust_type_res {
         if !rust_type.as_str().contains("GString") {
             imports.add_used_types(rust_type.used_types());

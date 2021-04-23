@@ -1,7 +1,7 @@
 use crate::{
     analysis::{
         self, imports::Imports, namespaces, override_string_type::override_string_type_return,
-        ref_mode::RefMode, rust_type::*,
+        rust_type::RustType,
     },
     config,
     env::Env,
@@ -119,20 +119,19 @@ pub fn analyze(
 
     let parameter = parameter.as_ref().map(|lib_par| {
         let par = analysis::Parameter::from_return_value(env, lib_par, configured_functions);
-        if let Ok(rust_type) = used_rust_type(env, typ, par.lib_par.direction, &par.try_from_glib) {
+        if let Ok(rust_type) = RustType::builder(env, typ)
+            .with_direction(par.lib_par.direction)
+            .with_try_from_glib(&par.try_from_glib)
+            .try_build()
+        {
             used_types.extend(rust_type.into_used_types());
         }
 
-        commented = parameter_rust_type(
-            env,
-            typ,
-            func.ret.direction,
-            Nullable(false),
-            RefMode::None,
-            library::ParameterScope::None,
-            &par.try_from_glib,
-        )
-        .is_err();
+        commented = RustType::builder(env, typ)
+            .with_direction(func.ret.direction)
+            .with_try_from_glib(&par.try_from_glib)
+            .try_build_param()
+            .is_err();
 
         par
     });

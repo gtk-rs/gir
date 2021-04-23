@@ -1,7 +1,7 @@
 use super::{
     conversion_type::ConversionType, out_parameters::can_as_return,
-    override_string_type::override_string_type_parameter, ref_mode::RefMode,
-    rust_type::rust_type_default, try_from_glib::TryFromGlib,
+    override_string_type::override_string_type_parameter, ref_mode::RefMode, rust_type::RustType,
+    try_from_glib::TryFromGlib,
 };
 use crate::{
     analysis,
@@ -219,6 +219,9 @@ pub fn analyze(
             library::ParameterDirection::In | library::ParameterDirection::InOut => true,
             library::ParameterDirection::Return => false,
             library::ParameterDirection::Out => !can_as_return(env, par) && !async_func,
+            library::ParameterDirection::None => {
+                panic!("undefined direction for parameter {:?}", par)
+            }
         };
 
         if async_func && async_param_to_remove(&par.name) {
@@ -382,7 +385,7 @@ fn get_length_type(
     length_name: &str,
     length_typ: TypeId,
 ) -> TransformationType {
-    let array_length_type = rust_type_default(env, length_typ).into_string();
+    let array_length_type = RustType::try_new(env, length_typ).into_string();
     TransformationType::Length {
         array_name: array_name.to_string(),
         array_length_name: length_name.to_string(),

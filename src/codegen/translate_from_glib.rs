@@ -1,6 +1,6 @@
 use crate::{
     analysis::{
-        self, conversion_type::ConversionType, rust_type::rust_type, try_from_glib::TryFromGlib,
+        self, conversion_type::ConversionType, rust_type::RustType, try_from_glib::TryFromGlib,
     },
     chunk::conversion_from_glib::Mode,
     env::Env,
@@ -88,7 +88,10 @@ impl TranslateFromGlib for analysis::return_value::Info {
         match self.parameter {
             Some(ref par) => match self.base_tid {
                 Some(tid) => {
-                    let rust_type = rust_type(env, tid, par.lib_par.direction, &par.try_from_glib);
+                    let rust_type = RustType::builder(env, tid)
+                        .with_direction(par.lib_par.direction)
+                        .with_try_from_glib(&par.try_from_glib)
+                        .try_build();
                     let from_glib_xxx = from_glib_xxx(par.lib_par.transfer, None);
 
                     let prefix = if *par.lib_par.nullable {

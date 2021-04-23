@@ -1,8 +1,8 @@
 use crate::{
     analysis::{
         self, conversion_type::ConversionType, function_parameters::CParameter,
-        functions::is_carray_with_direct_elements, imports::Imports, ref_mode::RefMode,
-        return_value, rust_type::parameter_rust_type, try_from_glib::TryFromGlib,
+        functions::is_carray_with_direct_elements, imports::Imports, return_value,
+        rust_type::RustType,
     },
     config::{self, parameter_matchable::ParameterMatchable},
     env::Env,
@@ -162,16 +162,11 @@ pub fn can_as_return(env: &Env, par: &library::Parameter) -> bool {
                 return false;
             }
 
-            parameter_rust_type(
-                env,
-                par.typ,
-                ParameterDirection::Out,
-                Nullable(false),
-                RefMode::None,
-                par.scope,
-                &TryFromGlib::default(),
-            )
-            .is_ok()
+            RustType::builder(env, par.typ)
+                .with_direction(ParameterDirection::Out)
+                .with_scope(par.scope)
+                .try_build_param()
+                .is_ok()
         }
         Borrow => false,
         Unknown => false,

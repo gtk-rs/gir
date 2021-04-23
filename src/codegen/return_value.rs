@@ -1,7 +1,7 @@
 use crate::{
     analysis::{
-        self, conversion_type::ConversionType, namespaces, ref_mode::RefMode,
-        rust_type::parameter_rust_type, try_from_glib::TryFromGlib,
+        self, conversion_type::ConversionType, namespaces, rust_type::RustType,
+        try_from_glib::TryFromGlib,
     },
     env::Env,
     library::{self, ParameterDirection},
@@ -26,16 +26,13 @@ impl ToReturnValue for library::Parameter {
         try_from_glib: &TryFromGlib,
         is_trampoline: bool,
     ) -> Option<String> {
-        let rust_type = parameter_rust_type(
-            env,
-            self.typ,
-            self.direction,
-            self.nullable,
-            RefMode::None,
-            self.scope,
-            try_from_glib,
-        );
-        let mut name = rust_type.into_string();
+        let mut name = RustType::builder(env, self.typ)
+            .with_direction(self.direction)
+            .with_nullable(self.nullable)
+            .with_scope(self.scope)
+            .with_try_from_glib(try_from_glib)
+            .try_build_param()
+            .into_string();
         if is_trampoline
             && self.direction == library::ParameterDirection::Return
             && is_gstring(&name)
@@ -190,16 +187,13 @@ pub fn out_parameters_as_return(env: &Env, analysis: &analysis::functions::Info)
 
 fn out_parameter_as_return(out: &analysis::Parameter, env: &Env) -> String {
     //TODO: upcasts?
-    let rust_type = parameter_rust_type(
-        env,
-        out.lib_par.typ,
-        ParameterDirection::Return,
-        out.lib_par.nullable,
-        RefMode::None,
-        out.lib_par.scope,
-        &out.try_from_glib,
-    );
-    let name = rust_type.into_string();
+    let name = RustType::builder(env, out.lib_par.typ)
+        .with_direction(ParameterDirection::Return)
+        .with_nullable(out.lib_par.nullable)
+        .with_scope(out.lib_par.scope)
+        .with_try_from_glib(&out.try_from_glib)
+        .try_build_param()
+        .into_string();
     match ConversionType::of(env, out.lib_par.typ) {
         ConversionType::Unknown => format!("/*Unknown conversion*/{}", name),
         _ => name,

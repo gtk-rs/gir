@@ -19,13 +19,10 @@ use crate::{
         safety_assertion_mode::SafetyAssertionMode,
         signatures::{Signature, Signatures},
         trampolines::Trampoline,
-        try_from_glib::TryFromGlib,
     },
     config::{self, gobjects::GStatus},
     env::Env,
-    library::{
-        self, Function, FunctionKind, Nullable, ParameterDirection, ParameterScope, Transfer, Type,
-    },
+    library::{self, Function, FunctionKind, ParameterDirection, ParameterScope, Transfer, Type},
     nameutil,
     traits::*,
     version::Version,
@@ -316,7 +313,11 @@ fn analyze_callbacks(
                 "Wrong instance parameter in {}",
                 func.c_identifier.as_ref().unwrap()
             );
-            if let Ok(rust_type) = used_rust_type(env, par.typ, par.direction, &par.try_from_glib) {
+            if let Ok(rust_type) = RustType::builder(env, par.typ)
+                .with_direction(par.direction)
+                .with_try_from_glib(&par.try_from_glib)
+                .try_build()
+            {
                 used_types.extend(rust_type.into_used_types());
             }
             let rust_type = env.library.type_(par.typ);
@@ -409,16 +410,12 @@ fn analyze_callbacks(
                 }
             }
             if !*commented {
-                *commented |= parameter_rust_type(
-                    env,
-                    par.typ,
-                    par.direction,
-                    Nullable(false),
-                    RefMode::None,
-                    par.scope,
-                    &par.try_from_glib,
-                )
-                .is_err();
+                *commented |= RustType::builder(env, par.typ)
+                    .with_direction(par.direction)
+                    .with_scope(par.scope)
+                    .with_try_from_glib(&par.try_from_glib)
+                    .try_build_param()
+                    .is_err();
             }
         }
         for (destroy_index, pos_in_destroys) in destructors_to_update {
@@ -641,8 +638,10 @@ fn analyze_function(
                     "Wrong instance parameter in {}",
                     func.c_identifier.as_ref().unwrap()
                 );
-                if let Ok(rust_type) =
-                    used_rust_type(env, par.typ, par.direction, &par.try_from_glib)
+                if let Ok(rust_type) = RustType::builder(env, par.typ)
+                    .with_direction(par.direction)
+                    .with_try_from_glib(&par.try_from_glib)
+                    .try_build()
                 {
                     if !rust_type.as_str().ends_with("GString") || par.c_type == "gchar***" {
                         used_types.extend(rust_type.into_used_types());
@@ -675,16 +674,12 @@ fn analyze_function(
                 let type_error = !(r#async
                     && *env.library.type_(par.typ)
                         == Type::Fundamental(library::Fundamental::Pointer))
-                    && parameter_rust_type(
-                        env,
-                        par.typ,
-                        par.direction,
-                        Nullable(false),
-                        RefMode::None,
-                        par.scope,
-                        &par.try_from_glib,
-                    )
-                    .is_err();
+                    && RustType::builder(env, par.typ)
+                        .with_direction(par.direction)
+                        .with_scope(par.scope)
+                        .with_try_from_glib(&par.try_from_glib)
+                        .try_build_param()
+                        .is_err();
                 if type_error {
                     commented = true;
                 }
@@ -773,22 +768,18 @@ fn analyze_function(
 
         if let Some(ref trampoline) = trampoline {
             for out in &trampoline.output_params {
-                if let Ok(rust_type) = used_rust_type(
-                    env,
-                    out.lib_par.typ,
-                    ParameterDirection::Out,
-                    &TryFromGlib::default(),
-                ) {
+                if let Ok(rust_type) = RustType::builder(env, out.lib_par.typ)
+                    .with_direction(ParameterDirection::Out)
+                    .try_build()
+                {
                     used_types.extend(rust_type.into_used_types());
                 }
             }
             if let Some(ref out) = trampoline.ffi_ret {
-                if let Ok(rust_type) = used_rust_type(
-                    env,
-                    out.lib_par.typ,
-                    ParameterDirection::Return,
-                    &TryFromGlib::default(),
-                ) {
+                if let Ok(rust_type) = RustType::builder(env, out.lib_par.typ)
+                    .with_direction(ParameterDirection::Return)
+                    .try_build()
+                {
                     used_types.extend(rust_type.into_used_types());
                 }
             }
@@ -838,8 +829,7 @@ fn analyze_function(
         status,
         kind: func.kind,
         visibility,
-        // FIXME what is this type?
-        type_name: rust_type_default(env, type_tid),
+        type_name: RustType::try_new(env, type_tid),
         parameters,
         ret,
         bounds,
@@ -1082,16 +1072,18 @@ fn analyze_callback(
             });
         }
         for p in parameters.rust_parameters.iter() {
-            if let Ok(rust_type) = used_rust_type(env, p.typ, p.direction, &p.try_from_glib) {
+            if let Ok(rust_type) = RustType::builder(env, p.typ)
+                .with_direction(p.direction)
+                .with_try_from_glib(&p.try_from_glib)
+                .try_build()
+            {
                 imports_to_add.extend(rust_type.into_used_types());
             }
         }
-        if let Ok(rust_type) = used_rust_type(
-            env,
-            func.ret.typ,
-            ParameterDirection::Return,
-            &TryFromGlib::default(),
-        ) {
+        if let Ok(rust_type) = RustType::builder(env, func.ret.typ)
+            .with_direction(ParameterDirection::Return)
+            .try_build()
+        {
             if !rust_type.as_str().ends_with("GString") {
                 imports_to_add.extend(rust_type.into_used_types());
             }
@@ -1131,16 +1123,12 @@ fn analyze_callback(
                     ret: func.ret.clone(),
                     bound_name: match callback_info {
                         Some(x) => x.bound_name.to_string(),
-                        None => match rust_type_full(
-                            env,
-                            par.typ,
-                            par.direction,
-                            par.nullable,
-                            RefMode::None,
-                            par.scope,
-                            library::Concurrency::None,
-                            &TryFromGlib::default(),
-                        ) {
+                        None => match RustType::builder(env, par.typ)
+                            .with_direction(par.direction)
+                            .with_nullable(par.nullable)
+                            .with_scope(par.scope)
+                            .try_build()
+                        {
                             Ok(rust_type) => rust_type.into_string(),
                             Err(_) => {
                                 warn_main!(type_tid, "`{}`: unknown type", func.name);

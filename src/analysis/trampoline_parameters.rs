@@ -1,7 +1,7 @@
 use super::{conversion_type::ConversionType, ref_mode::RefMode, try_from_glib::TryFromGlib};
 use crate::{
     analysis::is_gpointer,
-    analysis::rust_type::rust_type_default,
+    analysis::rust_type::RustType,
     config::{self, parameter_matchable::ParameterMatchable},
     env::Env,
     library, nameutil,
@@ -29,7 +29,7 @@ pub struct CParameter {
 
 impl CParameter {
     pub fn is_real_gpointer(&self, env: &Env) -> bool {
-        is_gpointer(&self.c_type) && rust_type_default(env, self.typ).is_err()
+        is_gpointer(&self.c_type) && RustType::try_new(env, self.typ).is_err()
     }
 }
 

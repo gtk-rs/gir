@@ -8,7 +8,7 @@ use crate::{
         functions::{find_index_to_ignore, AsyncTrampoline},
         out_parameters::Mode,
         return_value,
-        rust_type::rust_type_default,
+        rust_type::RustType,
         safety_assertion_mode::SafetyAssertionMode,
         trampoline_parameters,
         trampolines::Trampoline,
@@ -413,7 +413,7 @@ impl Builder {
             {
                 continue;
             }
-            let ty_name = match rust_type_default(env, par.typ) {
+            let ty_name = match RustType::try_new(env, par.typ) {
                 Ok(x) => x.into_string(),
                 _ => String::new(),
             };
@@ -1258,7 +1258,7 @@ fn c_type_mem_mode_lib(
     match ConversionType::of(env, typ) {
         ConversionType::Pointer => {
             if caller_allocates {
-                UninitializedNamed(rust_type_default(env, typ).unwrap().into_string())
+                UninitializedNamed(RustType::try_new(env, typ).unwrap().into_string())
             } else {
                 use crate::library::Type::*;
                 let type_ = env.library.type_(typ);
@@ -1296,7 +1296,7 @@ fn type_mem_mode(env: &Env, parameter: &library::Parameter) -> Chunk {
         ConversionType::Pointer => {
             if parameter.caller_allocates {
                 Chunk::UninitializedNamed {
-                    name: rust_type_default(env, parameter.typ).unwrap().into_string(),
+                    name: RustType::try_new(env, parameter.typ).unwrap().into_string(),
                 }
             } else {
                 use crate::library::Type::*;
