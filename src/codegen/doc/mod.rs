@@ -665,6 +665,6 @@ pub fn get_type_manual_traits_for_implements(
     manual_trait_iters
         .into_iter()
         .flatten()
-        .map(|name| format!("[`{n}`](trait@crate::{n})", n = name))
+        .map(|name| format!("[`{n}`](trait@crate::prelude::{n})", n = name))
         .collect()
 }
