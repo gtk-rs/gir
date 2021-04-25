@@ -150,23 +150,9 @@ impl<'a> Builder<'a> {
             call: Box::new(ffi_call),
         });
 
-        let unwrap = if self.is_nullable {
-            // This one is strictly speaking nullable, but
-            // we represent that with an empty Vec instead
-            if ["Vec<GString>", "Vec<crate::GString>", "Vec<glib::GString>"]
-                .iter()
-                .any(|&x| x == self.type_)
-            {
-                ".unwrap()"
-            } else {
-                ""
-            }
-        } else {
-            ".unwrap()"
-        };
         body.push(Chunk::Custom(format!(
-            "value.get().expect(\"Return Value for property `{}` getter\"){}",
-            self.name, unwrap,
+            "value.get().expect(\"Return Value for property `{}` getter\")",
+            self.name,
         )));
 
         vec![Chunk::Unsafe(body)]
@@ -199,10 +185,9 @@ impl<'a> Builder<'a> {
             "b\"{}\\0\".as_ptr() as *const _",
             self.name
         )));
-        let ref_str = if self.is_ref { "" } else { "&" };
         params.push(Chunk::Custom(format!(
-            "glib::Value::from({}{}).to_glib_none().0",
-            ref_str, self.var_name
+            "{}.to_value().to_glib_none().0",
+            self.var_name
         )));
 
         let mut body = Vec::new();
