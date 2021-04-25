@@ -402,15 +402,13 @@ pub fn generate_reexports(
         module_name, analysis.name, none_type
     ));
     if need_generate_trait(analysis) {
-        contents.extend_from_slice(&cfgs);
-        contents.push(format!(
-            "pub use self::{}::{};",
-            module_name, analysis.trait_name
-        ));
         for cfg in &cfgs {
             traits.push(format!("\t{}", cfg));
         }
-        traits.push(format!("\tpub use super::{};", analysis.trait_name));
+        traits.push(format!(
+            "\tpub use super::{}::{};",
+            module_name, analysis.trait_name
+        ));
     }
 
     if !analysis.builder_properties.is_empty() {
