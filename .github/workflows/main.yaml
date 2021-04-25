@@ -168,6 +168,10 @@ jobs:
           ref: master
           path: gtk-rs
         if: matrix.os == 'ubuntu-20.04'
+      - name: "Symlink `gir` in GTK"
+        run: |
+          rmdir gtk-rs/gir
+          ln -sf .. gtk-rs/gir
       - name: "Attempt to rebuild GTK gir"
         run: cd gtk-rs && python3 generator.py --no-fmt --gir-path ../target/release/gir --gir-files-directories ../tests/gir-files/ && rm ../Cargo.* && cargo build
         if: matrix.os == 'ubuntu-20.04'
