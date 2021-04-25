@@ -635,7 +635,7 @@ fn get_type_trait_for_implements(env: &Env, tid: TypeId) -> String {
         format!("{}Ext", env.library.type_(tid).get_name())
     };
     if tid.ns_id == MAIN_NAMESPACE {
-        format!("[`{n}`](trait@crate::{n})", n = &trait_name)
+        format!("[`{n}`](trait@crate::prelude::{n})", n = &trait_name)
     } else if let Some(symbol) = env.symbols.borrow().by_tid(tid) {
         let full_trait_name = symbol.full_rust_name();
         format!("[`trait@{}Ext`]", &full_trait_name)
