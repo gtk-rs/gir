@@ -637,8 +637,7 @@ fn get_type_trait_for_implements(env: &Env, tid: TypeId) -> String {
     if tid.ns_id == MAIN_NAMESPACE {
         format!("[`{n}`](trait@crate::{n})", n = &trait_name)
     } else if let Some(symbol) = env.symbols.borrow().by_tid(tid) {
-        let full_trait_name = symbol.full_rust_name();
-        format!("[`trait@{}Ext`]", &full_trait_name)
+        format!("[`trait@{}{}`]", &symbol.parent(), trait_name)
     } else {
         error!("Type {} doesn't have crate", tid.full_name(&env.library));
         format!("`{}`", trait_name)

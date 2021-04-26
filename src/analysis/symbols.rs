@@ -13,7 +13,7 @@ pub struct Symbol {
 }
 
 impl Symbol {
-    pub fn full_rust_name(&self) -> String {
+    pub fn parent(&self) -> String {
         let mut ret = String::new();
         if let Some(ref s) = self.crate_name {
             if s == "gobject" {
@@ -27,6 +27,11 @@ impl Symbol {
             ret.push_str(s);
             ret.push_str("::");
         }
+        ret
+    }
+
+    pub fn full_rust_name(&self) -> String {
+        let mut ret = self.parent();
         ret.push_str(&self.name);
         ret
     }
