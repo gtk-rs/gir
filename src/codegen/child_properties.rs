@@ -43,6 +43,7 @@ fn generate_func(
     writeln!(w)?;
 
     doc_hidden(w, prop.doc_hidden, comment_prefix, indent)?;
+    // FIXME handle doc alias
     let decl = declaration(env, prop, is_get);
     writeln!(
         w,

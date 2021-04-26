@@ -218,7 +218,7 @@ fn analyze_property(
 
         Some(Property {
             name: name.clone(),
-            var_name: String::new(),
+            var_name: nameutil::mangle_keywords(&*name_for_func).into_owned(),
             typ: prop.typ,
             is_get: true,
             func_name: get_func_name,
