@@ -635,7 +635,7 @@ fn get_type_trait_for_implements(env: &Env, tid: TypeId) -> String {
         format!("{}Ext", env.library.type_(tid).get_name())
     };
     if tid.ns_id == MAIN_NAMESPACE {
-        format!("[`{n}`](trait@crate::{n})", n = &trait_name)
+        format!("[`{n}`](trait@crate::prelude::{n})", n = &trait_name)
     } else if let Some(symbol) = env.symbols.borrow().by_tid(tid) {
         format!("[`trait@{}{}`]", &symbol.parent(), trait_name)
     } else {
@@ -664,6 +664,6 @@ pub fn get_type_manual_traits_for_implements(
     manual_trait_iters
         .into_iter()
         .flatten()
-        .map(|name| format!("[`{n}`](trait@crate::{n})", n = name))
+        .map(|name| format!("[`{n}`](trait@crate::prelude::{n})", n = name))
         .collect()
 }
