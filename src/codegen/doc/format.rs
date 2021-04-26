@@ -1,6 +1,6 @@
 use crate::analysis::symbols;
 use once_cell::sync::Lazy;
-use regex::{Captures, Regex};
+use regex::{Captures, Match, Regex};
 
 const LANGUAGE_SEP_BEGIN: &str = "<!-- language=\"";
 const LANGUAGE_SEP_END: &str = "\" -->";
@@ -78,7 +78,8 @@ fn format(mut input: &str, symbols: &symbols::Info, in_type: &str) -> String {
 
 static SYMBOL: Lazy<Regex> =
     Lazy::new(|| Regex::new(r"(^|[^\\])([@#%])(\w+\b)([:.]+[\w-]+\b)?").unwrap());
-static FUNCTION: Lazy<Regex> = Lazy::new(|| Regex::new(r"(\b[a-z0-9_]+)\(\)").unwrap());
+static FUNCTION: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"([@#%])?(\w+\b[:.]+)?(\b[a-z0-9_]+)\(\)").unwrap());
 static GDK_GTK: Lazy<Regex> = Lazy::new(|| Regex::new(r"G[dt]k[A-Z]\w+\b").unwrap());
 static TAGS: Lazy<Regex> = Lazy::new(|| Regex::new(r"<[\w/-]+>").unwrap());
 static SPACES: Lazy<Regex> = Lazy::new(|| Regex::new(r"[ ]{2,}").unwrap());
@@ -91,54 +92,88 @@ fn replace_c_types(entry: &str, symbols: &symbols::Info, in_type: &str) -> Strin
             .unwrap_or_else(|| s.into())
     };
 
-    let out = SYMBOL.replace_all(entry, |caps: &Captures<'_>| {
-        let member = caps.get(4).map(|m| m.as_str()).unwrap_or("");
-        let sym = symbols.by_c_name(&caps[3]);
-        match &caps[2] {
-            /* References to members, enum variants or methods within the same type. */
-            "@" => {
-                if let Some(sym) = sym {
+    let out = FUNCTION.replace_all(entry, |caps: &Captures<'_>| {
+        let name = &caps[3];
+        let sym = symbols.by_c_name(name);
+
+        if let Some(sym) = sym {
+            if sym.owner_name() == Some(in_type) {
+                // `#` or `%` symbols should probably have been `@` to denote
+                // that it is a reference within the current type.
+                format!("[`{f}()`](Self::{f}())", f = sym.name())
+            } else {
+                match caps.get(1).as_ref().map(Match::as_str) {
                     // Catch invalid @ references that have a C symbol available but do not belong
                     // to the current type (and can hence not use `Self::`). For now generate XXX
                     // but with a valid global link so that the can be easily spotted in the code.
                     // assert_eq!(sym.owner_name(), Some(in_type));
-                    if sym.owner_name() != Some(in_type) {
-                        format!(
-                            "{}[`crate::{}{}`] (XXX: @-reference does not belong to {}!)",
-                            &caps[1],
-                            sym.full_rust_name(),
-                            member,
-                            in_type,
-                        )
-                    } else {
-                        format!(
-                            "{}[`{n}{m}`](Self::{n}{m})",
-                            &caps[1],
-                            n = sym.name(),
-                            m = member
-                        )
+                    Some("@") => format!(
+                        "[`crate::{}()`] (XXX: @-reference does not belong to {}!)",
+                        sym.full_rust_name(),
+                        in_type,
+                    ),
+                    Some("#") | None => {
+                        format!("[`{f}()`](crate::{f}())", f = sym.full_rust_name())
                     }
-                } else {
-                    format!("{}`{}{}`", &caps[1], &caps[3], member)
+                    Some("%") => panic!("% not allowed for {:?}", caps),
+                    Some(c) => panic!("Unknown symbol reference {}", c),
                 }
             }
-            "#" | "%" => {
-                format!(
-                    "{}`{}{}`",
-                    &caps[1],
-                    sym.map(symbols::Symbol::full_rust_name)
-                        .unwrap_or_else(|| caps[3].into()),
-                    member
-                )
+        } else if let Some(typ) = caps.get(2) {
+            let typ = typ.as_str();
+            if typ == in_type {
+                format!("[`{f}()`](Self::{f}())", f = name)
+            } else {
+                format!("[`{t}{f}()`](crate::{t}{f}())", t = typ, f = name)
             }
-            u => panic!("Unknown reference type {}", u),
+        } else {
+            format!("`{}()`", name)
+        }
+    });
+
+    let out = SYMBOL.replace_all(&out, |caps: &Captures<'_>| {
+        let member = caps.get(4).map(|m| m.as_str()).unwrap_or("");
+        let sym = symbols.by_c_name(&caps[3]);
+
+        if let Some(sym) = sym {
+            if sym.owner_name() == Some(in_type) {
+                // `#` or `%` symbols should probably have been `@` to denote
+                // that it is a reference within the current type.
+                format!(
+                    "{}[`{n}{m}`](Self::{n}{m})",
+                    &caps[1],
+                    n = sym.name(),
+                    m = member
+                )
+            } else {
+                match &caps[2] {
+                    // Catch invalid @ references that have a C symbol available but do not belong
+                    // to the current type (and can hence not use `Self::`). For now generate XXX
+                    // but with a valid global link so that the can be easily spotted in the code.
+                    // assert_eq!(sym.owner_name(), Some(in_type));
+                    "@" => format!(
+                        "{}[`crate::{}{}`] (XXX: @-reference does not belong to {}!)",
+                        &caps[1],
+                        sym.full_rust_name(),
+                        member,
+                        in_type,
+                    ),
+                    "#" => format!(
+                        "{}[`{n}{m}`](crate::{n}{m})",
+                        &caps[1],
+                        n = sym.full_rust_name(),
+                        m = member,
+                    ),
+                    "%" => format!("{}[`{}{}`]", &caps[1], sym.full_rust_name(), member,),
+                    c => panic!("Unknown symbol reference {}", c),
+                }
+            }
+        } else {
+            format!("{}`{}{}`", &caps[1], &caps[3], member)
         }
     });
     let out = GDK_GTK.replace_all(&out, |caps: &Captures<'_>| {
         format!("`{}`", lookup(&caps[0]))
-    });
-    let out = FUNCTION.replace_all(&out, |caps: &Captures<'_>| {
-        format!("`{}`", lookup(&caps[1]))
     });
     let out = TAGS.replace_all(&out, "`$0`");
     SPACES.replace_all(&out, " ").into_owned()
