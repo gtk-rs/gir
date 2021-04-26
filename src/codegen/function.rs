@@ -89,6 +89,9 @@ pub fn generate(
     doc_hidden(w, analysis.doc_hidden, comment_prefix, indent)?;
     if !in_trait || only_declaration {
         doc_alias(w, &analysis.glib_name, comment_prefix, indent)?;
+        if analysis.codegen_name() != analysis.func_name {
+            doc_alias(w, &analysis.func_name, comment_prefix, indent)?;
+        }
     }
     writeln!(
         w,
