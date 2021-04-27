@@ -214,7 +214,6 @@ fn analyze_property(
         }
         if type_string.is_ok() {
             imports.add("glib::StaticType");
-            imports.add("glib::ToValue");
         }
 
         Some(Property {
