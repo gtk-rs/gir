@@ -6,6 +6,11 @@ use std::{fs::File, io::Write};
 mod git;
 
 fn main() {
+    let repo_path = git::git_dir(".").unwrap();
+    println!(
+        "cargo:rerun-if-changed={}",
+        repo_path.join("HEAD").display()
+    );
     let ver = git::repo_hash(".").unwrap_or_else(|| "???".into());
 
     File::create("src/gir_version.rs")

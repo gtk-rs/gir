@@ -52,8 +52,8 @@ fn gitmodules_config(subcommand: &[&str]) -> Option<String> {
     Some(result)
 }
 
-pub fn toplevel(path: impl AsRef<Path>) -> Option<PathBuf> {
-    let mut output = git_command(path, &["rev-parse", "--show-toplevel"]).ok()?;
+fn path_command(path: impl AsRef<Path>, subcommand: &[&str]) -> Option<PathBuf> {
+    let mut output = git_command(path, subcommand).ok()?;
 
     if !output.status.success() {
         return None;
@@ -69,6 +69,16 @@ pub fn toplevel(path: impl AsRef<Path>) -> Option<PathBuf> {
     );
     let toplevel = OsString::from_vec(output.stdout);
     Some(toplevel.into())
+}
+
+pub fn toplevel(path: impl AsRef<Path>) -> Option<PathBuf> {
+    path_command(path, &["rev-parse", "--show-toplevel"])
+}
+
+// Only build.rs uses this
+#[allow(dead_code)]
+pub fn git_dir(path: impl AsRef<Path>) -> Option<PathBuf> {
+    path_command(path, &["rev-parse", "--git-dir"])
 }
 
 pub(crate) fn repo_remote_url(path: impl AsRef<Path>) -> Option<String> {
