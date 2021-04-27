@@ -77,28 +77,40 @@ def build_gir():
     print("<= Done!")
 
 
-async def regenerate_crate_docs(gir_exe, crate_dir, base_gir_args):
+async def regenerate_crate_docs(conf, crate_dir, base_gir_args):
     doc_path = "docs.md"
     # Generate into docs.md instead of the default vendor.md
     doc_args = base_gir_args + ["-m", "doc", "--doc-target-path", doc_path]
 
     # The above `gir -m doc` generates docs.md relative to the directory containing Gir.toml
     doc_path = crate_dir / doc_path
-    embed_args = ["-g", "-m", "-o", doc_path, "-d", crate_dir / "src"]
+    embed_args = ["-m", "-d", crate_dir / "src"]
 
-    logs = "==> Regenerating documentation for `{}` into `{}`...\n".format(
-        crate_dir, doc_path
-    )
-    logs += await spawn_gir(gir_exe, doc_args)
+    logs = ""
 
-    logs += "==> Embedding documentation from `{}` into `{}`...\n".format(
-        doc_path, crate_dir
-    )
-    stdout, stderr = await spawn_process("rustdoc-stripper", embed_args)
-    if stdout:
-        logs += "===> stdout:\n\n" + stdout + "\n"
-    if stderr:
-        logs += "===> stderr:\n\n" + stderr + "\n"
+    if conf.strip_docs:
+        logs += "==> Stripping documentation from `{}`...\n".format(crate_dir)
+        # -n dumps stripped docs to stdout
+        _, stderr = await spawn_process("rustdoc-stripper", embed_args + ["-s", "-n"])
+        if stderr:
+            logs += "===> stderr:\n\n" + stderr + "\n"
+
+    if conf.embed_docs:
+        logs += "==> Regenerating documentation for `{}` into `{}`...\n".format(
+            crate_dir, doc_path
+        )
+        logs += await spawn_gir(conf.gir_path, doc_args)
+
+        logs += "==> Embedding documentation from `{}` into `{}`...\n".format(
+            doc_path, crate_dir
+        )
+        stdout, stderr = await spawn_process(
+            "rustdoc-stripper", embed_args + ["-g", "-o", doc_path]
+        )
+        if stdout:
+            logs += "===> stdout:\n\n" + stdout + "\n"
+        if stderr:
+            logs += "===> stderr:\n\n" + stderr + "\n"
 
     return logs
 
@@ -115,12 +127,12 @@ def regen_crates(path, conf):
 
         is_sys_crate = path.parent.name.endswith("sys")
 
-        if conf.embed_docs:
+        if conf.embed_docs or conf.strip_docs:
             # Embedding documentation only applies to non-sys crates
             if is_sys_crate:
                 return processes
 
-            processes.append(regenerate_crate_docs(conf.gir_path, path.parent, args))
+            processes.append(regenerate_crate_docs(conf, path.parent, args))
         else:
             if is_sys_crate:
                 args.extend(["-m", "sys"])
@@ -200,6 +212,11 @@ def parse_args():
         "--embed-docs",
         action="store_true",
         help="Build documentation with `gir -m doc`, and embed it with `rustdoc-stripper -g`",
+    )
+    parser.add_argument(
+        "--strip-docs",
+        action="store_true",
+        help="Remove documentation with `rustdoc-stripper -s -n`. Can be used in conjunction with --embed-docs",
     )
 
     return parser.parse_args()
