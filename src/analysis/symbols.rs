@@ -8,6 +8,7 @@ use std::collections::HashMap;
 #[derive(Clone, Debug, Default)]
 pub struct Symbol {
     crate_name: Option<String>,
+    module_name: Option<String>,
     owner_name: Option<String>,
     name: String,
 }
@@ -15,13 +16,17 @@ pub struct Symbol {
 impl Symbol {
     pub fn parent(&self) -> String {
         let mut ret = String::new();
-        if let Some(ref s) = self.crate_name {
-            if s == "gobject" {
-                ret.push_str("glib::object");
-            } else {
+        if Some("gobject") == self.crate_name() {
+            ret.push_str("glib::object::");
+        } else {
+            if let Some(ref s) = self.crate_name {
                 ret.push_str(s);
+                ret.push_str("::");
             }
-            ret.push_str("::");
+            if let Some(ref module) = self.module_name {
+                ret.push_str(module);
+                ret.push_str("::");
+            }
         }
         if let Some(ref s) = self.owner_name {
             ret.push_str(s);
@@ -37,11 +42,15 @@ impl Symbol {
     }
 
     pub fn make_trait_method(&mut self, trait_name: &str) {
+        if self.module_name.replace("prelude".to_string()).is_some() {
+            // .expect_none is not stabilized yet
+            panic!("{:?} already had a module name set!", self)
+        }
         self.owner_name = Some(trait_name.into());
     }
 
-    pub fn crate_name(&self) -> Option<&String> {
-        self.crate_name.as_ref()
+    pub fn crate_name(&self) -> Option<&str> {
+        self.crate_name.as_deref()
     }
 
     pub fn owner_name(&self) -> Option<&str> {
@@ -141,6 +150,7 @@ pub fn run(library: &Library, namespaces: &namespaces::Info) -> Info {
                             crate_name: crate_name.cloned(),
                             owner_name: Some(name.clone()),
                             name: member.name.to_camel(),
+                            ..Default::default()
                         };
                         info.insert(&member.c_identifier, symbol, Some(tid));
                     }
@@ -149,6 +159,7 @@ pub fn run(library: &Library, namespaces: &namespaces::Info) -> Info {
                             crate_name: crate_name.cloned(),
                             owner_name: Some(name.clone()),
                             name: func.name.clone(),
+                            ..Default::default()
                         };
                         info.insert(func.c_identifier.as_ref().unwrap(), symbol, None);
                     }
@@ -177,6 +188,7 @@ pub fn run(library: &Library, namespaces: &namespaces::Info) -> Info {
                             crate_name: crate_name.cloned(),
                             owner_name: Some(name.clone()),
                             name: func.name.clone(),
+                            ..Default::default()
                         };
                         info.insert(func.c_identifier.as_ref().unwrap(), symbol, None);
                     }
