@@ -48,7 +48,7 @@ pub(super) fn generate_static_to_str(
 \t{visibility}fn {rust_fn_name}<'a>(self) -> &'a str {{
 \t\tunsafe {{
 \t\t\tCStr::from_ptr(
-\t\t\t\t{ns}::{glib_fn_name}(self.to_glib())
+\t\t\t\t{ns}::{glib_fn_name}(self.into_glib())
 \t\t\t\t\t.as_ref()
 \t\t\t\t\t.expect(\"{glib_fn_name} returned NULL\"),
 \t\t\t)

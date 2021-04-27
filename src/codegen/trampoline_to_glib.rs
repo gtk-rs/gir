@@ -9,7 +9,7 @@ impl TrampolineToGlib for library::Parameter {
         use crate::analysis::conversion_type::ConversionType::*;
         match ConversionType::of(env, self.typ) {
             Direct => String::new(),
-            Scalar => ".to_glib()".to_owned(),
+            Scalar => ".into_glib()".to_owned(),
             Pointer => to_glib_xxx(self.transfer).to_owned(),
             Borrow => "/*Not applicable conversion Borrow*/".to_owned(),
             Unknown => "/*Unknown conversion*/".to_owned(),
