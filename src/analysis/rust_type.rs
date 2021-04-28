@@ -535,17 +535,33 @@ impl<'env> RustTypeBuilder<'env> {
             TryFromGlib::Option => {
                 rust_type = rust_type.map_any(|rust_type| {
                     rust_type
-                        .alter_type(|typ_| format!("Option<{}>", typ_))
+                        .alter_type(|typ_| {
+                            let mut opt = format!("Option<{}>", typ_);
+                            if self.direction == ParameterDirection::In {
+                                opt = format!("impl Into<{}>", opt);
+                            }
+
+                            opt
+                        })
                         .apply_ref_mode(self.ref_mode)
                 });
             }
-            TryFromGlib::Result { ok_type, err_type } if !self.direction.is_in() => {
-                rust_type = rust_type.map_any(|_| {
-                    RustType::new_with_uses(
-                        format!("Result<{}, {}>", &ok_type, &err_type),
-                        &[ok_type, err_type],
-                    )
-                });
+            TryFromGlib::Result { ok_type, err_type } => {
+                if self.direction == ParameterDirection::In {
+                    rust_type = rust_type.map_any(|rust_type| {
+                        RustType::new_with_uses(
+                            format!("impl Into<{}>", &rust_type.as_str()),
+                            &[&rust_type.as_str()],
+                        )
+                    });
+                } else {
+                    rust_type = rust_type.map_any(|_| {
+                        RustType::new_with_uses(
+                            format!("Result<{}, {}>", &ok_type, &err_type),
+                            &[ok_type, err_type],
+                        )
+                    });
+                }
             }
             TryFromGlib::ResultInfallible { ok_type } => {
                 let new_rust_type = RustType::new_and_use(ok_type).apply_ref_mode(self.ref_mode);
