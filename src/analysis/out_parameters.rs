@@ -113,22 +113,27 @@ pub fn analyze(
 pub fn analyze_imports(env: &Env, parameters: &[Parameter], imports: &mut Imports) {
     for par in parameters {
         if par.direction == ParameterDirection::Out {
-            match *env.library.type_(par.typ) {
-                Type::Bitfield(..) | Type::Enumeration(..) => imports.add("std::mem"),
-                Type::Fundamental(fund)
-                    if fund != Fundamental::Utf8
-                        && fund != Fundamental::OsString
-                        && fund != Fundamental::Filename =>
-                {
-                    imports.add("std::mem")
-                }
-                _ if !par.caller_allocates => match ConversionType::of(env, par.typ) {
-                    ConversionType::Direct | ConversionType::Scalar => (),
-                    _ => imports.add("std::ptr"),
-                },
-                _ => (),
-            }
+            analyze_type_imports(env, par.typ, par.caller_allocates, imports);
         }
+    }
+}
+
+fn analyze_type_imports(env: &Env, typ: TypeId, caller_allocates: bool, imports: &mut Imports) {
+    match *env.library.type_(typ) {
+        Type::Alias(ref alias) => analyze_type_imports(env, alias.typ, caller_allocates, imports),
+        Type::Bitfield(..) | Type::Enumeration(..) => imports.add("std::mem"),
+        Type::Fundamental(fund)
+            if fund != Fundamental::Utf8
+                && fund != Fundamental::OsString
+                && fund != Fundamental::Filename =>
+        {
+            imports.add("std::mem")
+        }
+        _ if !caller_allocates => match ConversionType::of(env, typ) {
+            ConversionType::Direct | ConversionType::Scalar => (),
+            _ => imports.add("std::ptr"),
+        },
+        _ => (),
     }
 }
 
