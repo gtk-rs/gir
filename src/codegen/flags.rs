@@ -169,8 +169,8 @@ impl IntoGlib for {name} {{
         w,
         "#[doc(hidden)]
 impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
-    unsafe fn from_glib(value: {sys_crate_name}::{ffi_name}) -> {name} {{
-        {assert}{name}::from_bits_truncate(value)
+    unsafe fn from_glib(value: {sys_crate_name}::{ffi_name}) -> Self {{
+        {assert}Self::from_bits_truncate(value)
     }}
 }}
 ",
@@ -235,7 +235,7 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
             w,
             "impl ToValue for {name} {{
     fn to_value(&self) -> {gvalue} {{
-        let mut value = {gvalue}::for_value_type::<{name}>();
+        let mut value = {gvalue}::for_value_type::<Self>();
         unsafe {{
             {glib}(value.to_glib_none_mut().0, self.into_glib());
         }}

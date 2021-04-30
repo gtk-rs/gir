@@ -164,14 +164,14 @@ fn generate_enum(
         version_condition(w, env, enum_.version, false, 0)?;
         writeln!(
             w,
-            "impl fmt::Display for {0} {{\n\
+            "impl fmt::Display for {} {{\n\
              \tfn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {{\n\
-             \t\twrite!(f, \"{0}::{{}}\", match *self {{",
+             \t\twrite!(f, \"Self::{{}}\", match *self {{",
             enum_.name
         )?;
         for member in &members {
             version_condition_no_doc(w, env, member.version, false, 3)?;
-            writeln!(w, "\t\t\t{0}::{1} => \"{1}\",", enum_.name, member.name)?;
+            writeln!(w, "\t\t\tSelf::{0} => \"{0}\",", member.name)?;
         }
         writeln!(
             w,
@@ -200,11 +200,11 @@ impl IntoGlib for {name} {{
         version_condition_no_doc(w, env, member.version, false, 3)?;
         writeln!(
             w,
-            "\t\t\t{}::{} => {}::{},",
-            enum_.name, member.name, sys_crate_name, member.c_name
+            "\t\t\tSelf::{} => {}::{},",
+            member.name, sys_crate_name, member.c_name
         )?;
     }
-    writeln!(w, "\t\t\t{}::__Unknown(value) => value,", enum_.name)?;
+    writeln!(w, "\t\t\tSelf::__Unknown(value) => value,")?;
     writeln!(
         w,
         "\
@@ -235,13 +235,9 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
     )?;
     for member in &members {
         version_condition_no_doc(w, env, member.version, false, 3)?;
-        writeln!(
-            w,
-            "\t\t\t{} => {}::{},",
-            member.value, enum_.name, member.name
-        )?;
+        writeln!(w, "\t\t\t{} => Self::{},", member.value, member.name)?;
     }
-    writeln!(w, "\t\t\tvalue => {}::__Unknown(value),", enum_.name)?;
+    writeln!(w, "\t\t\tvalue => Self::__Unknown(value),")?;
     writeln!(
         w,
         "\
@@ -302,16 +298,12 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
 
         for member in &members {
             version_condition_no_doc(w, env, member.version, false, 3)?;
-            writeln!(
-                w,
-                "\t\t\t{} => Some({}::{}),",
-                member.value, enum_.name, member.name
-            )?;
+            writeln!(w, "\t\t\t{} => Some(Self::{}),", member.value, member.name)?;
         }
         if has_failed_member {
-            writeln!(w, "\t\t\t_ => Some({}::Failed),", enum_.name)?;
+            writeln!(w, "\t\t\t_ => Some(Self::Failed),")?;
         } else {
-            writeln!(w, "\t\t\tvalue => Some({}::__Unknown(value)),", enum_.name)?;
+            writeln!(w, "\t\t\tvalue => Some(Self::__Unknown(value)),")?;
         }
 
         writeln!(
@@ -380,7 +372,7 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
             w,
             "impl ToValue for {name} {{
     fn to_value(&self) -> {gvalue} {{
-        let mut value = {gvalue}::for_value_type::<{name}>();
+        let mut value = {gvalue}::for_value_type::<Self>();
         unsafe {{
             {glib}(value.to_glib_none_mut().0, self.into_glib());
         }}
