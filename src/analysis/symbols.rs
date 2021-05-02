@@ -41,11 +41,22 @@ impl Symbol {
         ret
     }
 
-    pub fn make_trait_method(&mut self, trait_name: &str) {
+    fn make_in_prelude(&mut self) {
         if self.module_name.replace("prelude".to_string()).is_some() {
             // .expect_none is not stabilized yet
             panic!("{:?} already had a module name set!", self)
         }
+    }
+
+    /// Convert this symbol into a trait
+    pub fn make_trait(&mut self, trait_name: &str) {
+        self.make_in_prelude();
+        self.name = trait_name.into();
+    }
+
+    /// Convert this into a method of a trait
+    pub fn make_trait_method(&mut self, trait_name: &str) {
+        self.make_in_prelude();
         self.owner_name = Some(trait_name.into());
     }
 
