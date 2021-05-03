@@ -281,16 +281,26 @@ impl {}Builder {{
     } else {
         "glib"
     };
-    writeln!(
-        w,
-        r#"        let ret = {}::Object::new::<{}>(&properties)
-            .expect("object new");"#,
-        glib_crate_name, analysis.name
-    )?;
+
+    // The split allows us to not have clippy::let_and_return lint disabled
     if let Some(code) = analysis.builder_postprocess.as_ref() {
+        writeln!(
+            w,
+            r#"        let ret = {}::Object::new::<{}>(&properties)
+                .expect("Failed to create an instance of {}"");"#,
+            glib_crate_name, analysis.name, analysis.name,
+        )?;
         writeln!(w, "        {{\n            {}\n        }}", code)?;
+        writeln!(w, "    ret\n    }}")?;
+    } else {
+        writeln!(
+            w,
+            r#"        {}::Object::new::<{}>(&properties)
+                .expect("Failed to create an instance of {}")"#,
+            glib_crate_name, analysis.name, analysis.name,
+        )?;
     }
-    writeln!(w, "    ret\n    }}")?;
+
     for method in methods {
         writeln!(w, "{}", method)?;
     }
