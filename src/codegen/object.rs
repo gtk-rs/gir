@@ -287,7 +287,7 @@ impl {}Builder {{
         writeln!(
             w,
             r#"        let ret = {}::Object::new::<{}>(&properties)
-                .expect("Failed to create an instance of {}"");"#,
+                .expect("Failed to create an instance of {}");"#,
             glib_crate_name, analysis.name, analysis.name,
         )?;
         writeln!(w, "        {{\n            {}\n        }}", code)?;
@@ -299,6 +299,7 @@ impl {}Builder {{
                 .expect("Failed to create an instance of {}")"#,
             glib_crate_name, analysis.name, analysis.name,
         )?;
+        writeln!(w, "\n    }}")?;
     }
 
     for method in methods {
