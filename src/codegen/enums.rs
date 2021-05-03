@@ -164,9 +164,9 @@ fn generate_enum(
         version_condition(w, env, enum_.version, false, 0)?;
         writeln!(
             w,
-            "impl fmt::Display for {} {{\n\
+            "impl fmt::Display for {0} {{\n\
              \tfn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {{\n\
-             \t\twrite!(f, \"Self::{{}}\", match *self {{",
+             \t\twrite!(f, \"{0}::{{}}\", match *self {{",
             enum_.name
         )?;
         for member in &members {
