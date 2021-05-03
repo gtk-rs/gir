@@ -218,7 +218,7 @@ fn analyze_property(
 
         Some(Property {
             name: name.clone(),
-            var_name: String::new(),
+            var_name: nameutil::mangle_keywords(&*name_for_func).into_owned(),
             typ: prop.typ,
             is_get: true,
             func_name: get_func_name,
@@ -331,7 +331,7 @@ fn analyze_property(
             imports.add("std::boxed::Box as Box_");
 
             Some(signals::Info {
-                connect_name: format!("connect_property_{}_notify", name_for_func),
+                connect_name: format!("connect_{}_notify", name_for_func),
                 signal_name: format!("notify::{}", name),
                 trampoline,
                 action_emit_name: None,

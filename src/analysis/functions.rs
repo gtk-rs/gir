@@ -71,6 +71,7 @@ pub struct AsyncFuture {
 #[derive(Debug)]
 pub struct Info {
     pub name: String,
+    pub func_name: String,
     pub new_name: Option<String>,
     pub glib_name: String,
     pub status: GStatus,
@@ -163,6 +164,7 @@ pub fn analyze<F: Borrow<library::Function>>(
         let mut info = analyze_function(
             env,
             obj,
+            &func.name,
             name,
             status,
             func,
@@ -482,6 +484,7 @@ fn analyze_callbacks(
 fn analyze_function(
     env: &Env,
     obj: &config::gobjects::GObject,
+    func_name: &str,
     name: String,
     status: GStatus,
     func: &library::Function,
@@ -806,6 +809,7 @@ fn analyze_function(
 
     Info {
         name,
+        func_name: func_name.to_string(),
         new_name,
         glib_name: func.c_identifier.as_ref().unwrap().clone(),
         status,

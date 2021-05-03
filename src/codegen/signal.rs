@@ -1,5 +1,5 @@
 use super::{
-    general::{cfg_deprecated, doc_hidden, version_condition},
+    general::{cfg_deprecated, doc_alias, doc_hidden, version_condition},
     signal_body,
     trampoline::{self, func_string},
 };
@@ -35,6 +35,14 @@ pub fn generate(
     }
     version_condition(w, env, analysis.version, commented, indent)?;
     doc_hidden(w, analysis.doc_hidden, comment_prefix, indent)?;
+    // Strip the "prefix" from "prefix::prop-name", if any.
+    // Ex.: "notify::is-locked".
+    doc_alias(
+        w,
+        analysis.signal_name.splitn(2, "::").last().unwrap(),
+        comment_prefix,
+        indent,
+    )?;
     writeln!(
         w,
         "{}{}{}{}{}",
