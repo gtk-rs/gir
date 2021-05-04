@@ -484,6 +484,17 @@ name = "Gtk.TextBuffer"
     bypass_auto_rename = true
 ```
 
+Some constructors are not annotated as `constructor` in the `gir` files. In
+order for the naming convention to be applied, you can force a function to be
+considered as a constructor:
+
+```toml
+[[object.function]]
+name = "new_for_path"
+# Not annotated as constructor in Gir => force it to apply naming convention
+constructor = true
+```
+
 #### conversion_type "Option"
 
 The `conversion_type` variant `Option` is available for types `T` implementing
