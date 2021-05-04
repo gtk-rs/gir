@@ -539,32 +539,37 @@ fn analyze_function(
     }
 
     let mut new_name = configured_functions.iter().find_map(|f| f.rename.clone());
+    let is_constructor = configured_functions.iter().find_map(|f| f.is_constructor);
 
     let bypass_auto_rename = configured_functions.iter().any(|f| f.bypass_auto_rename);
+    let is_constructor = is_constructor.unwrap_or(false);
     if !bypass_auto_rename && new_name.is_none() {
-        match func.kind {
-            library::FunctionKind::Function
-            | library::FunctionKind::Global
-            | library::FunctionKind::Method => {
-                let nb_in_params = func
-                    .parameters
-                    .iter()
-                    .filter(|param| library::ParameterDirection::In == param.direction)
-                    .fold(0, |acc, _| acc + 1);
-                let is_bool_getter = (func.parameters.len() == nb_in_params)
-                    && (func.ret.typ == library::TypeId::tid_bool());
-                new_name = getter_rules::try_rename_would_be_getter(&name, is_bool_getter)
-                    .ok()
-                    .map(getter_rules::NewName::unwrap);
+        if func.kind == library::FunctionKind::Constructor || is_constructor {
+            if func.kind == library::FunctionKind::Constructor && is_constructor {
+                warn_main!(
+                    type_tid,
+                    "`{}`: config forces 'constructor' on an already gir-annotated 'constructor'",
+                    func_name
+                );
             }
-            library::FunctionKind::Constructor => {
-                if name.starts_with("new_from")
-                    || name.starts_with("new_with")
-                    || name.starts_with("new_for")
-                {
-                    new_name = Some(name[4..].to_string());
-                }
+
+            if name.starts_with("new_from")
+                || name.starts_with("new_with")
+                || name.starts_with("new_for")
+            {
+                new_name = Some(name[4..].to_string());
             }
+        } else {
+            let nb_in_params = func
+                .parameters
+                .iter()
+                .filter(|param| library::ParameterDirection::In == param.direction)
+                .fold(0, |acc, _| acc + 1);
+            let is_bool_getter = (func.parameters.len() == nb_in_params)
+                && (func.ret.typ == library::TypeId::tid_bool());
+            new_name = getter_rules::try_rename_would_be_getter(&name, is_bool_getter)
+                .ok()
+                .map(getter_rules::NewName::unwrap);
         }
     }
 

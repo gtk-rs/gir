@@ -237,6 +237,7 @@ pub struct Function {
     pub unsafe_: bool,
     pub rename: Option<String>,
     pub bypass_auto_rename: bool,
+    pub is_constructor: Option<bool>,
     pub assertion: Option<SafetyAssertionMode>,
 }
 
@@ -270,6 +271,7 @@ impl Parse for Function {
                 "unsafe",
                 "rename",
                 "bypass_auto_rename",
+                "constructor",
                 "assertion",
             ],
             &format!("function {}", object_name),
@@ -330,14 +332,14 @@ impl Parse for Function {
             .lookup("rename")
             .and_then(Value::as_str)
             .map(ToOwned::to_owned);
+        if !check_rename(&rename, object_name, &ident) {
+            return None;
+        }
         let bypass_auto_rename = toml
             .lookup("bypass_auto_rename")
             .and_then(Value::as_bool)
             .unwrap_or(false);
-        if !check_rename(&rename, object_name, &ident) {
-            return None;
-        }
-
+        let is_constructor = toml.lookup("constructor").and_then(Value::as_bool);
         let assertion = toml
             .lookup("assertion")
             .and_then(Value::as_str)
@@ -363,6 +365,7 @@ impl Parse for Function {
             unsafe_,
             rename,
             bypass_auto_rename,
+            is_constructor,
             assertion,
         })
     }
