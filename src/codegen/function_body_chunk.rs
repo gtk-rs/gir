@@ -1,5 +1,6 @@
 use crate::{
     analysis::{
+        self,
         conversion_type::ConversionType,
         function_parameters::{
             CParameter as AnalysisCParameter, Transformation, TransformationType,
@@ -7,7 +8,7 @@ use crate::{
         functions::{find_index_to_ignore, AsyncTrampoline},
         out_parameters::Mode,
         return_value,
-        rust_type::rust_type,
+        rust_type::RustType,
         safety_assertion_mode::SafetyAssertionMode,
         trampoline_parameters,
         trampolines::Trampoline,
@@ -16,6 +17,7 @@ use crate::{
     env::Env,
     library::{self, ParameterDirection, TypeId},
     nameutil::{is_gstring, use_gio_type, use_glib_if_needed, use_glib_type},
+    traits::*,
 };
 use std::collections::{hash_map::Entry, BTreeMap, HashMap};
 
@@ -411,8 +413,8 @@ impl Builder {
             {
                 continue;
             }
-            let ty_name = match rust_type(env, par.typ) {
-                Ok(ref x) => x.clone(),
+            let ty_name = match RustType::try_new(env, par.typ) {
+                Ok(x) => x.into_string(),
                 _ => String::new(),
             };
             let nullable = trampoline.parameters.rust_parameters[par.ind_rust].nullable;
@@ -662,7 +664,8 @@ impl Builder {
                         Param {
                             name: p.name.clone(),
                             typ: crate::analysis::ffi_type::ffi_type(env, p.typ, &p.c_type)
-                                .expect("failed to write c_type"),
+                                .expect("failed to write c_type")
+                                .into_string(),
                         }
                     }
                 })
@@ -672,7 +675,8 @@ impl Builder {
                 let p = &trampoline.ret;
                 Some(
                     crate::analysis::ffi_type::ffi_type(env, p.typ, &p.c_type)
-                        .expect("failed to write c_type"),
+                        .expect("failed to write c_type")
+                        .into_string(),
                 )
             } else {
                 None
@@ -735,22 +739,22 @@ impl Builder {
             trampoline
                 .output_params
                 .iter()
-                .filter(|param| {
-                    param.direction == ParameterDirection::Out
-                        || param.typ.full_name(&env.library) == "Gio.AsyncResult"
+                .filter(|out| {
+                    out.lib_par.direction == ParameterDirection::Out
+                        || out.lib_par.typ.full_name(&env.library) == "Gio.AsyncResult"
                 })
-                .map(|param| {
-                    if param.typ.full_name(&env.library) == "Gio.AsyncResult" {
+                .map(|out| {
+                    if out.lib_par.typ.full_name(&env.library) == "Gio.AsyncResult" {
                         found_async_result = true;
                         return Chunk::Name("res".to_string());
                     }
-                    let kind = type_mem_mode(env, param);
-                    let mut par: parameter_ffi_call_out::Parameter = param.into();
+                    let kind = type_mem_mode(env, &out.lib_par);
+                    let mut par: parameter_ffi_call_out::Parameter = out.into();
                     if kind.is_uninitialized() {
                         par.is_uninitialized = true;
                         uninitialized_vars.push((
-                            param.name.clone(),
-                            self.check_if_need_glib_conversion(env, param.typ),
+                            out.lib_par.name.clone(),
+                            self.check_if_need_glib_conversion(env, out.lib_par.typ),
                         ));
                     }
                     Chunk::FfiCallOutParameter { par }
@@ -760,28 +764,34 @@ impl Builder {
             found_async_result,
             "The check *wasn't* performed in analysis part: Guillaume was wrong!"
         );
-        let index_to_ignore =
-            find_index_to_ignore(&trampoline.output_params, trampoline.ffi_ret.as_ref());
+        let index_to_ignore = find_index_to_ignore(
+            trampoline.output_params.iter().map(|par| &par.lib_par),
+            trampoline.ffi_ret.as_ref().map(|ret| &ret.lib_par),
+        );
         let mut result: Vec<_> = trampoline
             .output_params
             .iter()
             .enumerate()
-            .filter(|&(index, param)| {
-                param.direction == ParameterDirection::Out
-                    && param.name != "error"
+            .filter(|&(index, out)| {
+                out.lib_par.direction == ParameterDirection::Out
+                    && out.lib_par.name != "error"
                     && Some(index) != index_to_ignore
             })
-            .map(|(_, param)| {
-                let value = Chunk::Custom(param.name.clone());
-                let mem_mode =
-                    c_type_mem_mode_lib(env, param.typ, param.caller_allocates, param.transfer);
+            .map(|(_, out)| {
+                let value = Chunk::Custom(out.lib_par.name.clone());
+                let mem_mode = c_type_mem_mode_lib(
+                    env,
+                    out.lib_par.typ,
+                    out.lib_par.caller_allocates,
+                    out.lib_par.transfer,
+                );
                 if let OutMemMode::UninitializedNamed(_) = mem_mode {
                     value
                 } else {
-                    let array_length_name = self.array_length(param).cloned();
+                    let array_length_name = self.array_length(&out).cloned();
                     self.remove_extra_assume_init(&array_length_name, &mut uninitialized_vars);
                     Chunk::FromGlibConversion {
-                        mode: param.into(),
+                        mode: out.into(),
                         array_length_name,
                         value: Box::new(value),
                     }
@@ -790,8 +800,12 @@ impl Builder {
             .collect();
 
         if let Some(ref ffi_ret) = trampoline.ffi_ret {
-            let mem_mode =
-                c_type_mem_mode_lib(env, ffi_ret.typ, ffi_ret.caller_allocates, ffi_ret.transfer);
+            let mem_mode = c_type_mem_mode_lib(
+                env,
+                ffi_ret.lib_par.typ,
+                ffi_ret.lib_par.caller_allocates,
+                ffi_ret.lib_par.transfer,
+            );
             let value = Chunk::Name("ret".to_string());
             if let OutMemMode::UninitializedNamed(_) = mem_mode {
                 result.insert(0, value);
@@ -819,12 +833,13 @@ impl Builder {
         let output_vars = trampoline
             .output_params
             .iter()
-            .filter(|param| param.direction == ParameterDirection::Out && param.name != "error")
-            .map(|param| (param, type_mem_mode(env, param)))
-            .map(|(param, mode)| Chunk::Let {
-                name: param.name.clone(),
+            .filter(|out| {
+                out.lib_par.direction == ParameterDirection::Out && out.lib_par.name != "error"
+            })
+            .map(|out| Chunk::Let {
+                name: out.lib_par.name.clone(),
                 is_mut: true,
-                value: Box::new(mode),
+                value: Box::new(type_mem_mode(env, &out.lib_par)),
                 type_: None,
             });
         body.extend(output_vars);
@@ -904,11 +919,12 @@ impl Builder {
         chunks.push(chunk);
     }
 
-    fn array_length(&self, param: &library::Parameter) -> Option<&String> {
+    fn array_length(&self, param: &analysis::Parameter) -> Option<&String> {
         self.async_trampoline.as_ref().and_then(|trampoline| {
             param
+                .lib_par
                 .array_length
-                .map(|index| &trampoline.output_params[index as usize].name)
+                .map(|index| &trampoline.output_params[index as usize].lib_par.name)
         })
     }
 
@@ -1213,25 +1229,22 @@ impl Builder {
     }
 
     fn find_array_length_name(&self, array_name_: &str) -> Option<String> {
-        self.transformations
-            .iter()
-            .filter_map(|tr| {
-                if let TransformationType::Length {
-                    ref array_name,
-                    ref array_length_name,
-                    ..
-                } = tr.transformation_type
-                {
-                    if array_name == array_name_ {
-                        Some(array_length_name.clone())
-                    } else {
-                        None
-                    }
+        self.transformations.iter().find_map(|tr| {
+            if let TransformationType::Length {
+                ref array_name,
+                ref array_length_name,
+                ..
+            } = tr.transformation_type
+            {
+                if array_name == array_name_ {
+                    Some(array_length_name.clone())
                 } else {
                     None
                 }
-            })
-            .next()
+            } else {
+                None
+            }
+        })
     }
 }
 
@@ -1245,7 +1258,7 @@ fn c_type_mem_mode_lib(
     match ConversionType::of(env, typ) {
         ConversionType::Pointer => {
             if caller_allocates {
-                UninitializedNamed(rust_type(env, typ).unwrap())
+                UninitializedNamed(RustType::try_new(env, typ).unwrap().into_string())
             } else {
                 use crate::library::Type::*;
                 let type_ = env.library.type_(typ);
@@ -1283,7 +1296,7 @@ fn type_mem_mode(env: &Env, parameter: &library::Parameter) -> Chunk {
         ConversionType::Pointer => {
             if parameter.caller_allocates {
                 Chunk::UninitializedNamed {
-                    name: rust_type(env, parameter.typ).unwrap(),
+                    name: RustType::try_new(env, parameter.typ).unwrap().into_string(),
                 }
             } else {
                 use crate::library::Type::*;

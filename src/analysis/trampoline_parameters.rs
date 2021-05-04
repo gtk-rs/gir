@@ -1,7 +1,7 @@
-use super::{conversion_type::ConversionType, ref_mode::RefMode};
+use super::{conversion_type::ConversionType, ref_mode::RefMode, try_from_glib::TryFromGlib};
 use crate::{
     analysis::is_gpointer,
-    analysis::rust_type::rust_type,
+    analysis::rust_type::RustType,
     config::{self, parameter_matchable::ParameterMatchable},
     env::Env,
     library, nameutil,
@@ -17,6 +17,7 @@ pub struct RustParameter {
     pub direction: library::ParameterDirection,
     pub nullable: library::Nullable,
     pub ref_mode: RefMode,
+    pub try_from_glib: TryFromGlib,
 }
 
 #[derive(Clone, Debug)]
@@ -28,7 +29,7 @@ pub struct CParameter {
 
 impl CParameter {
     pub fn is_real_gpointer(&self, env: &Env) -> bool {
-        is_gpointer(&self.c_type) && rust_type(env, self.typ).is_err()
+        is_gpointer(&self.c_type) && RustType::try_new(env, self.typ).is_err()
     }
 }
 
@@ -62,6 +63,7 @@ impl Parameters {
 
     pub fn prepare_transformation(
         &mut self,
+        env: &Env,
         type_tid: library::TypeId,
         name: String,
         c_type: String,
@@ -85,6 +87,7 @@ impl Parameters {
             direction,
             nullable,
             ref_mode,
+            try_from_glib: TryFromGlib::from_type_defaults(env, type_tid),
         };
         let ind_rust = self.rust_parameters.len();
         self.rust_parameters.push(rust_par);
@@ -120,6 +123,7 @@ pub fn analyze(
     let c_type = format!("{}*", owner.get_glib_name().unwrap());
 
     let transform = parameters.prepare_transformation(
+        env,
         type_tid,
         "this".to_owned(),
         c_type,
@@ -139,8 +143,7 @@ pub fn analyze(
         let nullable_override = configured_signals
             .matched_parameters(&name)
             .iter()
-            .filter_map(|p| p.nullable)
-            .next();
+            .find_map(|p| p.nullable);
         let nullable = nullable_override.unwrap_or(par.nullable);
 
         let conversion_type = {
@@ -156,15 +159,14 @@ pub fn analyze(
         let new_name = configured_signals
             .matched_parameters(&name)
             .iter()
-            .filter_map(|p| p.new_name.clone())
-            .next();
+            .find_map(|p| p.new_name.clone());
         let transformation_override = configured_signals
             .matched_parameters(&name)
             .iter()
-            .filter_map(|p| p.transformation)
-            .next();
+            .find_map(|p| p.transformation);
 
         let mut transform = parameters.prepare_transformation(
+            env,
             par.typ,
             name,
             par.c_type.clone(),

@@ -1,7 +1,7 @@
 use crate::{
     analysis::{
-        self, conversion_type::ConversionType, namespaces, ref_mode::RefMode,
-        rust_type::parameter_rust_type,
+        self, conversion_type::ConversionType, namespaces, rust_type::RustType,
+        try_from_glib::TryFromGlib,
     },
     env::Env,
     library::{self, ParameterDirection},
@@ -11,20 +11,28 @@ use crate::{
 use std::cmp;
 
 pub trait ToReturnValue {
-    fn to_return_value(&self, env: &Env, is_trampoline: bool) -> String;
+    fn to_return_value(
+        &self,
+        env: &Env,
+        try_from_glib: &TryFromGlib,
+        is_trampoline: bool,
+    ) -> Option<String>;
 }
 
 impl ToReturnValue for library::Parameter {
-    fn to_return_value(&self, env: &Env, is_trampoline: bool) -> String {
-        let rust_type = parameter_rust_type(
-            env,
-            self.typ,
-            self.direction,
-            self.nullable,
-            RefMode::None,
-            self.scope,
-        );
-        let mut name = rust_type.into_string();
+    fn to_return_value(
+        &self,
+        env: &Env,
+        try_from_glib: &TryFromGlib,
+        is_trampoline: bool,
+    ) -> Option<String> {
+        let mut name = RustType::builder(env, self.typ)
+            .with_direction(self.direction)
+            .with_nullable(self.nullable)
+            .with_scope(self.scope)
+            .with_try_from_glib(try_from_glib)
+            .try_build_param()
+            .into_string();
         if is_trampoline
             && self.direction == library::ParameterDirection::Return
             && is_gstring(&name)
@@ -36,20 +44,27 @@ impl ToReturnValue for library::Parameter {
             //TODO: records as in gtk_container_get_path_for_child
             _ => name,
         };
-        format!(" -> {}", type_str)
+
+        Some(type_str)
     }
 }
 
 impl ToReturnValue for analysis::return_value::Info {
-    fn to_return_value(&self, env: &Env, is_trampoline: bool) -> String {
-        match self.parameter {
-            Some(ref par) => {
-                let name = par.to_return_value(env, is_trampoline);
-                if self.nullable_return_is_error.is_some() && name.starts_with(" -> Option<") {
-                    // Change ` -> Option<T>` to ` -> Result<T, glib::BoolError>`
+    fn to_return_value(
+        &self,
+        env: &Env,
+        try_from_glib: &TryFromGlib,
+        is_trampoline: bool,
+    ) -> Option<String> {
+        let par = self.parameter.as_ref()?;
+        par.lib_par
+            .to_return_value(env, try_from_glib, is_trampoline)
+            .map(|type_name| {
+                if self.nullable_return_is_error.is_some() && type_name.starts_with("Option<") {
+                    // Change `Option<T>` to `Result<T, glib::BoolError>`
                     format!(
-                        " -> Result<{}, {}BoolError>",
-                        &name[11..(name.len() - 1)],
+                        "Result<{}, {}BoolError>",
+                        &type_name[7..(type_name.len() - 1)],
                         if env.namespaces.glib_ns_id == namespaces::MAIN {
                             ""
                         } else {
@@ -57,11 +72,9 @@ impl ToReturnValue for analysis::return_value::Info {
                         }
                     )
                 } else {
-                    name
+                    type_name
                 }
-            }
-            None => String::new(),
-        }
+            })
     }
 }
 
@@ -73,12 +86,12 @@ fn out_parameter_as_return_parts(
     let num_out_args = analysis
         .outs
         .iter()
-        .filter(|p| p.array_length.is_none())
+        .filter(|out| out.lib_par.array_length.is_none())
         .count();
     let num_out_sizes = analysis
         .outs
         .iter()
-        .filter(|p| p.array_length.is_some())
+        .filter(|out| out.lib_par.array_length.is_some())
         .count();
     // We need to differentiate between array(s)'s size arguments and normal ones. If we have 2
     // "normal" arguments and one "size" argument, we still need to wrap them into "()" so we take
@@ -130,27 +143,31 @@ pub fn out_parameters_as_return(env: &Env, analysis: &analysis::functions::Info)
     let array_lengths: Vec<_> = analysis
         .outs
         .iter()
-        .filter_map(|p| p.array_length)
+        .filter_map(|out| out.lib_par.array_length)
         .collect();
 
     let mut skip = 0;
-    for (pos, par) in analysis.outs.iter().filter(|par| !par.is_error).enumerate() {
+    for (pos, out) in analysis
+        .outs
+        .iter()
+        .filter(|out| !out.lib_par.is_error)
+        .enumerate()
+    {
         // The actual return value is inserted with an empty name at position 0
-        if !par.name.is_empty() {
-            let mangled_par_name = mangle_keywords(par.name.as_str());
+        if !out.lib_par.name.is_empty() {
+            let mangled_par_name = mangle_keywords(out.lib_par.name.as_str());
             let param_pos = analysis
                 .parameters
                 .c_parameters
                 .iter()
                 .enumerate()
-                .filter_map(|(pos, orig_par)| {
+                .find_map(|(pos, orig_par)| {
                     if orig_par.name == mangled_par_name {
                         Some(pos)
                     } else {
                         None
                     }
                 })
-                .next()
                 .unwrap();
             if array_lengths.contains(&(param_pos as u32)) {
                 skip += 1;
@@ -161,25 +178,23 @@ pub fn out_parameters_as_return(env: &Env, analysis: &analysis::functions::Info)
         if pos > skip {
             return_str.push_str(", ")
         }
-        let s = out_parameter_as_return(par, env);
+        let s = out_parameter_as_return(out, env);
         return_str.push_str(&s);
     }
     return_str.push_str(&suffix);
     return_str
 }
 
-fn out_parameter_as_return(par: &library::Parameter, env: &Env) -> String {
+fn out_parameter_as_return(out: &analysis::Parameter, env: &Env) -> String {
     //TODO: upcasts?
-    let rust_type = parameter_rust_type(
-        env,
-        par.typ,
-        ParameterDirection::Return,
-        par.nullable,
-        RefMode::None,
-        par.scope,
-    );
-    let name = rust_type.into_string();
-    match ConversionType::of(env, par.typ) {
+    let name = RustType::builder(env, out.lib_par.typ)
+        .with_direction(ParameterDirection::Return)
+        .with_nullable(out.lib_par.nullable)
+        .with_scope(out.lib_par.scope)
+        .with_try_from_glib(&out.try_from_glib)
+        .try_build_param()
+        .into_string();
+    match ConversionType::of(env, out.lib_par.typ) {
         ConversionType::Unknown => format!("/*Unknown conversion*/{}", name),
         _ => name,
     }

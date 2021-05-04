@@ -30,8 +30,9 @@ pub fn ffi_type(env: &Env, tid: library::TypeId, c_type: &str) -> Result {
                             .as_ref()
                             .map(String::as_str)
                             .unwrap_or_else(|| c_type);
-                        ffi_type(env, inner_tid, inner_c_type)
-                            .map_any(|s| format!("[{}; {}]", s, size))
+                        ffi_type(env, inner_tid, inner_c_type).map_any(|rust_type| {
+                            rust_type.alter_type(|typ_| format!("[{}; {}]", typ_, size))
+                        })
                     }
                     Type::Class(Class {
                         c_type: ref expected,
@@ -42,7 +43,9 @@ pub fn ffi_type(env: &Env, tid: library::TypeId, c_type: &str) -> Result {
                         ..
                     }) if c_type == "gpointer" => {
                         info!("[c:type `gpointer` instead of `*mut {}`, fixing]", expected);
-                        ffi_inner(env, tid, expected.clone()).map_any(|s| format!("*mut {}", s))
+                        ffi_inner(env, tid, expected.clone()).map_any(|rust_type| {
+                            rust_type.alter_type(|typ_| format!("*mut {}", typ_))
+                        })
                     }
                     _ => ffi_inner(env, c_tid, c_type.into()),
                 }
@@ -56,7 +59,8 @@ pub fn ffi_type(env: &Env, tid: library::TypeId, c_type: &str) -> Result {
         }
     } else {
         // ptr not empty
-        ffi_inner(env, tid, inner).map_any(|s| format!("{} {}", ptr, s))
+        ffi_inner(env, tid, inner)
+            .map_any(|rust_type| rust_type.alter_type(|typ_| format!("{} {}", ptr, typ_)))
     };
     trace!("ffi_type({:?}, {}) -> {:?}", tid, c_type, res);
     res
@@ -137,7 +141,8 @@ fn ffi_inner(env: &Env, tid: library::TypeId, mut inner: String) -> Result {
                 .as_ref()
                 .map(String::as_str)
                 .unwrap_or_else(|| inner.as_str());
-            ffi_type(env, inner_tid, inner_c_type).map_any(|s| format!("[{}; {}]", s, size))
+            ffi_type(env, inner_tid, inner_c_type)
+                .map_any(|rust_type| rust_type.alter_type(|typ_| format!("[{}; {}]", typ_, size)))
         }
         Type::Array(..)
         | Type::PtrArray(..)
@@ -148,7 +153,9 @@ fn ffi_inner(env: &Env, tid: library::TypeId, mut inner: String) -> Result {
             if let Some(glib_name) = env.library.type_(tid).get_glib_name() {
                 if inner != glib_name {
                     if inner == "gpointer" {
-                        fix_name(env, tid, glib_name).map_any(|s| format!("*mut {}", s))
+                        fix_name(env, tid, glib_name).map_any(|rust_type| {
+                            rust_type.alter_type(|typ_| format!("*mut {}", typ_))
+                        })
                     } else if implements_c_type(env, tid, &inner) {
                         info!(
                             "[c:type {} of {} <: {}, fixing]",
@@ -183,7 +190,7 @@ fn ffi_inner(env: &Env, tid: library::TypeId, mut inner: String) -> Result {
     };
 
     if volatile {
-        res.map(|s| format!("/*volatile*/{}", s))
+        res.map(|rust_type| rust_type.alter_type(|typ_| format!("/*volatile*/{}", typ_)))
     } else {
         res
     }
@@ -203,7 +210,8 @@ fn fix_name(env: &Env, type_id: library::TypeId, name: &str) -> Result {
                     Ok(format!(
                         "{}::{}",
                         &env.namespaces[env.namespaces.glib_ns_id].crate_name, name
-                    ))
+                    )
+                    .into())
                 }
             }
             _ => Ok(name.into()),
@@ -220,7 +228,7 @@ fn fix_name(env: &Env, type_id: library::TypeId, name: &str) -> Result {
         {
             Err(TypeError::Ignored(name_with_prefix))
         } else {
-            Ok(name_with_prefix)
+            Ok(name_with_prefix.into())
         }
     }
 }

@@ -1,5 +1,5 @@
 use crate::{
-    analysis::{rust_type::rust_type, trampoline_parameters::Transformation},
+    analysis::{rust_type::RustType, trampoline_parameters::Transformation},
     env::Env,
     library,
     nameutil::is_gstring,
@@ -16,12 +16,12 @@ impl TrampolineFromGlib for Transformation {
         let need_type_name = need_downcast || is_need_type_name(env, self.typ);
         match self.conversion_type {
             Direct => self.name.clone(),
-            Scalar => format!("from_glib({})", self.name),
+            Scalar | Option | Result { .. } => format!("from_glib({})", self.name),
             Borrow | Pointer => {
                 let is_borrow = self.conversion_type == Borrow;
                 let need_type_name = need_type_name || (is_borrow && nullable);
                 let (mut left, mut right) = from_glib_xxx(self.transfer, is_borrow);
-                let type_name = rust_type(env, self.typ).into_string();
+                let type_name = RustType::try_new(env, self.typ).into_string();
                 if need_type_name {
                     if is_borrow && nullable {
                         left = format!("Option::<{}>::{}", type_name, left);

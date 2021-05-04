@@ -7,9 +7,10 @@ use crate::{
         bounds::{BoundType, Bounds},
         ffi_type::ffi_type,
         ref_mode::RefMode,
-        rust_type::parameter_rust_type,
+        rust_type::RustType,
         trampoline_parameters::*,
         trampolines::Trampoline,
+        try_from_glib::TryFromGlib,
     },
     consts::TYPE_PARAMETERS_START,
     env::Env,
@@ -159,17 +160,12 @@ fn func_parameter(
             }
             BoundType::AsRef(_) => t.to_string(),
         },
-        None => {
-            let rust_type = parameter_rust_type(
-                env,
-                par.typ,
-                par.direction,
-                par.nullable,
-                ref_mode,
-                library::ParameterScope::None,
-            );
-            rust_type.into_string()
-        }
+        None => RustType::builder(env, par.typ)
+            .with_direction(par.direction)
+            .with_nullable(par.nullable)
+            .with_ref_mode(ref_mode)
+            .try_build_param()
+            .into_string(),
     }
 }
 
@@ -178,8 +174,14 @@ fn func_returns(env: &Env, analysis: &Trampoline) -> String {
         String::new()
     } else if analysis.inhibit {
         " -> glib::signal::Inhibit".into()
+    } else if let Some(return_type) =
+        analysis
+            .ret
+            .to_return_value(env, &TryFromGlib::default(), true)
+    {
+        format!(" -> {}", return_type)
     } else {
-        analysis.ret.to_return_value(env, true)
+        String::new()
     }
 }
 

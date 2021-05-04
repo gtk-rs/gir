@@ -8,7 +8,7 @@ use super::{
     signals::{Signal, Signals},
 };
 use crate::{
-    analysis::{conversion_type, ref_mode},
+    analysis::{conversion_type::ConversionType, ref_mode},
     config::{
         error::TomlHelper,
         parsable::{Parsable, Parse},
@@ -16,8 +16,8 @@ use crate::{
     library::{self, Library, TypeId, MAIN_NAMESPACE},
     version::Version,
 };
-use log::warn;
-use std::{collections::BTreeMap, str::FromStr};
+use log::{error, warn};
+use std::{collections::BTreeMap, str::FromStr, sync::Arc};
 use toml::Value;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -78,7 +78,7 @@ pub struct GObject {
     pub concurrency: library::Concurrency,
     pub ref_mode: Option<ref_mode::RefMode>,
     pub must_use: bool,
-    pub conversion_type: Option<conversion_type::ConversionType>,
+    pub conversion_type: Option<ConversionType>,
     pub generate_display_trait: bool,
     pub trust_return_value_nullability: bool,
     pub manual_traits: Vec<String>,
@@ -160,16 +160,65 @@ fn ref_mode_from_str(ref_mode: &str) -> Option<ref_mode::RefMode> {
     }
 }
 
-fn conversion_type_from_str(conversion_type: &str) -> Option<conversion_type::ConversionType> {
+pub fn parse_conversion_type(toml: Option<&Value>, object_name: &str) -> Option<ConversionType> {
+    let v = toml?;
+    v.check_unwanted(&["variant", "ok_type", "err_type"], "conversion_type");
+
+    let (conversion_type, ok_type, err_type) = match &v {
+        Value::Table(table) => {
+            let conversion_type = table.get("variant").and_then(Value::as_str);
+            if conversion_type.is_none() {
+                error!("Missing `variant` for {}.conversion_type", object_name);
+                return None;
+            }
+
+            let ok_type = Some(Arc::from(
+                table
+                    .get("ok_type")
+                    .and_then(Value::as_str)
+                    .unwrap_or(object_name),
+            ));
+            let err_type = table.get("err_type").and_then(Value::as_str);
+
+            (conversion_type.unwrap(), ok_type, err_type)
+        }
+        Value::String(conversion_type) => (conversion_type.as_str(), None, None),
+        _ => {
+            error!("Unexpected toml item for {}.conversion_type", object_name);
+            return None;
+        }
+    };
+
     use crate::analysis::conversion_type::ConversionType::*;
+
+    let get_err_type = || -> Arc<str> {
+        err_type.map_or_else(
+            || {
+                error!("Missing `err_type` for {}.conversion_type", object_name);
+                Arc::from("MissingErrorType")
+            },
+            Arc::from,
+        )
+    };
 
     match conversion_type {
         "direct" => Some(Direct),
         "scalar" => Some(Scalar),
+        "Option" => Some(Option),
+        "Result" => Some(Result {
+            ok_type: ok_type.expect("Missing `ok_type`"),
+            err_type: get_err_type(),
+        }),
         "pointer" => Some(Pointer),
         "borrow" => Some(Borrow),
         "unknown" => Some(Unknown),
-        _ => None,
+        unexpected => {
+            error!(
+                "Unexpected {} for {}.conversion_type",
+                unexpected, object_name
+            );
+            None
+        }
     }
 }
 
@@ -278,10 +327,7 @@ fn parse_object(
         .lookup("ref_mode")
         .and_then(Value::as_str)
         .and_then(ref_mode_from_str);
-    let conversion_type = toml_object
-        .lookup("conversion_type")
-        .and_then(Value::as_str)
-        .and_then(conversion_type_from_str);
+    let conversion_type = parse_conversion_type(toml_object.lookup("conversion_type"), &name);
     let child_properties = ChildProperties::parse(toml_object, &name);
     let must_use = toml_object
         .lookup("must_use")
@@ -347,10 +393,14 @@ fn parse_object(
         warn!("ref_mode configuration used for non-manual object {}", name);
     }
 
-    if status != GStatus::Manual && conversion_type.is_some() {
+    if status != GStatus::Manual
+        && !conversion_type
+            .as_ref()
+            .map_or(true, ConversionType::can_use_to_generate)
+    {
         warn!(
-            "conversion_type configuration used for non-manual object {}",
-            name
+            "unexpected conversion_type {:?} configuration used for non-manual object {}",
+            conversion_type, name
         );
     }
 
@@ -469,5 +519,126 @@ pub fn resolve_type_ids(objects: &mut GObjects, library: &Library) {
             }
         }
         object.type_id = type_id;
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::analysis::conversion_type::ConversionType;
+    use crate::library::Concurrency;
+
+    fn toml(input: &str) -> ::toml::Value {
+        let value = ::toml::from_str(&input);
+        assert!(value.is_ok());
+        value.unwrap()
+    }
+
+    #[test]
+    fn conversion_type_default() {
+        let toml = &toml(
+            r#"
+name = "Test"
+status = "generate"
+"#,
+        );
+
+        let object = parse_object(toml, Concurrency::default(), false, false, false);
+        assert_eq!(object.conversion_type, None);
+    }
+
+    #[test]
+    fn conversion_type_option_str() {
+        let toml = toml(
+            r#"
+name = "Test"
+status = "generate"
+conversion_type = "Option"
+"#,
+        );
+
+        let object = parse_object(&toml, Concurrency::default(), false, false, false);
+        assert_eq!(object.conversion_type, Some(ConversionType::Option));
+    }
+
+    #[test]
+    fn conversion_type_option_table() {
+        let toml = &toml(
+            r#"
+name = "Test"
+status = "generate"
+    [conversion_type]
+        variant = "Option"
+"#,
+        );
+
+        let object = parse_object(toml, Concurrency::default(), false, false, false);
+        assert_eq!(object.conversion_type, Some(ConversionType::Option));
+    }
+
+    #[test]
+    fn conversion_type_result_table_missing_err() {
+        let toml = &toml(
+            r#"
+name = "Test"
+status = "generate"
+    [conversion_type]
+        variant = "Result"
+"#,
+        );
+
+        let object = parse_object(toml, Concurrency::default(), false, false, false);
+        assert_eq!(
+            object.conversion_type,
+            Some(ConversionType::Result {
+                ok_type: Arc::from("Test"),
+                err_type: Arc::from("MissingErrorType"),
+            }),
+        );
+    }
+
+    #[test]
+    fn conversion_type_result_table_with_err() {
+        let toml = &toml(
+            r#"
+name = "Test"
+status = "generate"
+    [conversion_type]
+        variant = "Result"
+        err_type = "TryFromIntError"
+"#,
+        );
+
+        let object = parse_object(toml, Concurrency::default(), false, false, false);
+        assert_eq!(
+            object.conversion_type,
+            Some(ConversionType::Result {
+                ok_type: Arc::from("Test"),
+                err_type: Arc::from("TryFromIntError"),
+            }),
+        );
+    }
+
+    #[test]
+    fn conversion_type_result_table_with_ok_err() {
+        let toml = &toml(
+            r#"
+name = "Test"
+status = "generate"
+    [conversion_type]
+        variant = "Result"
+        ok_type = "TestSuccess"
+        err_type = "TryFromIntError"
+"#,
+        );
+
+        let object = parse_object(toml, Concurrency::default(), false, false, false);
+        assert_eq!(
+            object.conversion_type,
+            Some(ConversionType::Result {
+                ok_type: Arc::from("TestSuccess"),
+                err_type: Arc::from("TryFromIntError"),
+            }),
+        );
     }
 }

@@ -3,7 +3,7 @@ use crate::{
         bounds::{Bounds, PropertyBound},
         imports::Imports,
         ref_mode::RefMode,
-        rust_type::*,
+        rust_type::RustType,
         signals,
         signatures::{Signature, Signatures},
         trampolines,
@@ -106,17 +106,14 @@ fn analyze_property(
         .min()
         .or(prop.version)
         .or(Some(env.config.min_cfg_version));
-    let generate = configured_properties
-        .iter()
-        .filter_map(|f| f.generate)
-        .next();
+    let generate = configured_properties.iter().find_map(|f| f.generate);
     let generate_set = generate.is_some();
     let generate = generate.unwrap_or_else(PropertyGenerateFlags::all);
 
     let imports = &mut imports.with_defaults(prop_version, &None);
     imports.add("glib::translate::*");
 
-    let type_string = rust_type(env, prop.typ);
+    let type_string = RustType::try_new(env, prop.typ);
     let name_for_func = nameutil::signal_to_snake(&name);
 
     let mut get_prop_name = Some(format!("get_property_{}", name_for_func));
@@ -209,8 +206,11 @@ fn analyze_property(
     let (get_out_ref_mode, set_in_ref_mode, nullable) = get_property_ref_modes(env, prop);
 
     let getter = if readable {
-        if let Ok(ref s) = used_rust_type(env, prop.typ, false) {
-            imports.add_used_type(s);
+        if let Ok(rust_type) = RustType::builder(env, prop.typ)
+            .with_direction(library::ParameterDirection::Out)
+            .try_build()
+        {
+            imports.add_used_types(rust_type.used_types());
         }
         if type_string.is_ok() {
             imports.add("glib::StaticType");
@@ -236,8 +236,11 @@ fn analyze_property(
     };
 
     let setter = if writable {
-        if let Ok(ref s) = used_rust_type(env, prop.typ, true) {
-            imports.add_used_type(s);
+        if let Ok(rust_type) = RustType::builder(env, prop.typ)
+            .with_direction(library::ParameterDirection::In)
+            .try_build()
+        {
+            imports.add_used_types(rust_type.used_types());
         }
         if type_string.is_ok() {
             imports.add("glib::ToValue");

@@ -4,7 +4,7 @@ use crate::{
         conversion_type::ConversionType,
         function_parameters::CParameter,
         ref_mode::RefMode,
-        rust_type::parameter_rust_type,
+        rust_type::RustType,
     },
     env::Env,
     traits::*,
@@ -35,15 +35,14 @@ impl ToParameter for CParameter {
                     BoundType::AsRef(_) => type_str = t.to_string(),
                 },
                 None => {
-                    let rust_type = parameter_rust_type(
-                        env,
-                        self.typ,
-                        self.direction,
-                        self.nullable,
-                        self.ref_mode,
-                        self.scope,
-                    );
-                    let type_name = rust_type.into_string();
+                    let type_name = RustType::builder(env, self.typ)
+                        .with_direction(self.direction)
+                        .with_nullable(self.nullable)
+                        .with_ref_mode(self.ref_mode)
+                        .with_scope(self.scope)
+                        .with_try_from_glib(&self.try_from_glib)
+                        .try_build_param()
+                        .into_string();
                     type_str = match ConversionType::of(env, self.typ) {
                         ConversionType::Unknown => format!("/*Unknown conversion*/{}", type_name),
                         _ => type_name,

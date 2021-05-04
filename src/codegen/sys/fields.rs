@@ -128,7 +128,7 @@ fn analyze_fields(
 
         infos.push(FieldInfo {
             name: field.name.clone(),
-            typ,
+            typ: typ.into_string(),
             debug,
             unsafe_access,
         });
@@ -152,7 +152,7 @@ fn field_ffi_type(env: &Env, field: &Field) -> Result {
         if failure {
             Err(TypeError::Unimplemented(signature))
         } else {
-            Ok(signature)
+            Ok(signature.into())
         }
     } else {
         Err(TypeError::Ignored(format!(

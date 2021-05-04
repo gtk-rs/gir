@@ -1,7 +1,7 @@
 use crate::{
     analysis::{
-        imports::Imports, namespaces, override_string_type::override_string_type_return,
-        ref_mode::RefMode, rust_type::*,
+        self, imports::Imports, namespaces, override_string_type::override_string_type_return,
+        rust_type::RustType,
     },
     config,
     env::Env,
@@ -11,7 +11,7 @@ use log::error;
 
 #[derive(Clone, Debug, Default)]
 pub struct Info {
-    pub parameter: Option<library::Parameter>,
+    pub parameter: Option<analysis::Parameter>,
     pub base_tid: Option<library::TypeId>, // Some only if need downcast
     pub commented: bool,
     pub bool_return_is_error: Option<String>,
@@ -29,17 +29,12 @@ pub fn analyze(
 ) -> Info {
     let typ = configured_functions
         .iter()
-        .filter_map(|f| f.ret.type_name.as_ref())
-        .next()
+        .find_map(|f| f.ret.type_name.as_ref())
         .and_then(|typ| env.library.find_type(0, typ))
         .unwrap_or_else(|| override_string_type_return(env, func.ret.typ, configured_functions));
     let mut parameter = if typ == Default::default() {
         None
     } else {
-        if let Ok(s) = used_rust_type(env, typ, false) {
-            used_types.push(s);
-        }
-
         let mut nullable = func.ret.nullable;
         if !obj.trust_return_value_nullability {
             // Since GIRs are bad at specifying return value nullability, assume
@@ -49,10 +44,7 @@ pub fn analyze(
             }
         }
 
-        let nullable_override = configured_functions
-            .iter()
-            .filter_map(|f| f.ret.nullable)
-            .next();
+        let nullable_override = configured_functions.iter().find_map(|f| f.ret.nullable);
         if let Some(val) = nullable_override {
             nullable = val;
         }
@@ -63,24 +55,11 @@ pub fn analyze(
         })
     };
 
-    let commented = if typ == Default::default() {
-        false
-    } else {
-        parameter_rust_type(
-            env,
-            typ,
-            func.ret.direction,
-            Nullable(false),
-            RefMode::None,
-            library::ParameterScope::None,
-        )
-        .is_err()
-    };
+    let mut commented = false;
 
     let bool_return_is_error = configured_functions
         .iter()
-        .filter_map(|f| f.ret.bool_return_is_error.as_ref())
-        .next();
+        .find_map(|f| f.ret.bool_return_is_error.as_ref());
     let bool_return_error_message = bool_return_is_error.and_then(|m| {
         if typ != TypeId::tid_bool() {
             error!(
@@ -102,8 +81,7 @@ pub fn analyze(
 
     let nullable_return_is_error = configured_functions
         .iter()
-        .filter_map(|f| f.ret.nullable_return_is_error.as_ref())
-        .next();
+        .find_map(|f| f.ret.nullable_return_is_error.as_ref());
     let nullable_return_error_message = nullable_return_is_error.and_then(|m| {
         if let Some(library::Parameter { nullable: Nullable(false), ..}) = parameter {
             error!(
@@ -127,10 +105,7 @@ pub fn analyze(
 
     if func.kind == library::FunctionKind::Constructor {
         if let Some(par) = parameter {
-            let nullable_override = configured_functions
-                .iter()
-                .filter_map(|f| f.ret.nullable)
-                .next();
+            let nullable_override = configured_functions.iter().find_map(|f| f.ret.nullable);
             if par.typ != type_tid {
                 base_tid = Some(par.typ);
             }
@@ -141,6 +116,25 @@ pub fn analyze(
             });
         }
     }
+
+    let parameter = parameter.as_ref().map(|lib_par| {
+        let par = analysis::Parameter::from_return_value(env, lib_par, configured_functions);
+        if let Ok(rust_type) = RustType::builder(env, typ)
+            .with_direction(par.lib_par.direction)
+            .with_try_from_glib(&par.try_from_glib)
+            .try_build()
+        {
+            used_types.extend(rust_type.into_used_types());
+        }
+
+        commented = RustType::builder(env, typ)
+            .with_direction(func.ret.direction)
+            .with_try_from_glib(&par.try_from_glib)
+            .try_build_param()
+            .is_err();
+
+        par
+    });
 
     Info {
         parameter,

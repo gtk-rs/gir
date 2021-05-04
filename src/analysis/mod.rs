@@ -17,6 +17,7 @@ pub mod enums;
 pub mod ffi_type;
 pub mod flags;
 pub mod function_parameters;
+pub use function_parameters::Parameter;
 pub mod functions;
 pub mod general;
 pub mod imports;
@@ -39,6 +40,7 @@ pub mod supertypes;
 pub mod symbols;
 pub mod trampoline_parameters;
 pub mod trampolines;
+pub mod try_from_glib;
 pub mod types;
 
 #[derive(Debug, Default)]

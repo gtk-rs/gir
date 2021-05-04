@@ -1,10 +1,7 @@
 use super::{child_properties, function, general, properties, signal, trait_impls};
 use crate::{
     analysis::special_functions::Type,
-    analysis::{
-        self,
-        rust_type::{rust_type, rust_type_full},
-    },
+    analysis::{self, rust_type::RustType},
     case::CaseExt,
     codegen::general::{version_condition_no_doc, version_condition_string},
     env::Env,
@@ -185,22 +182,23 @@ fn generate_builder(w: &mut dyn Write, env: &Env, analysis: &analysis::object::I
     writeln!(w, "#[derive(Clone, Default)]")?;
     writeln!(w, "pub struct {}Builder {{", analysis.name)?;
     for property in &analysis.builder_properties {
-        match rust_type(env, property.typ) {
+        match RustType::try_new(env, property.typ) {
             Ok(type_string) => {
                 let type_string = match type_string.as_str() {
                     s if nameutil::is_gstring(s) => "String",
                     "Vec<GString>" | "Vec<glib::GString>" | "Vec<crate::GString>" => "Vec<String>",
                     typ => typ,
                 };
-                let mut param_type = rust_type_full(
-                    env,
-                    property.typ,
-                    library::Nullable(false),
-                    property.set_in_ref_mode,
-                    library::ParameterScope::None,
-                    library::Concurrency::None,
-                )
-                .into_string();
+                let direction = if property.is_get {
+                    library::ParameterDirection::In
+                } else {
+                    library::ParameterDirection::Out
+                };
+                let mut param_type = RustType::builder(env, property.typ)
+                    .with_direction(direction)
+                    .with_ref_mode(property.set_in_ref_mode)
+                    .try_build()
+                    .into_string();
                 let (param_type_override, bounds, conversion) = match &param_type[..] {
                     "&str" => (None, String::new(), ".to_string()"),
                     "&[&str]" => (Some("Vec<String>".to_string()), String::new(), ""),

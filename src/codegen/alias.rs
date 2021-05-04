@@ -1,5 +1,5 @@
 use crate::{
-    analysis::{namespaces, rust_type::rust_type},
+    analysis::{namespaces, rust_type::RustType},
     codegen::general,
     config::gobjects::GObject,
     env::Env,
@@ -54,7 +54,7 @@ pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>) {
 }
 
 fn generate_alias(env: &Env, w: &mut dyn Write, alias: &Alias, _: &GObject) -> Result<()> {
-    let typ = rust_type(env, alias.typ).into_string();
+    let typ = RustType::try_new(env, alias.typ).into_string();
     writeln!(w, "pub type {} = {};", alias.name, typ)?;
 
     Ok(())

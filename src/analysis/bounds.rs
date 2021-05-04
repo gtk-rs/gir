@@ -4,7 +4,8 @@ use crate::{
         functions::{find_function, find_index_to_ignore, finish_function_name},
         imports::Imports,
         out_parameters::use_function_return_for_result,
-        rust_type::{bounds_rust_type, rust_type, rust_type_nullable, rust_type_with_scope},
+        ref_mode::RefMode,
+        rust_type::RustType,
     },
     config,
     consts::TYPE_PARAMETERS_START,
@@ -81,7 +82,9 @@ impl Bounds {
         concurrency: Concurrency,
         configured_functions: &[&config::functions::Function],
     ) -> (Option<String>, Option<CallbackInfo>) {
-        let type_name = bounds_rust_type(env, par.typ);
+        let type_name = RustType::builder(env, par.typ)
+            .with_ref_mode(RefMode::ByRefFake)
+            .try_build();
         if (r#async && async_param_to_remove(&par.name)) || type_name.is_err() {
             return (None, None);
         }
@@ -109,7 +112,10 @@ impl Bounds {
                         ) {
                             out_parameters.insert(
                                 0,
-                                rust_type_nullable(env, function.ret.typ, function.ret.nullable)
+                                RustType::builder(env, function.ret.typ)
+                                    .with_direction(function.ret.direction)
+                                    .with_nullable(function.ret.nullable)
+                                    .try_build()
                                     .into_string(),
                             );
                         }
@@ -131,7 +137,12 @@ impl Bounds {
                 {
                     need_is_into_check = par.c_type != "GDestroyNotify";
                     if let Type::Function(_) = env.library.type_(par.typ) {
-                        type_string = rust_type_with_scope(env, par.typ, par.scope, concurrency)
+                        type_string = RustType::builder(env, par.typ)
+                            .with_direction(par.direction)
+                            .with_scope(par.scope)
+                            .with_concurrency(concurrency)
+                            .with_try_from_glib(&par.try_from_glib)
+                            .try_build()
                             .into_string();
                         let bound_name = *self.unused.front().unwrap();
                         callback_info = Some(CallbackInfo {
@@ -299,7 +310,10 @@ impl PropertyBound {
         }
         Some(PropertyBound {
             alias: TYPE_PARAMETERS_START,
-            type_str: bounds_rust_type(env, type_id).into_string(),
+            type_str: RustType::builder(env, type_id)
+                .with_ref_mode(RefMode::ByRefFake)
+                .try_build()
+                .into_string(),
         })
     }
 }
@@ -327,7 +341,11 @@ fn find_out_parameters(
                 .find_map(|f| f.parameters.iter().find_map(|p| p.nullable))
                 .unwrap_or(param.nullable);
 
-            rust_type_nullable(env, param.typ, nullable).into_string()
+            RustType::builder(env, param.typ)
+                .with_direction(param.direction)
+                .with_nullable(nullable)
+                .try_build()
+                .into_string()
         })
         .collect()
 }
@@ -347,7 +365,10 @@ fn find_error_type(env: &Env, function: &Function) -> String {
         .find(|param| param.direction == ParameterDirection::Out && param.name == "error")
         .expect("error type");
     if let Type::Record(_) = *env.type_(error_param.typ) {
-        return rust_type(env, error_param.typ).into_string();
+        return RustType::builder(env, error_param.typ)
+            .with_direction(error_param.direction)
+            .try_build()
+            .into_string();
     }
     panic!("cannot find error type")
 }

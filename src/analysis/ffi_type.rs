@@ -15,8 +15,8 @@ pub fn used_ffi_type(env: &Env, type_id: TypeId, c_type: &str) -> Option<String>
     let (_ptr, inner) = rustify_pointers(c_type);
     let type_ = ffi_inner(env, type_id, &inner);
     type_.ok().and_then(|type_name| {
-        if type_name.find(':').is_some() {
-            Some(type_name)
+        if type_name.as_str().find(':').is_some() {
+            Some(type_name.into_string())
         } else {
             None
         }
@@ -36,7 +36,9 @@ pub fn ffi_type(env: &Env, tid: TypeId, c_type: &str) -> Result {
             {
                 match *env.library.type_(tid) {
                     Type::FixedArray(_, size, _) => {
-                        ffi_inner(env, c_tid, c_type).map_any(|s| format!("[{}; {}]", s, size))
+                        ffi_inner(env, c_tid, c_type).map_any(|rust_type| {
+                            rust_type.alter_type(|typ_| format!("[{}; {}]", typ_, size))
+                        })
                     }
                     Type::Class(Class {
                         c_type: ref expected,
@@ -47,7 +49,9 @@ pub fn ffi_type(env: &Env, tid: TypeId, c_type: &str) -> Result {
                         ..
                     }) if is_gpointer(c_type) => {
                         info!("[c:type `gpointer` instead of `*mut {}`, fixing]", expected);
-                        ffi_inner(env, tid, expected).map_any(|s| format!("*mut {}", s))
+                        ffi_inner(env, tid, expected).map_any(|rust_type| {
+                            rust_type.alter_type(|typ_| format!("*mut {}", typ_))
+                        })
                     }
                     _ => ffi_inner(env, c_tid, c_type),
                 }
@@ -61,7 +65,8 @@ pub fn ffi_type(env: &Env, tid: TypeId, c_type: &str) -> Result {
         }
     } else {
         // ptr not empty
-        ffi_inner(env, tid, &inner).map_any(|s| format!("{} {}", ptr, s))
+        ffi_inner(env, tid, &inner)
+            .map_any(|rust_type| rust_type.alter_type(|typ_| format!("{} {}", ptr, typ_)))
     };
     trace!("ffi_type({:?}, {}) -> {:?}", tid, c_type, res);
     res
@@ -74,7 +79,7 @@ fn ffi_inner(env: &Env, tid: TypeId, inner: &str) -> Result {
             use crate::library::Fundamental::*;
             let inner = match fund {
                 None => "libc::c_void",
-                Boolean => return Ok(use_glib_if_needed(env, "ffi::gboolean")),
+                Boolean => return Ok(use_glib_if_needed(env, "ffi::gboolean").into()),
                 Int8 => "i8",
                 UInt8 => "u8",
                 Int16 => "i16",
@@ -98,7 +103,7 @@ fn ffi_inner(env: &Env, tid: TypeId, inner: &str) -> Result {
                 UniChar => "u32",
                 Utf8 => "libc::c_char",
                 Filename => "libc::c_char",
-                Type => return Ok(use_glib_if_needed(env, "ffi::GType")),
+                Type => return Ok(use_glib_if_needed(env, "ffi::GType").into()),
                 IntPtr => "libc::intptr_t",
                 UIntPtr => "libc::uintptr_t",
                 _ => return Err(TypeError::Unimplemented(inner.into())),
@@ -123,9 +128,8 @@ fn ffi_inner(env: &Env, tid: TypeId, inner: &str) -> Result {
             fix_name(env, tid, inner)
         }
         Type::CArray(inner_tid) => ffi_inner(env, inner_tid, inner),
-        Type::FixedArray(inner_tid, size, _) => {
-            ffi_inner(env, inner_tid, inner).map_any(|s| format!("[{}; {}]", s, size))
-        }
+        Type::FixedArray(inner_tid, size, _) => ffi_inner(env, inner_tid, inner)
+            .map_any(|rust_type| rust_type.alter_type(|typ_| format!("[{}; {}]", typ_, size))),
         Type::Array(..)
         | Type::PtrArray(..)
         | Type::List(..)
@@ -175,7 +179,7 @@ fn fix_name(env: &Env, type_id: TypeId, name: &str) -> Result {
             | Type::PtrArray(..)
             | Type::List(..)
             | Type::SList(..)
-            | Type::HashTable(..) => Ok(use_glib_if_needed(env, &format!("ffi::{}", name))),
+            | Type::HashTable(..) => Ok(use_glib_if_needed(env, &format!("ffi::{}", name)).into()),
             _ => Ok(name.into()),
         }
     } else {
@@ -197,7 +201,7 @@ fn fix_name(env: &Env, type_id: TypeId, name: &str) -> Result {
         {
             Err(TypeError::Ignored(name_with_prefix))
         } else {
-            Ok(name_with_prefix)
+            Ok(name_with_prefix.into())
         }
     }
 }

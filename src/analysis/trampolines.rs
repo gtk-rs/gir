@@ -2,7 +2,8 @@ use super::{
     bounds::{BoundType, Bounds},
     conversion_type::ConversionType,
     ffi_type::used_ffi_type,
-    rust_type::{bounds_rust_type, rust_type, used_rust_type},
+    ref_mode::RefMode,
+    rust_type::RustType,
     trampoline_parameters::{self, Parameters},
 };
 use crate::{
@@ -76,7 +77,9 @@ pub fn analyze(
     let mut bounds: Bounds = Default::default();
 
     if in_trait {
-        let type_name = bounds_rust_type(env, type_tid);
+        let type_name = RustType::builder(env, type_tid)
+            .with_ref_mode(RefMode::ByRefFake)
+            .try_build();
         bounds.add_parameter(
             "this",
             &type_name.into_string(),
@@ -92,6 +95,7 @@ pub fn analyze(
         let c_type = format!("{}*", owner.get_glib_name().unwrap());
 
         let transform = parameters.prepare_transformation(
+            env,
             type_tid,
             "this".to_owned(),
             c_type,
@@ -109,7 +113,9 @@ pub fn analyze(
     };
 
     if in_trait {
-        let type_name = bounds_rust_type(env, type_tid);
+        let type_name = RustType::builder(env, type_tid)
+            .with_ref_mode(RefMode::ByRefFake)
+            .try_build();
         bounds.add_parameter(
             "this",
             &type_name.into_string(),
@@ -119,31 +125,35 @@ pub fn analyze(
     }
 
     for par in &parameters.rust_parameters {
-        if let Ok(s) = used_rust_type(env, par.typ, false) {
-            used_types.push(s);
+        if let Ok(rust_type) = RustType::builder(env, par.typ)
+            .with_direction(par.direction)
+            .with_try_from_glib(&par.try_from_glib)
+            .try_build()
+        {
+            used_types.extend(rust_type.into_used_types());
         }
     }
     for par in &parameters.c_parameters {
-        if let Some(s) = used_ffi_type(env, par.typ, &par.c_type) {
-            used_types.push(s);
+        if let Some(ffi_type) = used_ffi_type(env, par.typ, &par.c_type) {
+            used_types.push(ffi_type);
         }
     }
 
     let mut ret_nullable = signal.ret.nullable;
 
     if signal.ret.typ != Default::default() {
-        if let Ok(s) = used_rust_type(env, signal.ret.typ, true) {
+        if let Ok(rust_type) = RustType::builder(env, signal.ret.typ)
+            .with_direction(library::ParameterDirection::Out)
+            .try_build()
+        {
             //No GString
-            used_types.push(s);
+            used_types.extend(rust_type.into_used_types());
         }
-        if let Some(s) = used_ffi_type(env, signal.ret.typ, &signal.ret.c_type) {
-            used_types.push(s);
+        if let Some(ffi_type) = used_ffi_type(env, signal.ret.typ, &signal.ret.c_type) {
+            used_types.push(ffi_type);
         }
 
-        let nullable_override = configured_signals
-            .iter()
-            .filter_map(|f| f.ret.nullable)
-            .next();
+        let nullable_override = configured_signals.iter().find_map(|f| f.ret.nullable);
         if let Some(nullable) = nullable_override {
             ret_nullable = nullable;
         }
@@ -214,7 +224,7 @@ pub fn type_error(env: &Env, par: &library::Parameter) -> Option<&'static str> {
     } else if ConversionType::of(env, par.typ) == ConversionType::Unknown {
         Some("Unknown conversion")
     } else {
-        match rust_type(env, par.typ) {
+        match RustType::try_new(env, par.typ) {
             Err(Ignored(_)) => Some("Ignored"),
             Err(Mismatch(_)) => Some("Mismatch"),
             Err(Unimplemented(_)) => Some("Unimplemented"),
