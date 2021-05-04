@@ -483,6 +483,101 @@ name = "Gtk.TextBuffer"
     # Avoid clash with the `insert` operation.
     bypass_auto_rename = true
 ```
+
+#### conversion_type "Option"
+
+The `conversion_type` variant `Option` is available for types `T` implementing
+`glib::TryFromGlib<Error=GlibNoneError>`. As a reminder, this allows
+implementing `FromGlib` for `Option<T>` and usually goes alongside with `ToGlib`
+for both `T` and `Option<T>`. In this case, `Option<T>` will be used for return
+values (including ffi output arguments). For in-arguments, except if the
+parameter is declared `mandatory`, `impl Into<Option<T>>` so that either an
+`Option<T>` or `T` can be used.
+
+Ex. from `gstreamer-rs`:
+
+``` rust
+[[object]]
+name = "Gst.ClockTime"
+status = "manual"
+conversion_type = "Option"
+```
+
+The type `ClockTime` implements `glib::TryFromGlib<Error=GlibNoneError>` (and
+`OptionToGlib`), which means that its Rust representation can take advantage of
+`Option<ClockTime>`.
+
+Additionally, the user can instruct `gir` to `expect` `Some` or `Ok` results for
+specific arguments or return values. E.g.:
+
+``` rust
+[[object]]
+name = "Gst.Clock"
+status = "generate"
+manual_traits = ["ClockExtManual"]
+    [[object.function]]
+    name = "get_calibration"
+        [[object.function.parameter]]
+        name = "internal"
+        mandatory = true
+```
+
+In the above example, the user instructs gir to consider the `internal` argument
+(which also happens to be an out argument) with type gir `Gst.ClockTime` can be
+represented as a `ClockTime` without the `Option`. This argument is actually
+part of a set of output arguments. With the above gir declaration, the generated
+signature is the following (the implementation takes care of `expect`ing the
+value to be defined):
+
+``` rust
+    fn get_calibration(
+        &self,
+    ) -> (
+        ClockTime,
+        Option<ClockTime>,
+        Option<ClockTime>,
+        Option<ClockTime>,
+    );
+```
+
+For a return value, the mandatory declaration reads:
+
+``` rust
+    [[object.function]]
+    name = "util_get_timestamp"
+    /.../
+        [object.function.return]
+        # always returns a value
+        mandatory = true
+```
+
+#### conversion_type "Result"
+
+The `conversion_type` variant `Result` is available for types `T` implementing
+`glib::TryFromGlib<Error=Err>` where `Err` is neither `GlibNoneError` nor
+`GlibNoneOrInvalidError`. In this case, `Result<T, ErrorType>` will be used for
+return values (including `ffi` output arguments) and the type itself in argument
+position.
+
+In `gstreamer-rs`, the C type `GstStateChangeReturn` can represent both a
+successful or an error return value. In Rust, the `Result` `enum` is the
+idiomatic way of returning an error. In `gstreamer-rs`, bindings to functions
+returning `GstStateChangeReturn` had to be manually implemented so as to return
+`Result<StateChangeSuccess, StateChangeError>`. Note that in this case, the type
+implementing `TryFromGlib` is `StateChangeSuccess` and not
+`GstStateChangeReturn`. These functions can be auto-generated using:
+
+``` rust
+[[object]]
+name = "Gst.StateChangeReturn"
+status = "generate"
+must_use = true
+    [object.conversion_type]
+    variant = "Result"
+    ok_type = "gst::StateChangeSuccess"
+    err_type = "gst::StateChangeError"
+```
+
 ### Generation in API mode
 
 To generate the Rust-user API level, The command is very similar to the previous one. It's better to not put this output in the same directory as where the FFI files are. Just run:
