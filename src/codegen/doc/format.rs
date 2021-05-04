@@ -158,13 +158,15 @@ fn replace_c_types(entry: &str, symbols: &symbols::Info, in_type: &str) -> Strin
                         member,
                         in_type,
                     ),
-                    "#" => format!(
+                    "%" if sym.is_rust_prelude() => {
+                        format!("{}[`{}{}`]", &caps[1], sym.full_rust_name(), member)
+                    }
+                    "#" | "%" => format!(
                         "{}[`{n}{m}`](crate::{n}{m})",
                         &caps[1],
                         n = sym.full_rust_name(),
-                        m = member,
+                        m = member
                     ),
-                    "%" => format!("{}[`{}{}`]", &caps[1], sym.full_rust_name(), member,),
                     c => panic!("Unknown symbol reference {}", c),
                 }
             }
