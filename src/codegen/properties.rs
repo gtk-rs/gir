@@ -120,9 +120,7 @@ fn body(env: &Env, prop: &Property, in_trait: bool) -> Chunk {
         .name(&prop.name)
         .in_trait(in_trait)
         .var_name(&prop.var_name)
-        .is_get(prop.is_get)
-        .is_ref(prop.set_in_ref_mode.is_ref())
-        .is_nullable(*prop.nullable);
+        .is_get(prop.is_get);
 
     if let Ok(type_) = RustType::try_new(env, prop.typ) {
         builder.type_(type_.as_str());
