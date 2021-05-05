@@ -52,9 +52,9 @@ impl Parse for ChildProperty {
 
         Some(ChildProperty {
             name,
+            rename_getter,
             type_name,
             doc_hidden,
-            rename_getter,
         })
     }
 }
