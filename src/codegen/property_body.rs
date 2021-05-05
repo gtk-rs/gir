@@ -12,8 +12,6 @@ pub struct Builder<'a> {
     is_get: bool,
     is_child_property: bool,
     type_: String,
-    is_ref: bool,
-    is_nullable: bool,
     env: &'a Env,
 }
 
@@ -28,8 +26,6 @@ impl<'a> Builder<'a> {
             is_get: Default::default(),
             is_child_property: Default::default(),
             type_: Default::default(),
-            is_ref: Default::default(),
-            is_nullable: Default::default(),
         }
     }
 
@@ -42,8 +38,6 @@ impl<'a> Builder<'a> {
             var_name: Default::default(),
             is_get: Default::default(),
             type_: Default::default(),
-            is_ref: Default::default(),
-            is_nullable: Default::default(),
         }
     }
 
@@ -69,16 +63,6 @@ impl<'a> Builder<'a> {
 
     pub fn type_(&mut self, type_: &str) -> &mut Self {
         self.type_ = type_.into();
-        self
-    }
-
-    pub fn is_ref(&mut self, value: bool) -> &mut Self {
-        self.is_ref = value;
-        self
-    }
-
-    pub fn is_nullable(&mut self, value: bool) -> &mut Self {
-        self.is_nullable = value;
         self
     }
 
