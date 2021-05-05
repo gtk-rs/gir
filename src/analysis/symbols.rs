@@ -11,6 +11,7 @@ pub struct Symbol {
     module_name: Option<String>,
     owner_name: Option<String>,
     name: String,
+    rust_prelude: bool,
 }
 
 impl Symbol {
@@ -71,6 +72,10 @@ impl Symbol {
     pub fn name(&self) -> &str {
         &self.name
     }
+
+    pub fn is_rust_prelude(&self) -> bool {
+        self.rust_prelude
+    }
 }
 
 #[derive(Debug)]
@@ -91,6 +96,7 @@ pub fn run(library: &Library, namespaces: &namespaces::Info) -> Info {
         "NULL",
         Symbol {
             name: "None".into(),
+            rust_prelude: true,
             ..Default::default()
         },
         None,
@@ -99,6 +105,7 @@ pub fn run(library: &Library, namespaces: &namespaces::Info) -> Info {
         "FALSE",
         Symbol {
             name: "false".into(),
+            rust_prelude: true,
             ..Default::default()
         },
         None,
@@ -107,6 +114,7 @@ pub fn run(library: &Library, namespaces: &namespaces::Info) -> Info {
         "TRUE",
         Symbol {
             name: "true".into(),
+            rust_prelude: true,
             ..Default::default()
         },
         None,
