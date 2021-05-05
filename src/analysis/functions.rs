@@ -668,6 +668,7 @@ fn analyze_function(
                     env,
                     func,
                     type_tid,
+                    new_name.as_ref().unwrap_or(&name),
                     callback_info,
                     &mut commented,
                     &mut trampoline,
@@ -876,6 +877,7 @@ fn analyze_async(
     env: &Env,
     func: &library::Function,
     type_tid: library::TypeId,
+    codegen_name: &str,
     callback_info: Option<CallbackInfo>,
     commented: &mut bool,
     trampoline: &mut Option<AsyncTrampoline>,
@@ -955,7 +957,7 @@ fn analyze_async(
 
         *trampoline = Some(AsyncTrampoline {
             is_method,
-            name: format!("{}_trampoline", func.name),
+            name: format!("{}_trampoline", codegen_name),
             finish_func_name: format!("{}::{}", env.main_sys_crate_name(), finish_func_name),
             callback_type,
             bound_name,
@@ -966,7 +968,7 @@ fn analyze_async(
         if !no_future {
             *async_future = Some(AsyncFuture {
                 is_method,
-                name: format!("{}_future", func.name),
+                name: format!("{}_future", codegen_name),
                 success_parameters,
                 error_parameters,
                 assertion: match SafetyAssertionMode::of(env, is_method, &parameters) {
