@@ -352,7 +352,7 @@ pub fn body_chunk(env: &Env, analysis: &analysis::functions::Info) -> Chunk {
         } else {
             warn!(
                 "Async function {} has no associated _finish function",
-                analysis.name
+                analysis.codegen_name(),
             );
         }
     } else {
@@ -451,11 +451,11 @@ pub fn body_chunk_futures(
         writeln!(body, "\tlet cancellable = Cancellable::new();")?;
     }
     if async_future.is_method {
-        writeln!(body, "\tobj.{}(", analysis.name)?;
+        writeln!(body, "\tobj.{}(", analysis.codegen_name())?;
     } else if analysis.type_name.is_ok() {
-        writeln!(body, "\tSelf::{}(", analysis.name)?;
+        writeln!(body, "\tSelf::{}(", analysis.codegen_name())?;
     } else {
-        writeln!(body, "\t{}(", analysis.name)?;
+        writeln!(body, "\t{}(", analysis.codegen_name())?;
     }
 
     // Skip the instance parameter
