@@ -719,7 +719,7 @@ fn analyze_function(
 
     for par in &parameters.rust_parameters {
         // Disallow fundamental arrays without length
-        let is_len_for_par = |t: &&Transformation| {
+        let is_len_for_par = |t: &Transformation| {
             if let TransformationType::Length { ref array_name, .. } = t.transformation_type {
                 array_name == &par.name
             } else {
@@ -727,11 +727,7 @@ fn analyze_function(
             }
         };
         if is_carray_with_direct_elements(env, par.typ)
-            && parameters
-                .transformations
-                .iter()
-                .find(is_len_for_par)
-                .is_none()
+            && !parameters.transformations.iter().any(is_len_for_par)
         {
             commented = true;
         }

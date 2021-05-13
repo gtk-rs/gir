@@ -156,9 +156,9 @@ impl Library {
         if !is_empty_c_type(c_type) {
             return false;
         }
-        if !c_types.contains_key(&tid) {
+        if let std::collections::hash_map::Entry::Vacant(entry) = c_types.entry(tid) {
             if let Some(detected_c_type) = self.c_type_by_type_id(tid) {
-                c_types.insert(tid, detected_c_type);
+                entry.insert(detected_c_type);
             }
         }
         true
