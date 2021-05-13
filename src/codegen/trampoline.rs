@@ -161,9 +161,9 @@ fn func_parameter(
             BoundType::AsRef(_) => t.to_string(),
         },
         None => RustType::builder(env, par.typ)
-            .with_direction(par.direction)
-            .with_nullable(par.nullable)
-            .with_ref_mode(ref_mode)
+            .direction(par.direction)
+            .nullable(par.nullable)
+            .ref_mode(ref_mode)
             .try_build_param()
             .into_string(),
     }

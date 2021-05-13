@@ -78,7 +78,7 @@ pub fn analyze(
 
     if in_trait {
         let type_name = RustType::builder(env, type_tid)
-            .with_ref_mode(RefMode::ByRefFake)
+            .ref_mode(RefMode::ByRefFake)
             .try_build();
         bounds.add_parameter(
             "this",
@@ -114,7 +114,7 @@ pub fn analyze(
 
     if in_trait {
         let type_name = RustType::builder(env, type_tid)
-            .with_ref_mode(RefMode::ByRefFake)
+            .ref_mode(RefMode::ByRefFake)
             .try_build();
         bounds.add_parameter(
             "this",
@@ -126,8 +126,8 @@ pub fn analyze(
 
     for par in &parameters.rust_parameters {
         if let Ok(rust_type) = RustType::builder(env, par.typ)
-            .with_direction(par.direction)
-            .with_try_from_glib(&par.try_from_glib)
+            .direction(par.direction)
+            .try_from_glib(&par.try_from_glib)
             .try_build()
         {
             used_types.extend(rust_type.into_used_types());
@@ -143,7 +143,7 @@ pub fn analyze(
 
     if signal.ret.typ != Default::default() {
         if let Ok(rust_type) = RustType::builder(env, signal.ret.typ)
-            .with_direction(library::ParameterDirection::Out)
+            .direction(library::ParameterDirection::Out)
             .try_build()
         {
             //No GString

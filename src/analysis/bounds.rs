@@ -83,7 +83,7 @@ impl Bounds {
         configured_functions: &[&config::functions::Function],
     ) -> (Option<String>, Option<CallbackInfo>) {
         let type_name = RustType::builder(env, par.typ)
-            .with_ref_mode(RefMode::ByRefFake)
+            .ref_mode(RefMode::ByRefFake)
             .try_build();
         if (r#async && async_param_to_remove(&par.name)) || type_name.is_err() {
             return (None, None);
@@ -113,8 +113,8 @@ impl Bounds {
                             out_parameters.insert(
                                 0,
                                 RustType::builder(env, function.ret.typ)
-                                    .with_direction(function.ret.direction)
-                                    .with_nullable(function.ret.nullable)
+                                    .direction(function.ret.direction)
+                                    .nullable(function.ret.nullable)
                                     .try_build()
                                     .into_string(),
                             );
@@ -138,10 +138,10 @@ impl Bounds {
                     need_is_into_check = par.c_type != "GDestroyNotify";
                     if let Type::Function(_) = env.library.type_(par.typ) {
                         type_string = RustType::builder(env, par.typ)
-                            .with_direction(par.direction)
-                            .with_scope(par.scope)
-                            .with_concurrency(concurrency)
-                            .with_try_from_glib(&par.try_from_glib)
+                            .direction(par.direction)
+                            .scope(par.scope)
+                            .concurrency(concurrency)
+                            .try_from_glib(&par.try_from_glib)
                             .try_build()
                             .into_string();
                         let bound_name = *self.unused.front().unwrap();
@@ -311,7 +311,7 @@ impl PropertyBound {
         Some(PropertyBound {
             alias: TYPE_PARAMETERS_START,
             type_str: RustType::builder(env, type_id)
-                .with_ref_mode(RefMode::ByRefFake)
+                .ref_mode(RefMode::ByRefFake)
                 .try_build()
                 .into_string(),
         })
@@ -342,8 +342,8 @@ fn find_out_parameters(
                 .unwrap_or(param.nullable);
 
             RustType::builder(env, param.typ)
-                .with_direction(param.direction)
-                .with_nullable(nullable)
+                .direction(param.direction)
+                .nullable(nullable)
                 .try_build()
                 .into_string()
         })
@@ -366,7 +366,7 @@ fn find_error_type(env: &Env, function: &Function) -> String {
         .expect("error type");
     if let Type::Record(_) = *env.type_(error_param.typ) {
         return RustType::builder(env, error_param.typ)
-            .with_direction(error_param.direction)
+            .direction(error_param.direction)
             .try_build()
             .into_string();
     }

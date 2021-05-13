@@ -207,7 +207,7 @@ fn analyze_property(
 
     let getter = if readable {
         if let Ok(rust_type) = RustType::builder(env, prop.typ)
-            .with_direction(library::ParameterDirection::Out)
+            .direction(library::ParameterDirection::Out)
             .try_build()
         {
             imports.add_used_types(rust_type.used_types());
@@ -237,7 +237,7 @@ fn analyze_property(
 
     let setter = if writable {
         if let Ok(rust_type) = RustType::builder(env, prop.typ)
-            .with_direction(library::ParameterDirection::In)
+            .direction(library::ParameterDirection::In)
             .try_build()
         {
             imports.add_used_types(rust_type.used_types());

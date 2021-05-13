@@ -314,8 +314,8 @@ fn analyze_callbacks(
                 func.c_identifier.as_ref().unwrap()
             );
             if let Ok(rust_type) = RustType::builder(env, par.typ)
-                .with_direction(par.direction)
-                .with_try_from_glib(&par.try_from_glib)
+                .direction(par.direction)
+                .try_from_glib(&par.try_from_glib)
                 .try_build()
             {
                 used_types.extend(rust_type.into_used_types());
@@ -411,9 +411,9 @@ fn analyze_callbacks(
             }
             if !*commented {
                 *commented |= RustType::builder(env, par.typ)
-                    .with_direction(par.direction)
-                    .with_scope(par.scope)
-                    .with_try_from_glib(&par.try_from_glib)
+                    .direction(par.direction)
+                    .scope(par.scope)
+                    .try_from_glib(&par.try_from_glib)
                     .try_build_param()
                     .is_err();
             }
@@ -644,8 +644,8 @@ fn analyze_function(
                     func.c_identifier.as_ref().unwrap()
                 );
                 if let Ok(rust_type) = RustType::builder(env, par.typ)
-                    .with_direction(par.direction)
-                    .with_try_from_glib(&par.try_from_glib)
+                    .direction(par.direction)
+                    .try_from_glib(&par.try_from_glib)
                     .try_build()
                 {
                     if !rust_type.as_str().ends_with("GString") || par.c_type == "gchar***" {
@@ -681,9 +681,9 @@ fn analyze_function(
                     && *env.library.type_(par.typ)
                         == Type::Fundamental(library::Fundamental::Pointer))
                     && RustType::builder(env, par.typ)
-                        .with_direction(par.direction)
-                        .with_scope(par.scope)
-                        .with_try_from_glib(&par.try_from_glib)
+                        .direction(par.direction)
+                        .scope(par.scope)
+                        .try_from_glib(&par.try_from_glib)
                         .try_build_param()
                         .is_err();
                 if type_error {
@@ -771,7 +771,7 @@ fn analyze_function(
         if let Some(ref trampoline) = trampoline {
             for out in &trampoline.output_params {
                 if let Ok(rust_type) = RustType::builder(env, out.lib_par.typ)
-                    .with_direction(ParameterDirection::Out)
+                    .direction(ParameterDirection::Out)
                     .try_build()
                 {
                     used_types.extend(rust_type.into_used_types());
@@ -779,7 +779,7 @@ fn analyze_function(
             }
             if let Some(ref out) = trampoline.ffi_ret {
                 if let Ok(rust_type) = RustType::builder(env, out.lib_par.typ)
-                    .with_direction(ParameterDirection::Return)
+                    .direction(ParameterDirection::Return)
                     .try_build()
                 {
                     used_types.extend(rust_type.into_used_types());
@@ -1076,15 +1076,15 @@ fn analyze_callback(
         }
         for p in parameters.rust_parameters.iter() {
             if let Ok(rust_type) = RustType::builder(env, p.typ)
-                .with_direction(p.direction)
-                .with_try_from_glib(&p.try_from_glib)
+                .direction(p.direction)
+                .try_from_glib(&p.try_from_glib)
                 .try_build()
             {
                 imports_to_add.extend(rust_type.into_used_types());
             }
         }
         if let Ok(rust_type) = RustType::builder(env, func.ret.typ)
-            .with_direction(ParameterDirection::Return)
+            .direction(ParameterDirection::Return)
             .try_build()
         {
             if !rust_type.as_str().ends_with("GString") {
@@ -1127,9 +1127,9 @@ fn analyze_callback(
                     bound_name: match callback_info {
                         Some(x) => x.bound_name.to_string(),
                         None => match RustType::builder(env, par.typ)
-                            .with_direction(par.direction)
-                            .with_nullable(par.nullable)
-                            .with_scope(par.scope)
+                            .direction(par.direction)
+                            .nullable(par.nullable)
+                            .scope(par.scope)
                             .try_build()
                         {
                             Ok(rust_type) => rust_type.into_string(),

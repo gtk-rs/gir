@@ -89,9 +89,9 @@ fn declaration(env: &Env, prop: &Property) -> String {
         bound = String::new();
         let dir = library::ParameterDirection::In;
         let param_type = RustType::builder(env, prop.typ)
-            .with_direction(dir)
-            .with_nullable(prop.nullable)
-            .with_ref_mode(prop.set_in_ref_mode)
+            .direction(dir)
+            .nullable(prop.nullable)
+            .ref_mode(prop.set_in_ref_mode)
             .try_build_param()
             .into_string();
         format!(", {}: {}", prop.var_name, param_type)
@@ -99,9 +99,9 @@ fn declaration(env: &Env, prop: &Property) -> String {
     let return_str = if prop.is_get {
         let dir = library::ParameterDirection::Return;
         let ret_type = RustType::builder(env, prop.typ)
-            .with_direction(dir)
-            .with_nullable(prop.nullable)
-            .with_ref_mode(prop.get_out_ref_mode)
+            .direction(dir)
+            .nullable(prop.nullable)
+            .ref_mode(prop.get_out_ref_mode)
             .try_build_param()
             .into_string();
         format!(" -> {}", ret_type)

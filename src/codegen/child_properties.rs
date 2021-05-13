@@ -97,9 +97,9 @@ fn declaration(env: &Env, prop: &ChildProperty, is_get: bool) -> String {
     let return_str = if is_get {
         let dir = library::ParameterDirection::Return;
         let ret_type = RustType::builder(env, prop.typ)
-            .with_direction(dir)
-            .with_nullable(prop.nullable)
-            .with_ref_mode(prop.get_out_ref_mode)
+            .direction(dir)
+            .nullable(prop.nullable)
+            .ref_mode(prop.get_out_ref_mode)
             .try_build_param()
             .into_string();
         format!(" -> {}", ret_type)
