@@ -249,7 +249,7 @@ pub fn unhide(functions: &mut Vec<FuncInfo>, specials: &Infos, type_: Type) {
 pub fn analyze_imports(specials: &Infos, imports: &mut Imports) {
     for (type_, info) in specials.traits() {
         use self::Type::*;
-        match *type_ {
+        match type_ {
             Copy if info.first_parameter_mut => {
                 imports.add_with_version("glib::translate::*", info.version)
             }

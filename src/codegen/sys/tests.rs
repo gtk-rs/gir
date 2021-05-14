@@ -67,10 +67,10 @@ fn prepare_ctypes(env: &Env) -> Vec<CType> {
         .iter()
         .filter_map(Option::as_ref)
         .filter(|t| !t.is_incomplete(&env.library))
-        .filter_map(|t| match *t {
-            Type::Record(library::Record { disguised, .. }) if !disguised => {
-                prepare_ctype(env, ns, t)
-            }
+        .filter_map(|t| match t {
+            Type::Record(library::Record {
+                disguised: false, ..
+            }) => prepare_ctype(env, ns, t),
             Type::Alias(_)
             | Type::Class(_)
             | Type::Union(_)
@@ -129,7 +129,7 @@ fn prepare_cconsts(env: &Env) -> Vec<CConstant> {
         .collect();
 
     for typ in &ns.types {
-        let typ = if let Some(ref typ) = *typ {
+        let typ = if let Some(typ) = typ {
             typ
         } else {
             continue;
@@ -138,8 +138,8 @@ fn prepare_cconsts(env: &Env) -> Vec<CConstant> {
         if env.type_status_sys(&full_name).ignored() {
             continue;
         }
-        match *typ {
-            Type::Bitfield(Bitfield { ref members, .. }) => {
+        match typ {
+            Type::Bitfield(Bitfield { members, .. }) => {
                 for member in members {
                     // GLib assumes that bitflags are unsigned integers,
                     // see the GValue machinery around them for example
@@ -149,7 +149,7 @@ fn prepare_cconsts(env: &Env) -> Vec<CConstant> {
                     });
                 }
             }
-            Type::Enumeration(Enumeration { ref members, .. }) => {
+            Type::Enumeration(Enumeration { members, .. }) => {
                 for member in members {
                     // GLib assumes that enums are signed integers,
                     // see the GValue machinery around them for example

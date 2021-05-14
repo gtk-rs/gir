@@ -207,7 +207,7 @@ impl Return {
 }
 
 fn check_rename(rename: &Option<String>, object_name: &str, function_name: &Ident) -> bool {
-    if let Some(ref rename) = rename {
+    if let Some(rename) = rename {
         for c in &["\t", "\n", " "] {
             if rename.contains(c) {
                 error!(

@@ -131,13 +131,14 @@ pub fn analyze_imports<'a>(
 }
 
 fn analyze_type_imports(env: &Env, typ: TypeId, caller_allocates: bool, imports: &mut Imports) {
-    match *env.library.type_(typ) {
-        Type::Alias(ref alias) => analyze_type_imports(env, alias.typ, caller_allocates, imports),
+    match env.library.type_(typ) {
+        Type::Alias(alias) => analyze_type_imports(env, alias.typ, caller_allocates, imports),
         Type::Bitfield(..) | Type::Enumeration(..) => imports.add("std::mem"),
         Type::Fundamental(fund)
-            if fund != Fundamental::Utf8
-                && fund != Fundamental::OsString
-                && fund != Fundamental::Filename =>
+            if !matches!(
+                fund,
+                Fundamental::Utf8 | Fundamental::OsString | Fundamental::Filename
+            ) =>
         {
             imports.add("std::mem")
         }

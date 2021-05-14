@@ -184,14 +184,14 @@ fn get_feature_dependencies(
 
 /// Returns the name of crate being currently generated.
 fn get_crate_name(config: &Config, root: &Table) -> String {
-    if let Some(&Value::Table(ref lib)) = root.get("lib") {
-        if let Some(&Value::String(ref lib_name)) = lib.get("name") {
+    if let Some(Value::Table(lib)) = root.get("lib") {
+        if let Some(Value::String(lib_name)) = lib.get("name") {
             //Converting don't needed as library target names cannot contain hyphens
             return lib_name.to_owned();
         }
     }
-    if let Some(&Value::Table(ref package)) = root.get("package") {
-        if let Some(&Value::String(ref package_name)) = package.get("name") {
+    if let Some(Value::Table(package)) = root.get("package") {
+        if let Some(Value::String(package_name)) = package.get("name") {
             return nameutil::crate_name(package_name);
         }
     }
@@ -207,7 +207,7 @@ fn unset(table: &mut Table, name: &str) {
 }
 
 fn upsert_table<S: Into<String>>(parent: &mut Table, name: S) -> &mut Table {
-    if let Value::Table(ref mut table) = *parent
+    if let Value::Table(table) = parent
         .entry(name.into())
         .or_insert_with(|| Value::Table(toml::map::Map::new()))
     {

@@ -143,24 +143,22 @@ pub fn run(library: &Library, namespaces: &namespaces::Info) -> Info {
                 id: pos as u32,
             };
 
-            match *typ {
-                Type::Alias(Alias {
-                    ref c_identifier, ..
-                }) => {
+            match typ {
+                Type::Alias(Alias { c_identifier, .. }) => {
                     info.insert(c_identifier, symbol, Some(tid));
                 }
                 Type::Enumeration(Enumeration {
-                    ref name,
-                    ref c_type,
-                    ref members,
-                    ref functions,
+                    name,
+                    c_type,
+                    members,
+                    functions,
                     ..
                 })
                 | Type::Bitfield(Bitfield {
-                    ref name,
-                    ref c_type,
-                    ref members,
-                    ref functions,
+                    name,
+                    c_type,
+                    members,
+                    functions,
                     ..
                 }) => {
                     info.insert(c_type, symbol, Some(tid));
@@ -184,21 +182,21 @@ pub fn run(library: &Library, namespaces: &namespaces::Info) -> Info {
                     }
                 }
                 Type::Record(Record {
-                    ref name,
-                    ref c_type,
-                    ref functions,
+                    name,
+                    c_type,
+                    functions,
                     ..
                 })
                 | Type::Class(Class {
-                    ref name,
-                    ref c_type,
-                    ref functions,
+                    name,
+                    c_type,
+                    functions,
                     ..
                 })
                 | Type::Interface(Interface {
-                    ref name,
-                    ref c_type,
-                    ref functions,
+                    name,
+                    c_type,
+                    functions,
                     ..
                 }) => {
                     info.insert(c_type, symbol, Some(tid));

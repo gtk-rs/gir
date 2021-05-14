@@ -77,7 +77,7 @@ pub fn uses(
     outer_version: Option<Version>,
 ) -> Result<()> {
     writeln!(w)?;
-    for (name, ref scope) in imports.iter() {
+    for (name, scope) in imports.iter() {
         if !scope.constraints.is_empty() {
             writeln!(
                 w,
@@ -259,7 +259,7 @@ fn define_boxed_type_internal(
         writeln!(w, "\t\tclear => {},", clear_function_expression,)?;
     }
 
-    if let Some(ref get_type_fn) = get_type_fn {
+    if let Some(get_type_fn) = get_type_fn {
         writeln!(w, "\t\ttype_ => || {}::{}(),", sys_crate_name, get_type_fn)?;
     }
     writeln!(w, "\t}}")?;
@@ -422,7 +422,7 @@ fn define_shared_type_internal(
         "\t\tunref => |ptr| {}::{}(ptr),",
         sys_crate_name, unref_fn
     )?;
-    if let Some(ref get_type_fn) = get_type_fn {
+    if let Some(get_type_fn) = get_type_fn {
         writeln!(w, "\t\ttype_ => || {}::{}(),", sys_crate_name, get_type_fn)?;
     }
     writeln!(w, "\t}}")?;

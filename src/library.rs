@@ -244,7 +244,7 @@ pub enum Fundamental {
 }
 
 impl Fundamental {
-    pub fn requires_conversion(self) -> bool {
+    pub fn requires_conversion(&self) -> bool {
         !matches!(
             self,
             Fundamental::Int8
@@ -651,18 +651,18 @@ impl fmt::Display for Type {
 impl Type {
     pub fn get_name(&self) -> String {
         use self::Type::*;
-        match *self {
+        match self {
             Fundamental(fund) => format!("{:?}", fund),
-            Alias(ref alias) => alias.name.clone(),
-            Enumeration(ref enum_) => enum_.name.clone(),
-            Bitfield(ref bit_field) => bit_field.name.clone(),
-            Record(ref rec) => rec.name.clone(),
-            Union(ref union) => union.name.clone(),
-            Function(ref func) => func.name.clone(),
-            Interface(ref interface) => interface.name.clone(),
+            Alias(alias) => alias.name.clone(),
+            Enumeration(enum_) => enum_.name.clone(),
+            Bitfield(bit_field) => bit_field.name.clone(),
+            Record(rec) => rec.name.clone(),
+            Union(union) => union.name.clone(),
+            Function(func) => func.name.clone(),
+            Interface(interface) => interface.name.clone(),
             Array(type_id) => format!("Array {:?}", type_id),
-            Class(ref class) => class.name.clone(),
-            Custom(ref custom) => custom.name.clone(),
+            Class(class) => class.name.clone(),
+            Custom(custom) => custom.name.clone(),
             CArray(type_id) => format!("CArray {:?}", type_id),
             FixedArray(type_id, size, _) => format!("FixedArray {:?}; {}", type_id, size),
             PtrArray(type_id) => format!("PtrArray {:?}", type_id),
@@ -676,17 +676,17 @@ impl Type {
 
     pub fn get_deprecated_version(&self) -> Option<Version> {
         use self::Type::*;
-        match *self {
+        match self {
             Fundamental(_) => None,
             Alias(_) => None,
-            Enumeration(ref enum_) => enum_.deprecated_version,
-            Bitfield(ref bit_field) => bit_field.deprecated_version,
-            Record(ref rec) => rec.deprecated_version,
+            Enumeration(enum_) => enum_.deprecated_version,
+            Bitfield(bit_field) => bit_field.deprecated_version,
+            Record(rec) => rec.deprecated_version,
             Union(_) => None,
-            Function(ref func) => func.deprecated_version,
-            Interface(ref interface) => interface.deprecated_version,
+            Function(func) => func.deprecated_version,
+            Interface(interface) => interface.deprecated_version,
             Array(_) => None,
-            Class(ref class) => class.deprecated_version,
+            Class(class) => class.deprecated_version,
             Custom(_) => None,
             CArray(_) => None,
             FixedArray(..) => None,
@@ -699,15 +699,15 @@ impl Type {
 
     pub fn get_glib_name(&self) -> Option<&str> {
         use self::Type::*;
-        match *self {
-            Alias(ref alias) => Some(&alias.c_identifier),
-            Enumeration(ref enum_) => Some(&enum_.c_type),
-            Bitfield(ref bit_field) => Some(&bit_field.c_type),
-            Record(ref rec) => Some(&rec.c_type),
-            Union(ref union) => union.c_type.as_ref().map(|s| &s[..]),
-            Function(ref func) => func.c_identifier.as_ref().map(|s| &s[..]),
-            Interface(ref interface) => Some(&interface.c_type),
-            Class(ref class) => Some(&class.c_type),
+        match self {
+            Alias(alias) => Some(&alias.c_identifier),
+            Enumeration(enum_) => Some(&enum_.c_type),
+            Bitfield(bit_field) => Some(&bit_field.c_type),
+            Record(rec) => Some(&rec.c_type),
+            Union(union) => union.c_type.as_ref().map(|s| &s[..]),
+            Function(func) => func.c_identifier.as_ref().map(|s| &s[..]),
+            Interface(interface) => Some(&interface.c_type),
+            Class(class) => Some(&class.c_type),
             _ => None,
         }
     }
@@ -796,13 +796,13 @@ impl Type {
     }
 
     pub fn functions(&self) -> &[Function] {
-        match *self {
-            Type::Enumeration(ref e) => &e.functions,
-            Type::Bitfield(ref b) => &b.functions,
-            Type::Record(ref r) => &r.functions,
-            Type::Union(ref u) => &u.functions,
-            Type::Interface(ref i) => &i.functions,
-            Type::Class(ref c) => &c.functions,
+        match self {
+            Type::Enumeration(e) => &e.functions,
+            Type::Bitfield(b) => &b.functions,
+            Type::Record(r) => &r.functions,
+            Type::Union(u) => &u.functions,
+            Type::Interface(i) => &i.functions,
+            Type::Class(c) => &c.functions,
             _ => &[],
         }
     }
@@ -814,9 +814,9 @@ impl Type {
     /// If the type is an Alias containing a fundamental, it'll return true (whereas
     /// `is_fundamental` won't).
     pub fn is_fundamental_type(&self, env: &Env) -> bool {
-        match *self {
-            Type::Alias(ref x) => env.library.type_(x.typ).is_fundamental_type(env),
-            ref x => x.is_fundamental(),
+        match self {
+            Type::Alias(x) => env.library.type_(x.typ).is_fundamental_type(env),
+            x => x.is_fundamental(),
         }
     }
 
@@ -878,7 +878,7 @@ macro_rules! impl_maybe_ref {
 
         impl MaybeRef<$name> for Type {
             fn maybe_ref(&self) -> Option<&$name> {
-                if let Type::$name(ref x) = *self { Some(x) } else { None }
+                if let Type::$name(x) = self { Some(x) } else { None }
             }
 
             fn to_ref(&self) -> &$name {
@@ -1034,7 +1034,7 @@ impl Library {
         let mut parents = HashSet::new();
 
         for x in &self.namespace(MAIN_NAMESPACE).types {
-            if let Some(ref x) = *x {
+            if let Some(x) = x {
                 let name = x.get_name();
                 let full_name = format!("{}.{}", namespace_name, name);
                 let mut check_methods = true;

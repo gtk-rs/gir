@@ -20,7 +20,7 @@ pub fn generate(
 ) -> Result<()> {
     for (type_, special_info) in specials.traits().iter() {
         if let Some(info) = lookup(functions, &special_info.glib_name) {
-            match *type_ {
+            match type_ {
                 Type::Compare => {
                     if !specials.has_trait(Type::Equal) {
                         generate_eq_compare(w, env, type_name, info, trait_name, scope_version)?;

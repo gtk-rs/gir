@@ -79,8 +79,8 @@ impl ConversionType {
                 UIntPtr => ConversionType::Direct,
                 Unsupported => ConversionType::Unknown,
             },
-            Alias(ref alias) if alias.c_identifier == "GQuark" => ConversionType::Scalar,
-            Alias(ref alias) => ConversionType::of(env, alias.typ),
+            Alias(alias) if alias.c_identifier == "GQuark" => ConversionType::Scalar,
+            Alias(alias) => ConversionType::of(env, alias.typ),
             Bitfield(_) => ConversionType::Scalar,
             Record(_) => ConversionType::Pointer,
             Union(_) => ConversionType::Pointer,
@@ -92,7 +92,7 @@ impl ConversionType {
             List(_) => ConversionType::Pointer,
             SList(_) => ConversionType::Pointer,
             PtrArray(_) => ConversionType::Pointer,
-            Function(super::library::Function { ref name, .. }) if name == "AsyncReadyCallback" => {
+            Function(super::library::Function { name, .. }) if name == "AsyncReadyCallback" => {
                 ConversionType::Direct
             }
             Function(_) => ConversionType::Direct,

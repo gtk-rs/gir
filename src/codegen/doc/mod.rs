@@ -120,7 +120,7 @@ fn generate_doc(w: &mut dyn Write, env: &Env) -> Result<()> {
     }
 
     for (tid, type_) in env.library.namespace_types(MAIN) {
-        if let LType::Enumeration(ref enum_) = *type_ {
+        if let LType::Enumeration(enum_) = type_ {
             if !env
                 .config
                 .objects
@@ -133,7 +133,7 @@ fn generate_doc(w: &mut dyn Write, env: &Env) -> Result<()> {
                     Box::new(move |w, e| create_enum_doc(w, e, enum_)),
                 ));
             }
-        } else if let LType::Bitfield(ref bitfield) = *type_ {
+        } else if let LType::Bitfield(bitfield) = type_ {
             if !env
                 .config
                 .objects
@@ -175,8 +175,8 @@ fn create_object_doc(w: &mut dyn Write, env: &Env, info: &analysis::object::Info
         .get(&info.full_name)
         .expect("Object not found");
 
-    match *env.library.type_(info.type_id) {
-        Type::Class(ref cl) => {
+    match env.library.type_(info.type_id) {
+        Type::Class(cl) => {
             doc = cl.doc.as_ref();
             doc_deprecated = cl.doc_deprecated.as_ref();
             functions = &cl.functions;
@@ -184,7 +184,7 @@ fn create_object_doc(w: &mut dyn Write, env: &Env, info: &analysis::object::Info
             properties = &cl.properties;
             is_abstract = env.library.type_(info.type_id).is_abstract();
         }
-        Type::Interface(ref iface) => {
+        Type::Interface(iface) => {
             doc = iface.doc.as_ref();
             doc_deprecated = iface.doc_deprecated.as_ref();
             functions = &iface.functions;
@@ -438,7 +438,7 @@ static PARAM_NAME: Lazy<Regex> = Lazy::new(|| Regex::new(r"@(\w+)\b").unwrap());
 
 fn fix_param_names<'a>(doc: &'a str, self_name: &Option<String>) -> Cow<'a, str> {
     PARAM_NAME.replace_all(doc, |caps: &Captures<'_>| {
-        if let Some(ref self_name) = *self_name {
+        if let Some(self_name) = self_name {
             if &caps[1] == self_name {
                 return "@self".into();
             }
@@ -483,19 +483,19 @@ where
         .map(|p| p.name.clone());
 
     write_item_doc(w, &ty, |w| {
-        if let Some(ref doc) = *fn_.doc() {
+        if let Some(doc) = fn_.doc() {
             writeln!(
                 w,
                 "{}",
                 reformat_doc(&fix_param_names(doc, &self_name), &symbols, &parent_name)
             )?;
         }
-        if let Some(ver) = *fn_.deprecated_version() {
+        if let Some(ver) = fn_.deprecated_version() {
             writeln!(w, "\n# Deprecated since {}\n", ver)?;
         } else if fn_.doc_deprecated().is_some() {
             writeln!(w, "\n# Deprecated\n")?;
         }
-        if let Some(ref doc) = *fn_.doc_deprecated() {
+        if let Some(doc) = fn_.doc_deprecated() {
             writeln!(
                 w,
                 "{}",

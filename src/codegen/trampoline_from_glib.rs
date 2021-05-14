@@ -70,12 +70,10 @@ pub fn from_glib_xxx(transfer: library::Transfer, is_borrow: bool) -> (String, S
 fn is_need_type_name(env: &Env, type_id: library::TypeId) -> bool {
     if type_id.ns_id == library::INTERNAL_NAMESPACE {
         use crate::library::{Fundamental::*, Type::*};
-        match *env.type_(type_id) {
-            Fundamental(fund) if fund == Utf8 => true,
-            Fundamental(fund) if fund == Filename => true,
-            Fundamental(fund) if fund == OsString => true,
-            _ => false,
-        }
+        matches!(
+            env.type_(type_id),
+            Fundamental(Utf8) | Fundamental(Filename) | Fundamental(OsString)
+        )
     } else {
         false
     }

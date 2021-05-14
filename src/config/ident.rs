@@ -23,8 +23,8 @@ impl PartialEq for Ident {
     fn eq(&self, other: &Ident) -> bool {
         pub use self::Ident::*;
         match (self, other) {
-            (&Name(ref s1), &Name(ref s2)) => s1 == s2,
-            (&Pattern(ref r1), &Pattern(ref r2)) => r1.as_str() == r2.as_str(),
+            (Name(s1), Name(s2)) => s1 == s2,
+            (Pattern(r1), Pattern(r2)) => r1.as_str() == r2.as_str(),
             _ => false,
         }
     }
@@ -65,9 +65,9 @@ impl Ident {
 
     pub fn is_match(&self, name: &str) -> bool {
         use self::Ident::*;
-        match *self {
-            Name(ref n) => name == n,
-            Pattern(ref regex) => regex.is_match(name),
+        match self {
+            Name(n) => name == n,
+            Pattern(regex) => regex.is_match(name),
         }
     }
 }

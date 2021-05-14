@@ -267,7 +267,7 @@ impl Builder {
             for FuncParameter {
                 pos,
                 full_type,
-                callbacks: ref calls,
+                callbacks: calls,
             } in group_by_user_data.values()
             {
                 if calls.len() > 1 {
@@ -362,7 +362,7 @@ impl Builder {
     ) {
         // To prevent to call twice `.assume_init()` on the length variable, we need to
         // remove them from the `uninitialized_vars` array.
-        if let Some(ref array_length_name) = *array_length_name {
+        if let Some(array_length_name) = array_length_name {
             uninitialized_vars.retain(|(x, _)| x != array_length_name);
         }
     }
@@ -447,7 +447,7 @@ impl Builder {
             .unwrap_or_else(|| "Unknown".to_owned());
 
         let mut extra_before_call = "";
-        if let Some(ref full_type) = full_type {
+        if let Some(full_type) = full_type {
             if is_destroy || trampoline.scope.is_async() {
                 body.push(Chunk::Let {
                     name: format!("{}callback", if is_destroy { "_" } else { "" }),
@@ -985,11 +985,11 @@ impl Builder {
                 continue;
             }
             let par = &self.parameters[trans.ind_c];
-            let chunk = match *par {
+            let chunk = match par {
                 In => Chunk::FfiCallParameter {
                     transformation_type: trans.transformation_type.clone(),
                 },
-                Out { ref parameter, .. } => Chunk::FfiCallOutParameter {
+                Out { parameter, .. } => Chunk::FfiCallOutParameter {
                     par: parameter.clone(),
                 },
             };
@@ -1037,7 +1037,7 @@ impl Builder {
         self.parameters
             .iter()
             .filter(|par| {
-                if let Out { ref parameter, .. } = *par {
+                if let Out { parameter, .. } = par {
                     !parameter.is_error
                 } else {
                     false
@@ -1058,9 +1058,9 @@ impl Builder {
 
         for par in outs {
             if let Out {
-                ref parameter,
-                ref mem_mode,
-            } = *par
+                parameter,
+                mem_mode,
+            } = par
             {
                 let val = self.get_uninitialized(mem_mode);
                 if val.is_uninitialized() {
@@ -1082,7 +1082,7 @@ impl Builder {
     }
     fn get_uninitialized(&self, mem_mode: &OutMemMode) -> Chunk {
         use self::OutMemMode::*;
-        match *mem_mode {
+        match mem_mode {
             Uninitialized => Chunk::Uninitialized,
             UninitializedNamed(ref name) => Chunk::UninitializedNamed { name: name.clone() },
             NullPtr => Chunk::NullPtr,
@@ -1099,15 +1099,15 @@ impl Builder {
         let mut chs: Vec<Chunk> = Vec::with_capacity(outs.len());
         for par in outs {
             if let Out {
-                ref parameter,
-                ref mem_mode,
-            } = *par
+                parameter,
+                mem_mode,
+            } = par
             {
                 if self.transformations.iter().any(|tr| {
                     matches!(
-                        tr.transformation_type,
+                        &tr.transformation_type,
                         TransformationType::Length {
-                            ref array_length_name,
+                             array_length_name,
                             ..
                         } if array_length_name == &parameter.name
                     )
@@ -1128,7 +1128,7 @@ impl Builder {
         uninitialized_vars: &mut Vec<(String, bool)>,
     ) -> Chunk {
         let value = Chunk::Custom(parameter.name.clone());
-        if let OutMemMode::UninitializedNamed(_) = *mem_mode {
+        if let OutMemMode::UninitializedNamed(_) = mem_mode {
             value
         } else {
             let array_length_name = self.find_array_length_name(&parameter.name);
@@ -1262,12 +1262,10 @@ fn c_type_mem_mode_lib(
             } else {
                 use crate::library::Type::*;
                 let type_ = env.library.type_(typ);
-                match *type_ {
-                    Fundamental(fund)
-                        if fund == library::Fundamental::Utf8
-                            || fund == library::Fundamental::OsString
-                            || fund == library::Fundamental::Filename =>
-                    {
+                match type_ {
+                    Fundamental(library::Fundamental::Utf8)
+                    | Fundamental(library::Fundamental::OsString)
+                    | Fundamental(library::Fundamental::Filename) => {
                         if transfer == library::Transfer::Full {
                             NullMutPtr
                         } else {
@@ -1301,12 +1299,10 @@ fn type_mem_mode(env: &Env, parameter: &library::Parameter) -> Chunk {
             } else {
                 use crate::library::Type::*;
                 let type_ = env.library.type_(parameter.typ);
-                match *type_ {
-                    Fundamental(fund)
-                        if fund == library::Fundamental::Utf8
-                            || fund == library::Fundamental::OsString
-                            || fund == library::Fundamental::Filename =>
-                    {
+                match type_ {
+                    Fundamental(library::Fundamental::Utf8)
+                    | Fundamental(library::Fundamental::OsString)
+                    | Fundamental(library::Fundamental::Filename) => {
                         if parameter.transfer == library::Transfer::Full {
                             Chunk::NullMutPtr
                         } else {
@@ -1330,8 +1326,8 @@ fn add_chunk_for_type(
     nullable: library::Nullable,
 ) -> bool {
     let type_ = env.type_(typ_);
-    match *type_ {
-        library::Type::Fundamental(ref x) if !x.requires_conversion() => true,
+    match type_ {
+        library::Type::Fundamental(x) if !x.requires_conversion() => true,
         library::Type::Fundamental(library::Fundamental::Boolean) => {
             body.push(Chunk::Custom(format!(
                 "let {0} = from_glib({0});",
@@ -1354,8 +1350,8 @@ fn add_chunk_for_type(
             )));
             true
         }
-        library::Type::Alias(ref x) => add_chunk_for_type(env, x.typ, par, body, ty_name, nullable),
-        ref x => {
+        library::Type::Alias(x) => add_chunk_for_type(env, x.typ, par, body, ty_name, nullable),
+        x => {
             let (begin, end) =
                 crate::codegen::trampoline_from_glib::from_glib_xxx(par.transfer, true);
 

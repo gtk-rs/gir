@@ -33,7 +33,7 @@ pub fn analyze<F: Borrow<library::Constant>>(
             continue;
         }
 
-        match *env.type_(constant.typ) {
+        match env.type_(constant.typ) {
             library::Type::Fundamental(library::Fundamental::Utf8) => (),
             _ => continue,
         }

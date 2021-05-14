@@ -125,11 +125,7 @@ impl TransformationType {
     }
 
     pub fn set_to_glib_extra(&mut self, to_glib_extra_: &str) {
-        if let TransformationType::ToGlibPointer {
-            ref mut to_glib_extra,
-            ..
-        } = *self
-        {
+        if let TransformationType::ToGlibPointer { to_glib_extra, .. } = self {
             *to_glib_extra = to_glib_extra_.to_owned();
         }
     }
@@ -458,7 +454,7 @@ fn is_length(par: &library::Parameter) -> bool {
 fn has_length(env: &Env, typ: TypeId) -> bool {
     use crate::library::Type;
     let typ = env.library.type_(typ);
-    match *typ {
+    match typ {
         Type::Fundamental(fund) => {
             use crate::library::Fundamental::*;
             matches!(fund, Utf8 | Filename | OsString)
@@ -470,7 +466,7 @@ fn has_length(env: &Env, typ: TypeId) -> bool {
         | Type::List(..)
         | Type::SList(..)
         | Type::HashTable(..) => true,
-        Type::Alias(ref alias) => has_length(env, alias.typ),
+        Type::Alias(alias) => has_length(env, alias.typ),
         _ => false,
     }
 }
