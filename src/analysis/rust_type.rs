@@ -387,7 +387,6 @@ impl<'env> RustTypeBuilder<'env> {
                     };
 
                     if let Some(s) = array_type {
-                        skip_option = true;
                         if self.ref_mode.is_ref() {
                             Ok(format!("[{}]", s).into())
                         } else {
