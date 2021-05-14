@@ -8,11 +8,9 @@ pub trait FunctionsMutVisitor {
 
 impl Namespace {
     pub fn visit_functions_mut<V: FunctionsMutVisitor>(&mut self, visitor: &mut V) -> bool {
-        for type_ in &mut self.types {
-            if let Some(type_) = type_ {
-                if !type_.visit_functions_mut(visitor) {
-                    return false;
-                }
+        for type_ in self.types.iter_mut().flatten() {
+            if !type_.visit_functions_mut(visitor) {
+                return false;
             }
         }
         true

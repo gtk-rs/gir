@@ -1033,76 +1033,74 @@ impl Library {
         let namespace_name = self.namespaces[MAIN_NAMESPACE as usize].name.clone();
         let mut parents = HashSet::new();
 
-        for x in &self.namespace(MAIN_NAMESPACE).types {
-            if let Some(x) = x {
-                let name = x.get_name();
-                let full_name = format!("{}.{}", namespace_name, name);
-                let mut check_methods = true;
+        for x in self.namespace(MAIN_NAMESPACE).types.iter().flatten() {
+            let name = x.get_name();
+            let full_name = format!("{}.{}", namespace_name, name);
+            let mut check_methods = true;
 
-                if !not_allowed_ending.iter().any(|s| name.ends_with(s))
-                    || x.is_enumeration()
-                    || x.is_bitfield()
+            if !not_allowed_ending.iter().any(|s| name.ends_with(s))
+                || x.is_enumeration()
+                || x.is_bitfield()
+            {
+                let version = x.get_deprecated_version();
+                let depr_version = version.unwrap_or(env.config.min_cfg_version);
+                if !env.analysis.objects.contains_key(&full_name)
+                    && !env.analysis.records.contains_key(&full_name)
+                    && !env.config.objects.iter().any(|o| o.1.name == full_name)
+                    && depr_version >= env.config.min_cfg_version
                 {
-                    let version = x.get_deprecated_version();
-                    let depr_version = version.unwrap_or(env.config.min_cfg_version);
-                    if !env.analysis.objects.contains_key(&full_name)
-                        && !env.analysis.records.contains_key(&full_name)
-                        && !env.config.objects.iter().any(|o| o.1.name == full_name)
-                        && depr_version >= env.config.min_cfg_version
+                    check_methods = false;
+                    if let Some(version) = version {
+                        println!("[NOT GENERATED] {} (deprecated in {})", full_name, version);
+                    } else {
+                        println!("[NOT GENERATED] {}", full_name);
+                    }
+                } else if let Type::Class(Class { properties, .. }) = x {
+                    if !env
+                        .config
+                        .objects
+                        .get(&full_name)
+                        .map(|obj| obj.generate_builder)
+                        .unwrap_or_else(|| false)
+                        && properties
+                            .iter()
+                            .any(|prop| prop.construct_only || prop.construct || prop.writable)
                     {
-                        check_methods = false;
-                        if let Some(version) = version {
-                            println!("[NOT GENERATED] {} (deprecated in {})", full_name, version);
+                        println!("[NOT GENERATED BUILDER] {}Builder", full_name);
+                    }
+                }
+            }
+            if let Some(tid) = env.library.find_type(0, &full_name) {
+                let gobject_id = env.library.find_type(0, "GObject.Object").unwrap();
+
+                for &super_tid in env.class_hierarchy.supertypes(tid) {
+                    let ty = env.library.type_(super_tid);
+                    let ns_id = super_tid.ns_id as usize;
+                    let full_parent_name =
+                        format!("{}.{}", self.namespaces[ns_id].name, ty.get_name());
+                    if super_tid != gobject_id
+                        && env
+                            .type_status(&super_tid.full_name(&env.library))
+                            .ignored()
+                        && parents.insert(full_parent_name.clone())
+                    {
+                        if let Some(version) = ty.get_deprecated_version() {
+                            println!(
+                                "[NOT GENERATED PARENT] {} (deprecated in {})",
+                                full_parent_name, version
+                            );
                         } else {
-                            println!("[NOT GENERATED] {}", full_name);
-                        }
-                    } else if let Type::Class(Class { properties, .. }) = x {
-                        if !env
-                            .config
-                            .objects
-                            .get(&full_name)
-                            .map(|obj| obj.generate_builder)
-                            .unwrap_or_else(|| false)
-                            && properties
-                                .iter()
-                                .any(|prop| prop.construct_only || prop.construct || prop.writable)
-                        {
-                            println!("[NOT GENERATED BUILDER] {}Builder", full_name);
+                            println!("[NOT GENERATED PARENT] {}", full_parent_name);
                         }
                     }
                 }
-                if let Some(tid) = env.library.find_type(0, &full_name) {
-                    let gobject_id = env.library.find_type(0, "GObject.Object").unwrap();
-
-                    for &super_tid in env.class_hierarchy.supertypes(tid) {
-                        let ty = env.library.type_(super_tid);
-                        let ns_id = super_tid.ns_id as usize;
-                        let full_parent_name =
-                            format!("{}.{}", self.namespaces[ns_id].name, ty.get_name());
-                        if super_tid != gobject_id
-                            && env
-                                .type_status(&super_tid.full_name(&env.library))
-                                .ignored()
-                            && parents.insert(full_parent_name.clone())
-                        {
-                            if let Some(version) = ty.get_deprecated_version() {
-                                println!(
-                                    "[NOT GENERATED PARENT] {} (deprecated in {})",
-                                    full_parent_name, version
-                                );
-                            } else {
-                                println!("[NOT GENERATED PARENT] {}", full_parent_name);
-                            }
-                        }
-                    }
-                    if check_methods {
-                        self.not_bound_functions(
-                            env,
-                            &format!("{}::", full_name),
-                            x.functions(),
-                            "METHOD",
-                        );
-                    }
+                if check_methods {
+                    self.not_bound_functions(
+                        env,
+                        &format!("{}::", full_name),
+                        x.functions(),
+                        "METHOD",
+                    );
                 }
             }
         }
