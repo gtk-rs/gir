@@ -120,16 +120,16 @@ pub fn analyze(
     let parameter = parameter.as_ref().map(|lib_par| {
         let par = analysis::Parameter::from_return_value(env, lib_par, configured_functions);
         if let Ok(rust_type) = RustType::builder(env, typ)
-            .with_direction(par.lib_par.direction)
-            .with_try_from_glib(&par.try_from_glib)
+            .direction(par.lib_par.direction)
+            .try_from_glib(&par.try_from_glib)
             .try_build()
         {
             used_types.extend(rust_type.into_used_types());
         }
 
         commented = RustType::builder(env, typ)
-            .with_direction(func.ret.direction)
-            .with_try_from_glib(&par.try_from_glib)
+            .direction(func.ret.direction)
+            .try_from_glib(&par.try_from_glib)
             .try_build_param()
             .is_err();
 

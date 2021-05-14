@@ -195,8 +195,8 @@ fn generate_builder(w: &mut dyn Write, env: &Env, analysis: &analysis::object::I
                     library::ParameterDirection::Out
                 };
                 let mut param_type = RustType::builder(env, property.typ)
-                    .with_direction(direction)
-                    .with_ref_mode(property.set_in_ref_mode)
+                    .direction(direction)
+                    .ref_mode(property.set_in_ref_mode)
                     .try_build()
                     .into_string();
                 let (param_type_override, bounds, conversion) = match &param_type[..] {

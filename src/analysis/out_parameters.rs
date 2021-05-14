@@ -163,8 +163,8 @@ pub fn can_as_return(env: &Env, par: &library::Parameter) -> bool {
             }
 
             RustType::builder(env, par.typ)
-                .with_direction(ParameterDirection::Out)
-                .with_scope(par.scope)
+                .direction(ParameterDirection::Out)
+                .scope(par.scope)
                 .try_build_param()
                 .is_ok()
         }

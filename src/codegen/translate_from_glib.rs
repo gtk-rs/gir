@@ -37,7 +37,7 @@ impl TranslateFromGlib for Mode {
                 let (pre, post) = match &self.try_from_glib {
                     TryFromGlib::Option => ("from_glib(", ")"),
                     TryFromGlib::OptionMandatory => (
-                        "Option::<_>::from_glib(",
+                        "try_from_glib(",
                         ").expect(\"mandatory glib value is None\")",
                     ),
                     other => panic!("Unexpected {:?} for ConversionType::Option", other),
@@ -46,16 +46,14 @@ impl TranslateFromGlib for Mode {
             }
             Result { .. } => {
                 let (pre, post) = match &self.try_from_glib {
-                    TryFromGlib::Result { ok_type, .. } => {
-                        (format!("{}::try_from_glib(", &ok_type), ")")
-                    }
-                    TryFromGlib::ResultInfallible { ok_type, .. } => (
-                        format!("{}::try_from_glib(", &ok_type),
+                    TryFromGlib::Result { .. } => ("try_from_glib(", ")"),
+                    TryFromGlib::ResultInfallible { .. } => (
+                        "try_from_glib(",
                         ").unwrap_or_else(|err| panic!(\"infallible {}\", err))",
                     ),
                     other => panic!("Unexpected {:?} for ConversionType::Result", other),
                 };
-                (pre, post.to_string())
+                (pre.to_string(), post.to_string())
             }
             Pointer => {
                 let trans = from_glib_xxx(self.transfer, array_length);
@@ -89,8 +87,8 @@ impl TranslateFromGlib for analysis::return_value::Info {
             Some(ref par) => match self.base_tid {
                 Some(tid) => {
                     let rust_type = RustType::builder(env, tid)
-                        .with_direction(par.lib_par.direction)
-                        .with_try_from_glib(&par.try_from_glib)
+                        .direction(par.lib_par.direction)
+                        .try_from_glib(&par.try_from_glib)
                         .try_build();
                     let from_glib_xxx = from_glib_xxx(par.lib_par.transfer, None);
 

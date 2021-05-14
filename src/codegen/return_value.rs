@@ -27,10 +27,10 @@ impl ToReturnValue for library::Parameter {
         is_trampoline: bool,
     ) -> Option<String> {
         let mut name = RustType::builder(env, self.typ)
-            .with_direction(self.direction)
-            .with_nullable(self.nullable)
-            .with_scope(self.scope)
-            .with_try_from_glib(try_from_glib)
+            .direction(self.direction)
+            .nullable(self.nullable)
+            .scope(self.scope)
+            .try_from_glib(try_from_glib)
             .try_build_param()
             .into_string();
         if is_trampoline
@@ -188,10 +188,10 @@ pub fn out_parameters_as_return(env: &Env, analysis: &analysis::functions::Info)
 fn out_parameter_as_return(out: &analysis::Parameter, env: &Env) -> String {
     //TODO: upcasts?
     let name = RustType::builder(env, out.lib_par.typ)
-        .with_direction(ParameterDirection::Return)
-        .with_nullable(out.lib_par.nullable)
-        .with_scope(out.lib_par.scope)
-        .with_try_from_glib(&out.try_from_glib)
+        .direction(ParameterDirection::Return)
+        .nullable(out.lib_par.nullable)
+        .scope(out.lib_par.scope)
+        .try_from_glib(&out.try_from_glib)
         .try_build_param()
         .into_string();
     match ConversionType::of(env, out.lib_par.typ) {

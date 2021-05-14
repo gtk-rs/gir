@@ -120,7 +120,7 @@ fn analyze_property(
         let dir = ParameterDirection::In;
         let set_params = if let Some(bound) = Bounds::type_for(env, typ, nullable) {
             let r_type = RustType::builder(env, typ)
-                .with_ref_mode(RefMode::ByRefFake)
+                .ref_mode(RefMode::ByRefFake)
                 .try_build()
                 .into_string();
             let mut bounds = Bounds::default();
@@ -136,9 +136,9 @@ fn analyze_property(
                 "{}: {}",
                 prop_name,
                 RustType::builder(env, typ)
-                    .with_direction(dir)
-                    .with_nullable(nullable)
-                    .with_ref_mode(set_in_ref_mode)
+                    .direction(dir)
+                    .nullable(nullable)
+                    .ref_mode(set_in_ref_mode)
                     .try_build_param()
                     .into_string()
             )

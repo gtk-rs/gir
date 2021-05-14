@@ -36,11 +36,11 @@ impl ToParameter for CParameter {
                 },
                 None => {
                     let type_name = RustType::builder(env, self.typ)
-                        .with_direction(self.direction)
-                        .with_nullable(self.nullable)
-                        .with_ref_mode(self.ref_mode)
-                        .with_scope(self.scope)
-                        .with_try_from_glib(&self.try_from_glib)
+                        .direction(self.direction)
+                        .nullable(self.nullable)
+                        .ref_mode(self.ref_mode)
+                        .scope(self.scope)
+                        .try_from_glib(&self.try_from_glib)
                         .try_build_param()
                         .into_string();
                     type_str = match ConversionType::of(env, self.typ) {

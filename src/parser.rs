@@ -5,7 +5,6 @@ use crate::{
 };
 use log::{trace, warn};
 use std::{
-    mem::replace,
     path::{Path, PathBuf},
     str::FromStr,
 };
@@ -77,12 +76,9 @@ impl Library {
                 }
                 Ok(())
             }
-            "namespace" => self.read_namespace(
-                parser,
-                elem,
-                package.take(),
-                replace(&mut includes, Vec::new()),
-            ),
+            "namespace" => {
+                self.read_namespace(parser, elem, package.take(), std::mem::take(&mut includes))
+            }
             "attribute" => parser.ignore_element(),
             _ => Err(parser.unexpected_element(elem)),
         })?;

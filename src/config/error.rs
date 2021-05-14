@@ -21,7 +21,7 @@ impl TomlHelper for toml::Value {
             None => return,
         };
         for (key, _) in table.iter() {
-            if options.iter().find(|&entry| entry == key).is_none() {
+            if !options.contains(&key.as_str()) {
                 ret.push(key.clone());
             }
         }

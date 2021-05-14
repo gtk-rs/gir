@@ -205,32 +205,32 @@ impl<'env> RustTypeBuilder<'env> {
         }
     }
 
-    pub fn with_direction(mut self, direction: ParameterDirection) -> Self {
+    pub fn direction(mut self, direction: ParameterDirection) -> Self {
         self.direction = direction;
         self
     }
 
-    pub fn with_nullable(mut self, nullable: Nullable) -> Self {
+    pub fn nullable(mut self, nullable: Nullable) -> Self {
         self.nullable = nullable;
         self
     }
 
-    pub fn with_ref_mode(mut self, ref_mode: RefMode) -> Self {
+    pub fn ref_mode(mut self, ref_mode: RefMode) -> Self {
         self.ref_mode = ref_mode;
         self
     }
 
-    pub fn with_scope(mut self, scope: ParameterScope) -> Self {
+    pub fn scope(mut self, scope: ParameterScope) -> Self {
         self.scope = scope;
         self
     }
 
-    pub fn with_concurrency(mut self, concurrency: library::Concurrency) -> Self {
+    pub fn concurrency(mut self, concurrency: library::Concurrency) -> Self {
         self.concurrency = concurrency;
         self
     }
 
-    pub fn with_try_from_glib(mut self, try_from_glib: &TryFromGlib) -> Self {
+    pub fn try_from_glib(mut self, try_from_glib: &TryFromGlib) -> Self {
         self.try_from_glib = try_from_glib.clone();
         self
     }
@@ -302,12 +302,12 @@ impl<'env> RustTypeBuilder<'env> {
             Alias(ref alias) => {
                 RustType::try_new_and_use(self.env, self.type_id).and_then(|alias_rust_type| {
                     RustType::builder(&self.env, alias.typ)
-                        .with_direction(self.direction)
-                        .with_nullable(self.nullable)
-                        .with_ref_mode(self.ref_mode)
-                        .with_scope(self.scope)
-                        .with_concurrency(self.concurrency)
-                        .with_try_from_glib(&self.try_from_glib)
+                        .direction(self.direction)
+                        .nullable(self.nullable)
+                        .ref_mode(self.ref_mode)
+                        .scope(self.scope)
+                        .concurrency(self.concurrency)
+                        .try_from_glib(&self.try_from_glib)
                         .try_build()
                         .map_any(|_| alias_rust_type)
                 })
@@ -342,9 +342,9 @@ impl<'env> RustTypeBuilder<'env> {
                     _ => self.ref_mode,
                 };
                 RustType::builder(&self.env, inner_tid)
-                    .with_ref_mode(inner_ref_mode)
-                    .with_scope(self.scope)
-                    .with_concurrency(self.concurrency)
+                    .ref_mode(inner_ref_mode)
+                    .scope(self.scope)
+                    .concurrency(self.concurrency)
                     .try_build()
                     .map_any(|rust_type| {
                         rust_type.alter_type(|typ| {
@@ -425,8 +425,8 @@ impl<'env> RustTypeBuilder<'env> {
                     }
 
                     let p_res = RustType::builder(&self.env, p.typ)
-                        .with_direction(p.direction)
-                        .with_nullable(p.nullable)
+                        .direction(p.direction)
+                        .nullable(p.nullable)
                         .try_build();
                     match p_res {
                         Ok(p_rust_type) => {
@@ -467,8 +467,8 @@ impl<'env> RustTypeBuilder<'env> {
                     "Fn"
                 };
                 let ret_res = RustType::builder(&self.env, f.ret.typ)
-                    .with_direction(f.ret.direction)
-                    .with_nullable(f.ret.nullable)
+                    .direction(f.ret.direction)
+                    .nullable(f.ret.nullable)
                     .try_build();
                 let ret = match ret_res {
                     Ok(ret_rust_type) => {
@@ -595,11 +595,11 @@ impl<'env> RustTypeBuilder<'env> {
         }
 
         let rust_type = RustType::builder(&self.env, self.type_id)
-            .with_direction(self.direction)
-            .with_nullable(self.nullable)
-            .with_ref_mode(self.ref_mode)
-            .with_scope(self.scope)
-            .with_try_from_glib(&self.try_from_glib)
+            .direction(self.direction)
+            .nullable(self.nullable)
+            .ref_mode(self.ref_mode)
+            .scope(self.scope)
+            .try_from_glib(&self.try_from_glib)
             .try_build();
         match *type_ {
             Fundamental(fund) => {
@@ -618,11 +618,11 @@ impl<'env> RustTypeBuilder<'env> {
             Alias(ref alias) => rust_type
                 .and_then(|rust_type| {
                     RustType::builder(&self.env, alias.typ)
-                        .with_direction(self.direction)
-                        .with_nullable(self.nullable)
-                        .with_ref_mode(self.ref_mode)
-                        .with_scope(self.scope)
-                        .with_try_from_glib(&self.try_from_glib)
+                        .direction(self.direction)
+                        .nullable(self.nullable)
+                        .ref_mode(self.ref_mode)
+                        .scope(self.scope)
+                        .try_from_glib(&self.try_from_glib)
                         .try_build_param()
                         .map_any(|_| rust_type)
                 })
