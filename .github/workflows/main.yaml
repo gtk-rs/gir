@@ -161,20 +161,31 @@ jobs:
           cd tests/sys/secret-sys
           cargo test -- --nocapture
         if: matrix.os == 'windows-latest'
-      - name: "Acquire gtk-rs"
+      - name: "Acquire gtk3-rs"
         uses: actions/checkout@v2
         with:
-          repository: gtk-rs/gtk-rs
+          repository: gtk-rs/gtk3-rs
           ref: master
-          path: gtk-rs
+          path: gtk3-rs
         if: matrix.os == 'ubuntu-20.04'
-      - name: "Symlink `gir` in GTK"
+      - name: "Symlink `gir` in gtk3-rs"
         run: |
-          rmdir gtk-rs/gir
-          ln -sf .. gtk-rs/gir
-      - name: "Attempt to rebuild GTK gir"
-        run: cd gtk-rs && python3 generator.py --no-fmt --gir-path ../target/release/gir --gir-files-directories ../tests/gir-files/ && rm ../Cargo.* && cargo build
+          rmdir gtk3-rs/gir
+          ln -sf .. gtk3-rs/gir
+      - name: "Attempt to rebuild gtk3-rs gir"
+        run: cd gtk3-rs && python3 generator.py --no-fmt --gir-path ../target/release/gir --gir-files-directories ../tests/gir-files/ && rm ../Cargo.* && cargo build
         if: matrix.os == 'ubuntu-20.04'
+      - name: "Acquire gtk-rs-core"
+        uses: actions/checkout@v2
+        with:
+          repository: gtk-rs/gtk-rs-core
+          ref: master
+          path: gtk-rs-core
+        if: matrix.os == 'ubuntu-20.04'
+      - name: "Symlink `gir` in gtk-rs-core"
+        run: |
+          rmdir gtk-rs-core/gir
+          ln -sf .. gtk-rs-core/gir
       - name: "Rebuild gio"
-        run: cd gtk-rs/gio && cargo test
+        run: cd gtk-rs-core/gio && cargo test
         if: matrix.os == 'ubuntu-20.04'
