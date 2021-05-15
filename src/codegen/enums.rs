@@ -259,7 +259,7 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
         )?;
 
         match domain {
-            ErrorDomain::Quark(ref quark) => {
+            ErrorDomain::Quark(quark) => {
                 writeln!(
                     w,
                     "        static QUARK: once_cell::sync::Lazy<{0}ffi::GQuark> = once_cell::sync::Lazy::new(|| unsafe {{
@@ -270,7 +270,7 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
                     quark,
                 )?;
             }
-            ErrorDomain::Function(ref f) => {
+            ErrorDomain::Function(f) => {
                 writeln!(
                     w,
                     "        unsafe {{ from_glib({sys_crate_name}::{get_quark}()) }}",

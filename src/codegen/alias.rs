@@ -23,7 +23,7 @@ pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>) {
         .collect();
     let mut has_any = false;
     for config in &configs {
-        if let Type::Alias(_) = *env.library.type_(config.type_id.unwrap()) {
+        if let Type::Alias(_) = env.library.type_(config.type_id.unwrap()) {
             has_any = true;
             break;
         }
@@ -43,7 +43,7 @@ pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>) {
 
         mod_rs.push("\nmod alias;".into());
         for config in &configs {
-            if let Type::Alias(ref alias) = *env.library.type_(config.type_id.unwrap()) {
+            if let Type::Alias(alias) = env.library.type_(config.type_id.unwrap()) {
                 mod_rs.push(format!("pub use self::alias::{};", alias.name));
                 generate_alias(env, w, alias, config)?;
             }

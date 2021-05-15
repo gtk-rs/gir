@@ -174,17 +174,16 @@ impl Bounds {
 
     pub fn type_for(env: &Env, type_id: TypeId, nullable: Nullable) -> Option<BoundType> {
         use self::BoundType::*;
-        match *env.library.type_(type_id) {
+        match env.library.type_(type_id) {
             Type::Fundamental(Fundamental::Filename) => Some(AsRef(None)),
             Type::Fundamental(Fundamental::OsString) => Some(AsRef(None)),
             Type::Fundamental(Fundamental::Utf8) if *nullable => None,
-            Type::Class(Class { final_type, .. }) => {
-                if final_type {
-                    None
-                } else {
-                    Some(IsA(None))
-                }
-            }
+            Type::Class(Class {
+                final_type: true, ..
+            }) => None,
+            Type::Class(Class {
+                final_type: false, ..
+            }) => Some(IsA(None)),
             Type::Interface(..) => Some(IsA(None)),
             Type::List(_) | Type::SList(_) | Type::CArray(_) => None,
             Type::Fundamental(_) if *nullable => None,
@@ -195,7 +194,7 @@ impl Bounds {
 
     fn get_to_glib_extra(bound_type: &BoundType) -> String {
         use self::BoundType::*;
-        match *bound_type {
+        match bound_type {
             AsRef(_) => ".as_ref()".to_owned(),
             IsA(_) => ".as_ref()".to_owned(),
             _ => String::new(),
@@ -364,7 +363,7 @@ fn find_error_type(env: &Env, function: &Function) -> String {
         .iter()
         .find(|param| param.direction == ParameterDirection::Out && param.name == "error")
         .expect("error type");
-    if let Type::Record(_) = *env.type_(error_param.typ) {
+    if let Type::Record(_) = env.type_(error_param.typ) {
         return RustType::builder(env, error_param.typ)
             .direction(error_param.direction)
             .try_build()

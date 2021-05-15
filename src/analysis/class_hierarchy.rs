@@ -32,15 +32,11 @@ fn get_node<'a>(
         return hier.get_mut(&tid);
     }
 
-    let direct_supers: Vec<TypeId> = match *library.type_(tid) {
+    let direct_supers: Vec<TypeId> = match library.type_(tid) {
         Type::Class(Class {
-            ref parent,
-            ref implements,
-            ..
+            parent, implements, ..
         }) => parent.iter().chain(implements.iter()).cloned().collect(),
-        Type::Interface(Interface {
-            ref prerequisites, ..
-        }) => prerequisites.clone(),
+        Type::Interface(Interface { prerequisites, .. }) => prerequisites.clone(),
         _ => return None,
     };
 

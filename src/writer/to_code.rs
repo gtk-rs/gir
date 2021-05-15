@@ -65,7 +65,7 @@ impl ToCode for Chunk {
                 ref type_,
             } => {
                 let modif = if is_mut { "mut " } else { "" };
-                let type_string = if let Some(ref type_) = *type_ {
+                let type_string = if let Some(type_) = type_ {
                     let type_strings = type_.to_code(env);
                     format_block_one_line(": ", "", &type_strings, "", "")
                 } else {
@@ -84,7 +84,7 @@ impl ToCode for Chunk {
             NullPtr => vec!["ptr::null()".into()],
             NullMutPtr => vec!["ptr::null_mut()".into()],
             Custom(ref string) => vec![string.clone()],
-            Tuple(ref chs, mode) => {
+            Tuple(ref chs, ref mode) => {
                 #[allow(deprecated)]
                 let with_bracket = match mode {
                     TupleMode::Auto => chs.len() > 1,
@@ -172,7 +172,7 @@ impl ToCode for Chunk {
                     .flat_map(|param| param.to_code(env))
                     .collect();
                 let mut s = format_block_one_line(&prefix, &suffix, &params, "", ", ");
-                if let Some(ref return_value) = return_value {
+                if let Some(return_value) = return_value {
                     s.push_str(&format!(" -> {}", return_value));
                 }
                 s.push_str(" {");

@@ -41,7 +41,7 @@ impl SafetyAssertionMode {
         }
         for par in &params.rust_parameters {
             let c_par = &params.c_parameters[par.ind_c];
-            match *env.library.type_(c_par.typ) {
+            match env.library.type_(c_par.typ) {
                 Class(..) | Interface(..)
                     if !*c_par.nullable && c_par.typ.ns_id == library::MAIN_NAMESPACE =>
                 {

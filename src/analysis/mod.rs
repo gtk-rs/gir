@@ -74,7 +74,7 @@ pub fn run(env: &mut Env) {
     while analyzed > 0 {
         analyzed = 0;
         let mut new_to_analyze: Vec<(TypeId, Vec<TypeId>)> = Vec::with_capacity(to_analyze.len());
-        for &(tid, ref deps) in &to_analyze {
+        for (tid, ref deps) in to_analyze {
             if !is_all_deps_analyzed(env, deps) {
                 new_to_analyze.push((tid, deps.clone()));
                 continue;
@@ -216,7 +216,7 @@ fn analyze(env: &mut Env, tid: TypeId, deps: &[TypeId]) {
         Some(obj) => obj,
         None => return,
     };
-    match *env.library.type_(tid) {
+    match env.library.type_(tid) {
         Type::Class(_) => {
             if let Some(info) = object::class(env, obj, deps) {
                 env.analysis.objects.insert(full_name, info);

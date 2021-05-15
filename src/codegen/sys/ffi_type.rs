@@ -198,7 +198,7 @@ fn ffi_inner(env: &Env, tid: library::TypeId, mut inner: String) -> Result {
 
 fn fix_name(env: &Env, type_id: library::TypeId, name: &str) -> Result {
     if type_id.ns_id == library::INTERNAL_NAMESPACE {
-        match *env.library.type_(type_id) {
+        match env.library.type_(type_id) {
             Type::Array(..)
             | Type::PtrArray(..)
             | Type::List(..)

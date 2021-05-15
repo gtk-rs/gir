@@ -33,7 +33,7 @@ impl RefMode {
         }
 
         use crate::library::Type::*;
-        match *library.type_(tid) {
+        match library.type_(tid) {
             Fundamental(library::Fundamental::Utf8)
             | Fundamental(library::Fundamental::Filename)
             | Fundamental(library::Fundamental::OsString)
@@ -49,7 +49,7 @@ impl RefMode {
                     RefMode::None
                 }
             }
-            Record(ref record) => {
+            Record(record) => {
                 if direction == library::ParameterDirection::In {
                     if let RecordType::Refcounted = RecordType::of(record) {
                         RefMode::ByRef
@@ -67,7 +67,7 @@ impl RefMode {
                     RefMode::None
                 }
             }
-            Alias(ref alias) => RefMode::of(env, alias.typ, direction),
+            Alias(alias) => RefMode::of(env, alias.typ, direction),
             _ => RefMode::None,
         }
     }

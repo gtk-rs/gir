@@ -158,7 +158,7 @@ pub fn analyze<F: Borrow<library::Function>>(
                 }
             }
         }
-        if let Some(ref mut signatures) = signatures {
+        if let Some(signatures) = signatures.as_mut() {
             signatures.insert(name.clone(), signature_params);
         }
 
@@ -856,7 +856,7 @@ pub fn is_carray_with_direct_elements(env: &Env, typ: library::TypeId) -> bool {
     match *env.library.type_(typ) {
         Type::CArray(inner_tid) => {
             use super::conversion_type::ConversionType;
-            match *env.library.type_(inner_tid) {
+            match env.library.type_(inner_tid) {
                 Type::Fundamental(..)
                     if ConversionType::of(env, inner_tid) == ConversionType::Direct =>
                 {
@@ -994,7 +994,7 @@ fn analyze_callback(
 ) -> Option<(Trampoline, Option<usize>)> {
     let mut imports_to_add = Vec::new();
 
-    if let Type::Function(ref func) = rust_type {
+    if let Type::Function(func) = rust_type {
         if par.c_type != "GDestroyNotify" {
             if let Some(user_data) = par.user_data_index {
                 if user_data >= c_parameters.len() {
@@ -1182,11 +1182,11 @@ pub fn find_function<'a>(env: &'a Env, c_identifier: &str) -> Option<&'a Functio
             return Some(f);
         }
         for typ in &namespace.types {
-            if let Some(Type::Class(ref class)) = *typ {
+            if let Some(Type::Class(class)) = typ {
                 if let Some(f) = find(&class.functions) {
                     return Some(f);
                 }
-            } else if let Some(Type::Interface(ref interface)) = *typ {
+            } else if let Some(Type::Interface(interface)) = typ {
                 if let Some(f) = find(&interface.functions) {
                     return Some(f);
                 }

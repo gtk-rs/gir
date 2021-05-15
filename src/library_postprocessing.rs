@@ -15,7 +15,7 @@ impl Namespace {
             .iter()
             .filter_map(|(name, &id)| {
                 if self.types[id as usize].is_none() {
-                    Some(&name[..])
+                    Some(name.as_str())
                 } else {
                     None
                 }
@@ -74,13 +74,13 @@ impl Library {
                     ns_id: ns_id as u16,
                     id: id as u32,
                 };
-                match *type_ {
-                    Type::Class(ref klass) => {
+                match type_ {
+                    Type::Class(klass) => {
                         if self.detect_empty_signals_c_types(&klass.signals, &mut c_types) {
                             tids.push(tid);
                         }
                     }
-                    Type::Interface(ref iface) => {
+                    Type::Interface(iface) => {
                         if self.detect_empty_signals_c_types(&iface.signals, &mut c_types) {
                             tids.push(tid);
                         }
@@ -107,17 +107,15 @@ impl Library {
             if !is_empty_c_type(c_type) {
                 return;
             }
-            if let Some(ref mut s) = c_types.get(&tid) {
+            if let Some(s) = c_types.get(&tid) {
                 *c_type = s.clone();
             }
         }
 
         for tid in tids {
-            match *self.type_mut(tid) {
-                Type::Class(ref mut klass) => {
-                    update_empty_signals_c_types(&mut klass.signals, &c_types)
-                }
-                Type::Interface(ref mut iface) => {
+            match self.type_mut(tid) {
+                Type::Class(klass) => update_empty_signals_c_types(&mut klass.signals, &c_types),
+                Type::Interface(iface) => {
                     update_empty_signals_c_types(&mut iface.signals, &c_types)
                 }
                 _ => (),
@@ -177,8 +175,8 @@ impl Library {
 
     fn is_referenced_type(&self, type_: &Type) -> bool {
         use crate::library::Type::*;
-        match *type_ {
-            Alias(ref alias) => self.is_referenced_type(self.type_(alias.typ)),
+        match type_ {
+            Alias(alias) => self.is_referenced_type(self.type_(alias.typ)),
             Record(..) | Union(..) | Class(..) | Interface(..) => true,
             _ => false,
         }
@@ -192,7 +190,7 @@ impl Library {
             for type_ in &ns.types {
                 let type_ = type_.as_ref().unwrap(); //Always contains something
 
-                if let Type::Record(ref record) = *type_ {
+                if let Type::Record(record) = type_ {
                     if let Some(ref struct_for) = record.gtype_struct_for {
                         if let Some(struct_for_tid) = self.find_type(ns_id as u16, struct_for) {
                             structs_and_types.push((record.c_type.clone(), struct_for_tid));
@@ -203,16 +201,16 @@ impl Library {
         }
 
         for (gtype_struct_c_type, struct_for_tid) in structs_and_types {
-            match *self.type_mut(struct_for_tid) {
-                Type::Class(ref mut klass) => {
+            match self.type_mut(struct_for_tid) {
+                Type::Class(klass) => {
                     klass.c_class_type = Some(gtype_struct_c_type);
                 }
 
-                Type::Interface(ref mut iface) => {
+                Type::Interface(iface) => {
                     iface.c_class_type = Some(gtype_struct_c_type);
                 }
 
-                ref x => unreachable!(
+                x => unreachable!(
                     "Something other than a class or interface has a class struct: {:?}",
                     x
                 ),
@@ -228,14 +226,14 @@ impl Library {
                 let type_struct;
                 let c_class_type;
 
-                match *type_ {
-                    Type::Class(ref klass) => {
+                match type_ {
+                    Type::Class(klass) => {
                         name = &klass.name;
                         type_struct = &klass.type_struct;
                         c_class_type = &klass.c_class_type;
                     }
 
-                    Type::Interface(ref iface) => {
+                    Type::Interface(iface) => {
                         name = &iface.name;
                         type_struct = &iface.type_struct;
                         c_class_type = &iface.c_class_type;
@@ -246,7 +244,7 @@ impl Library {
                     }
                 }
 
-                if let Some(ref type_struct) = *type_struct {
+                if let Some(type_struct) = type_struct {
                     let type_struct_tid = self.find_type(ns_id as u16, type_struct);
                     if type_struct_tid.is_none() {
                         panic!(
@@ -257,7 +255,7 @@ impl Library {
 
                     let type_struct_type = self.type_(type_struct_tid.unwrap());
 
-                    if let Type::Record(ref r) = *type_struct_type {
+                    if let Type::Record(r) = type_struct_type {
                         if r.gtype_struct_for.as_ref() != Some(name) {
                             if let Some(ref gtype_struct_for) = r.gtype_struct_for {
                                 panic!("\"{}\" has glib:type-struct=\"{}\" but the corresponding record \"{}\" has glib:is-gtype-struct-for={:?}",
@@ -278,7 +276,7 @@ impl Library {
                             type_struct
                         );
                     }
-                } else if let Some(ref c) = *c_class_type {
+                } else if let Some(c) = c_class_type {
                     panic!("\"{}\" has no glib:type-struct but there is an element with glib:is-gtype-struct-for=\"{}\"",
                            name,
                            c);
@@ -303,22 +301,10 @@ impl Library {
                     ns_id: ns_id as u16,
                     id: id as u32,
                 };
-                match *type_ {
-                    Type::Class(Class {
-                        ref name,
-                        ref fields,
-                        ..
-                    })
-                    | Type::Record(Record {
-                        ref name,
-                        ref fields,
-                        ..
-                    })
-                    | Type::Union(Union {
-                        ref name,
-                        ref fields,
-                        ..
-                    }) => {
+                match type_ {
+                    Type::Class(Class { name, fields, .. })
+                    | Type::Record(Record { name, fields, .. })
+                    | Type::Union(Union { name, fields, .. }) => {
                         for (fid, field) in fields.iter().enumerate() {
                             if nameutil::needs_mangling(&field.name) {
                                 let new_name = nameutil::mangle_keywords(&*field.name).into_owned();
@@ -336,12 +322,12 @@ impl Library {
                                 actions.push((tid, fid, Action::SetCType(c_type.to_owned())));
                                 continue;
                             }
-                            if let Type::Fundamental(Fundamental::Pointer) = *field_type {
+                            if let Type::Fundamental(Fundamental::Pointer) = field_type {
                                 // For example SoupBuffer is missing c:type for data field.
                                 actions.push((tid, fid, Action::SetCType("void*".to_owned())));
                                 continue;
                             }
-                            if let Type::FixedArray(..) = *field_type {
+                            if let Type::FixedArray(..) = field_type {
                                 // fixed-size Arrays can only have inner c_type
                                 // HACK: field c_type used only in sys mode for pointer checking
                                 // so any string without * will work
@@ -358,22 +344,10 @@ impl Library {
         }
         let ignore_missing_ctype = ["padding", "reserved", "_padding", "_reserved"];
         for (tid, fid, action) in actions {
-            match *self.type_mut(tid) {
-                Type::Class(Class {
-                    ref name,
-                    ref mut fields,
-                    ..
-                })
-                | Type::Record(Record {
-                    ref name,
-                    ref mut fields,
-                    ..
-                })
-                | Type::Union(Union {
-                    ref name,
-                    ref mut fields,
-                    ..
-                }) => match action {
+            match self.type_mut(tid) {
+                Type::Class(Class { name, fields, .. })
+                | Type::Record(Record { name, fields, .. })
+                | Type::Union(Union { name, fields, .. }) => match action {
                     Action::SetCType(c_type) => {
                         // Don't be verbose when internal fields such as padding don't provide a c-type
                         if !ignore_missing_ctype.contains(&fields[fid].name.as_str()) {
@@ -411,10 +385,8 @@ impl Library {
                     ns_id: ns_id as u16,
                     id: id as u32,
                 };
-                match *type_ {
-                    Type::Union(Union { ref fields, .. })
-                        if fields.as_slice().is_incomplete(self) =>
-                    {
+                match type_ {
+                    Type::Union(Union { fields, .. }) if fields.as_slice().is_incomplete(self) => {
                         unrepresentable.push(tid)
                     }
                     _ => {}
@@ -422,12 +394,8 @@ impl Library {
             }
         }
         for tid in unrepresentable {
-            match *self.type_mut(tid) {
-                Type::Union(Union {
-                    ref name,
-                    ref mut fields,
-                    ..
-                }) => {
+            match self.type_mut(tid) {
+                Type::Union(Union { name, fields, .. }) => {
                     info!("Type `{}` is not representable.", name);
                     fields.clear();
                 }
@@ -438,7 +406,7 @@ impl Library {
 
     fn has_subtypes(&self, parent_tid: TypeId) -> bool {
         for (tid, _) in self.types() {
-            if let Type::Class(ref class) = *self.type_(tid) {
+            if let Type::Class(class) = self.type_(tid) {
                 if class.parent == Some(parent_tid) {
                     return true;
                 }
@@ -462,7 +430,7 @@ impl Library {
             for (id, type_) in ns.types.iter().enumerate() {
                 let type_ = type_.as_ref().unwrap(); //Always contains something
 
-                if let Type::Class(ref klass) = *type_ {
+                if let Type::Class(klass) = type_ {
                     let tid = TypeId {
                         ns_id: ns_id as u16,
                         id: id as u32,
@@ -488,7 +456,7 @@ impl Library {
                         let class_struct_known = if let Some(class_record_tid) =
                             self.find_type(ns_id as u16, klass.type_struct.as_ref().unwrap())
                         {
-                            if let Type::Record(ref record) = self.type_(class_record_tid) {
+                            if let Type::Record(record) = self.type_(class_record_tid) {
                                 !record.disguised
                             } else {
                                 unreachable!("Type {} with non-record class", full_name);
@@ -507,10 +475,7 @@ impl Library {
         }
 
         for tid in final_types {
-            if let Type::Class(Class {
-                ref mut final_type, ..
-            }) = *self.type_mut(tid)
-            {
+            if let Type::Class(Class { final_type, .. }) = self.type_mut(tid) {
                 *final_type = true;
             } else {
                 unreachable!();
@@ -529,7 +494,7 @@ impl Library {
                     id: id as u32,
                 };
 
-                if let Type::Enumeration(ref enum_) = *type_ {
+                if let Type::Enumeration(enum_) = type_ {
                     if let Some(ErrorDomain::Quark(ref domain)) = enum_.error_domain {
                         let domain = domain.replace("-", "_");
 
@@ -574,11 +539,11 @@ impl Library {
                                 id: id as u32,
                             };
 
-                            let functions = match *type_ {
-                                Type::Enumeration(Enumeration { ref functions, .. })
-                                | Type::Class(Class { ref functions, .. })
-                                | Type::Record(Record { ref functions, .. })
-                                | Type::Interface(Interface { ref functions, .. }) => functions,
+                            let functions = match type_ {
+                                Type::Enumeration(Enumeration { functions, .. })
+                                | Type::Class(Class { functions, .. })
+                                | Type::Record(Record { functions, .. })
+                                | Type::Interface(Interface { functions, .. }) => functions,
                                 _ => continue,
                             };
 
@@ -604,19 +569,11 @@ impl Library {
         for (ns_id, enum_tid, domain_tid, function_name) in error_domains {
             if config.work_mode != WorkMode::Sys {
                 if let Some(domain_tid) = domain_tid {
-                    match *self.type_mut(domain_tid) {
-                        Type::Enumeration(Enumeration {
-                            ref mut functions, ..
-                        })
-                        | Type::Class(Class {
-                            ref mut functions, ..
-                        })
-                        | Type::Record(Record {
-                            ref mut functions, ..
-                        })
-                        | Type::Interface(Interface {
-                            ref mut functions, ..
-                        }) => {
+                    match self.type_mut(domain_tid) {
+                        Type::Enumeration(Enumeration { functions, .. })
+                        | Type::Class(Class { functions, .. })
+                        | Type::Record(Record { functions, .. })
+                        | Type::Interface(Interface { functions, .. }) => {
                             let pos = functions
                                 .iter()
                                 .position(|f| f.c_identifier.as_ref() == Some(&function_name))
@@ -635,7 +592,7 @@ impl Library {
                 }
             }
 
-            if let Type::Enumeration(ref mut enum_) = *self.type_mut(enum_tid) {
+            if let Type::Enumeration(enum_) = self.type_mut(enum_tid) {
                 assert!(enum_.error_domain.is_some());
                 enum_.error_domain = Some(ErrorDomain::Function(function_name));
             } else {

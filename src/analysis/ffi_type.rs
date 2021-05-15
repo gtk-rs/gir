@@ -34,19 +34,17 @@ pub fn ffi_type(env: &Env, tid: TypeId, c_type: &str) -> Result {
                 .maybe_ref_as::<Fundamental>()
                 .is_some()
             {
-                match *env.library.type_(tid) {
+                match env.library.type_(tid) {
                     Type::FixedArray(_, size, _) => {
                         ffi_inner(env, c_tid, c_type).map_any(|rust_type| {
                             rust_type.alter_type(|typ_| format!("[{}; {}]", typ_, size))
                         })
                     }
                     Type::Class(Class {
-                        c_type: ref expected,
-                        ..
+                        c_type: expected, ..
                     })
                     | Type::Interface(Interface {
-                        c_type: ref expected,
-                        ..
+                        c_type: expected, ..
                     }) if is_gpointer(c_type) => {
                         info!("[c:type `gpointer` instead of `*mut {}`, fixing]", expected);
                         ffi_inner(env, tid, expected).map_any(|rust_type| {
@@ -174,7 +172,7 @@ fn ffi_inner(env: &Env, tid: TypeId, inner: &str) -> Result {
 
 fn fix_name(env: &Env, type_id: TypeId, name: &str) -> Result {
     if type_id.ns_id == INTERNAL_NAMESPACE {
-        match *env.library.type_(type_id) {
+        match env.library.type_(type_id) {
             Type::Array(..)
             | Type::PtrArray(..)
             | Type::List(..)

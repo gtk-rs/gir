@@ -149,14 +149,14 @@ impl IsIncomplete for TypeId {
 
 impl IsIncomplete for Type {
     fn is_incomplete(&self, lib: &Library) -> bool {
-        match *self {
-            Type::Fundamental(ref fundamental) => fundamental.is_incomplete(lib),
-            Type::Alias(ref alias) => alias.is_incomplete(lib),
+        match self {
+            Type::Fundamental(fundamental) => fundamental.is_incomplete(lib),
+            Type::Alias(alias) => alias.is_incomplete(lib),
             Type::FixedArray(tid, ..) => tid.is_incomplete(lib),
-            Type::Class(ref klass) => klass.is_incomplete(lib),
-            Type::Record(ref record) => record.is_incomplete(lib),
-            Type::Union(ref union) => union.is_incomplete(lib),
-            Type::Function(ref function) => function.is_incomplete(lib),
+            Type::Class(klass) => klass.is_incomplete(lib),
+            Type::Record(record) => record.is_incomplete(lib),
+            Type::Union(union) => union.is_incomplete(lib),
+            Type::Function(function) => function.is_incomplete(lib),
             Type::Interface(..) => true,
             Type::Custom(..)
             | Type::Enumeration(..)
@@ -206,11 +206,11 @@ impl IsExternal for Alias {
 
 impl IsExternal for Type {
     fn is_external(&self, lib: &Library) -> bool {
-        match *self {
-            Type::Alias(ref alias) => alias.is_external(lib),
-            Type::Class(ref klass) => klass.is_external(lib),
-            Type::Record(ref record) => record.is_external(lib),
-            Type::Union(ref union) => union.is_external(lib),
+        match self {
+            Type::Alias(alias) => alias.is_external(lib),
+            Type::Class(klass) => klass.is_external(lib),
+            Type::Record(record) => record.is_external(lib),
+            Type::Union(union) => union.is_external(lib),
             Type::Interface(..) => true,
             Type::Custom(..)
             | Type::Fundamental(..)

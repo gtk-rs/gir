@@ -147,7 +147,7 @@ pub fn analyze(
         let nullable = nullable_override.unwrap_or(par.nullable);
 
         let conversion_type = {
-            match *env.library.type_(par.typ) {
+            match env.library.type_(par.typ) {
                 library::Type::Fundamental(library::Fundamental::Utf8)
                 | library::Type::Record(..)
                 | library::Type::Interface(..)
@@ -211,7 +211,7 @@ fn apply_transformation_type(
         }
         TransformationType::TreePath => {
             let type_ = env.type_(transform.typ);
-            if let library::Type::Fundamental(library::Fundamental::Utf8) = *type_ {
+            if let library::Type::Fundamental(library::Fundamental::Utf8) = type_ {
                 if let Some(type_tid) = env.library.find_type(0, "Gtk.TreePath") {
                     transform.typ = type_tid;
                     transform.conversion_type = ConversionType::Direct;

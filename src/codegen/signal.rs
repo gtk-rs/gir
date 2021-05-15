@@ -204,8 +204,8 @@ fn declaration(analysis: &analysis::signals::Info, function_type: &Option<String
 }
 
 fn bounds(function_type: &Option<String>) -> String {
-    match *function_type {
-        Some(ref type_) => format!("F: {}", type_),
+    match function_type {
+        Some(type_) => format!("F: {}", type_),
         _ => "Unsupported or ignored types".to_owned(),
     }
 }
