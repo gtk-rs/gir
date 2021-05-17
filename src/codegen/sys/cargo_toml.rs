@@ -59,13 +59,7 @@ fn fill_empty(root: &mut Table, env: &Env, crate_name: &str) {
             format!("{}-sys", ext_lib.crate_name)
         };
         let dep = upsert_table(deps, &*ext_package);
-        if ext_lib.crate_name == "cairo" {
-            set_string(dep, "git", "https://github.com/gtk-rs/cairo");
-        } else if ext_package.starts_with("sourceview") {
-            set_string(dep, "git", "https://github.com/gtk-rs/sourceview");
-        } else {
-            set_string(dep, "git", "https://github.com/gtk-rs/sys");
-        }
+        set_string(dep, "git", "https://github.com/gtk-rs/gtk-rs-core");
     }
 }
 
