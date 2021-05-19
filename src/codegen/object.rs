@@ -1,4 +1,5 @@
 use super::{child_properties, function, general, properties, signal, trait_impls};
+use crate::codegen::general::cfg_deprecated_string;
 use crate::{
     analysis::special_functions::Type,
     analysis::{self, rust_type::RustType},
@@ -219,19 +220,30 @@ fn generate_builder(w: &mut dyn Write, env: &Env, analysis: &analysis::object::I
                 let name = nameutil::mangle_keywords(nameutil::signal_to_snake(&property.name));
                 let version_condition_string =
                     version_condition_string(env, property.version, false, 1);
+                let deprecated_string =
+                    cfg_deprecated_string(env, property.deprecated_version, false, 1);
                 if let Some(ref version_condition_string) = version_condition_string {
                     writeln!(w, "{}", version_condition_string)?;
                 }
+                if let Some(ref deprecated_string) = deprecated_string {
+                    writeln!(w, "{}", deprecated_string)?;
+                }
                 writeln!(w, "    {}: Option<{}>,", name, type_string)?;
-                let prefix = version_condition_string
+                let version_prefix = version_condition_string
                     .map(|version| format!("{}\n", version))
                     .unwrap_or_default();
+
+                let deprecation_prefix = deprecated_string
+                    .map(|version| format!("{}\n", version))
+                    .unwrap_or_default();
+
                 methods.push(format!(
-                    "\n{prefix}    pub fn {name}{bounds}(mut self, {name}: {param_type}) -> Self {{
+                    "\n{version_prefix}{deprecation_prefix}    pub fn {name}{bounds}(mut self, {name}: {param_type}) -> Self {{
         self.{name} = Some({name}{conversion});
         self
     }}",
-                    prefix = prefix,
+                    version_prefix = version_prefix,
+                    deprecation_prefix = deprecation_prefix,
                     param_type = param_type,
                     name = name,
                     conversion = conversion,
