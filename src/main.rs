@@ -105,15 +105,6 @@ fn build_config() -> Result<RunKind, String> {
     .map(RunKind::Config)
 }
 
-#[cfg_attr(test, allow(dead_code))]
-fn main() {
-    if let Err(ref e) = do_main() {
-        eprintln!("{}", e);
-
-        ::std::process::exit(1);
-    }
-}
-
 fn run_check(check_gir_file: &str) -> Result<(), String> {
     let path = PathBuf::from(check_gir_file);
     if !path.is_file() {
@@ -134,7 +125,7 @@ fn run_check(check_gir_file: &str) -> Result<(), String> {
     library.read_file(&[parent], &mut vec![lib_name.to_owned()])
 }
 
-fn do_main() -> Result<(), String> {
+fn main() -> Result<(), String> {
     if std::env::var_os("RUST_LOG").is_none() {
         std::env::set_var("RUST_LOG", "gir=warn,libgir=warn");
     }
