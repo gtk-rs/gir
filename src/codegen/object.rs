@@ -180,6 +180,12 @@ fn generate_builder(w: &mut dyn Write, env: &Env, analysis: &analysis::object::I
     let mut methods = vec![];
     let mut properties = vec![];
     writeln!(w, "#[derive(Clone, Default)]")?;
+    writeln!(
+        w,
+        "// rustdoc-stripper-ignore-next
+        /// A builder for generating a [`{}`].",
+        analysis.name,
+    )?;
     writeln!(w, "pub struct {}Builder {{", analysis.name)?;
     for property in &analysis.builder_properties {
         match RustType::try_new(env, property.typ) {
@@ -246,20 +252,24 @@ fn generate_builder(w: &mut dyn Write, env: &Env, analysis: &analysis::object::I
         w,
         "}}
 
-impl {}Builder {{
+impl {name}Builder {{
+    // rustdoc-stripper-ignore-next
+    /// Create a new [`{name}Builder`].
     pub fn new() -> Self {{
         Self::default()
     }}
 ",
-        analysis.name
+        name = analysis.name
     )?;
 
     writeln!(
         w,
         "
-    pub fn build(self) -> {} {{
+    // rustdoc-stripper-ignore-next
+    /// Build the [`{name}`].
+    pub fn build(self) -> {name} {{
         let mut properties: Vec<(&str, &dyn ToValue)> = vec![];",
-        analysis.name
+        name = analysis.name
     )?;
     for property in &properties {
         let name = nameutil::mangle_keywords(nameutil::signal_to_snake(&property.name));
