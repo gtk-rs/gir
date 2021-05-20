@@ -201,13 +201,8 @@ fn create_object_doc(w: &mut dyn Write, env: &Env, info: &analysis::object::Info
     let manual_traits = get_type_manual_traits_for_implements(env, info);
 
     write_item_doc(w, &ty, |w| {
-        if let Some(ver) = info.deprecated_version {
-            write!(w, "`[Deprecated since {}]` ", ver)?;
-        }
         if let Some(doc) = doc_deprecated {
             writeln!(w, "{}", reformat_doc(doc, &symbols, &info.name))?;
-        } else if doc_deprecated.is_some() {
-            write!(w, "`[Deprecated]` ")?;
         }
         if let Some(doc) = doc {
             writeln!(w, "{}", reformat_doc(doc, &symbols, &info.name))?;
@@ -282,11 +277,6 @@ fn create_object_doc(w: &mut dyn Write, env: &Env, info: &analysis::object::Info
 
     if has_trait {
         write_item_doc(w, &ty_ext, |w| {
-            if let Some(ver) = info.deprecated_version {
-                write!(w, "`[Deprecated since {}]` ", ver)?;
-            } else if doc_deprecated.is_some() {
-                write!(w, "`[Deprecated]` ")?;
-            }
             writeln!(w, "Trait containing all `{}` methods.", ty.name)?;
 
             let mut implementors = Some(info.type_id)
@@ -376,9 +366,6 @@ fn create_record_doc(w: &mut dyn Write, env: &Env, info: &analysis::record::Info
 
     write_item_doc(w, &ty, |w| {
         if let Some(ref doc) = record.doc {
-            if let Some(ver) = info.deprecated_version {
-                write!(w, "`[Deprecated since {}]` ", ver)?;
-            }
             writeln!(w, "{}", reformat_doc(doc, &symbols, &info.name))?;
         }
         if let Some(ver) = info.deprecated_version {
