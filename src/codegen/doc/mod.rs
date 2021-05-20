@@ -5,7 +5,7 @@ use crate::{
     config::gobjects::GObject,
     env::Env,
     file_saver::save_to_file,
-    library::{Type as LType, *},
+    library::{self, Type as LType, *},
     nameutil,
     traits::*,
     version::Version,
@@ -145,6 +145,24 @@ fn generate_doc(w: &mut dyn Write, env: &Env) -> Result<()> {
                     &bitfield.name[..],
                     Box::new(move |w, e| create_bitfield_doc(w, e, bitfield)),
                 ));
+            }
+        }
+    }
+
+    if let Some(ref global_functions) = env.analysis.global_functions {
+        let ns = env.library.namespace(library::MAIN_NAMESPACE);
+        let functions = ns
+            .functions
+            .iter()
+            .filter(|f| f.kind == library::FunctionKind::Global);
+
+        for function in functions {
+            if let Some(ref c_identifier) = function.c_identifier {
+                let fn_new_name = (&global_functions.functions)
+                    .iter()
+                    .find(move |f| &f.glib_name == c_identifier)
+                    .and_then(|analysed_f| analysed_f.new_name.clone());
+                create_fn_doc(w, env, function, None, fn_new_name)?;
             }
         }
     }
