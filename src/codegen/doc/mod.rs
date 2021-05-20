@@ -168,6 +168,7 @@ fn create_object_doc(w: &mut dyn Write, env: &Env, info: &analysis::object::Info
     let signals: &[Signal];
     let properties: &[Property];
     let is_abstract;
+    let has_builder;
 
     let obj = env
         .config
@@ -183,6 +184,7 @@ fn create_object_doc(w: &mut dyn Write, env: &Env, info: &analysis::object::Info
             signals = &cl.signals;
             properties = &cl.properties;
             is_abstract = env.library.type_(info.type_id).is_abstract();
+            has_builder = obj.generate_builder;
         }
         Type::Interface(iface) => {
             doc = iface.doc.as_ref();
@@ -191,6 +193,7 @@ fn create_object_doc(w: &mut dyn Write, env: &Env, info: &analysis::object::Info
             signals = &iface.signals;
             properties = &iface.properties;
             is_abstract = false;
+            has_builder = false;
         }
         _ => unreachable!(),
     }
@@ -233,6 +236,49 @@ fn create_object_doc(w: &mut dyn Write, env: &Env, info: &analysis::object::Info
         }
         Ok(())
     })?;
+
+    if has_builder {
+        let builder_ty = TypeStruct::new(SType::Impl, &format!("{}Builder", info.name));
+        let parent_name = builder_ty.name.clone();
+
+        let mut builder_properties: Vec<_> = properties.iter().collect();
+        for parent_info in &info.supertypes {
+            match env.library.type_(parent_info.type_id) {
+                Type::Class(cl) => {
+                    builder_properties.extend(cl.properties.iter());
+                }
+                Type::Interface(iface) => {
+                    builder_properties.extend(iface.properties.iter());
+                }
+                _ => (),
+            }
+        }
+        for property in builder_properties.iter() {
+            let ty = TypeStruct {
+                ty: SType::Fn,
+                name: nameutil::signal_to_snake(&property.name),
+                parent: Some(Box::new(builder_ty.clone())),
+                args: vec![],
+            };
+            write_item_doc(w, &ty, |w| {
+                if let Some(ref doc) = property.doc {
+                    writeln!(
+                        w,
+                        "{}",
+                        reformat_doc(&fix_param_names(doc, &None), &symbols, &parent_name)
+                    )?;
+                }
+                if let Some(ref doc) = property.doc_deprecated {
+                    writeln!(
+                        w,
+                        "{}",
+                        reformat_doc(&fix_param_names(doc, &None), &symbols, &parent_name)
+                    )?;
+                }
+                Ok(())
+            })?;
+        }
+    }
 
     if has_trait {
         write_item_doc(w, &ty_ext, |w| {
