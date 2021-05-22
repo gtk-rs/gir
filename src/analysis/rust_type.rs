@@ -349,7 +349,11 @@ impl<'env> RustTypeBuilder<'env> {
                     .map_any(|rust_type| {
                         rust_type.alter_type(|typ| {
                             if self.ref_mode.is_ref() {
-                                format!("[{}]", typ)
+                                if inner_tid == library::TypeId::tid_utf8() {
+                                    format!("{}", typ)
+                                } else {
+                                    format!("[{}]", typ)
+                                }
                             } else {
                                 format!("Vec<{}>", typ)
                             }

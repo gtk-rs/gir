@@ -7,6 +7,7 @@ use crate::{
         rust_type::RustType,
     },
     env::Env,
+    library::{Type, TypeId},
     traits::*,
 };
 
@@ -32,7 +33,18 @@ impl ToParameter for CParameter {
                         type_str = format!("Option<{}{}>", ref_str, t)
                     }
                     BoundType::IsA(_) => type_str = format!("{}{}", ref_str, t),
-                    BoundType::AsRef(_) => type_str = t.to_string(),
+                    BoundType::AsRef(_) => {
+                        let type_ = env.library.type_(self.typ);
+                        type_str = match *type_ {
+                            Type::CArray(inner_tid)
+                                if inner_tid == TypeId::tid_utf8()
+                                    && self.ref_mode == RefMode::ByRef =>
+                            {
+                                format!("&[{}]", t)
+                            }
+                            _ => t.to_string(),
+                        }
+                    }
                 },
                 None => {
                     let type_name = RustType::builder(env, self.typ)

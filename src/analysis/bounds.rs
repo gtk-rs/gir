@@ -186,6 +186,7 @@ impl Bounds {
                 }
             }
             Type::Interface(..) => Some(IsA(None)),
+            Type::CArray(t) if t == TypeId::tid_utf8() => Some(AsRef(None)),
             Type::List(_) | Type::SList(_) | Type::CArray(_) => None,
             Type::Fundamental(_) if *nullable => None,
             Type::Function(_) => Some(NoWrapper),
