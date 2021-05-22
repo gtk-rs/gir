@@ -12,7 +12,7 @@ use crate::{
     version::Version,
 };
 use log::error;
-use std::str::FromStr;
+use std::{collections::HashSet, str::FromStr};
 use toml::Value;
 
 #[derive(Clone, Debug)]
@@ -230,6 +230,7 @@ pub struct Function {
     pub parameters: Parameters,
     pub ret: Return,
     pub doc_hidden: bool,
+    pub doc_ignore_parameters: HashSet<String>,
     pub is_windows_utf8: bool,
     pub disable_length_detect: bool,
     pub doc_trait_name: Option<String>,
@@ -263,6 +264,7 @@ impl Parse for Function {
                 "return",
                 "name",
                 "doc_hidden",
+                "doc_ignore_parameters",
                 "is_windows_utf8",
                 "disable_length_detect",
                 "pattern",
@@ -308,6 +310,14 @@ impl Parse for Function {
             .lookup("doc_hidden")
             .and_then(Value::as_bool)
             .unwrap_or(false);
+        let doc_ignore_parameters = toml
+            .lookup_vec("doc_ignore_parameters", "Invalid doc_ignore_parameters")
+            .map(|v| {
+                v.iter()
+                    .filter_map(|v| v.as_str().map(String::from))
+                    .collect()
+            })
+            .unwrap_or_default();
         let is_windows_utf8 = toml
             .lookup("is_windows_utf8")
             .and_then(Value::as_bool)
@@ -358,6 +368,7 @@ impl Parse for Function {
             parameters,
             ret,
             doc_hidden,
+            doc_ignore_parameters,
             is_windows_utf8,
             disable_length_detect,
             doc_trait_name,

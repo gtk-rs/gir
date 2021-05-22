@@ -244,6 +244,8 @@ trust_return_value_nullability = false
     cfg_condition = "mycond"
     # prefixed function with #[doc(hidden)]
     doc_hidden = true
+    # define a list of function parameters to be ignored when the documentation is generated
+    doc_ignore_parameters = ["some_user_data_param"] 
     # disable length_of autodetection
     disable_length_detect = true
     # write function docs to trait other than default "xxxExt",

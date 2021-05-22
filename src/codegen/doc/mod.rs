@@ -15,7 +15,7 @@ use once_cell::sync::Lazy;
 use regex::{Captures, Regex};
 use std::{
     borrow::Cow,
-    collections::BTreeSet,
+    collections::{BTreeSet, HashSet},
     io::{Result, Write},
 };
 use stripper_lib::{write_file_name, write_item_doc, Type as SType, TypeStruct};
@@ -296,7 +296,20 @@ fn create_object_doc(w: &mut dyn Write, env: &Env, info: &analysis::object::Info
                 .iter()
                 .find(|f| &f.glib_name == c_identifier)
                 .and_then(|analysed_f| analysed_f.new_name.clone());
-            create_fn_doc(w, env, function, Some(Box::new(ty)), fn_new_name)?;
+            let doc_ignored_parameters = info
+                .functions
+                .iter()
+                .find(|f| &f.glib_name == c_identifier)
+                .map(|analyzed_f| analyzed_f.doc_ignore_parameters.clone())
+                .unwrap_or_default();
+            create_fn_doc(
+                w,
+                env,
+                function,
+                Some(Box::new(ty)),
+                fn_new_name,
+                doc_ignored_parameters,
+            )?;
         }
     }
     for signal in signals {
@@ -313,7 +326,7 @@ fn create_object_doc(w: &mut dyn Write, env: &Env, info: &analysis::object::Info
         } else {
             ty.clone()
         };
-        create_fn_doc(w, env, signal, Some(Box::new(ty)), None)?;
+        create_fn_doc(w, env, signal, Some(Box::new(ty)), None, HashSet::new())?;
     }
     for property in properties {
         let ty = if has_trait {
@@ -362,7 +375,14 @@ fn create_record_doc(w: &mut dyn Write, env: &Env, info: &analysis::record::Info
         ..ty
     };
     for function in &record.functions {
-        create_fn_doc(w, env, function, Some(Box::new(ty.clone())), None)?;
+        create_fn_doc(
+            w,
+            env,
+            function,
+            Some(Box::new(ty.clone())),
+            None,
+            HashSet::new(),
+        )?;
     }
     Ok(())
 }
@@ -464,6 +484,7 @@ fn create_fn_doc<T>(
     fn_: &T,
     parent: Option<Box<TypeStruct>>,
     name_override: Option<String>,
+    doc_ignored_parameters: HashSet<String>,
 ) -> Result<()>
 where
     T: FunctionLikeType + ToStripperType,
@@ -537,6 +558,7 @@ where
 
         let in_parameters = no_array_length_params.iter().filter(|param| {
             let ignore = IGNORED_C_FN_PARAMS.contains(&param.name.as_str())
+                || doc_ignored_parameters.contains(&param.name)
                 || param.direction == ParameterDirection::Out
                 // special case error pointer as it's transformed to a Result
                 || (param.name == "error" && param.c_type == "GError**")
@@ -563,6 +585,7 @@ where
             .iter()
             .filter(|param| {
                 param.direction == ParameterDirection::Out
+                    && !doc_ignored_parameters.contains(&param.name)
                     && !(param.name == "error" && param.c_type == "GError**")
             })
             .collect();
