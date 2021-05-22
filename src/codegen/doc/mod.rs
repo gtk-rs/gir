@@ -337,7 +337,12 @@ fn create_object_doc(w: &mut dyn Write, env: &Env, info: &analysis::object::Info
             let mut implementors = std::iter::once(info.type_id)
                 .chain(env.class_hierarchy.subtypes(info.type_id))
                 .filter(|&tid| !env.type_status(&tid.full_name(&env.library)).ignored())
-                .map(|tid| format!("[`struct@crate::{}`]", env.library.type_(tid).get_name()))
+                .map(|tid| {
+                    format!(
+                        "[`{n}`](struct@crate::{n})",
+                        n = env.library.type_(tid).get_name()
+                    )
+                })
                 .collect::<Vec<_>>();
             implementors.sort();
 
@@ -774,7 +779,7 @@ fn get_type_trait_for_implements(env: &Env, tid: TypeId) -> String {
         format!("{}Ext", env.library.type_(tid).get_name())
     };
     if tid.ns_id == MAIN_NAMESPACE {
-        format!("[`trait@crate::prelude::{}`]", &trait_name)
+        format!("[`{n}`](trait@crate::prelude::{n})", n = &trait_name)
     } else if let Some(symbol) = env.symbols.borrow().by_tid(tid) {
         let mut symbol = symbol.clone();
         symbol.make_trait(&trait_name);
@@ -805,6 +810,6 @@ pub fn get_type_manual_traits_for_implements(
     manual_trait_iters
         .into_iter()
         .flatten()
-        .map(|name| format!("[`trait@crate::prelude::{}`]", name))
+        .map(|name| format!("[`{n}`](trait@crate::prelude::{n})", n = name))
         .collect()
 }
