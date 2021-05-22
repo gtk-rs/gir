@@ -36,7 +36,7 @@ impl ToParameter for CParameter {
                     BoundType::AsRef(_) => {
                         let type_ = env.library.type_(self.typ);
                         type_str = match *type_ {
-                            Type::CArray(inner_tid)
+                            Type::CArray(inner_tid) | Type::List(inner_tid)
                                 if inner_tid == TypeId::tid_utf8()
                                     && self.ref_mode == RefMode::ByRef =>
                             {
