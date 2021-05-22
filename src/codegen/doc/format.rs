@@ -100,7 +100,7 @@ fn replace_c_types(entry: &str, symbols: &symbols::Info, in_type: &str) -> Strin
             if sym.owner_name() == Some(in_type) {
                 // `#` or `%` symbols should probably have been `@` to denote
                 // that it is a reference within the current type.
-                format!("[`{f}()`](Self::{f}())", f = sym.name())
+                format!("[`{f}()`][Self::{f}()]", f = sym.name())
             } else {
                 match caps.get(1).as_ref().map(Match::as_str) {
                     // Catch invalid @ references that have a C symbol available but do not belong
@@ -113,7 +113,7 @@ fn replace_c_types(entry: &str, symbols: &symbols::Info, in_type: &str) -> Strin
                         in_type,
                     ),
                     Some("#") | None => {
-                        format!("[`{f}()`](crate::{f}())", f = sym.full_rust_name())
+                        format!("[`{f}()`][crate::{f}()]", f = sym.full_rust_name())
                     }
                     Some("%") => panic!("% not allowed for {:?}", caps),
                     Some(c) => panic!("Unknown symbol reference {}", c),
@@ -122,9 +122,9 @@ fn replace_c_types(entry: &str, symbols: &symbols::Info, in_type: &str) -> Strin
         } else if let Some(typ) = caps.get(2) {
             let typ = typ.as_str();
             if typ == in_type {
-                format!("[`{f}()`](Self::{f}())", f = name)
+                format!("[`{f}()`][Self::{f}()]", f = name)
             } else {
-                format!("[`{t}{f}()`](crate::{t}{f}())", t = typ, f = name)
+                format!("[`{t}{f}()`][crate::{t}{f}()]", t = typ, f = name)
             }
         } else {
             format!("`{}()`", name)
@@ -140,7 +140,7 @@ fn replace_c_types(entry: &str, symbols: &symbols::Info, in_type: &str) -> Strin
                 // `#` or `%` symbols should probably have been `@` to denote
                 // that it is a reference within the current type.
                 format!(
-                    "{}[`{n}{m}`](Self::{n}{m})",
+                    "{}[`{n}{m}`][Self::{n}{m}]",
                     &caps[1],
                     n = sym.name(),
                     m = member
@@ -162,7 +162,7 @@ fn replace_c_types(entry: &str, symbols: &symbols::Info, in_type: &str) -> Strin
                         format!("{}[`{}{}`]", &caps[1], sym.full_rust_name(), member)
                     }
                     "#" | "%" => format!(
-                        "{}[`{n}{m}`](crate::{n}{m})",
+                        "{}[`{n}{m}`][crate::{n}{m}]",
                         &caps[1],
                         n = sym.full_rust_name(),
                         m = member
