@@ -100,7 +100,7 @@ fn replace_c_types(entry: &str, symbols: &symbols::Info, in_type: &str) -> Strin
             if sym.owner_name() == Some(in_type) {
                 // `#` or `%` symbols should probably have been `@` to denote
                 // that it is a reference within the current type.
-                format!("[`Self::{}()`]", sym.name())
+                format!("[`{0}()`][Self::{0}]", sym.name())
             } else {
                 match caps.get(1).as_ref().map(Match::as_str) {
                     // Catch invalid @ references that have a C symbol available but do not belong
@@ -108,12 +108,12 @@ fn replace_c_types(entry: &str, symbols: &symbols::Info, in_type: &str) -> Strin
                     // but with a valid global link so that the can be easily spotted in the code.
                     // assert_eq!(sym.owner_name(), Some(in_type));
                     Some("@") => format!(
-                        "[`crate::{}()`] (XXX: @-reference does not belong to {}!)",
+                        "[`{0}()`][crate::{0}] (XXX: @-reference does not belong to {1}!)",
                         sym.full_rust_name(),
                         in_type,
                     ),
                     Some("#") | None => {
-                        format!("[`crate::{}()`]", sym.full_rust_name())
+                        format!("[`{0}()`][crate::{0}]", sym.full_rust_name())
                     }
                     Some("%") => panic!("% not allowed for {:?}", caps),
                     Some(c) => panic!("Unknown symbol reference {}", c),
@@ -122,9 +122,9 @@ fn replace_c_types(entry: &str, symbols: &symbols::Info, in_type: &str) -> Strin
         } else if let Some(typ) = caps.get(2) {
             let typ = typ.as_str();
             if typ == in_type {
-                format!("[`Self::{}()`]", name)
+                format!("[`{0}()`][Self::{0}]", name)
             } else {
-                format!("[`crate::{}{}()`]", typ, name)
+                format!("[`{0}{1}()`][crate::{0}{1}]", typ, name)
             }
         } else {
             format!("`{}()`", name)
@@ -139,7 +139,7 @@ fn replace_c_types(entry: &str, symbols: &symbols::Info, in_type: &str) -> Strin
             if sym.owner_name() == Some(in_type) {
                 // `#` or `%` symbols should probably have been `@` to denote
                 // that it is a reference within the current type.
-                format!("{}[`Self::{}{}`]", &caps[1], sym.name(), member)
+                format!("{0}[`{1}{2}`][Self::{1}{2}]", &caps[1], sym.name(), member)
             } else {
                 match &caps[2] {
                     // Catch invalid @ references that have a C symbol available but do not belong
@@ -147,7 +147,7 @@ fn replace_c_types(entry: &str, symbols: &symbols::Info, in_type: &str) -> Strin
                     // but with a valid global link so that the can be easily spotted in the code.
                     // assert_eq!(sym.owner_name(), Some(in_type));
                     "@" => format!(
-                        "{}[`crate::{}{}`] (XXX: @-reference does not belong to {}!)",
+                        "{0}[`{1}{2}`][crate::{1}{2}] (XXX: @-reference does not belong to {3}!)",
                         &caps[1],
                         sym.full_rust_name(),
                         member,
@@ -157,7 +157,12 @@ fn replace_c_types(entry: &str, symbols: &symbols::Info, in_type: &str) -> Strin
                         format!("{}[`{}{}`]", &caps[1], sym.full_rust_name(), member)
                     }
                     "#" | "%" => {
-                        format!("{}[`crate::{}{}`]", &caps[1], sym.full_rust_name(), member)
+                        format!(
+                            "{0}[`{1}{2}`][crate::{1}{2}]",
+                            &caps[1],
+                            sym.full_rust_name(),
+                            member
+                        )
                     }
                     c => panic!("Unknown symbol reference {}", c),
                 }
