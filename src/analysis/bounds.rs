@@ -279,6 +279,7 @@ impl Bounds {
             match used.bound_type {
                 NoWrapper => (),
                 IsA(_) => imports.add("glib::object::IsA"),
+                AsRef(_) if &used.type_str == "str" => continue,
                 AsRef(_) => imports.add_used_type(&used.type_str),
             }
         }
