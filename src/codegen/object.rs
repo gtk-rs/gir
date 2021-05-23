@@ -47,6 +47,24 @@ pub fn generate(
             )?;
         }
 
+        if !analysis.builder_properties.is_empty() {
+            // generate builder method that returns the corresponding builder
+            let builder_name = format!("{}Builder", analysis.name);
+            writeln!(
+                w,
+                "
+            // rustdoc-stripper-ignore-next
+            /// Creates a new builder-style object to construct a [`{name}`]
+            /// This method returns an instance of [`{builder_name}`] which can be used to create a [`{name}`].
+            pub fn builder() -> {builder_name} {{
+                {builder_name}::default()
+            }}
+        ",
+                name = analysis.name,
+                builder_name = builder_name
+            )?;
+        }
+
         if !need_generate_trait(analysis) {
             for func_analysis in &analysis.methods() {
                 function::generate(
