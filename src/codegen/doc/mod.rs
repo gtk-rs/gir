@@ -5,7 +5,7 @@ use crate::{
     config::gobjects::GObject,
     env::Env,
     file_saver::save_to_file,
-    library::{Type as LType, *},
+    library::{self, Type as LType, *},
     nameutil,
     traits::*,
     version::Version,
@@ -147,6 +147,42 @@ fn generate_doc(w: &mut dyn Write, env: &Env) -> Result<()> {
                 ));
             }
         }
+    }
+
+    let ns = env.library.namespace(library::MAIN_NAMESPACE);
+
+    if let Some(ref global_functions) = env.analysis.global_functions {
+        let functions = ns
+            .functions
+            .iter()
+            .filter(|f| f.kind == library::FunctionKind::Global);
+
+        for function in functions {
+            if let Some(ref c_identifier) = function.c_identifier {
+                let fn_new_name = (&global_functions.functions)
+                    .iter()
+                    .find(move |f| &f.glib_name == c_identifier)
+                    .and_then(|analysed_f| analysed_f.new_name.clone());
+                create_fn_doc(w, env, function, None, fn_new_name)?;
+            }
+        }
+    }
+
+    let symbols = env.symbols.borrow();
+    for constant in &ns.constants {
+        // strings are mapped to a static
+        let ty = if constant.c_type == "gchar*" {
+            SType::Static
+        } else {
+            SType::Const
+        };
+        let ty_id = TypeStruct::new(ty, &constant.name);
+        write_item_doc(w, &ty_id, |w| {
+            if let Some(ref doc) = constant.doc {
+                writeln!(w, "{}", reformat_doc(doc, &symbols, &constant.name))?;
+            }
+            Ok(())
+        })?;
     }
 
     generators.sort_by_key(|&(name, _)| name);
