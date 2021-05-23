@@ -174,7 +174,13 @@ fn generate_doc(w: &mut dyn Write, env: &Env) -> Result<()> {
                     .iter()
                     .find(move |f| &f.glib_name == c_identifier)
                     .and_then(|analysed_f| analysed_f.new_name.clone());
-                create_fn_doc(w, env, function, None, fn_new_name, HashSet::new())?;
+
+                let doc_ignored_parameters = (&global_functions.functions)
+                    .iter()
+                    .find(|f| &f.glib_name == c_identifier)
+                    .map(|analyzed_f| analyzed_f.doc_ignore_parameters.clone())
+                    .unwrap_or_default();
+                create_fn_doc(w, env, function, None, fn_new_name, doc_ignored_parameters)?;
             }
         }
     }
