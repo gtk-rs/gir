@@ -174,7 +174,7 @@ fn generate_doc(w: &mut dyn Write, env: &Env) -> Result<()> {
                     .iter()
                     .find(move |f| &f.glib_name == c_identifier)
                     .and_then(|analysed_f| analysed_f.new_name.clone());
-                create_fn_doc(w, env, function, None, fn_new_name)?;
+                create_fn_doc(w, env, function, None, fn_new_name, HashSet::new())?;
             }
         }
     }
