@@ -149,8 +149,9 @@ fn generate_doc(w: &mut dyn Write, env: &Env) -> Result<()> {
         }
     }
 
+    let ns = env.library.namespace(library::MAIN_NAMESPACE);
+
     if let Some(ref global_functions) = env.analysis.global_functions {
-        let ns = env.library.namespace(library::MAIN_NAMESPACE);
         let functions = ns
             .functions
             .iter()
@@ -165,6 +166,23 @@ fn generate_doc(w: &mut dyn Write, env: &Env) -> Result<()> {
                 create_fn_doc(w, env, function, None, fn_new_name)?;
             }
         }
+    }
+
+    let symbols = env.symbols.borrow();
+    for constant in &ns.constants {
+        // strings are mapped to a static
+        let ty = if constant.c_type == "gchar*" {
+            SType::Static
+        } else {
+            SType::Const
+        };
+        let ty_id = TypeStruct::new(ty, &constant.name);
+        write_item_doc(w, &ty_id, |w| {
+            if let Some(ref doc) = constant.doc {
+                writeln!(w, "{}", reformat_doc(doc, &symbols, &constant.name))?;
+            }
+            Ok(())
+        })?;
     }
 
     generators.sort_by_key(|&(name, _)| name);
