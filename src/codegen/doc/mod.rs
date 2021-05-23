@@ -15,11 +15,22 @@ use once_cell::sync::Lazy;
 use regex::{Captures, Regex};
 use std::{
     borrow::Cow,
+    collections::{BTreeSet, HashSet},
     io::{Result, Write},
 };
 use stripper_lib::{write_file_name, write_item_doc, Type as SType, TypeStruct};
 
 mod format;
+
+// A list of C parameters that are not used directly by the Rust bindings
+const IGNORED_C_FN_PARAMS: [&str; 6] = [
+    "user_data",
+    "user_destroy",
+    "destroy_func",
+    "dnotify",
+    "destroy",
+    "user_data_free_func",
+];
 
 trait ToStripperType {
     fn to_stripper_type(&self) -> TypeStruct;
@@ -357,7 +368,20 @@ fn create_object_doc(w: &mut dyn Write, env: &Env, info: &analysis::object::Info
                 .iter()
                 .find(|f| &f.glib_name == c_identifier)
                 .and_then(|analysed_f| analysed_f.new_name.clone());
-            create_fn_doc(w, env, function, Some(Box::new(ty)), fn_new_name)?;
+            let doc_ignored_parameters = info
+                .functions
+                .iter()
+                .find(|f| &f.glib_name == c_identifier)
+                .map(|analyzed_f| analyzed_f.doc_ignore_parameters.clone())
+                .unwrap_or_default();
+            create_fn_doc(
+                w,
+                env,
+                function,
+                Some(Box::new(ty)),
+                fn_new_name,
+                doc_ignored_parameters,
+            )?;
         }
     }
     for signal in signals {
@@ -374,7 +398,7 @@ fn create_object_doc(w: &mut dyn Write, env: &Env, info: &analysis::object::Info
         } else {
             ty.clone()
         };
-        create_fn_doc(w, env, signal, Some(Box::new(ty)), None)?;
+        create_fn_doc(w, env, signal, Some(Box::new(ty)), None, HashSet::new())?;
     }
     for property in properties {
         let ty = if has_trait {
@@ -420,7 +444,14 @@ fn create_record_doc(w: &mut dyn Write, env: &Env, info: &analysis::record::Info
         ..ty
     };
     for function in &record.functions {
-        create_fn_doc(w, env, function, Some(Box::new(ty.clone())), None)?;
+        create_fn_doc(
+            w,
+            env,
+            function,
+            Some(Box::new(ty.clone())),
+            None,
+            HashSet::new(),
+        )?;
     }
     Ok(())
 }
@@ -522,6 +553,7 @@ fn create_fn_doc<T>(
     fn_: &T,
     parent: Option<Box<TypeStruct>>,
     name_override: Option<String>,
+    doc_ignored_parameters: HashSet<String>,
 ) -> Result<()>
 where
     T: FunctionLikeType + ToStripperType,
@@ -572,8 +604,40 @@ where
             )?;
         }
 
-        for parameter in fn_.parameters() {
-            if parameter.instance_parameter || parameter.name.is_empty() {
+        // A list of parameter positions to filter out
+        let mut indices_to_ignore: BTreeSet<_> = fn_
+            .parameters()
+            .iter()
+            .filter_map(|param| param.array_length)
+            .collect();
+        if let Some(indice) = fn_.ret().array_length {
+            indices_to_ignore.insert(indice);
+        }
+
+        // The original list of parameters without the ones that specify an array length
+        let no_array_length_params: Vec<_> = fn_
+            .parameters()
+            .iter()
+            .enumerate()
+            .filter_map(|(indice, param)| {
+                (!indices_to_ignore.contains(&(indice as u32))).then(|| param)
+            })
+            .filter(|param| !param.instance_parameter)
+            .collect();
+
+        let in_parameters = no_array_length_params.iter().filter(|param| {
+            let ignore = IGNORED_C_FN_PARAMS.contains(&param.name.as_str())
+                || doc_ignored_parameters.contains(&param.name)
+                || param.direction == ParameterDirection::Out
+                // special case error pointer as it's transformed to a Result
+                || (param.name == "error" && param.c_type == "GError**")
+                // special case `data` with explicit `gpointer` type as it could be something else (unlike `user_data`)
+                || (param.name == "data" && param.c_type == "gpointer");
+            !ignore
+        });
+
+        for parameter in in_parameters {
+            if parameter.name.is_empty() {
                 continue;
             }
             if let Some(ref doc) = parameter.doc {
@@ -586,13 +650,40 @@ where
             }
         }
 
-        if let Some(ref doc) = fn_.ret().doc {
+        let out_parameters: Vec<_> = no_array_length_params
+            .iter()
+            .filter(|param| {
+                param.direction == ParameterDirection::Out
+                    && !doc_ignored_parameters.contains(&param.name)
+                    && !(param.name == "error" && param.c_type == "GError**")
+            })
+            .collect();
+
+        if fn_.ret().doc.is_some() || !out_parameters.is_empty() {
             writeln!(w, "\n# Returns\n")?;
+        }
+        // document function's return
+        if let Some(ref doc) = fn_.ret().doc {
             writeln!(
                 w,
                 "{}",
                 reformat_doc(&fix_param_names(doc, &self_name), &symbols, &parent_name)
             )?;
+        }
+        // document OUT parameters as part of the function's Return
+        for parameter in out_parameters {
+            if let Some(ref doc) = parameter.doc {
+                writeln!(
+                    w,
+                    "\n## `{}`",
+                    nameutil::mangle_keywords(&parameter.name[..])
+                )?;
+                writeln!(
+                    w,
+                    "{}",
+                    reformat_doc(&fix_param_names(doc, &self_name), &symbols, &parent_name),
+                )?;
+            }
         }
         Ok(())
     })

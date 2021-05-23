@@ -89,6 +89,7 @@ pub struct Info {
     pub cfg_condition: Option<String>,
     pub assertion: SafetyAssertionMode,
     pub doc_hidden: bool,
+    pub doc_ignore_parameters: HashSet<String>,
     pub r#async: bool,
     pub unsafe_: bool,
     pub trampoline: Option<AsyncTrampoline>,
@@ -585,6 +586,11 @@ fn analyze_function(
         .iter()
         .find_map(|f| f.cfg_condition.clone());
     let doc_hidden = configured_functions.iter().any(|f| f.doc_hidden);
+    let doc_ignore_parameters = configured_functions
+        .iter()
+        .find(|f| !f.doc_ignore_parameters.is_empty())
+        .map(|f| f.doc_ignore_parameters.clone())
+        .unwrap_or_default();
     let disable_length_detect = configured_functions.iter().any(|f| f.disable_length_detect);
     let no_future = configured_functions.iter().any(|f| f.no_future);
     let unsafe_ = configured_functions.iter().any(|f| f.unsafe_);
@@ -842,6 +848,7 @@ fn analyze_function(
         cfg_condition,
         assertion,
         doc_hidden,
+        doc_ignore_parameters,
         r#async,
         unsafe_,
         trampoline,
