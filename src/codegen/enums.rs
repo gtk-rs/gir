@@ -58,7 +58,6 @@ fn generate_enum(
     struct Member {
         name: String,
         c_name: String,
-        value: String,
         version: Option<Version>,
         deprecated_version: Option<Version>,
     }
@@ -80,7 +79,6 @@ fn generate_enum(
         members.push(Member {
             name: enum_member_name(&member.name),
             c_name: member.c_identifier.clone(),
-            value: member.value.clone(),
             version,
             deprecated_version,
         });
@@ -232,7 +230,11 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
     )?;
     for member in &members {
         version_condition_no_doc(w, env, member.version, false, 3)?;
-        writeln!(w, "\t\t\t{} => Self::{},", member.value, member.name)?;
+        writeln!(
+            w,
+            "\t\t\t{}::{} => Self::{},",
+            sys_crate_name, member.c_name, member.name
+        )?;
     }
     writeln!(w, "\t\t\tvalue => Self::__Unknown(value),")?;
     writeln!(
@@ -295,7 +297,11 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
 
         for member in &members {
             version_condition_no_doc(w, env, member.version, false, 3)?;
-            writeln!(w, "\t\t\t{} => Some(Self::{}),", member.value, member.name)?;
+            writeln!(
+                w,
+                "\t\t\t{}::{} => Some(Self::{}),",
+                sys_crate_name, member.c_name, member.name
+            )?;
         }
         if has_failed_member {
             writeln!(w, "\t\t\t_ => Some(Self::Failed),")?;
