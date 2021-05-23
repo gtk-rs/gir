@@ -24,13 +24,18 @@ pub fn generate(
     in_trait: bool,
     indent: usize,
 ) -> Result<()> {
-    let self_bound = in_trait
-        .then(|| format!("{}: IsA<{}>, ", TYPE_PARAMETERS_START, analysis.type_name))
+    let (self_bound, fn_self_bound) = in_trait
+        .then(|| {
+            (
+                format!("{}: IsA<{}>, ", TYPE_PARAMETERS_START, analysis.type_name),
+                Some(TYPE_PARAMETERS_START.to_string()),
+            )
+        })
         .unwrap_or_default();
 
     let prepend = tabs(indent);
     let params_str = trampoline_parameters(env, analysis);
-    let func_str = func_string(env, analysis, None, true);
+    let func_str = func_string(env, analysis, fn_self_bound, true);
     let ret_str = trampoline_returns(env, analysis);
 
     writeln!(
@@ -56,7 +61,7 @@ pub fn generate(
 pub fn func_string(
     env: &Env,
     analysis: &Trampoline,
-    replace_self_bound: Option<&str>,
+    replace_self_bound: Option<impl AsRef<str>>,
     closure: bool,
 ) -> String {
     let param_str = func_parameters(env, analysis, replace_self_bound, closure);
@@ -89,7 +94,7 @@ pub fn func_string(
 fn func_parameters(
     env: &Env,
     analysis: &Trampoline,
-    replace_self_bound: Option<&str>,
+    replace_self_bound: Option<impl AsRef<str>>,
     closure: bool,
 ) -> String {
     let mut param_str = String::with_capacity(100);
@@ -124,7 +129,10 @@ fn func_parameter(env: &Env, par: &RustParameter, bounds: &Bounds) -> String {
     };
 
     match bounds.get_parameter_bound(&par.name) {
-        Some(bound) => bound.full_type_parameter_reference(ref_mode, par.nullable),
+        // TODO: ASYNC??
+        Some(bound) => bound.full_type_parameter_reference(ref_mode, par.nullable, false),
+        // TODO
+        // Some((None, _)) => panic!("Trampoline expects type name"),
         None => RustType::builder(env, par.typ)
             .direction(par.direction)
             .nullable(par.nullable)

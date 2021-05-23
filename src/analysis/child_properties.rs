@@ -1,7 +1,12 @@
 use crate::{
-    analysis::{bounds::Bounds, imports::Imports, ref_mode::RefMode, rust_type::RustType},
-    codegen::function,
+    analysis::{
+        bounds::{Bound, Bounds},
+        imports::Imports,
+        ref_mode::RefMode,
+        rust_type::RustType,
+    },
     config,
+    consts::TYPE_PARAMETERS_START,
     env::Env,
     library::{self, ParameterDirection},
     nameutil,
@@ -123,14 +128,25 @@ fn analyze_property(
                 .ref_mode(RefMode::ByRefFake)
                 .try_build()
                 .into_string();
-            let mut bounds = Bounds::default();
-            bounds.add_parameter("P", &r_type, bound, false);
-            let (s_bounds, _) = function::bounds(&bounds, &[], false, false);
-            // Because the bounds won't necessarily be added into the final function, we
-            // only keep the "inner" part to make the string computation easier. So
-            // `<T: X>` becomes `T: X`.
-            bounds_str.push_str(&s_bounds[1..s_bounds.len() - 1]);
-            format!("{}: {}", prop_name, bounds.iter().last().unwrap().alias)
+
+            let _bound = Bound {
+                bound_type: bound,
+                parameter_name: TYPE_PARAMETERS_START.to_string(),
+                alias: Some(TYPE_PARAMETERS_START.to_owned()),
+                type_str: r_type,
+                callback_modified: false,
+            };
+            // TODO: bounds_str push?!?!
+            bounds_str.push_str("TODO");
+            format!("{}: {}", prop_name, TYPE_PARAMETERS_START)
+            // let mut bounds = Bounds::default();
+            // bounds.add_parameter("P", &r_type, bound, false);
+            // let (s_bounds, _) = function::bounds(&bounds, &[], false);
+            // // Because the bounds won't necessarily be added into the final function, we
+            // // only keep the "inner" part to make the string computation easier. So
+            // // `<T: X>` becomes `T: X`.
+            // bounds_str.push_str(&s_bounds[1..s_bounds.len() - 1]);
+            // format!("{}: {}", prop_name, bounds.iter().last().unwrap().alias)
         } else {
             format!(
                 "{}: {}",
