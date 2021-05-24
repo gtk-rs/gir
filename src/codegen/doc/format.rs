@@ -1,3 +1,4 @@
+use super::gi_docgen;
 use crate::{analysis::symbols, Env};
 use once_cell::sync::Lazy;
 use regex::{Captures, Match, Regex};
@@ -58,7 +59,10 @@ fn format(mut input: &str, env: &Env, in_type: &str) -> String {
     let mut ret = String::with_capacity(input.len());
     loop {
         let (before, after) = try_split(input, "`");
-        ret.push_str(&replace_c_types(before, env, in_type));
+        // We run gi_docgen first because it's super picky about the types it replaces
+        let no_c_types_re = gi_docgen::replace_c_types(before, env, in_type);
+        ret.push_str(&replace_c_types(&no_c_types_re, env, in_type));
+
         if let Some(after) = after {
             ret.push('`');
             let (before, after) = try_split(after, "`");
