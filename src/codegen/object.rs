@@ -414,7 +414,10 @@ fn generate_trait(w: &mut dyn Write, env: &Env, analysis: &analysis::object::Inf
 }
 
 fn need_generate_inherent(analysis: &analysis::object::Info) -> bool {
-    analysis.has_constructors || analysis.has_functions || !need_generate_trait(analysis)
+    analysis.has_constructors
+        || analysis.has_functions
+        || !need_generate_trait(analysis)
+        || !analysis.builder_properties.is_empty()
 }
 
 fn need_generate_trait(analysis: &analysis::object::Info) -> bool {
