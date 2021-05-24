@@ -216,9 +216,6 @@ pub fn declaration_futures(env: &Env, analysis: &analysis::functions::Info) -> S
             skipped += 1;
             if let Some((t, _)) = analysis.bounds.get_parameter_alias_info(&c_par.name) {
                 skipped_bounds.push(t);
-                if let Some(p) = analysis.bounds.get_base_alias(t) {
-                    skipped_bounds.push(p);
-                }
             }
             continue;
         }

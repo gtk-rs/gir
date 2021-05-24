@@ -38,7 +38,6 @@ pub struct Bound {
     pub parameter_name: String,
     pub alias: char,
     pub type_str: String,
-    pub info_for_next_type: bool,
     pub callback_modified: bool,
 }
 
@@ -215,7 +214,6 @@ impl Bounds {
                     parameter_name: name.to_owned(),
                     alias,
                     type_str: type_str.to_string(),
-                    info_for_next_type: false,
                     callback_modified: false,
                 });
                 return true;
@@ -231,7 +229,6 @@ impl Bounds {
                 parameter_name: name.to_owned(),
                 alias,
                 type_str: type_str.to_owned(),
-                info_for_next_type: false,
                 callback_modified: false,
             });
             true
@@ -243,31 +240,8 @@ impl Bounds {
     pub fn get_parameter_alias_info(&self, name: &str) -> Option<(char, BoundType)> {
         self.used
             .iter()
-            .find(move |n| {
-                if n.parameter_name == name {
-                    !n.info_for_next_type
-                } else {
-                    false
-                }
-            })
+            .find(|n| n.parameter_name == name)
             .map(|t| (t.alias, t.bound_type.clone()))
-    }
-
-    pub fn get_base_alias(&self, alias: char) -> Option<char> {
-        if alias == TYPE_PARAMETERS_START {
-            return None;
-        }
-        let prev_alias = ((alias as u8) - 1) as char;
-        self.used
-            .iter()
-            .find(move |n| n.alias == prev_alias)
-            .and_then(|b| {
-                if b.info_for_next_type {
-                    Some(b.alias)
-                } else {
-                    None
-                }
-            })
     }
 
     pub fn update_imports(&self, imports: &mut Imports) {
