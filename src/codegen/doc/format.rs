@@ -1,4 +1,4 @@
-use crate::analysis::symbols;
+use crate::{analysis::symbols, Env};
 use once_cell::sync::Lazy;
 use regex::{Captures, Match, Regex};
 
@@ -7,8 +7,8 @@ const LANGUAGE_SEP_END: &str = "\" -->";
 const LANGUAGE_BLOCK_BEGIN: &str = "|[";
 const LANGUAGE_BLOCK_END: &str = "\n]|";
 
-pub fn reformat_doc(input: &str, symbols: &symbols::Info, in_type: &str) -> String {
-    code_blocks_transformation(input, symbols, in_type)
+pub fn reformat_doc(input: &str, env: &Env, in_type: &str) -> String {
+    code_blocks_transformation(input, env, in_type)
 }
 
 fn try_split<'a>(src: &'a str, needle: &str) -> (&'a str, Option<&'a str>) {
@@ -18,13 +18,13 @@ fn try_split<'a>(src: &'a str, needle: &str) -> (&'a str, Option<&'a str>) {
     }
 }
 
-fn code_blocks_transformation(mut input: &str, symbols: &symbols::Info, in_type: &str) -> String {
+fn code_blocks_transformation(mut input: &str, env: &Env, in_type: &str) -> String {
     let mut out = String::with_capacity(input.len());
 
     loop {
         input = match try_split(input, LANGUAGE_BLOCK_BEGIN) {
             (before, Some(after)) => {
-                out.push_str(&format(before, symbols, in_type));
+                out.push_str(&format(before, env, in_type));
                 if let (before, Some(after)) =
                     try_split(get_language(after, &mut out), LANGUAGE_BLOCK_END)
                 {
@@ -36,7 +36,7 @@ fn code_blocks_transformation(mut input: &str, symbols: &symbols::Info, in_type:
                 }
             }
             (before, None) => {
-                out.push_str(&format(before, symbols, in_type));
+                out.push_str(&format(before, env, in_type));
                 return out;
             }
         };
@@ -54,11 +54,11 @@ fn get_language<'a>(entry: &'a str, out: &mut String) -> &'a str {
     entry
 }
 
-fn format(mut input: &str, symbols: &symbols::Info, in_type: &str) -> String {
+fn format(mut input: &str, env: &Env, in_type: &str) -> String {
     let mut ret = String::with_capacity(input.len());
     loop {
         let (before, after) = try_split(input, "`");
-        ret.push_str(&replace_c_types(before, symbols, in_type));
+        ret.push_str(&replace_c_types(before, env, in_type));
         if let Some(after) = after {
             ret.push('`');
             let (before, after) = try_split(after, "`");
@@ -84,7 +84,8 @@ static GDK_GTK: Lazy<Regex> = Lazy::new(|| Regex::new(r"G[dt]k[A-Z]\w+\b").unwra
 static TAGS: Lazy<Regex> = Lazy::new(|| Regex::new(r"<[\w/-]+>").unwrap());
 static SPACES: Lazy<Regex> = Lazy::new(|| Regex::new(r"[ ]{2,}").unwrap());
 
-fn replace_c_types(entry: &str, symbols: &symbols::Info, in_type: &str) -> String {
+fn replace_c_types(entry: &str, env: &Env, in_type: &str) -> String {
+    let symbols = env.symbols.borrow();
     let lookup = |s: &str| -> String {
         symbols
             .by_c_name(s)
