@@ -121,12 +121,9 @@ impl RustType {
 
     #[inline]
     fn apply_ref_mode(self, ref_mode: RefMode) -> Self {
-        match ref_mode {
-            RefMode::None | RefMode::ByRefFake => self,
-            RefMode::ByRef | RefMode::ByRefImmut | RefMode::ByRefConst => {
-                self.alter_type(|typ_| format!("&{}", typ_))
-            }
-            RefMode::ByRefMut => self.alter_type(|typ_| format!("&mut {}", typ_)),
+        match ref_mode.for_rust_type() {
+            "" => self,
+            ref_mode => self.alter_type(|typ_| format!("{}{}", ref_mode, typ_)),
         }
     }
 }

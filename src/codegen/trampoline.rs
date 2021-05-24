@@ -124,8 +124,6 @@ fn func_parameter(
     bound_replace: Option<(char, &str)>,
 ) -> String {
     //TODO: restore mutable support
-    //let mut_str = if par.ref_mode == RefMode::ByRefMut { "mut " } else { "" };
-    let mut_str = "";
     let ref_mode = if par.ref_mode == RefMode::ByRefMut {
         RefMode::ByRef
     } else {
@@ -137,15 +135,15 @@ fn func_parameter(
             BoundType::NoWrapper => unreachable!(),
             BoundType::IsA(_) => {
                 if *par.nullable {
-                    format!("Option<&{}{}>", mut_str, t)
+                    format!("Option<{}{}>", ref_mode.for_rust_type(), t)
                 } else if let Some((from, to)) = bound_replace {
                     if from == t {
-                        format!("&{}{}", mut_str, to)
+                        format!("{}{}", ref_mode.for_rust_type(), to)
                     } else {
-                        format!("&{}{}", mut_str, t)
+                        format!("{}{}", ref_mode.for_rust_type(), t)
                     }
                 } else {
-                    format!("&{}{}", mut_str, t)
+                    format!("{}{}", ref_mode.for_rust_type(), t)
                 }
             }
             BoundType::AsRef(_) => t.to_string(),

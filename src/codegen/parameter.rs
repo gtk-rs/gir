@@ -3,7 +3,6 @@ use crate::{
         bounds::{BoundType, Bounds},
         conversion_type::ConversionType,
         function_parameters::CParameter,
-        ref_mode::RefMode,
         rust_type::RustType,
     },
     env::Env,
@@ -16,11 +15,7 @@ pub trait ToParameter {
 
 impl ToParameter for CParameter {
     fn to_parameter(&self, env: &Env, bounds: &Bounds) -> String {
-        let ref_str = match self.ref_mode {
-            RefMode::ByRefMut => "&mut ",
-            RefMode::None => "",
-            _ => "&",
-        };
+        let ref_str = self.ref_mode.for_rust_type();
         if self.instance_parameter {
             format!("{}self", ref_str)
         } else {
