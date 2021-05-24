@@ -339,6 +339,7 @@ impl<'env> RustTypeBuilder<'env> {
                 skip_option = true;
                 let inner_ref_mode = match *self.env.library.type_(inner_tid) {
                     Class(..) | Interface(..) => RefMode::None,
+                    _ if self.ref_mode.is_ref() && inner_tid == library::TypeId::tid_utf8() => RefMode::ByRefFake,
                     _ => self.ref_mode,
                 };
                 RustType::builder(&self.env, inner_tid)
@@ -350,7 +351,7 @@ impl<'env> RustTypeBuilder<'env> {
                         rust_type.alter_type(|typ| {
                             if self.ref_mode.is_ref() {
                                 if inner_tid == library::TypeId::tid_utf8() {
-                                    format!("{}", typ)
+                                    format!("[impl AsRef<{}>]", typ)
                                 } else {
                                     format!("[{}]", typ)
                                 }

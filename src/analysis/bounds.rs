@@ -186,7 +186,6 @@ impl Bounds {
                 }
             }
             Type::Interface(..) => Some(IsA(None)),
-            Type::List(t) | Type::CArray(t) if t == TypeId::tid_utf8() => Some(AsRef(None)),
             Type::List(_) | Type::SList(_) | Type::CArray(_) => None,
             Type::Fundamental(_) if *nullable => None,
             Type::Function(_) => Some(NoWrapper),
@@ -279,7 +278,6 @@ impl Bounds {
             match used.bound_type {
                 NoWrapper => (),
                 IsA(_) => imports.add("glib::object::IsA"),
-                AsRef(_) if &used.type_str == "str" => continue,
                 AsRef(_) => imports.add_used_type(&used.type_str),
             }
         }
