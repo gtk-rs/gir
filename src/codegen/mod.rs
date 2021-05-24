@@ -2,6 +2,7 @@ use crate::{config::WorkMode, env::Env, file_saver::*};
 use std::path::Path;
 
 mod alias;
+mod bound;
 mod child_properties;
 mod constants;
 mod doc;
@@ -18,6 +19,7 @@ mod properties;
 mod property_body;
 mod record;
 mod records;
+mod ref_mode;
 mod return_value;
 mod signal;
 mod signal_body;

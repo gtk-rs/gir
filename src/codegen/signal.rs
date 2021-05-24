@@ -6,7 +6,6 @@ use super::{
 use crate::{
     analysis,
     chunk::Chunk,
-    consts::TYPE_PARAMETERS_START,
     env::Env,
     nameutil::use_glib_type,
     writer::{primitives::tabs, ToCode},
@@ -179,11 +178,7 @@ fn function_type_string(
     let type_ = func_string(
         env,
         trampoline,
-        if closure {
-            Some((TYPE_PARAMETERS_START, "Self"))
-        } else {
-            Some((TYPE_PARAMETERS_START, "self"))
-        },
+        Some(if closure { "Self" } else { "self" }),
         closure,
     );
     Some(type_)

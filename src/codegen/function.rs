@@ -10,11 +10,7 @@ use super::{
 };
 use crate::{
     analysis::{
-        self,
-        bounds::{Bound, Bounds},
-        functions::Visibility,
-        namespaces,
-        try_from_glib::TryFromGlib,
+        self, bounds::Bounds, functions::Visibility, namespaces, try_from_glib::TryFromGlib,
     },
     chunk::{ffi_function_todo, Chunk},
     env::Env,
@@ -214,11 +210,8 @@ pub fn declaration_futures(env: &Env, analysis: &analysis::functions::Info) -> S
 
         if c_par.name == "callback" || c_par.name == "cancellable" {
             skipped += 1;
-            if let Some((t, _)) = analysis.bounds.get_parameter_alias_info(&c_par.name) {
-                skipped_bounds.push(t);
-                if let Some(p) = analysis.bounds.get_base_alias(t) {
-                    skipped_bounds.push(p);
-                }
+            if let Some(bound) = analysis.bounds.get_parameter_bound(&c_par.name) {
+                skipped_bounds.push(bound.type_parameter_reference());
             }
             continue;
         }
@@ -237,36 +230,6 @@ pub fn declaration_futures(env: &Env, analysis: &analysis::functions::Info) -> S
         "fn {}{}({}){}",
         async_future.name, bounds, param_str, return_str,
     )
-}
-
-pub fn bound_to_string(bound: &Bound, r#async: bool) -> String {
-    use crate::analysis::bounds::BoundType::*;
-
-    match bound.bound_type {
-        NoWrapper => format!("{}: {}", bound.alias, bound.type_str),
-        IsA(Some(lifetime)) => format!(
-            "{}: IsA<{}> + {}",
-            bound.alias,
-            bound.type_str,
-            if r#async {
-                "Clone + 'static".into()
-            } else {
-                format!("'{}", lifetime)
-            }
-        ),
-        IsA(None) => format!(
-            "{}: IsA<{}>{}",
-            bound.alias,
-            bound.type_str,
-            if r#async { " + Clone + 'static" } else { "" }
-        ),
-        // This case should normally never happened
-        AsRef(Some(_ /*lifetime*/)) => {
-            unreachable!();
-            // format!("{}: AsRef<{}> + '{}", bound.alias, bound.type_str, lifetime)
-        }
-        AsRef(None) => format!("{}: AsRef<{}>", bound.alias, bound.type_str),
-    }
 }
 
 pub fn bounds(
@@ -290,40 +253,34 @@ pub fn bounds(
         })
         .collect::<Vec<_>>();
 
-    let strs: Vec<String> = bounds
+    let lifetimes = bounds
         .iter_lifetimes()
         .filter(|s| !skip_lifetimes.contains(s))
         .map(|s| format!("'{}", s))
-        .chain(
-            bounds
-                .iter()
-                .filter(|bound| {
-                    !skip.contains(&bound.alias)
-                        && (!filter_callback_modified || !bound.callback_modified)
-                })
-                .map(|b| bound_to_string(b, r#async)),
-        )
-        .collect();
+        .collect::<Vec<_>>();
 
-    if strs.is_empty() {
-        (String::new(), Vec::new())
+    let bounds = bounds.iter().filter(|bound| {
+        !skip.contains(&bound.alias) && (!filter_callback_modified || !bound.callback_modified)
+    });
+
+    let type_names = lifetimes
+        .iter()
+        .cloned()
+        .chain(bounds.clone().map(|b| b.type_parameter_definition(r#async)))
+        .collect::<Vec<_>>();
+
+    let type_names = if type_names.is_empty() {
+        String::new()
     } else {
-        let bounds = bounds
-            .iter_lifetimes()
-            .filter(|s| !skip_lifetimes.contains(s))
-            .map(|s| format!("'{}", s))
-            .chain(
-                bounds
-                    .iter()
-                    .filter(|bound| {
-                        !skip.contains(&bound.alias)
-                            && (!filter_callback_modified || !bound.callback_modified)
-                    })
-                    .map(|b| b.alias.to_string()),
-            )
-            .collect::<Vec<_>>();
-        (format!("<{}>", strs.join(", ")), bounds)
-    }
+        format!("<{}>", type_names.join(", "))
+    };
+
+    let bounds = lifetimes
+        .into_iter()
+        .chain(bounds.map(|b| b.alias.to_string()))
+        .collect::<Vec<_>>();
+
+    (type_names, bounds)
 }
 
 pub fn body_chunk(env: &Env, analysis: &analysis::functions::Info) -> Chunk {

@@ -4,13 +4,8 @@ use super::{
 };
 use crate::{
     analysis::{
-        bounds::{BoundType, Bounds},
-        ffi_type::ffi_type,
-        ref_mode::RefMode,
-        rust_type::RustType,
-        trampoline_parameters::*,
-        trampolines::Trampoline,
-        try_from_glib::TryFromGlib,
+        bounds::Bounds, ffi_type::ffi_type, ref_mode::RefMode, rust_type::RustType,
+        trampoline_parameters::*, trampolines::Trampoline, try_from_glib::TryFromGlib,
     },
     consts::TYPE_PARAMETERS_START,
     env::Env,
@@ -29,11 +24,9 @@ pub fn generate(
     in_trait: bool,
     indent: usize,
 ) -> Result<()> {
-    let (self_bound, end) = if in_trait {
-        (format!("{}, ", TYPE_PARAMETERS_START), "")
-    } else {
-        (String::new(), " {")
-    };
+    let self_bound = in_trait
+        .then(|| format!("{}: IsA<{}>, ", TYPE_PARAMETERS_START, analysis.type_name))
+        .unwrap_or_default();
 
     let prepend = tabs(indent);
     let params_str = trampoline_parameters(env, analysis);
@@ -42,7 +35,7 @@ pub fn generate(
 
     writeln!(
         w,
-        "{}unsafe extern \"C\" fn {}<{}F: {}>({}, f: {}){}{}",
+        "{}unsafe extern \"C\" fn {}<{}F: {}>({}, f: {}){} {{",
         prepend,
         analysis.name,
         self_bound,
@@ -50,15 +43,7 @@ pub fn generate(
         params_str,
         use_glib_if_needed(env, "ffi::gpointer"),
         ret_str,
-        end,
     )?;
-    if in_trait {
-        writeln!(
-            w,
-            "{0}\twhere {1}: IsA<{2}>\n{0}{{",
-            prepend, TYPE_PARAMETERS_START, analysis.type_name
-        )?;
-    }
     writeln!(w, "{}\tlet f: &F = &*(f as *const F);", prepend)?;
     transformation_vars(w, env, analysis, &prepend)?;
     let call = trampoline_call_func(env, analysis, in_trait);
@@ -71,10 +56,10 @@ pub fn generate(
 pub fn func_string(
     env: &Env,
     analysis: &Trampoline,
-    bound_replace: Option<(char, &str)>,
+    replace_self_bound: Option<&str>,
     closure: bool,
 ) -> String {
-    let param_str = func_parameters(env, analysis, bound_replace, closure);
+    let param_str = func_parameters(env, analysis, replace_self_bound, closure);
     let return_str = func_returns(env, analysis);
 
     if closure {
@@ -104,62 +89,42 @@ pub fn func_string(
 fn func_parameters(
     env: &Env,
     analysis: &Trampoline,
-    bound_replace: Option<(char, &str)>,
+    replace_self_bound: Option<&str>,
     closure: bool,
 ) -> String {
     let mut param_str = String::with_capacity(100);
 
     for (pos, par) in analysis.parameters.rust_parameters.iter().enumerate() {
-        if pos > 0 {
+        if pos == 0 {
+            if let Some(replace_self_bound) = &replace_self_bound {
+                param_str.push_str(par.ref_mode.for_rust_type());
+                param_str.push_str(replace_self_bound.as_ref());
+                continue;
+            }
+        } else {
             param_str.push_str(", ");
             if !closure {
                 param_str.push_str(&format!("{}: ", par.name));
             }
-        } else if !closure {
-            param_str.push_str("&self");
-            continue;
         }
 
-        let s = func_parameter(env, par, &analysis.bounds, bound_replace);
+        let s = func_parameter(env, par, &analysis.bounds);
         param_str.push_str(&s);
     }
 
     param_str
 }
 
-fn func_parameter(
-    env: &Env,
-    par: &RustParameter,
-    bounds: &Bounds,
-    bound_replace: Option<(char, &str)>,
-) -> String {
+fn func_parameter(env: &Env, par: &RustParameter, bounds: &Bounds) -> String {
     //TODO: restore mutable support
-    //let mut_str = if par.ref_mode == RefMode::ByRefMut { "mut " } else { "" };
-    let mut_str = "";
     let ref_mode = if par.ref_mode == RefMode::ByRefMut {
         RefMode::ByRef
     } else {
         par.ref_mode
     };
 
-    match bounds.get_parameter_alias_info(&par.name) {
-        Some((t, bound_type)) => match bound_type {
-            BoundType::NoWrapper => unreachable!(),
-            BoundType::IsA(_) => {
-                if *par.nullable {
-                    format!("Option<&{}{}>", mut_str, t)
-                } else if let Some((from, to)) = bound_replace {
-                    if from == t {
-                        format!("&{}{}", mut_str, to)
-                    } else {
-                        format!("&{}{}", mut_str, t)
-                    }
-                } else {
-                    format!("&{}{}", mut_str, t)
-                }
-            }
-            BoundType::AsRef(_) => t.to_string(),
-        },
+    match bounds.get_parameter_bound(&par.name) {
+        Some(bound) => bound.full_type_parameter_reference(ref_mode, par.nullable),
         None => RustType::builder(env, par.typ)
             .direction(par.direction)
             .nullable(par.nullable)
