@@ -1,3 +1,5 @@
+use std::any::Any;
+
 use super::gi_docgen;
 use crate::{analysis::symbols, Env};
 use once_cell::sync::Lazy;
@@ -171,9 +173,33 @@ fn replace_c_types(entry: &str, env: &Env, in_type: &str) -> String {
             format!("{}`{}{}`", &caps[1], &caps[3], member)
         }
     });
-    let out = GDK_GTK.replace_all(&out, |caps: &Captures<'_>| {
-        format!("`{}`", lookup(&caps[0]))
-    });
+    let out = GDK_GTK.replace_all(&out, |caps: &Captures<'_>| find_struct(&caps[0], env));
     let out = TAGS.replace_all(&out, "`$0`");
     SPACES.replace_all(&out, " ").into_owned()
+}
+
+fn find_struct(name: &str, env: &Env) -> String {
+    let symbols = env.symbols.borrow();
+    let symbol = if let Some(obj) = env
+        .analysis
+        .objects
+        .iter()
+        .find(|(_, o)| o.full_name == name)
+        .map(|(_, o)| o)
+    {
+        symbols.by_tid(obj.type_id)
+    } else if let Some(record) = env
+        .analysis
+        .records
+        .iter()
+        .find(|(_, r)| r.full_name == name)
+        .map(|(_, r)| r)
+    {
+        symbols.by_tid(record.type_id)
+    } else {
+        None
+    };
+    symbol
+        .map(|sym| format!("[{name}](crate::{name})", name = sym.full_rust_name()))
+        .unwrap_or_else(|| format!("`{}`", name))
 }
