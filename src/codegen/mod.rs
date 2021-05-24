@@ -2,6 +2,7 @@ use crate::{config::WorkMode, env::Env, file_saver::*};
 use std::path::Path;
 
 mod alias;
+mod bound;
 mod child_properties;
 mod constants;
 mod doc;

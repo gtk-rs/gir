@@ -4,13 +4,8 @@ use super::{
 };
 use crate::{
     analysis::{
-        bounds::{BoundType, Bounds},
-        ffi_type::ffi_type,
-        ref_mode::RefMode,
-        rust_type::RustType,
-        trampoline_parameters::*,
-        trampolines::Trampoline,
-        try_from_glib::TryFromGlib,
+        bounds::Bounds, ffi_type::ffi_type, ref_mode::RefMode, rust_type::RustType,
+        trampoline_parameters::*, trampolines::Trampoline, try_from_glib::TryFromGlib,
     },
     consts::TYPE_PARAMETERS_START,
     env::Env,
@@ -128,15 +123,8 @@ fn func_parameter(env: &Env, par: &RustParameter, bounds: &Bounds) -> String {
         par.ref_mode
     };
 
-    match bounds.get_parameter_alias_info(&par.name) {
-        Some((t, bound_type)) => match bound_type {
-            BoundType::NoWrapper => unreachable!(),
-            BoundType::IsA(_) if *par.nullable => {
-                format!("Option<{}{}>", ref_mode.for_rust_type(), t)
-            }
-            BoundType::IsA(_) => format!("{}{}", ref_mode.for_rust_type(), t),
-            BoundType::AsRef(_) => t.to_string(),
-        },
+    match bounds.get_parameter_bound(&par.name) {
+        Some(bound) => bound.full_type_parameter_reference(ref_mode, par.nullable),
         None => RustType::builder(env, par.typ)
             .direction(par.direction)
             .nullable(par.nullable)

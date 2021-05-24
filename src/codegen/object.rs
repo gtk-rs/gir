@@ -1,12 +1,14 @@
-use super::{child_properties, function, general, properties, signal, trait_impls};
-use crate::codegen::general::cfg_deprecated_string;
+use super::{
+    child_properties, function, general,
+    general::{cfg_deprecated_string, version_condition_no_doc, version_condition_string},
+    properties, signal, trait_impls,
+};
 use crate::{
-    analysis::special_functions::Type,
-    analysis::{self, rust_type::RustType},
+    analysis::{self, ref_mode::RefMode, rust_type::RustType, special_functions::Type},
     case::CaseExt,
-    codegen::general::{version_condition_no_doc, version_condition_string},
     env::Env,
-    library, nameutil,
+    library::{self, Nullable},
+    nameutil,
     traits::IntoString,
 };
 use std::io::{Result, Write};
@@ -229,10 +231,16 @@ fn generate_builder(w: &mut dyn Write, env: &Env, analysis: &analysis::object::I
                     "&[&str]" => (Some("Vec<String>".to_string()), String::new(), ""),
                     _ if !property.bounds.is_empty() => {
                         let (bounds, _) = function::bounds(&property.bounds, &[], false, false);
-                        let alias = property
-                            .bounds
-                            .get_parameter_alias_info(&property.name)
-                            .map(|(alias, _)| format!("&{}", alias));
+                        let alias =
+                            property
+                                .bounds
+                                .get_parameter_bound(&property.name)
+                                .map(|bound| {
+                                    bound.full_type_parameter_reference(
+                                        RefMode::ByRef,
+                                        Nullable(false),
+                                    )
+                                });
                         (alias, bounds, ".clone().upcast()")
                     }
                     typ if typ.starts_with('&') => (None, String::new(), ".clone()"),

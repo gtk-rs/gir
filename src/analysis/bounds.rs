@@ -216,11 +216,8 @@ impl Bounds {
         });
     }
 
-    pub fn get_parameter_alias_info(&self, name: &str) -> Option<(char, BoundType)> {
-        self.used
-            .iter()
-            .find(|n| n.parameter_name == name)
-            .map(|t| (t.alias, t.bound_type.clone()))
+    pub fn get_parameter_bound(&self, name: &str) -> Option<&Bound> {
+        self.iter().find(move |n| n.parameter_name == name)
     }
 
     pub fn update_imports(&self, imports: &mut Imports) {
@@ -365,16 +362,17 @@ mod tests {
     }
 
     #[test]
-    fn get_parameter_alias_info() {
+    fn get_parameter_bound() {
         let mut bounds: Bounds = Default::default();
         let typ = BoundType::IsA(None);
         bounds.add_parameter("a", "", typ.clone(), false);
         bounds.add_parameter("b", "", typ.clone(), false);
-        assert_eq!(
-            bounds.get_parameter_alias_info("a"),
-            Some(('P', typ.clone()))
-        );
-        assert_eq!(bounds.get_parameter_alias_info("b"), Some(('Q', typ)));
-        assert_eq!(bounds.get_parameter_alias_info("c"), None);
+        let bound = bounds.get_parameter_bound("a").unwrap();
+        assert_eq!(bound.alias, 'P');
+        assert_eq!(bound.bound_type, typ);
+        let bound = bounds.get_parameter_bound("b").unwrap();
+        assert_eq!(bound.alias, 'Q');
+        assert_eq!(bound.bound_type, typ);
+        assert_eq!(bounds.get_parameter_bound("c"), None);
     }
 }
