@@ -52,9 +52,8 @@ pub struct Bounds {
 impl Default for Bounds {
     fn default() -> Bounds {
         Bounds {
-            unused: (TYPE_PARAMETERS_START as u8..)
-                .take_while(|x| *x <= b'Z')
-                .map(|x| x as char)
+            unused: (TYPE_PARAMETERS_START..)
+                .take_while(|x| *x <= 'Z')
                 .collect(),
             used: Vec::new(),
             unused_lifetimes: "abcdefg".chars().collect(),
@@ -152,14 +151,8 @@ impl Bounds {
                         });
                     }
                 }
-                if (!need_is_into_check || !*par.nullable)
-                    && par.c_type != "GDestroyNotify"
-                    && !self.add_parameter(&par.name, &type_string, bound_type, r#async)
-                {
-                    panic!(
-                        "Too many type constraints for {}",
-                        func.c_identifier.as_ref().unwrap()
-                    )
+                if (!need_is_into_check || !*par.nullable) && par.c_type != "GDestroyNotify" {
+                    self.add_parameter(&par.name, &type_string, bound_type, r#async)
                 }
             }
         } else if par.instance_parameter {
@@ -204,37 +197,23 @@ impl Bounds {
         &mut self,
         name: &str,
         type_str: &str,
-        bound_type: BoundType,
+        mut bound_type: BoundType,
         r#async: bool,
-    ) -> bool {
+    ) {
         if r#async && name == "callback" {
-            if let Some(alias) = self.unused.pop_front() {
-                self.used.push(Bound {
-                    bound_type: BoundType::NoWrapper,
-                    parameter_name: name.to_owned(),
-                    alias,
-                    type_str: type_str.to_string(),
-                    callback_modified: false,
-                });
-                return true;
-            }
-            return false;
+            bound_type = BoundType::NoWrapper;
         }
         if self.used.iter().any(|n| n.parameter_name == name) {
-            return false;
+            return;
         }
-        if let Some(alias) = self.unused.pop_front() {
-            self.used.push(Bound {
-                bound_type,
-                parameter_name: name.to_owned(),
-                alias,
-                type_str: type_str.to_owned(),
-                callback_modified: false,
-            });
-            true
-        } else {
-            false
-        }
+        let alias = self.unused.pop_front().expect("No free type aliases!");
+        self.used.push(Bound {
+            bound_type,
+            parameter_name: name.to_owned(),
+            alias,
+            type_str: type_str.to_owned(),
+            callback_modified: false,
+        });
     }
 
     pub fn get_parameter_alias_info(&self, name: &str) -> Option<(char, BoundType)> {
@@ -354,21 +333,35 @@ mod tests {
     fn get_new_all() {
         let mut bounds: Bounds = Default::default();
         let typ = BoundType::IsA(None);
-        assert_eq!(bounds.add_parameter("a", "", typ.clone(), false), true);
+        bounds.add_parameter("a", "", typ.clone(), false);
+        assert_eq!(bounds.iter().len(), 1);
         // Don't add second time
-        assert_eq!(bounds.add_parameter("a", "", typ.clone(), false), false);
-        assert_eq!(bounds.add_parameter("b", "", typ.clone(), false), true);
-        assert_eq!(bounds.add_parameter("c", "", typ.clone(), false), true);
-        assert_eq!(bounds.add_parameter("d", "", typ.clone(), false), true);
-        assert_eq!(bounds.add_parameter("e", "", typ.clone(), false), true);
-        assert_eq!(bounds.add_parameter("f", "", typ.clone(), false), true);
-        assert_eq!(bounds.add_parameter("g", "", typ.clone(), false), true);
-        assert_eq!(bounds.add_parameter("h", "", typ.clone(), false), true);
-        assert_eq!(bounds.add_parameter("h", "", typ.clone(), false), false);
-        assert_eq!(bounds.add_parameter("i", "", typ.clone(), false), true);
-        assert_eq!(bounds.add_parameter("j", "", typ.clone(), false), true);
-        assert_eq!(bounds.add_parameter("k", "", typ.clone(), false), true);
-        assert_eq!(bounds.add_parameter("l", "", typ, false), false);
+        bounds.add_parameter("a", "", typ.clone(), false);
+        assert_eq!(bounds.iter().len(), 1);
+        bounds.add_parameter("b", "", typ.clone(), false);
+        bounds.add_parameter("c", "", typ.clone(), false);
+        bounds.add_parameter("d", "", typ.clone(), false);
+        bounds.add_parameter("e", "", typ.clone(), false);
+        bounds.add_parameter("f", "", typ.clone(), false);
+        bounds.add_parameter("g", "", typ.clone(), false);
+        bounds.add_parameter("h", "", typ.clone(), false);
+        assert_eq!(bounds.iter().len(), 8);
+        bounds.add_parameter("h", "", typ.clone(), false);
+        assert_eq!(bounds.iter().len(), 8);
+        bounds.add_parameter("i", "", typ.clone(), false);
+        bounds.add_parameter("j", "", typ.clone(), false);
+        bounds.add_parameter("k", "", typ, false);
+    }
+
+    #[test]
+    #[should_panic(expected = "No free type aliases!")]
+    fn exhaust_type_parameters() {
+        let mut bounds: Bounds = Default::default();
+        let typ = BoundType::NoWrapper;
+        for c in 'a'..='l' {
+            // Should panic on `l` because all type parameters are exhausted
+            bounds.add_parameter(c.to_string().as_str(), "", typ.clone(), false);
+        }
     }
 
     #[test]
