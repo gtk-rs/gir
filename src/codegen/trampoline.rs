@@ -61,10 +61,10 @@ pub fn generate(
 pub fn func_string(
     env: &Env,
     analysis: &Trampoline,
-    bound_replace: Option<(char, &str)>,
+    replace_self_bound: Option<&str>,
     closure: bool,
 ) -> String {
-    let param_str = func_parameters(env, analysis, bound_replace, closure);
+    let param_str = func_parameters(env, analysis, replace_self_bound, closure);
     let return_str = func_returns(env, analysis);
 
     if closure {
@@ -94,35 +94,33 @@ pub fn func_string(
 fn func_parameters(
     env: &Env,
     analysis: &Trampoline,
-    bound_replace: Option<(char, &str)>,
+    replace_self_bound: Option<&str>,
     closure: bool,
 ) -> String {
     let mut param_str = String::with_capacity(100);
 
     for (pos, par) in analysis.parameters.rust_parameters.iter().enumerate() {
-        if pos > 0 {
+        if pos == 0 {
+            if let Some(replace_self_bound) = &replace_self_bound {
+                param_str.push_str(par.ref_mode.for_rust_type());
+                param_str.push_str(replace_self_bound.as_ref());
+                continue;
+            }
+        } else {
             param_str.push_str(", ");
             if !closure {
                 param_str.push_str(&format!("{}: ", par.name));
             }
-        } else if !closure {
-            param_str.push_str("&self");
-            continue;
         }
 
-        let s = func_parameter(env, par, &analysis.bounds, bound_replace);
+        let s = func_parameter(env, par, &analysis.bounds);
         param_str.push_str(&s);
     }
 
     param_str
 }
 
-fn func_parameter(
-    env: &Env,
-    par: &RustParameter,
-    bounds: &Bounds,
-    bound_replace: Option<(char, &str)>,
-) -> String {
+fn func_parameter(env: &Env, par: &RustParameter, bounds: &Bounds) -> String {
     //TODO: restore mutable support
     let ref_mode = if par.ref_mode == RefMode::ByRefMut {
         RefMode::ByRef
@@ -133,19 +131,10 @@ fn func_parameter(
     match bounds.get_parameter_alias_info(&par.name) {
         Some((t, bound_type)) => match bound_type {
             BoundType::NoWrapper => unreachable!(),
-            BoundType::IsA(_) => {
-                if *par.nullable {
-                    format!("Option<{}{}>", ref_mode.for_rust_type(), t)
-                } else if let Some((from, to)) = bound_replace {
-                    if from == t {
-                        format!("{}{}", ref_mode.for_rust_type(), to)
-                    } else {
-                        format!("{}{}", ref_mode.for_rust_type(), t)
-                    }
-                } else {
-                    format!("{}{}", ref_mode.for_rust_type(), t)
-                }
+            BoundType::IsA(_) if *par.nullable => {
+                format!("Option<{}{}>", ref_mode.for_rust_type(), t)
             }
+            BoundType::IsA(_) => format!("{}{}", ref_mode.for_rust_type(), t),
             BoundType::AsRef(_) => t.to_string(),
         },
         None => RustType::builder(env, par.typ)
