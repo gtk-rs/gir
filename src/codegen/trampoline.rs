@@ -29,11 +29,9 @@ pub fn generate(
     in_trait: bool,
     indent: usize,
 ) -> Result<()> {
-    let (self_bound, end) = if in_trait {
-        (format!("{}, ", TYPE_PARAMETERS_START), "")
-    } else {
-        (String::new(), " {")
-    };
+    let self_bound = in_trait
+        .then(|| format!("{}: IsA<{}>, ", TYPE_PARAMETERS_START, analysis.type_name))
+        .unwrap_or_default();
 
     let prepend = tabs(indent);
     let params_str = trampoline_parameters(env, analysis);
@@ -42,7 +40,7 @@ pub fn generate(
 
     writeln!(
         w,
-        "{}unsafe extern \"C\" fn {}<{}F: {}>({}, f: {}){}{}",
+        "{}unsafe extern \"C\" fn {}<{}F: {}>({}, f: {}){} {{",
         prepend,
         analysis.name,
         self_bound,
@@ -50,15 +48,7 @@ pub fn generate(
         params_str,
         use_glib_if_needed(env, "ffi::gpointer"),
         ret_str,
-        end,
     )?;
-    if in_trait {
-        writeln!(
-            w,
-            "{0}\twhere {1}: IsA<{2}>\n{0}{{",
-            prepend, TYPE_PARAMETERS_START, analysis.type_name
-        )?;
-    }
     writeln!(w, "{}\tlet f: &F = &*(f as *const F);", prepend)?;
     transformation_vars(w, env, analysis, &prepend)?;
     let call = trampoline_call_func(env, analysis, in_trait);
