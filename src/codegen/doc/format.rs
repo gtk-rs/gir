@@ -75,31 +75,98 @@ static TAGS: Lazy<Regex> = Lazy::new(|| Regex::new(r"<[\w/-]+>").unwrap());
 static SPACES: Lazy<Regex> = Lazy::new(|| Regex::new(r"[ ]{2,}").unwrap());
 
 fn replace_c_types(entry: &str, env: &Env, in_type: &str) -> String {
-    let symbols = env.symbols.borrow();
     let out = FUNCTION.replace_all(entry, |caps: &Captures<'_>| {
         let name = &caps[3];
         find_function(name, env)
     });
 
     let out = SYMBOL.replace_all(&out, |caps: &Captures<'_>| {
-        let prefix = &caps[1];
-        if prefix == "#" {
-            let symbol_name = &caps[2];
-            let func_name = caps.get(3).map(|m| m.as_str().to_string());
-            format!("{}", symbol_name)
-        } else {
-            // would be equal to "%"
-            match &caps[2] {
-                "TRUE" => "[`true`]".to_string(),
-                "FALSE" => "[`false`]".to_string(),
-                "NULL" => "[`None`]".to_string(),
-                symbol_name => find_constant_or_variant(symbol_name, env),
+        match &caps[2] {
+            "TRUE" => "[`true`]".to_string(),
+            "FALSE" => "[`false`]".to_string(),
+            "NULL" => "[`None`]".to_string(),
+            symbol_name => {
+                if &caps[1] == "%" {
+                    find_constant_or_variant(symbol_name, env)
+                } else {
+                    let method_name = caps.get(3).map(|m| m.as_str().trim_start_matches('.'));
+                    // would be #
+                    find_type_by_name(symbol_name, method_name, env)
+                }
             }
         }
     });
     let out = GDK_GTK.replace_all(&out, |caps: &Captures<'_>| find_struct(&caps[2], env));
     let out = TAGS.replace_all(&out, "`$0`");
     SPACES.replace_all(&out, " ").into_owned()
+}
+
+fn find_type_by_name(symbol: &str, method_name: Option<&str>, env: &Env) -> String {
+    let symbols = env.symbols.borrow();
+    if let Some(method) = method_name {
+        let is_obj_func = env
+            .analysis
+            .objects
+            .iter()
+            .find(|(_, o)| o.full_name == symbol)
+            .and_then(|(_, obj_info)| {
+                obj_info
+                    .functions
+                    .iter()
+                    .filter(|fn_info| fn_info.status != GStatus::Ignore)
+                    .filter(|fn_info| !fn_info.is_special() && !fn_info.is_async_finish(env))
+                    .find(|fn_info| fn_info.name == method)
+                    .map(|fn_info| (obj_info, fn_info))
+            });
+        let is_record_func = env
+            .analysis
+            .records
+            .iter()
+            .find(|(_, r)| r.type_(&env.library).c_type == symbol)
+            .and_then(|(_, record_info)| {
+                record_info
+                    .functions
+                    .iter()
+                    .filter(|fn_info| fn_info.status != GStatus::Ignore)
+                    .filter(|fn_info| !fn_info.is_special() && !fn_info.is_async_finish(env))
+                    .find(|fn_info| fn_info.glib_name == method)
+                    .map(|fn_info| (record_info, fn_info))
+            });
+        if let Some((obj_info, fn_info)) = is_obj_func {
+            let sym = symbols.by_tid(obj_info.type_id).unwrap(); // we are sure the object exists
+            let (type_name, visible_type_name) = if obj_info.final_type
+                || fn_info.kind == FunctionKind::Constructor
+                || fn_info.kind == FunctionKind::Function
+            {
+                (obj_info.name.clone(), obj_info.name.clone())
+            } else {
+                let type_name = if fn_info.status == GStatus::Generate {
+                    obj_info.trait_name.clone()
+                } else {
+                    format!("{}Manual", obj_info.trait_name)
+                };
+                (format!("prelude::{}", type_name), type_name)
+            };
+            let name = sym.full_rust_name().replace(&obj_info.name, &type_name);
+            format!(
+                "[{visible_type_name}::{fn_name}](crate::{name}::{fn_name})",
+                name = name,
+                visible_type_name = visible_type_name,
+                fn_name = fn_info.codegen_name()
+            )
+        } else if let Some((record_info, fn_info)) = is_record_func {
+            let sym = symbols.by_tid(record_info.type_id).unwrap(); // we are sure the object exists
+            format!(
+                "[{name}::{fn_name}](crate::{name}::{fn_name})",
+                name = sym.full_rust_name(),
+                fn_name = fn_info.codegen_name()
+            )
+        } else {
+            format!("`{}::{}`", symbol, method)
+        }
+    } else {
+        find_struct(symbol, env)
+    }
 }
 
 fn find_constant_or_variant(symbol: &str, env: &Env) -> String {
@@ -160,7 +227,7 @@ fn find_struct(name: &str, env: &Env) -> String {
         .analysis
         .records
         .iter()
-        .find(|(full_name, _)| full_name == &name)
+        .find(|(_, r)| r.type_(&env.library).c_type == name)
         .map(|(_, r)| r)
     {
         symbols.by_tid(record.type_id)
