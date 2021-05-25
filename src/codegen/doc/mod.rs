@@ -338,8 +338,8 @@ fn create_object_doc(w: &mut dyn Write, env: &Env, info: &analysis::object::Info
                 .filter(|&tid| !env.type_status(&tid.full_name(&env.library)).ignored())
                 .map(|tid| {
                     format!(
-                        "[{name}](crate::{name})",
-                        name = env.library.type_(tid).get_name()
+                        "[`{0}`][struct@crate::{0}]",
+                        env.library.type_(tid).get_name()
                     )
                 })
                 .collect::<Vec<_>>();
@@ -773,11 +773,11 @@ fn get_type_trait_for_implements(env: &Env, tid: TypeId) -> String {
         format!("{}Ext", env.library.type_(tid).get_name())
     };
     if tid.ns_id == MAIN_NAMESPACE {
-        format!("[{name}](crate::prelude::{name})", name = &trait_name)
+        format!("[`{0}`][trait@crate::prelude::{0}]", trait_name)
     } else if let Some(symbol) = env.symbols.borrow().by_tid(tid) {
         let mut symbol = symbol.clone();
         symbol.make_trait(&trait_name);
-        format!("[{name}](trait@{name})", name = &symbol.full_rust_name())
+        format!("[`trait@{}`]", &symbol.full_rust_name())
     } else {
         error!("Type {} doesn't have crate", tid.full_name(&env.library));
         format!("`{}`", trait_name)
@@ -804,6 +804,6 @@ pub fn get_type_manual_traits_for_implements(
     manual_trait_iters
         .into_iter()
         .flatten()
-        .map(|name| format!("[{name}](trait@crate::prelude::{name})", name = name))
+        .map(|name| format!("[`{0}`][trait@crate::prelude::{0}]", name))
         .collect()
 }

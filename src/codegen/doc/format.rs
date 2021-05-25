@@ -1,7 +1,7 @@
 use super::gi_docgen;
 use crate::{config::gobjects::GStatus, library::FunctionKind, nameutil, Env};
 use once_cell::sync::Lazy;
-use regex::{Captures, Match, Regex};
+use regex::{Captures, Regex};
 
 const LANGUAGE_SEP_BEGIN: &str = "<!-- language=\"";
 const LANGUAGE_SEP_END: &str = "\" -->";
@@ -76,7 +76,7 @@ static GDK_GTK: Lazy<Regex> =
 static TAGS: Lazy<Regex> = Lazy::new(|| Regex::new(r"<[\w/-]+>").unwrap());
 static SPACES: Lazy<Regex> = Lazy::new(|| Regex::new(r"[ ]{2,}").unwrap());
 
-fn replace_c_types(entry: &str, env: &Env, in_type: &str) -> String {
+fn replace_c_types(entry: &str, env: &Env, _in_type: &str) -> String {
     let out = FUNCTION.replace_all(entry, |caps: &Captures<'_>| {
         let name = &caps[3];
         find_function(name, env)
@@ -152,7 +152,7 @@ fn find_type_by_name(symbol: &str, method_name: Option<&str>, env: &Env) -> Stri
             };
             let name = sym.full_rust_name().replace(&obj_info.name, &type_name);
             format!(
-                "[{visible_type_name}::{fn_name}](crate::{name}::{fn_name})",
+                "[`{visible_type_name}::{fn_name}`][crate::{name}::{fn_name}]",
                 name = name,
                 visible_type_name = visible_type_name,
                 fn_name = fn_info.codegen_name()
@@ -160,7 +160,7 @@ fn find_type_by_name(symbol: &str, method_name: Option<&str>, env: &Env) -> Stri
         } else if let Some((record_info, fn_info)) = is_record_func {
             let sym = symbols.by_tid(record_info.type_id).unwrap(); // we are sure the object exists
             format!(
-                "[{name}::{fn_name}](crate::{name}::{fn_name})",
+                "[`{name}::{fn_name}`][crate::{name}::{fn_name}]",
                 name = sym.full_rust_name(),
                 fn_name = fn_info.codegen_name()
             )
@@ -181,7 +181,7 @@ fn find_constant_or_variant(symbol: &str, env: &Env) -> String {
         .find(|c| c.glib_name == symbol)
     {
         // for whatever reason constants are not part of the symbols list
-        format!("[{name}](crate::{name})", name = const_info.name)
+        format!("[`{name}`][crate::{name}]", name = const_info.name)
     } else if let Some((flag_info, member_info)) = env.analysis.flags.iter().find_map(|f| {
         f.type_(&env.library)
             .members
@@ -191,7 +191,7 @@ fn find_constant_or_variant(symbol: &str, env: &Env) -> String {
     }) {
         let sym = symbols.by_tid(flag_info.type_id).unwrap();
         format!(
-            "[{flag_name}::{member_name}](crate::{parent}{member_name})",
+            "[`{flag_name}::{member_name}`][crate::{parent}{member_name}]",
             member_name = nameutil::bitfield_member_name(&member_info.name),
             flag_name = flag_info.name,
             parent = sym.parent()
@@ -205,7 +205,7 @@ fn find_constant_or_variant(symbol: &str, env: &Env) -> String {
     }) {
         let sym = symbols.by_tid(enum_info.type_id).unwrap();
         format!(
-            "[{enum_name}::{member}](crate::{parent}{member})",
+            "[`{enum_name}::{member}`][crate::{parent}{member}]",
             enum_name = enum_info.name,
             member = nameutil::enum_member_name(&member_info.name),
             parent = sym.parent()
@@ -238,7 +238,7 @@ fn find_struct(name: &str, env: &Env) -> String {
         None
     };
     symbol
-        .map(|sym| format!("[{name}](crate::{name})", name = sym.full_rust_name()))
+        .map(|sym| format!("[`{name}`][crate::{name}]", name = sym.full_rust_name()))
         .unwrap_or_else(|| name.to_string())
 }
 
@@ -289,7 +289,7 @@ fn find_function(name: &str, env: &Env) -> String {
         };
         let name = sym.full_rust_name().replace(&obj_info.name, &type_name);
         format!(
-            "[{visible_type_name}::{fn_name}](crate::{name}::{fn_name})",
+            "[`{visible_type_name}::{fn_name}()`][crate::{name}::{fn_name}()]",
             name = name,
             visible_type_name = visible_type_name,
             fn_name = fn_info.codegen_name()
@@ -297,16 +297,16 @@ fn find_function(name: &str, env: &Env) -> String {
     } else if let Some((record_info, fn_info)) = is_record_func {
         let sym = symbols.by_tid(record_info.type_id).unwrap(); // we are sure the object exists
         format!(
-            "[{name}::{fn_name}](crate::{name}::{fn_name})",
+            "[`{name}::{fn_name}()`][crate::{name}::{fn_name}()]",
             name = sym.full_rust_name(),
             fn_name = fn_info.codegen_name()
         )
     } else if let Some(fn_info) = is_globa_func {
         format!(
-            "[{fn_name}()](crate::{fn_name})",
+            "[`{fn_name}()`][crate::{fn_name}()]",
             fn_name = fn_info.codegen_name()
         )
     } else {
-        format!("`{}`", name)
+        format!("`{}()`", name)
     }
 }
