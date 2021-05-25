@@ -89,8 +89,12 @@ fn replace_c_types(entry: &str, env: &Env, in_type: &str) -> String {
             format!("{}", symbol_name)
         } else {
             // would be equal to "%"
-            let symbol_name = &caps[2];
-            find_constant_or_variant(symbol_name, env)
+            match &caps[2] {
+                "TRUE" => "[`true`]".to_string(),
+                "FALSE" => "[`false`]".to_string(),
+                "NULL" => "[`None`]".to_string(),
+                symbol_name => find_constant_or_variant(symbol_name, env),
+            }
         }
     });
     let out = GDK_GTK.replace_all(&out, |caps: &Captures<'_>| find_struct(&caps[2], env));
