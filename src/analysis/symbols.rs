@@ -18,7 +18,7 @@ impl Symbol {
     pub fn parent(&self) -> String {
         let mut ret = String::new();
         if Some("gobject") == self.crate_name() {
-            ret.push_str("glib::object::");
+            ret.push_str("glib::");
         } else {
             if let Some(ref s) = self.crate_name {
                 ret.push_str(s);
