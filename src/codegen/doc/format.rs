@@ -63,8 +63,7 @@ fn format(input: &str, env: &Env, in_type: &str) -> String {
     ret
 }
 
-static SYMBOL: Lazy<Regex> =
-    Lazy::new(|| Regex::new(r"(^|[^\\])([@#%])(\w+\b)([:.]+[\w-]+\b)?").unwrap());
+static SYMBOL: Lazy<Regex> = Lazy::new(|| Regex::new(r"([#%])(\w+\b)([:.]+[\w-]+\b)?").unwrap());
 static FUNCTION: Lazy<Regex> =
     Lazy::new(|| Regex::new(r"([@#%])?(\w+\b[:.]+)?(\b[a-z0-9_]+)\(\)").unwrap());
 // **note**
@@ -83,43 +82,63 @@ fn replace_c_types(entry: &str, env: &Env, in_type: &str) -> String {
     });
 
     let out = SYMBOL.replace_all(&out, |caps: &Captures<'_>| {
-        let member = caps.get(4).map(|m| m.as_str()).unwrap_or("");
-        let sym = symbols.by_c_name(&caps[3]);
-
-        if let Some(sym) = sym {
-            if sym.owner_name() == Some(in_type) {
-                // `#` or `%` symbols should probably have been `@` to denote
-                // that it is a reference within the current type.
-                format!("{}[`Self::{}{}`]", &caps[1], sym.name(), member)
-            } else {
-                match &caps[2] {
-                    // Catch invalid @ references that have a C symbol available but do not belong
-                    // to the current type (and can hence not use `Self::`). For now generate XXX
-                    // but with a valid global link so that the can be easily spotted in the code.
-                    // assert_eq!(sym.owner_name(), Some(in_type));
-                    "@" => format!(
-                        "{}[`crate::{}{}`] (XXX: @-reference does not belong to {}!)",
-                        &caps[1],
-                        sym.full_rust_name(),
-                        member,
-                        in_type,
-                    ),
-                    "%" if sym.is_rust_prelude() => {
-                        format!("{}[`{}{}`]", &caps[1], sym.full_rust_name(), member)
-                    }
-                    "#" | "%" => {
-                        format!("{}[`crate::{}{}`]", &caps[1], sym.full_rust_name(), member)
-                    }
-                    c => panic!("Unknown symbol reference {}", c),
-                }
-            }
+        let prefix = &caps[1];
+        if prefix == "#" {
+            let symbol_name = &caps[2];
+            let func_name = caps.get(3).map(|m| m.as_str().to_string());
+            format!("{}", symbol_name)
         } else {
-            format!("{}`{}{}`", &caps[1], &caps[3], member)
+            // would be equal to "%"
+            let symbol_name = &caps[2];
+            find_constant_or_variant(symbol_name, env)
         }
     });
     let out = GDK_GTK.replace_all(&out, |caps: &Captures<'_>| find_struct(&caps[2], env));
     let out = TAGS.replace_all(&out, "`$0`");
     SPACES.replace_all(&out, " ").into_owned()
+}
+
+fn find_constant_or_variant(symbol: &str, env: &Env) -> String {
+    let symbols = env.symbols.borrow();
+    if let Some(const_info) = env
+        .analysis
+        .constants
+        .iter()
+        .find(|c| c.glib_name == symbol)
+    {
+        // for whatever reason constants are not part of the symbols list
+        format!("[{name}](crate::{name})", name = const_info.name)
+    } else if let Some((flag_info, member_info)) = env.analysis.flags.iter().find_map(|f| {
+        f.type_(&env.library)
+            .members
+            .iter()
+            .find(|m| m.c_identifier == symbol)
+            .map(|m| (f, m))
+    }) {
+        let sym = symbols.by_tid(flag_info.type_id).unwrap();
+        format!(
+            "[{flag_name}::{member_name}](crate::{parent}{member_name})",
+            member_name = nameutil::bitfield_member_name(&member_info.name),
+            flag_name = flag_info.name,
+            parent = sym.parent()
+        )
+    } else if let Some((enum_info, member_info)) = env.analysis.enumerations.iter().find_map(|e| {
+        e.type_(&env.library)
+            .members
+            .iter()
+            .find(|m| m.c_identifier == symbol)
+            .map(|m| (e, m))
+    }) {
+        let sym = symbols.by_tid(enum_info.type_id).unwrap();
+        format!(
+            "[{enum_name}::{member}](crate::{parent}{member})",
+            enum_name = enum_info.name,
+            member = nameutil::enum_member_name(&member_info.name),
+            parent = sym.parent()
+        )
+    } else {
+        format!("`{}`", symbol)
+    }
 }
 
 fn find_struct(name: &str, env: &Env) -> String {

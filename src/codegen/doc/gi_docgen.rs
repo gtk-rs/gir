@@ -189,7 +189,11 @@ impl GiDocgen {
                 if let Some(enum_info) = env.analysis.enumerations.iter().find(|e| &e.name == type_)
                 {
                     let sym = symbols.by_tid(enum_info.type_id).unwrap();
-                    format!("[{name}](crate::{name})", name = sym.full_rust_name())
+                    format!(
+                        "[{name}](crate::{parent})",
+                        name = enum_info.name,
+                        parent = sym.parent().trim_end_matches("::")
+                    )
                 } else {
                     format!("`{}`", ns_type_to_doc(namespace, type_))
                 }
@@ -207,7 +211,11 @@ impl GiDocgen {
             GiDocgen::Flag { namespace, type_ } => {
                 if let Some(flag_info) = env.analysis.flags.iter().find(|e| &e.name == type_) {
                     let sym = symbols.by_tid(flag_info.type_id).unwrap();
-                    format!("[{name}](crate::{name})", name = sym.full_rust_name())
+                    format!(
+                        "[{name}](crate::{parent})",
+                        name = flag_info.name,
+                        parent = sym.parent().trim_end_matches("::")
+                    )
                 } else {
                     format!("`{}`", ns_type_to_doc(namespace, type_))
                 }
@@ -308,6 +316,9 @@ impl GiDocgen {
                         if let Some(fn_info) = obj_ty
                             .functions
                             .iter()
+                            .filter(|fn_info| {
+                                !fn_info.is_special() && !fn_info.is_async_finish(env)
+                            })
                             .find(|f| f.name == nameutil::mangle_keywords(name))
                         {
                             format!(
@@ -328,6 +339,7 @@ impl GiDocgen {
                     .unwrap()
                     .functions
                     .iter()
+                    .filter(|fn_info| !fn_info.is_special() && !fn_info.is_async_finish(env))
                     .find(|n| &n.name == name)
                 {
                     format!(
