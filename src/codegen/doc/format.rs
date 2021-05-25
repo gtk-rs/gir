@@ -1,5 +1,5 @@
 use super::gi_docgen;
-use crate::Env;
+use crate::{config::gobjects::GStatus, nameutil, Env};
 use once_cell::sync::Lazy;
 use regex::{Captures, Match, Regex};
 
@@ -71,7 +71,7 @@ static FUNCTION: Lazy<Regex> =
 // The optional . at the end is to make the regex more relaxed for some weird broken cases on gtk3's docs
 // it doesn't hurt other docs so please don't drop it
 static GDK_GTK: Lazy<Regex> =
-    Lazy::new(|| Regex::new(r"`(G[dts]k|Pango[A-Z]\w+\b)(\.)?`").unwrap());
+    Lazy::new(|| Regex::new(r"`([^\(:])?((G[dts]k|Pango)\w+\b)(\.)?`").unwrap());
 static TAGS: Lazy<Regex> = Lazy::new(|| Regex::new(r"<[\w/-]+>").unwrap());
 static SPACES: Lazy<Regex> = Lazy::new(|| Regex::new(r"[ ]{2,}").unwrap());
 
@@ -79,41 +79,7 @@ fn replace_c_types(entry: &str, env: &Env, in_type: &str) -> String {
     let symbols = env.symbols.borrow();
     let out = FUNCTION.replace_all(entry, |caps: &Captures<'_>| {
         let name = &caps[3];
-        let sym = symbols.by_c_name(name);
-
-        if let Some(sym) = sym {
-            if sym.owner_name() == Some(in_type) {
-                // `#` or `%` symbols should probably have been `@` to denote
-                // that it is a reference within the current type.
-                format!("[`Self::{}()`]", sym.name())
-            } else {
-                match caps.get(1).as_ref().map(Match::as_str) {
-                    // Catch invalid @ references that have a C symbol available but do not belong
-                    // to the current type (and can hence not use `Self::`). For now generate XXX
-                    // but with a valid global link so that the can be easily spotted in the code.
-                    // assert_eq!(sym.owner_name(), Some(in_type));
-                    Some("@") => format!(
-                        "[`crate::{}()`] (XXX: @-reference does not belong to {}!)",
-                        sym.full_rust_name(),
-                        in_type,
-                    ),
-                    Some("#") | None => {
-                        format!("[`crate::{}()`]", sym.full_rust_name())
-                    }
-                    Some("%") => panic!("% not allowed for {:?}", caps),
-                    Some(c) => panic!("Unknown symbol reference {}", c),
-                }
-            }
-        } else if let Some(typ) = caps.get(2) {
-            let typ = typ.as_str();
-            if typ == in_type {
-                format!("[`Self::{}()`]", name)
-            } else {
-                format!("[`crate::{}{}()`]", typ, name)
-            }
-        } else {
-            format!("`{}()`", name)
-        }
+        find_function(name, env)
     });
 
     let out = SYMBOL.replace_all(&out, |caps: &Captures<'_>| {
@@ -151,7 +117,7 @@ fn replace_c_types(entry: &str, env: &Env, in_type: &str) -> String {
             format!("{}`{}{}`", &caps[1], &caps[3], member)
         }
     });
-    let out = GDK_GTK.replace_all(&out, |caps: &Captures<'_>| find_struct(&caps[1], env));
+    let out = GDK_GTK.replace_all(&out, |caps: &Captures<'_>| find_struct(&caps[2], env));
     let out = TAGS.replace_all(&out, "`$0`");
     SPACES.replace_all(&out, " ").into_owned()
 }
@@ -171,7 +137,7 @@ fn find_struct(name: &str, env: &Env) -> String {
         .analysis
         .records
         .iter()
-        .find(|(_, r)| r.name == name)
+        .find(|(full_name, _)| full_name == &name)
         .map(|(_, r)| r)
     {
         symbols.by_tid(record.type_id)
@@ -180,5 +146,68 @@ fn find_struct(name: &str, env: &Env) -> String {
     };
     symbol
         .map(|sym| format!("[{name}](crate::{name})", name = sym.full_rust_name()))
-        .unwrap_or_else(|| format!("`{}`", name))
+        .unwrap_or_else(|| name.to_string())
+}
+
+/// Find a function in all the possible items, if not found return the original name surrounded with backsticks
+/// A function can either be a struct/interface/record method, a global function or maybe a virtual function
+fn find_function(name: &str, env: &Env) -> String {
+    let symbols = env.symbols.borrow();
+    let is_obj_func = env.analysis.objects.iter().find_map(|(_, obj_info)| {
+        obj_info
+            .functions
+            .iter()
+            .filter(|fn_info| fn_info.status != GStatus::Ignore)
+            .find(|fn_info| fn_info.glib_name == name)
+            .map(|fn_info| (obj_info, fn_info))
+    });
+    let is_record_func = env.analysis.records.iter().find_map(|(_, record_info)| {
+        record_info
+            .functions
+            .iter()
+            .filter(|fn_info| fn_info.status != GStatus::Ignore)
+            .find(|fn_info| fn_info.glib_name == name)
+            .map(|fn_info| (record_info, fn_info))
+    });
+    let is_globa_func = env.analysis.global_functions.as_ref().and_then(|info| {
+        info.functions
+            .iter()
+            .filter(|fn_info| fn_info.status != GStatus::Ignore)
+            .find(|fn_info| fn_info.glib_name == name)
+    });
+
+    if let Some((obj_info, fn_info)) = is_obj_func {
+        let sym = symbols.by_tid(obj_info.type_id).unwrap(); // we are sure the object exists
+        let (type_name, visible_type_name) = if obj_info.final_type {
+            (obj_info.name.clone(), obj_info.name.clone())
+        } else {
+            let type_name = if fn_info.status == GStatus::Generate {
+                obj_info.trait_name.clone()
+            } else {
+                format!("{}Manual", obj_info.trait_name)
+            };
+            (format!("prelude::{}", type_name), type_name)
+        };
+        let name = sym.full_rust_name().replace(&obj_info.name, &type_name);
+        format!(
+            "[{visible_type_name}::{fn_name}](crate::{name}::{fn_name})",
+            name = name,
+            visible_type_name = visible_type_name,
+            fn_name = fn_info.codegen_name()
+        )
+    } else if let Some((record_info, fn_info)) = is_record_func {
+        let sym = symbols.by_tid(record_info.type_id).unwrap(); // we are sure the object exists
+        format!(
+            "[{name}::{fn_name}](crate::{name}::{fn_name})",
+            name = sym.full_rust_name(),
+            fn_name = fn_info.codegen_name()
+        )
+    } else if let Some(fn_info) = is_globa_func {
+        format!(
+            "[{fn_name}()](crate::{fn_name})",
+            fn_name = fn_info.codegen_name()
+        )
+    } else {
+        format!("`{}`", name)
+    }
 }
