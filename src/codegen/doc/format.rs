@@ -1,7 +1,5 @@
-use std::any::Any;
-
 use super::gi_docgen;
-use crate::{analysis::symbols, Env};
+use crate::Env;
 use once_cell::sync::Lazy;
 use regex::{Captures, Match, Regex};
 
@@ -57,48 +55,27 @@ fn get_language<'a>(entry: &'a str, out: &mut String) -> &'a str {
     entry
 }
 
-fn format(mut input: &str, env: &Env, in_type: &str) -> String {
+fn format(input: &str, env: &Env, in_type: &str) -> String {
     let mut ret = String::with_capacity(input.len());
-    loop {
-        let (before, after) = try_split(input, "`");
-        // We run gi_docgen first because it's super picky about the types it replaces
-        let no_c_types_re = gi_docgen::replace_c_types(before, env, in_type);
-        ret.push_str(&replace_c_types(&no_c_types_re, env, in_type));
-
-        if let Some(after) = after {
-            ret.push('`');
-            let (before, after) = try_split(after, "`");
-            // don't touch anything enclosed in backticks
-            ret.push_str(before);
-            if let Some(after) = after {
-                ret.push('`');
-                input = after;
-            } else {
-                return ret;
-            }
-        } else {
-            return ret;
-        }
-    }
+    // We run gi_docgen first because it's super picky about the types it replaces
+    let no_c_types_re = gi_docgen::replace_c_types(input, env, in_type);
+    ret.push_str(&replace_c_types(&no_c_types_re, env, in_type));
+    ret
 }
 
 static SYMBOL: Lazy<Regex> =
     Lazy::new(|| Regex::new(r"(^|[^\\])([@#%])(\w+\b)([:.]+[\w-]+\b)?").unwrap());
 static FUNCTION: Lazy<Regex> =
     Lazy::new(|| Regex::new(r"([@#%])?(\w+\b[:.]+)?(\b[a-z0-9_]+)\(\)").unwrap());
-static GDK_GTK: Lazy<Regex> = Lazy::new(|| Regex::new(r"G[dt]k[A-Z]\w+\b").unwrap());
+// **note**
+// The optional . at the end is to make the regex more relaxed for some weird broken cases on gtk3's docs
+// it doesn't hurt other docs so please don't drop it
+static GDK_GTK: Lazy<Regex> = Lazy::new(|| Regex::new(r"`(G[dt]k[A-Z]\w+\b)(\.)?`").unwrap());
 static TAGS: Lazy<Regex> = Lazy::new(|| Regex::new(r"<[\w/-]+>").unwrap());
 static SPACES: Lazy<Regex> = Lazy::new(|| Regex::new(r"[ ]{2,}").unwrap());
 
 fn replace_c_types(entry: &str, env: &Env, in_type: &str) -> String {
     let symbols = env.symbols.borrow();
-    let lookup = |s: &str| -> String {
-        symbols
-            .by_c_name(s)
-            .map(symbols::Symbol::full_rust_name)
-            .unwrap_or_else(|| s.into())
-    };
-
     let out = FUNCTION.replace_all(entry, |caps: &Captures<'_>| {
         let name = &caps[3];
         let sym = symbols.by_c_name(name);
@@ -173,18 +150,19 @@ fn replace_c_types(entry: &str, env: &Env, in_type: &str) -> String {
             format!("{}`{}{}`", &caps[1], &caps[3], member)
         }
     });
-    let out = GDK_GTK.replace_all(&out, |caps: &Captures<'_>| find_struct(&caps[0], env));
+    let out = GDK_GTK.replace_all(&out, |caps: &Captures<'_>| find_struct(&caps[1], env));
     let out = TAGS.replace_all(&out, "`$0`");
     SPACES.replace_all(&out, " ").into_owned()
 }
 
 fn find_struct(name: &str, env: &Env) -> String {
     let symbols = env.symbols.borrow();
+
     let symbol = if let Some(obj) = env
         .analysis
         .objects
         .iter()
-        .find(|(_, o)| o.full_name == name)
+        .find(|(_, o)| o.c_type == name)
         .map(|(_, o)| o)
     {
         symbols.by_tid(obj.type_id)
@@ -192,7 +170,7 @@ fn find_struct(name: &str, env: &Env) -> String {
         .analysis
         .records
         .iter()
-        .find(|(_, r)| r.full_name == name)
+        .find(|(_, r)| r.name == name)
         .map(|(_, r)| r)
     {
         symbols.by_tid(record.type_id)
