@@ -64,6 +64,8 @@ fn format(input: &str, env: &Env, in_type: &str) -> String {
 }
 
 static SYMBOL: Lazy<Regex> = Lazy::new(|| Regex::new(r"([#%])(\w+\b)([:.]+[\w-]+\b)?").unwrap());
+static PARAM_SYMBOL: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"([@])(\w+\b)([:.]+[\w-]+\b)?").unwrap());
 static FUNCTION: Lazy<Regex> =
     Lazy::new(|| Regex::new(r"([@#%])?(\w+\b[:.]+)?(\b[a-z0-9_]+)\(\)").unwrap());
 // **note**
@@ -97,6 +99,7 @@ fn replace_c_types(entry: &str, env: &Env, in_type: &str) -> String {
         }
     });
     let out = GDK_GTK.replace_all(&out, |caps: &Captures<'_>| find_struct(&caps[2], env));
+    let out = PARAM_SYMBOL.replace_all(&out, |caps: &Captures<'_>| format!("`{}`", &caps[2]));
     let out = TAGS.replace_all(&out, "`$0`");
     SPACES.replace_all(&out, " ").into_owned()
 }
