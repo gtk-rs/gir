@@ -387,6 +387,24 @@ impl GiDocgen {
                     } else {
                         format!("`{}::{}()`", sym.full_rust_name(), name)
                     }
+                } else if let Some((_, record_info)) =
+                    env.analysis.records.iter().find(|(_, o)| &o.name == type_)
+                {
+                    let sym = symbols.by_tid(record_info.type_id).unwrap();
+                    if let Some(fn_info) = record_info
+                        .functions
+                        .iter()
+                        .filter(|f| f.status != GStatus::Ignore)
+                        .find(|f| f.name == nameutil::mangle_keywords(name))
+                    {
+                        format!(
+                            "[{name}::{fn_name}](crate::{name}::{fn_name})",
+                            name = sym.full_rust_name(),
+                            fn_name = fn_info.codegen_name()
+                        )
+                    } else {
+                        format!("`{}::{}()`", sym.full_rust_name(), name)
+                    }
                 } else {
                     format!("`{}::{}()`", ns_type_to_doc(namespace, type_), name)
                 }
