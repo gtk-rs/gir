@@ -104,6 +104,15 @@ impl Info {
         self.new_name.as_ref().unwrap_or(&self.name)
     }
 
+    pub fn is_special(&self) -> bool {
+        self.codegen_name()
+            .trim_end_matches('_')
+            .split('_')
+            .last()
+            .map(|i| i.parse::<special_functions::Type>().is_ok())
+            .unwrap_or(false)
+    }
+
     pub fn is_async_finish(&self, env: &Env) -> bool {
         let has_async_result = self
             .parameters

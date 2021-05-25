@@ -158,6 +158,7 @@ fn find_function(name: &str, env: &Env) -> String {
             .functions
             .iter()
             .filter(|fn_info| fn_info.status != GStatus::Ignore)
+            .filter(|fn_info| !fn_info.is_special() && !fn_info.is_async_finish(env))
             .find(|fn_info| fn_info.glib_name == name)
             .map(|fn_info| (obj_info, fn_info))
     });
@@ -166,6 +167,7 @@ fn find_function(name: &str, env: &Env) -> String {
             .functions
             .iter()
             .filter(|fn_info| fn_info.status != GStatus::Ignore)
+            .filter(|fn_info| !fn_info.is_special() && !fn_info.is_async_finish(env))
             .find(|fn_info| fn_info.glib_name == name)
             .map(|fn_info| (record_info, fn_info))
     });
@@ -173,6 +175,7 @@ fn find_function(name: &str, env: &Env) -> String {
         info.functions
             .iter()
             .filter(|fn_info| fn_info.status != GStatus::Ignore)
+            .filter(|fn_info| !fn_info.is_special() && !fn_info.is_async_finish(env))
             .find(|fn_info| fn_info.glib_name == name)
     });
 

@@ -366,6 +366,7 @@ impl GiDocgen {
                         .functions
                         .iter()
                         .filter(|f| f.status != GStatus::Ignore)
+                        .filter(|fn_info| !fn_info.is_special() && !fn_info.is_async_finish(env))
                         .find(|f| f.name == nameutil::mangle_keywords(name))
                     {
                         let (type_name, visible_type_name) = if class_info.final_type {
@@ -395,6 +396,7 @@ impl GiDocgen {
                         .functions
                         .iter()
                         .filter(|f| f.status != GStatus::Ignore)
+                        .filter(|fn_info| !fn_info.is_special() && !fn_info.is_async_finish(env))
                         .find(|f| f.name == nameutil::mangle_keywords(name))
                     {
                         format!(
