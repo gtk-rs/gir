@@ -1,5 +1,5 @@
 use super::gi_docgen;
-use crate::{config::gobjects::GStatus, nameutil, Env};
+use crate::{config::gobjects::GStatus, library::FunctionKind, nameutil, Env};
 use once_cell::sync::Lazy;
 use regex::{Captures, Match, Regex};
 
@@ -181,16 +181,17 @@ fn find_function(name: &str, env: &Env) -> String {
 
     if let Some((obj_info, fn_info)) = is_obj_func {
         let sym = symbols.by_tid(obj_info.type_id).unwrap(); // we are sure the object exists
-        let (type_name, visible_type_name) = if obj_info.final_type {
-            (obj_info.name.clone(), obj_info.name.clone())
-        } else {
-            let type_name = if fn_info.status == GStatus::Generate {
-                obj_info.trait_name.clone()
+        let (type_name, visible_type_name) =
+            if obj_info.final_type || fn_info.kind == FunctionKind::Constructor {
+                (obj_info.name.clone(), obj_info.name.clone())
             } else {
-                format!("{}Manual", obj_info.trait_name)
+                let type_name = if fn_info.status == GStatus::Generate {
+                    obj_info.trait_name.clone()
+                } else {
+                    format!("{}Manual", obj_info.trait_name)
+                };
+                (format!("prelude::{}", type_name), type_name)
             };
-            (format!("prelude::{}", type_name), type_name)
-        };
         let name = sym.full_rust_name().replace(&obj_info.name, &type_name);
         format!(
             "[{visible_type_name}::{fn_name}](crate::{name}::{fn_name})",
