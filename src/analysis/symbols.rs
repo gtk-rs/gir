@@ -169,7 +169,7 @@ pub fn run(library: &Library, namespaces: &namespaces::Info) -> Info {
                             name: member.name.to_camel(),
                             ..Default::default()
                         };
-                        info.insert(&member.c_identifier, symbol, Some(tid));
+                        info.insert(&member.c_identifier, symbol, None);
                     }
                     for func in functions {
                         let symbol = Symbol {
