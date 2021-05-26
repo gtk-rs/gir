@@ -58,8 +58,11 @@ fn get_language<'a>(entry: &'a str, out: &mut String) -> &'a str {
 fn format(input: &str, env: &Env, in_type: &str) -> String {
     let mut ret = String::with_capacity(input.len());
     // We run gi_docgen first because it's super picky about the types it replaces
-    let no_c_types_re = gi_docgen::replace_c_types(input, env, in_type);
-    ret.push_str(&replace_c_types(&no_c_types_re, env, in_type));
+    let out = replace_c_types(input, env, in_type);
+    let out = gi_docgen::replace_c_types(&out, env, in_type);
+    // this has to be done after gi_docgen replaced the various types it knows as it uses `@` in it's linking format
+    let out = PARAM_SYMBOL.replace_all(&out, |caps: &Captures<'_>| format!("`{}`", &caps[2]));
+    ret.push_str(&out);
     ret
 }
 
@@ -99,7 +102,6 @@ fn replace_c_types(entry: &str, env: &Env, _in_type: &str) -> String {
         }
     });
     let out = GDK_GTK.replace_all(&out, |caps: &Captures<'_>| find_struct(&caps[2], env));
-    let out = PARAM_SYMBOL.replace_all(&out, |caps: &Captures<'_>| format!("`{}`", &caps[2]));
     let out = TAGS.replace_all(&out, "`$0`");
     SPACES.replace_all(&out, " ").into_owned()
 }
