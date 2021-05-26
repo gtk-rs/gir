@@ -212,7 +212,7 @@ fn find_type(name: &str, env: &Env) -> String {
     };
     symbol
         .map(|sym| format!("[`{name}`][crate::{name}]", name = sym.full_rust_name()))
-        .unwrap_or_else(|| name.to_string())
+        .unwrap_or_else(|| format!("`{}`", name))
 }
 
 /// Find a function in all the possible items, if not found return the original name surrounded with backsticks
