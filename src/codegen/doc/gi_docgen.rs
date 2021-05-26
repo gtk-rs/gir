@@ -91,7 +91,8 @@ pub(crate) fn replace_c_types(entry: &str, env: &Env, _in_type: &str) -> String 
             if let Ok(gi_type) = GiDocgen::from_str(&caps[0]) {
                 gi_type.rust_link(env)
             } else {
-                format!("`{}`", entry.trim_start_matches('[').trim_end_matches(']'))
+                // otherwise fallback to the original string
+                caps[0].to_string()
             }
         })
         .to_string()
