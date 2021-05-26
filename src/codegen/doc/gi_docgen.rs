@@ -1,4 +1,4 @@
-use crate::{config::gobjects::GStatus, nameutil, Env};
+use crate::{nameutil::mangle_keywords, Env};
 use once_cell::sync::Lazy;
 use regex::{Captures, Regex};
 use std::{
@@ -279,23 +279,15 @@ impl GiDocgen {
                 type_,
                 name,
             } => {
-                if let Some((_, class_info)) =
-                    env.analysis.objects.iter().find(|(_, o)| &o.name == type_)
-                {
+                if let Some((class_info, fn_info)) = env.analysis.find_object_by_function(
+                    env,
+                    |o| &o.name == type_,
+                    |f| f.name == mangle_keywords(name),
+                ) {
                     let sym = symbols.by_tid(class_info.type_id).unwrap();
-                    if let Some(constructor) = class_info
-                        .constructors()
-                        .iter()
-                        .find(|f| f.name == nameutil::mangle_keywords(name))
-                    {
-                        format!(
-                            "[{name}::{fn_name}](crate::{name}::{fn_name})",
-                            name = sym.full_rust_name(),
-                            fn_name = constructor.codegen_name()
-                        )
-                    } else {
-                        format!("`{}::{}`", sym.full_rust_name(), name)
-                    }
+
+                    let parent = sym.full_rust_name();
+                    fn_info.doc_link(Some(&parent), None)
                 } else {
                     format!("`{}::{}`", ns_type_to_doc(namespace, type_), name)
                 }
@@ -306,47 +298,22 @@ impl GiDocgen {
                 name,
             } => {
                 if let Some(ty) = type_ {
-                    if let Some(obj_ty) = env
-                        .analysis
-                        .objects
-                        .iter()
-                        .find(|(_, o)| &o.name == ty)
-                        .map(|(_, info)| info)
-                    {
-                        let sym = symbols.by_tid(obj_ty.type_id).unwrap();
-                        if let Some(fn_info) = obj_ty
-                            .functions
-                            .iter()
-                            .filter(|fn_info| {
-                                !fn_info.is_special() && !fn_info.is_async_finish(env)
-                            })
-                            .find(|f| f.name == nameutil::mangle_keywords(name))
-                        {
-                            format!(
-                                "[{name}::{fn_name}](crate::{name}::{fn_name})",
-                                name = sym.full_rust_name(),
-                                fn_name = fn_info.codegen_name()
-                            )
-                        } else {
-                            format!("`{}::{}`", sym.full_rust_name(), name)
-                        }
+                    if let Some((obj_info, fn_info)) = env.analysis.find_object_by_function(
+                        env,
+                        |o| &o.name == ty,
+                        |f| f.name == mangle_keywords(name),
+                    ) {
+                        let sym = symbols.by_tid(obj_info.type_id).unwrap();
+
+                        let parent = sym.full_rust_name();
+                        fn_info.doc_link(Some(&parent), None)
                     } else {
                         format!("`{}`", name)
                     }
-                } else if let Some(fn_info) = env
-                    .analysis
-                    .global_functions
-                    .as_ref()
-                    .unwrap()
-                    .functions
-                    .iter()
-                    .filter(|fn_info| !fn_info.is_special() && !fn_info.is_async_finish(env))
-                    .find(|n| &n.name == name)
+                } else if let Some(fn_info) =
+                    env.analysis.find_global_function(env, |f| &f.name == name)
                 {
-                    format!(
-                        "[{fn_name}()](crate::{fn_name})",
-                        fn_name = fn_info.codegen_name()
-                    )
+                    fn_info.doc_link(None, None)
                 } else {
                     format!("`{}`", name)
                 }
@@ -371,55 +338,26 @@ impl GiDocgen {
                 name,
                 is_instance: _,
             } => {
-                if let Some((_, class_info)) =
-                    env.analysis.objects.iter().find(|(_, o)| &o.name == type_)
-                {
-                    let sym = symbols.by_tid(class_info.type_id).unwrap();
-                    if let Some(fn_info) = class_info
-                        .functions
-                        .iter()
-                        .filter(|f| f.status != GStatus::Ignore)
-                        .filter(|fn_info| !fn_info.is_special() && !fn_info.is_async_finish(env))
-                        .find(|f| f.name == nameutil::mangle_keywords(name))
-                    {
-                        let (type_name, visible_type_name) = if class_info.final_type {
-                            (class_info.name.clone(), class_info.name.clone())
-                        } else {
-                            let type_name = if fn_info.status == GStatus::Generate {
-                                class_info.trait_name.clone()
-                            } else {
-                                format!("{}Manual", class_info.trait_name)
-                            };
-                            (format!("prelude::{}", type_name), type_name)
-                        };
-                        format!(
-                            "[{visible_type_name}::{fn_name}](crate::{name}::{fn_name})",
-                            name = sym.full_rust_name().replace(type_, &type_name),
-                            visible_type_name = visible_type_name,
-                            fn_name = fn_info.codegen_name()
-                        )
-                    } else {
-                        format!("`{}::{}()`", sym.full_rust_name(), name)
-                    }
-                } else if let Some((_, record_info)) =
-                    env.analysis.records.iter().find(|(_, o)| &o.name == type_)
-                {
+                if let Some((obj_info, fn_info)) = env.analysis.find_object_by_function(
+                    env,
+                    |o| &o.name == type_,
+                    |f| f.name == mangle_keywords(name),
+                ) {
+                    let sym = symbols.by_tid(obj_info.type_id).unwrap();
+                    let (type_name, visible_type_name) = obj_info.generate_doc_link_info(fn_info);
+
+                    fn_info.doc_link(
+                        Some(&sym.full_rust_name().replace(type_, &type_name)),
+                        Some(&visible_type_name),
+                    )
+                } else if let Some((record_info, fn_info)) = env.analysis.find_record_by_function(
+                    env,
+                    |r| &r.name == type_,
+                    |f| f.name == mangle_keywords(name),
+                ) {
                     let sym = symbols.by_tid(record_info.type_id).unwrap();
-                    if let Some(fn_info) = record_info
-                        .functions
-                        .iter()
-                        .filter(|f| f.status != GStatus::Ignore)
-                        .filter(|fn_info| !fn_info.is_special() && !fn_info.is_async_finish(env))
-                        .find(|f| f.name == nameutil::mangle_keywords(name))
-                    {
-                        format!(
-                            "[{name}::{fn_name}](crate::{name}::{fn_name})",
-                            name = sym.full_rust_name(),
-                            fn_name = fn_info.codegen_name()
-                        )
-                    } else {
-                        format!("`{}::{}()`", sym.full_rust_name(), name)
-                    }
+                    let parent = sym.full_rust_name();
+                    fn_info.doc_link(Some(&parent), None)
                 } else {
                     format!("`{}::{}()`", ns_type_to_doc(namespace, type_), name)
                 }

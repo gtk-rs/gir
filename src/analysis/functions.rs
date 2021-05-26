@@ -113,6 +113,30 @@ impl Info {
             .unwrap_or(false)
     }
 
+    // returns whether the method can be linked in the docs
+    pub fn should_be_doc_linked<F: Fn(&Self) -> bool>(&self, env: &Env, search: F) -> bool {
+        self.status != GStatus::Ignore
+            && !self.is_special()
+            && !self.is_async_finish(env)
+            && search(self)
+    }
+
+    pub fn doc_link(&self, parent: Option<&str>, visible_parent: Option<&str>) -> String {
+        if let Some(p) = parent {
+            format!(
+                "[`{visible_type_name}::{fn_name}()`][crate::{name}::{fn_name}()]",
+                name = p,
+                visible_type_name = visible_parent.unwrap_or(p),
+                fn_name = self.codegen_name(),
+            )
+        } else {
+            format!(
+                "[`{fn_name}()`][crate::{fn_name}()]",
+                fn_name = self.codegen_name()
+            )
+        }
+    }
+
     pub fn is_async_finish(&self, env: &Env) -> bool {
         let has_async_result = self
             .parameters

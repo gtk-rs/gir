@@ -57,6 +57,62 @@ pub struct Analysis {
     pub flags_imports: Imports,
 }
 
+impl Analysis {
+    pub fn find_global_function<F: Fn(&functions::Info) -> bool + Copy>(
+        &self,
+        env: &Env,
+        search: F,
+    ) -> Option<&functions::Info> {
+        self.global_functions.as_ref().and_then(move |info| {
+            info.functions
+                .iter()
+                .find(move |fn_info| fn_info.should_be_doc_linked(env, search))
+        })
+    }
+
+    pub fn find_record_by_function<
+        F: Fn(&functions::Info) -> bool + Copy,
+        G: Fn(&record::Info) -> bool + Copy,
+    >(
+        &self,
+        env: &Env,
+        search_record: G,
+        search_fn: F,
+    ) -> Option<(&record::Info, &functions::Info)> {
+        self.records
+            .iter()
+            .filter(|(_, r)| search_record(r))
+            .find_map(|(_, record_info)| {
+                record_info
+                    .functions
+                    .iter()
+                    .find(|fn_info| fn_info.should_be_doc_linked(env, search_fn))
+                    .map(|fn_info| (record_info, fn_info))
+            })
+    }
+
+    pub fn find_object_by_function<
+        F: Fn(&functions::Info) -> bool + Copy,
+        G: Fn(&object::Info) -> bool + Copy,
+    >(
+        &self,
+        env: &Env,
+        search_obj: G,
+        search_fn: F,
+    ) -> Option<(&object::Info, &functions::Info)> {
+        self.objects
+            .iter()
+            .filter(|(_, o)| search_obj(o))
+            .find_map(|(_, obj_info)| {
+                obj_info
+                    .functions
+                    .iter()
+                    .find(|fn_info| fn_info.should_be_doc_linked(env, search_fn))
+                    .map(|fn_info| (obj_info, fn_info))
+            })
+    }
+}
+
 pub fn run(env: &mut Env) {
     let mut to_analyze: Vec<(TypeId, Vec<TypeId>)> = Vec::with_capacity(env.config.objects.len());
     for obj in env.config.objects.values() {

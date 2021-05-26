@@ -2,7 +2,13 @@ use super::{
     child_properties::ChildProperties, imports::Imports, info_base::InfoBase,
     signatures::Signatures, *,
 };
-use crate::{config::gobjects::GObject, env::Env, library, nameutil::*, traits::*};
+use crate::{
+    config::gobjects::{GObject, GStatus},
+    env::Env,
+    library::{self, FunctionKind},
+    nameutil::*,
+    traits::*,
+};
 use log::info;
 use std::ops::Deref;
 
@@ -36,6 +42,25 @@ impl Info {
 
     pub fn has_action_signals(&self) -> bool {
         self.signals.iter().any(|s| s.action_emit_name.is_some())
+    }
+
+    // Generate a visible doc name based on whether the passed function and whether the type is final
+    pub fn generate_doc_link_info(&self, fn_info: &functions::Info) -> (String, String) {
+        if self.final_type
+            || matches!(
+                fn_info.kind,
+                FunctionKind::Constructor | FunctionKind::Function
+            )
+        {
+            (self.name.clone(), self.name.clone())
+        } else {
+            let type_name = if fn_info.status == GStatus::Generate {
+                self.trait_name.clone()
+            } else {
+                format!("{}Manual", self.trait_name)
+            };
+            (format!("prelude::{}", type_name), type_name)
+        }
     }
 }
 
