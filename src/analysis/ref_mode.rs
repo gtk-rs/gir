@@ -17,6 +17,7 @@ impl RefMode {
         env: &env::Env,
         tid: library::TypeId,
         direction: library::ParameterDirection,
+        transfer: library::Transfer,
     ) -> RefMode {
         let library = &env.library;
 
@@ -25,7 +26,7 @@ impl RefMode {
             ..
         }) = env.config.objects.get(&tid.full_name(library))
         {
-            if direction == library::ParameterDirection::In {
+            if direction == library::ParameterDirection::In && transfer != library::Transfer::Full {
                 return ref_mode;
             } else {
                 return RefMode::None;
@@ -67,7 +68,7 @@ impl RefMode {
                     RefMode::None
                 }
             }
-            Alias(alias) => RefMode::of(env, alias.typ, direction),
+            Alias(alias) => RefMode::of(env, alias.typ, direction, transfer),
             _ => RefMode::None,
         }
     }
@@ -79,7 +80,7 @@ impl RefMode {
         self_in_trait: bool,
     ) -> RefMode {
         use self::RefMode::*;
-        let ref_mode = RefMode::of(env, par.typ, par.direction);
+        let ref_mode = RefMode::of(env, par.typ, par.direction, par.transfer);
         match ref_mode {
             ByRefMut if !is_mut_ptr(&*par.c_type) => ByRef,
             ByRefMut if immutable => ByRefImmut,

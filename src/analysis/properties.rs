@@ -393,8 +393,18 @@ pub fn get_property_ref_modes(
     env: &Env,
     prop: &library::Property,
 ) -> (RefMode, RefMode, library::Nullable) {
-    let get_out_ref_mode = RefMode::of(env, prop.typ, library::ParameterDirection::Return);
-    let mut set_in_ref_mode = RefMode::of(env, prop.typ, library::ParameterDirection::In);
+    let get_out_ref_mode = RefMode::of(
+        env,
+        prop.typ,
+        library::ParameterDirection::Return,
+        library::Transfer::None,
+    );
+    let mut set_in_ref_mode = RefMode::of(
+        env,
+        prop.typ,
+        library::ParameterDirection::In,
+        library::Transfer::None,
+    );
     if set_in_ref_mode == RefMode::ByRefMut {
         set_in_ref_mode = RefMode::ByRef;
     }

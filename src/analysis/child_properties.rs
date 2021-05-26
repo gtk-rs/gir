@@ -100,7 +100,12 @@ fn analyze_property(
             imports.add_used_types(rust_type.used_types());
         }
 
-        let get_out_ref_mode = RefMode::of(env, typ, library::ParameterDirection::Return);
+        let get_out_ref_mode = RefMode::of(
+            env,
+            typ,
+            library::ParameterDirection::Return,
+            library::Transfer::None,
+        );
         if !is_getter_renamed {
             if let Ok(new_name) = getter_rules::try_rename_getter_suffix(
                 &getter_name,
@@ -110,7 +115,12 @@ fn analyze_property(
             }
         }
 
-        let mut set_in_ref_mode = RefMode::of(env, typ, library::ParameterDirection::In);
+        let mut set_in_ref_mode = RefMode::of(
+            env,
+            typ,
+            library::ParameterDirection::In,
+            library::Transfer::None,
+        );
         if set_in_ref_mode == RefMode::ByRefMut {
             set_in_ref_mode = RefMode::ByRef;
         }
