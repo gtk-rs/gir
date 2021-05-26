@@ -190,11 +190,7 @@ impl GiDocgen {
                 if let Some(enum_info) = env.analysis.enumerations.iter().find(|e| &e.name == type_)
                 {
                     let sym = symbols.by_tid(enum_info.type_id).unwrap();
-                    format!(
-                        "[{name}](crate::{parent})",
-                        name = enum_info.name,
-                        parent = sym.parent().trim_end_matches("::")
-                    )
+                    format!("[`{name}`](crate::{name})", name = sym.full_rust_name())
                 } else {
                     format!("`{}`", ns_type_to_doc(namespace, type_))
                 }
@@ -212,11 +208,7 @@ impl GiDocgen {
             GiDocgen::Flag { namespace, type_ } => {
                 if let Some(flag_info) = env.analysis.flags.iter().find(|e| &e.name == type_) {
                     let sym = symbols.by_tid(flag_info.type_id).unwrap();
-                    format!(
-                        "[{name}](crate::{parent})",
-                        name = flag_info.name,
-                        parent = sym.parent().trim_end_matches("::")
-                    )
+                    format!("[`{name}`](crate::{name})", name = sym.full_rust_name())
                 } else {
                     format!("`{}`", ns_type_to_doc(namespace, type_))
                 }

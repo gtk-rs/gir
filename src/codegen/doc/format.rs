@@ -101,7 +101,7 @@ fn replace_c_types(entry: &str, env: &Env, _in_type: &str) -> String {
             }
         }
     });
-    let out = GDK_GTK.replace_all(&out, |caps: &Captures<'_>| find_struct(&caps[2], env));
+    let out = GDK_GTK.replace_all(&out, |caps: &Captures<'_>| find_type(&caps[2], env));
     let out = TAGS.replace_all(&out, "`$0`");
     SPACES.replace_all(&out, " ").into_owned()
 }
@@ -133,7 +133,7 @@ fn find_type_by_name(symbol: &str, method_name: Option<&str>, env: &Env) -> Stri
             format!("`{}::{}`", symbol, method)
         }
     } else {
-        find_struct(symbol, env)
+        find_type(symbol, env)
     }
 }
 
@@ -156,10 +156,10 @@ fn find_constant_or_variant(symbol: &str, env: &Env) -> String {
     }) {
         let sym = symbols.by_tid(flag_info.type_id).unwrap();
         format!(
-            "[`{flag_name}::{member_name}`][crate::{parent}{member_name}]",
+            "[`{flag_name}::{member_name}`][crate::{parent}::{member_name}]",
             member_name = nameutil::bitfield_member_name(&member_info.name),
             flag_name = flag_info.name,
-            parent = sym.parent()
+            parent = sym.full_rust_name()
         )
     } else if let Some((enum_info, member_info)) = env.analysis.enumerations.iter().find_map(|e| {
         e.type_(&env.library)
@@ -170,17 +170,18 @@ fn find_constant_or_variant(symbol: &str, env: &Env) -> String {
     }) {
         let sym = symbols.by_tid(enum_info.type_id).unwrap();
         format!(
-            "[`{enum_name}::{member}`][crate::{parent}{member}]",
+            "[`{enum_name}::{member}`][crate::{parent}::{member}]",
             enum_name = enum_info.name,
             member = nameutil::enum_member_name(&member_info.name),
-            parent = sym.parent()
+            parent = sym.full_rust_name()
         )
     } else {
         format!("`{}`", symbol)
     }
 }
 
-fn find_struct(name: &str, env: &Env) -> String {
+/// either an object/interface, record, enum or a flag
+fn find_type(name: &str, env: &Env) -> String {
     let symbols = env.symbols.borrow();
 
     let symbol = if let Some(obj) = env.analysis.objects.values().find(|o| o.c_type == name) {
@@ -192,6 +193,20 @@ fn find_struct(name: &str, env: &Env) -> String {
         .find(|r| r.type_(&env.library).c_type == name)
     {
         symbols.by_tid(record.type_id)
+    } else if let Some(enum_) = env
+        .analysis
+        .enumerations
+        .iter()
+        .find(|e| e.type_(&env.library).c_type == name)
+    {
+        symbols.by_tid(enum_.type_id)
+    } else if let Some(flag) = env
+        .analysis
+        .flags
+        .iter()
+        .find(|f| f.type_(&env.library).c_type == name)
+    {
+        symbols.by_tid(flag.type_id)
     } else {
         None
     };
