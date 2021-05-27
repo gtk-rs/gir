@@ -190,7 +190,7 @@ impl GiDocgen {
                 if let Some(enum_info) = env.analysis.enumerations.iter().find(|e| &e.name == type_)
                 {
                     let sym = symbols.by_tid(enum_info.type_id).unwrap();
-                    format!("[`{name}`][crate::{name}]", name = sym.full_rust_name())
+                    format!("[`{n}`][crate::{n}]", n = sym.full_rust_name())
                 } else {
                     format!("`{}`", ns_type_to_doc(namespace, type_))
                 }
@@ -200,7 +200,7 @@ impl GiDocgen {
                     env.analysis.objects.iter().find(|(_, o)| &o.name == type_)
                 {
                     let sym = symbols.by_tid(class_info.type_id).unwrap();
-                    format!("[`{name}`][crate::{name}]", name = sym.full_rust_name())
+                    format!("[`{n}`][crate::{n}]", n = sym.full_rust_name())
                 } else {
                     format!("`{}`", ns_type_to_doc(namespace, type_))
                 }
@@ -208,7 +208,7 @@ impl GiDocgen {
             GiDocgen::Flag { namespace, type_ } => {
                 if let Some(flag_info) = env.analysis.flags.iter().find(|e| &e.name == type_) {
                     let sym = symbols.by_tid(flag_info.type_id).unwrap();
-                    format!("[`{name}`][crate::{name}]", name = sym.full_rust_name())
+                    format!("[`{n}`][crate::{n}]", n = sym.full_rust_name())
                 } else {
                     format!("`{}`", ns_type_to_doc(namespace, type_))
                 }
@@ -216,7 +216,7 @@ impl GiDocgen {
             GiDocgen::Const { namespace, type_ } => {
                 if let Some(const_info) = env.analysis.constants.iter().find(|c| &c.name == type_) {
                     let sym = symbols.by_tid(const_info.typ).unwrap();
-                    format!("[`{name}`][crate::{name}]", name = sym.full_rust_name())
+                    format!("[`{n}`][crate::{n}]", n = sym.full_rust_name())
                 } else {
                     format!("`{}`", ns_type_to_doc(namespace, type_))
                 }
@@ -251,7 +251,7 @@ impl GiDocgen {
             }
             GiDocgen::Id(c_name) => {
                 if let Some(sym) = symbols.by_c_name(c_name) {
-                    format!("[`{name}`][crate::{name}]", name = sym.full_rust_name())
+                    format!("[`{n}`][crate::{n}]", n = sym.full_rust_name())
                 } else {
                     format!("`{}`", c_name)
                 }
@@ -261,7 +261,7 @@ impl GiDocgen {
                     env.analysis.records.iter().find(|(_, r)| &r.name == type_)
                 {
                     let sym = symbols.by_tid(record_info.type_id).unwrap();
-                    format!("[`{name}`][crate::{name}]", name = sym.full_rust_name())
+                    format!("[`{n}`][crate::{n}]", n = sym.full_rust_name())
                 } else {
                     format!("`{}`", ns_type_to_doc(namespace, type_))
                 }
@@ -277,9 +277,7 @@ impl GiDocgen {
                     |f| f.name == mangle_keywords(name),
                 ) {
                     let sym = symbols.by_tid(class_info.type_id).unwrap();
-
-                    let parent = sym.full_rust_name();
-                    fn_info.doc_link(Some(&parent), None)
+                    fn_info.doc_link(Some(&sym.full_rust_name()), None)
                 } else {
                     format!("`{}::{}`", ns_type_to_doc(namespace, type_), name)
                 }
@@ -296,9 +294,7 @@ impl GiDocgen {
                         |f| f.name == mangle_keywords(name),
                     ) {
                         let sym = symbols.by_tid(obj_info.type_id).unwrap();
-
-                        let parent = sym.full_rust_name();
-                        fn_info.doc_link(Some(&parent), None)
+                        fn_info.doc_link(Some(&sym.full_rust_name()), None)
                     } else {
                         format!("`{}`", name)
                     }
@@ -315,10 +311,7 @@ impl GiDocgen {
                     env.analysis.records.iter().find(|(_, r)| &r.name == alias)
                 {
                     let sym = symbols.by_tid(record_info.type_id).unwrap();
-                    format!(
-                        "alias::[`{name}`][crate::{name}]",
-                        name = sym.full_rust_name()
-                    )
+                    format!("alias::[`{n}`][crate::{n}]", n = sym.full_rust_name())
                 } else {
                     format!("`alias::{}`", alias)
                 }
@@ -347,8 +340,7 @@ impl GiDocgen {
                     |f| f.name == mangle_keywords(name),
                 ) {
                     let sym = symbols.by_tid(record_info.type_id).unwrap();
-                    let parent = sym.full_rust_name();
-                    fn_info.doc_link(Some(&parent), None)
+                    fn_info.doc_link(Some(&sym.full_rust_name()), None)
                 } else {
                     format!("`{}::{}()`", ns_type_to_doc(namespace, type_), name)
                 }

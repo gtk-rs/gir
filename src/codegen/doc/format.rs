@@ -146,7 +146,7 @@ fn find_constant_or_variant(symbol: &str, env: &Env) -> String {
         .find(|c| c.glib_name == symbol)
     {
         // for whatever reason constants are not part of the symbols list
-        format!("[`{name}`][crate::{name}]", name = const_info.name)
+        format!("[`{n}`][crate::{n}]", n = const_info.name)
     } else if let Some((flag_info, member_info)) = env.analysis.flags.iter().find_map(|f| {
         f.type_(&env.library)
             .members
@@ -156,10 +156,9 @@ fn find_constant_or_variant(symbol: &str, env: &Env) -> String {
     }) {
         let sym = symbols.by_tid(flag_info.type_id).unwrap();
         format!(
-            "[`{flag_name}::{member_name}`][crate::{parent}::{member_name}]",
-            member_name = nameutil::bitfield_member_name(&member_info.name),
-            flag_name = flag_info.name,
-            parent = sym.full_rust_name()
+            "[`{p}::{m}`][crate::{p}::{m}]",
+            m = nameutil::bitfield_member_name(&member_info.name),
+            p = sym.full_rust_name()
         )
     } else if let Some((enum_info, member_info)) = env.analysis.enumerations.iter().find_map(|e| {
         e.type_(&env.library)
@@ -170,10 +169,9 @@ fn find_constant_or_variant(symbol: &str, env: &Env) -> String {
     }) {
         let sym = symbols.by_tid(enum_info.type_id).unwrap();
         format!(
-            "[`{enum_name}::{member}`][crate::{parent}::{member}]",
-            enum_name = enum_info.name,
-            member = nameutil::enum_member_name(&member_info.name),
-            parent = sym.full_rust_name()
+            "[`{e}::{m}`][crate::{e}::{m}]",
+            m = nameutil::enum_member_name(&member_info.name),
+            e = sym.full_rust_name()
         )
     } else {
         format!("`{}`", symbol)
@@ -211,7 +209,7 @@ fn find_type(name: &str, env: &Env) -> String {
         None
     };
     symbol
-        .map(|sym| format!("[`{name}`][crate::{name}]", name = sym.full_rust_name()))
+        .map(|sym| format!("[`{n}`][crate::{n}]", n = sym.full_rust_name()))
         .unwrap_or_else(|| format!("`{}`", name))
 }
 
@@ -244,10 +242,7 @@ fn find_function(name: &str, env: &Env) -> String {
         .analysis
         .find_global_function(env, |f| f.glib_name == name)
     {
-        format!(
-            "[`{fn_name}()`][crate::{fn_name}()]",
-            fn_name = fn_info.codegen_name()
-        )
+        fn_info.doc_link(None, None)
     } else {
         format!("`{}()`", name)
     }
