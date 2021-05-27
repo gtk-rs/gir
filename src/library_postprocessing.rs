@@ -1,6 +1,10 @@
 use crate::{
     analysis::types::IsIncomplete,
-    config::{gobjects::GObject, Config, WorkMode},
+    config::{
+        gobjects::{GObject, GStatus},
+        matchable::Matchable,
+        Config, WorkMode,
+    },
     library::*,
     nameutil,
     parser::is_empty_c_type,
@@ -37,6 +41,7 @@ impl Library {
         self.make_unrepresentable_types_opaque();
         self.mark_final_types(config);
         self.update_error_domain_functions(config);
+        self.mark_ignored_enum_members(config);
     }
 
     fn fix_gtype(&mut self) {
@@ -598,6 +603,52 @@ impl Library {
             } else {
                 unreachable!();
             }
+        }
+    }
+
+    fn mark_ignored_enum_members(&mut self, config: &Config) {
+        let mut members_to_change = vec![];
+        for (ns_id, ns) in self.namespaces.iter().enumerate() {
+            for (id, _type_) in ns.types.iter().enumerate() {
+                let type_id = TypeId {
+                    ns_id: ns_id as u16,
+                    id: id as u32,
+                };
+
+                match self.type_(type_id) {
+                    Type::Bitfield(Bitfield { name, members, .. })
+                    | Type::Enumeration(Enumeration { name, members, .. }) => {
+                        let full_name = format!("{}.{}", ns.name, name);
+                        let config = config.objects.get(&full_name);
+                        let mut type_members = HashMap::new();
+                        for member in members.iter() {
+                            let status = config.and_then(|m| {
+                                m.members.matched(&member.name).first().map(|m| m.status)
+                            });
+                            type_members.insert(member.c_identifier.clone(), status);
+                        }
+                        members_to_change.push((type_id, type_members));
+                    }
+                    _ => (),
+                };
+            }
+        }
+
+        for (type_id, item_members) in members_to_change {
+            match self.type_mut(type_id) {
+                Type::Bitfield(Bitfield { members, .. })
+                | Type::Enumeration(Enumeration { members, .. }) => {
+                    for member in members.iter_mut() {
+                        let status = item_members
+                            .get(&member.c_identifier)
+                            .copied()
+                            .flatten()
+                            .unwrap_or(GStatus::Generate);
+                        member.status = status;
+                    }
+                }
+                _ => (),
+            };
         }
     }
 }

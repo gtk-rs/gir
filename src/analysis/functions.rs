@@ -115,10 +115,7 @@ impl Info {
 
     // returns whether the method can be linked in the docs
     pub fn should_be_doc_linked<F: Fn(&Self) -> bool>(&self, env: &Env, search: F) -> bool {
-        self.status != GStatus::Ignore
-            && !self.is_special()
-            && !self.is_async_finish(env)
-            && search(self)
+        !self.status.ignored() && !self.is_special() && !self.is_async_finish(env) && search(self)
     }
 
     pub fn doc_link(&self, parent: Option<&str>, visible_parent: Option<&str>) -> String {

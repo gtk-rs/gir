@@ -872,6 +872,7 @@ impl Library {
             value: value.into(),
             doc,
             c_identifier: c_identifier.unwrap_or_else(|| member_name.into()),
+            status: crate::config::gobjects::GStatus::Generate,
         })
     }
 
