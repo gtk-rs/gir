@@ -151,7 +151,7 @@ fn find_constant_or_variant(symbol: &str, env: &Env) -> String {
         f.type_(&env.library)
             .members
             .iter()
-            .find(|m| m.c_identifier == symbol)
+            .find(|m| m.c_identifier == symbol && !m.status.ignored())
             .map(|m| (f, m))
     }) {
         let sym = symbols.by_tid(flag_info.type_id).unwrap();
@@ -164,7 +164,7 @@ fn find_constant_or_variant(symbol: &str, env: &Env) -> String {
         e.type_(&env.library)
             .members
             .iter()
-            .find(|m| m.c_identifier == symbol)
+            .find(|m| m.c_identifier == symbol && !m.status.ignored())
             .map(|m| (e, m))
     }) {
         let sym = symbols.by_tid(enum_info.type_id).unwrap();
