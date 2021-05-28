@@ -130,7 +130,7 @@ pub fn analyze<F: Borrow<library::Function>>(
     'func: for func in functions {
         let func = func.borrow();
         let configured_functions = obj.functions.matched(&func.name);
-        let mut status = GStatus::Generate;
+        let mut status = obj.status;
         for f in configured_functions.iter() {
             match f.status {
                 GStatus::Ignore => continue 'func,
