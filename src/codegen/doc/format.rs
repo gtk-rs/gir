@@ -84,31 +84,28 @@ fn replace_c_types(entry: &str, env: &Env, _in_type: &str) -> String {
     let out = FUNCTION.replace_all(entry, |caps: &Captures<'_>| {
         let name = &caps[3];
         find_function(name, env).unwrap_or_else(|| {
-            info!("Function not found, falling back to symbol name `{}`", name);
-            format!("`{}`", name)
+            info!("No function found for `{}()`", name);
+            format!("`{}()`", name)
         })
     });
 
-    let out = SYMBOL.replace_all(&out, |caps: &Captures<'_>| {
-        match &caps[2] {
-            "TRUE" => "[`true`]".to_string(),
-            "FALSE" => "[`false`]".to_string(),
-            "NULL" => "[`None`]".to_string(),
-            symbol_name => {
-                if &caps[1] == "%" {
-                    find_constant_or_variant(symbol_name, env)
-                } else {
-                    let method_name = caps.get(3).map(|m| m.as_str().trim_start_matches('.'));
-                    // would be #
-                    find_method_or_type(symbol_name, method_name, env)
-                }
-                .unwrap_or_else(|| {
-                    info!("Symbol not found: `{}`", symbol_name);
-
-                    format!("`{}`", symbol_name)
-                })
+    let out = SYMBOL.replace_all(&out, |caps: &Captures<'_>| match &caps[2] {
+        "TRUE" => "[`true`]".to_string(),
+        "FALSE" => "[`false`]".to_string(),
+        "NULL" => "[`None`]".to_string(),
+        symbol_name => match &caps[1] {
+            "%" => find_constant_or_variant(symbol_name, env),
+            "#" => {
+                let method_name = caps.get(3).map(|m| m.as_str().trim_start_matches('.'));
+                find_method_or_type(symbol_name, method_name, env)
             }
+            s => panic!("Unknown symbol prefix `{}`", s),
         }
+        .unwrap_or_else(|| {
+            info!("Symbol `{}{}` not found", &caps[1], symbol_name);
+
+            format!("`{}`", symbol_name)
+        }),
     });
     let out = GDK_GTK.replace_all(&out, |caps: &Captures<'_>| {
         find_type(&caps[2], env).unwrap_or_else(|| format!("`{}`", &caps[2]))
@@ -125,7 +122,7 @@ fn find_method_or_type(type_: &str, method_name: Option<&str>, env: &Env) -> Opt
         if !is_signal && !is_property {
             if let Some((obj_info, fn_info)) = env.analysis.find_object_by_function(
                 env,
-                |o| o.full_name == type_,
+                |o| o.c_type == type_,
                 |f| f.name == method,
             ) {
                 let sym = symbols.by_tid(obj_info.type_id).unwrap(); // we are sure the object exists
@@ -144,14 +141,14 @@ fn find_method_or_type(type_: &str, method_name: Option<&str>, env: &Env) -> Opt
                     .full_rust_name(); // we are sure the object exists
                 Some(fn_info.doc_link(Some(&sym_name), None))
             } else {
-                warn!("Method `{}` of type `{}` was not found", method, type_);
+                warn!("Method `{}` of type `{}` not found", method, type_);
                 None
             }
         } else {
             env.analysis
                 .objects
                 .values()
-                .find(|o| o.full_name == type_)
+                .find(|o| o.c_type == type_)
                 .map(|info| {
                     let sym = symbols.by_tid(info.type_id).unwrap(); // we are sure the object exists
                     let name = method.trim_start_matches(':');
@@ -204,10 +201,7 @@ fn find_constant_or_variant(symbol: &str, env: &Env) -> Option<String> {
         // for whatever reason constants are not part of the symbols list
         Some(format!("[`{n}`][crate::{n}]", n = const_info.name))
     } else {
-        warn!(
-            "Constant/Flag variant/Enum member `{}` was not found",
-            symbol
-        );
+        warn!("Constant/Flag variant/Enum member `{}` not found", symbol);
         None
     }
 }
@@ -252,7 +246,7 @@ fn find_type(type_: &str, env: &Env) -> Option<String> {
     {
         symbols.by_tid(flag.type_id)
     } else {
-        warn!("Object/Interface/Record not found: `{}`", type_);
+        warn!("Object/Interface/Record `{}` not found", type_);
         None
     };
 
@@ -260,7 +254,7 @@ fn find_type(type_: &str, env: &Env) -> Option<String> {
         || {
             find_constant_or_variant(type_, env).map(|i| {
                 warn!(
-                    "`{}` should be a type (`#`) but was parsed as constant or variant (`%`)",
+                    "`{}` was found to be a constant or enum-variant (`%`) but is instead prefixed with (`#`)",
                     type_
                 );
                 i
@@ -311,7 +305,7 @@ fn find_function(name: &str, env: &Env) -> Option<String> {
         Some(fn_info.doc_link(None, None))
     } else {
         if !IGNORE_C_WARNING_FUNCS.contains(&name) {
-            warn!("Function not found found: `{}`", name);
+            warn!("Function `{}` not found", name);
         }
         None
     }

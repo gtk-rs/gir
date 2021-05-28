@@ -107,8 +107,8 @@ impl Info {
     pub fn is_special(&self) -> bool {
         self.codegen_name()
             .trim_end_matches('_')
-            .split('_')
-            .last()
+            .rsplit('_')
+            .next()
             .map(|i| i.parse::<special_functions::Type>().is_ok())
             .unwrap_or(false)
     }
