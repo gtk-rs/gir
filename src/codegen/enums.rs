@@ -21,7 +21,12 @@ use std::{
 };
 
 pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>) {
-    if env.analysis.enumerations.is_empty() {
+    if !env
+        .analysis
+        .enumerations
+        .iter()
+        .any(|e| env.config.objects[&e.full_name].status.need_generate())
+    {
         return;
     }
 
@@ -34,6 +39,10 @@ pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>) {
         mod_rs.push("\nmod enums;".into());
         for enum_analysis in &env.analysis.enumerations {
             let config = &env.config.objects[&enum_analysis.full_name];
+            if !config.status.need_generate() {
+                continue;
+            }
+
             let enum_ = enum_analysis.type_(&env.library);
 
             if let Some(cfg) = version_condition_string(env, enum_.version, false, 0) {
