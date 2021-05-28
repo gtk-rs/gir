@@ -1,4 +1,5 @@
 use crate::{
+    analysis::object::LocationInObject,
     codegen::doc::format::{
         gen_alias_doc_link, gen_callback_doc_link, gen_const_doc_link, gen_object_fn_doc_link,
         gen_property_doc_link, gen_signal_doc_link, gen_symbol_doc_link, gen_vfunc_doc_link,
@@ -95,7 +96,11 @@ static GI_DOCGEN_SYMBOLS: Lazy<Regex> = Lazy::new(|| {
     Regex::new(r"\[(callback|id|alias|class|const|ctor|enum|error|flags|func|iface|method|property|signal|struct|vfunc)[@](\w+\b)([:.]+[\w-]+\b)?([:.]+[\w-]+\b)?\]?").unwrap()
 });
 
-pub(crate) fn replace_c_types(entry: &str, env: &Env, in_type: Option<&TypeId>) -> String {
+pub(crate) fn replace_c_types(
+    entry: &str,
+    env: &Env,
+    in_type: Option<(&TypeId, Option<LocationInObject>)>,
+) -> String {
     GI_DOCGEN_SYMBOLS
         .replace_all(entry, |caps: &Captures<'_>| {
             if let Ok(gi_type) = GiDocgen::from_str(&caps[0]) {
@@ -195,7 +200,7 @@ fn find_method_or_function_by_name(
     type_: Option<&str>,
     name: &str,
     env: &Env,
-    in_type: Option<&TypeId>,
+    in_type: Option<(&TypeId, Option<LocationInObject>)>,
     is_class_method: bool,
 ) -> Option<String> {
     find_method_or_function(
@@ -210,7 +215,11 @@ fn find_method_or_function_by_name(
 }
 
 impl GiDocgen {
-    pub fn rust_link(&self, env: &Env, in_type: Option<&TypeId>) -> String {
+    pub fn rust_link(
+        &self,
+        env: &Env,
+        in_type: Option<(&TypeId, Option<LocationInObject>)>,
+    ) -> String {
         let symbols = env.symbols.borrow();
         match self {
             GiDocgen::Enum { type_, namespace } | GiDocgen::Error { type_, namespace } => env

@@ -1,4 +1,4 @@
-use super::gi_docgen;
+use super::{gi_docgen, LocationInObject};
 use crate::{
     analysis::functions::Info,
     library::{FunctionKind, TypeId},
@@ -23,7 +23,11 @@ const IGNORE_C_WARNING_FUNCS: [&str; 6] = [
     "printf",
 ];
 
-pub fn reformat_doc(input: &str, env: &Env, in_type: Option<&TypeId>) -> String {
+pub fn reformat_doc(
+    input: &str,
+    env: &Env,
+    in_type: Option<(&TypeId, Option<LocationInObject>)>,
+) -> String {
     code_blocks_transformation(input, env, in_type)
 }
 
@@ -34,7 +38,11 @@ fn try_split<'a>(src: &'a str, needle: &str) -> (&'a str, Option<&'a str>) {
     }
 }
 
-fn code_blocks_transformation(mut input: &str, env: &Env, in_type: Option<&TypeId>) -> String {
+fn code_blocks_transformation(
+    mut input: &str,
+    env: &Env,
+    in_type: Option<(&TypeId, Option<LocationInObject>)>,
+) -> String {
     let mut out = String::with_capacity(input.len());
 
     loop {
@@ -70,7 +78,7 @@ fn get_language<'a>(entry: &'a str, out: &mut String) -> &'a str {
     entry
 }
 
-fn format(input: &str, env: &Env, in_type: Option<&TypeId>) -> String {
+fn format(input: &str, env: &Env, in_type: Option<(&TypeId, Option<LocationInObject>)>) -> String {
     let mut ret = String::with_capacity(input.len());
     // We run gi_docgen first because it's super picky about the types it replaces
     let out = gi_docgen::replace_c_types(input, env, in_type);
@@ -94,7 +102,11 @@ static GDK_GTK: Lazy<Regex> =
 static TAGS: Lazy<Regex> = Lazy::new(|| Regex::new(r"<[\w/-]+>").unwrap());
 static SPACES: Lazy<Regex> = Lazy::new(|| Regex::new(r"[ ]{2,}").unwrap());
 
-fn replace_c_types(entry: &str, env: &Env, in_type: Option<&TypeId>) -> String {
+fn replace_c_types(
+    entry: &str,
+    env: &Env,
+    in_type: Option<(&TypeId, Option<LocationInObject>)>,
+) -> String {
     let out = FUNCTION.replace_all(entry, |caps: &Captures<'_>| {
         let name = &caps[3];
         find_method_or_function_by_ctype(None, name, env, in_type).unwrap_or_else(|| {
@@ -172,7 +184,7 @@ fn find_member(
     type_: &str,
     method_name: &str,
     env: &Env,
-    in_type: Option<&TypeId>,
+    in_type: Option<(&TypeId, Option<LocationInObject>)>,
 ) -> Option<String> {
     let symbols = env.symbols.borrow();
     let is_signal = method_name.starts_with("::");
@@ -196,7 +208,11 @@ fn find_member(
     }
 }
 
-fn find_constant_or_variant(symbol: &str, env: &Env, in_type: Option<&TypeId>) -> Option<String> {
+fn find_constant_or_variant(
+    symbol: &str,
+    env: &Env,
+    in_type: Option<(&TypeId, Option<LocationInObject>)>,
+) -> Option<String> {
     if let Some((flag_info, member_info)) = env.analysis.flags.iter().find_map(|f| {
         f.type_(&env.library)
             .members
@@ -284,7 +300,7 @@ fn find_method_or_function_by_ctype(
     c_type: Option<&str>,
     name: &str,
     env: &Env,
-    in_type: Option<&TypeId>,
+    in_type: Option<(&TypeId, Option<LocationInObject>)>,
 ) -> Option<String> {
     find_method_or_function(
         name,
@@ -310,7 +326,7 @@ pub(crate) fn find_method_or_function<
 >(
     name: &str,
     env: &Env,
-    in_type: Option<&TypeId>,
+    in_type: Option<(&TypeId, Option<LocationInObject>)>,
     search_fn: F,
     search_obj: G,
     search_record: H,
@@ -356,11 +372,11 @@ pub(crate) fn gen_record_fn_doc_link(
     type_id: TypeId,
     fn_info: &Info,
     env: &Env,
-    in_type: Option<&TypeId>,
+    in_type: Option<(&TypeId, Option<LocationInObject>)>,
 ) -> String {
     let symbols = env.symbols.borrow();
     let sym_name = symbols.by_tid(type_id).unwrap().full_rust_name();
-    let is_self = in_type == Some(&type_id);
+    let is_self = in_type == Some((&type_id, None));
 
     fn_info.doc_link(Some(&sym_name), None, is_self)
 }
@@ -369,12 +385,12 @@ pub(crate) fn gen_object_fn_doc_link(
     obj_info: &crate::analysis::object::Info,
     fn_info: &Info,
     env: &Env,
-    in_type: Option<&TypeId>,
+    in_type: Option<(&TypeId, Option<LocationInObject>)>,
     visible_name: &str,
 ) -> String {
     let symbols = env.symbols.borrow();
     let sym = symbols.by_tid(obj_info.type_id).unwrap();
-    let is_self = in_type == Some(&obj_info.type_id);
+    let is_self = in_type == Some((&obj_info.type_id, Some(obj_info.function_location(fn_info))));
 
     if fn_info.kind == FunctionKind::Method {
         let (type_name, visible_type_name) = obj_info.generate_doc_link_info(fn_info);
@@ -394,11 +410,11 @@ pub(crate) fn gen_member_doc_link(
     type_id: TypeId,
     member_name: &str,
     env: &Env,
-    in_type: Option<&TypeId>,
+    in_type: Option<(&TypeId, Option<LocationInObject>)>,
 ) -> String {
     let symbols = env.symbols.borrow();
     let sym = symbols.by_tid(type_id).unwrap().full_rust_name();
-    let is_self = in_type == Some(&type_id);
+    let is_self = in_type == Some((&type_id, None));
 
     if is_self {
         format!("[`{m}`][Self::{m}]", m = member_name)

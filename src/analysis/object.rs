@@ -10,7 +10,16 @@ use crate::{
     traits::*,
 };
 use log::info;
-use std::ops::Deref;
+use std::{borrow::Cow, ops::Deref};
+
+/// The location of an item within the object
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum LocationInObject {
+    Impl,
+    Ext,
+    ExtManual,
+    Builder,
+}
 
 #[derive(Debug, Default)]
 pub struct Info {
@@ -44,27 +53,42 @@ impl Info {
         self.signals.iter().any(|s| s.action_emit_name.is_some())
     }
 
-    /// Returns [`true`] when the function is implemented directly on the type,
-    /// [`false`] when it is implemented on an extension trait instead.
-    pub fn function_in_impl(&self, fn_info: &functions::Info) -> bool {
-        self.final_type
+    /// Returns the location of the function within this object
+    pub fn function_location(&self, fn_info: &functions::Info) -> LocationInObject {
+        if self.final_type
             || matches!(
                 fn_info.kind,
                 FunctionKind::Constructor | FunctionKind::Function
             )
+        {
+            LocationInObject::Impl
+        } else if fn_info.status == GStatus::Generate {
+            LocationInObject::Ext
+        } else {
+            LocationInObject::ExtManual
+        }
     }
 
-    // Generate a visible doc name based on whether the passed function and whether the type is final
-    pub fn generate_doc_link_info(&self, fn_info: &functions::Info) -> (String, String) {
-        if self.function_in_impl(fn_info) {
-            (self.name.clone(), self.name.clone())
-        } else {
-            let type_name = if fn_info.status == GStatus::Generate {
-                self.trait_name.clone()
-            } else {
-                format!("{}Manual", self.trait_name)
-            };
-            (format!("prelude::{}", type_name), type_name)
+    /// Generate doc name based on function location within this object
+    /// See also [`Self::function_location()`].
+    /// Returns `(item/crate path including type name, just the type name)`
+    pub fn generate_doc_link_info(
+        &self,
+        fn_info: &functions::Info,
+    ) -> (Cow<'_, str>, Cow<'_, str>) {
+        match self.function_location(fn_info) {
+            LocationInObject::Impl => (self.name.as_str().into(), self.name.as_str().into()),
+            LocationInObject::ExtManual => {
+                let trait_name = format!("{}Manual", self.trait_name);
+                (format!("prelude::{}", trait_name).into(), trait_name.into())
+            }
+            LocationInObject::Ext => (
+                format!("prelude::{}", self.trait_name).into(),
+                self.trait_name.as_str().into(),
+            ),
+            LocationInObject::Builder => {
+                panic!("C documentation is not expected to link to builders (a Rust concept)!")
+            }
         }
     }
 }
