@@ -120,29 +120,47 @@ fn replace_c_types(entry: &str, env: &Env, _in_type: &str) -> String {
 fn find_method_or_type(type_: &str, method_name: Option<&str>, env: &Env) -> Option<String> {
     let symbols = env.symbols.borrow();
     if let Some(method) = method_name {
-        if let Some((obj_info, fn_info)) = env.analysis.find_object_by_function(
-            env,
-            |o| o.full_name == type_,
-            |f| f.name == method,
-        ) {
-            let sym = symbols.by_tid(obj_info.type_id).unwrap(); // we are sure the object exists
-            let (type_name, visible_type_name) = obj_info.generate_doc_link_info(fn_info);
-            let name = sym.full_rust_name().replace(&obj_info.name, &type_name);
+        let is_signal = method.starts_with("::");
+        let is_property = !is_signal && method.starts_with(':');
+        if !is_signal && !is_property {
+            if let Some((obj_info, fn_info)) = env.analysis.find_object_by_function(
+                env,
+                |o| o.full_name == type_,
+                |f| f.name == method,
+            ) {
+                let sym = symbols.by_tid(obj_info.type_id).unwrap(); // we are sure the object exists
+                let (type_name, visible_type_name) = obj_info.generate_doc_link_info(fn_info);
+                let name = sym.full_rust_name().replace(&obj_info.name, &type_name);
 
-            Some(fn_info.doc_link(Some(&name), Some(&visible_type_name)))
-        } else if let Some((record_info, fn_info)) = env.analysis.find_record_by_function(
-            env,
-            |r| r.type_(&env.library).c_type == type_,
-            |f| f.name == method,
-        ) {
-            let sym_name = symbols
-                .by_tid(record_info.type_id)
-                .unwrap()
-                .full_rust_name(); // we are sure the object exists
-            Some(fn_info.doc_link(Some(&sym_name), None))
+                Some(fn_info.doc_link(Some(&name), Some(&visible_type_name)))
+            } else if let Some((record_info, fn_info)) = env.analysis.find_record_by_function(
+                env,
+                |r| r.type_(&env.library).c_type == type_,
+                |f| f.name == method,
+            ) {
+                let sym_name = symbols
+                    .by_tid(record_info.type_id)
+                    .unwrap()
+                    .full_rust_name(); // we are sure the object exists
+                Some(fn_info.doc_link(Some(&sym_name), None))
+            } else {
+                warn!("Method `{}` of type `{}` was not found", method, type_);
+                None
+            }
         } else {
-            warn!("Method `{}` of type `{}` was not found", method, type_);
-            None
+            env.analysis
+                .objects
+                .values()
+                .find(|o| o.full_name == type_)
+                .map(|info| {
+                    let sym = symbols.by_tid(info.type_id).unwrap(); // we are sure the object exists
+                    let name = method.trim_start_matches(':');
+                    if is_property {
+                        format!("`property::{}::{}`", sym.full_rust_name(), name)
+                    } else {
+                        format!("`signal::{}::{}`", sym.full_rust_name(), name)
+                    }
+                })
         }
     } else {
         find_type(type_, env)
