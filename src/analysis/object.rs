@@ -44,14 +44,19 @@ impl Info {
         self.signals.iter().any(|s| s.action_emit_name.is_some())
     }
 
-    // Generate a visible doc name based on whether the passed function and whether the type is final
-    pub fn generate_doc_link_info(&self, fn_info: &functions::Info) -> (String, String) {
-        if self.final_type
+    /// Returns [`true`] when the function is implemented directly on the type,
+    /// [`false`] when it is implemented on an extension trait instead.
+    pub fn function_in_impl(&self, fn_info: &functions::Info) -> bool {
+        self.final_type
             || matches!(
                 fn_info.kind,
                 FunctionKind::Constructor | FunctionKind::Function
             )
-        {
+    }
+
+    // Generate a visible doc name based on whether the passed function and whether the type is final
+    pub fn generate_doc_link_info(&self, fn_info: &functions::Info) -> (String, String) {
+        if self.function_in_impl(fn_info) {
             (self.name.clone(), self.name.clone())
         } else {
             let type_name = if fn_info.status == GStatus::Generate {

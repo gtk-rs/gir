@@ -399,18 +399,12 @@ pub(crate) fn gen_member_doc_link(
     let symbols = env.symbols.borrow();
     let sym = symbols.by_tid(type_id).unwrap().full_rust_name();
     let is_self = in_type == Some(&type_id);
-    let visible_sym = if is_self {
-        "Self".to_string()
-    } else {
-        sym.clone()
-    };
 
-    format!(
-        "[`{p}::{m}`][crate::{s}::{m}]",
-        m = member_name,
-        s = sym,
-        p = visible_sym
-    )
+    if is_self {
+        format!("[`{m}`][Self::{m}]", m = member_name)
+    } else {
+        format!("[`{s}::{m}`][crate::{s}::{m}]", s = sym, m = member_name)
+    }
 }
 
 pub(crate) fn gen_const_doc_link(const_info: &crate::analysis::constants::Info) -> String {

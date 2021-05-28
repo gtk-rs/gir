@@ -124,17 +124,16 @@ impl Info {
         is_self: bool,
     ) -> String {
         if let Some(p) = parent {
-            let visible_parent_name = if is_self {
-                "Self"
+            if is_self {
+                format!("[`{f}()`][Self::{f}()]", f = self.codegen_name())
             } else {
-                visible_parent.unwrap_or(p)
-            };
-            format!(
-                "[`{visible_type_name}::{fn_name}()`][crate::{name}::{fn_name}()]",
-                name = p,
-                visible_type_name = visible_parent_name,
-                fn_name = self.codegen_name(),
-            )
+                format!(
+                    "[`{visible_parent}::{f}()`][crate::{p}::{f}()]",
+                    visible_parent = visible_parent.unwrap_or(p),
+                    p = p,
+                    f = self.codegen_name()
+                )
+            }
         } else {
             format!(
                 "[`{fn_name}()`][crate::{fn_name}()]",
