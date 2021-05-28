@@ -1,4 +1,4 @@
-use crate::{nameutil::mangle_keywords, Env};
+use crate::{library::TypeId, nameutil::mangle_keywords, Env};
 use once_cell::sync::Lazy;
 use regex::{Captures, Regex};
 use std::{
@@ -85,11 +85,11 @@ static GI_DOCGEN_SYMBOLS: Lazy<Regex> = Lazy::new(|| {
     Regex::new(r"\[(callback|id|alias|class|const|ctor|enum|error|flags|func|iface|method|property|signal|struct|vfunc)[@](\w+\b)([:.]+[\w-]+\b)?([:.]+[\w-]+\b)?\]?").unwrap()
 });
 
-pub(crate) fn replace_c_types(entry: &str, env: &Env, _in_type: &str) -> String {
+pub(crate) fn replace_c_types(entry: &str, env: &Env, in_type: Option<&TypeId>) -> String {
     GI_DOCGEN_SYMBOLS
         .replace_all(entry, |caps: &Captures<'_>| {
             if let Ok(gi_type) = GiDocgen::from_str(&caps[0]) {
-                gi_type.rust_link(env)
+                gi_type.rust_link(env, in_type)
             } else {
                 // otherwise fallback to the original string
                 caps[0].to_string()
@@ -182,7 +182,7 @@ fn ns_type_to_doc(namespace: &Option<String>, type_: &str) -> String {
 }
 
 impl GiDocgen {
-    pub fn rust_link(&self, env: &Env) -> String {
+    pub fn rust_link(&self, env: &Env, in_type: Option<&TypeId>) -> String {
         let symbols = env.symbols.borrow();
         match self {
             GiDocgen::Enum { type_, namespace } | GiDocgen::Error { type_, namespace } => env
@@ -296,7 +296,8 @@ impl GiDocgen {
                     || format!("`{}::{}()`", ns_type_to_doc(namespace, type_), name),
                     |(obj_info, fn_info)| {
                         let sym = symbols.by_tid(obj_info.type_id).unwrap();
-                        fn_info.doc_link(Some(&sym.full_rust_name()), None)
+                        let is_self = in_type.map(|t| t == &obj_info.type_id).unwrap_or(false);
+                        fn_info.doc_link(Some(&sym.full_rust_name()), None, is_self)
                     },
                 ),
             GiDocgen::Func {
@@ -315,13 +316,19 @@ impl GiDocgen {
                             || format!("`{}::{}()`", ns_type_to_doc(namespace, ty), name),
                             |(obj_info, fn_info)| {
                                 let sym = symbols.by_tid(obj_info.type_id).unwrap();
-                                fn_info.doc_link(Some(&sym.full_rust_name()), None)
+                                let is_self =
+                                    in_type.map(|t| t == &obj_info.type_id).unwrap_or(false);
+
+                                fn_info.doc_link(Some(&sym.full_rust_name()), None, is_self)
                             },
                         )
                 } else {
                     env.analysis
                         .find_global_function(env, |f| &f.name == name)
-                        .map_or_else(|| format!("`{}()`", name), |info| info.doc_link(None, None))
+                        .map_or_else(
+                            || format!("`{}()`", name),
+                            |info| info.doc_link(None, None, false),
+                        )
                 }
             }
             GiDocgen::Alias(alias) => {
@@ -340,10 +347,12 @@ impl GiDocgen {
                 ) {
                     let sym = symbols.by_tid(obj_info.type_id).unwrap();
                     let (type_name, visible_type_name) = obj_info.generate_doc_link_info(fn_info);
+                    let is_self = in_type.map(|t| t == &obj_info.type_id).unwrap_or(false);
 
                     fn_info.doc_link(
                         Some(&sym.full_rust_name().replace(type_, &type_name)),
                         Some(&visible_type_name),
+                        is_self,
                     )
                 } else if let Some((record_info, fn_info)) = env.analysis.find_record_by_function(
                     env,
@@ -351,7 +360,9 @@ impl GiDocgen {
                     |f| f.name == mangle_keywords(name),
                 ) {
                     let sym = symbols.by_tid(record_info.type_id).unwrap();
-                    fn_info.doc_link(Some(&sym.full_rust_name()), None)
+                    let is_self = in_type.map(|t| t == &record_info.type_id).unwrap_or(false);
+
+                    fn_info.doc_link(Some(&sym.full_rust_name()), None, is_self)
                 } else {
                     format!("`{}::{}()`", ns_type_to_doc(namespace, type_), name)
                 }

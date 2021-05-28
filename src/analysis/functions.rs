@@ -118,12 +118,22 @@ impl Info {
         !self.status.ignored() && !self.is_special() && !self.is_async_finish(env) && search(self)
     }
 
-    pub fn doc_link(&self, parent: Option<&str>, visible_parent: Option<&str>) -> String {
+    pub fn doc_link(
+        &self,
+        parent: Option<&str>,
+        visible_parent: Option<&str>,
+        is_self: bool,
+    ) -> String {
         if let Some(p) = parent {
+            let visible_parent_name = if is_self {
+                "Self"
+            } else {
+                visible_parent.unwrap_or(p)
+            };
             format!(
                 "[`{visible_type_name}::{fn_name}()`][crate::{name}::{fn_name}()]",
                 name = p,
-                visible_type_name = visible_parent.unwrap_or(p),
+                visible_type_name = visible_parent_name,
                 fn_name = self.codegen_name(),
             )
         } else {
