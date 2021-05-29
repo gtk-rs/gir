@@ -87,7 +87,7 @@ static SPACES: Lazy<Regex> = Lazy::new(|| Regex::new(r"[ ]{2,}").unwrap());
 fn replace_c_types(entry: &str, env: &Env, in_type: Option<&TypeId>) -> String {
     let out = FUNCTION.replace_all(entry, |caps: &Captures<'_>| {
         let name = &caps[3];
-        find_function(name, env, in_type).unwrap_or_else(|| {
+        find_method_or_function_by_ctype(None, name, env, in_type).unwrap_or_else(|| {
             info!("No function found for `{}()`", name);
             format!("`{}()`", name)
         })
@@ -100,8 +100,11 @@ fn replace_c_types(entry: &str, env: &Env, in_type: Option<&TypeId>) -> String {
         symbol_name => match &caps[1] {
             "%" => find_constant_or_variant(symbol_name, env, in_type),
             "#" => {
-                let method_name = caps.get(3).map(|m| m.as_str().trim_start_matches('.'));
-                find_method_or_type(symbol_name, method_name, env, in_type)
+                if let Some(method_name) = caps.get(3).map(|m| m.as_str().trim_start_matches('.')) {
+                    find_method(symbol_name, method_name, env, in_type)
+                } else {
+                    find_type(symbol_name, env, in_type)
+                }
             }
             s => panic!("Unknown symbol prefix `{}`", s),
         }
@@ -118,61 +121,31 @@ fn replace_c_types(entry: &str, env: &Env, in_type: Option<&TypeId>) -> String {
     SPACES.replace_all(&out, " ").into_owned()
 }
 
-fn find_method_or_type(
+fn find_method(
     type_: &str,
-    method_name: Option<&str>,
+    method_name: &str,
     env: &Env,
     in_type: Option<&TypeId>,
 ) -> Option<String> {
     let symbols = env.symbols.borrow();
-    if let Some(method) = method_name {
-        let is_signal = method.starts_with("::");
-        let is_property = !is_signal && method.starts_with(':');
-        if !is_signal && !is_property {
-            if let Some((obj_info, fn_info)) = env.analysis.find_object_by_function(
-                env,
-                |o| o.c_type == type_,
-                |f| f.name == method,
-            ) {
-                Some(gen_object_fn_doc_link(
-                    obj_info,
-                    fn_info,
-                    env,
-                    in_type,
-                    &obj_info.name,
-                ))
-            } else if let Some((record_info, fn_info)) = env.analysis.find_record_by_function(
-                env,
-                |r| r.type_(&env.library).c_type == type_,
-                |f| f.name == method,
-            ) {
-                Some(gen_record_fn_doc_link(
-                    record_info.type_id,
-                    fn_info,
-                    env,
-                    in_type,
-                ))
-            } else {
-                warn!("Method `{}` of type `{}` not found", method, type_);
-                None
-            }
-        } else {
-            env.analysis
-                .objects
-                .values()
-                .find(|o| o.c_type == type_)
-                .map(|info| {
-                    let sym = symbols.by_tid(info.type_id).unwrap(); // we are sure the object exists
-                    let name = method.trim_start_matches(':');
-                    if is_property {
-                        gen_property_doc_link(&sym.full_rust_name(), name)
-                    } else {
-                        gen_signal_doc_link(&sym.full_rust_name(), name)
-                    }
-                })
-        }
+    let is_signal = method_name.starts_with("::");
+    let is_property = !is_signal && method_name.starts_with(':');
+    if !is_signal && !is_property {
+        find_method_or_function_by_ctype(Some(type_), method_name, env, in_type)
     } else {
-        find_type(type_, env, in_type)
+        env.analysis
+            .objects
+            .values()
+            .find(|o| o.c_type == type_)
+            .map(|info| {
+                let sym = symbols.by_tid(info.type_id).unwrap(); // we are sure the object exists
+                let name = method_name.trim_start_matches(':');
+                if is_property {
+                    gen_property_doc_link(&sym.full_rust_name(), name)
+                } else {
+                    gen_signal_doc_link(&sym.full_rust_name(), name)
+                }
+            })
     }
 }
 
@@ -231,47 +204,56 @@ fn find_type(type_: &str, env: &Env, in_type: Option<&TypeId>) -> Option<String>
         return None;
     }
 
-    let symbols = env.symbols.borrow();
-
-    let symbol = if let Some(obj) = env.analysis.objects.values().find(|o| o.c_type == type_) {
-        symbols.by_tid(obj.type_id)
+    let type_id = if let Some(obj) = env.analysis.objects.values().find(|o| o.c_type == type_) {
+        Some(obj.type_id)
     } else if let Some(record) = env
         .analysis
         .records
         .values()
         .find(|r| r.type_(&env.library).c_type == type_)
     {
-        symbols.by_tid(record.type_id)
+        Some(record.type_id)
     } else if let Some(enum_) = env
         .analysis
         .enumerations
         .iter()
         .find(|e| e.type_(&env.library).c_type == type_)
     {
-        symbols.by_tid(enum_.type_id)
+        Some(enum_.type_id)
     } else if let Some(flag) = env
         .analysis
         .flags
         .iter()
         .find(|f| f.type_(&env.library).c_type == type_)
     {
-        symbols.by_tid(flag.type_id)
+        Some(flag.type_id)
+    } else if let Some(constant_or_variant) = find_constant_or_variant(type_, env, in_type) {
+        warn!(
+            "`{}` matches a constant or enum-variant and should be prefixed with `%` instead of `#` (reserved for types)",
+            type_
+        );
+        return Some(constant_or_variant);
     } else {
         warn!("Object/Interface/Record `{}` not found", type_);
         None
     };
 
-    symbol.map_or_else(
-        || {
-            find_constant_or_variant(type_, env, in_type).map(|i| {
-                warn!(
-                    "`{}` was found to be a constant or enum-variant (`%`) but is instead prefixed with (`#`)",
-                    type_
-                );
-                i
-            })
-        },
-        |sym| Some(format!("[`{n}`][crate::{n}]", n = sym.full_rust_name())),
+    type_id.map(|ty| gen_symbol_doc_link(ty, env))
+}
+
+fn find_method_or_function_by_ctype(
+    c_type: Option<&str>,
+    name: &str,
+    env: &Env,
+    in_type: Option<&TypeId>,
+) -> Option<String> {
+    find_method_or_function(
+        name,
+        env,
+        in_type,
+        |f| f.glib_name == name,
+        |o| c_type.map_or(true, |t| o.c_type == t),
+        |r| c_type.map_or(true, |t| r.type_(&env.library).c_type == t),
     )
 }
 
@@ -284,13 +266,28 @@ const IGNORE_C_WARNING_FUNCS: [&str; 6] = [
     "g_strfreev",
     "printf",
 ];
-/// Find a function in all the possible items, if not found return the original name surrounded with backsticks
+/// Find a function in all the possible items, if not found return the original name surrounded with backticks.
 /// A function can either be a struct/interface/record method, a global function or maybe a virtual function
-fn find_function(name: &str, env: &Env, in_type: Option<&TypeId>) -> Option<String> {
+///
+/// This function is generic so it can be de-duplicated between a
+/// - "find_method_or_function_by_ctype" where the object/records are looked by their C name
+/// - "find_method_or_function_by_name" where the object/records are looked by their name
+pub(crate) fn find_method_or_function<
+    F: Fn(&crate::analysis::functions::Info) -> bool + Copy,
+    G: Fn(&crate::analysis::object::Info) -> bool + Copy,
+    H: Fn(&crate::analysis::record::Info) -> bool + Copy,
+>(
+    name: &str,
+    env: &Env,
+    in_type: Option<&TypeId>,
+    search_fn: F,
+    search_obj: G,
+    search_record: H,
+) -> Option<String> {
     // if we can find the function in an object
-    if let Some((obj_info, fn_info)) =
-        env.analysis
-            .find_object_by_function(env, |_| true, |f| f.glib_name == name)
+    if let Some((obj_info, fn_info)) = env
+        .analysis
+        .find_object_by_function(env, search_obj, search_fn)
     {
         Some(gen_object_fn_doc_link(
             obj_info,
@@ -302,7 +299,7 @@ fn find_function(name: &str, env: &Env, in_type: Option<&TypeId>) -> Option<Stri
     // or in a record
     } else if let Some((record_info, fn_info)) =
         env.analysis
-            .find_record_by_function(env, |_| true, |f| f.glib_name == name)
+            .find_record_by_function(env, search_record, search_fn)
     {
         Some(gen_record_fn_doc_link(
             record_info.type_id,
@@ -311,10 +308,7 @@ fn find_function(name: &str, env: &Env, in_type: Option<&TypeId>) -> Option<Stri
             in_type,
         ))
     // or as a global function
-    } else if let Some(fn_info) = env
-        .analysis
-        .find_global_function(env, |f| f.glib_name == name)
-    {
+    } else if let Some(fn_info) = env.analysis.find_global_function(env, search_fn) {
         Some(fn_info.doc_link(None, None, false))
     } else {
         if !IGNORE_C_WARNING_FUNCS.contains(&name) {
@@ -332,7 +326,7 @@ pub(crate) fn gen_record_fn_doc_link(
 ) -> String {
     let symbols = env.symbols.borrow();
     let sym_name = symbols.by_tid(type_id).unwrap().full_rust_name();
-    let is_self = in_type.map(|t| t == &type_id).unwrap_or(false);
+    let is_self = in_type == Some(&type_id);
 
     fn_info.doc_link(Some(&sym_name), None, is_self)
 }
@@ -346,7 +340,7 @@ pub(crate) fn gen_object_fn_doc_link(
 ) -> String {
     let symbols = env.symbols.borrow();
     let sym = symbols.by_tid(obj_info.type_id).unwrap();
-    let is_self = in_type.map(|t| t == &obj_info.type_id).unwrap_or(false);
+    let is_self = in_type == Some(&obj_info.type_id);
 
     if fn_info.kind == FunctionKind::Method {
         let (type_name, visible_type_name) = obj_info.generate_doc_link_info(fn_info);
@@ -370,7 +364,7 @@ pub(crate) fn gen_member_doc_link(
 ) -> String {
     let symbols = env.symbols.borrow();
     let sym = symbols.by_tid(type_id).unwrap().full_rust_name();
-    let is_self = in_type.map(|t| t == &type_id).unwrap_or(false);
+    let is_self = in_type == Some(&type_id);
     let visible_sym = if is_self {
         "Self".to_string()
     } else {

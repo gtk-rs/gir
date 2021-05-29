@@ -1,8 +1,7 @@
 use crate::{
     codegen::doc::format::{
         gen_alias_doc_link, gen_callback_doc_link, gen_const_doc_link, gen_object_fn_doc_link,
-        gen_property_doc_link, gen_record_fn_doc_link, gen_signal_doc_link, gen_symbol_doc_link,
-        gen_vfunc_doc_link,
+        gen_property_doc_link, gen_signal_doc_link, gen_symbol_doc_link, gen_vfunc_doc_link,
     },
     library::TypeId,
     nameutil::mangle_keywords,
@@ -14,6 +13,8 @@ use std::{
     fmt::{self, Display, Formatter},
     str::FromStr,
 };
+
+use super::format::find_method_or_function;
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub enum GiDocgenError {
@@ -190,6 +191,22 @@ fn ns_type_to_doc(namespace: &Option<String>, type_: &str) -> String {
     }
 }
 
+fn find_method_or_function_by_name(
+    type_: Option<&str>,
+    name: &str,
+    env: &Env,
+    in_type: Option<&TypeId>,
+) -> Option<String> {
+    find_method_or_function(
+        name,
+        env,
+        in_type,
+        |f| f.name == mangle_keywords(name),
+        |o| type_.map_or(true, |t| o.name == t),
+        |r| type_.map_or(true, |t| r.name == t),
+    )
+}
+
 impl GiDocgen {
     pub fn rust_link(&self, env: &Env, in_type: Option<&TypeId>) -> String {
         let symbols = env.symbols.borrow();
@@ -296,52 +313,22 @@ impl GiDocgen {
                 namespace,
                 type_,
                 name,
-            } => {
-                if let Some(ty) = type_ {
-                    env.analysis
-                        .find_object_by_function(
-                            env,
-                            |o| &o.name == ty,
-                            |f| f.name == mangle_keywords(name),
-                        )
-                        .map_or_else(
-                            || format!("`{}::{}()`", ns_type_to_doc(namespace, ty), name),
-                            |(obj_info, fn_info)| {
-                                gen_object_fn_doc_link(obj_info, fn_info, env, in_type, ty)
-                            },
-                        )
-                } else {
-                    env.analysis
-                        .find_global_function(env, |f| &f.name == name)
-                        .map_or_else(
-                            || format!("`{}()`", name),
-                            |info| info.doc_link(None, None, false),
-                        )
-                }
-            }
+            } => find_method_or_function_by_name(type_.as_deref(), name, env, in_type)
+                .unwrap_or_else(|| {
+                    if let Some(ty) = type_ {
+                        format!("`{}::{}()`", ns_type_to_doc(namespace, ty), name)
+                    } else {
+                        format!("`{}()`", name)
+                    }
+                }),
             GiDocgen::Alias(alias) => gen_alias_doc_link(alias),
             GiDocgen::Method {
                 namespace,
                 type_,
                 name,
                 is_instance: _,
-            } => {
-                if let Some((obj_info, fn_info)) = env.analysis.find_object_by_function(
-                    env,
-                    |o| &o.name == type_,
-                    |f| f.name == mangle_keywords(name),
-                ) {
-                    gen_object_fn_doc_link(obj_info, fn_info, env, in_type, type_)
-                } else if let Some((record_info, fn_info)) = env.analysis.find_record_by_function(
-                    env,
-                    |r| &r.name == type_,
-                    |f| f.name == mangle_keywords(name),
-                ) {
-                    gen_record_fn_doc_link(record_info.type_id, fn_info, env, in_type)
-                } else {
-                    format!("`{}::{}()`", ns_type_to_doc(namespace, type_), name)
-                }
-            }
+            } => find_method_or_function_by_name(Some(type_), name, env, in_type)
+                .unwrap_or_else(|| format!("`{}::{}()`", ns_type_to_doc(namespace, type_), name)),
             GiDocgen::Callback { namespace, name } => {
                 gen_callback_doc_link(&ns_type_to_doc(namespace, name))
             }

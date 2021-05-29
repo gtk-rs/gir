@@ -80,9 +80,9 @@ impl Analysis {
         search_fn: F,
     ) -> Option<(&record::Info, &functions::Info)> {
         self.records
-            .iter()
-            .filter(|(_, r)| search_record(r))
-            .find_map(|(_, record_info)| {
+            .values()
+            .filter(|r| search_record(r))
+            .find_map(|record_info| {
                 record_info
                     .functions
                     .iter()
@@ -101,9 +101,9 @@ impl Analysis {
         search_fn: F,
     ) -> Option<(&object::Info, &functions::Info)> {
         self.objects
-            .iter()
-            .filter(|(_, o)| search_obj(o))
-            .find_map(|(_, obj_info)| {
+            .values()
+            .filter(|o| search_obj(o))
+            .find_map(|obj_info| {
                 obj_info
                     .functions
                     .iter()

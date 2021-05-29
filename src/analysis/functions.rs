@@ -109,8 +109,7 @@ impl Info {
             .trim_end_matches('_')
             .rsplit('_')
             .next()
-            .map(|i| i.parse::<special_functions::Type>().is_ok())
-            .unwrap_or(false)
+            .map_or(false, |i| i.parse::<special_functions::Type>().is_ok())
     }
 
     // returns whether the method can be linked in the docs
