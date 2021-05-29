@@ -1,7 +1,6 @@
 use self::format::reformat_doc;
 use crate::{
     analysis::{self, namespaces::MAIN},
-    case::CaseExt,
     config::gobjects::GObject,
     env::Env,
     file_saver::save_to_file,
@@ -487,7 +486,7 @@ fn create_enum_doc(w: &mut dyn Write, env: &Env, enum_: &Enumeration) -> Result<
     for member in &enum_.members {
         if member.doc.is_some() {
             let sub_ty = TypeStruct {
-                name: member.name.to_camel(),
+                name: nameutil::enum_member_name(&member.name),
                 parent: Some(Box::new(ty.clone())),
                 ty: SType::Variant,
                 args: Vec::new(),
