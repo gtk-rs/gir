@@ -101,7 +101,7 @@ fn replace_c_types(entry: &str, env: &Env, in_type: Option<&TypeId>) -> String {
             if !IGNORE_C_WARNING_FUNCS.contains(&name) {
                 info!("No function found for `{}()`", name);
             }
-            format!("`{}()`", name)
+            format!("`{}{}()`", caps.get(2).map_or("", |m| m.as_str()), name)
         })
     });
 
@@ -115,10 +115,11 @@ fn replace_c_types(entry: &str, env: &Env, in_type: Option<&TypeId>) -> String {
                 format!("`{}`", symbol_name)
             }),
             "#" => {
-                if let Some(method_name) = caps.get(3).map(|m| m.as_str().trim_start_matches('.')) {
-                    find_method(symbol_name, method_name, env, in_type).unwrap_or_else(|| {
-                        info!("Method `#{}` not found", symbol_name);
-                        format!("`{}`", symbol_name)
+                if let Some(member_path) = caps.get(3).map(|m| m.as_str()) {
+                    let method_name = member_path.trim_start_matches('.');
+                    find_member(symbol_name, method_name, env, in_type).unwrap_or_else(|| {
+                        info!("`#{}` not found as method", symbol_name);
+                        format!("`{}{}`", symbol_name, member_path)
                     })
                 } else if let Some(type_) = find_type(symbol_name, env) {
                     type_
@@ -167,7 +168,7 @@ fn replace_c_types(entry: &str, env: &Env, in_type: Option<&TypeId>) -> String {
     SPACES.replace_all(&out, " ").into_owned()
 }
 
-fn find_method(
+fn find_member(
     type_: &str,
     method_name: &str,
     env: &Env,
