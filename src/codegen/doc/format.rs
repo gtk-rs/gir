@@ -1,5 +1,9 @@
 use super::gi_docgen;
-use crate::{library::TypeId, nameutil, Env};
+use crate::{
+    analysis::functions::Info,
+    library::{FunctionKind, TypeId},
+    nameutil, Env,
+};
 use log::{info, warn};
 use once_cell::sync::Lazy;
 use regex::{Captures, Regex};
@@ -130,23 +134,24 @@ fn find_method_or_type(
                 |o| o.c_type == type_,
                 |f| f.name == method,
             ) {
-                let sym = symbols.by_tid(obj_info.type_id).unwrap(); // we are sure the object exists
-                let (type_name, visible_type_name) = obj_info.generate_doc_link_info(fn_info);
-                let name = sym.full_rust_name().replace(&obj_info.name, &type_name);
-                let is_self = in_type.map(|t| t == &obj_info.type_id).unwrap_or(false);
-
-                Some(fn_info.doc_link(Some(&name), Some(&visible_type_name), is_self))
+                Some(gen_object_fn_doc_link(
+                    obj_info,
+                    fn_info,
+                    env,
+                    in_type,
+                    &obj_info.name,
+                ))
             } else if let Some((record_info, fn_info)) = env.analysis.find_record_by_function(
                 env,
                 |r| r.type_(&env.library).c_type == type_,
                 |f| f.name == method,
             ) {
-                let sym_name = symbols
-                    .by_tid(record_info.type_id)
-                    .unwrap()
-                    .full_rust_name(); // we are sure the object exists
-                let is_self = in_type.map(|t| t == &record_info.type_id).unwrap_or(false);
-                Some(fn_info.doc_link(Some(&sym_name), None, is_self))
+                Some(gen_record_fn_doc_link(
+                    record_info.type_id,
+                    fn_info,
+                    env,
+                    in_type,
+                ))
             } else {
                 warn!("Method `{}` of type `{}` not found", method, type_);
                 None
@@ -160,9 +165,9 @@ fn find_method_or_type(
                     let sym = symbols.by_tid(info.type_id).unwrap(); // we are sure the object exists
                     let name = method.trim_start_matches(':');
                     if is_property {
-                        format!("`property::{}::{}`", sym.full_rust_name(), name)
+                        gen_property_doc_link(&sym.full_rust_name(), name)
                     } else {
-                        format!("`signal::{}::{}`", sym.full_rust_name(), name)
+                        gen_signal_doc_link(&sym.full_rust_name(), name)
                     }
                 })
         }
@@ -172,7 +177,6 @@ fn find_method_or_type(
 }
 
 fn find_constant_or_variant(symbol: &str, env: &Env, in_type: Option<&TypeId>) -> Option<String> {
-    let symbols = env.symbols.borrow();
     if let Some((flag_info, member_info)) = env.analysis.flags.iter().find_map(|f| {
         f.type_(&env.library)
             .members
@@ -180,19 +184,11 @@ fn find_constant_or_variant(symbol: &str, env: &Env, in_type: Option<&TypeId>) -
             .find(|m| m.c_identifier == symbol && !m.status.ignored())
             .map(|m| (f, m))
     }) {
-        let sym = symbols.by_tid(flag_info.type_id).unwrap().full_rust_name();
-        let is_self = in_type.map(|t| t == &flag_info.type_id).unwrap_or(false);
-        let visible_sym = if is_self {
-            "Self".to_string()
-        } else {
-            sym.clone()
-        };
-
-        Some(format!(
-            "[`{p}::{m}`][crate::{s}::{m}]",
-            m = nameutil::bitfield_member_name(&member_info.name),
-            s = sym,
-            p = visible_sym
+        Some(gen_member_doc_link(
+            flag_info.type_id,
+            &nameutil::bitfield_member_name(&member_info.name),
+            env,
+            in_type,
         ))
     } else if let Some((enum_info, member_info)) = env.analysis.enumerations.iter().find_map(|e| {
         e.type_(&env.library)
@@ -201,19 +197,11 @@ fn find_constant_or_variant(symbol: &str, env: &Env, in_type: Option<&TypeId>) -
             .find(|m| m.c_identifier == symbol && !m.status.ignored())
             .map(|m| (e, m))
     }) {
-        let sym = symbols.by_tid(enum_info.type_id).unwrap().full_rust_name();
-        let is_self = in_type.map(|t| t == &enum_info.type_id).unwrap_or(false);
-
-        let visible_sym = if is_self {
-            "Self".to_string()
-        } else {
-            sym.clone()
-        };
-        Some(format!(
-            "[`{e}::{m}`][crate::{s}::{m}]",
-            m = nameutil::enum_member_name(&member_info.name),
-            s = sym,
-            e = visible_sym
+        Some(gen_member_doc_link(
+            enum_info.type_id,
+            &nameutil::enum_member_name(&member_info.name),
+            env,
+            in_type,
         ))
     } else if let Some(const_info) = env
         .analysis
@@ -221,15 +209,14 @@ fn find_constant_or_variant(symbol: &str, env: &Env, in_type: Option<&TypeId>) -
         .iter()
         .find(|c| c.glib_name == symbol)
     {
-        // for whatever reason constants are not part of the symbols list
-        Some(format!("[`{n}`][crate::{n}]", n = const_info.name))
+        Some(gen_const_doc_link(const_info))
     } else {
         warn!("Constant/Flag variant/Enum member `{}` not found", symbol);
         None
     }
 }
 
-/// either an object/interface, record, enum or a flag
+// A list of types that are automatically ignored by the `find_type` function
 const IGNORED_C_TYPES: [&str; 6] = [
     "gconstpointer",
     "guint16",
@@ -238,6 +225,7 @@ const IGNORED_C_TYPES: [&str; 6] = [
     "gchararray",
     "GList",
 ];
+/// either an object/interface, record, enum or a flag
 fn find_type(type_: &str, env: &Env, in_type: Option<&TypeId>) -> Option<String> {
     if IGNORED_C_TYPES.contains(&type_) {
         return None;
@@ -287,9 +275,7 @@ fn find_type(type_: &str, env: &Env, in_type: Option<&TypeId>) -> Option<String>
     )
 }
 
-/// Find a function in all the possible items, if not found return the original name surrounded with backsticks
-/// A function can either be a struct/interface/record method, a global function or maybe a virtual function
-
+// A list of function names that are ignored when warning about a "not found function"
 const IGNORE_C_WARNING_FUNCS: [&str; 6] = [
     "g_object_unref",
     "g_object_ref",
@@ -298,32 +284,32 @@ const IGNORE_C_WARNING_FUNCS: [&str; 6] = [
     "g_strfreev",
     "printf",
 ];
+/// Find a function in all the possible items, if not found return the original name surrounded with backsticks
+/// A function can either be a struct/interface/record method, a global function or maybe a virtual function
 fn find_function(name: &str, env: &Env, in_type: Option<&TypeId>) -> Option<String> {
-    let symbols = env.symbols.borrow();
     // if we can find the function in an object
     if let Some((obj_info, fn_info)) =
         env.analysis
             .find_object_by_function(env, |_| true, |f| f.glib_name == name)
     {
-        let sym = symbols.by_tid(obj_info.type_id).unwrap(); // we are sure the object exists
-        let (type_name, visible_type_name) = obj_info.generate_doc_link_info(fn_info);
-
-        let name = sym.full_rust_name().replace(&obj_info.name, &type_name);
-        let is_self = in_type.map(|t| t == &obj_info.type_id).unwrap_or(false);
-
-        Some(fn_info.doc_link(Some(&name), Some(&visible_type_name), is_self))
+        Some(gen_object_fn_doc_link(
+            obj_info,
+            fn_info,
+            env,
+            in_type,
+            &obj_info.name,
+        ))
     // or in a record
     } else if let Some((record_info, fn_info)) =
         env.analysis
             .find_record_by_function(env, |_| true, |f| f.glib_name == name)
     {
-        let sym_name = symbols
-            .by_tid(record_info.type_id)
-            .unwrap()
-            .full_rust_name(); // we are sure the object exists
-        let is_self = in_type.map(|t| t == &record_info.type_id).unwrap_or(false);
-
-        Some(fn_info.doc_link(Some(&sym_name), None, is_self))
+        Some(gen_record_fn_doc_link(
+            record_info.type_id,
+            fn_info,
+            env,
+            in_type,
+        ))
     // or as a global function
     } else if let Some(fn_info) = env
         .analysis
@@ -336,4 +322,96 @@ fn find_function(name: &str, env: &Env, in_type: Option<&TypeId>) -> Option<Stri
         }
         None
     }
+}
+
+pub(crate) fn gen_record_fn_doc_link(
+    type_id: TypeId,
+    fn_info: &Info,
+    env: &Env,
+    in_type: Option<&TypeId>,
+) -> String {
+    let symbols = env.symbols.borrow();
+    let sym_name = symbols.by_tid(type_id).unwrap().full_rust_name();
+    let is_self = in_type.map(|t| t == &type_id).unwrap_or(false);
+
+    fn_info.doc_link(Some(&sym_name), None, is_self)
+}
+
+pub(crate) fn gen_object_fn_doc_link(
+    obj_info: &crate::analysis::object::Info,
+    fn_info: &Info,
+    env: &Env,
+    in_type: Option<&TypeId>,
+    visible_name: &str,
+) -> String {
+    let symbols = env.symbols.borrow();
+    let sym = symbols.by_tid(obj_info.type_id).unwrap();
+    let is_self = in_type.map(|t| t == &obj_info.type_id).unwrap_or(false);
+
+    if fn_info.kind == FunctionKind::Method {
+        let (type_name, visible_type_name) = obj_info.generate_doc_link_info(fn_info);
+
+        fn_info.doc_link(
+            Some(&sym.full_rust_name().replace(visible_name, &type_name)),
+            Some(&visible_type_name),
+            is_self,
+        )
+    } else {
+        fn_info.doc_link(Some(&sym.full_rust_name()), None, is_self)
+    }
+}
+
+// Helper function to generate a doc link for an enum member/bitfield variant
+pub(crate) fn gen_member_doc_link(
+    type_id: TypeId,
+    member_name: &str,
+    env: &Env,
+    in_type: Option<&TypeId>,
+) -> String {
+    let symbols = env.symbols.borrow();
+    let sym = symbols.by_tid(type_id).unwrap().full_rust_name();
+    let is_self = in_type.map(|t| t == &type_id).unwrap_or(false);
+    let visible_sym = if is_self {
+        "Self".to_string()
+    } else {
+        sym.clone()
+    };
+
+    format!(
+        "[`{p}::{m}`][crate::{s}::{m}]",
+        m = member_name,
+        s = sym,
+        p = visible_sym
+    )
+}
+
+pub(crate) fn gen_const_doc_link(const_info: &crate::analysis::constants::Info) -> String {
+    // for whatever reason constants are not part of the symbols list
+    format!("[`{n}`][crate::{n}]", n = const_info.name)
+}
+
+pub(crate) fn gen_signal_doc_link(symbol: &str, signal: &str) -> String {
+    format!("`signal::{}::{}`", symbol, signal)
+}
+
+pub(crate) fn gen_property_doc_link(symbol: &str, property: &str) -> String {
+    format!("`property::{}::{}`", symbol, property)
+}
+
+pub(crate) fn gen_vfunc_doc_link(symbol: &str, vfunc: &str) -> String {
+    format!("`vfunc::{}::{}`", symbol, vfunc)
+}
+
+pub(crate) fn gen_callback_doc_link(callback: &str) -> String {
+    format!("`callback::{}", callback)
+}
+
+pub(crate) fn gen_alias_doc_link(alias: &str) -> String {
+    format!("`alias::{}`", alias)
+}
+
+pub(crate) fn gen_symbol_doc_link(type_id: TypeId, env: &Env) -> String {
+    let symbols = env.symbols.borrow();
+    let sym = symbols.by_tid(type_id).unwrap();
+    format!("[`{n}`][crate::{n}]", n = sym.full_rust_name())
 }
