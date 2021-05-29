@@ -3,7 +3,7 @@ use crate::{
     analysis::flags::Info,
     analysis::special_functions::Type,
     codegen::general::{
-        self, cfg_deprecated, derives, version_condition, version_condition_string,
+        self, cfg_deprecated, derives, doc_alias, version_condition, version_condition_string,
     },
     config::gobjects::GObject,
     env::Env,
@@ -72,6 +72,7 @@ fn generate_flags(
         derives(w, &d, 1)?;
     }
 
+    doc_alias(w, &flags.c_type, "", 1)?;
     writeln!(w, "    pub struct {}: u32 {{", flags.name)?;
     for member in &flags.members {
         let member_config = config.members.matched(&member.name);
@@ -86,6 +87,9 @@ fn generate_flags(
         let version = member_config.iter().find_map(|m| m.version);
         cfg_deprecated(w, env, deprecated_version, false, 2)?;
         version_condition(w, env, version, false, 2)?;
+        if member.c_identifier != member.name {
+            doc_alias(w, &member.c_identifier, "", 2)?;
+        }
         writeln!(w, "\t\tconst {} = {};", name, val as u32)?;
     }
 
