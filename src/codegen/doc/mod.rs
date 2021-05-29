@@ -463,7 +463,6 @@ fn create_record_doc(w: &mut dyn Write, env: &Env, info: &analysis::record::Info
                 Some(Box::new(ty.clone())),
                 fn_new_name,
                 HashSet::new(),
-                Some(&info.type_id),
             )?;
         }
     }
