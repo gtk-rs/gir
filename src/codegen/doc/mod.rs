@@ -1,7 +1,6 @@
 use self::format::reformat_doc;
 use crate::{
     analysis::{self, namespaces::MAIN},
-    case::CaseExt,
     config::gobjects::GObject,
     env::Env,
     file_saver::save_to_file,
