@@ -273,7 +273,10 @@ fn create_object_doc(w: &mut dyn Write, env: &Env, info: &analysis::object::Info
         let mut implements = impl_self
             .iter()
             .chain(env.class_hierarchy.supertypes(info.type_id))
-            .filter(|&tid| !env.type_status(&tid.full_name(&env.library)).ignored())
+            .filter(|&tid| {
+                !env.type_status(&tid.full_name(&env.library)).ignored()
+                    && !env.type_(*tid).is_final_type()
+            })
             .map(|&tid| get_type_trait_for_implements(env, tid))
             .collect::<Vec<_>>();
         implements.extend(manual_traits);
