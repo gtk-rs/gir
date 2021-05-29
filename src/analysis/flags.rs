@@ -25,14 +25,7 @@ impl Info {
 pub fn new(env: &Env, obj: &GObject, imports: &mut Imports) -> Option<Info> {
     info!("Analyzing flags {}", obj.name);
 
-    if !obj.status.need_generate() {
-        return None;
-    }
-
-    if !obj
-        .type_id
-        .map_or(false, |tid| tid.ns_id == namespaces::MAIN)
-    {
+    if obj.status.ignored() {
         return None;
     }
 
@@ -42,23 +35,25 @@ pub fn new(env: &Env, obj: &GObject, imports: &mut Imports) -> Option<Info> {
 
     let name = split_namespace_name(&obj.name).1;
 
-    // Mark the type as available within the bitfield namespace:
-    imports.add_defined(&format!("crate::{}", name));
+    if obj.status.need_generate() {
+        // Mark the type as available within the bitfield namespace:
+        imports.add_defined(&format!("crate::{}", name));
 
-    let imports = &mut imports.with_defaults(flags.version, &None);
-    imports.add("glib::translate::*");
-    imports.add("bitflags::bitflags");
+        let imports = &mut imports.with_defaults(flags.version, &None);
+        imports.add("glib::translate::*");
+        imports.add("bitflags::bitflags");
 
-    let has_get_type = flags.glib_get_type.is_some();
-    if has_get_type {
-        imports.add("glib::Type");
-        imports.add("glib::StaticType");
-        imports.add("glib::value::FromValue");
-        imports.add("glib::value::ToValue");
-    }
+        let has_get_type = flags.glib_get_type.is_some();
+        if has_get_type {
+            imports.add("glib::Type");
+            imports.add("glib::StaticType");
+            imports.add("glib::value::FromValue");
+            imports.add("glib::value::ToValue");
+        }
 
-    if obj.generate_display_trait {
-        imports.add("std::fmt");
+        if obj.generate_display_trait {
+            imports.add("std::fmt");
+        }
     }
 
     let mut functions = functions::analyze(

@@ -3,6 +3,7 @@ use super::{
     constants::Constants,
     derives::Derives,
     functions::Functions,
+    ident::Ident,
     members::Members,
     properties::Properties,
     signals::{Signal, Signals},
@@ -17,7 +18,11 @@ use crate::{
     version::Version,
 };
 use log::{error, warn};
-use std::{collections::BTreeMap, str::FromStr, sync::Arc};
+use std::{
+    collections::{BTreeMap, HashSet},
+    str::FromStr,
+    sync::Arc,
+};
 use toml::Value;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -280,6 +285,13 @@ fn parse_object(
 
     let constants = Constants::parse(toml_object.lookup("constant"), &name);
     let functions = Functions::parse(toml_object.lookup("function"), &name);
+    let mut function_names = HashSet::new();
+    for f in &functions {
+        if let Ident::Name(name) = &f.ident {
+            assert!(function_names.insert(name), "{} already defined!", name);
+        }
+    }
+
     let signals = {
         let mut v = Vec::new();
         if let Some(configs) = toml_object.lookup("signal").and_then(Value::as_array) {

@@ -49,6 +49,7 @@ pub struct Analysis {
     pub records: BTreeMap<String, record::Info>,
     pub global_functions: Option<info_base::InfoBase>,
     pub constants: Vec<constants::Info>,
+
     pub enumerations: Vec<enums::Info>,
     pub enum_imports: Imports,
 

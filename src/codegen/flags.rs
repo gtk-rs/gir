@@ -18,7 +18,12 @@ use std::{
 };
 
 pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>) {
-    if env.analysis.flags.is_empty() {
+    if !env
+        .analysis
+        .flags
+        .iter()
+        .any(|f| env.config.objects[&f.full_name].status.need_generate())
+    {
         return;
     }
 
@@ -31,6 +36,9 @@ pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>) {
         mod_rs.push("\nmod flags;".into());
         for flags_analysis in &env.analysis.flags {
             let config = &env.config.objects[&flags_analysis.full_name];
+            if !config.status.need_generate() {
+                continue;
+            }
             let flags = flags_analysis.type_(&env.library);
 
             if let Some(cfg) = version_condition_string(env, flags.version, false, 0) {
