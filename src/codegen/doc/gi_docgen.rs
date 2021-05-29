@@ -160,7 +160,7 @@ pub enum GiDocgen {
         namespace: Option<String>,
         type_: String,
         name: String,
-        is_instance: bool, // Whether `type_` ends with Class
+        is_class_method: bool, // Whether `type_` ends with Class
     },
     Property {
         namespace: Option<String>,
@@ -196,6 +196,7 @@ fn find_method_or_function_by_name(
     name: &str,
     env: &Env,
     in_type: Option<&TypeId>,
+    is_class_method: bool,
 ) -> Option<String> {
     find_method_or_function(
         name,
@@ -204,6 +205,7 @@ fn find_method_or_function_by_name(
         |f| f.name == mangle_keywords(name),
         |o| type_.map_or(true, |t| o.name == t),
         |r| type_.map_or(true, |t| r.name == t),
+        is_class_method,
     )
 }
 
@@ -313,7 +315,7 @@ impl GiDocgen {
                 namespace,
                 type_,
                 name,
-            } => find_method_or_function_by_name(type_.as_deref(), name, env, in_type)
+            } => find_method_or_function_by_name(type_.as_deref(), name, env, in_type, false)
                 .unwrap_or_else(|| {
                     if let Some(ty) = type_ {
                         format!("`{}::{}()`", ns_type_to_doc(namespace, ty), name)
@@ -326,8 +328,8 @@ impl GiDocgen {
                 namespace,
                 type_,
                 name,
-                is_instance: _,
-            } => find_method_or_function_by_name(Some(type_), name, env, in_type)
+                is_class_method,
+            } => find_method_or_function_by_name(Some(type_), name, env, in_type, *is_class_method)
                 .unwrap_or_else(|| format!("`{}::{}()`", ns_type_to_doc(namespace, type_), name)),
             GiDocgen::Callback { namespace, name } => {
                 gen_callback_doc_link(&ns_type_to_doc(namespace, name))
@@ -403,7 +405,7 @@ impl FromStr for GiDocgen {
                         type_.ok_or_else(|| GiDocgenError::BrokenLinkType("method".to_string()))?;
                     Ok(GiDocgen::Method {
                         namespace,
-                        is_instance: type_.ends_with("Class"),
+                        is_class_method: type_.ends_with("Class"),
                         type_,
                         name,
                     })
@@ -717,7 +719,7 @@ mod tests {
                 namespace: Some("Gtk".to_string()),
                 type_: "Widget".to_string(),
                 name: "show".to_string(),
-                is_instance: false,
+                is_class_method: false,
             })
         );
 
@@ -727,7 +729,7 @@ mod tests {
                 namespace: None,
                 type_: "WidgetClass".to_string(),
                 name: "add_binding".to_string(),
-                is_instance: true,
+                is_class_method: true,
             })
         );
     }

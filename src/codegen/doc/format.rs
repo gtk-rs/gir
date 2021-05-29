@@ -254,6 +254,7 @@ fn find_method_or_function_by_ctype(
         |f| f.glib_name == name,
         |o| c_type.map_or(true, |t| o.c_type == t),
         |r| c_type.map_or(true, |t| r.type_(&env.library).c_type == t),
+        c_type.map_or(false, |t| t.ends_with("Class")),
     )
 }
 
@@ -283,7 +284,13 @@ pub(crate) fn find_method_or_function<
     search_fn: F,
     search_obj: G,
     search_record: H,
+    is_class_method: bool,
 ) -> Option<String> {
+    if is_class_method {
+        info!("Class methods are not supported yet `{}`", name);
+        return None;
+    }
+
     // if we can find the function in an object
     if let Some((obj_info, fn_info)) = env
         .analysis
