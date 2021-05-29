@@ -13,6 +13,16 @@ const LANGUAGE_SEP_END: &str = "\" -->";
 const LANGUAGE_BLOCK_BEGIN: &str = "|[";
 const LANGUAGE_BLOCK_END: &str = "\n]|";
 
+// A list of function names that are ignored when warning about a "not found function"
+const IGNORE_C_WARNING_FUNCS: [&str; 6] = [
+    "g_object_unref",
+    "g_object_ref",
+    "g_free",
+    "g_list_free",
+    "g_strfreev",
+    "printf",
+];
+
 pub fn reformat_doc(input: &str, env: &Env, in_type: Option<&TypeId>) -> String {
     code_blocks_transformation(input, env, in_type)
 }
@@ -71,7 +81,7 @@ fn format(input: &str, env: &Env, in_type: Option<&TypeId>) -> String {
     ret
 }
 
-static SYMBOL: Lazy<Regex> = Lazy::new(|| Regex::new(r"([#%])(\w+\b)([:.]+[\w-]+\b)?").unwrap());
+static SYMBOL: Lazy<Regex> = Lazy::new(|| Regex::new(r"([@#%])(\w+\b)([:.]+[\w-]+\b)?").unwrap());
 static PARAM_SYMBOL: Lazy<Regex> =
     Lazy::new(|| Regex::new(r"([@])(\w+\b)([:.]+[\w-]+\b)?").unwrap());
 static FUNCTION: Lazy<Regex> =
@@ -88,7 +98,9 @@ fn replace_c_types(entry: &str, env: &Env, in_type: Option<&TypeId>) -> String {
     let out = FUNCTION.replace_all(entry, |caps: &Captures<'_>| {
         let name = &caps[3];
         find_method_or_function_by_ctype(None, name, env, in_type).unwrap_or_else(|| {
-            info!("No function found for `{}()`", name);
+            if !IGNORE_C_WARNING_FUNCS.contains(&name) {
+                info!("No function found for `{}()`", name);
+            }
             format!("`{}()`", name)
         })
     });
@@ -98,24 +110,58 @@ fn replace_c_types(entry: &str, env: &Env, in_type: Option<&TypeId>) -> String {
         "FALSE" => "[`false`]".to_string(),
         "NULL" => "[`None`]".to_string(),
         symbol_name => match &caps[1] {
-            "%" => find_constant_or_variant(symbol_name, env, in_type),
+            "%" => find_constant_or_variant(symbol_name, env, in_type).unwrap_or_else(|| {
+                info!("Constant or variant `%{}` not found", symbol_name);
+                format!("`{}`", symbol_name)
+            }),
             "#" => {
                 if let Some(method_name) = caps.get(3).map(|m| m.as_str().trim_start_matches('.')) {
-                    find_method(symbol_name, method_name, env, in_type)
+                    find_method(symbol_name, method_name, env, in_type).unwrap_or_else(|| {
+                        info!("Method `#{}` not found", symbol_name);
+                        format!("`{}`", symbol_name)
+                    })
+                } else if let Some(type_) = find_type(symbol_name, env) {
+                    type_
+                } else if let Some(constant_or_variant) =
+                    find_constant_or_variant(symbol_name, env, in_type)
+                {
+                    warn!(
+                        "`{}` matches a constant/variant and should use `%` prefix instead of `#`",
+                        symbol_name
+                    );
+                    constant_or_variant
                 } else {
-                    find_type(symbol_name, env, in_type)
+                    info!("Type `#{}` not found", symbol_name);
+                    format!("`{}`", symbol_name)
+                }
+            }
+            "@" => {
+                // XXX: Theoretically this code should check if the resulting
+                // symbol truly belongs to `in_type`!
+                if let Some(type_) = find_type(symbol_name, env) {
+                    warn!(
+                        "`{}` matches a type and should use `#` prefix instead of `%`",
+                        symbol_name
+                    );
+                    type_
+                } else if let Some(constant_or_variant) =
+                    find_constant_or_variant(symbol_name, env, in_type)
+                {
+                    constant_or_variant
+                } else if let Some(function) =
+                    find_method_or_function_by_ctype(None, symbol_name, env, in_type)
+                {
+                    function
+                } else {
+                    // `@` is often used to refer to fields and function parameters.
+                    format!("`{}`", symbol_name)
                 }
             }
             s => panic!("Unknown symbol prefix `{}`", s),
-        }
-        .unwrap_or_else(|| {
-            info!("Symbol `{}{}` not found", &caps[1], symbol_name);
-
-            format!("`{}`", symbol_name)
-        }),
+        },
     });
     let out = GDK_GTK.replace_all(&out, |caps: &Captures<'_>| {
-        find_type(&caps[2], env, in_type).unwrap_or_else(|| format!("`{}`", &caps[2]))
+        find_type(&caps[2], env).unwrap_or_else(|| format!("`{}`", &caps[2]))
     });
     let out = TAGS.replace_all(&out, "`$0`");
     SPACES.replace_all(&out, " ").into_owned()
@@ -184,7 +230,6 @@ fn find_constant_or_variant(symbol: &str, env: &Env, in_type: Option<&TypeId>) -
     {
         Some(gen_const_doc_link(const_info))
     } else {
-        warn!("Constant/Flag variant/Enum member `{}` not found", symbol);
         None
     }
 }
@@ -199,7 +244,7 @@ const IGNORED_C_TYPES: [&str; 6] = [
     "GList",
 ];
 /// either an object/interface, record, enum or a flag
-fn find_type(type_: &str, env: &Env, in_type: Option<&TypeId>) -> Option<String> {
+fn find_type(type_: &str, env: &Env) -> Option<String> {
     if IGNORED_C_TYPES.contains(&type_) {
         return None;
     }
@@ -227,14 +272,7 @@ fn find_type(type_: &str, env: &Env, in_type: Option<&TypeId>) -> Option<String>
         .find(|f| f.type_(&env.library).c_type == type_)
     {
         Some(flag.type_id)
-    } else if let Some(constant_or_variant) = find_constant_or_variant(type_, env, in_type) {
-        warn!(
-            "`{}` matches a constant or enum-variant and should be prefixed with `%` instead of `#` (reserved for types)",
-            type_
-        );
-        return Some(constant_or_variant);
     } else {
-        warn!("Object/Interface/Record `{}` not found", type_);
         None
     };
 
@@ -258,21 +296,12 @@ fn find_method_or_function_by_ctype(
     )
 }
 
-// A list of function names that are ignored when warning about a "not found function"
-const IGNORE_C_WARNING_FUNCS: [&str; 6] = [
-    "g_object_unref",
-    "g_object_ref",
-    "g_free",
-    "g_list_free",
-    "g_strfreev",
-    "printf",
-];
 /// Find a function in all the possible items, if not found return the original name surrounded with backticks.
 /// A function can either be a struct/interface/record method, a global function or maybe a virtual function
 ///
 /// This function is generic so it can be de-duplicated between a
-/// - "find_method_or_function_by_ctype" where the object/records are looked by their C name
-/// - "find_method_or_function_by_name" where the object/records are looked by their name
+/// - [`find_method_or_function_by_ctype()`] where the object/records are looked by their C name
+/// - [`gi_docgen::find_method_or_function_by_name()`] where the object/records are looked by their name
 pub(crate) fn find_method_or_function<
     F: Fn(&crate::analysis::functions::Info) -> bool + Copy,
     G: Fn(&crate::analysis::object::Info) -> bool + Copy,
@@ -318,9 +347,6 @@ pub(crate) fn find_method_or_function<
     } else if let Some(fn_info) = env.analysis.find_global_function(env, search_fn) {
         Some(fn_info.doc_link(None, None, false))
     } else {
-        if !IGNORE_C_WARNING_FUNCS.contains(&name) {
-            warn!("Function `{}` not found", name);
-        }
         None
     }
 }
