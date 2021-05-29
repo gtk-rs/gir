@@ -330,10 +330,9 @@ fn create_object_doc(w: &mut dyn Write, env: &Env, info: &analysis::object::Info
 
     if has_trait {
         write_item_doc(w, &ty_ext, |w| {
-            writeln!(w, "Trait containing all `{}` methods.", ty.name)?;
+            writeln!(w, "Trait containing all [`struct@{}`] methods.", ty.name)?;
 
-            let mut implementors = Some(info.type_id)
-                .into_iter()
+            let mut implementors = std::iter::once(info.type_id)
                 .chain(env.class_hierarchy.subtypes(info.type_id))
                 .filter(|&tid| !env.type_status(&tid.full_name(&env.library)).ignored())
                 .map(|tid| format!("[`struct@crate::{}`]", env.library.type_(tid).get_name()))
