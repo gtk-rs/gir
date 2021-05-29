@@ -452,14 +452,21 @@ fn create_record_doc(w: &mut dyn Write, env: &Env, info: &analysis::record::Info
         ..ty
     };
     for function in &record.functions {
-        create_fn_doc(
-            w,
-            env,
-            function,
-            Some(Box::new(ty.clone())),
-            None,
-            HashSet::new(),
-        )?;
+        if let Some(c_identifier) = &function.c_identifier {
+            let fn_new_name = info
+                .functions
+                .iter()
+                .find(|f| &f.glib_name == c_identifier)
+                .and_then(|analysed_f| analysed_f.new_name.clone());
+            create_fn_doc(
+                w,
+                env,
+                function,
+                Some(Box::new(ty.clone())),
+                fn_new_name,
+                HashSet::new(),
+            )?;
+        }
     }
     Ok(())
 }
