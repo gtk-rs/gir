@@ -79,15 +79,61 @@ fn get_language<'a>(entry: &'a str, out: &mut String) -> &'a str {
     entry
 }
 
-fn format(input: &str, env: &Env, in_type: Option<(&TypeId, Option<LocationInObject>)>) -> String {
+// try to get the language if any is defined or fallback to text
+fn get_markdown_language(input: &str) -> (&str, &str) {
+    let (lang, after) = if let Some((lang, after)) = input.split_once("\n") {
+        let lang = if lang.is_empty() { None } else { Some(lang) };
+        (lang, after)
+    } else {
+        (None, input)
+    };
+    (lang.unwrap_or("text"), after)
+}
+
+// Re-format codeblocks & replaces the C types and GI-docgen with proper links
+fn format(
+    mut input: &str,
+    env: &Env,
+    in_type: Option<(&TypeId, Option<LocationInObject>)>,
+) -> String {
     let mut ret = String::with_capacity(input.len());
+    loop {
+        input = match try_split(input, "```") {
+            (before, Some(after)) => {
+                // if we are inside a codeblock
+                ret.push_str(&replace_symbols(before, env, in_type));
+
+                let (lang, after) = get_markdown_language(after);
+                ret.push_str(&format!("```{}\n", lang));
+
+                if let (before, Some(after)) = try_split(after, "```") {
+                    ret.push_str(before);
+                    ret.push_str("```");
+                    after
+                } else {
+                    after
+                }
+            }
+            (before, None) => {
+                ret.push_str(&replace_symbols(before, env, in_type));
+                return ret;
+            }
+        }
+    }
+}
+
+fn replace_symbols(
+    input: &str,
+    env: &Env,
+    in_type: Option<(&TypeId, Option<LocationInObject>)>,
+) -> String {
     // We run gi_docgen first because it's super picky about the types it replaces
     let out = gi_docgen::replace_c_types(input, env, in_type);
     let out = replace_c_types(&out, env, in_type);
     // this has to be done after gi_docgen replaced the various types it knows as it uses `@` in it's linking format
-    let out = PARAM_SYMBOL.replace_all(&out, |caps: &Captures<'_>| format!("`{}`", &caps[2]));
-    ret.push_str(&out);
-    ret
+    PARAM_SYMBOL
+        .replace_all(&out, |caps: &Captures<'_>| format!("`{}`", &caps[2]))
+        .to_string()
 }
 
 static SYMBOL: Lazy<Regex> = Lazy::new(|| Regex::new(r"([@#%])(\w+\b)([:.]+[\w-]+\b)?").unwrap());
