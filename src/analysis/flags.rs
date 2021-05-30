@@ -101,7 +101,9 @@ pub fn new(env: &Env, obj: &GObject, imports: &mut Imports) -> Option<Info> {
 
     let specials = special_functions::extract(&mut functions, type_, obj);
 
-    special_functions::analyze_imports(&specials, imports);
+    if obj.status.need_generate() {
+        special_functions::analyze_imports(&specials, imports);
+    }
 
     let info = Info {
         full_name: obj.name.clone(),
