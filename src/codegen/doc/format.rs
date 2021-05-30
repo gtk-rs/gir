@@ -1,3 +1,4 @@
+#![allow(clippy::manual_map)]
 use super::{gi_docgen, LocationInObject};
 use crate::{
     analysis::functions::Info,
