@@ -78,8 +78,7 @@ fn generate_enum(
     for member in &enum_.members {
         let member_config = config.members.matched(&member.name);
         let is_alias = member_config.iter().any(|m| m.alias);
-        let generate = member_config.iter().all(|m| m.status.need_generate());
-        if is_alias || !generate || vals.contains(&member.value) {
+        if is_alias || member.status.ignored() || vals.contains(&member.value) {
             continue;
         }
         vals.insert(member.value.clone());

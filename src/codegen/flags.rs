@@ -76,8 +76,7 @@ fn generate_flags(
     writeln!(w, "    pub struct {}: u32 {{", flags.name)?;
     for member in &flags.members {
         let member_config = config.members.matched(&member.name);
-        let generate = member_config.iter().all(|m| m.status.need_generate());
-        if !generate {
+        if member.status.ignored() {
             continue;
         }
 

@@ -104,6 +104,44 @@ impl Info {
         self.new_name.as_ref().unwrap_or(&self.name)
     }
 
+    pub fn is_special(&self) -> bool {
+        self.codegen_name()
+            .trim_end_matches('_')
+            .rsplit('_')
+            .next()
+            .map_or(false, |i| i.parse::<special_functions::Type>().is_ok())
+    }
+
+    // returns whether the method can be linked in the docs
+    pub fn should_be_doc_linked<F: Fn(&Self) -> bool>(&self, env: &Env, search: F) -> bool {
+        !self.status.ignored() && !self.is_special() && !self.is_async_finish(env) && search(self)
+    }
+
+    pub fn doc_link(
+        &self,
+        parent: Option<&str>,
+        visible_parent: Option<&str>,
+        is_self: bool,
+    ) -> String {
+        if let Some(p) = parent {
+            if is_self {
+                format!("[`{f}()`][Self::{f}()]", f = self.codegen_name())
+            } else {
+                format!(
+                    "[`{visible_parent}::{f}()`][crate::{p}::{f}()]",
+                    visible_parent = visible_parent.unwrap_or(p),
+                    p = p,
+                    f = self.codegen_name()
+                )
+            }
+        } else {
+            format!(
+                "[`{fn_name}()`][crate::{fn_name}()]",
+                fn_name = self.codegen_name()
+            )
+        }
+    }
+
     pub fn is_async_finish(&self, env: &Env) -> bool {
         let has_async_result = self
             .parameters

@@ -1,6 +1,6 @@
 use crate::{
-    analysis::conversion_type::ConversionType, env::Env, nameutil::split_namespace_name, traits::*,
-    version::Version,
+    analysis::conversion_type::ConversionType, config::gobjects::GStatus, env::Env,
+    nameutil::split_namespace_name, traits::*, version::Version,
 };
 use std::{
     cmp::{Ord, Ordering, PartialOrd},
@@ -376,6 +376,7 @@ pub struct Member {
     pub c_identifier: String,
     pub value: String,
     pub doc: Option<String>,
+    pub status: GStatus,
 }
 
 #[derive(Debug)]
