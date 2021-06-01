@@ -140,6 +140,7 @@ pub fn define_object_type(
 
     writeln!(w)?;
     writeln!(w, "{} {{", use_glib_type(env, "wrapper!"))?;
+    doc_alias(w, glib_name, "", 1)?;
     if parents.is_empty() {
         writeln!(
             w,
