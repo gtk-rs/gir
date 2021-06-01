@@ -356,6 +356,8 @@ fn find_method_or_function_by_ctype(
         |f| f.glib_name == name,
         |o| c_type.map_or(true, |t| o.c_type == t),
         |r| c_type.map_or(true, |t| r.type_(&env.library).c_type == t),
+        |r| c_type.map_or(true, |t| r.type_(&env.library).c_type == t),
+        |r| c_type.map_or(true, |t| r.type_(&env.library).c_type == t),
         c_type.map_or(false, |t| t.ends_with("Class")),
     )
 }
@@ -366,17 +368,15 @@ fn find_method_or_function_by_ctype(
 /// This function is generic so it can be de-duplicated between a
 /// - [`find_method_or_function_by_ctype()`] where the object/records are looked by their C name
 /// - [`gi_docgen::find_method_or_function_by_name()`] where the object/records are looked by their name
-pub(crate) fn find_method_or_function<
-    F: Fn(&crate::analysis::functions::Info) -> bool + Copy,
-    G: Fn(&crate::analysis::object::Info) -> bool + Copy,
-    H: Fn(&crate::analysis::record::Info) -> bool + Copy,
->(
+pub(crate) fn find_method_or_function(
     name: &str,
     env: &Env,
     in_type: Option<(&TypeId, Option<LocationInObject>)>,
-    search_fn: F,
-    search_obj: G,
-    search_record: H,
+    search_fn: impl Fn(&crate::analysis::functions::Info) -> bool + Copy,
+    search_obj: impl Fn(&crate::analysis::object::Info) -> bool + Copy,
+    search_record: impl Fn(&crate::analysis::record::Info) -> bool + Copy,
+    search_enum: impl Fn(&crate::analysis::enums::Info) -> bool + Copy,
+    search_flag: impl Fn(&crate::analysis::flags::Info) -> bool + Copy,
     is_class_method: bool,
 ) -> Option<String> {
     if is_class_method {
@@ -401,8 +401,28 @@ pub(crate) fn find_method_or_function<
         env.analysis
             .find_record_by_function(env, search_record, search_fn)
     {
-        Some(gen_record_fn_doc_link(
+        Some(gen_type_fn_doc_link(
             record_info.type_id,
+            fn_info,
+            env,
+            in_type,
+        ))
+    } else if let Some((enum_info, fn_info)) =
+        env.analysis
+            .find_enum_by_function(env, search_enum, search_fn)
+    {
+        Some(gen_type_fn_doc_link(
+            enum_info.type_id,
+            fn_info,
+            env,
+            in_type,
+        ))
+    } else if let Some((flag_info, fn_info)) =
+        env.analysis
+            .find_flag_by_function(env, search_flag, search_fn)
+    {
+        Some(gen_type_fn_doc_link(
+            flag_info.type_id,
             fn_info,
             env,
             in_type,
@@ -415,7 +435,7 @@ pub(crate) fn find_method_or_function<
     }
 }
 
-pub(crate) fn gen_record_fn_doc_link(
+pub(crate) fn gen_type_fn_doc_link(
     type_id: TypeId,
     fn_info: &Info,
     env: &Env,
