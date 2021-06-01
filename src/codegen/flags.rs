@@ -81,7 +81,6 @@ fn generate_flags(
         }
 
         let name = bitfield_member_name(&member.name);
-        let val: i64 = member.value.parse().unwrap();
         let deprecated_version = member_config.iter().find_map(|m| m.deprecated_version);
         let version = member_config.iter().find_map(|m| m.version);
         cfg_deprecated(w, env, deprecated_version, false, 2)?;
@@ -89,7 +88,11 @@ fn generate_flags(
         if member.c_identifier != member.name {
             doc_alias(w, &member.c_identifier, "", 2)?;
         }
-        writeln!(w, "\t\tconst {} = {};", name, val as u32)?;
+        writeln!(
+            w,
+            "\t\tconst {} = ffi::{} as u32;",
+            name, member.c_identifier
+        )?;
     }
 
     writeln!(
