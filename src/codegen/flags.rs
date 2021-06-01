@@ -90,8 +90,8 @@ fn generate_flags(
         }
         writeln!(
             w,
-            "\t\tconst {} = ffi::{} as u32;",
-            name, member.c_identifier
+            "\t\tconst {} = {}::{} as u32;",
+            name, sys_crate_name, member.c_identifier,
         )?;
     }
 
