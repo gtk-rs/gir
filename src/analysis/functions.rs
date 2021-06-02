@@ -45,7 +45,11 @@ pub enum Visibility {
 
 impl Visibility {
     pub fn hidden(self) -> bool {
-        self == Visibility::Hidden
+        self == Self::Hidden
+    }
+
+    pub fn code_visible(self) -> bool {
+        matches!(self, Self::Private | Self::Public)
     }
 }
 
@@ -114,7 +118,11 @@ impl Info {
 
     // returns whether the method can be linked in the docs
     pub fn should_be_doc_linked<F: Fn(&Self) -> bool>(&self, env: &Env, search: F) -> bool {
-        !self.status.ignored() && !self.is_special() && !self.is_async_finish(env) && search(self)
+        !self.status.ignored()
+            && (self.status.manual() || self.visibility.code_visible())
+            && !self.is_special()
+            && !self.is_async_finish(env)
+            && search(self)
     }
 
     pub fn doc_link(
