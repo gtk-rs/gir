@@ -210,6 +210,8 @@ fn find_method_or_function_by_name(
         |f| f.name == mangle_keywords(name),
         |o| type_.map_or(true, |t| o.name == t),
         |r| type_.map_or(true, |t| r.name == t),
+        |e| type_.map_or(true, |t| e.name == t),
+        |f| type_.map_or(true, |t| f.name == t),
         is_class_method,
     )
 }

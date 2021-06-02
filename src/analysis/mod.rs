@@ -57,17 +57,23 @@ pub struct Analysis {
     pub flags_imports: Imports,
 }
 
+fn find_function<'a>(
+    env: &Env,
+    mut functions: impl Iterator<Item = &'a functions::Info>,
+    search_fn: impl Fn(&functions::Info) -> bool + Copy,
+) -> Option<&'a functions::Info> {
+    functions.find(|fn_info| fn_info.should_be_doc_linked(env) && search_fn(fn_info))
+}
+
 impl Analysis {
     pub fn find_global_function<F: Fn(&functions::Info) -> bool + Copy>(
         &self,
         env: &Env,
         search: F,
     ) -> Option<&functions::Info> {
-        self.global_functions.as_ref().and_then(move |info| {
-            info.functions
-                .iter()
-                .find(move |fn_info| fn_info.should_be_doc_linked(env, search))
-        })
+        self.global_functions
+            .as_ref()
+            .and_then(move |info| find_function(env, info.functions.iter(), search))
     }
 
     pub fn find_record_by_function<
@@ -83,10 +89,7 @@ impl Analysis {
             .values()
             .filter(|r| search_record(r))
             .find_map(|record_info| {
-                record_info
-                    .functions
-                    .iter()
-                    .find(|fn_info| fn_info.should_be_doc_linked(env, search_fn))
+                find_function(env, record_info.functions.iter(), search_fn)
                     .map(|fn_info| (record_info, fn_info))
             })
     }
@@ -104,10 +107,43 @@ impl Analysis {
             .values()
             .filter(|o| search_obj(o))
             .find_map(|obj_info| {
-                obj_info
-                    .functions
-                    .iter()
-                    .find(|fn_info| fn_info.should_be_doc_linked(env, search_fn))
+                find_function(env, obj_info.functions.iter(), search_fn)
+                    .map(|fn_info| (obj_info, fn_info))
+            })
+    }
+
+    pub fn find_enum_by_function<
+        F: Fn(&functions::Info) -> bool + Copy,
+        G: Fn(&enums::Info) -> bool + Copy,
+    >(
+        &self,
+        env: &Env,
+        search_enum: G,
+        search_fn: F,
+    ) -> Option<(&enums::Info, &functions::Info)> {
+        self.enumerations
+            .iter()
+            .filter(|o| search_enum(o))
+            .find_map(|obj_info| {
+                find_function(env, obj_info.functions.iter(), search_fn)
+                    .map(|fn_info| (obj_info, fn_info))
+            })
+    }
+
+    pub fn find_flag_by_function<
+        F: Fn(&functions::Info) -> bool + Copy,
+        G: Fn(&flags::Info) -> bool + Copy,
+    >(
+        &self,
+        env: &Env,
+        search_flag: G,
+        search_fn: F,
+    ) -> Option<(&flags::Info, &functions::Info)> {
+        self.flags
+            .iter()
+            .filter(|o| search_flag(o))
+            .find_map(|obj_info| {
+                find_function(env, obj_info.functions.iter(), search_fn)
                     .map(|fn_info| (obj_info, fn_info))
             })
     }
