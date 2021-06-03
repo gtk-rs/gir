@@ -82,8 +82,14 @@ fn generate_enum(
             continue;
         }
         vals.insert(member.value.clone());
-        let deprecated_version = member_config.iter().find_map(|m| m.deprecated_version);
-        let version = member_config.iter().find_map(|m| m.version);
+        let deprecated_version = member_config
+            .iter()
+            .find_map(|m| m.deprecated_version)
+            .or(member.deprecated_version);
+        let version = member_config
+            .iter()
+            .find_map(|m| m.version)
+            .or(member.version);
         members.push(Member {
             name: enum_member_name(&member.name),
             c_name: member.c_identifier.clone(),

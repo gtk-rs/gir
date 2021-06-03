@@ -377,6 +377,8 @@ pub struct Member {
     pub value: String,
     pub doc: Option<String>,
     pub status: GStatus,
+    pub version: Option<Version>,
+    pub deprecated_version: Option<Version>,
 }
 
 #[derive(Debug)]

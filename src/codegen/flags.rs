@@ -81,8 +81,14 @@ fn generate_flags(
         }
 
         let name = bitfield_member_name(&member.name);
-        let deprecated_version = member_config.iter().find_map(|m| m.deprecated_version);
-        let version = member_config.iter().find_map(|m| m.version);
+        let deprecated_version = member_config
+            .iter()
+            .find_map(|m| m.deprecated_version)
+            .or(member.deprecated_version);
+        let version = member_config
+            .iter()
+            .find_map(|m| m.version)
+            .or(member.version);
         cfg_deprecated(w, env, deprecated_version, false, 2)?;
         version_condition(w, env, version, false, 2)?;
         if member.c_identifier != member.name {
