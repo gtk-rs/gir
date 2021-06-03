@@ -642,7 +642,9 @@ impl Library {
         let mut doc_deprecated = None;
 
         parser.elements(|parser, elem| match elem.name() {
-            "member" => self.read_member(parser, elem).map(|m| members.push(m)),
+            "member" => self
+                .read_member(parser, ns_id, elem)
+                .map(|m| members.push(m)),
             "constructor" | "function" | "method" => {
                 self.read_function_to_vec(parser, ns_id, elem, &mut fns)
             }
@@ -691,7 +693,9 @@ impl Library {
         let mut doc_deprecated = None;
 
         parser.elements(|parser, elem| match elem.name() {
-            "member" => self.read_member(parser, elem).map(|m| members.push(m)),
+            "member" => self
+                .read_member(parser, ns_id, elem)
+                .map(|m| members.push(m)),
             "constructor" | "function" | "method" => {
                 self.read_function_to_vec(parser, ns_id, elem, &mut fns)
             }
@@ -854,10 +858,17 @@ impl Library {
         }
     }
 
-    fn read_member(&self, parser: &mut XmlParser<'_>, elem: &Element) -> Result<Member, String> {
+    fn read_member(
+        &mut self,
+        parser: &mut XmlParser<'_>,
+        ns_id: u16,
+        elem: &Element,
+    ) -> Result<Member, String> {
         let member_name = elem.attr_required("name")?;
         let value = elem.attr_required("value")?;
         let c_identifier = elem.attr("identifier").map(|x| x.into());
+        let version = self.read_version(parser, ns_id, elem)?;
+        let deprecated_version = self.read_deprecated_version(parser, ns_id, elem)?;
 
         let mut doc = None;
 
@@ -873,6 +884,8 @@ impl Library {
             doc,
             c_identifier: c_identifier.unwrap_or_else(|| member_name.into()),
             status: crate::config::gobjects::GStatus::Generate,
+            version,
+            deprecated_version,
         })
     }
 
