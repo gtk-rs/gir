@@ -131,6 +131,7 @@ pub fn generate(
             None
         },
         analysis.version,
+        &None, // There is no need for #[cfg()] since it's applied on the whole file.
     )?;
 
     if !analysis.builder_properties.is_empty() {
