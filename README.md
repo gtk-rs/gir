@@ -351,6 +351,8 @@ version = "3.12"
     name = "2button_press"
     # allows to skip elements with bad names, other members with same value used instead
     alias = true
+    # Allow to add a cfg condition
+    cfg_condition = "target_os = \"linux\""
     [[object.member]]
     name = "touchpad_pinch"
     # define starting version when member added

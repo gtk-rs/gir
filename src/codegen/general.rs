@@ -539,7 +539,7 @@ pub fn version_condition_no_doc(
 ) -> Result<()> {
     match version {
         Some(v) if v > env.config.min_cfg_version => {
-            if let Some(s) = cfg_condition_string_no_doc(&Some(v.to_cfg()), commented, indent) {
+            if let Some(s) = cfg_condition_string_no_doc(&Some(&v.to_cfg()), commented, indent) {
                 writeln!(w, "{}", s)?
             }
         }
@@ -595,40 +595,48 @@ pub fn not_version_condition_no_dox(
     Ok(())
 }
 
-pub fn cfg_condition(
+pub fn cfg_condition<S: AsRef<str> + Display>(
     w: &mut dyn Write,
-    cfg_condition: &Option<String>,
+    cfg_condition: &Option<S>,
     commented: bool,
     indent: usize,
 ) -> Result<()> {
-    let s = cfg_condition_string(cfg_condition, commented, indent);
-    if let Some(s) = s {
+    if let Some(s) = cfg_condition_string(cfg_condition, commented, indent) {
+        writeln!(w, "{}", s)?;
+    }
+    Ok(())
+}
+
+pub fn cfg_condition_no_doc(
+    w: &mut dyn Write,
+    cfg_condition: &Option<&String>,
+    commented: bool,
+    indent: usize,
+) -> Result<()> {
+    if let Some(s) = cfg_condition_string_no_doc(cfg_condition, commented, indent) {
         writeln!(w, "{}", s)?;
     }
     Ok(())
 }
 
 pub fn cfg_condition_string_no_doc(
-    cfg_condition: &Option<String>,
+    cfg_condition: &Option<&String>,
     commented: bool,
     indent: usize,
 ) -> Option<String> {
-    match cfg_condition.as_ref() {
-        Some(v) => {
-            let comment = if commented { "//" } else { "" };
-            Some(format!(
-                "{0}{1}#[cfg(any({2}, feature = \"dox\"))]",
-                tabs(indent),
-                comment,
-                v
-            ))
-        }
-        None => None,
-    }
+    cfg_condition.and_then(|cfg| {
+        let comment = if commented { "//" } else { "" };
+        Some(format!(
+            "{0}{1}#[cfg(any({2}, feature = \"dox\"))]",
+            tabs(indent),
+            comment,
+            cfg,
+        ))
+    })
 }
 
-pub fn cfg_condition_string(
-    cfg_condition: &Option<String>,
+pub fn cfg_condition_string<S: AsRef<str> + Display>(
+    cfg_condition: &Option<S>,
     commented: bool,
     indent: usize,
 ) -> Option<String> {

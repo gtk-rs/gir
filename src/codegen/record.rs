@@ -113,6 +113,7 @@ pub fn generate(w: &mut dyn Write, env: &Env, analysis: &analysis::record::Info)
         &analysis.specials,
         None,
         analysis.version,
+        &None, // There is no need for #[cfg()] since it's applied on the whole file.
     )?;
 
     if analysis.concurrency != library::Concurrency::None {

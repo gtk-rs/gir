@@ -3,7 +3,7 @@ use crate::{
         functions::Info,
         special_functions::{Infos, Type},
     },
-    codegen::general::version_condition,
+    codegen::general::{cfg_condition_no_doc, version_condition},
     version::Version,
     Env,
 };
@@ -17,23 +17,60 @@ pub fn generate(
     specials: &Infos,
     trait_name: Option<&str>,
     scope_version: Option<Version>,
+    cfg_condition: &Option<&String>,
 ) -> Result<()> {
     for (type_, special_info) in specials.traits().iter() {
         if let Some(info) = lookup(functions, &special_info.glib_name) {
             match type_ {
                 Type::Compare => {
                     if !specials.has_trait(Type::Equal) {
-                        generate_eq_compare(w, env, type_name, info, trait_name, scope_version)?;
+                        generate_eq_compare(
+                            w,
+                            env,
+                            type_name,
+                            info,
+                            trait_name,
+                            scope_version,
+                            cfg_condition,
+                        )?;
                     }
-                    generate_ord(w, env, type_name, info, trait_name, scope_version)?;
+                    generate_ord(
+                        w,
+                        env,
+                        type_name,
+                        info,
+                        trait_name,
+                        scope_version,
+                        cfg_condition,
+                    )?;
                 }
-                Type::Equal => {
-                    generate_eq(w, env, type_name, info, trait_name, scope_version)?;
-                }
-                Type::Display => {
-                    generate_display(w, env, type_name, info, trait_name, scope_version)?
-                }
-                Type::Hash => generate_hash(w, env, type_name, info, trait_name, scope_version)?,
+                Type::Equal => generate_eq(
+                    w,
+                    env,
+                    type_name,
+                    info,
+                    trait_name,
+                    scope_version,
+                    cfg_condition,
+                )?,
+                Type::Display => generate_display(
+                    w,
+                    env,
+                    type_name,
+                    info,
+                    trait_name,
+                    scope_version,
+                    cfg_condition,
+                )?,
+                Type::Hash => generate_hash(
+                    w,
+                    env,
+                    type_name,
+                    info,
+                    trait_name,
+                    scope_version,
+                    cfg_condition,
+                )?,
                 _ => {}
             }
         }
@@ -85,10 +122,12 @@ fn generate_display(
     func: &Info,
     trait_name: Option<&str>,
     scope_version: Option<Version>,
+    cfg_condition: &Option<&String>,
 ) -> Result<()> {
     writeln!(w)?;
     let version = Version::if_stricter_than(func.version, scope_version);
     version_condition(w, env, version, false, 0)?;
+    cfg_condition_no_doc(w, cfg_condition, false, 0)?;
 
     use crate::analysis::out_parameters::Mode;
 
@@ -128,10 +167,12 @@ fn generate_hash(
     func: &Info,
     trait_name: Option<&str>,
     scope_version: Option<Version>,
+    cfg_condition: &Option<&String>,
 ) -> Result<()> {
     writeln!(w)?;
     let version = Version::if_stricter_than(func.version, scope_version);
     version_condition(w, env, version, false, 0)?;
+    cfg_condition_no_doc(w, cfg_condition, false, 0)?;
 
     let call = generate_call(&func.codegen_name(), &[], trait_name);
 
@@ -156,10 +197,12 @@ fn generate_eq(
     func: &Info,
     trait_name: Option<&str>,
     scope_version: Option<Version>,
+    cfg_condition: &Option<&String>,
 ) -> Result<()> {
     writeln!(w)?;
     let version = Version::if_stricter_than(func.version, scope_version);
     version_condition(w, env, version, false, 0)?;
+    cfg_condition_no_doc(w, cfg_condition, false, 0)?;
 
     let call = generate_call(&func.codegen_name(), &["other"], trait_name);
 
@@ -186,10 +229,12 @@ fn generate_eq_compare(
     func: &Info,
     trait_name: Option<&str>,
     scope_version: Option<Version>,
+    cfg_condition: &Option<&String>,
 ) -> Result<()> {
     writeln!(w)?;
     let version = Version::if_stricter_than(func.version, scope_version);
     version_condition(w, env, version, false, 0)?;
+    cfg_condition_no_doc(w, cfg_condition, false, 0)?;
 
     let call = generate_call(&func.codegen_name(), &["other"], trait_name);
 
@@ -216,10 +261,12 @@ fn generate_ord(
     func: &Info,
     trait_name: Option<&str>,
     scope_version: Option<Version>,
+    cfg_condition: &Option<&String>,
 ) -> Result<()> {
     writeln!(w)?;
     let version = Version::if_stricter_than(func.version, scope_version);
     version_condition(w, env, version, false, 0)?;
+    cfg_condition_no_doc(w, cfg_condition, false, 0)?;
 
     let call = generate_call(&func.codegen_name(), &["other"], trait_name);
 

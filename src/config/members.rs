@@ -11,6 +11,7 @@ pub struct Member {
     pub version: Option<Version>,
     pub deprecated_version: Option<Version>,
     pub status: GStatus,
+    pub cfg_condition: Option<String>,
 }
 
 impl Parse for Member {
@@ -27,7 +28,15 @@ impl Parse for Member {
         };
 
         toml.check_unwanted(
-            &["alias", "version", "name", "pattern", "ignore", "manual"],
+            &[
+                "alias",
+                "version",
+                "name",
+                "pattern",
+                "ignore",
+                "manual",
+                "cfg_condition",
+            ],
             &format!("member {}", object_name),
         );
 
@@ -43,6 +52,10 @@ impl Parse for Member {
             .lookup("deprecated_version")
             .and_then(Value::as_str)
             .and_then(|s| s.parse().ok());
+        let cfg_condition = toml
+            .lookup("cfg_condition")
+            .and_then(Value::as_str)
+            .map(ToOwned::to_owned);
 
         let status = {
             if toml
@@ -68,6 +81,7 @@ impl Parse for Member {
             version,
             deprecated_version,
             status,
+            cfg_condition,
         })
     }
 }
