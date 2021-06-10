@@ -391,22 +391,17 @@ pub fn body_chunk_futures(
     if async_future.is_method {
         writeln!(
             body,
-            "Box_::pin({}::new(self, move |obj, send| {{",
+            "Box_::pin({}::new(self, move |obj, cancellable, send| {{",
             gio_future_name
         )?;
     } else {
         writeln!(
             body,
-            "Box_::pin({}::new(&(), move |_obj, send| {{",
+            "Box_::pin({}::new(&(), move |_obj, cancellable, send| {{",
             gio_future_name
         )?;
     }
 
-    if env.config.library_name != "Gio" {
-        writeln!(body, "\tlet cancellable = gio::Cancellable::new();")?;
-    } else {
-        writeln!(body, "\tlet cancellable = Cancellable::new();")?;
-    }
     if async_future.is_method {
         writeln!(body, "\tobj.{}(", analysis.codegen_name())?;
     } else if analysis.type_name.is_ok() {
@@ -418,7 +413,7 @@ pub fn body_chunk_futures(
     // Skip the instance parameter
     for par in analysis.parameters.rust_parameters.iter().skip(skip) {
         if par.name == "cancellable" {
-            writeln!(body, "\t\tSome(&cancellable),")?;
+            writeln!(body, "\t\tSome(cancellable),")?;
         } else if par.name == "callback" {
             continue;
         } else {
@@ -442,8 +437,6 @@ pub fn body_chunk_futures(
     writeln!(body, "\t\t\tsend.resolve(res);")?;
     writeln!(body, "\t\t}},")?;
     writeln!(body, "\t);")?;
-    writeln!(body)?;
-    writeln!(body, "\tcancellable")?;
     writeln!(body, "}}))")?;
 
     Ok(body)
