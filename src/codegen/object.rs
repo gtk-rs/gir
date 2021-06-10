@@ -210,6 +210,7 @@ fn generate_builder(w: &mut dyn Write, env: &Env, analysis: &analysis::object::I
         analysis.name,
     )?;
     writeln!(w, "pub struct {}Builder {{", analysis.name)?;
+
     for property in &analysis.builder_properties {
         match RustType::try_new(env, property.typ) {
             Ok(type_string) => {
@@ -223,6 +224,7 @@ fn generate_builder(w: &mut dyn Write, env: &Env, analysis: &analysis::object::I
                 } else {
                     library::ParameterDirection::Out
                 };
+
                 let mut param_type = RustType::builder(env, property.typ)
                     .direction(direction)
                     .ref_mode(property.set_in_ref_mode)
@@ -241,6 +243,7 @@ fn generate_builder(w: &mut dyn Write, env: &Env, analysis: &analysis::object::I
                                     bound.full_type_parameter_reference(
                                         RefMode::ByRef,
                                         Nullable(false),
+                                        false,
                                     )
                                 });
                         (alias, bounds, ".clone().upcast()")

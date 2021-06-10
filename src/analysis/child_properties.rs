@@ -91,7 +91,7 @@ fn analyze_property(
         .and_then(|cp| cp.rename_getter.clone());
     let is_getter_renamed = getter_rename.is_some();
     let mut getter_name = getter_rename.unwrap_or_else(|| prop_name.clone());
-
+    eprintln!("AAA: {:?}", prop.type_name);
     if let Some(typ) = env.library.find_type(0, &prop.type_name) {
         let doc_hidden = prop.doc_hidden;
 
@@ -118,7 +118,8 @@ fn analyze_property(
 
         let mut bounds_str = String::new();
         let dir = ParameterDirection::In;
-        let set_params = if let Some(bound) = Bounds::type_for(env, typ, nullable) {
+
+        let set_params = if let Some(bound) = Bounds::type_for(env, typ, nullable, None) {
             let r_type = RustType::builder(env, typ)
                 .ref_mode(RefMode::ByRefFake)
                 .try_build()

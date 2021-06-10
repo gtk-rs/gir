@@ -11,7 +11,7 @@ use crate::{
     consts::TYPE_PARAMETERS_START,
     env::Env,
     library::{
-        Class, Concurrency, Function, Fundamental, Nullable, ParameterDirection, Type, TypeId,
+        self, Class, Concurrency, Function, Fundamental, Nullable, ParameterDirection, Type, TypeId,
     },
     traits::IntoString,
 };
@@ -24,6 +24,7 @@ pub enum BoundType {
     IsA(Option<char>),
     // lifetime <- shouldn't be used but just in case...
     AsRef(Option<char>),
+    ToGlibPtr(bool, Option<char>),
 }
 
 impl BoundType {
@@ -92,7 +93,9 @@ impl Bounds {
         let mut need_is_into_check = false;
 
         if !par.instance_parameter && par.direction != ParameterDirection::Out {
-            if let Some(bound_type) = Bounds::type_for(env, par.typ, par.nullable) {
+            if let Some(bound_type) =
+                Bounds::type_for(env, par.typ, par.nullable, Some(par.c_type.clone()))
+            {
                 ret = Some(Bounds::get_to_glib_extra(&bound_type));
                 if r#async && (par.name == "callback" || par.name.ends_with("_callback")) {
                     let func_name = func.c_identifier.as_ref().unwrap();
@@ -150,13 +153,27 @@ impl Bounds {
                             bound_name,
                         });
                     }
-                }
+                } /* else if par.c_type == "const char*" && par.ref_mode.is_ref() {
+                      self.lifetimes.push('s');
+                      type_string = "ToGlibPtr<'a, *const libc::c_char>".into();
+
+                      let bound_name = *self.unused.front().unwrap();
+                      callback_info = Some(CallbackInfo {
+                          callback_type: type_string.clone(),
+                          success_parameters: String::new(),
+                          error_parameters: String::new(),
+                          bound_name,
+                      });
+                      self.add_parameter(&par.name, &type_string)
+                  } */
                 if (!need_is_into_check || !*par.nullable) && par.c_type != "GDestroyNotify" {
                     self.add_parameter(&par.name, &type_string, bound_type, r#async)
                 }
             }
         } else if par.instance_parameter {
-            if let Some(bound_type) = Bounds::type_for(env, par.typ, par.nullable) {
+            if let Some(bound_type) =
+                Bounds::type_for(env, par.typ, par.nullable, Some(par.c_type.clone()))
+            {
                 ret = Some(Bounds::get_to_glib_extra(&bound_type));
             }
         }
@@ -164,12 +181,32 @@ impl Bounds {
         (ret, callback_info)
     }
 
-    pub fn type_for(env: &Env, type_id: TypeId, nullable: Nullable) -> Option<BoundType> {
+    pub fn type_for(
+        env: &Env,
+        type_id: TypeId,
+        nullable: Nullable,
+        c_type: Option<String>,
+    ) -> Option<BoundType> {
         use self::BoundType::*;
         match env.library.type_(type_id) {
             Type::Fundamental(Fundamental::Filename) => Some(AsRef(None)),
             Type::Fundamental(Fundamental::OsString) => Some(AsRef(None)),
             Type::Fundamental(Fundamental::Utf8) if *nullable => None,
+            Type::Fundamental(Fundamental::Utf8) if !*nullable => {
+                eprintln!(
+                    "{:?}",
+                    RefMode::of(env, type_id, library::ParameterDirection::In)
+                );
+                if let Some(c_type) = c_type {
+                    if c_type == "const char*" {
+                        Some(ToGlibPtr(false, Some('s')))
+                    } else {
+                        Some(ToGlibPtr(true, Some('s')))
+                    }
+                } else {
+                    Some(ToGlibPtr(true, Some('s')))
+                }
+            }
             Type::Class(Class {
                 final_type: true, ..
             }) => None,
@@ -207,6 +244,13 @@ impl Bounds {
             return;
         }
         let alias = self.unused.pop_front().expect("No free type aliases!");
+
+        if let BoundType::ToGlibPtr(_, Some(lifetime)) = bound_type {
+            if !self.lifetimes.contains(&lifetime) {
+                self.lifetimes.push(lifetime)
+            }
+        }
+
         self.used.push(Bound {
             bound_type,
             parameter_name: name.to_owned(),
@@ -228,6 +272,7 @@ impl Bounds {
                 NoWrapper => (),
                 IsA(_) => imports.add("glib::object::IsA"),
                 AsRef(_) => imports.add_used_type(&used.type_str),
+                ToGlibPtr(_, _) => imports.add("libc::c_char"),
             }
         }
     }

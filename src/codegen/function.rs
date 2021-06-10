@@ -14,7 +14,7 @@ use crate::{
     },
     chunk::{ffi_function_todo, Chunk},
     env::Env,
-    library,
+    library::{self, Fundamental, ParameterScope, Type},
     version::Version,
     writer::{primitives::tabs, safety_assertion_mode_to_str, ToCode},
 };
@@ -174,13 +174,16 @@ pub fn declaration(env: &Env, analysis: &analysis::functions::Info) -> String {
     let mut param_str = String::with_capacity(100);
 
     let (bounds, _) = bounds(&analysis.bounds, &[], false, false);
+    let r#async = analysis.parameters.c_parameters.iter().any(|parameter| {
+        parameter.scope == ParameterScope::Async && parameter.c_type == "GAsyncReadyCallback"
+    });
 
     for par in analysis.parameters.rust_parameters.iter() {
         if !param_str.is_empty() {
             param_str.push_str(", ")
         }
         let c_par = &analysis.parameters.c_parameters[par.ind_c];
-        let s = c_par.to_parameter(env, &analysis.bounds);
+        let s = c_par.to_parameter(env, &analysis.bounds, r#async);
         param_str.push_str(&s);
     }
 
@@ -205,6 +208,11 @@ pub fn declaration_futures(env: &Env, analysis: &analysis::functions::Info) -> S
 
     let mut skipped = 0;
     let mut skipped_bounds = vec![];
+
+    let r#async = analysis.parameters.c_parameters.iter().any(|parameter| {
+        parameter.scope == ParameterScope::Async && parameter.c_type == "GAsyncReadyCallback"
+    });
+
     for (pos, par) in analysis.parameters.rust_parameters.iter().enumerate() {
         let c_par = &analysis.parameters.c_parameters[par.ind_c];
 
@@ -220,7 +228,7 @@ pub fn declaration_futures(env: &Env, analysis: &analysis::functions::Info) -> S
             param_str.push_str(", ")
         }
 
-        let s = c_par.to_parameter(env, &analysis.bounds);
+        let s = c_par.to_parameter(env, &analysis.bounds, r#async);
         param_str.push_str(&s);
     }
 
@@ -382,7 +390,7 @@ pub fn body_chunk_futures(
                 par.name, par.name
             )?;
         } else if is_str {
-            writeln!(body, "let {} = String::from({});", par.name, par.name)?;
+            // writeln!(body, "let {} = String::from({});", par.name, par.name)?;
         } else if c_par.ref_mode != RefMode::None {
             writeln!(body, "let {} = {}.clone();", par.name, par.name)?;
         }
@@ -430,7 +438,9 @@ pub fn body_chunk_futures(
                     "\t\t{}.as_ref().map(::std::borrow::Borrow::borrow),",
                     par.name
                 )?;
-            } else if c_par.ref_mode != RefMode::None {
+            } else if c_par.ref_mode != RefMode::None
+                && env.library.type_(c_par.typ) != &Type::Fundamental(Fundamental::Utf8)
+            {
                 writeln!(body, "\t\t&{},", par.name)?;
             } else {
                 writeln!(body, "\t\t{},", par.name)?;

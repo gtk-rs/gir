@@ -262,7 +262,7 @@ fn generate_object_funcs(
             version_condition(w, env, version, commented, 1)?;
         }
         generate_cfg_configure(w, &configured_functions, commented)?;
-        writeln!(w, "    {}pub fn {}{};", comment, name, sig)?;
+        writeln!(w, "    /*BO*/{}pub fn {}{};", comment, name, sig)?;
     }
 
     Ok(())

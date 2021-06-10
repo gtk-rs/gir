@@ -19,6 +19,7 @@ impl Bound {
         &self,
         ref_mode: RefMode,
         nullable: Nullable,
+        r#async: bool,
     ) -> String {
         let t = self.type_parameter_reference();
         let ref_str = ref_mode.for_rust_type();
@@ -27,7 +28,21 @@ impl Bound {
                 format!("Option<{}{}>", ref_str, t)
             }
             BoundType::IsA(_) => format!("{}{}", ref_str, t),
-            BoundType::NoWrapper | BoundType::AsRef(_) => t.to_string(),
+            BoundType::ToGlibPtr(_, Some(lifetime)) => {
+                let mut lifetime_post = r#async
+                    .then(|| "'static".to_string())
+                    .or_else(|| Some(format!(" '{}", lifetime)))
+                    .unwrap_or_default();
+                if ref_str.is_empty() {
+                    lifetime_post = "".to_string();
+                }
+                format!("{}{} {}", ref_str, lifetime_post, t)
+
+                // format!("{}", /* ref_str, lifetime_post, */ t)
+            }
+            BoundType::NoWrapper | BoundType::ToGlibPtr(_, _) | BoundType::AsRef(_) => {
+                t.to_string()
+            }
         }
     }
 
@@ -56,6 +71,21 @@ impl Bound {
             }
             BoundType::AsRef(Some(_ /*lifetime*/)) => panic!("AsRef cannot have a lifetime"),
             BoundType::AsRef(None) => format!("AsRef<{}>", self.type_str),
+            BoundType::ToGlibPtr(mutable, Some(lifetime)) => {
+                eprintln!("tStr: {}", self.type_str);
+                let modif = if mutable { "mut" } else { "const" };
+                let post = r#async
+                    .then(|| " + Clone + 'static".to_string())
+                    .or_else(|| Some(format!(" + '{}", lifetime)))
+                    .unwrap_or_default();
+                let lifetime = r#async
+                    .then(|| "'static".to_string())
+                    .or_else(|| Some(format!("'{}", lifetime)))
+                    .unwrap_or_default();
+
+                format!("ToGlibPtr<{}, *{} libc::c_char>{}", lifetime, modif, post)
+            }
+            BoundType::ToGlibPtr(_, None) => panic!("ToGlibPtr must have a lifetime"),
         }
     }
 }

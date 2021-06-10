@@ -9,7 +9,7 @@ use crate::{
     },
     consts::TYPE_PARAMETERS_START,
     env::Env,
-    library,
+    library::{self},
     nameutil::{use_glib_if_needed, use_gtk_type},
     traits::IntoString,
     writer::primitives::tabs,
@@ -108,14 +108,14 @@ fn func_parameters(
             }
         }
 
-        let s = func_parameter(env, par, &analysis.bounds);
+        let s = func_parameter(env, par, &analysis.bounds, true);
         param_str.push_str(&s);
     }
 
     param_str
 }
 
-fn func_parameter(env: &Env, par: &RustParameter, bounds: &Bounds) -> String {
+fn func_parameter(env: &Env, par: &RustParameter, bounds: &Bounds, r#async: bool) -> String {
     //TODO: restore mutable support
     let ref_mode = if par.ref_mode == RefMode::ByRefMut {
         RefMode::ByRef
@@ -124,7 +124,7 @@ fn func_parameter(env: &Env, par: &RustParameter, bounds: &Bounds) -> String {
     };
 
     match bounds.get_parameter_bound(&par.name) {
-        Some(bound) => bound.full_type_parameter_reference(ref_mode, par.nullable),
+        Some(bound) => bound.full_type_parameter_reference(ref_mode, par.nullable, r#async),
         None => RustType::builder(env, par.typ)
             .direction(par.direction)
             .nullable(par.nullable)

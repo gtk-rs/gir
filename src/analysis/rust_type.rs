@@ -650,7 +650,7 @@ impl<'env> RustTypeBuilder<'env> {
             },
             CArray(..) | PtrArray(..) => match self.direction {
                 ParameterDirection::In | ParameterDirection::Out | ParameterDirection::Return => {
-                    rust_type
+                    rust_type.map_any(|rust_type| rust_type.format_parameter(self.direction))
                 }
                 _ => Err(TypeError::Unimplemented(into_inner(rust_type))),
             },

@@ -174,6 +174,7 @@ pub fn analyze<F: Borrow<library::Function>>(
 
     'func: for func in functions {
         let func = func.borrow();
+
         let configured_functions = obj.functions.matched(&func.name);
         let mut status = obj.status;
         for f in configured_functions.iter() {
@@ -542,6 +543,12 @@ fn analyze_function(
     configured_functions: &[&config::functions::Function],
     imports: &mut Imports,
 ) -> Info {
+    let debug = name == "set_text";
+    eprintln!("{}", func.name);
+    if debug {
+        eprintln!("{:?}", func);
+    }
+
     let r#async = func.parameters.iter().any(|parameter| {
         parameter.scope == ParameterScope::Async && parameter.c_type == "GAsyncReadyCallback"
     });
@@ -703,6 +710,10 @@ fn analyze_function(
                         used_types.extend(rust_type.into_used_types());
                     }
                 }
+                if debug {
+                    eprintln!("{:?}", par)
+                }
+
                 let (to_glib_extra, callback_info) = bounds.add_for_parameter(
                     env,
                     func,
