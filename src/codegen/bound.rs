@@ -83,7 +83,10 @@ impl Bound {
                     .or_else(|| Some(format!("'{}", lifetime)))
                     .unwrap_or_default();
 
-                format!("ToGlibPtr<{}, *{} libc::c_char>{}", lifetime, modif, post)
+                format!(
+                    "ToGlibPtr<{}, *{} libc::c_char> + ?Sized{}",
+                    lifetime, modif, post
+                )
             }
             BoundType::ToGlibPtr(_, None) => panic!("ToGlibPtr must have a lifetime"),
         }
