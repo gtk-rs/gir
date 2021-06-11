@@ -8,18 +8,16 @@ use crate::{
 };
 
 pub trait ToParameter {
-    fn to_parameter(&self, env: &Env, bounds: &Bounds, r#async: bool) -> String;
+    fn to_parameter(&self, env: &Env, bounds: &Bounds) -> String;
 }
 
 impl ToParameter for CParameter {
-    fn to_parameter(&self, env: &Env, bounds: &Bounds, r#async: bool) -> String {
+    fn to_parameter(&self, env: &Env, bounds: &Bounds) -> String {
         if self.instance_parameter {
             format!("{}self", self.ref_mode.for_rust_type())
         } else {
             let type_str = match bounds.get_parameter_bound(&self.name) {
-                Some(bound) => {
-                    bound.full_type_parameter_reference(self.ref_mode, self.nullable, r#async)
-                }
+                Some(bound) => bound.full_type_parameter_reference(self.ref_mode, self.nullable),
                 None => {
                     let type_name = RustType::builder(env, self.typ)
                         .direction(self.direction)

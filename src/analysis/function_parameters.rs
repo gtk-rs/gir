@@ -110,7 +110,6 @@ pub enum TransformationType {
         name: String,
         typ: String,
         nullable: bool,
-        ref_mode: RefMode,
     },
     ToSome(String),
 }
@@ -232,9 +231,6 @@ pub fn analyze(
             add_rust_parameter = false;
         }
 
-        let immutable = configured_parameters.iter().any(|p| p.constant);
-        let ref_mode =
-            RefMode::without_unneeded_mut(env, par, immutable, in_trait && par.instance_parameter);
         let nullable_override = configured_parameters.iter().find_map(|p| p.nullable);
         let nullable = nullable_override.unwrap_or(par.nullable);
 
@@ -246,7 +242,6 @@ pub fn analyze(
                     name: name.clone(),
                     typ: rust_type_res.into_string(),
                     nullable: *nullable,
-                    ref_mode,
                 },
             };
             parameters.transformations.push(transformation);
@@ -285,6 +280,10 @@ pub fn analyze(
             caller_allocates = false;
             transfer = library::Transfer::None;
         }
+
+        let immutable = configured_parameters.iter().any(|p| p.constant);
+        let ref_mode =
+            RefMode::without_unneeded_mut(env, par, immutable, in_trait && par.instance_parameter);
 
         let try_from_glib = TryFromGlib::from_parameter(env, typ, &configured_parameters);
 

@@ -11,7 +11,7 @@ use crate::{
     consts::TYPE_PARAMETERS_START,
     env::Env,
     library::{
-        self, Class, Concurrency, Function, Fundamental, Nullable, ParameterDirection, Type, TypeId,
+        Class, Concurrency, Function, Fundamental, Nullable, ParameterDirection, Type, TypeId,
     },
     traits::IntoString,
 };
@@ -94,9 +94,7 @@ impl Bounds {
         let mut need_is_into_check = false;
 
         if !par.instance_parameter && par.direction != ParameterDirection::Out {
-            if let Some(bound_type) =
-                Bounds::type_for(env, par.typ, par.nullable, Some(par.c_type.clone()))
-            {
+            if let Some(bound_type) = Bounds::type_for(env, par.typ, par.nullable) {
                 ret = Some(Bounds::get_to_glib_extra(&bound_type));
                 if r#async && (par.name == "callback" || par.name.ends_with("_callback")) {
                     let func_name = func.c_identifier.as_ref().unwrap();
@@ -172,9 +170,7 @@ impl Bounds {
                 }
             }
         } else if par.instance_parameter {
-            if let Some(bound_type) =
-                Bounds::type_for(env, par.typ, par.nullable, Some(par.c_type.clone()))
-            {
+            if let Some(bound_type) = Bounds::type_for(env, par.typ, par.nullable) {
                 ret = Some(Bounds::get_to_glib_extra(&bound_type));
             }
         }
@@ -182,12 +178,7 @@ impl Bounds {
         (ret, callback_info)
     }
 
-    pub fn type_for(
-        env: &Env,
-        type_id: TypeId,
-        nullable: Nullable,
-        c_type: Option<String>,
-    ) -> Option<BoundType> {
+    pub fn type_for(env: &Env, type_id: TypeId, nullable: Nullable) -> Option<BoundType> {
         use self::BoundType::*;
         match env.library.type_(type_id) {
             Type::Fundamental(Fundamental::Filename) => Some(AsRef(None)),

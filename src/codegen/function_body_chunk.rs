@@ -942,12 +942,9 @@ impl Builder {
                 ref name,
                 ref typ,
                 ref nullable,
-                ref ref_mode,
             } = &trans.transformation_type
             {
                 if let In = self.parameters[trans.ind_c] {
-                    let ref_str = ref_mode.for_rust_type();
-
                     let (value, typ) = if *nullable {
                         (
                             Chunk::Custom(format!("{}.map(|p| p.into())", name)),

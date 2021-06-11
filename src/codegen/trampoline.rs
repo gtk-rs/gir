@@ -110,14 +110,14 @@ fn func_parameters(
             }
         }
 
-        let s = func_parameter(env, par, &analysis.bounds, true);
+        let s = func_parameter(env, par, &analysis.bounds);
         param_str.push_str(&s);
     }
 
     param_str
 }
 
-fn func_parameter(env: &Env, par: &RustParameter, bounds: &Bounds, r#async: bool) -> String {
+fn func_parameter(env: &Env, par: &RustParameter, bounds: &Bounds) -> String {
     //TODO: restore mutable support
     let ref_mode = if par.ref_mode == RefMode::ByRefMut {
         RefMode::ByRef
@@ -126,7 +126,7 @@ fn func_parameter(env: &Env, par: &RustParameter, bounds: &Bounds, r#async: bool
     };
 
     match bounds.get_parameter_bound(&par.name) {
-        Some(bound) => bound.full_type_parameter_reference(ref_mode, par.nullable, r#async),
+        Some(bound) => bound.full_type_parameter_reference(ref_mode, par.nullable),
         None => RustType::builder(env, par.typ)
             .direction(par.direction)
             .nullable(par.nullable)

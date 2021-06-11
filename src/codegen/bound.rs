@@ -19,7 +19,6 @@ impl Bound {
         &self,
         ref_mode: RefMode,
         nullable: Nullable,
-        r#async: bool,
     ) -> String {
         let t = self.type_parameter_reference();
         let ref_str = ref_mode.for_rust_type();
