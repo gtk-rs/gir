@@ -79,7 +79,9 @@ pub fn func_string(
 
         format!(
             "Fn({}){}{} + 'static",
-            param_str, return_str, concurrency_str
+            param_str.replace("glib::GString", "&str"),
+            return_str,
+            concurrency_str
         )
     } else {
         format!("({}){}", param_str, return_str,)

@@ -10,7 +10,8 @@ use super::{
 };
 use crate::{
     analysis::{
-        self, bounds::Bounds, functions::Visibility, namespaces, try_from_glib::TryFromGlib,
+        self, bounds::Bounds, functions::Visibility, namespaces, rust_type::RustType,
+        try_from_glib::TryFromGlib,
     },
     chunk::{ffi_function_todo, Chunk},
     env::Env,
@@ -20,6 +21,7 @@ use crate::{
 };
 use log::warn;
 use std::{
+    convert::TryFrom,
     fmt,
     io::{Result, Write},
     result::Result as StdResult,
@@ -384,11 +386,21 @@ pub fn body_chunk_futures(
         );
 
         if *c_par.nullable {
-            writeln!(
-                body,
-                "let {} = {}.map(ToOwned::to_owned);",
-                par.name, par.name
-            )?;
+            if is_str {
+                writeln!(
+                    body,
+                    "let {}: Option<{}> = {}.map(|p| p.into());",
+                    par.name,
+                    RustType::try_new(env, par.typ).unwrap().as_str(),
+                    par.name,
+                )?;
+            } else {
+                writeln!(
+                    body,
+                    "let {} = {}.map(ToOwned::to_owned);",
+                    par.name, par.name
+                )?;
+            }
         } else if is_str {
             // writeln!(body, "let {} = String::from({});", par.name, par.name)?;
         } else if c_par.ref_mode != RefMode::None {
@@ -432,12 +444,22 @@ pub fn body_chunk_futures(
         } else {
             let c_par = &analysis.parameters.c_parameters[par.ind_c];
 
+            let type_ = env.type_(par.typ);
+            let is_str = matches!(
+                *type_,
+                library::Type::Fundamental(library::Fundamental::Utf8)
+            );
+
             if *c_par.nullable {
-                writeln!(
-                    body,
-                    "\t\t{}.as_ref().map(::std::borrow::Borrow::borrow),",
-                    par.name
-                )?;
+                if is_str {
+                    writeln!(body, "\t\t{},", par.name)?;
+                } else {
+                    writeln!(
+                        body,
+                        "\t\t{}.as_ref().map(::std::borrow::Borrow::borrow),",
+                        par.name
+                    )?;
+                }
             } else if c_par.ref_mode != RefMode::None
                 && env.library.type_(c_par.typ) != &Type::Fundamental(Fundamental::Utf8)
             {

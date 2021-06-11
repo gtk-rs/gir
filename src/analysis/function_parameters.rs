@@ -106,6 +106,12 @@ pub enum TransformationType {
         array_length_type: String,
     },
     IntoRaw(String),
+    Into {
+        name: String,
+        typ: String,
+        nullable: bool,
+        ref_mode: RefMode,
+    },
     ToSome(String),
 }
 
@@ -208,6 +214,7 @@ pub fn analyze(
 
         let c_type = par.c_type.clone();
         let typ = override_string_type_parameter(env, par.typ, &configured_parameters);
+        let rust_type_res = RustType::try_new(env, typ);
 
         let ind_c = parameters.c_parameters.len();
         let mut ind_rust = Some(parameters.rust_parameters.len());
@@ -223,6 +230,26 @@ pub fn analyze(
 
         if async_func && async_param_to_remove(&par.name) {
             add_rust_parameter = false;
+        }
+
+        let immutable = configured_parameters.iter().any(|p| p.constant);
+        let ref_mode =
+            RefMode::without_unneeded_mut(env, par, immutable, in_trait && par.instance_parameter);
+        let nullable_override = configured_parameters.iter().find_map(|p| p.nullable);
+        let nullable = nullable_override.unwrap_or(par.nullable);
+
+        if par.typ == TypeId::tid_utf8() {
+            let transformation = Transformation {
+                ind_c,
+                ind_rust,
+                transformation_type: TransformationType::Into {
+                    name: name.clone(),
+                    typ: rust_type_res.into_string(),
+                    nullable: *nullable,
+                    ref_mode,
+                },
+            };
+            parameters.transformations.push(transformation);
         }
 
         let mut array_name = configured_parameters
@@ -258,13 +285,6 @@ pub fn analyze(
             caller_allocates = false;
             transfer = library::Transfer::None;
         }
-
-        let immutable = configured_parameters.iter().any(|p| p.constant);
-        let ref_mode =
-            RefMode::without_unneeded_mut(env, par, immutable, in_trait && par.instance_parameter);
-
-        let nullable_override = configured_parameters.iter().find_map(|p| p.nullable);
-        let nullable = nullable_override.unwrap_or(par.nullable);
 
         let try_from_glib = TryFromGlib::from_parameter(env, typ, &configured_parameters);
 

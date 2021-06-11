@@ -24,7 +24,8 @@ pub enum BoundType {
     IsA(Option<char>),
     // lifetime <- shouldn't be used but just in case...
     AsRef(Option<char>),
-    ToGlibPtr(bool, Option<char>),
+    // lifetime <- shouldn't be used but just in case...
+    Into(Option<char>),
 }
 
 impl BoundType {
@@ -191,22 +192,7 @@ impl Bounds {
         match env.library.type_(type_id) {
             Type::Fundamental(Fundamental::Filename) => Some(AsRef(None)),
             Type::Fundamental(Fundamental::OsString) => Some(AsRef(None)),
-            Type::Fundamental(Fundamental::Utf8) if *nullable => None,
-            Type::Fundamental(Fundamental::Utf8) if !*nullable => {
-                eprintln!(
-                    "{:?}",
-                    RefMode::of(env, type_id, library::ParameterDirection::In)
-                );
-                if let Some(c_type) = c_type {
-                    if c_type == "const char*" {
-                        Some(ToGlibPtr(false, Some('s')))
-                    } else {
-                        Some(ToGlibPtr(true, Some('s')))
-                    }
-                } else {
-                    Some(ToGlibPtr(true, Some('s')))
-                }
-            }
+            Type::Fundamental(Fundamental::Utf8) => Some(Into(None)),
             Type::Class(Class {
                 final_type: true, ..
             }) => None,
@@ -245,12 +231,6 @@ impl Bounds {
         }
         let alias = self.unused.pop_front().expect("No free type aliases!");
 
-        if let BoundType::ToGlibPtr(_, Some(lifetime)) = bound_type {
-            if !self.lifetimes.contains(&lifetime) {
-                self.lifetimes.push(lifetime)
-            }
-        }
-
         self.used.push(Bound {
             bound_type,
             parameter_name: name.to_owned(),
@@ -269,10 +249,9 @@ impl Bounds {
         use self::BoundType::*;
         for used in &self.used {
             match used.bound_type {
-                NoWrapper => (),
+                NoWrapper | Into(_) => (),
                 IsA(_) => imports.add("glib::object::IsA"),
                 AsRef(_) => imports.add_used_type(&used.type_str),
-                ToGlibPtr(_, _) => imports.add("libc::c_char"),
             }
         }
     }

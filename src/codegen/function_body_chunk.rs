@@ -215,6 +215,7 @@ impl Builder {
 
         let mut chunks = Vec::new();
 
+        self.add_in_into_conversions(&mut chunks);
         self.add_in_array_lengths(&mut chunks);
         self.add_assertion(&mut chunks);
 
@@ -932,6 +933,40 @@ impl Builder {
         match self.assertion {
             SafetyAssertionMode::None => (),
             x => chunks.insert(0, Chunk::AssertInit(x)),
+        }
+    }
+
+    fn add_in_into_conversions(&self, chunks: &mut Vec<Chunk>) {
+        for trans in &self.transformations {
+            if let TransformationType::Into {
+                ref name,
+                ref typ,
+                ref nullable,
+                ref ref_mode,
+            } = &trans.transformation_type
+            {
+                if let In = self.parameters[trans.ind_c] {
+                    let ref_str = ref_mode.for_rust_type();
+
+                    let (value, typ) = if *nullable {
+                        (
+                            Chunk::Custom(format!("{}.map(|p| p.into())", name)),
+                            Chunk::Custom(format!("Option<{}>", typ)),
+                        )
+                    } else {
+                        (
+                            Chunk::Custom(format!("{}.into()", name)),
+                            Chunk::Custom(format!("{}", typ)),
+                        )
+                    };
+                    chunks.push(Chunk::Let {
+                        name: name.clone(),
+                        is_mut: false,
+                        value: Box::new(value),
+                        type_: Some(Box::new(typ)),
+                    });
+                }
+            }
         }
     }
 

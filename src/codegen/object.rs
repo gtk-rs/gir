@@ -230,8 +230,13 @@ fn generate_builder(w: &mut dyn Write, env: &Env, analysis: &analysis::object::I
                     .ref_mode(property.set_in_ref_mode)
                     .try_build()
                     .into_string();
+                eprintln!("RIP: {}", &param_type[..]);
                 let (param_type_override, bounds, conversion) = match &param_type[..] {
-                    "&str" => (None, String::new(), ".to_string()"),
+                    typ if nameutil::is_gstring(typ) && property.set_in_ref_mode.is_ref() => (
+                        Some("P".to_string()),
+                        "<P: Into<glib::GString>>".to_string(),
+                        ".into().to_string()",
+                    ),
                     "&[&str]" => (Some("Vec<String>".to_string()), String::new(), ""),
                     _ if !property.bounds.is_empty() => {
                         let (bounds, _) = function::bounds(&property.bounds, &[], false, false);
