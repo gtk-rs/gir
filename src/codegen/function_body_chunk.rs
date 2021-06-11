@@ -977,7 +977,7 @@ impl Builder {
             {
                 if let In = self.parameters[trans.ind_c] {
                     let value =
-                        Chunk::Custom(format!("{}.len()/**/ as {}", array_name, array_length_type));
+                        Chunk::Custom(format!("{}.len() as {}", array_name, array_length_type));
                     chunks.push(Chunk::Let {
                         name: array_length_name.clone(),
                         is_mut: false,
