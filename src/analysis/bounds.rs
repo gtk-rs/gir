@@ -152,19 +152,7 @@ impl Bounds {
                             bound_name,
                         });
                     }
-                } /* else if par.c_type == "const char*" && par.ref_mode.is_ref() {
-                      self.lifetimes.push('s');
-                      type_string = "ToGlibPtr<'a, *const libc::c_char>".into();
-
-                      let bound_name = *self.unused.front().unwrap();
-                      callback_info = Some(CallbackInfo {
-                          callback_type: type_string.clone(),
-                          success_parameters: String::new(),
-                          error_parameters: String::new(),
-                          bound_name,
-                      });
-                      self.add_parameter(&par.name, &type_string)
-                  } */
+                }
                 if (!need_is_into_check || !*par.nullable) && par.c_type != "GDestroyNotify" {
                     self.add_parameter(&par.name, &type_string, bound_type, r#async)
                 }
