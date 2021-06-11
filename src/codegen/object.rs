@@ -230,7 +230,7 @@ fn generate_builder(w: &mut dyn Write, env: &Env, analysis: &analysis::object::I
                     .ref_mode(property.set_in_ref_mode)
                     .try_build()
                     .into_string();
-                eprintln!("RIP: {}", &param_type[..]);
+
                 let (param_type_override, bounds, conversion) = match &param_type[..] {
                     typ if nameutil::is_gstring(typ) && property.set_in_ref_mode.is_ref() => (
                         Some("P".to_string()),

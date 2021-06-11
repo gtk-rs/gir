@@ -270,7 +270,6 @@ impl<'env> RustTypeBuilder<'env> {
 
                     UniChar => ok("char"),
                     Utf8 => {
-                        //TODO: make this also work for nullable things!!
                         if self.ref_mode.is_ref() {
                             skip_ref = true;
                             ok_and_use(&use_glib_type(&self.env, "GString"))
@@ -434,7 +433,7 @@ impl<'env> RustTypeBuilder<'env> {
                             let y = RustType::try_new(&self.env, p.typ)
                                 .unwrap_or_else(|_| RustType::default());
                             params.push(format!(
-                                "{}/**/{}",
+                                "{}{}",
                                 if is_fundamental || *p.nullable {
                                     ""
                                 } else {

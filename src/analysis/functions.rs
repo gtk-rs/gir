@@ -543,12 +543,6 @@ fn analyze_function(
     configured_functions: &[&config::functions::Function],
     imports: &mut Imports,
 ) -> Info {
-    let debug = name == "set_text";
-    eprintln!("{}", func.name);
-    if debug {
-        eprintln!("{:?}", func);
-    }
-
     let r#async = func.parameters.iter().any(|parameter| {
         parameter.scope == ParameterScope::Async && parameter.c_type == "GAsyncReadyCallback"
     });
@@ -709,9 +703,6 @@ fn analyze_function(
                     if !rust_type.as_str().ends_with("GString") || par.c_type == "gchar***" {
                         used_types.extend(rust_type.into_used_types());
                     }
-                }
-                if debug {
-                    eprintln!("{:?}", par)
                 }
 
                 let (to_glib_extra, callback_info) = bounds.add_for_parameter(
