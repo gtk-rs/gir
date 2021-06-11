@@ -34,20 +34,6 @@ impl Bound {
             BoundType::Into(_) => {
                 format!("{}", t)
             }
-            /*
-                        BoundType::ToGlibPtr(_, Some(lifetime)) => {
-                           let mut lifetime_post = r#async
-                               .then(|| "'static".to_string())
-                               .or_else(|| Some(format!(" '{}", lifetime)))
-                               .unwrap_or_default();
-                           if ref_str.is_empty() {
-                               lifetime_post = "".to_string();
-                           }
-                           format!("{}{} {}", ref_str, lifetime_post, t)
-
-                           // format!("{}", /* ref_str, lifetime_post, */ t)
-                       }
-            */
             BoundType::NoWrapper | BoundType::AsRef(_) => t.to_string(),
         }
     }
