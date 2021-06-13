@@ -36,12 +36,14 @@ pub fn generate(
     doc_hidden(w, analysis.doc_hidden, comment_prefix, indent)?;
     // Strip the "prefix" from "prefix::prop-name", if any.
     // Ex.: "notify::is-locked".
-    doc_alias(
-        w,
-        analysis.signal_name.splitn(2, "::").last().unwrap(),
-        comment_prefix,
-        indent,
-    )?;
+    if !in_trait || only_declaration {
+        doc_alias(
+            w,
+            analysis.signal_name.splitn(2, "::").last().unwrap(),
+            comment_prefix,
+            indent,
+        )?;
+    }
     writeln!(
         w,
         "{}{}{}{}{}",
