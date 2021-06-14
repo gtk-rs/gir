@@ -10,11 +10,12 @@ use super::{
 };
 use crate::{
     analysis::{
-        self, bounds::Bounds, functions::Visibility, namespaces, try_from_glib::TryFromGlib,
+        self, bounds::Bounds, functions::Visibility, namespaces, rust_type::RustType,
+        try_from_glib::TryFromGlib,
     },
     chunk::{ffi_function_todo, Chunk},
     env::Env,
-    library,
+    library::{self, Fundamental, Type},
     version::Version,
     writer::{primitives::tabs, safety_assertion_mode_to_str, ToCode},
 };
@@ -205,6 +206,7 @@ pub fn declaration_futures(env: &Env, analysis: &analysis::functions::Info) -> S
 
     let mut skipped = 0;
     let mut skipped_bounds = vec![];
+
     for (pos, par) in analysis.parameters.rust_parameters.iter().enumerate() {
         let c_par = &analysis.parameters.c_parameters[par.ind_c];
 
@@ -376,13 +378,23 @@ pub fn body_chunk_futures(
         );
 
         if *c_par.nullable {
-            writeln!(
-                body,
-                "let {} = {}.map(ToOwned::to_owned);",
-                par.name, par.name
-            )?;
+            if is_str {
+                writeln!(
+                    body,
+                    "let {}: Option<{}> = {}.map(|p| p.into());",
+                    par.name,
+                    RustType::try_new(env, par.typ).unwrap().as_str(),
+                    par.name,
+                )?;
+            } else {
+                writeln!(
+                    body,
+                    "let {} = {}.map(ToOwned::to_owned);",
+                    par.name, par.name
+                )?;
+            }
         } else if is_str {
-            writeln!(body, "let {} = String::from({});", par.name, par.name)?;
+            // writeln!(body, "let {} = String::from({});", par.name, par.name)?;
         } else if c_par.ref_mode != RefMode::None {
             writeln!(body, "let {} = {}.clone();", par.name, par.name)?;
         }
@@ -419,13 +431,25 @@ pub fn body_chunk_futures(
         } else {
             let c_par = &analysis.parameters.c_parameters[par.ind_c];
 
+            let type_ = env.type_(par.typ);
+            let is_str = matches!(
+                *type_,
+                library::Type::Fundamental(library::Fundamental::Utf8)
+            );
+
             if *c_par.nullable {
-                writeln!(
-                    body,
-                    "\t\t{}.as_ref().map(::std::borrow::Borrow::borrow),",
-                    par.name
-                )?;
-            } else if c_par.ref_mode != RefMode::None {
+                if is_str {
+                    writeln!(body, "\t\t{},", par.name)?;
+                } else {
+                    writeln!(
+                        body,
+                        "\t\t{}.as_ref().map(::std::borrow::Borrow::borrow),",
+                        par.name
+                    )?;
+                }
+            } else if c_par.ref_mode != RefMode::None
+                && env.library.type_(c_par.typ) != &Type::Fundamental(Fundamental::Utf8)
+            {
                 writeln!(body, "\t\t&{},", par.name)?;
             } else {
                 writeln!(body, "\t\t{},", par.name)?;

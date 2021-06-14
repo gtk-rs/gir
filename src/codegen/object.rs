@@ -210,6 +210,7 @@ fn generate_builder(w: &mut dyn Write, env: &Env, analysis: &analysis::object::I
         analysis.name,
     )?;
     writeln!(w, "pub struct {}Builder {{", analysis.name)?;
+
     for property in &analysis.builder_properties {
         match RustType::try_new(env, property.typ) {
             Ok(type_string) => {
@@ -223,13 +224,19 @@ fn generate_builder(w: &mut dyn Write, env: &Env, analysis: &analysis::object::I
                 } else {
                     library::ParameterDirection::Out
                 };
+
                 let mut param_type = RustType::builder(env, property.typ)
                     .direction(direction)
                     .ref_mode(property.set_in_ref_mode)
                     .try_build()
                     .into_string();
+
                 let (param_type_override, bounds, conversion) = match &param_type[..] {
-                    "&str" => (None, String::new(), ".to_string()"),
+                    typ if nameutil::is_gstring(typ) && property.set_in_ref_mode.is_ref() => (
+                        Some("P".to_string()),
+                        "<P: Into<glib::GString>>".to_string(),
+                        ".into().to_string()",
+                    ),
                     "&[&str]" => (Some("Vec<String>".to_string()), String::new(), ""),
                     _ if !property.bounds.is_empty() => {
                         let (bounds, _) = function::bounds(&property.bounds, &[], false, false);

@@ -174,6 +174,7 @@ pub fn analyze<F: Borrow<library::Function>>(
 
     'func: for func in functions {
         let func = func.borrow();
+
         let configured_functions = obj.functions.matched(&func.name);
         let mut status = obj.status;
         for f in configured_functions.iter() {
@@ -703,6 +704,7 @@ fn analyze_function(
                         used_types.extend(rust_type.into_used_types());
                     }
                 }
+
                 let (to_glib_extra, callback_info) = bounds.add_for_parameter(
                     env,
                     func,

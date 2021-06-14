@@ -9,7 +9,7 @@ use crate::{
     },
     consts::TYPE_PARAMETERS_START,
     env::Env,
-    library,
+    library::{self},
     nameutil::{use_glib_if_needed, use_gtk_type},
     traits::IntoString,
     writer::primitives::tabs,
@@ -79,7 +79,9 @@ pub fn func_string(
 
         format!(
             "Fn({}){}{} + 'static",
-            param_str, return_str, concurrency_str
+            param_str.replace("glib::GString", "&str"),
+            return_str,
+            concurrency_str
         )
     } else {
         format!("({}){}", param_str, return_str,)

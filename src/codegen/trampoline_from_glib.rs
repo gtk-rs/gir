@@ -30,16 +30,16 @@ impl TrampolineFromGlib for Transformation {
                     }
                 }
 
-                if !nullable {
-                    left = format!("&{}", left);
-                } else if nullable && is_borrow {
+                if nullable && is_borrow {
                     if is_gstring(&type_name) {
                         right = format!("{}.as_ref().as_deref()", right);
                     } else {
                         right = format!("{}.as_ref().as_ref()", right);
                     }
                 } else if is_gstring(&type_name) {
-                    right = format!("{}.as_deref()", right);
+                    left = format!("&*{}", left);
+                } else if !nullable {
+                    left = format!("&{}", left);
                 } else {
                     right = format!("{}.as_ref()", right);
                 }

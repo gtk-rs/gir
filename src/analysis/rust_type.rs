@@ -238,6 +238,7 @@ impl<'env> RustTypeBuilder<'env> {
         let ok_and_use = |s: &str| Ok(RustType::new_and_use(s));
         let err = |s: &str| Err(TypeError::Unimplemented(s.into()));
         let mut skip_option = false;
+        let mut skip_ref = false;
         let type_ = self.env.library.type_(self.type_id);
         let mut rust_type = match *type_ {
             Fundamental(fund) => {
@@ -270,7 +271,8 @@ impl<'env> RustTypeBuilder<'env> {
                     UniChar => ok("char"),
                     Utf8 => {
                         if self.ref_mode.is_ref() {
-                            ok("str")
+                            skip_ref = true;
+                            ok_and_use(&use_glib_type(&self.env, "GString"))
                         } else {
                             ok_and_use(&use_glib_type(&self.env, "GString"))
                         }
@@ -540,7 +542,11 @@ impl<'env> RustTypeBuilder<'env> {
 
                             opt
                         })
-                        .apply_ref_mode(self.ref_mode)
+                        .apply_ref_mode(if skip_ref {
+                            RefMode::None
+                        } else {
+                            self.ref_mode
+                        })
                 });
             }
             TryFromGlib::Result { ok_type, err_type } => {
@@ -561,11 +567,21 @@ impl<'env> RustTypeBuilder<'env> {
                 }
             }
             TryFromGlib::ResultInfallible { ok_type } => {
-                let new_rust_type = RustType::new_and_use(ok_type).apply_ref_mode(self.ref_mode);
+                let new_rust_type = RustType::new_and_use(ok_type).apply_ref_mode(if skip_ref {
+                    RefMode::None
+                } else {
+                    self.ref_mode
+                });
                 rust_type = rust_type.map_any(|_| new_rust_type);
             }
             _ => {
-                rust_type = rust_type.map_any(|rust_type| rust_type.apply_ref_mode(self.ref_mode));
+                rust_type = rust_type.map_any(|rust_type| {
+                    rust_type.apply_ref_mode(if skip_ref {
+                        RefMode::None
+                    } else {
+                        self.ref_mode
+                    })
+                });
             }
         }
 
@@ -579,7 +595,6 @@ impl<'env> RustTypeBuilder<'env> {
                 _ => (),
             }
         }
-
         rust_type
     }
 
@@ -650,7 +665,7 @@ impl<'env> RustTypeBuilder<'env> {
             },
             CArray(..) | PtrArray(..) => match self.direction {
                 ParameterDirection::In | ParameterDirection::Out | ParameterDirection::Return => {
-                    rust_type
+                    rust_type.map_any(|rust_type| rust_type.format_parameter(self.direction))
                 }
                 _ => Err(TypeError::Unimplemented(into_inner(rust_type))),
             },

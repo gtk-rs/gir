@@ -27,6 +27,12 @@ impl Bound {
                 format!("Option<{}{}>", ref_str, t)
             }
             BoundType::IsA(_) => format!("{}{}", ref_str, t),
+            BoundType::Into(_) if *nullable => {
+                format!("Option<{}>", t)
+            }
+            BoundType::Into(_) => {
+                format!("{}", t)
+            }
             BoundType::NoWrapper | BoundType::AsRef(_) => t.to_string(),
         }
     }
@@ -56,6 +62,16 @@ impl Bound {
             }
             BoundType::AsRef(Some(_ /*lifetime*/)) => panic!("AsRef cannot have a lifetime"),
             BoundType::AsRef(None) => format!("AsRef<{}>", self.type_str),
+            BoundType::Into(Some(_ /*lifetime*/)) => panic!("Into cannot have a lifetime"),
+            BoundType::Into(None) => {
+                let is_a = format!("Into<{}>", self.type_str);
+                let lifetime = r#async
+                    .then(|| " + Clone + 'static".to_string())
+                    .or_else(|| Some("".to_string()))
+                    .unwrap_or_default();
+
+                format!("{}{}", is_a, lifetime)
+            }
         }
     }
 }
