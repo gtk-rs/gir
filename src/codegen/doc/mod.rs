@@ -392,7 +392,10 @@ fn create_object_doc(w: &mut dyn Write, env: &Env, info: &analysis::object::Info
         let is_manual = configured_functions.iter().any(|f| f.status.manual());
         let (ty, object_location) = if (has_trait || is_manual)
             && function.parameters.iter().any(|p| p.instance_parameter)
+            && !info.final_type
         {
+            // We use "original_name" here to be sure to get the correct object since the "name"
+            // field could have been renamed.
             if let Some(trait_name) = configured_functions
                 .iter()
                 .find_map(|f| f.doc_trait_name.as_ref())
@@ -405,7 +408,7 @@ fn create_object_doc(w: &mut dyn Write, env: &Env, info: &analysis::object::Info
                     // the `{}Manual` trait, which would be ObjectLocation::ExtManual.
                     None,
                 )
-            } else if is_manual && !info.final_type {
+            } else if is_manual {
                 (
                     TypeStruct::new(SType::Trait, &format!("{}ExtManual", info.name)),
                     Some(LocationInObject::ExtManual),
