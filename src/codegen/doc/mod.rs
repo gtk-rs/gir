@@ -389,28 +389,33 @@ fn create_object_doc(w: &mut dyn Write, env: &Env, info: &analysis::object::Info
 
     for function in functions {
         let configured_functions = obj.functions.matched(&function.name);
-        let (ty, object_location) =
-            if has_trait && function.parameters.iter().any(|p| p.instance_parameter) {
-                // We use "original_name" here to be sure to get the correct object since the "name"
-                // field could have been renamed.
-                if let Some(trait_name) = configured_functions
-                    .iter()
-                    .find_map(|f| f.doc_trait_name.as_ref())
-                {
-                    (
-                        TypeStruct::new(SType::Trait, trait_name),
-                        // Because we cannot sensibly deduce where the docs end up,
-                        // assume they're outside the docs so that no `Self::` links
-                        // are generated.  It is currently quite uncommon to specify
-                        // the `{}Manual` trait, which would be ObjectLocation::ExtManual.
-                        None,
-                    )
-                } else {
-                    (ty_ext.clone(), Some(LocationInObject::Ext))
-                }
+        let is_manual = configured_functions.iter().any(|f| f.status.manual());
+        let (ty, object_location) = if (has_trait || is_manual)
+            && function.parameters.iter().any(|p| p.instance_parameter)
+        {
+            if let Some(trait_name) = configured_functions
+                .iter()
+                .find_map(|f| f.doc_trait_name.as_ref())
+            {
+                (
+                    TypeStruct::new(SType::Trait, trait_name),
+                    // Because we cannot sensibly deduce where the docs end up,
+                    // assume they're outside the docs so that no `Self::` links
+                    // are generated.  It is currently quite uncommon to specify
+                    // the `{}Manual` trait, which would be ObjectLocation::ExtManual.
+                    None,
+                )
+            } else if is_manual && !info.final_type {
+                (
+                    TypeStruct::new(SType::Trait, &format!("{}ExtManual", info.name)),
+                    Some(LocationInObject::ExtManual),
+                )
             } else {
-                (ty.clone(), Some(LocationInObject::Impl))
-            };
+                (ty_ext.clone(), Some(LocationInObject::Ext))
+            }
+        } else {
+            (ty.clone(), Some(LocationInObject::Impl))
+        };
         if let Some(c_identifier) = &function.c_identifier {
             // Retrieve the new_name computed during analysis, if any
             let fn_new_name = info
