@@ -494,6 +494,7 @@ fn create_object_doc(w: &mut dyn Write, env: &Env, info: &analysis::object::Info
             (&info.type_id, object_location),
             getter_name,
             setter_name,
+            info,
         )?;
     }
     Ok(())
@@ -785,6 +786,7 @@ fn create_property_doc(
     in_type: (&TypeId, Option<LocationInObject>),
     getter_name: Option<String>,
     setter_name: Option<String>,
+    obj_info: &analysis::object::Info,
 ) -> Result<()> {
     if env.is_totally_deprecated(property.deprecated_version) {
         return Ok(());
@@ -796,24 +798,28 @@ fn create_property_doc(
         return Ok(());
     }
     let name_for_func = nameutil::signal_to_snake(&property.name);
+    let getter_name = getter_name.unwrap_or_else(|| name_for_func.clone());
+    let has_getter_method = obj_info.functions.iter().any(|f| {
+        f.func_name == getter_name || f.new_name.as_ref().map_or(false, |n| n == &getter_name)
+    });
+
+    let setter_name = setter_name.unwrap_or_else(|| format!("set_{}", &name_for_func));
+    let has_setter_method = obj_info.functions.iter().any(|f| {
+        f.func_name == setter_name || f.new_name.as_ref().map_or(false, |n| n == &setter_name)
+    });
+
     let mut v = Vec::with_capacity(2);
 
-    if property.readable {
+    if property.readable && !has_getter_method {
         v.push(TypeStruct {
             parent: parent.clone(),
-            ..TypeStruct::new(
-                SType::Fn,
-                &getter_name.unwrap_or_else(|| name_for_func.clone()),
-            )
+            ..TypeStruct::new(SType::Fn, &getter_name)
         });
     }
-    if property.writable {
+    if property.writable && !has_setter_method {
         v.push(TypeStruct {
             parent,
-            ..TypeStruct::new(
-                SType::Fn,
-                &setter_name.unwrap_or_else(|| format!("set_{}", &name_for_func)),
-            )
+            ..TypeStruct::new(SType::Fn, &setter_name)
         });
     }
 
