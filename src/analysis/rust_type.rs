@@ -149,7 +149,7 @@ fn into_inner(res: Result) -> String {
     use self::TypeError::*;
     match res {
         Ok(rust_type) => rust_type.into_string(),
-        Err(Ignored(s)) | Err(Mismatch(s)) | Err(Unimplemented(s)) => s,
+        Err(Ignored(s) | Mismatch(s) | Unimplemented(s)) => s,
     }
 }
 
@@ -599,12 +599,13 @@ impl<'env> RustTypeBuilder<'env> {
             .try_from_glib(&self.try_from_glib)
             .try_build();
         match type_ {
-            Fundamental(library::Fundamental::Utf8)
-            | Fundamental(library::Fundamental::OsString)
-            | Fundamental(library::Fundamental::Filename)
-                if (self.direction == ParameterDirection::InOut
-                    || (self.direction == ParameterDirection::Out
-                        && self.ref_mode == RefMode::ByRefMut)) =>
+            Fundamental(
+                library::Fundamental::Utf8
+                | library::Fundamental::OsString
+                | library::Fundamental::Filename,
+            ) if (self.direction == ParameterDirection::InOut
+                || (self.direction == ParameterDirection::Out
+                    && self.ref_mode == RefMode::ByRefMut)) =>
             {
                 Err(TypeError::Unimplemented(into_inner(rust_type)))
             }

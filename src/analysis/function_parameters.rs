@@ -452,13 +452,11 @@ fn is_length(par: &library::Parameter) -> bool {
 }
 
 fn has_length(env: &Env, typ: TypeId) -> bool {
+    use crate::library::Fundamental::*;
     use crate::library::Type;
     let typ = env.library.type_(typ);
     match typ {
-        Type::Fundamental(fund) => {
-            use crate::library::Fundamental::*;
-            matches!(fund, Utf8 | Filename | OsString)
-        }
+        Type::Fundamental(Utf8 | Filename | OsString) => true,
         Type::CArray(..)
         | Type::FixedArray(..)
         | Type::Array(..)

@@ -167,9 +167,7 @@ impl Bounds {
     pub fn type_for(env: &Env, type_id: TypeId, nullable: Nullable) -> Option<BoundType> {
         use self::BoundType::*;
         match env.library.type_(type_id) {
-            Type::Fundamental(Fundamental::Filename) => Some(AsRef(None)),
-            Type::Fundamental(Fundamental::OsString) => Some(AsRef(None)),
-            Type::Fundamental(Fundamental::Utf8) if *nullable => None,
+            Type::Fundamental(Fundamental::Filename | Fundamental::OsString) => Some(AsRef(None)),
             Type::Class(Class {
                 final_type: true, ..
             }) => None,
