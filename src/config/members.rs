@@ -118,7 +118,7 @@ alias = true
         );
         let f = Member::parse(&toml, "a").unwrap();
         assert_eq!(f.ident, Ident::Name("name1".into()));
-        assert_eq!(f.alias, true);
+        assert!(f.alias);
     }
 
     #[test]
