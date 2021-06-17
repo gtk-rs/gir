@@ -30,7 +30,7 @@ target_path = "."
 # Path where lib.rs generated (defaults to <target_path>/src)
 # auto_path = "src"
 work_mode = "sys"
-# If true then build.rs will be splitted into 2 parts:
+# If true then build.rs will be split into 2 parts:
 # always generated build_version.rs,
 # and build.rs that generated only if not exists.
 # Defaults to false

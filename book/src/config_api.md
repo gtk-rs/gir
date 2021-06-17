@@ -180,7 +180,7 @@ trust_return_value_nullability = false
         name = "path_string"
         # allow to use different names in closure
         new_name = "path"
-        # can be also "borrow" and "none": Add some transformation beetween ffi trampoline parameters and rust closure
+        # can be also "borrow" and "none": Add some transformation between ffi trampoline parameters and rust closure
         transformation = "treepath"
         nullable = true
         [object.signal.return]
