@@ -71,7 +71,10 @@ fn code_blocks_transformation(
 fn get_language<'a>(entry: &'a str, out: &mut String) -> &'a str {
     if let (_, Some(after)) = try_split(entry, LANGUAGE_SEP_BEGIN) {
         if let (before, Some(after)) = try_split(after, LANGUAGE_SEP_END) {
-            out.push_str(&format!("\n```{}", before));
+            if ["text", "rust"].contains(&before) {
+                out.push_str(&format!("\n\n**⚠️ The following code is in {} ⚠️**", before));
+            }
+            out.push_str(&format!("\n\n```{}", before));
             return after;
         }
     }
@@ -104,6 +107,9 @@ fn format(
                 ret.push_str(&replace_symbols(before, env, in_type));
 
                 let (lang, after) = get_markdown_language(after);
+                if ["text", "rust"].contains(&lang) && after.lines().count() > 1 {
+                    ret.push_str(&format!("**⚠️ The following code is in {0} ⚠️**\n\n", lang));
+                }
                 ret.push_str(&format!("```{}\n", lang));
 
                 if let (before, Some(after)) = try_split(after, "```") {
