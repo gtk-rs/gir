@@ -140,6 +140,7 @@ pub fn out_parameters_as_return(env: &Env, analysis: &analysis::functions::Info)
     return_str.push_str(" -> ");
     return_str.push_str(prefix);
 
+    #[allow(clippy::needless_collect)]
     let array_lengths: Vec<_> = analysis
         .outs
         .iter()

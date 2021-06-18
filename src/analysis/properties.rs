@@ -355,7 +355,7 @@ fn analyze_property(
 
 /// Returns (the list of get functions to check, the desired get function name).
 fn get_func_name(prop_name: &str, is_bool_getter: bool) -> (Vec<String>, String) {
-    let get_rename_res = getter_rules::try_rename_getter_suffix(&prop_name, is_bool_getter);
+    let get_rename_res = getter_rules::try_rename_getter_suffix(prop_name, is_bool_getter);
     match get_rename_res {
         Ok(new_name) => {
             let new_name = new_name.unwrap();

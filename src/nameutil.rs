@@ -144,7 +144,7 @@ pub fn shared_libs_to_links(shared_libs: &[String]) -> String {
     // links = ["foo", "bar"] or ['foo', 'bar'] is not supported.
     // Pick the first element
     if let Some(shared_lib) = shared_libs.get(0) {
-        return format!("\"{}\"", shared_lib_name_to_link_name(&shared_lib));
+        return format!("\"{}\"", shared_lib_name_to_link_name(shared_lib));
     }
 
     panic!("empty list of shared library");

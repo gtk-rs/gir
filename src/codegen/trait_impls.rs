@@ -174,7 +174,7 @@ fn generate_hash(
     version_condition(w, env, version, false, 0)?;
     cfg_condition_no_doc(w, cfg_condition, false, 0)?;
 
-    let call = generate_call(&func.codegen_name(), &[], trait_name);
+    let call = generate_call(func.codegen_name(), &[], trait_name);
 
     writeln!(
         w,
@@ -204,7 +204,7 @@ fn generate_eq(
     version_condition(w, env, version, false, 0)?;
     cfg_condition_no_doc(w, cfg_condition, false, 0)?;
 
-    let call = generate_call(&func.codegen_name(), &["other"], trait_name);
+    let call = generate_call(func.codegen_name(), &["other"], trait_name);
 
     writeln!(
         w,
@@ -236,7 +236,7 @@ fn generate_eq_compare(
     version_condition(w, env, version, false, 0)?;
     cfg_condition_no_doc(w, cfg_condition, false, 0)?;
 
-    let call = generate_call(&func.codegen_name(), &["other"], trait_name);
+    let call = generate_call(func.codegen_name(), &["other"], trait_name);
 
     writeln!(
         w,
@@ -268,7 +268,7 @@ fn generate_ord(
     version_condition(w, env, version, false, 0)?;
     cfg_condition_no_doc(w, cfg_condition, false, 0)?;
 
-    let call = generate_call(&func.codegen_name(), &["other"], trait_name);
+    let call = generate_call(func.codegen_name(), &["other"], trait_name);
 
     writeln!(
         w,

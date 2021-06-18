@@ -788,7 +788,7 @@ impl Builder {
                 if let OutMemMode::UninitializedNamed(_) = mem_mode {
                     value
                 } else {
-                    let array_length_name = self.array_length(&out).cloned();
+                    let array_length_name = self.array_length(out).cloned();
                     self.remove_extra_assume_init(&array_length_name, &mut uninitialized_vars);
                     Chunk::FromGlibConversion {
                         mode: out.into(),
