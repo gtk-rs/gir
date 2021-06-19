@@ -1,0 +1,6 @@
+[book]
+authors = ["The gtk-rs Project Developers"]
+language = "en"
+multilingual = false
+src = "src"
+title = "Generate Rust bindings for GIR based libraries"
