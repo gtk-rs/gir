@@ -1,0 +1,642 @@
+<!DOCTYPE HTML>
+<html lang="en" class="sidebar-visible no-js light">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>API Options - Generate Rust bindings for GIR based libraries</title>
+                
+
+        <!-- Custom HTML head -->
+        
+
+        <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff" />
+
+                <link rel="icon" href="favicon.svg">
+                        <link rel="shortcut icon" href="favicon.png">
+                <link rel="stylesheet" href="css/variables.css">
+        <link rel="stylesheet" href="css/general.css">
+        <link rel="stylesheet" href="css/chrome.css">
+                <link rel="stylesheet" href="css/print.css" media="print">
+        
+        <!-- Fonts -->
+        <link rel="stylesheet" href="FontAwesome/css/font-awesome.css">
+                <link rel="stylesheet" href="fonts/fonts.css">
+        
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" href="highlight.css">
+        <link rel="stylesheet" href="tomorrow-night.css">
+        <link rel="stylesheet" href="ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        
+            </head>
+    <body>
+        <!-- Provide site root to javascript -->
+        <script type="text/javascript">
+            var path_to_root = "";
+            var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "navy" : "light";
+        </script>
+
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script type="text/javascript">
+            try {
+                var theme = localStorage.getItem('mdbook-theme');
+                var sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script type="text/javascript">
+            var theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            var html = document.querySelector('html');
+            html.classList.remove('no-js')
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add('js');
+        </script>
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script type="text/javascript">
+            var html = document.querySelector('html');
+            var sidebar = 'hidden';
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            }
+            html.classList.remove('sidebar-visible');
+            html.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <div class="sidebar-scrollbox">
+                <ol class="chapter"><li class="chapter-item expanded "><a href="introduction.html"><strong aria-hidden="true">1.</strong> Introduction</a></li><li class="chapter-item expanded "><a href="config_introduction.html"><strong aria-hidden="true">2.</strong> Configuration</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="config_ffi.html"><strong aria-hidden="true">2.1.</strong> FFI Options</a></li><li class="chapter-item expanded "><a href="config_api.html" class="active"><strong aria-hidden="true">2.2.</strong> API Options</a></li><li class="chapter-item expanded "><a href="config_name_override.html"><strong aria-hidden="true">2.3.</strong> Crate name override</a></li></ol></li><li class="chapter-item expanded "><a href="tutorial/introduction.html"><strong aria-hidden="true">3.</strong> Tutorial</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="tutorial/sys_library.html"><strong aria-hidden="true">3.1.</strong> Generating the FFI library</a></li><li class="chapter-item expanded "><a href="tutorial/high_level_rust_api.html"><strong aria-hidden="true">3.2.</strong> Generating the Rust API</a></li><li class="chapter-item expanded "><a href="tutorial/handling_errors.html"><strong aria-hidden="true">3.3.</strong> Handling generation errors</a></li></ol></li><li class="chapter-item expanded "><a href="generate_docs.html"><strong aria-hidden="true">4.</strong> Generating documentation</a></li></ol>            </div>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky bordered">
+                    <div class="left-buttons">
+                        <button id="sidebar-toggle" class="icon-button" type="button" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </button>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light (default)</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                                                <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                                            </div>
+
+                    <h1 class="menu-title">Generate Rust bindings for GIR based libraries</h1>
+
+                    <div class="right-buttons">
+                                                <a href="print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                                                                        
+                    </div>
+                </div>
+
+                                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+                
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script type="text/javascript">
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="api-options"><a class="header" href="#api-options">API Options</a></h1>
+<p>This mode requires you to write another TOML file. <a href="https://github.com/gtk-rs/gtk/blob/master/Gir.toml">gtk/Gir.toml</a> is a good example.</p>
+<pre><code class="language-toml">[options]
+girs_directories = [&quot;gir-files&quot;]
+library = &quot;Gtk&quot;
+version = &quot;3.0&quot;
+min_cfg_version = &quot;3.4&quot;
+target_path = &quot;.&quot;
+# Path where objects generated (defaults to &lt;target_path&gt;/src/auto)
+# auto_path = &quot;src/auto&quot;
+work_mode = &quot;normal&quot;
+generate_safety_asserts = true
+deprecate_by_min_version = true
+# With this option enabled, versions for gir and gir-files saved only to one file to minimize noise,
+# can also take path to the directory for saving &quot;versions.txt&quot; or filename with extension.
+# Relative to target_path
+single_version_file = true
+# Generation of Display trait enabled for all enums, classes, etc.,
+# which do not have an override for `generate_display_trait`
+# (defaults to &quot;true&quot;)
+generate_display_trait = true
+# Trust the nullability information about return values. If this is disabled
+# then any pointer return type is assumed to be nullable unless there is an
+# explicit override for it.
+# This has to be used carefully as many libraries are missing nullable
+# annotations for return values, which then will cause a panic once an
+# unexpected NULL is returned.
+trust_return_value_nullability = false
+# Disable running `cargo fmt` on generated files
+# (defaults to false)
+disable_format = true
+# Always generate a Builder if possible. This is mostly a convenient setter as most of the
+# time you might want the Builder to be generated. Ignoring none-desired ones can still be done with per object `generate_builder` configuration.
+# (defaults to false)
+generate_builder = true
+</code></pre>
+<p>This mode generates only the specified objects. You can either add the object's fullname to the <code>generate</code> array or add it to the <code>manual</code> array (but in this case, it won't be generated, just used in other functions/methods instead of generating an &quot;ignored&quot; argument). Example:</p>
+<pre><code class="language-toml">generate = [&quot;Gtk.Widget&quot;, &quot;Gtk.Window&quot;]
+manual = [&quot;Gtk.Button&quot;]
+</code></pre>
+<p>So in here, both <code>GtkWidget</code> and <code>GtkWindow</code> will be fully generated and functions/methods using <code>GtkButton</code> will be uncommented. To generate code for all global functions, add <code>Gtk.*</code> to the <code>generate</code> array.</p>
+<p>To also generate a <code>Builder</code> struct for a widget, it needs to be set with the <code>generate_builder</code> flag in object configuration:</p>
+<pre><code class="language-toml">[[object]]
+name = &quot;Gtk.TreeView&quot;
+status = &quot;generate&quot;
+generate_builder = true
+</code></pre>
+<p>If you want to remove warning messages about the not bound <code>Builders</code> during the generation you don't want to be generated, you can ignore them with the <code>generate_builder</code> flag in object configuration:</p>
+<pre><code class="language-toml">[[object]]
+name = &quot;Gtk.TreeView&quot;
+status = &quot;generate&quot;
+generate_builder = false
+</code></pre>
+<p>If there is some work which has to be done post-construction before the builder's
+<code>build</code> method returns, you can set the <code>builder_postprocess</code> value in the object configuration:</p>
+<pre><code class="language-toml">[[object]]
+name = &quot;Gtk.Application&quot;
+status = &quot;generate&quot;
+generate_builder = true
+builder_postprocess = &quot;Application::register_startup_hook(&amp;ret);&quot;
+</code></pre>
+<p>For the duration of the code in <code>builder_postprocess</code> the binding <code>ret</code> will be the
+value to be returned from the <code>build</code> method.</p>
+<p>Sometimes Gir understands the object definition incorrectly or the <code>.gir</code> file contains an incomplete or wrong definition, to fix it, you can use the full object configuration:</p>
+<pre><code class="language-toml">[[object]]
+# object's fullname
+name = &quot;Gtk.SomeClass&quot;
+# can be also &quot;manual&quot; and &quot;ignore&quot; but it's simpler to just put the object in the same array
+status = &quot;generate&quot;
+# replace the parameter name for the child in child properties (instead &quot;child&quot;)
+child_name = &quot;item&quot;
+# mark object as final type, i.e. one without any further subclasses. this
+# will not generate trait SomeClassExt for this object, but implement all
+# functions in impl SomeClass
+final_type = true
+# allow rename result file
+module_name = &quot;soome_class&quot;
+# override starting version
+version = &quot;3.12&quot;
+# prefixed object in mod.rs with #[cfg(mycond)]
+cfg_condition = &quot;mycond&quot;
+# if you want to override default option Ex. for write your own Display implementation
+generate_display_trait = false
+# if you want to generate builder with name SomeClassBuilder
+generate_builder = true
+# trust return value nullability annotations for this specific type.
+# See above for details and use with care
+trust_return_value_nullability = false
+    # define overrides for function
+    [[object.function]]
+    # filter functions from object
+    name = &quot;set_website_label&quot;
+    # alternative way to apply override for many functions. Will be used with '^' and '$' on both sides
+    # can be used instead of `name` almost anywhere
+    # pattern = &quot;[gs]et_value&quot;
+    # don't generate function
+    ignore = true
+    # override starting version
+    version = &quot;3.12&quot;
+    # prefixed function with #[cfg(mycond)]
+    cfg_condition = &quot;mycond&quot;
+    # prefixed function with #[doc(hidden)]
+    doc_hidden = true
+    # define a list of function parameters to be ignored when the documentation is generated
+    doc_ignore_parameters = [&quot;some_user_data_param&quot;] 
+    # disable length_of autodetection
+    disable_length_detect = true
+    # write function docs to trait other than default &quot;xxxExt&quot;,
+    # also works in [object.signal] and [object.property]
+    doc_trait_name = &quot;SocketListenerExtManual&quot;
+    # disable generation of future for async function
+    no_future = true
+    # to rename the generated function
+    rename = &quot;something_else&quot;
+    # to override the default safety assertions: &quot;none&quot;, &quot;skip&quot;,
+    # &quot;not-initialized&quot;, &quot;in-main-thread&quot;
+    assertion = &quot;in-main-thread&quot;
+        # override for parameter
+        [[object.function.parameter]]
+        # filter by name
+        name = &quot;website_label&quot;
+        # allow to remove/add Option&lt;&gt;
+        nullable = true
+        # allow to make parameter immutable
+        const = true
+        # parameter is calculated as length of string or array and removed from function declaration
+        # (for length of return value use &quot;return&quot;)
+        length_of = &quot;str&quot;
+        # change string type. Variants: &quot;utf8&quot;, &quot;filename&quot;, &quot;os_string&quot;
+        string_type = &quot;os_string&quot;
+        # make function unsafe to call (emits `fn unsafe`)
+        unsafe = true
+
+        # override for return value
+        [object.function.return]
+        # allow to remove/add Option&lt;&gt; to return value
+        nullable = true
+        # convert bool return types to Result&lt;(), glib::BoolError&gt; with
+        # the given error message on failure
+        bool_return_is_error = &quot;Function failed doing what it is supposed to do&quot;
+        # convert Option return types to Result&lt;T, glib::BoolError&gt; with
+        # the given error message on failure
+        nullable_return_is_error = &quot;Function failed doing what it is supposed to do&quot;
+        # always include the return value of throwing functions in the returned Result&lt;...&gt;,
+        # without this option bool and guint return values are assumed to indicate success or error,
+        # and are not included in the returned Result&lt;...&gt;
+        use_return_for_result = true
+        # change string type. Variants: &quot;utf8&quot;, &quot;filename&quot;, &quot;os_string&quot;
+        string_type = &quot;os_string&quot;
+        # overwrite type
+        type = &quot;Gtk.Widget&quot;
+    [[object.signal]]
+    name = &quot;activate-link&quot;
+    # replace trampoline bool return type with `Inhibit`
+    inhibit = true
+    ignore = true
+    version = &quot;3.10&quot;
+    doc_hidden = true
+        [[object.signal.parameter]]
+        name = &quot;path_string&quot;
+        # allow to use different names in closure
+        new_name = &quot;path&quot;
+        # can be also &quot;borrow&quot; and &quot;none&quot;: Add some transformation between ffi trampoline parameters and rust closure
+        transformation = &quot;treepath&quot;
+        nullable = true
+        [object.signal.return]
+        nullable = true
+    # override for properties
+    [[object.property]]
+    name = &quot;baseline-position&quot;
+    version = &quot;3.10&quot;
+    ignore = true
+    [[object.property]]
+    name = &quot;events&quot;
+    # generate only `connect_property_events_notify`, without `get_property_events` and `set_property_events`
+    # supported values: &quot;get&quot;, &quot;set&quot;, &quot;notify&quot;
+    generate = [&quot;notify&quot;]
+</code></pre>
+<p>Since there are no child properties in <code>.gir</code> files, it needs to be added for classes manually:</p>
+<pre><code class="language-toml">[[object]]
+name = &quot;Gtk.SomeClassWithChildProperties&quot;
+status = &quot;generate&quot;
+# replace parameter name for child in child properties (instead of &quot;child&quot;)
+child_name = &quot;item&quot;
+# define concrete child type (instead of &quot;Widget&quot;)
+child_type = &quot;Gtk.MenuItem&quot;
+    [[object.child_prop]]
+    name = &quot;position&quot;
+    type = &quot;gint&quot;
+    doc_hidden = true
+</code></pre>
+<p>For enumerations and bitflags, you can configure the members and mark the type
+as <code>#[must_use]</code>:</p>
+<pre><code class="language-toml">[[object]]
+name = &quot;Gdk.EventType&quot;
+status = &quot;generate&quot;
+# generates #[must_use] attribute for the type
+must_use = true
+# override starting version
+version = &quot;3.12&quot;
+    [[object.member]]
+    name = &quot;2button_press&quot;
+    # allows to skip elements with bad names, other members with same value used instead
+    alias = true
+    # Allow to add a cfg condition
+    cfg_condition = &quot;target_os = \&quot;linux\&quot;&quot;
+    [[object.member]]
+    name = &quot;touchpad_pinch&quot;
+    # define starting version when member added
+    version = &quot;3.18&quot;
+</code></pre>
+<p>For enumerations and bitflags, you can also configure additional <code>#[derive()]</code>
+clauses optionally conditioned to a <code>cfg</code>.</p>
+<pre><code class="language-toml">[[object]]
+name = &quot;Gst.Format&quot;
+status = &quot;generate&quot;
+    [[object.derive]]
+    name = &quot;Serialize, Deserialize&quot;
+    cfg_condition = &quot;feature = \&quot;ser_de\&quot;&quot;
+</code></pre>
+<p>Gir auto-detects <code>copy</code>/<code>free</code> or <code>ref</code>/<code>unref</code> function pairs for memory management
+on records. It falls back to generic <code>g_boxed_copy</code>/<code>g_boxed_free</code> if these are not
+found, based on an existing implementation of <code>get_type</code>. Otherwise no record
+implementation can be generated.</p>
+<p>Some boxed types are passed as <code>out</code> parameters to functions and the caller is
+required to allocate them. For this it is necessary to provide Rust
+expressions in the configuration for initializing newly allocated memory for
+them, and to free any resources that might be stored in values of that boxed
+types. By default the memory is zero-initialized and it is valid to provide an
+empty closure like below.</p>
+<pre><code class="language-toml">[[object]]
+name = &quot;Gtk.TreeIter&quot;
+status = &quot;generate&quot;
+init_function_expression = &quot;|_ptr| ()&quot;
+clear_function_expression = &quot;|_ptr| ()&quot;
+</code></pre>
+<p>For global functions, the members can be configured by configuring the <code>Gtk.*</code> object:</p>
+<pre><code class="language-toml">[[object]]
+name = &quot;Gtk.*&quot;
+status = &quot;generate&quot;
+    [[object.function]]
+    name = &quot;stock_list_ids&quot;
+    # allows to ignore global functions
+    ignore = true
+</code></pre>
+<p>Which will prevent gir from generating <code>stock_list_ids</code>. If you want to specify
+that a function will be manually implemented, you can use:</p>
+<pre><code class="language-toml">[[object]]
+name = &quot;Gtk.Entry&quot;
+status = &quot;generate&quot;
+    [[object.function]]
+    name = &quot;get_invisible_char&quot;
+    manual = true
+</code></pre>
+<p>This will prevent gir from generating <code>get_invisible_char</code> and it won't generate
+<code>get_property_invisible_char</code> which would have been generated if we had used
+&quot;ignore = true&quot;.</p>
+<p>Note that you must not place <code>Gtk.*</code> into the <code>generate</code> array and
+additionally configure its members.</p>
+<p>You can control the generation of constants in a similar fashion:</p>
+<pre><code class="language-toml">[[object]]
+name = &quot;Gtk.*&quot;
+status = &quot;generate&quot;
+    [[object.constant]]
+    pattern = &quot;*&quot;
+    # No constants will be generated
+    ignore = true
+</code></pre>
+<p>Constants also support <code>version</code> and <code>cfg_condition</code> fields.</p>
+<p>In various cases, GObjects or boxed types can be used from multiple threads
+and have certain concurrency guarantees. This can be configured with the
+<code>concurrency</code> setting at the top-level options or per object. It will
+automatically implement the <code>Send</code> and <code>Sync</code> traits for the resulting object
+and set appropriate trait bounds for signal callbacks. The default is <code>none</code>,
+and apart from that <code>send</code> and <code>send+sync</code> are supported.</p>
+<pre><code class="language-toml">[[object]]
+# object's fullname
+name = &quot;Gtk.SomeClass&quot;
+# can be also &quot;manual&quot; and &quot;ignore&quot; but it's simpler to just put the object in the same array
+status = &quot;generate&quot;
+# concurrency of the object, default is set in the top-level options or
+# otherwise &quot;none&quot;. Valid values are &quot;none&quot;, &quot;send&quot; and &quot;send+sync&quot;
+concurrency = &quot;send+sync&quot;
+</code></pre>
+<p>Note that <code>send</code> is only valid for types that are either not reference counted
+(i.e. <code>clone()</code> copies the object) or that are read-only (i.e. no API for
+mutating the object exists). <code>send+sync</code> is valid if the type can be sent to
+different threads and all API allows simultaneous calls from different threads
+due to internal locking via e.g. a mutex.</p>
+<pre><code class="language-toml">[[object]]
+name = &quot;Gtk.Something&quot;
+status = &quot;manual&quot;
+# Can also be &quot;ref-mut&quot;, &quot;ref-immut&quot;
+ref_mode = &quot;ref&quot;
+</code></pre>
+<p>When manually generating bindings, it can happen that the reference mode
+detected by GIR is different than what was implemented and conversion to the C
+types are wrong in autogenerated functions that have such objects as argument.
+This can be overridden with the <code>ref_mode</code> configuration.</p>
+<p>Getters are automatically renamed to comply with Rust codying style guidelines.
+However, this can cause name clashes with existing functions. If you want to
+bypass the automatic renaming mechanism, use <code>bypass_auto_rename = true</code>:</p>
+<pre><code class="language-toml">[[object]]
+name = &quot;Gtk.TextBuffer&quot;
+[...]
+    [[object.function]]
+    name = &quot;get_insert&quot;
+    # Avoid clash with the `insert` operation.
+    bypass_auto_rename = true
+</code></pre>
+<p>Some constructors are not annotated as <code>constructor</code> in the <code>gir</code> files. In
+order for the naming convention to be applied, you can force a function to be
+considered as a constructor:</p>
+<pre><code class="language-toml">[[object.function]]
+name = &quot;new_for_path&quot;
+# Not annotated as constructor in Gir =&gt; force it to apply naming convention
+constructor = true
+</code></pre>
+<h2 id="conversion_type-option"><a class="header" href="#conversion_type-option">conversion_type &quot;Option&quot;</a></h2>
+<p>The <code>conversion_type</code> variant <code>Option</code> is available for types <code>T</code> implementing
+<code>glib::TryFromGlib&lt;Error=GlibNoneError&gt;</code>. As a reminder, this allows
+implementing <code>FromGlib</code> for <code>Option&lt;T&gt;</code> and usually goes alongside with <code>ToGlib</code>
+for both <code>T</code> and <code>Option&lt;T&gt;</code>. In this case, <code>Option&lt;T&gt;</code> will be used for return
+values (including ffi output arguments). For in-arguments, except if the
+parameter is declared <code>mandatory</code>, <code>impl Into&lt;Option&lt;T&gt;&gt;</code> so that either an
+<code>Option&lt;T&gt;</code> or <code>T</code> can be used.</p>
+<p>Ex. from <code>gstreamer-rs</code>:</p>
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>[[object]]
+name = &quot;Gst.ClockTime&quot;
+status = &quot;manual&quot;
+conversion_type = &quot;Option&quot;
+<span class="boring">}
+</span></code></pre></pre>
+<p>The type <code>ClockTime</code> implements <code>glib::TryFromGlib&lt;Error=GlibNoneError&gt;</code> (and
+<code>OptionToGlib</code>), which means that its Rust representation can take advantage of
+<code>Option&lt;ClockTime&gt;</code>.</p>
+<p>Additionally, the user can instruct <code>gir</code> to <code>expect</code> <code>Some</code> or <code>Ok</code> results for
+specific arguments or return values. E.g.:</p>
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>[[object]]
+name = &quot;Gst.Clock&quot;
+status = &quot;generate&quot;
+manual_traits = [&quot;ClockExtManual&quot;]
+    [[object.function]]
+    name = &quot;get_calibration&quot;
+        [[object.function.parameter]]
+        name = &quot;internal&quot;
+        mandatory = true
+<span class="boring">}
+</span></code></pre></pre>
+<p>In the above example, the user instructs gir to consider the <code>internal</code> argument
+(which also happens to be an out argument) with type gir <code>Gst.ClockTime</code> can be
+represented as a <code>ClockTime</code> without the <code>Option</code>. This argument is actually
+part of a set of output arguments. With the above gir declaration, the generated
+signature is the following (the implementation takes care of <code>expect</code>ing the
+value to be defined):</p>
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>    fn get_calibration(
+        &amp;self,
+    ) -&gt; (
+        ClockTime,
+        Option&lt;ClockTime&gt;,
+        Option&lt;ClockTime&gt;,
+        Option&lt;ClockTime&gt;,
+    );
+<span class="boring">}
+</span></code></pre></pre>
+<p>For a return value, the mandatory declaration reads:</p>
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>    [[object.function]]
+    name = &quot;util_get_timestamp&quot;
+    /.../
+        [object.function.return]
+<span class="boring">        always returns a value
+</span>        mandatory = true
+<span class="boring">}
+</span></code></pre></pre>
+<h2 id="conversion_type-result"><a class="header" href="#conversion_type-result">conversion_type &quot;Result&quot;</a></h2>
+<p>The <code>conversion_type</code> variant <code>Result</code> is available for types <code>T</code> implementing
+<code>glib::TryFromGlib&lt;Error=Err&gt;</code> where <code>Err</code> is neither <code>GlibNoneError</code> nor
+<code>GlibNoneOrInvalidError</code>. In this case, <code>Result&lt;T, ErrorType&gt;</code> will be used for
+return values (including <code>ffi</code> output arguments) and the type itself in argument
+position.</p>
+<p>In <code>gstreamer-rs</code>, the C type <code>GstStateChangeReturn</code> can represent both a
+successful or an error return value. In Rust, the <code>Result</code> <code>enum</code> is the
+idiomatic way of returning an error. In <code>gstreamer-rs</code>, bindings to functions
+returning <code>GstStateChangeReturn</code> had to be manually implemented so as to return
+<code>Result&lt;StateChangeSuccess, StateChangeError&gt;</code>. Note that in this case, the type
+implementing <code>TryFromGlib</code> is <code>StateChangeSuccess</code> and not
+<code>GstStateChangeReturn</code>. These functions can be auto-generated using:</p>
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>[[object]]
+name = &quot;Gst.StateChangeReturn&quot;
+status = &quot;generate&quot;
+must_use = true
+    [object.conversion_type]
+    variant = &quot;Result&quot;
+    ok_type = &quot;gst::StateChangeSuccess&quot;
+    err_type = &quot;gst::StateChangeError&quot;
+<span class="boring">}
+</span></code></pre></pre>
+<h2 id="generation-in-api-mode"><a class="header" href="#generation-in-api-mode">Generation in API mode</a></h2>
+<p>To generate the Rust-user API level, The command is very similar to the previous one. It's better to not put this output in the same directory as where the FFI files are. Just run:</p>
+<pre><code class="language-shell">cargo run --release -- -c YourGirFile.toml -d ../gir-files -o the-output-directory
+</code></pre>
+<p>Now it should be done. Just go to the output directory (so <code>the-output-directory/auto</code> in our case) and try to build using <code>cargo build</code>. Don't forget to update your dependencies in both projects: nothing much to do in the FFI/sys one but the Rust-user API level will need to have a dependency over the FFI/sys one.</p>
+<p>Now, at your crate entry point (generally <code>lib.rs</code>), add the following to include all generated files:</p>
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>pub use auto::*;
+<span class="boring">}
+</span></code></pre></pre>
+<h2 id="add-manual-bindings-alongside-generated-code"><a class="header" href="#add-manual-bindings-alongside-generated-code">Add manual bindings alongside generated code</a></h2>
+<p>Unfortunately, <code>gir</code> isn't perfect (yet) and will certainly not be able to generate all the code on its own. So here's what a <code>gir</code> generated folder looks like:</p>
+<pre><code class="language-text">- your_folder
+|
+|- Cargo.toml
+|- src
+ |
+ |- lib.rs
+ |- auto
+  |
+  |- (all files generated by gir)
+</code></pre>
+<p>You can add your manual bindings directly inside the <code>src</code> folder (at the same level as <code>lib.rs</code>). Then don't forget to reexport them. Let's say you added a <code>Color</code> type in a <code>color.rs</code> file. You need to add in <code>lib.rs</code>:</p>
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// We make the type public for the API users.
+pub use color::Color;
+
+mod color;
+<span class="boring">}
+</span></code></pre></pre>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                                                    <a rel="prev" href="config_ffi.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+                        
+                                                    <a rel="next" href="config_name_override.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+                        
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                                    <a rel="prev" href="config_ffi.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+                
+                                    <a rel="next" href="config_name_override.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+                            </nav>
+
+        </div>
+
+        
+        
+        
+                <script type="text/javascript">
+            window.playground_copyable = true;
+        </script>
+        
+        
+                <script src="elasticlunr.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="mark.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="searcher.js" type="text/javascript" charset="utf-8"></script>
+        
+        <script src="clipboard.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="highlight.js" type="text/javascript" charset="utf-8"></script>
+        <script src="book.js" type="text/javascript" charset="utf-8"></script>
+
+        <!-- Custom JS scripts -->
+        
+        
+    </body>
+</html>

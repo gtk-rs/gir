@@ -1,0 +1,443 @@
+<!DOCTYPE HTML>
+<html lang="en" class="sidebar-visible no-js light">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Generating the Rust API - Generate Rust bindings for GIR based libraries</title>
+                
+
+        <!-- Custom HTML head -->
+        
+
+        <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff" />
+
+                <link rel="icon" href="../favicon.svg">
+                        <link rel="shortcut icon" href="../favicon.png">
+                <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+                <link rel="stylesheet" href="../css/print.css" media="print">
+        
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+                <link rel="stylesheet" href="../fonts/fonts.css">
+        
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" href="../highlight.css">
+        <link rel="stylesheet" href="../tomorrow-night.css">
+        <link rel="stylesheet" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        
+            </head>
+    <body>
+        <!-- Provide site root to javascript -->
+        <script type="text/javascript">
+            var path_to_root = "../";
+            var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "navy" : "light";
+        </script>
+
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script type="text/javascript">
+            try {
+                var theme = localStorage.getItem('mdbook-theme');
+                var sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script type="text/javascript">
+            var theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            var html = document.querySelector('html');
+            html.classList.remove('no-js')
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add('js');
+        </script>
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script type="text/javascript">
+            var html = document.querySelector('html');
+            var sidebar = 'hidden';
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            }
+            html.classList.remove('sidebar-visible');
+            html.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <div class="sidebar-scrollbox">
+                <ol class="chapter"><li class="chapter-item expanded "><a href="../introduction.html"><strong aria-hidden="true">1.</strong> Introduction</a></li><li class="chapter-item expanded "><a href="../config_introduction.html"><strong aria-hidden="true">2.</strong> Configuration</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../config_ffi.html"><strong aria-hidden="true">2.1.</strong> FFI Options</a></li><li class="chapter-item expanded "><a href="../config_api.html"><strong aria-hidden="true">2.2.</strong> API Options</a></li><li class="chapter-item expanded "><a href="../config_name_override.html"><strong aria-hidden="true">2.3.</strong> Crate name override</a></li></ol></li><li class="chapter-item expanded "><a href="../tutorial/introduction.html"><strong aria-hidden="true">3.</strong> Tutorial</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../tutorial/sys_library.html"><strong aria-hidden="true">3.1.</strong> Generating the FFI library</a></li><li class="chapter-item expanded "><a href="../tutorial/high_level_rust_api.html" class="active"><strong aria-hidden="true">3.2.</strong> Generating the Rust API</a></li><li class="chapter-item expanded "><a href="../tutorial/handling_errors.html"><strong aria-hidden="true">3.3.</strong> Handling generation errors</a></li></ol></li><li class="chapter-item expanded "><a href="../generate_docs.html"><strong aria-hidden="true">4.</strong> Generating documentation</a></li></ol>            </div>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky bordered">
+                    <div class="left-buttons">
+                        <button id="sidebar-toggle" class="icon-button" type="button" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </button>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light (default)</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                                                <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                                            </div>
+
+                    <h1 class="menu-title">Generate Rust bindings for GIR based libraries</h1>
+
+                    <div class="right-buttons">
+                                                <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                                                                        
+                    </div>
+                </div>
+
+                                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+                
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script type="text/javascript">
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="generating-the-rust-api"><a class="header" href="#generating-the-rust-api">Generating the Rust API</a></h1>
+<p>Time to go back to the &quot;global&quot; sourceview folder:</p>
+<pre><code class="language-bash">&gt; cd ..
+</code></pre>
+<p>As you certainly guessed, we'll need a new <code>Gir.toml</code> file. Let's write it:</p>
+<pre><code class="language-toml">[options]
+girs_dir = &quot;../gir-files&quot;
+library = &quot;GtkSource&quot;
+version = &quot;3.0&quot;
+min_cfg_version = &quot;3.0&quot;
+target_path = &quot;.&quot;
+work_mode = &quot;normal&quot;
+generate_safety_asserts = true
+deprecate_by_min_version = true
+single_version_file = true
+
+generate = []
+</code></pre>
+<p>A few new things in here. Let's take a look at them:</p>
+<ul>
+<li><code>work_mode</code> value is now set to <code>normal</code>, it means it'll generate the high-level Rust api instead of the sys-level.</li>
+<li><code>generate_safety_asserts</code> is used to generates checks to ensure that, or any other kind of initialization needed before being able to use the library.</li>
+<li><code>deprecate_by_min_version</code> is used to generate a <a href="https://doc.rust-lang.org/edition-guide/rust-2018/the-compiler/an-attribute-for-deprecation.html">Rust &quot;#[deprecated]&quot;</a> attribute based on the deprecation information provided by the <code>.gir</code> file.</li>
+<li><code>single_version_file</code> is a very useful option when you have a lot of generated files (like we'll have). Instead of generating the gir hash commit used for the generation in the header of all generated files, it'll just write it inside one file, removing <code>git diff</code> noise <strong>a lot</strong>.</li>
+<li><code>generate = []</code>: this line currently does nothing. We say to <a href="https://github.com/gtk-rs/gir">gir</a> to generate nothing. We'll fulfill it later on.</li>
+</ul>
+<p>Let's make a first generation of our high-level Rust API!</p>
+<pre><code class="language-bash">&gt; gir
+</code></pre>
+<p>Now if you take a look around, you'll see a new &quot;auto&quot; folder inside &quot;src&quot;. Doesn't contain much though. Which makes sense since we're generating nothing. Time to introduce you to a whole new <a href="https://github.com/gtk-rs/gir">gir</a> mode: <code>not_bound</code>. Let's give it a try:</p>
+<pre><code class="language-bash">&gt; gir -m not_bound
+[NOT GENERATED] GtkSource.Buffer
+[NOT GENERATED PARENT] Gtk.TextBuffer
+[NOT GENERATED] GtkSource.Language
+[NOT GENERATED] GtkSource.Mark
+[NOT GENERATED PARENT] Gtk.TextMark
+[NOT GENERATED] GtkSource.StyleScheme
+[NOT GENERATED] GtkSource.UndoManager
+[NOT GENERATED] GtkSource.SortFlags
+[NOT GENERATED] GtkSource.Completion
+[NOT GENERATED PARENT] Gtk.Buildable
+[NOT GENERATED] GtkSource.CompletionProvider
+[NOT GENERATED] GtkSource.CompletionContext
+[NOT GENERATED PARENT] GObject.InitiallyUnowned
+[NOT GENERATED] GtkSource.CompletionInfo
+[NOT GENERATED PARENT] Gtk.Window
+[NOT GENERATED PARENT] Gtk.Bin
+[NOT GENERATED PARENT] Gtk.Container
+[NOT GENERATED PARENT] Gtk.Widget
+[NOT GENERATED PARENT] Atk.ImplementorIface
+[NOT GENERATED] GtkSource.View
+[NOT GENERATED PARENT] Gtk.TextView
+[NOT GENERATED PARENT] Gtk.Scrollable
+[NOT GENERATED] GtkSource.CompletionActivation
+[NOT GENERATED] GtkSource.CompletionProposal
+[NOT GENERATED] GtkSource.CompletionError
+[NOT GENERATED] GtkSource.CompletionItem
+[NOT GENERATED PARENT] GtkSource.CompletionProposal
+[NOT GENERATED] GtkSource.CompletionWords
+[NOT GENERATED PARENT] GtkSource.CompletionProvider
+[NOT GENERATED] GtkSource.DrawSpacesFlags (deprecated in 3.24)
+[NOT GENERATED] GtkSource.Encoding
+[NOT GENERATED] GtkSource.File
+[NOT GENERATED] GtkSource.MountOperationFactory
+[NOT GENERATED] GtkSource.FileLoader
+[NOT GENERATED] GtkSource.FileLoaderError
+[NOT GENERATED] GtkSource.FileSaver
+[NOT GENERATED] GtkSource.FileSaverFlags
+[NOT GENERATED] GtkSource.FileSaverError
+[NOT GENERATED] GtkSource.Gutter
+[NOT GENERATED] GtkSource.GutterRenderer
+[NOT GENERATED] GtkSource.GutterRendererState
+[NOT GENERATED] GtkSource.GutterRendererAlignmentMode
+[NOT GENERATED] GtkSource.GutterRendererPixbuf
+[NOT GENERATED PARENT] GtkSource.GutterRenderer
+[NOT GENERATED] GtkSource.GutterRendererText
+[NOT GENERATED] GtkSource.LanguageManager
+[NOT GENERATED] GtkSource.Map
+[NOT GENERATED PARENT] GtkSource.View
+[NOT GENERATED] GtkSource.MarkAttributes
+[NOT GENERATED] GtkSource.PrintCompositor
+[NOT GENERATED] GtkSource.Region
+[NOT GENERATED] GtkSource.RegionIter
+[NOT GENERATED] GtkSource.SearchContext
+[NOT GENERATED] GtkSource.SearchSettings
+[NOT GENERATED] GtkSource.Style
+[NOT GENERATED] GtkSource.SpaceDrawer
+[NOT GENERATED] GtkSource.SpaceTypeFlags
+[NOT GENERATED] GtkSource.SpaceLocationFlags
+[NOT GENERATED] GtkSource.StyleSchemeChooser
+[NOT GENERATED] GtkSource.StyleSchemeChooserButton
+[NOT GENERATED PARENT] Gtk.Button
+[NOT GENERATED PARENT] Gtk.Actionable
+[NOT GENERATED PARENT] Gtk.Activatable
+[NOT GENERATED PARENT] GtkSource.StyleSchemeChooser
+[NOT GENERATED] GtkSource.StyleSchemeChooserInterface
+[NOT GENERATED] GtkSource.StyleSchemeChooserWidget
+[NOT GENERATED] GtkSource.StyleSchemeManager
+[NOT GENERATED] GtkSource.Tag
+[NOT GENERATED PARENT] Gtk.TextTag
+[NOT GENERATED] GtkSource.ViewGutterPosition
+</code></pre>
+<p>We now have the list of all the non-yet generated items. Quite convenient! You can also see that we have two kinds of not generated items:</p>
+<ul>
+<li><code>[NOT GENERATED]</code></li>
+<li><code>[NOT GENERATED PARENT]</code></li>
+</ul>
+<p><code>[NOT GENERATED PARENT]</code> means that this object lives in a dependency of the current library. We'll come back on how to add them a bit later.</p>
+<p>Let's start by generating one type. Let's update the &quot;generate&quot; array as follows:</p>
+<pre><code class="language-toml">generate = [
+    &quot;GtkSource.Language&quot;,
+]
+</code></pre>
+<p>Another <code>gir</code> run:</p>
+<pre><code class="language-bash">&gt; gir
+</code></pre>
+<p>(Again, if you do it on another library and it fails and you can't figure out why, don't hesitate to reach us!)</p>
+<p>We now have a <code>src/auto/language.rs</code> file. We need to include all <code>auto</code> files in our library. To do so, let's update the <code>src/lib.rs</code> file as follows:</p>
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>pub use auto::*;
+
+mod auto;
+<span class="boring">}
+</span></code></pre></pre>
+<p>Let's compile:</p>
+<pre><code class="language-bash">&gt; cargo build
+</code></pre>
+<p>It completely failed with a lot of errors. Yeay!</p>
+<p>You guessed it, we need to add a few dependencies to make it work. A lot of those errors were about the fact that the <code>Language</code> type didn't exist. Which is weird since we generated it, right? Well, if you take a look at the <code>src/auto/language.rs</code> file, you'll see this at the top:</p>
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>glib_wrapper! {
+    pub struct Language(Object&lt;gtk_source_sys::GtkSourceLanguage, gtk_source_sys::GtkSourceLanguageClass, LanguageClass&gt;);
+
+    match fn {
+        get_type =&gt; || gtk_source_sys::gtk_source_language_get_type(),
+    }
+}
+<span class="boring">}
+</span></code></pre></pre>
+<p>This macro comes from the <code>glib</code> crate. We didn't import it, therefore the Rust compiler can't find it. We'll also need its <code>sys</code> part (the case of <code>glib</code> is a bit special).</p>
+<p>Another issue that will arise is that we didn't import the <code>sourceview-sys</code> crate either. Alongside those two (three if we count <code>glib-sys</code>!), we'll need both <code>libc</code> and <code>bitflags</code>. Let's fix all of those issues at once! For that, we need to update the <code>Cargo.toml</code>:</p>
+<pre><code class="language-toml">[package]
+name = &quot;sourceview&quot;
+version = &quot;0.1.0&quot;
+authors = [&quot;Guillaume Gomez &lt;guillaume1.gomez@gmail.com&gt;&quot;]
+
+[dependencies]
+libc = &quot;0.2&quot;
+bitflags = &quot;1.0&quot;
+
+[dependencies.gtk-source-sys]
+path = &quot;./sourceview-sys&quot;
+
+[dependencies.glib]
+git = &quot;https://github.com/gtk-rs/glib&quot;
+
+[dependencies.glib-sys]
+git = &quot;https://github.com/gtk-rs/sys&quot; # all gtk-rs sys crates are in the sys repository
+</code></pre>
+<p>And to import those crates into <code>src/lib.rs</code>:</p>
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[macro_use]
+extern crate glib;
+extern crate glib_sys;
+extern crate gtk_source_sys;
+
+extern crate libc;
+#[macro_use]
+extern crate bitflags;
+
+pub use auto::*;
+
+mod auto;
+<span class="boring">}
+</span></code></pre></pre>
+<p>Let's try to rebuild:</p>
+<pre><code class="language-bash">&gt; cargo build
+</code></pre>
+<p>It worked! We have generated the <code>Language</code> item! I'll let you take a look at the <code>src/auto/language.rs</code> file, then we can continue.</p>
+<p>Again, if you encounter any issue at this stage (if the generated code is invalid for example), don't hesitate to reach us so we can give you a hand!</p>
+<p>We'll now generate the <code>GtkSource.Region</code> type. Why this one? Well, I don't want to spoil the surprise so just wait for a bit!</p>
+<p>First, we need to add it into the types to generate into our <code>Gir.toml</code> file:</p>
+<pre><code class="language-toml">generate = [
+    &quot;GtkSource.Language&quot;,
+    &quot;GtkSource.Region&quot;,
+]
+</code></pre>
+<p>We regenerate:</p>
+<pre><code class="language-bash">&gt; gir
+</code></pre>
+<p>We rebuild:</p>
+<pre><code class="language-bash">&gt; cargo build
+</code></pre>
+<p>Everything works, yeay! Now if we take a look at our newly generated <code>src/auto/region.rs</code>, we'll see code like this:</p>
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>//#[cfg(any(feature = &quot;v3_22&quot;, feature = &quot;dox&quot;))]
+//fn add_subregion(&amp;self, _start: /*Ignored*/&amp;gtk::TextIter, _end: /*Ignored*/&amp;gtk::TextIter);
+
+//#[cfg(any(feature = &quot;v3_22&quot;, feature = &quot;dox&quot;))]
+//fn get_buffer(&amp;self) -&gt; /*Ignored*/Option&lt;gtk::TextBuffer&gt;;
+<span class="boring">}
+</span></code></pre></pre>
+<p>Some functions are commented. Why so? The reason is simple: we need to tell to <code>gir</code> that those types have been generated and that it can generate code using them. We can do it by adding the type into the &quot;manual&quot; list. To put it simply, when <a href="https://github.com/gtk-rs/gir">gir</a> sees an item into this &quot;manual&quot; list, it means to it &quot;this type has been generated somewhere else, you can use it just like the others&quot;.</p>
+<p>Let's update our <code>Gir.toml</code> file once again:</p>
+<pre><code class="language-toml">generate = [
+    &quot;GtkSource.Language&quot;,
+    &quot;GtkSource.Region&quot;,
+]
+
+manual = [
+    &quot;Gtk.TextIter&quot;,
+    &quot;Gtk.TextBuffer&quot;,
+]
+</code></pre>
+<p>We'll also need to import the <code>gtk</code> crate. Let's add it into our <code>Cargo.toml</code> file:</p>
+<pre><code class="language-toml">[dependencies.gtk]
+git = &quot;https://github.com/gtk-rs/gtk&quot;
+</code></pre>
+<p>And import it into our <code>src/lib.rs</code>:</p>
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>extern crate gtk;
+<span class="boring">}
+</span></code></pre></pre>
+<p>We regenerate and rebuild:</p>
+<pre><code class="language-bash">&gt; gir
+&gt; cargo build
+</code></pre>
+<p>Everything is working, yeay! If you take another look at <code>src/auto/region.rs</code>, you'll see a lot less commented functions. Amongst the remaining ones, you'll see this one:</p>
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>//#[cfg(any(feature = &quot;v3_22&quot;, feature = &quot;dox&quot;))]
+//fn get_start_region_iter(&amp;self, iter: /*Ignored*/RegionIter);
+<span class="boring">}
+</span></code></pre></pre>
+<p>If a type name isn't prepend by <code>[crate_name]::</code>, then it means it comes from the current crate. To add it, just put it into the &quot;generate&quot; list of <code>Gir.toml</code>.</p>
+<p>At this point, you should have almost everything you need. There is just one last case we need to talk about.</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                                                    <a rel="prev" href="../tutorial/sys_library.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+                        
+                                                    <a rel="next" href="../tutorial/handling_errors.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+                        
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                                    <a rel="prev" href="../tutorial/sys_library.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+                
+                                    <a rel="next" href="../tutorial/handling_errors.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+                            </nav>
+
+        </div>
+
+        
+        
+        
+                <script type="text/javascript">
+            window.playground_copyable = true;
+        </script>
+        
+        
+                <script src="../elasticlunr.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../mark.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../searcher.js" type="text/javascript" charset="utf-8"></script>
+        
+        <script src="../clipboard.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../highlight.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../book.js" type="text/javascript" charset="utf-8"></script>
+
+        <!-- Custom JS scripts -->
+        
+        
+    </body>
+</html>
