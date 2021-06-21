@@ -1263,9 +1263,11 @@ fn c_type_mem_mode_lib(
                 use crate::library::Type::*;
                 let type_ = env.library.type_(typ);
                 match type_ {
-                    Fundamental(library::Fundamental::Utf8)
-                    | Fundamental(library::Fundamental::OsString)
-                    | Fundamental(library::Fundamental::Filename) => {
+                    Fundamental(
+                        library::Fundamental::Utf8
+                        | library::Fundamental::OsString
+                        | library::Fundamental::Filename,
+                    ) => {
                         if transfer == library::Transfer::Full {
                             NullMutPtr
                         } else {
@@ -1300,9 +1302,11 @@ fn type_mem_mode(env: &Env, parameter: &library::Parameter) -> Chunk {
                 use crate::library::Type::*;
                 let type_ = env.library.type_(parameter.typ);
                 match type_ {
-                    Fundamental(library::Fundamental::Utf8)
-                    | Fundamental(library::Fundamental::OsString)
-                    | Fundamental(library::Fundamental::Filename) => {
+                    Fundamental(
+                        library::Fundamental::Utf8
+                        | library::Fundamental::OsString
+                        | library::Fundamental::Filename,
+                    ) => {
                         if parameter.transfer == library::Transfer::Full {
                             Chunk::NullMutPtr
                         } else {

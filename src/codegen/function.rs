@@ -248,7 +248,7 @@ pub fn bounds(
         .iter()
         .filter(|bound| skip.contains(&bound.alias))
         .filter_map(|bound| match bound.bound_type {
-            IsA(Some(lifetime)) | AsRef(Some(lifetime)) => Some(lifetime),
+            IsA(lifetime) | AsRef(lifetime) => lifetime,
             _ => None,
         })
         .collect::<Vec<_>>();

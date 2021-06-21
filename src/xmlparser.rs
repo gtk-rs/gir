@@ -214,7 +214,7 @@ impl<'a> XmlParser<'a> {
         loop {
             match self.parser.next() {
                 // Ignore whitespace and comments by default.
-                Ok(XmlEvent::Whitespace(..)) | Ok(XmlEvent::Comment(..)) => continue,
+                Ok(XmlEvent::Whitespace(..) | XmlEvent::Comment(..)) => continue,
                 Ok(event) => return Ok(event),
                 Err(e) => return Err(self.error_emitter.emit_error(&e)),
             }

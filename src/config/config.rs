@@ -26,7 +26,7 @@ fn normalize_path(path: impl AsRef<Path>) -> PathBuf {
     for component in path.as_ref().components() {
         match (component, parts.last()) {
             (Component::CurDir, _) | (Component::ParentDir, Some(Component::RootDir)) => {}
-            (Component::ParentDir, None) | (Component::ParentDir, Some(Component::ParentDir)) => {
+            (Component::ParentDir, None | Some(Component::ParentDir)) => {
                 parts.push(Component::ParentDir)
             }
             (Component::ParentDir, Some(_)) => {

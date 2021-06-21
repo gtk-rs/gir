@@ -134,8 +134,7 @@ impl IsIncomplete for Function {
         self.parameters.iter().any(|p| {
             matches!(
                 lib.type_(p.typ),
-                Type::Fundamental(Fundamental::Unsupported)
-                    | Type::Fundamental(Fundamental::VarArgs)
+                Type::Fundamental(Fundamental::Unsupported | Fundamental::VarArgs)
             )
         })
     }
