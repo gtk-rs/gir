@@ -31,7 +31,11 @@ impl TrampolineFromGlib for Transformation {
                 }
 
                 if !nullable {
-                    left = format!("&{}", left);
+                    left = format!(
+                        "{}{}",
+                        if need_downcast && is_borrow { "" } else { "&" },
+                        left
+                    );
                 } else if nullable && is_borrow {
                     if is_gstring(&type_name) {
                         right = format!("{}.as_ref().as_deref()", right);
