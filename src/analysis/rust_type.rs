@@ -272,7 +272,7 @@ impl<'env> RustTypeBuilder<'env> {
                         if self.ref_mode.is_ref() {
                             ok("str")
                         } else {
-                            ok_and_use(&use_glib_type(&self.env, "GString"))
+                            ok_and_use(&use_glib_type(self.env, "GString"))
                         }
                     }
                     Filename => {
@@ -298,7 +298,7 @@ impl<'env> RustTypeBuilder<'env> {
             }
             Alias(ref alias) => {
                 RustType::try_new_and_use(self.env, self.type_id).and_then(|alias_rust_type| {
-                    RustType::builder(&self.env, alias.typ)
+                    RustType::builder(self.env, alias.typ)
                         .direction(self.direction)
                         .nullable(self.nullable)
                         .ref_mode(self.ref_mode)
@@ -338,7 +338,7 @@ impl<'env> RustTypeBuilder<'env> {
                     Class(..) | Interface(..) => RefMode::None,
                     _ => self.ref_mode,
                 };
-                RustType::builder(&self.env, inner_tid)
+                RustType::builder(self.env, inner_tid)
                     .ref_mode(inner_ref_mode)
                     .scope(self.scope)
                     .concurrency(self.concurrency)
@@ -390,7 +390,7 @@ impl<'env> RustTypeBuilder<'env> {
                 }
             }
             Custom(library::Custom { ref name, .. }) => {
-                RustType::try_new_and_use_with_name(&self.env, self.type_id, name)
+                RustType::try_new_and_use_with_name(self.env, self.type_id, name)
             }
             Function(ref f) => {
                 let concurrency = match self.concurrency {
@@ -408,7 +408,7 @@ impl<'env> RustTypeBuilder<'env> {
                     // FIXME need to use the result from use_glib_type(&self.env, "Error")?
                     return Ok(format!(
                         "FnOnce(Result<(), {}>) + 'static",
-                        use_glib_type(&self.env, "Error"),
+                        use_glib_type(self.env, "Error"),
                     )
                     .into());
                 } else if full_name == "GLib.DestroyNotify" {
@@ -421,14 +421,14 @@ impl<'env> RustTypeBuilder<'env> {
                         continue;
                     }
 
-                    let p_res = RustType::builder(&self.env, p.typ)
+                    let p_res = RustType::builder(self.env, p.typ)
                         .direction(p.direction)
                         .nullable(p.nullable)
                         .try_build();
                     match p_res {
                         Ok(p_rust_type) => {
-                            let is_fundamental = p.typ.is_fundamental_type(&self.env);
-                            let y = RustType::try_new(&self.env, p.typ)
+                            let is_fundamental = p.typ.is_fundamental_type(self.env);
+                            let y = RustType::try_new(self.env, p.typ)
                                 .unwrap_or_else(|_| RustType::default());
                             params.push(format!(
                                 "{}{}",
@@ -463,19 +463,19 @@ impl<'env> RustTypeBuilder<'env> {
                 } else {
                     "Fn"
                 };
-                let ret_res = RustType::builder(&self.env, f.ret.typ)
+                let ret_res = RustType::builder(self.env, f.ret.typ)
                     .direction(f.ret.direction)
                     .nullable(f.ret.nullable)
                     .try_build();
                 let ret = match ret_res {
                     Ok(ret_rust_type) => {
-                        let y = RustType::try_new(&self.env, f.ret.typ)
+                        let y = RustType::try_new(self.env, f.ret.typ)
                             .unwrap_or_else(|_| RustType::default());
                         format!(
                             "{}({}) -> {}{}",
                             closure_kind,
                             params.join(", "),
-                            if !is_gstring(&y.as_str()) {
+                            if !is_gstring(y.as_str()) {
                                 ret_rust_type.as_str()
                             } else if *f.ret.nullable {
                                 "Option<String>"
@@ -526,7 +526,7 @@ impl<'env> RustTypeBuilder<'env> {
 
         match self
             .try_from_glib
-            .or_type_defaults(&self.env, self.type_id)
+            .or_type_defaults(self.env, self.type_id)
             .borrow()
         {
             TryFromGlib::Option => {
@@ -570,7 +570,7 @@ impl<'env> RustTypeBuilder<'env> {
         }
 
         if *self.nullable && !skip_option {
-            match ConversionType::of(&self.env, self.type_id) {
+            match ConversionType::of(self.env, self.type_id) {
                 ConversionType::Pointer | ConversionType::Scalar => {
                     rust_type = rust_type.map_any(|rust_type| {
                         rust_type.alter_type(|typ_| format!("Option<{}>", typ_))
@@ -591,7 +591,7 @@ impl<'env> RustTypeBuilder<'env> {
             panic!("undefined direction for parameter with type {:?}", type_);
         }
 
-        let rust_type = RustType::builder(&self.env, self.type_id)
+        let rust_type = RustType::builder(self.env, self.type_id)
             .direction(self.direction)
             .nullable(self.nullable)
             .ref_mode(self.ref_mode)
@@ -614,7 +614,7 @@ impl<'env> RustTypeBuilder<'env> {
 
             Alias(alias) => rust_type
                 .and_then(|rust_type| {
-                    RustType::builder(&self.env, alias.typ)
+                    RustType::builder(self.env, alias.typ)
                         .direction(self.direction)
                         .nullable(self.nullable)
                         .ref_mode(self.ref_mode)

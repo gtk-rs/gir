@@ -295,7 +295,7 @@ pub fn define_boxed_type(
                 free_fn,
                 init_function_expression,
                 clear_function_expression,
-                Some(&get_type_fn),
+                Some(get_type_fn),
                 derive,
             )?;
 
@@ -323,7 +323,7 @@ pub fn define_boxed_type(
                 free_fn,
                 init_function_expression,
                 clear_function_expression,
-                Some(&get_type_fn),
+                Some(get_type_fn),
                 derive,
             )?;
         }
@@ -454,7 +454,7 @@ pub fn define_shared_type(
                 glib_name,
                 ref_fn,
                 unref_fn,
-                Some(&get_type_fn),
+                Some(get_type_fn),
                 derive,
             )?;
 
@@ -471,7 +471,7 @@ pub fn define_shared_type(
                 glib_name,
                 ref_fn,
                 unref_fn,
-                Some(&get_type_fn),
+                Some(get_type_fn),
                 derive,
             )?;
         }

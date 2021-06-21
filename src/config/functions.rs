@@ -542,16 +542,16 @@ const = true
         let pars = f.parameters;
         assert_eq!(pars.len(), 4);
         assert_eq!(pars[0].ident, Ident::Name("par1".into()));
-        assert_eq!(pars[0].constant, false);
+        assert!(!pars[0].constant);
         assert_eq!(pars[0].nullable, None);
         assert_eq!(pars[1].ident, Ident::Name("par2".into()));
-        assert_eq!(pars[1].constant, false);
+        assert!(!pars[1].constant);
         assert_eq!(pars[1].nullable, Some(Nullable(false)));
         assert_eq!(pars[2].ident, Ident::Name("par3".into()));
-        assert_eq!(pars[2].constant, true);
+        assert!(pars[2].constant);
         assert_eq!(pars[2].nullable, Some(Nullable(true)));
         assert!(matches!(pars[3].ident, Ident::Pattern(_)));
-        assert_eq!(pars[3].constant, true);
+        assert!(pars[3].constant);
         assert_eq!(pars[3].nullable, None);
     }
 

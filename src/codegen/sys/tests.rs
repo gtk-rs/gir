@@ -174,7 +174,7 @@ fn prepare_cconsts(env: &Env) -> Vec<CConstant> {
             }
         }
 
-        strip_cast(a).cmp(&strip_cast(b))
+        strip_cast(a).cmp(strip_cast(b))
     });
     constants
 }

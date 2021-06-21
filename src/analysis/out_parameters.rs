@@ -76,7 +76,7 @@ pub fn analyze(
         if lib_par.direction != ParameterDirection::Out {
             continue;
         }
-        if can_as_return(env, &lib_par) {
+        if can_as_return(env, lib_par) {
             let mut lib_par = lib_par.clone();
             lib_par.name = nameutil::mangle_keywords(&lib_par.name).into_owned();
             let configured_parameters = configured_functions.matched_parameters(&lib_par.name);
@@ -103,7 +103,7 @@ pub fn analyze(
         info.mode = Mode::None;
     }
     if info.mode == Mode::Combined || info.mode == Mode::Throws(true) {
-        let mut ret = analysis::Parameter::from_return_value(env, &func.ret, &configured_functions);
+        let mut ret = analysis::Parameter::from_return_value(env, &func.ret, configured_functions);
 
         //TODO: fully switch to use analyzed returns (it add too many Return<Option<>>)
         if let Some(ref par) = func_ret.parameter {

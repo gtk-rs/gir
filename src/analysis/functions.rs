@@ -240,7 +240,7 @@ fn fixup_gpointer_parameter(
     let instance_parameter = idx == 0;
 
     let glib_name = env.library.type_(type_tid).get_glib_name().unwrap();
-    let ffi_name = ffi_type::ffi_type(env, type_tid, &glib_name).unwrap();
+    let ffi_name = ffi_type::ffi_type(env, type_tid, glib_name).unwrap();
     let pointer_type = if is_boxed { "*const" } else { "*mut" };
     parameters.rust_parameters[idx].typ = type_tid;
     parameters.c_parameters[idx].typ = type_tid;
@@ -343,7 +343,7 @@ fn analyze_callbacks(
         }
 
         let func_name = match &func.c_identifier {
-            Some(n) => &n,
+            Some(n) => n,
             None => &func.name,
         };
         let mut destructors_to_update = Vec::new();
@@ -392,12 +392,12 @@ fn analyze_callbacks(
                         func_name,
                         type_tid,
                         env,
-                        &par,
+                        par,
                         &callback_info,
                         commented,
                         imports,
                         &c_parameters,
-                        &rust_type,
+                        rust_type,
                     ) {
                         if let Some(destroy_index) = destroy_index {
                             let user_data = cross_user_data_check
@@ -424,12 +424,12 @@ fn analyze_callbacks(
                     func_name,
                     type_tid,
                     env,
-                    &par,
+                    par,
                     &callback_info,
                     commented,
                     imports,
                     &c_parameters,
-                    &rust_type,
+                    rust_type,
                 ) {
                     // We just assume that for API "cleaness", the destroy callback will always
                     // be |-> *after* <-| the initial callback.
@@ -446,7 +446,7 @@ fn analyze_callbacks(
                     }
                     // We check if the user trampoline is there. If so, we change the destroy
                     // nullable value if needed.
-                    if !find_callback_bound_to_destructor(&callbacks, &mut callback, pos) {
+                    if !find_callback_bound_to_destructor(callbacks, &mut callback, pos) {
                         // Maybe the linked callback is after so we store it just in case...
                         destructors_to_update.push((pos, destroys.len()));
                     }
@@ -466,7 +466,7 @@ fn analyze_callbacks(
         }
         for (destroy_index, pos_in_destroys) in destructors_to_update {
             if !find_callback_bound_to_destructor(
-                &callbacks,
+                callbacks,
                 &mut destroys[pos_in_destroys],
                 destroy_index,
             ) {
@@ -513,7 +513,7 @@ fn analyze_callbacks(
         }
         *parameters = function_parameters::analyze(
             env,
-            &params,
+            params,
             configured_functions,
             disable_length_detect,
             false,
@@ -957,7 +957,7 @@ fn analyze_async(
                 ffi_ret = Some(analysis::Parameter::from_return_value(
                     env,
                     &function.ret,
-                    &configured_functions,
+                    configured_functions,
                 ));
             }
 
@@ -1019,7 +1019,7 @@ fn analyze_async(
                 name: format!("{}_future", codegen_name),
                 success_parameters,
                 error_parameters,
-                assertion: match SafetyAssertionMode::of(env, is_method, &parameters) {
+                assertion: match SafetyAssertionMode::of(env, is_method, parameters) {
                     SafetyAssertionMode::None => SafetyAssertionMode::None,
                     // "_future" functions calls the "async" one which has the init check, so no
                     // need to do it twice.

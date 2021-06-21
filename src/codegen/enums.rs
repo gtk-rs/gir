@@ -112,7 +112,7 @@ fn generate_enum(
     }
 
     if let Some(ref d) = config.derives {
-        derives(w, &d, 1)?;
+        derives(w, d, 1)?;
     } else {
         writeln!(w, "#[derive(Debug, Eq, PartialEq, Ord, PartialOrd, Hash)]")?;
     }
