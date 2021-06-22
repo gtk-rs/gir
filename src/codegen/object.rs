@@ -207,6 +207,7 @@ fn generate_builder(w: &mut dyn Write, env: &Env, analysis: &analysis::object::I
         w,
         "// rustdoc-stripper-ignore-next
         /// A [builder-pattern] type to construct [`{}`] objects.
+        ///
         /// [builder-pattern]: https://doc.rust-lang.org/1.0.0/style/ownership/builders.html",
         analysis.name,
     )?;
