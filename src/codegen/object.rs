@@ -56,9 +56,9 @@ pub fn generate(
                 w,
                 "
             // rustdoc-stripper-ignore-next
-            /// Creates a new builder-style object to construct a [`{name}`].
+            /// Creates a new builder-pattern struct instance to construct [`{name}`] objects.
             ///
-            /// This method returns an instance of [`{builder_name}`] which can be used to create a [`{name}`].
+            /// This method returns an instance of [`{builder_name}`] which can be used to create [`{name}`] objects.
             pub fn builder() -> {builder_name} {{
                 {builder_name}::default()
             }}
@@ -206,7 +206,8 @@ fn generate_builder(w: &mut dyn Write, env: &Env, analysis: &analysis::object::I
     writeln!(
         w,
         "// rustdoc-stripper-ignore-next
-        /// A builder for generating a [`{}`].",
+        /// A [builder-pattern] type to construct [`{}`] objects.
+        /// [builder-pattern]: https://doc.rust-lang.org/1.0.0/style/ownership/builders.html",
         analysis.name,
     )?;
     writeln!(w, "pub struct {}Builder {{", analysis.name)?;
