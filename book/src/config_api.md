@@ -122,7 +122,7 @@ trust_return_value_nullability = false
     # prefixed function with #[doc(hidden)]
     doc_hidden = true
     # define a list of function parameters to be ignored when the documentation is generated
-    doc_ignore_parameters = ["some_user_data_param"] 
+    doc_ignore_parameters = ["some_user_data_param"]
     # disable length_of autodetection
     disable_length_detect = true
     # write function docs to trait other than default "xxxExt",
@@ -473,8 +473,8 @@ must_use = true
 
 To generate the Rust-user API level, The command is very similar to the previous one. It's better to not put this output in the same directory as where the FFI files are. Just run:
 
-```shell
-cargo run --release -- -c YourGirFile.toml -d ../gir-files -o the-output-directory
+```console
+> cargo run --release -- -c YourGirFile.toml -d ../gir-files -o the-output-directory
 ```
 
 Now it should be done. Just go to the output directory (so `the-output-directory/auto` in our case) and try to build using `cargo build`. Don't forget to update your dependencies in both projects: nothing much to do in the FFI/sys one but the Rust-user API level will need to have a dependency over the FFI/sys one.
