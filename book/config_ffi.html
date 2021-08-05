@@ -209,7 +209,7 @@ cfg_condition = &quot;feature = \&quot;egl\&quot;&quot;
 </code></pre>
 <h2 id="generation-in-ffi-mode"><a class="header" href="#generation-in-ffi-mode">Generation in FFI mode</a></h2>
 <p>When you're ready, let's generate the FFI part. In the command we'll execute, <code>../gir-files</code> is where the directory with your <code>.gir</code> files is. (But again, you can just clone the <a href="https://github.com/gtk-rs/gir-files">gir-files repository</a> and add your file(s) in it). Then let's run the command:</p>
-<pre><code class="language-shell">cargo run --release -- -c YourSysGirFile.toml -d ../gir-files -m sys -o the-output-directory-sys
+<pre><code class="language-console">&gt; cargo run --release -- -c YourSysGirFile.toml -d ../gir-files -m sys -o the-output-directory-sys
 </code></pre>
 <p>The generated files will be placed in <code>the-output-directory-sys</code>. Just take care about the dependencies and the crate's name generated in the <code>Cargo.toml</code> file (update them if they don't work as expected).</p>
 <p>You now have the sys part of your binding!</p>

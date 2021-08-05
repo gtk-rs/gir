@@ -247,7 +247,7 @@ trust_return_value_nullability = false
     # prefixed function with #[doc(hidden)]
     doc_hidden = true
     # define a list of function parameters to be ignored when the documentation is generated
-    doc_ignore_parameters = [&quot;some_user_data_param&quot;] 
+    doc_ignore_parameters = [&quot;some_user_data_param&quot;]
     # disable length_of autodetection
     disable_length_detect = true
     # write function docs to trait other than default &quot;xxxExt&quot;,
@@ -557,7 +557,7 @@ must_use = true
 </span></code></pre></pre>
 <h2 id="generation-in-api-mode"><a class="header" href="#generation-in-api-mode">Generation in API mode</a></h2>
 <p>To generate the Rust-user API level, The command is very similar to the previous one. It's better to not put this output in the same directory as where the FFI files are. Just run:</p>
-<pre><code class="language-shell">cargo run --release -- -c YourGirFile.toml -d ../gir-files -o the-output-directory
+<pre><code class="language-console">&gt; cargo run --release -- -c YourGirFile.toml -d ../gir-files -o the-output-directory
 </code></pre>
 <p>Now it should be done. Just go to the output directory (so <code>the-output-directory/auto</code> in our case) and try to build using <code>cargo build</code>. Don't forget to update your dependencies in both projects: nothing much to do in the FFI/sys one but the Rust-user API level will need to have a dependency over the FFI/sys one.</p>
 <p>Now, at your crate entry point (generally <code>lib.rs</code>), add the following to include all generated files:</p>
