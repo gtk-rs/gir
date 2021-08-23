@@ -48,7 +48,7 @@ mod tests {
         let input = format!("generate={}", val);
         let table: toml::Value = toml::from_str(&input).unwrap();
         let value = table.lookup("generate").unwrap();
-        PropertyGenerateFlags::parse_flags(&value, "generate")
+        PropertyGenerateFlags::parse_flags(value, "generate")
     }
 
     #[test]
