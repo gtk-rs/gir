@@ -29,7 +29,6 @@ name = "pango_sys"
 
 [package]
 build = "build.rs"
-links = "pango"
 name = "pango-sys"
 version = "0.2.0"
 edition = "2018"

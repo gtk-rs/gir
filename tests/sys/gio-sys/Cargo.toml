@@ -37,7 +37,6 @@ name = "gio_sys"
 
 [package]
 build = "build.rs"
-links = "gio"
 name = "gio-sys"
 version = "0.2.0"
 edition = "2018"

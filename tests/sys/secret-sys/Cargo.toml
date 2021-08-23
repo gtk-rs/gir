@@ -25,7 +25,6 @@ name = "secret_sys"
 
 [package]
 build = "build.rs"
-links = "secret"
 name = "secret-sys"
 version = "0.2.0"
 edition = "2018"

@@ -42,7 +42,6 @@ name = "gdk_sys"
 
 [package]
 build = "build.rs"
-links = "gdk"
 name = "gdk-sys"
 version = "0.2.0"
 edition = "2018"

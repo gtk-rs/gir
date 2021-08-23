@@ -31,7 +31,6 @@ name = "atk_sys"
 
 [package]
 build = "build.rs"
-links = "atk"
 name = "atk-sys"
 version = "0.2.0"
 edition = "2018"
