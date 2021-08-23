@@ -412,12 +412,12 @@ mod tests {
     use crate::{library::Nullable, version::Version};
 
     fn functions_toml(input: &str) -> ::toml::Value {
-        let mut value: ::toml::value::Table = ::toml::from_str(&input).unwrap();
+        let mut value: ::toml::value::Table = ::toml::from_str(input).unwrap();
         value.remove("f").unwrap()
     }
 
     fn toml(input: &str) -> ::toml::Value {
-        let value = ::toml::from_str(&input);
+        let value = ::toml::from_str(input);
         assert!(value.is_ok());
         value.unwrap()
     }
