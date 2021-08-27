@@ -711,6 +711,8 @@ pub fn declare_default_from_new(
             && f.status.need_generate()
             && f.name == "new"
             && f.parameters.rust_parameters.is_empty()
+            // Cannot generate Default implementation for Option<>
+            && f.ret.parameter.as_ref().map_or(false, |x| !*x.lib_par.nullable)
     }) {
         writeln!(w)?;
         version_condition(w, env, func.version, false, 0)?;
