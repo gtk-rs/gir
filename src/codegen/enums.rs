@@ -48,7 +48,7 @@ pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>) {
             if let Some(cfg) = version_condition_string(env, enum_.version, false, 0) {
                 mod_rs.push(cfg);
             }
-            if let Some(cfg) = cfg_condition_string(&config.cfg_condition, false, 0) {
+            if let Some(cfg) = cfg_condition_string(config.cfg_condition.as_ref(), false, 0) {
                 mod_rs.push(cfg);
             }
             mod_rs.push(format!("pub use self::enums::{};", enum_.name));
@@ -106,7 +106,7 @@ fn generate_enum(
 
     cfg_deprecated(w, env, enum_.deprecated_version, false, 0)?;
     version_condition(w, env, enum_.version, false, 0)?;
-    cfg_condition(w, &config.cfg_condition, false, 0)?;
+    cfg_condition(w, config.cfg_condition.as_ref(), false, 0)?;
     if config.must_use {
         writeln!(w, "#[must_use]")?;
     }
@@ -124,7 +124,7 @@ fn generate_enum(
     for member in &members {
         cfg_deprecated(w, env, member.deprecated_version, false, 1)?;
         version_condition(w, env, member.version, false, 1)?;
-        cfg_condition(w, &member.cfg_condition, false, 1)?;
+        cfg_condition(w, member.cfg_condition.as_ref(), false, 1)?;
         // Don't generate a doc_alias if the C name is the same as the Rust one
         if member.c_name != member.name {
             doc_alias(w, &member.c_name, "", 1)?;
@@ -148,7 +148,7 @@ fn generate_enum(
     if !functions.is_empty() {
         writeln!(w)?;
         version_condition(w, env, enum_.version, false, 0)?;
-        cfg_condition_no_doc(w, &config.cfg_condition.as_ref(), false, 0)?;
+        cfg_condition_no_doc(w, config.cfg_condition.as_ref(), false, 0)?;
         write!(w, "impl {} {{", analysis.name)?;
         for func_analysis in functions {
             function::generate(
@@ -173,7 +173,7 @@ fn generate_enum(
         &analysis.specials,
         None,
         None,
-        &config.cfg_condition.as_ref(),
+        config.cfg_condition.as_ref(),
     )?;
 
     writeln!(w)?;
@@ -181,7 +181,7 @@ fn generate_enum(
     if config.generate_display_trait && !analysis.specials.has_trait(Type::Display) {
         // Generate Display trait implementation.
         version_condition(w, env, enum_.version, false, 0)?;
-        cfg_condition_no_doc(w, &config.cfg_condition.as_ref(), false, 0)?;
+        cfg_condition_no_doc(w, config.cfg_condition.as_ref(), false, 0)?;
         writeln!(
             w,
             "impl fmt::Display for {0} {{\n\
@@ -191,7 +191,7 @@ fn generate_enum(
         )?;
         for member in &members {
             version_condition_no_doc(w, env, member.version, false, 3)?;
-            cfg_condition_no_doc(w, &member.cfg_condition, false, 3)?;
+            cfg_condition_no_doc(w, member.cfg_condition.as_ref(), false, 3)?;
             writeln!(w, "\t\t\tSelf::{0} => \"{0}\",", member.name)?;
         }
         writeln!(
@@ -205,7 +205,7 @@ fn generate_enum(
 
     // Generate IntoGlib trait implementation.
     version_condition(w, env, enum_.version, false, 0)?;
-    cfg_condition_no_doc(w, &config.cfg_condition.as_ref(), false, 0)?;
+    cfg_condition_no_doc(w, config.cfg_condition.as_ref(), false, 0)?;
     writeln!(
         w,
         "#[doc(hidden)]
@@ -220,7 +220,7 @@ impl IntoGlib for {name} {{
     )?;
     for member in &members {
         version_condition_no_doc(w, env, member.version, false, 3)?;
-        cfg_condition_no_doc(w, &member.cfg_condition, false, 3)?;
+        cfg_condition_no_doc(w, member.cfg_condition.as_ref(), false, 3)?;
         writeln!(
             w,
             "\t\t\tSelf::{} => {}::{},",
@@ -245,7 +245,7 @@ impl IntoGlib for {name} {{
 
     // Generate FromGlib trait implementation.
     version_condition(w, env, enum_.version, false, 0)?;
-    cfg_condition_no_doc(w, &config.cfg_condition.as_ref(), false, 0)?;
+    cfg_condition_no_doc(w, config.cfg_condition.as_ref(), false, 0)?;
     writeln!(
         w,
         "#[doc(hidden)]
@@ -259,7 +259,7 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
     )?;
     for member in &members {
         version_condition_no_doc(w, env, member.version, false, 3)?;
-        cfg_condition_no_doc(w, &member.cfg_condition, false, 3)?;
+        cfg_condition_no_doc(w, member.cfg_condition.as_ref(), false, 3)?;
         writeln!(
             w,
             "\t\t\t{}::{} => Self::{},",
@@ -281,7 +281,7 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
         let has_failed_member = members.iter().any(|m| m.name == "Failed");
 
         version_condition(w, env, enum_.version, false, 0)?;
-        cfg_condition_no_doc(w, &config.cfg_condition.as_ref(), false, 0)?;
+        cfg_condition_no_doc(w, config.cfg_condition.as_ref(), false, 0)?;
         writeln!(
             w,
             "impl ErrorDomain for {name} {{
@@ -328,7 +328,7 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
 
         for member in &members {
             version_condition_no_doc(w, env, member.version, false, 3)?;
-            cfg_condition_no_doc(w, &member.cfg_condition, false, 3)?;
+            cfg_condition_no_doc(w, member.cfg_condition.as_ref(), false, 3)?;
             writeln!(
                 w,
                 "\t\t\t{}::{} => Some(Self::{}),",
@@ -360,7 +360,7 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
             .flatten();
 
         version_condition(w, env, version, false, 0)?;
-        cfg_condition_no_doc(w, &config.cfg_condition.as_ref(), false, 0)?;
+        cfg_condition_no_doc(w, config.cfg_condition.as_ref(), false, 0)?;
         writeln!(
             w,
             "impl StaticType for {name} {{
@@ -375,7 +375,7 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
         writeln!(w)?;
 
         version_condition(w, env, version, false, 0)?;
-        cfg_condition_no_doc(w, &config.cfg_condition.as_ref(), false, 0)?;
+        cfg_condition_no_doc(w, config.cfg_condition.as_ref(), false, 0)?;
         writeln!(
             w,
             "impl {valuetype} for {name} {{
@@ -387,7 +387,7 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
         writeln!(w)?;
 
         version_condition(w, env, version, false, 0)?;
-        cfg_condition_no_doc(w, &config.cfg_condition.as_ref(), false, 0)?;
+        cfg_condition_no_doc(w, config.cfg_condition.as_ref(), false, 0)?;
         writeln!(
             w,
             "unsafe impl<'a> FromValue<'a> for {name} {{
@@ -406,7 +406,7 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
         writeln!(w)?;
 
         version_condition(w, env, version, false, 0)?;
-        cfg_condition_no_doc(w, &config.cfg_condition.as_ref(), false, 0)?;
+        cfg_condition_no_doc(w, config.cfg_condition.as_ref(), false, 0)?;
         writeln!(
             w,
             "impl ToValue for {name} {{

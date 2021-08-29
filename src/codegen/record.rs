@@ -113,7 +113,7 @@ pub fn generate(w: &mut dyn Write, env: &Env, analysis: &analysis::record::Info)
         &analysis.specials,
         None,
         analysis.version,
-        &None, // There is no need for #[cfg()] since it's applied on the whole file.
+        None, // There is no need for #[cfg()] since it's applied on the whole file.
     )?;
 
     if analysis.concurrency != library::Concurrency::None {
@@ -143,7 +143,7 @@ pub fn generate_reexports(
     module_name: &str,
     contents: &mut Vec<String>,
 ) {
-    let cfg_condition = general::cfg_condition_string(&analysis.cfg_condition, false, 0);
+    let cfg_condition = general::cfg_condition_string(analysis.cfg_condition.as_ref(), false, 0);
     let version_cfg = general::version_condition_string(env, analysis.version, false, 0);
     let mut cfg = String::new();
     if let Some(s) = cfg_condition {

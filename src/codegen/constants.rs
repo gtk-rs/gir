@@ -30,7 +30,7 @@ pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>) {
             let type_ = env.type_(constant.typ);
             if let library::Type::Fundamental(library::Fundamental::Utf8) = type_ {
                 cfg_deprecated(w, env, constant.deprecated_version, false, 0)?;
-                cfg_condition(w, &constant.cfg_condition, false, 0)?;
+                cfg_condition(w, constant.cfg_condition.as_ref(), false, 0)?;
                 version_condition(w, env, constant.version, false, 0)?;
                 doc_alias(w, &constant.glib_name, "", 0)?;
                 writeln!(

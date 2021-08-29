@@ -17,7 +17,7 @@ pub fn generate(
     specials: &Infos,
     trait_name: Option<&str>,
     scope_version: Option<Version>,
-    cfg_condition: &Option<&String>,
+    cfg_condition: Option<&String>,
 ) -> Result<()> {
     for (type_, special_info) in specials.traits().iter() {
         if let Some(info) = lookup(functions, &special_info.glib_name) {
@@ -122,7 +122,7 @@ fn generate_display(
     func: &Info,
     trait_name: Option<&str>,
     scope_version: Option<Version>,
-    cfg_condition: &Option<&String>,
+    cfg_condition: Option<&String>,
 ) -> Result<()> {
     writeln!(w)?;
     let version = Version::if_stricter_than(func.version, scope_version);
@@ -167,7 +167,7 @@ fn generate_hash(
     func: &Info,
     trait_name: Option<&str>,
     scope_version: Option<Version>,
-    cfg_condition: &Option<&String>,
+    cfg_condition: Option<&String>,
 ) -> Result<()> {
     writeln!(w)?;
     let version = Version::if_stricter_than(func.version, scope_version);
@@ -197,7 +197,7 @@ fn generate_eq(
     func: &Info,
     trait_name: Option<&str>,
     scope_version: Option<Version>,
-    cfg_condition: &Option<&String>,
+    cfg_condition: Option<&String>,
 ) -> Result<()> {
     writeln!(w)?;
     let version = Version::if_stricter_than(func.version, scope_version);
@@ -229,7 +229,7 @@ fn generate_eq_compare(
     func: &Info,
     trait_name: Option<&str>,
     scope_version: Option<Version>,
-    cfg_condition: &Option<&String>,
+    cfg_condition: Option<&String>,
 ) -> Result<()> {
     writeln!(w)?;
     let version = Version::if_stricter_than(func.version, scope_version);
@@ -261,7 +261,7 @@ fn generate_ord(
     func: &Info,
     trait_name: Option<&str>,
     scope_version: Option<Version>,
-    cfg_condition: &Option<&String>,
+    cfg_condition: Option<&String>,
 ) -> Result<()> {
     writeln!(w)?;
     let version = Version::if_stricter_than(func.version, scope_version);

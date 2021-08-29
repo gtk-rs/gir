@@ -515,7 +515,7 @@ fn get_c_output(name: &str) -> Result<String, Box<dyn Error>> {
 const RUST_LAYOUTS: &[(&str, Layout)] = &["####
     )?;
     for ctype in ctypes {
-        general::cfg_condition(w, &ctype.cfg_condition, false, 1)?;
+        general::cfg_condition(w, ctype.cfg_condition.as_ref(), false, 1)?;
         writeln!(w, "    (\"{ctype}\", Layout {{size: size_of::<{ctype}>(), alignment: align_of::<{ctype}>()}}),",
                  ctype=ctype.name)?;
     }
