@@ -224,8 +224,8 @@ fn generate_constant_cfg_configure(
 ) -> Result<()> {
     let cfg_condition_ = configured_constants
         .iter()
-        .find_map(|f| f.cfg_condition.clone());
-    cfg_condition(w, &cfg_condition_, commented, 1)?;
+        .find_map(|f| f.cfg_condition.as_ref());
+    cfg_condition(w, cfg_condition_, commented, 1)?;
     Ok(())
 }
 
@@ -476,7 +476,7 @@ fn generate_from_fields(
     fields: &fields::Fields,
     align: Option<u32>,
 ) -> Result<()> {
-    cfg_condition(w, &fields.cfg_condition, false, 0)?;
+    cfg_condition(w, fields.cfg_condition.as_ref(), false, 0)?;
     writeln!(w, "#[repr(C)]")?;
     if let Some(align) = align {
         writeln!(w, "#[repr(align({}))]", align)?;
@@ -513,7 +513,7 @@ fn generate_from_fields(
     }
     writeln!(w)?;
 
-    cfg_condition(w, &fields.cfg_condition, false, 0)?;
+    cfg_condition(w, fields.cfg_condition.as_ref(), false, 0)?;
     writeln!(
         w,
         "impl ::std::fmt::Debug for {name} {{",

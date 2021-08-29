@@ -539,7 +539,7 @@ pub fn version_condition_no_doc(
 ) -> Result<()> {
     match version {
         Some(v) if v > env.config.min_cfg_version => {
-            if let Some(s) = cfg_condition_string_no_doc(&Some(&v.to_cfg()), commented, indent) {
+            if let Some(s) = cfg_condition_string_no_doc(Some(&v.to_cfg()), commented, indent) {
                 writeln!(w, "{}", s)?
             }
         }
@@ -556,7 +556,7 @@ pub fn version_condition_string(
 ) -> Option<String> {
     match version {
         Some(v) if v > env.config.min_cfg_version => {
-            cfg_condition_string(&Some(v.to_cfg()), commented, indent)
+            cfg_condition_string(Some(&v.to_cfg()), commented, indent)
         }
         _ => None,
     }
@@ -569,7 +569,7 @@ pub fn not_version_condition(
     indent: usize,
 ) -> Result<()> {
     if let Some(s) = version.and_then(|v| {
-        cfg_condition_string(&Some(format!("not({})", v.to_cfg())), commented, indent)
+        cfg_condition_string(Some(&format!("not({})", v.to_cfg())), commented, indent)
     }) {
         writeln!(w, "{}", s)?;
     }
@@ -595,9 +595,9 @@ pub fn not_version_condition_no_dox(
     Ok(())
 }
 
-pub fn cfg_condition<S: AsRef<str> + Display>(
+pub fn cfg_condition(
     w: &mut dyn Write,
-    cfg_condition: &Option<S>,
+    cfg_condition: Option<&impl Display>,
     commented: bool,
     indent: usize,
 ) -> Result<()> {
@@ -609,7 +609,7 @@ pub fn cfg_condition<S: AsRef<str> + Display>(
 
 pub fn cfg_condition_no_doc(
     w: &mut dyn Write,
-    cfg_condition: &Option<&String>,
+    cfg_condition: Option<&impl Display>,
     commented: bool,
     indent: usize,
 ) -> Result<()> {
@@ -620,7 +620,7 @@ pub fn cfg_condition_no_doc(
 }
 
 pub fn cfg_condition_string_no_doc(
-    cfg_condition: &Option<&String>,
+    cfg_condition: Option<&impl Display>,
     commented: bool,
     indent: usize,
 ) -> Option<String> {
@@ -635,8 +635,8 @@ pub fn cfg_condition_string_no_doc(
     })
 }
 
-pub fn cfg_condition_string<S: AsRef<str> + Display>(
-    cfg_condition: &Option<S>,
+pub fn cfg_condition_string(
+    cfg_condition: Option<&impl Display>,
     commented: bool,
     indent: usize,
 ) -> Option<String> {
