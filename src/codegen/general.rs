@@ -547,6 +547,23 @@ pub fn version_condition_no_doc(
     }
     Ok(())
 }
+pub fn version_condition_doc(
+    w: &mut dyn Write,
+    env: &Env,
+    version: Option<Version>,
+    commented: bool,
+    indent: usize,
+) -> Result<()> {
+    match version {
+        Some(v) if v > env.config.min_cfg_version => {
+            if let Some(s) = cfg_condition_string_doc(Some(&v.to_cfg()), commented, indent) {
+                writeln!(w, "{}", s)?
+            }
+        }
+        _ => {}
+    }
+    Ok(())
+}
 
 pub fn version_condition_string(
     env: &Env,
@@ -624,14 +641,42 @@ pub fn cfg_condition_string_no_doc(
     commented: bool,
     indent: usize,
 ) -> Option<String> {
-    cfg_condition.and_then(|cfg| {
+    cfg_condition.map(|cfg| {
         let comment = if commented { "//" } else { "" };
-        Some(format!(
+        format!(
             "{0}{1}#[cfg(any({2}, feature = \"dox\"))]",
             tabs(indent),
             comment,
             cfg,
-        ))
+        )
+    })
+}
+
+pub fn cfg_condition_doc(
+    w: &mut dyn Write,
+    cfg_condition: Option<&impl Display>,
+    commented: bool,
+    indent: usize,
+) -> Result<()> {
+    if let Some(s) = cfg_condition_string_doc(cfg_condition, commented, indent) {
+        writeln!(w, "{}", s)?;
+    }
+    Ok(())
+}
+
+pub fn cfg_condition_string_doc(
+    cfg_condition: Option<&impl Display>,
+    commented: bool,
+    indent: usize,
+) -> Option<String> {
+    cfg_condition.map(|cfg| {
+        let comment = if commented { "//" } else { "" };
+        format!(
+            "{0}{1}#[cfg_attr(feature = \"dox\", doc(cfg({2})))]",
+            tabs(indent),
+            comment,
+            cfg,
+        )
     })
 }
 
@@ -640,19 +685,13 @@ pub fn cfg_condition_string(
     commented: bool,
     indent: usize,
 ) -> Option<String> {
-    match cfg_condition.as_ref() {
-        Some(v) => {
-            let comment = if commented { "//" } else { "" };
-            Some(format!(
-                "{0}{1}#[cfg(any({2}, feature = \"dox\"))]\n\
-                 {0}{1}#[cfg_attr(feature = \"dox\", doc(cfg({2})))]",
-                tabs(indent),
-                comment,
-                v
-            ))
-        }
-        None => None,
-    }
+    cfg_condition.map(|_| {
+        format!(
+            "{}\n{}",
+            cfg_condition_string_no_doc(cfg_condition, commented, indent).unwrap(),
+            cfg_condition_string_doc(cfg_condition, commented, indent).unwrap(),
+        )
+    })
 }
 
 pub fn derives(w: &mut dyn Write, derives: &[Derive], indent: usize) -> Result<()> {

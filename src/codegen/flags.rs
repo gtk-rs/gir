@@ -3,8 +3,9 @@ use crate::{
     analysis::flags::Info,
     analysis::special_functions::Type,
     codegen::general::{
-        self, cfg_condition, cfg_condition_no_doc, cfg_condition_string, cfg_deprecated, derives,
-        doc_alias, version_condition, version_condition_string,
+        self, cfg_condition, cfg_condition_doc, cfg_condition_no_doc, cfg_condition_string,
+        cfg_deprecated, derives, doc_alias, version_condition, version_condition_doc,
+        version_condition_no_doc, version_condition_string,
     },
     config::gobjects::GObject,
     env::Env,
@@ -65,10 +66,12 @@ fn generate_flags(
     analysis: &Info,
 ) -> Result<()> {
     let sys_crate_name = env.main_sys_crate_name();
-    cfg_deprecated(w, env, flags.deprecated_version, false, 0)?;
-    version_condition(w, env, flags.version, false, 0)?;
-    cfg_condition(w, config.cfg_condition.as_ref(), false, 0)?;
+    cfg_condition_no_doc(w, config.cfg_condition.as_ref(), false, 0)?;
+    version_condition_no_doc(w, env, flags.version, false, 0)?;
     writeln!(w, "bitflags! {{")?;
+    cfg_condition_doc(w, config.cfg_condition.as_ref(), false, 1)?;
+    version_condition_doc(w, env, flags.version, false, 1)?;
+    cfg_deprecated(w, env, flags.deprecated_version, false, 1)?;
     if config.must_use {
         writeln!(w, "    #[must_use]")?;
     }
