@@ -180,8 +180,8 @@ fn generate_cfg_configure(
 ) -> Result<()> {
     let cfg_condition_ = configured_functions
         .iter()
-        .find_map(|f| f.cfg_condition.clone());
-    cfg_condition(w, &cfg_condition_, commented, 1)?;
+        .find_map(|f| f.cfg_condition.as_ref());
+    cfg_condition(w, cfg_condition_, commented, 1)?;
     Ok(())
 }
 
