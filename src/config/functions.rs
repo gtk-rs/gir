@@ -16,6 +16,46 @@ use std::{collections::HashSet, str::FromStr};
 use toml::Value;
 
 #[derive(Clone, Debug)]
+pub struct CallbackParameter {
+    pub ident: Ident,
+    pub nullable: Option<Nullable>,
+}
+
+pub type CallbackParameters = Vec<CallbackParameter>;
+
+impl Parse for CallbackParameter {
+    fn parse(toml: &Value, object_name: &str) -> Option<CallbackParameter> {
+        let ident = match Ident::parse(toml, object_name, "callback parameter") {
+            Some(ident) => ident,
+            None => {
+                error!(
+                    "No 'name' or 'pattern' given for parameter for object {}",
+                    object_name
+                );
+                return None;
+            }
+        };
+        toml.check_unwanted(
+            &["nullable"],
+            &format!("callback parameter {}", object_name),
+        );
+
+        let nullable = toml
+            .lookup("nullable")
+            .and_then(Value::as_bool)
+            .map(Nullable);
+
+        Some(CallbackParameter { ident, nullable })
+    }
+}
+
+impl AsRef<Ident> for CallbackParameter {
+    fn as_ref(&self) -> &Ident {
+        &self.ident
+    }
+}
+
+#[derive(Clone, Debug)]
 pub struct Parameter {
     pub ident: Ident,
     //true - parameter don't changed in FFI function,
@@ -26,6 +66,7 @@ pub struct Parameter {
     pub infallible: Option<Infallible>,
     pub length_of: Option<String>,
     pub string_type: Option<StringType>,
+    pub callback_parameters: CallbackParameters,
 }
 
 impl Parse for Parameter {
@@ -50,6 +91,7 @@ impl Parse for Parameter {
                 "name",
                 "pattern",
                 "string_type",
+                "callback_parameter",
             ],
             &format!("function parameter {}", object_name),
         );
@@ -89,6 +131,8 @@ impl Parse for Parameter {
                 }
             },
         };
+        let callback_parameters =
+            CallbackParameters::parse(toml.lookup("callback_parameter"), object_name);
 
         Some(Parameter {
             ident,
@@ -98,6 +142,7 @@ impl Parse for Parameter {
             infallible,
             length_of,
             string_type,
+            callback_parameters,
         })
     }
 }

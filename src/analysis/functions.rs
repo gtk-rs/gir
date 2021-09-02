@@ -388,6 +388,12 @@ fn analyze_callbacks(
 
             if rust_type.is_function() {
                 if par.c_type != "GDestroyNotify" {
+                    let callback_parameters_config = configured_functions.iter().find_map(|f| {
+                        f.parameters
+                            .iter()
+                            .find(|p| p.ident.is_match(&par.name))
+                            .map(|p| &p.callback_parameters)
+                    });
                     if let Some((mut callback, destroy_index)) = analyze_callback(
                         func_name,
                         type_tid,
@@ -398,6 +404,7 @@ fn analyze_callbacks(
                         imports,
                         &c_parameters,
                         rust_type,
+                        callback_parameters_config,
                     ) {
                         if let Some(destroy_index) = destroy_index {
                             let user_data = cross_user_data_check
@@ -430,6 +437,7 @@ fn analyze_callbacks(
                     imports,
                     &c_parameters,
                     rust_type,
+                    None,
                 ) {
                     // We just assume that for API "cleaness", the destroy callback will always
                     // be |-> *after* <-| the initial callback.
@@ -1043,6 +1051,7 @@ fn analyze_callback(
     imports: &mut Imports,
     c_parameters: &[(&CParameter, usize)],
     rust_type: &Type,
+    callback_parameters_config: Option<&config::functions::CallbackParameters>,
 ) -> Option<(Trampoline, Option<usize>)> {
     let mut imports_to_add = Vec::new();
 
@@ -1127,11 +1136,11 @@ fn analyze_callback(
             });
         }
         for p in parameters.rust_parameters.iter() {
-            if let Ok(rust_type) = RustType::builder(env, p.typ)
-                .direction(p.direction)
-                .try_from_glib(&p.try_from_glib)
-                .try_build()
-            {
+            let mut rust_ty = RustType::builder(env, p.typ).direction(p.direction);
+            if let Some(callback_parameters_config) = callback_parameters_config {
+                rust_ty = rust_ty.callback_parameters_config(callback_parameters_config);
+            }
+            if let Ok(rust_type) = rust_ty.try_from_glib(&p.try_from_glib).try_build() {
                 imports_to_add.extend(rust_type.into_used_types());
             }
         }
