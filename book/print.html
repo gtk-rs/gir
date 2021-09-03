@@ -406,6 +406,11 @@ trust_return_value_nullability = false
         string_type = &quot;os_string&quot;
         # overwrite type
         type = &quot;Gtk.Widget&quot;
+
+            # Override callback's parameter
+            [[object.function.parameter.callback_parameter]]
+            name = &quot;name_of_the_callback_parameter&quot;
+            nullable = true
     [[object.signal]]
     name = &quot;activate-link&quot;
     # replace trampoline bool return type with `Inhibit`
