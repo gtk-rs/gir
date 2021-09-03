@@ -1,6 +1,7 @@
 use super::conversion_type::ConversionType;
 use crate::{
     analysis::{ref_mode::RefMode, try_from_glib::TryFromGlib},
+    config::functions::{CallbackParameter, CallbackParameters},
     env::Env,
     library::{self, Nullable, ParameterDirection, ParameterScope},
     nameutil::{is_gstring, use_glib_type},
@@ -186,6 +187,7 @@ pub struct RustTypeBuilder<'env> {
     scope: ParameterScope,
     concurrency: library::Concurrency,
     try_from_glib: TryFromGlib,
+    callback_parameters_config: CallbackParameters,
 }
 
 impl<'env> RustTypeBuilder<'env> {
@@ -199,6 +201,7 @@ impl<'env> RustTypeBuilder<'env> {
             scope: ParameterScope::None,
             concurrency: library::Concurrency::None,
             try_from_glib: TryFromGlib::default(),
+            callback_parameters_config: Vec::new(),
         }
     }
 
@@ -229,6 +232,14 @@ impl<'env> RustTypeBuilder<'env> {
 
     pub fn try_from_glib(mut self, try_from_glib: &TryFromGlib) -> Self {
         self.try_from_glib = try_from_glib.clone();
+        self
+    }
+
+    pub fn callback_parameters_config(
+        mut self,
+        callback_parameters_config: &[CallbackParameter],
+    ) -> Self {
+        self.callback_parameters_config = callback_parameters_config.to_owned();
         self
     }
 
@@ -421,9 +432,15 @@ impl<'env> RustTypeBuilder<'env> {
                         continue;
                     }
 
+                    let nullable = self
+                        .callback_parameters_config
+                        .iter()
+                        .find(|cp| cp.ident.is_match(&p.name))
+                        .and_then(|c| c.nullable)
+                        .unwrap_or(p.nullable);
                     let p_res = RustType::builder(self.env, p.typ)
                         .direction(p.direction)
-                        .nullable(p.nullable)
+                        .nullable(nullable)
                         .try_build();
                     match p_res {
                         Ok(p_rust_type) => {
@@ -432,18 +449,14 @@ impl<'env> RustTypeBuilder<'env> {
                                 .unwrap_or_else(|_| RustType::default());
                             params.push(format!(
                                 "{}{}",
-                                if is_fundamental || *p.nullable {
-                                    ""
-                                } else {
-                                    "&"
-                                },
+                                if is_fundamental || *nullable { "" } else { "&" },
                                 if !is_gstring(y.as_str()) {
-                                    if !is_fundamental && *p.nullable {
+                                    if !is_fundamental && *nullable {
                                         p_rust_type.into_string().replace("Option<", "Option<&")
                                     } else {
                                         p_rust_type.into_string()
                                     }
-                                } else if *p.nullable {
+                                } else if *nullable {
                                     "Option<&str>".to_owned()
                                 } else {
                                     "&str".to_owned()

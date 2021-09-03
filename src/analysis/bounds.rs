@@ -135,10 +135,23 @@ impl Bounds {
                 {
                     need_is_into_check = par.c_type != "GDestroyNotify";
                     if let Type::Function(_) = env.library.type_(par.typ) {
-                        type_string = RustType::builder(env, par.typ)
+                        let callback_parameters_config =
+                            configured_functions.iter().find_map(|f| {
+                                f.parameters
+                                    .iter()
+                                    .find(|p| p.ident.is_match(&par.name))
+                                    .map(|p| &p.callback_parameters)
+                            });
+
+                        let mut rust_ty = RustType::builder(env, par.typ)
                             .direction(par.direction)
                             .scope(par.scope)
-                            .concurrency(concurrency)
+                            .concurrency(concurrency);
+                        if let Some(callback_parameters_config) = callback_parameters_config {
+                            rust_ty =
+                                rust_ty.callback_parameters_config(callback_parameters_config);
+                        }
+                        type_string = rust_ty
                             .try_from_glib(&par.try_from_glib)
                             .try_build()
                             .into_string();

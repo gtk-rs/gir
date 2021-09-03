@@ -35,8 +35,8 @@ impl CParameter {
 
 #[derive(Clone, Debug)]
 pub struct Transformation {
-    pub ind_c: usize,    //index in `Vec<CParameter>`
-    pub ind_rust: usize, //index in `Vec<RustParameter>`
+    pub ind_c: usize,    // index in `Vec<CParameter>`
+    pub ind_rust: usize, // index in `Vec<RustParameter>`
     pub transformation: TransformationType,
     pub name: String,
     pub typ: library::TypeId,
