@@ -116,6 +116,7 @@ pub fn analyze(
     signal_parameters: &[library::Parameter],
     type_tid: library::TypeId,
     configured_signals: &[&config::signals::Signal],
+    callback_parameters_config: Option<&config::functions::CallbackParameters>,
 ) -> Parameters {
     let mut parameters = Parameters::new(signal_parameters.len() + 1);
 
@@ -143,7 +144,14 @@ pub fn analyze(
         let nullable_override = configured_signals
             .matched_parameters(&name)
             .iter()
-            .find_map(|p| p.nullable);
+            .find_map(|p| p.nullable)
+            .or_else(|| {
+                callback_parameters_config.and_then(|cp| {
+                    cp.iter()
+                        .find(|cp| cp.ident.is_match(&par.name))
+                        .and_then(|c| c.nullable)
+                })
+            });
         let nullable = nullable_override.unwrap_or(par.nullable);
 
         let conversion_type = {

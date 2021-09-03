@@ -109,7 +109,7 @@ pub fn analyze(
 
         parameters
     } else {
-        trampoline_parameters::analyze(env, &signal.parameters, type_tid, configured_signals)
+        trampoline_parameters::analyze(env, &signal.parameters, type_tid, configured_signals, None)
     };
 
     if in_trait {

@@ -1124,8 +1124,13 @@ fn analyze_callback(
             return None;
         }
 
-        let parameters =
-            crate::analysis::trampoline_parameters::analyze(env, &func.parameters, par.typ, &[]);
+        let parameters = crate::analysis::trampoline_parameters::analyze(
+            env,
+            &func.parameters,
+            par.typ,
+            &[],
+            callback_parameters_config,
+        );
         if par.c_type != "GDestroyNotify" && !*commented {
             *commented |= func.parameters.iter().any(|p| {
                 if p.closure.is_none() {
@@ -1136,11 +1141,12 @@ fn analyze_callback(
             });
         }
         for p in parameters.rust_parameters.iter() {
-            let mut rust_ty = RustType::builder(env, p.typ).direction(p.direction);
-            if let Some(callback_parameters_config) = callback_parameters_config {
-                rust_ty = rust_ty.callback_parameters_config(callback_parameters_config);
-            }
-            if let Ok(rust_type) = rust_ty.try_from_glib(&p.try_from_glib).try_build() {
+            if let Ok(rust_type) = RustType::builder(env, p.typ)
+                .direction(p.direction)
+                .nullable(p.nullable)
+                .try_from_glib(&p.try_from_glib)
+                .try_build()
+            {
                 imports_to_add.extend(rust_type.into_used_types());
             }
         }
