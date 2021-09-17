@@ -116,7 +116,7 @@ pub fn generate(
 
         writeln!(w, "}}")?;
 
-        general::declare_default_from_new(w, env, &analysis.name, &analysis.functions)?;
+        general::declare_default_from_new(w, env, &analysis.name, &analysis.functions, true)?;
     }
 
     trait_impls::generate(
