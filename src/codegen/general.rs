@@ -744,7 +744,7 @@ pub fn declare_default_from_new(
     env: &Env,
     name: &str,
     functions: &[analysis::functions::Info],
-    is_object: bool,
+    has_builder: bool,
 ) -> Result<()> {
     if let Some(func) = functions.iter().find(|f| {
         !f.visibility.hidden()
@@ -756,23 +756,29 @@ pub fn declare_default_from_new(
         if func.parameters.rust_parameters.is_empty() {
             writeln!(w)?;
             version_condition(w, env, func.version, false, 0)?;
-            writeln!(w, "impl Default for {} {{", name)?;
-            writeln!(w, "    fn default() -> Self {{")?;
-            writeln!(w, "        Self::new()")?;
-            writeln!(w, "    }}")?;
-            writeln!(w, "}}")?;
-        } else if is_object {
+            writeln!(
+                w,
+                "impl Default for {} {{
+                     fn default() -> Self {{
+                         Self::new()
+                     }}
+                 }}",
+                name
+            )?;
+        } else if has_builder {
             // create an alternative default implementation the uses `glib::object::Object::new()`
             writeln!(w)?;
             version_condition(w, env, func.version, false, 0)?;
-            writeln!(w, "impl Default for {} {{", name)?;
-            writeln!(w, "    fn default() -> Self {{")?;
-            writeln!(w, "        match glib::object::Object::new::<Self>(&[]) {{")?;
-            writeln!(w, "            Ok(obj) => obj,")?;
-            writeln!(w, "            Err(err) => panic!(\"Can't construct {} object with default parameters: {{}}\", err),", name)?;
-            writeln!(w, "        }}")?;
-            writeln!(w, "    }}")?;
-            writeln!(w, "}}")?;
+            writeln!(
+                w,
+                "impl Default for {} {{
+                     fn default() -> Self {{
+                         match glib::object::Object::new::<Self>(&[]) {{
+                              Ok(obj) => obj,
+                              Err(err) => panic!(\"Can't construct {} object with default parameters: {{}}\", err),
+                         }}
+                     }}
+                 }}", name, name)?;
         }
     }
 
