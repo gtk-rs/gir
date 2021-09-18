@@ -767,7 +767,10 @@ pub fn declare_default_from_new(
             version_condition(w, env, func.version, false, 0)?;
             writeln!(w, "impl Default for {} {{", name)?;
             writeln!(w, "    fn default() -> Self {{")?;
-            writeln!(w, "        ::glib::object::Object::new::<Self>(&[]).expect(\"Can't construct {} object with default parameters\")", name)?;
+            writeln!(w, "        match glib::object::Object::new::<Self>(&[]) {{")?;
+            writeln!(w, "            Ok(obj) => obj,")?;
+            writeln!(w, "            Err(err) => panic!(\"Can't construct {} object with default parameters: {{}}\", err),", name)?;
+            writeln!(w, "        }}")?;
             writeln!(w, "    }}")?;
             writeln!(w, "}}")?;
         }
