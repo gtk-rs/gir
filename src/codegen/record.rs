@@ -103,7 +103,7 @@ pub fn generate(w: &mut dyn Write, env: &Env, analysis: &analysis::record::Info)
         writeln!(w, "}}")?;
     }
 
-    general::declare_default_from_new(w, env, &analysis.name, &analysis.functions)?;
+    general::declare_default_from_new(w, env, &analysis.name, &analysis.functions, false)?;
 
     trait_impls::generate(
         w,

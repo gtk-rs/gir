@@ -744,22 +744,40 @@ pub fn declare_default_from_new(
     env: &Env,
     name: &str,
     functions: &[analysis::functions::Info],
+    has_builder: bool,
 ) -> Result<()> {
     if let Some(func) = functions.iter().find(|f| {
         !f.visibility.hidden()
             && f.status.need_generate()
             && f.name == "new"
-            && f.parameters.rust_parameters.is_empty()
             // Cannot generate Default implementation for Option<>
             && f.ret.parameter.as_ref().map_or(false, |x| !*x.lib_par.nullable)
     }) {
-        writeln!(w)?;
-        version_condition(w, env, func.version, false, 0)?;
-        writeln!(w, "impl Default for {} {{", name)?;
-        writeln!(w, "    fn default() -> Self {{")?;
-        writeln!(w, "        Self::new()")?;
-        writeln!(w, "    }}")?;
-        writeln!(w, "}}")?;
+        if func.parameters.rust_parameters.is_empty() {
+            writeln!(w)?;
+            version_condition(w, env, func.version, false, 0)?;
+            writeln!(
+                w,
+                "impl Default for {} {{
+                     fn default() -> Self {{
+                         Self::new()
+                     }}
+                 }}",
+                name
+            )?;
+        } else if has_builder {
+            // create an alternative default implementation the uses `glib::object::Object::new()`
+            writeln!(w)?;
+            version_condition(w, env, func.version, false, 0)?;
+            writeln!(
+                w,
+                "impl Default for {0} {{
+                     fn default() -> Self {{
+                         glib::object::Object::new::<Self>(&[])
+                            .expect(\"Can't construct {0} object with default parameters\")
+                     }}
+                 }}", name)?;
+        }
     }
 
     Ok(())
