@@ -776,7 +776,9 @@ pub fn declare_default_from_new(
                          glib::object::Object::new::<Self>(&[])
                             .expect(\"Can't construct {0} object with default parameters\")
                      }}
-                 }}", name)?;
+                 }}",
+                name
+            )?;
         }
     }
 
