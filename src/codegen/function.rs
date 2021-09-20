@@ -180,7 +180,7 @@ pub fn declaration(env: &Env, analysis: &analysis::functions::Info) -> String {
             param_str.push_str(", ")
         }
         let c_par = &analysis.parameters.c_parameters[par.ind_c];
-        let s = c_par.to_parameter(env, &analysis.bounds);
+        let s = c_par.to_parameter(env, &analysis.bounds, false);
         param_str.push_str(&s);
     }
 
@@ -210,8 +210,12 @@ pub fn declaration_futures(env: &Env, analysis: &analysis::functions::Info) -> S
 
         if c_par.name == "callback" || c_par.name == "cancellable" {
             skipped += 1;
-            if let Some(bound) = analysis.bounds.get_parameter_bound(&c_par.name) {
-                skipped_bounds.push(bound.type_parameter_reference());
+            if let Some(alias) = analysis
+                .bounds
+                .get_parameter_bound(&c_par.name)
+                .and_then(|bound| bound.type_parameter_reference())
+            {
+                skipped_bounds.push(alias);
             }
             continue;
         }
@@ -220,7 +224,7 @@ pub fn declaration_futures(env: &Env, analysis: &analysis::functions::Info) -> S
             param_str.push_str(", ")
         }
 
-        let s = c_par.to_parameter(env, &analysis.bounds);
+        let s = c_par.to_parameter(env, &analysis.bounds, true);
         param_str.push_str(&s);
     }
 
@@ -246,7 +250,8 @@ pub fn bounds(
 
     let skip_lifetimes = bounds
         .iter()
-        .filter(|bound| skip.contains(&bound.alias))
+        // TODO: False or true?
+        .filter(|bound| bound.alias.map_or(false, |alias| skip.contains(&alias)))
         .filter_map(|bound| match bound.bound_type {
             IsA(lifetime) | AsRef(lifetime) => lifetime,
             _ => None,
@@ -260,13 +265,18 @@ pub fn bounds(
         .collect::<Vec<_>>();
 
     let bounds = bounds.iter().filter(|bound| {
-        !skip.contains(&bound.alias) && (!filter_callback_modified || !bound.callback_modified)
+        bound.alias.map_or(true, |alias| !skip.contains(&alias))
+            && (!filter_callback_modified || !bound.callback_modified)
     });
 
     let type_names = lifetimes
         .iter()
         .cloned()
-        .chain(bounds.clone().map(|b| b.type_parameter_definition(r#async)))
+        .chain(
+            bounds
+                .clone()
+                .filter_map(|b| b.type_parameter_definition(r#async)),
+        )
         .collect::<Vec<_>>();
 
     let type_names = if type_names.is_empty() {
@@ -277,7 +287,9 @@ pub fn bounds(
 
     let bounds = lifetimes
         .into_iter()
-        .chain(bounds.map(|b| b.alias.to_string()))
+        // TODO: enforce that this is only used on NoWrapper!
+        // TODO: Analyze if alias is used in function, otherwise set to None!
+        .chain(bounds.filter_map(|b| b.alias).map(|a| a.to_string()))
         .collect::<Vec<_>>();
 
     (type_names, bounds)

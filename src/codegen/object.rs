@@ -249,6 +249,7 @@ fn generate_builder(w: &mut dyn Write, env: &Env, analysis: &analysis::object::I
                                     bound.full_type_parameter_reference(
                                         RefMode::ByRef,
                                         Nullable(false),
+                                        false,
                                     )
                                 });
                         (alias, bounds, ".clone().upcast()")

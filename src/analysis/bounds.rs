@@ -28,7 +28,15 @@ pub enum BoundType {
 
 impl BoundType {
     pub fn need_isa(&self) -> bool {
-        matches!(*self, BoundType::IsA(_))
+        matches!(*self, Self::IsA(_))
+    }
+
+    // TODO: This is just a heuristic for now, based on what we do in codegen!
+    // Theoretically the surrounding function should determine whether it needs to
+    // reuse an alias (ie. to use in `call_func::<P, Q, R>`) or not.
+    // In the latter case an `impl` is generated instead of a type name/alias.
+    pub fn has_alias(&self) -> bool {
+        matches!(*self, Self::NoWrapper)
     }
 }
 
@@ -36,7 +44,8 @@ impl BoundType {
 pub struct Bound {
     pub bound_type: BoundType,
     pub parameter_name: String,
-    pub alias: char,
+    /// Bound does not have an alias when `param: impl type_str` is used
+    pub alias: Option<char>,
     pub type_str: String,
     pub callback_modified: bool,
 }
@@ -217,7 +226,9 @@ impl Bounds {
         if self.used.iter().any(|n| n.parameter_name == name) {
             return;
         }
-        let alias = self.unused.pop_front().expect("No free type aliases!");
+        let alias = bound_type
+            .has_alias()
+            .then(|| self.unused.pop_front().expect("No free type aliases!"));
         self.used.push(Bound {
             bound_type,
             parameter_name: name.to_owned(),
@@ -375,15 +386,36 @@ mod tests {
     #[test]
     fn get_parameter_bound() {
         let mut bounds: Bounds = Default::default();
+        let typ = BoundType::NoWrapper;
+        bounds.add_parameter("a", "", typ.clone(), false);
+        bounds.add_parameter("b", "", typ.clone(), false);
+        let bound = bounds.get_parameter_bound("a").unwrap();
+        // `NoWrapper `bounds are expected to have an alias:
+        assert_eq!(bound.alias, Some('P'));
+        assert_eq!(bound.bound_type, typ);
+        let bound = bounds.get_parameter_bound("b").unwrap();
+        assert_eq!(bound.alias, Some('Q'));
+        assert_eq!(bound.bound_type, typ);
+        assert_eq!(bounds.get_parameter_bound("c"), None);
+    }
+
+    #[test]
+    fn impl_bound() {
+        let mut bounds: Bounds = Default::default();
         let typ = BoundType::IsA(None);
         bounds.add_parameter("a", "", typ.clone(), false);
         bounds.add_parameter("b", "", typ.clone(), false);
         let bound = bounds.get_parameter_bound("a").unwrap();
-        assert_eq!(bound.alias, 'P');
+        // `IsA` is simplified to an inline `foo: impl IsA<Bar>` and
+        // lacks an alias/type-parameter:
+        assert_eq!(bound.alias, None);
         assert_eq!(bound.bound_type, typ);
-        let bound = bounds.get_parameter_bound("b").unwrap();
-        assert_eq!(bound.alias, 'Q');
+
+        let typ = BoundType::AsRef(None);
+        bounds.add_parameter("c", "", typ.clone(), false);
+        let bound = bounds.get_parameter_bound("c").unwrap();
+        // Same `impl AsRef<Foo>` simplification as `IsA`:
+        assert_eq!(bound.alias, None);
         assert_eq!(bound.bound_type, typ);
-        assert_eq!(bounds.get_parameter_bound("c"), None);
     }
 }
