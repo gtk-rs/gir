@@ -72,7 +72,7 @@ fn fill_in(root: &mut Table, env: &Env) {
 
     {
         let build_deps = upsert_table(root, "build-dependencies");
-        set_string(build_deps, "system-deps", "4");
+        set_string(build_deps, "system-deps", "5");
     }
 
     {
