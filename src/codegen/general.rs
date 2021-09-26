@@ -739,7 +739,7 @@ pub fn write_vec<T: Display>(w: &mut dyn Write, v: &[T]) -> Result<()> {
     Ok(())
 }
 
-pub fn declare_default_from_new(
+pub fn implement_default_from_new_or_builder(
     w: &mut dyn Write,
     env: &Env,
     name: &str,
@@ -765,21 +765,25 @@ pub fn declare_default_from_new(
                  }}",
                 name
             )?;
-        } else if has_builder {
-            // create an alternative default implementation the uses `glib::object::Object::new()`
-            writeln!(w)?;
-            version_condition(w, env, func.version, false, 0)?;
-            writeln!(
-                w,
-                "impl Default for {0} {{
-                     fn default() -> Self {{
-                         glib::object::Object::new::<Self>(&[])
-                            .expect(\"Can't construct {0} object with default parameters\")
-                     }}
-                 }}",
-                name
-            )?;
+            // appropriate new function for Default impl found
+            return Ok(());
         }
+    }
+
+    // no appropriate new function found, looking for builder pattern
+    if has_builder {
+        // create an alternative default implementation the uses `glib::object::Object::new()`
+        writeln!(
+            w,
+            "
+             impl Default for {0} {{
+                 fn default() -> Self {{
+                     glib::object::Object::new::<Self>(&[])
+                        .expect(\"Can't construct {0} object with default parameters\")
+                 }}
+             }}",
+            name
+        )?;
     }
 
     Ok(())

@@ -116,7 +116,7 @@ pub fn generate(
 
         writeln!(w, "}}")?;
 
-        general::declare_default_from_new(
+        general::implement_default_from_new_or_builder(
             w,
             env,
             &analysis.name,
