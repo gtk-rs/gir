@@ -117,11 +117,16 @@ impl Bounds {
                             &func.name,
                             configured_functions,
                         ) {
+                            let nullable = configured_functions
+                                .iter()
+                                .find_map(|f| f.ret.nullable)
+                                .unwrap_or(function.ret.nullable);
+
                             out_parameters.insert(
                                 0,
                                 RustType::builder(env, function.ret.typ)
                                     .direction(function.ret.direction)
-                                    .nullable(function.ret.nullable)
+                                    .nullable(nullable)
                                     .try_build()
                                     .into_string(),
                             );
@@ -309,7 +314,12 @@ fn find_out_parameters(
             // but that a) happens afterwards and b) is not accessible from here either.
             let nullable = configured_functions
                 .iter()
-                .find_map(|f| f.parameters.iter().find_map(|p| p.nullable))
+                .find_map(|f| {
+                    f.parameters
+                        .iter()
+                        .filter(|p| p.ident.is_match(&param.name))
+                        .find_map(|p| p.nullable)
+                })
                 .unwrap_or(param.nullable);
 
             RustType::builder(env, param.typ)
