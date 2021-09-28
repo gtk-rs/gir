@@ -177,13 +177,8 @@ pub fn class(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<Info>
     let builder_properties =
         class_builder::analyze(env, &klass.properties, class_tid, obj, &mut imports);
 
-    let (version, deprecated_version) = info_base::versions(
-        env,
-        obj,
-        &functions,
-        klass.version,
-        klass.deprecated_version,
-    );
+    let version = obj.version.or(klass.version);
+    let deprecated_version = klass.deprecated_version;
 
     let child_properties =
         child_properties::analyze(env, obj.child_properties.as_ref(), class_tid, &mut imports);
@@ -317,13 +312,8 @@ pub fn interface(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<I
         deps,
     );
 
-    let (version, deprecated_version) = info_base::versions(
-        env,
-        obj,
-        &functions,
-        iface.version,
-        iface.deprecated_version,
-    );
+    let version = obj.version.or(iface.version);
+    let deprecated_version = iface.deprecated_version;
 
     if obj.concurrency == library::Concurrency::SendUnique {
         imports.add("glib::ObjectExt");

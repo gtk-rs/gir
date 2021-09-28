@@ -94,13 +94,8 @@ pub fn new(env: &Env, obj: &GObject) -> Option<Info> {
     );
     let specials = special_functions::extract(&mut functions, type_, obj);
 
-    let (version, deprecated_version) = info_base::versions(
-        env,
-        obj,
-        &functions,
-        record.version,
-        record.deprecated_version,
-    );
+    let version = obj.version.or(record.version);
+    let deprecated_version = record.deprecated_version;
 
     let is_shared = specials.has_trait(special_functions::Type::Ref)
         && specials.has_trait(special_functions::Type::Unref);
