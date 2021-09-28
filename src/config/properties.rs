@@ -180,7 +180,7 @@ version = "3.20"
 "#,
         );
         let p = Property::parse(&toml, "a").unwrap();
-        assert_eq!(p.version, Some(Version::Full(3, 20, 0)));
+        assert_eq!(p.version, Some(Version(3, 20, 0)));
     }
 
     #[test]
