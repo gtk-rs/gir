@@ -17,7 +17,7 @@ fn git_command(path: impl AsRef<Path>, subcommand: &[&str]) -> Result<Output> {
 }
 
 pub fn repo_hash(path: impl AsRef<Path>) -> Option<String> {
-    let output = git_command(path.as_ref(), &["rev-parse", "--short", "HEAD"]).ok()?;
+    let output = git_command(path.as_ref(), &["rev-parse", "--short=12", "HEAD"]).ok()?;
     if !output.status.success() {
         return None;
     }

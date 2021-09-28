@@ -131,7 +131,7 @@ jobs:
         run: pacman --noconfirm -S base-devel mingw-w64-${{ matrix.arch }}-toolchain
         if: matrix.os == 'windows-latest'
       - name: Install library devel packages with pacman
-        run: pacman --noconfirm -S mingw-w64-${{ matrix.arch }}-gtk3 mingw-w64-${{ matrix.arch }}-libgit2 mingw-w64-${{ matrix.arch }}-libsecret
+        run: pacman --noconfirm -S mingw-w64-${{ matrix.arch }}-gtk3 mingw-w64-${{ matrix.arch }}-libgit2
         if: matrix.os == 'windows-latest'
       - name: "Acquire gir-files"
         uses: actions/checkout@v2
@@ -155,11 +155,6 @@ jobs:
         run: |
           cd tests/sys/sys_build
           cargo build && cargo build --features v3_20
-        if: matrix.os == 'windows-latest'
-      - name: "secret-sys (Windows)"
-        run: |
-          cd tests/sys/secret-sys
-          cargo test -- --nocapture
         if: matrix.os == 'windows-latest'
       - name: "Acquire gtk3-rs"
         uses: actions/checkout@v2
