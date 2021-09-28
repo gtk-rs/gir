@@ -1,6 +1,9 @@
 use super::{
     child_properties, function, general,
-    general::{cfg_deprecated_string, version_condition_no_doc, version_condition_string},
+    general::{
+        cfg_deprecated_string, not_version_condition_no_dox, version_condition,
+        version_condition_no_doc, version_condition_string,
+    },
     properties, signal, trait_impls,
 };
 use crate::{
@@ -11,6 +14,7 @@ use crate::{
     nameutil,
     traits::IntoString,
 };
+use std::collections::{BTreeMap, HashSet};
 use std::io::{Result, Write};
 
 pub fn generate(
@@ -22,16 +26,111 @@ pub fn generate(
     general::start_comments(w, &env.config)?;
     general::uses(w, env, &analysis.imports, analysis.version)?;
 
-    general::define_object_type(
-        w,
-        env,
-        &analysis.name,
-        &analysis.c_type,
-        analysis.c_class_type.as_deref(),
-        &analysis.get_type,
-        analysis.is_interface,
-        &analysis.supertypes,
-    )?;
+    // Collect all supertypes that were added at a later time. The `glib::wrapper!` call
+    // needs to be done multiple times with different `#[cfg]` directives if there is a difference.
+    let mut versions = BTreeMap::new();
+    for p in &analysis.supertypes {
+        use crate::library::*;
+
+        match *env.library.type_(p.type_id) {
+            Type::Interface(Interface { .. }) | Type::Class(Class { .. })
+                if !p.status.ignored() =>
+            {
+                let full_name = p.type_id.full_name(&env.library);
+                // TODO: Might want to add a configuration on the object to override this per
+                // supertype in case the supertype existed in older versions but newly became on
+                // for this very type.
+                if let Some(parent_version) = env
+                    .analysis
+                    .objects
+                    .get(&full_name)
+                    .and_then(|info| info.version)
+                {
+                    if Some(parent_version) > analysis.version
+                        && parent_version > env.config.min_cfg_version
+                    {
+                        versions
+                            .entry(parent_version)
+                            .and_modify(|t: &mut Vec<_>| t.push(p))
+                            .or_insert_with(|| vec![p]);
+                    }
+                }
+            }
+            _ => continue,
+        }
+    }
+
+    if versions.is_empty() {
+        writeln!(w)?;
+        general::define_object_type(
+            w,
+            env,
+            &analysis.name,
+            &analysis.c_type,
+            analysis.c_class_type.as_deref(),
+            &analysis.get_type,
+            analysis.is_interface,
+            &analysis.supertypes,
+        )?;
+    } else {
+        // Write the `glib::wrapper!` calls from the highest version to the lowest and remember
+        // which supertypes have to be removed for the next call.
+        let mut remove_types = HashSet::new();
+
+        let mut previous_version = None;
+        for (&version, stypes) in versions.iter().rev() {
+            let supertypes = analysis
+                .supertypes
+                .iter()
+                .filter(|t| !remove_types.contains(&t.type_id))
+                .cloned()
+                .collect::<Vec<_>>();
+
+            writeln!(w)?;
+            if previous_version.is_some() {
+                not_version_condition_no_dox(w, previous_version, false, 0)?;
+                version_condition_no_doc(w, env, Some(version), false, 0)?;
+            } else {
+                version_condition(w, env, Some(version), false, 0)?;
+            }
+            general::define_object_type(
+                w,
+                env,
+                &analysis.name,
+                &analysis.c_type,
+                analysis.c_class_type.as_deref(),
+                &analysis.get_type,
+                analysis.is_interface,
+                &supertypes,
+            )?;
+
+            for t in stypes {
+                remove_types.insert(t.type_id);
+            }
+
+            previous_version = Some(version);
+        }
+
+        // Write the base `glib::wrapper!`.
+        let supertypes = analysis
+            .supertypes
+            .iter()
+            .filter(|t| !remove_types.contains(&t.type_id))
+            .cloned()
+            .collect::<Vec<_>>();
+        writeln!(w)?;
+        not_version_condition_no_dox(w, previous_version, false, 0)?;
+        general::define_object_type(
+            w,
+            env,
+            &analysis.name,
+            &analysis.c_type,
+            analysis.c_class_type.as_deref(),
+            &analysis.get_type,
+            analysis.is_interface,
+            &supertypes,
+        )?;
+    }
 
     if need_generate_inherent(analysis) {
         writeln!(w)?;

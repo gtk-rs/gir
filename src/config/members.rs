@@ -141,6 +141,6 @@ version = "3.20"
 "#,
         );
         let f = Member::parse(&toml, "a").unwrap();
-        assert_eq!(f.version, Some(Version::Full(3, 20, 0)));
+        assert_eq!(f.version, Some(Version(3, 20, 0)));
     }
 }

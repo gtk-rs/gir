@@ -3,9 +3,15 @@ use crate::{
     analysis::{namespaces, rust_type::RustType},
     env::Env,
     library::TypeId,
+    version::Version,
 };
 
-pub fn analyze(env: &Env, type_id: TypeId, imports: &mut Imports) -> Vec<StatusedTypeId> {
+pub fn analyze(
+    env: &Env,
+    type_id: TypeId,
+    version: Option<Version>,
+    imports: &mut Imports,
+) -> Vec<StatusedTypeId> {
     let mut parents = Vec::new();
     let gobject_id = env.library.find_type(0, "GObject.Object").unwrap();
 
@@ -25,8 +31,30 @@ pub fn analyze(env: &Env, type_id: TypeId, imports: &mut Imports) -> Vec<Statuse
 
         if !status.ignored() && super_tid.ns_id == namespaces::MAIN {
             if let Ok(rust_type) = RustType::try_new(env, super_tid) {
-                for import in rust_type.into_used_types() {
-                    imports.add(&format!("crate::{}", import));
+                let full_name = super_tid.full_name(&env.library);
+                if let Some(parent_version) = env
+                    .analysis
+                    .objects
+                    .get(&full_name)
+                    .and_then(|info| info.version)
+                {
+                    if Some(parent_version) > version && parent_version > env.config.min_cfg_version
+                    {
+                        for import in rust_type.into_used_types() {
+                            imports.add_with_version(
+                                &format!("crate::{}", import),
+                                Some(parent_version),
+                            );
+                        }
+                    } else {
+                        for import in rust_type.into_used_types() {
+                            imports.add(&format!("crate::{}", import));
+                        }
+                    }
+                } else {
+                    for import in rust_type.into_used_types() {
+                        imports.add(&format!("crate::{}", import));
+                    }
                 }
             }
         }
