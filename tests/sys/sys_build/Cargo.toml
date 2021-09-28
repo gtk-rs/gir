@@ -4,7 +4,7 @@ version = "0.0.1"
 edition = "2018"
 
 [features]
-full = ["secret-sys"]
+full = []
 v3_16 = ["gtk-sys/v3_16"]
 v3_18 = ["v3_16", "gtk-sys/v3_18"]
 v3_20 = ["v3_18", "gtk-sys/v3_20"]
@@ -12,7 +12,3 @@ v3_22 = ["v3_20", "gtk-sys/v3_22"]
 
 [dependencies.gtk-sys]
 path = "../gtk-sys"
-
-[dependencies.secret-sys]
-optional = true
-path = "../secret-sys"
