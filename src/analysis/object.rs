@@ -113,12 +113,15 @@ pub fn class(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<Info>
 
     let klass: &library::Class = type_.maybe_ref()?;
 
+    let version = obj.version.or(klass.version);
+    let deprecated_version = klass.deprecated_version;
+
     let mut imports = Imports::with_defined(&env.library, &name);
     if obj.generate_display_trait {
         imports.add("std::fmt");
     }
 
-    let supertypes = supertypes::analyze(env, class_tid, &mut imports);
+    let supertypes = supertypes::analyze(env, class_tid, version, &mut imports);
 
     let final_type = klass.final_type;
     let trait_name = obj
@@ -176,9 +179,6 @@ pub fn class(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<Info>
 
     let builder_properties =
         class_builder::analyze(env, &klass.properties, class_tid, obj, &mut imports);
-
-    let version = obj.version.or(klass.version);
-    let deprecated_version = klass.deprecated_version;
 
     let child_properties =
         child_properties::analyze(env, obj.child_properties.as_ref(), class_tid, &mut imports);
@@ -272,13 +272,16 @@ pub fn interface(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<I
 
     let iface: &library::Interface = type_.maybe_ref()?;
 
+    let version = obj.version.or(iface.version);
+    let deprecated_version = iface.deprecated_version;
+
     let mut imports = Imports::with_defined(&env.library, &name);
     imports.add("glib::object::IsA");
     if obj.generate_display_trait {
         imports.add("std::fmt");
     }
 
-    let supertypes = supertypes::analyze(env, iface_tid, &mut imports);
+    let supertypes = supertypes::analyze(env, iface_tid, version, &mut imports);
 
     let trait_name = obj
         .trait_name
@@ -311,9 +314,6 @@ pub fn interface(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<I
         &signatures,
         deps,
     );
-
-    let version = obj.version.or(iface.version);
-    let deprecated_version = iface.deprecated_version;
 
     if obj.concurrency == library::Concurrency::SendUnique {
         imports.add("glib::ObjectExt");
