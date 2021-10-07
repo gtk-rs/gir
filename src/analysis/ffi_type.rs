@@ -104,6 +104,7 @@ fn ffi_inner(env: &Env, tid: TypeId, inner: &str) -> Result {
                 Type => return Ok(use_glib_if_needed(env, "ffi::GType").into()),
                 IntPtr => "libc::intptr_t",
                 UIntPtr => "libc::uintptr_t",
+                Bool => "bool",
                 _ => return Err(TypeError::Unimplemented(inner.into())),
             };
             Ok(inner.into())
