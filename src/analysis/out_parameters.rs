@@ -62,7 +62,7 @@ pub fn analyze(
         info.mode = Mode::Throws(use_ret);
     } else if func.ret.typ == TypeId::tid_none() {
         info.mode = Mode::Normal;
-    } else if func.ret.typ == TypeId::tid_bool() {
+    } else if func.ret.typ == TypeId::tid_bool() || func.ret.typ == TypeId::tid_c_bool() {
         if nullable_override == Some(Nullable(false)) {
             info.mode = Mode::Combined;
         } else {
@@ -213,5 +213,5 @@ pub fn use_function_return_for_result(
         return true;
     }
     let type_ = env.type_(typ);
-    !matches!(&*type_.get_name(), "UInt" | "Boolean")
+    !matches!(&*type_.get_name(), "UInt" | "Boolean" | "Bool")
 }

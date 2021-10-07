@@ -240,6 +240,7 @@ pub enum Fundamental {
     //Same encoding as Filename but can contains any string
     //Not defined in GLib directly
     OsString,
+    Bool,
     Unsupported,
 }
 
@@ -267,6 +268,7 @@ impl Fundamental {
                 | Fundamental::SSize
                 | Fundamental::Float
                 | Fundamental::Double
+                | Fundamental::Bool
         )
     }
 }
@@ -307,6 +309,7 @@ const FUNDAMENTAL: &[(&str, Fundamental)] = &[
     ("guintptr", Fundamental::UIntPtr),
     //TODO: this is temporary name, change it when type added to GLib
     ("os_string", Fundamental::OsString),
+    ("bool", Fundamental::Bool),
 ];
 
 #[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq, PartialOrd, Ord)]
@@ -340,6 +343,10 @@ impl TypeId {
 
     pub fn tid_os_string() -> TypeId {
         TypeId { ns_id: 0, id: 33 }
+    }
+
+    pub fn tid_c_bool() -> TypeId {
+        TypeId { ns_id: 0, id: 34 }
     }
 
     pub fn is_fundamental_type(self, env: &Env) -> bool {
@@ -1341,6 +1348,7 @@ mod tests {
 
         assert_eq!(TypeId::tid_none().full_name(&lib), "*.None");
         assert_eq!(TypeId::tid_bool().full_name(&lib), "*.Boolean");
+        assert_eq!(TypeId::tid_c_bool().full_name(&lib), "*.Bool");
         assert_eq!(TypeId::tid_utf8().full_name(&lib), "*.Utf8");
         assert_eq!(TypeId::tid_filename().full_name(&lib), "*.Filename");
         assert_eq!(TypeId::tid_os_string().full_name(&lib), "*.OsString");
