@@ -61,7 +61,7 @@ pub fn analyze(
         .iter()
         .find_map(|f| f.ret.bool_return_is_error.as_ref());
     let bool_return_error_message = bool_return_is_error.and_then(|m| {
-        if typ != TypeId::tid_bool() {
+        if typ != TypeId::tid_bool() && typ != TypeId::tid_c_bool() {
             error!(
                 "Ignoring bool_return_is_error configuration for non-bool returning function {}",
                 func.name

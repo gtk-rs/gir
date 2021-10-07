@@ -77,6 +77,7 @@ impl ConversionType {
                 None => ConversionType::Unknown,
                 IntPtr => ConversionType::Direct,
                 UIntPtr => ConversionType::Direct,
+                Bool => ConversionType::Direct,
                 Unsupported => ConversionType::Unknown,
             },
             Alias(alias) if alias.c_identifier == "GQuark" => ConversionType::Scalar,
