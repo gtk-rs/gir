@@ -131,7 +131,7 @@ pub fn generate(
             None
         },
         analysis.version,
-        &None, // There is no need for #[cfg()] since it's applied on the whole file.
+        None, // There is no need for #[cfg()] since it's applied on the whole file.
     )?;
 
     if !analysis.builder_properties.is_empty() {
@@ -444,7 +444,7 @@ pub fn generate_reexports(
     traits: &mut Vec<String>,
 ) {
     let mut cfgs: Vec<String> = Vec::new();
-    if let Some(cfg) = general::cfg_condition_string(&analysis.cfg_condition, false, 0) {
+    if let Some(cfg) = general::cfg_condition_string(analysis.cfg_condition.as_ref(), false, 0) {
         cfgs.push(cfg);
     }
     if let Some(cfg) = general::version_condition_string(env, analysis.version, false, 0) {

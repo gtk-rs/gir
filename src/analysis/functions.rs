@@ -612,7 +612,8 @@ fn analyze_function(
                 .filter(|param| library::ParameterDirection::In == param.direction)
                 .fold(0, |acc, _| acc + 1);
             let is_bool_getter = (func.parameters.len() == nb_in_params)
-                && (func.ret.typ == library::TypeId::tid_bool());
+                && (func.ret.typ == library::TypeId::tid_bool()
+                    || func.ret.typ == library::TypeId::tid_c_bool());
             new_name = getter_rules::try_rename_would_be_getter(&name, is_bool_getter)
                 .ok()
                 .map(getter_rules::NewName::unwrap);

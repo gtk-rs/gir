@@ -49,7 +49,7 @@ mod tests {
     use super::*;
 
     fn toml(input: &str) -> ::toml::Value {
-        let value = ::toml::from_str(&input);
+        let value = ::toml::from_str(input);
         assert!(value.is_ok());
         value.unwrap()
     }

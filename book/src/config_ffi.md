@@ -83,8 +83,8 @@ cfg_condition = "feature = \"egl\""
 
 When you're ready, let's generate the FFI part. In the command we'll execute, `../gir-files` is where the directory with your `.gir` files is. (But again, you can just clone the [gir-files repository](https://github.com/gtk-rs/gir-files) and add your file(s) in it). Then let's run the command:
 
-```shell
-cargo run --release -- -c YourSysGirFile.toml -d ../gir-files -m sys -o the-output-directory-sys
+```console
+> cargo run --release -- -c YourSysGirFile.toml -d ../gir-files -m sys -o the-output-directory-sys
 ```
 
 The generated files will be placed in `the-output-directory-sys`. Just take care about the dependencies and the crate's name generated in the `Cargo.toml` file (update them if they don't work as expected).

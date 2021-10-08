@@ -243,7 +243,7 @@ impl<'env> RustTypeBuilder<'env> {
             Fundamental(fund) => {
                 match fund {
                     None => err("()"),
-                    Boolean => ok("bool"),
+                    Boolean | Bool => ok("bool"),
                     Int8 => ok("i8"),
                     UInt8 => ok("u8"),
                     Int16 => ok("i16"),

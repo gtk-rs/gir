@@ -529,27 +529,27 @@ mod tests {
     fn test_make_single_version_file() {
         let target_path = Path::new("/tmp/glib");
         assert_eq!(
-            make_single_version_file(None, &target_path),
+            make_single_version_file(None, target_path),
             PathBuf::from("/tmp/glib/src/auto/versions.txt")
         );
         assert_eq!(
-            make_single_version_file(Some(""), &target_path),
+            make_single_version_file(Some(""), target_path),
             PathBuf::from("/tmp/glib/src/auto/versions.txt")
         );
         assert_eq!(
-            make_single_version_file(Some("src"), &target_path),
+            make_single_version_file(Some("src"), target_path),
             PathBuf::from("/tmp/glib/src/versions.txt")
         );
         assert_eq!(
-            make_single_version_file(Some("src/vers.txt"), &target_path),
+            make_single_version_file(Some("src/vers.txt"), target_path),
             PathBuf::from("/tmp/glib/src/vers.txt")
         );
         assert_eq!(
-            make_single_version_file(Some("."), &target_path),
+            make_single_version_file(Some("."), target_path),
             PathBuf::from("/tmp/glib/versions.txt")
         );
         assert_eq!(
-            make_single_version_file(Some("./_vers.dat"), &target_path),
+            make_single_version_file(Some("./_vers.dat"), target_path),
             PathBuf::from("/tmp/glib/_vers.dat")
         );
     }
