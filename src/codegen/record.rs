@@ -19,7 +19,9 @@ pub fn generate(w: &mut dyn Write, env: &Env, analysis: &analysis::record::Info)
                 env,
                 &analysis.name,
                 &type_.c_type,
+                analysis.boxed_inline,
                 &analysis.init_function_expression,
+                &analysis.copy_into_function_expression,
                 &analysis.clear_function_expression,
                 glib_get_type,
                 &analysis.derives,
@@ -61,7 +63,9 @@ pub fn generate(w: &mut dyn Write, env: &Env, analysis: &analysis::record::Info)
             &type_.c_type,
             copy_fn,
             &free_fn.glib_name,
+            analysis.boxed_inline,
             &analysis.init_function_expression,
+            &analysis.copy_into_function_expression,
             &analysis.clear_function_expression,
             analysis.glib_get_type.as_ref().map(|(f, v)| {
                 if v > &analysis.version {

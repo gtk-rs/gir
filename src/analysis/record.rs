@@ -19,7 +19,9 @@ pub struct Info {
     pub glib_get_type: Option<(String, Option<Version>)>,
     pub is_boxed: bool,
     pub derives: Derives,
+    pub boxed_inline: bool,
     pub init_function_expression: Option<String>,
+    pub copy_into_function_expression: Option<String>,
     pub clear_function_expression: Option<String>,
 }
 
@@ -78,6 +80,7 @@ pub fn new(env: &Env, obj: &GObject) -> Option<Info> {
     let record: &library::Record = type_.maybe_ref()?;
 
     let is_boxed = RecordType::of(record) == RecordType::AutoBoxed;
+    let boxed_inline = obj.boxed_inline;
 
     let mut imports = Imports::with_defined(&env.library, &name);
 
@@ -105,8 +108,16 @@ pub fn new(env: &Env, obj: &GObject) -> Option<Info> {
     };
 
     let mut derives = if let Some(ref derives) = obj.derives {
+        if boxed_inline
+            && !derives.is_empty()
+            && !derives
+                .iter()
+                .all(|ds| ds.names.is_empty() || ds.names.iter().all(|n| n == "Debug"))
+        {
+            panic!("Can't automatically derive traits other than `Debug` for BoxedInline records");
+        }
         derives.clone()
-    } else {
+    } else if !boxed_inline {
         let derives = vec![Derive {
             names: vec![
                 "Debug".into(),
@@ -120,6 +131,9 @@ pub fn new(env: &Env, obj: &GObject) -> Option<Info> {
         }];
 
         derives
+    } else {
+        // boxed_inline
+        vec![]
     };
 
     for special in specials.traits().keys() {
@@ -196,7 +210,9 @@ pub fn new(env: &Env, obj: &GObject) -> Option<Info> {
         glib_get_type,
         derives,
         is_boxed,
+        boxed_inline,
         init_function_expression: obj.init_function_expression.clone(),
+        copy_into_function_expression: obj.copy_into_function_expression.clone(),
         clear_function_expression: obj.clear_function_expression.clone(),
     };
 
