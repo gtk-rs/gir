@@ -182,7 +182,7 @@ fn prepare_cconsts(env: &Env) -> Vec<CConstant> {
 /// Checks if type name is unlikely to correspond to a real C type name.
 fn is_name_made_up(name: &str) -> bool {
     // Unnamed types are assigned name during parsing, those names contain an underscore.
-    name.contains('_')
+    name.contains('_') && !name.ends_with("_t")
 }
 
 fn generate_manual_h(env: &Env, path: &Path, w: &mut dyn Write) -> io::Result<()> {
