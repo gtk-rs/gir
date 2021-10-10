@@ -333,6 +333,10 @@ impl TypeId {
         TypeId { ns_id: 0, id: 1 }
     }
 
+    pub fn tid_uint32() -> TypeId {
+        TypeId { ns_id: 0, id: 7 }
+    }
+
     pub fn tid_utf8() -> TypeId {
         TypeId { ns_id: 0, id: 28 }
     }
@@ -1348,6 +1352,7 @@ mod tests {
 
         assert_eq!(TypeId::tid_none().full_name(&lib), "*.None");
         assert_eq!(TypeId::tid_bool().full_name(&lib), "*.Boolean");
+        assert_eq!(TypeId::tid_uint32().full_name(&lib), "*.UInt32");
         assert_eq!(TypeId::tid_c_bool().full_name(&lib), "*.Bool");
         assert_eq!(TypeId::tid_utf8().full_name(&lib), "*.Utf8");
         assert_eq!(TypeId::tid_filename().full_name(&lib), "*.Filename");
