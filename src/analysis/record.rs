@@ -79,7 +79,10 @@ pub fn new(env: &Env, obj: &GObject) -> Option<Info> {
 
     let record: &library::Record = type_.maybe_ref()?;
 
-    let is_boxed = RecordType::of(record) == RecordType::AutoBoxed;
+    let is_boxed = matches!(
+        RecordType::of(record),
+        RecordType::Boxed | RecordType::AutoBoxed
+    );
     let boxed_inline = obj.boxed_inline;
 
     let mut imports = Imports::with_defined(&env.library, &name);
