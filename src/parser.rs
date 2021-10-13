@@ -334,6 +334,21 @@ impl Library {
                 }),
             "field" => {
                 self.read_field(parser, ns_id, elem).map(|mut f| {
+                    // Workaround for bitfields
+                    if c_type == "GDate" {
+                        if f.name == "julian_days" {
+                            fields.push(f);
+                        } else if f.name == "julian" {
+                            f.name = "flags_dmy".into();
+                            f.typ = TypeId::tid_uint32();
+                            f.c_type = Some("guint".into());
+                            f.bits = None;
+                            fields.push(f);
+                        } else {
+                            // Skip
+                        }
+                        return;
+                    }
                     // Workaround for wrong GValue c:type
                     if c_type == "GValue" && f.name == "data" {
                         f.c_type = Some("GValue_data".into());

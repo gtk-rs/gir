@@ -253,26 +253,6 @@ status = "generate"
     cfg_condition = "feature = \"ser_de\""
 ```
 
-Gir auto-detects `copy`/`free` or `ref`/`unref` function pairs for memory management
-on records. It falls back to generic `g_boxed_copy`/`g_boxed_free` if these are not
-found, based on an existing implementation of `get_type`. Otherwise no record
-implementation can be generated.
-
-Some boxed types are passed as `out` parameters to functions and the caller is
-required to allocate them. For this it is necessary to provide Rust
-expressions in the configuration for initializing newly allocated memory for
-them, and to free any resources that might be stored in values of that boxed
-types. By default the memory is zero-initialized and it is valid to provide an
-empty closure like below.
-
-```toml
-[[object]]
-name = "Gtk.TreeIter"
-status = "generate"
-init_function_expression = "|_ptr| ()"
-clear_function_expression = "|_ptr| ()"
-```
-
 For global functions, the members can be configured by configuring the `Gtk.*` object:
 
 ```toml
@@ -472,6 +452,60 @@ must_use = true
     variant = "Result"
     ok_type = "gst::StateChangeSuccess"
     err_type = "gst::StateChangeError"
+```
+
+## Boxed types vs. BoxedInline types
+
+For boxed types / records, gir auto-detects `copy`/`free` or `ref`/`unref`
+function pairs for memory management on records. It falls back to generic
+`g_boxed_copy`/`g_boxed_free` if these are not found, based on an existing
+implementation of `get_type`. Otherwise no record implementation can be
+generated.
+
+This works for the majority of boxed types, which are literally boxed: their
+memory is always allocated on the heap and memory management is left to the C
+library. Some boxed types, however, are special and in C code they are usually
+allocated on the stack or inline inside another struct. As such, their struct
+definition is public and part of the API/ABI. Usually these types are
+relatively small and allocated regularly, which would make heap allocations
+costly.
+
+These special boxed types are usually allocated by the caller of the C
+functions, and the functions are then only filling in the memory and taking
+values of this type as `(out caller-allocates)` parameters.
+
+In most other bindings, heap allocations are used for these boxed types too
+but in Rust we can do better and actually allocate them on the stack or inline
+inside another struct.
+
+Gir calls these special boxed types "boxed inline".
+
+```toml
+[[object]]
+name = "GLib.TreeIter"
+status = "generate"
+boxed_inline = true
+```
+
+For inline-allocated boxed types it is possible to provide Rust expressions in
+the configuration for initializing newly allocated memory for them, to copy
+from one value into another one, and to free any resources that might be
+stored in values of that boxed types.
+
+By default the memory is zero-initialized and copying is done via
+`std::ptr::copy()`. If the boxed type contains memory that needs to be freed
+then these functions must be provided.
+
+The following configuration is equivalent with the one above.
+
+```toml
+[[object]]
+name = "GLib.TreeIter"
+status = "generate"
+boxed_inline = true
+init_function_expression = "|_ptr| ()"
+copy_into_function_expression = "|dest, src| { std::ptr::copy_nonoverlapping(src, dest, 1); }"
+clear_function_expression = "|_ptr| ()"
 ```
 
 ## Generation in API mode

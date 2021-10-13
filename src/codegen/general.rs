@@ -224,7 +224,9 @@ fn define_boxed_type_internal(
     glib_name: &str,
     copy_fn: &TraitInfo,
     free_fn: &str,
+    boxed_inline: bool,
     init_function_expression: &Option<String>,
+    copy_into_function_expression: &Option<String>,
     clear_function_expression: &Option<String>,
     get_type_fn: Option<&str>,
     derive: &[Derive],
@@ -235,8 +237,11 @@ fn define_boxed_type_internal(
     derives(w, derive, 1)?;
     writeln!(
         w,
-        "\tpub struct {}(Boxed<{}::{}>);",
-        type_name, sys_crate_name, glib_name
+        "\tpub struct {}(Boxed{}<{}::{}>);",
+        type_name,
+        if boxed_inline { "Inline" } else { "" },
+        sys_crate_name,
+        glib_name
     )?;
     writeln!(w)?;
     writeln!(w, "\tmatch fn {{")?;
@@ -252,10 +257,17 @@ fn define_boxed_type_internal(
     )?;
     writeln!(w, "\t\tfree => |ptr| {}::{}(ptr),", sys_crate_name, free_fn)?;
 
-    if let (Some(init_function_expression), Some(clear_function_expression)) =
-        (init_function_expression, clear_function_expression)
-    {
+    if let (
+        Some(init_function_expression),
+        Some(copy_into_function_expression),
+        Some(clear_function_expression),
+    ) = (
+        init_function_expression,
+        copy_into_function_expression,
+        clear_function_expression,
+    ) {
         writeln!(w, "\t\tinit => {},", init_function_expression,)?;
+        writeln!(w, "\t\tcopy_into => {},", copy_into_function_expression,)?;
         writeln!(w, "\t\tclear => {},", clear_function_expression,)?;
     }
 
@@ -275,7 +287,9 @@ pub fn define_boxed_type(
     glib_name: &str,
     copy_fn: &TraitInfo,
     free_fn: &str,
+    boxed_inline: bool,
     init_function_expression: &Option<String>,
+    copy_into_function_expression: &Option<String>,
     clear_function_expression: &Option<String>,
     get_type_fn: Option<(String, Option<Version>)>,
     derive: &[Derive],
@@ -292,7 +306,9 @@ pub fn define_boxed_type(
                 glib_name,
                 copy_fn,
                 free_fn,
+                boxed_inline,
                 init_function_expression,
+                copy_into_function_expression,
                 clear_function_expression,
                 Some(get_type_fn),
                 derive,
@@ -307,7 +323,9 @@ pub fn define_boxed_type(
                 glib_name,
                 copy_fn,
                 free_fn,
+                boxed_inline,
                 init_function_expression,
+                copy_into_function_expression,
                 clear_function_expression,
                 None,
                 derive,
@@ -320,7 +338,9 @@ pub fn define_boxed_type(
                 glib_name,
                 copy_fn,
                 free_fn,
+                boxed_inline,
                 init_function_expression,
+                copy_into_function_expression,
                 clear_function_expression,
                 Some(get_type_fn),
                 derive,
@@ -334,7 +354,9 @@ pub fn define_boxed_type(
             glib_name,
             copy_fn,
             free_fn,
+            boxed_inline,
             init_function_expression,
+            copy_into_function_expression,
             clear_function_expression,
             None,
             derive,
@@ -349,7 +371,9 @@ pub fn define_auto_boxed_type(
     env: &Env,
     type_name: &str,
     glib_name: &str,
+    boxed_inline: bool,
     init_function_expression: &Option<String>,
+    copy_into_function_expression: &Option<String>,
     clear_function_expression: &Option<String>,
     get_type_fn: &str,
     derive: &[Derive],
@@ -360,8 +384,11 @@ pub fn define_auto_boxed_type(
     derives(w, derive, 1)?;
     writeln!(
         w,
-        "\tpub struct {}(Boxed<{}::{}>);",
-        type_name, sys_crate_name, glib_name
+        "\tpub struct {}(Boxed{}<{}::{}>);",
+        type_name,
+        if boxed_inline { "Inline" } else { "" },
+        sys_crate_name,
+        glib_name
     )?;
     writeln!(w)?;
     writeln!(w, "\tmatch fn {{")?;
@@ -382,10 +409,17 @@ pub fn define_auto_boxed_type(
         get_type_fn
     )?;
 
-    if let (Some(init_function_expression), Some(clear_function_expression)) =
-        (init_function_expression, clear_function_expression)
-    {
+    if let (
+        Some(init_function_expression),
+        Some(copy_into_function_expression),
+        Some(clear_function_expression),
+    ) = (
+        init_function_expression,
+        copy_into_function_expression,
+        clear_function_expression,
+    ) {
         writeln!(w, "\t\tinit => {},", init_function_expression,)?;
+        writeln!(w, "\t\tcopy_into => {},", copy_into_function_expression,)?;
         writeln!(w, "\t\tclear => {},", clear_function_expression,)?;
     }
 

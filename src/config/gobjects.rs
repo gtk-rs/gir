@@ -90,7 +90,9 @@ pub struct GObject {
     pub align: Option<u32>,
     pub generate_builder: bool,
     pub builder_postprocess: Option<String>,
+    pub boxed_inline: bool,
     pub init_function_expression: Option<String>,
+    pub copy_into_function_expression: Option<String>,
     pub clear_function_expression: Option<String>,
 }
 
@@ -122,7 +124,9 @@ impl Default for GObject {
             align: None,
             generate_builder: false,
             builder_postprocess: None,
+            boxed_inline: false,
             init_function_expression: None,
+            copy_into_function_expression: None,
             clear_function_expression: None,
         }
     }
@@ -270,7 +274,9 @@ fn parse_object(
             "align",
             "generate_builder",
             "builder_postprocess",
+            "boxed_inline",
             "init_function_expression",
+            "copy_into_function_expression",
             "clear_function_expression",
         ],
         &format!("object {}", name),
@@ -380,6 +386,11 @@ fn parse_object(
         .and_then(Value::as_bool)
         .unwrap_or(generate_builder);
 
+    let boxed_inline = toml_object
+        .lookup("boxed_inline")
+        .and_then(Value::as_bool)
+        .unwrap_or(false);
+
     let builder_postprocess = toml_object
         .lookup("builder_postprocess")
         .and_then(Value::as_str)
@@ -388,16 +399,35 @@ fn parse_object(
         .lookup("init_function_expression")
         .and_then(Value::as_str)
         .map(ToOwned::to_owned);
+    let copy_into_function_expression = toml_object
+        .lookup("copy_into_function_expression")
+        .and_then(Value::as_str)
+        .map(ToOwned::to_owned);
     let clear_function_expression = toml_object
         .lookup("clear_function_expression")
         .and_then(Value::as_str)
         .map(ToOwned::to_owned);
 
-    if (init_function_expression.is_some() && clear_function_expression.is_none())
-        || (init_function_expression.is_none() && clear_function_expression.is_some())
+    if boxed_inline
+        && !((init_function_expression.is_none()
+            && copy_into_function_expression.is_none()
+            && clear_function_expression.is_none())
+            || (init_function_expression.is_some()
+                && copy_into_function_expression.is_some()
+                && clear_function_expression.is_some()))
     {
         panic!(
-            "`init_function_expression` and `clear_function_expression` both have to be provided"
+            "`init_function_expression`, `copy_into_function_expression` and `clear_function_expression` all have to be provided or neither"
+        );
+    }
+
+    if !boxed_inline
+        && (init_function_expression.is_some()
+            || copy_into_function_expression.is_some()
+            || clear_function_expression.is_some())
+    {
+        panic!(
+            "`init_function_expression`, `copy_into_function_expression` and `clear_function_expression` can only be provided for BoxedInline types"
         );
     }
 
@@ -449,7 +479,9 @@ fn parse_object(
         align,
         generate_builder,
         builder_postprocess,
+        boxed_inline,
         init_function_expression,
+        copy_into_function_expression,
         clear_function_expression,
     }
 }

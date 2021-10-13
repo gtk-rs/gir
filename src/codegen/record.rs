@@ -1,8 +1,9 @@
 use super::{function, general, trait_impls};
 use crate::{
-    analysis::{self, special_functions::Type},
+    analysis::{self, record_type::RecordType, special_functions::Type},
     env::Env,
     library,
+    traits::MaybeRef,
 };
 use std::io::{Result, Write};
 
@@ -12,14 +13,16 @@ pub fn generate(w: &mut dyn Write, env: &Env, analysis: &analysis::record::Info)
     general::start_comments(w, &env.config)?;
     general::uses(w, env, &analysis.imports, type_.version)?;
 
-    if analysis.is_boxed {
+    if RecordType::of(env.type_(analysis.type_id).maybe_ref().unwrap()) == RecordType::AutoBoxed {
         if let Some((ref glib_get_type, _)) = analysis.glib_get_type {
             general::define_auto_boxed_type(
                 w,
                 env,
                 &analysis.name,
                 &type_.c_type,
+                analysis.boxed_inline,
                 &analysis.init_function_expression,
+                &analysis.copy_into_function_expression,
                 &analysis.clear_function_expression,
                 glib_get_type,
                 &analysis.derives,
@@ -61,7 +64,9 @@ pub fn generate(w: &mut dyn Write, env: &Env, analysis: &analysis::record::Info)
             &type_.c_type,
             copy_fn,
             &free_fn.glib_name,
+            analysis.boxed_inline,
             &analysis.init_function_expression,
+            &analysis.copy_into_function_expression,
             &analysis.clear_function_expression,
             analysis.glib_get_type.as_ref().map(|(f, v)| {
                 if v > &analysis.version {
