@@ -471,22 +471,6 @@ status = &quot;generate&quot;
     name = &quot;Serialize, Deserialize&quot;
     cfg_condition = &quot;feature = \&quot;ser_de\&quot;&quot;
 </code></pre>
-<p>Gir auto-detects <code>copy</code>/<code>free</code> or <code>ref</code>/<code>unref</code> function pairs for memory management
-on records. It falls back to generic <code>g_boxed_copy</code>/<code>g_boxed_free</code> if these are not
-found, based on an existing implementation of <code>get_type</code>. Otherwise no record
-implementation can be generated.</p>
-<p>Some boxed types are passed as <code>out</code> parameters to functions and the caller is
-required to allocate them. For this it is necessary to provide Rust
-expressions in the configuration for initializing newly allocated memory for
-them, and to free any resources that might be stored in values of that boxed
-types. By default the memory is zero-initialized and it is valid to provide an
-empty closure like below.</p>
-<pre><code class="language-toml">[[object]]
-name = &quot;Gtk.TreeIter&quot;
-status = &quot;generate&quot;
-init_function_expression = &quot;|_ptr| ()&quot;
-clear_function_expression = &quot;|_ptr| ()&quot;
-</code></pre>
 <p>For global functions, the members can be configured by configuring the <code>Gtk.*</code> object:</p>
 <pre><code class="language-toml">[[object]]
 name = &quot;Gtk.*&quot;
@@ -663,6 +647,47 @@ must_use = true
     err_type = &quot;gst::StateChangeError&quot;
 <span class="boring">}
 </span></code></pre></pre>
+<h2 id="boxed-types-vs-boxedinline-types"><a class="header" href="#boxed-types-vs-boxedinline-types">Boxed types vs. BoxedInline types</a></h2>
+<p>For boxed types / records, gir auto-detects <code>copy</code>/<code>free</code> or <code>ref</code>/<code>unref</code>
+function pairs for memory management on records. It falls back to generic
+<code>g_boxed_copy</code>/<code>g_boxed_free</code> if these are not found, based on an existing
+implementation of <code>get_type</code>. Otherwise no record implementation can be
+generated.</p>
+<p>This works for the majority of boxed types, which are literally boxed: their
+memory is always allocated on the heap and memory management is left to the C
+library. Some boxed types, however, are special and in C code they are usually
+allocated on the stack or inline inside another struct. As such, their struct
+definition is public and part of the API/ABI. Usually these types are
+relatively small and allocated regularly, which would make heap allocations
+costly.</p>
+<p>These special boxed types are usually allocated by the caller of the C
+functions, and the functions are then only filling in the memory and taking
+values of this type as <code>(out caller-allocates)</code> parameters.</p>
+<p>In most other bindings, heap allocations are used for these boxed types too
+but in Rust we can do better and actually allocate them on the stack or inline
+inside another struct.</p>
+<p>Gir calls these special boxed types &quot;boxed inline&quot;.</p>
+<pre><code class="language-toml">[[object]]
+name = &quot;GLib.TreeIter&quot;
+status = &quot;generate&quot;
+boxed_inline = true
+</code></pre>
+<p>For inline-allocated boxed types it is possible to provide Rust expressions in
+the configuration for initializing newly allocated memory for them, to copy
+from one value into another one, and to free any resources that might be
+stored in values of that boxed types.</p>
+<p>By default the memory is zero-initialized and copying is done via
+<code>std::ptr::copy()</code>. If the boxed type contains memory that needs to be freed
+then these functions must be provided.</p>
+<p>The following configuration is equivalent with the one above.</p>
+<pre><code class="language-toml">[[object]]
+name = &quot;GLib.TreeIter&quot;
+status = &quot;generate&quot;
+boxed_inline = true
+init_function_expression = &quot;|_ptr| ()&quot;
+copy_into_function_expression = &quot;|dest, src| { std::ptr::copy_nonoverlapping(src, dest, 1); }&quot;
+clear_function_expression = &quot;|_ptr| ()&quot;
+</code></pre>
 <h2 id="generation-in-api-mode"><a class="header" href="#generation-in-api-mode">Generation in API mode</a></h2>
 <p>To generate the Rust-user API level, The command is very similar to the previous one. It's better to not put this output in the same directory as where the FFI files are. Just run:</p>
 <pre><code class="language-console">&gt; cargo run --release -- -c YourGirFile.toml -d ../gir-files -o the-output-directory
