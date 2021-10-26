@@ -103,7 +103,8 @@ fn is_stringify(func: &mut FuncInfo, parent_type: &LibType, obj: &GObject) -> bo
 
         if func.name == "to_string" {
             // Rename to to_str to make sure it doesn't clash with ToString::to_string
-            func.name = "to_str".to_owned();
+            assert!(func.new_name.is_none(), "A `to_string` function can't be renamed manually. It's automatically renamed to `to_str`");
+            func.new_name = Some("to_str".to_owned());
 
             // As to not change old code behaviour, assume non-nullability outside
             // enums and flags only, and exclusively for to_string. Function inside
