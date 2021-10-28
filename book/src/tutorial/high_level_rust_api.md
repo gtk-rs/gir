@@ -10,7 +10,7 @@ As you certainly guessed, we'll need a new `Gir.toml` file. Let's write it:
 
 ```toml
 [options]
-girs_dir = "../gir-files"
+girs_directories = ["../gir-files"]
 library = "GtkSource"
 version = "3.0"
 min_cfg_version = "3.0"

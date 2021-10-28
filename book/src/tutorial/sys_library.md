@@ -115,7 +115,7 @@ Now we regenerate it then rebuild it:
 
 Should work just fine!
 
-We can cleanup the command line a bit now. You can actually give the work mode ("-m" option) and the gir files repository through the `Gir.toml` file using "work_mode" and "girs_dir" options:
+We can cleanup the command line a bit now. You can actually give the work mode ("-m" option) and the gir files repository through the `Gir.toml` file using "work_mode" and "girs_directories" options:
 
 ```toml
 [options]
@@ -124,7 +124,7 @@ version = "3.0"
 target_path = "."
 min_cfg_version = "3.0"
 work_mode = "sys"
-girs_dir = "../../gir-files/"
+girs_directories = ["../../gir-files/"]
 
 external_libraries = [
     "Cairo",
