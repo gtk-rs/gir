@@ -136,6 +136,59 @@
                     <main>
                         <h1 id="handling-generation-errors"><a class="header" href="#handling-generation-errors">Handling generation errors</a></h1>
 <p>There are a few kinds of errors (not much luckily) which can happen with <a href="https://github.com/gtk-rs/gir">gir</a> generation. Let's take a look at them.</p>
+<h3 id="cannot-find-macros"><a class="header" href="#cannot-find-macros">Cannot find macros</a></h3>
+<p>Compilation of the generated bindings may fail with errors like the following:</p>
+<pre><code>error: cannot find macro `skip_assert_initialized` in this scope
+  --&gt; src/auto/enums.rs:83:9
+   |
+83 |         skip_assert_initialized!();
+   |         ^^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = help: have you added the `#[macro_use]` on the module/import?
+
+error: cannot find macro `assert_initialized_main_thread` in this scope
+  --&gt; src/auto/example.rs:33:9
+   |
+33 |         assert_initialized_main_thread!();
+   |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = help: have you added the `#[macro_use]` on the module/import?
+</code></pre>
+<p>In this case you’ll have to implement them yourself. For example, you can add the following to your <code>lib.rs</code> file:</p>
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>/// No-op.
+macro_rules! skip_assert_initialized {
+    () =&gt; {};
+}
+
+/// Asserts that this is the main thread and either `gdk::init` or `gtk::init` has been called.
+macro_rules! assert_initialized_main_thread {
+    () =&gt; {
+        if !::gtk::is_initialized_main_thread() {
+            if ::gtk::is_initialized() {
+                panic!(&quot;GTK may only be used from the main thread.&quot;);
+            } else {
+                panic!(&quot;GTK has not been initialized. Call `gtk::init` first.&quot;);
+            }
+        }
+    };
+}
+<span class="boring">}
+</span></code></pre></pre>
+<p>Note: macros are order-dependent and you <em>must</em> insert this code before declaring modules that use it (e.g. <code>mod auto</code>).</p>
+<p>One complication here is that the <code>assert_initialized_main_thread!</code> macro depends on the exact library. If it's GTK-based then the above macro is likely correct, unless the library has its own initialization function. If it has its own initialization function it would need to be handled in addition to GTK's here in the same way.</p>
+<p>For non-GTK-based libraries this macro would handle the initialization function of that library in the same way, or if there is none would simply do nothing:</p>
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>/// No-op.
+macro_rules! assert_initialized_main_thread {
+    () =&gt; {};
+}
+<span class="boring">}
+</span></code></pre></pre>
 <h2 id="missing-memory-management-functions"><a class="header" href="#missing-memory-management-functions">Missing memory management functions</a></h2>
 <p>If <a href="https://github.com/gtk-rs/gir">gir</a> generation fails (for whatever reason), it means you'll have to implement the type yourself. Just like types from other <code>gtk-rs</code> crates, you'll need to put it into the &quot;manual&quot; list. Then you need to put the type into the <code>src</code> folder (or inside a subfolder, you know how Rust works).</p>
 <p>/!\ Don't forget to reexport the type inside your <code>src/lib.rs</code> file! For example, let's take a look at the <a href="https://github.com/gtk-rs/gtk/blob/master/src/requisition.rs">requisition.rs</a> file from the <code>gtk</code> crate.</p>
