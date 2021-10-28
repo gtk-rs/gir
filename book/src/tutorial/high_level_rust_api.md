@@ -188,23 +188,6 @@ git = "https://github.com/gtk-rs/glib"
 git = "https://github.com/gtk-rs/sys" # all gtk-rs sys crates are in the sys repository
 ```
 
-And to import those crates into `src/lib.rs`:
-
-```rust
-#[macro_use]
-extern crate glib;
-extern crate glib_sys;
-extern crate gtk_source_sys;
-
-extern crate libc;
-#[macro_use]
-extern crate bitflags;
-
-pub use auto::*;
-
-mod auto;
-```
-
 Let's try to rebuild:
 
 ```console
@@ -269,12 +252,6 @@ We'll also need to import the `gtk` crate. Let's add it into our `Cargo.toml` fi
 ```toml
 [dependencies.gtk]
 git = "https://github.com/gtk-rs/gtk"
-```
-
-And import it into our `src/lib.rs`:
-
-```rust
-extern crate gtk;
 ```
 
 We regenerate and rebuild:
