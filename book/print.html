@@ -982,7 +982,7 @@ mod auto;
 <span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>glib_wrapper! {
-    pub struct Language(Object&lt;gtk_source_sys::GtkSourceLanguage, gtk_source_sys::GtkSourceLanguageClass, LanguageClass&gt;);
+    pub struct Language(Object&lt;ffi::GtkSourceLanguage, ffi::GtkSourceLanguageClass, LanguageClass&gt;);
 
     match fn {
         get_type =&gt; || gtk_source_sys::gtk_source_language_get_type(),
@@ -991,7 +991,8 @@ mod auto;
 <span class="boring">}
 </span></code></pre></pre>
 <p>This macro comes from the <code>glib</code> crate. We didn't import it, therefore the Rust compiler can't find it. We'll also need its <code>sys</code> part (the case of <code>glib</code> is a bit special).</p>
-<p>Another issue that will arise is that we didn't import the <code>sourceview-sys</code> crate either. Alongside those two (three if we count <code>glib-sys</code>!), we'll need both <code>libc</code> and <code>bitflags</code>. Let's fix all of those issues at once! For that, we need to update the <code>Cargo.toml</code>:</p>
+<p>A second issue is that we didn't import the <code>sourceview-sys</code> crate we generated. Gir produces code expecting this crate to be imported as &quot;ffi&quot; (which you can see in the definition of <code>Language</code> above), so we need to rename it in the <code>Cargo.toml</code> file, too.</p>
+<p>Alongside those two (three if we count <code>glib-sys</code>!), we'll need both <code>libc</code> and <code>bitflags</code>. Let's fix all of those issues at once! For that, we need to update the <code>Cargo.toml</code>:</p>
 <pre><code class="language-toml">[package]
 name = &quot;sourceview&quot;
 version = &quot;0.1.0&quot;
@@ -1001,7 +1002,8 @@ authors = [&quot;Guillaume Gomez &lt;guillaume1.gomez@gmail.com&gt;&quot;]
 libc = &quot;0.2&quot;
 bitflags = &quot;1.0&quot;
 
-[dependencies.gtk-source-sys]
+[dependencies.ffi]
+package = &quot;sourceview-sys&quot;
 path = &quot;./sourceview-sys&quot;
 
 [dependencies.glib]
