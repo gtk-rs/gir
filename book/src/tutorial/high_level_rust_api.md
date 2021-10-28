@@ -156,7 +156,7 @@ You guessed it, we need to add a few dependencies to make it work. A lot of thos
 
 ```rust
 glib_wrapper! {
-    pub struct Language(Object<gtk_source_sys::GtkSourceLanguage, gtk_source_sys::GtkSourceLanguageClass, LanguageClass>);
+    pub struct Language(Object<ffi::GtkSourceLanguage, ffi::GtkSourceLanguageClass, LanguageClass>);
 
     match fn {
         get_type => || gtk_source_sys::gtk_source_language_get_type(),
@@ -166,7 +166,9 @@ glib_wrapper! {
 
 This macro comes from the `glib` crate. We didn't import it, therefore the Rust compiler can't find it. We'll also need its `sys` part (the case of `glib` is a bit special).
 
-Another issue that will arise is that we didn't import the `sourceview-sys` crate either. Alongside those two (three if we count `glib-sys`!), we'll need both `libc` and `bitflags`. Let's fix all of those issues at once! For that, we need to update the `Cargo.toml`:
+A second issue is that we didn't import the `sourceview-sys` crate we generated. Gir produces code expecting this crate to be imported as "ffi" (which you can see in the definition of `Language` above), so we need to rename it in the `Cargo.toml` file, too.
+
+Alongside those two (three if we count `glib-sys`!), we'll need both `libc` and `bitflags`. Let's fix all of those issues at once! For that, we need to update the `Cargo.toml`:
 
 ```toml
 [package]
@@ -178,7 +180,8 @@ authors = ["Guillaume Gomez <guillaume1.gomez@gmail.com>"]
 libc = "0.2"
 bitflags = "1.0"
 
-[dependencies.gtk-source-sys]
+[dependencies.ffi]
+package = "sourceview-sys"
 path = "./sourceview-sys"
 
 [dependencies.glib]
