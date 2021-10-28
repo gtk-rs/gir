@@ -2,6 +2,63 @@
 
 There are a few kinds of errors (not much luckily) which can happen with [gir] generation. Let's take a look at them.
 
+### Cannot find macros
+
+Compilation of the generated bindings may fail with errors like the following:
+
+```
+error: cannot find macro `skip_assert_initialized` in this scope
+  --> src/auto/enums.rs:83:9
+   |
+83 |         skip_assert_initialized!();
+   |         ^^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = help: have you added the `#[macro_use]` on the module/import?
+
+error: cannot find macro `assert_initialized_main_thread` in this scope
+  --> src/auto/example.rs:33:9
+   |
+33 |         assert_initialized_main_thread!();
+   |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = help: have you added the `#[macro_use]` on the module/import?
+```
+
+In this case you’ll have to implement them yourself. For example, you can add the following to your `lib.rs` file:
+
+```rust
+/// No-op.
+macro_rules! skip_assert_initialized {
+    () => {};
+}
+
+/// Asserts that this is the main thread and either `gdk::init` or `gtk::init` has been called.
+macro_rules! assert_initialized_main_thread {
+    () => {
+        if !::gtk::is_initialized_main_thread() {
+            if ::gtk::is_initialized() {
+                panic!("GTK may only be used from the main thread.");
+            } else {
+                panic!("GTK has not been initialized. Call `gtk::init` first.");
+            }
+        }
+    };
+}
+```
+
+Note: macros are order-dependent and you *must* insert this code before declaring modules that use it (e.g. `mod auto`).
+
+One complication here is that the `assert_initialized_main_thread!` macro depends on the exact library. If it's GTK-based then the above macro is likely correct, unless the library has its own initialization function. If it has its own initialization function it would need to be handled in addition to GTK's here in the same way.
+
+For non-GTK-based libraries this macro would handle the initialization function of that library in the same way, or if there is none would simply do nothing:
+
+```rust
+/// No-op.
+macro_rules! assert_initialized_main_thread {
+    () => {};
+}
+```
+
 ## Missing memory management functions
 
 If [gir] generation fails (for whatever reason), it means you'll have to implement the type yourself. Just like types from other `gtk-rs` crates, you'll need to put it into the "manual" list. Then you need to put the type into the `src` folder (or inside a subfolder, you know how Rust works).
