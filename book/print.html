@@ -820,14 +820,14 @@ external_libraries = [
 &gt; cargo build
 </code></pre>
 <p>Should work just fine!</p>
-<p>We can cleanup the command line a bit now. You can actually give the work mode (&quot;-m&quot; option) and the gir files repository through the <code>Gir.toml</code> file using &quot;work_mode&quot; and &quot;girs_dir&quot; options:</p>
+<p>We can cleanup the command line a bit now. You can actually give the work mode (&quot;-m&quot; option) and the gir files repository through the <code>Gir.toml</code> file using &quot;work_mode&quot; and &quot;girs_directories&quot; options:</p>
 <pre><code class="language-toml">[options]
 library = &quot;GtkSource&quot;
 version = &quot;3.0&quot;
 target_path = &quot;.&quot;
 min_cfg_version = &quot;3.0&quot;
 work_mode = &quot;sys&quot;
-girs_dir = &quot;../../gir-files/&quot;
+girs_directories = [&quot;../../gir-files/&quot;]
 
 external_libraries = [
     &quot;Cairo&quot;,
@@ -853,7 +853,7 @@ external_libraries = [
 </code></pre>
 <p>As you certainly guessed, we'll need a new <code>Gir.toml</code> file. Let's write it:</p>
 <pre><code class="language-toml">[options]
-girs_dir = &quot;../gir-files&quot;
+girs_directories = [&quot;../gir-files&quot;]
 library = &quot;GtkSource&quot;
 version = &quot;3.0&quot;
 min_cfg_version = &quot;3.0&quot;
