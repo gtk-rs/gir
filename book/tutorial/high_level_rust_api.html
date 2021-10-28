@@ -297,24 +297,6 @@ git = &quot;https://github.com/gtk-rs/glib&quot;
 [dependencies.glib-sys]
 git = &quot;https://github.com/gtk-rs/sys&quot; # all gtk-rs sys crates are in the sys repository
 </code></pre>
-<p>And to import those crates into <code>src/lib.rs</code>:</p>
-<pre><pre class="playground"><code class="language-rust">
-<span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>#[macro_use]
-extern crate glib;
-extern crate glib_sys;
-extern crate gtk_source_sys;
-
-extern crate libc;
-#[macro_use]
-extern crate bitflags;
-
-pub use auto::*;
-
-mod auto;
-<span class="boring">}
-</span></code></pre></pre>
 <p>Let's try to rebuild:</p>
 <pre><code class="language-console">&gt; cargo build
 </code></pre>
@@ -360,13 +342,6 @@ manual = [
 <pre><code class="language-toml">[dependencies.gtk]
 git = &quot;https://github.com/gtk-rs/gtk&quot;
 </code></pre>
-<p>And import it into our <code>src/lib.rs</code>:</p>
-<pre><pre class="playground"><code class="language-rust">
-<span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>extern crate gtk;
-<span class="boring">}
-</span></code></pre></pre>
 <p>We regenerate and rebuild:</p>
 <pre><code class="language-console">&gt; gir
 &gt; cargo build
