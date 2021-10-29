@@ -36,7 +36,7 @@ fn fill_empty(root: &mut Table, env: &Env, crate_name: &str) {
         let package = upsert_table(root, "package");
         set_string(package, "name", package_name);
         set_string(package, "version", "0.0.1");
-        set_string(package, "edition", "2018");
+        set_string(package, "edition", "2021");
     }
 
     {

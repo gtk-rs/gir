@@ -57,7 +57,7 @@ name = "gtk_sys"
 build = "build.rs"
 name = "gtk-sys"
 version = "0.2.0"
-edition = "2018"
+edition = "2021"
 [package.metadata.system-deps."gtk+_3_0"]
 name = "gtk+-3.0"
 version = "3.4"

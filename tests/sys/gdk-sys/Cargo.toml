@@ -44,7 +44,7 @@ name = "gdk_sys"
 build = "build.rs"
 name = "gdk-sys"
 version = "0.2.0"
-edition = "2018"
+edition = "2021"
 [package.metadata.system-deps.gdk_3_0]
 name = "gdk-3.0"
 version = "3.4"
