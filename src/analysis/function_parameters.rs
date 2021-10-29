@@ -301,20 +301,16 @@ pub fn analyze(
             ind_rust = None;
         }
 
-        let mut trans_nullable = false;
         let type_ = env.type_(par.typ);
-        let to_glib_extra =
-            if par.instance_parameter || !*nullable || (!type_.is_interface() && !type_.is_class())
-            {
-                String::new()
+        let to_glib_extra = if par.instance_parameter || !*nullable {
+            String::new()
+        } else {
+            if type_.is_class() && !type_.is_final_type() {
+                ".as_ref()".to_owned()
             } else {
-                trans_nullable = *nullable;
-                if !type_.is_final_type() {
-                    ".as_ref()".to_owned()
-                } else {
-                    String::new()
-                }
-            };
+                String::new()
+            }
+        };
 
         let transformation_type = match conversion {
             ConversionType::Direct => {
@@ -366,7 +362,7 @@ pub fn analyze(
                 explicit_target_type: String::new(),
                 pointer_cast: String::new(),
                 in_trait,
-                nullable: trans_nullable,
+                nullable: *nullable,
             },
             ConversionType::Borrow => TransformationType::ToGlibBorrow,
             ConversionType::Unknown => TransformationType::ToGlibUnknown { name },
