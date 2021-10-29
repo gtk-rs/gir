@@ -52,6 +52,9 @@ impl Bound {
                 format!("Option<{}{}>", ref_str, trait_bound)
             }
             BoundType::IsA(_) => format!("{}{}", ref_str, trait_bound),
+            BoundType::AsRef(_) if *nullable => {
+                format!("Option<{}>", trait_bound)
+            }
             BoundType::NoWrapper | BoundType::AsRef(_) => trait_bound,
         }
     }
