@@ -33,7 +33,7 @@ name = "atk_sys"
 build = "build.rs"
 name = "atk-sys"
 version = "0.2.0"
-edition = "2018"
+edition = "2021"
 [package.metadata.system-deps.atk]
 name = "atk"
 version = "2.4"

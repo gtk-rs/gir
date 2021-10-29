@@ -31,7 +31,7 @@ name = "pango_sys"
 build = "build.rs"
 name = "pango-sys"
 version = "0.2.0"
-edition = "2018"
+edition = "2021"
 [package.metadata.system-deps.pango]
 name = "pango"
 version = "1.30"
