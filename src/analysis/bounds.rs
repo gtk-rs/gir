@@ -10,9 +10,7 @@ use crate::{
     config,
     consts::TYPE_PARAMETERS_START,
     env::Env,
-    library::{
-        Class, Concurrency, Function, Fundamental, Nullable, ParameterDirection, Type, TypeId,
-    },
+    library::{Class, Concurrency, Function, Fundamental, ParameterDirection, Type, TypeId},
     traits::IntoString,
 };
 use std::{collections::vec_deque::VecDeque, slice::Iter};
@@ -101,8 +99,12 @@ impl Bounds {
         let mut need_is_into_check = false;
 
         if !par.instance_parameter && par.direction != ParameterDirection::Out {
-            if let Some(bound_type) = Bounds::type_for(env, par.typ, par.nullable) {
-                ret = Some(Bounds::get_to_glib_extra(&bound_type));
+            if let Some(bound_type) = Bounds::type_for(env, par.typ) {
+                ret = Some(Bounds::get_to_glib_extra(
+                    &bound_type,
+                    *par.nullable,
+                    par.instance_parameter,
+                ));
                 if r#async && (par.name == "callback" || par.name.ends_with("_callback")) {
                     let func_name = func.c_identifier.as_ref().unwrap();
                     let finish_func_name = finish_function_name(func_name);
@@ -183,15 +185,15 @@ impl Bounds {
                 }
             }
         } else if par.instance_parameter {
-            if let Some(bound_type) = Bounds::type_for(env, par.typ, par.nullable) {
-                ret = Some(Bounds::get_to_glib_extra(&bound_type));
+            if let Some(bound_type) = Bounds::type_for(env, par.typ) {
+                ret = Some(Bounds::get_to_glib_extra(&bound_type, *par.nullable, true));
             }
         }
 
         (ret, callback_info)
     }
 
-    pub fn type_for(env: &Env, type_id: TypeId, nullable: Nullable) -> Option<BoundType> {
+    pub fn type_for(env: &Env, type_id: TypeId) -> Option<BoundType> {
         use self::BoundType::*;
         match env.library.type_(type_id) {
             Type::Fundamental(Fundamental::Filename | Fundamental::OsString) => Some(AsRef(None)),
@@ -203,16 +205,21 @@ impl Bounds {
             }) => Some(IsA(None)),
             Type::Interface(..) => Some(IsA(None)),
             Type::List(_) | Type::SList(_) | Type::CArray(_) => None,
-            Type::Fundamental(_) if *nullable => None,
             Type::Function(_) => Some(NoWrapper),
             _ => None,
         }
     }
 
-    fn get_to_glib_extra(bound_type: &BoundType) -> String {
+    fn get_to_glib_extra(
+        bound_type: &BoundType,
+        nullable: bool,
+        instance_parameter: bool,
+    ) -> String {
         use self::BoundType::*;
         match bound_type {
+            AsRef(_) if nullable => ".as_ref().map(|p| p.as_ref())".to_owned(),
             AsRef(_) => ".as_ref()".to_owned(),
+            IsA(_) if nullable && !instance_parameter => ".map(|p| p.as_ref())".to_owned(),
             IsA(_) => ".as_ref()".to_owned(),
             _ => String::new(),
         }

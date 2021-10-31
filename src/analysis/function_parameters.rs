@@ -301,17 +301,6 @@ pub fn analyze(
             ind_rust = None;
         }
 
-        let type_ = env.type_(par.typ);
-        let to_glib_extra = if par.instance_parameter || !*nullable {
-            String::new()
-        } else {
-            if type_.is_class() && !type_.is_final_type() {
-                ".as_ref()".to_owned()
-            } else {
-                String::new()
-            }
-        };
-
         let transformation_type = match conversion {
             ConversionType::Direct => {
                 if par.c_type != "GLib.Pid" {
@@ -358,9 +347,9 @@ pub fn analyze(
                 instance_parameter: par.instance_parameter,
                 transfer,
                 ref_mode,
-                to_glib_extra,
-                explicit_target_type: String::new(),
-                pointer_cast: String::new(),
+                to_glib_extra: Default::default(),
+                explicit_target_type: Default::default(),
+                pointer_cast: Default::default(),
                 in_trait,
                 nullable: *nullable,
             },
