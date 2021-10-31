@@ -123,7 +123,7 @@ fn analyze_property(
 
         let mut bounds_str = String::new();
         let dir = ParameterDirection::In;
-        let set_params = if let Some(bound) = Bounds::type_for(env, typ, nullable) {
+        let set_params = if let Some(bound) = Bounds::type_for(env, typ) {
             let r_type = RustType::builder(env, typ)
                 .ref_mode(RefMode::ByRefFake)
                 .try_build()

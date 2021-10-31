@@ -255,7 +255,7 @@ fn fixup_gpointer_parameter(
             instance_parameter,
             transfer: Transfer::None,
             ref_mode: RefMode::ByRef,
-            to_glib_extra: String::new(),
+            to_glib_extra: Default::default(),
             explicit_target_type: format!("{} {}", pointer_type, ffi_name.as_str()),
             pointer_cast: format!(
                 " as {}",

@@ -301,21 +301,6 @@ pub fn analyze(
             ind_rust = None;
         }
 
-        let mut trans_nullable = false;
-        let type_ = env.type_(par.typ);
-        let to_glib_extra =
-            if par.instance_parameter || !*nullable || (!type_.is_interface() && !type_.is_class())
-            {
-                String::new()
-            } else {
-                trans_nullable = *nullable;
-                if !type_.is_final_type() {
-                    ".as_ref()".to_owned()
-                } else {
-                    String::new()
-                }
-            };
-
         let transformation_type = match conversion {
             ConversionType::Direct => {
                 if par.c_type != "GLib.Pid" {
@@ -362,11 +347,11 @@ pub fn analyze(
                 instance_parameter: par.instance_parameter,
                 transfer,
                 ref_mode,
-                to_glib_extra,
-                explicit_target_type: String::new(),
-                pointer_cast: String::new(),
+                to_glib_extra: Default::default(),
+                explicit_target_type: Default::default(),
+                pointer_cast: Default::default(),
                 in_trait,
-                nullable: trans_nullable,
+                nullable: *nullable,
             },
             ConversionType::Borrow => TransformationType::ToGlibBorrow,
             ConversionType::Unknown => TransformationType::ToGlibUnknown { name },

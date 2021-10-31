@@ -111,7 +111,7 @@ fn analyze_property(
     let (get_out_ref_mode, set_in_ref_mode, nullable) = get_property_ref_modes(env, prop);
 
     let mut bounds = Bounds::default();
-    if let Some(bound) = Bounds::type_for(env, prop.typ, nullable) {
+    if let Some(bound) = Bounds::type_for(env, prop.typ) {
         imports.add("glib::object::IsA");
         bounds.add_parameter(&prop.name, &rust_type_res.into_string(), bound, false);
     }
