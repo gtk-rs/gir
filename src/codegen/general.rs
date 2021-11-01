@@ -789,7 +789,6 @@ pub fn declare_default_from_new(
         if func.parameters.rust_parameters.is_empty() {
             writeln!(w)?;
             version_condition(w, env, func.version, false, 0)?;
-            cfg_deprecated(w, env, func.deprecated_version, false, 0)?;
             writeln!(
                 w,
                 "impl Default for {} {{
@@ -803,7 +802,6 @@ pub fn declare_default_from_new(
             // create an alternative default implementation the uses `glib::object::Object::new()`
             writeln!(w)?;
             version_condition(w, env, func.version, false, 0)?;
-            cfg_deprecated(w, env, func.deprecated_version, false, 0)?;
             writeln!(
                 w,
                 "impl Default for {0} {{
