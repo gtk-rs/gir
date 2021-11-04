@@ -8,7 +8,6 @@ use super::{
 };
 use crate::{
     analysis::{self, ref_mode::RefMode, rust_type::RustType, special_functions::Type},
-    case::CaseExt,
     env::Env,
     library::{self, Nullable},
     nameutil,
@@ -273,12 +272,14 @@ pub fn generate(
     }
 
     if !analysis.final_type {
-        writeln!(w)?;
         writeln!(
             w,
-            "pub const NONE_{}: Option<&{}> = None;",
-            analysis.name.to_snake().to_uppercase(),
-            analysis.name
+            "
+impl {} {{
+    pub const NONE: Option<&'static {}> = None;
+}}
+",
+            analysis.name, analysis.name
         )?;
     }
 
@@ -565,16 +566,8 @@ pub fn generate_reexports(
     contents.push(format!("mod {};", module_name));
     contents.extend_from_slice(&cfgs);
 
-    let none_type = if !analysis.final_type {
-        format!(", NONE_{}", analysis.name.to_snake().to_uppercase())
-    } else {
-        String::new()
-    };
+    contents.push(format!("pub use self::{}::{};", module_name, analysis.name,));
 
-    contents.push(format!(
-        "pub use self::{}::{{{}{}}};",
-        module_name, analysis.name, none_type
-    ));
     if need_generate_trait(analysis) {
         for cfg in &cfgs {
             traits.push(format!("\t{}", cfg));
