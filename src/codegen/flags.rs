@@ -256,7 +256,7 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
     unsafe fn from_value(value: &'a {gvalue}) -> Self {{
         {assert}from_glib({glib}(value.to_glib_none().0))
     }}
-}}",
+}}unsafe impl FromOwnedValue for {name} {{}}",
             name = flags.name,
             glib = use_glib_type(env, "gobject_ffi::g_value_get_flags"),
             gvalue = use_glib_type(env, "Value"),
