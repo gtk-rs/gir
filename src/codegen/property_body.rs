@@ -76,13 +76,51 @@ impl<'a> Builder<'a> {
     }
 
     fn chunks_for_get(&self) -> Vec<Chunk> {
-        let mut params = Vec::new();
-
-        let cast_target = if self.is_child_property {
-            use_gtk_type(self.env, "ffi::GtkContainer")
+        if self.is_child_property {
+            // TODO: make use of safe bindings for child properties setter
+            self.child_property_setter()
         } else {
-            use_glib_type(self.env, "gobject_ffi::GObject")
-        };
+            let self_ = if self.in_trait {
+                "self.as_ref()"
+            } else {
+                "self"
+            };
+
+            vec![Chunk::Custom(format!(
+                "{}::property({}, \"{}\")",
+                use_glib_type(self.env, "ObjectExt"),
+                self_,
+                self.name
+            ))]
+        }
+    }
+
+    fn chunks_for_set(&self) -> Vec<Chunk> {
+        if self.is_child_property {
+            // TODO: make use of safe bindings for child properties getter
+            self.child_property_getter()
+        } else {
+            let self_ = if self.in_trait {
+                "self.as_ref()"
+            } else {
+                "self"
+            };
+
+            vec![Chunk::Custom(format!(
+                "{}::set_property({},\"{}\", &{})",
+                use_glib_type(self.env, "ObjectExt"),
+                self_,
+                self.name,
+                self.var_name
+            ))]
+        }
+    }
+
+    fn child_property_setter(&self) -> Vec<Chunk> {
+        let mut body = Vec::new();
+
+        let mut params = Vec::new();
+        let cast_target = use_gtk_type(self.env, "ffi::GtkContainer");
         if self.in_trait {
             params.push(Chunk::Custom(format!(
                 "self.to_glib_none().0 as *mut {}",
@@ -94,20 +132,16 @@ impl<'a> Builder<'a> {
                 cast_target
             )));
         }
+        params.push(Chunk::Custom("item.to_glib_none().0 as *mut _".into()));
 
-        if self.is_child_property {
-            params.push(Chunk::Custom("item.to_glib_none().0 as *mut _".into()));
-        }
         params.push(Chunk::Custom(format!(
             "b\"{}\\0\".as_ptr() as *const _",
             self.name
         )));
         params.push(Chunk::Custom("value.to_glib_none_mut().0".into()));
 
-        let mut body = Vec::new();
-
         let ffi_call = Chunk::FfiCall {
-            name: self.get_ffi_func(),
+            name: use_gtk_type(self.env, "ffi::gtk_container_child_get_property"),
             params,
         };
 
@@ -131,18 +165,14 @@ impl<'a> Builder<'a> {
             "value.get().expect(\"Return Value for property `{}` getter\")",
             self.name,
         )));
-
         vec![Chunk::Unsafe(body)]
     }
 
-    fn chunks_for_set(&self) -> Vec<Chunk> {
-        let mut params = Vec::new();
+    fn child_property_getter(&self) -> Vec<Chunk> {
+        let mut body = Vec::new();
 
-        let cast_target = if self.is_child_property {
-            use_gtk_type(self.env, "ffi::GtkContainer")
-        } else {
-            use_glib_type(self.env, "gobject_ffi::GObject")
-        };
+        let mut params = Vec::new();
+        let cast_target = use_gtk_type(self.env, "ffi::GtkContainer");
         if self.in_trait {
             params.push(Chunk::Custom(format!(
                 "self.to_glib_none().0 as *mut {}",
@@ -154,10 +184,7 @@ impl<'a> Builder<'a> {
                 cast_target
             )));
         }
-
-        if self.is_child_property {
-            params.push(Chunk::Custom("item.to_glib_none().0 as *mut _".into()));
-        }
+        params.push(Chunk::Custom("item.to_glib_none().0 as *mut _".into()));
         params.push(Chunk::Custom(format!(
             "b\"{}\\0\".as_ptr() as *const _",
             self.name
@@ -167,10 +194,8 @@ impl<'a> Builder<'a> {
             self.var_name
         )));
 
-        let mut body = Vec::new();
-
         let ffi_call = Chunk::FfiCall {
-            name: self.set_ffi_func(),
+            name: use_gtk_type(self.env, "ffi::gtk_container_child_set_property"),
             params,
         };
         body.push(Chunk::FfiCallConversion {
@@ -178,23 +203,6 @@ impl<'a> Builder<'a> {
             array_length_name: None,
             call: Box::new(ffi_call),
         });
-
         vec![Chunk::Unsafe(body)]
-    }
-
-    fn get_ffi_func(&self) -> String {
-        if self.is_child_property {
-            use_gtk_type(self.env, "ffi::gtk_container_child_get_property")
-        } else {
-            use_glib_type(self.env, "gobject_ffi::g_object_get_property")
-        }
-    }
-
-    fn set_ffi_func(&self) -> String {
-        if self.is_child_property {
-            use_gtk_type(self.env, "ffi::gtk_container_child_set_property")
-        } else {
-            use_glib_type(self.env, "gobject_ffi::g_object_set_property")
-        }
     }
 }
