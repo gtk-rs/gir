@@ -15,6 +15,7 @@ use crate::{
 };
 use std::collections::{BTreeMap, HashSet};
 use std::io::{Result, Write};
+use std::ops::Index;
 
 pub fn generate(
     w: &mut dyn Write,
@@ -39,15 +40,18 @@ pub fn generate(
                 // TODO: Might want to add a configuration on the object to override this per
                 // supertype in case the supertype existed in older versions but newly became on
                 // for this very type.
-                if let Some(parent_version) = env
-                    .analysis
-                    .objects
-                    .get(&full_name)
-                    .and_then(|info| info.version)
-                {
-                    if Some(parent_version) > analysis.version
-                        && parent_version > env.config.min_cfg_version
-                    {
+                if let Some(object) = env.analysis.objects.get(&full_name) {
+                    let parent_version = object.version;
+                    let namespace_min_version =
+                        if object.type_id.ns_id == analysis::namespaces::MAIN {
+                            Some(env.config.min_cfg_version)
+                        } else {
+                            let namespace = env.namespaces.index(object.type_id.ns_id);
+                            env.config
+                                .find_ext_library(namespace)
+                                .and_then(|lib| lib.min_version)
+                        };
+                    if parent_version > analysis.version && parent_version > namespace_min_version {
                         versions
                             .entry(parent_version)
                             .and_modify(|t: &mut Vec<_>| t.push(p))
@@ -88,9 +92,9 @@ pub fn generate(
             writeln!(w)?;
             if previous_version.is_some() {
                 not_version_condition_no_dox(w, previous_version, false, 0)?;
-                version_condition_no_doc(w, env, Some(version), false, 0)?;
+                version_condition_no_doc(w, env, version, false, 0)?;
             } else {
-                version_condition(w, env, Some(version), false, 0)?;
+                version_condition(w, env, version, false, 0)?;
             }
             general::define_object_type(
                 w,
@@ -107,7 +111,7 @@ pub fn generate(
                 remove_types.insert(t.type_id);
             }
 
-            previous_version = Some(version);
+            previous_version = version;
         }
 
         // Write the base `glib::wrapper!`.

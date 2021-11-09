@@ -3,6 +3,7 @@ use super::{
     gobjects, WorkMode,
 };
 use crate::{
+    analysis::namespaces::Namespace,
     config::error::TomlHelper,
     git::{repo_hash, repo_remote_url, toplevel},
     library::{self, Library},
@@ -380,6 +381,12 @@ impl Config {
                 None
             }
         })
+    }
+
+    pub fn find_ext_library(&self, namespace: &Namespace) -> Option<&ExternalLibrary> {
+        self.external_libraries
+            .iter()
+            .find(|lib| lib.crate_name == namespace.crate_name)
     }
 
     pub fn resolve_type_ids(&mut self, library: &Library) {
