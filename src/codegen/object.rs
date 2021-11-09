@@ -7,7 +7,10 @@ use super::{
     properties, signal, trait_impls,
 };
 use crate::{
-    analysis::{self, ref_mode::RefMode, rust_type::RustType, special_functions::Type},
+    analysis::{
+        self, object::has_builder_properties, ref_mode::RefMode, rust_type::RustType,
+        special_functions::Type,
+    },
     env::Env,
     library::{self, Nullable},
     nameutil,
@@ -15,7 +18,6 @@ use crate::{
 };
 use std::collections::{BTreeMap, HashSet};
 use std::io::{Result, Write};
-use std::ops::Index;
 
 pub fn generate(
     w: &mut dyn Write,
@@ -42,15 +44,9 @@ pub fn generate(
                 // for this very type.
                 if let Some(object) = env.analysis.objects.get(&full_name) {
                     let parent_version = object.version;
-                    let namespace_min_version =
-                        if object.type_id.ns_id == analysis::namespaces::MAIN {
-                            Some(env.config.min_cfg_version)
-                        } else {
-                            let namespace = env.namespaces.index(object.type_id.ns_id);
-                            env.config
-                                .find_ext_library(namespace)
-                                .and_then(|lib| lib.min_version)
-                        };
+                    let namespace_min_version = env
+                        .config
+                        .min_required_version(env, Some(object.type_id.ns_id));
                     if parent_version > analysis.version && parent_version > namespace_min_version {
                         versions
                             .entry(parent_version)
@@ -92,7 +88,7 @@ pub fn generate(
             writeln!(w)?;
             if previous_version.is_some() {
                 not_version_condition_no_dox(w, previous_version, false, 0)?;
-                version_condition_no_doc(w, env, version, false, 0)?;
+                version_condition_no_doc(w, env, None, version, false, 0)?;
             } else {
                 version_condition(w, env, version, false, 0)?;
             }
@@ -151,7 +147,7 @@ pub fn generate(
             )?;
         }
 
-        if !analysis.builder_properties.is_empty() {
+        if has_builder_properties(&analysis.builder_properties) {
             // generate builder method that returns the corresponding builder
             let builder_name = format!("{}Builder", analysis.name);
             writeln!(
@@ -223,7 +219,7 @@ pub fn generate(
             env,
             &analysis.name,
             &analysis.functions,
-            !analysis.builder_properties.is_empty(),
+            has_builder_properties(&analysis.builder_properties),
         )?;
     }
 
@@ -242,7 +238,7 @@ pub fn generate(
         None, // There is no need for #[cfg()] since it's applied on the whole file.
     )?;
 
-    if !analysis.builder_properties.is_empty() {
+    if has_builder_properties(&analysis.builder_properties) {
         writeln!(w)?;
         generate_builder(w, env, analysis)?;
     }
@@ -322,74 +318,83 @@ fn generate_builder(w: &mut dyn Write, env: &Env, analysis: &analysis::object::I
         analysis.name,
     )?;
     writeln!(w, "pub struct {}Builder {{", analysis.name)?;
-    for property in &analysis.builder_properties {
-        match RustType::try_new(env, property.typ) {
-            Ok(type_string) => {
-                let type_string = match type_string.as_str() {
-                    s if nameutil::is_gstring(s) => "String",
-                    "Vec<GString>" | "Vec<glib::GString>" | "Vec<crate::GString>" => "Vec<String>",
-                    typ => typ,
-                };
-                let direction = if property.is_get {
-                    library::ParameterDirection::In
-                } else {
-                    library::ParameterDirection::Out
-                };
-                let mut param_type = RustType::builder(env, property.typ)
-                    .direction(direction)
-                    .ref_mode(property.set_in_ref_mode)
-                    .try_build()
-                    .into_string();
-                let (param_type_override, bounds, conversion) = match &param_type[..] {
-                    "&str" => (None, String::new(), ".to_string()"),
-                    "&[&str]" => (Some("Vec<String>".to_string()), String::new(), ""),
-                    _ if !property.bounds.is_empty() => {
-                        let (bounds, _) = function::bounds(&property.bounds, &[], false, false);
-                        let alias =
-                            property
-                                .bounds
-                                .get_parameter_bound(&property.name)
-                                .map(|bound| {
-                                    bound.full_type_parameter_reference(
-                                        RefMode::ByRef,
-                                        Nullable(false),
-                                        false,
-                                    )
-                                });
-                        (alias, bounds, ".clone().upcast()")
+    for (builder_props, super_tid) in &analysis.builder_properties {
+        for property in builder_props {
+            match RustType::try_new(env, property.typ) {
+                Ok(type_string) => {
+                    let type_string = match type_string.as_str() {
+                        s if nameutil::is_gstring(s) => "String",
+                        "Vec<GString>" | "Vec<glib::GString>" | "Vec<crate::GString>" => {
+                            "Vec<String>"
+                        }
+                        typ => typ,
+                    };
+                    let direction = if property.is_get {
+                        library::ParameterDirection::In
+                    } else {
+                        library::ParameterDirection::Out
+                    };
+                    let mut param_type = RustType::builder(env, property.typ)
+                        .direction(direction)
+                        .ref_mode(property.set_in_ref_mode)
+                        .try_build()
+                        .into_string();
+                    let (param_type_override, bounds, conversion) = match &param_type[..] {
+                        "&str" => (None, String::new(), ".to_string()"),
+                        "&[&str]" => (Some("Vec<String>".to_string()), String::new(), ""),
+                        _ if !property.bounds.is_empty() => {
+                            let (bounds, _) = function::bounds(&property.bounds, &[], false, false);
+                            let alias =
+                                property
+                                    .bounds
+                                    .get_parameter_bound(&property.name)
+                                    .map(|bound| {
+                                        bound.full_type_parameter_reference(
+                                            RefMode::ByRef,
+                                            Nullable(false),
+                                            false,
+                                        )
+                                    });
+                            (alias, bounds, ".clone().upcast()")
+                        }
+                        typ if typ.starts_with('&') => (None, String::new(), ".clone()"),
+                        _ => (None, String::new(), ""),
+                    };
+                    if let Some(param_type_override) = param_type_override {
+                        param_type = param_type_override.to_string();
                     }
-                    typ if typ.starts_with('&') => (None, String::new(), ".clone()"),
-                    _ => (None, String::new(), ""),
-                };
-                if let Some(param_type_override) = param_type_override {
-                    param_type = param_type_override.to_string();
-                }
-                let name = nameutil::mangle_keywords(nameutil::signal_to_snake(&property.name));
-                let version_condition_string =
-                    version_condition_string(env, property.version, false, 1);
-                let deprecated_string = cfg_deprecated_string(
-                    env,
-                    Some(property.typ),
-                    property.deprecated_version,
-                    false,
-                    1,
-                );
-                if let Some(ref version_condition_string) = version_condition_string {
-                    writeln!(w, "{}", version_condition_string)?;
-                }
-                if let Some(ref deprecated_string) = deprecated_string {
-                    writeln!(w, "{}", deprecated_string)?;
-                }
-                writeln!(w, "    {}: Option<{}>,", name, type_string)?;
-                let version_prefix = version_condition_string
-                    .map(|version| format!("{}\n", version))
-                    .unwrap_or_default();
+                    let name = nameutil::mangle_keywords(nameutil::signal_to_snake(&property.name));
 
-                let deprecation_prefix = deprecated_string
-                    .map(|version| format!("{}\n", version))
-                    .unwrap_or_default();
+                    let version_condition_string = version_condition_string(
+                        env,
+                        Some(super_tid.ns_id),
+                        property.version,
+                        false,
+                        1,
+                    );
+                    let deprecated_string = cfg_deprecated_string(
+                        env,
+                        Some(*super_tid),
+                        property.deprecated_version,
+                        false,
+                        1,
+                    );
+                    if let Some(ref version_condition_string) = version_condition_string {
+                        writeln!(w, "{}", version_condition_string)?;
+                    }
+                    if let Some(ref deprecated_string) = deprecated_string {
+                        writeln!(w, "{}", deprecated_string)?;
+                    }
+                    writeln!(w, "    {}: Option<{}>,", name, type_string)?;
+                    let version_prefix = version_condition_string
+                        .map(|version| format!("{}\n", version))
+                        .unwrap_or_default();
 
-                methods.push(format!(
+                    let deprecation_prefix = deprecated_string
+                        .map(|version| format!("{}\n", version))
+                        .unwrap_or_default();
+
+                    methods.push(format!(
                     "\n{version_prefix}{deprecation_prefix}    pub fn {name}{bounds}(mut self, {name}: {param_type}) -> Self {{
         self.{name} = Some({name}{conversion});
         self
@@ -401,9 +406,10 @@ fn generate_builder(w: &mut dyn Write, env: &Env, analysis: &analysis::object::I
                     conversion = conversion,
                     bounds = bounds
                 ));
-                properties.push(property);
+                    properties.push((property, super_tid));
+                }
+                Err(_) => writeln!(w, "    //{}: /*Unknown type*/,", property.name)?,
             }
-            Err(_) => writeln!(w, "    //{}: /*Unknown type*/,", property.name)?,
         }
     }
     writeln!(
@@ -429,9 +435,9 @@ impl {name}Builder {{
         let mut properties: Vec<(&str, &dyn ToValue)> = vec![];",
         name = analysis.name
     )?;
-    for property in &properties {
+    for (property, super_tid) in &properties {
         let name = nameutil::mangle_keywords(nameutil::signal_to_snake(&property.name));
-        version_condition_no_doc(w, env, property.version, false, 2)?;
+        version_condition_no_doc(w, env, Some(super_tid.ns_id), property.version, false, 2)?;
         writeln!(
             w,
             "\
@@ -545,7 +551,7 @@ fn need_generate_inherent(analysis: &analysis::object::Info) -> bool {
     analysis.has_constructors
         || analysis.has_functions
         || !need_generate_trait(analysis)
-        || !analysis.builder_properties.is_empty()
+        || has_builder_properties(&analysis.builder_properties)
 }
 
 fn need_generate_trait(analysis: &analysis::object::Info) -> bool {
@@ -563,7 +569,7 @@ pub fn generate_reexports(
     if let Some(cfg) = general::cfg_condition_string(analysis.cfg_condition.as_ref(), false, 0) {
         cfgs.push(cfg);
     }
-    if let Some(cfg) = general::version_condition_string(env, analysis.version, false, 0) {
+    if let Some(cfg) = general::version_condition_string(env, None, analysis.version, false, 0) {
         cfgs.push(cfg);
     }
     if let Some(cfg) = general::cfg_deprecated_string(
@@ -593,7 +599,7 @@ pub fn generate_reexports(
         ));
     }
 
-    if !analysis.builder_properties.is_empty() {
+    if has_builder_properties(&analysis.builder_properties) {
         contents.extend_from_slice(&cfgs);
         contents.push(format!(
             "pub use self::{}::{}Builder;",

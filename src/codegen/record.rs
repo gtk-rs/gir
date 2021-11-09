@@ -149,7 +149,13 @@ pub fn generate_reexports(
     contents: &mut Vec<String>,
 ) {
     let cfg_condition = general::cfg_condition_string(analysis.cfg_condition.as_ref(), false, 0);
-    let version_cfg = general::version_condition_string(env, analysis.version, false, 0);
+    let version_cfg = general::version_condition_string(
+        env,
+        Some(analysis.type_id.ns_id),
+        analysis.version,
+        false,
+        0,
+    );
     let mut cfg = String::new();
     if let Some(s) = cfg_condition {
         cfg.push_str(&s);

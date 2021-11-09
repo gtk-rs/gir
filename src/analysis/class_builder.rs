@@ -18,13 +18,16 @@ pub fn analyze(
     type_tid: library::TypeId,
     obj: &GObject,
     imports: &mut Imports,
-) -> Vec<Property> {
+) -> Vec<(Vec<Property>, library::TypeId)> {
     if !obj.generate_builder {
         return Vec::new();
     }
 
     let mut names = HashSet::<String>::new();
-    let mut builder_properties = analyze_properties(env, type_tid, props, obj, imports, &mut names);
+    let mut builder_properties = vec![(
+        analyze_properties(env, type_tid, props, obj, imports, &mut names),
+        type_tid,
+    )];
 
     for &super_tid in env.class_hierarchy.supertypes(type_tid) {
         let type_ = env.type_(super_tid);
@@ -41,15 +44,18 @@ pub fn analyze(
                 continue;
             };
 
-        let new_builder_properties = analyze_properties(
-            env,
+        let new_builder_properties = (
+            analyze_properties(
+                env,
+                super_tid,
+                super_properties,
+                super_obj,
+                imports,
+                &mut names,
+            ),
             super_tid,
-            super_properties,
-            super_obj,
-            imports,
-            &mut names,
         );
-        builder_properties.extend(new_builder_properties);
+        builder_properties.push(new_builder_properties);
     }
 
     builder_properties
@@ -100,8 +106,7 @@ fn analyze_property(
         .iter()
         .filter_map(|f| f.version)
         .min()
-        .or(prop.version)
-        .or(Some(env.config.min_cfg_version));
+        .or(prop.version);
 
     let for_builder = prop.construct_only || prop.construct || prop.writable;
     if !for_builder {

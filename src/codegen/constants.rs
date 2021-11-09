@@ -41,7 +41,7 @@ pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>) {
                     name = constant.name,
                     c_id = constant.glib_name
                 )?;
-                if let Some(cfg) = version_condition_string(env, constant.version, false, 0) {
+                if let Some(cfg) = version_condition_string(env, None, constant.version, false, 0) {
                     mod_rs.push(cfg);
                 }
                 mod_rs.push(format!("pub use self::constants::{};", constant.name));

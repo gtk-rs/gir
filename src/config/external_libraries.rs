@@ -30,7 +30,6 @@ pub fn read_external_libraries(toml: &toml::Value) -> Result<Vec<ExternalLibrary
     if let Some(custom_libs) = custom_libs {
         for custom_lib in custom_libs {
             if let Some(info) = custom_lib.1.as_table() {
-                println!("{:#?}", info);
                 let namespace = custom_lib.0.as_str();
                 let crate_name_ = info
                     .get("crate")

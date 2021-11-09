@@ -560,7 +560,7 @@ pub fn version_condition(
     commented: bool,
     indent: usize,
 ) -> Result<()> {
-    if let Some(s) = version_condition_string(env, version, commented, indent) {
+    if let Some(s) = version_condition_string(env, None, version, commented, indent) {
         writeln!(w, "{}", s)?;
     }
     Ok(())
@@ -569,18 +569,20 @@ pub fn version_condition(
 pub fn version_condition_no_doc(
     w: &mut dyn Write,
     env: &Env,
+    ns_id: Option<u16>,
     version: Option<Version>,
     commented: bool,
     indent: usize,
 ) -> Result<()> {
-    match version {
-        Some(v) if v > env.config.min_cfg_version => {
+    let to_compare_with = env.config.min_required_version(env, ns_id);
+    if let (Some(v), Some(to_compare_v)) = (version, to_compare_with) {
+        if v > to_compare_v {
             if let Some(s) = cfg_condition_string_no_doc(Some(&v.to_cfg()), commented, indent) {
                 writeln!(w, "{}", s)?
             }
         }
-        _ => {}
     }
+
     Ok(())
 }
 pub fn version_condition_doc(
@@ -603,15 +605,20 @@ pub fn version_condition_doc(
 
 pub fn version_condition_string(
     env: &Env,
+    ns_id: Option<u16>,
     version: Option<Version>,
     commented: bool,
     indent: usize,
 ) -> Option<String> {
-    match version {
-        Some(v) if v > env.config.min_cfg_version => {
+    let to_compare_with = env.config.min_required_version(env, ns_id);
+    if let (Some(v), Some(to_compare_v)) = (version, to_compare_with) {
+        if v > to_compare_v {
             cfg_condition_string(Some(&v.to_cfg()), commented, indent)
+        } else {
+            None
         }
-        _ => None,
+    } else {
+        None
     }
 }
 

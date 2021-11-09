@@ -43,7 +43,7 @@ pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>) {
             }
             let flags = flags_analysis.type_(&env.library);
 
-            if let Some(cfg) = version_condition_string(env, flags.version, false, 0) {
+            if let Some(cfg) = version_condition_string(env, None, flags.version, false, 0) {
                 mod_rs.push(cfg);
             }
             if let Some(cfg) = cfg_condition_string(config.cfg_condition.as_ref(), false, 0) {
@@ -67,7 +67,7 @@ fn generate_flags(
 ) -> Result<()> {
     let sys_crate_name = env.main_sys_crate_name();
     cfg_condition_no_doc(w, config.cfg_condition.as_ref(), false, 0)?;
-    version_condition_no_doc(w, env, flags.version, false, 0)?;
+    version_condition_no_doc(w, env, None, flags.version, false, 0)?;
     writeln!(w, "bitflags! {{")?;
     cfg_condition_doc(w, config.cfg_condition.as_ref(), false, 1)?;
     version_condition_doc(w, env, flags.version, false, 1)?;

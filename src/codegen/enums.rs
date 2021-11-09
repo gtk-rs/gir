@@ -45,7 +45,7 @@ pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>) {
 
             let enum_ = enum_analysis.type_(&env.library);
 
-            if let Some(cfg) = version_condition_string(env, enum_.version, false, 0) {
+            if let Some(cfg) = version_condition_string(env, None, enum_.version, false, 0) {
                 mod_rs.push(cfg);
             }
             if let Some(cfg) = cfg_condition_string(config.cfg_condition.as_ref(), false, 0) {
@@ -204,7 +204,7 @@ fn generate_enum(
             enum_.name
         )?;
         for member in &members {
-            version_condition_no_doc(w, env, member.version, false, 3)?;
+            version_condition_no_doc(w, env, None, member.version, false, 3)?;
             cfg_condition_no_doc(w, member.cfg_condition.as_ref(), false, 3)?;
             writeln!(w, "\t\t\tSelf::{0} => \"{0}\",", member.name)?;
         }
@@ -233,7 +233,7 @@ impl IntoGlib for {name} {{
         ffi_name = enum_.c_type
     )?;
     for member in &members {
-        version_condition_no_doc(w, env, member.version, false, 3)?;
+        version_condition_no_doc(w, env, None, member.version, false, 3)?;
         cfg_condition_no_doc(w, member.cfg_condition.as_ref(), false, 3)?;
         writeln!(
             w,
@@ -272,7 +272,7 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
         assert = assert
     )?;
     for member in &members {
-        version_condition_no_doc(w, env, member.version, false, 3)?;
+        version_condition_no_doc(w, env, None, member.version, false, 3)?;
         cfg_condition_no_doc(w, member.cfg_condition.as_ref(), false, 3)?;
         writeln!(
             w,
@@ -341,7 +341,7 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
         )?;
 
         for member in &members {
-            version_condition_no_doc(w, env, member.version, false, 3)?;
+            version_condition_no_doc(w, env, None, member.version, false, 3)?;
             cfg_condition_no_doc(w, member.cfg_condition.as_ref(), false, 3)?;
             writeln!(
                 w,

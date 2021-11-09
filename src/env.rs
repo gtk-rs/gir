@@ -5,7 +5,6 @@ use crate::{
     version::Version,
 };
 use std::cell::RefCell;
-use std::ops::Index;
 
 #[derive(Debug)]
 pub struct Env {
@@ -42,35 +41,21 @@ impl Env {
         ns_id: Option<NsId>,
         deprecated_version: Option<Version>,
     ) -> bool {
-        let to_compare_with = ns_id
-            .and_then(|ns| {
-                let namespace = self.namespaces.index(ns);
-                self.config
-                    .find_ext_library(namespace)
-                    .and_then(|lib| lib.min_version)
-            })
-            .unwrap_or(self.config.min_cfg_version);
-
-        match deprecated_version {
-            Some(version) if version <= to_compare_with => self.config.deprecate_by_min_version,
-            _ => false,
+        let to_compare_with = self.config.min_required_version(self, ns_id);
+        if let (Some(v), Some(to_compare_v)) = (deprecated_version, to_compare_with) {
+            if v <= to_compare_v {
+                return self.config.deprecate_by_min_version;
+            }
         }
+        false
     }
 
     pub fn is_too_low_version(&self, ns_id: Option<NsId>, version: Option<Version>) -> bool {
-        let to_compare_with = ns_id
-            .and_then(|ns| {
-                let namespace = self.namespaces.index(ns);
-                self.config
-                    .find_ext_library(namespace)
-                    .and_then(|lib| lib.min_version)
-            })
-            .unwrap_or(self.config.min_cfg_version);
-
-        match version {
-            Some(version) => version <= to_compare_with,
-            _ => false,
+        let to_compare_with = self.config.min_required_version(self, ns_id);
+        if let (Some(v), Some(to_compare_v)) = (version, to_compare_with) {
+            return v <= to_compare_v;
         }
+        false
     }
 
     pub fn main_sys_crate_name(&self) -> &str {
