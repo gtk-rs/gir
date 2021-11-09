@@ -24,7 +24,7 @@ pub fn analyze(
     }
 
     let mut names = HashSet::<String>::new();
-    let mut builder_properties = analyze_properties(env, props, obj, imports, &mut names);
+    let mut builder_properties = analyze_properties(env, type_tid, props, obj, imports, &mut names);
 
     for &super_tid in env.class_hierarchy.supertypes(type_tid) {
         let type_ = env.type_(super_tid);
@@ -41,8 +41,14 @@ pub fn analyze(
                 continue;
             };
 
-        let new_builder_properties =
-            analyze_properties(env, super_properties, super_obj, imports, &mut names);
+        let new_builder_properties = analyze_properties(
+            env,
+            super_tid,
+            super_properties,
+            super_obj,
+            imports,
+            &mut names,
+        );
         builder_properties.extend(new_builder_properties);
     }
 
@@ -51,6 +57,7 @@ pub fn analyze(
 
 fn analyze_properties(
     env: &Env,
+    type_tid: library::TypeId,
     props: &[library::Property],
     obj: &GObject,
     imports: &mut Imports,
@@ -70,7 +77,7 @@ fn analyze_properties(
             continue;
         }
 
-        if env.is_totally_deprecated(prop.deprecated_version) {
+        if env.is_totally_deprecated(Some(type_tid.ns_id), prop.deprecated_version) {
             continue;
         }
         let builder = analyze_property(env, prop, &configured_properties, imports);

@@ -55,7 +55,7 @@ pub fn analyze(
             continue;
         }
 
-        if env.is_totally_deprecated(prop.deprecated_version) {
+        if env.is_totally_deprecated(Some(type_tid.ns_id), prop.deprecated_version) {
             continue;
         }
 
@@ -168,7 +168,9 @@ fn analyze_property(
             );
             if has {
                 // There is a matching get func
-                if env.is_totally_deprecated(version) || version <= prop_version {
+                if env.is_totally_deprecated(Some(type_tid.ns_id), version)
+                    || version <= prop_version
+                {
                     // And its availability covers the property's availability
                     // => don't generate the get property.
                     readable = false;
@@ -188,7 +190,7 @@ fn analyze_property(
             Signature::has_for_property(env, &set_func_name, false, prop.typ, signatures, deps);
         if has {
             // There is a matching set func
-            if env.is_totally_deprecated(version) || version <= prop_version {
+            if env.is_totally_deprecated(Some(type_tid.ns_id), version) || version <= prop_version {
                 // And its availability covers the property's availability
                 // => don't generate the set property.
                 writable = false;

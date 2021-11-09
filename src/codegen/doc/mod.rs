@@ -113,7 +113,7 @@ fn generate_doc(w: &mut dyn Write, env: &Env) -> Result<()> {
     let mut generators: Vec<(&str, Box<dyn Fn(&mut dyn Write, &Env) -> Result<()>>)> = Vec::new();
 
     for info in env.analysis.objects.values() {
-        if info.type_id.ns_id == MAIN && !env.is_totally_deprecated(info.deprecated_version) {
+        if info.type_id.ns_id == MAIN && !env.is_totally_deprecated(None, info.deprecated_version) {
             generators.push((
                 &info.name,
                 Box::new(move |w, e| create_object_doc(w, e, info)),
@@ -122,7 +122,7 @@ fn generate_doc(w: &mut dyn Write, env: &Env) -> Result<()> {
     }
 
     for info in env.analysis.records.values() {
-        if info.type_id.ns_id == MAIN && !env.is_totally_deprecated(info.deprecated_version) {
+        if info.type_id.ns_id == MAIN && !env.is_totally_deprecated(None, info.deprecated_version) {
             generators.push((
                 &info.name,
                 Box::new(move |w, e| create_record_doc(w, e, info)),
@@ -137,7 +137,7 @@ fn generate_doc(w: &mut dyn Write, env: &Env) -> Result<()> {
                 .objects
                 .get(&tid.full_name(&env.library))
                 .map_or(true, |obj| obj.status.ignored())
-                && !env.is_totally_deprecated(enum_.deprecated_version)
+                && !env.is_totally_deprecated(None, enum_.deprecated_version)
             {
                 generators.push((
                     &enum_.name[..],
@@ -150,7 +150,7 @@ fn generate_doc(w: &mut dyn Write, env: &Env) -> Result<()> {
                 .objects
                 .get(&tid.full_name(&env.library))
                 .map_or(true, |obj| obj.status.ignored())
-                && !env.is_totally_deprecated(bitfield.deprecated_version)
+                && !env.is_totally_deprecated(None, bitfield.deprecated_version)
             {
                 generators.push((
                     &bitfield.name[..],
@@ -658,7 +658,7 @@ fn create_fn_doc<T>(
 where
     T: FunctionLikeType + ToStripperType,
 {
-    if env.is_totally_deprecated(*fn_.deprecated_version()) {
+    if env.is_totally_deprecated(None, *fn_.deprecated_version()) {
         return Ok(());
     }
     if fn_.doc().is_none()
@@ -796,7 +796,7 @@ fn create_property_doc(
     setter_name: Option<String>,
     obj_info: &analysis::object::Info,
 ) -> Result<()> {
-    if env.is_totally_deprecated(property.deprecated_version) {
+    if env.is_totally_deprecated(Some(in_type.0.ns_id), property.deprecated_version) {
         return Ok(());
     }
     if property.doc.is_none()

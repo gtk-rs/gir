@@ -35,7 +35,7 @@ pub fn analyze(
         if !configured_signals.iter().all(|f| f.status.need_generate()) {
             continue;
         }
-        if env.is_totally_deprecated(signal.deprecated_version) {
+        if env.is_totally_deprecated(Some(type_tid.ns_id), signal.deprecated_version) {
             continue;
         }
 
