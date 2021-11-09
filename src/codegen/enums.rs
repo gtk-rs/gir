@@ -104,7 +104,14 @@ fn generate_enum(
         });
     }
 
-    cfg_deprecated(w, env, enum_.deprecated_version, false, 0)?;
+    cfg_deprecated(
+        w,
+        env,
+        Some(analysis.type_id),
+        enum_.deprecated_version,
+        false,
+        0,
+    )?;
     version_condition(w, env, enum_.version, false, 0)?;
     cfg_condition(w, config.cfg_condition.as_ref(), false, 0)?;
     if config.must_use {
@@ -122,7 +129,14 @@ fn generate_enum(
 
     writeln!(w, "pub enum {} {{", enum_.name)?;
     for member in &members {
-        cfg_deprecated(w, env, member.deprecated_version, false, 1)?;
+        cfg_deprecated(
+            w,
+            env,
+            Some(analysis.type_id),
+            member.deprecated_version,
+            false,
+            1,
+        )?;
         version_condition(w, env, member.version, false, 1)?;
         cfg_condition(w, member.cfg_condition.as_ref(), false, 1)?;
         // Don't generate a doc_alias if the C name is the same as the Rust one

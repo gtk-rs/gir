@@ -29,7 +29,7 @@ pub fn generate(
 
     writeln!(w)?;
     if !in_trait || only_declaration {
-        cfg_deprecated(w, env, analysis.deprecated_version, commented, indent)?;
+        cfg_deprecated(w, env, None, analysis.deprecated_version, commented, indent)?;
     }
     version_condition(w, env, analysis.version, commented, indent)?;
     doc_hidden(w, analysis.doc_hidden, comment_prefix, indent)?;
@@ -92,7 +92,7 @@ pub fn generate(
     if let Some(ref emit_name) = analysis.action_emit_name {
         writeln!(w)?;
         if !in_trait || only_declaration {
-            cfg_deprecated(w, env, analysis.deprecated_version, commented, indent)?;
+            cfg_deprecated(w, env, None, analysis.deprecated_version, commented, indent)?;
         }
         version_condition(w, env, analysis.version, commented, indent)?;
 

@@ -44,7 +44,14 @@ fn generate_prop_func(
 
     let decl = declaration(env, prop);
     if !in_trait || only_declaration {
-        cfg_deprecated(w, env, prop.deprecated_version, commented, indent)?;
+        cfg_deprecated(
+            w,
+            env,
+            Some(prop.typ),
+            prop.deprecated_version,
+            commented,
+            indent,
+        )?;
     }
     version_condition(w, env, prop.version, commented, indent)?;
     if !in_trait || only_declaration {

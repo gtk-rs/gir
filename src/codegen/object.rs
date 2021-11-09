@@ -367,8 +367,13 @@ fn generate_builder(w: &mut dyn Write, env: &Env, analysis: &analysis::object::I
                 let name = nameutil::mangle_keywords(nameutil::signal_to_snake(&property.name));
                 let version_condition_string =
                     version_condition_string(env, property.version, false, 1);
-                let deprecated_string =
-                    cfg_deprecated_string(env, property.deprecated_version, false, 1);
+                let deprecated_string = cfg_deprecated_string(
+                    env,
+                    Some(property.typ),
+                    property.deprecated_version,
+                    false,
+                    1,
+                );
                 if let Some(ref version_condition_string) = version_condition_string {
                     writeln!(w, "{}", version_condition_string)?;
                 }
@@ -561,7 +566,13 @@ pub fn generate_reexports(
     if let Some(cfg) = general::version_condition_string(env, analysis.version, false, 0) {
         cfgs.push(cfg);
     }
-    if let Some(cfg) = general::cfg_deprecated_string(env, analysis.deprecated_version, false, 0) {
+    if let Some(cfg) = general::cfg_deprecated_string(
+        env,
+        Some(analysis.type_id),
+        analysis.deprecated_version,
+        false,
+        0,
+    ) {
         cfgs.push(cfg);
     }
 

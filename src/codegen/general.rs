@@ -5,6 +5,7 @@ use crate::{
     config::{derives::Derive, Config},
     env::Env,
     gir_version::VERSION,
+    library::TypeId,
     nameutil::use_glib_type,
     version::Version,
     writer::primitives::tabs,
@@ -518,11 +519,12 @@ pub fn define_shared_type(
 pub fn cfg_deprecated(
     w: &mut dyn Write,
     env: &Env,
+    type_tid: Option<TypeId>,
     deprecated: Option<Version>,
     commented: bool,
     indent: usize,
 ) -> Result<()> {
-    if let Some(s) = cfg_deprecated_string(env, deprecated, commented, indent) {
+    if let Some(s) = cfg_deprecated_string(env, type_tid, deprecated, commented, indent) {
         writeln!(w, "{}", s)?;
     }
     Ok(())
@@ -530,13 +532,14 @@ pub fn cfg_deprecated(
 
 pub fn cfg_deprecated_string(
     env: &Env,
+    type_tid: Option<TypeId>,
     deprecated: Option<Version>,
     commented: bool,
     indent: usize,
 ) -> Option<String> {
     let comment = if commented { "//" } else { "" };
     deprecated.map(|v| {
-        if env.is_too_low_version(Some(v)) {
+        if env.is_too_low_version(type_tid.map(|t| t.ns_id), Some(v)) {
             format!("{}{}#[deprecated = \"Since {}\"]", tabs(indent), comment, v)
         } else {
             format!(

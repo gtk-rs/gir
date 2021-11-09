@@ -71,7 +71,14 @@ fn generate_flags(
     writeln!(w, "bitflags! {{")?;
     cfg_condition_doc(w, config.cfg_condition.as_ref(), false, 1)?;
     version_condition_doc(w, env, flags.version, false, 1)?;
-    cfg_deprecated(w, env, flags.deprecated_version, false, 1)?;
+    cfg_deprecated(
+        w,
+        env,
+        Some(analysis.type_id),
+        flags.deprecated_version,
+        false,
+        1,
+    )?;
     if config.must_use {
         writeln!(w, "    #[must_use]")?;
     }
@@ -98,7 +105,7 @@ fn generate_flags(
             .find_map(|m| m.version)
             .or(member.version);
         let cfg_cond = member_config.iter().find_map(|m| m.cfg_condition.as_ref());
-        cfg_deprecated(w, env, deprecated_version, false, 2)?;
+        cfg_deprecated(w, env, Some(analysis.type_id), deprecated_version, false, 2)?;
         version_condition(w, env, version, false, 2)?;
         cfg_condition(w, cfg_cond, false, 2)?;
         if member.c_identifier != member.name {

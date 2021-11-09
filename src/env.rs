@@ -57,9 +57,18 @@ impl Env {
         }
     }
 
-    pub fn is_too_low_version(&self, version: Option<Version>) -> bool {
+    pub fn is_too_low_version(&self, ns_id: Option<NsId>, version: Option<Version>) -> bool {
+        let to_compare_with = ns_id
+            .and_then(|ns| {
+                let namespace = self.namespaces.index(ns);
+                self.config
+                    .find_ext_library(namespace)
+                    .and_then(|lib| lib.min_version)
+            })
+            .unwrap_or(self.config.min_cfg_version);
+
         match version {
-            Some(version) => version <= self.config.min_cfg_version,
+            Some(version) => version <= to_compare_with,
             _ => false,
         }
     }
