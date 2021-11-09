@@ -552,6 +552,7 @@ mod tests {
         let lib = ExternalLibrary {
             namespace: "Gdk".to_owned(),
             crate_name: "gdk".to_owned(),
+            min_version: None,
         };
         assert_eq!(
             get_extern_crate_string(&lib),
@@ -561,6 +562,7 @@ mod tests {
         let lib = ExternalLibrary {
             namespace: "GdkPixbuf".to_owned(),
             crate_name: "gdk_pixbuf".to_owned(),
+            min_version: None,
         };
         assert_eq!(
             get_extern_crate_string(&lib),
@@ -570,6 +572,7 @@ mod tests {
         let lib = ExternalLibrary {
             namespace: "GdkPixbuf".to_owned(),
             crate_name: "some-crate".to_owned(),
+            min_version: None,
         };
         assert_eq!(
             get_extern_crate_string(&lib),
