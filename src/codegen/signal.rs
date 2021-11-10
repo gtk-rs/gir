@@ -31,7 +31,7 @@ pub fn generate(
     if !in_trait || only_declaration {
         cfg_deprecated(w, env, None, analysis.deprecated_version, commented, indent)?;
     }
-    version_condition(w, env, analysis.version, commented, indent)?;
+    version_condition(w, env, None, analysis.version, commented, indent)?;
     doc_hidden(w, analysis.doc_hidden, comment_prefix, indent)?;
     // Strip the "prefix" from "prefix::prop-name", if any.
     // Ex.: "notify::is-locked".
@@ -94,7 +94,7 @@ pub fn generate(
         if !in_trait || only_declaration {
             cfg_deprecated(w, env, None, analysis.deprecated_version, commented, indent)?;
         }
-        version_condition(w, env, analysis.version, commented, indent)?;
+        version_condition(w, env, None, analysis.version, commented, indent)?;
 
         let function_type = function_type_string(env, analysis, false);
 

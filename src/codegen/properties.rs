@@ -53,7 +53,7 @@ fn generate_prop_func(
             indent,
         )?;
     }
-    version_condition(w, env, prop.version, commented, indent)?;
+    version_condition(w, env, None, prop.version, commented, indent)?;
     if !in_trait || only_declaration {
         let add_doc_alias = if let Some(func_name_alias) = prop.func_name_alias.as_ref() {
             &prop.name != func_name_alias && prop.name != prop.var_name

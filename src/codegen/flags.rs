@@ -106,7 +106,7 @@ fn generate_flags(
             .or(member.version);
         let cfg_cond = member_config.iter().find_map(|m| m.cfg_condition.as_ref());
         cfg_deprecated(w, env, Some(analysis.type_id), deprecated_version, false, 2)?;
-        version_condition(w, env, version, false, 2)?;
+        version_condition(w, env, None, version, false, 2)?;
         cfg_condition(w, cfg_cond, false, 2)?;
         if member.c_identifier != member.name {
             doc_alias(w, &member.c_identifier, "", 2)?;
@@ -132,7 +132,7 @@ fn generate_flags(
 
     if !functions.is_empty() {
         writeln!(w)?;
-        version_condition(w, env, flags.version, false, 0)?;
+        version_condition(w, env, None, flags.version, false, 0)?;
         cfg_condition_no_doc(w, config.cfg_condition.as_ref(), false, 0)?;
         write!(w, "impl {} {{", analysis.name)?;
         for func_analysis in functions {
@@ -165,7 +165,7 @@ fn generate_flags(
 
     if config.generate_display_trait && !analysis.specials.has_trait(Type::Display) {
         // Generate Display trait implementation.
-        version_condition(w, env, flags.version, false, 0)?;
+        version_condition(w, env, None, flags.version, false, 0)?;
         cfg_condition_no_doc(w, config.cfg_condition.as_ref(), false, 0)?;
         writeln!(
             w,
@@ -178,7 +178,7 @@ fn generate_flags(
         )?;
     }
 
-    version_condition(w, env, flags.version, false, 0)?;
+    version_condition(w, env, None, flags.version, false, 0)?;
     cfg_condition_no_doc(w, config.cfg_condition.as_ref(), false, 0)?;
     writeln!(
         w,
@@ -202,7 +202,7 @@ impl IntoGlib for {name} {{
         ""
     };
 
-    version_condition(w, env, flags.version, false, 0)?;
+    version_condition(w, env, None, flags.version, false, 0)?;
     cfg_condition_no_doc(w, config.cfg_condition.as_ref(), false, 0)?;
     writeln!(
         w,
@@ -226,7 +226,7 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
             .max()
             .flatten();
 
-        version_condition(w, env, version, false, 0)?;
+        version_condition(w, env, None, version, false, 0)?;
         cfg_condition_no_doc(w, config.cfg_condition.as_ref(), false, 0)?;
         writeln!(
             w,
@@ -241,7 +241,7 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
         )?;
         writeln!(w)?;
 
-        version_condition(w, env, version, false, 0)?;
+        version_condition(w, env, None, version, false, 0)?;
         cfg_condition_no_doc(w, config.cfg_condition.as_ref(), false, 0)?;
         writeln!(
             w,
@@ -253,7 +253,7 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
         )?;
         writeln!(w)?;
 
-        version_condition(w, env, version, false, 0)?;
+        version_condition(w, env, None, version, false, 0)?;
         cfg_condition_no_doc(w, config.cfg_condition.as_ref(), false, 0)?;
         writeln!(
             w,
@@ -272,7 +272,7 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
         )?;
         writeln!(w)?;
 
-        version_condition(w, env, version, false, 0)?;
+        version_condition(w, env, None, version, false, 0)?;
         cfg_condition_no_doc(w, config.cfg_condition.as_ref(), false, 0)?;
         writeln!(
             w,

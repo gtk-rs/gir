@@ -112,7 +112,7 @@ fn generate_enum(
         false,
         0,
     )?;
-    version_condition(w, env, enum_.version, false, 0)?;
+    version_condition(w, env, None, enum_.version, false, 0)?;
     cfg_condition(w, config.cfg_condition.as_ref(), false, 0)?;
     if config.must_use {
         writeln!(w, "#[must_use]")?;
@@ -137,7 +137,7 @@ fn generate_enum(
             false,
             1,
         )?;
-        version_condition(w, env, member.version, false, 1)?;
+        version_condition(w, env, None, member.version, false, 1)?;
         cfg_condition(w, member.cfg_condition.as_ref(), false, 1)?;
         // Don't generate a doc_alias if the C name is the same as the Rust one
         if member.c_name != member.name {
@@ -161,7 +161,7 @@ fn generate_enum(
 
     if !functions.is_empty() {
         writeln!(w)?;
-        version_condition(w, env, enum_.version, false, 0)?;
+        version_condition(w, env, None, enum_.version, false, 0)?;
         cfg_condition_no_doc(w, config.cfg_condition.as_ref(), false, 0)?;
         write!(w, "impl {} {{", analysis.name)?;
         for func_analysis in functions {
@@ -194,7 +194,7 @@ fn generate_enum(
 
     if config.generate_display_trait && !analysis.specials.has_trait(Type::Display) {
         // Generate Display trait implementation.
-        version_condition(w, env, enum_.version, false, 0)?;
+        version_condition(w, env, None, enum_.version, false, 0)?;
         cfg_condition_no_doc(w, config.cfg_condition.as_ref(), false, 0)?;
         writeln!(
             w,
@@ -218,7 +218,7 @@ fn generate_enum(
     }
 
     // Generate IntoGlib trait implementation.
-    version_condition(w, env, enum_.version, false, 0)?;
+    version_condition(w, env, None, enum_.version, false, 0)?;
     cfg_condition_no_doc(w, config.cfg_condition.as_ref(), false, 0)?;
     writeln!(
         w,
@@ -258,7 +258,7 @@ impl IntoGlib for {name} {{
     };
 
     // Generate FromGlib trait implementation.
-    version_condition(w, env, enum_.version, false, 0)?;
+    version_condition(w, env, None, enum_.version, false, 0)?;
     cfg_condition_no_doc(w, config.cfg_condition.as_ref(), false, 0)?;
     writeln!(
         w,
@@ -294,7 +294,7 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
     if let Some(ref domain) = enum_.error_domain {
         let has_failed_member = members.iter().any(|m| m.name == "Failed");
 
-        version_condition(w, env, enum_.version, false, 0)?;
+        version_condition(w, env, None, enum_.version, false, 0)?;
         cfg_condition_no_doc(w, config.cfg_condition.as_ref(), false, 0)?;
         writeln!(
             w,
@@ -373,7 +373,7 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
             .max()
             .flatten();
 
-        version_condition(w, env, version, false, 0)?;
+        version_condition(w, env, None, version, false, 0)?;
         cfg_condition_no_doc(w, config.cfg_condition.as_ref(), false, 0)?;
         writeln!(
             w,
@@ -388,7 +388,7 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
         )?;
         writeln!(w)?;
 
-        version_condition(w, env, version, false, 0)?;
+        version_condition(w, env, None, version, false, 0)?;
         cfg_condition_no_doc(w, config.cfg_condition.as_ref(), false, 0)?;
         writeln!(
             w,
@@ -400,7 +400,7 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
         )?;
         writeln!(w)?;
 
-        version_condition(w, env, version, false, 0)?;
+        version_condition(w, env, None, version, false, 0)?;
         cfg_condition_no_doc(w, config.cfg_condition.as_ref(), false, 0)?;
         writeln!(
             w,
@@ -419,7 +419,7 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
         )?;
         writeln!(w)?;
 
-        version_condition(w, env, version, false, 0)?;
+        version_condition(w, env, None, version, false, 0)?;
         cfg_condition_no_doc(w, config.cfg_condition.as_ref(), false, 0)?;
         writeln!(
             w,

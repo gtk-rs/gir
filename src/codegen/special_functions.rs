@@ -35,7 +35,7 @@ pub(super) fn generate_static_to_str(
 ) -> Result<()> {
     writeln!(w)?;
     let version = Version::if_stricter_than(function.version, scope_version);
-    version_condition(w, env, version, false, 1)?;
+    version_condition(w, env, None, version, false, 1)?;
 
     let visibility = match function.visibility {
         Visibility::Public => "pub ",

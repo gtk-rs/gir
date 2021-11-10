@@ -204,7 +204,7 @@ fn generate_bitfields(w: &mut dyn Write, env: &Env, items: &[&Bitfield]) -> Resu
 
             let val: i64 = member.value.parse().unwrap();
 
-            version_condition(w, env, version, false, 0)?;
+            version_condition(w, env, None, version, false, 0)?;
             writeln!(
                 w,
                 "pub const {}: {} = {};",
@@ -310,7 +310,7 @@ fn generate_enums(w: &mut dyn Write, env: &Env, items: &[&Enumeration]) -> Resul
                 continue;
             }
 
-            version_condition(w, env, version, false, 0)?;
+            version_condition(w, env, None, version, false, 0)?;
             writeln!(
                 w,
                 "pub const {}: {} = {};",

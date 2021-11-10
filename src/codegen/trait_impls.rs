@@ -126,7 +126,7 @@ fn generate_display(
 ) -> Result<()> {
     writeln!(w)?;
     let version = Version::if_stricter_than(func.version, scope_version);
-    version_condition(w, env, version, false, 0)?;
+    version_condition(w, env, None, version, false, 0)?;
     cfg_condition_no_doc(w, cfg_condition, false, 0)?;
 
     use crate::analysis::out_parameters::Mode;
@@ -171,7 +171,7 @@ fn generate_hash(
 ) -> Result<()> {
     writeln!(w)?;
     let version = Version::if_stricter_than(func.version, scope_version);
-    version_condition(w, env, version, false, 0)?;
+    version_condition(w, env, None, version, false, 0)?;
     cfg_condition_no_doc(w, cfg_condition, false, 0)?;
 
     let call = generate_call(func.codegen_name(), &[], trait_name);
@@ -201,7 +201,7 @@ fn generate_eq(
 ) -> Result<()> {
     writeln!(w)?;
     let version = Version::if_stricter_than(func.version, scope_version);
-    version_condition(w, env, version, false, 0)?;
+    version_condition(w, env, None, version, false, 0)?;
     cfg_condition_no_doc(w, cfg_condition, false, 0)?;
 
     let call = generate_call(func.codegen_name(), &["other"], trait_name);
@@ -233,7 +233,7 @@ fn generate_eq_compare(
 ) -> Result<()> {
     writeln!(w)?;
     let version = Version::if_stricter_than(func.version, scope_version);
-    version_condition(w, env, version, false, 0)?;
+    version_condition(w, env, None, version, false, 0)?;
     cfg_condition_no_doc(w, cfg_condition, false, 0)?;
 
     let call = generate_call(func.codegen_name(), &["other"], trait_name);
@@ -265,7 +265,7 @@ fn generate_ord(
 ) -> Result<()> {
     writeln!(w)?;
     let version = Version::if_stricter_than(func.version, scope_version);
-    version_condition(w, env, version, false, 0)?;
+    version_condition(w, env, None, version, false, 0)?;
     cfg_condition_no_doc(w, cfg_condition, false, 0)?;
 
     let call = generate_call(func.codegen_name(), &["other"], trait_name);

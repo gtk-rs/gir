@@ -30,9 +30,10 @@ pub fn generate(
 
     // Collect all supertypes that were added at a later time. The `glib::wrapper!` call
     // needs to be done multiple times with different `#[cfg]` directives if there is a difference.
-    let mut versions = BTreeMap::new();
+    let mut namespaces = Vec::new();
     for p in &analysis.supertypes {
         use crate::library::*;
+        let mut versions = BTreeMap::new();
 
         match *env.library.type_(p.type_id) {
             Type::Interface(Interface { .. }) | Type::Class(Class { .. })
@@ -52,6 +53,9 @@ pub fn generate(
                             .entry(parent_version)
                             .and_modify(|t: &mut Vec<_>| t.push(p))
                             .or_insert_with(|| vec![p]);
+                        if !versions.is_empty() {
+                            namespaces.push((p.type_id.ns_id, versions));
+                        }
                     }
                 }
             }
@@ -59,7 +63,7 @@ pub fn generate(
         }
     }
 
-    if versions.is_empty() {
+    if namespaces.is_empty() {
         writeln!(w)?;
         general::define_object_type(
             w,
@@ -74,40 +78,44 @@ pub fn generate(
     } else {
         // Write the `glib::wrapper!` calls from the highest version to the lowest and remember
         // which supertypes have to be removed for the next call.
-        let mut remove_types = HashSet::new();
+        let mut remove_types: HashSet<library::TypeId> = HashSet::new();
 
         let mut previous_version = None;
-        for (&version, stypes) in versions.iter().rev() {
-            let supertypes = analysis
-                .supertypes
-                .iter()
-                .filter(|t| !remove_types.contains(&t.type_id))
-                .cloned()
-                .collect::<Vec<_>>();
+        let mut previous_ns_id = None;
+        for (ns_id, versions) in namespaces.iter() {
+            for (&version, stypes) in versions.iter().rev() {
+                let supertypes = analysis
+                    .supertypes
+                    .iter()
+                    .filter(|t| !remove_types.contains(&t.type_id))
+                    .cloned()
+                    .collect::<Vec<_>>();
 
-            writeln!(w)?;
-            if previous_version.is_some() {
-                not_version_condition_no_dox(w, previous_version, false, 0)?;
-                version_condition_no_doc(w, env, None, version, false, 0)?;
-            } else {
-                version_condition(w, env, version, false, 0)?;
+                writeln!(w)?;
+                if previous_version.is_some() {
+                    not_version_condition_no_dox(w, env, Some(*ns_id), previous_version, false, 0)?;
+                    version_condition_no_doc(w, env, Some(*ns_id), version, false, 0)?;
+                } else {
+                    version_condition(w, env, Some(*ns_id), version, false, 0)?;
+                }
+                general::define_object_type(
+                    w,
+                    env,
+                    &analysis.name,
+                    &analysis.c_type,
+                    analysis.c_class_type.as_deref(),
+                    &analysis.get_type,
+                    analysis.is_interface,
+                    &supertypes,
+                )?;
+
+                for t in stypes {
+                    remove_types.insert(t.type_id);
+                }
+
+                previous_ns_id = Some(*ns_id);
+                previous_version = version;
             }
-            general::define_object_type(
-                w,
-                env,
-                &analysis.name,
-                &analysis.c_type,
-                analysis.c_class_type.as_deref(),
-                &analysis.get_type,
-                analysis.is_interface,
-                &supertypes,
-            )?;
-
-            for t in stypes {
-                remove_types.insert(t.type_id);
-            }
-
-            previous_version = version;
         }
 
         // Write the base `glib::wrapper!`.
@@ -118,7 +126,7 @@ pub fn generate(
             .cloned()
             .collect::<Vec<_>>();
         writeln!(w)?;
-        not_version_condition_no_dox(w, previous_version, false, 0)?;
+        not_version_condition_no_dox(w, env, previous_ns_id, previous_version, false, 0)?;
         general::define_object_type(
             w,
             env,
