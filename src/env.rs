@@ -42,12 +42,23 @@ impl Env {
         deprecated_version: Option<Version>,
     ) -> bool {
         let to_compare_with = self.config.min_required_version(self, ns_id);
-        if let (Some(v), Some(to_compare_v)) = (deprecated_version, to_compare_with) {
-            if v <= to_compare_v {
-                return self.config.deprecate_by_min_version;
+        match (deprecated_version, to_compare_with) {
+            (Some(v), Some(to_compare_v)) => {
+                if v <= to_compare_v {
+                    self.config.deprecate_by_min_version
+                } else {
+                    false
+                }
             }
+            (Some(v), _) => {
+                if v <= self.config.min_cfg_version {
+                    self.config.deprecate_by_min_version
+                } else {
+                    false
+                }
+            }
+            _ => false,
         }
-        false
     }
 
     pub fn is_too_low_version(&self, ns_id: Option<NsId>, version: Option<Version>) -> bool {
