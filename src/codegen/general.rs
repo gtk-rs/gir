@@ -13,6 +13,7 @@ use crate::{
 use std::{
     fmt::Display,
     io::{Result, Write},
+    ops::Index,
 };
 
 pub fn start_comments(w: &mut dyn Write, conf: &Config) -> Result<()> {
@@ -546,7 +547,7 @@ pub fn cfg_deprecated_string(
                 "{}{}#[cfg_attr({}, deprecated = \"Since {}\")]",
                 tabs(indent),
                 comment,
-                v.to_cfg(),
+                v.to_cfg(None),
                 v,
             )
         }
@@ -577,7 +578,20 @@ pub fn version_condition_no_doc(
     let to_compare_with = env.config.min_required_version(env, ns_id);
     if let (Some(v), Some(to_compare_v)) = (version, to_compare_with) {
         if v > to_compare_v {
-            if let Some(s) = cfg_condition_string_no_doc(Some(&v.to_cfg()), commented, indent) {
+            // Prefix with the crate name if it's not the main one
+            let namespace_name = ns_id.and_then(|ns| {
+                if ns == namespaces::MAIN {
+                    None
+                } else {
+                    Some(env.namespaces.index(ns).crate_name.clone())
+                }
+            });
+
+            if let Some(s) = cfg_condition_string_no_doc(
+                Some(&v.to_cfg(namespace_name.as_deref())),
+                commented,
+                indent,
+            ) {
                 writeln!(w, "{}", s)?
             }
         }
@@ -594,7 +608,7 @@ pub fn version_condition_doc(
 ) -> Result<()> {
     match version {
         Some(v) if v > env.config.min_cfg_version => {
-            if let Some(s) = cfg_condition_string_doc(Some(&v.to_cfg()), commented, indent) {
+            if let Some(s) = cfg_condition_string_doc(Some(&v.to_cfg(None)), commented, indent) {
                 writeln!(w, "{}", s)?
             }
         }
@@ -613,7 +627,19 @@ pub fn version_condition_string(
     let to_compare_with = env.config.min_required_version(env, ns_id);
     if let (Some(v), Some(to_compare_v)) = (version, to_compare_with) {
         if v > to_compare_v {
-            cfg_condition_string(Some(&v.to_cfg()), commented, indent)
+            // Prefix with the crate name if it's not the main one
+            let namespace_name = ns_id.and_then(|ns| {
+                if ns == namespaces::MAIN {
+                    None
+                } else {
+                    Some(env.namespaces.index(ns).crate_name.clone())
+                }
+            });
+            cfg_condition_string(
+                Some(&v.to_cfg(namespace_name.as_deref())),
+                commented,
+                indent,
+            )
         } else {
             None
         }
@@ -629,7 +655,7 @@ pub fn not_version_condition(
     indent: usize,
 ) -> Result<()> {
     if let Some(s) = version.and_then(|v| {
-        cfg_condition_string(Some(&format!("not({})", v.to_cfg())), commented, indent)
+        cfg_condition_string(Some(&format!("not({})", v.to_cfg(None))), commented, indent)
     }) {
         writeln!(w, "{}", s)?;
     }
@@ -648,7 +674,7 @@ pub fn not_version_condition_no_dox(
             "{}{}#[cfg(not(any({}, feature = \"dox\")))]",
             tabs(indent),
             comment,
-            v.to_cfg()
+            v.to_cfg(None)
         );
         writeln!(w, "{}", s)?;
     }
