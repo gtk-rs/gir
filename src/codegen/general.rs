@@ -577,27 +577,28 @@ pub fn version_condition_no_doc(
     indent: usize,
 ) -> Result<()> {
     let to_compare_with = env.config.min_required_version(env, ns_id);
-    if let (Some(v), Some(to_compare_v)) = (version, to_compare_with) {
-        if v > to_compare_v {
-            // Prefix with the crate name if it's not the main one
-            let namespace_name = ns_id.and_then(|ns| {
-                if ns == namespaces::MAIN {
-                    None
-                } else {
-                    Some(env.namespaces.index(ns).crate_name.clone())
-                }
-            });
-
-            if let Some(s) = cfg_condition_string_no_doc(
-                Some(&v.to_cfg(namespace_name.as_deref())),
-                commented,
-                indent,
-            ) {
-                writeln!(w, "{}", s)?
+    let should_generate = match (version, to_compare_with) {
+        (Some(v), Some(to_compare_v)) => v > to_compare_v,
+        (Some(_), _) => true,
+        _ => false,
+    };
+    if should_generate {
+        // Prefix with the crate name if it's not the main one
+        let namespace_name = ns_id.and_then(|ns| {
+            if ns == namespaces::MAIN {
+                None
+            } else {
+                Some(env.namespaces.index(ns).crate_name.clone())
             }
+        });
+        if let Some(s) = cfg_condition_string_no_doc(
+            Some(&version.unwrap().to_cfg(namespace_name.as_deref())),
+            commented,
+            indent,
+        ) {
+            writeln!(w, "{}", s)?
         }
     }
-
     Ok(())
 }
 pub fn version_condition_doc(
