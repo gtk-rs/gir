@@ -8,7 +8,7 @@ authors = [
 ]
 build = "build.rs"
 exclude = ["Gir*.toml", "tests/**/*", "*.md", "generator.py"]
-edition = "2021"
+edition = "2018"
 
 [dependencies]
 bitflags = "1.0"

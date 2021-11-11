@@ -1,5 +1,5 @@
 use crate::{
-    analysis,
+    analysis::{self, namespaces::NsId},
     config::{gobjects::GStatus, Config},
     library::*,
     version::Version,
@@ -36,20 +36,37 @@ impl Env {
             .unwrap_or(GStatus::Generate)
     }
 
-    pub fn is_totally_deprecated(&self, deprecated_version: Option<Version>) -> bool {
-        match deprecated_version {
-            Some(version) if version <= self.config.min_cfg_version => {
-                self.config.deprecate_by_min_version
+    pub fn is_totally_deprecated(
+        &self,
+        ns_id: Option<NsId>,
+        deprecated_version: Option<Version>,
+    ) -> bool {
+        let to_compare_with = self.config.min_required_version(self, ns_id);
+        match (deprecated_version, to_compare_with) {
+            (Some(v), Some(to_compare_v)) => {
+                if v <= to_compare_v {
+                    self.config.deprecate_by_min_version
+                } else {
+                    false
+                }
+            }
+            (Some(v), _) => {
+                if v <= self.config.min_cfg_version {
+                    self.config.deprecate_by_min_version
+                } else {
+                    false
+                }
             }
             _ => false,
         }
     }
 
-    pub fn is_too_low_version(&self, version: Option<Version>) -> bool {
-        match version {
-            Some(version) => version <= self.config.min_cfg_version,
-            _ => false,
+    pub fn is_too_low_version(&self, ns_id: Option<NsId>, version: Option<Version>) -> bool {
+        let to_compare_with = self.config.min_required_version(self, ns_id);
+        if let (Some(v), Some(to_compare_v)) = (version, to_compare_with) {
+            return v <= to_compare_v;
         }
+        false
     }
 
     pub fn main_sys_crate_name(&self) -> &str {

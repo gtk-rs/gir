@@ -218,7 +218,7 @@ fn generate_object_funcs(
                 .chain(configured_functions.iter().map(|f| f.version))
                 .max()
                 .flatten();
-            version_condition(w, env, version, false, 1)?;
+            version_condition(w, env, None, version, false, 1)?;
             generate_cfg_configure(w, &configured_functions, false)?;
             writeln!(w, "    pub fn {}() -> GType;", glib_get_type)?;
         }
@@ -248,7 +248,7 @@ fn generate_object_funcs(
             .or(func.version)
             .or(version);
 
-        version_condition(w, env, version, commented, 1)?;
+        version_condition(w, env, None, version, commented, 1)?;
         let name = func.c_identifier.as_ref().unwrap();
         // since we work with gir-files from Linux, some function names need to be adjusted
         if is_windows_utf8 {
@@ -259,7 +259,7 @@ fn generate_object_funcs(
                 comment
             )?;
             writeln!(w, "    {}pub fn {}_utf8{};", comment, name, sig)?;
-            version_condition(w, env, version, commented, 1)?;
+            version_condition(w, env, None, version, commented, 1)?;
         }
         generate_cfg_configure(w, &configured_functions, commented)?;
         writeln!(w, "    {}pub fn {}{};", comment, name, sig)?;

@@ -3,7 +3,9 @@ use super::{
     gobjects, WorkMode,
 };
 use crate::{
+    analysis::namespaces::{self, Namespace, NsId},
     config::error::TomlHelper,
+    env::Env,
     git::{repo_hash, repo_remote_url, toplevel},
     library::{self, Library},
     nameutil::set_crate_name_overrides,
@@ -13,6 +15,7 @@ use log::warn;
 use std::{
     collections::HashMap,
     fs,
+    ops::Index,
     path::{Component, Path, PathBuf},
     str::FromStr,
 };
@@ -380,6 +383,23 @@ impl Config {
                 None
             }
         })
+    }
+
+    pub fn find_ext_library(&self, namespace: &Namespace) -> Option<&ExternalLibrary> {
+        self.external_libraries
+            .iter()
+            .find(|lib| lib.crate_name == namespace.crate_name)
+    }
+
+    pub fn min_required_version(&self, env: &Env, ns_id: Option<NsId>) -> Option<Version> {
+        let ns_id = ns_id.unwrap_or(namespaces::MAIN);
+        if ns_id == namespaces::MAIN {
+            Some(env.config.min_cfg_version)
+        } else {
+            let namespace = env.namespaces.index(ns_id);
+            self.find_ext_library(namespace)
+                .and_then(|lib| lib.min_version)
+        }
     }
 
     pub fn resolve_type_ids(&mut self, library: &Library) {

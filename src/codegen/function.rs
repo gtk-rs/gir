@@ -77,11 +77,11 @@ pub fn generate(
 
     writeln!(w)?;
     if !in_trait || only_declaration {
-        cfg_deprecated(w, env, analysis.deprecated_version, commented, indent)?;
+        cfg_deprecated(w, env, None, analysis.deprecated_version, commented, indent)?;
     }
     cfg_condition(w, analysis.cfg_condition.as_ref(), commented, indent)?;
     let version = Version::if_stricter_than(analysis.version, scope_version);
-    version_condition(w, env, version, commented, indent)?;
+    version_condition(w, env, None, version, commented, indent)?;
     not_version_condition(w, analysis.not_version, commented, indent)?;
     doc_hidden(w, analysis.doc_hidden, comment_prefix, indent)?;
     if !in_trait || only_declaration {
@@ -114,12 +114,12 @@ pub fn generate(
 
         writeln!(w)?;
         if !in_trait || only_declaration {
-            cfg_deprecated(w, env, analysis.deprecated_version, commented, indent)?;
+            cfg_deprecated(w, env, None, analysis.deprecated_version, commented, indent)?;
         }
 
         writeln!(w, "{}{}", tabs(indent), comment_prefix)?;
         cfg_condition(w, analysis.cfg_condition.as_ref(), commented, indent)?;
-        version_condition(w, env, version, commented, indent)?;
+        version_condition(w, env, None, version, commented, indent)?;
         not_version_condition(w, analysis.not_version, commented, indent)?;
         doc_hidden(w, analysis.doc_hidden, comment_prefix, indent)?;
         writeln!(

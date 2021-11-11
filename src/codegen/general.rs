@@ -5,6 +5,7 @@ use crate::{
     config::{derives::Derive, Config},
     env::Env,
     gir_version::VERSION,
+    library::TypeId,
     nameutil::use_glib_type,
     version::Version,
     writer::primitives::tabs,
@@ -12,6 +13,7 @@ use crate::{
 use std::{
     fmt::Display,
     io::{Result, Write},
+    ops::Index,
 };
 
 pub fn start_comments(w: &mut dyn Write, conf: &Config) -> Result<()> {
@@ -92,7 +94,7 @@ pub fn uses(
         }
         let version = Version::if_stricter_than(scope.version, outer_version);
 
-        version_condition(w, env, version, false, 0)?;
+        version_condition(w, env, None, version, false, 0)?;
         writeln!(w, "use {};", name)?;
     }
 
@@ -298,7 +300,7 @@ pub fn define_boxed_type(
 
     if let Some((ref get_type_fn, get_type_version)) = get_type_fn {
         if get_type_version.is_some() {
-            version_condition(w, env, get_type_version, false, 0)?;
+            version_condition(w, env, None, get_type_version, false, 0)?;
             define_boxed_type_internal(
                 w,
                 env,
@@ -315,7 +317,7 @@ pub fn define_boxed_type(
             )?;
 
             writeln!(w)?;
-            not_version_condition_no_dox(w, get_type_version, false, 0)?;
+            not_version_condition_no_dox(w, env, None, get_type_version, false, 0)?;
             define_boxed_type_internal(
                 w,
                 env,
@@ -479,7 +481,7 @@ pub fn define_shared_type(
 
     if let Some((ref get_type_fn, get_type_version)) = get_type_fn {
         if get_type_version.is_some() {
-            version_condition(w, env, get_type_version, false, 0)?;
+            version_condition(w, env, None, get_type_version, false, 0)?;
             define_shared_type_internal(
                 w,
                 env,
@@ -492,7 +494,7 @@ pub fn define_shared_type(
             )?;
 
             writeln!(w)?;
-            not_version_condition_no_dox(w, get_type_version, false, 0)?;
+            not_version_condition_no_dox(w, env, None, get_type_version, false, 0)?;
             define_shared_type_internal(
                 w, env, type_name, glib_name, ref_fn, unref_fn, None, derive,
             )?;
@@ -518,11 +520,12 @@ pub fn define_shared_type(
 pub fn cfg_deprecated(
     w: &mut dyn Write,
     env: &Env,
+    type_tid: Option<TypeId>,
     deprecated: Option<Version>,
     commented: bool,
     indent: usize,
 ) -> Result<()> {
-    if let Some(s) = cfg_deprecated_string(env, deprecated, commented, indent) {
+    if let Some(s) = cfg_deprecated_string(env, type_tid, deprecated, commented, indent) {
         writeln!(w, "{}", s)?;
     }
     Ok(())
@@ -530,20 +533,21 @@ pub fn cfg_deprecated(
 
 pub fn cfg_deprecated_string(
     env: &Env,
+    type_tid: Option<TypeId>,
     deprecated: Option<Version>,
     commented: bool,
     indent: usize,
 ) -> Option<String> {
     let comment = if commented { "//" } else { "" };
     deprecated.map(|v| {
-        if env.is_too_low_version(Some(v)) {
+        if env.is_too_low_version(type_tid.map(|t| t.ns_id), Some(v)) {
             format!("{}{}#[deprecated = \"Since {}\"]", tabs(indent), comment, v)
         } else {
             format!(
                 "{}{}#[cfg_attr({}, deprecated = \"Since {}\")]",
                 tabs(indent),
                 comment,
-                v.to_cfg(),
+                v.to_cfg(None),
                 v,
             )
         }
@@ -553,11 +557,12 @@ pub fn cfg_deprecated_string(
 pub fn version_condition(
     w: &mut dyn Write,
     env: &Env,
+    ns_id: Option<u16>,
     version: Option<Version>,
     commented: bool,
     indent: usize,
 ) -> Result<()> {
-    if let Some(s) = version_condition_string(env, version, commented, indent) {
+    if let Some(s) = version_condition_string(env, ns_id, version, commented, indent) {
         writeln!(w, "{}", s)?;
     }
     Ok(())
@@ -566,18 +571,33 @@ pub fn version_condition(
 pub fn version_condition_no_doc(
     w: &mut dyn Write,
     env: &Env,
+    ns_id: Option<u16>,
     version: Option<Version>,
     commented: bool,
     indent: usize,
 ) -> Result<()> {
-    match version {
-        Some(v) if v > env.config.min_cfg_version => {
-            if let Some(s) = cfg_condition_string_no_doc(Some(&v.to_cfg()), commented, indent) {
+    let to_compare_with = env.config.min_required_version(env, ns_id);
+    if let (Some(v), Some(to_compare_v)) = (version, to_compare_with) {
+        if v > to_compare_v {
+            // Prefix with the crate name if it's not the main one
+            let namespace_name = ns_id.and_then(|ns| {
+                if ns == namespaces::MAIN {
+                    None
+                } else {
+                    Some(env.namespaces.index(ns).crate_name.clone())
+                }
+            });
+
+            if let Some(s) = cfg_condition_string_no_doc(
+                Some(&v.to_cfg(namespace_name.as_deref())),
+                commented,
+                indent,
+            ) {
                 writeln!(w, "{}", s)?
             }
         }
-        _ => {}
     }
+
     Ok(())
 }
 pub fn version_condition_doc(
@@ -589,7 +609,7 @@ pub fn version_condition_doc(
 ) -> Result<()> {
     match version {
         Some(v) if v > env.config.min_cfg_version => {
-            if let Some(s) = cfg_condition_string_doc(Some(&v.to_cfg()), commented, indent) {
+            if let Some(s) = cfg_condition_string_doc(Some(&v.to_cfg(None)), commented, indent) {
                 writeln!(w, "{}", s)?
             }
         }
@@ -600,15 +620,33 @@ pub fn version_condition_doc(
 
 pub fn version_condition_string(
     env: &Env,
+    ns_id: Option<u16>,
     version: Option<Version>,
     commented: bool,
     indent: usize,
 ) -> Option<String> {
-    match version {
-        Some(v) if v > env.config.min_cfg_version => {
-            cfg_condition_string(Some(&v.to_cfg()), commented, indent)
-        }
-        _ => None,
+    let to_compare_with = env.config.min_required_version(env, ns_id);
+    let should_generate = match (version, to_compare_with) {
+        (Some(v), Some(to_compare_v)) => v > to_compare_v,
+        (Some(_), _) => true,
+        _ => false,
+    };
+    if should_generate {
+        // Prefix with the crate name if it's not the main one
+        let namespace_name = ns_id.and_then(|ns| {
+            if ns == namespaces::MAIN {
+                None
+            } else {
+                Some(env.namespaces.index(ns).crate_name.clone())
+            }
+        });
+        cfg_condition_string(
+            Some(&version.unwrap().to_cfg(namespace_name.as_deref())),
+            commented,
+            indent,
+        )
+    } else {
+        None
     }
 }
 
@@ -619,7 +657,7 @@ pub fn not_version_condition(
     indent: usize,
 ) -> Result<()> {
     if let Some(s) = version.and_then(|v| {
-        cfg_condition_string(Some(&format!("not({})", v.to_cfg())), commented, indent)
+        cfg_condition_string(Some(&format!("not({})", v.to_cfg(None))), commented, indent)
     }) {
         writeln!(w, "{}", s)?;
     }
@@ -628,17 +666,26 @@ pub fn not_version_condition(
 
 pub fn not_version_condition_no_dox(
     w: &mut dyn Write,
+    env: &Env,
+    ns_id: Option<u16>,
     version: Option<Version>,
     commented: bool,
     indent: usize,
 ) -> Result<()> {
     if let Some(v) = version {
         let comment = if commented { "//" } else { "" };
+        let namespace_name = ns_id.and_then(|ns| {
+            if ns == namespaces::MAIN {
+                None
+            } else {
+                Some(env.namespaces.index(ns).crate_name.clone())
+            }
+        });
         let s = format!(
             "{}{}#[cfg(not(any({}, feature = \"dox\")))]",
             tabs(indent),
             comment,
-            v.to_cfg()
+            v.to_cfg(namespace_name.as_deref())
         );
         writeln!(w, "{}", s)?;
     }
@@ -788,7 +835,7 @@ pub fn declare_default_from_new(
     }) {
         if func.parameters.rust_parameters.is_empty() {
             writeln!(w)?;
-            version_condition(w, env, func.version, false, 0)?;
+            version_condition(w, env, None, func.version, false, 0)?;
             writeln!(
                 w,
                 "impl Default for {} {{
@@ -801,7 +848,7 @@ pub fn declare_default_from_new(
         } else if has_builder {
             // create an alternative default implementation the uses `glib::object::Object::new()`
             writeln!(w)?;
-            version_condition(w, env, func.version, false, 0)?;
+            version_condition(w, env, None, func.version, false, 0)?;
             writeln!(
                 w,
                 "impl Default for {0} {{

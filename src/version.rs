@@ -8,8 +8,18 @@ use std::{
 pub struct Version(pub u16, pub u16, pub u16);
 
 impl Version {
-    pub fn to_cfg(self) -> String {
-        format!("feature = \"{}\"", self.to_feature())
+    /// Convert a version number to a config guard
+    ///
+    /// When generating a builder pattern, properties could be from a super-type class/interface
+    /// and so the version used there must be prefixed with the crate name from where the super-type
+    /// originates from in case it is different from the main crate. For those cases you can pass
+    /// the crate name as the `prefix` parameter
+    pub fn to_cfg(self, prefix: Option<&str>) -> String {
+        if let Some(p) = prefix {
+            format!("feature = \"{}_{}\"", p, self.to_feature())
+        } else {
+            format!("feature = \"{}\"", self.to_feature())
+        }
     }
 
     pub fn to_feature(self) -> String {

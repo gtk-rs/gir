@@ -79,7 +79,7 @@ fn write_version(w: &mut dyn Write, env: &Env, for_let: bool) -> Result<()> {
         write!(
             w,
             "if cfg!({}) {{\n\t\t\"{}\"\n\t}} else ",
-            version.to_cfg(),
+            version.to_cfg(None),
             lib_version
         )?;
     }

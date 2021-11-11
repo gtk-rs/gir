@@ -37,7 +37,7 @@ pub struct Info {
     pub signals: Vec<signals::Info>,
     pub notify_signals: Vec<signals::Info>,
     pub properties: Vec<properties::Property>,
-    pub builder_properties: Vec<properties::Property>,
+    pub builder_properties: Vec<(Vec<properties::Property>, TypeId)>,
     pub builder_postprocess: Option<String>,
     pub child_properties: ChildProperties,
     pub signatures: Signatures,
@@ -99,6 +99,14 @@ impl Deref for Info {
     fn deref(&self) -> &InfoBase {
         &self.base
     }
+}
+
+pub fn has_builder_properties(builder_properties: &[(Vec<properties::Property>, TypeId)]) -> bool {
+    builder_properties
+        .iter()
+        .map(|b| b.0.iter().len())
+        .sum::<usize>()
+        > 0
 }
 
 pub fn class(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<Info> {
@@ -196,7 +204,7 @@ pub fn class(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<Info>
     let generate_trait = !final_type
         && (has_signals || has_methods || !properties.is_empty() || !child_properties.is_empty());
 
-    if !builder_properties.is_empty() {
+    if has_builder_properties(&builder_properties) {
         imports.add("glib::object::Cast");
         imports.add("glib::StaticType");
         imports.add("glib::ToValue");

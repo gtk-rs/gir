@@ -1,10 +1,13 @@
 use super::error::*;
 use crate::nameutil::crate_name;
+use crate::version::Version;
+use std::str::FromStr;
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct ExternalLibrary {
     pub namespace: String,
     pub crate_name: String,
+    pub min_version: Option<Version>,
 }
 
 pub fn read_external_libraries(toml: &toml::Value) -> Result<Vec<ExternalLibrary>, String> {
@@ -15,6 +18,7 @@ pub fn read_external_libraries(toml: &toml::Value) -> Result<Vec<ExternalLibrary
             .filter_map(|v| v.as_str().map(String::from))
             .map(|namespace| ExternalLibrary {
                 crate_name: crate_name(&namespace),
+                min_version: None,
                 namespace,
             })
             .collect(),
@@ -25,17 +29,34 @@ pub fn read_external_libraries(toml: &toml::Value) -> Result<Vec<ExternalLibrary
         .and_then(toml::Value::as_table);
     if let Some(custom_libs) = custom_libs {
         for custom_lib in custom_libs {
-            let crate_name = custom_lib.0;
-            if let Some(namespace) = custom_lib.1.as_str() {
+            if let Some(info) = custom_lib.1.as_table() {
+                let namespace = custom_lib.0.as_str();
+                let crate_name_ = info
+                    .get("crate")
+                    .map(|c| c.as_str().expect("crate name must be a string").to_string())
+                    .unwrap_or_else(|| crate_name(namespace));
+                let min_version = info
+                    .get("min_version")
+                    .map(|v| v.as_str().expect("min required version must be a string"))
+                    .map(|v| Version::from_str(v).expect("Invalid version number"));
                 let lib = ExternalLibrary {
                     namespace: namespace.to_owned(),
-                    crate_name: crate_name.clone(),
+                    crate_name: crate_name_,
+                    min_version,
+                };
+                external_libraries.push(lib);
+            } else if let Some(namespace) = custom_lib.1.as_str() {
+                let crate_name_ = custom_lib.0;
+                let lib = ExternalLibrary {
+                    namespace: namespace.to_owned(),
+                    crate_name: crate_name_.clone(),
+                    min_version: None,
                 };
                 external_libraries.push(lib);
             } else {
                 return Err(format!(
-                    "For external library \"{}\" namespace must be string",
-                    crate_name
+                    "For external library \"{:#?}\" namespace must be string or a table",
+                    custom_lib.0
                 ));
             }
         }
@@ -77,6 +98,7 @@ other-lib="OtherLib"
             ExternalLibrary {
                 namespace: "GLib".to_owned(),
                 crate_name: "glib".to_owned(),
+                min_version: None,
             }
         );
         assert_eq!(
@@ -84,6 +106,7 @@ other-lib="OtherLib"
             ExternalLibrary {
                 namespace: "Gdk".to_owned(),
                 crate_name: "gdk".to_owned(),
+                min_version: None,
             }
         );
         assert_eq!(
@@ -91,6 +114,7 @@ other-lib="OtherLib"
             ExternalLibrary {
                 namespace: "GdkPixbuf".to_owned(),
                 crate_name: "gdk_pixbuf".to_owned(),
+                min_version: None,
             }
         );
         //Sorted alphabetically
@@ -99,6 +123,7 @@ other-lib="OtherLib"
             ExternalLibrary {
                 namespace: "CoolLib".to_owned(),
                 crate_name: "coollib".to_owned(),
+                min_version: None,
             }
         );
         assert_eq!(
@@ -106,6 +131,37 @@ other-lib="OtherLib"
             ExternalLibrary {
                 namespace: "OtherLib".to_owned(),
                 crate_name: "other-lib".to_owned(),
+                min_version: None,
+            }
+        );
+    }
+
+    #[test]
+    fn test_read_external_libraries_with_min_version() {
+        let toml = toml(
+            r#"
+[external_libraries]
+CoolLib={crate = "coollib", min_version = "0.3.0"}
+OtherLib={min_version = "0.4.0"}
+"#,
+        );
+        let libs = read_external_libraries(&toml).unwrap();
+
+        //Sorted alphabetically
+        assert_eq!(
+            libs[0],
+            ExternalLibrary {
+                namespace: "CoolLib".to_owned(),
+                crate_name: "coollib".to_owned(),
+                min_version: Some(Version::from_str("0.3.0").unwrap()),
+            }
+        );
+        assert_eq!(
+            libs[1],
+            ExternalLibrary {
+                namespace: "OtherLib".to_owned(),
+                crate_name: "other_lib".to_owned(),
+                min_version: Some(Version::from_str("0.4.0").unwrap()),
             }
         );
     }

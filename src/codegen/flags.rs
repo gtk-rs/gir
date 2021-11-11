@@ -43,7 +43,7 @@ pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>) {
             }
             let flags = flags_analysis.type_(&env.library);
 
-            if let Some(cfg) = version_condition_string(env, flags.version, false, 0) {
+            if let Some(cfg) = version_condition_string(env, None, flags.version, false, 0) {
                 mod_rs.push(cfg);
             }
             if let Some(cfg) = cfg_condition_string(config.cfg_condition.as_ref(), false, 0) {
@@ -67,11 +67,18 @@ fn generate_flags(
 ) -> Result<()> {
     let sys_crate_name = env.main_sys_crate_name();
     cfg_condition_no_doc(w, config.cfg_condition.as_ref(), false, 0)?;
-    version_condition_no_doc(w, env, flags.version, false, 0)?;
+    version_condition_no_doc(w, env, None, flags.version, false, 0)?;
     writeln!(w, "bitflags! {{")?;
     cfg_condition_doc(w, config.cfg_condition.as_ref(), false, 1)?;
     version_condition_doc(w, env, flags.version, false, 1)?;
-    cfg_deprecated(w, env, flags.deprecated_version, false, 1)?;
+    cfg_deprecated(
+        w,
+        env,
+        Some(analysis.type_id),
+        flags.deprecated_version,
+        false,
+        1,
+    )?;
     if config.must_use {
         writeln!(w, "    #[must_use]")?;
     }
@@ -98,8 +105,8 @@ fn generate_flags(
             .find_map(|m| m.version)
             .or(member.version);
         let cfg_cond = member_config.iter().find_map(|m| m.cfg_condition.as_ref());
-        cfg_deprecated(w, env, deprecated_version, false, 2)?;
-        version_condition(w, env, version, false, 2)?;
+        cfg_deprecated(w, env, Some(analysis.type_id), deprecated_version, false, 2)?;
+        version_condition(w, env, None, version, false, 2)?;
         cfg_condition(w, cfg_cond, false, 2)?;
         if member.c_identifier != member.name {
             doc_alias(w, &member.c_identifier, "", 2)?;
@@ -125,7 +132,7 @@ fn generate_flags(
 
     if !functions.is_empty() {
         writeln!(w)?;
-        version_condition(w, env, flags.version, false, 0)?;
+        version_condition(w, env, None, flags.version, false, 0)?;
         cfg_condition_no_doc(w, config.cfg_condition.as_ref(), false, 0)?;
         write!(w, "impl {} {{", analysis.name)?;
         for func_analysis in functions {
@@ -158,7 +165,7 @@ fn generate_flags(
 
     if config.generate_display_trait && !analysis.specials.has_trait(Type::Display) {
         // Generate Display trait implementation.
-        version_condition(w, env, flags.version, false, 0)?;
+        version_condition(w, env, None, flags.version, false, 0)?;
         cfg_condition_no_doc(w, config.cfg_condition.as_ref(), false, 0)?;
         writeln!(
             w,
@@ -171,7 +178,7 @@ fn generate_flags(
         )?;
     }
 
-    version_condition(w, env, flags.version, false, 0)?;
+    version_condition(w, env, None, flags.version, false, 0)?;
     cfg_condition_no_doc(w, config.cfg_condition.as_ref(), false, 0)?;
     writeln!(
         w,
@@ -195,7 +202,7 @@ impl IntoGlib for {name} {{
         ""
     };
 
-    version_condition(w, env, flags.version, false, 0)?;
+    version_condition(w, env, None, flags.version, false, 0)?;
     cfg_condition_no_doc(w, config.cfg_condition.as_ref(), false, 0)?;
     writeln!(
         w,
@@ -219,7 +226,7 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
             .max()
             .flatten();
 
-        version_condition(w, env, version, false, 0)?;
+        version_condition(w, env, None, version, false, 0)?;
         cfg_condition_no_doc(w, config.cfg_condition.as_ref(), false, 0)?;
         writeln!(
             w,
@@ -234,7 +241,7 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
         )?;
         writeln!(w)?;
 
-        version_condition(w, env, version, false, 0)?;
+        version_condition(w, env, None, version, false, 0)?;
         cfg_condition_no_doc(w, config.cfg_condition.as_ref(), false, 0)?;
         writeln!(
             w,
@@ -246,7 +253,7 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
         )?;
         writeln!(w)?;
 
-        version_condition(w, env, version, false, 0)?;
+        version_condition(w, env, None, version, false, 0)?;
         cfg_condition_no_doc(w, config.cfg_condition.as_ref(), false, 0)?;
         writeln!(
             w,
@@ -265,7 +272,7 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
         )?;
         writeln!(w)?;
 
-        version_condition(w, env, version, false, 0)?;
+        version_condition(w, env, None, version, false, 0)?;
         cfg_condition_no_doc(w, config.cfg_condition.as_ref(), false, 0)?;
         writeln!(
             w,

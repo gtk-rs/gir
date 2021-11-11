@@ -29,7 +29,7 @@ pub fn analyze<F: Borrow<library::Constant>>(
             continue;
         }
 
-        if env.is_totally_deprecated(constant.deprecated_version) {
+        if env.is_totally_deprecated(None, constant.deprecated_version) {
             continue;
         }
 
