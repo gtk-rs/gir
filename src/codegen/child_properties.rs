@@ -7,6 +7,7 @@ use crate::{
     chunk::Chunk,
     env::Env,
     library,
+    nameutil::use_gtk_type,
     traits::IntoString,
     writer::{primitives::tabs, ToCode},
 };
@@ -89,7 +90,7 @@ fn declaration(env: &Env, prop: &ChildProperty, is_get: bool) -> String {
         let child_type = RustType::try_new(env, typ).into_string();
         format!("T: IsA<{}>", child_type)
     } else {
-        "T: IsA<Widget>".to_string()
+        format!("T: IsA<{}>", use_gtk_type(env, "Widget"))
     };
     if !is_get && !prop.bounds.is_empty() {
         bounds = format!("{}, {}", prop.bounds, bounds);
