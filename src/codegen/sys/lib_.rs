@@ -376,6 +376,19 @@ fn generate_classes_structs(w: &mut dyn Write, env: &Env, classes: &[&Class]) ->
     Ok(())
 }
 
+fn generate_opaque_type(w: &mut dyn Write, name: &str) -> Result<()> {
+    writeln!(
+        w,
+        r#"#[repr(C)]
+pub struct {} {{
+    _data: [u8; 0],
+    _marker: core::marker::PhantomData<(*mut u8, core::marker::PhantomPinned)>,
+}}
+"#,
+        name
+    )
+}
+
 fn generate_interfaces_structs(
     w: &mut dyn Write,
     env: &Env,
@@ -389,7 +402,7 @@ fn generate_interfaces_structs(
         if !env.type_status_sys(&full_name).need_generate() {
             continue;
         }
-        writeln!(w, "#[repr(C)]\npub struct {}(c_void);\n", interface.c_type)?;
+        generate_opaque_type(w, &interface.c_type)?;
         generate_debug_impl(
             w,
             &interface.c_type,
@@ -464,9 +477,7 @@ impl ::std::fmt::Debug for GHookList {
 }
 
 fn generate_disguised(w: &mut dyn Write, record: &Record) -> Result<()> {
-    writeln!(w, "#[repr(C)]")?;
-    writeln!(w, "pub struct _{name}(c_void);", name = record.c_type)?;
-    writeln!(w)?;
+    generate_opaque_type(w, &format!("_{}", record.c_type))?;
     writeln!(w, "pub type {name} = *mut _{name};", name = record.c_type)?;
     writeln!(w)
 }
@@ -477,7 +488,6 @@ fn generate_from_fields(
     align: Option<u32>,
 ) -> Result<()> {
     cfg_condition(w, fields.cfg_condition.as_ref(), false, 0)?;
-    writeln!(w, "#[repr(C)]")?;
     if let Some(align) = align {
         writeln!(w, "#[repr(align({}))]", align)?;
     }
@@ -489,8 +499,9 @@ fn generate_from_fields(
         // It would be nice to represent those using extern types
         // from RFC 1861, once they are available in stable Rust.
         // https://github.com/rust-lang/rust/issues/43467
-        writeln!(w, "pub struct {name}(c_void);", name = &fields.name)?;
+        generate_opaque_type(w, &fields.name)?;
     } else {
+        writeln!(w, "#[repr(C)]")?;
         writeln!(
             w,
             "pub {kind} {name} {{",
@@ -509,9 +520,8 @@ fn generate_from_fields(
             writeln!(w, "\t_truncated_record_marker: c_void,")?;
             writeln!(w, "\t// {}", reason)?;
         }
-        writeln!(w, "}}")?;
+        writeln!(w, "}}\n")?;
     }
-    writeln!(w)?;
 
     cfg_condition(w, fields.cfg_condition.as_ref(), false, 0)?;
     writeln!(
