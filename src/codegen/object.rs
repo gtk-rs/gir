@@ -606,12 +606,4 @@ pub fn generate_reexports(
             module_name, analysis.trait_name
         ));
     }
-
-    if has_builder_properties(&analysis.builder_properties) {
-        contents.extend_from_slice(&cfgs);
-        contents.push(format!(
-            "pub use self::{}::{}Builder;",
-            module_name, analysis.name
-        ));
-    }
 }
