@@ -439,6 +439,7 @@ impl {name}Builder {{
         "
     // rustdoc-stripper-ignore-next
     /// Build the [`{name}`].
+    #[must_use = \"The builder must be built to be used\"]
     pub fn build(self) -> {name} {{
         let mut properties: Vec<(&str, &dyn ToValue)> = vec![];",
         name = analysis.name
@@ -604,14 +605,6 @@ pub fn generate_reexports(
         traits.push(format!(
             "\tpub use super::{}::{};",
             module_name, analysis.trait_name
-        ));
-    }
-
-    if has_builder_properties(&analysis.builder_properties) {
-        contents.extend_from_slice(&cfgs);
-        contents.push(format!(
-            "pub use self::{}::{}Builder;",
-            module_name, analysis.name
         ));
     }
 }
