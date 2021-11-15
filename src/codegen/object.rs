@@ -439,6 +439,7 @@ impl {name}Builder {{
         "
     // rustdoc-stripper-ignore-next
     /// Build the [`{name}`].
+    #[must_use = \"The builder must be built to be used\"]
     pub fn build(self) -> {name} {{
         let mut properties: Vec<(&str, &dyn ToValue)> = vec![];",
         name = analysis.name
