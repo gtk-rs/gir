@@ -164,7 +164,7 @@ pub fn generate(
             // rustdoc-stripper-ignore-next
             /// Creates a new builder-pattern struct instance to construct [`{name}`] objects.
             ///
-            /// This method returns an instance of [`{builder_name}`] which can be used to create [`{name}`] objects.
+            /// This method returns an instance of [`{builder_name}`](crate::builders::{builder_name}) which can be used to create [`{name}`] objects.
             pub fn builder() -> {builder_name} {{
                 {builder_name}::default()
             }}
@@ -573,6 +573,7 @@ pub fn generate_reexports(
     module_name: &str,
     contents: &mut Vec<String>,
     traits: &mut Vec<String>,
+    builders: &mut Vec<String>,
 ) {
     let mut cfgs: Vec<String> = Vec::new();
     if let Some(cfg) = general::cfg_condition_string(analysis.cfg_condition.as_ref(), false, 0) {
@@ -605,6 +606,16 @@ pub fn generate_reexports(
         traits.push(format!(
             "\tpub use super::{}::{};",
             module_name, analysis.trait_name
+        ));
+    }
+
+    if has_builder_properties(&analysis.builder_properties) {
+        for cfg in &cfgs {
+            builders.push(format!("\t{}", cfg));
+        }
+        builders.push(format!(
+            "\tpub use super::{}::{}Builder;",
+            module_name, analysis.name
         ));
     }
 }

@@ -2,7 +2,13 @@ use crate::{env::Env, file_saver::*, nameutil::*};
 use log::info;
 use std::path::Path;
 
-pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>, traits: &mut Vec<String>) {
+pub fn generate(
+    env: &Env,
+    root_path: &Path,
+    mod_rs: &mut Vec<String>,
+    traits: &mut Vec<String>,
+    builders: &mut Vec<String>,
+) {
     info!("Generate objects");
     for class_analysis in env.analysis.objects.values() {
         let obj = &env.config.objects[&class_analysis.full_name];
@@ -24,6 +30,6 @@ pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>, traits: &
             super::object::generate(w, env, class_analysis, generate_display_trait)
         });
 
-        super::object::generate_reexports(env, class_analysis, &mod_name, mod_rs, traits);
+        super::object::generate_reexports(env, class_analysis, &mod_name, mod_rs, traits, builders);
     }
 }
