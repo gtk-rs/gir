@@ -56,12 +56,23 @@ impl Info {
     pub fn should_generate_impl_block(&self) -> bool {
         self.has_constructors
             || has_builder_properties(&self.builder_properties)
-            || !self.generate_trait
+            || !self.need_generate_trait()
                 && !(self.methods().is_empty()
                     && self.properties.is_empty()
                     && self.child_properties.is_empty()
                     && self.signals.is_empty())
             || self.has_functions
+    }
+
+    pub fn need_generate_inherent(&self) -> bool {
+        self.has_constructors
+            || self.has_functions
+            || !self.need_generate_trait()
+            || has_builder_properties(&self.builder_properties)
+    }
+
+    pub fn need_generate_trait(&self) -> bool {
+        self.generate_trait
     }
 
     pub fn has_action_signals(&self) -> bool {
