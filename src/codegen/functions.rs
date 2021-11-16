@@ -13,6 +13,10 @@ pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>) {
         Some(ref functions) => functions,
         None => return,
     };
+    // Don't generate anything if we have no functions
+    if functions.functions.is_empty() {
+        return;
+    }
 
     let path = root_path.join("functions.rs");
     file_saver::save_to_file(path, env.config.make_backup, |w| {
