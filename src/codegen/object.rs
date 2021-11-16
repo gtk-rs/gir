@@ -139,9 +139,22 @@ pub fn generate(
         )?;
     }
 
-    if need_generate_inherent(analysis) {
+    if (analysis.need_generate_inherent() && analysis.should_generate_impl_block())
+        || !analysis.final_type
+    {
         writeln!(w)?;
         write!(w, "impl {} {{", analysis.name)?;
+
+        if !analysis.final_type {
+            writeln!(
+                w,
+                "
+        pub const NONE: Option<&'static {}> = None;
+    ",
+                analysis.name
+            )?;
+        }
+
         for func_analysis in &analysis.constructors() {
             function::generate(
                 w,
@@ -174,7 +187,7 @@ pub fn generate(
             )?;
         }
 
-        if !need_generate_trait(analysis) {
+        if !analysis.need_generate_trait() {
             for func_analysis in &analysis.methods() {
                 function::generate(
                     w,
@@ -210,7 +223,7 @@ pub fn generate(
             )?;
         }
 
-        if !need_generate_trait(analysis) {
+        if !analysis.need_generate_trait() {
             for signal_analysis in analysis
                 .signals
                 .iter()
@@ -237,7 +250,7 @@ pub fn generate(
         &analysis.name,
         &analysis.functions,
         &analysis.specials,
-        if need_generate_trait(analysis) {
+        if analysis.need_generate_trait() {
             Some(&analysis.trait_name)
         } else {
             None
@@ -279,19 +292,7 @@ pub fn generate(
         writeln!(w, "unsafe impl Sync for {} {{}}", analysis.name)?;
     }
 
-    if !analysis.final_type {
-        writeln!(
-            w,
-            "
-impl {} {{
-    pub const NONE: Option<&'static {}> = None;
-}}
-",
-            analysis.name, analysis.name
-        )?;
-    }
-
-    if need_generate_trait(analysis) {
+    if analysis.need_generate_trait() {
         writeln!(w)?;
         generate_trait(w, env, analysis)?;
     }
@@ -556,17 +557,6 @@ fn generate_trait(w: &mut dyn Write, env: &Env, analysis: &analysis::object::Inf
     Ok(())
 }
 
-fn need_generate_inherent(analysis: &analysis::object::Info) -> bool {
-    analysis.has_constructors
-        || analysis.has_functions
-        || !need_generate_trait(analysis)
-        || has_builder_properties(&analysis.builder_properties)
-}
-
-fn need_generate_trait(analysis: &analysis::object::Info) -> bool {
-    analysis.generate_trait
-}
-
 pub fn generate_reexports(
     env: &Env,
     analysis: &analysis::object::Info,
@@ -599,7 +589,7 @@ pub fn generate_reexports(
 
     contents.push(format!("pub use self::{}::{};", module_name, analysis.name,));
 
-    if need_generate_trait(analysis) {
+    if analysis.need_generate_trait() {
         for cfg in &cfgs {
             traits.push(format!("\t{}", cfg));
         }
