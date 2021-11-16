@@ -49,6 +49,21 @@ impl Info {
             || self.notify_signals.iter().any(|s| s.trampoline.is_ok())
     }
 
+    /// Whether we should generate an impl block for this object
+    /// We don't generate an impl block if the type doesn't have any of the followings:
+    /// - Constructors / Functions / Builder properties (no build function)
+    /// - Is a final type & doesn't have either methods / properties / child properties / signals
+    pub fn should_generate_impl_block(&self) -> bool {
+        self.has_constructors
+            || has_builder_properties(&self.builder_properties)
+            || !self.generate_trait
+                && !(self.methods().is_empty()
+                    && self.properties.is_empty()
+                    && self.child_properties.is_empty()
+                    && self.signals.is_empty())
+            || self.has_functions
+    }
+
     pub fn has_action_signals(&self) -> bool {
         self.signals.iter().any(|s| s.action_emit_name.is_some())
     }

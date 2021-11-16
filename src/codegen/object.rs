@@ -139,9 +139,10 @@ pub fn generate(
         )?;
     }
 
-    if need_generate_inherent(analysis) {
+    if need_generate_inherent(analysis) && analysis.should_generate_impl_block() {
         writeln!(w)?;
         write!(w, "impl {} {{", analysis.name)?;
+
         for func_analysis in &analysis.constructors() {
             function::generate(
                 w,
