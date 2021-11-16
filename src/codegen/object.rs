@@ -139,9 +139,21 @@ pub fn generate(
         )?;
     }
 
-    if analysis.need_generate_inherent() && analysis.should_generate_impl_block() {
+    if (analysis.need_generate_inherent() && analysis.should_generate_impl_block())
+        || !analysis.final_type
+    {
         writeln!(w)?;
         write!(w, "impl {} {{", analysis.name)?;
+
+        if !analysis.final_type {
+            writeln!(
+                w,
+                "
+        pub const NONE: Option<&'static {}> = None;
+    ",
+                analysis.name
+            )?;
+        }
 
         for func_analysis in &analysis.constructors() {
             function::generate(
@@ -278,18 +290,6 @@ pub fn generate(
 
     if let library::Concurrency::SendSync = analysis.concurrency {
         writeln!(w, "unsafe impl Sync for {} {{}}", analysis.name)?;
-    }
-
-    if !analysis.final_type {
-        writeln!(
-            w,
-            "
-impl {} {{
-    pub const NONE: Option<&'static {}> = None;
-}}
-",
-            analysis.name, analysis.name
-        )?;
     }
 
     if analysis.need_generate_trait() {
