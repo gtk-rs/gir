@@ -5,10 +5,11 @@ edition = "2021"
 
 [features]
 full = []
-v3_16 = ["gtk-sys/v3_16"]
-v3_18 = ["v3_16", "gtk-sys/v3_18"]
-v3_20 = ["v3_18", "gtk-sys/v3_20"]
-v3_22 = ["v3_20", "gtk-sys/v3_22"]
+v3_16 = ["gtk/v3_16"]
+v3_18 = ["v3_16", "gtk/v3_18"]
+v3_20 = ["v3_18", "gtk/v3_20"]
+v3_22 = ["v3_20", "gtk/v3_22"]
 
-[dependencies.gtk-sys]
+[dependencies.gtk]
+package = "gtk-sys"
 path = "../gtk-sys"

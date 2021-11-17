@@ -1,7 +1,7 @@
 use super::{ffi_type::ffi_type, fields, functions, statics};
 use crate::{
     codegen::general::{self, cfg_condition, version_condition},
-    config::{constants, ExternalLibrary},
+    config::constants,
     env::Env,
     file_saver::*,
     library::*,
@@ -39,7 +39,6 @@ fn generate_lib(w: &mut dyn Write, env: &Env) -> Result<()> {
     general::start_comments(w, &env.config)?;
     statics::begin(w)?;
 
-    generate_extern_crates(w, env)?;
     include_custom_modules(w, env)?;
     statics::after_extern_crates(w)?;
 
@@ -85,22 +84,6 @@ fn generate_lib(w: &mut dyn Write, env: &Env) -> Result<()> {
     writeln!(w, "\n}}")?;
 
     Ok(())
-}
-
-fn generate_extern_crates(w: &mut dyn Write, env: &Env) -> Result<()> {
-    for library in &env.config.external_libraries {
-        w.write_all(get_extern_crate_string(library).as_bytes())?;
-    }
-
-    Ok(())
-}
-
-fn get_extern_crate_string(library: &ExternalLibrary) -> String {
-    format!(
-        "use {}_sys as {};\n",
-        library.crate_name.replace("-", "_"),
-        crate_name(&library.namespace)
-    )
 }
 
 fn include_custom_modules(w: &mut dyn Write, env: &Env) -> Result<()> {
@@ -551,42 +534,4 @@ fn generate_from_fields(
     writeln!(w, "\t}}")?;
     writeln!(w, "}}")?;
     writeln!(w)
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_get_extern_crate_string() {
-        let lib = ExternalLibrary {
-            namespace: "Gdk".to_owned(),
-            crate_name: "gdk".to_owned(),
-            min_version: None,
-        };
-        assert_eq!(
-            get_extern_crate_string(&lib),
-            "use gdk_sys as gdk;\n".to_owned()
-        );
-
-        let lib = ExternalLibrary {
-            namespace: "GdkPixbuf".to_owned(),
-            crate_name: "gdk_pixbuf".to_owned(),
-            min_version: None,
-        };
-        assert_eq!(
-            get_extern_crate_string(&lib),
-            "use gdk_pixbuf_sys as gdk_pixbuf;\n".to_owned()
-        );
-
-        let lib = ExternalLibrary {
-            namespace: "GdkPixbuf".to_owned(),
-            crate_name: "some-crate".to_owned(),
-            min_version: None,
-        };
-        assert_eq!(
-            get_extern_crate_string(&lib),
-            "use some_crate_sys as gdk_pixbuf;\n".to_owned()
-        );
-    }
 }

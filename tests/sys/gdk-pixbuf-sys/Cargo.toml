@@ -6,13 +6,16 @@ system-deps = "5"
 bitflags = "1.0"
 libc = "0.2"
 
-[dependencies.gio-sys]
+[dependencies.gio]
+package = "gio-sys"
 path = "../gio-sys"
 
-[dependencies.glib-sys]
+[dependencies.glib]
+package = "glib-sys"
 path = "../glib-sys"
 
-[dependencies.gobject-sys]
+[dependencies.gobject]
+package = "gobject-sys"
 path = "../gobject-sys"
 
 [features]

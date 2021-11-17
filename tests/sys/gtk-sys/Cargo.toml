@@ -6,28 +6,36 @@ system-deps = "5"
 bitflags = "1.0"
 libc = "0.2"
 
-[dependencies.atk-sys]
+[dependencies.atk]
+package = "atk-sys"
 path = "../atk-sys"
 
-[dependencies.cairo-sys-rs]
+[dependencies.cairo]
+package = "cairo-sys-rs"
 git = "https://github.com/gtk-rs/cairo"
 
-[dependencies.gdk-pixbuf-sys]
+[dependencies.gdk-pixbuf]
+package = "gdk-pixbuf-sys"
 path = "../gdk-pixbuf-sys"
 
-[dependencies.gdk-sys]
+[dependencies.gdk]
+package = "gdk-sys"
 path = "../gdk-sys"
 
-[dependencies.gio-sys]
+[dependencies.gio]
+package = "gio-sys"
 path = "../gio-sys"
 
-[dependencies.glib-sys]
+[dependencies.glib]
+package = "glib-sys"
 path = "../glib-sys"
 
-[dependencies.gobject-sys]
+[dependencies.gobject]
+package = "gobject-sys"
 path = "../gobject-sys"
 
-[dependencies.pango-sys]
+[dependencies.pango]
+package = "pango-sys"
 path = "../pango-sys"
 
 [features]
