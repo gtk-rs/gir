@@ -6,7 +6,8 @@ system-deps = "5"
 bitflags = "1.0"
 libc = "0.2"
 
-[dependencies.glib-sys]
+[dependencies.glib]
+package = "glib-sys"
 path = "../glib-sys"
 
 [features]
