@@ -165,8 +165,10 @@ static FUNCTION: Lazy<Regex> =
 // **note**
 // The optional . at the end is to make the regex more relaxed for some weird broken cases on gtk3's docs
 // it doesn't hurt other docs so please don't drop it
-static GDK_GTK: Lazy<Regex> =
-    Lazy::new(|| Regex::new(r"`([^\(:])?((G[dts]k|Pango)\w+\b)(\.)?`").unwrap());
+static GDK_GTK: Lazy<Regex> = Lazy::new(|| {
+    Regex::new(r"`([^\(:])?((G[dts]k|Pango|cairo_|graphene_|Adw|Hdy|GtkSource)\w+\b)(\.)?`")
+        .unwrap()
+});
 static TAGS: Lazy<Regex> = Lazy::new(|| Regex::new(r"<[\w/-]+>").unwrap());
 static SPACES: Lazy<Regex> = Lazy::new(|| Regex::new(r"[ ]{2,}").unwrap());
 
