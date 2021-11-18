@@ -5,7 +5,6 @@ import argparse
 import subprocess
 import sys
 import asyncio
-import shutil
 
 DEFAULT_GIR_FILES_DIRECTORY = Path("./gir-files")
 DEFAULT_GIR_DIRECTORY = Path("./gir/")
@@ -137,8 +136,6 @@ def regen_crates(path, conf):
         else:
             if is_sys_crate:
                 args.extend(["-m", "sys"])
-            else:
-                shutil.rmtree(path.parent / "src/auto")
 
             async def regenerate_crate(path, args):
                 return "==> Regenerating `{}`...\n".format(path) + await spawn_gir(
