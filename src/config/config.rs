@@ -234,6 +234,10 @@ impl Config {
             None if work_mode == WorkMode::Normal => target_path.join("src").join("auto"),
             None => target_path.join("src"),
         };
+        if work_mode == WorkMode::Normal {
+            std::fs::remove_dir_all(&auto_path)
+                .map_err(|e| format!("remove_dir_all failed: {:?}", e))?;
+        }
 
         let doc_target_path: PathBuf = match doc_target_path.into() {
             Some("") | None => match toml.lookup("options.doc_target_path") {
