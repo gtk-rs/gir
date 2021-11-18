@@ -234,7 +234,7 @@ impl Config {
             None if work_mode == WorkMode::Normal => target_path.join("src").join("auto"),
             None => target_path.join("src"),
         };
-        if work_mode == WorkMode::Normal {
+        if work_mode == WorkMode::Normal && auto_path.exists() {
             std::fs::remove_dir_all(&auto_path)
                 .map_err(|e| format!("remove_dir_all failed: {:?}", e))?;
         }
