@@ -317,7 +317,7 @@ impl GiDocgen {
                     |f| f.name == mangle_keywords(name),
                 )
                 .map_or_else(
-                    || format!("`{}::{}()`", ns_type_to_doc(namespace, type_), name),
+                    || format!("`{}::{}`", ns_type_to_doc(namespace, type_), name),
                     |(obj_info, fn_info)| {
                         gen_object_fn_doc_link(obj_info, fn_info, env, in_type, type_)
                     },
@@ -329,9 +329,9 @@ impl GiDocgen {
             } => find_method_or_function_by_name(type_.as_deref(), name, env, in_type, false)
                 .unwrap_or_else(|| {
                     if let Some(ty) = type_ {
-                        format!("`{}::{}()`", ns_type_to_doc(namespace, ty), name)
+                        format!("`{}::{}`", ns_type_to_doc(namespace, ty), name)
                     } else {
-                        format!("`{}()`", name)
+                        format!("`{}`", name)
                     }
                 }),
             GiDocgen::Alias(alias) => gen_alias_doc_link(alias),
@@ -341,7 +341,7 @@ impl GiDocgen {
                 name,
                 is_class_method,
             } => find_method_or_function_by_name(Some(type_), name, env, in_type, *is_class_method)
-                .unwrap_or_else(|| format!("`{}::{}()`", ns_type_to_doc(namespace, type_), name)),
+                .unwrap_or_else(|| format!("`{}::{}`", ns_type_to_doc(namespace, type_), name)),
             GiDocgen::Callback { namespace, name } => {
                 gen_callback_doc_link(&ns_type_to_doc(namespace, name))
             }
