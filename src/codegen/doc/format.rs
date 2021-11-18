@@ -135,9 +135,12 @@ fn replace_symbols(
     env: &Env,
     in_type: Option<(&TypeId, Option<LocationInObject>)>,
 ) -> String {
-    // We run gi_docgen first because it's super picky about the types it replaces
-    let out = gi_docgen::replace_c_types(input, env, in_type);
-    let out = replace_c_types(&out, env, in_type);
+    let out = if env.config.use_gi_docgen {
+        // We run gi_docgen first because it's super picky about the types it replaces
+        gi_docgen::replace_c_types(input, env, in_type)
+    } else {
+        replace_c_types(input, env, in_type)
+    };
     // this has to be done after gi_docgen replaced the various types it knows as it uses `@` in it's linking format
     PARAM_SYMBOL
         .replace_all(&out, |caps: &Captures<'_>| format!("`{}`", &caps[2]))
