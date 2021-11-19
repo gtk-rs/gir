@@ -135,25 +135,40 @@ fn replace_symbols(
     env: &Env,
     in_type: Option<(&TypeId, Option<LocationInObject>)>,
 ) -> String {
-    // We run gi_docgen first because it's super picky about the types it replaces
-    let out = gi_docgen::replace_c_types(input, env, in_type);
-    let out = replace_c_types(&out, env, in_type);
-    // this has to be done after gi_docgen replaced the various types it knows as it uses `@` in it's linking format
-    PARAM_SYMBOL
-        .replace_all(&out, |caps: &Captures<'_>| format!("`{}`", &caps[2]))
-        .to_string()
+    if env.config.use_gi_docgen {
+        let out = gi_docgen::replace_c_types(input, env, in_type);
+        let out = GI_DOCGEN_SYMBOL.replace_all(&out, |caps: &Captures<'_>| match &caps[2] {
+            "TRUE" => "[`true`]".to_string(),
+            "FALSE" => "[`false`]".to_string(),
+            "NULL" => "[`None`]".to_string(),
+            symbol_name => match &caps[1] {
+                // Opt-in only for the %SYMBOLS, @/# causes breakages
+                "%" => find_constant_or_variant_wrapper(symbol_name, env, in_type),
+                s => panic!("Unknown symbol prefix `{}`", s),
+            },
+        });
+        let out = GDK_GTK.replace_all(&out, |caps: &Captures<'_>| {
+            find_type(&caps[2], env).unwrap_or_else(|| format!("`{}`", &caps[2]))
+        });
+
+        out.to_string()
+    } else {
+        replace_c_types(input, env, in_type)
+    }
 }
 
 static SYMBOL: Lazy<Regex> = Lazy::new(|| Regex::new(r"([@#%])(\w+\b)([:.]+[\w-]+\b)?").unwrap());
-static PARAM_SYMBOL: Lazy<Regex> =
-    Lazy::new(|| Regex::new(r"([@])(\w+\b)([:.]+[\w-]+\b)?").unwrap());
+static GI_DOCGEN_SYMBOL: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"([%])(\w+\b)([:.]+[\w-]+\b)?").unwrap());
 static FUNCTION: Lazy<Regex> =
     Lazy::new(|| Regex::new(r"([@#%])?(\w+\b[:.]+)?(\b[a-z0-9_]+)\(\)").unwrap());
 // **note**
 // The optional . at the end is to make the regex more relaxed for some weird broken cases on gtk3's docs
 // it doesn't hurt other docs so please don't drop it
-static GDK_GTK: Lazy<Regex> =
-    Lazy::new(|| Regex::new(r"`([^\(:])?((G[dts]k|Pango)\w+\b)(\.)?`").unwrap());
+static GDK_GTK: Lazy<Regex> = Lazy::new(|| {
+    Regex::new(r"`([^\(:])?((G[dts]k|Pango|cairo_|graphene_|Adw|Hdy|GtkSource)\w+\b)(\.)?`")
+        .unwrap()
+});
 static TAGS: Lazy<Regex> = Lazy::new(|| Regex::new(r"<[\w/-]+>").unwrap());
 static SPACES: Lazy<Regex> = Lazy::new(|| Regex::new(r"[ ]{2,}").unwrap());
 
@@ -177,10 +192,7 @@ fn replace_c_types(
         "FALSE" => "[`false`]".to_string(),
         "NULL" => "[`None`]".to_string(),
         symbol_name => match &caps[1] {
-            "%" => find_constant_or_variant(symbol_name, env, in_type).unwrap_or_else(|| {
-                info!("Constant or variant `%{}` not found", symbol_name);
-                format!("`{}`", symbol_name)
-            }),
+            "%" => find_constant_or_variant_wrapper(symbol_name, env, in_type),
             "#" => {
                 if let Some(member_path) = caps.get(3).map(|m| m.as_str()) {
                     let method_name = member_path.trim_start_matches('.');
@@ -233,6 +245,19 @@ fn replace_c_types(
     });
     let out = TAGS.replace_all(&out, "`$0`");
     SPACES.replace_all(&out, " ").into_owned()
+}
+
+/// Wrapper around [`find_constant_or_variant`] that fallbacks to returning
+/// the `symbol_name`
+fn find_constant_or_variant_wrapper(
+    symbol_name: &str,
+    env: &Env,
+    in_type: Option<(&TypeId, Option<LocationInObject>)>,
+) -> String {
+    find_constant_or_variant(symbol_name, env, in_type).unwrap_or_else(|| {
+        info!("Constant or variant `%{}` not found", symbol_name);
+        format!("`{}`", symbol_name)
+    })
 }
 
 fn find_member(

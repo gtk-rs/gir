@@ -107,6 +107,7 @@ pub struct Config {
     pub external_libraries: Vec<ExternalLibrary>,
     pub objects: gobjects::GObjects,
     pub min_cfg_version: Version,
+    pub use_gi_docgen: bool,
     pub make_backup: bool,
     pub generate_safety_asserts: bool,
     pub deprecate_by_min_version: bool,
@@ -304,6 +305,11 @@ impl Config {
             None => Default::default(),
         };
 
+        let use_gi_docgen = match toml.lookup("options.use_gi_docgen") {
+            Some(v) => v.as_result_bool("options.use_gi_docgen")?,
+            None => false,
+        };
+
         let generate_safety_asserts = match toml.lookup("options.generate_safety_asserts") {
             Some(v) => v.as_result_bool("options.generate_safety_asserts")?,
             None => false,
@@ -358,6 +364,7 @@ impl Config {
             objects,
             min_cfg_version,
             make_backup,
+            use_gi_docgen,
             generate_safety_asserts,
             deprecate_by_min_version,
             show_statistics,
