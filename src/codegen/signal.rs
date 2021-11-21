@@ -131,25 +131,21 @@ pub fn generate(
                 args.push_str(&par.name);
             }
 
-            writeln!(
-                w,
-                "{}let {} = self.emit_by_name(\"{}\", &[{}]);",
-                tabs(indent + 1),
-                if trampoline.ret.typ != Default::default() {
-                    "res"
-                } else {
-                    "_"
-                },
-                analysis.signal_name,
-                args,
-            )?;
-
             if trampoline.ret.typ != Default::default() {
                 writeln!(
                     w,
-                    "{}res.unwrap().get().expect(\"Return Value for `{}`\")",
+                    "{}self.emit_by_name(\"{}\", &[{}])",
                     tabs(indent + 1),
-                    emit_name,
+                    analysis.signal_name,
+                    args,
+                )?;
+            } else {
+                writeln!(
+                    w,
+                    "{}self.emit_by_name::<()>(\"{}\", &[{}]);",
+                    tabs(indent + 1),
+                    analysis.signal_name,
+                    args,
                 )?;
             }
             writeln!(w, "{}}}", tabs(indent))?;
