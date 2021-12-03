@@ -326,6 +326,7 @@ fn generate_builder(w: &mut dyn Write, env: &Env, analysis: &analysis::object::I
         /// [builder-pattern]: https://doc.rust-lang.org/1.0.0/style/ownership/builders.html",
         analysis.name,
     )?;
+    writeln!(w, "#[must_use = \"The builder must be built to be used\"]")?;
     writeln!(w, "pub struct {}Builder {{", analysis.name)?;
     for (builder_props, super_tid) in &analysis.builder_properties {
         for property in builder_props {
@@ -440,7 +441,7 @@ impl {name}Builder {{
         "
     // rustdoc-stripper-ignore-next
     /// Build the [`{name}`].
-    #[must_use = \"The builder must be built to be used\"]
+    #[must_use = \"Building the object from the builder is usually expensive and is not expected to have side effects\"]
     pub fn build(self) -> {name} {{
         let mut properties: Vec<(&str, &dyn ToValue)> = vec![];",
         name = analysis.name

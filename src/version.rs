@@ -4,7 +4,7 @@ use std::{
 };
 
 /// Major, minor and patch version
-#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Default, Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Version(pub u16, pub u16, pub u16);
 
 impl Version {
@@ -73,12 +73,6 @@ impl Display for Version {
             Version(major, minor, 0) => write!(f, "{}.{}", major, minor),
             Version(major, minor, patch) => write!(f, "{}.{}.{}", major, minor, patch),
         }
-    }
-}
-
-impl Default for Version {
-    fn default() -> Version {
-        Version(0, 0, 0)
     }
 }
 
