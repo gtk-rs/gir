@@ -258,7 +258,7 @@ impl GiDocgen {
                 .find(|c| &c.name == type_)
                 .map_or_else(
                     || format!("`{}`", ns_type_to_doc(namespace, type_)),
-                    |info| gen_const_doc_link(info),
+                    gen_const_doc_link,
                 ),
             GiDocgen::Property {
                 type_,

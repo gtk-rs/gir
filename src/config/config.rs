@@ -64,7 +64,6 @@ fn test_normalize_path() {
 #[derive(Debug)]
 pub struct GirVersion {
     pub gir_dir: PathBuf,
-    file_name: Option<String>,
     hash: Option<String>,
     url: Option<String>,
 }
@@ -74,9 +73,6 @@ impl GirVersion {
         let gir_dir = normalize_path(gir_dir);
         let is_submodule = toplevel(&gir_dir) != Path::new(".").canonicalize().ok();
         Self {
-            file_name: gir_dir
-                .file_name()
-                .map(|s| s.to_str().expect("OsStr::to_str failed").to_owned()),
             hash: is_submodule.then(|| repo_hash(&gir_dir).unwrap_or_else(|| "???".to_string())),
             url: is_submodule.then(|| repo_remote_url(&gir_dir)).flatten(),
             gir_dir,

@@ -52,7 +52,6 @@ pub struct Bound {
 pub struct Bounds {
     unused: VecDeque<char>,
     used: Vec<Bound>,
-    unused_lifetimes: VecDeque<char>,
     lifetimes: Vec<char>,
 }
 
@@ -63,7 +62,6 @@ impl Default for Bounds {
                 .take_while(|x| *x <= 'Z')
                 .collect(),
             used: Vec::new(),
-            unused_lifetimes: "abcdefg".chars().collect(),
             lifetimes: Vec::new(),
         }
     }
