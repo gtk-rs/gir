@@ -116,12 +116,21 @@ impl ToCode for Chunk {
                 let s = format_block_one_line(&prefix, suffix, &value_strings, "", "");
                 vec![s]
             }
-            ErrorResultReturn { ref value } => {
+            AssertErrorSanity => {
+                let assert = "assert_eq!(is_ok == 0, !error.is_null());";
+                vec![assert.to_string()]
+            }
+            ErrorResultReturn { ref ret, ref value } => {
+                let mut lines = match ret {
+                    Some(r) => r.to_code(env),
+                    None => vec![],
+                };
                 let value_strings = value.to_code(env);
                 let prefix = "if error.is_null() { Ok(";
                 let suffix = ") } else { Err(from_glib_full(error)) }";
                 let s = format_block_one_line(prefix, suffix, &value_strings, "", "");
-                vec![s]
+                lines.push(s);
+                lines
             }
             AssertInit(x) => vec![safety_assertion_mode_to_str(x).to_owned()],
             Connect {
