@@ -864,6 +864,7 @@ impl Builder {
             name: "result".to_string(),
             is_mut: false,
             value: Box::new(Chunk::ErrorResultReturn {
+                ret: None,
                 value: Box::new(result),
             }),
             type_: None,
@@ -1190,7 +1191,9 @@ impl Builder {
                     panic!("Call without Chunk::FfiCallConversion")
                 };
                 self.remove_extra_assume_init(&array_length_name, uninitialized_vars);
+                let assert_safe_ret;
                 let call = if use_ret {
+                    assert_safe_ret = Option::None;
                     Chunk::Let {
                         name: "ret".into(),
                         is_mut: false,
@@ -1198,8 +1201,9 @@ impl Builder {
                         type_: Option::None,
                     }
                 } else {
+                    assert_safe_ret = Some(Box::new(Chunk::AssertErrorSanity));
                     Chunk::Let {
-                        name: "_".into(),
+                        name: "is_ok".into(),
                         is_mut: false,
                         value: boxed_call,
                         type_: Option::None,
@@ -1221,6 +1225,7 @@ impl Builder {
                     panic!("Return is not Tuple")
                 }
                 ret = Chunk::ErrorResultReturn {
+                    ret: assert_safe_ret,
                     value: Box::new(ret),
                 };
                 (call, Some(ret))

@@ -51,7 +51,9 @@ pub enum Chunk {
         condition: String,
         value: Box<Chunk>,
     },
+    AssertErrorSanity,
     ErrorResultReturn {
+        ret: Option<Box<Chunk>>,
         value: Box<Chunk>,
     },
     AssertInit(SafetyAssertionMode),
