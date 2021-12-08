@@ -551,5 +551,10 @@ pub(crate) fn gen_alias_doc_link(alias: &str) -> String {
 pub(crate) fn gen_symbol_doc_link(type_id: TypeId, env: &Env) -> String {
     let symbols = env.symbols.borrow();
     let sym = symbols.by_tid(type_id).unwrap();
-    format!("[`{n}`][crate::{n}]", n = sym.full_rust_name())
+    // Workaround the case of glib::Variant being a derive macro and a struct
+    if sym.name() == "Variant" && (sym.crate_name().is_none() || sym.crate_name() == Some("glib")) {
+        format!("[`{n}`][struct@crate::{n}]", n = sym.full_rust_name())
+    } else {
+        format!("[`{n}`][crate::{n}]", n = sym.full_rust_name())
+    }
 }
