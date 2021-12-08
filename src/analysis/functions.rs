@@ -1037,7 +1037,7 @@ fn analyze_async(
         if !no_future {
             *async_future = Some(AsyncFuture {
                 is_method,
-                name: format!("{}_future", codegen_name),
+                name: format!("{}_future", codegen_name.trim_end_matches("_async")),
                 success_parameters,
                 error_parameters,
                 assertion: match SafetyAssertionMode::of(env, is_method, parameters) {
