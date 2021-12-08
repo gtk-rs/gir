@@ -120,10 +120,12 @@ impl Info {
 
     // returns whether the method can be linked in the docs
     pub fn should_be_doc_linked(&self, env: &Env) -> bool {
-        !self.status.ignored()
+        self.should_docs_be_generated(env)
             && (self.status.manual() || self.visibility.code_visible())
-            && !self.is_special()
-            && !self.is_async_finish(env)
+    }
+
+    pub fn should_docs_be_generated(&self, env: &Env) -> bool {
+        !self.status.ignored() && !self.is_special() && !self.is_async_finish(env)
     }
 
     pub fn doc_link(
