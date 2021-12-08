@@ -177,9 +177,24 @@ fn generate_doc(w: &mut dyn Write, env: &Env) -> Result<()> {
                 let doc_trait_name = (&global_functions.functions)
                     .iter()
                     .find(move |f| &f.glib_name == c_identifier)
-                    .map(|f| f.doc_trait_name.as_ref())
-                    .flatten();
-                let parent = doc_trait_name.map(|p| Box::new(TypeStruct::new(SType::Trait, p)));
+                    .and_then(|f| f.doc_trait_name.as_ref());
+                let doc_struct_name = (&global_functions.functions)
+                    .iter()
+                    .find(move |f| &f.glib_name == c_identifier)
+                    .and_then(|f| f.doc_struct_name.as_ref());
+                if doc_trait_name.is_some() && doc_struct_name.is_some() {
+                    panic!(
+                        "Can't use both doc_trait_name and doc_struct_name on the same function"
+                    );
+                }
+
+                let parent = if doc_trait_name.is_some() {
+                    doc_trait_name.map(|p| Box::new(TypeStruct::new(SType::Trait, p)))
+                } else if doc_struct_name.is_some() {
+                    doc_struct_name.map(|p| Box::new(TypeStruct::new(SType::Impl, p)))
+                } else {
+                    None
+                };
 
                 let doc_ignored_parameters = (&global_functions.functions)
                     .iter()

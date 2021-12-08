@@ -265,6 +265,10 @@ status = "generate"
     name = "stock_list_ids"
     # allows to ignore global functions
     ignore = true
+    # allows to define if the function was moved to a trait 
+    doc_trait_name = "StockExt"
+    # allows to define if the function was moved to a struct
+    doc_struct_name = "Stock"
 ```
 
 Which will prevent gir from generating `stock_list_ids`. If you want to specify
