@@ -174,6 +174,12 @@ fn generate_doc(w: &mut dyn Write, env: &Env) -> Result<()> {
                     .iter()
                     .find(move |f| &f.glib_name == c_identifier)
                     .and_then(|analysed_f| analysed_f.new_name.clone());
+                let doc_trait_name = (&global_functions.functions)
+                    .iter()
+                    .find(move |f| &f.glib_name == c_identifier)
+                    .map(|f| f.doc_trait_name.as_ref())
+                    .flatten();
+                let parent = doc_trait_name.map(|p| Box::new(TypeStruct::new(SType::Trait, p)));
 
                 let doc_ignored_parameters = (&global_functions.functions)
                     .iter()
@@ -184,7 +190,7 @@ fn generate_doc(w: &mut dyn Write, env: &Env) -> Result<()> {
                     w,
                     env,
                     function,
-                    None,
+                    parent,
                     fn_new_name,
                     doc_ignored_parameters,
                     None,
