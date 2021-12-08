@@ -481,6 +481,10 @@ status = &quot;generate&quot;
     name = &quot;stock_list_ids&quot;
     # allows to ignore global functions
     ignore = true
+    # allows to define if the function was moved to a trait 
+    doc_trait_name = &quot;StockExt&quot;
+    # allows to define if the function was moved to a struct
+    doc_struct_name = &quot;Stock&quot;
 </code></pre>
 <p>Which will prevent gir from generating <code>stock_list_ids</code>. If you want to specify
 that a function will be manually implemented, you can use:</p>
