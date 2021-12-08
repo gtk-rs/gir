@@ -93,6 +93,7 @@ pub struct Info {
     pub cfg_condition: Option<String>,
     pub assertion: SafetyAssertionMode,
     pub doc_hidden: bool,
+    pub doc_trait_name: Option<String>,
     pub doc_ignore_parameters: HashSet<String>,
     pub r#async: bool,
     pub unsafe_: bool,
@@ -640,6 +641,9 @@ fn analyze_function(
         .iter()
         .find_map(|f| f.cfg_condition.clone());
     let doc_hidden = configured_functions.iter().any(|f| f.doc_hidden);
+    let doc_trait_name = configured_functions
+        .iter()
+        .find_map(|f| f.doc_trait_name.clone());
     let doc_ignore_parameters = configured_functions
         .iter()
         .find(|f| !f.doc_ignore_parameters.is_empty())
@@ -902,6 +906,7 @@ fn analyze_function(
         cfg_condition,
         assertion,
         doc_hidden,
+        doc_trait_name,
         doc_ignore_parameters,
         r#async,
         unsafe_,
