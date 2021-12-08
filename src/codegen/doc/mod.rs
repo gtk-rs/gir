@@ -415,9 +415,18 @@ fn create_object_doc(w: &mut dyn Write, env: &Env, info: &analysis::object::Info
             && function.parameters.iter().any(|p| p.instance_parameter)
             && !info.final_type
         {
+            if let Some(struct_name) = configured_functions
+                .iter()
+                .find_map(|f| f.doc_struct_name.as_ref())
+            {
+                (
+                    TypeStruct::new(SType::Impl, struct_name),
+                    Some(LocationInObject::Impl),
+                )
+            }
             // We use "original_name" here to be sure to get the correct object since the "name"
             // field could have been renamed.
-            if let Some(trait_name) = configured_functions
+            else if let Some(trait_name) = configured_functions
                 .iter()
                 .find_map(|f| f.doc_trait_name.as_ref())
             {
