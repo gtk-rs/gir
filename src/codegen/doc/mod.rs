@@ -170,22 +170,37 @@ fn generate_doc(w: &mut dyn Write, env: &Env) -> Result<()> {
 
         for function in functions {
             if let Some(ref c_identifier) = function.c_identifier {
-                let fn_new_name = (&global_functions.functions)
+                let f_info = (&global_functions.functions)
                     .iter()
-                    .find(move |f| &f.glib_name == c_identifier)
-                    .and_then(|analysed_f| analysed_f.new_name.clone());
-                let doc_trait_name = (&global_functions.functions)
-                    .iter()
-                    .find(move |f| &f.glib_name == c_identifier)
-                    .map(|f| f.doc_trait_name.as_ref())
-                    .flatten();
-                let parent = doc_trait_name.map(|p| Box::new(TypeStruct::new(SType::Trait, p)));
+                    .find(move |f| &f.glib_name == c_identifier);
+                let fn_new_name = f_info.and_then(|analysed_f| analysed_f.new_name.clone());
+                let doc_trait_name = f_info.and_then(|f| f.doc_trait_name.as_ref());
+                let doc_struct_name = f_info.and_then(|f| f.doc_struct_name.as_ref());
+                if doc_trait_name.is_some() && doc_struct_name.is_some() {
+                    panic!(
+                        "Can't use both doc_trait_name and doc_struct_name on the same function"
+                    );
+                }
 
-                let doc_ignored_parameters = (&global_functions.functions)
-                    .iter()
-                    .find(|f| &f.glib_name == c_identifier)
+                let parent = if doc_trait_name.is_some() {
+                    doc_trait_name.map(|p| Box::new(TypeStruct::new(SType::Trait, p)))
+                } else if doc_struct_name.is_some() {
+                    doc_struct_name.map(|p| Box::new(TypeStruct::new(SType::Impl, p)))
+                } else {
+                    None
+                };
+
+                let doc_ignored_parameters = f_info
                     .map(|analyzed_f| analyzed_f.doc_ignore_parameters.clone())
                     .unwrap_or_default();
+
+                let should_be_documented = f_info
+                    .map(|f| f.should_docs_be_generated(env))
+                    .unwrap_or(false);
+                if !should_be_documented {
+                    continue;
+                }
+
                 create_fn_doc(
                     w,
                     env,
@@ -400,9 +415,18 @@ fn create_object_doc(w: &mut dyn Write, env: &Env, info: &analysis::object::Info
             && function.parameters.iter().any(|p| p.instance_parameter)
             && !info.final_type
         {
+            if let Some(struct_name) = configured_functions
+                .iter()
+                .find_map(|f| f.doc_struct_name.as_ref())
+            {
+                (
+                    TypeStruct::new(SType::Impl, struct_name),
+                    Some(LocationInObject::Impl),
+                )
+            }
             // We use "original_name" here to be sure to get the correct object since the "name"
             // field could have been renamed.
-            if let Some(trait_name) = configured_functions
+            else if let Some(trait_name) = configured_functions
                 .iter()
                 .find_map(|f| f.doc_trait_name.as_ref())
             {
@@ -426,16 +450,18 @@ fn create_object_doc(w: &mut dyn Write, env: &Env, info: &analysis::object::Info
             (ty.clone(), Some(LocationInObject::Impl))
         };
         if let Some(c_identifier) = &function.c_identifier {
+            let f_info = info.functions.iter().find(|f| &f.glib_name == c_identifier);
+            let should_be_documented = f_info
+                .map(|f| f.should_docs_be_generated(env))
+                .unwrap_or(false);
+
+            if !should_be_documented {
+                continue;
+            }
+
             // Retrieve the new_name computed during analysis, if any
-            let fn_new_name = info
-                .functions
-                .iter()
-                .find(|f| &f.glib_name == c_identifier)
-                .and_then(|analysed_f| analysed_f.new_name.clone());
-            let doc_ignored_parameters = info
-                .functions
-                .iter()
-                .find(|f| &f.glib_name == c_identifier)
+            let fn_new_name = f_info.and_then(|analysed_f| analysed_f.new_name.clone());
+            let doc_ignored_parameters = f_info
                 .map(|analyzed_f| analyzed_f.doc_ignore_parameters.clone())
                 .unwrap_or_default();
             create_fn_doc(
@@ -539,11 +565,15 @@ fn create_record_doc(w: &mut dyn Write, env: &Env, info: &analysis::record::Info
     };
     for function in &record.functions {
         if let Some(c_identifier) = &function.c_identifier {
-            let fn_new_name = info
-                .functions
-                .iter()
-                .find(|f| &f.glib_name == c_identifier)
-                .and_then(|analysed_f| analysed_f.new_name.clone());
+            let f_info = info.functions.iter().find(|f| &f.glib_name == c_identifier);
+            let should_be_documented = f_info
+                .map(|f| f.should_docs_be_generated(env))
+                .unwrap_or(false);
+            if !should_be_documented {
+                continue;
+            }
+            let fn_new_name = f_info.and_then(|analysed_f| analysed_f.new_name.clone());
+
             create_fn_doc(
                 w,
                 env,
