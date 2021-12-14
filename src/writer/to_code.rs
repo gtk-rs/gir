@@ -4,6 +4,7 @@ use crate::{
     chunk::{Chunk, Param, TupleMode},
     codegen::{translate_from_glib::TranslateFromGlib, translate_to_glib::TranslateToGlib},
     env::Env,
+    nameutil::use_glib_type,
 };
 
 pub trait ToCode {
@@ -117,8 +118,11 @@ impl ToCode for Chunk {
                 vec![s]
             }
             AssertErrorSanity => {
-                let assert = "assert_eq!(is_ok == 0, !error.is_null());";
-                vec![assert.to_string()]
+                let assert = format!(
+                    "assert_eq!(is_ok == {}, !error.is_null());",
+                    use_glib_type(env, "ffi::GFALSE")
+                );
+                vec![assert]
             }
             ErrorResultReturn { ref ret, ref value } => {
                 let mut lines = match ret {
