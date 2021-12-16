@@ -860,7 +860,7 @@ fn create_property_doc(
             ..TypeStruct::new(SType::Fn, &getter_name)
         });
     }
-    if property.writable && !has_setter_method {
+    if property.writable && !property.construct_only && !has_setter_method {
         v.push(TypeStruct {
             parent,
             ..TypeStruct::new(SType::Fn, &setter_name)
