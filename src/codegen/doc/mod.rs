@@ -338,10 +338,10 @@ fn create_object_doc(w: &mut dyn Write, env: &Env, info: &analysis::object::Info
         for parent_info in &info.supertypes {
             match env.library.type_(parent_info.type_id) {
                 Type::Class(cl) => {
-                    builder_properties.extend(cl.properties.iter());
+                    builder_properties.extend(cl.properties.iter().filter(|p| p.writable));
                 }
                 Type::Interface(iface) => {
-                    builder_properties.extend(iface.properties.iter());
+                    builder_properties.extend(iface.properties.iter().filter(|p| p.writable));
                 }
                 _ => (),
             }
