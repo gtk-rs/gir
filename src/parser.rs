@@ -1234,6 +1234,8 @@ impl Library {
         let writable = elem.attr_bool("writable", false);
         let construct = elem.attr_bool("construct", false);
         let construct_only = elem.attr_bool("construct-only", false);
+        let getter = elem.attr("getter").map(|g| g.to_string());
+        let setter = elem.attr("setter").map(|g| g.to_string());
         let transfer = Transfer::from_str(elem.attr("transfer-ownership").unwrap_or("none"))
             .map_err(|why| parser.fail_with_position(&why, elem.position()))?;
 
@@ -1282,6 +1284,8 @@ impl Library {
                 construct_only,
                 transfer,
                 typ: tid,
+                getter,
+                setter,
                 c_type,
                 version,
                 deprecated_version,

@@ -511,19 +511,21 @@ fn create_object_doc(w: &mut dyn Write, env: &Env, info: &analysis::object::Info
         )?;
     }
     for property in properties {
-        let getter_name = info
-            .properties
-            .iter()
-            .filter(|p| p.is_get)
-            .find(|p| p.name == property.name)
-            .map(|p| p.func_name.clone());
+        let getter_name = property.getter.clone().or_else(|| {
+            info.properties
+                .iter()
+                .filter(|p| p.is_get)
+                .find(|p| p.name == property.name)
+                .map(|p| p.func_name.clone())
+        });
 
-        let setter_name = info
-            .properties
-            .iter()
-            .filter(|p| !p.is_get)
-            .find(|p| p.name == property.name)
-            .map(|p| p.func_name.clone());
+        let setter_name = property.setter.clone().or_else(|| {
+            info.properties
+                .iter()
+                .filter(|p| !p.is_get)
+                .find(|p| p.name == property.name)
+                .map(|p| p.func_name.clone())
+        });
         let (ty, object_location) = if has_trait {
             let configured_properties = obj.properties.matched(&property.name);
             if let Some(trait_name) = configured_properties

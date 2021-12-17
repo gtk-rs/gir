@@ -496,6 +496,8 @@ pub struct Property {
     pub readable: bool,
     pub writable: bool,
     pub construct: bool,
+    pub getter: Option<String>,
+    pub setter: Option<String>,
     pub construct_only: bool,
     pub typ: TypeId,
     pub c_type: Option<String>,
