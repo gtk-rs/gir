@@ -124,14 +124,20 @@ fn analyze_property(
     let bypass_auto_rename = configured_properties.iter().any(|f| f.bypass_auto_rename);
     let (check_get_func_names, mut get_func_name) = if bypass_auto_rename {
         (
-            vec![format!("get_{}", name_for_func)],
+            vec![prop
+                .getter
+                .clone()
+                .unwrap_or_else(|| format!("get_{}", name_for_func))],
             get_prop_name.take().expect("defined 10 lines above"),
         )
     } else {
         get_func_name(&name_for_func, prop.typ == library::TypeId::tid_bool())
     };
 
-    let mut set_func_name = format!("set_{}", name_for_func);
+    let mut set_func_name = prop
+        .setter
+        .clone()
+        .unwrap_or_else(|| format!("set_{}", name_for_func));
     let mut set_prop_name = Some(format!("set_property_{}", name_for_func));
 
     let mut readable = prop.readable;

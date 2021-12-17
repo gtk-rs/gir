@@ -934,6 +934,8 @@ impl Library {
     ) -> Result<Function, String> {
         let fn_name = elem.attr_required("name")?;
         let c_identifier = elem.attr("identifier").or_else(|| elem.attr("type"));
+        let getter_prop = elem.attr("glib:get-property").map(|g| g.to_string());
+        let setter_prop = elem.attr("glib:set-property").map(|g| g.to_string());
         let kind = FunctionKind::from_str(kind_str).map_err(|why| parser.fail(&why))?;
         let is_method = kind == FunctionKind::Method;
         let version = self.read_version(parser, ns_id, elem)?;
@@ -998,6 +1000,8 @@ impl Library {
                 deprecated_version,
                 doc,
                 doc_deprecated,
+                getter_prop,
+                setter_prop,
             })
         } else {
             Err(parser.fail_with_position(

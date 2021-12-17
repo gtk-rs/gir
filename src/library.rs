@@ -541,6 +541,8 @@ pub struct Function {
     pub deprecated_version: Option<Version>,
     pub doc: Option<String>,
     pub doc_deprecated: Option<String>,
+    pub getter_prop: Option<String>,
+    pub setter_prop: Option<String>,
 }
 
 #[derive(Debug)]
