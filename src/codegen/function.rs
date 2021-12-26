@@ -94,9 +94,16 @@ pub fn generate(
             doc_alias(w, &analysis.func_name, comment_prefix, indent)?;
         }
     }
+    let dead_code_cfg = if !analysis.visibility.is_public() {
+        "#[allow(dead_code)]"
+    } else {
+        ""
+    };
+
     writeln!(
         w,
-        "{}{}{}{}{}{}",
+        "{}{}{}{}{}{}{}",
+        dead_code_cfg,
         tabs(indent),
         comment_prefix,
         pub_prefix,
