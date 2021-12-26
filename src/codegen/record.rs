@@ -170,10 +170,11 @@ pub fn generate_reexports(
     };
     contents.push("".to_owned());
     contents.push(format!("{}mod {};", cfg, module_name));
-    if analysis.visibility.is_public() {
-        contents.push(format!(
-            "{}pub use self::{}::{};",
-            cfg, module_name, analysis.name
-        ));
-    }
+    contents.push(format!(
+        "{}{} use self::{}::{};",
+        cfg,
+        analysis.visibility.export_visibility(),
+        module_name,
+        analysis.name
+    ));
 }

@@ -591,18 +591,21 @@ pub fn generate_reexports(
     contents.push(format!("mod {};", module_name));
     contents.extend_from_slice(&cfgs);
 
-    if analysis.visibility.is_public() {
-        contents.push(format!("pub use self::{}::{};", module_name, analysis.name,));
+    contents.push(format!(
+        "{} use self::{}::{};",
+        analysis.visibility.export_visibility(),
+        module_name,
+        analysis.name,
+    ));
 
-        if analysis.need_generate_trait() {
-            for cfg in &cfgs {
-                traits.push(format!("\t{}", cfg));
-            }
-            traits.push(format!(
-                "\tpub use super::{}::{};",
-                module_name, analysis.trait_name
-            ));
+    if analysis.need_generate_trait() {
+        for cfg in &cfgs {
+            traits.push(format!("\t{}", cfg));
         }
+        traits.push(format!(
+            "\tpub use super::{}::{};",
+            module_name, analysis.trait_name
+        ));
     }
 
     if has_builder_properties(&analysis.builder_properties) {

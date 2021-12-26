@@ -43,15 +43,17 @@ pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>) {
             }
             let flags = flags_analysis.type_(&env.library);
 
-            if flags_analysis.visibility.is_public() {
-                if let Some(cfg) = version_condition_string(env, None, flags.version, false, 0) {
-                    mod_rs.push(cfg);
-                }
-                if let Some(cfg) = cfg_condition_string(config.cfg_condition.as_ref(), false, 0) {
-                    mod_rs.push(cfg);
-                }
-                mod_rs.push(format!("pub use self::flags::{};", flags.name));
+            if let Some(cfg) = version_condition_string(env, None, flags.version, false, 0) {
+                mod_rs.push(cfg);
             }
+            if let Some(cfg) = cfg_condition_string(config.cfg_condition.as_ref(), false, 0) {
+                mod_rs.push(cfg);
+            }
+            mod_rs.push(format!(
+                "{} use self::flags::{};",
+                flags_analysis.visibility.export_visibility(),
+                flags.name
+            ));
             generate_flags(env, w, flags, config, flags_analysis)?;
         }
 
