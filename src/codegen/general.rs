@@ -236,6 +236,7 @@ fn define_boxed_type_internal(
     clear_function_expression: &Option<String>,
     get_type_fn: Option<&str>,
     derive: &[Derive],
+    visibility: Visibility,
 ) -> Result<()> {
     let sys_crate_name = env.main_sys_crate_name();
     writeln!(w, "{} {{", use_glib_type(env, "wrapper!"))?;
@@ -243,7 +244,8 @@ fn define_boxed_type_internal(
     derives(w, derive, 1)?;
     writeln!(
         w,
-        "\tpub struct {}(Boxed{}<{}::{}>);",
+        "\t{} struct {}(Boxed{}<{}::{}>);",
+        visibility,
         type_name,
         if boxed_inline { "Inline" } else { "" },
         sys_crate_name,
@@ -299,6 +301,7 @@ pub fn define_boxed_type(
     clear_function_expression: &Option<String>,
     get_type_fn: Option<(String, Option<Version>)>,
     derive: &[Derive],
+    visibility: Visibility,
 ) -> Result<()> {
     writeln!(w)?;
 
@@ -318,6 +321,7 @@ pub fn define_boxed_type(
                 clear_function_expression,
                 Some(get_type_fn),
                 derive,
+                visibility,
             )?;
 
             writeln!(w)?;
@@ -335,6 +339,7 @@ pub fn define_boxed_type(
                 clear_function_expression,
                 None,
                 derive,
+                visibility,
             )?;
         } else {
             define_boxed_type_internal(
@@ -350,6 +355,7 @@ pub fn define_boxed_type(
                 clear_function_expression,
                 Some(get_type_fn),
                 derive,
+                visibility,
             )?;
         }
     } else {
@@ -366,6 +372,7 @@ pub fn define_boxed_type(
             clear_function_expression,
             None,
             derive,
+            visibility,
         )?;
     }
 
@@ -383,6 +390,7 @@ pub fn define_auto_boxed_type(
     clear_function_expression: &Option<String>,
     get_type_fn: &str,
     derive: &[Derive],
+    visibility: Visibility,
 ) -> Result<()> {
     let sys_crate_name = env.main_sys_crate_name();
     writeln!(w)?;
@@ -390,7 +398,8 @@ pub fn define_auto_boxed_type(
     derives(w, derive, 1)?;
     writeln!(
         w,
-        "\tpub struct {}(Boxed{}<{}::{}>);",
+        "\t{} struct {}(Boxed{}<{}::{}>);",
+        visibility,
         type_name,
         if boxed_inline { "Inline" } else { "" },
         sys_crate_name,
@@ -445,14 +454,15 @@ fn define_shared_type_internal(
     unref_fn: &str,
     get_type_fn: Option<&str>,
     derive: &[Derive],
+    visibility: Visibility,
 ) -> Result<()> {
     let sys_crate_name = env.main_sys_crate_name();
     writeln!(w, "{} {{", use_glib_type(env, "wrapper!"))?;
     derives(w, derive, 1)?;
     writeln!(
         w,
-        "\tpub struct {}(Shared<{}::{}>);",
-        type_name, sys_crate_name, glib_name
+        "\t{} struct {}(Shared<{}::{}>);",
+        visibility, type_name, sys_crate_name, glib_name
     )?;
     writeln!(w)?;
     writeln!(w, "\tmatch fn {{")?;
@@ -480,6 +490,7 @@ pub fn define_shared_type(
     unref_fn: &str,
     get_type_fn: Option<(String, Option<Version>)>,
     derive: &[Derive],
+    visibility: Visibility,
 ) -> Result<()> {
     writeln!(w)?;
 
@@ -495,12 +506,13 @@ pub fn define_shared_type(
                 unref_fn,
                 Some(get_type_fn),
                 derive,
+                visibility,
             )?;
 
             writeln!(w)?;
             not_version_condition_no_dox(w, env, None, get_type_version, false, 0)?;
             define_shared_type_internal(
-                w, env, type_name, glib_name, ref_fn, unref_fn, None, derive,
+                w, env, type_name, glib_name, ref_fn, unref_fn, None, derive, visibility,
             )?;
         } else {
             define_shared_type_internal(
@@ -512,10 +524,13 @@ pub fn define_shared_type(
                 unref_fn,
                 Some(get_type_fn),
                 derive,
+                visibility,
             )?;
         }
     } else {
-        define_shared_type_internal(w, env, type_name, glib_name, ref_fn, unref_fn, None, derive)?;
+        define_shared_type_internal(
+            w, env, type_name, glib_name, ref_fn, unref_fn, None, derive, visibility,
+        )?;
     }
 
     Ok(())

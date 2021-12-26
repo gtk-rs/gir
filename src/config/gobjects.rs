@@ -415,7 +415,7 @@ fn parse_object(
     let visibility = toml_object
         .lookup("visibility")
         .and_then(Value::as_str)
-        .map(|s| std::str::FromStr::from_str(s))
+        .map(std::str::FromStr::from_str)
         .transpose();
     if let Err(ref err) = visibility {
         error!("{}", err);
