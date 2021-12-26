@@ -127,7 +127,7 @@ fn generate_enum(
     writeln!(w, "#[non_exhaustive]")?;
     doc_alias(w, &enum_.c_type, "", 0)?;
 
-    writeln!(w, "pub enum {} {{", enum_.name)?;
+    writeln!(w, "{} enum {} {{", config.visibility, enum_.name)?;
     for member in &members {
         cfg_deprecated(
             w,

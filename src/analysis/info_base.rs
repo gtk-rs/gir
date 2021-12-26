@@ -1,5 +1,5 @@
 use super::{imports::Imports, *};
-use crate::{library, version::Version};
+use crate::{codegen::Visibility, library, version::Version};
 
 #[derive(Debug, Default)]
 pub struct InfoBase {
@@ -13,6 +13,7 @@ pub struct InfoBase {
     pub deprecated_version: Option<Version>,
     pub cfg_condition: Option<String>,
     pub concurrency: library::Concurrency,
+    pub visibility: Visibility,
 }
 
 impl InfoBase {

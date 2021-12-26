@@ -206,6 +206,7 @@ pub fn new(env: &Env, obj: &GObject) -> Option<Info> {
         deprecated_version,
         cfg_condition: obj.cfg_condition.clone(),
         concurrency: obj.concurrency,
+        visibility: obj.visibility,
     };
 
     let info = Info {

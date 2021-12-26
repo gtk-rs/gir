@@ -10,6 +10,7 @@ use super::{
 };
 use crate::{
     analysis::{conversion_type::ConversionType, ref_mode},
+    codegen::Visibility,
     config::{
         error::TomlHelper,
         parsable::{Parsable, Parse},
@@ -94,6 +95,7 @@ pub struct GObject {
     pub init_function_expression: Option<String>,
     pub copy_into_function_expression: Option<String>,
     pub clear_function_expression: Option<String>,
+    pub visibility: Visibility,
 }
 
 impl Default for GObject {
@@ -128,6 +130,7 @@ impl Default for GObject {
             init_function_expression: None,
             copy_into_function_expression: None,
             clear_function_expression: None,
+            visibility: Default::default(),
         }
     }
 }
@@ -278,6 +281,7 @@ fn parse_object(
             "init_function_expression",
             "copy_into_function_expression",
             "clear_function_expression",
+            "visibility",
         ],
         &format!("object {}", name),
     );
@@ -408,6 +412,15 @@ fn parse_object(
         .and_then(Value::as_str)
         .map(ToOwned::to_owned);
 
+    let visibility = toml_object
+        .lookup("visibility")
+        .and_then(Value::as_str)
+        .map(|s| std::str::FromStr::from_str(s))
+        .transpose();
+    if let Err(ref err) = visibility {
+        error!("{}", err);
+    }
+    let visibility = visibility.ok().flatten().unwrap_or_default();
     if boxed_inline
         && !((init_function_expression.is_none()
             && copy_into_function_expression.is_none()
@@ -483,6 +496,7 @@ fn parse_object(
         init_function_expression,
         copy_into_function_expression,
         clear_function_expression,
+        visibility,
     }
 }
 
