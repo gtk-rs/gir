@@ -88,7 +88,7 @@ fn generate_flags(
     }
 
     doc_alias(w, &flags.c_type, "", 1)?;
-    writeln!(w, "    pub struct {}: u32 {{", flags.name)?;
+    writeln!(w, "    {} struct {}: u32 {{", config.visibility, flags.name)?;
     for member in &flags.members {
         let member_config = config.members.matched(&member.name);
         if member.status.ignored() {
