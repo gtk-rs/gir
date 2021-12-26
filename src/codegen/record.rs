@@ -87,7 +87,7 @@ pub fn generate(w: &mut dyn Write, env: &Env, analysis: &analysis::record::Info)
     if analysis
         .functions
         .iter()
-        .any(|f| f.status.need_generate() && !f.visibility.hidden())
+        .any(|f| f.status.need_generate() && !f.func_visibility.hidden())
     {
         writeln!(w)?;
         write!(w, "impl {} {{", analysis.name)?;

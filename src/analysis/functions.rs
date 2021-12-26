@@ -20,6 +20,7 @@ use crate::{
         signatures::{Signature, Signatures},
         trampolines::Trampoline,
     },
+    codegen::Visibility,
     config::{self, gobjects::GStatus},
     env::Env,
     library::{self, Function, FunctionKind, ParameterDirection, ParameterScope, Transfer, Type},
@@ -36,14 +37,14 @@ use std::{
 use super::special_functions;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum Visibility {
+pub enum FuncVisibility {
     Public,
     Comment,
     Private,
     Hidden,
 }
 
-impl Visibility {
+impl FuncVisibility {
     pub fn hidden(self) -> bool {
         self == Self::Hidden
     }
@@ -81,6 +82,7 @@ pub struct Info {
     pub glib_name: String,
     pub status: GStatus,
     pub kind: library::FunctionKind,
+    pub func_visibility: FuncVisibility,
     pub visibility: Visibility,
     pub type_name: Result,
     pub parameters: Parameters,
@@ -121,7 +123,7 @@ impl Info {
     // returns whether the method can be linked in the docs
     pub fn should_be_doc_linked(&self, env: &Env) -> bool {
         self.should_docs_be_generated(env)
-            && (self.status.manual() || self.visibility.code_visible())
+            && (self.status.manual() || self.func_visibility.code_visible())
     }
 
     pub fn should_docs_be_generated(&self, env: &Env) -> bool {
@@ -640,6 +642,10 @@ fn analyze_function(
 
     let version = env.config.filter_version(version);
     let deprecated_version = func.deprecated_version;
+    let visibility = configured_functions
+        .iter()
+        .find_map(|f| f.visibility)
+        .unwrap_or_default();
     let cfg_condition = configured_functions
         .iter()
         .find_map(|f| f.cfg_condition.clone());
@@ -884,10 +890,10 @@ fn analyze_function(
         bounds.update_imports(imports);
     }
 
-    let visibility = if commented {
-        Visibility::Comment
+    let func_visibility = if commented {
+        FuncVisibility::Comment
     } else {
-        Visibility::Public
+        FuncVisibility::Public
     };
     let is_method = func.kind == library::FunctionKind::Method;
     let assertion =
@@ -901,6 +907,7 @@ fn analyze_function(
         status,
         kind: func.kind,
         visibility,
+        func_visibility,
         type_name: RustType::try_new(env, type_tid),
         parameters,
         ret,

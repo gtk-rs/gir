@@ -1,7 +1,7 @@
 use std::io::{Result, Write};
 
 use crate::{
-    analysis::{self, functions::Visibility, special_functions::FunctionType},
+    analysis::{self, functions::FuncVisibility, special_functions::FunctionType},
     version::Version,
     Env,
 };
@@ -37,8 +37,8 @@ pub(super) fn generate_static_to_str(
     let version = Version::if_stricter_than(function.version, scope_version);
     version_condition(w, env, None, version, false, 1)?;
 
-    let visibility = match function.visibility {
-        Visibility::Public => "pub ",
+    let visibility = match function.func_visibility {
+        FuncVisibility::Public => "pub ",
         _ => "",
     };
 

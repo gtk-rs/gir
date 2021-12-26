@@ -828,7 +828,7 @@ pub fn declare_default_from_new(
     has_builder: bool,
 ) -> Result<()> {
     if let Some(func) = functions.iter().find(|f| {
-        !f.visibility.hidden()
+        !f.func_visibility.hidden()
             && f.status.need_generate()
             && f.name == "new"
             // Cannot generate Default implementation for Option<>

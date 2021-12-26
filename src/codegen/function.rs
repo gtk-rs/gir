@@ -10,7 +10,7 @@ use super::{
 };
 use crate::{
     analysis::{
-        self, bounds::Bounds, functions::Visibility, namespaces, try_from_glib::TryFromGlib,
+        self, bounds::Bounds, functions::FuncVisibility, namespaces, try_from_glib::TryFromGlib,
     },
     chunk::{ffi_function_todo, Chunk},
     env::Env,
@@ -51,25 +51,29 @@ pub fn generate(
 
     let mut commented = false;
     let mut comment_prefix = "";
-    let mut pub_prefix = if in_trait { "" } else { "pub " };
+    let mut pub_prefix = if in_trait {
+        "".to_owned()
+    } else {
+        format!("{} ", analysis.visibility)
+    };
 
-    match analysis.visibility {
-        Visibility::Public => {}
-        Visibility::Comment => {
+    match analysis.func_visibility {
+        FuncVisibility::Public => {}
+        FuncVisibility::Comment => {
             commented = true;
             comment_prefix = "//";
         }
-        Visibility::Private => {
+        FuncVisibility::Private => {
             if in_trait {
                 warn!(
                     "Generating trait method for private function {}",
                     analysis.glib_name
                 );
             } else {
-                pub_prefix = "";
+                pub_prefix = "".to_string();
             }
         }
-        Visibility::Hidden => return Ok(()),
+        FuncVisibility::Hidden => return Ok(()),
     }
     let unsafe_ = if analysis.unsafe_ { "unsafe " } else { "" };
     let declaration = declaration(env, analysis);
@@ -296,7 +300,7 @@ pub fn bounds(
 }
 
 pub fn body_chunk(env: &Env, analysis: &analysis::functions::Info) -> Chunk {
-    if analysis.visibility == Visibility::Comment {
+    if analysis.func_visibility == FuncVisibility::Comment {
         return ffi_function_todo(env, &analysis.glib_name);
     }
 

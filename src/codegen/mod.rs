@@ -28,6 +28,8 @@ mod sys;
 mod trait_impls;
 mod trampoline;
 mod trampoline_from_glib;
+mod visibility;
+pub use visibility::Visibility;
 mod trampoline_to_glib;
 pub mod translate_from_glib;
 pub mod translate_to_glib;
