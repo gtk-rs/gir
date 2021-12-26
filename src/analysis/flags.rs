@@ -1,5 +1,5 @@
 use super::{function_parameters::TransformationType, imports::Imports, *};
-use crate::{config::gobjects::GObject, env::Env, nameutil::*, traits::*};
+use crate::{codegen::Visibility, config::gobjects::GObject, env::Env, nameutil::*, traits::*};
 
 use log::info;
 
@@ -10,6 +10,7 @@ pub struct Info {
     pub name: String,
     pub functions: Vec<functions::Info>,
     pub specials: special_functions::Infos,
+    pub visibility: Visibility,
 }
 
 impl Info {
@@ -111,6 +112,7 @@ pub fn new(env: &Env, obj: &GObject, imports: &mut Imports) -> Option<Info> {
         name: name.to_owned(),
         functions,
         specials,
+        visibility: obj.visibility,
     };
 
     Some(info)

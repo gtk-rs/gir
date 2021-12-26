@@ -43,13 +43,15 @@ pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>) {
             }
             let flags = flags_analysis.type_(&env.library);
 
-            if let Some(cfg) = version_condition_string(env, None, flags.version, false, 0) {
-                mod_rs.push(cfg);
+            if flags_analysis.visibility.is_public() {
+                if let Some(cfg) = version_condition_string(env, None, flags.version, false, 0) {
+                    mod_rs.push(cfg);
+                }
+                if let Some(cfg) = cfg_condition_string(config.cfg_condition.as_ref(), false, 0) {
+                    mod_rs.push(cfg);
+                }
+                mod_rs.push(format!("pub use self::flags::{};", flags.name));
             }
-            if let Some(cfg) = cfg_condition_string(config.cfg_condition.as_ref(), false, 0) {
-                mod_rs.push(cfg);
-            }
-            mod_rs.push(format!("pub use self::flags::{};", flags.name));
             generate_flags(env, w, flags, config, flags_analysis)?;
         }
 
@@ -88,7 +90,11 @@ fn generate_flags(
     }
 
     doc_alias(w, &flags.c_type, "", 1)?;
-    writeln!(w, "    {} struct {}: u32 {{", config.visibility, flags.name)?;
+    writeln!(
+        w,
+        "    {} struct {}: u32 {{",
+        analysis.visibility, flags.name
+    )?;
     for member in &flags.members {
         let member_config = config.members.matched(&member.name);
         if member.status.ignored() {

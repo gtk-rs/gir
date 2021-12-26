@@ -45,13 +45,15 @@ pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>) {
 
             let enum_ = enum_analysis.type_(&env.library);
 
-            if let Some(cfg) = version_condition_string(env, None, enum_.version, false, 0) {
-                mod_rs.push(cfg);
+            if enum_analysis.visibility.is_public() {
+                if let Some(cfg) = version_condition_string(env, None, enum_.version, false, 0) {
+                    mod_rs.push(cfg);
+                }
+                if let Some(cfg) = cfg_condition_string(config.cfg_condition.as_ref(), false, 0) {
+                    mod_rs.push(cfg);
+                }
+                mod_rs.push(format!("pub use self::enums::{};", enum_.name));
             }
-            if let Some(cfg) = cfg_condition_string(config.cfg_condition.as_ref(), false, 0) {
-                mod_rs.push(cfg);
-            }
-            mod_rs.push(format!("pub use self::enums::{};", enum_.name));
             generate_enum(env, w, enum_, config, enum_analysis)?;
         }
 
@@ -127,7 +129,7 @@ fn generate_enum(
     writeln!(w, "#[non_exhaustive]")?;
     doc_alias(w, &enum_.c_type, "", 0)?;
 
-    writeln!(w, "{} enum {} {{", config.visibility, enum_.name)?;
+    writeln!(w, "{} enum {} {{", analysis.visibility, enum_.name)?;
     for member in &members {
         cfg_deprecated(
             w,
