@@ -16,6 +16,8 @@ use std::{
     ops::Index,
 };
 
+use super::Visibility;
+
 pub fn start_comments(w: &mut dyn Write, conf: &Config) -> Result<()> {
     if conf.single_version_file.is_some() {
         start_comments_no_version(w, conf)
@@ -122,6 +124,7 @@ pub fn define_object_type(
     glib_func_name: &str,
     is_interface: bool,
     parents: &[StatusedTypeId],
+    visibility: Visibility,
 ) -> Result<()> {
     let sys_crate_name = env.main_sys_crate_name();
     let class_name = {
@@ -145,8 +148,8 @@ pub fn define_object_type(
     if parents.is_empty() {
         writeln!(
             w,
-            "\tpub struct {}({}<{}::{}{}>);",
-            type_name, kind_name, sys_crate_name, glib_name, class_name
+            "\t{} struct {}({}<{}::{}{}>);",
+            visibility, type_name, kind_name, sys_crate_name, glib_name, class_name
         )?;
     } else if is_interface {
         let prerequisites: Vec<String> =
@@ -154,7 +157,8 @@ pub fn define_object_type(
 
         writeln!(
             w,
-            "\tpub struct {}(Interface<{}::{}{}>) @requires {};",
+            "\t{} struct {}(Interface<{}::{}{}>) @requires {};",
+            visibility,
             type_name,
             sys_crate_name,
             glib_name,
@@ -202,8 +206,8 @@ pub fn define_object_type(
 
         writeln!(
             w,
-            "\tpub struct {}(Object<{}::{}{}>){};",
-            type_name, sys_crate_name, glib_name, class_name, parents_string,
+            "\t{} struct {}(Object<{}::{}{}>){};",
+            visibility, type_name, sys_crate_name, glib_name, class_name, parents_string,
         )?;
     }
     writeln!(w)?;

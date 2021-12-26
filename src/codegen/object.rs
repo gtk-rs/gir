@@ -74,6 +74,7 @@ pub fn generate(
             &analysis.get_type,
             analysis.is_interface,
             &analysis.supertypes,
+            analysis.visibility,
         )?;
     } else {
         // Write the `glib::wrapper!` calls from the highest version to the lowest and remember
@@ -107,6 +108,7 @@ pub fn generate(
                     &analysis.get_type,
                     analysis.is_interface,
                     &supertypes,
+                    analysis.visibility,
                 )?;
 
                 for t in stypes {
@@ -136,6 +138,7 @@ pub fn generate(
             &analysis.get_type,
             analysis.is_interface,
             &supertypes,
+            analysis.visibility,
         )?;
     }
 
