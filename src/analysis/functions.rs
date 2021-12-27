@@ -36,24 +36,6 @@ use std::{
 
 use super::special_functions;
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum FuncVisibility {
-    Public,
-    Comment,
-    Private,
-    Hidden,
-}
-
-impl FuncVisibility {
-    pub fn hidden(self) -> bool {
-        self == Self::Hidden
-    }
-
-    pub fn code_visible(self) -> bool {
-        matches!(self, Self::Private | Self::Public)
-    }
-}
-
 #[derive(Clone, Debug)]
 pub struct AsyncTrampoline {
     pub is_method: bool,
@@ -82,7 +64,6 @@ pub struct Info {
     pub glib_name: String,
     pub status: GStatus,
     pub kind: library::FunctionKind,
-    pub func_visibility: FuncVisibility,
     pub visibility: Visibility,
     pub type_name: Result,
     pub parameters: Parameters,
@@ -105,6 +86,11 @@ pub struct Info {
     pub destroys: Vec<Trampoline>,
     pub remove_params: Vec<usize>,
     pub async_future: Option<AsyncFuture>,
+    /// Whether the function is hidden (an implementation detail)
+    /// Like the ref/unref/copy/free functions
+    pub hidden: bool,
+    /// Whether the function can't be generated
+    pub commented: bool,
 }
 
 impl Info {
@@ -123,7 +109,7 @@ impl Info {
     // returns whether the method can be linked in the docs
     pub fn should_be_doc_linked(&self, env: &Env) -> bool {
         self.should_docs_be_generated(env)
-            && (self.status.manual() || self.func_visibility.code_visible())
+            && (self.status.manual() || (!self.commented && !self.hidden))
     }
 
     pub fn should_docs_be_generated(&self, env: &Env) -> bool {
@@ -890,11 +876,6 @@ fn analyze_function(
         bounds.update_imports(imports);
     }
 
-    let func_visibility = if commented {
-        FuncVisibility::Comment
-    } else {
-        FuncVisibility::Public
-    };
     let is_method = func.kind == library::FunctionKind::Method;
     let assertion =
         assertion.unwrap_or_else(|| SafetyAssertionMode::of(env, is_method, &parameters));
@@ -907,7 +888,6 @@ fn analyze_function(
         status,
         kind: func.kind,
         visibility,
-        func_visibility,
         type_name: RustType::try_new(env, type_tid),
         parameters,
         ret,
@@ -929,6 +909,8 @@ fn analyze_function(
         callbacks,
         destroys,
         remove_params: cross_user_data_check.values().cloned().collect::<Vec<_>>(),
+        commented,
+        hidden: false,
     }
 }
 

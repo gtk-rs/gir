@@ -1,7 +1,7 @@
 use std::io::{Result, Write};
 
 use crate::{
-    analysis::{self, functions::FuncVisibility, special_functions::FunctionType},
+    analysis::{self, special_functions::FunctionType},
     version::Version,
     Env,
 };
@@ -37,11 +37,6 @@ pub(super) fn generate_static_to_str(
     let version = Version::if_stricter_than(function.version, scope_version);
     version_condition(w, env, None, version, false, 1)?;
 
-    let visibility = match function.func_visibility {
-        FuncVisibility::Public => "pub ",
-        _ => "",
-    };
-
     writeln!(
         w,
         "\
@@ -56,7 +51,7 @@ pub(super) fn generate_static_to_str(
 \t\t\t.expect(\"{glib_fn_name} returned an invalid string\")
 \t\t}}
 \t}}",
-        visibility = visibility,
+        visibility = function.visibility,
         rust_fn_name = function.codegen_name(),
         ns = env.main_sys_crate_name(),
         glib_fn_name = function.glib_name,
