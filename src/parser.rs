@@ -265,6 +265,11 @@ impl Library {
         parent_ctype_prefix: Option<&str>,
     ) -> Result<Option<Type>, String> {
         let record_name = elem.attr_required("name")?;
+        // Records starting with `_` are intended to be private and should not be bound
+        if record_name.starts_with('_') {
+            parser.ignore_element()?;
+            return Ok(None);
+        }
         let c_type = elem.attr_required("type")?;
         let symbol_prefix = elem.attr("symbol-prefix").map(ToOwned::to_owned);
         let get_type = elem.attr("get-type").map(ToOwned::to_owned);
