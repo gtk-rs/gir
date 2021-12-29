@@ -377,7 +377,7 @@ pub fn define_auto_boxed_type(
     init_function_expression: &Option<String>,
     copy_into_function_expression: &Option<String>,
     clear_function_expression: &Option<String>,
-    get_type_fn: Option<(String, Option<Version>)>,
+    get_type_fn: &Option<(String, Option<Version>)>,
     derive: &[Derive],
 ) -> Result<()> {
     let sys_crate_name = env.main_sys_crate_name();
@@ -394,13 +394,13 @@ pub fn define_auto_boxed_type(
     )?;
     writeln!(w)?;
     writeln!(w, "\tmatch fn {{")?;
-    if let Some(get_type_fn) = get_type_fn.clone() {
+    if let Some((ref get_type_fn, _get_type_version)) = get_type_fn {
         writeln!(
             w,
             "\t\tcopy => |ptr| {}({}::{}(), ptr as *mut _) as *mut {}::{},",
             use_glib_type(env, "gobject_ffi::g_boxed_copy"),
             sys_crate_name,
-            get_type_fn.0,
+            get_type_fn,
             sys_crate_name,
             glib_name
         )?;
@@ -409,7 +409,7 @@ pub fn define_auto_boxed_type(
             "\t\tfree => |ptr| {}({}::{}(), ptr as *mut _),",
             use_glib_type(env, "gobject_ffi::g_boxed_free"),
             sys_crate_name,
-            get_type_fn.0
+            get_type_fn
         )?;
     }
 
@@ -426,11 +426,11 @@ pub fn define_auto_boxed_type(
         writeln!(w, "\t\tcopy_into => {},", copy_into_function_expression,)?;
         writeln!(w, "\t\tclear => {},", clear_function_expression,)?;
     }
-    if let Some(get_type_fn) = get_type_fn {
+    if let Some((ref get_type_fn, _get_type_version)) = get_type_fn {
         writeln!(
             w,
             "\t\ttype_ => || {}::{}(),",
-            sys_crate_name, get_type_fn.0
+            sys_crate_name, get_type_fn
         )?;
     }
     writeln!(w, "\t}}")?;
