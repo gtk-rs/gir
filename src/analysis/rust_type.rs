@@ -1,6 +1,6 @@
 use super::conversion_type::ConversionType;
 use crate::{
-    analysis::{ref_mode::RefMode, try_from_glib::TryFromGlib},
+    analysis::{record_type::RecordType, ref_mode::RefMode, try_from_glib::TryFromGlib},
     config::functions::{CallbackParameter, CallbackParameters},
     env::Env,
     library::{self, Nullable, ParameterDirection, ParameterScope},
@@ -345,8 +345,19 @@ impl<'env> RustTypeBuilder<'env> {
                 if ConversionType::of(self.env, inner_tid) == ConversionType::Pointer =>
             {
                 skip_option = true;
-                let inner_ref_mode = match self.env.library.type_(inner_tid) {
+                let inner_ref_mode = match self.env.type_(inner_tid) {
                     Class(..) | Interface(..) => RefMode::None,
+                    Record(record) => match RecordType::of(record) {
+                        RecordType::Boxed => RefMode::None,
+                        RecordType::AutoBoxed => {
+                            if record.has_copy() {
+                                RefMode::None
+                            } else {
+                                self.ref_mode
+                            }
+                        }
+                        _ => self.ref_mode,
+                    },
                     _ => self.ref_mode,
                 };
                 RustType::builder(self.env, inner_tid)
@@ -367,7 +378,7 @@ impl<'env> RustTypeBuilder<'env> {
             CArray(inner_tid)
                 if ConversionType::of(self.env, inner_tid) == ConversionType::Direct =>
             {
-                if let Fundamental(fund) = self.env.library.type_(inner_tid) {
+                if let Fundamental(fund) = self.env.type_(inner_tid) {
                     let array_type = match fund {
                         Int8 => Some("i8"),
                         UInt8 => Some("u8"),

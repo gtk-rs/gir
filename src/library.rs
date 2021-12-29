@@ -445,6 +445,30 @@ pub struct Record {
     pub disguised: bool,
 }
 
+impl Record {
+    pub fn has_free(&self) -> bool {
+        self.functions.iter().any(|f| f.name == "free") || (self.has_copy() && self.has_destroy())
+    }
+
+    pub fn has_copy(&self) -> bool {
+        self.functions
+            .iter()
+            .any(|f| f.name == "copy" || f.name == "copy_into")
+    }
+
+    pub fn has_destroy(&self) -> bool {
+        self.functions.iter().any(|f| f.name == "destroy")
+    }
+
+    pub fn has_unref(&self) -> bool {
+        self.functions.iter().any(|f| f.name == "unref")
+    }
+
+    pub fn has_ref(&self) -> bool {
+        self.functions.iter().any(|f| f.name == "ref")
+    }
+}
+
 #[derive(Default, Debug)]
 pub struct Field {
     pub name: String,
