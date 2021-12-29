@@ -427,11 +427,7 @@ pub fn define_auto_boxed_type(
         writeln!(w, "\t\tclear => {},", clear_function_expression,)?;
     }
     if let Some((ref get_type_fn, _get_type_version)) = get_type_fn {
-        writeln!(
-            w,
-            "\t\ttype_ => || {}::{}(),",
-            sys_crate_name, get_type_fn
-        )?;
+        writeln!(w, "\t\ttype_ => || {}::{}(),", sys_crate_name, get_type_fn)?;
     }
     writeln!(w, "\t}}")?;
     writeln!(w, "}}")?;
