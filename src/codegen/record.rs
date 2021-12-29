@@ -14,25 +14,18 @@ pub fn generate(w: &mut dyn Write, env: &Env, analysis: &analysis::record::Info)
     general::uses(w, env, &analysis.imports, type_.version)?;
 
     if RecordType::of(env.type_(analysis.type_id).maybe_ref().unwrap()) == RecordType::AutoBoxed {
-        if let Some((ref glib_get_type, _)) = analysis.glib_get_type {
-            general::define_auto_boxed_type(
-                w,
-                env,
-                &analysis.name,
-                &type_.c_type,
-                analysis.boxed_inline,
-                &analysis.init_function_expression,
-                &analysis.copy_into_function_expression,
-                &analysis.clear_function_expression,
-                glib_get_type,
-                &analysis.derives,
-            )?;
-        } else {
-            panic!(
-                "Record {} has record_boxed=true but don't have glib:get_type function",
-                analysis.name
-            );
-        }
+        general::define_auto_boxed_type(
+            w,
+            env,
+            &analysis.name,
+            &type_.c_type,
+            analysis.boxed_inline,
+            &analysis.init_function_expression,
+            &analysis.copy_into_function_expression,
+            &analysis.clear_function_expression,
+            analysis.glib_get_type.clone(),
+            &analysis.derives,
+        )?;
     } else if let (Some(ref_fn), Some(unref_fn)) = (
         analysis.specials.traits().get(&Type::Ref),
         analysis.specials.traits().get(&Type::Unref),
