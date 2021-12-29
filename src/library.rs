@@ -569,6 +569,10 @@ pub struct Class {
     pub doc: Option<String>,
     pub doc_deprecated: Option<String>,
     pub is_abstract: bool,
+    pub is_fundamental: bool,
+    /// Specific to fundamental types
+    pub ref_fn: Option<String>,
+    pub unref_fn: Option<String>,
 }
 
 #[derive(Debug)]

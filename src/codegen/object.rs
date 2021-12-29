@@ -63,19 +63,33 @@ pub fn generate(
         }
     }
 
-    if namespaces.is_empty() {
+    if namespaces.is_empty() || analysis.is_fundamental {
         writeln!(w)?;
-        general::define_object_type(
-            w,
-            env,
-            &analysis.name,
-            &analysis.c_type,
-            analysis.c_class_type.as_deref(),
-            &analysis.get_type,
-            analysis.is_interface,
-            &analysis.supertypes,
-            analysis.visibility,
-        )?;
+        if analysis.is_fundamental {
+            general::define_fundamental_type(
+                w,
+                env,
+                &analysis.name,
+                &analysis.c_type,
+                &analysis.get_type,
+                analysis.ref_fn.as_deref(),
+                analysis.unref_fn.as_deref(),
+                &analysis.supertypes,
+                analysis.visibility,
+            )?;
+        } else {
+            general::define_object_type(
+                w,
+                env,
+                &analysis.name,
+                &analysis.c_type,
+                analysis.c_class_type.as_deref(),
+                &analysis.get_type,
+                analysis.is_interface,
+                &analysis.supertypes,
+                analysis.visibility,
+            )?;
+        }
     } else {
         // Write the `glib::wrapper!` calls from the highest version to the lowest and remember
         // which supertypes have to be removed for the next call.

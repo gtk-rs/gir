@@ -79,6 +79,7 @@ pub struct GObject {
     pub cfg_condition: Option<String>,
     pub type_id: Option<TypeId>,
     pub final_type: Option<bool>,
+    pub fundamental_type: Option<bool>,
     pub trait_name: Option<String>,
     pub child_properties: Option<ChildProperties>,
     pub concurrency: library::Concurrency,
@@ -114,6 +115,7 @@ impl Default for GObject {
             cfg_condition: None,
             type_id: None,
             final_type: None,
+            fundamental_type: None,
             trait_name: None,
             child_properties: None,
             concurrency: Default::default(),
@@ -267,6 +269,7 @@ fn parse_object(
             "child_name",
             "child_type",
             "final_type",
+            "fundamental_type",
             "trait",
             "trait_name",
             "cfg_condition",
@@ -336,6 +339,9 @@ fn parse_object(
         .lookup("final_type")
         .and_then(Value::as_bool)
         .or_else(|| generate_trait.map(|t| !t));
+    let fundamental_type = toml_object
+        .lookup("fundamental_type")
+        .and_then(Value::as_bool);
     let trait_name = toml_object
         .lookup("trait_name")
         .and_then(Value::as_str)
@@ -480,6 +486,7 @@ fn parse_object(
         cfg_condition,
         type_id: None,
         final_type,
+        fundamental_type,
         trait_name,
         child_properties,
         concurrency,

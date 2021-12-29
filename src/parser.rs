@@ -152,6 +152,16 @@ impl Library {
         let get_type = elem.attr_required("get-type")?;
         let version = self.read_version(parser, ns_id, elem)?;
         let deprecated_version = self.read_deprecated_version(parser, ns_id, elem)?;
+        let is_fundamental = elem.attr("fundamental").map(|x| x == "1").unwrap_or(false);
+        let (ref_fn, unref_fn) = if is_fundamental {
+            (
+                elem.attr("ref-func").map(ToOwned::to_owned),
+                elem.attr("unref-func").map(ToOwned::to_owned),
+            )
+        } else {
+            (None, None)
+        };
+
         let is_abstract = elem.attr("abstract").map(|x| x == "1").unwrap_or(false);
 
         let mut fns = Vec::new();
@@ -238,6 +248,9 @@ impl Library {
             deprecated_version,
             symbol_prefix,
             is_abstract,
+            is_fundamental,
+            ref_fn,
+            unref_fn,
         });
         self.add_type(ns_id, class_name, typ);
         Ok(())

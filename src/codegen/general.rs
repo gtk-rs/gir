@@ -115,6 +115,97 @@ fn format_parent_name(env: &Env, p: &StatusedTypeId) -> String {
     }
 }
 
+pub fn define_fundamental_type(
+    w: &mut dyn Write,
+    env: &Env,
+    type_name: &str,
+    glib_name: &str,
+    glib_func_name: &str,
+    ref_func: Option<&str>,
+    unref_func: Option<&str>,
+    parents: &[StatusedTypeId],
+    visibility: Visibility,
+) -> Result<()> {
+    let sys_crate_name = env.main_sys_crate_name();
+    writeln!(w, "{} {{", use_glib_type(env, "wrapper!"))?;
+    doc_alias(w, glib_name, "", 1)?;
+    writeln!(
+        w,
+        "\t{} struct {}(Shared<{}::{}>);",
+        visibility, type_name, sys_crate_name, glib_name
+    )?;
+    writeln!(w)?;
+
+    writeln!(w, "\tmatch fn {{")?;
+    let (ref_fn, unref_fn, ptr, ffi_crate_name) = if parents.is_empty() {
+        // it's the super-type, it must have a ref/unref functions
+        (
+            ref_func.unwrap().to_owned(),
+            unref_func.unwrap().to_owned(),
+            "ptr".to_owned(),
+            sys_crate_name.to_owned(),
+        )
+    } else {
+        let (ref_fn, unref_fn, ptr, ffi_crate_name) = parents
+            .iter()
+            .filter_map(|p| {
+                use crate::library::*;
+                let type_ = env.library.type_(p.type_id);
+                let parent_sys_crate_name = env.sys_crate_import(p.type_id);
+                match type_ {
+                    Type::Class(class) => Some((
+                        class.ref_fn.as_ref().unwrap().clone(),
+                        class.unref_fn.as_ref().unwrap().clone(),
+                        format!(
+                            "ptr as *mut {}::{}",
+                            parent_sys_crate_name,
+                            class.c_type.clone()
+                        ),
+                        parent_sys_crate_name,
+                    )),
+                    _ => None,
+                }
+            })
+            .next()
+            .unwrap();
+        // otherwise get that information from the parent
+        (ref_fn, unref_fn, ptr, ffi_crate_name)
+    };
+
+    writeln!(
+        w,
+        "\t\tref => |ptr| {}::{}({}),",
+        ffi_crate_name, ref_fn, ptr
+    )?;
+    writeln!(
+        w,
+        "\t\tunref => |ptr| {}::{}({}),",
+        ffi_crate_name, unref_fn, ptr
+    )?;
+
+    writeln!(w, "\t}}")?;
+    writeln!(w, "}}")?;
+
+    // We can't use type_ from glib::wrapper! because that would auto-implement
+    // Value traits which are often not the correct types
+    writeln!(w, "\n")?;
+    writeln!(
+        w,
+        "impl {} for {} {{",
+        use_glib_type(env, "StaticType"),
+        type_name
+    )?;
+    writeln!(w, "\tfn static_type() -> {} {{", use_glib_type(env, "Type"))?;
+    writeln!(
+        w,
+        "\t\t unsafe {{ from_glib({}::{}()) }}",
+        sys_crate_name, glib_func_name
+    )?;
+    writeln!(w, "\t}}")?;
+    writeln!(w, "}}")?;
+    Ok(())
+}
+
 pub fn define_object_type(
     w: &mut dyn Write,
     env: &Env,

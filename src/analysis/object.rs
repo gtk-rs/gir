@@ -28,6 +28,7 @@ pub struct Info {
     pub c_class_type: Option<String>,
     pub get_type: String,
     pub is_interface: bool,
+    pub is_fundamental: bool,
     pub supertypes: Vec<general::StatusedTypeId>,
     pub final_type: bool,
     pub generate_trait: bool,
@@ -41,6 +42,10 @@ pub struct Info {
     pub builder_postprocess: Option<String>,
     pub child_properties: ChildProperties,
     pub signatures: Signatures,
+    /// Specific to fundamental types
+    pub ref_fn: Option<String>,
+    /// Specific to fundamental types
+    pub unref_fn: Option<String>,
 }
 
 impl Info {
@@ -222,13 +227,19 @@ pub fn class(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<Info>
         .any(|f| f.kind == library::FunctionKind::Method && f.status.need_generate());
     let has_signals = signals.iter().any(|s| s.trampoline.is_ok())
         || notify_signals.iter().any(|s| s.trampoline.is_ok());
-
+    let is_fundamental = obj.fundamental_type.unwrap_or(klass.is_fundamental);
     // There's no point in generating a trait if there are no signals, methods, properties
     // and child properties: it would be empty
     //
     // There's also no point in generating a trait for final types: there are no possible subtypes
     let generate_trait = !final_type
+        && !is_fundamental
         && (has_signals || has_methods || !properties.is_empty() || !child_properties.is_empty());
+
+    if is_fundamental {
+        imports.add("glib::StaticType");
+        imports.add("glib::translate::*");
+    }
 
     if has_builder_properties(&builder_properties) {
         imports.add("glib::object::Cast");
@@ -277,6 +288,7 @@ pub fn class(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<Info>
         c_class_type: klass.c_class_type.clone(),
         get_type: klass.glib_get_type.clone(),
         is_interface: false,
+        is_fundamental,
         supertypes,
         final_type,
         generate_trait,
@@ -290,6 +302,8 @@ pub fn class(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<Info>
         builder_postprocess: obj.builder_postprocess.clone(),
         child_properties,
         signatures,
+        ref_fn: klass.ref_fn.clone(),
+        unref_fn: klass.unref_fn.clone(),
     };
 
     Some(info)

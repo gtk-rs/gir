@@ -2,6 +2,7 @@ use crate::{
     analysis::{self, namespaces::NsId},
     config::{gobjects::GStatus, Config},
     library::*,
+    nameutil::use_glib_type,
     version::Version,
 };
 use std::cell::RefCell;
@@ -71,5 +72,15 @@ impl Env {
 
     pub fn main_sys_crate_name(&self) -> &str {
         &self.namespaces[MAIN_NAMESPACE].sys_crate_name
+    }
+
+    /// Helper to get the ffi crate import
+    pub fn sys_crate_import(&self, type_id: TypeId) -> String {
+        let crate_name = &self.namespaces[type_id.ns_id].sys_crate_name;
+        if crate_name == "gobject_ffi" {
+            use_glib_type(self, crate_name)
+        } else {
+            crate_name.to_owned()
+        }
     }
 }
