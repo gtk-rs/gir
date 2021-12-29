@@ -8,8 +8,8 @@ use super::{
 };
 use crate::{
     analysis::{
-        self, object::has_builder_properties, ref_mode::RefMode, rust_type::RustType,
-        special_functions::Type,
+        self, bounds::BoundType, object::has_builder_properties, ref_mode::RefMode,
+        rust_type::RustType, special_functions::Type,
     },
     env::Env,
     library::{self, Nullable},
@@ -371,18 +371,19 @@ fn generate_builder(w: &mut dyn Write, env: &Env, analysis: &analysis::object::I
                         "&[&str]" => (Some("Vec<String>".to_string()), String::new(), ""),
                         _ if !property.bounds.is_empty() => {
                             let (bounds, _) = function::bounds(&property.bounds, &[], false, false);
-                            let alias =
-                                property
-                                    .bounds
-                                    .get_parameter_bound(&property.name)
-                                    .map(|bound| {
-                                        bound.full_type_parameter_reference(
-                                            RefMode::ByRef,
-                                            Nullable(false),
-                                            false,
-                                        )
-                                    });
-                            (alias, bounds, ".clone().upcast()")
+                            let param_bound = property.bounds.get_parameter_bound(&property.name);
+                            let alias = param_bound.map(|bound| {
+                                bound.full_type_parameter_reference(
+                                    RefMode::ByRef,
+                                    Nullable(false),
+                                    false,
+                                )
+                            });
+                            let conversion = param_bound.and_then(|bound| match bound.bound_type {
+                                BoundType::AsRef(_) => Some(".as_ref().clone()"),
+                                _ => None,
+                            });
+                            (alias, bounds, conversion.unwrap_or(".clone().upcast()"))
                         }
                         typ if typ.starts_with('&') => (None, String::new(), ".clone()"),
                         _ => (None, String::new(), ""),
