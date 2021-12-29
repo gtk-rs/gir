@@ -168,6 +168,7 @@ pub fn class(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<Info>
         .as_ref()
         .cloned()
         .unwrap_or_else(|| format!("{}Ext", name));
+    let is_fundamental = obj.fundamental_type.unwrap_or(klass.is_fundamental);
 
     let mut signatures = Signatures::with_capacity(klass.functions.len());
 
@@ -202,6 +203,7 @@ pub fn class(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<Info>
         &klass.signals,
         class_tid,
         !final_type,
+        is_fundamental,
         obj,
         &mut imports,
     );
@@ -210,6 +212,7 @@ pub fn class(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<Info>
         &klass.properties,
         class_tid,
         !final_type,
+        is_fundamental,
         obj,
         &mut imports,
         &signatures,
@@ -227,7 +230,6 @@ pub fn class(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<Info>
         .any(|f| f.kind == library::FunctionKind::Method && f.status.need_generate());
     let has_signals = signals.iter().any(|s| s.trampoline.is_ok())
         || notify_signals.iter().any(|s| s.trampoline.is_ok());
-    let is_fundamental = obj.fundamental_type.unwrap_or(klass.is_fundamental);
     // There's no point in generating a trait if there are no signals, methods, properties
     // and child properties: it would be empty
     //
@@ -352,12 +354,21 @@ pub fn interface(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<I
         Some(deps),
     );
 
-    let signals = signals::analyze(env, &iface.signals, iface_tid, true, obj, &mut imports);
+    let signals = signals::analyze(
+        env,
+        &iface.signals,
+        iface_tid,
+        true,
+        false,
+        obj,
+        &mut imports,
+    );
     let (properties, notify_signals) = properties::analyze(
         env,
         &iface.properties,
         iface_tid,
         true,
+        false,
         obj,
         &mut imports,
         &signatures,

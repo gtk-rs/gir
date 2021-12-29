@@ -196,6 +196,10 @@ impl Bounds {
         match env.library.type_(type_id) {
             Type::Fundamental(Fundamental::Filename | Fundamental::OsString) => Some(AsRef(None)),
             Type::Class(Class {
+                is_fundamental: true,
+                ..
+            }) => Some(AsRef(None)),
+            Type::Class(Class {
                 final_type: true, ..
             }) => None,
             Type::Class(Class {
