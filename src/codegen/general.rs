@@ -377,7 +377,7 @@ pub fn define_auto_boxed_type(
     init_function_expression: &Option<String>,
     copy_into_function_expression: &Option<String>,
     clear_function_expression: &Option<String>,
-    get_type_fn: Option<&String>,
+    get_type_fn: Option<&str>,
     derive: &[Derive],
 ) -> Result<()> {
     let sys_crate_name = env.main_sys_crate_name();
