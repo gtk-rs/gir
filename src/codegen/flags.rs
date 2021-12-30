@@ -49,7 +49,11 @@ pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>) {
             if let Some(cfg) = cfg_condition_string(config.cfg_condition.as_ref(), false, 0) {
                 mod_rs.push(cfg);
             }
-            mod_rs.push(format!("pub use self::flags::{};", flags.name));
+            mod_rs.push(format!(
+                "{} use self::flags::{};",
+                flags_analysis.visibility.export_visibility(),
+                flags.name
+            ));
             generate_flags(env, w, flags, config, flags_analysis)?;
         }
 
@@ -88,7 +92,11 @@ fn generate_flags(
     }
 
     doc_alias(w, &flags.c_type, "", 1)?;
-    writeln!(w, "    pub struct {}: u32 {{", flags.name)?;
+    writeln!(
+        w,
+        "    {} struct {}: u32 {{",
+        analysis.visibility, flags.name
+    )?;
     for member in &flags.members {
         let member_config = config.members.matched(&member.name);
         if member.status.ignored() {

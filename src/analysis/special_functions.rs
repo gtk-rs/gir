@@ -1,8 +1,6 @@
 use crate::{
-    analysis::{
-        functions::{Info as FuncInfo, Visibility},
-        imports::Imports,
-    },
+    analysis::{functions::Info as FuncInfo, imports::Imports},
+    codegen::Visibility,
     config::GObject,
     library::{Type as LibType, TypeId},
     version::Version,
@@ -124,8 +122,13 @@ fn is_stringify(func: &mut FuncInfo, parent_type: &LibType, obj: &GObject) -> bo
 }
 
 fn update_func(func: &mut FuncInfo, type_: Type) -> bool {
-    if func.visibility != Visibility::Comment {
-        func.visibility = visibility(type_);
+    if !func.commented {
+        use self::Type::*;
+        match type_ {
+            Copy | Free | Ref | Unref => func.hidden = true,
+            Hash | Compare | Equal => func.visibility = Visibility::Private,
+            Display => func.visibility = Visibility::Public,
+        };
     }
     true
 }
@@ -226,23 +229,15 @@ pub fn extract(functions: &mut Vec<FuncInfo>, parent_type: &LibType, obj: &GObje
     specials
 }
 
-fn visibility(t: Type) -> Visibility {
-    use self::Type::*;
-    match t {
-        Copy | Free | Ref | Unref => Visibility::Hidden,
-        Hash | Compare | Equal => Visibility::Private,
-        Display => Visibility::Public,
-    }
-}
-
 // Some special functions (e.g. `copy` on refcounted types) should be exposed
 pub fn unhide(functions: &mut Vec<FuncInfo>, specials: &Infos, type_: Type) {
     if let Some(func) = specials.traits().get(&type_) {
         let func = functions
             .iter_mut()
-            .find(|f| f.glib_name == func.glib_name && f.visibility != Visibility::Comment);
+            .find(|f| f.glib_name == func.glib_name && !f.commented);
         if let Some(func) = func {
             func.visibility = Visibility::Public;
+            func.hidden = false;
         }
     }
 }

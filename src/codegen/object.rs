@@ -74,6 +74,7 @@ pub fn generate(
             &analysis.get_type,
             analysis.is_interface,
             &analysis.supertypes,
+            analysis.visibility,
         )?;
     } else {
         // Write the `glib::wrapper!` calls from the highest version to the lowest and remember
@@ -107,6 +108,7 @@ pub fn generate(
                     &analysis.get_type,
                     analysis.is_interface,
                     &supertypes,
+                    analysis.visibility,
                 )?;
 
                 for t in stypes {
@@ -136,6 +138,7 @@ pub fn generate(
             &analysis.get_type,
             analysis.is_interface,
             &supertypes,
+            analysis.visibility,
         )?;
     }
 
@@ -588,7 +591,12 @@ pub fn generate_reexports(
     contents.push(format!("mod {};", module_name));
     contents.extend_from_slice(&cfgs);
 
-    contents.push(format!("pub use self::{}::{};", module_name, analysis.name,));
+    contents.push(format!(
+        "{} use self::{}::{};",
+        analysis.visibility.export_visibility(),
+        module_name,
+        analysis.name,
+    ));
 
     if analysis.need_generate_trait() {
         for cfg in &cfgs {

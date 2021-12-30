@@ -255,6 +255,7 @@ pub fn class(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<Info>
         deprecated_version,
         cfg_condition: obj.cfg_condition.clone(),
         concurrency: obj.concurrency,
+        visibility: obj.visibility,
     };
 
     // patch up trait methods in the symbol table
@@ -364,6 +365,7 @@ pub fn interface(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<I
         deprecated_version,
         cfg_condition: obj.cfg_condition.clone(),
         concurrency: obj.concurrency,
+        visibility: obj.visibility,
     };
 
     let has_functions = !base.functions().is_empty();

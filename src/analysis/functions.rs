@@ -20,6 +20,7 @@ use crate::{
         signatures::{Signature, Signatures},
         trampolines::Trampoline,
     },
+    codegen::Visibility,
     config::{self, gobjects::GStatus},
     env::Env,
     library::{self, Function, FunctionKind, ParameterDirection, ParameterScope, Transfer, Type},
@@ -34,24 +35,6 @@ use std::{
 };
 
 use super::special_functions;
-
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum Visibility {
-    Public,
-    Comment,
-    Private,
-    Hidden,
-}
-
-impl Visibility {
-    pub fn hidden(self) -> bool {
-        self == Self::Hidden
-    }
-
-    pub fn code_visible(self) -> bool {
-        matches!(self, Self::Private | Self::Public)
-    }
-}
 
 #[derive(Clone, Debug)]
 pub struct AsyncTrampoline {
@@ -103,6 +86,11 @@ pub struct Info {
     pub destroys: Vec<Trampoline>,
     pub remove_params: Vec<usize>,
     pub async_future: Option<AsyncFuture>,
+    /// Whether the function is hidden (an implementation detail)
+    /// Like the ref/unref/copy/free functions
+    pub hidden: bool,
+    /// Whether the function can't be generated
+    pub commented: bool,
 }
 
 impl Info {
@@ -121,7 +109,7 @@ impl Info {
     // returns whether the method can be linked in the docs
     pub fn should_be_doc_linked(&self, env: &Env) -> bool {
         self.should_docs_be_generated(env)
-            && (self.status.manual() || self.visibility.code_visible())
+            && (self.status.manual() || (!self.commented && !self.hidden))
     }
 
     pub fn should_docs_be_generated(&self, env: &Env) -> bool {
@@ -640,6 +628,10 @@ fn analyze_function(
 
     let version = env.config.filter_version(version);
     let deprecated_version = func.deprecated_version;
+    let visibility = configured_functions
+        .iter()
+        .find_map(|f| f.visibility)
+        .unwrap_or_default();
     let cfg_condition = configured_functions
         .iter()
         .find_map(|f| f.cfg_condition.clone());
@@ -884,11 +876,6 @@ fn analyze_function(
         bounds.update_imports(imports);
     }
 
-    let visibility = if commented {
-        Visibility::Comment
-    } else {
-        Visibility::Public
-    };
     let is_method = func.kind == library::FunctionKind::Method;
     let assertion =
         assertion.unwrap_or_else(|| SafetyAssertionMode::of(env, is_method, &parameters));
@@ -922,6 +909,8 @@ fn analyze_function(
         callbacks,
         destroys,
         remove_params: cross_user_data_check.values().cloned().collect::<Vec<_>>(),
+        commented,
+        hidden: false,
     }
 }
 

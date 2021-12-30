@@ -9,9 +9,7 @@ use super::{
     special_functions,
 };
 use crate::{
-    analysis::{
-        self, bounds::Bounds, functions::Visibility, namespaces, try_from_glib::TryFromGlib,
-    },
+    analysis::{self, bounds::Bounds, namespaces, try_from_glib::TryFromGlib},
     chunk::{ffi_function_todo, Chunk},
     env::Env,
     library,
@@ -51,25 +49,18 @@ pub fn generate(
 
     let mut commented = false;
     let mut comment_prefix = "";
-    let mut pub_prefix = if in_trait { "" } else { "pub " };
+    let pub_prefix = if in_trait {
+        "".to_owned()
+    } else {
+        format!("{} ", analysis.visibility)
+    };
 
-    match analysis.visibility {
-        Visibility::Public => {}
-        Visibility::Comment => {
-            commented = true;
-            comment_prefix = "//";
-        }
-        Visibility::Private => {
-            if in_trait {
-                warn!(
-                    "Generating trait method for private function {}",
-                    analysis.glib_name
-                );
-            } else {
-                pub_prefix = "";
-            }
-        }
-        Visibility::Hidden => return Ok(()),
+    if analysis.commented {
+        commented = true;
+        comment_prefix = "//";
+    }
+    if analysis.hidden {
+        return Ok(());
     }
     let unsafe_ = if analysis.unsafe_ { "unsafe " } else { "" };
     let declaration = declaration(env, analysis);
@@ -90,9 +81,17 @@ pub fn generate(
             doc_alias(w, &analysis.func_name, comment_prefix, indent)?;
         }
     }
+    // Don't add a guard for public or copy/equal functions
+    let dead_code_cfg = if !analysis.visibility.is_public() && !analysis.is_special() {
+        "#[allow(dead_code)]"
+    } else {
+        ""
+    };
+
     writeln!(
         w,
-        "{}{}{}{}{}{}",
+        "{}{}{}{}{}{}{}",
+        dead_code_cfg,
         tabs(indent),
         comment_prefix,
         pub_prefix,
@@ -296,7 +295,7 @@ pub fn bounds(
 }
 
 pub fn body_chunk(env: &Env, analysis: &analysis::functions::Info) -> Chunk {
-    if analysis.visibility == Visibility::Comment {
+    if analysis.commented {
         return ffi_function_todo(env, &analysis.glib_name);
     }
 

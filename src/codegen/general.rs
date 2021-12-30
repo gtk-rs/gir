@@ -16,6 +16,8 @@ use std::{
     ops::Index,
 };
 
+use super::Visibility;
+
 pub fn start_comments(w: &mut dyn Write, conf: &Config) -> Result<()> {
     if conf.single_version_file.is_some() {
         start_comments_no_version(w, conf)
@@ -122,6 +124,7 @@ pub fn define_object_type(
     glib_func_name: &str,
     is_interface: bool,
     parents: &[StatusedTypeId],
+    visibility: Visibility,
 ) -> Result<()> {
     let sys_crate_name = env.main_sys_crate_name();
     let class_name = {
@@ -145,8 +148,8 @@ pub fn define_object_type(
     if parents.is_empty() {
         writeln!(
             w,
-            "\tpub struct {}({}<{}::{}{}>);",
-            type_name, kind_name, sys_crate_name, glib_name, class_name
+            "\t{} struct {}({}<{}::{}{}>);",
+            visibility, type_name, kind_name, sys_crate_name, glib_name, class_name
         )?;
     } else if is_interface {
         let prerequisites: Vec<String> =
@@ -154,7 +157,8 @@ pub fn define_object_type(
 
         writeln!(
             w,
-            "\tpub struct {}(Interface<{}::{}{}>) @requires {};",
+            "\t{} struct {}(Interface<{}::{}{}>) @requires {};",
+            visibility,
             type_name,
             sys_crate_name,
             glib_name,
@@ -202,8 +206,8 @@ pub fn define_object_type(
 
         writeln!(
             w,
-            "\tpub struct {}(Object<{}::{}{}>){};",
-            type_name, sys_crate_name, glib_name, class_name, parents_string,
+            "\t{} struct {}(Object<{}::{}{}>){};",
+            visibility, type_name, sys_crate_name, glib_name, class_name, parents_string,
         )?;
     }
     writeln!(w)?;
@@ -232,6 +236,7 @@ fn define_boxed_type_internal(
     clear_function_expression: &Option<String>,
     get_type_fn: Option<&str>,
     derive: &[Derive],
+    visibility: Visibility,
 ) -> Result<()> {
     let sys_crate_name = env.main_sys_crate_name();
     writeln!(w, "{} {{", use_glib_type(env, "wrapper!"))?;
@@ -239,7 +244,8 @@ fn define_boxed_type_internal(
     derives(w, derive, 1)?;
     writeln!(
         w,
-        "\tpub struct {}(Boxed{}<{}::{}>);",
+        "\t{} struct {}(Boxed{}<{}::{}>);",
+        visibility,
         type_name,
         if boxed_inline { "Inline" } else { "" },
         sys_crate_name,
@@ -295,6 +301,7 @@ pub fn define_boxed_type(
     clear_function_expression: &Option<String>,
     get_type_fn: Option<(String, Option<Version>)>,
     derive: &[Derive],
+    visibility: Visibility,
 ) -> Result<()> {
     writeln!(w)?;
 
@@ -314,6 +321,7 @@ pub fn define_boxed_type(
                 clear_function_expression,
                 Some(get_type_fn),
                 derive,
+                visibility,
             )?;
 
             writeln!(w)?;
@@ -331,6 +339,7 @@ pub fn define_boxed_type(
                 clear_function_expression,
                 None,
                 derive,
+                visibility,
             )?;
         } else {
             define_boxed_type_internal(
@@ -346,6 +355,7 @@ pub fn define_boxed_type(
                 clear_function_expression,
                 Some(get_type_fn),
                 derive,
+                visibility,
             )?;
         }
     } else {
@@ -362,6 +372,7 @@ pub fn define_boxed_type(
             clear_function_expression,
             None,
             derive,
+            visibility,
         )?;
     }
 
@@ -379,6 +390,7 @@ pub fn define_auto_boxed_type(
     clear_function_expression: &Option<String>,
     get_type_fn: &str,
     derive: &[Derive],
+    visibility: Visibility,
 ) -> Result<()> {
     let sys_crate_name = env.main_sys_crate_name();
     writeln!(w)?;
@@ -386,7 +398,8 @@ pub fn define_auto_boxed_type(
     derives(w, derive, 1)?;
     writeln!(
         w,
-        "\tpub struct {}(Boxed{}<{}::{}>);",
+        "\t{} struct {}(Boxed{}<{}::{}>);",
+        visibility,
         type_name,
         if boxed_inline { "Inline" } else { "" },
         sys_crate_name,
@@ -441,14 +454,15 @@ fn define_shared_type_internal(
     unref_fn: &str,
     get_type_fn: Option<&str>,
     derive: &[Derive],
+    visibility: Visibility,
 ) -> Result<()> {
     let sys_crate_name = env.main_sys_crate_name();
     writeln!(w, "{} {{", use_glib_type(env, "wrapper!"))?;
     derives(w, derive, 1)?;
     writeln!(
         w,
-        "\tpub struct {}(Shared<{}::{}>);",
-        type_name, sys_crate_name, glib_name
+        "\t{} struct {}(Shared<{}::{}>);",
+        visibility, type_name, sys_crate_name, glib_name
     )?;
     writeln!(w)?;
     writeln!(w, "\tmatch fn {{")?;
@@ -476,6 +490,7 @@ pub fn define_shared_type(
     unref_fn: &str,
     get_type_fn: Option<(String, Option<Version>)>,
     derive: &[Derive],
+    visibility: Visibility,
 ) -> Result<()> {
     writeln!(w)?;
 
@@ -491,12 +506,13 @@ pub fn define_shared_type(
                 unref_fn,
                 Some(get_type_fn),
                 derive,
+                visibility,
             )?;
 
             writeln!(w)?;
             not_version_condition_no_dox(w, env, None, get_type_version, false, 0)?;
             define_shared_type_internal(
-                w, env, type_name, glib_name, ref_fn, unref_fn, None, derive,
+                w, env, type_name, glib_name, ref_fn, unref_fn, None, derive, visibility,
             )?;
         } else {
             define_shared_type_internal(
@@ -508,10 +524,13 @@ pub fn define_shared_type(
                 unref_fn,
                 Some(get_type_fn),
                 derive,
+                visibility,
             )?;
         }
     } else {
-        define_shared_type_internal(w, env, type_name, glib_name, ref_fn, unref_fn, None, derive)?;
+        define_shared_type_internal(
+            w, env, type_name, glib_name, ref_fn, unref_fn, None, derive, visibility,
+        )?;
     }
 
     Ok(())
@@ -828,7 +847,7 @@ pub fn declare_default_from_new(
     has_builder: bool,
 ) -> Result<()> {
     if let Some(func) = functions.iter().find(|f| {
-        !f.visibility.hidden()
+        !f.hidden
             && f.status.need_generate()
             && f.name == "new"
             // Cannot generate Default implementation for Option<>

@@ -8,6 +8,7 @@ use super::{
 };
 use crate::{
     analysis::safety_assertion_mode::SafetyAssertionMode,
+    codegen::Visibility,
     library::{Infallible, Mandatory, Nullable},
     version::Version,
 };
@@ -283,6 +284,7 @@ pub struct Function {
     pub no_future: bool,
     pub unsafe_: bool,
     pub rename: Option<String>,
+    pub visibility: Option<Visibility>,
     pub bypass_auto_rename: bool,
     pub is_constructor: Option<bool>,
     pub assertion: Option<SafetyAssertionMode>,
@@ -322,6 +324,7 @@ impl Parse for Function {
                 "bypass_auto_rename",
                 "constructor",
                 "assertion",
+                "visibility",
             ],
             &format!("function {}", object_name),
         );
@@ -410,7 +413,15 @@ impl Parse for Function {
             error!("{}", err);
         }
         let assertion = assertion.ok().flatten();
-
+        let visibility = toml
+            .lookup("visibility")
+            .and_then(Value::as_str)
+            .map(std::str::FromStr::from_str)
+            .transpose();
+        if let Err(ref err) = visibility {
+            error!("{}", err);
+        }
+        let visibility = visibility.ok().flatten();
         Some(Function {
             ident,
             status,
@@ -430,6 +441,7 @@ impl Parse for Function {
             bypass_auto_rename,
             is_constructor,
             assertion,
+            visibility,
         })
     }
 }

@@ -108,6 +108,8 @@ generate_builder = true
 # trust return value nullability annotations for this specific type.
 # See above for details and use with care
 trust_return_value_nullability = false
+# Tweak the visibility of the type
+visibility = "pub" # or 'crate' / 'private' / 'super'
     # define overrides for function
     [[object.function]]
     # filter functions from object
@@ -137,6 +139,8 @@ trust_return_value_nullability = false
     # to override the default safety assertions: "none", "skip",
     # "not-initialized", "in-main-thread"
     assertion = "in-main-thread"
+    # Tweak the visibility of the function
+    visibility = "pub" # or 'crate' / 'private' / 'super'
         # override for parameter
         [[object.function.parameter]]
         # filter by name

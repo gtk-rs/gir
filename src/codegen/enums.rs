@@ -51,7 +51,12 @@ pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>) {
             if let Some(cfg) = cfg_condition_string(config.cfg_condition.as_ref(), false, 0) {
                 mod_rs.push(cfg);
             }
-            mod_rs.push(format!("pub use self::enums::{};", enum_.name));
+            mod_rs.push(format!(
+                "{} use self::enums::{};",
+                enum_analysis.visibility.export_visibility(),
+                enum_.name
+            ));
+
             generate_enum(env, w, enum_, config, enum_analysis)?;
         }
 
@@ -127,7 +132,7 @@ fn generate_enum(
     writeln!(w, "#[non_exhaustive]")?;
     doc_alias(w, &enum_.c_type, "", 0)?;
 
-    writeln!(w, "pub enum {} {{", enum_.name)?;
+    writeln!(w, "{} enum {} {{", analysis.visibility, enum_.name)?;
     for member in &members {
         cfg_deprecated(
             w,

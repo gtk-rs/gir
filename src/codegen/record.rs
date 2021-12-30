@@ -26,6 +26,7 @@ pub fn generate(w: &mut dyn Write, env: &Env, analysis: &analysis::record::Info)
                 &analysis.clear_function_expression,
                 glib_get_type,
                 &analysis.derives,
+                analysis.visibility,
             )?;
         } else {
             panic!(
@@ -52,6 +53,7 @@ pub fn generate(w: &mut dyn Write, env: &Env, analysis: &analysis::record::Info)
                 }
             }),
             &analysis.derives,
+            analysis.visibility,
         )?;
     } else if let (Some(copy_fn), Some(free_fn)) = (
         analysis.specials.traits().get(&Type::Copy),
@@ -76,6 +78,7 @@ pub fn generate(w: &mut dyn Write, env: &Env, analysis: &analysis::record::Info)
                 }
             }),
             &analysis.derives,
+            analysis.visibility,
         )?;
     } else {
         panic!(
@@ -87,7 +90,7 @@ pub fn generate(w: &mut dyn Write, env: &Env, analysis: &analysis::record::Info)
     if analysis
         .functions
         .iter()
-        .any(|f| f.status.need_generate() && !f.visibility.hidden())
+        .any(|f| f.status.need_generate() && !f.hidden)
     {
         writeln!(w)?;
         write!(w, "impl {} {{", analysis.name)?;
@@ -168,7 +171,10 @@ pub fn generate_reexports(
     contents.push("".to_owned());
     contents.push(format!("{}mod {};", cfg, module_name));
     contents.push(format!(
-        "{}pub use self::{}::{};",
-        cfg, module_name, analysis.name
+        "{}{} use self::{}::{};",
+        cfg,
+        analysis.visibility.export_visibility(),
+        module_name,
+        analysis.name
     ));
 }
