@@ -104,6 +104,16 @@ fn fill_in(root: &mut Table, env: &Env) {
                     .collect(),
             ),
         );
+        features.insert(
+            "static".to_string(),
+            Value::Array(
+                env.config
+                    .external_libraries
+                    .iter()
+                    .map(|l| Value::String(format!("{}/static", l.crate_name)))
+                    .collect(),
+            ),
+        );
     }
 
     {
