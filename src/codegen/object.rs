@@ -162,6 +162,7 @@ pub fn generate(
             function::generate(
                 w,
                 env,
+                Some(analysis.type_id),
                 func_analysis,
                 Some(&analysis.specials),
                 analysis.version,
@@ -195,6 +196,7 @@ pub fn generate(
                 function::generate(
                     w,
                     env,
+                    Some(analysis.type_id),
                     func_analysis,
                     Some(&analysis.specials),
                     analysis.version,
@@ -217,6 +219,7 @@ pub fn generate(
             function::generate(
                 w,
                 env,
+                Some(analysis.type_id),
                 func_analysis,
                 Some(&analysis.specials),
                 analysis.version,
@@ -501,6 +504,7 @@ fn generate_trait(w: &mut dyn Write, env: &Env, analysis: &analysis::object::Inf
         function::generate(
             w,
             env,
+            Some(analysis.type_id),
             func_analysis,
             Some(&analysis.specials),
             analysis.version,
@@ -535,6 +539,7 @@ fn generate_trait(w: &mut dyn Write, env: &Env, analysis: &analysis::object::Inf
         function::generate(
             w,
             env,
+            Some(analysis.type_id),
             func_analysis,
             Some(&analysis.specials),
             analysis.version,

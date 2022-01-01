@@ -173,6 +173,7 @@ fn generate_enum(
             function::generate(
                 w,
                 env,
+                Some(analysis.type_id),
                 func_analysis,
                 Some(&analysis.specials),
                 enum_.version,

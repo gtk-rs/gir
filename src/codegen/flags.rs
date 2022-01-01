@@ -147,6 +147,7 @@ fn generate_flags(
             function::generate(
                 w,
                 env,
+                Some(analysis.type_id),
                 func_analysis,
                 Some(&analysis.specials),
                 flags.version,
