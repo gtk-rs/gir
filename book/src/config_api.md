@@ -95,6 +95,11 @@ child_name = "item"
 # will not generate trait SomeClassExt for this object, but implement all
 # functions in impl SomeClass
 final_type = true
+# mark the object as a fundamental type in case the GIR file lacks the annotation
+# note that fundamental types don't make use of IsA/Cast traits and you should
+# implement something similar manually
+# gir is only capable for generating the type definitions along with their functions
+fundamental_type = false 
 # allow rename result file
 module_name = "soome_class"
 # override starting version

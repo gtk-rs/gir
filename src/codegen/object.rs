@@ -8,8 +8,8 @@ use super::{
 };
 use crate::{
     analysis::{
-        self, object::has_builder_properties, ref_mode::RefMode, rust_type::RustType,
-        special_functions::Type,
+        self, bounds::BoundType, object::has_builder_properties, ref_mode::RefMode,
+        rust_type::RustType, special_functions::Type,
     },
     env::Env,
     library::{self, Nullable},
@@ -63,19 +63,33 @@ pub fn generate(
         }
     }
 
-    if namespaces.is_empty() {
+    if namespaces.is_empty() || analysis.is_fundamental {
         writeln!(w)?;
-        general::define_object_type(
-            w,
-            env,
-            &analysis.name,
-            &analysis.c_type,
-            analysis.c_class_type.as_deref(),
-            &analysis.get_type,
-            analysis.is_interface,
-            &analysis.supertypes,
-            analysis.visibility,
-        )?;
+        if analysis.is_fundamental {
+            general::define_fundamental_type(
+                w,
+                env,
+                &analysis.name,
+                &analysis.c_type,
+                &analysis.get_type,
+                analysis.ref_fn.as_deref(),
+                analysis.unref_fn.as_deref(),
+                &analysis.supertypes,
+                analysis.visibility,
+            )?;
+        } else {
+            general::define_object_type(
+                w,
+                env,
+                &analysis.name,
+                &analysis.c_type,
+                analysis.c_class_type.as_deref(),
+                &analysis.get_type,
+                analysis.is_interface,
+                &analysis.supertypes,
+                analysis.visibility,
+            )?;
+        }
     } else {
         // Write the `glib::wrapper!` calls from the highest version to the lowest and remember
         // which supertypes have to be removed for the next call.
@@ -357,18 +371,19 @@ fn generate_builder(w: &mut dyn Write, env: &Env, analysis: &analysis::object::I
                         "&[&str]" => (Some("Vec<String>".to_string()), String::new(), ""),
                         _ if !property.bounds.is_empty() => {
                             let (bounds, _) = function::bounds(&property.bounds, &[], false, false);
-                            let alias =
-                                property
-                                    .bounds
-                                    .get_parameter_bound(&property.name)
-                                    .map(|bound| {
-                                        bound.full_type_parameter_reference(
-                                            RefMode::ByRef,
-                                            Nullable(false),
-                                            false,
-                                        )
-                                    });
-                            (alias, bounds, ".clone().upcast()")
+                            let param_bound = property.bounds.get_parameter_bound(&property.name);
+                            let alias = param_bound.map(|bound| {
+                                bound.full_type_parameter_reference(
+                                    RefMode::ByRef,
+                                    Nullable(false),
+                                    false,
+                                )
+                            });
+                            let conversion = param_bound.and_then(|bound| match bound.bound_type {
+                                BoundType::AsRef(_) => Some(".as_ref().clone()"),
+                                _ => None,
+                            });
+                            (alias, bounds, conversion.unwrap_or(".clone().upcast()"))
                         }
                         typ if typ.starts_with('&') => (None, String::new(), ".clone()"),
                         _ => (None, String::new(), ""),

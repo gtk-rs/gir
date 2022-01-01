@@ -48,6 +48,7 @@ pub fn analyze(
     signal: &library::Signal,
     type_tid: library::TypeId,
     in_trait: bool,
+    fundamental_type: bool,
     configured_signals: &[&config::signals::Signal],
     obj: &GObject,
     used_types: &mut Vec<String>,
@@ -76,16 +77,25 @@ pub fn analyze(
 
     let mut bounds: Bounds = Default::default();
 
-    if in_trait {
+    if in_trait || fundamental_type {
         let type_name = RustType::builder(env, type_tid)
             .ref_mode(RefMode::ByRefFake)
             .try_build();
-        bounds.add_parameter(
-            "this",
-            &type_name.into_string(),
-            BoundType::IsA(None),
-            false,
-        );
+        if fundamental_type {
+            bounds.add_parameter(
+                "this",
+                &type_name.into_string(),
+                BoundType::AsRef(None),
+                false,
+            );
+        } else {
+            bounds.add_parameter(
+                "this",
+                &type_name.into_string(),
+                BoundType::IsA(None),
+                false,
+            );
+        }
     }
 
     let parameters = if is_notify {
@@ -112,16 +122,25 @@ pub fn analyze(
         trampoline_parameters::analyze(env, &signal.parameters, type_tid, configured_signals, None)
     };
 
-    if in_trait {
+    if in_trait || fundamental_type {
         let type_name = RustType::builder(env, type_tid)
             .ref_mode(RefMode::ByRefFake)
             .try_build();
-        bounds.add_parameter(
-            "this",
-            &type_name.into_string(),
-            BoundType::IsA(None),
-            false,
-        );
+        if fundamental_type {
+            bounds.add_parameter(
+                "this",
+                &type_name.into_string(),
+                BoundType::AsRef(None),
+                false,
+            );
+        } else {
+            bounds.add_parameter(
+                "this",
+                &type_name.into_string(),
+                BoundType::IsA(None),
+                false,
+            );
+        }
     }
 
     for par in &parameters.rust_parameters {
