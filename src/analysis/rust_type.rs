@@ -350,7 +350,7 @@ impl<'env> RustTypeBuilder<'env> {
                     Record(record) => match RecordType::of(record) {
                         RecordType::Boxed => RefMode::None,
                         RecordType::AutoBoxed => {
-                            if record.has_copy() {
+                            if !record.has_copy() {
                                 RefMode::None
                             } else {
                                 self.ref_mode
