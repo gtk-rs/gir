@@ -10,18 +10,17 @@ pub enum Visibility {
 }
 
 impl Visibility {
-    pub fn is_public(&self) -> bool {
-        matches!(self, Self::Public)
+    pub fn is_public(self) -> bool {
+        self == Self::Public
     }
 
-    pub fn export_visibility(&self) -> String {
+    pub fn export_visibility(self) -> &'static str {
         match self {
             Self::Public => "pub",
             Self::Private => "",
             Self::Crate => "pub(crate)",
             Self::Super => "pub(super)",
         }
-        .to_owned()
     }
 }
 
@@ -33,12 +32,7 @@ impl Default for Visibility {
 
 impl fmt::Display for Visibility {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::Public => write!(f, "pub"),
-            Self::Crate => write!(f, "pub(crate)"),
-            Self::Private => write!(f, ""),
-            Self::Super => write!(f, "pub(super)"),
-        }
+        f.write_str(self.export_visibility())
     }
 }
 
