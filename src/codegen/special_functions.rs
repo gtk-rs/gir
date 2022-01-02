@@ -40,7 +40,7 @@ pub(super) fn generate_static_to_str(
     writeln!(
         w,
         "\
-\t{visibility}fn {rust_fn_name}<'a>(self) -> &'a str {{
+\t{visibility} fn {rust_fn_name}<'a>(self) -> &'a str {{
 \t\tunsafe {{
 \t\t\tCStr::from_ptr(
 \t\t\t\t{ns}::{glib_fn_name}(self.into_glib())
