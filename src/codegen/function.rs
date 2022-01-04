@@ -5,14 +5,14 @@ use super::{
         version_condition,
     },
     parameter::ToParameter,
-    return_value::{out_parameters_as_return, ToReturnValue},
+    return_value::{out_parameter_types, out_parameters_as_return, ToReturnValue},
     special_functions,
 };
 use crate::{
     analysis::{self, bounds::Bounds, namespaces, try_from_glib::TryFromGlib},
     chunk::{ffi_function_todo, Chunk},
     env::Env,
-    library,
+    library::{self, TypeId},
     version::Version,
     writer::{primitives::tabs, safety_assertion_mode_to_str, ToCode},
 };
@@ -23,9 +23,38 @@ use std::{
     result::Result as StdResult,
 };
 
+// We follow the rules of the `return_self_not_must_use` clippy lint:
+//
+// If `Self` is returned (so `-> Self`) in a method (whatever the form of the `self`), then
+// the `#[must_use]` attribute must be added.
+pub fn get_must_use_if_needed(
+    parent_type_id: Option<TypeId>,
+    analysis: &analysis::functions::Info,
+    in_trait: bool,
+    only_declaration: bool,
+    comment_prefix: &str,
+) -> Option<String> {
+    // If there is no parent, it means it's not a (trait) method so we're not interested.
+    if let Some(parent_type_id) = parent_type_id {
+        // Check it's a trait declaration or a method declaration (outside of a trait
+        // implementation).
+        if analysis.kind == library::FunctionKind::Method && (!in_trait || only_declaration) {
+            // We now get the list of the returned types.
+            let outs = out_parameter_types(analysis);
+            // If there is only one type returned, we check if it's the same type as `self` (stored
+            // in `parent_type_id`).
+            if [parent_type_id] == *outs.as_slice() {
+                return Some(format!("{}#[must_use]\n", comment_prefix));
+            }
+        }
+    }
+    None
+}
+
 pub fn generate(
     w: &mut dyn Write,
     env: &Env,
+    parent_type_id: Option<TypeId>,
     analysis: &analysis::functions::Info,
     special_functions: Option<&analysis::special_functions::Infos>,
     scope_version: Option<Version>,
@@ -90,8 +119,16 @@ pub fn generate(
 
     writeln!(
         w,
-        "{}{}{}{}{}{}{}",
+        "{}{}{}{}{}{}{}{}",
         dead_code_cfg,
+        get_must_use_if_needed(
+            parent_type_id,
+            analysis,
+            in_trait,
+            only_declaration,
+            comment_prefix
+        )
+        .unwrap_or_default(),
         tabs(indent),
         comment_prefix,
         pub_prefix,

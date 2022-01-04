@@ -99,6 +99,7 @@ pub fn generate(w: &mut dyn Write, env: &Env, analysis: &analysis::record::Info)
             function::generate(
                 w,
                 env,
+                Some(analysis.type_id),
                 func_analysis,
                 Some(&analysis.specials),
                 analysis.version,

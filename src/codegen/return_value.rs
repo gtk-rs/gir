@@ -1,10 +1,10 @@
 use crate::{
     analysis::{
-        self, conversion_type::ConversionType, namespaces, rust_type::RustType,
-        try_from_glib::TryFromGlib,
+        self, conversion_type::ConversionType, namespaces, out_parameters::Mode,
+        rust_type::RustType, try_from_glib::TryFromGlib,
     },
     env::Env,
-    library::{self, ParameterDirection},
+    library::{self, ParameterDirection, TypeId},
     nameutil::{is_gstring, mangle_keywords, use_glib_type},
     traits::*,
 };
@@ -75,6 +75,76 @@ impl ToReturnValue for analysis::return_value::Info {
                     type_name
                 }
             })
+    }
+}
+
+/// Returns the `TypeId` of the returned types from the provided function.
+pub fn out_parameter_types(analysis: &analysis::functions::Info) -> Vec<TypeId> {
+    // If it returns an error, there is nothing for us to check.
+    if analysis.ret.bool_return_is_error.is_some()
+        || analysis.ret.nullable_return_is_error.is_some()
+    {
+        return Vec::new();
+    }
+
+    if !analysis.outs.is_empty() {
+        let num_out_args = analysis
+            .outs
+            .iter()
+            .filter(|out| out.lib_par.array_length.is_none())
+            .count();
+        let num_out_sizes = analysis
+            .outs
+            .iter()
+            .filter(|out| out.lib_par.array_length.is_some())
+            .count();
+        // We need to differentiate between array(s)'s size arguments and normal ones. If we have 2
+        // "normal" arguments and one "size" argument, we still need to wrap them into "()" so we take
+        // that into account. If the opposite, it means that there are two arguments in any case so
+        // we need "()" too.
+        let num_outs = std::cmp::max(num_out_args, num_out_sizes);
+        match analysis.outs.mode {
+            Mode::Normal | Mode::Combined => {
+                #[allow(clippy::needless_collect)]
+                let array_lengths: Vec<_> = analysis
+                    .outs
+                    .iter()
+                    .filter_map(|out| out.lib_par.array_length)
+                    .collect();
+                let mut ret_params = Vec::with_capacity(num_outs);
+
+                for out in analysis.outs.iter().filter(|out| !out.lib_par.is_error) {
+                    // The actual return value is inserted with an empty name at position 0
+                    if !out.lib_par.name.is_empty() {
+                        let mangled_par_name =
+                            crate::nameutil::mangle_keywords(out.lib_par.name.as_str());
+                        let param_pos = analysis
+                            .parameters
+                            .c_parameters
+                            .iter()
+                            .enumerate()
+                            .find_map(|(pos, orig_par)| {
+                                if orig_par.name == mangled_par_name {
+                                    Some(pos)
+                                } else {
+                                    None
+                                }
+                            })
+                            .unwrap();
+                        if array_lengths.contains(&(param_pos as u32)) {
+                            continue;
+                        }
+                    }
+                    ret_params.push(out.lib_par.typ);
+                }
+                ret_params
+            }
+            _ => Vec::new(),
+        }
+    } else if let Some(typ) = analysis.ret.parameter.as_ref().map(|out| out.lib_par.typ) {
+        vec![typ]
+    } else {
+        Vec::new()
     }
 }
 
