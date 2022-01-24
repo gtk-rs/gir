@@ -348,9 +348,29 @@ fn generate_builder(w: &mut dyn Write, env: &Env, analysis: &analysis::object::I
     )?;
     writeln!(w, "#[must_use = \"The builder must be built to be used\"]")?;
     writeln!(w, "pub struct {}Builder {{", analysis.name)?;
+
+    let tid_int = env
+        .library
+        .find_type(0, "*.gint")
+        .expect("No fundamental type *.gint");
+
+    let glib_ns_id = env
+        .library
+        .find_namespace("GLib")
+        .expect("Missing `GLib` namespace in add_glib_priority!");
+    let priority_id = env
+        .library
+        .find_type(glib_ns_id, "Priority")
+        .expect("No Priority type");
+
     for (builder_props, super_tid) in &analysis.builder_properties {
         for property in builder_props {
-            match RustType::try_new(env, property.typ) {
+            let property_type = if property.name.ends_with("priority") && property.typ == tid_int {
+                priority_id
+            } else {
+                property.typ
+            };
+            match RustType::try_new(env, property_type) {
                 Ok(type_string) => {
                     let type_string = match type_string.as_str() {
                         s if nameutil::is_gstring(s) => "String",
@@ -364,7 +384,7 @@ fn generate_builder(w: &mut dyn Write, env: &Env, analysis: &analysis::object::I
                     } else {
                         library::ParameterDirection::Out
                     };
-                    let mut param_type = RustType::builder(env, property.typ)
+                    let mut param_type = RustType::builder(env, property_type)
                         .direction(direction)
                         .ref_mode(property.set_in_ref_mode)
                         .try_build()
