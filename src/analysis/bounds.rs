@@ -133,10 +133,8 @@ impl Bounds {
                         }
                         let parameters = format_out_parameters(&out_parameters);
                         let error_type = find_error_type(env, function);
-                        type_string = format!(
-                            "FnOnce(Result<{}, {}>) + Send + 'static",
-                            parameters, error_type
-                        );
+                        type_string =
+                            format!("FnOnce(Result<{}, {}>) + 'static", parameters, error_type);
                         let bound_name = *self.unused.front().unwrap();
                         callback_info = Some(CallbackInfo {
                             callback_type: type_string.clone(),
