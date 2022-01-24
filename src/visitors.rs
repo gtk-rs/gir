@@ -13,6 +13,12 @@ impl Namespace {
                 return false;
             }
         }
+        // Replace types in global functions as well
+        for func in self.functions.iter_mut() {
+            if !visitor.visit_function_mut(func) {
+                return false;
+            }
+        }
         true
     }
 }
