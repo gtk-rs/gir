@@ -716,12 +716,30 @@ impl Builder {
         chunks: &mut Vec<Chunk>,
         trampoline: &AsyncTrampoline,
     ) {
+        chunks.push(Chunk::Custom(String::from(
+            r###"
+                let main_context = glib::MainContext::ref_thread_default();
+                let is_main_context_owner = main_context.is_owner();
+                let has_acquired_main_context = (!is_main_context_owner)
+                    .then(|| main_context.acquire().ok())
+                    .flatten();
+                assert!(
+                    is_main_context_owner || has_acquired_main_context.is_some(),
+                    "Async operations only allowed if the thread is owning the MainContext"
+                );
+        "###,
+        )));
+
         chunks.push(Chunk::Let {
             name: "user_data".to_string(),
             is_mut: false,
-            value: Box::new(Chunk::Custom("Box_::new(callback)".into())),
+            value: Box::new(Chunk::Custom(format!(
+                "Box_::new({}::new(callback))",
+                use_glib_type(env, "thread_guard::ThreadGuard")
+            ))),
             type_: Some(Box::new(Chunk::Custom(format!(
-                "Box_<{}>",
+                "Box_<{}<{}>>",
+                use_glib_type(env, "thread_guard::ThreadGuard"),
                 trampoline.bound_name
             )))),
         });
@@ -874,7 +892,17 @@ impl Builder {
             is_mut: false,
             value: Box::new(Chunk::Custom("Box_::from_raw(user_data as *mut _)".into())),
             type_: Some(Box::new(Chunk::Custom(format!(
-                "Box_<{}>",
+                "Box_<{}<{}>>",
+                use_glib_type(env, "thread_guard::ThreadGuard"),
+                trampoline.bound_name
+            )))),
+        });
+        body.push(Chunk::Let {
+            name: "callback".to_string(),
+            is_mut: false,
+            value: Box::new(Chunk::Custom("callback.into_inner()".into())),
+            type_: Some(Box::new(Chunk::Custom(format!(
+                "{}",
                 trampoline.bound_name
             )))),
         });
