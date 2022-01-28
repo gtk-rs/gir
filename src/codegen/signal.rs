@@ -160,9 +160,7 @@ fn function_type_string(
     analysis: &analysis::signals::Info,
     closure: bool,
 ) -> Option<String> {
-    if analysis.trampoline.is_err() {
-        return None;
-    }
+    analysis.trampoline.as_ref().ok()?;
 
     let trampoline = analysis.trampoline.as_ref().unwrap_or_else(|_| {
         panic!(
