@@ -58,6 +58,8 @@ status = "generate"
 generate_builder = true
 ```
 
+> If the object doesn't already have a `Default` implementation through a constructor method without arguments, generating a `Builder` struct will add a `Default` implementation for the object.
+
 If you want to remove warning messages about the not bound `Builders` during the generation you don't want to be generated, you can ignore them with the `generate_builder` flag in object configuration:
 
 ```toml
