@@ -183,6 +183,9 @@ name = &quot;Gtk.TreeView&quot;
 status = &quot;generate&quot;
 generate_builder = true
 </code></pre>
+<blockquote>
+<p>If the object doesn't already have a <code>Default</code> implementation through a constructor method without arguments, generating a <code>Builder</code> struct will add a <code>Default</code> implementation for the object.</p>
+</blockquote>
 <p>If you want to remove warning messages about the not bound <code>Builders</code> during the generation you don't want to be generated, you can ignore them with the <code>generate_builder</code> flag in object configuration:</p>
 <pre><code class="language-toml">[[object]]
 name = &quot;Gtk.TreeView&quot;
