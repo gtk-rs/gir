@@ -60,7 +60,7 @@ pub fn new(env: &Env, obj: &GObject, imports: &mut Imports) -> Option<Info> {
     let mut functions = functions::analyze(
         env,
         &flags.functions,
-        flags_tid,
+        Some(flags_tid),
         false,
         false,
         obj,

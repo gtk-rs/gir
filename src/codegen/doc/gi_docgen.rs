@@ -208,7 +208,12 @@ fn find_method_or_function_by_name(
         name,
         env,
         in_type,
-        |f| f.name == mangle_keywords(name),
+        |f| {
+            f.name == mangle_keywords(name)
+                && namespace.as_ref().map_or(f.ns_id == MAIN_NAMESPACE, |n| {
+                    &env.library.namespaces[f.ns_id as usize].name == n
+                })
+        },
         |o| {
             type_.map_or(true, |t| {
                 o.name == t && is_same_namespace(env, namespace, o.type_id)
