@@ -90,7 +90,7 @@ pub fn new(env: &Env, obj: &GObject) -> Option<Info> {
     let mut functions = functions::analyze(
         env,
         &record.functions,
-        record_tid,
+        Some(record_tid),
         false,
         is_boxed,
         obj,
