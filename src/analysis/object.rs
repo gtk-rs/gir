@@ -175,7 +175,7 @@ pub fn class(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<Info>
     let mut functions = functions::analyze(
         env,
         &klass.functions,
-        class_tid,
+        Some(class_tid),
         !final_type,
         false,
         obj,
@@ -345,7 +345,7 @@ pub fn interface(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<I
     let functions = functions::analyze(
         env,
         &iface.functions,
-        iface_tid,
+        Some(iface_tid),
         true,
         false,
         obj,

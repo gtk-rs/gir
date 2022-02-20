@@ -266,7 +266,7 @@ fn analyze_global_functions(env: &mut Env) {
     let functions = functions::analyze(
         env,
         &functions,
-        TypeId::tid_none(),
+        None,
         false,
         false,
         obj,
