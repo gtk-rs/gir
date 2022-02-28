@@ -664,6 +664,9 @@ fn create_bitfield_doc(
                 if let Some(ref doc) = member.doc {
                     writeln!(w, "{}", reformat_doc(doc, env, Some((&tid, None))))?;
                 }
+                if let Some(ref doc) = member.doc_deprecated {
+                    writeln!(w, "{}", reformat_doc(doc, env, Some((&tid, None))))?;
+                }
                 Ok(())
             })?;
         }
