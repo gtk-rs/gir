@@ -34,13 +34,13 @@ A few new things in here. Let's take a look at them:
 Let's make a first generation of our high-level Rust API!
 
 ```console
-> gir
+> gir -o .
 ```
 
 Now if you take a look around, you'll see a new "auto" folder inside "src". Doesn't contain much though. Which makes sense since we're generating nothing. Time to introduce you to a whole new [gir] mode: `not_bound`. Let's give it a try:
 
 ```console
-> gir -m not_bound
+> gir -o . -m not_bound
 [NOT GENERATED] GtkSource.Buffer
 [NOT GENERATED PARENT] Gtk.TextBuffer
 [NOT GENERATED] GtkSource.Language
@@ -131,7 +131,7 @@ generate = [
 Another `gir` run:
 
 ```console
-> gir
+> gir -o .
 ```
 
 (Again, if you do it on another library and it fails and you can't figure out why, don't hesitate to reach us!)
@@ -215,7 +215,7 @@ generate = [
 We regenerate:
 
 ```console
-> gir
+> gir -o .
 ```
 
 We rebuild:
@@ -260,7 +260,7 @@ git = "https://github.com/gtk-rs/gtk"
 We regenerate and rebuild:
 
 ```console
-> gir
+> gir -o .
 > cargo build
 ```
 
