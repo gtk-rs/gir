@@ -84,7 +84,7 @@ fn get_language<'a>(entry: &'a str, out: &mut String) -> &'a str {
 
 // try to get the language if any is defined or fallback to text
 fn get_markdown_language(input: &str) -> (&str, &str) {
-    let (lang, after) = if let Some((lang, after)) = input.split_once("\n") {
+    let (lang, after) = if let Some((lang, after)) = input.split_once('\n') {
         let lang = if lang.is_empty() { None } else { Some(lang) };
         (lang, after)
     } else {

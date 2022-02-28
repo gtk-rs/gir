@@ -28,6 +28,8 @@ impl Builder {
         self
     }
 
+    // https://github.com/rust-lang/rust-clippy/issues/8480
+    #[allow(clippy::wrong_self_convention)]
     pub fn is_detailed(&mut self, value: bool) -> &mut Builder {
         self.is_detailed = value;
         self
