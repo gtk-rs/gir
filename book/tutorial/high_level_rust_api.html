@@ -161,10 +161,10 @@ generate = []
 <li><code>generate = []</code>: this line currently does nothing. We say to <a href="https://github.com/gtk-rs/gir">gir</a> to generate nothing. We'll fulfill it later on.</li>
 </ul>
 <p>Let's make a first generation of our high-level Rust API!</p>
-<pre><code class="language-console">&gt; gir
+<pre><code class="language-console">&gt; gir -o .
 </code></pre>
 <p>Now if you take a look around, you'll see a new &quot;auto&quot; folder inside &quot;src&quot;. Doesn't contain much though. Which makes sense since we're generating nothing. Time to introduce you to a whole new <a href="https://github.com/gtk-rs/gir">gir</a> mode: <code>not_bound</code>. Let's give it a try:</p>
-<pre><code class="language-console">&gt; gir -m not_bound
+<pre><code class="language-console">&gt; gir -o . -m not_bound
 [NOT GENERATED] GtkSource.Buffer
 [NOT GENERATED PARENT] Gtk.TextBuffer
 [NOT GENERATED] GtkSource.Language
@@ -248,7 +248,7 @@ generate = []
 ]
 </code></pre>
 <p>Another <code>gir</code> run:</p>
-<pre><code class="language-console">&gt; gir
+<pre><code class="language-console">&gt; gir -o .
 </code></pre>
 <p>(Again, if you do it on another library and it fails and you can't figure out why, don't hesitate to reach us!)</p>
 <p>We now have a <code>src/auto/language.rs</code> file. We need to include all <code>auto</code> files in our library. To do so, let's update the <code>src/lib.rs</code> file as follows:</p>
@@ -312,7 +312,7 @@ git = &quot;https://github.com/gtk-rs/sys&quot; # all gtk-rs sys crates are in t
 ]
 </code></pre>
 <p>We regenerate:</p>
-<pre><code class="language-console">&gt; gir
+<pre><code class="language-console">&gt; gir -o .
 </code></pre>
 <p>We rebuild:</p>
 <pre><code class="language-console">&gt; cargo build
@@ -345,7 +345,7 @@ manual = [
 git = &quot;https://github.com/gtk-rs/gtk&quot;
 </code></pre>
 <p>We regenerate and rebuild:</p>
-<pre><code class="language-console">&gt; gir
+<pre><code class="language-console">&gt; gir -o .
 &gt; cargo build
 </code></pre>
 <p>Everything is working, yeay! If you take another look at <code>src/auto/region.rs</code>, you'll see a lot less commented functions. Amongst the remaining ones, you'll see this one:</p>
