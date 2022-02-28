@@ -501,7 +501,7 @@ impl Library {
 
                 if let Type::Enumeration(enum_) = type_ {
                     if let Some(ErrorDomain::Quark(ref domain)) = enum_.error_domain {
-                        let domain = domain.replace("-", "_");
+                        let domain = domain.replace('-', "_");
 
                         let mut function_candidates = vec![domain.clone()];
                         if !domain.ends_with("_quark") {
