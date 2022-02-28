@@ -581,6 +581,8 @@ fn generate_trait(w: &mut dyn Write, env: &Env, analysis: &analysis::object::Inf
     Ok(())
 }
 
+// https://github.com/rust-lang/rust-clippy/issues/8482
+#[allow(clippy::ptr_arg)]
 pub fn generate_reexports(
     env: &Env,
     analysis: &analysis::object::Info,

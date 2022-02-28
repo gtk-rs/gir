@@ -133,7 +133,7 @@ fn update_func(func: &mut FuncInfo, type_: Type) -> bool {
     true
 }
 
-pub fn extract(functions: &mut Vec<FuncInfo>, parent_type: &LibType, obj: &GObject) -> Infos {
+pub fn extract(functions: &mut [FuncInfo], parent_type: &LibType, obj: &GObject) -> Infos {
     let mut specials = Infos::default();
     let mut has_copy = false;
     let mut has_free = false;
@@ -230,7 +230,7 @@ pub fn extract(functions: &mut Vec<FuncInfo>, parent_type: &LibType, obj: &GObje
 }
 
 // Some special functions (e.g. `copy` on refcounted types) should be exposed
-pub fn unhide(functions: &mut Vec<FuncInfo>, specials: &Infos, type_: Type) {
+pub fn unhide(functions: &mut [FuncInfo], specials: &Infos, type_: Type) {
     if let Some(func) = specials.traits().get(&type_) {
         let func = functions
             .iter_mut()
