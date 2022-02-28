@@ -387,6 +387,7 @@ pub struct Member {
     pub c_identifier: String,
     pub value: String,
     pub doc: Option<String>,
+    pub doc_deprecated: Option<String>,
     pub status: GStatus,
     pub version: Option<Version>,
     pub deprecated_version: Option<Version>,

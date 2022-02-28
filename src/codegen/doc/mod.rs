@@ -618,6 +618,9 @@ fn create_enum_doc(w: &mut dyn Write, env: &Env, enum_: &Enumeration, tid: TypeI
                 if let Some(ref doc) = member.doc {
                     writeln!(w, "{}", reformat_doc(doc, env, Some((&tid, None))))?;
                 }
+                if let Some(ref doc) = member.doc_deprecated {
+                    writeln!(w, "{}", reformat_doc(doc, env, Some((&tid, None))))?;
+                }
                 Ok(())
             })?;
         }
@@ -659,6 +662,9 @@ fn create_bitfield_doc(
             };
             write_item_doc(w, &sub_ty, |w| {
                 if let Some(ref doc) = member.doc {
+                    writeln!(w, "{}", reformat_doc(doc, env, Some((&tid, None))))?;
+                }
+                if let Some(ref doc) = member.doc_deprecated {
                     writeln!(w, "{}", reformat_doc(doc, env, Some((&tid, None))))?;
                 }
                 Ok(())
