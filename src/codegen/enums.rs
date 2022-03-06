@@ -6,6 +6,7 @@ use crate::{
         self, cfg_condition, cfg_condition_no_doc, cfg_condition_string, cfg_deprecated, derives,
         doc_alias, version_condition, version_condition_no_doc, version_condition_string,
     },
+    codegen::generate_default_impl,
     config::gobjects::GObject,
     env::Env,
     file_saver,
@@ -449,6 +450,25 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
         )?;
         writeln!(w)?;
     }
+
+    generate_default_impl(
+        w,
+        env,
+        config,
+        &enum_.name,
+        enum_.version,
+        enum_.members.iter(),
+        |member| {
+            let e_member = members.iter().find(|m| m.c_name == member.c_identifier)?;
+            let member_config = config.members.matched(&member.name);
+            let version = member_config
+                .iter()
+                .find_map(|m| m.version)
+                .or(e_member.version);
+            let cfg_condition = member_config.iter().find_map(|m| m.cfg_condition.as_ref());
+            Some((version, cfg_condition, e_member.name.as_str()))
+        },
+    )?;
 
     Ok(())
 }

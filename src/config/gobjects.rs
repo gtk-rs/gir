@@ -97,6 +97,7 @@ pub struct GObject {
     pub copy_into_function_expression: Option<String>,
     pub clear_function_expression: Option<String>,
     pub visibility: Visibility,
+    pub default_value: Option<String>,
 }
 
 impl Default for GObject {
@@ -133,6 +134,7 @@ impl Default for GObject {
             copy_into_function_expression: None,
             clear_function_expression: None,
             visibility: Default::default(),
+            default_value: None,
         }
     }
 }
@@ -285,6 +287,7 @@ fn parse_object(
             "copy_into_function_expression",
             "clear_function_expression",
             "visibility",
+            "default_value",
         ],
         &format!("object {}", name),
     );
@@ -417,6 +420,10 @@ fn parse_object(
         .lookup("clear_function_expression")
         .and_then(Value::as_str)
         .map(ToOwned::to_owned);
+    let default_value = toml_object
+        .lookup("default_value")
+        .and_then(Value::as_str)
+        .map(ToOwned::to_owned);
 
     let visibility = toml_object
         .lookup("visibility")
@@ -504,6 +511,7 @@ fn parse_object(
         copy_into_function_expression,
         clear_function_expression,
         visibility,
+        default_value,
     }
 }
 
