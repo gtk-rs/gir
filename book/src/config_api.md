@@ -117,6 +117,9 @@ generate_builder = true
 trust_return_value_nullability = false
 # Tweak the visibility of the type
 visibility = "pub" # or 'crate' / 'private' / 'super'
+# The default value to used for the `Default` implementation. It only
+# works for flags and enums. You have to pass the "GIR" member name.
+default_value = "fill"
     # define overrides for function
     [[object.function]]
     # filter functions from object
