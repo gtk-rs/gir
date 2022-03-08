@@ -7,6 +7,7 @@ use crate::{
         cfg_deprecated, derives, doc_alias, version_condition, version_condition_doc,
         version_condition_no_doc, version_condition_string,
     },
+    codegen::generate_default_impl,
     config::gobjects::GObject,
     env::Env,
     file_saver,
@@ -186,6 +187,26 @@ fn generate_flags(
             flags.name
         )?;
     }
+    generate_default_impl(
+        w,
+        env,
+        config,
+        &flags.name,
+        flags.version,
+        flags.members.iter(),
+        |member| {
+            let member_config = config.members.matched(&member.name);
+            if member.status.ignored() {
+                return None;
+            }
+            let version = member_config
+                .iter()
+                .find_map(|m| m.version)
+                .or(member.version);
+            let cfg_cond = member_config.iter().find_map(|m| m.cfg_condition.as_ref());
+            Some((version, cfg_cond, bitfield_member_name(&member.name)))
+        },
+    )?;
 
     version_condition(w, env, None, flags.version, false, 0)?;
     cfg_condition_no_doc(w, config.cfg_condition.as_ref(), false, 0)?;
