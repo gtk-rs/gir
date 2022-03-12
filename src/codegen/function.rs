@@ -160,10 +160,11 @@ pub fn generate(
         doc_hidden(w, analysis.doc_hidden, comment_prefix, indent)?;
         writeln!(
             w,
-            "{}{}{}{}{}",
+            "{}{}{}{}{}{}",
             tabs(indent),
             comment_prefix,
             pub_prefix,
+            unsafe_,
             declaration,
             suffix
         )?;
