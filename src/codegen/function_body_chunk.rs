@@ -422,7 +422,10 @@ impl Builder {
                 add_chunk_for_type(env, par.typ, par, &mut body, &ty_name, nullable);
             if is_gstring(&ty_name) {
                 if *nullable {
-                    arguments.push(Chunk::Name(format!("{}.as_ref().as_deref()", par.name)));
+                    arguments.push(Chunk::Name(format!(
+                        "(*{}).as_ref().map(|s| s.as_str())",
+                        par.name
+                    )));
                 } else {
                     arguments.push(Chunk::Name(format!("{}.as_str()", par.name)));
                 }
