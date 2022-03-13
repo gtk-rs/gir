@@ -28,6 +28,15 @@ pub fn generate(
     general::start_comments(w, &env.config)?;
     general::uses(w, env, &analysis.imports, analysis.version)?;
 
+    let config = &env.config.objects[&analysis.full_name];
+    if config.default_value.is_some() {
+        log::error!(
+            "`default_value` can only be used on flags and enums. {} is neither. Ignoring \
+             `default_value`.",
+            analysis.name,
+        );
+    }
+
     // Collect all supertypes that were added at a later time. The `glib::wrapper!` call
     // needs to be done multiple times with different `#[cfg]` directives if there is a difference.
     let mut namespaces = Vec::new();
@@ -581,6 +590,8 @@ fn generate_trait(w: &mut dyn Write, env: &Env, analysis: &analysis::object::Inf
     Ok(())
 }
 
+// https://github.com/rust-lang/rust-clippy/issues/8482
+#[allow(clippy::ptr_arg)]
 pub fn generate_reexports(
     env: &Env,
     analysis: &analysis::object::Info,

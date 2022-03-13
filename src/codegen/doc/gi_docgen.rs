@@ -4,7 +4,7 @@ use crate::{
         gen_alias_doc_link, gen_callback_doc_link, gen_const_doc_link, gen_object_fn_doc_link,
         gen_property_doc_link, gen_signal_doc_link, gen_symbol_doc_link, gen_vfunc_doc_link,
     },
-    library::TypeId,
+    library::{TypeId, MAIN_NAMESPACE},
     nameutil::mangle_keywords,
     Env,
 };
@@ -198,6 +198,7 @@ fn ns_type_to_doc(namespace: &Option<String>, type_: &str) -> String {
 
 fn find_method_or_function_by_name(
     type_: Option<&str>,
+    namespace: Option<&str>,
     name: &str,
     env: &Env,
     in_type: Option<(&TypeId, Option<LocationInObject>)>,
@@ -207,13 +208,42 @@ fn find_method_or_function_by_name(
         name,
         env,
         in_type,
-        |f| f.name == mangle_keywords(name),
-        |o| type_.map_or(true, |t| o.name == t),
-        |r| type_.map_or(true, |t| r.name == t),
-        |e| type_.map_or(true, |t| e.name == t),
-        |f| type_.map_or(true, |t| f.name == t),
+        |f| {
+            f.name == mangle_keywords(name)
+                && namespace.as_ref().map_or(f.ns_id == MAIN_NAMESPACE, |n| {
+                    &env.library.namespaces[f.ns_id as usize].name == n
+                })
+        },
+        |o| {
+            type_.map_or(true, |t| {
+                o.name == t && is_same_namespace(env, namespace, o.type_id)
+            })
+        },
+        |r| {
+            type_.map_or(true, |t| {
+                r.name == t && is_same_namespace(env, namespace, r.type_id)
+            })
+        },
+        |e| {
+            type_.map_or(true, |t| {
+                e.name == t && is_same_namespace(env, namespace, e.type_id)
+            })
+        },
+        |f| {
+            type_.map_or(true, |t| {
+                f.name == t && is_same_namespace(env, namespace, f.type_id)
+            })
+        },
         is_class_method,
     )
+}
+
+fn is_same_namespace(env: &Env, namespace: Option<&str>, type_id: TypeId) -> bool {
+    namespace
+        .as_ref()
+        .map_or(MAIN_NAMESPACE == type_id.ns_id, |n| {
+            &env.library.namespaces[type_id.ns_id as usize].name == n
+        })
 }
 
 impl GiDocgen {
@@ -237,7 +267,9 @@ impl GiDocgen {
                 .analysis
                 .objects
                 .values()
-                .find(|o| &o.name == type_)
+                .find(|o| {
+                    &o.name == type_ && is_same_namespace(env, namespace.as_deref(), o.type_id)
+                })
                 .map_or_else(
                     || format!("`{}`", ns_type_to_doc(namespace, type_)),
                     |info| gen_symbol_doc_link(info.type_id, env),
@@ -246,7 +278,9 @@ impl GiDocgen {
                 .analysis
                 .flags
                 .iter()
-                .find(|e| &e.name == type_)
+                .find(|e| {
+                    &e.name == type_ && is_same_namespace(env, namespace.as_deref(), e.type_id)
+                })
                 .map_or_else(
                     || format!("`{}`", ns_type_to_doc(namespace, type_)),
                     |info| gen_symbol_doc_link(info.type_id, env),
@@ -255,7 +289,7 @@ impl GiDocgen {
                 .analysis
                 .constants
                 .iter()
-                .find(|c| &c.name == type_)
+                .find(|c| &c.name == type_ && is_same_namespace(env, namespace.as_deref(), c.typ))
                 .map_or_else(
                     || format!("`{}`", ns_type_to_doc(namespace, type_)),
                     gen_const_doc_link,
@@ -268,7 +302,9 @@ impl GiDocgen {
                 .analysis
                 .objects
                 .values()
-                .find(|o| &o.name == type_)
+                .find(|o| {
+                    &o.name == type_ && is_same_namespace(env, namespace.as_deref(), o.type_id)
+                })
                 .map_or_else(
                     || gen_property_doc_link(&ns_type_to_doc(namespace, type_), name),
                     |info| {
@@ -284,7 +320,9 @@ impl GiDocgen {
                 .analysis
                 .objects
                 .values()
-                .find(|o| &o.name == type_)
+                .find(|o| {
+                    &o.name == type_ && is_same_namespace(env, namespace.as_deref(), o.type_id)
+                })
                 .map_or_else(
                     || gen_signal_doc_link(&ns_type_to_doc(namespace, type_), name),
                     |info| {
@@ -300,7 +338,9 @@ impl GiDocgen {
                 .analysis
                 .records
                 .values()
-                .find(|r| &r.name == type_)
+                .find(|r| {
+                    &r.name == type_ && is_same_namespace(env, namespace.as_deref(), r.type_id)
+                })
                 .map_or_else(
                     || format!("`{}`", ns_type_to_doc(namespace, type_)),
                     |info| gen_symbol_doc_link(info.type_id, env),
@@ -313,7 +353,7 @@ impl GiDocgen {
                 .analysis
                 .find_object_by_function(
                     env,
-                    |o| &o.name == type_,
+                    |o| &o.name == type_ && is_same_namespace(env, namespace.as_deref(), o.type_id),
                     |f| f.name == mangle_keywords(name),
                 )
                 .map_or_else(
@@ -326,22 +366,36 @@ impl GiDocgen {
                 namespace,
                 type_,
                 name,
-            } => find_method_or_function_by_name(type_.as_deref(), name, env, in_type, false)
-                .unwrap_or_else(|| {
-                    if let Some(ty) = type_ {
-                        format!("`{}::{}()`", ns_type_to_doc(namespace, ty), name)
-                    } else {
-                        format!("`{}()`", name)
-                    }
-                }),
+            } => find_method_or_function_by_name(
+                type_.as_deref(),
+                namespace.as_deref(),
+                name,
+                env,
+                in_type,
+                false,
+            )
+            .unwrap_or_else(|| {
+                if let Some(ty) = type_ {
+                    format!("`{}::{}()`", ns_type_to_doc(namespace, ty), name)
+                } else {
+                    format!("`{}()`", name)
+                }
+            }),
             GiDocgen::Alias(alias) => gen_alias_doc_link(alias),
             GiDocgen::Method {
                 namespace,
                 type_,
                 name,
                 is_class_method,
-            } => find_method_or_function_by_name(Some(type_), name, env, in_type, *is_class_method)
-                .unwrap_or_else(|| format!("`{}::{}()`", ns_type_to_doc(namespace, type_), name)),
+            } => find_method_or_function_by_name(
+                Some(type_),
+                namespace.as_deref(),
+                name,
+                env,
+                in_type,
+                *is_class_method,
+            )
+            .unwrap_or_else(|| format!("`{}::{}()`", ns_type_to_doc(namespace, type_), name)),
             GiDocgen::Callback { namespace, name } => {
                 gen_callback_doc_link(&ns_type_to_doc(namespace, name))
             }

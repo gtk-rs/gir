@@ -61,11 +61,11 @@ impl Info {
     pub fn should_generate_impl_block(&self) -> bool {
         self.has_constructors
             || has_builder_properties(&self.builder_properties)
-            || !self.need_generate_trait()
-                && !(self.methods().is_empty()
-                    && self.properties.is_empty()
-                    && self.child_properties.is_empty()
-                    && self.signals.is_empty())
+            || !(self.need_generate_trait()
+                && self.methods().is_empty()
+                && self.properties.is_empty()
+                && self.child_properties.is_empty()
+                && self.signals.is_empty())
             || self.has_functions
     }
 
@@ -175,7 +175,7 @@ pub fn class(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<Info>
     let mut functions = functions::analyze(
         env,
         &klass.functions,
-        class_tid,
+        Some(class_tid),
         !final_type,
         false,
         obj,
@@ -345,7 +345,7 @@ pub fn interface(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<I
     let functions = functions::analyze(
         env,
         &iface.functions,
-        iface_tid,
+        Some(iface_tid),
         true,
         false,
         obj,

@@ -52,7 +52,7 @@ pub fn file_name_sys(name: &str) -> String {
 
 /// Crate name with undescores for `use` statement
 pub fn crate_name(name: &str) -> String {
-    let name = name.replace("-", "_").to_snake();
+    let name = name.replace('-', "_").to_snake();
     let crate_name = if let Some(name_without_prefix) = name.strip_prefix("g_") {
         name_without_prefix.to_owned()
     } else {
@@ -67,7 +67,7 @@ pub fn crate_name(name: &str) -> String {
 
 /// Crate name with '-' for Cargo.toml etc.
 pub fn exported_crate_name(crate_name: &str) -> String {
-    crate_name.replace("_", "-")
+    crate_name.replace('_', "-")
 }
 
 pub fn module_name(name: &str) -> String {
@@ -123,7 +123,7 @@ pub fn signal_to_snake(signal: &str) -> String {
 }
 
 pub fn lib_name_to_toml(name: &str) -> String {
-    name.to_string().replace("-", "_").replace(".", "_")
+    name.to_string().replace(&['-', '.'], "_")
 }
 
 pub fn shared_lib_name_to_link_name(name: &str) -> &str {
@@ -133,7 +133,7 @@ pub fn shared_lib_name_to_link_name(name: &str) -> &str {
         s = &s[3..];
     }
 
-    let offset = s.find(".so").unwrap_or_else(|| s.len());
+    let offset = s.find(".so").unwrap_or(s.len());
     s = &s[..offset];
 
     s

@@ -23,7 +23,10 @@ use crate::{
     codegen::Visibility,
     config::{self, gobjects::GStatus},
     env::Env,
-    library::{self, Function, FunctionKind, ParameterDirection, ParameterScope, Transfer, Type},
+    library::{
+        self, Function, FunctionKind, ParameterDirection, ParameterScope, Transfer, Type,
+        MAIN_NAMESPACE,
+    },
     nameutil,
     traits::*,
     version::Version,
@@ -34,7 +37,7 @@ use std::{
     collections::{HashMap, HashSet},
 };
 
-use super::special_functions;
+use super::{namespaces::NsId, special_functions};
 
 #[derive(Clone, Debug)]
 pub struct AsyncTrampoline {
@@ -91,6 +94,9 @@ pub struct Info {
     pub hidden: bool,
     /// Whether the function can't be generated
     pub commented: bool,
+    /// In order to generate docs links we need to know in which namespace
+    /// this potential global function is defined
+    pub ns_id: NsId,
 }
 
 impl Info {
@@ -154,7 +160,7 @@ impl Info {
 pub fn analyze<F: Borrow<library::Function>>(
     env: &Env,
     functions: &[F],
-    type_tid: library::TypeId,
+    type_tid: Option<library::TypeId>,
     in_trait: bool,
     is_boxed: bool,
     obj: &config::gobjects::GObject,
@@ -179,7 +185,10 @@ pub fn analyze<F: Borrow<library::Function>>(
             }
         }
 
-        if env.is_totally_deprecated(Some(type_tid.ns_id), func.deprecated_version) {
+        if env.is_totally_deprecated(
+            Some(type_tid.unwrap_or_default().ns_id),
+            func.deprecated_version,
+        ) {
             continue;
         }
         let name = nameutil::mangle_keywords(&*func.name).into_owned();
@@ -536,12 +545,14 @@ fn analyze_function(
     name: String,
     status: GStatus,
     func: &library::Function,
-    type_tid: library::TypeId,
+    type_tid: Option<library::TypeId>,
     in_trait: bool,
     is_boxed: bool,
     configured_functions: &[&config::functions::Function],
     imports: &mut Imports,
 ) -> Info {
+    let ns_id = type_tid.map_or(MAIN_NAMESPACE, |t| t.ns_id);
+    let type_tid = type_tid.unwrap_or_default();
     let r#async = func.parameters.iter().any(|parameter| {
         parameter.scope == ParameterScope::Async && parameter.c_type == "GAsyncReadyCallback"
     });
@@ -911,6 +922,7 @@ fn analyze_function(
         remove_params: cross_user_data_check.values().cloned().collect::<Vec<_>>(),
         commented,
         hidden: false,
+        ns_id,
     }
 }
 

@@ -904,9 +904,11 @@ impl Library {
         let deprecated_version = self.read_deprecated_version(parser, ns_id, elem)?;
 
         let mut doc = None;
+        let mut doc_deprecated = None;
 
         parser.elements(|parser, elem| match elem.name() {
             "doc" => parser.text().map(|t| doc = Some(t)),
+            "doc-deprecated" => parser.text().map(|t| doc_deprecated = Some(t)),
             "attribute" => parser.ignore_element(),
             _ => Err(parser.unexpected_element(elem)),
         })?;
@@ -915,6 +917,7 @@ impl Library {
             name: member_name.into(),
             value: value.into(),
             doc,
+            doc_deprecated,
             c_identifier: c_identifier.unwrap_or_else(|| member_name.into()),
             status: crate::config::gobjects::GStatus::Generate,
             version,

@@ -65,7 +65,7 @@ pub fn new(env: &Env, obj: &GObject, imports: &mut Imports) -> Option<Info> {
     let mut functions = functions::analyze(
         env,
         &enumeration.functions,
-        enumeration_tid,
+        Some(enumeration_tid),
         false,
         false,
         obj,

@@ -1,5 +1,10 @@
-use crate::{config::WorkMode, env::Env, file_saver::*};
+use crate::config::gobjects::GObject;
+use crate::{config::WorkMode, env::Env, file_saver::*, library::Member, version::Version};
+use std::fmt::Display;
+use std::io::{Result, Write};
 use std::path::Path;
+
+use general::{cfg_condition, version_condition};
 
 mod alias;
 mod bound;
@@ -95,5 +100,63 @@ pub fn generate_single_version_file(env: &Env) {
         save_to_file(path, env.config.make_backup, |w| {
             general::single_version_file(w, &env.config, "")
         });
+    }
+}
+
+pub fn generate_default_impl<
+    'a,
+    D: Display,
+    F: Fn(&'a Member) -> Option<(Option<Version>, Option<&'a String>, D)>,
+>(
+    w: &mut dyn Write,
+    env: &Env,
+    config: &GObject,
+    type_name: &str,
+    type_version: Option<Version>,
+    mut members: impl Iterator<Item = &'a Member>,
+    callback: F,
+) -> Result<()> {
+    if let Some(ref default_value) = config.default_value {
+        let member = match members.find(|m| m.name == *default_value) {
+            Some(m) => m,
+            None => {
+                log::error!(
+                    "type `{}` doesn't have a member named `{}`. Not generating default impl.",
+                    type_name,
+                    default_value,
+                );
+                return Ok(());
+            }
+        };
+        let (version, cfg_cond, member_name) = match callback(member) {
+            Some(n) => n,
+            None => {
+                log::error!(
+                    "member `{}` on type `{}` isn't generated so no default impl.",
+                    default_value,
+                    type_name,
+                );
+                return Ok(());
+            }
+        };
+
+        // First we generate the type cfg.
+        version_condition(w, env, None, type_version, false, 0)?;
+        cfg_condition(w, config.cfg_condition.as_ref(), false, 0)?;
+        // Then we generate the member cfg.
+        version_condition(w, env, None, version, false, 0)?;
+        cfg_condition(w, cfg_cond, false, 0)?;
+        writeln!(
+            w,
+            "\n\
+             impl Default for {} {{\n\
+             \tfn default() -> Self {{\n\
+             \t\tSelf::{}\n\
+             \t}}\n\
+             }}\n",
+            type_name, member_name,
+        )
+    } else {
+        Ok(())
     }
 }
