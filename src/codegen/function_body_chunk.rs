@@ -1222,23 +1222,16 @@ impl Builder {
                     panic!("Call without Chunk::FfiCallConversion")
                 };
                 self.remove_extra_assume_init(&array_length_name, uninitialized_vars);
-                let assert_safe_ret;
-                let call = if use_ret {
-                    assert_safe_ret = Option::None;
-                    Chunk::Let {
-                        name: "ret".into(),
-                        is_mut: false,
-                        value: boxed_call,
-                        type_: Option::None,
-                    }
+                let (name, assert_safe_ret) = if use_ret {
+                    ("ret", Option::None)
                 } else {
-                    assert_safe_ret = Some(Box::new(Chunk::AssertErrorSanity));
-                    Chunk::Let {
-                        name: "is_ok".into(),
-                        is_mut: false,
-                        value: boxed_call,
-                        type_: Option::None,
-                    }
+                    ("is_ok", Some(Box::new(Chunk::AssertErrorSanity)))
+                };
+                let call = Chunk::Let {
+                    name: name.into(),
+                    is_mut: false,
+                    value: boxed_call,
+                    type_: Option::None,
                 };
                 let mut ret = ret.expect("No return in throws outs mode");
                 if let Chunk::Tuple(ref mut vec, ref mut mode) = ret {
