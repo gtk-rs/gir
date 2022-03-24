@@ -1227,6 +1227,7 @@ impl Builder {
                     ThrowFunctionReturnStrategy::CheckError => {
                         ("is_ok", Some(Box::new(Chunk::AssertErrorSanity)))
                     }
+                    ThrowFunctionReturnStrategy::Void => ("_", Option::None),
                 };
                 let call = Chunk::Let {
                     name: name.into(),

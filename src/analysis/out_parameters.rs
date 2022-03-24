@@ -18,6 +18,7 @@ use std::slice::Iter;
 pub enum ThrowFunctionReturnStrategy {
     ReturnResult,
     CheckError,
+    Void,
 }
 
 impl Default for ThrowFunctionReturnStrategy {
@@ -199,11 +200,14 @@ fn decide_throw_function_return_strategy(
         .as_ref()
         .map(|par| par.lib_par.typ)
         .unwrap_or_default();
-    let use_ret = use_function_return_for_result(env, typ, func_name, configured_functions);
-    if use_ret {
-        ThrowFunctionReturnStrategy::ReturnResult
+    if env.type_(typ).eq(&Type::Fundamental(Fundamental::None)) {
+        ThrowFunctionReturnStrategy::Void
     } else {
-        ThrowFunctionReturnStrategy::CheckError
+        if use_function_return_for_result(env, typ, func_name, configured_functions) {
+            ThrowFunctionReturnStrategy::ReturnResult
+        } else {
+            ThrowFunctionReturnStrategy::CheckError
+        }
     }
 }
 
