@@ -6,7 +6,7 @@ use crate::{
             CParameter as AnalysisCParameter, Transformation, TransformationType,
         },
         functions::{find_index_to_ignore, AsyncTrampoline},
-        out_parameters::Mode,
+        out_parameters::{Mode, ThrowFunctionReturnStrategy},
         return_value,
         rust_type::RustType,
         safety_assertion_mode::SafetyAssertionMode,
@@ -1209,7 +1209,7 @@ impl Builder {
                 }
                 (call, Some(ret))
             }
-            Throws(use_ret) => {
+            Throws(return_strategy) => {
                 //extracting original FFI function call
                 let (boxed_call, array_length_name, ret_info) = if let Chunk::FfiCallConversion {
                     call: inner,
@@ -1222,10 +1222,11 @@ impl Builder {
                     panic!("Call without Chunk::FfiCallConversion")
                 };
                 self.remove_extra_assume_init(&array_length_name, uninitialized_vars);
-                let (name, assert_safe_ret) = if use_ret {
-                    ("ret", Option::None)
-                } else {
-                    ("is_ok", Some(Box::new(Chunk::AssertErrorSanity)))
+                let (name, assert_safe_ret) = match return_strategy {
+                    ThrowFunctionReturnStrategy::ReturnResult => ("ret", Option::None),
+                    ThrowFunctionReturnStrategy::CheckError => {
+                        ("is_ok", Some(Box::new(Chunk::AssertErrorSanity)))
+                    }
                 };
                 let call = Chunk::Let {
                     name: name.into(),
@@ -1234,9 +1235,10 @@ impl Builder {
                     type_: Option::None,
                 };
                 let mut ret = ret.expect("No return in throws outs mode");
-                if let Chunk::Tuple(ref mut vec, ref mut mode) = ret {
+
+                if let Chunk::Tuple(vec, mode) = &mut ret {
                     *mode = TupleMode::WithUnit;
-                    if use_ret {
+                    if return_strategy == ThrowFunctionReturnStrategy::ReturnResult {
                         let val = Chunk::Custom("ret".into());
                         let conv = Chunk::FfiCallConversion {
                             call: Box::new(val),
