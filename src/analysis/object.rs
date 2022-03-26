@@ -93,7 +93,7 @@ impl Info {
             )
         {
             LocationInObject::Impl
-        } else if fn_info.status == GStatus::Generate {
+        } else if fn_info.status == GStatus::Generate || self.full_name == "GObject.Object" {
             LocationInObject::Ext
         } else {
             LocationInObject::ExtManual
