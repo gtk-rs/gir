@@ -202,12 +202,10 @@ fn decide_throw_function_return_strategy(
         .unwrap_or_default();
     if env.type_(typ).eq(&Type::Fundamental(Fundamental::None)) {
         ThrowFunctionReturnStrategy::Void
+    } else if use_function_return_for_result(env, typ, func_name, configured_functions) {
+        ThrowFunctionReturnStrategy::ReturnResult
     } else {
-        if use_function_return_for_result(env, typ, func_name, configured_functions) {
-            ThrowFunctionReturnStrategy::ReturnResult
-        } else {
-            ThrowFunctionReturnStrategy::CheckError
-        }
+        ThrowFunctionReturnStrategy::CheckError
     }
 }
 
