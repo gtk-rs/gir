@@ -15,13 +15,25 @@ use log::error;
 use std::slice::Iter;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum ThrowFunctionReturnStrategy {
+    ReturnResult,
+    CheckError,
+    Void,
+}
+
+impl Default for ThrowFunctionReturnStrategy {
+    fn default() -> Self {
+        Self::ReturnResult
+    }
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum Mode {
     None,
     Normal,
     Optional,
     Combined,
-    //<use function return>
-    Throws(bool),
+    Throws(ThrowFunctionReturnStrategy),
 }
 
 impl Default for Mode {
@@ -58,8 +70,9 @@ pub fn analyze(
 
     let nullable_override = configured_functions.iter().find_map(|f| f.ret.nullable);
     if func.throws {
-        let use_ret = use_return_value_for_result(env, func_ret, &func.name, configured_functions);
-        info.mode = Mode::Throws(use_ret);
+        let return_strategy =
+            decide_throw_function_return_strategy(env, func_ret, &func.name, configured_functions);
+        info.mode = Mode::Throws(return_strategy);
     } else if func.ret.typ == TypeId::tid_none() {
         info.mode = Mode::Normal;
     } else if func.ret.typ == TypeId::tid_bool() || func.ret.typ == TypeId::tid_c_bool() {
@@ -102,7 +115,9 @@ pub fn analyze(
     if info.params.is_empty() {
         info.mode = Mode::None;
     }
-    if info.mode == Mode::Combined || info.mode == Mode::Throws(true) {
+    if info.mode == Mode::Combined
+        || info.mode == Mode::Throws(ThrowFunctionReturnStrategy::ReturnResult)
+    {
         let mut ret = analysis::Parameter::from_return_value(env, &func.ret, configured_functions);
 
         //TODO: fully switch to use analyzed returns (it add too many Return<Option<>>)
@@ -174,18 +189,24 @@ pub fn can_as_return(env: &Env, par: &library::Parameter) -> bool {
     }
 }
 
-pub fn use_return_value_for_result(
+fn decide_throw_function_return_strategy(
     env: &Env,
     ret: &return_value::Info,
     func_name: &str,
     configured_functions: &[&config::functions::Function],
-) -> bool {
+) -> ThrowFunctionReturnStrategy {
     let typ = ret
         .parameter
         .as_ref()
         .map(|par| par.lib_par.typ)
         .unwrap_or_default();
-    use_function_return_for_result(env, typ, func_name, configured_functions)
+    if env.type_(typ).eq(&Type::Fundamental(Fundamental::None)) {
+        ThrowFunctionReturnStrategy::Void
+    } else if use_function_return_for_result(env, typ, func_name, configured_functions) {
+        ThrowFunctionReturnStrategy::ReturnResult
+    } else {
+        ThrowFunctionReturnStrategy::CheckError
+    }
 }
 
 pub fn use_function_return_for_result(
