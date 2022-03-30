@@ -38,12 +38,12 @@ impl TrampolineFromGlib for Transformation {
                     );
                 } else if nullable && is_borrow {
                     if is_gstring(&type_name) {
-                        right = format!("(*{}).as_ref().map(|s| s.as_str())", right);
+                        right = format!("{}.as_ref().as_ref().map(|s| s.as_str())", right);
                     } else {
                         right = format!("{}.as_ref().as_ref()", right);
                     }
                 } else if is_gstring(&type_name) {
-                    right = format!("{}.as_str()", right);
+                    right = format!("{}.as_ref().map(|s| s.as_str())", right);
                 } else {
                     right = format!("{}.as_ref()", right);
                 }
