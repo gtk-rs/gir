@@ -30,7 +30,7 @@ name = "gobject_sys"
 build = "build.rs"
 name = "gobject-sys"
 version = "0.2.0"
-edition = "2021"
+edition = "2018"
 [package.metadata.system-deps.gobject_2_0]
 name = "gobject-2.0"
 version = "2.32"

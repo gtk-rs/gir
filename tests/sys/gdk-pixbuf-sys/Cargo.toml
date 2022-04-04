@@ -34,7 +34,7 @@ name = "gdk_pixbuf_sys"
 build = "build.rs"
 name = "gdk-pixbuf-sys"
 version = "0.2.0"
-edition = "2021"
+edition = "2018"
 [package.metadata.system-deps.gdk_pixbuf_2_0]
 name = "gdk-pixbuf-2.0"
 version = "2.26"
