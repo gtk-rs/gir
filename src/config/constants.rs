@@ -3,7 +3,7 @@ use crate::version::Version;
 use log::error;
 use toml::Value;
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Constant {
     pub ident: Ident,
     pub status: GStatus,
@@ -13,11 +13,11 @@ pub struct Constant {
 
 impl Parse for Constant {
     fn parse(toml: &Value, object_name: &str) -> Option<Constant> {
-        let ident = match Ident::parse(toml, object_name, "function") {
+        let ident = match Ident::parse(toml, object_name, "constant") {
             Some(ident) => ident,
             None => {
                 error!(
-                    "No 'name' or 'pattern' given for function for object {}",
+                    "No 'name' or 'pattern' given for constant for object {}",
                     object_name
                 );
                 return None;
