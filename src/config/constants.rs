@@ -9,6 +9,7 @@ pub struct Constant {
     pub status: GStatus,
     pub version: Option<Version>,
     pub cfg_condition: Option<String>,
+    pub generate_doc: bool,
 }
 
 impl Parse for Constant {
@@ -31,6 +32,7 @@ impl Parse for Constant {
                 "version",
                 "cfg_condition",
                 "pattern",
+                "generate_doc",
             ],
             &format!("function {}", object_name),
         );
@@ -61,12 +63,17 @@ impl Parse for Constant {
                 GStatus::Generate
             }
         };
+        let generate_doc = toml
+            .lookup("generate_doc")
+            .and_then(Value::as_bool)
+            .unwrap_or(true);
 
         Some(Constant {
             ident,
             status,
             version,
             cfg_condition,
+            generate_doc,
         })
     }
 }

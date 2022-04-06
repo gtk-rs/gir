@@ -8,6 +8,7 @@ pub struct ChildProperty {
     pub rename_getter: Option<String>,
     pub type_name: String,
     pub doc_hidden: bool,
+    pub generate_doc: bool,
 }
 
 impl Parse for ChildProperty {
@@ -49,12 +50,17 @@ impl Parse for ChildProperty {
             .lookup("rename_getter")
             .and_then(Value::as_str)
             .map(ToOwned::to_owned);
+        let generate_doc = toml
+            .lookup("generate_doc")
+            .and_then(Value::as_bool)
+            .unwrap_or(true);
 
         Some(ChildProperty {
             name,
             rename_getter,
             type_name,
             doc_hidden,
+            generate_doc,
         })
     }
 }

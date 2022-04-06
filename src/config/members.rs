@@ -12,6 +12,7 @@ pub struct Member {
     pub deprecated_version: Option<Version>,
     pub status: GStatus,
     pub cfg_condition: Option<String>,
+    pub generate_doc: bool,
 }
 
 impl Parse for Member {
@@ -36,6 +37,7 @@ impl Parse for Member {
                 "ignore",
                 "manual",
                 "cfg_condition",
+                "generate_doc",
             ],
             &format!("member {}", object_name),
         );
@@ -74,6 +76,10 @@ impl Parse for Member {
                 GStatus::Generate
             }
         };
+        let generate_doc = toml
+            .lookup("generate_doc")
+            .and_then(Value::as_bool)
+            .unwrap_or(true);
 
         Some(Member {
             ident,
@@ -82,6 +88,7 @@ impl Parse for Member {
             deprecated_version,
             status,
             cfg_condition,
+            generate_doc,
         })
     }
 }

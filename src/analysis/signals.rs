@@ -18,6 +18,7 @@ pub struct Info {
     pub deprecated_version: Option<Version>,
     pub doc_hidden: bool,
     pub is_detailed: bool,
+    pub generate_doc: bool,
 }
 
 pub fn analyze(
@@ -111,6 +112,7 @@ fn analyze_signal(
         imports.add("std::mem::transmute");
         imports.add("std::boxed::Box as Box_");
     }
+    let generate_doc = configured_signals.iter().all(|f| f.generate_doc);
 
     let info = Info {
         connect_name,
@@ -121,6 +123,7 @@ fn analyze_signal(
         deprecated_version,
         doc_hidden,
         is_detailed: signal.is_detailed,
+        generate_doc,
     };
 
     info

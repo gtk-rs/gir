@@ -14,6 +14,7 @@ pub struct Property {
     pub generate: Option<PropertyGenerateFlags>,
     pub bypass_auto_rename: bool,
     pub doc_trait_name: Option<String>,
+    pub generate_doc: bool,
 }
 
 impl Parse for Property {
@@ -39,6 +40,7 @@ impl Parse for Property {
                 "generate",
                 "bypass_auto_rename",
                 "doc_trait_name",
+                "generate_doc",
             ],
             &format!("property {}", object_name),
         );
@@ -77,6 +79,10 @@ impl Parse for Property {
             .lookup("doc_trait_name")
             .and_then(Value::as_str)
             .map(ToOwned::to_owned);
+        let generate_doc = toml
+            .lookup("generate_doc")
+            .and_then(Value::as_bool)
+            .unwrap_or(true);
 
         Some(Property {
             ident,
@@ -85,6 +91,7 @@ impl Parse for Property {
             generate,
             bypass_auto_rename,
             doc_trait_name,
+            generate_doc,
         })
     }
 }
