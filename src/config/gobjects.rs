@@ -760,4 +760,28 @@ status = "generate"
             Ident::Name("Func".to_owned()),
         );
     }
+
+    #[test]
+    fn conversion_type_generate_doc() {
+        let r = &toml(
+            r#"
+name = "Test"
+status = "generate"
+generate_doc = false
+"#,
+        );
+
+        let object = parse_object(r, Concurrency::default(), false, false, false);
+        assert!(!object.generate_doc);
+
+        // Ensure that the default value is "true".
+        let r = &toml(
+            r#"
+name = "Test"
+status = "generate"
+"#,
+        );
+        let object = parse_object(r, Concurrency::default(), false, false, false);
+        assert!(object.generate_doc);
+    }
 }

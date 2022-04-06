@@ -133,6 +133,29 @@ type = "prop_type"
     }
 
     #[test]
+    fn child_property_parse_generate_doc() {
+        let r = toml(
+            r#"
+name = "prop"
+type = "prop_type"
+generate_doc = false
+"#,
+        );
+        let child = ChildProperty::parse(&r, "a").unwrap();
+        assert!(!child.generate_doc);
+
+        // Ensure that the default value is "true".
+        let r = toml(
+            r#"
+name = "prop"
+type = "prop_type"
+"#,
+        );
+        let child = ChildProperty::parse(&r, "a").unwrap();
+        assert!(child.generate_doc);
+    }
+
+    #[test]
     fn child_property_parse_not_all() {
         let tml = toml(
             r#"

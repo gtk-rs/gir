@@ -191,6 +191,27 @@ version = "3.20"
     }
 
     #[test]
+    fn property_generate_doc() {
+        let r = toml(
+            r#"
+name = "prop"
+generate_doc = false
+"#,
+        );
+        let p = Property::parse(&r, "a").unwrap();
+        assert!(!p.generate_doc);
+
+        // Ensure that the default value is "true".
+        let r = toml(
+            r#"
+name = "prop"
+"#,
+        );
+        let p = Property::parse(&r, "a").unwrap();
+        assert!(p.generate_doc);
+    }
+
+    #[test]
     fn properties_parse_empty_for_none() {
         let props = Properties::parse(None, "a");
         assert!(props.is_empty());

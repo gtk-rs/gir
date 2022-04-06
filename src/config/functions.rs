@@ -653,6 +653,27 @@ nullable = true
     }
 
     #[test]
+    fn function_parse_generate_doc() {
+        let r = toml(
+            r#"
+name = "prop"
+generate_doc = false
+"#,
+        );
+        let f = Function::parse(&r, "a").unwrap();
+        assert!(!f.generate_doc);
+
+        // Ensure that the default value is "true".
+        let r = toml(
+            r#"
+name = "prop"
+"#,
+        );
+        let f = Function::parse(&r, "a").unwrap();
+        assert!(f.generate_doc);
+    }
+
+    #[test]
     fn functions_parse_empty_for_none() {
         let fns = Functions::parse(None, "a");
         assert!(fns.is_empty());

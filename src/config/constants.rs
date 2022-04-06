@@ -85,3 +85,35 @@ impl AsRef<Ident> for Constant {
 }
 
 pub type Constants = Vec<Constant>;
+
+#[cfg(test)]
+mod tests {
+    use super::{super::parsable::Parse, *};
+
+    fn toml(input: &str) -> ::toml::Value {
+        let value = ::toml::from_str(input);
+        assert!(value.is_ok());
+        value.unwrap()
+    }
+
+    #[test]
+    fn child_property_parse_generate_doc() {
+        let r = toml(
+            r#"
+name = "prop"
+generate_doc = false
+"#,
+        );
+        let constant = Constant::parse(&r, "a").unwrap();
+        assert!(!constant.generate_doc);
+
+        // Ensure that the default value is "true".
+        let r = toml(
+            r#"
+name = "prop"
+"#,
+        );
+        let constant = Constant::parse(&r, "a").unwrap();
+        assert!(constant.generate_doc);
+    }
+}

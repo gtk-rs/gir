@@ -150,4 +150,25 @@ version = "3.20"
         let f = Member::parse(&toml, "a").unwrap();
         assert_eq!(f.version, Some(Version(3, 20, 0)));
     }
+
+    #[test]
+    fn member_parse_generate_doc() {
+        let r = toml(
+            r#"
+name = "name1"
+generate_doc = false
+"#,
+        );
+        let f = Member::parse(&r, "a").unwrap();
+        assert!(!f.generate_doc);
+
+        // We now ensure that the default value is true.
+        let r = toml(
+            r#"
+name = "name1"
+"#,
+        );
+        let f = Member::parse(&r, "a").unwrap();
+        assert!(f.generate_doc);
+    }
 }

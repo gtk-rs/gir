@@ -268,4 +268,25 @@ manual = true
         let f = Signal::parse(&toml, "a", Default::default()).unwrap();
         assert!(f.status.manual());
     }
+
+    #[test]
+    fn signal_parse_generate_doc() {
+        let r = toml(
+            r#"
+name = "signal1"
+generate_doc = false
+"#,
+        );
+        let f = Signal::parse(&r, "a", Default::default()).unwrap();
+        assert!(!f.generate_doc);
+
+        // Ensure that the default value is "true".
+        let r = toml(
+            r#"
+name = "prop"
+"#,
+        );
+        let f = Signal::parse(&r, "a", Default::default()).unwrap();
+        assert!(f.generate_doc);
+    }
 }
