@@ -714,4 +714,40 @@ status = "generate"
             }),
         );
     }
+
+    #[test]
+    fn conversion_type_fields() {
+        let toml = &toml(
+            r#"
+[[object]]
+name = "Test"
+status = "generate"
+    [[object.constant]]
+    name = "Const"
+    [[object.function]]
+    name = "Func"
+    manual = true
+
+"#,
+        );
+
+        let object = toml
+            .lookup("object")
+            .map(|t| parse_toml(t, Concurrency::default(), false, false, false))
+            .expect("parsing failed");
+        assert_eq!(
+            object["Test"].constants,
+            vec![crate::config::constants::Constant {
+                ident: Ident::Name("Const".to_owned()),
+                status: GStatus::Generate,
+                version: None,
+                cfg_condition: None,
+            }],
+        );
+        assert_eq!(object["Test"].functions.len(), 1);
+        assert_eq!(
+            object["Test"].functions[0].ident,
+            Ident::Name("Func".to_owned()),
+        );
+    }
 }
