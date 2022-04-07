@@ -352,6 +352,8 @@ visibility = &quot;pub&quot; # or 'crate' / 'private' / 'super'
 # The default value to used for the `Default` implementation. It only
 # works for flags and enums. You have to pass the &quot;GIR&quot; member name.
 default_value = &quot;fill&quot;
+# In case you don't want to generate the documentation for this type.
+generate_doc = false
     # define overrides for function
     [[object.function]]
     # filter functions from object
@@ -383,6 +385,8 @@ default_value = &quot;fill&quot;
     assertion = &quot;in-main-thread&quot;
     # Tweak the visibility of the function
     visibility = &quot;pub&quot; # or 'crate' / 'private' / 'super'
+    # In case you don't want to generate the documentation for this method.
+    generate_doc = false
         # override for parameter
         [[object.function.parameter]]
         # filter by name
@@ -429,6 +433,8 @@ default_value = &quot;fill&quot;
     ignore = true
     version = &quot;3.10&quot;
     doc_hidden = true
+    # In case you don't want to generate the documentation for this signal.
+    generate_doc = false
         [[object.signal.parameter]]
         name = &quot;path_string&quot;
         # allow to use different names in closure
@@ -443,6 +449,8 @@ default_value = &quot;fill&quot;
     name = &quot;baseline-position&quot;
     version = &quot;3.10&quot;
     ignore = true
+    # In case you don't want to generate the documentation for this property.
+    generate_doc = false
     [[object.property]]
     name = &quot;events&quot;
     # generate only `connect_property_events_notify`, without `get_property_events` and `set_property_events`
@@ -477,6 +485,8 @@ version = &quot;3.12&quot;
     alias = true
     # Allow to add a cfg condition
     cfg_condition = &quot;target_os = \&quot;linux\&quot;&quot;
+    # In case you don't want to generate the documentation for this member.
+    generate_doc = false
     [[object.member]]
     name = &quot;touchpad_pinch&quot;
     # define starting version when member added
@@ -503,6 +513,8 @@ status = &quot;generate&quot;
     doc_trait_name = &quot;StockExt&quot;
     # allows to define if the function was moved to a struct
     doc_struct_name = &quot;Stock&quot;
+    # In case you don't want to generate the documentation for this function.
+    generate_doc = false
 </code></pre>
 <p>Which will prevent gir from generating <code>stock_list_ids</code>. If you want to specify
 that a function will be manually implemented, you can use:</p>
@@ -526,6 +538,8 @@ status = &quot;generate&quot;
     pattern = &quot;*&quot;
     # No constants will be generated
     ignore = true
+    # In case you don't want to generate the documentation for this constant.
+    generate_doc = false
 </code></pre>
 <p>Constants also support <code>version</code> and <code>cfg_condition</code> fields.</p>
 <p>In various cases, GObjects or boxed types can be used from multiple threads
