@@ -700,7 +700,7 @@ impl Type {
             Enumeration(enum_) => enum_.name.clone(),
             Bitfield(bit_field) => bit_field.name.clone(),
             Record(rec) => rec.name.clone(),
-            Union(union) => union.name.clone(),
+            Union(u) => u.name.clone(),
             Function(func) => func.name.clone(),
             Interface(interface) => interface.name.clone(),
             Array(type_id) => format!("Array {:?}", type_id),

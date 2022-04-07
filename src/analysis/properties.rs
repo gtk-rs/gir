@@ -348,6 +348,7 @@ fn analyze_property(
                 deprecated_version: prop.deprecated_version,
                 doc_hidden: false,
                 is_detailed: false, // see above comment
+                generate_doc: obj.generate_doc,
             })
         } else {
             None

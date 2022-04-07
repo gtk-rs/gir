@@ -98,6 +98,7 @@ pub struct GObject {
     pub clear_function_expression: Option<String>,
     pub visibility: Visibility,
     pub default_value: Option<String>,
+    pub generate_doc: bool,
 }
 
 impl Default for GObject {
@@ -135,6 +136,7 @@ impl Default for GObject {
             clear_function_expression: None,
             visibility: Default::default(),
             default_value: None,
+            generate_doc: true,
         }
     }
 }
@@ -288,6 +290,7 @@ fn parse_object(
             "clear_function_expression",
             "visibility",
             "default_value",
+            "generate_doc",
         ],
         &format!("object {}", name),
     );
@@ -472,6 +475,11 @@ fn parse_object(
         );
     }
 
+    let generate_doc = toml_object
+        .lookup("generate_doc")
+        .and_then(Value::as_bool)
+        .unwrap_or(true);
+
     if generate_trait.is_some() {
         warn!(
             "`trait` configuration is deprecated and replaced by `final_type` for object {}",
@@ -512,6 +520,7 @@ fn parse_object(
         clear_function_expression,
         visibility,
         default_value,
+        generate_doc,
     }
 }
 
@@ -742,6 +751,7 @@ status = "generate"
                 status: GStatus::Generate,
                 version: None,
                 cfg_condition: None,
+                generate_doc: true,
             }],
         );
         assert_eq!(object["Test"].functions.len(), 1);
@@ -749,5 +759,29 @@ status = "generate"
             object["Test"].functions[0].ident,
             Ident::Name("Func".to_owned()),
         );
+    }
+
+    #[test]
+    fn conversion_type_generate_doc() {
+        let r = &toml(
+            r#"
+name = "Test"
+status = "generate"
+generate_doc = false
+"#,
+        );
+
+        let object = parse_object(r, Concurrency::default(), false, false, false);
+        assert!(!object.generate_doc);
+
+        // Ensure that the default value is "true".
+        let r = &toml(
+            r#"
+name = "Test"
+status = "generate"
+"#,
+        );
+        let object = parse_object(r, Concurrency::default(), false, false, false);
+        assert!(object.generate_doc);
     }
 }

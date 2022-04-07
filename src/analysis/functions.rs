@@ -97,6 +97,7 @@ pub struct Info {
     /// In order to generate docs links we need to know in which namespace
     /// this potential global function is defined
     pub ns_id: NsId,
+    pub generate_doc: bool,
 }
 
 impl Info {
@@ -891,6 +892,8 @@ fn analyze_function(
     let assertion =
         assertion.unwrap_or_else(|| SafetyAssertionMode::of(env, is_method, &parameters));
 
+    let generate_doc = configured_functions.iter().all(|f| f.generate_doc);
+
     Info {
         name,
         func_name: func_name.to_string(),
@@ -923,6 +926,7 @@ fn analyze_function(
         commented,
         hidden: false,
         ns_id,
+        generate_doc,
     }
 }
 

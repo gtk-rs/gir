@@ -209,6 +209,7 @@ fn generate_doc(w: &mut dyn Write, env: &Env) -> Result<()> {
                     fn_new_name,
                     doc_ignored_parameters,
                     None,
+                    f_info.map(|f| f.generate_doc).unwrap_or(true),
                 )?;
             }
         }
@@ -222,12 +223,19 @@ fn generate_doc(w: &mut dyn Write, env: &Env) -> Result<()> {
             SType::Const
         };
         let ty_id = TypeStruct::new(ty, &constant.name);
-        write_item_doc(w, &ty_id, |w| {
-            if let Some(ref doc) = constant.doc {
-                writeln!(w, "{}", reformat_doc(doc, env, Some((&constant.typ, None))))?;
-            }
-            Ok(())
-        })?;
+        let generate_doc = env
+            .config
+            .objects
+            .get(&constant.typ.full_name(&env.library))
+            .map_or(true, |c| c.generate_doc);
+        if generate_doc {
+            write_item_doc(w, &ty_id, |w| {
+                if let Some(ref doc) = constant.doc {
+                    writeln!(w, "{}", reformat_doc(doc, env, Some((&constant.typ, None))))?;
+                }
+                Ok(())
+            })?;
+        }
     }
 
     generators.sort_by_key(|&(name, _)| name);
@@ -292,7 +300,7 @@ fn create_object_doc(w: &mut dyn Write, env: &Env, info: &analysis::object::Info
                 )
             )?;
         }
-        if let Some(doc) = doc {
+        if let (Some(doc), true) = (doc, obj.generate_doc) {
             writeln!(
                 w,
                 "{}",
@@ -472,12 +480,13 @@ fn create_object_doc(w: &mut dyn Write, env: &Env, info: &analysis::object::Info
                 fn_new_name,
                 doc_ignored_parameters,
                 Some((&info.type_id, object_location)),
+                f_info.map(|f| f.generate_doc).unwrap_or(true),
             )?;
         }
     }
     for signal in signals {
+        let configured_signals = obj.signals.matched(&signal.name);
         let (ty, object_location) = if has_trait {
-            let configured_signals = obj.signals.matched(&signal.name);
             if let Some(trait_name) = configured_signals
                 .iter()
                 .find_map(|f| f.doc_trait_name.as_ref())
@@ -497,6 +506,7 @@ fn create_object_doc(w: &mut dyn Write, env: &Env, info: &analysis::object::Info
             None,
             HashSet::new(),
             Some((&info.type_id, object_location)),
+            configured_signals.iter().all(|s| s.generate_doc),
         )?;
     }
     for property in properties {
@@ -543,21 +553,28 @@ fn create_object_doc(w: &mut dyn Write, env: &Env, info: &analysis::object::Info
 fn create_record_doc(w: &mut dyn Write, env: &Env, info: &analysis::record::Info) -> Result<()> {
     let record: &Record = env.library.type_(info.type_id).to_ref_as();
     let ty = record.to_stripper_type();
+    let generate_doc = env
+        .config
+        .objects
+        .get(&info.type_id.full_name(&env.library))
+        .map_or(true, |r| r.generate_doc);
 
-    write_item_doc(w, &ty, |w| {
-        if let Some(ref doc) = record.doc {
-            writeln!(w, "{}", reformat_doc(doc, env, Some((&info.type_id, None))))?;
-        }
-        if let Some(ver) = info.deprecated_version {
-            writeln!(w, "\n# Deprecated since {}\n", ver)?;
-        } else if record.doc_deprecated.is_some() {
-            writeln!(w, "\n# Deprecated\n")?;
-        }
-        if let Some(ref doc) = record.doc_deprecated {
-            writeln!(w, "{}", reformat_doc(doc, env, Some((&info.type_id, None))))?;
-        }
-        Ok(())
-    })?;
+    if generate_doc {
+        write_item_doc(w, &ty, |w| {
+            if let Some(ref doc) = record.doc {
+                writeln!(w, "{}", reformat_doc(doc, env, Some((&info.type_id, None))))?;
+            }
+            if let Some(ver) = info.deprecated_version {
+                writeln!(w, "\n# Deprecated since {}\n", ver)?;
+            } else if record.doc_deprecated.is_some() {
+                writeln!(w, "\n# Deprecated\n")?;
+            }
+            if let Some(ref doc) = record.doc_deprecated {
+                writeln!(w, "{}", reformat_doc(doc, env, Some((&info.type_id, None))))?;
+            }
+            Ok(())
+        })?;
+    }
 
     let ty = TypeStruct {
         ty: SType::Impl,
@@ -582,6 +599,7 @@ fn create_record_doc(w: &mut dyn Write, env: &Env, info: &analysis::record::Info
                 fn_new_name,
                 HashSet::new(),
                 Some((&info.type_id, None)),
+                f_info.map(|f| f.generate_doc).unwrap_or(true),
             )?;
         }
     }
@@ -590,24 +608,36 @@ fn create_record_doc(w: &mut dyn Write, env: &Env, info: &analysis::record::Info
 
 fn create_enum_doc(w: &mut dyn Write, env: &Env, enum_: &Enumeration, tid: TypeId) -> Result<()> {
     let ty = enum_.to_stripper_type();
+    let config = env.config.objects.get(&tid.full_name(&env.library));
 
-    write_item_doc(w, &ty, |w| {
-        if let Some(ref doc) = enum_.doc {
-            writeln!(w, "{}", reformat_doc(doc, env, Some((&tid, None))))?;
-        }
-        if let Some(ver) = enum_.deprecated_version {
-            writeln!(w, "\n# Deprecated since {}\n", ver)?;
-        } else if enum_.doc_deprecated.is_some() {
-            writeln!(w, "\n# Deprecated\n")?;
-        }
-        if let Some(ref doc) = enum_.doc_deprecated {
-            writeln!(w, "{}", reformat_doc(doc, env, Some((&tid, None))))?;
-        }
-        Ok(())
-    })?;
+    if config.map_or(true, |c| c.generate_doc) {
+        write_item_doc(w, &ty, |w| {
+            if let Some(ref doc) = enum_.doc {
+                writeln!(w, "{}", reformat_doc(doc, env, Some((&tid, None))))?;
+            }
+            if let Some(ver) = enum_.deprecated_version {
+                writeln!(w, "\n# Deprecated since {}\n", ver)?;
+            } else if enum_.doc_deprecated.is_some() {
+                writeln!(w, "\n# Deprecated\n")?;
+            }
+            if let Some(ref doc) = enum_.doc_deprecated {
+                writeln!(w, "{}", reformat_doc(doc, env, Some((&tid, None))))?;
+            }
+            Ok(())
+        })?;
+    }
 
     for member in &enum_.members {
-        if member.doc.is_some() {
+        let generate_doc = config
+            .and_then(|m| {
+                m.members
+                    .matched(&member.name)
+                    .first()
+                    .map(|m| m.generate_doc)
+            })
+            .unwrap_or(true);
+
+        if generate_doc && member.doc.is_some() {
             let sub_ty = TypeStruct {
                 name: nameutil::enum_member_name(&member.name),
                 parent: Some(Box::new(ty.clone())),
@@ -636,10 +666,13 @@ fn create_bitfield_doc(
     tid: TypeId,
 ) -> Result<()> {
     let ty = bitfield.to_stripper_type();
+    let config = env.config.objects.get(&tid.full_name(&env.library));
 
     write_item_doc(w, &ty, |w| {
-        if let Some(ref doc) = bitfield.doc {
-            writeln!(w, "{}", reformat_doc(doc, env, Some((&tid, None))))?;
+        if config.map_or(true, |c| c.generate_doc) {
+            if let Some(ref doc) = bitfield.doc {
+                writeln!(w, "{}", reformat_doc(doc, env, Some((&tid, None))))?;
+            }
         }
         if let Some(ver) = bitfield.deprecated_version {
             writeln!(w, "\n# Deprecated since {}\n", ver)?;
@@ -653,7 +686,16 @@ fn create_bitfield_doc(
     })?;
 
     for member in &bitfield.members {
-        if member.doc.is_some() {
+        let generate_doc = config
+            .and_then(|m| {
+                m.members
+                    .matched(&member.name)
+                    .first()
+                    .map(|m| m.generate_doc)
+            })
+            .unwrap_or(true);
+
+        if generate_doc && member.doc.is_some() {
             let sub_ty = TypeStruct {
                 name: nameutil::bitfield_member_name(&member.name),
                 parent: Some(Box::new(ty.clone())),
@@ -696,10 +738,14 @@ fn create_fn_doc<T>(
     name_override: Option<String>,
     doc_ignored_parameters: HashSet<String>,
     in_type: Option<(&TypeId, Option<LocationInObject>)>,
+    generate_doc: bool,
 ) -> Result<()>
 where
     T: FunctionLikeType + ToStripperType,
 {
+    if !generate_doc {
+        return Ok(());
+    }
     if env.is_totally_deprecated(None, *fn_.deprecated_version()) {
         return Ok(());
     }
@@ -839,6 +885,14 @@ fn create_property_doc(
     obj_info: &analysis::object::Info,
 ) -> Result<()> {
     if env.is_totally_deprecated(Some(in_type.0.ns_id), property.deprecated_version) {
+        return Ok(());
+    }
+    let generate_doc = env
+        .config
+        .objects
+        .get(&obj_info.type_id.full_name(&env.library))
+        .map_or(true, |r| r.generate_doc);
+    if !generate_doc {
         return Ok(());
     }
     if property.doc.is_none()

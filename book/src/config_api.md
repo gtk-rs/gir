@@ -120,6 +120,8 @@ visibility = "pub" # or 'crate' / 'private' / 'super'
 # The default value to used for the `Default` implementation. It only
 # works for flags and enums. You have to pass the "GIR" member name.
 default_value = "fill"
+# In case you don't want to generate the documentation for this type.
+generate_doc = false
     # define overrides for function
     [[object.function]]
     # filter functions from object
@@ -151,6 +153,8 @@ default_value = "fill"
     assertion = "in-main-thread"
     # Tweak the visibility of the function
     visibility = "pub" # or 'crate' / 'private' / 'super'
+    # In case you don't want to generate the documentation for this method.
+    generate_doc = false
         # override for parameter
         [[object.function.parameter]]
         # filter by name
@@ -197,6 +201,8 @@ default_value = "fill"
     ignore = true
     version = "3.10"
     doc_hidden = true
+    # In case you don't want to generate the documentation for this signal.
+    generate_doc = false
         [[object.signal.parameter]]
         name = "path_string"
         # allow to use different names in closure
@@ -211,6 +217,8 @@ default_value = "fill"
     name = "baseline-position"
     version = "3.10"
     ignore = true
+    # In case you don't want to generate the documentation for this property.
+    generate_doc = false
     [[object.property]]
     name = "events"
     # generate only `connect_property_events_notify`, without `get_property_events` and `set_property_events`
@@ -251,6 +259,8 @@ version = "3.12"
     alias = true
     # Allow to add a cfg condition
     cfg_condition = "target_os = \"linux\""
+    # In case you don't want to generate the documentation for this member.
+    generate_doc = false
     [[object.member]]
     name = "touchpad_pinch"
     # define starting version when member added
@@ -283,6 +293,8 @@ status = "generate"
     doc_trait_name = "StockExt"
     # allows to define if the function was moved to a struct
     doc_struct_name = "Stock"
+    # In case you don't want to generate the documentation for this function.
+    generate_doc = false
 ```
 
 Which will prevent gir from generating `stock_list_ids`. If you want to specify
@@ -314,6 +326,8 @@ status = "generate"
     pattern = "*"
     # No constants will be generated
     ignore = true
+    # In case you don't want to generate the documentation for this constant.
+    generate_doc = false
 ```
 
 Constants also support `version` and `cfg_condition` fields.

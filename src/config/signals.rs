@@ -107,6 +107,7 @@ pub struct Signal {
     pub concurrency: library::Concurrency,
     pub doc_hidden: bool,
     pub doc_trait_name: Option<String>,
+    pub generate_doc: bool,
 }
 
 impl Signal {
@@ -138,6 +139,7 @@ impl Signal {
                 "pattern",
                 "concurrency",
                 "doc_trait_name",
+                "generate_doc",
             ],
             &format!("signal {}", object_name),
         );
@@ -185,6 +187,10 @@ impl Signal {
             .lookup("doc_trait_name")
             .and_then(Value::as_str)
             .map(ToOwned::to_owned);
+        let generate_doc = toml
+            .lookup("generate_doc")
+            .and_then(Value::as_bool)
+            .unwrap_or(true);
 
         Some(Signal {
             ident,
@@ -196,6 +202,7 @@ impl Signal {
             concurrency,
             doc_hidden,
             doc_trait_name,
+            generate_doc,
         })
     }
 }
@@ -260,5 +267,26 @@ manual = true
         );
         let f = Signal::parse(&toml, "a", Default::default()).unwrap();
         assert!(f.status.manual());
+    }
+
+    #[test]
+    fn signal_parse_generate_doc() {
+        let r = toml(
+            r#"
+name = "signal1"
+generate_doc = false
+"#,
+        );
+        let f = Signal::parse(&r, "a", Default::default()).unwrap();
+        assert!(!f.generate_doc);
+
+        // Ensure that the default value is "true".
+        let r = toml(
+            r#"
+name = "prop"
+"#,
+        );
+        let f = Signal::parse(&r, "a", Default::default()).unwrap();
+        assert!(f.generate_doc);
     }
 }

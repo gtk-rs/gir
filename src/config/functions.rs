@@ -288,6 +288,7 @@ pub struct Function {
     pub bypass_auto_rename: bool,
     pub is_constructor: Option<bool>,
     pub assertion: Option<SafetyAssertionMode>,
+    pub generate_doc: bool,
 }
 
 impl Parse for Function {
@@ -325,6 +326,7 @@ impl Parse for Function {
                 "constructor",
                 "assertion",
                 "visibility",
+                "generate_doc",
             ],
             &format!("function {}", object_name),
         );
@@ -422,6 +424,10 @@ impl Parse for Function {
             error!("{}", err);
         }
         let visibility = visibility.ok().flatten();
+        let generate_doc = toml
+            .lookup("generate_doc")
+            .and_then(Value::as_bool)
+            .unwrap_or(true);
         Some(Function {
             ident,
             status,
@@ -442,6 +448,7 @@ impl Parse for Function {
             is_constructor,
             assertion,
             visibility,
+            generate_doc,
         })
     }
 }
@@ -643,6 +650,27 @@ nullable = true
         );
         let f = Function::parse(&toml, "a").unwrap();
         assert_eq!(f.ret.nullable, Some(Nullable(true)));
+    }
+
+    #[test]
+    fn function_parse_generate_doc() {
+        let r = toml(
+            r#"
+name = "prop"
+generate_doc = false
+"#,
+        );
+        let f = Function::parse(&r, "a").unwrap();
+        assert!(!f.generate_doc);
+
+        // Ensure that the default value is "true".
+        let r = toml(
+            r#"
+name = "prop"
+"#,
+        );
+        let f = Function::parse(&r, "a").unwrap();
+        assert!(f.generate_doc);
     }
 
     #[test]

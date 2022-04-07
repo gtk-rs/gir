@@ -8,6 +8,7 @@ pub struct ChildProperty {
     pub rename_getter: Option<String>,
     pub type_name: String,
     pub doc_hidden: bool,
+    pub generate_doc: bool,
 }
 
 impl Parse for ChildProperty {
@@ -49,12 +50,17 @@ impl Parse for ChildProperty {
             .lookup("rename_getter")
             .and_then(Value::as_str)
             .map(ToOwned::to_owned);
+        let generate_doc = toml
+            .lookup("generate_doc")
+            .and_then(Value::as_bool)
+            .unwrap_or(true);
 
         Some(ChildProperty {
             name,
             rename_getter,
             type_name,
             doc_hidden,
+            generate_doc,
         })
     }
 }
@@ -124,6 +130,29 @@ type = "prop_type"
         let child = ChildProperty::parse(&toml, "a").unwrap();
         assert_eq!("prop", child.name);
         assert_eq!("prop_type", child.type_name);
+    }
+
+    #[test]
+    fn child_property_parse_generate_doc() {
+        let r = toml(
+            r#"
+name = "prop"
+type = "prop_type"
+generate_doc = false
+"#,
+        );
+        let child = ChildProperty::parse(&r, "a").unwrap();
+        assert!(!child.generate_doc);
+
+        // Ensure that the default value is "true".
+        let r = toml(
+            r#"
+name = "prop"
+type = "prop_type"
+"#,
+        );
+        let child = ChildProperty::parse(&r, "a").unwrap();
+        assert!(child.generate_doc);
     }
 
     #[test]
