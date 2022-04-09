@@ -74,7 +74,7 @@ pub fn func_string(
             // is sent to. But it will only be ever owned by a single thread
             // at a time, so signals can only be emitted from one thread at
             // a time and Sync is not needed
-            library::Concurrency::Send | library::Concurrency::SendUnique => " + Send",
+            library::Concurrency::Send => " + Send",
             // If an object is Sync, it can be shared between threads, and as
             // such our callback can be called from arbitrary threads and needs
             // to be Send *AND* Sync

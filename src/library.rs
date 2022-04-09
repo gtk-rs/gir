@@ -180,7 +180,6 @@ impl FromStr for FunctionKind {
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum Concurrency {
     None,
-    SendUnique,
     Send,
     SendSync,
 }
@@ -191,7 +190,6 @@ impl FromStr for Concurrency {
         use self::Concurrency::*;
         match name {
             "none" => Ok(None),
-            "send-unique" => Ok(SendUnique),
             "send" => Ok(Send),
             "send+sync" => Ok(SendSync),
             _ => Err(format!("Unknown concurrency kind '{}'", name)),
