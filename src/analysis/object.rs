@@ -253,10 +253,6 @@ pub fn class(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<Info>
         imports.add("glib::object::IsA");
     }
 
-    if obj.concurrency == library::Concurrency::SendUnique {
-        imports.add("glib::ObjectExt");
-    }
-
     let base = InfoBase {
         full_name,
         type_id: class_tid,
@@ -374,10 +370,6 @@ pub fn interface(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<I
         &signatures,
         deps,
     );
-
-    if obj.concurrency == library::Concurrency::SendUnique {
-        imports.add("glib::ObjectExt");
-    }
 
     let base = InfoBase {
         full_name,

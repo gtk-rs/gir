@@ -417,7 +417,7 @@ impl<'env> RustTypeBuilder<'env> {
             Function(ref f) => {
                 let concurrency = match self.concurrency {
                     _ if self.scope.is_call() => "",
-                    library::Concurrency::Send | library::Concurrency::SendUnique => " + Send",
+                    library::Concurrency::Send => " + Send",
                     // If an object is Sync, it can be shared between threads, and as
                     // such our callback can be called from arbitrary threads and needs
                     // to be Send *AND* Sync
