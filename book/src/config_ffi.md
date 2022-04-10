@@ -64,7 +64,6 @@ name = "GdkPixbuf.PixbufAnimation"
 status = "generate"
     [[object.function]]
     name = "new_from_file"
-    is_windows_utf8 = true
 ```
 
 Also, you can add rust cfg conditions on objects, functions and constants, for example, when flagging for conditional compilation:
