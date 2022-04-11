@@ -3,7 +3,7 @@
 And finally the last feature! Just run the following command (note the `-m doc` at the end):
 
 ```console
-> cargo run --release -- -c YourGirFile.toml -d ../gir-files --doc-target-path the-output-file-name -m doc
+> gir -c Gir.toml -d ../gir-files --doc-target-path docs.md -m doc
 ```
 
 It'll generate a markdown file if everything went fine. That's where all this crate's documentation is. If you want to put it back into your crate's source code like "normal" doc comments, run:
