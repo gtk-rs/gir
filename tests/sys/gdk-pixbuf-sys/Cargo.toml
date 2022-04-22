@@ -1,0 +1,64 @@
+[build-dependencies]
+pkg-config = "0.3.7"
+system-deps = "6"
+
+[dependencies]
+bitflags = "1.0"
+libc = "0.2"
+
+[dependencies.gio]
+package = "gio-sys"
+path = "../gio-sys"
+
+[dependencies.glib]
+package = "glib-sys"
+path = "../glib-sys"
+
+[dependencies.gobject]
+package = "gobject-sys"
+path = "../gobject-sys"
+
+[features]
+dox = []
+v2_28 = []
+v2_30 = ["v2_28"]
+v2_32 = ["v2_30"]
+v2_36 = ["v2_32"]
+v2_36_8 = ["v2_36"]
+v2_40 = ["v2_36_8"]
+
+[lib]
+name = "gdk_pixbuf_sys"
+
+[package]
+build = "build.rs"
+name = "gdk-pixbuf-sys"
+version = "0.2.0"
+edition = "2021"
+[package.metadata.system-deps.gdk_pixbuf_2_0]
+name = "gdk-pixbuf-2.0"
+version = "2.26"
+
+[package.metadata.system-deps.gdk_pixbuf_2_0.v2_28]
+version = "2.28"
+
+[package.metadata.system-deps.gdk_pixbuf_2_0.v2_30]
+version = "2.30"
+
+[package.metadata.system-deps.gdk_pixbuf_2_0.v2_32]
+version = "2.32"
+
+[package.metadata.system-deps.gdk_pixbuf_2_0.v2_36]
+version = "2.36"
+
+[package.metadata.system-deps.gdk_pixbuf_2_0.v2_36_8]
+version = "2.36.8"
+
+[package.metadata.system-deps.gdk_pixbuf_2_0.v2_40]
+version = "2.40"
+[package.metadata.docs.rs]
+features = ["dox"]
+
+[dev-dependencies]
+shell-words = "1.0.0"
+tempfile = "3"

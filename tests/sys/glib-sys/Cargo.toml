@@ -1,0 +1,92 @@
+[build-dependencies]
+pkg-config = "0.3.7"
+system-deps = "6"
+
+[dependencies]
+bitflags = "1.0"
+libc = "0.2"
+
+[features]
+dox = []
+v2_34 = []
+v2_36 = ["v2_34"]
+v2_38 = ["v2_36"]
+v2_40 = ["v2_38"]
+v2_44 = ["v2_40"]
+v2_46 = ["v2_44"]
+v2_48 = ["v2_46"]
+v2_50 = ["v2_48"]
+v2_52 = ["v2_50"]
+v2_54 = ["v2_52"]
+v2_56 = ["v2_54"]
+v2_58 = ["v2_56"]
+v2_60 = ["v2_58"]
+v2_62 = ["v2_60"]
+v2_64 = ["v2_62"]
+v2_66 = ["v2_64"]
+
+[lib]
+name = "glib_sys"
+
+[package]
+build = "build.rs"
+name = "glib-sys"
+version = "0.2.0"
+edition = "2021"
+[package.metadata.system-deps.glib_2_0]
+name = "glib-2.0"
+version = "2.32"
+
+[package.metadata.system-deps.glib_2_0.v2_34]
+version = "2.34"
+
+[package.metadata.system-deps.glib_2_0.v2_36]
+version = "2.36"
+
+[package.metadata.system-deps.glib_2_0.v2_38]
+version = "2.38"
+
+[package.metadata.system-deps.glib_2_0.v2_40]
+version = "2.40"
+
+[package.metadata.system-deps.glib_2_0.v2_44]
+version = "2.44"
+
+[package.metadata.system-deps.glib_2_0.v2_46]
+version = "2.46"
+
+[package.metadata.system-deps.glib_2_0.v2_48]
+version = "2.48"
+
+[package.metadata.system-deps.glib_2_0.v2_50]
+version = "2.50"
+
+[package.metadata.system-deps.glib_2_0.v2_52]
+version = "2.52"
+
+[package.metadata.system-deps.glib_2_0.v2_54]
+version = "2.54"
+
+[package.metadata.system-deps.glib_2_0.v2_56]
+version = "2.56"
+
+[package.metadata.system-deps.glib_2_0.v2_58]
+version = "2.58"
+
+[package.metadata.system-deps.glib_2_0.v2_60]
+version = "2.60"
+
+[package.metadata.system-deps.glib_2_0.v2_62]
+version = "2.62"
+
+[package.metadata.system-deps.glib_2_0.v2_64]
+version = "2.64"
+
+[package.metadata.system-deps.glib_2_0.v2_66]
+version = "2.66"
+[package.metadata.docs.rs]
+features = ["dox"]
+
+[dev-dependencies]
+shell-words = "1.0.0"
+tempfile = "3"

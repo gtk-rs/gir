@@ -1,0 +1,10 @@
+[book]
+authors = ["The gtk-rs Project Developers"]
+language = "en"
+multilingual = false
+src = "src"
+title = "Generate Rust bindings for GIR based libraries"
+
+[output.html]
+git-repository-url = "https://github.com/gtk-rs/gir/tree/master/book"
+edit-url-template = "https://github.com/gtk-rs/gir/edit/master/book/{path}"

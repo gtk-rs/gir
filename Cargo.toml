@@ -1,0 +1,35 @@
+[package]
+name = "gir"
+version = "0.0.1"
+authors = [
+	"Evgenii Pashkin <eapashkin@gmail.com>",
+	"Gleb Kozyrev <gleb@gkoz.com>",
+	"Guillaume Gomez <guillaume1.gomez@gmail.com>",
+]
+build = "build.rs"
+exclude = ["Gir*.toml", "tests/**/*", "*.md", "generator.py"]
+edition = "2021"
+
+[dependencies]
+bitflags = "1.0"
+getopts = "0.2.21"
+getter_rules = { package = "fix-getters-rules", version = "0.3.0", default-features = false }
+xml-rs = "0.8"
+toml = { version = "0.5" , features = ["preserve_order"] }
+env_logger = { version = "0.9", default-features = false }
+once_cell = "1.0"
+log = "0.4"
+regex = "1.0"
+hprof = "0.1"
+rustdoc-stripper = { git = "https://github.com/GuillaumeGomez/rustdoc-stripper" }
+
+[profile.release]
+codegen-units = 4
+
+[[bin]]
+name = "gir"
+path = "src/main.rs"
+
+[lib]
+name = "libgir"
+path = "src/lib.rs"
