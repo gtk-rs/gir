@@ -870,6 +870,23 @@ where
                 )?;
             }
         }
+        // document function's Error
+        let gerror_out_parameter = no_array_length_params.iter().find(|param| {
+            param.direction == ParameterDirection::Out
+                && !doc_ignored_parameters.contains(&param.name)
+                && param.c_type == "GError**"
+        });
+
+        if let Some(param) = gerror_out_parameter {
+            if let Some(ref doc) = param.doc {
+                writeln!(w, "\n# Errors\n")?;
+                writeln!(
+                    w,
+                    "{}",
+                    reformat_doc(&fix_param_names(doc, &self_name), env, in_type),
+                )?;
+            }
+        }
         Ok(())
     })
 }
