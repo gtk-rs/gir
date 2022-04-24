@@ -1,12 +1,11 @@
 # Introduction
+[gir] is a tool to automatically generate bindings and a safe wrapper for a library written in C. All you need to be able to use it is a `.gir` file containing the [GObject introspection](https://gi.readthedocs.io/en/latest/) data for the library you want to create the bindings for, as well as the `.gir` files for all its dependencies. If your library does not provide a `.gir` file, unfortunately you cannot use [gir], but maybe you can try [rust-bindgen](https://github.com/rust-lang/rust-bindgen).
 
-This book aims to provide complete documentation on how to use [gir] to generate bindings for GObject based libraries based on the [GObject introspection](https://gi.readthedocs.io/en/latest/) data.
+## Where can I find the .gir files
+There are multiple ways you can get the needed `.gir` files. The `*.gir` you need will correspond to the project you want to generate bindings for.
 
-[gir] consists of a library and at the same time a binary you can use to generate the bindings.
 
-[gir] requires both a `Gir.toml` configuration file and a `.gir` file containing the GObject introspection data.
-
-- The `*.gir` you need will correspond to the project you want to generate bindings for. You can get them from here or directly on ubuntu website (for example: <http://packages.ubuntu.com/zesty/amd64/libgtk-3-dev>).
+ There are multiple ways to get the .gir files you need. You can get them from [here](https://github.com/gtk-rs/gir-files). They are also usually included in the package of the library you want to use. The or example: <https://packages.ubuntu.com/jammy/libgtk-3-dev>).
 
 - The `*.toml` is what is used to pass various settings and options to [gir] for use when generating the bindings - you will need to write one to suit your needs, for an example you can take a look to gtk-rs/sys/gir-gtk.toml.
 
