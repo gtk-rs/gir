@@ -46,6 +46,7 @@ fn fill_empty(root: &mut Table, env: &Env, crate_name: &str) {
 
     let deps = upsert_table(root, "dependencies");
     for ext_lib in &env.config.external_libraries {
+        let dep = upsert_table(deps, &ext_lib.crate_name);
         let ext_package = if ext_lib.crate_name == "cairo" {
             format!("{}-sys-rs", ext_lib.crate_name)
         } else if ext_lib.crate_name == "gdk_pixbuf" {
@@ -53,8 +54,23 @@ fn fill_empty(root: &mut Table, env: &Env, crate_name: &str) {
         } else {
             format!("{}-sys", ext_lib.crate_name)
         };
-        let dep = upsert_table(deps, &*ext_package);
-        set_string(dep, "git", "https://github.com/gtk-rs/gtk-rs-core");
+        let repo_url = match ext_package.as_str() {
+            // Not sure if glib-macros and gobject-sys are needed here
+            "cairo-sys-rs" | "gdk-pixbuf-sys" | "gio-sys" | "gobject-sys" | "glib-macros"
+            | "glib-sys" | "graphene-sys" | "pango-sys" | "pangocairo-sys" => {
+                "https://github.com/gtk-rs/gtk-rs-core"
+            }
+            // Not sure if gtk-macros is needed here
+            "atk-sys" | "gdk-sys" | "gdkwayland-sys" | "gdkx11-sys" | "gtk-sys" | "gtk-macros" => {
+                "https://github.com/gtk-rs/gtk3-rs"
+            }
+            // Not sure if gtk4-macros is needed here
+            "gdk4-wayland-sys" | "gdk4-x11-sys" | "gdk4-sys" | "gsk4-sys" | "gtk4-macros"
+            | "gtk4-sys" => "https://github.com/gtk-rs/gtk4-rs",
+            &_ => "Unknown dependency, please create an issue",
+        };
+        set_string(dep, "package", ext_package);
+        set_string(dep, "git", repo_url);
     }
 }
 
@@ -137,6 +153,7 @@ fn fill_in(root: &mut Table, env: &Env) {
     }
 
     {
+        // TODO: Copy this part to wrapper Cargo.toml generation code to fix builds on docs.rs
         // Small trick to prevent having double quotes around it since toml doesn't like having '.'
         let docs_rs_metadata = upsert_table(root, "package");
         let docs_rs_metadata = upsert_table(docs_rs_metadata, "metadata");
