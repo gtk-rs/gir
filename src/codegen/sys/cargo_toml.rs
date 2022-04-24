@@ -65,6 +65,29 @@ fn fill_empty(root: &mut Table, env: &Env, crate_name: &str) {
             "gdk4-wayland-sys" | "gdk4-x11-sys" | "gdk4-sys" | "gsk4-sys" | "gtk4-sys" => {
                 "https://github.com/gtk-rs/gtk4-rs"
             }
+            "gstreamer-sys"
+            | "gstreamer-app-sys"
+            | "gstreamer-audio-sys"
+            | "gstreamer-base-sys"
+            | "gstreamer-check-sys"
+            | "gstreamer-controller-sys"
+            | "gstreamer-editing-services-sys"
+            | "gstreamer-gl-sys"
+            | "gstreamer-gl/egl-sys"
+            | "gstreamer-gl/wayland-sys"
+            | "gstreamer-gl/x11-sys"
+            | "gstreamer-mpegts-sys"
+            | "gstreamer-net-sys"
+            | "gstreamer-pbutils-sys"
+            | "gstreamer-player-sys"
+            | "gstreamer-rtp-sys"
+            | "gstreamer-rtsp-sys"
+            | "gstreamer-rtsp-server-sys"
+            | "gstreamer-sdp-sys"
+            | "gstreamer-tag-sys"
+            | "gstreamer-video-sys"
+            | "gstreamer-webrtc-sys"
+            | "gstreamer-allocators-sys" => "https://gitlab.freedesktop.org/gstreamer/gstreamer-rs",
             &_ => "ADD GIT REPOSITORY URL HERE",
         };
         set_string(dep, "package", ext_package);
