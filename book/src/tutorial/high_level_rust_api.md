@@ -1,20 +1,79 @@
 # Generating the Rust API
+In the previous step we successfully created the unsafe bindings of the -sys crate. Let's change into the directory of the safe wrapper crate.
 
-Time to go back to the "global" sourceview folder:
+## The Cargo.toml file
+The Cargo.toml file will not be replaced when you run gir. So it is our responsibility to make sure the information in it is correct. Open the Cargo.toml file and have a look at it. Make sure everything under `[package]` is to your liking.
 
-```console
-> cd ..
+Add the following lines to the file:
+```toml
+[package.metadata.docs.rs]
+features = ["dox"]
+```
+This automatically activates the `dox` feature if you chose to publish the bindings and docs.rs tries to build the documentation. If you are not going to maintain the crate and don't want to publish it, this line is not going to hurt.
+
+We also need to add libc, bitflags, glib and glib-sys and all other dependencies we used in the sys crate as dependencies. Because we are creating a wrapper for the sys crate, which we generated in the previous chapter, we also need to add the sys crate to the list of dependencies. In the automatically generated code, the sys crate is always called `ffi`, so we need to rename the sys crate in our Cargo.toml. For our example, this results in the following dependencies:
+```toml
+[dependencies]
+libc = "0.2"
+bitflags = "1.0"
+
+[dependencies.ffi]
+package = "sourceview-sys"
+path = "../sourceview-sys"
+
+[dependencies.glib]
+git = "https://github.com/gtk-rs/glib"
+
+[dependencies.glib-sys]
+git = "https://github.com/gtk-rs/sys" # all gtk-rs sys crates are in the sys repository
+
+[dependencies.gtk]
+git = "https://github.com/gtk-rs/gtk"
 ```
 
-As you certainly guessed, we'll need a new `Gir.toml` file. Let's write it:
+In order to make the features of the sys crate available for users of your safe wrapper, you need to add features. Copy the `[features]` part of the Cargo.toml of your sys crate and paste it into the Cargo.toml of the normal crate. The features are supposed to activate the corresponding features of the sys crate, so you need to make some changes. If for example you have the following sys features:
+
+```toml
+[features]
+v0_4 = []
+v0_5 = ["v0_4"]
+v0_6 = ["v0_5"]
+default = ["v0_6"]
+dox = []
+```
+
+You need to change the features in the Cargo.toml of your normal crate to
+
+```toml
+[features]
+v0_4 = ["ffi/v0_4"]
+v0_5 = ["ffi/v0_5", "v0_4"]
+v0_6 = ["ffi/v0_6", "v0_5"]
+default = ["v0_6"]
+dox = ["ffi/dox"]
+```
+
+## The lib.rs file
+The lib.rs file will not be replaced when you run gir. All the code that gir will generate for us is going to be in src/auto. We need to include all `auto` files in our library. To do so, let's update the `src/lib.rs` file as follows:
+
+```rust
+#![cfg_attr(feature = "dox", feature(doc_cfg))]
+
+pub use auto::*;
+mod auto;
+```
+
+
+## The Gir.toml file
+As you certainly guessed, we have to fill our `Gir.toml` file for the normal crate as well. Let's write it:
 
 ```toml
 [options]
-girs_directories = ["../gir-files"]
 library = "GtkSource"
 version = "3.0"
 min_cfg_version = "3.0"
 target_path = "."
+girs_directories = ["../gir-files"]
 work_mode = "normal"
 generate_safety_asserts = true
 deprecate_by_min_version = true
@@ -23,7 +82,7 @@ single_version_file = true
 generate = []
 ```
 
-A few new things in here. Let's take a look at them:
+Many of these options look familiar from the last chapter but there are also a few new things in here. Let's take a look at them:
 
 * `work_mode` value is now set to `normal`, it means it'll generate the high-level Rust api instead of the sys-level.
 * `generate_safety_asserts` is used to generates checks to ensure that, or any other kind of initialization needed before being able to use the library.
@@ -37,7 +96,9 @@ Let's make a first generation of our high-level Rust API!
 > gir -o .
 ```
 
-Now if you take a look around, you'll see a new "auto" folder inside "src". Doesn't contain much though. Which makes sense since we're generating nothing. Time to introduce you to a whole new [gir] mode: `not_bound`. Let's give it a try:
+If you take a look at which files and folders were created, you'll see a new "auto" folder inside "src". This folder contains all the generated code. It doesn't contain anything though. Which makes sense since we're generating nothing.
+
+Now it's time to introduce you to a whole new [gir] mode: `not_bound`. Let's give it a try:
 
 ```console
 > gir -o . -m not_bound
@@ -113,166 +174,40 @@ Now if you take a look around, you'll see a new "auto" folder inside "src". Does
 [NOT GENERATED] GtkSource.ViewGutterPosition
 ```
 
-We now have the list of all the non-yet generated items. Quite convenient! You can also see that we have two kinds of not generated items:
+We now have the list of all the non-yet generated items. Quite convenient! There can be different kinds of not generated items:
 
 * `[NOT GENERATED]`
+Objects marked with `[NOT GENERATED]` are objects that we can generate, but we did not (yet) add to the `generate` array.
 * `[NOT GENERATED PARENT]`
-
-`[NOT GENERATED PARENT]` means that this object lives in a dependency of the current library. We'll come back on how to add them a bit later.
-
-Let's start by generating one type. Let's update the "generate" array as follows:
-
-```toml
-generate = [
-    "GtkSource.Language",
-]
-```
-
-Another `gir` run:
-
-```console
-> gir -o .
-```
-
-(Again, if you do it on another library and it fails and you can't figure out why, don't hesitate to reach us!)
-
-We now have a `src/auto/language.rs` file. We need to include all `auto` files in our library. To do so, let's update the `src/lib.rs` file as follows:
-
+These objects live in a dependency of the current library. These are the objects we will add to the `manual` array in the following steps.
+* `[NOT GENERATED FUNCTION]`
+These are global functions that were not generated. This will not be the case in our example, but if you see this with your own library, just add `"NameOfYourLibrary.*"` to the `generate` array in the Git.toml and add the following line to your src/lib.rs file:
 ```rust
-pub use auto::*;
-
-mod auto;
+pub use auto::functions::*;
 ```
 
-Let's compile:
+## Generating the code
+In order to generate the code for the safe wrapper, we follow these steps until all objects have been generated:
 
-```console
-> cargo build
-```
+- Run `gir -o . -m not_bound` to see which objects have not been generated yet
+- Pick one of the types marked with `[NOT GENERATED]`
+- Add it to the `generate` array in the Gir.toml file
+- Run `gir -o .` to generate the code
+- Open the generated files under src/auto and have a look at them
+- Search for `/*Ignored*/`. If the type name following `/*Ignored*/` is prepended by `[crate_name]::` (e.g `/*Ignored*/&gtk::TextIter`),
+    - then we add it to the `manual` array (e.g gtk). By doing so we tell [gir] that those types have been generated somewhere else and that they can be used just like the other types.
+    - Otherwise, the type comes from the current crate and we just put it into the `generate` list of the `Gir.toml` file.
+- Start with the first step again
+    
+The names of the objects are not the same as the crates names. You have to use the names of the corresponding gir files.
 
-It completely failed with a lot of errors. Yeay!
+Okay, lets go through that process for a few objects of our example.
 
-You guessed it, we need to add a few dependencies to make it work. A lot of those errors were about the fact that the `Language` type didn't exist. Which is weird since we generated it, right? Well, if you take a look at the `src/auto/language.rs` file, you'll see this at the top:
+TODO: Add steps of example
 
-```rust
-glib_wrapper! {
-    pub struct Language(Object<ffi::GtkSourceLanguage, ffi::GtkSourceLanguageClass, LanguageClass>);
-
-    match fn {
-        get_type => || gtk_source_sys::gtk_source_language_get_type(),
-    }
-}
-```
-
-This macro comes from the `glib` crate. We didn't import it, therefore the Rust compiler can't find it. We'll also need its `sys` part (the case of `glib` is a bit special).
-
-A second issue is that we didn't import the `sourceview-sys` crate we generated. Gir produces code expecting this crate to be imported as "ffi" (which you can see in the definition of `Language` above), so we need to rename it in the `Cargo.toml` file, too.
-
-Alongside those two (three if we count `glib-sys`!), we'll need both `libc` and `bitflags`. Let's fix all of those issues at once! For that, we need to update the `Cargo.toml`:
-
-```toml
-[package]
-name = "sourceview"
-version = "0.1.0"
-authors = ["Guillaume Gomez <guillaume1.gomez@gmail.com>"]
-
-[dependencies]
-libc = "0.2"
-bitflags = "1.0"
-
-[dependencies.ffi]
-package = "sourceview-sys"
-path = "./sourceview-sys"
-
-[dependencies.glib]
-git = "https://github.com/gtk-rs/glib"
-
-[dependencies.glib-sys]
-git = "https://github.com/gtk-rs/sys" # all gtk-rs sys crates are in the sys repository
-```
-
-Let's try to rebuild:
-
-```console
-> cargo build
-```
-
-It worked! We have generated the `Language` item! I'll let you take a look at the `src/auto/language.rs` file, then we can continue.
-
-Again, if you encounter any issue at this stage (if the generated code is invalid for example), don't hesitate to reach us so we can give you a hand!
-
-We'll now generate the `GtkSource.Region` type. Why this one? Well, I don't want to spoil the surprise so just wait for a bit!
-
-First, we need to add it into the types to generate into our `Gir.toml` file:
-
-```toml
-generate = [
-    "GtkSource.Language",
-    "GtkSource.Region",
-]
-```
-
-We regenerate:
-
-```console
-> gir -o .
-```
-
-We rebuild:
-
-```console
-> cargo build
-```
-
-Everything works, yeay! Now if we take a look at our newly generated `src/auto/region.rs`, we'll see code like this:
-
-```rust
-//#[cfg(any(feature = "v3_22", feature = "dox"))]
-//fn add_subregion(&self, _start: /*Ignored*/&gtk::TextIter, _end: /*Ignored*/&gtk::TextIter);
-
-//#[cfg(any(feature = "v3_22", feature = "dox"))]
-//fn get_buffer(&self) -> /*Ignored*/Option<gtk::TextBuffer>;
-```
-
-Some functions are commented. Why so? The reason is simple: we need to tell to `gir` that those types have been generated and that it can generate code using them. We can do it by adding the type into the "manual" list. To put it simply, when [gir] sees an item into this "manual" list, it means to it "this type has been generated somewhere else, you can use it just like the others".
-
-Let's update our `Gir.toml` file once again:
-
-```toml
-generate = [
-    "GtkSource.Language",
-    "GtkSource.Region",
-]
-
-manual = [
-    "Gtk.TextIter",
-    "Gtk.TextBuffer",
-]
-```
-
-We'll also need to import the `gtk` crate. Let's add it into our `Cargo.toml` file:
-
-```toml
-[dependencies.gtk]
-git = "https://github.com/gtk-rs/gtk"
-```
-
-We regenerate and rebuild:
-
-```console
-> gir -o .
-> cargo build
-```
-
-Everything is working, yeay! If you take another look at `src/auto/region.rs`, you'll see a lot less commented functions. Amongst the remaining ones, you'll see this one:
-
-```rust
-//#[cfg(any(feature = "v3_22", feature = "dox"))]
-//fn get_start_region_iter(&self, iter: /*Ignored*/RegionIter);
-```
-
-If a type name isn't prepend by `[crate_name]::`, then it means it comes from the current crate. To add it, just put it into the "generate" list of `Gir.toml`.
+Again, if you do it on another library and it fails and you can't figure out why, don't hesitate to reach us!
 
 At this point, you should have almost everything you need. There is just one last case we need to talk about.
+
 
 [gir]: https://github.com/gtk-rs/gir

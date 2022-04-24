@@ -1,10 +1,5 @@
 # Introduction
-[gir] is a tool to automatically generate bindings and a safe wrapper for a library written in C. All you need to be able to use it is a `.gir` file containing the [GObject introspection](https://gi.readthedocs.io/en/latest/) data for the library you want to create the bindings for, as well as the `.gir` files for all its dependencies. If your library does not provide a `.gir` file, unfortunately you cannot use [gir], but maybe you can try [rust-bindgen](https://github.com/rust-lang/rust-bindgen).
-
-## Where can I find the .gir files
-There are multiple ways you can get the needed `.gir` files. The `*.gir` you need will correspond to the project you want to generate bindings for. If you have the library installed, you can search for it under `/usr/share/gir-1.0/`. Otherwise you should be able to get it from the package that installs the library. Ubuntu for example allows you to [search](https://packages.ubuntu.com/) for and download packages via their website.
-
-The recommended way to get the `.gir` files for your dependencies is to clone the [gir-files repo](https://github.com/gtk-rs/gir-files). This is the recommended way, because some of the `.gir` files included in the libraries have small errors that are already fixed in the gir-files repo. Otherwise you could use the above mentioned methods to find the files.
+[gir] is a tool to automatically generate bindings and a safe wrapper for a library written in C. All you need to be able to use it is a `.gir` file containing the [GObject introspection](https://gi.readthedocs.io/en/latest/) data for the library you want to create the bindings for, as well as the `.gir` files for all its dependencies. Have a look at the tutorial if you don't know how to [find the .gir files](tutorial/finding_gir_files.md). If your library does not provide a `.gir` file, unfortunately you cannot use [gir], but maybe you can try [rust-bindgen](https://github.com/rust-lang/rust-bindgen).
 
 ## General steps
 [gir] tries to make it as simple as possible to generate a safe wrapper for your C library. The process can be divided into four steps that correspond with the four operating modes gir has.

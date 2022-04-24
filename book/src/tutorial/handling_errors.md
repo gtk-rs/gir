@@ -1,6 +1,6 @@
 # Handling generation errors
 
-There are a few kinds of errors (not much luckily) which can happen with [gir] generation. Let's take a look at them.
+Luckily there are only a few errors which can happen with [gir] generation. Let's take a look at them.
 
 ### Cannot find macros
 
@@ -24,7 +24,7 @@ error: cannot find macro `assert_initialized_main_thread` in this scope
    = help: have you added the `#[macro_use]` on the module/import?
 ```
 
-In this case you’ll have to implement them yourself. For example, you can add the following to your `lib.rs` file:
+In this case you’ll have to implement them yourself. Macros are order-dependent and you *must* insert this code before declaring modules that use it (e.g. `mod auto`). For example, you can add the following to your `lib.rs` file:
 
 ```rust
 /// No-op.
@@ -46,11 +46,10 @@ macro_rules! assert_initialized_main_thread {
 }
 ```
 
-Note: macros are order-dependent and you *must* insert this code before declaring modules that use it (e.g. `mod auto`).
 
 One complication here is that the `assert_initialized_main_thread!` macro depends on the exact library. If it's GTK-based then the above macro is likely correct, unless the library has its own initialization function. If it has its own initialization function it would need to be handled in addition to GTK's here in the same way.
 
-For non-GTK-based libraries this macro would handle the initialization function of that library in the same way, or if there is none would simply do nothing:
+For non-GTK-based libraries the following macro would handle the initialization function of that library in the same way, or if there is none would simply do nothing:
 
 ```rust
 /// No-op.
@@ -63,7 +62,7 @@ macro_rules! assert_initialized_main_thread {
 
 If [gir] generation fails (for whatever reason), it means you'll have to implement the type yourself. Just like types from other `gtk-rs` crates, you'll need to put it into the "manual" list. Then you need to put the type into the `src` folder (or inside a subfolder, you know how Rust works).
 
-/!\ Don't forget to reexport the type inside your `src/lib.rs` file! For example, let's take a look at the [requisition.rs](https://github.com/gtk-rs/gtk/blob/master/src/requisition.rs) file from the `gtk` crate.
+/!\ Don't forget to reexport the type inside your `src/lib.rs` file! For example, let's take a look at the [requisition.rs](https://github.com/gtk-rs/gtk3-rs/blob/master/gtk/src/requisition.rs) file from the `gtk3` crate.
 
 Since it's a "simple" type (no pointer, therefore no memory management to do), [gir] doesn't know how to generate it. You'll need to implement some traits by hand like `ToGlibPtr` or `ToGlibPtrMut` (depending on your needs).
 
@@ -107,7 +106,7 @@ impl<O: IsA<Region>> RegionExtManual for O {
 
 You might wonder: "why not just implementing it on the `Region` type directly?". Because like this, a subclass will also be able to use this trait easily as long as it implements `IsA<Region>`. For instance, in gtk, everything that implements `IsA<Widget>` (so almost every GTK types) can use those methods.
 
-As usual, don't forget to reexport the trait. A little tip about reexporting manual traits: in `gtk-rs`, we create a `src/prelude.rs` file which reexports all traits (both manual and generated ones), making it simpler for users to use them through `use [DEPENDENCY]::prelude::*`. It looks like this:
+As usual, don't forget to reexport the trait. A little tip about reexporting manual traits: in `gtk3-rs`, we create a `src/prelude.rs` file which reexports all traits (both manual and generated ones), making it simpler for users to use them through `use [DEPENDENCY]::prelude::*`. It looks like this:
 
 ```rust
 pub use auto::traits::*;

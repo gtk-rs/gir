@@ -1,15 +1,8 @@
 # Tutorial
+In this tutorial, we go through all the steps needed to generate a safe wrapper for a C library. We start with finding the .gir files needed and end with generating the documentation. Afterwards, we look at a few common errors and how to fix them.
 
-Let's see how to generate Rust bindings of a GNOME library using the [gir] crate.
+The first paragraphs of each chapter explain the general process. Because this can be a bit abstract sometimes, it is followed by an example. The example continues through all the chapters. If you follow along until the end, you will have generated a safe wrapper including the documentation. In case you are stuck at any point or there are other errors and you can't figure out what's going on, don't hesitate to reach us so we can give you a hand!
 
-Note that the `.gir` files often happens that they are invalid (missing or invalid annotations for example). We have a small script to fix the `.gir` files we're using (and only them!) available in the [gir-files repository](https://github.com/gtk-rs/gir-files/blob/master/fix.sh). You can run it like this (at the same level of the `.gir` files you want to patch):
-
-```console
-> sh fix.sh
-```
-
-All `gtk-rs` generated crates come in two parts: the `sys` part which contains all the C functions and types definitions (direct mapping, everything is unsafe) and the "high-level" part which contains the nice, completely safe and idiomatic Rust API on top of the `sys` part.
-
-As an example, we'll generate the `sourceview` library bindings. So first, let's generate the `sys` part!
+As an example, we'll generate the `sourceview` library bindings. So first, let's see where we can get the .gir files for it!
 
 [gir]: https://github.com/gtk-rs/gir
