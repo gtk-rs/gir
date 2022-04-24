@@ -153,7 +153,6 @@ fn fill_in(root: &mut Table, env: &Env) {
     }
 
     {
-        // TODO: Copy this part to wrapper Cargo.toml generation code to fix builds on docs.rs
         // Small trick to prevent having double quotes around it since toml doesn't like having '.'
         let docs_rs_metadata = upsert_table(root, "package");
         let docs_rs_metadata = upsert_table(docs_rs_metadata, "metadata");
