@@ -55,19 +55,17 @@ fn fill_empty(root: &mut Table, env: &Env, crate_name: &str) {
             format!("{}-sys", ext_lib.crate_name)
         };
         let repo_url = match ext_package.as_str() {
-            // Not sure if glib-macros and gobject-sys are needed here
-            "cairo-sys-rs" | "gdk-pixbuf-sys" | "gio-sys" | "gobject-sys" | "glib-macros"
-            | "glib-sys" | "graphene-sys" | "pango-sys" | "pangocairo-sys" => {
+            "cairo-sys-rs" | "gdk-pixbuf-sys" | "gio-sys" | "gobject-sys" | "glib-sys"
+            | "graphene-sys" | "pango-sys" | "pangocairo-sys" => {
                 "https://github.com/gtk-rs/gtk-rs-core"
             }
-            // Not sure if gtk-macros is needed here
             "atk-sys" | "gdk-sys" | "gdkwayland-sys" | "gdkx11-sys" | "gtk-sys" | "gtk-macros" => {
                 "https://github.com/gtk-rs/gtk3-rs"
             }
-            // Not sure if gtk4-macros is needed here
-            "gdk4-wayland-sys" | "gdk4-x11-sys" | "gdk4-sys" | "gsk4-sys" | "gtk4-macros"
-            | "gtk4-sys" => "https://github.com/gtk-rs/gtk4-rs",
-            &_ => "Unknown dependency, please create an issue",
+            "gdk4-wayland-sys" | "gdk4-x11-sys" | "gdk4-sys" | "gsk4-sys" | "gtk4-sys" => {
+                "https://github.com/gtk-rs/gtk4-rs"
+            }
+            &_ => "ADD GIT REPOSITORY URL HERE",
         };
         set_string(dep, "package", ext_package);
         set_string(dep, "git", repo_url);
