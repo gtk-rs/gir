@@ -1,20 +1,20 @@
 # Generating the FFI library
-We've installed gir and set up our repo. Now let's work on the unsafe bindings of the -sys crate. Let's change into the directory of the sys crate.
+We have installed gir, set up our repo and have all the .gir files we need. Now let's work on the unsafe bindings of the -sys crate. Let's change into the directory of the sys crate.
 
 ```console
-> cd sourceview-sys
+> cd pango/pango-sys
 ```
 
 ## The Gir.toml file
-The first step is to let [gir] know what to generate. This is what the `Gir.toml` file that we created inside the `sourceview-sys` folder is for. This file will not be replaced when we run gir again. The file is currently empty so let's add the following to it:
+The first step is to let [gir] know what to generate. This is what the `Gir.toml` file that we created inside the `pango-sys` folder is for. This file will not be replaced when we run gir again. The file is currently empty so let's add the following to it:
 
 ```toml
 [options]
-library = "GtkSource"
-version = "3.0"
-min_cfg_version = "3.0"
+library = "Pango"
+version = "1.0"
+min_cfg_version = "1.0"
 target_path = "."
-girs_directories = ["../gir-files/"]
+girs_directories = ["../../gir-files/"]
 work_mode = "sys"
 ```
 
@@ -25,20 +25,19 @@ work_mode = "sys"
 * `work_mode` stands for the mode gir is using. The option here are `sys` and `normal`.
 * `girs_directories` stands for the location of the `.gir` files.
 
-You can find out the values for `library` and `version` by looking at the name of the .gir file of your library. In our case it is called GtkSource-3.0.gir. This tells us that the `library` is GtkSource and the `version` is 3.0. If you don't know what value to use for `min_cfg_version`, use the same as you use for `version`. Because we are generating the unsafe bindings, we use the `sys` work mode.
-
+You can find out the values for `library` and `version` by looking at the name of the .gir file of your library. In our case it is called Pango-1.0.gir. This tells us that the `library` is Pango and the `version` is 1.0. If you don't know what value to use for `min_cfg_version`, use the same as you use for `version`. Because we are generating the unsafe bindings, we use the `sys` work mode.
 
 Let's generate the `sys` crate now:
 
 ```console
-> # Run gir in "sys" mode (the "-m" option). We give the gir files path (the "-d" option) and output path (the "-o" option).
 > gir -o .
 ```
 
-You should now see new files (and a new folder):
+You should now see new files and a new folder.
 
 * `build.rs`
 * `Cargo.toml`
+* `Gir.toml`
 * `src/lib.rs`
 * `tests/`
 
@@ -48,32 +47,31 @@ Now let's try to build it:
 > cargo build
 ```
 
-Surprise! It doesn't build at all and you should see a loooooot of errors. Well, that was expected. We need to add some dependencies in order to make it work. You can have a look at the gir file of your library to find out which are needed.
-
-TODO: Describe how this is done
-
-The dependencies need to be added to the `external_libraries` part. The names of the dependencies are the same as in the .gir files and not what the packages to install the libraries might be called. Let's update our `Gir.toml` file to make it look like this:
+Surprise! It doesn't build at all and you should see a loooooot of errors. Well, that was expected. We need to add some dependencies in order to make it work. Have a look at the errors of the compiler to find out which are missing. In our example, the compiler throws the following errors:
+```console
+use of undeclared crate or module `glib`
+use of undeclared crate or module `gobject`
+```
+The dependencies need to be added to the `external_libraries` part. The names of the dependencies are the same as in the .gir files and not what the packages to install the libraries might be called. The compiler told us that the `GLib` and the `GObject` dependencies are missing. Let's update our `Gir.toml` file to fix it:
 
 ```toml
 [options]
-library = "GtkSource"
-version = "3.0"
+library = "Pango"
+version = "1.0"
+min_cfg_version = "1.0"
 target_path = "."
-min_cfg_version = "3.0"
+girs_directories = ["../../gir-files/"]
+work_mode = "sys"
 
 external_libraries = [
-    "Cairo",
-    "Gdk",
-    "GdkPixbuf",
-    "Gio",
     "GLib",
     "GObject",
-    "Gtk",
 ]
 ```
 
-Because we made some changes to the Gir.toml file, we have to run gir again. This is called regenerating the code. Just run gir again to regenerate the code. You can then try building the crate to see if the errors are gone.
+Because we made some changes to the Gir.toml file, we have to run gir again. This is called regenerating the code. Just remove the `Cargo.*` files and run gir again to regenerate the code. You can then try building the crate to see if the errors are gone.
 ```console
+> rm Cargo.*
 > gir -o .
 > cargo build
 ```
@@ -86,7 +84,7 @@ Normally, all tests passed. If you get an error when running those tests, it's v
 ## The Gir.toml file
 This file was automatically generated but it will not be replaced when we run gir again. Make sure to look at your Cargo.toml to optionally add more information to it. If there are any `[features]`, you should try building and testing with these features activated as well. If you'd like, you can also set the default features. This can be useful for example if you want to always activate the newest version unless the user of the crate specifies an older version.
 
-For our example, we now have a working `sys` crate containing all functions and objects definition. We are done here and can go back to the "global" folder of our project:
+For our example, we now have a working `sys` crate containing all functions and objects definition. We are done here and can go back to the folder of the wrapper crate:
 ```console
 > cd ..
 ```

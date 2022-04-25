@@ -67,7 +67,6 @@ If [gir] generation fails (for whatever reason), it means you'll have to impleme
 Since it's a "simple" type (no pointer, therefore no memory management to do), [gir] doesn't know how to generate it. You'll need to implement some traits by hand like `ToGlibPtr` or `ToGlibPtrMut` (depending on your needs).
 
 ## Bad function generation
-
 In some cases, the generated code isn't correct (array parameters are often an issue). In such cases, it's better to just make the implementation yourself. As an example, let's say you want to implement `Region::is_empty` yourself. A few changes have to be made. Let's start with `Gir.toml`:
 
 ```toml
@@ -83,7 +82,7 @@ status = "generate"
     ignore = true
 ```
 
-So to sum up what I wrote above: we removed "GtkSource.Region" from the "generate" list and we created a new entry for it. Then we say to [gir] that it should generate (through `status = "generate"`). However, we also tell it that we don't want the "is_empty" to be generated.
+So to sum up what was written above: we removed "GtkSource.Region" from the "generate" list and we created a new entry for it. Then we say to [gir] that it should generate (through `status = "generate"`). However, we also tell it that we don't want the "is_empty" to be generated.
 
 Now that we've done that, we need to reimplement it. Let's create a `src/region.rs` file:
 
@@ -110,7 +109,6 @@ As usual, don't forget to reexport the trait. A little tip about reexporting man
 
 ```rust
 pub use auto::traits::*;
-
 pub use region::RegionExtManual;
 ```
 
@@ -118,7 +116,6 @@ Then it's reexported as follows from the `src/lib.rs` file:
 
 ```rust
 pub mod prelude;
-
 pub use prelude::*;
 ```
 
