@@ -46,6 +46,7 @@ fn fill_empty(root: &mut Table, env: &Env, crate_name: &str) {
 
     let deps = upsert_table(root, "dependencies");
     for ext_lib in &env.config.external_libraries {
+        let dep = upsert_table(deps, &ext_lib.crate_name);
         let ext_package = if ext_lib.crate_name == "cairo" {
             format!("{}-sys-rs", ext_lib.crate_name)
         } else if ext_lib.crate_name == "gdk_pixbuf" {
@@ -53,8 +54,44 @@ fn fill_empty(root: &mut Table, env: &Env, crate_name: &str) {
         } else {
             format!("{}-sys", ext_lib.crate_name)
         };
-        let dep = upsert_table(deps, &*ext_package);
-        set_string(dep, "git", "https://github.com/gtk-rs/gtk-rs-core");
+        let repo_url = match ext_package.as_str() {
+            "cairo-sys-rs" | "gdk-pixbuf-sys" | "gio-sys" | "gobject-sys" | "glib-sys"
+            | "graphene-sys" | "pango-sys" | "pangocairo-sys" => {
+                "https://github.com/gtk-rs/gtk-rs-core"
+            }
+            "atk-sys" | "gdk-sys" | "gdkwayland-sys" | "gdkx11-sys" | "gtk-sys" => {
+                "https://github.com/gtk-rs/gtk3-rs"
+            }
+            "gdk4-wayland-sys" | "gdk4-x11-sys" | "gdk4-sys" | "gsk4-sys" | "gtk4-sys" => {
+                "https://github.com/gtk-rs/gtk4-rs"
+            }
+            "gstreamer-sys"
+            | "gstreamer-app-sys"
+            | "gstreamer-audio-sys"
+            | "gstreamer-base-sys"
+            | "gstreamer-check-sys"
+            | "gstreamer-controller-sys"
+            | "gstreamer-editing-services-sys"
+            | "gstreamer-gl-sys"
+            | "gstreamer-gl-egl-sys"
+            | "gstreamer-gl-wayland-sys"
+            | "gstreamer-gl-x11-sys"
+            | "gstreamer-mpegts-sys"
+            | "gstreamer-net-sys"
+            | "gstreamer-pbutils-sys"
+            | "gstreamer-player-sys"
+            | "gstreamer-rtp-sys"
+            | "gstreamer-rtsp-sys"
+            | "gstreamer-rtsp-server-sys"
+            | "gstreamer-sdp-sys"
+            | "gstreamer-tag-sys"
+            | "gstreamer-video-sys"
+            | "gstreamer-webrtc-sys"
+            | "gstreamer-allocators-sys" => "https://gitlab.freedesktop.org/gstreamer/gstreamer-rs",
+            &_ => "ADD GIT REPOSITORY URL HERE",
+        };
+        set_string(dep, "package", ext_package);
+        set_string(dep, "git", repo_url);
     }
 }
 
