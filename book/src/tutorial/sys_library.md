@@ -69,7 +69,7 @@ external_libraries = [
 ]
 ```
 
-Because we made some changes to the Gir.toml file, we have to run gir again. This is called regenerating the code. Just remove the `Cargo.*` files and run gir again to regenerate the code. You can then try building the crate to see if the errors are gone.
+ If one of your .gir files changed or you want to use an updated version of gir to generate the code, there is no need to delete the Cargo.toml or the Cargo.lock files before you regenerate the code. Because we made some changes to the Gir.toml file, we have to run gir again. Changing the content of the external_libraries array means that additional dependencies have to be added. gir does this automatically for you, but only if there is no Cargo.toml and no Cargo.lock file present. Just remove the `Cargo.*` files and run gir again and the additional dependencies will be added. If you made any manual changes to the file, you would have to do these changes again. After regenerating the code, we build the crate to see if the errors are gone.
 ```console
 > rm Cargo.*
 > gir -o .
