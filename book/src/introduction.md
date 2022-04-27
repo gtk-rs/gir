@@ -25,4 +25,7 @@ In order to generate the bindings and the wrapper for the first time, the above 
 ## GIR format reference
 It can always be useful to look at the [reference](https://gi.readthedocs.io/en/latest/annotations/giannotations.html) or [schema](https://gitlab.gnome.org/GNOME/gobject-introspection/blob/master/docs/gir-1.2.rnc).
 
+## Contact us
+If you use gir on another library and it fails and you can't figure out why, don't hesitate to [contact us](https://gtk-rs.org/contact)!
+
 [gir]: https://github.com/gtk-rs/gir

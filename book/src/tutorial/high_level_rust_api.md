@@ -309,7 +309,7 @@ Okay, lets go through that process for a few objects of our example.
 
 TODO: Add steps of example
 
-Again, if you do it on another library and it fails and you can't figure out why, don't hesitate to reach us!
+Again, if you do it on another library and it fails and you can't figure out why, don't hesitate to [contact us](https://gtk-rs.org/contact)!
 
 At this point, you should have almost everything you need. Let's have a look at errors that can happen in this process.
 
