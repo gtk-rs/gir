@@ -118,9 +118,9 @@ min_cfg_version = "1.0"
 target_path = "."
 girs_directories = ["../gir-files"]
 work_mode = "normal"
+single_version_file = true
 generate_safety_asserts = true
 deprecate_by_min_version = true
-single_version_file = true
 
 generate = []
 
@@ -132,7 +132,6 @@ Many of these options look familiar from the last chapter but there are also a f
 * `work_mode` value is now set to `normal`, it means it'll generate the high-level Rust api instead of the sys-level.
 * `generate_safety_asserts` is used to generates checks to ensure that, or any other kind of initialization needed before being able to use the library.
 * `deprecate_by_min_version` is used to generate a [Rust "#[deprecated]"](https://doc.rust-lang.org/edition-guide/rust-2018/the-compiler/an-attribute-for-deprecation.html) attribute based on the deprecation information provided by the `.gir` file.
-* `single_version_file` is a very useful option when you have a lot of generated files (like we'll have). Instead of generating the gir hash commit used for the generation in the header of all generated files, it'll just write it inside one file, removing `git diff` noise **a lot**.
 * `generate = []`: this line currently does nothing. We say to [gir] to generate nothing. We'll fill it later on.
 * `manual = []`: this line currently does nothing. We can let [gir] know about objects which it does not have to generate code for.
 
