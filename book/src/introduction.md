@@ -6,16 +6,16 @@ This book contains a tutorial on how to use gir. As an example we will create th
 ## General steps
 [gir] tries to make it as simple as possible to generate a safe wrapper for your C library. The process can be divided into four steps that correspond to the four operating modes gir has.
 
-- Generating unsafe bindings
+- Generating unsafe bindings:
 In this step, the low-level FFI bindings are created from the supplied `*.gir` file. These are essentially direct calls into the related C library and are typically unsafe. The resulting crate is typically appended with -sys. The operating mode is `sys`.
 
-- Generating a safe wrapper
+- Generating a safe wrapper:
 Next, another crate for a layer on top of these unsafe (sys) bindings is created, which makes them safe for use in general Rust. The operating mode is `normal`.
 
-- Checking for missing types/methods
+- Checking for missing types/methods:
 The operating mode `not_bound` allows you to see the detected types/methods that will not be generated for whatever reasons.
 
-- Adding documentation
+- Adding documentation:
 After the safe wrapper is created, gir can even generate the documentation for us. Use the operating mode `doc` to do so.
 
 

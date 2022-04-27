@@ -6,7 +6,7 @@ Luckily there are only a few errors which can happen with [gir] generation. Let'
 
 Compilation of the generated bindings may fail with errors like the following:
 
-```
+```console
 error: cannot find macro `skip_assert_initialized` in this scope
   --> src/auto/enums.rs:83:9
    |
@@ -49,7 +49,7 @@ macro_rules! assert_initialized_main_thread {
 
 One complication here is that the `assert_initialized_main_thread!` macro depends on the exact library. If it's GTK-based then the above macro is likely correct, unless the library has its own initialization function. If it has its own initialization function it would need to be handled in addition to GTK's here in the same way.
 
-For non-GTK-based libraries the following macro would handle the initialization function of that library in the same way, or if there is none would simply do nothing:
+For non-GTK-based libraries the following macro would handle the initialization function of that library in the same way, or if there is none it would simply do nothing:
 
 ```rust
 /// No-op.
@@ -82,9 +82,9 @@ status = "generate"
     ignore = true
 ```
 
-So to sum up what was written above: we removed "GtkSource.Region" from the "generate" list and we created a new entry for it. Then we say to [gir] that it should generate (through `status = "generate"`). However, we also tell it that we don't want the "is_empty" to be generated.
+So to sum up what was written above: we removed "GtkSource.Region" from the "generate" list and we created a new entry for it. Then we say to [gir] that it should generate (through `status = "generate"`). However, we also tell it that we don't want the "is_empty" function to be generated.
 
-Now that we've done that, we need to reimplement it. Let's create a `src/region.rs` file:
+Now that we've done that, we need to implement it. Let's create a `src/region.rs` file:
 
 ```rust
 use glib::object::IsA;
@@ -105,7 +105,7 @@ impl<O: IsA<Region>> RegionExtManual for O {
 
 You might wonder: "why not just implementing it on the `Region` type directly?". Because like this, a subclass will also be able to use this trait easily as long as it implements `IsA<Region>`. For instance, in gtk, everything that implements `IsA<Widget>` (so almost every GTK types) can use those methods.
 
-As usual, don't forget to reexport the trait. A little tip about reexporting manual traits: in `gtk3-rs`, we create a `src/prelude.rs` file which reexports all traits (both manual and generated ones), making it simpler for users to use them through `use [DEPENDENCY]::prelude::*`. It looks like this:
+As usual, don't forget to reexport the trait. A little tip about reexporting manual traits: in `gtk3-rs`, we create a `src/prelude.rs` file which reexports all traits (both manual and generated ones), making it simpler for users to use them through `use [DEPENDENCY]::prelude::*`. The `src/prelude.rs` file looks like this:
 
 ```rust
 pub use auto::traits::*;
@@ -118,5 +118,23 @@ Then it's reexported as follows from the `src/lib.rs` file:
 pub mod prelude;
 pub use prelude::*;
 ```
+
+## Manually defined traits missing from the documentation
+If you defined traits manually, you can add them to the "Implements" section in the documentation for classes and interfaces by using the `manual_traits = []` option in the `Gir.toml` file. Here is an example:
+
+```toml
+[[object]]
+name = "Gtk.Assistant"
+status = "generate"
+#add link to trait from current crate
+manual_traits = ["AssistantExtManual"]
+
+[[object]]
+name = "Gtk.Application"
+status = "generate"
+#add link to trait from other crate
+manual_traits = ["gio::ApplicationExtManual"]
+```
+
 
 [gir]: https://github.com/gtk-rs/gir

@@ -17,10 +17,10 @@ For GStreamer related dependencies, follow the above mentioned steps but clone t
 If you have other dependencies, you have to find the files yourself. They can often be found in the repo containing the source of your dependencies or if you have them installed, you might find them under `/usr/share/gir-1.0/` again.
 
 ## Example
-We want to generate the wrapper for pango. It is related to GTK, so in order to get its .gir files, we use the recommended way. While being in the project folder git-tutorial, we clone the [gir-files repo](https://github.com/gtk-rs/gir-files).
+We want to generate the wrapper for pango. It is related to GTK, so in order to get its .gir files, we use the recommended way. While being in the project folder `git-tutorial`, we clone the [gir-files repo](https://github.com/gtk-rs/gir-files).
 
 ```console
 > git clone --depth 1 https://github.com/gtk-rs/gir-files
 ```
 
-If you look into `gir-files`, you'll see a file named Pango-1.0.gir. That's the one for pango. Because we already cloned the gir-files repo, we also have all the other .gir files of the dependencies that we need. Now we can create the unsafe bindings.
+If you look into `gir-files`, you'll see a file named `Pango-1.0.gir`. That's the one for pango. Because we already cloned the gir-files repo, we also have all the other .gir files of the dependencies that we need. Now we can create the unsafe bindings.

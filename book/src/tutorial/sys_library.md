@@ -18,12 +18,12 @@ girs_directories = ["../../gir-files/"]
 work_mode = "sys"
 ```
 
-* `library` stands for the library we want to generate.
+* `library` stands for the name of the library we want to generate.
 * `version` stands for the version of the library to be used. 
-* `target_path` stands for the location where the files will be generated.
 * `min_cfg_version` will be the minimum version supported by the generated bindings.
-* `work_mode` stands for the mode gir is using. The option here are `sys` and `normal`.
+* `target_path` stands for the location where the files will be generated.
 * `girs_directories` stands for the location of the `.gir` files.
+* `work_mode` stands for the mode gir is using. The options here are `sys` and `normal`.
 
 You can find out the values for `library` and `version` by looking at the name of the .gir file of your library. In our case it is called Pango-1.0.gir. This tells us that the `library` is Pango and the `version` is 1.0. If you don't know what value to use for `min_cfg_version`, use the same as you use for `version`. Because we are generating the unsafe bindings, we use the `sys` work mode.
 
@@ -48,7 +48,7 @@ Now let's try to build it:
 ```
 
 Surprise! It doesn't build at all and you should see a loooooot of errors. Well, that was expected. We need to add some dependencies in order to make it work. Have a look at the errors of the compiler to find out which are missing. In our example, the compiler throws the following errors:
-```console
+```rust
 use of undeclared crate or module `glib`
 use of undeclared crate or module `gobject`
 ```

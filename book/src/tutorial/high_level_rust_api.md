@@ -1,5 +1,5 @@
 # Generating the Rust API
-In the previous step we successfully created the unsafe bindings of the -sys crate. We are now in the directory of the safe wrapper crate (gir-tutorial/pango).
+In the previous step we successfully created the unsafe bindings of the -sys crate. We are now in the directory of the safe wrapper crate (`gir-tutorial/pango`).
 
 ## The Cargo.toml file
 The Cargo.toml file will not be replaced when you run gir. So it is our responsibility to make sure the information in it is correct. Open the Cargo.toml file and have a look at it. Make sure everything under `[package]` is to your liking.
@@ -11,7 +11,7 @@ features = ["dox"]
 ```
 This automatically activates the `dox` feature if you chose to publish the bindings and docs.rs tries to build the documentation. If you are not going to maintain the crate and don't want to publish it, this line is not going to hurt.
 
-We also need to add libc, bitflags, glib and glib-sys and all other dependencies we used in the sys crate as dependencies. Because we are creating a wrapper for the sys crate, which we generated in the previous chapter, we also need to add the sys crate to the list of dependencies. In the automatically generated code, the sys crate is always called `ffi`, so we need to rename the sys crate in our Cargo.toml. For our example, this results in the following dependencies:
+We also need to add `libc`, `bitflags`, `glib` and `glib-sys` and all other dependencies we used in the sys crate as dependencies. Because we are creating a wrapper for the sys crate, which we generated in the previous chapter, we also need to add the sys crate to the list of dependencies. In the automatically generated code, the sys crate is always called `ffi`, so we need to rename the sys crate in our `Cargo.toml`. For our example, this results in the following dependencies:
 ```toml
 [dependencies]
 libc = "0.2"
@@ -123,6 +123,8 @@ deprecate_by_min_version = true
 single_version_file = true
 
 generate = []
+
+manual = []
 ```
 
 Many of these options look familiar from the last chapter but there are also a few new things in here. Let's take a look at them:
@@ -132,6 +134,7 @@ Many of these options look familiar from the last chapter but there are also a f
 * `deprecate_by_min_version` is used to generate a [Rust "#[deprecated]"](https://doc.rust-lang.org/edition-guide/rust-2018/the-compiler/an-attribute-for-deprecation.html) attribute based on the deprecation information provided by the `.gir` file.
 * `single_version_file` is a very useful option when you have a lot of generated files (like we'll have). Instead of generating the gir hash commit used for the generation in the header of all generated files, it'll just write it inside one file, removing `git diff` noise **a lot**.
 * `generate = []`: this line currently does nothing. We say to [gir] to generate nothing. We'll fill it later on.
+* `manual = []`: this line currently does nothing. We can let [gir] know about objects which it does not have to generate code for.
 
 Let's make a first generation of our high-level Rust API!
 
@@ -276,13 +279,13 @@ Now it's time to introduce you to a whole new [gir] mode: `not_bound`. Let's giv
 [NOT GENERATED FUNCTION] Pango.unichar_direction because of Pango.Direction
 ```
 
-We now have the list of all the non-yet generated items. Quite convenient! There can be different kinds of not generated items:
+We now have the list of all the not-yet generated items. Quite convenient! There can be different kinds of not generated items:
 
-* `[NOT GENERATED]`
+* `[NOT GENERATED]`:
 Objects marked with `[NOT GENERATED]` are objects that we can generate, but we did not (yet) add to the `generate` array.
-* `[NOT GENERATED PARENT]`
+* `[NOT GENERATED PARENT]`:
 These objects live in a dependency of the current library. These are the objects we will add to the `manual` array in the following steps.
-* `[NOT GENERATED FUNCTION]`
+* `[NOT GENERATED FUNCTION]`:
 These are global functions that were not generated. To fix it, we just add `"NameOfYourLibrary.*"` to the `generate` array in the Git.toml and add the following line to your src/lib.rs file:
 ```rust
 pub use auto::functions::*;
@@ -309,7 +312,7 @@ TODO: Add steps of example
 
 Again, if you do it on another library and it fails and you can't figure out why, don't hesitate to reach us!
 
-At this point, you should have almost everything you need. There is just one last case we need to talk about.
+At this point, you should have almost everything you need. Let's have a look at errors that can happen in this process.
 
 
 [gir]: https://github.com/gtk-rs/gir
