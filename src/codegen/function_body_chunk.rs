@@ -208,7 +208,6 @@ impl Builder {
         let (call, ret) = self.apply_outs_mode(call, ret, &mut uninitialized_vars);
 
         body.push(call);
-        self.write_out_uninitialized(&mut body, uninitialized_vars);
         if let Some(chunk) = ret {
             body.push(chunk);
         }
@@ -335,26 +334,6 @@ impl Builder {
         Chunk::BlockHalf(chunks)
     }
 
-    fn write_out_uninitialized(
-        &self,
-        body: &mut Vec<Chunk>,
-        uninitialized_vars: Vec<(String, bool)>,
-    ) {
-        for (uninitialized_var, need_from_glib) in uninitialized_vars {
-            body.push(Chunk::Let {
-                name: uninitialized_var.clone(),
-                is_mut: false,
-                value: Box::new(Chunk::Custom(format!(
-                    "{}{}.assume_init(){}",
-                    if need_from_glib { "from_glib(" } else { "" },
-                    uninitialized_var,
-                    if need_from_glib { ")" } else { "" },
-                ))),
-                type_: None,
-            });
-        }
-    }
-
     fn remove_extra_assume_init(
         &self,
         array_length_name: &Option<String>,
@@ -365,6 +344,17 @@ impl Builder {
         if let Some(array_length_name) = array_length_name {
             uninitialized_vars.retain(|(x, _)| x != array_length_name);
         }
+    }
+
+    fn is_uninitialized_var(
+        &self,
+        name: &String,
+        uninitialized_vars: &mut [(String, bool)],
+    ) -> Option<bool> {
+        uninitialized_vars
+            .iter()
+            .find(|(n, _)| n.eq(name))
+            .map(|(_, need_from_glib)| *need_from_glib)
     }
 
     fn add_trampoline(
@@ -880,7 +870,6 @@ impl Builder {
             }),
             type_: None,
         });
-        self.write_out_uninitialized(&mut body, uninitialized_vars);
         body.push(Chunk::Let {
             name: "result".to_string(),
             is_mut: false,
@@ -1084,11 +1073,9 @@ impl Builder {
             library::Type::Alias(a) if a.c_identifier == "GPid"
         )
     }
-    fn write_out_variables(&self, v: &mut Vec<Chunk>, env: &Env) -> Vec<(String, bool)> {
-        let mut ret = Vec::new();
-        let outs = self.get_outs();
-
-        for par in outs {
+    fn write_out_variables(&self, body: &mut Vec<Chunk>, env: &Env) -> Vec<(String, bool)> {
+        let mut uninitialized_vars = Vec::new();
+        for par in self.get_outs() {
             if let Out {
                 parameter,
                 mem_mode,
@@ -1096,7 +1083,7 @@ impl Builder {
             {
                 let val = self.get_uninitialized(mem_mode);
                 if val.is_uninitialized() {
-                    ret.push((
+                    uninitialized_vars.push((
                         parameter.name.clone(),
                         self.check_if_need_glib_conversion(env, parameter.typ),
                     ));
@@ -1107,10 +1094,10 @@ impl Builder {
                     value: Box::new(val),
                     type_: None,
                 };
-                v.push(chunk);
+                body.push(chunk);
             }
         }
-        ret
+        uninitialized_vars
     }
     fn get_uninitialized(&self, mem_mode: &OutMemMode) -> Chunk {
         use self::OutMemMode::*;
@@ -1159,7 +1146,18 @@ impl Builder {
         mem_mode: &OutMemMode,
         uninitialized_vars: &mut Vec<(String, bool)>,
     ) -> Chunk {
-        let value = Chunk::Custom(parameter.name.clone());
+        let value = if let Some(need_from_glib) =
+            self.is_uninitialized_var(&parameter.name, uninitialized_vars)
+        {
+            Chunk::Custom(format!(
+                "{}{}.assume_init(){}",
+                if need_from_glib { "from_glib(" } else { "" },
+                parameter.name,
+                if need_from_glib { ")" } else { "" },
+            ))
+        } else {
+            Chunk::Custom(parameter.name.clone())
+        };
         if let OutMemMode::UninitializedNamed(_) = mem_mode {
             value
         } else {
