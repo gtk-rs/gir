@@ -346,10 +346,27 @@ impl Builder {
         }
     }
 
+    fn generate_initialized_value(
+        &self,
+        name: &str,
+        uninitialized_vars: &[(String, bool)],
+    ) -> Chunk {
+        if let Some(need_from_glib) = self.is_uninitialized_var(name, uninitialized_vars) {
+            Chunk::Custom(format!(
+                "{}{}.assume_init(){}",
+                if need_from_glib { "from_glib(" } else { "" },
+                name,
+                if need_from_glib { ")" } else { "" },
+            ))
+        } else {
+            Chunk::Custom(name.to_string())
+        }
+    }
+
     fn is_uninitialized_var(
         &self,
-        name: &String,
-        uninitialized_vars: &mut [(String, bool)],
+        name: &str,
+        uninitialized_vars: &[(String, bool)],
     ) -> Option<bool> {
         uninitialized_vars
             .iter()
@@ -789,13 +806,13 @@ impl Builder {
                     && Some(index) != index_to_ignore
             })
             .map(|(_, out)| {
-                let value = Chunk::Custom(out.lib_par.name.clone());
                 let mem_mode = c_type_mem_mode_lib(
                     env,
                     out.lib_par.typ,
                     out.lib_par.caller_allocates,
                     out.lib_par.transfer,
                 );
+                let value = self.generate_initialized_value(&out.lib_par.name, &uninitialized_vars);
                 if let OutMemMode::UninitializedNamed(_) = mem_mode {
                     value
                 } else {
@@ -1146,18 +1163,7 @@ impl Builder {
         mem_mode: &OutMemMode,
         uninitialized_vars: &mut Vec<(String, bool)>,
     ) -> Chunk {
-        let value = if let Some(need_from_glib) =
-            self.is_uninitialized_var(&parameter.name, uninitialized_vars)
-        {
-            Chunk::Custom(format!(
-                "{}{}.assume_init(){}",
-                if need_from_glib { "from_glib(" } else { "" },
-                parameter.name,
-                if need_from_glib { ")" } else { "" },
-            ))
-        } else {
-            Chunk::Custom(parameter.name.clone())
-        };
+        let value = self.generate_initialized_value(&parameter.name, uninitialized_vars);
         if let OutMemMode::UninitializedNamed(_) = mem_mode {
             value
         } else {
