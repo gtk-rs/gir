@@ -1,6 +1,4 @@
-use std::ffi::OsString;
 use std::io::Result;
-use std::os::unix::prelude::OsStringExt;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Output};
 
@@ -67,8 +65,19 @@ fn path_command(path: impl AsRef<Path>, subcommand: &[&str]) -> Option<PathBuf> 
             .and_then(std::char::from_u32),
         Some('\n')
     );
-    let toplevel = OsString::from_vec(output.stdout);
-    Some(toplevel.into())
+    Some(path_from_output(output.stdout))
+}
+
+#[cfg(unix)]
+fn path_from_output(output: Vec<u8>) -> PathBuf {
+    use std::ffi::OsString;
+    use std::os::unix::prelude::OsStringExt;
+    OsString::from_vec(output).into()
+}
+
+#[cfg(not(unix))]
+fn path_from_output(output: Vec<u8>) -> PathBuf {
+    String::from_utf8(output).unwrap().into()
 }
 
 pub fn toplevel(path: impl AsRef<Path>) -> Option<PathBuf> {
