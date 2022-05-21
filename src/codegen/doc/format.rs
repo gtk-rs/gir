@@ -542,7 +542,7 @@ pub(crate) fn gen_signal_doc_link(symbol: &str, signal: &str) -> String {
 }
 
 pub(crate) fn gen_property_doc_link(symbol: &str, property: &str) -> String {
-    format!("`property::{}::{}`", symbol, property)
+    format!("[`{property}`][struct@crate::{symbol}#{property}]")
 }
 
 pub(crate) fn gen_vfunc_doc_link(symbol: &str, vfunc: &str) -> String {
