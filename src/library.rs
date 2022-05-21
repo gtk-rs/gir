@@ -896,6 +896,13 @@ impl Type {
         }
     }
 
+    pub fn is_fundamental(&self) -> bool {
+        match *self {
+            Type::Class(Class { is_fundamental, .. }) => is_fundamental,
+            _ => false,
+        }
+    }
+
     pub fn is_abstract(&self) -> bool {
         match *self {
             Type::Class(Class { is_abstract, .. }) => is_abstract,
