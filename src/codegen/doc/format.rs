@@ -538,7 +538,7 @@ pub(crate) fn gen_const_doc_link(const_info: &crate::analysis::constants::Info) 
 }
 
 pub(crate) fn gen_signal_doc_link(symbol: &str, signal: &str) -> String {
-    format!("`signal::{}::{}`", symbol, signal)
+    format!("[`{signal}`][struct@crate::{symbol}#{signal}]")
 }
 
 pub(crate) fn gen_property_doc_link(symbol: &str, property: &str) -> String {
