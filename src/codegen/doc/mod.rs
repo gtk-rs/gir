@@ -347,6 +347,26 @@ fn create_object_doc(w: &mut dyn Write, env: &Env, info: &analysis::object::Info
                 }
             }
         }
+        if !signals.is_empty() {
+            writeln!(w, "\n## Signals")?;
+            document_type_signals(env, w, info, signals, None)?;
+
+            for parent_info in &info.supertypes {
+                match env.library.type_(parent_info.type_id) {
+                    Type::Class(cl) => {
+                        if !cl.signals.is_empty() {
+                            document_type_signals(env, w, info, &cl.signals, Some(&cl.name))?;
+                        }
+                    }
+                    Type::Interface(iface) => {
+                        if !iface.signals.is_empty() {
+                            document_type_signals(env, w, info, &iface.signals, Some(&iface.name))?;
+                        }
+                    }
+                    _ => (),
+                }
+            }
+        }
 
         let impl_self = if has_trait { Some(info.type_id) } else { None };
         let mut implements = impl_self
@@ -1066,6 +1086,46 @@ pub fn document_type_properties(
             )?;
         } else {
             writeln!(w, "\n\n#### `{}`\n {}", property.name, details.join(" | "),)?;
+        }
+    }
+    if subtype.is_some() {
+        writeln!(w, "</details>")?;
+    }
+    Ok(())
+}
+
+pub fn document_type_signals(
+    env: &Env,
+    w: &mut dyn Write,
+    info: &analysis::object::Info,
+    signals: &[Signal],
+    subtype: Option<&str>,
+) -> Result<()> {
+    if let Some(subtype_name) = subtype {
+        writeln!(w, "<details><summary><h4>{}</h4></summary>", subtype_name)?;
+    }
+    for signal in signals {
+        let mut details = Vec::new();
+        if signal.is_action {
+            details.push("Action");
+        }
+        if signal.is_detailed {
+            details.push("Detailed");
+        }
+        if let Some(doc) = &signal.doc {
+            writeln!(
+                w,
+                "\n\n#### `{}`\n {}\n\n{}",
+                signal.name,
+                reformat_doc(
+                    &fix_param_names(doc, &None),
+                    env,
+                    Some((&info.type_id, None))
+                ),
+                details.join(" | "),
+            )?;
+        } else {
+            writeln!(w, "\n\n#### `{}`\n {}", signal.name, details.join(" | "),)?;
         }
     }
     if subtype.is_some() {
