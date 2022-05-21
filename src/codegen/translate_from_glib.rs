@@ -27,7 +27,7 @@ impl TranslateFromGlib for Mode {
         match ConversionType::of(env, self.typ) {
             Direct => (String::new(), String::new()),
             Scalar => match env.library.type_(self.typ) {
-                library::Type::Fundamental(library::Fundamental::UniChar) => (
+                library::Type::Basic(library::Basic::UniChar) => (
                     "std::convert::TryFrom::try_from(".into(),
                     ").expect(\"conversion from an invalid Unicode value attempted\")".into(),
                 ),

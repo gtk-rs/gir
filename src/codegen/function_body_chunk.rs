@@ -425,8 +425,7 @@ impl Builder {
                 _ => String::new(),
             };
             let nullable = trampoline.parameters.rust_parameters[par.ind_rust].nullable;
-            let is_fundamental =
-                add_chunk_for_type(env, par.typ, par, &mut body, &ty_name, nullable);
+            let is_basic = add_chunk_for_type(env, par.typ, par, &mut body, &ty_name, nullable);
             if is_gstring(&ty_name) {
                 if *nullable {
                     arguments.push(Chunk::Name(format!(
@@ -438,13 +437,13 @@ impl Builder {
                 }
                 continue;
             }
-            if *nullable && !is_fundamental {
+            if *nullable && !is_basic {
                 arguments.push(Chunk::Name(format!("{}.as_ref().as_ref()", par.name)));
                 continue;
             }
             arguments.push(Chunk::Name(format!(
                 "{}{}",
-                if is_fundamental { "" } else { "&" },
+                if is_basic { "" } else { "&" },
                 par.name
             )));
         }
@@ -1299,10 +1298,8 @@ fn c_type_mem_mode_lib(
                 use crate::library::Type::*;
                 let type_ = env.library.type_(typ);
                 match type_ {
-                    Fundamental(
-                        library::Fundamental::Utf8
-                        | library::Fundamental::OsString
-                        | library::Fundamental::Filename,
+                    Basic(
+                        library::Basic::Utf8 | library::Basic::OsString | library::Basic::Filename,
                     ) => {
                         if transfer == library::Transfer::Full {
                             NullMutPtr
@@ -1338,10 +1335,8 @@ fn type_mem_mode(env: &Env, parameter: &library::Parameter) -> Chunk {
                 use crate::library::Type::*;
                 let type_ = env.library.type_(parameter.typ);
                 match type_ {
-                    Fundamental(
-                        library::Fundamental::Utf8
-                        | library::Fundamental::OsString
-                        | library::Fundamental::Filename,
+                    Basic(
+                        library::Basic::Utf8 | library::Basic::OsString | library::Basic::Filename,
                     ) => {
                         if parameter.transfer == library::Transfer::Full {
                             Chunk::NullMutPtr
@@ -1367,15 +1362,15 @@ fn add_chunk_for_type(
 ) -> bool {
     let type_ = env.type_(typ_);
     match type_ {
-        library::Type::Fundamental(x) if !x.requires_conversion() => true,
-        library::Type::Fundamental(library::Fundamental::Boolean) => {
+        library::Type::Basic(x) if !x.requires_conversion() => true,
+        library::Type::Basic(library::Basic::Boolean) => {
             body.push(Chunk::Custom(format!(
                 "let {0} = from_glib({0});",
                 par.name
             )));
             true
         }
-        library::Type::Fundamental(library::Fundamental::UniChar) => {
+        library::Type::Basic(library::Basic::UniChar) => {
             body.push(Chunk::Custom(format!(
                 "let {0} = std::convert::TryFrom::try_from({0})\
                      .expect(\"conversion from an invalid Unicode value attempted\");",
@@ -1422,7 +1417,7 @@ fn add_chunk_for_type(
                 "let {1}{3} = {0}{1}{2};",
                 begin, par.name, end, type_name
             )));
-            x.is_fundamental()
+            x.is_basic()
         }
     }
 }

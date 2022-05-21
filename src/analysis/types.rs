@@ -49,12 +49,9 @@ pub trait IsIncomplete {
     fn is_incomplete(&self, lib: &Library) -> bool;
 }
 
-impl IsIncomplete for Fundamental {
+impl IsIncomplete for Basic {
     fn is_incomplete(&self, _lib: &Library) -> bool {
-        matches!(
-            *self,
-            Fundamental::None | Fundamental::Unsupported | Fundamental::VarArgs
-        )
+        matches!(*self, Basic::None | Basic::Unsupported | Basic::VarArgs)
     }
 }
 
@@ -134,7 +131,7 @@ impl IsIncomplete for Function {
         self.parameters.iter().any(|p| {
             matches!(
                 lib.type_(p.typ),
-                Type::Fundamental(Fundamental::Unsupported | Fundamental::VarArgs)
+                Type::Basic(Basic::Unsupported | Basic::VarArgs)
             )
         })
     }
@@ -149,7 +146,7 @@ impl IsIncomplete for TypeId {
 impl IsIncomplete for Type {
     fn is_incomplete(&self, lib: &Library) -> bool {
         match self {
-            Type::Fundamental(fundamental) => fundamental.is_incomplete(lib),
+            Type::Basic(basic) => basic.is_incomplete(lib),
             Type::Alias(alias) => alias.is_incomplete(lib),
             Type::FixedArray(tid, ..) => tid.is_incomplete(lib),
             Type::Class(klass) => klass.is_incomplete(lib),
@@ -212,7 +209,7 @@ impl IsExternal for Type {
             Type::Union(union) => union.is_external(lib),
             Type::Interface(..) => true,
             Type::Custom(..)
-            | Type::Fundamental(..)
+            | Type::Basic(..)
             | Type::Enumeration(..)
             | Type::Bitfield(..)
             | Type::Function(..)

@@ -244,14 +244,14 @@ impl<'env> RustTypeBuilder<'env> {
     }
 
     pub fn try_build(self) -> Result {
-        use crate::library::{Fundamental::*, Type::*};
+        use crate::library::{Basic::*, Type::*};
         let ok = |s: &str| Ok(RustType::from(s));
         let ok_and_use = |s: &str| Ok(RustType::new_and_use(s));
         let err = |s: &str| Err(TypeError::Unimplemented(s.into()));
         let mut skip_option = false;
         let type_ = self.env.library.type_(self.type_id);
         let mut rust_type = match *type_ {
-            Fundamental(fund) => {
+            Basic(fund) => {
                 match fund {
                     None => err("()"),
                     Boolean | Bool => ok("bool"),
@@ -304,7 +304,7 @@ impl<'env> RustTypeBuilder<'env> {
                     Char => ok_and_use(&use_glib_type(self.env, "Char")),
                     UChar => ok_and_use(&use_glib_type(self.env, "UChar")),
                     Unsupported => err("Unsupported"),
-                    _ => err(&format!("Fundamental: {:?}", fund)),
+                    _ => err(&format!("Basic: {:?}", fund)),
                 }
             }
             Alias(ref alias) => {
@@ -378,7 +378,7 @@ impl<'env> RustTypeBuilder<'env> {
             CArray(inner_tid)
                 if ConversionType::of(self.env, inner_tid) == ConversionType::Direct =>
             {
-                if let Fundamental(fund) = self.env.type_(inner_tid) {
+                if let Basic(fund) = self.env.type_(inner_tid) {
                     let array_type = match fund {
                         Int8 => Some("i8"),
                         UInt8 => Some("u8"),
@@ -455,14 +455,14 @@ impl<'env> RustTypeBuilder<'env> {
                         .try_build();
                     match p_res {
                         Ok(p_rust_type) => {
-                            let is_fundamental = p.typ.is_fundamental_type(self.env);
+                            let is_basic = p.typ.is_basic_type(self.env);
                             let y = RustType::try_new(self.env, p.typ)
                                 .unwrap_or_else(|_| RustType::default());
                             params.push(format!(
                                 "{}{}",
-                                if is_fundamental || *nullable { "" } else { "&" },
+                                if is_basic || *nullable { "" } else { "&" },
                                 if !is_gstring(y.as_str()) {
-                                    if !is_fundamental && *nullable {
+                                    if !is_basic && *nullable {
                                         p_rust_type.into_string().replace("Option<", "Option<&")
                                     } else {
                                         p_rust_type.into_string()
@@ -623,19 +623,14 @@ impl<'env> RustTypeBuilder<'env> {
             .try_from_glib(&self.try_from_glib)
             .try_build();
         match type_ {
-            Fundamental(
-                library::Fundamental::Utf8
-                | library::Fundamental::OsString
-                | library::Fundamental::Filename,
-            ) if (self.direction == ParameterDirection::InOut
-                || (self.direction == ParameterDirection::Out
-                    && self.ref_mode == RefMode::ByRefMut)) =>
+            Basic(library::Basic::Utf8 | library::Basic::OsString | library::Basic::Filename)
+                if (self.direction == ParameterDirection::InOut
+                    || (self.direction == ParameterDirection::Out
+                        && self.ref_mode == RefMode::ByRefMut)) =>
             {
                 Err(TypeError::Unimplemented(into_inner(rust_type)))
             }
-            Fundamental(_) => {
-                rust_type.map_any(|rust_type| rust_type.format_parameter(self.direction))
-            }
+            Basic(_) => rust_type.map_any(|rust_type| rust_type.format_parameter(self.direction)),
 
             Alias(alias) => rust_type
                 .and_then(|rust_type| {

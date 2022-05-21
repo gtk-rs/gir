@@ -34,7 +34,7 @@ pub fn analyze<F: Borrow<library::Constant>>(
         }
 
         match env.type_(constant.typ) {
-            library::Type::Fundamental(library::Fundamental::Utf8) => (),
+            library::Type::Basic(library::Basic::Utf8) => (),
             _ => continue,
         }
 

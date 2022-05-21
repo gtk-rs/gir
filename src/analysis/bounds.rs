@@ -10,7 +10,7 @@ use crate::{
     config,
     consts::TYPE_PARAMETERS_START,
     env::Env,
-    library::{Class, Concurrency, Function, Fundamental, ParameterDirection, Type, TypeId},
+    library::{Basic, Class, Concurrency, Function, ParameterDirection, Type, TypeId},
     traits::IntoString,
 };
 use std::{collections::vec_deque::VecDeque, slice::Iter};
@@ -192,7 +192,7 @@ impl Bounds {
     pub fn type_for(env: &Env, type_id: TypeId) -> Option<BoundType> {
         use self::BoundType::*;
         match env.library.type_(type_id) {
-            Type::Fundamental(Fundamental::Filename | Fundamental::OsString) => Some(AsRef(None)),
+            Type::Basic(Basic::Filename | Basic::OsString) => Some(AsRef(None)),
             Type::Class(Class {
                 is_fundamental: true,
                 ..

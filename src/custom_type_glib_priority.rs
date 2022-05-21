@@ -12,9 +12,7 @@ impl Library {
             return;
         }
 
-        let tid_int = self
-            .find_type(0, "*.gint")
-            .expect("No fundamental type *.gint");
+        let tid_int = self.find_type(0, "*.gint").expect("No basic type *.gint");
         let glib_ns_id = self
             .find_namespace("GLib")
             .expect("Missing `GLib` namespace in add_glib_priority!");

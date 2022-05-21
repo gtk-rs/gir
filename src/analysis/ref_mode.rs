@@ -34,11 +34,7 @@ impl RefMode {
 
         use crate::library::Type::*;
         match library.type_(tid) {
-            Fundamental(
-                library::Fundamental::Utf8
-                | library::Fundamental::Filename
-                | library::Fundamental::OsString,
-            )
+            Basic(library::Basic::Utf8 | library::Basic::Filename | library::Basic::OsString)
             | Class(..)
             | Interface(..)
             | List(..)

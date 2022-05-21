@@ -7,7 +7,7 @@ use crate::{
     config::{self, parameter_matchable::ParameterMatchable},
     env::Env,
     library::{
-        self, Function, Fundamental, Nullable, ParameterDirection, Type, TypeId, INTERNAL_NAMESPACE,
+        self, Basic, Function, Nullable, ParameterDirection, Type, TypeId, INTERNAL_NAMESPACE,
     },
     nameutil,
 };
@@ -149,12 +149,7 @@ fn analyze_type_imports(env: &Env, typ: TypeId, caller_allocates: bool, imports:
     match env.library.type_(typ) {
         Type::Alias(alias) => analyze_type_imports(env, alias.typ, caller_allocates, imports),
         Type::Bitfield(..) | Type::Enumeration(..) => imports.add("std::mem"),
-        Type::Fundamental(fund)
-            if !matches!(
-                fund,
-                Fundamental::Utf8 | Fundamental::OsString | Fundamental::Filename
-            ) =>
-        {
+        Type::Basic(fund) if !matches!(fund, Basic::Utf8 | Basic::OsString | Basic::Filename) => {
             imports.add("std::mem")
         }
         _ if !caller_allocates => match ConversionType::of(env, typ) {
@@ -173,7 +168,7 @@ pub fn can_as_return(env: &Env, par: &library::Parameter) -> bool {
     match ConversionType::of(env, par.typ) {
         Direct | Scalar | Option | Result { .. } => true,
         Pointer => {
-            // Disallow fundamental arrays without length
+            // Disallow Basic arrays without length
             if is_carray_with_direct_elements(env, par.typ) && par.array_length.is_none() {
                 return false;
             }
@@ -200,7 +195,7 @@ fn decide_throw_function_return_strategy(
         .as_ref()
         .map(|par| par.lib_par.typ)
         .unwrap_or_default();
-    if env.type_(typ).eq(&Type::Fundamental(Fundamental::None)) {
+    if env.type_(typ).eq(&Type::Basic(Basic::None)) {
         ThrowFunctionReturnStrategy::Void
     } else if use_function_return_for_result(env, typ, func_name, configured_functions) {
         ThrowFunctionReturnStrategy::ReturnResult

@@ -47,7 +47,7 @@ impl Library {
     fn fix_gtype(&mut self) {
         if let Some(ns_id) = self.find_namespace("GObject") {
             // hide the `GType` type alias in `GObject`
-            self.add_type(ns_id, "Type", Type::Fundamental(Fundamental::Unsupported));
+            self.add_type(ns_id, "Type", Type::Basic(Basic::Unsupported));
         }
     }
 
@@ -327,7 +327,7 @@ impl Library {
                                 actions.push((tid, fid, Action::SetCType(c_type.to_owned())));
                                 continue;
                             }
-                            if let Type::Fundamental(Fundamental::Pointer) = field_type {
+                            if let Type::Basic(Basic::Pointer) = field_type {
                                 // For example SoupBuffer is missing c:type for data field.
                                 actions.push((tid, fid, Action::SetCType("void*".to_owned())));
                                 continue;

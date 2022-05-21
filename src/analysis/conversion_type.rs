@@ -43,9 +43,9 @@ impl ConversionType {
             return conversion_type;
         }
 
-        use crate::library::{Fundamental::*, Type::*};
+        use crate::library::{Basic::*, Type::*};
         match library.type_(type_id) {
-            Fundamental(fund) => match fund {
+            Basic(fund) => match fund {
                 Boolean => ConversionType::Scalar,
                 Int8 => ConversionType::Direct,
                 UInt8 => ConversionType::Direct,
