@@ -204,7 +204,7 @@ impl Default for Concurrency {
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum Fundamental {
+pub enum Basic {
     None,
     Boolean,
     Int8,
@@ -242,72 +242,72 @@ pub enum Fundamental {
     Unsupported,
 }
 
-impl Fundamental {
+impl Basic {
     pub fn requires_conversion(&self) -> bool {
         !matches!(
             self,
-            Fundamental::Int8
-                | Fundamental::UInt8
-                | Fundamental::Int16
-                | Fundamental::UInt16
-                | Fundamental::Int32
-                | Fundamental::UInt32
-                | Fundamental::Int64
-                | Fundamental::UInt64
-                | Fundamental::Char
-                | Fundamental::UChar
-                | Fundamental::Short
-                | Fundamental::UShort
-                | Fundamental::Int
-                | Fundamental::UInt
-                | Fundamental::Long
-                | Fundamental::ULong
-                | Fundamental::Size
-                | Fundamental::SSize
-                | Fundamental::Float
-                | Fundamental::Double
-                | Fundamental::Bool
+            Self::Int8
+                | Self::UInt8
+                | Self::Int16
+                | Self::UInt16
+                | Self::Int32
+                | Self::UInt32
+                | Self::Int64
+                | Self::UInt64
+                | Self::Char
+                | Self::UChar
+                | Self::Short
+                | Self::UShort
+                | Self::Int
+                | Self::UInt
+                | Self::Long
+                | Self::ULong
+                | Self::Size
+                | Self::SSize
+                | Self::Float
+                | Self::Double
+                | Self::Bool
         )
     }
 }
 
-const FUNDAMENTAL: &[(&str, Fundamental)] = &[
-    ("none", Fundamental::None),
-    ("gboolean", Fundamental::Boolean),
-    ("gint8", Fundamental::Int8),
-    ("guint8", Fundamental::UInt8),
-    ("gint16", Fundamental::Int16),
-    ("guint16", Fundamental::UInt16),
-    ("gint32", Fundamental::Int32),
-    ("guint32", Fundamental::UInt32),
-    ("gint64", Fundamental::Int64),
-    ("guint64", Fundamental::UInt64),
-    ("gchar", Fundamental::Char),
-    ("guchar", Fundamental::UChar),
-    ("gshort", Fundamental::Short),
-    ("gushort", Fundamental::UShort),
-    ("gint", Fundamental::Int),
-    ("guint", Fundamental::UInt),
-    ("glong", Fundamental::Long),
-    ("gulong", Fundamental::ULong),
-    ("gsize", Fundamental::Size),
-    ("gssize", Fundamental::SSize),
-    ("gfloat", Fundamental::Float),
-    ("gdouble", Fundamental::Double),
-    ("long double", Fundamental::Unsupported),
-    ("gunichar", Fundamental::UniChar),
-    ("gconstpointer", Fundamental::Pointer),
-    ("gpointer", Fundamental::Pointer),
-    ("va_list", Fundamental::Unsupported),
-    ("varargs", Fundamental::VarArgs),
-    ("utf8", Fundamental::Utf8),
-    ("filename", Fundamental::Filename),
-    ("GType", Fundamental::Type),
-    ("gintptr", Fundamental::IntPtr),
-    ("guintptr", Fundamental::UIntPtr),
+const BASIC: &[(&str, Basic)] = &[
+    ("none", Basic::None),
+    ("gboolean", Basic::Boolean),
+    ("gint8", Basic::Int8),
+    ("guint8", Basic::UInt8),
+    ("gint16", Basic::Int16),
+    ("guint16", Basic::UInt16),
+    ("gint32", Basic::Int32),
+    ("guint32", Basic::UInt32),
+    ("gint64", Basic::Int64),
+    ("guint64", Basic::UInt64),
+    ("gchar", Basic::Char),
+    ("guchar", Basic::UChar),
+    ("gshort", Basic::Short),
+    ("gushort", Basic::UShort),
+    ("gint", Basic::Int),
+    ("guint", Basic::UInt),
+    ("glong", Basic::Long),
+    ("gulong", Basic::ULong),
+    ("gsize", Basic::Size),
+    ("gssize", Basic::SSize),
+    ("gfloat", Basic::Float),
+    ("gdouble", Basic::Double),
+    ("long double", Basic::Unsupported),
+    ("gunichar", Basic::UniChar),
+    ("gconstpointer", Basic::Pointer),
+    ("gpointer", Basic::Pointer),
+    ("va_list", Basic::Unsupported),
+    ("varargs", Basic::VarArgs),
+    ("utf8", Basic::Utf8),
+    ("filename", Basic::Filename),
+    ("GType", Basic::Type),
+    ("gintptr", Basic::IntPtr),
+    ("guintptr", Basic::UIntPtr),
     //TODO: this is temporary name, change it when type added to GLib
-    ("os_string", Fundamental::OsString),
-    ("bool", Fundamental::Bool),
+    ("os_string", Basic::OsString),
+    ("bool", Basic::Bool),
 ];
 
 #[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq, PartialOrd, Ord)]
@@ -351,8 +351,8 @@ impl TypeId {
         TypeId { ns_id: 0, id: 34 }
     }
 
-    pub fn is_fundamental_type(self, env: &Env) -> bool {
-        env.library.type_(self).is_fundamental_type(env)
+    pub fn is_basic_type(self, env: &Env) -> bool {
+        env.library.type_(self).is_basic_type(env)
     }
 }
 
@@ -646,7 +646,7 @@ impl_lexical_ord!(
 #[allow(clippy::large_enum_variant)]
 #[derive(Debug, PartialEq)]
 pub enum Type {
-    Fundamental(Fundamental),
+    Basic(Basic),
     Alias(Alias),
     Enumeration(Enumeration),
     Bitfield(Bitfield),
@@ -668,7 +668,7 @@ pub enum Type {
 impl fmt::Display for Type {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(match self {
-            Type::Fundamental(_) => "Fundamental",
+            Type::Basic(_) => "Basic",
             Type::Alias(_) => "Alias",
             Type::Enumeration(_) => "Enumeration",
             Type::Bitfield(_) => "Bitfield",
@@ -693,7 +693,7 @@ impl Type {
     pub fn get_name(&self) -> String {
         use self::Type::*;
         match self {
-            Fundamental(fund) => format!("{:?}", fund),
+            Basic(basic) => format!("{:?}", basic),
             Alias(alias) => alias.name.clone(),
             Enumeration(enum_) => enum_.name.clone(),
             Bitfield(bit_field) => bit_field.name.clone(),
@@ -718,7 +718,7 @@ impl Type {
     pub fn get_deprecated_version(&self) -> Option<Version> {
         use self::Type::*;
         match self {
-            Fundamental(_) => None,
+            Basic(_) => None,
             Alias(_) => None,
             Enumeration(enum_) => enum_.deprecated_version,
             Bitfield(bit_field) => bit_field.deprecated_version,
@@ -848,16 +848,16 @@ impl Type {
         }
     }
 
-    pub fn is_fundamental(&self) -> bool {
-        matches!(*self, Type::Fundamental(_))
+    pub fn is_basic(&self) -> bool {
+        matches!(*self, Type::Basic(_))
     }
 
-    /// If the type is an Alias containing a fundamental, it'll return true (whereas
-    /// `is_fundamental` won't).
-    pub fn is_fundamental_type(&self, env: &Env) -> bool {
+    /// If the type is an Alias containing a basic, it'll return true (whereas
+    /// `is_basic` won't).
+    pub fn is_basic_type(&self, env: &Env) -> bool {
         match self {
-            Type::Alias(x) => env.library.type_(x.typ).is_fundamental_type(env),
-            x => x.is_fundamental(),
+            Type::Alias(x) => env.library.type_(x.typ).is_basic_type(env),
+            x => x.is_basic(),
         }
     }
 
@@ -893,6 +893,13 @@ impl Type {
             Type::Class(Class { final_type, .. }) => final_type,
             Type::Interface(..) => false,
             _ => true,
+        }
+    }
+
+    pub fn is_fundamental(&self) -> bool {
+        match *self {
+            Type::Class(Class { is_fundamental, .. }) => is_fundamental,
+            _ => false,
         }
     }
 
@@ -937,7 +944,7 @@ impl_maybe_ref!(
     Class,
     Enumeration,
     Function,
-    Fundamental,
+    Basic,
     Interface,
     Record,
     Union,
@@ -1047,8 +1054,8 @@ impl Library {
             INTERNAL_NAMESPACE,
             library.add_namespace(INTERNAL_NAMESPACE_NAME)
         );
-        for &(name, t) in FUNDAMENTAL {
-            library.add_type(INTERNAL_NAMESPACE, name, Type::Fundamental(t));
+        for &(name, t) in BASIC {
+            library.add_type(INTERNAL_NAMESPACE, name, Type::Basic(t));
         }
         assert_eq!(MAIN_NAMESPACE, library.add_namespace(main_namespace_name));
 
@@ -1172,7 +1179,7 @@ impl Library {
                         ty = t;
                         ns_id = n as usize;
                     }
-                    if ty.is_fundamental() {
+                    if ty.is_basic() {
                         return None;
                     }
                     let full_name = format!("{}.{}", self.namespaces[ns_id].name, ty.get_name());
@@ -1194,7 +1201,7 @@ impl Library {
                     ty = t;
                     ns_id = n as usize;
                 }
-                if !ty.is_fundamental() {
+                if !ty.is_basic() {
                     let full_name = format!("{}.{}", self.namespaces[ns_id].name, ty.get_name());
                     if env
                         .type_status(&func.ret.typ.full_name(&env.library))
@@ -1374,7 +1381,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn fundamental_tids() {
+    fn basic_tids() {
         let lib = Library::new("Gtk");
 
         assert_eq!(TypeId::tid_none().full_name(&lib), "*.None");

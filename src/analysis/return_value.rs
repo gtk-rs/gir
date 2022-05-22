@@ -146,9 +146,9 @@ pub fn analyze(
 }
 
 fn can_be_nullable_return(env: &Env, type_id: library::TypeId) -> bool {
-    use crate::library::{Fundamental::*, Type::*};
+    use crate::library::{Basic::*, Type::*};
     match env.library.type_(type_id) {
-        Fundamental(fund) => matches!(fund, Pointer | Utf8 | Filename | OsString),
+        Basic(fund) => matches!(fund, Pointer | Utf8 | Filename | OsString),
         Alias(alias) => can_be_nullable_return(env, alias.typ),
         Enumeration(_) => false,
         Bitfield(_) => false,

@@ -35,10 +35,8 @@ fn apply(env: &Env, type_id: TypeId, string_type: Option<config::StringType>) ->
         }
     };
     match *env.library.type_(type_id) {
-        Type::Fundamental(Fundamental::Filename | Fundamental::OsString | Fundamental::Utf8) => {
-            replace
-        }
-        Type::CArray(inner_tid) if can_overriden_fundamental(env, inner_tid) => {
+        Type::Basic(Basic::Filename | Basic::OsString | Basic::Utf8) => replace,
+        Type::CArray(inner_tid) if can_overriden_basic(env, inner_tid) => {
             Type::find_c_array(&env.library, replace, None)
         }
         _ => {
@@ -51,9 +49,9 @@ fn apply(env: &Env, type_id: TypeId, string_type: Option<config::StringType>) ->
     }
 }
 
-fn can_overriden_fundamental(env: &Env, type_id: TypeId) -> bool {
+fn can_overriden_basic(env: &Env, type_id: TypeId) -> bool {
     matches!(
         *env.library.type_(type_id),
-        Type::Fundamental(Fundamental::Filename | Fundamental::OsString | Fundamental::Utf8)
+        Type::Basic(Basic::Filename | Basic::OsString | Basic::Utf8)
     )
 }

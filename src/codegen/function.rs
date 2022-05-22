@@ -419,10 +419,7 @@ pub fn body_chunk_futures(
         let c_par = &analysis.parameters.c_parameters[par.ind_c];
 
         let type_ = env.type_(par.typ);
-        let is_str = matches!(
-            *type_,
-            library::Type::Fundamental(library::Fundamental::Utf8)
-        );
+        let is_str = matches!(*type_, library::Type::Basic(library::Basic::Utf8));
 
         if *c_par.nullable {
             writeln!(

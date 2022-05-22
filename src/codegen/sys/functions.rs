@@ -322,7 +322,7 @@ fn function_return_value(env: &Env, func: &library::Function) -> (bool, String) 
 }
 
 fn function_parameter(env: &Env, par: &library::Parameter, bare: bool) -> (bool, String) {
-    if let library::Type::Fundamental(library::Fundamental::VarArgs) = env.library.type_(par.typ) {
+    if let library::Type::Basic(library::Basic::VarArgs) = env.library.type_(par.typ) {
         return (false, "...".into());
     }
     let ffi_type = ffi_type(env, par.typ, &par.c_type);

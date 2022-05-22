@@ -752,8 +752,7 @@ fn analyze_function(
                     &parameters,
                 );
                 let type_error = !(r#async
-                    && *env.library.type_(par.typ)
-                        == Type::Fundamental(library::Fundamental::Pointer))
+                    && *env.library.type_(par.typ) == Type::Basic(library::Basic::Pointer))
                     && RustType::builder(env, par.typ)
                         .direction(par.direction)
                         .scope(par.scope)
@@ -792,7 +791,7 @@ fn analyze_function(
     }
 
     for par in &parameters.rust_parameters {
-        // Disallow fundamental arrays without length
+        // Disallow basic arrays without length
         let is_len_for_par = |t: &Transformation| {
             if let TransformationType::Length { ref array_name, .. } = t.transformation_type {
                 array_name == &par.name
@@ -935,9 +934,7 @@ pub fn is_carray_with_direct_elements(env: &Env, typ: library::TypeId) -> bool {
         Type::CArray(inner_tid) => {
             use super::conversion_type::ConversionType;
             match env.library.type_(inner_tid) {
-                Type::Fundamental(..)
-                    if ConversionType::of(env, inner_tid) == ConversionType::Direct =>
-                {
+                Type::Basic(..) if ConversionType::of(env, inner_tid) == ConversionType::Direct => {
                     true
                 }
                 _ => false,

@@ -87,6 +87,7 @@ impl Info {
     /// Returns the location of the function within this object
     pub fn function_location(&self, fn_info: &functions::Info) -> LocationInObject {
         if self.final_type
+            || self.is_fundamental
             || matches!(
                 fn_info.kind,
                 FunctionKind::Constructor | FunctionKind::Function

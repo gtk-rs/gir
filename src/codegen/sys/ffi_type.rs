@@ -17,13 +17,8 @@ pub fn ffi_type(env: &Env, tid: library::TypeId, c_type: &str) -> Result {
     let (ptr, inner) = rustify_pointers(c_type);
     let res = if ptr.is_empty() {
         if let Some(c_tid) = env.library.find_type(0, c_type) {
-            // Fast track plain fundamental types avoiding some checks
-            if env
-                .library
-                .type_(c_tid)
-                .maybe_ref_as::<Fundamental>()
-                .is_some()
-            {
+            // Fast track plain basic types avoiding some checks
+            if env.library.type_(c_tid).maybe_ref_as::<Basic>().is_some() {
                 match *env.library.type_(tid) {
                     Type::FixedArray(inner_tid, size, ref inner_c_type) => {
                         let inner_c_type = inner_c_type
@@ -50,7 +45,7 @@ pub fn ffi_type(env: &Env, tid: library::TypeId, c_type: &str) -> Result {
                     _ => ffi_inner(env, c_tid, c_type.into()),
                 }
             } else {
-                // c_type isn't fundamental
+                // c_type isn't Basic
                 ffi_inner(env, tid, inner)
             }
         } else {
@@ -74,8 +69,8 @@ fn ffi_inner(env: &Env, tid: library::TypeId, mut inner: String) -> Result {
 
     let typ = env.library.type_(tid);
     let res = match *typ {
-        Type::Fundamental(fund) => {
-            use crate::library::Fundamental::*;
+        Type::Basic(fund) => {
+            use crate::library::Basic::*;
             let inner = match fund {
                 None => "c_void",
                 Boolean => "gboolean",

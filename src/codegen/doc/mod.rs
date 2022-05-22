@@ -327,6 +327,7 @@ fn create_object_doc(w: &mut dyn Write, env: &Env, info: &analysis::object::Info
             .filter(|&tid| {
                 !env.type_status(&tid.full_name(&env.library)).ignored()
                     && !env.type_(*tid).is_final_type()
+                    && !env.type_(*tid).is_fundamental()
             })
             .map(|&tid| get_type_trait_for_implements(env, tid))
             .collect::<Vec<_>>();
