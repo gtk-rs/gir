@@ -71,7 +71,10 @@ fn generate_lib(w: &mut dyn Write, env: &Env) -> Result<()> {
     generate_classes_structs(w, env, &classes)?;
     generate_interfaces_structs(w, env, &interfaces)?;
 
-    write_link_attr(w, &env.namespaces.main().shared_libs)?;
+    if !env.config.self_linking {
+        write_link_attr(w, &env.namespaces.main().shared_libs)?;
+    }
+
     writeln!(w, "extern \"C\" {{")?;
     functions::generate_enums_funcs(w, env, &enums)?;
     functions::generate_bitfields_funcs(w, env, &bitfields)?;

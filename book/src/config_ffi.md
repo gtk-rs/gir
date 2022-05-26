@@ -35,6 +35,13 @@ work_mode = "sys"
 # and build.rs that generated only if not exists.
 # Defaults to false
 split_build_rs = false
+# If true, then build.rs and tests do not get generated, and
+# no #[link] attribute is emitted. This is supposed to be used
+# when a library consists of a hybrid of C and Rust code, and
+# the bindings to the C objects should be generated for Rust to
+# use.
+# Defaults to false
+self_linking = false
 # Adds extra versions to features
 extra_versions = [
    "3.15",
