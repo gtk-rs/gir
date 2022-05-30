@@ -112,6 +112,10 @@ impl IsIncomplete for Record {
             // Search for GHookList in sys codegen for rationale.
             false
         } else {
+            // BADHACK: Prevent a horrible cyclic dependency on the "refs" array
+            if self.name == "VulkanDecoderPicture" {
+                return false;
+            }
             self.fields.as_slice().is_incomplete(lib)
         }
     }
