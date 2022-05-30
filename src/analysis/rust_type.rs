@@ -271,7 +271,7 @@ impl<'env> RustTypeBuilder<'env> {
                     UInt => ok("u32"), // maybe dependent on target system
 
                     Short => ok_and_use("libc::c_short"), // depends of target system
-                    UShort => ok_and_use("libc::c_ushort"), // depends o f target system
+                    UShort => ok_and_use("libc::c_ushort"), // depends of target system
                     Long => ok_and_use("libc::c_long"),   // depends of target system
                     ULong => ok_and_use("libc::c_ulong"), // depends of target system
 

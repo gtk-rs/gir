@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use log::{error, info};
 
 use crate::{
-    analysis::types::IsIncomplete,
+    analysis::{conversion_type::ConversionType, types::IsIncomplete},
     config::{
         gobjects::{GObject, GStatus},
         matchable::Matchable,
@@ -34,6 +34,7 @@ type DetectedCTypes = HashMap<TypeId, String>;
 
 impl Library {
     pub fn postprocessing(&mut self, config: &Config) {
+        self.define_vulkan_types();
         self.fix_gtype();
         self.check_resolved();
         self.fill_empty_signals_c_types();
@@ -44,6 +45,20 @@ impl Library {
         self.mark_final_types(config);
         self.update_error_domain_functions(config);
         self.mark_ignored_enum_members(config);
+    }
+
+    fn define_vulkan_types(&mut self) {
+        if let Some(ns_id) = self.find_namespace("Vulkan") {
+            let ns = self.namespace_mut(ns_id);
+            for ns_type in ns.types.iter_mut().flatten() {
+                if let Type::Record(incomplete_record) = ns_type {
+                    *ns_type = Type::Custom(Custom {
+                        name: format!("ash::vk::{}", incomplete_record.name),
+                        conversion_type: ConversionType::Direct,
+                    });
+                }
+            }
+        }
     }
 
     fn fix_gtype(&mut self) {

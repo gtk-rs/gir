@@ -150,6 +150,7 @@ fn ffi_inner(env: &Env, tid: library::TypeId, mut inner: String) -> Result {
         | Type::List(..)
         | Type::SList(..)
         | Type::HashTable(..) => fix_name(env, tid, &inner),
+        Type::Custom(ref c) => return Ok(c.name.clone().into()),
         _ => {
             if let Some(glib_name) = env.library.type_(tid).get_glib_name() {
                 if inner != glib_name {
