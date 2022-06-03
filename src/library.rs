@@ -240,7 +240,7 @@ pub enum Basic {
     OsString,
     Bool,
     Unsupported,
-    Vulkan(String),
+    Typedef(String),
 }
 
 impl Basic {
@@ -268,7 +268,7 @@ impl Basic {
                 | Self::Float
                 | Self::Double
                 | Self::Bool
-                | Self::Vulkan(_)
+                | Self::Typedef(_)
         )
     }
 }
@@ -1039,8 +1039,6 @@ impl Namespace {
 pub const INTERNAL_NAMESPACE_NAME: &str = "*";
 pub const INTERNAL_NAMESPACE: u16 = 0;
 pub const MAIN_NAMESPACE: u16 = 1;
-pub const VULKAN_NAMESPACE_NAME: &str = "Vulkan";
-pub const VULKAN_NAMESPACE: u16 = 2;
 
 #[derive(Debug)]
 pub struct Library {
@@ -1062,62 +1060,6 @@ impl Library {
             library.add_type(INTERNAL_NAMESPACE, name, Type::Basic(t.clone()));
         }
         assert_eq!(MAIN_NAMESPACE, library.add_namespace(main_namespace_name));
-
-        assert_eq!(
-            VULKAN_NAMESPACE,
-            library.add_namespace(VULKAN_NAMESPACE_NAME)
-        );
-        // TODO: This should be parseable from gir-files/Vulkan-1.0.gir!
-        const VULKAN: &[&str] = &[
-            "AccessFlags",
-            "Buffer",
-            "BufferUsageFlags",
-            "CommandBuffer",
-            "CommandBufferLevel",
-            "CommandPool",
-            "DescriptorPool",
-            "DescriptorSet",
-            "Device",
-            "DeviceMemory",
-            "DeviceSize",
-            "Fence",
-            "Format",
-            "Image",
-            "ImageCreateInfo",
-            "ImageFormatProperties",
-            "ImageLayout",
-            "ImageSubresourceRange",
-            "ImageTiling",
-            "ImageUsageFlags",
-            "ImageView",
-            "ImageViewCreateInfo",
-            "Instance",
-            "MemoryAllocateInfo",
-            "MemoryHeapFlags",
-            "MemoryPropertyFlags",
-            "MemoryRequirements",
-            "PhysicalDevice",
-            "PhysicalDeviceFeatures",
-            "PhysicalDeviceMemoryProperties",
-            "PhysicalDeviceProperties",
-            "PhysicalDeviceType",
-            "PipelineStageFlags",
-            "PresentModeKHR",
-            "Queue",
-            "QueueFamilyProperties",
-            "QueueFlags",
-            "Result",
-            "SampleCountFlags",
-            "Semaphore",
-            "SurfaceKHR",
-        ];
-        for v in VULKAN {
-            library.add_type(
-                VULKAN_NAMESPACE,
-                v,
-                Type::Basic(Basic::Vulkan(v.to_string())),
-            );
-        }
 
         //For string_type override
         Type::c_array(&mut library, TypeId::tid_utf8(), None, None);

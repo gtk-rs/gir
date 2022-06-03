@@ -110,7 +110,7 @@ fn ffi_inner(env: &Env, tid: library::TypeId, mut inner: String) -> Result {
                 UIntPtr => "uintptr_t",
                 Bool => "bool",
                 Unsupported => return Err(TypeError::Unimplemented(inner)),
-                Vulkan(v) => return Ok(format!("ash::vk::{}", v).into()),
+                Typedef(name) => return Ok(name.into()),
                 VarArgs => panic!("Should not reach here"),
             };
             Ok(inner.into())

@@ -303,7 +303,7 @@ impl<'env> RustTypeBuilder<'env> {
                     Type => ok_and_use(&use_glib_type(self.env, "types::Type")),
                     Char => ok_and_use(&use_glib_type(self.env, "Char")),
                     UChar => ok_and_use(&use_glib_type(self.env, "UChar")),
-                    Vulkan(name) => ok_and_use(&format!("ash::vk::{}", name)),
+                    Typedef(name) => ok_and_use(name),
                     Unsupported => err("Unsupported"),
                     _ => err(&format!("Basic: {:?}", fund)),
                 }
