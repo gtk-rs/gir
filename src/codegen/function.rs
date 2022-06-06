@@ -9,10 +9,11 @@ use super::{
     special_functions,
 };
 use crate::{
-    analysis::{self, bounds::Bounds, namespaces, try_from_glib::TryFromGlib},
+    analysis::{self, bounds::Bounds, try_from_glib::TryFromGlib},
     chunk::{ffi_function_todo, Chunk},
     env::Env,
     library::{self, TypeId},
+    nameutil::use_glib_type,
     version::Version,
     writer::{primitives::tabs, safety_assertion_mode_to_str, ToCode},
 };
@@ -190,11 +191,7 @@ pub fn declaration(env: &Env, analysis: &analysis::functions::Info) -> String {
     let return_str = if outs_as_return {
         out_parameters_as_return(env, analysis)
     } else if analysis.ret.bool_return_is_error.is_some() {
-        if env.namespaces.glib_ns_id == namespaces::MAIN {
-            " -> Result<(), error::BoolError>".into()
-        } else {
-            " -> Result<(), glib::error::BoolError>".into()
-        }
+        format!(" -> Result<(), {}>", use_glib_type(env, "error::BoolError"))
     } else if let Some(return_type) = analysis.ret.to_return_value(
         env,
         analysis
