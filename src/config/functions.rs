@@ -277,7 +277,6 @@ pub struct Function {
     pub ret: Return,
     pub doc_hidden: bool,
     pub doc_ignore_parameters: HashSet<String>,
-    pub is_windows_utf8: bool,
     pub disable_length_detect: bool,
     pub doc_trait_name: Option<String>,
     pub doc_struct_name: Option<String>,
@@ -314,7 +313,6 @@ impl Parse for Function {
                 "name",
                 "doc_hidden",
                 "doc_ignore_parameters",
-                "is_windows_utf8",
                 "disable_length_detect",
                 "pattern",
                 "doc_trait_name",
@@ -370,10 +368,6 @@ impl Parse for Function {
                     .collect()
             })
             .unwrap_or_default();
-        let is_windows_utf8 = toml
-            .lookup("is_windows_utf8")
-            .and_then(Value::as_bool)
-            .unwrap_or(false);
         let disable_length_detect = toml
             .lookup("disable_length_detect")
             .and_then(Value::as_bool)
@@ -437,7 +431,6 @@ impl Parse for Function {
             ret,
             doc_hidden,
             doc_ignore_parameters,
-            is_windows_utf8,
             disable_length_detect,
             doc_trait_name,
             doc_struct_name,
