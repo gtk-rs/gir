@@ -2,8 +2,8 @@
 
 Time to go back to the "global" sourceview folder:
 
-```console
-> cd ..
+```sh
+cd ..
 ```
 
 As you certainly guessed, we'll need a new `Gir.toml` file. Let's write it:
@@ -33,8 +33,8 @@ A few new things in here. Let's take a look at them:
 
 Let's make a first generation of our high-level Rust API!
 
-```console
-> gir -o .
+```sh
+gir -o .
 ```
 
 Now if you take a look around, you'll see a new "auto" folder inside "src". Doesn't contain much though. Which makes sense since we're generating nothing. Time to introduce you to a whole new [gir] mode: `not_bound`. Let's give it a try:
@@ -130,8 +130,8 @@ generate = [
 
 Another `gir` run:
 
-```console
-> gir -o .
+```sh
+gir -o .
 ```
 
 (Again, if you do it on another library and it fails and you can't figure out why, don't hesitate to reach us!)
@@ -146,8 +146,8 @@ mod auto;
 
 Let's compile:
 
-```console
-> cargo build
+```sh
+cargo build
 ```
 
 It completely failed with a lot of errors. Yeay!
@@ -193,8 +193,8 @@ git = "https://github.com/gtk-rs/sys" # all gtk-rs sys crates are in the sys rep
 
 Let's try to rebuild:
 
-```console
-> cargo build
+```sh
+cargo build
 ```
 
 It worked! We have generated the `Language` item! I'll let you take a look at the `src/auto/language.rs` file, then we can continue.
@@ -214,14 +214,14 @@ generate = [
 
 We regenerate:
 
-```console
-> gir -o .
+```sh
+gir -o .
 ```
 
 We rebuild:
 
-```console
-> cargo build
+```sh
+cargo build
 ```
 
 Everything works, yeay! Now if we take a look at our newly generated `src/auto/region.rs`, we'll see code like this:
@@ -259,9 +259,9 @@ git = "https://github.com/gtk-rs/gtk"
 
 We regenerate and rebuild:
 
-```console
-> gir -o .
-> cargo build
+```sh
+gir -o .
+cargo build
 ```
 
 Everything is working, yeay! If you take another look at `src/auto/region.rs`, you'll see a lot less commented functions. Amongst the remaining ones, you'll see this one:

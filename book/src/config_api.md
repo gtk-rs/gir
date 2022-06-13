@@ -546,8 +546,8 @@ clear_function_expression = "|_ptr| ()"
 
 To generate the Rust-user API level, The command is very similar to the previous one. It's better to not put this output in the same directory as where the FFI files are. Just run:
 
-```console
-> cargo run --release -- -c YourGirFile.toml -d ../gir-files -o the-output-directory
+```sh
+cargo run --release -- -c YourGirFile.toml -d ../gir-files -o the-output-directory
 ```
 
 Now it should be done. Just go to the output directory (so `the-output-directory/auto` in our case) and try to build using `cargo build`. Don't forget to update your dependencies in both projects: nothing much to do in the FFI/sys one but the Rust-user API level will need to have a dependency over the FFI/sys one.
