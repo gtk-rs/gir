@@ -142,11 +142,11 @@
                     <main>
                         <h1 id="generating-documentation"><a class="header" href="#generating-documentation">Generating documentation</a></h1>
 <p>And finally the last feature! Just run the following command (note the <code>-m doc</code> at the end):</p>
-<pre><code class="language-console">&gt; cargo run --release -- -c YourGirFile.toml -d ../gir-files --doc-target-path the-output-file-name -m doc
+<pre><code class="language-sh">cargo run --release -- -c YourGirFile.toml -d ../gir-files --doc-target-path the-output-file-name -m doc
 </code></pre>
 <p>It'll generate a markdown file if everything went fine. That's where all this crate's documentation is. If you want to put it back into your crate's source code like &quot;normal&quot; doc comments, run:</p>
-<pre><code class="language-console">&gt; cargo install rustdoc-stripper
-&gt; rustdoc-stripper -g -o docs.md
+<pre><code class="language-sh">cargo install rustdoc-stripper
+rustdoc-stripper -g -o docs.md
 </code></pre>
 <p>And now your crate should be completely documented as expected!</p>
 <p>If you defining traits manually you can add them to &quot;Implements&quot; section for classes and interfaces:</p>

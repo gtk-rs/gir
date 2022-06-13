@@ -143,7 +143,7 @@
                         <h1 id="tutorial"><a class="header" href="#tutorial">Tutorial</a></h1>
 <p>Let's see how to generate Rust bindings of a GNOME library using the <a href="https://github.com/gtk-rs/gir">gir</a> crate.</p>
 <p>Note that the <code>.gir</code> files often happens that they are invalid (missing or invalid annotations for example). We have a small script to fix the <code>.gir</code> files we're using (and only them!) available in the <a href="https://github.com/gtk-rs/gir-files/blob/master/fix.sh">gir-files repository</a>. You can run it like this (at the same level of the <code>.gir</code> files you want to patch):</p>
-<pre><code class="language-console">&gt; sh fix.sh
+<pre><code class="language-sh">sh fix.sh
 </code></pre>
 <p>All <code>gtk-rs</code> generated crates come in two parts: the <code>sys</code> part which contains all the C functions and types definitions (direct mapping, everything is unsafe) and the &quot;high-level&quot; part which contains the nice, completely safe and idiomatic Rust API on top of the <code>sys</code> part.</p>
 <p>As an example, we'll generate the <code>sourceview</code> library bindings. So first, let's generate the <code>sys</code> part!</p>

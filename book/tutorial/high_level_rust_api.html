@@ -142,7 +142,7 @@
                     <main>
                         <h1 id="generating-the-rust-api"><a class="header" href="#generating-the-rust-api">Generating the Rust API</a></h1>
 <p>Time to go back to the &quot;global&quot; sourceview folder:</p>
-<pre><code class="language-console">&gt; cd ..
+<pre><code class="language-sh">cd ..
 </code></pre>
 <p>As you certainly guessed, we'll need a new <code>Gir.toml</code> file. Let's write it:</p>
 <pre><code class="language-toml">[options]
@@ -167,7 +167,7 @@ generate = []
 <li><code>generate = []</code>: this line currently does nothing. We say to <a href="https://github.com/gtk-rs/gir">gir</a> to generate nothing. We'll fulfill it later on.</li>
 </ul>
 <p>Let's make a first generation of our high-level Rust API!</p>
-<pre><code class="language-console">&gt; gir -o .
+<pre><code class="language-sh">gir -o .
 </code></pre>
 <p>Now if you take a look around, you'll see a new &quot;auto&quot; folder inside &quot;src&quot;. Doesn't contain much though. Which makes sense since we're generating nothing. Time to introduce you to a whole new <a href="https://github.com/gtk-rs/gir">gir</a> mode: <code>not_bound</code>. Let's give it a try:</p>
 <pre><code class="language-console">&gt; gir -o . -m not_bound
@@ -254,7 +254,7 @@ generate = []
 ]
 </code></pre>
 <p>Another <code>gir</code> run:</p>
-<pre><code class="language-console">&gt; gir -o .
+<pre><code class="language-sh">gir -o .
 </code></pre>
 <p>(Again, if you do it on another library and it fails and you can't figure out why, don't hesitate to reach us!)</p>
 <p>We now have a <code>src/auto/language.rs</code> file. We need to include all <code>auto</code> files in our library. To do so, let's update the <code>src/lib.rs</code> file as follows:</p>
@@ -267,7 +267,7 @@ mod auto;
 <span class="boring">}
 </span></code></pre></pre>
 <p>Let's compile:</p>
-<pre><code class="language-console">&gt; cargo build
+<pre><code class="language-sh">cargo build
 </code></pre>
 <p>It completely failed with a lot of errors. Yeay!</p>
 <p>You guessed it, we need to add a few dependencies to make it work. A lot of those errors were about the fact that the <code>Language</code> type didn't exist. Which is weird since we generated it, right? Well, if you take a look at the <code>src/auto/language.rs</code> file, you'll see this at the top:</p>
@@ -306,7 +306,7 @@ git = &quot;https://github.com/gtk-rs/glib&quot;
 git = &quot;https://github.com/gtk-rs/sys&quot; # all gtk-rs sys crates are in the sys repository
 </code></pre>
 <p>Let's try to rebuild:</p>
-<pre><code class="language-console">&gt; cargo build
+<pre><code class="language-sh">cargo build
 </code></pre>
 <p>It worked! We have generated the <code>Language</code> item! I'll let you take a look at the <code>src/auto/language.rs</code> file, then we can continue.</p>
 <p>Again, if you encounter any issue at this stage (if the generated code is invalid for example), don't hesitate to reach us so we can give you a hand!</p>
@@ -318,10 +318,10 @@ git = &quot;https://github.com/gtk-rs/sys&quot; # all gtk-rs sys crates are in t
 ]
 </code></pre>
 <p>We regenerate:</p>
-<pre><code class="language-console">&gt; gir -o .
+<pre><code class="language-sh">gir -o .
 </code></pre>
 <p>We rebuild:</p>
-<pre><code class="language-console">&gt; cargo build
+<pre><code class="language-sh">cargo build
 </code></pre>
 <p>Everything works, yeay! Now if we take a look at our newly generated <code>src/auto/region.rs</code>, we'll see code like this:</p>
 <pre><pre class="playground"><code class="language-rust">
@@ -351,8 +351,8 @@ manual = [
 git = &quot;https://github.com/gtk-rs/gtk&quot;
 </code></pre>
 <p>We regenerate and rebuild:</p>
-<pre><code class="language-console">&gt; gir -o .
-&gt; cargo build
+<pre><code class="language-sh">gir -o .
+cargo build
 </code></pre>
 <p>Everything is working, yeay! If you take another look at <code>src/auto/region.rs</code>, you'll see a lot less commented functions. Amongst the remaining ones, you'll see this one:</p>
 <pre><pre class="playground"><code class="language-rust">
