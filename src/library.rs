@@ -203,7 +203,7 @@ impl Default for Concurrency {
     }
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Basic {
     None,
     Boolean,
@@ -240,6 +240,7 @@ pub enum Basic {
     OsString,
     Bool,
     Unsupported,
+    Typedef(String),
 }
 
 impl Basic {
@@ -267,6 +268,7 @@ impl Basic {
                 | Self::Float
                 | Self::Double
                 | Self::Bool
+                | Self::Typedef(_)
         )
     }
 }
@@ -1054,8 +1056,8 @@ impl Library {
             INTERNAL_NAMESPACE,
             library.add_namespace(INTERNAL_NAMESPACE_NAME)
         );
-        for &(name, t) in BASIC {
-            library.add_type(INTERNAL_NAMESPACE, name, Type::Basic(t));
+        for (name, t) in BASIC {
+            library.add_type(INTERNAL_NAMESPACE, name, Type::Basic(t.clone()));
         }
         assert_eq!(MAIN_NAMESPACE, library.add_namespace(main_namespace_name));
 

@@ -69,7 +69,7 @@ fn ffi_inner(env: &Env, tid: library::TypeId, mut inner: String) -> Result {
 
     let typ = env.library.type_(tid);
     let res = match *typ {
-        Type::Basic(fund) => {
+        Type::Basic(ref fund) => {
             use crate::library::Basic::*;
             let inner = match fund {
                 None => "c_void",
@@ -110,6 +110,7 @@ fn ffi_inner(env: &Env, tid: library::TypeId, mut inner: String) -> Result {
                 UIntPtr => "uintptr_t",
                 Bool => "bool",
                 Unsupported => return Err(TypeError::Unimplemented(inner)),
+                Typedef(name) => return Ok(name.into()),
                 VarArgs => panic!("Should not reach here"),
             };
             Ok(inner.into())
