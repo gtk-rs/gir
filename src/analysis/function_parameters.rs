@@ -4,7 +4,7 @@ use super::{
     try_from_glib::TryFromGlib,
 };
 use crate::{
-    analysis,
+    analysis::{self, bounds::Bounds},
     config::{self, parameter_matchable::ParameterMatchable},
     env::Env,
     library::{self, Nullable, ParameterScope, TypeId},
@@ -191,10 +191,10 @@ pub fn analyze(
 ) -> Parameters {
     let mut parameters = Parameters::new(function_parameters.len());
 
-    // Map: length argument position => array name
-    let array_lengths: HashMap<u32, String> = function_parameters
+    // Map: length argument position => parameter
+    let array_lengths: HashMap<u32, &library::Parameter> = function_parameters
         .iter()
-        .filter_map(|p| p.array_length.map(|pos| (pos, p.name.clone())))
+        .filter_map(|p| p.array_length.map(|pos| (pos, p)))
         .collect();
 
     for (pos, par) in function_parameters.iter().enumerate() {
@@ -225,17 +225,29 @@ pub fn analyze(
             add_rust_parameter = false;
         }
 
-        let mut array_name = configured_parameters
-            .iter()
-            .find_map(|p| p.length_of.as_ref());
-        if array_name.is_none() {
-            array_name = array_lengths.get(&(pos as u32))
+        let mut array_par = configured_parameters.iter().find_map(|cp| {
+            cp.length_of
+                .as_ref()
+                .and_then(|n| function_parameters.iter().find(|fp| fp.name == *n))
+        });
+        if array_par.is_none() {
+            array_par = array_lengths.get(&(pos as u32)).copied();
         }
-        if array_name.is_none() && !disable_length_detect {
-            array_name = detect_length(env, pos, par, function_parameters);
+        if array_par.is_none() && !disable_length_detect {
+            array_par = detect_length(env, pos, par, function_parameters);
         }
-        if let Some(array_name) = array_name {
-            let array_name = nameutil::mangle_keywords(&array_name[..]);
+        if let Some(array_par) = array_par {
+            let mut array_name = nameutil::mangle_keywords(&array_par.name);
+            if let Some(bound_type) = Bounds::type_for(env, array_par.typ) {
+                array_name = (array_name.into_owned()
+                    + &Bounds::get_to_glib_extra(
+                        &bound_type,
+                        *array_par.nullable,
+                        array_par.instance_parameter,
+                    ))
+                    .into();
+            }
+
             add_rust_parameter = false;
 
             let transformation = Transformation {
@@ -408,19 +420,18 @@ fn detect_length<'a>(
     pos: usize,
     par: &library::Parameter,
     parameters: &'a [library::Parameter],
-) -> Option<&'a String> {
+) -> Option<&'a library::Parameter> {
     if !is_length(par) {
         return None;
     }
 
-    let array = parameters.get(pos - 1).and_then(|p| {
+    parameters.get(pos - 1).and_then(|p| {
         if has_length(env, p.typ) {
             Some(p)
         } else {
             None
         }
-    });
-    array.map(|p| &p.name)
+    })
 }
 
 fn is_length(par: &library::Parameter) -> bool {

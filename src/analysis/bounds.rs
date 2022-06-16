@@ -210,7 +210,7 @@ impl Bounds {
         }
     }
 
-    fn get_to_glib_extra(
+    pub fn get_to_glib_extra(
         bound_type: &BoundType,
         nullable: bool,
         instance_parameter: bool,
