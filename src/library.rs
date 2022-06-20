@@ -1118,9 +1118,10 @@ impl Library {
                     }
                 }
             }
-            if let Some(tid) = env.library.find_type(0, &full_name) {
-                let gobject_id = env.library.find_type(0, "GObject.Object").unwrap();
-
+            if let (Some(tid), Some(gobject_id)) = (
+                env.library.find_type(0, &full_name),
+                env.library.find_type(0, "GObject.Object"),
+            ) {
                 for &super_tid in env.class_hierarchy.supertypes(tid) {
                     let ty = env.library.type_(super_tid);
                     let ns_id = super_tid.ns_id as usize;
