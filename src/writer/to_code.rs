@@ -6,6 +6,7 @@ use crate::{
     env::Env,
     nameutil::use_glib_type,
 };
+use std::fmt::Write;
 
 pub trait ToCode {
     fn to_code(&self, env: &Env) -> Vec<String>;
@@ -186,7 +187,7 @@ impl ToCode for Chunk {
                     .collect();
                 let mut s = format_block_one_line(&prefix, &suffix, &params, "", ", ");
                 if let Some(return_value) = return_value {
-                    s.push_str(&format!(" -> {}", return_value));
+                    write!(s, " -> {}", return_value).unwrap();
                 }
                 s.push_str(" {");
                 let mut code = format_block("", "}", &body.to_code(env));

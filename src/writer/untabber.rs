@@ -14,11 +14,8 @@ impl Untabber {
 impl Write for Untabber {
     fn write(&mut self, buf: &[u8]) -> Result<usize> {
         let mut chunks = buf.split(|b| b == &b'\t').peekable();
-        loop {
-            match chunks.next() {
-                Some(chunk) => self.orig.write_all(chunk)?,
-                None => break,
-            };
+        while let Some(chunk) = chunks.next() {
+            self.orig.write_all(chunk)?;
             if chunks.peek().is_some() {
                 self.orig.write_all(TAB.as_bytes())?;
             } else {

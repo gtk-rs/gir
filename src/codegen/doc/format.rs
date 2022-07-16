@@ -8,6 +8,7 @@ use crate::{
 use log::{info, warn};
 use once_cell::sync::Lazy;
 use regex::{Captures, Regex};
+use std::fmt::Write;
 
 const LANGUAGE_SEP_BEGIN: &str = "<!-- language=\"";
 const LANGUAGE_SEP_END: &str = "\" -->";
@@ -72,9 +73,9 @@ fn get_language<'a>(entry: &'a str, out: &mut String) -> &'a str {
     if let (_, Some(after)) = try_split(entry, LANGUAGE_SEP_BEGIN) {
         if let (before, Some(after)) = try_split(after, LANGUAGE_SEP_END) {
             if !["text", "rust"].contains(&before) {
-                out.push_str(&format!("\n\n**⚠️ The following code is in {} ⚠️**", before));
+                write!(out, "\n\n**⚠️ The following code is in {} ⚠️**", before).unwrap();
             }
-            out.push_str(&format!("\n\n```{}", before));
+            write!(out, "\n\n```{}", before).unwrap();
             return after;
         }
     }
@@ -110,9 +111,9 @@ fn format(
                 if !["text", "rust", "xml", "css", "json", "html"].contains(&lang)
                     && after.lines().count() > 1
                 {
-                    ret.push_str(&format!("**⚠️ The following code is in {0} ⚠️**\n\n", lang));
+                    write!(ret, "**⚠️ The following code is in {0} ⚠️**\n\n", lang).unwrap();
                 }
-                ret.push_str(&format!("```{}\n", lang));
+                writeln!(ret, "```{}", lang).unwrap();
 
                 if let (before, Some(after)) = try_split(after, "```") {
                     ret.push_str(before);

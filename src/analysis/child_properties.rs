@@ -88,7 +88,7 @@ fn analyze_property(
     imports: &mut Imports,
 ) -> Option<ChildProperty> {
     let name = prop.name.clone();
-    let prop_name = nameutil::signal_to_snake(&*prop.name);
+    let prop_name = nameutil::signal_to_snake(&prop.name);
     let getter_rename = config
         .properties
         .iter()

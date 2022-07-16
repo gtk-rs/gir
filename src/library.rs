@@ -644,7 +644,7 @@ impl_lexical_ord!(
 );
 
 #[allow(clippy::large_enum_variant)]
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Eq, PartialEq)]
 pub enum Type {
     Basic(Basic),
     Alias(Alias),

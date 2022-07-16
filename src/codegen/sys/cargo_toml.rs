@@ -221,7 +221,7 @@ fn get_crate_name(config: &Config, root: &Table) -> String {
             return nameutil::crate_name(package_name);
         }
     }
-    return format!("{}_sys", nameutil::crate_name(&config.library_name));
+    format!("{}_sys", nameutil::crate_name(&config.library_name))
 }
 
 fn set_string<S: Into<String>>(table: &mut Table, name: &str, new_value: S) {
