@@ -36,6 +36,7 @@ pub struct Property {
 pub fn analyze(
     env: &Env,
     props: &[library::Property],
+    supertypes_props: &[&library::Property],
     type_tid: library::TypeId,
     generate_trait: bool,
     is_fundamental: bool,
@@ -57,6 +58,13 @@ pub fn analyze(
         }
 
         if env.is_totally_deprecated(Some(type_tid.ns_id), prop.deprecated_version) {
+            continue;
+        }
+
+        if supertypes_props
+            .iter()
+            .any(|p| p.name == prop.name && p.typ == prop.typ)
+        {
             continue;
         }
 

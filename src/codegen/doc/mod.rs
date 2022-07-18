@@ -170,7 +170,8 @@ fn generate_doc(w: &mut dyn Write, env: &Env) -> Result<()> {
 
         for function in functions {
             if let Some(ref c_identifier) = function.c_identifier {
-                let f_info = (&global_functions.functions)
+                let f_info = global_functions
+                    .functions
                     .iter()
                     .find(move |f| &f.glib_name == c_identifier);
                 let fn_new_name = f_info.and_then(|analysed_f| analysed_f.new_name.clone());

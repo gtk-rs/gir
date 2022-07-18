@@ -162,6 +162,15 @@ pub fn class(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<Info>
     }
 
     let supertypes = supertypes::analyze(env, class_tid, version, &mut imports);
+    let supertypes_properties = supertypes
+        .iter()
+        .filter_map(|t| match env.type_(t.type_id) {
+            Type::Class(c) => Some(&c.properties),
+            Type::Interface(i) => Some(&i.properties),
+            _ => None,
+        })
+        .flatten()
+        .collect::<Vec<&_>>();
 
     let final_type = klass.final_type;
     let trait_name = obj
@@ -211,6 +220,7 @@ pub fn class(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<Info>
     let (properties, notify_signals) = properties::analyze(
         env,
         &klass.properties,
+        &supertypes_properties,
         class_tid,
         !final_type,
         is_fundamental,
@@ -330,6 +340,15 @@ pub fn interface(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<I
     }
 
     let supertypes = supertypes::analyze(env, iface_tid, version, &mut imports);
+    let supertypes_properties = supertypes
+        .iter()
+        .filter_map(|t| match env.type_(t.type_id) {
+            Type::Class(c) => Some(&c.properties),
+            Type::Interface(i) => Some(&i.properties),
+            _ => None,
+        })
+        .flatten()
+        .collect::<Vec<&_>>();
 
     let trait_name = obj
         .trait_name
@@ -363,6 +382,7 @@ pub fn interface(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<I
     let (properties, notify_signals) = properties::analyze(
         env,
         &iface.properties,
+        &supertypes_properties,
         iface_tid,
         true,
         false,

@@ -79,9 +79,9 @@ impl RefMode {
         use self::RefMode::*;
         let ref_mode = RefMode::of(env, par.typ, par.direction);
         match ref_mode {
-            ByRefMut if !is_mut_ptr(&*par.c_type) => ByRef,
+            ByRefMut if !is_mut_ptr(&par.c_type) => ByRef,
             ByRefMut if immutable => ByRefImmut,
-            ByRef if self_in_trait && !is_mut_ptr(&*par.c_type) => ByRefConst,
+            ByRef if self_in_trait && !is_mut_ptr(&par.c_type) => ByRefConst,
             ref_mode => ref_mode,
         }
     }

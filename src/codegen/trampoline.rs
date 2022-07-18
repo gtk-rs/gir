@@ -15,6 +15,7 @@ use crate::{
     writer::primitives::tabs,
 };
 use log::error;
+use std::fmt::Write as FWrite;
 use std::io::{Result, Write};
 
 pub fn generate(
@@ -109,7 +110,7 @@ fn func_parameters(
         } else {
             param_str.push_str(", ");
             if !closure {
-                param_str.push_str(&format!("{}: ", par.name));
+                write!(param_str, "{}: ", par.name).unwrap();
             }
         }
 
