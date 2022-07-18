@@ -161,8 +161,7 @@ error: cannot find macro `assert_initialized_main_thread` in this scope
    = help: have you added the `#[macro_use]` on the module/import?
 </code></pre>
 <p>In this case you’ll have to implement them yourself. For example, you can add the following to your <code>lib.rs</code> file:</p>
-<pre><pre class="playground"><code class="language-rust">
-<span class="boring">#![allow(unused)]
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>/// No-op.
 macro_rules! skip_assert_initialized {
@@ -186,8 +185,7 @@ macro_rules! assert_initialized_main_thread {
 <p>Note: macros are order-dependent and you <em>must</em> insert this code before declaring modules that use it (e.g. <code>mod auto</code>).</p>
 <p>One complication here is that the <code>assert_initialized_main_thread!</code> macro depends on the exact library. If it's GTK-based then the above macro is likely correct, unless the library has its own initialization function. If it has its own initialization function it would need to be handled in addition to GTK's here in the same way.</p>
 <p>For non-GTK-based libraries this macro would handle the initialization function of that library in the same way, or if there is none would simply do nothing:</p>
-<pre><pre class="playground"><code class="language-rust">
-<span class="boring">#![allow(unused)]
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>/// No-op.
 macro_rules! assert_initialized_main_thread {
@@ -214,8 +212,7 @@ status = &quot;generate&quot;
 </code></pre>
 <p>So to sum up what I wrote above: we removed &quot;GtkSource.Region&quot; from the &quot;generate&quot; list and we created a new entry for it. Then we say to <a href="https://github.com/gtk-rs/gir">gir</a> that it should generate (through <code>status = &quot;generate&quot;</code>). However, we also tell it that we don't want the &quot;is_empty&quot; to be generated.</p>
 <p>Now that we've done that, we need to reimplement it. Let's create a <code>src/region.rs</code> file:</p>
-<pre><pre class="playground"><code class="language-rust">
-<span class="boring">#![allow(unused)]
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use glib::object::IsA;
 use glib::translate::*;
@@ -235,8 +232,7 @@ impl&lt;O: IsA&lt;Region&gt;&gt; RegionExtManual for O {
 </span></code></pre></pre>
 <p>You might wonder: &quot;why not just implementing it on the <code>Region</code> type directly?&quot;. Because like this, a subclass will also be able to use this trait easily as long as it implements <code>IsA&lt;Region&gt;</code>. For instance, in gtk, everything that implements <code>IsA&lt;Widget&gt;</code> (so almost every GTK types) can use those methods.</p>
 <p>As usual, don't forget to reexport the trait. A little tip about reexporting manual traits: in <code>gtk-rs</code>, we create a <code>src/prelude.rs</code> file which reexports all traits (both manual and generated ones), making it simpler for users to use them through <code>use [DEPENDENCY]::prelude::*</code>. It looks like this:</p>
-<pre><pre class="playground"><code class="language-rust">
-<span class="boring">#![allow(unused)]
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>pub use auto::traits::*;
 
@@ -244,8 +240,7 @@ pub use region::RegionExtManual;
 <span class="boring">}
 </span></code></pre></pre>
 <p>Then it's reexported as follows from the <code>src/lib.rs</code> file:</p>
-<pre><pre class="playground"><code class="language-rust">
-<span class="boring">#![allow(unused)]
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>pub mod prelude;
 

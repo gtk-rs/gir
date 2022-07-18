@@ -258,8 +258,7 @@ generate = []
 </code></pre>
 <p>(Again, if you do it on another library and it fails and you can't figure out why, don't hesitate to reach us!)</p>
 <p>We now have a <code>src/auto/language.rs</code> file. We need to include all <code>auto</code> files in our library. To do so, let's update the <code>src/lib.rs</code> file as follows:</p>
-<pre><pre class="playground"><code class="language-rust">
-<span class="boring">#![allow(unused)]
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>pub use auto::*;
 
@@ -271,8 +270,7 @@ mod auto;
 </code></pre>
 <p>It completely failed with a lot of errors. Yeay!</p>
 <p>You guessed it, we need to add a few dependencies to make it work. A lot of those errors were about the fact that the <code>Language</code> type didn't exist. Which is weird since we generated it, right? Well, if you take a look at the <code>src/auto/language.rs</code> file, you'll see this at the top:</p>
-<pre><pre class="playground"><code class="language-rust">
-<span class="boring">#![allow(unused)]
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>glib_wrapper! {
     pub struct Language(Object&lt;ffi::GtkSourceLanguage, ffi::GtkSourceLanguageClass, LanguageClass&gt;);
@@ -324,8 +322,7 @@ git = &quot;https://github.com/gtk-rs/sys&quot; # all gtk-rs sys crates are in t
 <pre><code class="language-sh">cargo build
 </code></pre>
 <p>Everything works, yeay! Now if we take a look at our newly generated <code>src/auto/region.rs</code>, we'll see code like this:</p>
-<pre><pre class="playground"><code class="language-rust">
-<span class="boring">#![allow(unused)]
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>//#[cfg(any(feature = &quot;v3_22&quot;, feature = &quot;dox&quot;))]
 //fn add_subregion(&amp;self, _start: /*Ignored*/&amp;gtk::TextIter, _end: /*Ignored*/&amp;gtk::TextIter);
@@ -355,8 +352,7 @@ git = &quot;https://github.com/gtk-rs/gtk&quot;
 cargo build
 </code></pre>
 <p>Everything is working, yeay! If you take another look at <code>src/auto/region.rs</code>, you'll see a lot less commented functions. Amongst the remaining ones, you'll see this one:</p>
-<pre><pre class="playground"><code class="language-rust">
-<span class="boring">#![allow(unused)]
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>//#[cfg(any(feature = &quot;v3_22&quot;, feature = &quot;dox&quot;))]
 //fn get_start_region_iter(&amp;self, iter: /*Ignored*/RegionIter);
