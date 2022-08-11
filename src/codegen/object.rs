@@ -29,6 +29,7 @@ pub fn generate(
     general::uses(w, env, &analysis.imports, analysis.version)?;
 
     let config = &env.config.objects[&analysis.full_name];
+    let object_name = config.rename.as_ref().unwrap_or(&analysis.name);
     if config.default_value.is_some() {
         log::error!(
             "`default_value` can only be used on flags and enums. {} is neither. Ignoring \
@@ -78,7 +79,7 @@ pub fn generate(
             general::define_fundamental_type(
                 w,
                 env,
-                &analysis.name,
+                object_name,
                 &analysis.c_type,
                 &analysis.get_type,
                 analysis.ref_fn.as_deref(),
@@ -90,7 +91,7 @@ pub fn generate(
             general::define_object_type(
                 w,
                 env,
-                &analysis.name,
+                object_name,
                 &analysis.c_type,
                 analysis.c_class_type.as_deref(),
                 &analysis.get_type,
@@ -125,7 +126,7 @@ pub fn generate(
                 general::define_object_type(
                     w,
                     env,
-                    &analysis.name,
+                    object_name,
                     &analysis.c_type,
                     analysis.c_class_type.as_deref(),
                     &analysis.get_type,
@@ -155,7 +156,7 @@ pub fn generate(
         general::define_object_type(
             w,
             env,
-            &analysis.name,
+            object_name,
             &analysis.c_type,
             analysis.c_class_type.as_deref(),
             &analysis.get_type,
@@ -169,7 +170,7 @@ pub fn generate(
         || !analysis.final_type
     {
         writeln!(w)?;
-        write!(w, "impl {} {{", analysis.name)?;
+        write!(w, "impl {} {{", object_name)?;
 
         if !analysis.final_type {
             writeln!(
@@ -177,7 +178,7 @@ pub fn generate(
                 "
         pub const NONE: Option<&'static {}> = None;
     ",
-                analysis.name
+                object_name
             )?;
         }
 
@@ -197,7 +198,7 @@ pub fn generate(
 
         if has_builder_properties(&analysis.builder_properties) {
             // generate builder method that returns the corresponding builder
-            let builder_name = format!("{}Builder", analysis.name);
+            let builder_name = format!("{}Builder", object_name);
             writeln!(
                 w,
                 "
@@ -209,7 +210,7 @@ pub fn generate(
                 {builder_name}::default()
             }}
         ",
-                name = analysis.name,
+                name = object_name,
                 builder_name = builder_name
             )?;
         }
@@ -267,7 +268,7 @@ pub fn generate(
         general::declare_default_from_new(
             w,
             env,
-            &analysis.name,
+            object_name,
             &analysis.functions,
             has_builder_properties(&analysis.builder_properties),
         )?;
@@ -276,7 +277,7 @@ pub fn generate(
     trait_impls::generate(
         w,
         env,
-        &analysis.name,
+        object_name,
         &analysis.functions,
         &analysis.specials,
         if analysis.need_generate_trait() {
@@ -290,7 +291,7 @@ pub fn generate(
 
     if has_builder_properties(&analysis.builder_properties) {
         writeln!(w)?;
-        generate_builder(w, env, analysis)?;
+        generate_builder(w, object_name, env, analysis)?;
     }
 
     if analysis.concurrency != library::Concurrency::None {
@@ -299,22 +300,22 @@ pub fn generate(
 
     match analysis.concurrency {
         library::Concurrency::Send | library::Concurrency::SendSync => {
-            writeln!(w, "unsafe impl Send for {} {{}}", analysis.name)?;
+            writeln!(w, "unsafe impl Send for {} {{}}", object_name)?;
         }
         _ => (),
     }
 
     if let library::Concurrency::SendSync = analysis.concurrency {
-        writeln!(w, "unsafe impl Sync for {} {{}}", analysis.name)?;
+        writeln!(w, "unsafe impl Sync for {} {{}}", object_name)?;
     }
 
     if analysis.need_generate_trait() {
         writeln!(w)?;
-        generate_trait(w, env, analysis)?;
+        generate_trait(w, object_name, env, analysis)?;
     }
 
     if generate_display_trait && !analysis.specials.has_trait(Type::Display) {
-        writeln!(w, "\nimpl fmt::Display for {} {{", analysis.name,)?;
+        writeln!(w, "\nimpl fmt::Display for {} {{", object_name,)?;
         // Generate Display trait implementation.
         writeln!(
             w,
@@ -322,7 +323,7 @@ pub fn generate(
              \t\tf.write_str(\"{}\")\n\
              \t}}\n\
              }}",
-            analysis.name
+            object_name
         )?;
     }
 
@@ -330,7 +331,12 @@ pub fn generate(
 }
 
 // TODO: instead create a Vec<> inside the Builder instead of Options.
-fn generate_builder(w: &mut dyn Write, env: &Env, analysis: &analysis::object::Info) -> Result<()> {
+fn generate_builder(
+    w: &mut dyn Write,
+    object_name: &str,
+    env: &Env,
+    analysis: &analysis::object::Info,
+) -> Result<()> {
     let mut methods = vec![];
     let mut properties = vec![];
     writeln!(w, "#[derive(Clone, Default)]")?;
@@ -340,10 +346,10 @@ fn generate_builder(w: &mut dyn Write, env: &Env, analysis: &analysis::object::I
         /// A [builder-pattern] type to construct [`{}`] objects.
         ///
         /// [builder-pattern]: https://doc.rust-lang.org/1.0.0/style/ownership/builders.html",
-        analysis.name,
+        object_name,
     )?;
     writeln!(w, "#[must_use = \"The builder must be built to be used\"]")?;
-    writeln!(w, "pub struct {}Builder {{", analysis.name)?;
+    writeln!(w, "pub struct {}Builder {{", object_name)?;
     for (builder_props, super_tid) in &analysis.builder_properties {
         for property in builder_props {
             match RustType::try_new(env, property.typ) {
@@ -450,7 +456,7 @@ impl {name}Builder {{
         Self::default()
     }}
 ",
-        name = analysis.name
+        name = object_name
     )?;
 
     writeln!(
@@ -461,7 +467,7 @@ impl {name}Builder {{
     #[must_use = \"Building the object from the builder is usually expensive and is not expected to have side effects\"]
     pub fn build(self) -> {name} {{
         let mut properties: Vec<(&str, &dyn ToValue)> = vec![];",
-        name = analysis.name
+        name = object_name
     )?;
     for (property, super_tid) in &properties {
         let name = nameutil::mangle_keywords(nameutil::signal_to_snake(&property.name));
@@ -488,7 +494,7 @@ impl {name}Builder {{
             w,
             r#"        let ret = {}::Object::new::<{}>(&properties)
                 .expect("Failed to create an instance of {}");"#,
-            glib_crate_name, analysis.name, analysis.name,
+            glib_crate_name, object_name, object_name,
         )?;
         writeln!(w, "        {{\n            {}\n        }}", code)?;
         writeln!(w, "    ret\n    }}")?;
@@ -497,7 +503,7 @@ impl {name}Builder {{
             w,
             r#"        {}::Object::new::<{}>(&properties)
                 .expect("Failed to create an instance of {}")"#,
-            glib_crate_name, analysis.name, analysis.name,
+            glib_crate_name, object_name, object_name,
         )?;
         writeln!(w, "\n    }}")?;
     }
@@ -508,7 +514,12 @@ impl {name}Builder {{
     writeln!(w, "}}")
 }
 
-fn generate_trait(w: &mut dyn Write, env: &Env, analysis: &analysis::object::Info) -> Result<()> {
+fn generate_trait(
+    w: &mut dyn Write,
+    object_name: &str,
+    env: &Env,
+    analysis: &analysis::object::Info,
+) -> Result<()> {
     write!(w, "pub trait {}: 'static {{", analysis.trait_name)?;
 
     for func_analysis in &analysis.methods() {
@@ -543,7 +554,7 @@ fn generate_trait(w: &mut dyn Write, env: &Env, analysis: &analysis::object::Inf
     write!(
         w,
         "impl<O: IsA<{}>> {} for O {{",
-        analysis.name, analysis.trait_name,
+        object_name, analysis.trait_name,
     )?;
 
     for func_analysis in &analysis.methods() {
@@ -587,6 +598,9 @@ pub fn generate_reexports(
     traits: &mut Vec<String>,
     builders: &mut Vec<String>,
 ) {
+    let config = &env.config.objects[&analysis.full_name];
+    let object_name = config.rename.as_ref().unwrap_or(&analysis.name);
+
     let mut cfgs: Vec<String> = Vec::new();
     if let Some(cfg) = general::cfg_condition_string(analysis.cfg_condition.as_ref(), false, 0) {
         cfgs.push(cfg);
@@ -613,7 +627,7 @@ pub fn generate_reexports(
         "{} use self::{}::{};",
         analysis.visibility.export_visibility(),
         module_name,
-        analysis.name,
+        object_name,
     ));
 
     if analysis.need_generate_trait() {
@@ -632,7 +646,7 @@ pub fn generate_reexports(
         }
         builders.push(format!(
             "\tpub use super::{}::{}Builder;",
-            module_name, analysis.name
+            module_name, object_name
         ));
     }
 }

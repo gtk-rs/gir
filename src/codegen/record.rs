@@ -13,12 +13,15 @@ pub fn generate(w: &mut dyn Write, env: &Env, analysis: &analysis::record::Info)
     general::start_comments(w, &env.config)?;
     general::uses(w, env, &analysis.imports, type_.version)?;
 
+    let config = &env.config.objects[&analysis.full_name];
+    let record_name = config.rename.as_ref().unwrap_or(&analysis.name);
+
     if RecordType::of(env.type_(analysis.type_id).maybe_ref().unwrap()) == RecordType::AutoBoxed {
         if let Some((ref glib_get_type, _)) = analysis.glib_get_type {
             general::define_auto_boxed_type(
                 w,
                 env,
-                &analysis.name,
+                record_name,
                 &type_.c_type,
                 analysis.boxed_inline,
                 &analysis.init_function_expression,
@@ -41,7 +44,7 @@ pub fn generate(w: &mut dyn Write, env: &Env, analysis: &analysis::record::Info)
         general::define_shared_type(
             w,
             env,
-            &analysis.name,
+            record_name,
             &type_.c_type,
             &ref_fn.glib_name,
             &unref_fn.glib_name,
@@ -62,7 +65,7 @@ pub fn generate(w: &mut dyn Write, env: &Env, analysis: &analysis::record::Info)
         general::define_boxed_type(
             w,
             env,
-            &analysis.name,
+            record_name,
             &type_.c_type,
             copy_fn,
             &free_fn.glib_name,
@@ -93,7 +96,7 @@ pub fn generate(w: &mut dyn Write, env: &Env, analysis: &analysis::record::Info)
         .any(|f| f.status.need_generate() && !f.hidden)
     {
         writeln!(w)?;
-        write!(w, "impl {} {{", analysis.name)?;
+        write!(w, "impl {} {{", record_name)?;
 
         for func_analysis in &analysis.functions {
             function::generate(
@@ -112,12 +115,12 @@ pub fn generate(w: &mut dyn Write, env: &Env, analysis: &analysis::record::Info)
         writeln!(w, "}}")?;
     }
 
-    general::declare_default_from_new(w, env, &analysis.name, &analysis.functions, false)?;
+    general::declare_default_from_new(w, env, record_name, &analysis.functions, false)?;
 
     trait_impls::generate(
         w,
         env,
-        &analysis.name,
+        record_name,
         &analysis.functions,
         &analysis.specials,
         None,
@@ -131,13 +134,13 @@ pub fn generate(w: &mut dyn Write, env: &Env, analysis: &analysis::record::Info)
 
     match analysis.concurrency {
         library::Concurrency::Send | library::Concurrency::SendSync => {
-            writeln!(w, "unsafe impl Send for {} {{}}", analysis.name)?;
+            writeln!(w, "unsafe impl Send for {} {{}}", record_name)?;
         }
         _ => (),
     }
 
     if analysis.concurrency == library::Concurrency::SendSync {
-        writeln!(w, "unsafe impl Sync for {} {{}}", analysis.name)?;
+        writeln!(w, "unsafe impl Sync for {} {{}}", record_name)?;
     }
 
     Ok(())
@@ -149,6 +152,9 @@ pub fn generate_reexports(
     module_name: &str,
     contents: &mut Vec<String>,
 ) {
+    let config = &env.config.objects[&analysis.full_name];
+    let record_name = config.rename.as_ref().unwrap_or(&analysis.name);
+
     let cfg_condition = general::cfg_condition_string(analysis.cfg_condition.as_ref(), false, 0);
     let version_cfg = general::version_condition_string(
         env,
@@ -173,6 +179,6 @@ pub fn generate_reexports(
         cfg,
         analysis.visibility.export_visibility(),
         module_name,
-        analysis.name
+        record_name
     ));
 }

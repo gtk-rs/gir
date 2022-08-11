@@ -67,6 +67,7 @@ impl FromStr for GStatus {
 #[derive(Clone, Debug)]
 pub struct GObject {
     pub name: String,
+    pub rename: Option<String>,
     pub functions: Functions,
     pub constants: Constants,
     pub signals: Signals,
@@ -105,6 +106,7 @@ impl Default for GObject {
     fn default() -> GObject {
         GObject {
             name: "Default".into(),
+            rename: Default::default(),
             functions: Functions::new(),
             constants: Constants::new(),
             signals: Signals::new(),
@@ -257,6 +259,7 @@ fn parse_object(
     toml_object.check_unwanted(
         &[
             "name",
+            "rename",
             "status",
             "function",
             "constant",
@@ -323,6 +326,10 @@ fn parse_object(
 
         v
     };
+    let rename = toml_object
+        .lookup("rename")
+        .and_then(Value::as_str)
+        .map(ToOwned::to_owned);
     let members = Members::parse(toml_object.lookup("member"), &name);
     let properties = Properties::parse(toml_object.lookup("property"), &name);
     let derives = toml_object
@@ -489,6 +496,7 @@ fn parse_object(
 
     GObject {
         name,
+        rename,
         functions,
         constants,
         signals,
@@ -614,6 +622,21 @@ mod tests {
         let value = ::toml::from_str(input);
         assert!(value.is_ok());
         value.unwrap()
+    }
+
+    #[test]
+    fn object_rename() {
+        let toml = &toml(
+            r#"
+name = "Test"
+status = "generate"
+rename = "SomeTest"
+"#,
+        );
+
+        let object = parse_object(toml, Concurrency::default(), false, false, false);
+        assert_eq!(object.name, "Test");
+        assert_eq!(object.rename.as_deref(), Some("SomeTest"));
     }
 
     #[test]
