@@ -72,6 +72,7 @@ pub struct CParameter {
     //analysis fields
     pub ref_mode: RefMode,
     pub try_from_glib: TryFromGlib,
+    pub move_: bool,
 }
 
 #[derive(Clone, Debug)]
@@ -95,6 +96,7 @@ pub enum TransformationType {
         pointer_cast: String,
         in_trait: bool,
         nullable: bool,
+        move_: bool,
     },
     ToGlibBorrow,
     ToGlibUnknown {
@@ -295,6 +297,7 @@ pub fn analyze(
             user_data_index: par.closure,
             destroy_index: par.destroy,
             try_from_glib: try_from_glib.clone(),
+            move_: configured_parameters.iter().any(|p| p.move_),
         };
         parameters.c_parameters.push(c_par);
 
@@ -364,6 +367,7 @@ pub fn analyze(
                 pointer_cast: Default::default(),
                 in_trait,
                 nullable: *nullable,
+                move_: configured_parameters.iter().any(|p| p.move_),
             },
             ConversionType::Borrow => TransformationType::ToGlibBorrow,
             ConversionType::Unknown => TransformationType::ToGlibUnknown { name },

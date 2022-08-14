@@ -266,6 +266,7 @@ fn fixup_gpointer_parameter(
             ),
             in_trait: false,
             nullable: false,
+            move_: false,
         },
     };
 }

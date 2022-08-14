@@ -161,6 +161,8 @@ generate_doc = false
         name = "website_label"
         # allow to remove/add Option<>
         nullable = true
+        # Take the parameter by value instead of by ref
+        move = true
         # allow to make parameter immutable
         const = true
         # parameter is calculated as length of string or array and removed from function declaration
