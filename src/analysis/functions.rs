@@ -199,9 +199,10 @@ pub fn analyze<F: Borrow<library::Function>>(
             if let Some(deps) = deps {
                 let (has, version) = signature_params.has_in_deps(env, &name, deps);
                 if has {
-                    match version {
-                        Some(v) if v > env.config.min_cfg_version => not_version = version,
-                        _ => continue,
+                    if let Some(v) = version {
+                        if v > env.config.min_cfg_version {
+                            not_version = version;
+                        }
                     }
                 }
             }
