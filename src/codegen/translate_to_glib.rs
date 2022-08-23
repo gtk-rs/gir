@@ -29,9 +29,10 @@ impl TranslateToGlib for TransformationType {
                 ref pointer_cast,
                 ref explicit_target_type,
                 in_trait,
+                move_,
                 ..
             } => {
-                let (left, right) = to_glib_xxx(transfer, ref_mode, explicit_target_type);
+                let (left, right) = to_glib_xxx(transfer, ref_mode, explicit_target_type, move_);
 
                 if instance_parameter {
                     format!(
@@ -58,22 +59,25 @@ fn to_glib_xxx(
     transfer: Transfer,
     ref_mode: RefMode,
     explicit_target_type: &str,
+    move_: bool,
 ) -> (String, &'static str) {
     use self::Transfer::*;
     match transfer {
         None => {
             match ref_mode {
                 RefMode::None => ("".into(), ".to_glib_none_mut().0"), //unreachable!(),
-                RefMode::ByRef => {
-                    if explicit_target_type.is_empty() {
-                        ("".into(), ".to_glib_none().0")
-                    } else {
-                        (
-                            format!("ToGlibPtr::<{}>::to_glib_none(", explicit_target_type),
-                            ").0",
-                        )
-                    }
-                }
+                RefMode::ByRef => match (move_, explicit_target_type.is_empty()) {
+                    (true, true) => ("".into(), ".into_glib_ptr()"),
+                    (true, false) => (
+                        format!("ToGlibPtr::<{}>::into_glib_ptr(", explicit_target_type),
+                        ")",
+                    ),
+                    (false, true) => ("".into(), ".to_glib_none().0"),
+                    (false, false) => (
+                        format!("ToGlibPtr::<{}>::to_glib_none(", explicit_target_type),
+                        ").0",
+                    ),
+                },
                 RefMode::ByRefMut => ("".into(), ".to_glib_none_mut().0"),
                 RefMode::ByRefImmut => ("mut_override(".into(), ".to_glib_none().0)"),
                 RefMode::ByRefConst => ("const_override(".into(), ".to_glib_none().0)"),

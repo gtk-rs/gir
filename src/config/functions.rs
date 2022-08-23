@@ -62,6 +62,7 @@ pub struct Parameter {
     //true - parameter don't changed in FFI function,
     //false(default) - parameter can be changed in FFI function
     pub constant: bool,
+    pub move_: bool,
     pub nullable: Option<Nullable>,
     pub mandatory: Option<Mandatory>,
     pub infallible: Option<Infallible>,
@@ -90,6 +91,7 @@ impl Parse for Parameter {
                 "infallible",
                 "length_of",
                 "name",
+                "move",
                 "pattern",
                 "string_type",
                 "callback_parameter",
@@ -99,6 +101,10 @@ impl Parse for Parameter {
 
         let constant = toml
             .lookup("const")
+            .and_then(Value::as_bool)
+            .unwrap_or(false);
+        let move_ = toml
+            .lookup("move")
             .and_then(Value::as_bool)
             .unwrap_or(false);
         let nullable = toml
@@ -140,6 +146,7 @@ impl Parse for Parameter {
             constant,
             nullable,
             mandatory,
+            move_,
             infallible,
             length_of,
             string_type,
