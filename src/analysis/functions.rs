@@ -935,12 +935,7 @@ pub fn is_carray_with_direct_elements(env: &Env, typ: library::TypeId) -> bool {
     match *env.library.type_(typ) {
         Type::CArray(inner_tid) => {
             use super::conversion_type::ConversionType;
-            match env.library.type_(inner_tid) {
-                Type::Basic(..) if ConversionType::of(env, inner_tid) == ConversionType::Direct => {
-                    true
-                }
-                _ => false,
-            }
+            matches!(env.library.type_(inner_tid), Type::Basic(..) if ConversionType::of(env, inner_tid) == ConversionType::Direct)
         }
         _ => false,
     }

@@ -89,6 +89,8 @@ Sometimes Gir understands the object definition incorrectly or the `.gir` file c
 [[object]]
 # object's fullname
 name = "Gtk.SomeClass"
+# An optional different name of the object
+rename = "Gtk.SomeNewName"
 # can be also "manual" and "ignore" but it's simpler to just put the object in the same array
 status = "generate"
 # replace the parameter name for the child in child properties (instead "child")

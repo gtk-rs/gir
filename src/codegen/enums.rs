@@ -55,7 +55,7 @@ pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>) {
             mod_rs.push(format!(
                 "{} use self::enums::{};",
                 enum_analysis.visibility.export_visibility(),
-                enum_.name
+                config.rename.as_ref().unwrap_or(&enum_.name)
             ));
 
             generate_enum(env, w, enum_, config, enum_analysis)?;
@@ -132,8 +132,12 @@ fn generate_enum(
     writeln!(w, "#[derive(Clone, Copy)]")?;
     writeln!(w, "#[non_exhaustive]")?;
     doc_alias(w, &enum_.c_type, "", 0)?;
+    if config.rename.is_some() {
+        doc_alias(w, &enum_.name, "", 0)?;
+    }
 
-    writeln!(w, "{} enum {} {{", analysis.visibility, enum_.name)?;
+    let enum_name = config.rename.as_ref().unwrap_or(&enum_.name);
+    writeln!(w, "{} enum {} {{", analysis.visibility, enum_name)?;
     for member in &members {
         cfg_deprecated(
             w,
@@ -208,7 +212,7 @@ fn generate_enum(
             "impl fmt::Display for {0} {{\n\
              \tfn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {{\n\
              \t\twrite!(f, \"{0}::{{}}\", match *self {{",
-            enum_.name
+            enum_name
         )?;
         for member in &members {
             version_condition_no_doc(w, env, None, member.version, false, 3)?;
@@ -236,7 +240,7 @@ impl IntoGlib for {name} {{
     fn into_glib(self) -> {sys_crate_name}::{ffi_name} {{
         match self {{",
         sys_crate_name = sys_crate_name,
-        name = enum_.name,
+        name = enum_name,
         ffi_name = enum_.c_type
     )?;
     for member in &members {
@@ -274,7 +278,7 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
     unsafe fn from_glib(value: {sys_crate_name}::{ffi_name}) -> Self {{
         {assert}match value {{",
         sys_crate_name = sys_crate_name,
-        name = enum_.name,
+        name = enum_name,
         ffi_name = enum_.c_type,
         assert = assert
     )?;
@@ -308,7 +312,7 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
             "impl ErrorDomain for {name} {{
     fn domain() -> Quark {{
         {assert}",
-            name = enum_.name,
+            name = enum_name,
             assert = assert
         )?;
 
@@ -390,7 +394,7 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
     }}
 }}",
             sys_crate_name = sys_crate_name,
-            name = enum_.name,
+            name = enum_name,
             get_type = get_type
         )?;
         writeln!(w)?;
@@ -402,7 +406,7 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
             "impl {valuetype} for {name} {{
     type Type = Self;
 }}",
-            name = enum_.name,
+            name = enum_name,
             valuetype = use_glib_type(env, "value::ValueType"),
         )?;
         writeln!(w)?;
@@ -418,7 +422,7 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
         {assert}from_glib({glib}(value.to_glib_none().0))
     }}
 }}",
-            name = enum_.name,
+            name = enum_name,
             glib = use_glib_type(env, "gobject_ffi::g_value_get_enum"),
             gvalue = use_glib_type(env, "Value"),
             genericwrongvaluetypechecker = use_glib_type(env, "value::GenericValueTypeChecker"),
@@ -443,7 +447,7 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
         Self::static_type()
     }}
 }}",
-            name = enum_.name,
+            name = enum_name,
             glib = use_glib_type(env, "gobject_ffi::g_value_set_enum"),
             gvalue = use_glib_type(env, "Value"),
             gtype = use_glib_type(env, "Type"),
@@ -455,7 +459,7 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
         w,
         env,
         config,
-        &enum_.name,
+        enum_name,
         enum_.version,
         enum_.members.iter(),
         |member| {

@@ -53,7 +53,7 @@ pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>) {
             mod_rs.push(format!(
                 "{} use self::flags::{};",
                 flags_analysis.visibility.export_visibility(),
-                flags.name
+                config.rename.as_ref().unwrap_or(&flags.name),
             ));
             generate_flags(env, w, flags, config, flags_analysis)?;
         }
@@ -92,11 +92,16 @@ fn generate_flags(
         derives(w, d, 1)?;
     }
 
+    let flags_name = config.rename.as_ref().unwrap_or(&flags.name);
+
     doc_alias(w, &flags.c_type, "", 1)?;
+    if config.rename.is_some() {
+        doc_alias(w, &flags.name, "", 0)?;
+    }
     writeln!(
         w,
         "    {} struct {}: u32 {{",
-        analysis.visibility, flags.name
+        analysis.visibility, flags_name
     )?;
     for member in &flags.members {
         let member_config = config.members.matched(&member.name);
@@ -184,14 +189,14 @@ fn generate_flags(
             \t\t<Self as fmt::Debug>::fmt(self, f)\n\
             \t}}\n\
             }}\n",
-            flags.name
+            flags_name
         )?;
     }
     generate_default_impl(
         w,
         env,
         config,
-        &flags.name,
+        flags_name,
         flags.version,
         flags.members.iter(),
         |member| {
@@ -222,7 +227,7 @@ impl IntoGlib for {name} {{
 }}
 ",
         sys_crate_name = sys_crate_name,
-        name = flags.name,
+        name = flags_name,
         ffi_name = flags.c_type
     )?;
 
@@ -244,7 +249,7 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
 }}
 ",
         sys_crate_name = sys_crate_name,
-        name = flags.name,
+        name = flags_name,
         ffi_name = flags.c_type,
         assert = assert
     )?;
@@ -266,7 +271,7 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
     }}
 }}",
             sys_crate_name = sys_crate_name,
-            name = flags.name,
+            name = flags_name,
             get_type = get_type
         )?;
         writeln!(w)?;
@@ -278,7 +283,7 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
             "impl {valuetype} for {name} {{
     type Type = Self;
 }}",
-            name = flags.name,
+            name = flags_name,
             valuetype = use_glib_type(env, "value::ValueType"),
         )?;
         writeln!(w)?;
@@ -294,7 +299,7 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
         {assert}from_glib({glib}(value.to_glib_none().0))
     }}
 }}",
-            name = flags.name,
+            name = flags_name,
             glib = use_glib_type(env, "gobject_ffi::g_value_get_flags"),
             gvalue = use_glib_type(env, "Value"),
             genericwrongvaluetypechecker = use_glib_type(env, "value::GenericValueTypeChecker"),
@@ -319,7 +324,7 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
         Self::static_type()
     }}
 }}",
-            name = flags.name,
+            name = flags_name,
             glib = use_glib_type(env, "gobject_ffi::g_value_set_flags"),
             gvalue = use_glib_type(env, "Value"),
             gtype = use_glib_type(env, "Type"),
