@@ -4,7 +4,7 @@ There are multiple ways you can get the needed `.gir` files. The `*.gir` you nee
 Have a look at the .gir file of your library. At the beginning of the file, you probably see something similar to `<include name="GObject" version="2.0"/>`. "GObject" in this case would be a dependency and you will have to find the .gir file for your dependencies as well.
 
 ## GTK dependencies
-If your library depends on GTK libraries, the recommended way to get the `.gir` files for them is to clone the [gir-files repo](https://github.com/gtk-rs/gir-files). It's the recommended way, because some of the `.gir` files included in the libraries are invalid (missing or invalid annotations for example). These errors are already fixed in the gir files from the repo. Otherwise you could use the above mentioned methods to find the files and run the [script](https://github.com/gtk-rs/gir-files/blob/master/fix.sh) to fix the `.gir` files (and only them!) available in the gir-files repository. You can run it like this (at the same level of the `.gir` files you want to patch):
+If your library depends on GTK libraries, the recommended way to get the `.gir` files for them is to clone the [gir-files repo](https://github.com/gtk-rs/gir-files). It's the recommended way, because some of the `.gir` files included in the libraries are invalid (missing or invalid annotations for example). These errors are already fixed in the gir files from the repo. Otherwise you could use the above mentioned methods to find the files and run the [script](https://github.com/gtk-rs/gir-files/blob/master/fix.sh) to fix the `.gir` files available in the gir-files repository (and only them!). You can run it like this (at the same level of the `.gir` files you want to patch):
 
 ```sh
 sh fix.sh

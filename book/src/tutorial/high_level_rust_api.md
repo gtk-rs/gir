@@ -307,7 +307,7 @@ The names of the objects are not the same as the crates names. You have to use t
 
 Okay, lets go through that process for a few objects of our example.
 
-TODO: Add steps of example
+🚧 TODO: Add remaining steps of the pango example 🚧
 
 Again, if you do it on another library and it fails and you can't figure out why, don't hesitate to [contact us](https://gtk-rs.org/contact)!
 
