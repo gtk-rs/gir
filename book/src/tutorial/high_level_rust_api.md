@@ -137,8 +137,8 @@ Many of these options look familiar from the last chapter but there are also a f
 
 Let's make a first generation of our high-level Rust API!
 
-```console
-> gir -o .
+```sh
+gir -o .
 ```
 
 If you take a look at which files and folders were created, you'll see a new "auto" folder inside "src". This folder contains all the generated code. It doesn't contain anything though. Which makes sense since we're generating nothing.

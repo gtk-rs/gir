@@ -56,17 +56,6 @@ dependencies = [
 dox_feature_dependencies = ["whatever"]
 ```
 
-You can mark some functions that has suffix `_utf8` on Windows:
-
-```toml
-[[object]]
-name = "GdkPixbuf.PixbufAnimation"
-status = "generate"
-    [[object.function]]
-    name = "new_from_file"
-    is_windows_utf8 = true
-```
-
 Also, you can add rust cfg conditions on objects, functions and constants, for example, when flagging for conditional compilation:
 
 ```toml
@@ -83,8 +72,8 @@ cfg_condition = "feature = \"egl\""
 
 When you're ready, let's generate the FFI part. In the command we'll execute, `../gir-files` is where the directory with your `.gir` files is. (But again, you can just clone the [gir-files repository](https://github.com/gtk-rs/gir-files) and add your file(s) in it). Then let's run the command:
 
-```console
-> cargo run --release -- -c YourSysGirFile.toml -d ../gir-files -m sys -o the-output-directory-sys
+```sh
+cargo run --release -- -c YourSysGirFile.toml -d ../gir-files -m sys -o the-output-directory-sys
 ```
 
 The generated files will be placed in `the-output-directory-sys`. Just take care about the dependencies and the crate's name generated in the `Cargo.toml` file (update them if they don't work as expected).

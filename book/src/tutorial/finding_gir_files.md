@@ -6,8 +6,8 @@ Have a look at the .gir file of your library. At the beginning of the file, you 
 ## GTK dependencies
 If your library depends on GTK libraries, the recommended way to get the `.gir` files for them is to clone the [gir-files repo](https://github.com/gtk-rs/gir-files). It's the recommended way, because some of the `.gir` files included in the libraries are invalid (missing or invalid annotations for example). These errors are already fixed in the gir files from the repo. Otherwise you could use the above mentioned methods to find the files and run the [script](https://github.com/gtk-rs/gir-files/blob/master/fix.sh) to fix the `.gir` files (and only them!) available in the gir-files repository. You can run it like this (at the same level of the `.gir` files you want to patch):
 
-```console
-> sh fix.sh
+```sh
+sh fix.sh
 ```
 
 ## GStreamer dependencies
@@ -19,8 +19,8 @@ If you have other dependencies, you have to find the files yourself. They can of
 ## Example
 We want to generate the wrapper for pango. It is related to GTK, so in order to get its .gir files, we use the recommended way. While being in the project folder `git-tutorial`, we clone the [gir-files repo](https://github.com/gtk-rs/gir-files).
 
-```console
-> git clone --depth 1 https://github.com/gtk-rs/gir-files
+```sh
+git clone --depth 1 https://github.com/gtk-rs/gir-files
 ```
 
 If you look into `gir-files`, you'll see a file named `Pango-1.0.gir`. That's the one for pango. Because we already cloned the gir-files repo, we also have all the other .gir files of the dependencies that we need. Now we can create the unsafe bindings.
