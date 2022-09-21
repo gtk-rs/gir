@@ -52,16 +52,6 @@ dependencies = [
 ]
 ```
 
-You can mark some functions that has suffix `_utf8` on Windows:
-
-```toml
-[[object]]
-name = "GdkPixbuf.PixbufAnimation"
-status = "generate"
-    [[object.function]]
-    name = "new_from_file"
-```
-
 Also, you can add rust cfg conditions on objects, functions and constants, for example, when flagging for conditional compilation:
 
 ```toml
