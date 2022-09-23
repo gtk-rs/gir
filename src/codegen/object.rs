@@ -486,18 +486,16 @@ impl {name}Builder {{
     if let Some(code) = analysis.builder_postprocess.as_ref() {
         writeln!(
             w,
-            r#"        let ret = {}::Object::new::<{}>(&properties)
-                .expect("Failed to create an instance of {}");"#,
-            glib_crate_name, analysis.name, analysis.name,
+            r#"        let ret = {}::Object::new::<{}>(&properties);"#,
+            glib_crate_name, analysis.name,
         )?;
         writeln!(w, "        {{\n            {}\n        }}", code)?;
         writeln!(w, "    ret\n    }}")?;
     } else {
         writeln!(
             w,
-            r#"        {}::Object::new::<{}>(&properties)
-                .expect("Failed to create an instance of {}")"#,
-            glib_crate_name, analysis.name, analysis.name,
+            r#"        {}::Object::new::<{}>(&properties)"#,
+            glib_crate_name, analysis.name,
         )?;
         writeln!(w, "\n    }}")?;
     }
