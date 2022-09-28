@@ -496,6 +496,8 @@ pub struct Property {
     pub readable: bool,
     pub writable: bool,
     pub construct: bool,
+    pub getter: Option<String>,
+    pub setter: Option<String>,
     pub construct_only: bool,
     pub typ: TypeId,
     pub c_type: Option<String>,
@@ -539,6 +541,8 @@ pub struct Function {
     pub deprecated_version: Option<Version>,
     pub doc: Option<String>,
     pub doc_deprecated: Option<String>,
+    pub getter_prop: Option<String>,
+    pub setter_prop: Option<String>,
 }
 
 #[derive(Debug)]

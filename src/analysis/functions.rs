@@ -98,6 +98,8 @@ pub struct Info {
     /// this potential global function is defined
     pub ns_id: NsId,
     pub generate_doc: bool,
+    pub getter_prop: Option<String>,
+    pub setter_prop: Option<String>,
 }
 
 impl Info {
@@ -923,6 +925,8 @@ fn analyze_function(
         async_future,
         callbacks,
         destroys,
+        getter_prop: func.getter_prop.clone(),
+        setter_prop: func.setter_prop.clone(),
         remove_params: cross_user_data_check.values().cloned().collect::<Vec<_>>(),
         commented,
         hidden: false,
