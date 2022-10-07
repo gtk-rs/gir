@@ -706,7 +706,7 @@ pub fn version_condition_no_doc(
             commented,
             indent,
         ) {
-            writeln!(w, "{}", s)?
+            writeln!(w, "{}", s)?;
         }
     }
     Ok(())
@@ -721,7 +721,7 @@ pub fn version_condition_doc(
     match version {
         Some(v) if v > env.config.min_cfg_version => {
             if let Some(s) = cfg_condition_string_doc(Some(&v.to_cfg(None)), commented, indent) {
-                writeln!(w, "{}", s)?
+                writeln!(w, "{}", s)?;
             }
         }
         _ => {}
@@ -984,7 +984,7 @@ pub fn escape_string(s: &str) -> String {
             '\"' | '\\' => es.push('\\'),
             _ => (),
         }
-        es.push(c)
+        es.push(c);
     }
     es
 }

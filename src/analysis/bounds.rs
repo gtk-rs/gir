@@ -177,7 +177,7 @@ impl Bounds {
                     }
                 }
                 if (!need_is_into_check || !*par.nullable) && par.c_type != "GDestroyNotify" {
-                    self.add_parameter(&par.name, &type_string, bound_type, r#async)
+                    self.add_parameter(&par.name, &type_string, bound_type, r#async);
                 }
             }
         } else if par.instance_parameter {

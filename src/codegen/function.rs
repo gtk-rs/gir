@@ -211,7 +211,7 @@ pub fn declaration(env: &Env, analysis: &analysis::functions::Info) -> String {
 
     for par in &analysis.parameters.rust_parameters {
         if !param_str.is_empty() {
-            param_str.push_str(", ")
+            param_str.push_str(", ");
         }
         let c_par = &analysis.parameters.c_parameters[par.ind_c];
         let s = c_par.to_parameter(env, &analysis.bounds, false);
@@ -255,7 +255,7 @@ pub fn declaration_futures(env: &Env, analysis: &analysis::functions::Info) -> S
         }
 
         if pos - skipped > 0 {
-            param_str.push_str(", ")
+            param_str.push_str(", ");
         }
 
         let s = c_par.to_parameter(env, &analysis.bounds, true);

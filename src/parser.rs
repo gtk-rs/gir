@@ -1015,7 +1015,7 @@ impl Library {
         fns: &mut Vec<Function>,
     ) -> Result<(), String> {
         if let Some(f) = self.read_function_if_not_moved(parser, ns_id, elem.name(), elem)? {
-            fns.push(f)
+            fns.push(f);
         }
         Ok(())
     }

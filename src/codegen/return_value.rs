@@ -247,7 +247,7 @@ pub fn out_parameters_as_return(env: &Env, analysis: &analysis::functions::Info)
         }
 
         if pos > skip {
-            return_str.push_str(", ")
+            return_str.push_str(", ");
         }
         let s = out_parameter_as_return(out, env);
         return_str.push_str(&s);

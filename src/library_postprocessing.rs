@@ -121,7 +121,7 @@ impl Library {
             match self.type_mut(tid) {
                 Type::Class(klass) => update_empty_signals_c_types(&mut klass.signals, &c_types),
                 Type::Interface(iface) => {
-                    update_empty_signals_c_types(&mut iface.signals, &c_types)
+                    update_empty_signals_c_types(&mut iface.signals, &c_types);
                 }
                 _ => (),
             }
@@ -392,7 +392,7 @@ impl Library {
                 };
                 match type_ {
                     Type::Union(Union { fields, .. }) if fields.as_slice().is_incomplete(self) => {
-                        unrepresentable.push(tid)
+                        unrepresentable.push(tid);
                     }
                     _ => {}
                 }
