@@ -221,7 +221,7 @@ impl Builder {
             // Key: user data index
             // Value: the current pos in the tuple for the given argument.
             let mut poses = HashMap::with_capacity(group_by_user_data.len());
-            for trampoline in self.callbacks.iter() {
+            for trampoline in &self.callbacks {
                 *poses
                     .entry(&trampoline.user_data_index)
                     .or_insert_with(|| 0) += 1;
@@ -231,7 +231,7 @@ impl Builder {
                 .filter(|(_, x)| *x > 1)
                 .map(|(x, _)| (x, 0))
                 .collect::<HashMap<_, _>>();
-            for trampoline in self.callbacks.iter() {
+            for trampoline in &self.callbacks {
                 let user_data_index = trampoline.user_data_index;
                 let pos = poses.entry(&trampoline.user_data_index);
                 self.add_trampoline(
@@ -251,7 +251,7 @@ impl Builder {
                     *x += 1;
                 });
             }
-            for destroy in self.destroys.iter() {
+            for destroy in &self.destroys {
                 self.add_trampoline(
                     env,
                     &mut chunks,
@@ -414,7 +414,7 @@ impl Builder {
         let mut body = Vec::new();
         let mut arguments = Vec::new();
 
-        for par in trampoline.parameters.transformations.iter() {
+        for par in &trampoline.parameters.transformations {
             if par.name == "this"
                 || trampoline.parameters.c_parameters[par.ind_c].is_real_gpointer(env)
             {
@@ -1048,7 +1048,7 @@ impl Builder {
                 },
             ));
         }
-        for destroy in self.destroys.iter() {
+        for destroy in &self.destroys {
             to_insert.push((
                 destroy.destroy_index,
                 Chunk::FfiCallParameter {

@@ -175,7 +175,7 @@ pub fn analyze<F: Borrow<library::Function>>(
         let func = func.borrow();
         let configured_functions = obj.functions.matched(&func.name);
         let mut status = obj.status;
-        for f in configured_functions.iter() {
+        for f in &configured_functions {
             match f.status {
                 GStatus::Ignore => continue 'func,
                 GStatus::Manual => {
@@ -1157,7 +1157,7 @@ fn analyze_callback(
                 }
             });
         }
-        for p in parameters.rust_parameters.iter() {
+        for p in &parameters.rust_parameters {
             if let Ok(rust_type) = RustType::builder(env, p.typ)
                 .direction(p.direction)
                 .nullable(p.nullable)

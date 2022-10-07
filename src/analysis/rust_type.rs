@@ -438,7 +438,7 @@ impl<'env> RustTypeBuilder<'env> {
                 }
                 let mut params = Vec::with_capacity(f.parameters.len());
                 let mut err = false;
-                for p in f.parameters.iter() {
+                for p in &f.parameters {
                     if p.closure.is_some() {
                         continue;
                     }

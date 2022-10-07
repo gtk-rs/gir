@@ -209,7 +209,7 @@ pub fn declaration(env: &Env, analysis: &analysis::functions::Info) -> String {
 
     let (bounds, _) = bounds(&analysis.bounds, &[], false, false);
 
-    for par in analysis.parameters.rust_parameters.iter() {
+    for par in &analysis.parameters.rust_parameters {
         if !param_str.is_empty() {
             param_str.push_str(", ")
         }
@@ -359,10 +359,10 @@ pub fn body_chunk(env: &Env, analysis: &analysis::functions::Info) -> Chunk {
             );
         }
     } else {
-        for trampoline in analysis.callbacks.iter() {
+        for trampoline in &analysis.callbacks {
             builder.callback(trampoline);
         }
-        for trampoline in analysis.destroys.iter() {
+        for trampoline in &analysis.destroys {
             builder.destroy(trampoline);
         }
     }

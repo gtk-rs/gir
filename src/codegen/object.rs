@@ -106,7 +106,7 @@ pub fn generate(
 
         let mut previous_version = None;
         let mut previous_ns_id = None;
-        for (ns_id, versions) in namespaces.iter() {
+        for (ns_id, versions) in &namespaces {
             for (&version, stypes) in versions.iter().rev() {
                 let supertypes = analysis
                     .supertypes

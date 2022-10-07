@@ -356,7 +356,7 @@ fn create_object_doc(w: &mut dyn Write, env: &Env, info: &analysis::object::Info
                 _ => (),
             }
         }
-        for property in builder_properties.iter() {
+        for property in &builder_properties {
             let ty = TypeStruct {
                 ty: SType::Fn,
                 name: nameutil::signal_to_snake(&property.name),
