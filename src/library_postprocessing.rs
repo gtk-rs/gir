@@ -64,9 +64,11 @@ impl Library {
             })
             .collect();
 
-        if !list.is_empty() {
-            panic!("Incomplete library, unresolved: {:?}", list);
-        }
+        assert!(
+            list.is_empty(),
+            "Incomplete library, unresolved: {:?}",
+            list
+        );
     }
 
     fn fill_empty_signals_c_types(&mut self) {
@@ -251,12 +253,12 @@ impl Library {
 
                 if let Some(type_struct) = type_struct {
                     let type_struct_tid = self.find_type(ns_id as u16, type_struct);
-                    if type_struct_tid.is_none() {
-                        panic!(
-                            "\"{}\" has glib:type-struct=\"{}\" but there is no such record",
-                            name, type_struct
-                        );
-                    }
+                    assert!(
+                        type_struct_tid.is_some(),
+                        "\"{}\" has glib:type-struct=\"{}\" but there is no such record",
+                        name,
+                        type_struct
+                    );
 
                     let type_struct_type = self.type_(type_struct_tid.unwrap());
 

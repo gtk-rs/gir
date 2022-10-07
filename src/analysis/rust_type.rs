@@ -613,9 +613,11 @@ impl<'env> RustTypeBuilder<'env> {
         use crate::library::Type::*;
         let type_ = self.env.library.type_(self.type_id);
 
-        if self.direction == ParameterDirection::None {
-            panic!("undefined direction for parameter with type {:?}", type_);
-        }
+        assert!(
+            !(self.direction == ParameterDirection::None),
+            "undefined direction for parameter with type {:?}",
+            type_
+        );
 
         let rust_type = RustType::builder(self.env, self.type_id)
             .direction(self.direction)

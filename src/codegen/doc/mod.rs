@@ -177,11 +177,10 @@ fn generate_doc(w: &mut dyn Write, env: &Env) -> Result<()> {
                 let fn_new_name = f_info.and_then(|analysed_f| analysed_f.new_name.clone());
                 let doc_trait_name = f_info.and_then(|f| f.doc_trait_name.as_ref());
                 let doc_struct_name = f_info.and_then(|f| f.doc_struct_name.as_ref());
-                if doc_trait_name.is_some() && doc_struct_name.is_some() {
-                    panic!(
-                        "Can't use both doc_trait_name and doc_struct_name on the same function"
-                    );
-                }
+                assert!(
+                    !(doc_trait_name.is_some() && doc_struct_name.is_some()),
+                    "Can't use both doc_trait_name and doc_struct_name on the same function"
+                );
 
                 let parent = if doc_trait_name.is_some() {
                     doc_trait_name.map(|p| Box::new(TypeStruct::new(SType::Trait, p)))

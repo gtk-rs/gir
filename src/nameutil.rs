@@ -6,9 +6,10 @@ static mut CRATE_NAME_OVERRIDES: Option<HashMap<String, String>> = None;
 
 pub(crate) fn set_crate_name_overrides(overrides: HashMap<String, String>) {
     unsafe {
-        if CRATE_NAME_OVERRIDES.is_some() {
-            panic!("Crate name overrides already set;");
-        }
+        assert!(
+            CRATE_NAME_OVERRIDES.is_none(),
+            "Crate name overrides already set;"
+        );
         CRATE_NAME_OVERRIDES = Some(overrides);
     }
 }
