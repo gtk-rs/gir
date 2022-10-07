@@ -965,7 +965,6 @@ pub fn declare_default_from_new(
                 "impl Default for {0} {{
                      fn default() -> Self {{
                          glib::object::Object::new::<Self>(&[])
-                            .expect(\"Can't construct {0} object with default parameters\")
                      }}
                  }}",
                 name
