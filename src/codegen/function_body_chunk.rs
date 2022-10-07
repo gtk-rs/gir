@@ -135,7 +135,7 @@ impl Builder {
         self.in_unsafe = in_unsafe;
         self
     }
-    pub fn generate(&self, env: &Env, bounds: String, bounds_names: String) -> Chunk {
+    pub fn generate(&self, env: &Env, bounds: &str, bounds_names: &str) -> Chunk {
         let mut body = Vec::new();
 
         let mut uninitialized_vars = if self.outs_as_return {
@@ -243,8 +243,8 @@ impl Builder {
                         Entry::Occupied(ref x) => Some(*x.get()),
                         _ => None,
                     },
-                    &bounds,
-                    &bounds_names,
+                    bounds,
+                    bounds_names,
                     false,
                 );
                 pos.and_modify(|x| {
@@ -258,8 +258,8 @@ impl Builder {
                     destroy,
                     &group_by_user_data[&destroy.user_data_index].full_type,
                     None, // doesn't matter for destroy
-                    &bounds,
-                    &bounds_names,
+                    bounds,
+                    bounds_names,
                     true,
                 );
             }

@@ -377,7 +377,7 @@ pub fn body_chunk(env: &Env, analysis: &analysis::functions::Info) -> Chunk {
 
     let (bounds, bounds_names) = bounds(&analysis.bounds, &[], false, true);
 
-    builder.generate(env, bounds, bounds_names.join(", "))
+    builder.generate(env, &bounds, &bounds_names.join(", "))
 }
 
 pub fn body_chunk_futures(

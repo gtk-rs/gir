@@ -36,7 +36,7 @@ pub fn generate(
 
     let prepend = tabs(indent);
     let params_str = trampoline_parameters(env, analysis);
-    let func_str = func_string(env, analysis, fn_self_bound, true);
+    let func_str = func_string(env, analysis, &fn_self_bound, true);
     let ret_str = trampoline_returns(env, analysis);
 
     writeln!(
@@ -62,7 +62,7 @@ pub fn generate(
 pub fn func_string(
     env: &Env,
     analysis: &Trampoline,
-    replace_self_bound: Option<impl AsRef<str>>,
+    replace_self_bound: &Option<impl AsRef<str>>,
     closure: bool,
 ) -> String {
     let param_str = func_parameters(env, analysis, replace_self_bound, closure);
@@ -95,7 +95,7 @@ pub fn func_string(
 fn func_parameters(
     env: &Env,
     analysis: &Trampoline,
-    replace_self_bound: Option<impl AsRef<str>>,
+    replace_self_bound: &Option<impl AsRef<str>>,
     closure: bool,
 ) -> String {
     let mut param_str = String::with_capacity(100);

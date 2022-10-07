@@ -207,7 +207,7 @@ fn generate_doc(w: &mut dyn Write, env: &Env) -> Result<()> {
                     function,
                     parent,
                     fn_new_name,
-                    doc_ignored_parameters,
+                    &doc_ignored_parameters,
                     None,
                     f_info.map_or(true, |f| f.generate_doc),
                 )?;
@@ -477,7 +477,7 @@ fn create_object_doc(w: &mut dyn Write, env: &Env, info: &analysis::object::Info
                 function,
                 Some(Box::new(ty)),
                 fn_new_name,
-                doc_ignored_parameters,
+                &doc_ignored_parameters,
                 Some((&info.type_id, object_location)),
                 f_info.map_or(true, |f| f.generate_doc),
             )?;
@@ -503,7 +503,7 @@ fn create_object_doc(w: &mut dyn Write, env: &Env, info: &analysis::object::Info
             signal,
             Some(Box::new(ty)),
             None,
-            HashSet::new(),
+            &HashSet::new(),
             Some((&info.type_id, object_location)),
             configured_signals.iter().all(|s| s.generate_doc),
         )?;
@@ -594,7 +594,7 @@ fn create_record_doc(w: &mut dyn Write, env: &Env, info: &analysis::record::Info
                 function,
                 Some(Box::new(ty.clone())),
                 fn_new_name,
-                HashSet::new(),
+                &HashSet::new(),
                 Some((&info.type_id, None)),
                 f_info.map_or(true, |f| f.generate_doc),
             )?;
@@ -733,7 +733,7 @@ fn create_fn_doc<T>(
     fn_: &T,
     parent: Option<Box<TypeStruct>>,
     name_override: Option<String>,
-    doc_ignored_parameters: HashSet<String>,
+    doc_ignored_parameters: &HashSet<String>,
     in_type: Option<(&TypeId, Option<LocationInObject>)>,
     generate_doc: bool,
 ) -> Result<()>
