@@ -80,7 +80,7 @@ impl Env {
         if crate_name == "gobject_ffi" {
             use_glib_type(self, crate_name)
         } else {
-            crate_name.to_owned()
+            crate_name.clone()
         }
     }
 }

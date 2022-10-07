@@ -154,7 +154,7 @@ fn fill_in(root: &mut Table, env: &Env) {
         let meta = upsert_table(meta, nameutil::lib_name_to_toml(lib_name));
         // Allow both the name and version of a system dep to be overridden by hand
         meta.entry("name")
-            .or_insert_with(|| Value::String(lib_name.to_owned()));
+            .or_insert_with(|| Value::String(lib_name.clone()));
         meta.entry("version")
             .or_insert_with(|| Value::String(env.config.min_cfg_version.to_string()));
 
@@ -213,7 +213,7 @@ fn get_crate_name(config: &Config, root: &Table) -> String {
     if let Some(Value::Table(lib)) = root.get("lib") {
         if let Some(Value::String(lib_name)) = lib.get("name") {
             //Converting don't needed as library target names cannot contain hyphens
-            return lib_name.to_owned();
+            return lib_name.clone();
         }
     }
     if let Some(Value::Table(package)) = root.get("package") {
