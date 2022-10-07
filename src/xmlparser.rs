@@ -156,13 +156,13 @@ impl<'a> XmlParser<'a> {
     }
 
     #[cfg(test)]
-    pub fn new<'r, R: 'r + Read>(read: R) -> Result<XmlParser<'r>, String> {
-        Ok(XmlParser {
+    pub fn new<'r, R: 'r + Read>(read: R) -> XmlParser<'r> {
+        XmlParser {
             parser: EventReader::new(Box::new(read)),
             peek_event: None,
             peek_position: TextPosition::new(),
             error_emitter: Rc::new(ErrorEmitter { path: None }),
-        })
+        }
     }
 
     /// Returns an error that combines current position and given error message.
@@ -354,7 +354,7 @@ mod tests {
     where
         F: FnOnce(XmlParser<'_>) -> Result<R, String>,
     {
-        f(XmlParser::new(xml)?)
+        f(XmlParser::new(xml))
     }
 
     #[test]
