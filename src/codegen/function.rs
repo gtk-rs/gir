@@ -405,7 +405,7 @@ pub fn body_chunk_futures(
             safety_assertion_mode_to_str(async_future.assertion)
         )?;
     }
-    let skip = if async_future.is_method { 1 } else { 0 };
+    let skip = usize::from(async_future.is_method);
 
     // Skip the instance parameter
     for par in analysis.parameters.rust_parameters.iter().skip(skip) {
