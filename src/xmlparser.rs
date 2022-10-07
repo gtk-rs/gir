@@ -142,7 +142,7 @@ impl Element {
 
 impl<'a> XmlParser<'a> {
     pub fn from_path(path: &Path) -> Result<XmlParser<'_>, String> {
-        match File::open(&path) {
+        match File::open(path) {
             Err(e) => Err(format!("Can't open file \"{}\": {}", path.display(), e)),
             Ok(file) => Ok(XmlParser {
                 parser: EventReader::new(Box::new(BufReader::new(file))),

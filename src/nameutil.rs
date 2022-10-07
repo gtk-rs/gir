@@ -124,7 +124,7 @@ pub fn signal_to_snake(signal: &str) -> String {
 }
 
 pub fn lib_name_to_toml(name: &str) -> String {
-    name.to_string().replace(&['-', '.'], "_")
+    name.to_string().replace(['-', '.'], "_")
 }
 
 pub fn shared_lib_name_to_link_name(name: &str) -> &str {
