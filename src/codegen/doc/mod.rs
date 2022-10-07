@@ -801,7 +801,7 @@ where
             .iter()
             .enumerate()
             .filter_map(|(indice, param)| {
-                (!indices_to_ignore.contains(&(indice as u32))).then(|| param)
+                (!indices_to_ignore.contains(&(indice as u32))).then_some(param)
             })
             .filter(|param| !param.instance_parameter)
             .collect();
