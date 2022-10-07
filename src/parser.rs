@@ -1191,9 +1191,9 @@ impl Library {
             })
         } else if varargs {
             Ok(Parameter {
-                name: "".into(),
+                name: String::new(),
                 typ: self.find_type(INTERNAL_NAMESPACE, "varargs").unwrap(),
-                c_type: "".into(),
+                c_type: String::new(),
                 instance_parameter,
                 direction: Default::default(),
                 transfer: Transfer::None,

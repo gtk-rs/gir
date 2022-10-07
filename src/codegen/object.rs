@@ -604,7 +604,7 @@ pub fn generate_reexports(
         cfgs.push(cfg);
     }
 
-    contents.push("".to_owned());
+    contents.push(String::new());
     contents.extend_from_slice(&cfgs);
     contents.push(format!("mod {};", module_name));
     contents.extend_from_slice(&cfgs);

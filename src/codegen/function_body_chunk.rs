@@ -1409,7 +1409,7 @@ fn add_chunk_for_type(
                     type_name = format!(": Option<{}>", ty_name);
                 }
             } else {
-                type_name = String::from("");
+                type_name = String::new();
             }
 
             body.push(Chunk::Custom(format!(

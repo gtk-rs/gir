@@ -302,7 +302,7 @@ fn analyze_property(
                 name: format!("notify::{}", name),
                 parameters: Vec::new(),
                 ret: library::Parameter {
-                    name: "".into(),
+                    name: String::new(),
                     typ: env
                         .library
                         .find_type(library::INTERNAL_NAMESPACE, "none")

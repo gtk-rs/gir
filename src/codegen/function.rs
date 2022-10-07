@@ -80,7 +80,7 @@ pub fn generate(
     let mut commented = false;
     let mut comment_prefix = "";
     let pub_prefix = if in_trait {
-        "".to_owned()
+        String::new()
     } else {
         format!("{} ", analysis.visibility)
     };

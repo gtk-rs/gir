@@ -222,7 +222,7 @@ pub fn define_object_type(
         if let Some(s) = glib_class_name {
             format!(", {}::{}", sys_crate_name, s)
         } else {
-            "".to_string()
+            String::new()
         }
     };
 
