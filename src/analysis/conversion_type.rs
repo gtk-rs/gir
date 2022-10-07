@@ -32,6 +32,8 @@ impl Default for ConversionType {
 
 impl ConversionType {
     pub fn of(env: &env::Env, type_id: TypeId) -> ConversionType {
+        use crate::library::{Basic::*, Type::*};
+
         let library = &env.library;
 
         if let Some(conversion_type) = env
@@ -43,7 +45,6 @@ impl ConversionType {
             return conversion_type;
         }
 
-        use crate::library::{Basic::*, Type::*};
         match library.type_(type_id) {
             Basic(fund) => match fund {
                 Boolean => ConversionType::Scalar,

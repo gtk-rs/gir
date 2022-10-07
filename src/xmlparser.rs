@@ -359,16 +359,16 @@ mod tests {
 
     #[test]
     fn test_element_with_name() {
-        let xml = br#"<?xml version="1.0"?>
-            <!-- a comment -->
-            <a>
-            </a>"#;
-
         fn parse_with_root_name(xml: &[u8], root: &str) -> Result<(), String> {
             with_parser(xml, |mut p| {
                 p.document(|p, _| p.element_with_name(root, |_, _elem| Ok(())))
             })
         }
+
+        let xml = br#"<?xml version="1.0"?>
+            <!-- a comment -->
+            <a>
+            </a>"#;
 
         assert!(parse_with_root_name(xml, "a").is_ok());
         assert!(parse_with_root_name(xml, "b").is_err());

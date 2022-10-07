@@ -70,6 +70,28 @@ impl Library {
     }
 
     fn fill_empty_signals_c_types(&mut self) {
+        fn update_empty_signals_c_types(signals: &mut [Signal], c_types: &DetectedCTypes) {
+            for signal in signals {
+                update_empty_signal_c_types(signal, c_types);
+            }
+        }
+
+        fn update_empty_signal_c_types(signal: &mut Signal, c_types: &DetectedCTypes) {
+            for par in &mut signal.parameters {
+                update_empty_c_type(&mut par.c_type, par.typ, c_types);
+            }
+            update_empty_c_type(&mut signal.ret.c_type, signal.ret.typ, c_types);
+        }
+
+        fn update_empty_c_type(c_type: &mut String, tid: TypeId, c_types: &DetectedCTypes) {
+            if !is_empty_c_type(c_type) {
+                return;
+            }
+            if let Some(s) = c_types.get(&tid) {
+                *c_type = s.clone();
+            }
+        }
+
         let mut tids = Vec::new();
         let mut c_types = DetectedCTypes::new();
         for (ns_id, ns) in self.namespaces.iter().enumerate() {
@@ -92,28 +114,6 @@ impl Library {
                     }
                     _ => (),
                 }
-            }
-        }
-
-        fn update_empty_signals_c_types(signals: &mut [Signal], c_types: &DetectedCTypes) {
-            for signal in signals {
-                update_empty_signal_c_types(signal, c_types);
-            }
-        }
-
-        fn update_empty_signal_c_types(signal: &mut Signal, c_types: &DetectedCTypes) {
-            for par in &mut signal.parameters {
-                update_empty_c_type(&mut par.c_type, par.typ, c_types);
-            }
-            update_empty_c_type(&mut signal.ret.c_type, signal.ret.typ, c_types);
-        }
-
-        fn update_empty_c_type(c_type: &mut String, tid: TypeId, c_types: &DetectedCTypes) {
-            if !is_empty_c_type(c_type) {
-                return;
-            }
-            if let Some(s) = c_types.get(&tid) {
-                *c_type = s.clone();
             }
         }
 
