@@ -148,7 +148,7 @@ pub fn define_fundamental_type(
     } else {
         let (ref_fn, unref_fn, ptr, ffi_crate_name) = parents
             .iter()
-            .filter_map(|p| {
+            .find_map(|p| {
                 use crate::library::*;
                 let type_ = env.library.type_(p.type_id);
                 let parent_sys_crate_name = env.sys_crate_import(p.type_id);
@@ -166,7 +166,6 @@ pub fn define_fundamental_type(
                     _ => None,
                 }
             })
-            .next()
             .unwrap();
         // otherwise get that information from the parent
         (ref_fn, unref_fn, ptr, ffi_crate_name)
