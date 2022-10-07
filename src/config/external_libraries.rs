@@ -31,10 +31,10 @@ pub fn read_external_libraries(toml: &toml::Value) -> Result<Vec<ExternalLibrary
         for custom_lib in custom_libs {
             if let Some(info) = custom_lib.1.as_table() {
                 let namespace = custom_lib.0.as_str();
-                let crate_name_ = info
-                    .get("crate")
-                    .map(|c| c.as_str().expect("crate name must be a string").to_string())
-                    .unwrap_or_else(|| crate_name(namespace));
+                let crate_name_ = info.get("crate").map_or_else(
+                    || crate_name(namespace),
+                    |c| c.as_str().expect("crate name must be a string").to_string(),
+                );
                 let min_version = info
                     .get("min_version")
                     .map(|v| v.as_str().expect("min required version must be a string"))

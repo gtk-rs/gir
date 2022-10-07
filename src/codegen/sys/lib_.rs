@@ -178,8 +178,7 @@ fn generate_bitfields(w: &mut dyn Write, env: &Env, items: &[&Bitfield]) -> Resu
         for member in &item.members {
             let member_config = config
                 .as_ref()
-                .map(|c| c.members.matched(&member.name))
-                .unwrap_or_else(Vec::new);
+                .map_or_else(Vec::new, |c| c.members.matched(&member.name));
             let version = member_config
                 .iter()
                 .find_map(|m| m.version)
@@ -281,8 +280,7 @@ fn generate_enums(w: &mut dyn Write, env: &Env, items: &[&Enumeration]) -> Resul
         for member in &item.members {
             let member_config = config
                 .as_ref()
-                .map(|c| c.members.matched(&member.name))
-                .unwrap_or_else(Vec::new);
+                .map_or_else(Vec::new, |c| c.members.matched(&member.name));
             let is_alias = member_config.iter().any(|m| m.alias);
             let version = member_config
                 .iter()

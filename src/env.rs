@@ -33,8 +33,7 @@ impl Env {
         self.config
             .objects
             .get(name)
-            .map(|o| o.status)
-            .unwrap_or(GStatus::Generate)
+            .map_or(GStatus::Generate, |o| o.status)
     }
 
     pub fn is_totally_deprecated(

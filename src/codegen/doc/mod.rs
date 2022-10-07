@@ -195,9 +195,8 @@ fn generate_doc(w: &mut dyn Write, env: &Env) -> Result<()> {
                     .map(|analyzed_f| analyzed_f.doc_ignore_parameters.clone())
                     .unwrap_or_default();
 
-                let should_be_documented = f_info
-                    .map(|f| f.should_docs_be_generated(env))
-                    .unwrap_or(false);
+                let should_be_documented =
+                    f_info.map_or(false, |f| f.should_docs_be_generated(env));
                 if !should_be_documented {
                     continue;
                 }
@@ -210,7 +209,7 @@ fn generate_doc(w: &mut dyn Write, env: &Env) -> Result<()> {
                     fn_new_name,
                     doc_ignored_parameters,
                     None,
-                    f_info.map(|f| f.generate_doc).unwrap_or(true),
+                    f_info.map_or(true, |f| f.generate_doc),
                 )?;
             }
         }
@@ -461,9 +460,7 @@ fn create_object_doc(w: &mut dyn Write, env: &Env, info: &analysis::object::Info
         };
         if let Some(c_identifier) = &function.c_identifier {
             let f_info = info.functions.iter().find(|f| &f.glib_name == c_identifier);
-            let should_be_documented = f_info
-                .map(|f| f.should_docs_be_generated(env))
-                .unwrap_or(false);
+            let should_be_documented = f_info.map_or(false, |f| f.should_docs_be_generated(env));
 
             if !should_be_documented {
                 continue;
@@ -482,7 +479,7 @@ fn create_object_doc(w: &mut dyn Write, env: &Env, info: &analysis::object::Info
                 fn_new_name,
                 doc_ignored_parameters,
                 Some((&info.type_id, object_location)),
-                f_info.map(|f| f.generate_doc).unwrap_or(true),
+                f_info.map_or(true, |f| f.generate_doc),
             )?;
         }
     }
@@ -585,9 +582,7 @@ fn create_record_doc(w: &mut dyn Write, env: &Env, info: &analysis::record::Info
     for function in &record.functions {
         if let Some(c_identifier) = &function.c_identifier {
             let f_info = info.functions.iter().find(|f| &f.glib_name == c_identifier);
-            let should_be_documented = f_info
-                .map(|f| f.should_docs_be_generated(env))
-                .unwrap_or(false);
+            let should_be_documented = f_info.map_or(false, |f| f.should_docs_be_generated(env));
             if !should_be_documented {
                 continue;
             }
@@ -601,7 +596,7 @@ fn create_record_doc(w: &mut dyn Write, env: &Env, info: &analysis::record::Info
                 fn_new_name,
                 HashSet::new(),
                 Some((&info.type_id, None)),
-                f_info.map(|f| f.generate_doc).unwrap_or(true),
+                f_info.map_or(true, |f| f.generate_doc),
             )?;
         }
     }

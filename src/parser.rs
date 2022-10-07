@@ -152,7 +152,7 @@ impl Library {
         let get_type = elem.attr_required("get-type")?;
         let version = self.read_version(parser, ns_id, elem)?;
         let deprecated_version = self.read_deprecated_version(parser, ns_id, elem)?;
-        let is_fundamental = elem.attr("fundamental").map(|x| x == "1").unwrap_or(false);
+        let is_fundamental = elem.attr("fundamental").map_or(false, |x| x == "1");
         let (ref_fn, unref_fn) = if is_fundamental {
             (
                 elem.attr("ref-func").map(ToOwned::to_owned),
@@ -162,7 +162,7 @@ impl Library {
             (None, None)
         };
 
-        let is_abstract = elem.attr("abstract").map(|x| x == "1").unwrap_or(false);
+        let is_abstract = elem.attr("abstract").map_or(false, |x| x == "1");
 
         let mut fns = Vec::new();
         let mut signals = Vec::new();
@@ -313,25 +313,21 @@ impl Library {
                     u = Union {
                         name: format!(
                             "{}{}_{}",
-                            parent_name_prefix
-                                .map(|s| {
-                                    let mut s = String::from(s);
-                                    s.push('_');
-                                    s
-                                })
-                                .unwrap_or_else(String::new),
+                            parent_name_prefix.map_or_else(String::new, |s| {
+                                let mut s = String::from(s);
+                                s.push('_');
+                                s
+                            }),
                             record_name,
                             field_name
                         ),
                         c_type: Some(format!(
                             "{}{}_{}",
-                            parent_ctype_prefix
-                                .map(|s| {
-                                    let mut s = String::from(s);
-                                    s.push('_');
-                                    s
-                                })
-                                .unwrap_or_else(String::new),
+                            parent_ctype_prefix.map_or_else(String::new, |s| {
+                                let mut s = String::from(s);
+                                s.push('_');
+                                s
+                            }),
                             c_type,
                             field_name
                         )),
@@ -470,25 +466,21 @@ impl Library {
                 r = Record {
                     name: format!(
                         "{}{}_{}",
-                        parent_name_prefix
-                            .map(|s| {
-                                let mut s = String::from(s);
-                                s.push('_');
-                                s
-                            })
-                            .unwrap_or_else(String::new),
+                        parent_name_prefix.map_or_else(String::new, |s| {
+                            let mut s = String::from(s);
+                            s.push('_');
+                            s
+                        }),
                         union_name,
                         field_name
                     ),
                     c_type: format!(
                         "{}{}_{}",
-                        parent_ctype_prefix
-                            .map(|s| {
-                                let mut s = String::from(s);
-                                s.push('_');
-                                s
-                            })
-                            .unwrap_or_else(String::new),
+                        parent_ctype_prefix.map_or_else(String::new, |s| {
+                            let mut s = String::from(s);
+                            s.push('_');
+                            s
+                        }),
                         c_type,
                         field_name
                     ),

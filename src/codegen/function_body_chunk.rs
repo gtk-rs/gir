@@ -452,8 +452,7 @@ impl Builder {
             .parameters
             .c_parameters
             .last()
-            .map(|p| p.name.clone())
-            .unwrap_or_else(|| "Unknown".to_owned());
+            .map_or_else(|| "Unknown".to_owned(), |p| p.name.clone());
 
         let mut extra_before_call = "";
         if let Some(full_type) = full_type {

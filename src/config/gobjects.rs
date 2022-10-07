@@ -377,12 +377,11 @@ fn parse_object(
         .unwrap_or(trust_return_value_nullability);
     let manual_traits = toml_object
         .lookup_vec("manual_traits", "IGNORED ERROR")
-        .map(|v| {
+        .map_or(Vec::new(), |v| {
             v.iter()
                 .filter_map(|v| v.as_str().map(String::from))
                 .collect()
-        })
-        .unwrap_or_else(|_| Vec::new());
+        });
     let align = toml_object
         .lookup("align")
         .and_then(Value::as_integer)

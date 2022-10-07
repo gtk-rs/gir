@@ -1108,8 +1108,7 @@ impl Library {
                         .config
                         .objects
                         .get(&full_name)
-                        .map(|obj| obj.generate_builder)
-                        .unwrap_or_else(|| false)
+                        .map_or_else(|| false, |obj| obj.generate_builder)
                         && properties
                             .iter()
                             .any(|prop| prop.construct_only || prop.construct || prop.writable)
