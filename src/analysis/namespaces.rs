@@ -58,7 +58,7 @@ pub fn run(gir: &library::Library) -> Info {
             package_name: ns.package_name.clone(),
             symbol_prefixes: ns.symbol_prefixes.clone(),
             shared_libs: ns.shared_library.clone(),
-            versions: ns.versions.iter().cloned().collect(),
+            versions: ns.versions.iter().copied().collect(),
         });
         if ns.name == "GLib" {
             glib_ns_id = Some(ns_id);

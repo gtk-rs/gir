@@ -923,7 +923,7 @@ fn analyze_function(
         async_future,
         callbacks,
         destroys,
-        remove_params: cross_user_data_check.values().cloned().collect::<Vec<_>>(),
+        remove_params: cross_user_data_check.values().copied().collect::<Vec<_>>(),
         commented,
         hidden: false,
         ns_id,

@@ -1030,7 +1030,7 @@ impl Namespace {
     }
 
     fn find_type(&self, name: &str) -> Option<u32> {
-        self.index.get(name).cloned()
+        self.index.get(name).copied()
     }
 }
 
@@ -1247,7 +1247,7 @@ impl Library {
     }
 
     pub fn find_namespace(&self, name: &str) -> Option<u16> {
-        self.index.get(name).cloned()
+        self.index.get(name).copied()
     }
 
     pub fn add_namespace(&mut self, name: &str) -> u16 {

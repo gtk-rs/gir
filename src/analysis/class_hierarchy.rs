@@ -35,7 +35,7 @@ fn get_node<'a>(
     let direct_supers: Vec<TypeId> = match library.type_(tid) {
         Type::Class(Class {
             parent, implements, ..
-        }) => parent.iter().chain(implements.iter()).cloned().collect(),
+        }) => parent.iter().chain(implements.iter()).copied().collect(),
         Type::Interface(Interface { prerequisites, .. }) => prerequisites.clone(),
         _ => return None,
     };
@@ -64,7 +64,7 @@ fn get_node<'a>(
 impl Info {
     pub fn subtypes<'a>(&'a self, tid: TypeId) -> Box<dyn Iterator<Item = TypeId> + 'a> {
         match self.hier.get(&tid) {
-            Some(node) => Box::new(node.subs.iter().cloned()),
+            Some(node) => Box::new(node.subs.iter().copied()),
             None => Box::new(iter::empty()),
         }
     }
