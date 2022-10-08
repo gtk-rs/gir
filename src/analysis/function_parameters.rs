@@ -7,7 +7,7 @@ use crate::{
     analysis::{self, bounds::Bounds},
     config::{self, parameter_matchable::ParameterMatchable},
     env::Env,
-    library::{self, Nullable, ParameterScope, TypeId},
+    library::{self, Nullable, ParameterScope, Transfer, TypeId},
     nameutil,
     traits::IntoString,
 };
@@ -225,7 +225,23 @@ pub fn analyze(
         if async_func && async_param_to_remove(&par.name) {
             add_rust_parameter = false;
         }
-        let move_ = configured_parameters.iter().any(|p| p.move_);
+        let mut transfer = par.transfer;
+
+        let mut caller_allocates = par.caller_allocates;
+        let conversion = ConversionType::of(env, typ);
+        if let ConversionType::Direct
+        | ConversionType::Scalar
+        | ConversionType::Option
+        | ConversionType::Result { .. } = conversion
+        {
+            //For simple types no reason to have these flags
+            caller_allocates = false;
+            transfer = library::Transfer::None;
+        }
+        let move_ = configured_parameters
+            .iter()
+            .find_map(|p| p.move_)
+            .unwrap_or(transfer == Transfer::Full && par.direction.is_in());
         let mut array_par = configured_parameters.iter().find_map(|cp| {
             cp.length_of
                 .as_ref()
@@ -258,19 +274,6 @@ pub fn analyze(
                 transformation_type: get_length_type(env, &array_name, &par.name, typ),
             };
             parameters.transformations.push(transformation);
-        }
-
-        let mut caller_allocates = par.caller_allocates;
-        let mut transfer = par.transfer;
-        let conversion = ConversionType::of(env, typ);
-        if let ConversionType::Direct
-        | ConversionType::Scalar
-        | ConversionType::Option
-        | ConversionType::Result { .. } = conversion
-        {
-            //For simple types no reason to have these flags
-            caller_allocates = false;
-            transfer = library::Transfer::None;
         }
 
         let immutable = configured_parameters.iter().any(|p| p.constant);
@@ -372,7 +375,7 @@ pub fn analyze(
                 },
                 in_trait,
                 nullable: *nullable,
-                move_: configured_parameters.iter().any(|p| p.move_),
+                move_,
             },
             ConversionType::Borrow => TransformationType::ToGlibBorrow,
             ConversionType::Unknown => TransformationType::ToGlibUnknown { name },
