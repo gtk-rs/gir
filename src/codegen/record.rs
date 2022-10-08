@@ -70,7 +70,7 @@ pub fn generate(w: &mut dyn Write, env: &Env, analysis: &analysis::record::Info)
             &analysis.init_function_expression,
             &analysis.copy_into_function_expression,
             &analysis.clear_function_expression,
-            &analysis.glib_get_type.as_ref().map(|(f, v)| {
+            analysis.glib_get_type.as_ref().map(|(f, v)| {
                 if v > &analysis.version {
                     (f.clone(), *v)
                 } else {
