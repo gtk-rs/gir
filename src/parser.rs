@@ -313,11 +313,7 @@ impl Library {
                     u = Union {
                         name: format!(
                             "{}{}_{}",
-                            parent_name_prefix.map_or_else(String::new, |s| {
-                                let mut s = String::from(s);
-                                s.push('_');
-                                s
-                            }),
+                            parent_name_prefix.map_or_else(String::new, |s| { format!("{}_", s) }),
                             record_name,
                             field_name
                         ),
@@ -462,21 +458,13 @@ impl Library {
                 r = Record {
                     name: format!(
                         "{}{}_{}",
-                        parent_name_prefix.map_or_else(String::new, |s| {
-                            let mut s = String::from(s);
-                            s.push('_');
-                            s
-                        }),
+                        parent_name_prefix.map_or_else(String::new, |s| { format!("{}_", s) }),
                         union_name,
                         field_name
                     ),
                     c_type: format!(
                         "{}{}_{}",
-                        parent_ctype_prefix.map_or_else(String::new, |s| {
-                            let mut s = String::from(s);
-                            s.push('_');
-                            s
-                        }),
+                        parent_ctype_prefix.map_or_else(String::new, |s| { format!("{}_", s) }),
                         c_type,
                         field_name
                     ),
