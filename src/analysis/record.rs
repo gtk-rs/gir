@@ -184,8 +184,11 @@ pub fn new(env: &Env, obj: &GObject) -> Option<Info> {
             // As the get_type function only has a version if explicitly configured let's just
             // panic here. It's easy enough for the user to move the version configuration from
             // the function to the type.
-            assert!(get_type_version <= version, "Have to use get_type function for {} but version is higher than for the type ({:?} > {:?})",
-                    full_name, get_type_version, version);
+            assert!(
+                get_type_version <= version,
+                "Have to use get_type function for {} but version is higher than for the type ({:?} > {:?})",
+                full_name, get_type_version, version
+            );
         } else {
             error!("Missing memory management functions for {}", full_name);
         }

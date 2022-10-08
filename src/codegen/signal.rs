@@ -172,7 +172,7 @@ fn function_type_string(
     let type_ = func_string(
         env,
         trampoline,
-        &Some(if closure { "Self" } else { "self" }),
+        Some(if closure { "Self" } else { "self" }),
         closure,
     );
     Some(type_)

@@ -8,7 +8,7 @@ pub(crate) fn set_crate_name_overrides(overrides: HashMap<String, String>) {
     unsafe {
         assert!(
             CRATE_NAME_OVERRIDES.is_none(),
-            "Crate name overrides already set;"
+            "Crate name overrides already set"
         );
         CRATE_NAME_OVERRIDES = Some(overrides);
     }

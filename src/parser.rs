@@ -323,11 +323,7 @@ impl Library {
                         ),
                         c_type: Some(format!(
                             "{}{}_{}",
-                            parent_ctype_prefix.map_or_else(String::new, |s| {
-                                let mut s = String::from(s);
-                                s.push('_');
-                                s
-                            }),
+                            parent_ctype_prefix.map_or_else(String::new, |s| { format!("{}_", s) }),
                             c_type,
                             field_name
                         )),

@@ -614,7 +614,7 @@ impl<'env> RustTypeBuilder<'env> {
         let type_ = self.env.library.type_(self.type_id);
 
         assert!(
-            !(self.direction == ParameterDirection::None),
+            self.direction != ParameterDirection::None,
             "undefined direction for parameter with type {:?}",
             type_
         );

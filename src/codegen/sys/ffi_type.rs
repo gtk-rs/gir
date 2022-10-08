@@ -21,8 +21,7 @@ pub fn ffi_type(env: &Env, tid: library::TypeId, c_type: &str) -> Result {
             if env.library.type_(c_tid).maybe_ref_as::<Basic>().is_some() {
                 match *env.library.type_(tid) {
                     Type::FixedArray(inner_tid, size, ref inner_c_type) => {
-                        let inner_c_type =
-                            inner_c_type.as_ref().map_or_else(|| c_type, String::as_str);
+                        let inner_c_type = inner_c_type.as_ref().map_or(c_type, String::as_str);
                         ffi_type(env, inner_tid, inner_c_type).map_any(|rust_type| {
                             rust_type.alter_type(|typ_| format!("[{}; {}]", typ_, size))
                         })
