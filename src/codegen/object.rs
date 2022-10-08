@@ -365,7 +365,7 @@ fn generate_builder(w: &mut dyn Write, env: &Env, analysis: &analysis::object::I
                         .ref_mode(property.set_in_ref_mode)
                         .try_build()
                         .into_string();
-                    let (param_type_override, bounds, conversion) = match &param_type[..] {
+                    let (param_type_override, bounds, conversion) = match param_type.as_str() {
                         "&str" => (None, String::new(), ".to_string()"),
                         "&[&str]" => (Some("Vec<String>".to_string()), String::new(), ""),
                         _ if !property.bounds.is_empty() => {

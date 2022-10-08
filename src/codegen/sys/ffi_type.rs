@@ -97,7 +97,7 @@ fn ffi_inner(env: &Env, tid: library::TypeId, mut inner: String) -> Result {
                 OsString => "c_char",
                 Type => "GType",
                 Pointer => {
-                    match &inner[..] {
+                    match inner.as_str() {
                         "void" => "c_void",
                         "tm" => return Err(TypeError::Unimplemented(inner)), //TODO: try use time:Tm
                         _ => &*inner,

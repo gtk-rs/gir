@@ -140,7 +140,7 @@ fn generate_doc(w: &mut dyn Write, env: &Env) -> Result<()> {
                 && !env.is_totally_deprecated(None, enum_.deprecated_version)
             {
                 generators.push((
-                    &enum_.name[..],
+                    enum_.name.as_str(),
                     Box::new(move |w, e| create_enum_doc(w, e, enum_, tid)),
                 ));
             }
@@ -153,7 +153,7 @@ fn generate_doc(w: &mut dyn Write, env: &Env) -> Result<()> {
                 && !env.is_totally_deprecated(None, bitfield.deprecated_version)
             {
                 generators.push((
-                    &bitfield.name[..],
+                    bitfield.name.as_str(),
                     Box::new(move |w, e| create_bitfield_doc(w, e, bitfield, tid)),
                 ));
             }
@@ -822,7 +822,11 @@ where
                 continue;
             }
             if let Some(ref doc) = parameter.doc {
-                writeln!(w, "## `{}`", nameutil::mangle_keywords(&parameter.name[..]))?;
+                writeln!(
+                    w,
+                    "## `{}`",
+                    nameutil::mangle_keywords(parameter.name.as_str())
+                )?;
                 writeln!(
                     w,
                     "{}",
@@ -857,7 +861,7 @@ where
                 writeln!(
                     w,
                     "\n## `{}`",
-                    nameutil::mangle_keywords(&parameter.name[..])
+                    nameutil::mangle_keywords(parameter.name.as_str())
                 )?;
                 writeln!(
                     w,
