@@ -578,7 +578,7 @@ pub fn define_shared_type(
     glib_name: &str,
     ref_fn: &str,
     unref_fn: &str,
-    get_type_fn: &Option<(String, Option<Version>)>,
+    get_type_fn: Option<(String, Option<Version>)>,
     derive: &[Derive],
     visibility: Visibility,
 ) -> Result<()> {
@@ -586,7 +586,7 @@ pub fn define_shared_type(
 
     if let Some((ref get_type_fn, get_type_version)) = get_type_fn {
         if get_type_version.is_some() {
-            version_condition(w, env, None, *get_type_version, false, 0)?;
+            version_condition(w, env, None, get_type_version, false, 0)?;
             define_shared_type_internal(
                 w,
                 env,
@@ -600,7 +600,7 @@ pub fn define_shared_type(
             )?;
 
             writeln!(w)?;
-            not_version_condition_no_dox(w, env, None, *get_type_version, false, 0)?;
+            not_version_condition_no_dox(w, env, None, get_type_version, false, 0)?;
             define_shared_type_internal(
                 w, env, type_name, glib_name, ref_fn, unref_fn, None, derive, visibility,
             )?;

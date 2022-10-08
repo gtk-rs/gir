@@ -65,7 +65,7 @@ pub fn func_string(
     replace_self_bound: Option<impl AsRef<str>>,
     closure: bool,
 ) -> String {
-    let param_str = func_parameters(env, analysis, &replace_self_bound, closure);
+    let param_str = func_parameters(env, analysis, replace_self_bound, closure);
     let return_str = func_returns(env, analysis);
 
     if closure {
@@ -95,7 +95,7 @@ pub fn func_string(
 fn func_parameters(
     env: &Env,
     analysis: &Trampoline,
-    replace_self_bound: &Option<impl AsRef<str>>,
+    replace_self_bound: Option<impl AsRef<str>>,
     closure: bool,
 ) -> String {
     let mut param_str = String::with_capacity(100);
