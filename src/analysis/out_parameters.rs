@@ -150,7 +150,7 @@ fn analyze_type_imports(env: &Env, typ: TypeId, caller_allocates: bool, imports:
         Type::Alias(alias) => analyze_type_imports(env, alias.typ, caller_allocates, imports),
         Type::Bitfield(..) | Type::Enumeration(..) => imports.add("std::mem"),
         Type::Basic(fund) if !matches!(fund, Basic::Utf8 | Basic::OsString | Basic::Filename) => {
-            imports.add("std::mem")
+            imports.add("std::mem");
         }
         _ if !caller_allocates => match ConversionType::of(env, typ) {
             ConversionType::Direct

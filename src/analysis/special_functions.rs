@@ -247,7 +247,7 @@ pub fn analyze_imports(specials: &Infos, imports: &mut Imports) {
         use self::Type::*;
         match type_ {
             Copy if info.first_parameter_mut => {
-                imports.add_with_version("glib::translate::*", info.version)
+                imports.add_with_version("glib::translate::*", info.version);
             }
             Compare => imports.add_with_version("std::cmp", info.version),
             Display => imports.add_with_version("std::fmt", info.version),
@@ -259,7 +259,7 @@ pub fn analyze_imports(specials: &Infos, imports: &mut Imports) {
     for info in specials.functions().values() {
         match info.type_ {
             FunctionType::StaticStringify => {
-                imports.add_with_version("std::ffi::CStr", info.version)
+                imports.add_with_version("std::ffi::CStr", info.version);
             }
         }
     }

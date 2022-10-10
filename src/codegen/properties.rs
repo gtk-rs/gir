@@ -113,7 +113,7 @@ fn declaration(env: &Env, prop: &Property) -> String {
             .into_string();
         format!(" -> {}", ret_type)
     } else {
-        "".to_string()
+        String::new()
     };
     format!(
         "fn {}{}(&self{}){}",

@@ -61,7 +61,7 @@ fn path_command(path: impl AsRef<Path>, subcommand: &[&str]) -> Option<PathBuf> 
         output
             .stdout
             .pop()
-            .map(|c| c as u32)
+            .map(u32::from)
             .and_then(std::char::from_u32),
         Some('\n')
     );

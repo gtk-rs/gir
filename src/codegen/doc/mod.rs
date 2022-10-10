@@ -140,7 +140,7 @@ fn generate_doc(w: &mut dyn Write, env: &Env) -> Result<()> {
                 && !env.is_totally_deprecated(None, enum_.deprecated_version)
             {
                 generators.push((
-                    &enum_.name[..],
+                    enum_.name.as_str(),
                     Box::new(move |w, e| create_enum_doc(w, e, enum_, tid)),
                 ));
             }
@@ -153,7 +153,7 @@ fn generate_doc(w: &mut dyn Write, env: &Env) -> Result<()> {
                 && !env.is_totally_deprecated(None, bitfield.deprecated_version)
             {
                 generators.push((
-                    &bitfield.name[..],
+                    bitfield.name.as_str(),
                     Box::new(move |w, e| create_bitfield_doc(w, e, bitfield, tid)),
                 ));
             }
@@ -177,11 +177,10 @@ fn generate_doc(w: &mut dyn Write, env: &Env) -> Result<()> {
                 let fn_new_name = f_info.and_then(|analysed_f| analysed_f.new_name.clone());
                 let doc_trait_name = f_info.and_then(|f| f.doc_trait_name.as_ref());
                 let doc_struct_name = f_info.and_then(|f| f.doc_struct_name.as_ref());
-                if doc_trait_name.is_some() && doc_struct_name.is_some() {
-                    panic!(
-                        "Can't use both doc_trait_name and doc_struct_name on the same function"
-                    );
-                }
+                assert!(
+                    !(doc_trait_name.is_some() && doc_struct_name.is_some()),
+                    "Can't use both doc_trait_name and doc_struct_name on the same function"
+                );
 
                 let parent = if doc_trait_name.is_some() {
                     doc_trait_name.map(|p| Box::new(TypeStruct::new(SType::Trait, p)))
@@ -195,9 +194,8 @@ fn generate_doc(w: &mut dyn Write, env: &Env) -> Result<()> {
                     .map(|analyzed_f| analyzed_f.doc_ignore_parameters.clone())
                     .unwrap_or_default();
 
-                let should_be_documented = f_info
-                    .map(|f| f.should_docs_be_generated(env))
-                    .unwrap_or(false);
+                let should_be_documented =
+                    f_info.map_or(false, |f| f.should_docs_be_generated(env));
                 if !should_be_documented {
                     continue;
                 }
@@ -208,9 +206,9 @@ fn generate_doc(w: &mut dyn Write, env: &Env) -> Result<()> {
                     function,
                     parent,
                     fn_new_name,
-                    doc_ignored_parameters,
+                    &doc_ignored_parameters,
                     None,
-                    f_info.map(|f| f.generate_doc).unwrap_or(true),
+                    f_info.map_or(true, |f| f.generate_doc),
                 )?;
             }
         }
@@ -356,7 +354,7 @@ fn create_object_doc(w: &mut dyn Write, env: &Env, info: &analysis::object::Info
                 _ => (),
             }
         }
-        for property in builder_properties.iter() {
+        for property in &builder_properties {
             let ty = TypeStruct {
                 ty: SType::Fn,
                 name: nameutil::signal_to_snake(&property.name),
@@ -461,9 +459,7 @@ fn create_object_doc(w: &mut dyn Write, env: &Env, info: &analysis::object::Info
         };
         if let Some(c_identifier) = &function.c_identifier {
             let f_info = info.functions.iter().find(|f| &f.glib_name == c_identifier);
-            let should_be_documented = f_info
-                .map(|f| f.should_docs_be_generated(env))
-                .unwrap_or(false);
+            let should_be_documented = f_info.map_or(false, |f| f.should_docs_be_generated(env));
 
             if !should_be_documented {
                 continue;
@@ -480,9 +476,9 @@ fn create_object_doc(w: &mut dyn Write, env: &Env, info: &analysis::object::Info
                 function,
                 Some(Box::new(ty)),
                 fn_new_name,
-                doc_ignored_parameters,
+                &doc_ignored_parameters,
                 Some((&info.type_id, object_location)),
-                f_info.map(|f| f.generate_doc).unwrap_or(true),
+                f_info.map_or(true, |f| f.generate_doc),
             )?;
         }
     }
@@ -506,7 +502,7 @@ fn create_object_doc(w: &mut dyn Write, env: &Env, info: &analysis::object::Info
             signal,
             Some(Box::new(ty)),
             None,
-            HashSet::new(),
+            &HashSet::new(),
             Some((&info.type_id, object_location)),
             configured_signals.iter().all(|s| s.generate_doc),
         )?;
@@ -585,9 +581,7 @@ fn create_record_doc(w: &mut dyn Write, env: &Env, info: &analysis::record::Info
     for function in &record.functions {
         if let Some(c_identifier) = &function.c_identifier {
             let f_info = info.functions.iter().find(|f| &f.glib_name == c_identifier);
-            let should_be_documented = f_info
-                .map(|f| f.should_docs_be_generated(env))
-                .unwrap_or(false);
+            let should_be_documented = f_info.map_or(false, |f| f.should_docs_be_generated(env));
             if !should_be_documented {
                 continue;
             }
@@ -599,9 +593,9 @@ fn create_record_doc(w: &mut dyn Write, env: &Env, info: &analysis::record::Info
                 function,
                 Some(Box::new(ty.clone())),
                 fn_new_name,
-                HashSet::new(),
+                &HashSet::new(),
                 Some((&info.type_id, None)),
-                f_info.map(|f| f.generate_doc).unwrap_or(true),
+                f_info.map_or(true, |f| f.generate_doc),
             )?;
         }
     }
@@ -738,7 +732,7 @@ fn create_fn_doc<T>(
     fn_: &T,
     parent: Option<Box<TypeStruct>>,
     name_override: Option<String>,
-    doc_ignored_parameters: HashSet<String>,
+    doc_ignored_parameters: &HashSet<String>,
     in_type: Option<(&TypeId, Option<LocationInObject>)>,
     generate_doc: bool,
 ) -> Result<()>
@@ -807,7 +801,7 @@ where
             .iter()
             .enumerate()
             .filter_map(|(indice, param)| {
-                (!indices_to_ignore.contains(&(indice as u32))).then(|| param)
+                (!indices_to_ignore.contains(&(indice as u32))).then_some(param)
             })
             .filter(|param| !param.instance_parameter)
             .collect();
@@ -828,7 +822,11 @@ where
                 continue;
             }
             if let Some(ref doc) = parameter.doc {
-                writeln!(w, "## `{}`", nameutil::mangle_keywords(&parameter.name[..]))?;
+                writeln!(
+                    w,
+                    "## `{}`",
+                    nameutil::mangle_keywords(parameter.name.as_str())
+                )?;
                 writeln!(
                     w,
                     "{}",
@@ -863,7 +861,7 @@ where
                 writeln!(
                     w,
                     "\n## `{}`",
-                    nameutil::mangle_keywords(&parameter.name[..])
+                    nameutil::mangle_keywords(parameter.name.as_str())
                 )?;
                 writeln!(
                     w,

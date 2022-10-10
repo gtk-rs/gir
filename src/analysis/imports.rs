@@ -312,7 +312,7 @@ impl<'a> ImportsWithDefault<'a> {
 
 impl Drop for ImportsWithDefault<'_> {
     fn drop(&mut self) {
-        self.imports.reset_defaults()
+        self.imports.reset_defaults();
     }
 }
 

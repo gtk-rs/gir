@@ -43,10 +43,11 @@ impl Symbol {
     }
 
     fn make_in_prelude(&mut self) {
-        if self.module_name.replace("prelude".to_string()).is_some() {
-            // .expect_none is not stabilized yet
-            panic!("{:?} already had a module name set!", self)
-        }
+        assert!(
+            self.module_name.replace("prelude".to_string()).is_none(),
+            "{:?} already had a module name set!",
+            self
+        );
     }
 
     /// Convert this symbol into a trait

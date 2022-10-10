@@ -148,7 +148,7 @@ pub fn define_fundamental_type(
     } else {
         let (ref_fn, unref_fn, ptr, ffi_crate_name) = parents
             .iter()
-            .filter_map(|p| {
+            .find_map(|p| {
                 use crate::library::*;
                 let type_ = env.library.type_(p.type_id);
                 let parent_sys_crate_name = env.sys_crate_import(p.type_id);
@@ -166,7 +166,6 @@ pub fn define_fundamental_type(
                     _ => None,
                 }
             })
-            .next()
             .unwrap();
         // otherwise get that information from the parent
         (ref_fn, unref_fn, ptr, ffi_crate_name)
@@ -222,7 +221,7 @@ pub fn define_object_type(
         if let Some(s) = glib_class_name {
             format!(", {}::{}", sys_crate_name, s)
         } else {
-            "".to_string()
+            String::new()
         }
     };
 
@@ -706,7 +705,7 @@ pub fn version_condition_no_doc(
             commented,
             indent,
         ) {
-            writeln!(w, "{}", s)?
+            writeln!(w, "{}", s)?;
         }
     }
     Ok(())
@@ -721,7 +720,7 @@ pub fn version_condition_doc(
     match version {
         Some(v) if v > env.config.min_cfg_version => {
             if let Some(s) = cfg_condition_string_doc(Some(&v.to_cfg(None)), commented, indent) {
-                writeln!(w, "{}", s)?
+                writeln!(w, "{}", s)?;
             }
         }
         _ => {}
@@ -983,7 +982,7 @@ pub fn escape_string(s: &str) -> String {
             '\"' | '\\' => es.push('\\'),
             _ => (),
         }
-        es.push(c)
+        es.push(c);
     }
     es
 }

@@ -166,7 +166,7 @@ pub fn generate_reexports(
         cfg.push_str(&s);
         cfg.push('\n');
     };
-    contents.push("".to_owned());
+    contents.push(String::new());
     contents.push(format!("{}mod {};", cfg, module_name));
     contents.push(format!(
         "{}{} use self::{}::{};",

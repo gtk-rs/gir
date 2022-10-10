@@ -176,20 +176,19 @@ pub fn new(env: &Env, obj: &GObject) -> Option<Info> {
             || !specials.has_trait(special_functions::Type::Free))
     {
         if let Some((_, get_type_version)) = glib_get_type {
-            if get_type_version > version {
-                // FIXME: Ideally we would update it here but that requires fixing *all* the
-                // versions of functions in this and other types that use this type somewhere in
-                // the signature. Similar code exists for before the analysis already but that
-                // doesn't apply directly here.
-                //
-                // As the get_type function only has a version if explicitly configured let's just
-                // panic here. It's easy enough for the user to move the version configuration from
-                // the function to the type.
-                panic!(
-                    "Have to use get_type function for {} but version is higher than for the type ({:?} > {:?})",
-                    full_name, get_type_version, version
-                );
-            }
+            // FIXME: Ideally we would update it here but that requires fixing *all* the
+            // versions of functions in this and other types that use this type somewhere in
+            // the signature. Similar code exists for before the analysis already but that
+            // doesn't apply directly here.
+            //
+            // As the get_type function only has a version if explicitly configured let's just
+            // panic here. It's easy enough for the user to move the version configuration from
+            // the function to the type.
+            assert!(
+                get_type_version <= version,
+                "Have to use get_type function for {} but version is higher than for the type ({:?} > {:?})",
+                full_name, get_type_version, version
+            );
         } else {
             error!("Missing memory management functions for {}", full_name);
         }

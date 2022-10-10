@@ -179,6 +179,8 @@ fn ref_mode_from_str(ref_mode: &str) -> Option<ref_mode::RefMode> {
 }
 
 pub fn parse_conversion_type(toml: Option<&Value>, object_name: &str) -> Option<ConversionType> {
+    use crate::analysis::conversion_type::ConversionType::*;
+
     let v = toml?;
     v.check_unwanted(&["variant", "ok_type", "err_type"], "conversion_type");
 
@@ -206,8 +208,6 @@ pub fn parse_conversion_type(toml: Option<&Value>, object_name: &str) -> Option<
             return None;
         }
     };
-
-    use crate::analysis::conversion_type::ConversionType::*;
 
     let get_err_type = || -> Arc<str> {
         err_type.map_or_else(
@@ -377,12 +377,10 @@ fn parse_object(
         .unwrap_or(trust_return_value_nullability);
     let manual_traits = toml_object
         .lookup_vec("manual_traits", "IGNORED ERROR")
-        .map(|v| {
-            v.iter()
-                .filter_map(|v| v.as_str().map(String::from))
-                .collect()
-        })
-        .unwrap_or_else(|_| Vec::new());
+        .into_iter()
+        .flatten()
+        .filter_map(|v| v.as_str().map(String::from))
+        .collect();
     let align = toml_object
         .lookup("align")
         .and_then(Value::as_integer)

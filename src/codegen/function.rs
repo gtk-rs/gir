@@ -80,7 +80,7 @@ pub fn generate(
     let mut commented = false;
     let mut comment_prefix = "";
     let pub_prefix = if in_trait {
-        "".to_owned()
+        String::new()
     } else {
         format!("{} ", analysis.visibility)
     };
@@ -209,9 +209,9 @@ pub fn declaration(env: &Env, analysis: &analysis::functions::Info) -> String {
 
     let (bounds, _) = bounds(&analysis.bounds, &[], false, false);
 
-    for par in analysis.parameters.rust_parameters.iter() {
+    for par in &analysis.parameters.rust_parameters {
         if !param_str.is_empty() {
-            param_str.push_str(", ")
+            param_str.push_str(", ");
         }
         let c_par = &analysis.parameters.c_parameters[par.ind_c];
         let s = c_par.to_parameter(env, &analysis.bounds, false);
@@ -255,7 +255,7 @@ pub fn declaration_futures(env: &Env, analysis: &analysis::functions::Info) -> S
         }
 
         if pos - skipped > 0 {
-            param_str.push_str(", ")
+            param_str.push_str(", ");
         }
 
         let s = c_par.to_parameter(env, &analysis.bounds, true);
@@ -359,10 +359,10 @@ pub fn body_chunk(env: &Env, analysis: &analysis::functions::Info) -> Chunk {
             );
         }
     } else {
-        for trampoline in analysis.callbacks.iter() {
+        for trampoline in &analysis.callbacks {
             builder.callback(trampoline);
         }
-        for trampoline in analysis.destroys.iter() {
+        for trampoline in &analysis.destroys {
             builder.destroy(trampoline);
         }
     }
@@ -377,7 +377,7 @@ pub fn body_chunk(env: &Env, analysis: &analysis::functions::Info) -> Chunk {
 
     let (bounds, bounds_names) = bounds(&analysis.bounds, &[], false, true);
 
-    builder.generate(env, bounds, bounds_names.join(", "))
+    builder.generate(env, &bounds, &bounds_names.join(", "))
 }
 
 pub fn body_chunk_futures(
@@ -405,7 +405,7 @@ pub fn body_chunk_futures(
             safety_assertion_mode_to_str(async_future.assertion)
         )?;
     }
-    let skip = if async_future.is_method { 1 } else { 0 };
+    let skip = usize::from(async_future.is_method);
 
     // Skip the instance parameter
     for par in analysis.parameters.rust_parameters.iter().skip(skip) {

@@ -144,9 +144,9 @@ impl Parse for Parameter {
         Some(Parameter {
             ident,
             constant,
+            move_,
             nullable,
             mandatory,
-            move_,
             infallible,
             length_of,
             string_type,
@@ -444,10 +444,10 @@ impl Parse for Function {
             no_future,
             unsafe_,
             rename,
+            visibility,
             bypass_auto_rename,
             is_constructor,
             assertion,
-            visibility,
             generate_doc,
         })
     }

@@ -142,7 +142,7 @@ impl Element {
 
 impl<'a> XmlParser<'a> {
     pub fn from_path(path: &Path) -> Result<XmlParser<'_>, String> {
-        match File::open(&path) {
+        match File::open(path) {
             Err(e) => Err(format!("Can't open file \"{}\": {}", path.display(), e)),
             Ok(file) => Ok(XmlParser {
                 parser: EventReader::new(Box::new(BufReader::new(file))),
@@ -156,13 +156,13 @@ impl<'a> XmlParser<'a> {
     }
 
     #[cfg(test)]
-    pub fn new<'r, R: 'r + Read>(read: R) -> Result<XmlParser<'r>, String> {
-        Ok(XmlParser {
+    pub fn new<'r, R: 'r + Read>(read: R) -> XmlParser<'r> {
+        XmlParser {
             parser: EventReader::new(Box::new(read)),
             peek_event: None,
             peek_position: TextPosition::new(),
             error_emitter: Rc::new(ErrorEmitter { path: None }),
-        })
+        }
     }
 
     /// Returns an error that combines current position and given error message.
@@ -354,21 +354,21 @@ mod tests {
     where
         F: FnOnce(XmlParser<'_>) -> Result<R, String>,
     {
-        f(XmlParser::new(xml)?)
+        f(XmlParser::new(xml))
     }
 
     #[test]
     fn test_element_with_name() {
-        let xml = br#"<?xml version="1.0"?>
-            <!-- a comment -->
-            <a>
-            </a>"#;
-
         fn parse_with_root_name(xml: &[u8], root: &str) -> Result<(), String> {
             with_parser(xml, |mut p| {
                 p.document(|p, _| p.element_with_name(root, |_, _elem| Ok(())))
             })
         }
+
+        let xml = br#"<?xml version="1.0"?>
+            <!-- a comment -->
+            <a>
+            </a>"#;
 
         assert!(parse_with_root_name(xml, "a").is_ok());
         assert!(parse_with_root_name(xml, "b").is_err());

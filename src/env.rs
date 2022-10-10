@@ -33,8 +33,7 @@ impl Env {
         self.config
             .objects
             .get(name)
-            .map(|o| o.status)
-            .unwrap_or(GStatus::Generate)
+            .map_or(GStatus::Generate, |o| o.status)
     }
 
     pub fn is_totally_deprecated(
@@ -80,7 +79,7 @@ impl Env {
         if crate_name == "gobject_ffi" {
             use_glib_type(self, crate_name)
         } else {
-            crate_name.to_owned()
+            crate_name.clone()
         }
     }
 }

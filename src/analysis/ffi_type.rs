@@ -181,7 +181,7 @@ fn fix_name(env: &Env, type_id: TypeId, name: &str) -> Result {
         let sys_crate_name = if sys_crate_name == "gobject_ffi" {
             use_glib_type(env, "gobject_ffi")
         } else if type_id.ns_id == MAIN_NAMESPACE {
-            sys_crate_name.to_owned()
+            sys_crate_name.clone()
         } else {
             format!(
                 "{}::{}",

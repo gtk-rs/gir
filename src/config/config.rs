@@ -30,7 +30,7 @@ fn normalize_path(path: impl AsRef<Path>) -> PathBuf {
         match (component, parts.last()) {
             (Component::CurDir, _) | (Component::ParentDir, Some(Component::RootDir)) => {}
             (Component::ParentDir, None | Some(Component::ParentDir)) => {
-                parts.push(Component::ParentDir)
+                parts.push(Component::ParentDir);
             }
             (Component::ParentDir, Some(_)) => {
                 parts
@@ -359,8 +359,8 @@ impl Config {
             external_libraries,
             objects,
             min_cfg_version,
-            make_backup,
             use_gi_docgen,
+            make_backup,
             generate_safety_asserts,
             deprecate_by_min_version,
             show_statistics,
@@ -410,7 +410,7 @@ impl Config {
     }
 
     pub fn resolve_type_ids(&mut self, library: &Library) {
-        gobjects::resolve_type_ids(&mut self.objects, library)
+        gobjects::resolve_type_ids(&mut self.objects, library);
     }
 
     pub fn check_disable_format(&mut self) {

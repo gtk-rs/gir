@@ -18,6 +18,8 @@ impl RefMode {
         tid: library::TypeId,
         direction: library::ParameterDirection,
     ) -> RefMode {
+        use crate::library::Type::*;
+
         let library = &env.library;
 
         if let Some(&GObject {
@@ -32,7 +34,6 @@ impl RefMode {
             }
         }
 
-        use crate::library::Type::*;
         match library.type_(tid) {
             Basic(library::Basic::Utf8 | library::Basic::Filename | library::Basic::OsString)
             | Class(..)

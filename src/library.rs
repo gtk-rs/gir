@@ -745,8 +745,8 @@ impl Type {
             Enumeration(enum_) => Some(&enum_.c_type),
             Bitfield(bit_field) => Some(&bit_field.c_type),
             Record(rec) => Some(&rec.c_type),
-            Union(union) => union.c_type.as_ref().map(|s| &s[..]),
-            Function(func) => func.c_identifier.as_ref().map(|s| &s[..]),
+            Union(union) => union.c_type.as_deref(),
+            Function(func) => func.c_identifier.as_deref(),
             Interface(interface) => Some(&interface.c_type),
             Class(class) => Some(&class.c_type),
             _ => None,
@@ -1030,7 +1030,7 @@ impl Namespace {
     }
 
     fn find_type(&self, name: &str) -> Option<u32> {
-        self.index.get(name).cloned()
+        self.index.get(name).copied()
     }
 }
 
@@ -1108,8 +1108,7 @@ impl Library {
                         .config
                         .objects
                         .get(&full_name)
-                        .map(|obj| obj.generate_builder)
-                        .unwrap_or_else(|| false)
+                        .map_or(false, |obj| obj.generate_builder)
                         && properties
                             .iter()
                             .any(|prop| prop.construct_only || prop.construct || prop.writable)
@@ -1247,7 +1246,7 @@ impl Library {
     }
 
     pub fn find_namespace(&self, name: &str) -> Option<u16> {
-        self.index.get(name).cloned()
+        self.index.get(name).copied()
     }
 
     pub fn add_namespace(&mut self, name: &str) -> u16 {

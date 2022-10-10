@@ -135,7 +135,7 @@ impl Builder {
         self.in_unsafe = in_unsafe;
         self
     }
-    pub fn generate(&self, env: &Env, bounds: String, bounds_names: String) -> Chunk {
+    pub fn generate(&self, env: &Env, bounds: &str, bounds_names: &str) -> Chunk {
         let mut body = Vec::new();
 
         let mut uninitialized_vars = if self.outs_as_return {
@@ -221,7 +221,7 @@ impl Builder {
             // Key: user data index
             // Value: the current pos in the tuple for the given argument.
             let mut poses = HashMap::with_capacity(group_by_user_data.len());
-            for trampoline in self.callbacks.iter() {
+            for trampoline in &self.callbacks {
                 *poses
                     .entry(&trampoline.user_data_index)
                     .or_insert_with(|| 0) += 1;
@@ -231,7 +231,7 @@ impl Builder {
                 .filter(|(_, x)| *x > 1)
                 .map(|(x, _)| (x, 0))
                 .collect::<HashMap<_, _>>();
-            for trampoline in self.callbacks.iter() {
+            for trampoline in &self.callbacks {
                 let user_data_index = trampoline.user_data_index;
                 let pos = poses.entry(&trampoline.user_data_index);
                 self.add_trampoline(
@@ -243,23 +243,23 @@ impl Builder {
                         Entry::Occupied(ref x) => Some(*x.get()),
                         _ => None,
                     },
-                    &bounds,
-                    &bounds_names,
+                    bounds,
+                    bounds_names,
                     false,
                 );
                 pos.and_modify(|x| {
                     *x += 1;
                 });
             }
-            for destroy in self.destroys.iter() {
+            for destroy in &self.destroys {
                 self.add_trampoline(
                     env,
                     &mut chunks,
                     destroy,
                     &group_by_user_data[&destroy.user_data_index].full_type,
                     None, // doesn't matter for destroy
-                    &bounds,
-                    &bounds_names,
+                    bounds,
+                    bounds_names,
                     true,
                 );
             }
@@ -414,7 +414,7 @@ impl Builder {
         let mut body = Vec::new();
         let mut arguments = Vec::new();
 
-        for par in trampoline.parameters.transformations.iter() {
+        for par in &trampoline.parameters.transformations {
             if par.name == "this"
                 || trampoline.parameters.c_parameters[par.ind_c].is_real_gpointer(env)
             {
@@ -452,8 +452,7 @@ impl Builder {
             .parameters
             .c_parameters
             .last()
-            .map(|p| p.name.clone())
-            .unwrap_or_else(|| "Unknown".to_owned());
+            .map_or_else(|| "Unknown".to_owned(), |p| p.name.clone());
 
         let mut extra_before_call = "";
         if let Some(full_type) = full_type {
@@ -1048,7 +1047,7 @@ impl Builder {
                 },
             ));
         }
-        for destroy in self.destroys.iter() {
+        for destroy in &self.destroys {
             to_insert.push((
                 destroy.destroy_index,
                 Chunk::FfiCallParameter {
@@ -1060,7 +1059,7 @@ impl Builder {
         }
         to_insert.sort_unstable_by(|(a, _), (b, _)| a.cmp(b));
         for (pos, data) in to_insert {
-            params.insert(pos, data)
+            params.insert(pos, data);
         }
         params
     }
@@ -1410,7 +1409,7 @@ fn add_chunk_for_type(
                     type_name = format!(": Option<{}>", ty_name);
                 }
             } else {
-                type_name = String::from("");
+                type_name = String::new();
             }
 
             body.push(Chunk::Custom(format!(

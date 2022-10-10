@@ -71,7 +71,7 @@ impl ToCode for Chunk {
                     let type_strings = type_.to_code(env);
                     format_block_one_line(": ", "", &type_strings, "", "")
                 } else {
-                    "".to_owned()
+                    String::new()
                 };
                 let value_strings = value.to_code(env);
                 let prefix = format!("let {}{}{} = ", modif, name, type_string);

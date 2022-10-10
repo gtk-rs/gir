@@ -44,11 +44,7 @@ pub fn analyze(
         return properties;
     }
     let config = config.unwrap();
-    let child_name = config
-        .child_name
-        .as_ref()
-        .map(|s| &s[..])
-        .unwrap_or("child");
+    let child_name = config.child_name.as_ref().map_or("child", |s| s.as_str());
     let child_type = config
         .child_type
         .as_ref()

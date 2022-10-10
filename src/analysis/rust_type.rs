@@ -35,14 +35,14 @@ impl RustType {
         RustTypeBuilder::new(env, type_id)
     }
 
-    fn new_and_use(rust_type: impl ToString) -> Self {
+    fn new_and_use(rust_type: &impl ToString) -> Self {
         RustType {
             inner: rust_type.to_string(),
             used_types: vec![rust_type.to_string()],
         }
     }
 
-    fn new_with_uses(rust_type: impl ToString, uses: &[impl ToString]) -> Self {
+    fn new_with_uses(rust_type: &impl ToString, uses: &[impl ToString]) -> Self {
         RustType {
             inner: rust_type.to_string(),
             used_types: uses.iter().map(ToString::to_string).collect(),
@@ -52,7 +52,7 @@ impl RustType {
     fn check(
         env: &Env,
         type_id: library::TypeId,
-        type_name: impl ToString,
+        type_name: &impl ToString,
     ) -> result::Result<String, TypeError> {
         let mut type_name = type_name.to_string();
 
@@ -76,9 +76,11 @@ impl RustType {
     }
 
     fn try_new_and_use(env: &Env, type_id: library::TypeId) -> Result {
-        Self::check(env, type_id, env.library.type_(type_id).get_name()).map(|type_name| RustType {
-            inner: type_name.clone(),
-            used_types: vec![type_name],
+        Self::check(env, type_id, &env.library.type_(type_id).get_name()).map(|type_name| {
+            RustType {
+                inner: type_name.clone(),
+                used_types: vec![type_name],
+            }
         })
     }
 
@@ -87,7 +89,7 @@ impl RustType {
         type_id: library::TypeId,
         type_name: impl ToString,
     ) -> Result {
-        Self::check(env, type_id, type_name).map(|type_name| RustType {
+        Self::check(env, type_id, &type_name).map(|type_name| RustType {
             inner: type_name.clone(),
             used_types: vec![type_name],
         })
@@ -246,7 +248,7 @@ impl<'env> RustTypeBuilder<'env> {
     pub fn try_build(self) -> Result {
         use crate::library::{Basic::*, Type::*};
         let ok = |s: &str| Ok(RustType::from(s));
-        let ok_and_use = |s: &str| Ok(RustType::new_and_use(s));
+        let ok_and_use = |s: &str| Ok(RustType::new_and_use(&s));
         let err = |s: &str| Err(TypeError::Unimplemented(s.into()));
         let mut skip_option = false;
         let type_ = self.env.library.type_(self.type_id);
@@ -438,7 +440,7 @@ impl<'env> RustTypeBuilder<'env> {
                 }
                 let mut params = Vec::with_capacity(f.parameters.len());
                 let mut err = false;
-                for p in f.parameters.iter() {
+                for p in &f.parameters {
                     if p.closure.is_some() {
                         continue;
                     }
@@ -571,14 +573,14 @@ impl<'env> RustTypeBuilder<'env> {
                 if self.direction == ParameterDirection::In {
                     rust_type = rust_type.map_any(|rust_type| {
                         RustType::new_with_uses(
-                            format!("impl Into<{}>", &rust_type.as_str()),
+                            &format!("impl Into<{}>", &rust_type.as_str()),
                             &[&rust_type.as_str()],
                         )
                     });
                 } else {
                     rust_type = rust_type.map_any(|_| {
                         RustType::new_with_uses(
-                            format!("Result<{}, {}>", &ok_type, &err_type),
+                            &format!("Result<{}, {}>", &ok_type, &err_type),
                             &[ok_type, err_type],
                         )
                     });
@@ -611,9 +613,11 @@ impl<'env> RustTypeBuilder<'env> {
         use crate::library::Type::*;
         let type_ = self.env.library.type_(self.type_id);
 
-        if self.direction == ParameterDirection::None {
-            panic!("undefined direction for parameter with type {:?}", type_);
-        }
+        assert!(
+            self.direction != ParameterDirection::None,
+            "undefined direction for parameter with type {:?}",
+            type_
+        );
 
         let rust_type = RustType::builder(self.env, self.type_id)
             .direction(self.direction)

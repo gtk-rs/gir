@@ -124,12 +124,12 @@ fn generate_display(
     scope_version: Option<Version>,
     cfg_condition: Option<&String>,
 ) -> Result<()> {
+    use crate::analysis::out_parameters::Mode;
+
     writeln!(w)?;
     let version = Version::if_stricter_than(func.version, scope_version);
     version_condition(w, env, None, version, false, 0)?;
     cfg_condition_no_doc(w, cfg_condition, false, 0)?;
-
-    use crate::analysis::out_parameters::Mode;
 
     let call = generate_call(func.codegen_name(), &[], trait_name);
     let body = if let Mode::Throws(_) = func.outs.mode {

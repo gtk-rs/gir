@@ -175,7 +175,7 @@ pub fn analyze<F: Borrow<library::Function>>(
         let func = func.borrow();
         let configured_functions = obj.functions.matched(&func.name);
         let mut status = obj.status;
-        for f in configured_functions.iter() {
+        for f in &configured_functions {
             match f.status {
                 GStatus::Ignore => continue 'func,
                 GStatus::Manual => {
@@ -923,7 +923,7 @@ fn analyze_function(
         async_future,
         callbacks,
         destroys,
-        remove_params: cross_user_data_check.values().cloned().collect::<Vec<_>>(),
+        remove_params: cross_user_data_check.values().copied().collect::<Vec<_>>(),
         commented,
         hidden: false,
         ns_id,
@@ -935,12 +935,7 @@ pub fn is_carray_with_direct_elements(env: &Env, typ: library::TypeId) -> bool {
     match *env.library.type_(typ) {
         Type::CArray(inner_tid) => {
             use super::conversion_type::ConversionType;
-            match env.library.type_(inner_tid) {
-                Type::Basic(..) if ConversionType::of(env, inner_tid) == ConversionType::Direct => {
-                    true
-                }
-                _ => false,
-            }
+            matches!(env.library.type_(inner_tid), Type::Basic(..) if ConversionType::of(env, inner_tid) == ConversionType::Direct)
         }
         _ => false,
     }
@@ -1157,7 +1152,7 @@ fn analyze_callback(
                 }
             });
         }
-        for p in parameters.rust_parameters.iter() {
+        for p in &parameters.rust_parameters {
             if let Ok(rust_type) = RustType::builder(env, p.typ)
                 .direction(p.direction)
                 .nullable(p.nullable)

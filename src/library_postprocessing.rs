@@ -64,12 +64,36 @@ impl Library {
             })
             .collect();
 
-        if !list.is_empty() {
-            panic!("Incomplete library, unresolved: {:?}", list);
-        }
+        assert!(
+            list.is_empty(),
+            "Incomplete library, unresolved: {:?}",
+            list
+        );
     }
 
     fn fill_empty_signals_c_types(&mut self) {
+        fn update_empty_signals_c_types(signals: &mut [Signal], c_types: &DetectedCTypes) {
+            for signal in signals {
+                update_empty_signal_c_types(signal, c_types);
+            }
+        }
+
+        fn update_empty_signal_c_types(signal: &mut Signal, c_types: &DetectedCTypes) {
+            for par in &mut signal.parameters {
+                update_empty_c_type(&mut par.c_type, par.typ, c_types);
+            }
+            update_empty_c_type(&mut signal.ret.c_type, signal.ret.typ, c_types);
+        }
+
+        fn update_empty_c_type(c_type: &mut String, tid: TypeId, c_types: &DetectedCTypes) {
+            if !is_empty_c_type(c_type) {
+                return;
+            }
+            if let Some(s) = c_types.get(&tid) {
+                *c_type = s.clone();
+            }
+        }
+
         let mut tids = Vec::new();
         let mut c_types = DetectedCTypes::new();
         for (ns_id, ns) in self.namespaces.iter().enumerate() {
@@ -95,33 +119,11 @@ impl Library {
             }
         }
 
-        fn update_empty_signals_c_types(signals: &mut [Signal], c_types: &DetectedCTypes) {
-            for signal in signals {
-                update_empty_signal_c_types(signal, c_types);
-            }
-        }
-
-        fn update_empty_signal_c_types(signal: &mut Signal, c_types: &DetectedCTypes) {
-            for par in &mut signal.parameters {
-                update_empty_c_type(&mut par.c_type, par.typ, c_types);
-            }
-            update_empty_c_type(&mut signal.ret.c_type, signal.ret.typ, c_types);
-        }
-
-        fn update_empty_c_type(c_type: &mut String, tid: TypeId, c_types: &DetectedCTypes) {
-            if !is_empty_c_type(c_type) {
-                return;
-            }
-            if let Some(s) = c_types.get(&tid) {
-                *c_type = s.clone();
-            }
-        }
-
         for tid in tids {
             match self.type_mut(tid) {
                 Type::Class(klass) => update_empty_signals_c_types(&mut klass.signals, &c_types),
                 Type::Interface(iface) => {
-                    update_empty_signals_c_types(&mut iface.signals, &c_types)
+                    update_empty_signals_c_types(&mut iface.signals, &c_types);
                 }
                 _ => (),
             }
@@ -251,12 +253,12 @@ impl Library {
 
                 if let Some(type_struct) = type_struct {
                     let type_struct_tid = self.find_type(ns_id as u16, type_struct);
-                    if type_struct_tid.is_none() {
-                        panic!(
-                            "\"{}\" has glib:type-struct=\"{}\" but there is no such record",
-                            name, type_struct
-                        );
-                    }
+                    assert!(
+                        type_struct_tid.is_some(),
+                        "\"{}\" has glib:type-struct=\"{}\" but there is no such record",
+                        name,
+                        type_struct
+                    );
 
                     let type_struct_type = self.type_(type_struct_tid.unwrap());
 
@@ -392,7 +394,7 @@ impl Library {
                 };
                 match type_ {
                     Type::Union(Union { fields, .. }) if fields.as_slice().is_incomplete(self) => {
-                        unrepresentable.push(tid)
+                        unrepresentable.push(tid);
                     }
                     _ => {}
                 }

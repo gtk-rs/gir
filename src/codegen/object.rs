@@ -106,7 +106,7 @@ pub fn generate(
 
         let mut previous_version = None;
         let mut previous_ns_id = None;
-        for (ns_id, versions) in namespaces.iter() {
+        for (ns_id, versions) in &namespaces {
             for (&version, stypes) in versions.iter().rev() {
                 let supertypes = analysis
                     .supertypes
@@ -365,7 +365,7 @@ fn generate_builder(w: &mut dyn Write, env: &Env, analysis: &analysis::object::I
                         .ref_mode(property.set_in_ref_mode)
                         .try_build()
                         .into_string();
-                    let (param_type_override, bounds, conversion) = match &param_type[..] {
+                    let (param_type_override, bounds, conversion) = match param_type.as_str() {
                         "&str" => (None, String::new(), ".to_string()"),
                         "&[&str]" => (Some("Vec<String>".to_string()), String::new(), ""),
                         _ if !property.bounds.is_empty() => {
@@ -602,7 +602,7 @@ pub fn generate_reexports(
         cfgs.push(cfg);
     }
 
-    contents.push("".to_owned());
+    contents.push(String::new());
     contents.extend_from_slice(&cfgs);
     contents.push(format!("mod {};", module_name));
     contents.extend_from_slice(&cfgs);

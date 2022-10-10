@@ -597,7 +597,7 @@ mod tests {
                 namespace: Some("Gtk".to_string()),
                 name: "MapListModelMapFunc".to_string()
             })
-        )
+        );
     }
 
     #[test]

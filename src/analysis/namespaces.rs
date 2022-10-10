@@ -46,7 +46,7 @@ pub fn run(gir: &library::Library) -> Info {
     for (ns_id, ns) in gir.namespaces.iter().enumerate() {
         let ns_id = ns_id as NsId;
         let crate_name = nameutil::crate_name(&ns.name);
-        let (sys_crate_name, higher_crate_name) = match &crate_name[..] {
+        let (sys_crate_name, higher_crate_name) = match crate_name.as_str() {
             "gobject" => ("gobject_ffi".to_owned(), "glib".to_owned()),
             _ => ("ffi".to_owned(), crate_name.clone()),
         };
@@ -58,7 +58,7 @@ pub fn run(gir: &library::Library) -> Info {
             package_name: ns.package_name.clone(),
             symbol_prefixes: ns.symbol_prefixes.clone(),
             shared_libs: ns.shared_library.clone(),
-            versions: ns.versions.iter().cloned().collect(),
+            versions: ns.versions.iter().copied().collect(),
         });
         if ns.name == "GLib" {
             glib_ns_id = Some(ns_id);

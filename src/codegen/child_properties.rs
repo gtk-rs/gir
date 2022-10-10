@@ -105,14 +105,14 @@ fn declaration(env: &Env, prop: &ChildProperty, is_get: bool) -> String {
             .into_string();
         format!(" -> {}", ret_type)
     } else {
-        "".to_string()
+        String::new()
     };
     format!(
         "fn {}<{}>(&self, item: &T{}){}",
         func_name,
         bounds,
         if is_get {
-            "".to_owned()
+            String::new()
         } else {
             format!(", {}", prop.set_params)
         },
