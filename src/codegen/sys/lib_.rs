@@ -25,10 +25,16 @@ pub fn generate(env: &Env) {
 
 fn write_link_attr(w: &mut dyn Write, shared_libs: &[String]) -> Result<()> {
     for it in shared_libs {
+        let link_name = shared_lib_name_to_link_name(it);
         writeln!(
             w,
-            "#[link(name = \"{}\")]",
-            shared_lib_name_to_link_name(it)
+            r#"#[cfg_attr(feature = "static", link(name = "{}", kind = "static"))]"#,
+            link_name
+        )?;
+        writeln!(
+            w,
+            r#"#[cfg_attr(not(feature = "static"), link(name = "{}"))]"#,
+            link_name
         )?;
     }
 
