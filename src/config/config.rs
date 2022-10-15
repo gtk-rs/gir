@@ -119,6 +119,10 @@ pub struct Config {
     pub lib_version_overrides: HashMap<Version, Version>,
     pub feature_dependencies: HashMap<Version, Vec<String>>,
     pub dox_feature_dependencies: Vec<String>,
+    /// An url that will be inserted into the docs as link that links
+    /// to another doc source, for example when builds on docs.rs
+    /// are limited due to license issues.
+    pub external_docs_url: Option<String>,
 }
 
 impl Config {
@@ -346,6 +350,7 @@ impl Config {
         let lib_version_overrides = read_lib_version_overrides(&toml)?;
         let feature_dependencies = read_feature_dependencies(&toml)?;
         let dox_feature_dependencies = read_dox_feature_dependencies(&toml)?;
+        let external_docs_url = read_external_docs_url(&toml)?;
 
         Ok(Config {
             work_mode,
@@ -375,6 +380,7 @@ impl Config {
             lib_version_overrides,
             feature_dependencies,
             dox_feature_dependencies,
+            external_docs_url,
         })
     }
 
@@ -546,6 +552,17 @@ fn read_feature_dependencies(toml: &toml::Value) -> Result<HashMap<Version, Vec<
     }
 
     Ok(map)
+}
+
+fn read_external_docs_url(toml: &toml::Value) -> Result<Option<String>, String> {
+    Ok(
+        if let Some(value) = toml.lookup("options.external_docs_url") {
+            let value = value.as_result_str("options.external_docs_url")?;
+            Some(value.to_string())
+        } else {
+            None
+        },
+    )
 }
 
 #[cfg(test)]

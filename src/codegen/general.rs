@@ -129,6 +129,13 @@ pub fn define_fundamental_type(
     let sys_crate_name = env.main_sys_crate_name();
     writeln!(w, "{} {{", use_glib_type(env, "wrapper!"))?;
     doc_alias(w, glib_name, "", 1)?;
+    external_doc_link(
+        w,
+        env.config.external_docs_url.as_deref(),
+        type_name,
+        &visibility,
+        1,
+    )?;
     writeln!(
         w,
         "\t{} struct {}(Shared<{}::{}>);",
@@ -235,6 +242,13 @@ pub fn define_object_type(
 
     writeln!(w, "{} {{", use_glib_type(env, "wrapper!"))?;
     doc_alias(w, glib_name, "", 1)?;
+    external_doc_link(
+        w,
+        env.config.external_docs_url.as_deref(),
+        type_name,
+        &visibility,
+        1,
+    )?;
     if parents.is_empty() {
         writeln!(
             w,
@@ -907,6 +921,29 @@ pub fn doc_alias(w: &mut dyn Write, name: &str, comment_prefix: &str, indent: us
         comment_prefix,
         name,
     )
+}
+
+pub fn external_doc_link(
+    w: &mut dyn Write,
+    external_url: Option<&str>,
+    name: &str,
+    visibility: &Visibility,
+    indent: usize,
+) -> Result<()> {
+    // Don't generate the external doc link on non-public types.
+    if !visibility.is_public() {
+        Ok(())
+    } else if let Some(external_url) = external_url {
+        writeln!(
+            w,
+            "{}/// This documentation is incomplete due to license restrictions and limitations on docs.rs. Please have a look at [our official docs]({}/index.html?search={}) for more information.",
+            tabs(indent),
+            external_url.trim_end_matches('/'),
+            name
+        )
+    } else {
+        Ok(())
+    }
 }
 
 pub fn doc_hidden(
