@@ -186,7 +186,12 @@ fn fill_in(root: &mut Table, env: &Env) {
         let features = upsert_table(root, "features");
         let mut dox_features = Vec::new();
         for ext_lib in &env.config.external_libraries {
-            dox_features.push(Value::String(format!("{}/dox", ext_lib.crate_name)));
+            let crate_name = if ext_lib.crate_name == "gdk_pixbuf" {
+                "gdk-pixbuf"
+            } else {
+                &ext_lib.crate_name
+            };
+            dox_features.push(Value::String(format!("{}/dox", crate_name)));
         }
         features.insert("dox".to_string(), Value::Array(dox_features));
     }
