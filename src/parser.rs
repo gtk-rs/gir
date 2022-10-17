@@ -954,7 +954,6 @@ impl Library {
                 caller_allocates: false,
                 nullable: Nullable(true),
                 array_length: None,
-                allow_none: true,
                 is_error: true,
                 doc: None,
                 scope: ParameterScope::None,
@@ -1106,7 +1105,6 @@ impl Library {
             .attr_from_str("transfer-ownership")?
             .unwrap_or(Transfer::None);
         let nullable = elem.attr_bool("nullable", false);
-        let allow_none = elem.attr_bool("allow-none", false);
         let scope = elem.attr_from_str("scope")?.unwrap_or(ParameterScope::None);
         let closure = elem.attr_from_str("closure")?;
         let destroy = elem.attr_from_str("destroy")?;
@@ -1165,7 +1163,6 @@ impl Library {
                 transfer,
                 caller_allocates,
                 nullable: Nullable(nullable),
-                allow_none,
                 array_length,
                 is_error: false,
                 doc,
@@ -1183,7 +1180,6 @@ impl Library {
                 transfer: Transfer::None,
                 caller_allocates: false,
                 nullable: Nullable(false),
-                allow_none,
                 array_length: None,
                 is_error: false,
                 doc,

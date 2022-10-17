@@ -313,7 +313,6 @@ fn analyze_property(
                     transfer: library::Transfer::None,
                     caller_allocates: false,
                     nullable: library::Nullable(false),
-                    allow_none: false,
                     array_length: None,
                     is_error: false,
                     doc: None,

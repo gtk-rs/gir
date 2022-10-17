@@ -49,7 +49,6 @@ pub struct RustParameter {
     pub ind_c: usize, //index in `Vec<CParameter>`
     pub name: String,
     pub typ: TypeId,
-    pub allow_none: bool,
 }
 
 #[derive(Clone, Debug)]
@@ -309,7 +308,6 @@ pub fn analyze(
                 name: name.clone(),
                 typ,
                 ind_c,
-                allow_none: par.allow_none,
             };
             parameters.rust_parameters.push(rust_par);
         } else {

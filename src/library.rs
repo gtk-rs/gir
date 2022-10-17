@@ -516,7 +516,6 @@ pub struct Parameter {
     pub transfer: Transfer,
     pub caller_allocates: bool,
     pub nullable: Nullable,
-    pub allow_none: bool,
     pub array_length: Option<u32>,
     pub is_error: bool,
     pub doc: Option<String>,
