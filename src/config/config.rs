@@ -118,7 +118,6 @@ pub struct Config {
     pub extra_versions: Vec<Version>,
     pub lib_version_overrides: HashMap<Version, Version>,
     pub feature_dependencies: HashMap<Version, Vec<String>>,
-    pub dox_feature_dependencies: Vec<String>,
 }
 
 impl Config {
@@ -345,7 +344,6 @@ impl Config {
         let extra_versions = read_extra_versions(&toml)?;
         let lib_version_overrides = read_lib_version_overrides(&toml)?;
         let feature_dependencies = read_feature_dependencies(&toml)?;
-        let dox_feature_dependencies = read_dox_feature_dependencies(&toml)?;
 
         Ok(Config {
             work_mode,
@@ -374,7 +372,6 @@ impl Config {
             extra_versions,
             lib_version_overrides,
             feature_dependencies,
-            dox_feature_dependencies,
         })
     }
 
@@ -476,24 +473,6 @@ fn read_extra_versions(toml: &toml::Value) -> Result<Vec<Version>, String> {
                 })
             })
             .map(|s| s.and_then(str::parse))
-            .collect(),
-        None => Ok(Vec::new()),
-    }
-}
-
-fn read_dox_feature_dependencies(toml: &toml::Value) -> Result<Vec<String>, String> {
-    match toml.lookup("options.dox_feature_dependencies") {
-        Some(a) => a
-            .as_result_vec("options.dox_feature_dependencies")?
-            .iter()
-            .map(|v| {
-                v.as_str()
-                    .ok_or_else(|| {
-                        "options.dox_feature_dependencies expected to be array of string"
-                            .to_string()
-                    })
-                    .map(str::to_owned)
-            })
             .collect(),
         None => Ok(Vec::new()),
     }
