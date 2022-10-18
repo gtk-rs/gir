@@ -7,6 +7,7 @@ use std::str::FromStr;
 pub struct ExternalLibrary {
     pub namespace: String,
     pub crate_name: String,
+    pub lib_name: String,
     pub min_version: Option<Version>,
 }
 
@@ -16,10 +17,14 @@ pub fn read_external_libraries(toml: &toml::Value) -> Result<Vec<ExternalLibrary
             .as_result_vec("options.external_libraries")?
             .iter()
             .filter_map(|v| v.as_str().map(String::from))
-            .map(|namespace| ExternalLibrary {
-                crate_name: crate_name(&namespace),
-                min_version: None,
-                namespace,
+            .map(|namespace| {
+                let crate_name_ = crate_name(&namespace);
+                ExternalLibrary {
+                    crate_name: crate_name_.clone(),
+                    lib_name: crate_name_,
+                    min_version: None,
+                    namespace,
+                }
             })
             .collect(),
         None => Vec::new(),
@@ -42,6 +47,7 @@ pub fn read_external_libraries(toml: &toml::Value) -> Result<Vec<ExternalLibrary
                 let lib = ExternalLibrary {
                     namespace: namespace.to_owned(),
                     crate_name: crate_name_,
+                    lib_name: crate_name(namespace),
                     min_version,
                 };
                 external_libraries.push(lib);
@@ -50,6 +56,7 @@ pub fn read_external_libraries(toml: &toml::Value) -> Result<Vec<ExternalLibrary
                 let lib = ExternalLibrary {
                     namespace: namespace.to_owned(),
                     crate_name: crate_name_.clone(),
+                    lib_name: crate_name(custom_lib.1.as_str().expect("No custom lib name set")),
                     min_version: None,
                 };
                 external_libraries.push(lib);
@@ -98,6 +105,7 @@ other-lib="OtherLib"
             ExternalLibrary {
                 namespace: "GLib".to_owned(),
                 crate_name: "glib".to_owned(),
+                lib_name: "glib".to_owned(),
                 min_version: None,
             }
         );
@@ -106,6 +114,7 @@ other-lib="OtherLib"
             ExternalLibrary {
                 namespace: "Gdk".to_owned(),
                 crate_name: "gdk".to_owned(),
+                lib_name: "gdk".to_owned(),
                 min_version: None,
             }
         );
@@ -114,6 +123,7 @@ other-lib="OtherLib"
             ExternalLibrary {
                 namespace: "GdkPixbuf".to_owned(),
                 crate_name: "gdk_pixbuf".to_owned(),
+                lib_name: "gdk_pixbuf".to_owned(),
                 min_version: None,
             }
         );
@@ -123,6 +133,7 @@ other-lib="OtherLib"
             ExternalLibrary {
                 namespace: "CoolLib".to_owned(),
                 crate_name: "coollib".to_owned(),
+                lib_name: "cool_lib".to_owned(),
                 min_version: None,
             }
         );
@@ -131,6 +142,7 @@ other-lib="OtherLib"
             ExternalLibrary {
                 namespace: "OtherLib".to_owned(),
                 crate_name: "other-lib".to_owned(),
+                lib_name: "other_lib".to_owned(),
                 min_version: None,
             }
         );
@@ -153,6 +165,7 @@ OtherLib={min_version = "0.4.0"}
             ExternalLibrary {
                 namespace: "CoolLib".to_owned(),
                 crate_name: "coollib".to_owned(),
+                lib_name: "cool_lib".to_owned(),
                 min_version: Some(Version::from_str("0.3.0").unwrap()),
             }
         );
@@ -161,6 +174,7 @@ OtherLib={min_version = "0.4.0"}
             ExternalLibrary {
                 namespace: "OtherLib".to_owned(),
                 crate_name: "other_lib".to_owned(),
+                lib_name: "other_lib".to_owned(),
                 min_version: Some(Version::from_str("0.4.0").unwrap()),
             }
         );

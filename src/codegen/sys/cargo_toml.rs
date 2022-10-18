@@ -131,16 +131,6 @@ fn fill_in(root: &mut Table, env: &Env) {
             features.insert(version.to_feature(), Value::Array(prev_array));
             Some(version)
         });
-        features.insert(
-            "dox".to_string(),
-            Value::Array(
-                env.config
-                    .dox_feature_dependencies
-                    .iter()
-                    .map(|s| Value::String(s.clone()))
-                    .collect(),
-            ),
-        );
     }
 
     {
@@ -190,6 +180,15 @@ fn fill_in(root: &mut Table, env: &Env) {
                     .collect::<Vec<_>>(),
             ),
         );
+    }
+
+    {
+        let features = upsert_table(root, "features");
+        let mut dox_features = Vec::new();
+        for ext_lib in &env.config.external_libraries {
+            dox_features.push(Value::String(format!("{}/dox", ext_lib.lib_name)));
+        }
+        features.insert("dox".to_string(), Value::Array(dox_features));
     }
 }
 
