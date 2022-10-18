@@ -102,6 +102,7 @@ impl Bounds {
                     &bound_type,
                     *par.nullable,
                     par.instance_parameter,
+                    par.move_,
                 ));
                 if r#async && (par.name == "callback" || par.name.ends_with("_callback")) {
                     let func_name = func.c_identifier.as_ref().unwrap();
@@ -182,7 +183,12 @@ impl Bounds {
             }
         } else if par.instance_parameter {
             if let Some(bound_type) = Bounds::type_for(env, par.typ) {
-                ret = Some(Bounds::get_to_glib_extra(&bound_type, *par.nullable, true));
+                ret = Some(Bounds::get_to_glib_extra(
+                    &bound_type,
+                    *par.nullable,
+                    true,
+                    par.move_,
+                ));
             }
         }
 
@@ -214,12 +220,15 @@ impl Bounds {
         bound_type: &BoundType,
         nullable: bool,
         instance_parameter: bool,
+        move_: bool,
     ) -> String {
         use self::BoundType::*;
         match bound_type {
             AsRef(_) if nullable => ".as_ref().map(|p| p.as_ref())".to_owned(),
+            AsRef(_) if move_ => ".upcast()".to_owned(),
             AsRef(_) => ".as_ref()".to_owned(),
             IsA(_) if nullable && !instance_parameter => ".map(|p| p.as_ref())".to_owned(),
+            IsA(_) if move_ => ".upcast()".to_owned(),
             IsA(_) => ".as_ref()".to_owned(),
             _ => String::new(),
         }
