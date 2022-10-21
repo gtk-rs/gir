@@ -879,7 +879,7 @@ fn analyze_function(
         }
 
         imports.add_used_types(&used_types);
-        if ret.base_tid.is_some() {
+        if ret.base_tid.is_some() || parameters.c_parameters.iter().any(|p| p.move_) {
             imports.add("glib::object::Cast");
         }
 

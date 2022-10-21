@@ -49,7 +49,6 @@ pub struct RustParameter {
     pub ind_c: usize, //index in `Vec<CParameter>`
     pub name: String,
     pub typ: TypeId,
-    pub allow_none: bool,
 }
 
 #[derive(Clone, Debug)]
@@ -226,7 +225,7 @@ pub fn analyze(
         if async_func && async_param_to_remove(&par.name) {
             add_rust_parameter = false;
         }
-
+        let move_ = configured_parameters.iter().any(|p| p.move_);
         let mut array_par = configured_parameters.iter().find_map(|cp| {
             cp.length_of
                 .as_ref()
@@ -246,6 +245,7 @@ pub fn analyze(
                         &bound_type,
                         *array_par.nullable,
                         array_par.instance_parameter,
+                        move_,
                     ))
                     .into();
             }
@@ -297,7 +297,7 @@ pub fn analyze(
             user_data_index: par.closure,
             destroy_index: par.destroy,
             try_from_glib: try_from_glib.clone(),
-            move_: configured_parameters.iter().any(|p| p.move_),
+            move_,
         };
         parameters.c_parameters.push(c_par);
 
@@ -309,7 +309,6 @@ pub fn analyze(
                 name: name.clone(),
                 typ,
                 ind_c,
-                allow_none: par.allow_none,
             };
             parameters.rust_parameters.push(rust_par);
         } else {

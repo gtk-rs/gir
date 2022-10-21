@@ -10,7 +10,7 @@ libc = "0.2"
 package = "cairo-sys-rs"
 git = "https://github.com/gtk-rs/cairo"
 
-[dependencies.gdk-pixbuf]
+[dependencies.gdk_pixbuf]
 package = "gdk-pixbuf-sys"
 path = "../gdk-pixbuf-sys"
 
