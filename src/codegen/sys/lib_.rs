@@ -388,7 +388,7 @@ fn generate_interfaces_structs(
             w,
             &interface.c_type,
             &format!(
-                "write!(f, \"{name} @ {{:p}}\", self)",
+                "write!(f, \"{name} @ {{self:p}}\")",
                 name = interface.c_type
             ),
         )?;
@@ -449,7 +449,7 @@ pub struct GHookList {
 
 impl ::std::fmt::Debug for GHookList {
     fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
-        write!(f, "GHookList @ {:p}", self)
+        write!(f, "GHookList @ {self:p}")
     }
 }
 
@@ -516,7 +516,7 @@ fn generate_from_fields(
     )?;
     writeln!(
         w,
-        "\t\tf.debug_struct(&format!(\"{name} @ {{:p}}\", self))",
+        "\t\tf.debug_struct(&format!(\"{name} @ {{self:p}}\"))",
         name = &fields.name
     )?;
     for field in fields.fields.iter().filter(|f| f.debug) {

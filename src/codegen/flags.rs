@@ -122,7 +122,7 @@ fn generate_flags(
         }
         writeln!(
             w,
-            "\t\tconst {} = {}::{} as u32;",
+            "\t\tconst {} = {}::{} as _;",
             name, sys_crate_name, member.c_identifier,
         )?;
     }
