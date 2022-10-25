@@ -147,7 +147,7 @@ impl ToCode for Chunk {
                 let mut v: Vec<String> = Vec::with_capacity(6);
                 if is_detailed {
                     v.push(format!(
-                        r#"let detailed_signal_name = detail.map(|name| {{ format!("{0}::{{}}\0", name) }});"#,
+                        r#"let detailed_signal_name = detail.map(|name| {{ format!("{0}::{{name}}\0") }});"#,
                         signal
                     ));
                     v.push(format!(
