@@ -134,8 +134,14 @@ pub fn shared_lib_name_to_link_name(name: &str) -> &str {
         s = &s[3..];
     }
 
-    let offset = s.find(".so").unwrap_or(s.len());
-    s = &s[..offset];
+    if let Some(offset) = s.rfind(".so") {
+        s = &s[..offset];
+    } else if let Some(offset) = s.rfind(".dll") {
+        s = &s[..offset];
+        if let Some(offset) = s.rfind('-') {
+            s = &s[..offset];
+        }
+    }
 
     s
 }
@@ -250,6 +256,7 @@ mod tests {
 
     #[test]
     fn shared_lib_name_to_link_name_works() {
+        assert_eq!(shared_lib_name_to_link_name("libgtk-4-1.dll"), "gtk-4");
         assert_eq!(shared_lib_name_to_link_name("libatk-1.0.so.0"), "atk-1.0");
         assert_eq!(
             shared_lib_name_to_link_name("libgdk_pixbuf-2.0.so.0"),
