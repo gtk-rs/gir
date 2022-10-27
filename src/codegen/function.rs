@@ -118,9 +118,20 @@ pub fn generate(
         ""
     };
 
+    let allow_should_implement_trait = if analysis.codegen_name() == "default" {
+        format!(
+            "{}{}#[allow(clippy::should_implement_trait)]",
+            tabs(indent),
+            comment_prefix
+        )
+    } else {
+        String::new()
+    };
+
     writeln!(
         w,
-        "{}{}{}{}{}{}{}{}",
+        "{}{}{}{}{}{}{}{}{}",
+        allow_should_implement_trait,
         dead_code_cfg,
         get_must_use_if_needed(
             parent_type_id,
