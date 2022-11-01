@@ -1,5 +1,5 @@
 # Generating the FFI library
-We have installed gir, set up our repo and have all the .gir files we need. Now let's work on the unsafe bindings of the -sys crate. Let's change into the directory of the sys crate.
+We have installed [gir], set up our repo and have all the `.gir` files we need. Now let's work on the unsafe bindings of the -sys crate. Let's change into the directory of the sys crate.
 
 ```sh
 cd pango/pango-sys
@@ -49,7 +49,7 @@ Now let's try to build it:
 cargo build
 ```
 
-Surprise! It doesn't build at all and you should see a loooooot of errors. Well, that was expected. We need to add some dependencies in order to make it work. Have a look at the errors of the compiler to find out which are missing. In our example, the compiler throws the following errors:
+Surprise! It doesn't build at all and you should see a lot of errors. Well, that was expected. We need to add some dependencies in order to make it work. Have a look at the errors of the compiler to find out which are missing. In our example, the compiler throws the following errors:
 ```rust
 use of undeclared crate or module `glib`
 use of undeclared crate or module `gobject`
