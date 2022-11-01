@@ -34,3 +34,5 @@ cargo doc
 Congratulations, we are done! You have successfully created the safe wrapper for a C library!
 
 You can easily publish your generated bindings and the wrapper to crates.io to allow others to use it. Publishing crates is easy but keep in mind that they need to be maintained as well. We set up the project folder in a way that easily allows sharing the code. All that is needed is to add some information to your Cargo.toml. Gir will not override them when you re-generate bindings. Easy, right? If this is your first time publishing a crate, you can find a detailed guide [here](https://doc.rust-lang.org/cargo/reference/publishing.html).
+
+Before you publish the crate, please ensure docs.rs will activate the dox feature and the dox feature of the safe wrapper crate also activates the feature of its dependencies and the unsafe FFI bindings you created. Feel free to go back to the chapter about the [Cargo.toml file of the safe wrapper](high_level_rust_api.md#the-cargotoml-file) to read more about it. If you skip this step, your crate and all crates depending on it will not have documentation available on docs.rs.

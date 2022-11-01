@@ -9,7 +9,7 @@ Add the following lines to the file:
 [package.metadata.docs.rs]
 features = ["dox"]
 ```
-This automatically activates the `dox` feature if you chose to publish the bindings and docs.rs tries to build the documentation. If you are not going to maintain the crate and don't want to publish it, this line is not going to hurt.
+This automatically activates the `dox` feature if you chose to publish the bindings and docs.rs tries to build the documentation. The `dox` feature skips linking the C libraries and allows docs.rs to build the documentation without having the underlying libraries installed. Even if you don't plan to publish it, this line is not going to hurt.
 
 We also need to add `libc`, `bitflags`, `glib` and `glib-sys` and all other dependencies we used in the sys crate as dependencies. Because we are creating a wrapper for the sys crate, which we generated in the previous chapter, we also need to add the sys crate to the list of dependencies. In the automatically generated code, the sys crate is always called `ffi`, so we need to rename the sys crate in our `Cargo.toml`. For our example, this results in the following dependencies:
 ```toml
