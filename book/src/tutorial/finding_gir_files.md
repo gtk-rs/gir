@@ -21,6 +21,6 @@ We want to generate the wrapper for pango. It is related to GTK, so in order to 
 
 ```sh
 git clone --depth 1 https://github.com/gtk-rs/gir-files
+git config -f .gitmodules submodule.gir-files.update none
 ```
-
-If you look into `gir-files`, you'll see a file named `Pango-1.0.gir`. That's the one for pango. Because we already cloned the gir-files repo, we also have all the other .gir files of the dependencies that we need. Now we can create the unsafe bindings.
+We also change the setting so that the submodule is not automatically checked out, otherwise anyone using your library from git will have the useless submodule checked out. If you look into `gir-files`, you'll see a file named `Pango-1.0.gir`. That's the one for pango. Because we already cloned the gir-files repo, we also have all the other .gir files of the dependencies that we need. Now we can create the unsafe bindings.
