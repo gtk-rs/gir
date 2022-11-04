@@ -71,7 +71,7 @@ impl Default for Bounds {
 pub struct CallbackInfo {
     pub callback_type: String,
     pub success_parameters: String,
-    pub error_parameters: String,
+    pub error_parameters: Option<String>,
     pub bound_name: char,
 }
 
@@ -134,8 +134,12 @@ impl Bounds {
                         }
                         let parameters = format_out_parameters(&out_parameters);
                         let error_type = find_error_type(env, function);
-                        type_string =
-                            format!("FnOnce(Result<{}, {}>) + 'static", parameters, error_type);
+                        if let Some(ref error) = error_type {
+                            type_string =
+                                format!("FnOnce(Result<{}, {}>) + 'static", parameters, error);
+                        } else {
+                            type_string = format!("FnOnce({}) + 'static", parameters);
+                        }
                         let bound_name = *self.unused.front().unwrap();
                         callback_info = Some(CallbackInfo {
                             callback_type: type_string.clone(),
@@ -172,7 +176,7 @@ impl Bounds {
                         callback_info = Some(CallbackInfo {
                             callback_type: type_string.clone(),
                             success_parameters: String::new(),
-                            error_parameters: String::new(),
+                            error_parameters: None,
                             bound_name,
                         });
                     }
@@ -355,19 +359,21 @@ fn format_out_parameters(parameters: &[String]) -> String {
     }
 }
 
-fn find_error_type(env: &Env, function: &Function) -> String {
+fn find_error_type(env: &Env, function: &Function) -> Option<String> {
     let error_param = function
         .parameters
         .iter()
-        .find(|param| param.direction == ParameterDirection::Out && param.name == "error")
-        .expect("error type");
+        .find(|param| param.direction == ParameterDirection::Out && param.name == "error")?;
     if let Type::Record(_) = env.type_(error_param.typ) {
-        return RustType::builder(env, error_param.typ)
-            .direction(error_param.direction)
-            .try_build()
-            .into_string();
+        return Some(
+            RustType::builder(env, error_param.typ)
+                .direction(error_param.direction)
+                .try_build()
+                .into_string(),
+        );
+    } else {
+        None
     }
-    panic!("cannot find error type")
 }
 
 #[cfg(test)]
