@@ -363,7 +363,7 @@ fn find_error_type(env: &Env, function: &Function) -> Option<String> {
     let error_param = function
         .parameters
         .iter()
-        .find(|param| param.direction == ParameterDirection::Out && param.name == "error")?;
+        .find(|param| param.direction.is_out() && param.is_error)?;
     if let Type::Record(_) = env.type_(error_param.typ) {
         return Some(
             RustType::builder(env, error_param.typ)
