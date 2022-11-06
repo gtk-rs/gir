@@ -27,7 +27,7 @@ single_version_file = true
 * `work_mode` stands for the mode gir is using. The options here are `sys` and `normal`.
 * `single_version_file` is a very useful option when you have a lot of generated files (like we'll have). Instead of generating the gir hash commit used for the generation in the header of all generated files, it'll just write it inside one file, removing `git diff` noise **a lot**.
 
-You can find out the values for `library` and `version` by looking at the name of the .gir file of your library. In our case it is called Pango-1.0.gir. This tells us that the `library` is Pango and the `version` is 1.0. If you don't know what value to use for `min_cfg_version`, use the same as you use for `version`. Because we are generating the unsafe bindings, we use the `sys` work mode.
+You can find out the values for `library` and `version` by looking at the name of the .gir file of your library. In our case it is called Pango-1.0.gir. This tells us that the `library` is Pango and the `version` is 1.0. If you don't know what value to use for `min_cfg_version`, use the same as you use for `version`. If not all `.gir` files that are needed reside in `../../gir-files/`, you can add the path to the other files by changing `girs_directories`. If for example you also have `.gir` files in the root of your project folder, change it to `girs_directories = ["../../gir-files/", "../.."]`. Because we are generating the unsafe bindings, we use the `sys` work mode.
 
 Let's generate the `sys` crate now:
 

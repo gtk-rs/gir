@@ -23,12 +23,12 @@ cd ..
 Of course we also need to download and install [gir].
 ```sh
 git submodule add https://github.com/gtk-rs/gir
-git config -f .gitmodules submodule.gir.update none
+git submodule set-branch --branch master -- ./gir
 cd gir
 cargo install --path .
 cd ..
 ```
-By adding it as a submodule, we are able to fetch future updates of the tool and we always exactly know which gir version we used to generate our bindings. We also change the setting so that the submodule is not automatically checked out, otherwise anyone using your library from git will have the useless submodule checked out. 
+By adding it as a submodule, we are able to fetch future updates of the tool and we always exactly know which gir version we used to generate our bindings. We also set the branch of the submodule to master. 
 
 If there are any updates to gir in the future, we can install them by opening our project folder `gir-tutorial` and running
 ```sh
