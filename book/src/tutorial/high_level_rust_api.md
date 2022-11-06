@@ -60,7 +60,7 @@ v1_46 = ["v1_44"]
 v1_48 = ["v1_46"]
 v1_50 = ["v1_48"]
 v1_52 = ["v1_50"]
-dox = []
+dox = ["glib/dox", "gobject/dox"]
 ```
 
 You need to change the features in the Cargo.toml of your normal crate to
@@ -93,7 +93,7 @@ v1_46 = ["ffi/v1_46", "v1_44"]
 v1_48 = ["ffi/v1_48", "v1_46"]
 v1_50 = ["ffi/v1_50", "v1_48"]
 v1_52 = ["ffi/v1_52", "v1_50"]
-dox = ["ffi/dox"]
+dox = ["glib/dox", "gobject/dox", "ffi/dox"]
 ```
 
 ## The lib.rs file
