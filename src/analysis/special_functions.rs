@@ -249,7 +249,10 @@ pub fn analyze_imports(specials: &Infos, imports: &mut Imports) {
             Copy if info.first_parameter_mut => {
                 imports.add_with_version("glib::translate::*", info.version);
             }
-            Compare => imports.add_with_version("std::cmp", info.version),
+            Compare => {
+                imports.add_with_version("std::cmp", info.version);
+                imports.add_with_version("glib::translate::*", info.version);
+            }
             Display => imports.add_with_version("std::fmt", info.version),
             Hash => imports.add_with_version("std::hash", info.version),
             Equal => imports.add_with_version("glib::translate::*", info.version),
