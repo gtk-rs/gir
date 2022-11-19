@@ -235,6 +235,7 @@ fn fixup_gpointer_parameter(
     env: &Env,
     type_tid: library::TypeId,
     is_boxed: bool,
+    in_trait: bool,
     parameters: &mut Parameters,
     idx: usize,
 ) {
@@ -264,7 +265,7 @@ fn fixup_gpointer_parameter(
                 " as {}",
                 nameutil::use_glib_if_needed(env, "ffi::gconstpointer")
             ),
-            in_trait: false,
+            in_trait,
             nullable: false,
             move_: false,
         },
@@ -276,6 +277,7 @@ fn fixup_special_functions(
     name: &str,
     type_tid: library::TypeId,
     is_boxed: bool,
+    in_trait: bool,
     parameters: &mut Parameters,
 ) {
     // Workaround for some _hash() / _compare() / _equal() functions taking
@@ -284,7 +286,7 @@ fn fixup_special_functions(
         && parameters.c_parameters.len() == 1
         && parameters.c_parameters[0].c_type == "gconstpointer"
     {
-        fixup_gpointer_parameter(env, type_tid, is_boxed, parameters, 0);
+        fixup_gpointer_parameter(env, type_tid, is_boxed, in_trait, parameters, 0);
     }
 
     if (name == "compare" || name == "equal" || name == "is_equal")
@@ -292,8 +294,8 @@ fn fixup_special_functions(
         && parameters.c_parameters[0].c_type == "gconstpointer"
         && parameters.c_parameters[1].c_type == "gconstpointer"
     {
-        fixup_gpointer_parameter(env, type_tid, is_boxed, parameters, 0);
-        fixup_gpointer_parameter(env, type_tid, is_boxed, parameters, 1);
+        fixup_gpointer_parameter(env, type_tid, is_boxed, in_trait, parameters, 0);
+        fixup_gpointer_parameter(env, type_tid, is_boxed, in_trait, parameters, 1);
     }
 }
 
@@ -699,7 +701,14 @@ fn analyze_function(
         }
     }
 
-    fixup_special_functions(env, name.as_str(), type_tid, is_boxed, &mut parameters);
+    fixup_special_functions(
+        env,
+        name.as_str(),
+        type_tid,
+        is_boxed,
+        in_trait,
+        &mut parameters,
+    );
 
     // Key: destroy callback index
     // Value: associated user data index
