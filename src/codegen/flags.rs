@@ -325,6 +325,21 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
             gtype = use_glib_type(env, "Type"),
         )?;
         writeln!(w)?;
+
+        version_condition(w, env, None, version, false, 0)?;
+        cfg_condition_no_doc(w, config.cfg_condition.as_ref(), false, 0)?;
+        writeln!(
+            w,
+            "impl From<{name}> for {gvalue} {{
+    #[inline]
+    fn from(v: {name}) -> Self {{
+        ToValue::to_value(&v)
+    }}
+}}",
+            name = flags.name,
+            gvalue = use_glib_type(env, "Value"),
+        )?;
+        writeln!(w)?;
     }
 
     Ok(())
