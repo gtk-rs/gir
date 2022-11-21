@@ -583,7 +583,7 @@ pub fn resolve_type_ids(objects: &mut GObjects, library: &Library) {
 
     for (name, object) in objects.iter_mut() {
         let type_id = library.find_type(0, name);
-        if type_id.is_none() && name != &global_functions_name {
+        if type_id.is_none() && name != &global_functions_name && object.status != GStatus::Ignore {
             warn!("Configured object `{}` missing from the library", name);
         } else if object.generate_builder {
             if let Some(type_id) = type_id {
