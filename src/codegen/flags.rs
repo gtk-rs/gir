@@ -333,11 +333,12 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
             "impl From<{name}> for {gvalue} {{
     #[inline]
     fn from(v: {name}) -> Self {{
-        ToValue::to_value(&v)
+        {assert}ToValue::to_value(&v)
     }}
 }}",
             name = flags.name,
             gvalue = use_glib_type(env, "Value"),
+            assert = assert,
         )?;
         writeln!(w)?;
     }
