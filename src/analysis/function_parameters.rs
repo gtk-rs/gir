@@ -363,7 +363,13 @@ pub fn analyze(
                 ref_mode,
                 to_glib_extra: Default::default(),
                 explicit_target_type: Default::default(),
-                pointer_cast: Default::default(),
+                pointer_cast: if matches!(env.library.type_(typ), library::Type::CArray(_))
+                    && par.c_type == "gpointer"
+                {
+                    format!(" as {}", nameutil::use_glib_if_needed(env, "ffi::gpointer"))
+                } else {
+                    Default::default()
+                },
                 in_trait,
                 nullable: *nullable,
                 move_: configured_parameters.iter().any(|p| p.move_),
