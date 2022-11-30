@@ -145,7 +145,11 @@ fn prepare_cconsts(env: &Env) -> Vec<CConstant> {
                     // see the GValue machinery around them for example
                     constants.push(CConstant {
                         name: format!("(guint) {}", member.c_identifier),
-                        value: member.value.clone(),
+                        value: member
+                            .value
+                            .parse::<i32>()
+                            .map(|i| (i as u32).to_string())
+                            .unwrap_or_else(|_| member.value.clone()),
                     });
                 }
             }
