@@ -44,7 +44,14 @@ pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>) {
                 if let Some(cfg) = version_condition_string(env, None, constant.version, false, 0) {
                     mod_rs.push(cfg);
                 }
-                mod_rs.push(format!("pub use self::constants::{};", constant.name));
+                mod_rs.push(format!(
+                    "{}pub use self::constants::{};",
+                    constant
+                        .deprecated_version
+                        .map(|_| "#[allow(deprecated)]\n")
+                        .unwrap_or(""),
+                    constant.name
+                ));
             }
         }
 

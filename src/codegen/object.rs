@@ -26,6 +26,13 @@ pub fn generate(
     generate_display_trait: bool,
 ) -> Result<()> {
     general::start_comments(w, &env.config)?;
+    if analysis
+        .functions
+        .iter()
+        .any(|f| f.deprecated_version.is_some())
+    {
+        writeln!(w, "#![allow(deprecated)]")?;
+    }
     general::uses(w, env, &analysis.imports, analysis.version)?;
 
     let config = &env.config.objects[&analysis.full_name];
