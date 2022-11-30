@@ -297,6 +297,8 @@ fn generate_abi_rs(
     info!("Generating file {:?}", path);
     general::start_comments(w, &env.config)?;
     writeln!(w)?;
+    writeln!(w, "#![cfg(target_os = \"linux\")]")?;
+    writeln!(w)?;
 
     if !ctypes.is_empty() {
         writeln!(w, "use {}::*;", crate_name)?;
@@ -414,7 +416,6 @@ impl Results {
 }
 
 #[test]
-#[cfg(target_os = "linux")]
 fn cross_validate_constants_with_c() {
     let mut c_constants: Vec<(String, String)> = Vec::new();
 
@@ -449,7 +450,6 @@ fn cross_validate_constants_with_c() {
 }
 
 #[test]
-#[cfg(target_os = "linux")]
 fn cross_validate_layout_with_c() {
     let mut c_layouts = Vec::new();
 
