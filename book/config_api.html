@@ -5,7 +5,6 @@
         <meta charset="UTF-8">
         <title>API Options - Generate Rust bindings for GIR based libraries</title>
         <!-- Custom HTML head -->
-        <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
         <meta name="description" content="">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="theme-color" content="#ffffff" />
@@ -28,13 +27,13 @@
     </head>
     <body>
         <!-- Provide site root to javascript -->
-        <script type="text/javascript">
+        <script>
             var path_to_root = "";
             var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "navy" : "light";
         </script>
 
         <!-- Work around some values being stored in localStorage wrapped in quotes -->
-        <script type="text/javascript">
+        <script>
             try {
                 var theme = localStorage.getItem('mdbook-theme');
                 var sidebar = localStorage.getItem('mdbook-sidebar');
@@ -50,7 +49,7 @@
         </script>
 
         <!-- Set the theme before any content is loaded, prevents flash -->
-        <script type="text/javascript">
+        <script>
             var theme;
             try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
             if (theme === null || theme === undefined) { theme = default_theme; }
@@ -62,7 +61,7 @@
         </script>
 
         <!-- Hide / unhide sidebar before it is displayed -->
-        <script type="text/javascript">
+        <script>
             var html = document.querySelector('html');
             var sidebar = 'hidden';
             if (document.body.clientWidth >= 1080) {
@@ -93,7 +92,7 @@
                             <i class="fa fa-paint-brush"></i>
                         </button>
                         <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
-                            <li role="none"><button role="menuitem" class="theme" id="light">Light (default)</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
                             <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
                             <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
                             <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
@@ -130,7 +129,7 @@
                     </div>
                 </div>
                 <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
-                <script type="text/javascript">
+                <script>
                     document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
                     document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
                     Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
@@ -499,8 +498,7 @@ parameter is declared <code>mandatory</code>, <code>impl Into&lt;Option&lt;T&gt;
 name = &quot;Gst.ClockTime&quot;
 status = &quot;manual&quot;
 conversion_type = &quot;Option&quot;
-<span class="boring">}
-</span></code></pre></pre>
+<span class="boring">}</span></code></pre></pre>
 <p>The type <code>ClockTime</code> implements <code>glib::TryFromGlib&lt;Error=GlibNoneError&gt;</code> (and
 <code>OptionToGlib</code>), which means that its Rust representation can take advantage of
 <code>Option&lt;ClockTime&gt;</code>.</p>
@@ -517,8 +515,7 @@ manual_traits = [&quot;ClockExtManual&quot;]
         [[object.function.parameter]]
         name = &quot;internal&quot;
         mandatory = true
-<span class="boring">}
-</span></code></pre></pre>
+<span class="boring">}</span></code></pre></pre>
 <p>In the above example, the user instructs gir to consider the <code>internal</code> argument
 (which also happens to be an out argument) with type gir <code>Gst.ClockTime</code> can be
 represented as a <code>ClockTime</code> without the <code>Option</code>. This argument is actually
@@ -535,8 +532,7 @@ value to be defined):</p>
         Option&lt;ClockTime&gt;,
         Option&lt;ClockTime&gt;,
     );
-<span class="boring">}
-</span></code></pre></pre>
+<span class="boring">}</span></code></pre></pre>
 <p>For a return value, the mandatory declaration reads:</p>
 <pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
@@ -546,8 +542,7 @@ value to be defined):</p>
         [object.function.return]
 <span class="boring">        always returns a value
 </span>        mandatory = true
-<span class="boring">}
-</span></code></pre></pre>
+<span class="boring">}</span></code></pre></pre>
 <h2 id="conversion_type-result"><a class="header" href="#conversion_type-result">conversion_type &quot;Result&quot;</a></h2>
 <p>The <code>conversion_type</code> variant <code>Result</code> is available for types <code>T</code> implementing
 <code>glib::TryFromGlib&lt;Error=Err&gt;</code> where <code>Err</code> is neither <code>GlibNoneError</code> nor
@@ -571,8 +566,7 @@ must_use = true
     variant = &quot;Result&quot;
     ok_type = &quot;gst::StateChangeSuccess&quot;
     err_type = &quot;gst::StateChangeError&quot;
-<span class="boring">}
-</span></code></pre></pre>
+<span class="boring">}</span></code></pre></pre>
 <h2 id="boxed-types-vs-boxedinline-types"><a class="header" href="#boxed-types-vs-boxedinline-types">Boxed types vs. BoxedInline types</a></h2>
 <p>For boxed types / records, gir auto-detects <code>copy</code>/<code>free</code> or <code>ref</code>/<code>unref</code>
 function pairs for memory management on records. It falls back to generic
@@ -623,8 +617,7 @@ clear_function_expression = &quot;|_ptr| ()&quot;
 <pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>pub use auto::*;
-<span class="boring">}
-</span></code></pre></pre>
+<span class="boring">}</span></code></pre></pre>
 <h2 id="add-manual-bindings-alongside-generated-code"><a class="header" href="#add-manual-bindings-alongside-generated-code">Add manual bindings alongside generated code</a></h2>
 <p>Unfortunately, <code>gir</code> isn't perfect (yet) and will certainly not be able to generate all the code on its own. So here's what a <code>gir</code> generated folder looks like:</p>
 <pre><code class="language-text">- your_folder
@@ -644,8 +637,7 @@ clear_function_expression = &quot;|_ptr| ()&quot;
 pub use color::Color;
 
 mod color;
-<span class="boring">}
-</span></code></pre></pre>
+<span class="boring">}</span></code></pre></pre>
 
                     </main>
 
@@ -673,15 +665,15 @@ mod color;
 
         </div>
 
-        <script type="text/javascript">
+        <script>
             window.playground_copyable = true;
         </script>
-        <script src="elasticlunr.min.js" type="text/javascript" charset="utf-8"></script>
-        <script src="mark.min.js" type="text/javascript" charset="utf-8"></script>
-        <script src="searcher.js" type="text/javascript" charset="utf-8"></script>
-        <script src="clipboard.min.js" type="text/javascript" charset="utf-8"></script>
-        <script src="highlight.js" type="text/javascript" charset="utf-8"></script>
-        <script src="book.js" type="text/javascript" charset="utf-8"></script>
+        <script src="elasticlunr.min.js"></script>
+        <script src="mark.min.js"></script>
+        <script src="searcher.js"></script>
+        <script src="clipboard.min.js"></script>
+        <script src="highlight.js"></script>
+        <script src="book.js"></script>
 
         <!-- Custom JS scripts -->
     </body>

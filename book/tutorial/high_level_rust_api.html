@@ -5,7 +5,6 @@
         <meta charset="UTF-8">
         <title>Generating the Rust API - Generate Rust bindings for GIR based libraries</title>
         <!-- Custom HTML head -->
-        <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
         <meta name="description" content="">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="theme-color" content="#ffffff" />
@@ -28,13 +27,13 @@
     </head>
     <body>
         <!-- Provide site root to javascript -->
-        <script type="text/javascript">
+        <script>
             var path_to_root = "../";
             var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "navy" : "light";
         </script>
 
         <!-- Work around some values being stored in localStorage wrapped in quotes -->
-        <script type="text/javascript">
+        <script>
             try {
                 var theme = localStorage.getItem('mdbook-theme');
                 var sidebar = localStorage.getItem('mdbook-sidebar');
@@ -50,7 +49,7 @@
         </script>
 
         <!-- Set the theme before any content is loaded, prevents flash -->
-        <script type="text/javascript">
+        <script>
             var theme;
             try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
             if (theme === null || theme === undefined) { theme = default_theme; }
@@ -62,7 +61,7 @@
         </script>
 
         <!-- Hide / unhide sidebar before it is displayed -->
-        <script type="text/javascript">
+        <script>
             var html = document.querySelector('html');
             var sidebar = 'hidden';
             if (document.body.clientWidth >= 1080) {
@@ -93,7 +92,7 @@
                             <i class="fa fa-paint-brush"></i>
                         </button>
                         <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
-                            <li role="none"><button role="menuitem" class="theme" id="light">Light (default)</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
                             <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
                             <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
                             <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
@@ -130,7 +129,7 @@
                     </div>
                 </div>
                 <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
-                <script type="text/javascript">
+                <script>
                     document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
                     document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
                     Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
@@ -263,8 +262,7 @@ generate = []
 </span>pub use auto::*;
 
 mod auto;
-<span class="boring">}
-</span></code></pre></pre>
+<span class="boring">}</span></code></pre></pre>
 <p>Let's compile:</p>
 <pre><code class="language-sh">cargo build
 </code></pre>
@@ -279,8 +277,7 @@ mod auto;
         get_type =&gt; || gtk_source_sys::gtk_source_language_get_type(),
     }
 }
-<span class="boring">}
-</span></code></pre></pre>
+<span class="boring">}</span></code></pre></pre>
 <p>This macro comes from the <code>glib</code> crate. We didn't import it, therefore the Rust compiler can't find it. We'll also need its <code>sys</code> part (the case of <code>glib</code> is a bit special).</p>
 <p>A second issue is that we didn't import the <code>sourceview-sys</code> crate we generated. Gir produces code expecting this crate to be imported as &quot;ffi&quot; (which you can see in the definition of <code>Language</code> above), so we need to rename it in the <code>Cargo.toml</code> file, too.</p>
 <p>Alongside those two (three if we count <code>glib-sys</code>!), we'll need both <code>libc</code> and <code>bitflags</code>. Let's fix all of those issues at once! For that, we need to update the <code>Cargo.toml</code>:</p>
@@ -329,8 +326,7 @@ git = &quot;https://github.com/gtk-rs/sys&quot; # all gtk-rs sys crates are in t
 
 //#[cfg(any(feature = &quot;v3_22&quot;, feature = &quot;dox&quot;))]
 //fn get_buffer(&amp;self) -&gt; /*Ignored*/Option&lt;gtk::TextBuffer&gt;;
-<span class="boring">}
-</span></code></pre></pre>
+<span class="boring">}</span></code></pre></pre>
 <p>Some functions are commented. Why so? The reason is simple: we need to tell to <code>gir</code> that those types have been generated and that it can generate code using them. We can do it by adding the type into the &quot;manual&quot; list. To put it simply, when <a href="https://github.com/gtk-rs/gir">gir</a> sees an item into this &quot;manual&quot; list, it means to it &quot;this type has been generated somewhere else, you can use it just like the others&quot;.</p>
 <p>Let's update our <code>Gir.toml</code> file once again:</p>
 <pre><code class="language-toml">generate = [
@@ -356,8 +352,7 @@ cargo build
 </span><span class="boring">fn main() {
 </span>//#[cfg(any(feature = &quot;v3_22&quot;, feature = &quot;dox&quot;))]
 //fn get_start_region_iter(&amp;self, iter: /*Ignored*/RegionIter);
-<span class="boring">}
-</span></code></pre></pre>
+<span class="boring">}</span></code></pre></pre>
 <p>If a type name isn't prepend by <code>[crate_name]::</code>, then it means it comes from the current crate. To add it, just put it into the &quot;generate&quot; list of <code>Gir.toml</code>.</p>
 <p>At this point, you should have almost everything you need. There is just one last case we need to talk about.</p>
 
@@ -387,15 +382,15 @@ cargo build
 
         </div>
 
-        <script type="text/javascript">
+        <script>
             window.playground_copyable = true;
         </script>
-        <script src="../elasticlunr.min.js" type="text/javascript" charset="utf-8"></script>
-        <script src="../mark.min.js" type="text/javascript" charset="utf-8"></script>
-        <script src="../searcher.js" type="text/javascript" charset="utf-8"></script>
-        <script src="../clipboard.min.js" type="text/javascript" charset="utf-8"></script>
-        <script src="../highlight.js" type="text/javascript" charset="utf-8"></script>
-        <script src="../book.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
 
         <!-- Custom JS scripts -->
     </body>
