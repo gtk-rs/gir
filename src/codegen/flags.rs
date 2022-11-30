@@ -1,4 +1,4 @@
-use super::{function, trait_impls};
+use super::{function, general::allow_deprecated, trait_impls};
 use crate::{
     analysis::flags::Info,
     analysis::special_functions::Type,
@@ -51,7 +51,11 @@ pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>) {
                 mod_rs.push(cfg);
             }
             mod_rs.push(format!(
-                "{} use self::flags::{};",
+                "{}{} use self::flags::{};",
+                flags
+                    .deprecated_version
+                    .map(|_| "#[allow(deprecated)]\n")
+                    .unwrap_or(""),
                 flags_analysis.visibility.export_visibility(),
                 flags.name
             ));
@@ -143,6 +147,7 @@ fn generate_flags(
         writeln!(w)?;
         version_condition(w, env, None, flags.version, false, 0)?;
         cfg_condition_no_doc(w, config.cfg_condition.as_ref(), false, 0)?;
+        allow_deprecated(w, flags.deprecated_version, false, 0)?;
         write!(w, "impl {} {{", analysis.name)?;
         for func_analysis in functions {
             function::generate(
@@ -177,6 +182,7 @@ fn generate_flags(
         // Generate Display trait implementation.
         version_condition(w, env, None, flags.version, false, 0)?;
         cfg_condition_no_doc(w, config.cfg_condition.as_ref(), false, 0)?;
+        allow_deprecated(w, flags.deprecated_version, false, 0)?;
         writeln!(
             w,
             "impl fmt::Display for {0} {{\n\
@@ -210,6 +216,7 @@ fn generate_flags(
 
     version_condition(w, env, None, flags.version, false, 0)?;
     cfg_condition_no_doc(w, config.cfg_condition.as_ref(), false, 0)?;
+    allow_deprecated(w, flags.deprecated_version, false, 0)?;
     writeln!(
         w,
         "#[doc(hidden)]
@@ -234,6 +241,7 @@ impl IntoGlib for {name} {{
 
     version_condition(w, env, None, flags.version, false, 0)?;
     cfg_condition_no_doc(w, config.cfg_condition.as_ref(), false, 0)?;
+    allow_deprecated(w, flags.deprecated_version, false, 0)?;
     writeln!(
         w,
         "#[doc(hidden)]
@@ -258,6 +266,7 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
 
         version_condition(w, env, None, version, false, 0)?;
         cfg_condition_no_doc(w, config.cfg_condition.as_ref(), false, 0)?;
+        allow_deprecated(w, flags.deprecated_version, false, 0)?;
         writeln!(
             w,
             "impl StaticType for {name} {{
@@ -273,6 +282,7 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
 
         version_condition(w, env, None, version, false, 0)?;
         cfg_condition_no_doc(w, config.cfg_condition.as_ref(), false, 0)?;
+        allow_deprecated(w, flags.deprecated_version, false, 0)?;
         writeln!(
             w,
             "impl {valuetype} for {name} {{
@@ -285,6 +295,7 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
 
         version_condition(w, env, None, version, false, 0)?;
         cfg_condition_no_doc(w, config.cfg_condition.as_ref(), false, 0)?;
+        allow_deprecated(w, flags.deprecated_version, false, 0)?;
         writeln!(
             w,
             "unsafe impl<'a> FromValue<'a> for {name} {{
@@ -304,6 +315,7 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
 
         version_condition(w, env, None, version, false, 0)?;
         cfg_condition_no_doc(w, config.cfg_condition.as_ref(), false, 0)?;
+        allow_deprecated(w, flags.deprecated_version, false, 0)?;
         writeln!(
             w,
             "impl ToValue for {name} {{
@@ -328,6 +340,7 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
 
         version_condition(w, env, None, version, false, 0)?;
         cfg_condition_no_doc(w, config.cfg_condition.as_ref(), false, 0)?;
+        allow_deprecated(w, flags.deprecated_version, false, 0)?;
         writeln!(
             w,
             "impl From<{name}> for {gvalue} {{

@@ -1,8 +1,8 @@
 use super::{
     function_body_chunk,
     general::{
-        cfg_condition, cfg_deprecated, doc_alias, doc_hidden, not_version_condition,
-        version_condition,
+        allow_deprecated, cfg_condition, cfg_deprecated, doc_alias, doc_hidden,
+        not_version_condition, version_condition,
     },
     parameter::ToParameter,
     return_value::{out_parameter_types, out_parameters_as_return, ToReturnValue},
@@ -105,6 +105,7 @@ pub fn generate(
     version_condition(w, env, None, version, commented, indent)?;
     not_version_condition(w, analysis.not_version, commented, indent)?;
     doc_hidden(w, analysis.doc_hidden, comment_prefix, indent)?;
+    allow_deprecated(w, analysis.deprecated_version, commented, indent)?;
     if !in_trait || only_declaration {
         doc_alias(w, &analysis.glib_name, comment_prefix, indent)?;
         if analysis.codegen_name() != analysis.func_name {

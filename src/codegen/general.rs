@@ -922,6 +922,24 @@ pub fn doc_hidden(
     }
 }
 
+pub fn allow_deprecated(
+    w: &mut dyn Write,
+    allow_deprecated: Option<Version>,
+    commented: bool,
+    indent: usize,
+) -> Result<()> {
+    if allow_deprecated.is_some() {
+        writeln!(
+            w,
+            "{}{}#[allow(deprecated)]",
+            tabs(indent),
+            if commented { "//" } else { "" }
+        )
+    } else {
+        Ok(())
+    }
+}
+
 pub fn write_vec<T: Display>(w: &mut dyn Write, v: &[T]) -> Result<()> {
     for s in v {
         writeln!(w, "{}", s)?;
