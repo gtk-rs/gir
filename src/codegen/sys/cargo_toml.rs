@@ -139,7 +139,7 @@ fn fill_in(root: &mut Table, env: &Env) {
         let meta = upsert_table(meta, "system-deps");
 
         let ns = env.namespaces.main();
-        let lib_name = ns.package_name.as_ref().unwrap();
+        let lib_name = ns.package_names.first().unwrap();
 
         let meta = upsert_table(meta, nameutil::lib_name_to_toml(lib_name));
         // Allow both the name and version of a system dep to be overridden by hand

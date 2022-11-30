@@ -289,7 +289,10 @@ fn generate_abi_rs(
     cconsts: &[CConstant],
 ) -> io::Result<()> {
     let ns = env.library.namespace(MAIN_NAMESPACE);
-    let package_name = ns.package_name.as_ref().expect("Missing package name");
+    let mut package_names = ns.package_names.join("\", \"");
+    if !package_names.is_empty() {
+        package_names = format!("\"{}\"", package_names);
+    }
 
     info!("Generating file {:?}", path);
     general::start_comments(w, &env.config)?;
@@ -308,7 +311,7 @@ fn generate_abi_rs(
     writeln!(w, "use std::str;")?;
     writeln!(w, "use tempfile::Builder;")?;
     writeln!(w)?;
-    writeln!(w, "static PACKAGES: &[&str] = &[\"{}\"];", package_name)?;
+    writeln!(w, "static PACKAGES: &[&str] = &[{}];", package_names)?;
     writeln!(
         w,
         "{}",
