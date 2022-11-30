@@ -43,7 +43,7 @@ impl Library {
         parser: &mut XmlParser<'_>,
         libs: &mut Vec<String>,
     ) -> Result<(), String> {
-        let mut package = None;
+        let mut packages = Vec::new();
         let mut includes = Vec::new();
         parser.elements(|parser, elem| match elem.name() {
             "include" => {
@@ -69,16 +69,16 @@ impl Library {
                 Ok(())
             }
             "package" => {
-                // Take the first package element and ignore any other ones.
-                if package.is_none() {
-                    let name = elem.attr_required("name")?;
-                    package = Some(name.to_owned());
-                }
+                let name = elem.attr_required("name")?;
+                packages.push(name.to_owned());
                 Ok(())
             }
-            "namespace" => {
-                self.read_namespace(parser, elem, package.take(), std::mem::take(&mut includes))
-            }
+            "namespace" => self.read_namespace(
+                parser,
+                elem,
+                std::mem::take(&mut packages),
+                std::mem::take(&mut includes),
+            ),
             "attribute" => parser.ignore_element(),
             _ => Err(parser.unexpected_element(elem)),
         })?;
@@ -89,7 +89,7 @@ impl Library {
         &mut self,
         parser: &mut XmlParser<'_>,
         elem: &Element,
-        package: Option<String>,
+        packages: Vec<String>,
         c_includes: Vec<String>,
     ) -> Result<(), String> {
         let ns_name = elem.attr_required("name")?;
@@ -97,7 +97,7 @@ impl Library {
 
         {
             let ns = self.namespace_mut(ns_id);
-            ns.package_name = package;
+            ns.package_names = packages;
             ns.c_includes = c_includes;
             if let Some(s) = elem.attr("shared-library") {
                 ns.shared_library = s.split(',').map(String::from).collect();

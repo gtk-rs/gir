@@ -973,7 +973,7 @@ pub struct Namespace {
     pub glib_name_index: HashMap<String, u32>,
     pub constants: Vec<Constant>,
     pub functions: Vec<Function>,
-    pub package_name: Option<String>,
+    pub package_names: Vec<String>,
     pub versions: BTreeSet<Version>,
     pub doc: Option<String>,
     pub doc_deprecated: Option<String>,

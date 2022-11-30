@@ -145,7 +145,11 @@ fn prepare_cconsts(env: &Env) -> Vec<CConstant> {
                     // see the GValue machinery around them for example
                     constants.push(CConstant {
                         name: format!("(guint) {}", member.c_identifier),
-                        value: member.value.clone(),
+                        value: member
+                            .value
+                            .parse::<i32>()
+                            .map(|i| (i as u32).to_string())
+                            .unwrap_or_else(|_| member.value.clone()),
                     });
                 }
             }
@@ -289,10 +293,15 @@ fn generate_abi_rs(
     cconsts: &[CConstant],
 ) -> io::Result<()> {
     let ns = env.library.namespace(MAIN_NAMESPACE);
-    let package_name = ns.package_name.as_ref().expect("Missing package name");
+    let mut package_names = ns.package_names.join("\", \"");
+    if !package_names.is_empty() {
+        package_names = format!("\"{}\"", package_names);
+    }
 
     info!("Generating file {:?}", path);
     general::start_comments(w, &env.config)?;
+    writeln!(w)?;
+    writeln!(w, "#![cfg(target_os = \"linux\")]")?;
     writeln!(w)?;
 
     if !ctypes.is_empty() {
@@ -308,7 +317,7 @@ fn generate_abi_rs(
     writeln!(w, "use std::str;")?;
     writeln!(w, "use tempfile::Builder;")?;
     writeln!(w)?;
-    writeln!(w, "static PACKAGES: &[&str] = &[\"{}\"];", package_name)?;
+    writeln!(w, "static PACKAGES: &[&str] = &[{}];", package_names)?;
     writeln!(
         w,
         "{}",
@@ -411,7 +420,6 @@ impl Results {
 }
 
 #[test]
-#[cfg(target_os = "linux")]
 fn cross_validate_constants_with_c() {
     let mut c_constants: Vec<(String, String)> = Vec::new();
 
@@ -446,7 +454,6 @@ fn cross_validate_constants_with_c() {
 }
 
 #[test]
-#[cfg(target_os = "linux")]
 fn cross_validate_layout_with_c() {
     let mut c_layouts = Vec::new();
 
