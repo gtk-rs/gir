@@ -11,6 +11,7 @@ use crate::{
     env::Env,
     file_saver::*,
     library::Member,
+    nameutil::use_glib_type,
     version::Version,
 };
 
@@ -43,6 +44,8 @@ mod trampoline;
 mod trampoline_from_glib;
 mod visibility;
 pub use visibility::Visibility;
+
+use self::general::{allow_deprecated, cfg_condition_no_doc};
 mod trampoline_to_glib;
 pub mod translate_from_glib;
 pub mod translate_to_glib;
@@ -167,4 +170,83 @@ pub fn generate_default_impl<
     } else {
         Ok(())
     }
+}
+
+pub fn generate_variant_impls(
+    w: &mut dyn Write,
+    env: &Env,
+    config: &GObject,
+    type_name: &str,
+    type_version: Option<Version>,
+    deprecated_version: Option<Version>,
+    static_variant_type_str: &str,
+    from_variant_impl: &str,
+    to_variant_impl: &str,
+) -> Result<()> {
+    let assert = if env.config.generate_safety_asserts {
+        "skip_assert_initialized!();\n\t\t"
+    } else {
+        ""
+    };
+    let gvariant = use_glib_type(env, "Variant");
+    let tovariant = use_glib_type(env, "ToVariant");
+
+    version_condition(w, env, None, type_version, false, 0)?;
+    cfg_condition_no_doc(w, config.cfg_condition.as_ref(), false, 0)?;
+    allow_deprecated(w, deprecated_version, false, 0)?;
+    writeln!(
+        w,
+        "impl {staticvarianttype} for {type_name} {{
+    fn static_variant_type() -> std::borrow::Cow<'static, {variantty}> {{
+        {assert}std::borrow::Cow::Borrowed(unsafe {{
+            {variantty}::from_str_unchecked(\"{static_variant_type_str}\")
+        }})
+    }}
+}}",
+        staticvarianttype = use_glib_type(env, "StaticVariantType"),
+        variantty = use_glib_type(env, "VariantTy"),
+    )?;
+    writeln!(w)?;
+
+    version_condition(w, env, None, type_version, false, 0)?;
+    cfg_condition_no_doc(w, config.cfg_condition.as_ref(), false, 0)?;
+    allow_deprecated(w, deprecated_version, false, 0)?;
+    writeln!(
+        w,
+        "impl {fromvariant} for {type_name} {{
+    fn from_variant(variant: &{gvariant}) -> Option<Self> {{
+        {assert}{from_variant_impl}
+    }}
+}}",
+        fromvariant = use_glib_type(env, "FromVariant"),
+    )?;
+    writeln!(w)?;
+
+    version_condition(w, env, None, type_version, false, 0)?;
+    cfg_condition_no_doc(w, config.cfg_condition.as_ref(), false, 0)?;
+    allow_deprecated(w, deprecated_version, false, 0)?;
+    writeln!(
+        w,
+        "impl {tovariant} for {type_name} {{
+    fn to_variant(&self) -> {gvariant} {{
+        {assert}{to_variant_impl}
+    }}
+}}"
+    )?;
+    writeln!(w)?;
+
+    version_condition(w, env, None, type_version, false, 0)?;
+    cfg_condition_no_doc(w, config.cfg_condition.as_ref(), false, 0)?;
+    allow_deprecated(w, deprecated_version, false, 0)?;
+    writeln!(
+        w,
+        "impl From<{type_name}> for {gvariant} {{
+    fn from(v: {type_name}) -> Self {{
+        {assert}{tovariant}::to_variant(&v)
+    }}
+}}",
+    )?;
+    writeln!(w)?;
+
+    Ok(())
 }

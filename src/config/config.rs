@@ -90,6 +90,38 @@ impl GirVersion {
     }
 }
 
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+pub enum VariantTraitMode {
+    #[default]
+    None,
+    Repr,
+    String,
+}
+
+impl VariantTraitMode {
+    pub fn is_none(self) -> bool {
+        self == Self::None
+    }
+    pub fn is_repr(self) -> bool {
+        self == Self::Repr
+    }
+    pub fn is_string(self) -> bool {
+        self == Self::String
+    }
+}
+
+impl FromStr for VariantTraitMode {
+    type Err = String;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "none" => Ok(Self::None),
+            "repr" => Ok(Self::Repr),
+            "string" => Ok(Self::String),
+            e => Err(format!("Wrong variant trait mode: \"{}\"", e)),
+        }
+    }
+}
+
 #[derive(Debug)]
 pub struct Config {
     pub work_mode: WorkMode,
@@ -113,6 +145,7 @@ pub struct Config {
     pub concurrency: library::Concurrency,
     pub single_version_file: Option<PathBuf>,
     pub generate_display_trait: bool,
+    pub generate_variant_traits: VariantTraitMode,
     pub trust_return_value_nullability: bool,
     pub docs_rs_features: Vec<String>,
     pub disable_format: bool,
@@ -255,6 +288,13 @@ impl Config {
             None => true,
         };
 
+        let generate_variant_traits = match toml.lookup("options.generate_variant_traits") {
+            Some(v) => v
+                .as_result_str("options.generate_variant_traits")?
+                .parse()?,
+            None => Default::default(),
+        };
+
         let trust_return_value_nullability =
             match toml.lookup("options.trust_return_value_nullability") {
                 Some(v) => v.as_result_bool("options.trust_return_value_nullability")?,
@@ -281,6 +321,7 @@ impl Config {
                     t,
                     concurrency,
                     generate_display_trait,
+                    generate_variant_traits,
                     generate_builder,
                     trust_return_value_nullability,
                 )
@@ -291,6 +332,7 @@ impl Config {
             &toml,
             concurrency,
             generate_display_trait,
+            generate_variant_traits,
             generate_builder,
             trust_return_value_nullability,
         );
@@ -367,6 +409,7 @@ impl Config {
             concurrency,
             single_version_file,
             generate_display_trait,
+            generate_variant_traits,
             trust_return_value_nullability,
             docs_rs_features,
             disable_format,
