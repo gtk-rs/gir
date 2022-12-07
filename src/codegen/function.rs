@@ -409,10 +409,21 @@ pub fn body_chunk_futures(
 
     let mut body = String::new();
 
+    let future_name = analysis
+        .async_future
+        .as_ref()
+        .map(|a| {
+            if a.error_parameters.is_some() {
+                "GioFuture"
+            } else {
+                "GioInfallibleFuture"
+            }
+        })
+        .unwrap_or("GioFuture");
     let gio_future_name = if env.config.library_name != "Gio" {
-        "gio::GioFuture"
+        format!("gio::{future_name}")
     } else {
-        "crate::GioFuture"
+        format!("crate::{future_name}")
     };
     writeln!(body)?;
 
