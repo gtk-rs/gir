@@ -102,7 +102,16 @@ impl Library {
             ns.package_names = packages;
             ns.c_includes = c_includes;
             if let Some(s) = elem.attr("shared-library") {
-                ns.shared_library = s.split(',').map(String::from).collect();
+                ns.shared_library = s
+                    .split(',')
+                    .filter_map(|x| {
+                        if !x.is_empty() {
+                            Some(String::from(x))
+                        } else {
+                            None
+                        }
+                    })
+                    .collect();
             }
             if let Some(s) = elem.attr("identifier-prefixes") {
                 ns.identifier_prefixes = s.split(',').map(String::from).collect();
