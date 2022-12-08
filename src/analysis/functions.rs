@@ -42,6 +42,7 @@ use super::{namespaces::NsId, special_functions};
 #[derive(Clone, Debug)]
 pub struct AsyncTrampoline {
     pub is_method: bool,
+    pub has_error_parameter: bool,
     pub name: String,
     pub finish_func_name: String,
     pub callback_type: String,
@@ -55,7 +56,7 @@ pub struct AsyncFuture {
     pub is_method: bool,
     pub name: String,
     pub success_parameters: String,
-    pub error_parameters: String,
+    pub error_parameters: Option<String>,
     pub assertion: SafetyAssertionMode,
 }
 
@@ -1013,17 +1014,11 @@ fn analyze_async(
             *commented = true;
             return false;
         }
-        if !*commented && (success_parameters.is_empty() || error_parameters.is_empty()) {
+        if !*commented && success_parameters.is_empty() {
             if success_parameters.is_empty() {
                 warn_main!(
                     type_tid,
                     "{}: missing success parameters for async future",
-                    func.name
-                );
-            } else if error_parameters.is_empty() {
-                warn_main!(
-                    type_tid,
-                    "{}: missing error parameters for async future",
                     func.name
                 );
             }
@@ -1034,6 +1029,7 @@ fn analyze_async(
 
         *trampoline = Some(AsyncTrampoline {
             is_method,
+            has_error_parameter: error_parameters.is_some(),
             name: format!("{}_trampoline", codegen_name),
             finish_func_name: format!("{}::{}", env.main_sys_crate_name(), finish_func_name),
             callback_type,

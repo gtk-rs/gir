@@ -242,10 +242,17 @@ pub fn declaration(env: &Env, analysis: &analysis::functions::Info) -> String {
 pub fn declaration_futures(env: &Env, analysis: &analysis::functions::Info) -> String {
     let async_future = analysis.async_future.as_ref().unwrap();
 
-    let return_str = format!(
-        " -> Pin<Box_<dyn std::future::Future<Output = Result<{}, {}>> + 'static>>",
-        async_future.success_parameters, async_future.error_parameters
-    );
+    let return_str = if let Some(ref error_parameters) = async_future.error_parameters {
+        format!(
+            " -> Pin<Box_<dyn std::future::Future<Output = Result<{}, {}>> + 'static>>",
+            async_future.success_parameters, error_parameters
+        )
+    } else {
+        format!(
+            " -> Pin<Box_<dyn std::future::Future<Output = {}> + 'static>>",
+            async_future.success_parameters
+        )
+    };
 
     let mut param_str = String::with_capacity(100);
 
