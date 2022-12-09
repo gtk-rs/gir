@@ -243,7 +243,7 @@ pub fn analyze(
             .find_map(|p| p.move_)
             .unwrap_or_else(|| {
                 // FIXME: drop the condition here once we have figured out how to handle
-                // the Vec<T> use case, e.g with something like
+                // the Vec<T> use case, e.g with something like PtrSlice
 
                 if matches!(env.library.type_(typ), library::Type::CArray(_)) {
                     false
