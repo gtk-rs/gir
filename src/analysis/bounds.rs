@@ -228,9 +228,11 @@ impl Bounds {
     ) -> String {
         use self::BoundType::*;
         match bound_type {
+            AsRef(_) if move_ && nullable => ".map(|p| p.as_ref().clone().upcast())".to_owned(),
             AsRef(_) if nullable => ".as_ref().map(|p| p.as_ref())".to_owned(),
             AsRef(_) if move_ => ".upcast()".to_owned(),
             AsRef(_) => ".as_ref()".to_owned(),
+            IsA(_) if move_ && nullable => ".map(|p| p.upcast())".to_owned(),
             IsA(_) if nullable && !instance_parameter => ".map(|p| p.as_ref())".to_owned(),
             IsA(_) if move_ => ".upcast()".to_owned(),
             IsA(_) => ".as_ref()".to_owned(),
