@@ -848,14 +848,25 @@ impl Builder {
                 );
             }
         }
+        // If the trampoline doesn't have a GError parameter
+        let has_error_parameter = self
+            .async_trampoline
+            .as_ref()
+            .map(|a| a.has_error_parameter)
+            .unwrap_or_default();
 
         let result = Chunk::Tuple(result, TupleMode::WithUnit);
-        let mut body = vec![Chunk::Let {
-            name: "error".to_string(),
-            is_mut: true,
-            value: Box::new(Chunk::NullMutPtr),
-            type_: None,
-        }];
+
+        let mut body = if has_error_parameter {
+            vec![Chunk::Let {
+                name: "error".to_string(),
+                is_mut: true,
+                value: Box::new(Chunk::NullMutPtr),
+                type_: None,
+            }]
+        } else {
+            vec![]
+        };
         let output_vars = trampoline
             .output_params
             .iter()
@@ -871,7 +882,11 @@ impl Builder {
         body.extend(output_vars);
 
         let ret_name = if trampoline.ffi_ret.is_some() {
-            "ret"
+            if has_error_parameter {
+                "ret"
+            } else {
+                "result" // Needed as in case of an error param we would have let result = if error.is_null() { Ok()} else { Err()};
+            }
         } else {
             "_"
         };
@@ -885,15 +900,17 @@ impl Builder {
             }),
             type_: None,
         });
-        body.push(Chunk::Let {
-            name: "result".to_string(),
-            is_mut: false,
-            value: Box::new(Chunk::ErrorResultReturn {
-                ret: None,
-                value: Box::new(result),
-            }),
-            type_: None,
-        });
+        if has_error_parameter {
+            body.push(Chunk::Let {
+                name: "result".to_string(),
+                is_mut: false,
+                value: Box::new(Chunk::ErrorResultReturn {
+                    ret: None,
+                    value: Box::new(result),
+                }),
+                type_: None,
+            });
+        }
         body.push(Chunk::Let {
             name: "callback".to_string(),
             is_mut: false,
