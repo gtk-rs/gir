@@ -84,7 +84,13 @@ fn to_glib_xxx(
                 RefMode::ByRefFake => (String::new(), ""), //unreachable!(),
             }
         }
-        Full => (String::new(), ".to_glib_full()"),
-        Container => (String::new(), ".to_glib_container().0"),
+        Full => {
+            if move_ {
+                ("".into(), ".into_glib_ptr()")
+            } else {
+                ("".into(), ".to_glib_full()")
+            }
+        }
+        Container => ("".into(), ".to_glib_container().0"),
     }
 }
