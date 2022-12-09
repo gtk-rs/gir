@@ -241,7 +241,16 @@ pub fn analyze(
         let move_ = configured_parameters
             .iter()
             .find_map(|p| p.move_)
-            .unwrap_or(transfer == Transfer::Full && par.direction.is_in());
+            .unwrap_or_else(|| {
+                // FIXME: drop the condition here once we have figured out how to handle
+                // the Vec<T> use case, e.g with something like
+
+                if matches!(env.library.type_(typ), library::Type::CArray(_)) {
+                    false
+                } else {
+                    transfer == Transfer::Full && par.direction.is_in()
+                }
+            });
         let mut array_par = configured_parameters.iter().find_map(|cp| {
             cp.length_of
                 .as_ref()
