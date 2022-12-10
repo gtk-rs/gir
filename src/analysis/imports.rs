@@ -329,7 +329,7 @@ impl DerefMut for ImportsWithDefault<'_> {
     }
 }
 
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug, Default, Ord, PartialEq, PartialOrd, Eq)]
 pub struct ImportConditions {
     pub version: Option<Version>,
     pub constraints: Vec<String>,

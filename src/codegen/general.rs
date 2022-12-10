@@ -1,6 +1,10 @@
 use crate::{
     analysis::{
-        self, general::StatusedTypeId, imports::Imports, namespaces, special_functions::TraitInfo,
+        self,
+        general::StatusedTypeId,
+        imports::{ImportConditions, Imports},
+        namespaces,
+        special_functions::TraitInfo,
     },
     config::{derives::Derive, Config},
     env::Env,
@@ -11,6 +15,7 @@ use crate::{
     writer::primitives::tabs,
 };
 use std::{
+    collections::BTreeMap,
     fmt::Display,
     io::{Result, Write},
     ops::Index,
@@ -81,23 +86,58 @@ pub fn uses(
     outer_version: Option<Version>,
 ) -> Result<()> {
     writeln!(w)?;
-    for (name, scope) in imports.iter() {
-        if !scope.constraints.is_empty() {
-            writeln!(
-                w,
-                "#[cfg(any({},feature = \"dox\"))]",
-                scope.constraints.join(", ")
-            )?;
-            writeln!(
-                w,
-                "#[cfg_attr(feature = \"dox\", doc(cfg({})))]",
-                scope.constraints.join(", ")
-            )?;
-        }
-        let version = Version::if_stricter_than(scope.version, outer_version);
 
-        version_condition(w, env, None, version, false, 0)?;
-        writeln!(w, "use {};", name)?;
+    let mut grouped_imports: BTreeMap<(&str, Option<ImportConditions>), Vec<&str>> =
+        BTreeMap::new();
+
+    for (name, scope) in imports.iter() {
+        let (crate_name, import) = name.split_once("::").unwrap();
+        let mut scope = scope.clone();
+
+        // The check here is needed to group unneeded version guards and allow grouping those imports
+        scope.version = Version::if_stricter_than(scope.version, outer_version);
+        let to_compare_with = env.config.min_required_version(env, None);
+        scope.version = match (scope.version, to_compare_with) {
+            (Some(v), Some(to_compare_v)) => {
+                if v > to_compare_v {
+                    scope.version
+                } else {
+                    None
+                }
+            }
+            (Some(_), _) => scope.version,
+            _ => None,
+        };
+
+        let key = if scope.constraints.is_empty() && scope.version.is_none() {
+            (crate_name, None)
+        } else {
+            (crate_name, Some(scope))
+        };
+        grouped_imports
+            .entry(key)
+            .and_modify(|entry| entry.push(import))
+            .or_insert_with(|| vec![import]);
+    }
+
+    for ((crate_name, scope), names) in grouped_imports.iter() {
+        if !scope.is_none() {
+            let scope = scope.as_ref().unwrap();
+            if !scope.constraints.is_empty() {
+                writeln!(
+                    w,
+                    "#[cfg(any({},feature = \"dox\"))]",
+                    scope.constraints.join(", ")
+                )?;
+                writeln!(
+                    w,
+                    "#[cfg_attr(feature = \"dox\", doc(cfg({})))]",
+                    scope.constraints.join(", ")
+                )?;
+            }
+            version_condition(w, env, None, scope.version, false, 0)?;
+        }
+        writeln!(w, "use {crate_name}::{{{}}};", names.join(","))?;
     }
 
     Ok(())
