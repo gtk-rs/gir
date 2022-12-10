@@ -65,7 +65,7 @@ pub fn analyze(
     }
 
     if !properties.is_empty() {
-        imports.add("glib::object::IsA");
+        imports.add("glib::prelude::*");
         if let Some(rust_type) = child_type.and_then(|typ| RustType::try_new(env, typ).ok()) {
             imports.add_used_types(rust_type.used_types());
         }
@@ -96,7 +96,7 @@ fn analyze_property(
     if let Some(typ) = env.library.find_type(0, &prop.type_name) {
         let doc_hidden = prop.doc_hidden;
 
-        imports.add("glib::StaticType");
+        imports.add("glib::prelude::*");
         if let Ok(rust_type) = RustType::try_new(env, typ) {
             imports.add_used_types(rust_type.used_types());
         }

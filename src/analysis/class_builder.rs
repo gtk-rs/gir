@@ -124,7 +124,7 @@ fn analyze_property(
 
     let mut bounds = Bounds::default();
     if let Some(bound) = Bounds::type_for(env, prop.typ) {
-        imports.add("glib::object::IsA");
+        imports.add("glib::prelude::*");
         bounds.add_parameter(&prop.name, &rust_type_res.into_string(), bound, false);
     }
 
