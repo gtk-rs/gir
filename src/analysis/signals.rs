@@ -93,7 +93,7 @@ fn analyze_signal(
     );
 
     let action_emit_name = if signal.is_action {
-        imports.add("glib::object::ObjectExt");
+        imports.add("glib::prelude::*");
         Some(format!("emit_{}", nameutil::signal_to_snake(&signal.name)))
     } else {
         None
@@ -101,14 +101,8 @@ fn analyze_signal(
 
     if trampoline.is_ok() {
         imports.add_used_types(&used_types);
-        if in_trait {
-            imports.add("glib::object::Cast");
-        } else {
-            //To resolve a conflict with OSTree::ObjectType
-            imports.add("glib::object::ObjectType as ObjectType_");
-        }
-        imports.add("glib::signal::connect_raw");
-        imports.add("glib::signal::SignalHandlerId");
+        imports.add("glib::prelude::*");
+        imports.add("glib::signal::{connect_raw, SignalHandlerId}");
         imports.add("std::mem::transmute");
         imports.add("std::boxed::Box as Box_");
     }

@@ -226,7 +226,7 @@ fn analyze_property(
             imports.add_used_types(rust_type.used_types());
         }
         if type_string.is_ok() {
-            imports.add("glib::StaticType");
+            imports.add("glib::prelude::*");
         }
 
         Some(Property {
@@ -256,11 +256,11 @@ fn analyze_property(
             imports.add_used_types(rust_type.used_types());
         }
         if type_string.is_ok() {
-            imports.add("glib::ToValue");
+            imports.add("glib::prelude::*");
         }
         let set_bound = PropertyBound::get(env, prop.typ);
         if type_string.is_ok() && set_bound.is_some() {
-            imports.add("glib::object::IsA");
+            imports.add("glib::prelude::*");
             if !*nullable {
                 //TODO: support non-nullable setter if found any
                 warn!(
@@ -290,8 +290,7 @@ fn analyze_property(
     };
 
     if !generate_trait && (writable || readable || notifiable) {
-        //To resolve a conflict with OSTree::ObjectType
-        imports.add("glib::object::ObjectType as ObjectType_");
+        imports.add("glib::prelude::*");
     }
 
     let notify_signal = if notifiable {
@@ -339,10 +338,9 @@ fn analyze_property(
         if trampoline.is_ok() {
             imports.add_used_types(&used_types);
             if generate_trait {
-                imports.add("glib::object::Cast");
+                imports.add("glib::prelude::*");
             }
-            imports.add("glib::signal::connect_raw");
-            imports.add("glib::signal::SignalHandlerId");
+            imports.add("glib::signal::{connect_raw, SignalHandlerId}");
             imports.add("std::mem::transmute");
             imports.add("std::boxed::Box as Box_");
 

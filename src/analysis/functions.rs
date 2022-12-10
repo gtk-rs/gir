@@ -890,7 +890,7 @@ fn analyze_function(
 
         imports.add_used_types(&used_types);
         if ret.base_tid.is_some() || parameters.c_parameters.iter().any(|p| p.move_) {
-            imports.add("glib::object::Cast");
+            imports.add("glib::prelude::*");
         }
 
         if func.name.parse::<special_functions::Type>().is_err() {

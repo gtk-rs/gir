@@ -275,7 +275,7 @@ impl Bounds {
         for used in &self.used {
             match used.bound_type {
                 NoWrapper => (),
-                IsA(_) => imports.add("glib::object::IsA"),
+                IsA(_) => imports.add("glib::prelude::*"),
                 AsRef(_) => imports.add_used_type(&used.type_str),
             }
         }

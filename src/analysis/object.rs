@@ -250,18 +250,16 @@ pub fn class(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<Info>
         && (has_signals || has_methods || !properties.is_empty() || !child_properties.is_empty());
 
     if is_fundamental {
-        imports.add("glib::StaticType");
+        imports.add("glib::prelude::*");
         imports.add("glib::translate::*");
     }
 
     if has_builder_properties(&builder_properties) {
-        imports.add("glib::object::Cast");
-        imports.add("glib::StaticType");
-        imports.add("glib::ToValue");
+        imports.add("glib::prelude::*");
     }
 
     if generate_trait {
-        imports.add("glib::object::IsA");
+        imports.add("glib::prelude::*");
     }
 
     let base = InfoBase {
@@ -334,7 +332,7 @@ pub fn interface(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<I
     let deprecated_version = iface.deprecated_version;
 
     let mut imports = Imports::with_defined(&env.library, &name);
-    imports.add("glib::object::IsA");
+    imports.add("glib::prelude::*");
     if obj.generate_display_trait {
         imports.add("std::fmt");
     }
