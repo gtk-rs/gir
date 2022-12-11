@@ -5,3 +5,5 @@
 ## How to use
 
 A work in progress book to help with learning how to use `gir` along with a tutorial are available at <https://gtk-rs.org/gir/book>.
+
+If you intend to contribute to `gir` or make use of `libgir`, the docs are available at <https://gtk-rs.org/gir/docs/gir> / <https://gtk-rs.org/gir/docs/libgir>.
