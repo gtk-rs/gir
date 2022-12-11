@@ -1014,11 +1014,10 @@ impl Builder {
 
     fn generate_call(&self, calls: &FuncParameters<'_>) -> Chunk {
         let params = self.generate_func_parameters(calls);
-        let func = Chunk::FfiCall {
+        Chunk::FfiCall {
             name: self.glib_name.clone(),
             params,
-        };
-        func
+        }
     }
     fn generate_call_conversion(
         &self,
@@ -1144,7 +1143,6 @@ impl Builder {
         }
     }
 
-    #[allow(clippy::blocks_in_if_conditions)]
     fn generate_out_return(&self, uninitialized_vars: &mut Vec<(String, bool)>) -> Option<Chunk> {
         if !self.outs_as_return {
             return None;

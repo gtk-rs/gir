@@ -4,7 +4,6 @@ use crate::analysis::{
     safety_assertion_mode::SafetyAssertionMode,
 };
 
-#[allow(clippy::large_enum_variant)]
 #[derive(Clone, Debug)]
 pub enum Chunk {
     Comment(Vec<Chunk>),

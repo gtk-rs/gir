@@ -23,7 +23,6 @@ impl<S: AsRef<str>> OptionStr for Option<S> {
     }
 }
 
-#[allow(clippy::large_enum_variant)]
 enum RunKind {
     Config(Config),
     CheckGirFile(String),

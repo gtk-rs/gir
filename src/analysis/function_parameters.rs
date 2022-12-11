@@ -182,7 +182,6 @@ impl Parameters {
     }
 }
 
-#[allow(clippy::useless_let_if_seq)]
 pub fn analyze(
     env: &Env,
     function_parameters: &[library::Parameter],
