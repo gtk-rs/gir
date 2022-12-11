@@ -174,7 +174,7 @@ fn generate_flags(
         &analysis.specials,
         None,
         None,
-        config.cfg_condition.as_ref(),
+        config.cfg_condition.as_deref(),
     )?;
 
     writeln!(w)?;

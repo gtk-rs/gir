@@ -94,8 +94,7 @@ pub fn uses(
         let (crate_name, import) = name.split_once("::").unwrap();
         let mut scope = scope.clone();
 
-        // The check here is needed to group unneeded version guards and allow grouping
-        // those imports
+        // The check here is needed to group unneeded version guards and allow grouping those imports
         scope.version = Version::if_stricter_than(scope.version, outer_version);
         let to_compare_with = env.config.min_required_version(env, None);
         scope.version = match (scope.version, to_compare_with) {
@@ -845,7 +844,7 @@ pub fn not_version_condition_no_dox(
 
 pub fn cfg_condition(
     w: &mut dyn Write,
-    cfg_condition: Option<&impl Display>,
+    cfg_condition: Option<&(impl Display + ?Sized)>,
     commented: bool,
     indent: usize,
 ) -> Result<()> {
@@ -857,7 +856,7 @@ pub fn cfg_condition(
 
 pub fn cfg_condition_no_doc(
     w: &mut dyn Write,
-    cfg_condition: Option<&impl Display>,
+    cfg_condition: Option<&(impl Display + ?Sized)>,
     commented: bool,
     indent: usize,
 ) -> Result<()> {
@@ -868,7 +867,7 @@ pub fn cfg_condition_no_doc(
 }
 
 pub fn cfg_condition_string_no_doc(
-    cfg_condition: Option<&impl Display>,
+    cfg_condition: Option<&(impl Display + ?Sized)>,
     commented: bool,
     indent: usize,
 ) -> Option<String> {
@@ -885,7 +884,7 @@ pub fn cfg_condition_string_no_doc(
 
 pub fn cfg_condition_doc(
     w: &mut dyn Write,
-    cfg_condition: Option<&impl Display>,
+    cfg_condition: Option<&(impl Display + ?Sized)>,
     commented: bool,
     indent: usize,
 ) -> Result<()> {
@@ -896,7 +895,7 @@ pub fn cfg_condition_doc(
 }
 
 pub fn cfg_condition_string_doc(
-    cfg_condition: Option<&impl Display>,
+    cfg_condition: Option<&(impl Display + ?Sized)>,
     commented: bool,
     indent: usize,
 ) -> Option<String> {
@@ -912,7 +911,7 @@ pub fn cfg_condition_string_doc(
 }
 
 pub fn cfg_condition_string(
-    cfg_condition: Option<&impl Display>,
+    cfg_condition: Option<&(impl Display + ?Sized)>,
     commented: bool,
     indent: usize,
 ) -> Option<String> {
@@ -1015,8 +1014,7 @@ pub fn declare_default_from_new(
                 name
             )?;
         } else if has_builder {
-            // create an alternative default implementation the uses
-            // `glib::object::Object::new()`
+            // create an alternative default implementation the uses `glib::object::Object::new()`
             writeln!(w)?;
             version_condition(w, env, None, func.version, false, 0)?;
             writeln!(
