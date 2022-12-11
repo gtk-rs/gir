@@ -9,8 +9,8 @@ pub enum RecordType {
     Boxed,
     /// Referencecounted record
     Refcounted,
-    //TODO: detect and generate direct records
-    //Direct,
+    // TODO: detect and generate direct records
+    // Direct,
 }
 
 impl RecordType {

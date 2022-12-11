@@ -2,7 +2,8 @@ use crate::library::*;
 
 /// Array size limit above which Rust no longer automatically derives traits.
 const RUST_DERIVE_ARRAY_SIZE_LIMIT: u16 = 32;
-/// Number of parameters above which Rust no longer automatically derives traits in functions.
+/// Number of parameters above which Rust no longer automatically derives traits
+/// in functions.
 const RUST_DERIVE_PARAM_SIZE_LIMIT: usize = 12;
 
 /// Checks if given type is some kind of pointer.
@@ -127,7 +128,7 @@ impl IsIncomplete for Union {
 
 impl IsIncomplete for Function {
     fn is_incomplete(&self, lib: &Library) -> bool {
-        //Checking p.typ.is_incomplete(lib) cause recursive check on GScannerMsgFunc
+        // Checking p.typ.is_incomplete(lib) cause recursive check on GScannerMsgFunc
         self.parameters.iter().any(|p| {
             matches!(
                 lib.type_(p.typ),

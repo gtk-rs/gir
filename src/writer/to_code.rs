@@ -29,7 +29,7 @@ impl ToCode for Chunk {
                 ref params,
             } => {
                 let prefix = format!("{}(", name);
-                //TODO: change to format_block or format_block_smart
+                // TODO: change to format_block or format_block_smart
                 let s = format_block_one_line(&prefix, ")", &params.to_code(env), "", ", ");
                 vec![s]
             }

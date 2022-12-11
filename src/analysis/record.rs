@@ -36,7 +36,7 @@ impl Deref for Info {
 }
 
 impl Info {
-    //TODO: add test in tests/ for panic
+    // TODO: add test in tests/ for panic
     pub fn type_<'a>(&self, library: &'a library::Library) -> &'a library::Record {
         let type_ = library
             .type_(self.type_id)
@@ -183,9 +183,9 @@ pub fn new(env: &Env, obj: &GObject) -> Option<Info> {
             // the signature. Similar code exists for before the analysis already but that
             // doesn't apply directly here.
             //
-            // As the get_type function only has a version if explicitly configured let's just
-            // panic here. It's easy enough for the user to move the version configuration from
-            // the function to the type.
+            // As the get_type function only has a version if explicitly configured let's
+            // just panic here. It's easy enough for the user to move the
+            // version configuration from the function to the type.
             assert!(
                 get_type_version <= version,
                 "Have to use get_type function for {} but version is higher than for the type ({:?} > {:?})",

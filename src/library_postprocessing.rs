@@ -100,7 +100,7 @@ impl Library {
         let mut c_types = DetectedCTypes::new();
         for (ns_id, ns) in self.namespaces.iter().enumerate() {
             for (id, type_) in ns.types.iter().enumerate() {
-                let type_ = type_.as_ref().unwrap(); //Always contains something
+                let type_ = type_.as_ref().unwrap(); // Always contains something
                 let tid = TypeId {
                     ns_id: ns_id as u16,
                     id: id as u32,
@@ -197,7 +197,7 @@ impl Library {
 
         for (ns_id, ns) in self.namespaces.iter().enumerate() {
             for type_ in &ns.types {
-                let type_ = type_.as_ref().unwrap(); //Always contains something
+                let type_ = type_.as_ref().unwrap(); // Always contains something
 
                 if let Type::Record(record) = type_ {
                     if let Some(ref struct_for) = record.gtype_struct_for {
@@ -230,7 +230,7 @@ impl Library {
     fn correlate_class_structs(&self) {
         for (ns_id, ns) in self.namespaces.iter().enumerate() {
             for type_ in &ns.types {
-                let type_ = type_.as_ref().unwrap(); //Always contains something
+                let type_ = type_.as_ref().unwrap(); // Always contains something
                 let name;
                 let type_struct;
                 let c_class_type;
@@ -305,7 +305,7 @@ impl Library {
         let mut actions: Vec<(TypeId, usize, Action)> = Vec::new();
         for (ns_id, ns) in self.namespaces.iter().enumerate() {
             for (id, type_) in ns.types.iter().enumerate() {
-                let type_ = type_.as_ref().unwrap(); //Always contains something
+                let type_ = type_.as_ref().unwrap(); // Always contains something
                 let tid = TypeId {
                     ns_id: ns_id as u16,
                     id: id as u32,
@@ -358,7 +358,8 @@ impl Library {
                 | Type::Record(Record { name, fields, .. })
                 | Type::Union(Union { name, fields, .. }) => match action {
                     Action::SetCType(c_type) => {
-                        // Don't be verbose when internal fields such as padding don't provide a c-type
+                        // Don't be verbose when internal fields such as padding don't provide a
+                        // c-type
                         if !ignore_missing_ctype.contains(&fields[fid].name.as_str()) {
                             warn_main!(
                                 tid,
@@ -427,17 +428,19 @@ impl Library {
 
     fn mark_final_types(&mut self, config: &Config) {
         // Here we mark all class types as final types if configured so in the config or
-        // otherwise if there is no public class struct for the type or the instance struct
-        // has no fields (i.e. is not known!), and there are no known subtypes.
+        // otherwise if there is no public class struct for the type or the instance
+        // struct has no fields (i.e. is not known!), and there are no known
+        // subtypes.
         //
         // Final types can't have any subclasses and we handle them slightly different
         // for that reason.
-        // FIXME: without class_hierarchy this function O(n2) due inner loop in `has_subtypes`
+        // FIXME: without class_hierarchy this function O(n2) due inner loop in
+        // `has_subtypes`
         let mut final_types: Vec<TypeId> = Vec::new();
 
         for (ns_id, ns) in self.namespaces.iter().enumerate() {
             for (id, type_) in ns.types.iter().enumerate() {
-                let type_ = type_.as_ref().unwrap(); //Always contains something
+                let type_ = type_.as_ref().unwrap(); // Always contains something
 
                 if let Type::Class(klass) = type_ {
                     let tid = TypeId {
@@ -497,7 +500,7 @@ impl Library {
         let mut error_domains = vec![];
         for (ns_id, ns) in self.namespaces.iter().enumerate() {
             'next_enum: for (id, type_) in ns.types.iter().enumerate() {
-                let type_ = type_.as_ref().unwrap(); //Always contains something
+                let type_ = type_.as_ref().unwrap(); // Always contains something
                 let enum_tid = TypeId {
                     ns_id: ns_id as u16,
                     id: id as u32,
@@ -542,7 +545,7 @@ impl Library {
 
                         // Quadratic in number of types...
                         for (id, type_) in ns.types.iter().enumerate() {
-                            let type_ = type_.as_ref().unwrap(); //Always contains something
+                            let type_ = type_.as_ref().unwrap(); // Always contains something
                             let domain_tid = TypeId {
                                 ns_id: ns_id as u16,
                                 id: id as u32,

@@ -88,8 +88,9 @@ pub fn analyze(
             let mut out =
                 analysis::Parameter::from_parameter(env, &lib_par, &configured_parameters);
 
-            // FIXME: temporary solution for string_type, nullable override. This should completely
-            // work based on the analyzed parameters instead of the library parameters.
+            // FIXME: temporary solution for string_type, nullable override. This should
+            // completely work based on the analyzed parameters instead of the
+            // library parameters.
             if let Some(c_par) = func_c_params
                 .iter()
                 .find(|c_par| c_par.name == lib_par.name)
@@ -112,7 +113,7 @@ pub fn analyze(
     {
         let mut ret = analysis::Parameter::from_return_value(env, &func.ret, configured_functions);
 
-        //TODO: fully switch to use analyzed returns (it add too many Return<Option<>>)
+        // TODO: fully switch to use analyzed returns (it add too many Return<Option<>>)
         if let Some(ref par) = func_ret.parameter {
             ret.lib_par.typ = par.lib_par.typ;
         }

@@ -263,7 +263,7 @@ fn analyze_property(
         if type_string.is_ok() && set_bound.is_some() {
             imports.add("glib::prelude::*");
             if !*nullable {
-                //TODO: support non-nullable setter if found any
+                // TODO: support non-nullable setter if found any
                 warn!(
                     "Non nullable setter for property generated as nullable \"{}.{}\"",
                     type_name, name
@@ -321,7 +321,8 @@ fn analyze_property(
                     destroy: None,
                 },
                 is_action: false,
-                is_detailed: false, // well, technically this *is* an instance of a detailed signal, but we "pre-detailed" it
+                is_detailed: false, /* well, technically this *is* an instance of a detailed
+                                     * signal, but we "pre-detailed" it */
                 version: prop_version,
                 deprecated_version: prop.deprecated_version,
                 doc: None,

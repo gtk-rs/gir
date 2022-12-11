@@ -101,7 +101,7 @@ fn fill_in(root: &mut Table, env: &Env) {
     {
         let package = upsert_table(root, "package");
         set_string(package, "build", "build.rs");
-        //set_string(package, "version", "0.2.0");
+        // set_string(package, "version", "0.2.0");
     }
 
     {
@@ -166,7 +166,8 @@ fn fill_in(root: &mut Table, env: &Env) {
     }
 
     {
-        // Small trick to prevent having double quotes around it since toml doesn't like having '.'
+        // Small trick to prevent having double quotes around it since toml doesn't like
+        // having '.'
         let docs_rs_metadata = upsert_table(root, "package");
         let docs_rs_metadata = upsert_table(docs_rs_metadata, "metadata");
         let docs_rs_metadata = upsert_table(docs_rs_metadata, "docs");
@@ -213,7 +214,7 @@ fn get_feature_dependencies(
 fn get_crate_name(config: &Config, root: &Table) -> String {
     if let Some(Value::Table(lib)) = root.get("lib") {
         if let Some(Value::String(lib_name)) = lib.get("name") {
-            //Converting don't needed as library target names cannot contain hyphens
+            // Converting don't needed as library target names cannot contain hyphens
             return lib_name.clone();
         }
     }

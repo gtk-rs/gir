@@ -42,7 +42,7 @@ impl ToReturnValue for library::Parameter {
         }
         let type_str = match ConversionType::of(env, self.typ) {
             ConversionType::Unknown => format!("/*Unknown conversion*/{}", name),
-            //TODO: records as in gtk_container_get_path_for_child
+            // TODO: records as in gtk_container_get_path_for_child
             _ => name,
         };
 
@@ -99,9 +99,10 @@ pub fn out_parameter_types(analysis: &analysis::functions::Info) -> Vec<TypeId> 
             .iter()
             .filter(|out| out.lib_par.array_length.is_some())
             .count();
-        // We need to differentiate between array(s)'s size arguments and normal ones. If we have 2
-        // "normal" arguments and one "size" argument, we still need to wrap them into "()" so we take
-        // that into account. If the opposite, it means that there are two arguments in any case so
+        // We need to differentiate between array(s)'s size arguments and normal ones.
+        // If we have 2 "normal" arguments and one "size" argument, we still
+        // need to wrap them into "()" so we take that into account. If the
+        // opposite, it means that there are two arguments in any case so
         // we need "()" too.
         let num_outs = std::cmp::max(num_out_args, num_out_sizes);
         match analysis.outs.mode {
@@ -164,10 +165,10 @@ fn out_parameter_as_return_parts(
         .iter()
         .filter(|out| out.lib_par.array_length.is_some())
         .count();
-    // We need to differentiate between array(s)'s size arguments and normal ones. If we have 2
-    // "normal" arguments and one "size" argument, we still need to wrap them into "()" so we take
-    // that into account. If the opposite, it means that there are two arguments in any case so
-    // we need "()" too.
+    // We need to differentiate between array(s)'s size arguments and normal ones.
+    // If we have 2 "normal" arguments and one "size" argument, we still need to
+    // wrap them into "()" so we take that into account. If the opposite, it
+    // means that there are two arguments in any case so we need "()" too.
     let num_outs = cmp::max(num_out_args, num_out_sizes);
     match analysis.outs.mode {
         Normal | Combined => {
@@ -195,7 +196,7 @@ fn out_parameter_as_return_parts(
         }
         Throws(..) => {
             if num_outs == 1 + 1 {
-                //if only one parameter except "glib::Error"
+                // if only one parameter except "glib::Error"
                 ("Result<", format!(", {}>", use_glib_type(env, "Error")))
             } else {
                 ("Result<(", format!("), {}>", use_glib_type(env, "Error")))
@@ -258,7 +259,7 @@ pub fn out_parameters_as_return(env: &Env, analysis: &analysis::functions::Info)
 }
 
 fn out_parameter_as_return(out: &analysis::Parameter, env: &Env) -> String {
-    //TODO: upcasts?
+    // TODO: upcasts?
     let name = RustType::builder(env, out.lib_par.typ)
         .direction(ParameterDirection::Return)
         .nullable(out.lib_par.nullable)

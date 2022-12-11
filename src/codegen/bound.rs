@@ -84,7 +84,7 @@ impl Bound {
 
                 format!("{}{}", is_a, lifetime)
             }
-            BoundType::AsRef(Some(_ /*lifetime*/)) => panic!("AsRef cannot have a lifetime"),
+            BoundType::AsRef(Some(_ /* lifetime */)) => panic!("AsRef cannot have a lifetime"),
             BoundType::AsRef(None) => format!("AsRef<{}>", self.type_str),
         }
     }

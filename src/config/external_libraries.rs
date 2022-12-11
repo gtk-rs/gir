@@ -127,7 +127,7 @@ other-lib="OtherLib"
                 min_version: None,
             }
         );
-        //Sorted alphabetically
+        // Sorted alphabetically
         assert_eq!(
             libs[3],
             ExternalLibrary {
@@ -159,7 +159,7 @@ OtherLib={min_version = "0.4.0"}
         );
         let libs = read_external_libraries(&toml).unwrap();
 
-        //Sorted alphabetically
+        // Sorted alphabetically
         assert_eq!(
             libs[0],
             ExternalLibrary {

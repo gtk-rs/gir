@@ -522,7 +522,8 @@ fn generate_from_fields(
         name = &fields.name
     )?;
     for field in fields.fields.iter().filter(|f| f.debug) {
-        // TODO: We should generate debug for field manually if automatic one is not available.
+        // TODO: We should generate debug for field manually if automatic one is not
+        // available.
         writeln!(
             w,
             "\t\t .field(\"{field_name}\", {field_get})",

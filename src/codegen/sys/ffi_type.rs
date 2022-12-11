@@ -100,7 +100,8 @@ fn ffi_inner(env: &Env, tid: library::TypeId, mut inner: String) -> Result {
                 Pointer => {
                     match inner.as_str() {
                         "void" => "c_void",
-                        "tm" => return Err(TypeError::Unimplemented(inner)), //TODO: try use time:Tm
+                        // TODO: try use time:Tm
+                        "tm" => return Err(TypeError::Unimplemented(inner)),
                         _ => &*inner,
                     }
                 }

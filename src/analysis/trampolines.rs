@@ -38,7 +38,8 @@ pub struct Trampoline {
     pub user_data_index: usize,
     pub destroy_index: usize,
     pub nullable: library::Nullable,
-    /// This field is used to give the type name when generating the "IsA<X>" part.
+    /// This field is used to give the type name when generating the "IsA<X>"
+    /// part.
     pub type_name: String,
 }
 
@@ -70,7 +71,7 @@ pub fn analyze(
 
     let name = format!("{}_trampoline", signal_to_snake(&signal.name));
 
-    //TODO: move to object.signal.return config
+    // TODO: move to object.signal.return config
     let inhibit = configured_signals.iter().any(|f| f.inhibit);
     if inhibit && signal.ret.typ != library::TypeId::tid_bool() {
         error!("Wrong return type for Inhibit for signal '{}'", signal.name);
@@ -166,7 +167,7 @@ pub fn analyze(
             .direction(library::ParameterDirection::Out)
             .try_build()
         {
-            //No GString
+            // No GString
             used_types.extend(rust_type.into_used_types());
         }
         if let Some(ffi_type) = used_ffi_type(env, signal.ret.typ, &signal.ret.c_type) {

@@ -61,8 +61,8 @@ impl AsRef<Ident> for CallbackParameter {
 #[derive(Clone, Debug)]
 pub struct Parameter {
     pub ident: Ident,
-    //true - parameter don't changed in FFI function,
-    //false(default) - parameter can be changed in FFI function
+    // true - parameter don't changed in FFI function,
+    // false(default) - parameter can be changed in FFI function
     pub constant: bool,
     pub move_: Option<bool>,
     pub nullable: Option<Nullable>,

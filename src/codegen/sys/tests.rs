@@ -17,7 +17,8 @@ use crate::{
 struct CType {
     /// Name of type, as used in C.
     name: String,
-    /// Expression describing when type is available (when defined only conditionally).
+    /// Expression describing when type is available (when defined only
+    /// conditionally).
     cfg_condition: Option<String>,
 }
 
@@ -187,7 +188,8 @@ fn prepare_cconsts(env: &Env) -> Vec<CConstant> {
 
 /// Checks if type name is unlikely to correspond to a real C type name.
 fn is_name_made_up(name: &str) -> bool {
-    // Unnamed types are assigned name during parsing, those names contain an underscore.
+    // Unnamed types are assigned name during parsing, those names contain an
+    // underscore.
     name.contains('_') && !name.ends_with("_t")
 }
 

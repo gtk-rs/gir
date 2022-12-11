@@ -139,11 +139,12 @@ fn analyze_property(
             // let mut bounds = Bounds::default();
             // bounds.add_parameter("P", &r_type, bound, false);
             // let (s_bounds, _) = function::bounds(&bounds, &[], false);
-            // // Because the bounds won't necessarily be added into the final function, we
-            // // only keep the "inner" part to make the string computation easier. So
-            // // `<T: X>` becomes `T: X`.
-            // bounds_str.push_str(&s_bounds[1..s_bounds.len() - 1]);
-            // format!("{}: {}", prop_name, bounds.iter().last().unwrap().alias)
+            // // Because the bounds won't necessarily be added into the final
+            // function, we // only keep the "inner" part to make
+            // the string computation easier. So // `<T: X>` becomes
+            // `T: X`. bounds_str.push_str(&s_bounds[1..s_bounds.
+            // len() - 1]); format!("{}: {}", prop_name,
+            // bounds.iter().last().unwrap().alias)
         } else {
             format!(
                 "{}: {}",

@@ -17,7 +17,8 @@ const LANGUAGE_SEP_END: &str = "\" -->";
 const LANGUAGE_BLOCK_BEGIN: &str = "|[";
 const LANGUAGE_BLOCK_END: &str = "\n]|";
 
-// A list of function names that are ignored when warning about a "not found function"
+// A list of function names that are ignored when warning about a "not found
+// function"
 const IGNORE_C_WARNING_FUNCS: [&str; 6] = [
     "g_object_unref",
     "g_object_ref",
@@ -166,8 +167,9 @@ static GI_DOCGEN_SYMBOL: Lazy<Regex> =
 static FUNCTION: Lazy<Regex> =
     Lazy::new(|| Regex::new(r"([@#%])?(\w+\b[:.]+)?(\b[a-z0-9_]+)\(\)").unwrap());
 // **note**
-// The optional . at the end is to make the regex more relaxed for some weird broken cases on gtk3's docs
-// it doesn't hurt other docs so please don't drop it
+// The optional . at the end is to make the regex more relaxed for some weird
+// broken cases on gtk3's docs it doesn't hurt other docs so please don't drop
+// it
 static GDK_GTK: Lazy<Regex> = Lazy::new(|| {
     Regex::new(r"`([^\(:])?((G[dts]k|Pango|cairo_|graphene_|Adw|Hdy|GtkSource)\w+\b)(\.)?`")
         .unwrap()
@@ -398,12 +400,16 @@ fn find_method_or_function_by_ctype(
     )
 }
 
-/// Find a function in all the possible items, if not found return the original name surrounded with backticks.
-/// A function can either be a struct/interface/record method, a global function or maybe a virtual function
+/// Find a function in all the possible items, if not found return the original
+/// name surrounded with backticks. A function can either be a
+/// struct/interface/record method, a global function or maybe a virtual
+/// function
 ///
 /// This function is generic so it can be de-duplicated between a
-/// - [`find_method_or_function_by_ctype()`] where the object/records are looked by their C name
-/// - [`gi_docgen::find_method_or_function_by_name()`] where the object/records are looked by their name
+/// - [`find_method_or_function_by_ctype()`] where the object/records are looked
+///   by their C name
+/// - [`gi_docgen::find_method_or_function_by_name()`] where the object/records
+///   are looked by their name
 pub(crate) fn find_method_or_function(
     name: &str,
     env: &Env,

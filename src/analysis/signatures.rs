@@ -71,7 +71,7 @@ impl Signature {
         if self.eq(other) {
             true
         } else {
-            //For getters for types like GdkRGBA
+            // For getters for types like GdkRGBA
             is_get && other.0.len() == 2 && other.0[1] == self.1
         }
     }

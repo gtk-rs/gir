@@ -6,8 +6,8 @@ pub enum RefMode {
     None,
     ByRef,
     ByRefMut,
-    ByRefImmut, //immutable reference with mutable pointer in sys
-    ByRefConst, //instance parameters in trait function with const pointer in sys
+    ByRefImmut, // immutable reference with mutable pointer in sys
+    ByRefConst, // instance parameters in trait function with const pointer in sys
     ByRefFake,
 }
 

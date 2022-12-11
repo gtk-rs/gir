@@ -1,8 +1,8 @@
 use crate::library::*;
 
 pub trait FunctionsMutVisitor {
-    //TODO: remove interrupt functionality if it is not used
-    //visiting stops if returned false
+    // TODO: remove interrupt functionality if it is not used
+    // visiting stops if returned false
     fn visit_function_mut(&mut self, func: &mut Function) -> bool;
 }
 

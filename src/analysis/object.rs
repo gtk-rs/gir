@@ -57,9 +57,11 @@ impl Info {
     }
 
     /// Whether we should generate an impl block for this object
-    /// We don't generate an impl block if the type doesn't have any of the followings:
+    /// We don't generate an impl block if the type doesn't have any of the
+    /// followings:
     /// - Constructors / Functions / Builder properties (no build function)
-    /// - Is a final type & doesn't have either methods / properties / child properties / signals
+    /// - Is a final type & doesn't have either methods / properties / child
+    ///   properties / signals
     pub fn should_generate_impl_block(&self) -> bool {
         self.has_constructors
             || has_builder_properties(&self.builder_properties)
@@ -198,8 +200,8 @@ pub fn class(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<Info>
     let mut specials = special_functions::extract(&mut functions, type_, obj);
     // `copy` will duplicate an object while `clone` just adds a reference
     special_functions::unhide(&mut functions, &specials, special_functions::Type::Copy);
-    // these are all automatically derived on objects and compare by pointer. If such functions
-    // exist they will provide additional functionality
+    // these are all automatically derived on objects and compare by pointer. If
+    // such functions exist they will provide additional functionality
     for t in &[
         special_functions::Type::Hash,
         special_functions::Type::Equal,
@@ -243,10 +245,11 @@ pub fn class(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<Info>
         .any(|f| f.kind == library::FunctionKind::Method && f.status.need_generate());
     let has_signals = signals.iter().any(|s| s.trampoline.is_ok())
         || notify_signals.iter().any(|s| s.trampoline.is_ok());
-    // There's no point in generating a trait if there are no signals, methods, properties
-    // and child properties: it would be empty
+    // There's no point in generating a trait if there are no signals, methods,
+    // properties and child properties: it would be empty
     //
-    // There's also no point in generating a trait for final types: there are no possible subtypes
+    // There's also no point in generating a trait for final types: there are no
+    // possible subtypes
     let generate_trait = !final_type
         && !is_fundamental
         && (has_signals || has_methods || !properties.is_empty() || !child_properties.is_empty());

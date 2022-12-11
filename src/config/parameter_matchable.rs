@@ -5,7 +5,7 @@ pub trait Functionlike {
 
     fn parameters(&self) -> &[Self::Parameter];
 
-    //TODO: result
+    // TODO: result
 }
 
 pub trait ParameterMatchable {

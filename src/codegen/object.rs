@@ -47,8 +47,9 @@ pub fn generate(
         );
     }
 
-    // Collect all supertypes that were added at a later time. The `glib::wrapper!` call
-    // needs to be done multiple times with different `#[cfg]` directives if there is a difference.
+    // Collect all supertypes that were added at a later time. The `glib::wrapper!`
+    // call needs to be done multiple times with different `#[cfg]` directives
+    // if there is a difference.
     let mut namespaces = Vec::new();
     for p in &analysis.supertypes {
         use crate::library::*;
@@ -110,8 +111,8 @@ pub fn generate(
             )?;
         }
     } else {
-        // Write the `glib::wrapper!` calls from the highest version to the lowest and remember
-        // which supertypes have to be removed for the next call.
+        // Write the `glib::wrapper!` calls from the highest version to the lowest and
+        // remember which supertypes have to be removed for the next call.
         let mut remove_types: HashSet<library::TypeId> = HashSet::new();
 
         let mut previous_version = None;

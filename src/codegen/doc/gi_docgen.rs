@@ -59,8 +59,9 @@ fn namespace_type_from_details(
     }
 }
 
-/// Convert a "Namespace.Type.method_name" to (Option<Namespace>, Option<Type>, name)
-/// Type is only optional for global functions and the order can be modified the `is_global_func` parameters
+/// Convert a "Namespace.Type.method_name" to (Option<Namespace>, Option<Type>,
+/// name) Type is only optional for global functions and the order can be
+/// modified the `is_global_func` parameters
 fn namespace_type_method_from_details(
     link_details: &str,
     link_type: &str,

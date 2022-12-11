@@ -24,7 +24,7 @@ use crate::{
 
 #[derive(Clone, Debug)]
 enum Parameter {
-    //Used to separate in and out parameters in `add_in_array_lengths`
+    // Used to separate in and out parameters in `add_in_array_lengths`
     // and `generate_func_parameters`
     In,
     Out {
@@ -886,7 +886,9 @@ impl Builder {
             if has_error_parameter {
                 "ret"
             } else {
-                "result" // Needed as in case of an error param we would have let result = if error.is_null() { Ok()} else { Err()};
+                "result" // Needed as in case of an error param we would have
+                         // let result = if error.is_null() { Ok()} else {
+                         // Err()};
             }
         } else {
             "_"
@@ -1099,7 +1101,8 @@ impl Builder {
             .collect()
     }
     fn check_if_need_glib_conversion(&self, env: &Env, typ: TypeId) -> bool {
-        // TODO: maybe improve this part to potentially handle more cases than just glib::Pid?
+        // TODO: maybe improve this part to potentially handle more cases than just
+        // glib::Pid?
         matches!(
             env.type_(typ),
             library::Type::Alias(a) if a.c_identifier == "GPid"
@@ -1229,7 +1232,7 @@ impl Builder {
                 (call, Some(ret))
             }
             Throws(return_strategy) => {
-                //extracting original FFI function call
+                // extracting original FFI function call
                 let (boxed_call, array_length_name, ret_info) = if let Chunk::FfiCallConversion {
                     call: inner,
                     array_length_name,

@@ -25,7 +25,8 @@ fn check_up_eq(a: &str, b: &str) -> Ordering {
     Ordering::Equal
 }
 
-/// This function is used by the `Imports` type to generate output like `cargo fmt` would.
+/// This function is used by the `Imports` type to generate output like `cargo
+/// fmt` would.
 ///
 /// For example:
 ///
@@ -121,9 +122,9 @@ impl Imports {
         self.defaults.clear();
     }
 
-    /// The goals of this function is to discard unwanted imports like "crate". It
-    /// also extends the checks in case you are implementing "X". For example, you don't want to
-    /// import "X" or "crate::X" in this case.
+    /// The goals of this function is to discard unwanted imports like "crate".
+    /// It also extends the checks in case you are implementing "X". For
+    /// example, you don't want to import "X" or "crate::X" in this case.
     fn common_checks(&self, name: &str) -> bool {
         // The ffi namespace is used directly, including it is a programmer error.
         assert_ne!(name, "crate::ffi");
@@ -197,8 +198,8 @@ impl Imports {
         }
     }
 
-    /// Declares that name should be available through its last path component and provides
-    /// an optional feature constraint.
+    /// Declares that name should be available through its last path component
+    /// and provides an optional feature constraint.
     ///
     /// For example, if name is `X::Y::Z` then it will be available as `Z`.
     pub fn add_with_constraint(

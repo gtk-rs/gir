@@ -1,9 +1,7 @@
-/*
- * TODO: better heuristic (https://bugzilla.gnome.org/show_bug.cgi?id=623635#c5)
- * TODO: ProgressCallback types (not specific to async).
- * TODO: add annotation for methods like g_file_replace_contents_bytes_async where the finish
- * method has a different prefix.
- */
+// TODO: better heuristic (https://bugzilla.gnome.org/show_bug.cgi?id=623635#c5)
+// TODO: ProgressCallback types (not specific to async).
+// TODO: add annotation for methods like g_file_replace_contents_bytes_async
+// where the finish method has a different prefix.
 
 use std::{
     borrow::Borrow,
@@ -340,8 +338,8 @@ fn analyze_callbacks(
     let mut to_remove = Vec::new();
 
     {
-        // When closure data and destroy are specified in gir, they don't take into account the
-        // actual closure parameter.
+        // When closure data and destroy are specified in gir, they don't take into
+        // account the actual closure parameter.
         let mut c_parameters = Vec::new();
         for (pos, par) in parameters.c_parameters.iter().enumerate() {
             if par.instance_parameter {
@@ -591,8 +589,8 @@ fn analyze_function(
             .iter()
             .any(|par| par.c_type == "GDestroyNotify")
     {
-        // In here, We have a DestroyNotify callback but no other callback is provided. A good
-        // example of this situation is this function:
+        // In here, We have a DestroyNotify callback but no other callback is provided.
+        // A good example of this situation is this function:
         // https://developer.gnome.org/gio/stable/GTlsPassword.html#g-tls-password-set-value-full
         warn_main!(
             type_tid,
@@ -720,8 +718,8 @@ fn analyze_function(
     if status.need_generate() {
         if !has_callback_parameter {
             for (pos, par) in parameters.c_parameters.iter().enumerate() {
-                // FIXME: It'd be better if we assumed that user data wasn't gpointer all the time so
-                //        we could handle it more generically.
+                // FIXME: It'd be better if we assumed that user data wasn't gpointer all the
+                // time so        we could handle it more generically.
                 if r#async && is_gpointer(&par.c_type) {
                     continue;
                 }
@@ -1128,8 +1126,8 @@ fn analyze_callback(
             }
         }
 
-        // If we don't have a "user data" parameter, we can't get the closure so there's nothing we
-        // can do...
+        // If we don't have a "user data" parameter, we can't get the closure so there's
+        // nothing we can do...
         if par.c_type != "GDestroyNotify"
             && (func.parameters.is_empty() || !func.parameters.iter().any(|c| c.closure.is_some()))
         {

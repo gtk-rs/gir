@@ -9,8 +9,8 @@ use crate::analysis::{
 pub enum Chunk {
     Comment(Vec<Chunk>),
     Chunks(Vec<Chunk>),
-    BlockHalf(Vec<Chunk>),   //Block without open bracket, temporary
-    UnsafeSmart(Vec<Chunk>), //TODO: remove (will change generated results)
+    BlockHalf(Vec<Chunk>),   // Block without open bracket, temporary
+    UnsafeSmart(Vec<Chunk>), // TODO: remove (will change generated results)
     Unsafe(Vec<Chunk>),
     #[allow(clippy::upper_case_acronyms)]
     FfiCallTODO(String),
@@ -24,7 +24,7 @@ pub enum Chunk {
     FfiCallOutParameter {
         par: parameter_ffi_call_out::Parameter,
     },
-    //TODO: separate without return_value::Info
+    // TODO: separate without return_value::Info
     FfiCallConversion {
         ret: return_value::Info,
         array_length_name: Option<String>,
