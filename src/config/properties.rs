@@ -19,7 +19,7 @@ pub struct Property {
 }
 
 impl Parse for Property {
-    fn parse(toml: &Value, object_name: &str) -> Option<Property> {
+    fn parse(toml: &Value, object_name: &str) -> Option<Self> {
         let ident = match Ident::parse(toml, object_name, "property") {
             Some(ident) => ident,
             None => {
@@ -85,7 +85,7 @@ impl Parse for Property {
             .and_then(Value::as_bool)
             .unwrap_or(true);
 
-        Some(Property {
+        Some(Self {
             ident,
             status,
             version,

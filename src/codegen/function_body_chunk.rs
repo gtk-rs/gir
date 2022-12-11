@@ -44,7 +44,7 @@ enum OutMemMode {
 
 impl OutMemMode {
     fn is_uninitialized(&self) -> bool {
-        matches!(*self, OutMemMode::Uninitialized)
+        matches!(*self, Self::Uninitialized)
     }
 }
 
@@ -79,38 +79,38 @@ struct FuncParameter<'a> {
 }
 
 impl Builder {
-    pub fn new() -> Builder {
+    pub fn new() -> Self {
         Default::default()
     }
-    pub fn async_trampoline(&mut self, trampoline: &AsyncTrampoline) -> &mut Builder {
+    pub fn async_trampoline(&mut self, trampoline: &AsyncTrampoline) -> &mut Self {
         self.async_trampoline = Some(trampoline.clone());
         self
     }
-    pub fn callback(&mut self, trampoline: &Trampoline) -> &mut Builder {
+    pub fn callback(&mut self, trampoline: &Trampoline) -> &mut Self {
         self.callbacks.push(trampoline.clone());
         self
     }
-    pub fn destroy(&mut self, trampoline: &Trampoline) -> &mut Builder {
+    pub fn destroy(&mut self, trampoline: &Trampoline) -> &mut Self {
         self.destroys.push(trampoline.clone());
         self
     }
-    pub fn glib_name(&mut self, name: &str) -> &mut Builder {
+    pub fn glib_name(&mut self, name: &str) -> &mut Self {
         self.glib_name = name.into();
         self
     }
-    pub fn assertion(&mut self, assertion: SafetyAssertionMode) -> &mut Builder {
+    pub fn assertion(&mut self, assertion: SafetyAssertionMode) -> &mut Self {
         self.assertion = assertion;
         self
     }
-    pub fn ret(&mut self, ret: &return_value::Info) -> &mut Builder {
+    pub fn ret(&mut self, ret: &return_value::Info) -> &mut Self {
         self.ret = ReturnValue { ret: ret.clone() };
         self
     }
-    pub fn parameter(&mut self) -> &mut Builder {
+    pub fn parameter(&mut self) -> &mut Self {
         self.parameters.push(Parameter::In);
         self
     }
-    pub fn out_parameter(&mut self, env: &Env, parameter: &AnalysisCParameter) -> &mut Builder {
+    pub fn out_parameter(&mut self, env: &Env, parameter: &AnalysisCParameter) -> &mut Self {
         let mem_mode = c_type_mem_mode(env, parameter);
         self.parameters.push(Parameter::Out {
             parameter: parameter_ffi_call_out::Parameter::new(
@@ -123,16 +123,16 @@ impl Builder {
         self
     }
 
-    pub fn transformations(&mut self, transformations: &[Transformation]) -> &mut Builder {
+    pub fn transformations(&mut self, transformations: &[Transformation]) -> &mut Self {
         self.transformations = transformations.to_owned();
         self
     }
 
-    pub fn outs_mode(&mut self, mode: Mode) -> &mut Builder {
+    pub fn outs_mode(&mut self, mode: Mode) -> &mut Self {
         self.outs_mode = mode;
         self
     }
-    pub fn in_unsafe(&mut self, in_unsafe: bool) -> &mut Builder {
+    pub fn in_unsafe(&mut self, in_unsafe: bool) -> &mut Self {
         self.in_unsafe = in_unsafe;
         self
     }

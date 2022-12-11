@@ -303,12 +303,12 @@ pub struct PropertyBound {
 }
 
 impl PropertyBound {
-    pub fn get(env: &Env, type_id: TypeId) -> Option<PropertyBound> {
+    pub fn get(env: &Env, type_id: TypeId) -> Option<Self> {
         let type_ = env.type_(type_id);
         if type_.is_final_type() {
             return None;
         }
-        Some(PropertyBound {
+        Some(Self {
             alias: TYPE_PARAMETERS_START,
             type_str: RustType::builder(env, type_id)
                 .ref_mode(RefMode::ByRefFake)

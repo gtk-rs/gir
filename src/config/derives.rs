@@ -10,7 +10,7 @@ pub struct Derive {
 }
 
 impl Parse for Derive {
-    fn parse(toml: &Value, object_name: &str) -> Option<Derive> {
+    fn parse(toml: &Value, object_name: &str) -> Option<Self> {
         let names = match toml.lookup("name").and_then(Value::as_str) {
             Some(names) => names,
             None => {
@@ -33,7 +33,7 @@ impl Parse for Derive {
             names_vec.push(name.trim().into());
         }
 
-        Some(Derive {
+        Some(Self {
             names: names_vec,
             cfg_condition,
         })

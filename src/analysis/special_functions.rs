@@ -24,16 +24,15 @@ impl FromStr for Type {
     type Err = String;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        use self::Type::*;
         match s {
-            "compare" => Ok(Compare),
-            "copy" => Ok(Copy),
-            "equal" => Ok(Equal),
-            "free" | "destroy" => Ok(Free),
-            "is_equal" => Ok(Equal),
-            "ref" | "ref_" => Ok(Ref),
-            "unref" => Ok(Unref),
-            "hash" => Ok(Hash),
+            "compare" => Ok(Self::Compare),
+            "copy" => Ok(Self::Copy),
+            "equal" => Ok(Self::Equal),
+            "free" | "destroy" => Ok(Self::Free),
+            "is_equal" => Ok(Self::Equal),
+            "ref" | "ref_" => Ok(Self::Ref),
+            "unref" => Ok(Self::Unref),
+            "hash" => Ok(Self::Hash),
             _ => Err(format!("Unknown type '{}'", s)),
         }
     }

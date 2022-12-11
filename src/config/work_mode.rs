@@ -11,11 +11,11 @@ pub enum WorkMode {
 
 impl WorkMode {
     pub fn is_normal(self) -> bool {
-        matches!(self, WorkMode::Normal)
+        matches!(self, Self::Normal)
     }
 
     pub fn is_generate_rust_files(self) -> bool {
-        matches!(self, WorkMode::Normal | WorkMode::Sys)
+        matches!(self, Self::Normal | Self::Sys)
     }
 }
 
@@ -23,10 +23,10 @@ impl FromStr for WorkMode {
     type Err = String;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
-            "normal" => Ok(WorkMode::Normal),
-            "sys" => Ok(WorkMode::Sys),
-            "doc" => Ok(WorkMode::Doc),
-            "not_bound" => Ok(WorkMode::DisplayNotBound),
+            "normal" => Ok(Self::Normal),
+            "sys" => Ok(Self::Sys),
+            "doc" => Ok(Self::Doc),
+            "not_bound" => Ok(Self::DisplayNotBound),
             _ => Err(format!("Wrong work mode '{}'", s)),
         }
     }

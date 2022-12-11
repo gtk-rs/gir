@@ -16,25 +16,25 @@ impl FromStr for PropertyGenerateFlags {
     type Err = String;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
-            "get" => Ok(PropertyGenerateFlags::GET),
-            "set" => Ok(PropertyGenerateFlags::SET),
-            "notify" => Ok(PropertyGenerateFlags::NOTIFY),
+            "get" => Ok(Self::GET),
+            "set" => Ok(Self::SET),
+            "notify" => Ok(Self::NOTIFY),
             _ => Err(format!("Wrong property generate flag \"{}\"", s)),
         }
     }
 }
 
 impl PropertyGenerateFlags {
-    pub fn parse_flags(toml: &toml::Value, option: &str) -> Result<PropertyGenerateFlags, String> {
+    pub fn parse_flags(toml: &toml::Value, option: &str) -> Result<Self, String> {
         let array = toml.as_result_vec(option)?;
-        let mut val = PropertyGenerateFlags::empty();
+        let mut val = Self::empty();
         for v in array {
             let s = v.as_str().ok_or(format!(
                 "Invalid `{}` value element, expected a string, found {}",
                 option,
                 v.type_str()
             ))?;
-            match PropertyGenerateFlags::from_str(s) {
+            match Self::from_str(s) {
                 Ok(v) => val |= v,
                 e @ Err(_) => return e,
             }

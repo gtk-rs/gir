@@ -52,8 +52,8 @@ pub struct Parameters {
 }
 
 impl Parameters {
-    pub fn new(capacity: usize) -> Parameters {
-        Parameters {
+    pub fn new(capacity: usize) -> Self {
+        Self {
             rust_parameters: Vec::with_capacity(capacity),
             c_parameters: Vec::with_capacity(capacity),
             transformations: Vec::with_capacity(capacity),

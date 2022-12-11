@@ -13,7 +13,7 @@ pub struct ChildProperty {
 }
 
 impl Parse for ChildProperty {
-    fn parse(toml: &Value, object_name: &str) -> Option<ChildProperty> {
+    fn parse(toml: &Value, object_name: &str) -> Option<Self> {
         let name = toml
             .lookup("name")
             .and_then(Value::as_str)
@@ -56,7 +56,7 @@ impl Parse for ChildProperty {
             .and_then(Value::as_bool)
             .unwrap_or(true);
 
-        Some(ChildProperty {
+        Some(Self {
             name,
             rename_getter,
             type_name,
@@ -74,7 +74,7 @@ pub struct ChildProperties {
 }
 
 impl Parse for ChildProperties {
-    fn parse(toml_object: &Value, object_name: &str) -> Option<ChildProperties> {
+    fn parse(toml_object: &Value, object_name: &str) -> Option<Self> {
         let child_name = toml_object
             .lookup("child_name")
             .and_then(Value::as_str)
@@ -93,7 +93,7 @@ impl Parse for ChildProperties {
         }
 
         if !properties.is_empty() {
-            Some(ChildProperties {
+            Some(Self {
                 child_name,
                 child_type,
                 properties,

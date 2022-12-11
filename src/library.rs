@@ -21,12 +21,11 @@ pub enum Transfer {
 
 impl FromStr for Transfer {
     type Err = String;
-    fn from_str(name: &str) -> Result<Transfer, String> {
-        use self::Transfer::*;
+    fn from_str(name: &str) -> Result<Self, String> {
         match name {
-            "none" => Ok(None),
-            "container" => Ok(Container),
-            "full" => Ok(Full),
+            "none" => Ok(Self::None),
+            "container" => Ok(Self::Container),
+            "full" => Ok(Self::Full),
             _ => Err(format!("Unknown ownership transfer mode '{}'", name)),
         }
     }
@@ -44,22 +43,21 @@ pub enum ParameterDirection {
 
 impl ParameterDirection {
     pub fn is_in(self) -> bool {
-        matches!(self, ParameterDirection::In | ParameterDirection::InOut)
+        matches!(self, Self::In | Self::InOut)
     }
 
     pub fn is_out(self) -> bool {
-        matches!(self, ParameterDirection::Out | ParameterDirection::InOut)
+        matches!(self, Self::Out | Self::InOut)
     }
 }
 
 impl FromStr for ParameterDirection {
     type Err = String;
-    fn from_str(name: &str) -> Result<ParameterDirection, String> {
-        use self::ParameterDirection::*;
+    fn from_str(name: &str) -> Result<Self, String> {
         match name {
-            "in" => Ok(In),
-            "out" => Ok(Out),
-            "inout" => Ok(InOut),
+            "in" => Ok(Self::In),
+            "out" => Ok(Self::Out),
+            "inout" => Ok(Self::InOut),
             _ => Err(format!("Unknown parameter direction '{}'", name)),
         }
     }
@@ -88,22 +86,22 @@ pub enum ParameterScope {
 
 impl ParameterScope {
     pub fn is_call(self) -> bool {
-        matches!(self, ParameterScope::Call)
+        matches!(self, Self::Call)
     }
 
     pub fn is_async(self) -> bool {
-        matches!(self, ParameterScope::Async)
+        matches!(self, Self::Async)
     }
 }
 
 impl FromStr for ParameterScope {
     type Err = String;
 
-    fn from_str(name: &str) -> Result<ParameterScope, String> {
+    fn from_str(name: &str) -> Result<Self, String> {
         match name {
-            "call" => Ok(ParameterScope::Call),
-            "async" => Ok(ParameterScope::Async),
-            "notified" => Ok(ParameterScope::Notified),
+            "call" => Ok(Self::Call),
+            "async" => Ok(Self::Async),
+            "notified" => Ok(Self::Notified),
             _ => Err(format!("Unknown parameter scope type: {}", name)),
         }
     }
@@ -155,14 +153,13 @@ pub enum FunctionKind {
 
 impl FromStr for FunctionKind {
     type Err = String;
-    fn from_str(name: &str) -> Result<FunctionKind, String> {
-        use self::FunctionKind::*;
+    fn from_str(name: &str) -> Result<Self, String> {
         match name {
-            "constructor" => Ok(Constructor),
-            "function" => Ok(Function),
-            "method" => Ok(Method),
-            "callback" => Ok(Function),
-            "global" => Ok(Global),
+            "constructor" => Ok(Self::Constructor),
+            "function" => Ok(Self::Function),
+            "method" => Ok(Self::Method),
+            "callback" => Ok(Self::Function),
+            "global" => Ok(Self::Global),
             _ => Err(format!("Unknown function kind '{}'", name)),
         }
     }
@@ -178,12 +175,11 @@ pub enum Concurrency {
 
 impl FromStr for Concurrency {
     type Err = String;
-    fn from_str(name: &str) -> Result<Concurrency, String> {
-        use self::Concurrency::*;
+    fn from_str(name: &str) -> Result<Self, String> {
         match name {
-            "none" => Ok(None),
-            "send" => Ok(Send),
-            "send+sync" => Ok(SendSync),
+            "none" => Ok(Self::None),
+            "send" => Ok(Self::Send),
+            "send+sync" => Ok(Self::SendSync),
             _ => Err(format!("Unknown concurrency kind '{}'", name)),
         }
     }
@@ -654,87 +650,84 @@ pub enum Type {
 impl fmt::Display for Type {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(match self {
-            Type::Basic(_) => "Basic",
-            Type::Alias(_) => "Alias",
-            Type::Enumeration(_) => "Enumeration",
-            Type::Bitfield(_) => "Bitfield",
-            Type::Record(_) => "Record",
-            Type::Union(_) => "Union",
-            Type::Function(_) => "Function",
-            Type::Interface(_) => "Interface",
-            Type::Class(_) => "Class",
-            Type::Custom(_) => "Custom",
-            Type::Array(_) => "Array",
-            Type::CArray(_) => "CArray",
-            Type::FixedArray(_, _, _) => "FixedArray",
-            Type::PtrArray(_) => "PtrArray",
-            Type::HashTable(_, _) => "HashTable",
-            Type::List(_) => "List",
-            Type::SList(_) => "SList",
+            Self::Basic(_) => "Basic",
+            Self::Alias(_) => "Alias",
+            Self::Enumeration(_) => "Enumeration",
+            Self::Bitfield(_) => "Bitfield",
+            Self::Record(_) => "Record",
+            Self::Union(_) => "Union",
+            Self::Function(_) => "Function",
+            Self::Interface(_) => "Interface",
+            Self::Class(_) => "Class",
+            Self::Custom(_) => "Custom",
+            Self::Array(_) => "Array",
+            Self::CArray(_) => "CArray",
+            Self::FixedArray(_, _, _) => "FixedArray",
+            Self::PtrArray(_) => "PtrArray",
+            Self::HashTable(_, _) => "HashTable",
+            Self::List(_) => "List",
+            Self::SList(_) => "SList",
         })
     }
 }
 
 impl Type {
     pub fn get_name(&self) -> String {
-        use self::Type::*;
         match self {
-            Basic(basic) => format!("{:?}", basic),
-            Alias(alias) => alias.name.clone(),
-            Enumeration(enum_) => enum_.name.clone(),
-            Bitfield(bit_field) => bit_field.name.clone(),
-            Record(rec) => rec.name.clone(),
-            Union(u) => u.name.clone(),
-            Function(func) => func.name.clone(),
-            Interface(interface) => interface.name.clone(),
-            Array(type_id) => format!("Array {:?}", type_id),
-            Class(class) => class.name.clone(),
-            Custom(custom) => custom.name.clone(),
-            CArray(type_id) => format!("CArray {:?}", type_id),
-            FixedArray(type_id, size, _) => format!("FixedArray {:?}; {}", type_id, size),
-            PtrArray(type_id) => format!("PtrArray {:?}", type_id),
-            HashTable(key_type_id, value_type_id) => {
+            Self::Basic(basic) => format!("{:?}", basic),
+            Self::Alias(alias) => alias.name.clone(),
+            Self::Enumeration(enum_) => enum_.name.clone(),
+            Self::Bitfield(bit_field) => bit_field.name.clone(),
+            Self::Record(rec) => rec.name.clone(),
+            Self::Union(u) => u.name.clone(),
+            Self::Function(func) => func.name.clone(),
+            Self::Interface(interface) => interface.name.clone(),
+            Self::Array(type_id) => format!("Array {:?}", type_id),
+            Self::Class(class) => class.name.clone(),
+            Self::Custom(custom) => custom.name.clone(),
+            Self::CArray(type_id) => format!("CArray {:?}", type_id),
+            Self::FixedArray(type_id, size, _) => format!("FixedArray {:?}; {}", type_id, size),
+            Self::PtrArray(type_id) => format!("PtrArray {:?}", type_id),
+            Self::HashTable(key_type_id, value_type_id) => {
                 format!("HashTable {:?}/{:?}", key_type_id, value_type_id)
             }
-            List(type_id) => format!("List {:?}", type_id),
-            SList(type_id) => format!("SList {:?}", type_id),
+            Self::List(type_id) => format!("List {:?}", type_id),
+            Self::SList(type_id) => format!("SList {:?}", type_id),
         }
     }
 
     pub fn get_deprecated_version(&self) -> Option<Version> {
-        use self::Type::*;
         match self {
-            Basic(_) => None,
-            Alias(_) => None,
-            Enumeration(enum_) => enum_.deprecated_version,
-            Bitfield(bit_field) => bit_field.deprecated_version,
-            Record(rec) => rec.deprecated_version,
-            Union(_) => None,
-            Function(func) => func.deprecated_version,
-            Interface(interface) => interface.deprecated_version,
-            Array(_) => None,
-            Class(class) => class.deprecated_version,
-            Custom(_) => None,
-            CArray(_) => None,
-            FixedArray(..) => None,
-            PtrArray(_) => None,
-            HashTable(_, _) => None,
-            List(_) => None,
-            SList(_) => None,
+            Self::Basic(_) => None,
+            Self::Alias(_) => None,
+            Self::Enumeration(enum_) => enum_.deprecated_version,
+            Self::Bitfield(bit_field) => bit_field.deprecated_version,
+            Self::Record(rec) => rec.deprecated_version,
+            Self::Union(_) => None,
+            Self::Function(func) => func.deprecated_version,
+            Self::Interface(interface) => interface.deprecated_version,
+            Self::Array(_) => None,
+            Self::Class(class) => class.deprecated_version,
+            Self::Custom(_) => None,
+            Self::CArray(_) => None,
+            Self::FixedArray(..) => None,
+            Self::PtrArray(_) => None,
+            Self::HashTable(_, _) => None,
+            Self::List(_) => None,
+            Self::SList(_) => None,
         }
     }
 
     pub fn get_glib_name(&self) -> Option<&str> {
-        use self::Type::*;
         match self {
-            Alias(alias) => Some(&alias.c_identifier),
-            Enumeration(enum_) => Some(&enum_.c_type),
-            Bitfield(bit_field) => Some(&bit_field.c_type),
-            Record(rec) => Some(&rec.c_type),
-            Union(union) => union.c_type.as_deref(),
-            Function(func) => func.c_identifier.as_deref(),
-            Interface(interface) => Some(&interface.c_type),
-            Class(class) => Some(&class.c_type),
+            Self::Alias(alias) => Some(&alias.c_identifier),
+            Self::Enumeration(enum_) => Some(&enum_.c_type),
+            Self::Bitfield(bit_field) => Some(&bit_field.c_type),
+            Self::Record(rec) => Some(&rec.c_type),
+            Self::Union(union) => union.c_type.as_deref(),
+            Self::Function(func) => func.c_identifier.as_deref(),
+            Self::Interface(interface) => Some(&interface.c_type),
+            Self::Class(class) => Some(&class.c_type),
             _ => None,
         }
     }
@@ -745,20 +738,20 @@ impl Type {
         size: Option<u16>,
         c_type: Option<String>,
     ) -> TypeId {
-        let name = Type::c_array_internal_name(inner, size, &c_type);
+        let name = Self::c_array_internal_name(inner, size, &c_type);
         if let Some(size) = size {
             library.add_type(
                 INTERNAL_NAMESPACE,
                 &name,
-                Type::FixedArray(inner, size, c_type),
+                Self::FixedArray(inner, size, c_type),
             )
         } else {
-            library.add_type(INTERNAL_NAMESPACE, &name, Type::CArray(inner))
+            library.add_type(INTERNAL_NAMESPACE, &name, Self::CArray(inner))
         }
     }
 
     pub fn find_c_array(library: &Library, inner: TypeId, size: Option<u16>) -> TypeId {
-        let name = Type::c_array_internal_name(inner, size, &None);
+        let name = Self::c_array_internal_name(inner, size, &None);
         library
             .find_type(INTERNAL_NAMESPACE, &name)
             .unwrap_or_else(|| panic!("No type for '*.{}'", name))
@@ -776,27 +769,27 @@ impl Type {
         match (name, inner.len()) {
             ("GLib.Array", 1) => {
                 let tid = inner.remove(0);
-                Some((format!("Array(#{:?})", tid), Type::Array(tid)))
+                Some((format!("Array(#{:?})", tid), Self::Array(tid)))
             }
             ("GLib.PtrArray", 1) => {
                 let tid = inner.remove(0);
-                Some((format!("PtrArray(#{:?})", tid), Type::PtrArray(tid)))
+                Some((format!("PtrArray(#{:?})", tid), Self::PtrArray(tid)))
             }
             ("GLib.HashTable", 2) => {
                 let k_tid = inner.remove(0);
                 let v_tid = inner.remove(0);
                 Some((
                     format!("HashTable(#{:?}, #{:?})", k_tid, v_tid),
-                    Type::HashTable(k_tid, v_tid),
+                    Self::HashTable(k_tid, v_tid),
                 ))
             }
             ("GLib.List", 1) => {
                 let tid = inner.remove(0);
-                Some((format!("List(#{:?})", tid), Type::List(tid)))
+                Some((format!("List(#{:?})", tid), Self::List(tid)))
             }
             ("GLib.SList", 1) => {
                 let tid = inner.remove(0);
-                Some((format!("SList(#{:?})", tid), Type::SList(tid)))
+                Some((format!("SList(#{:?})", tid), Self::SList(tid)))
             }
             _ => None,
         }
@@ -806,55 +799,55 @@ impl Type {
     pub fn function(library: &mut Library, func: Function) -> TypeId {
         let mut param_tids: Vec<TypeId> = func.parameters.iter().map(|p| p.typ).collect();
         param_tids.push(func.ret.typ);
-        let typ = Type::Function(func);
+        let typ = Self::Function(func);
         library.add_type(INTERNAL_NAMESPACE, &format!("fn<#{:?}>", param_tids), typ)
     }
 
     pub fn union(library: &mut Library, u: Union, ns_id: u16) -> TypeId {
         let field_tids: Vec<TypeId> = u.fields.iter().map(|f| f.typ).collect();
-        let typ = Type::Union(u);
+        let typ = Self::Union(u);
         library.add_type(ns_id, &format!("#{:?}", field_tids), typ)
     }
 
     pub fn record(library: &mut Library, r: Record, ns_id: u16) -> TypeId {
         let field_tids: Vec<TypeId> = r.fields.iter().map(|f| f.typ).collect();
-        let typ = Type::Record(r);
+        let typ = Self::Record(r);
         library.add_type(ns_id, &format!("#{:?}", field_tids), typ)
     }
 
     pub fn functions(&self) -> &[Function] {
         match self {
-            Type::Enumeration(e) => &e.functions,
-            Type::Bitfield(b) => &b.functions,
-            Type::Record(r) => &r.functions,
-            Type::Union(u) => &u.functions,
-            Type::Interface(i) => &i.functions,
-            Type::Class(c) => &c.functions,
+            Self::Enumeration(e) => &e.functions,
+            Self::Bitfield(b) => &b.functions,
+            Self::Record(r) => &r.functions,
+            Self::Union(u) => &u.functions,
+            Self::Interface(i) => &i.functions,
+            Self::Class(c) => &c.functions,
             _ => &[],
         }
     }
 
     pub fn is_basic(&self) -> bool {
-        matches!(*self, Type::Basic(_))
+        matches!(*self, Self::Basic(_))
     }
 
     /// If the type is an Alias containing a basic, it'll return true (whereas
     /// `is_basic` won't).
     pub fn is_basic_type(&self, env: &Env) -> bool {
         match self {
-            Type::Alias(x) => env.library.type_(x.typ).is_basic_type(env),
+            Self::Alias(x) => env.library.type_(x.typ).is_basic_type(env),
             x => x.is_basic(),
         }
     }
 
     pub fn get_inner_type<'a>(&'a self, env: &'a Env) -> Option<(&'a Type, u16)> {
         match *self {
-            Type::Array(t)
-            | Type::CArray(t)
-            | Type::FixedArray(t, ..)
-            | Type::PtrArray(t)
-            | Type::List(t)
-            | Type::SList(t) => {
+            Self::Array(t)
+            | Self::CArray(t)
+            | Self::FixedArray(t, ..)
+            | Self::PtrArray(t)
+            | Self::List(t)
+            | Self::SList(t) => {
                 let ty = env.type_(t);
                 ty.get_inner_type(env).or(Some((ty, t.ns_id)))
             }
@@ -863,45 +856,45 @@ impl Type {
     }
 
     pub fn is_function(&self) -> bool {
-        matches!(*self, Type::Function(_))
+        matches!(*self, Self::Function(_))
     }
 
     pub fn is_class(&self) -> bool {
-        matches!(*self, Type::Class(_))
+        matches!(*self, Self::Class(_))
     }
 
     pub fn is_interface(&self) -> bool {
-        matches!(*self, Type::Interface(_))
+        matches!(*self, Self::Interface(_))
     }
 
     pub fn is_final_type(&self) -> bool {
         match *self {
-            Type::Class(Class { final_type, .. }) => final_type,
-            Type::Interface(..) => false,
+            Self::Class(Class { final_type, .. }) => final_type,
+            Self::Interface(..) => false,
             _ => true,
         }
     }
 
     pub fn is_fundamental(&self) -> bool {
         match *self {
-            Type::Class(Class { is_fundamental, .. }) => is_fundamental,
+            Self::Class(Class { is_fundamental, .. }) => is_fundamental,
             _ => false,
         }
     }
 
     pub fn is_abstract(&self) -> bool {
         match *self {
-            Type::Class(Class { is_abstract, .. }) => is_abstract,
+            Self::Class(Class { is_abstract, .. }) => is_abstract,
             _ => false,
         }
     }
 
     pub fn is_enumeration(&self) -> bool {
-        matches!(*self, Type::Enumeration(_))
+        matches!(*self, Self::Enumeration(_))
     }
 
     pub fn is_bitfield(&self) -> bool {
-        matches!(*self, Type::Bitfield(_))
+        matches!(*self, Self::Bitfield(_))
     }
 }
 
@@ -912,7 +905,7 @@ macro_rules! impl_maybe_ref {
 
         impl MaybeRef<$name> for Type {
             fn maybe_ref(&self) -> Option<&$name> {
-                if let Type::$name(x) = self { Some(x) } else { None }
+                if let Self::$name(x) = self { Some(x) } else { None }
             }
 
             fn to_ref(&self) -> &$name {
@@ -973,10 +966,10 @@ pub struct Namespace {
 }
 
 impl Namespace {
-    fn new(name: &str) -> Namespace {
-        Namespace {
+    fn new(name: &str) -> Self {
+        Self {
             name: name.into(),
-            ..Namespace::default()
+            ..Self::default()
         }
     }
 
@@ -1032,8 +1025,8 @@ pub struct Library {
 }
 
 impl Library {
-    pub fn new(main_namespace_name: &str) -> Library {
-        let mut library = Library {
+    pub fn new(main_namespace_name: &str) -> Self {
+        let mut library = Self {
             namespaces: Vec::new(),
             index: HashMap::new(),
         };

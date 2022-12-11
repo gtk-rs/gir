@@ -17,7 +17,7 @@ pub struct Member {
 }
 
 impl Parse for Member {
-    fn parse(toml: &Value, object_name: &str) -> Option<Member> {
+    fn parse(toml: &Value, object_name: &str) -> Option<Self> {
         let ident = match Ident::parse(toml, object_name, "member") {
             Some(ident) => ident,
             None => {
@@ -82,7 +82,7 @@ impl Parse for Member {
             .and_then(Value::as_bool)
             .unwrap_or(true);
 
-        Some(Member {
+        Some(Self {
             ident,
             alias,
             version,

@@ -11,9 +11,9 @@ impl FromStr for StringType {
     type Err = String;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
-            "utf8" => Ok(StringType::Utf8),
-            "filename" => Ok(StringType::Filename),
-            "os_string" => Ok(StringType::OsString),
+            "utf8" => Ok(Self::Utf8),
+            "filename" => Ok(Self::Filename),
+            "os_string" => Ok(Self::OsString),
             _ => Err(format!("Wrong string type '{}'", s)),
         }
     }

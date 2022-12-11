@@ -195,7 +195,7 @@ pub struct RustTypeBuilder<'env> {
 
 impl<'env> RustTypeBuilder<'env> {
     fn new(env: &'env Env, type_id: library::TypeId) -> Self {
-        RustTypeBuilder {
+        Self {
             env,
             type_id,
             direction: ParameterDirection::None,

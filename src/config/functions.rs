@@ -27,7 +27,7 @@ pub struct CallbackParameter {
 pub type CallbackParameters = Vec<CallbackParameter>;
 
 impl Parse for CallbackParameter {
-    fn parse(toml: &Value, object_name: &str) -> Option<CallbackParameter> {
+    fn parse(toml: &Value, object_name: &str) -> Option<Self> {
         let ident = match Ident::parse(toml, object_name, "callback parameter") {
             Some(ident) => ident,
             None => {
@@ -48,7 +48,7 @@ impl Parse for CallbackParameter {
             .and_then(Value::as_bool)
             .map(Nullable);
 
-        Some(CallbackParameter { ident, nullable })
+        Some(Self { ident, nullable })
     }
 }
 
@@ -74,7 +74,7 @@ pub struct Parameter {
 }
 
 impl Parse for Parameter {
-    fn parse(toml: &Value, object_name: &str) -> Option<Parameter> {
+    fn parse(toml: &Value, object_name: &str) -> Option<Self> {
         let ident = match Ident::parse(toml, object_name, "function parameter") {
             Some(ident) => ident,
             None => {
@@ -140,7 +140,7 @@ impl Parse for Parameter {
         let callback_parameters =
             CallbackParameters::parse(toml.lookup("callback_parameter"), object_name);
 
-        Some(Parameter {
+        Some(Self {
             ident,
             constant,
             move_,
@@ -175,9 +175,9 @@ pub struct Return {
 }
 
 impl Return {
-    pub fn parse(toml: Option<&Value>, object_name: &str) -> Return {
+    pub fn parse(toml: Option<&Value>, object_name: &str) -> Self {
         if toml.is_none() {
-            return Return {
+            return Self {
                 nullable: None,
                 mandatory: None,
                 infallible: None,
@@ -245,7 +245,7 @@ impl Return {
             );
         }
 
-        Return {
+        Self {
             nullable,
             mandatory,
             infallible,
@@ -297,7 +297,7 @@ pub struct Function {
 }
 
 impl Parse for Function {
-    fn parse(toml: &Value, object_name: &str) -> Option<Function> {
+    fn parse(toml: &Value, object_name: &str) -> Option<Self> {
         let ident = match Ident::parse(toml, object_name, "function") {
             Some(ident) => ident,
             None => {
@@ -428,7 +428,7 @@ impl Parse for Function {
             .lookup("generate_doc")
             .and_then(Value::as_bool)
             .unwrap_or(true);
-        Some(Function {
+        Some(Self {
             ident,
             status,
             version,

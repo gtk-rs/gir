@@ -15,11 +15,8 @@ pub struct Parameter {
 }
 
 impl Parameter {
-    pub fn new(
-        orig: &analysis::function_parameters::CParameter,
-        is_uninitialized: bool,
-    ) -> Parameter {
-        Parameter {
+    pub fn new(orig: &analysis::function_parameters::CParameter, is_uninitialized: bool) -> Self {
+        Self {
             name: orig.name.clone(),
             typ: orig.typ,
             transfer: orig.transfer,
@@ -32,8 +29,8 @@ impl Parameter {
 }
 
 impl From<&analysis::Parameter> for Parameter {
-    fn from(orig: &analysis::Parameter) -> Parameter {
-        Parameter {
+    fn from(orig: &analysis::Parameter) -> Self {
+        Self {
             name: orig.lib_par.name.clone(),
             typ: orig.lib_par.typ,
             transfer: orig.lib_par.transfer,
