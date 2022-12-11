@@ -39,7 +39,6 @@ pub struct Info {
     pub notify_signals: Vec<signals::Info>,
     pub properties: Vec<properties::Property>,
     pub builder_properties: Vec<(Vec<properties::Property>, TypeId)>,
-    pub builder_postprocess: Option<String>,
     pub child_properties: ChildProperties,
     pub signatures: Signatures,
     /// Specific to fundamental types
@@ -82,6 +81,12 @@ impl Info {
 
     pub fn has_action_signals(&self) -> bool {
         self.signals.iter().any(|s| s.action_emit_name.is_some())
+    }
+
+    pub fn builder_trait_prefix(&self) -> &str {
+        self.trait_name
+            .strip_suffix("Ext")
+            .unwrap_or(self.trait_name.as_str())
     }
 
     /// Returns the location of the function within this object
@@ -306,7 +311,6 @@ pub fn class(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<Info>
         notify_signals,
         properties,
         builder_properties,
-        builder_postprocess: obj.builder_postprocess.clone(),
         child_properties,
         signatures,
         ref_fn: klass.ref_fn.clone(),
@@ -390,6 +394,13 @@ pub fn interface(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<I
         deps,
     );
 
+    let builder_properties =
+        class_builder::analyze(env, &iface.properties, iface_tid, obj, &mut imports);
+
+    if has_builder_properties(&builder_properties) {
+        imports.add("glib::prelude::*");
+    }
+
     let base = InfoBase {
         full_name,
         type_id: iface_tid,
@@ -420,6 +431,7 @@ pub fn interface(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<I
         signals,
         notify_signals,
         properties,
+        builder_properties,
         signatures,
         ..Default::default()
     };

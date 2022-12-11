@@ -13,7 +13,7 @@ use crate::{
     },
     env::Env,
     library::{self, Nullable},
-    nameutil,
+    nameutil::{self, use_glib_type},
     traits::IntoString,
 };
 use std::collections::{BTreeMap, HashSet};
@@ -202,22 +202,25 @@ pub fn generate(
             )?;
         }
 
-        if has_builder_properties(&analysis.builder_properties) {
+        if has_builder_properties(&analysis.builder_properties)
+            && !env.library.type_(analysis.type_id).is_abstract()
+            && !analysis.is_interface
+        {
             // generate builder method that returns the corresponding builder
-            let builder_name = format!("{}Builder", analysis.name);
             writeln!(
                 w,
                 "
             // rustdoc-stripper-ignore-next
             /// Creates a new builder-pattern struct instance to construct [`{name}`] objects.
             ///
-            /// This method returns an instance of [`{builder_name}`](crate::builders::{builder_name}) which can be used to create [`{name}`] objects.
-            pub fn builder() -> {builder_name} {{
-                {builder_name}::default()
+            /// This method returns an instance of [`ObjectBuilder`]({object_builder}) which can be used to create [`{name}`] objects.
+            pub fn builder() -> {object_builder}<'static, {name}> {{
+                {object}::builder()
             }}
         ",
                 name = analysis.name,
-                builder_name = builder_name
+                object_builder = use_glib_type(env, "object::ObjectBuilder"),
+                object = use_glib_type(env, "Object"),
             )?;
         }
 
@@ -336,177 +339,99 @@ pub fn generate(
     Ok(())
 }
 
-// TODO: instead create a Vec<> inside the Builder instead of Options.
 fn generate_builder(w: &mut dyn Write, env: &Env, analysis: &analysis::object::Info) -> Result<()> {
+    let object_builder = use_glib_type(env, "object::ObjectBuilder");
     let mut methods = vec![];
-    let mut properties = vec![];
-    writeln!(w, "#[derive(Clone, Default)]")?;
     writeln!(
         w,
-        "// rustdoc-stripper-ignore-next
-        /// A [builder-pattern] type to construct [`{}`] objects.
-        ///
-        /// [builder-pattern]: https://doc.rust-lang.org/1.0.0/style/ownership/builders.html",
-        analysis.name,
+        "pub trait {name}BuilderExt {{",
+        name = analysis.builder_trait_prefix()
     )?;
-    writeln!(w, "#[must_use = \"The builder must be built to be used\"]")?;
-    writeln!(w, "pub struct {}Builder {{", analysis.name)?;
     for (builder_props, super_tid) in &analysis.builder_properties {
         for property in builder_props {
-            match RustType::try_new(env, property.typ) {
-                Ok(type_string) => {
-                    let type_string = match type_string.as_str() {
-                        s if nameutil::is_gstring(s) => "String",
-                        "Vec<GString>" | "Vec<glib::GString>" | "Vec<crate::GString>" => {
-                            "Vec<String>"
-                        }
-                        typ => typ,
-                    };
-                    let direction = if property.is_get {
-                        library::ParameterDirection::In
-                    } else {
-                        library::ParameterDirection::Out
-                    };
-                    let mut param_type = RustType::builder(env, property.typ)
-                        .direction(direction)
-                        .ref_mode(property.set_in_ref_mode)
-                        .try_build()
-                        .into_string();
-                    let (param_type_override, bounds, conversion) = match param_type.as_str() {
-                        "&str" => (None, String::new(), ".to_string()"),
-                        "&[&str]" => (Some("Vec<String>".to_string()), String::new(), ""),
-                        _ if !property.bounds.is_empty() => {
-                            let (bounds, _) = function::bounds(&property.bounds, &[], false, false);
-                            let param_bound = property.bounds.get_parameter_bound(&property.name);
-                            let alias = param_bound.map(|bound| {
-                                bound.full_type_parameter_reference(
-                                    RefMode::ByRef,
-                                    Nullable(false),
-                                    false,
-                                )
-                            });
-                            let conversion = param_bound.and_then(|bound| match bound.bound_type {
-                                BoundType::AsRef(_) => Some(".as_ref().clone()"),
-                                _ => None,
-                            });
-                            (alias, bounds, conversion.unwrap_or(".clone().upcast()"))
-                        }
-                        typ if typ.starts_with('&') => (None, String::new(), ".clone()"),
-                        _ => (None, String::new(), ""),
-                    };
-                    if let Some(param_type_override) = param_type_override {
-                        param_type = param_type_override.to_string();
-                    }
-                    let name = nameutil::mangle_keywords(nameutil::signal_to_snake(&property.name));
+            let direction = if property.is_get {
+                library::ParameterDirection::In
+            } else {
+                library::ParameterDirection::Out
+            };
+            let param_type = RustType::builder(env, property.typ)
+                .direction(direction)
+                .ref_mode(property.set_in_ref_mode)
+                .try_build();
+            let commented = param_type.is_err();
+            let comment_prefix = if commented { "//" } else { "" };
+            let mut param_type = param_type.into_string();
 
-                    let version_condition_string = version_condition_string(
-                        env,
-                        Some(super_tid.ns_id),
-                        property.version,
-                        false,
-                        1,
-                    );
-                    let deprecated_string = cfg_deprecated_string(
-                        env,
-                        Some(*super_tid),
-                        property.deprecated_version,
-                        false,
-                        1,
-                    );
-                    if let Some(ref version_condition_string) = version_condition_string {
-                        writeln!(w, "{}", version_condition_string)?;
-                    }
-                    if let Some(ref deprecated_string) = deprecated_string {
-                        writeln!(w, "{}", deprecated_string)?;
-                    }
-                    writeln!(w, "    {}: Option<{}>,", name, type_string)?;
-                    let version_prefix = version_condition_string
-                        .map(|version| format!("{}\n", version))
-                        .unwrap_or_default();
-
-                    let deprecation_prefix = deprecated_string
-                        .map(|version| format!("{}\n", version))
-                        .unwrap_or_default();
-
-                    methods.push(format!(
-                    "\n{version_prefix}{deprecation_prefix}    pub fn {name}{bounds}(mut self, {name}: {param_type}) -> Self {{
-        self.{name} = Some({name}{conversion});
-        self
-    }}",
-                    version_prefix = version_prefix,
-                    deprecation_prefix = deprecation_prefix,
-                    param_type = param_type,
-                    name = name,
-                    conversion = conversion,
-                    bounds = bounds
-                ));
-                    properties.push((property, super_tid));
+            let (param_type_override, bounds, conversion) = match param_type.as_str() {
+                "&str" => (None, String::new(), ".to_string()"),
+                "&[&str]" => (Some("Vec<String>".to_string()), String::new(), ""),
+                _ if !property.bounds.is_empty() => {
+                    let (bounds, _) = function::bounds(&property.bounds, &[], false, false);
+                    let param_bound = property.bounds.get_parameter_bound(&property.name);
+                    let alias = param_bound.map(|bound| {
+                        bound.full_type_parameter_reference(RefMode::ByRef, Nullable(false), false)
+                    });
+                    let conversion = param_bound.and_then(|bound| match bound.bound_type {
+                        BoundType::AsRef(_) => Some(".as_ref().clone()"),
+                        _ => None,
+                    });
+                    (alias, bounds, conversion.unwrap_or(".clone().upcast()"))
                 }
-                Err(_) => writeln!(w, "    //{}: /*Unknown type*/,", property.name)?,
+                typ if typ.starts_with('&') => (None, String::new(), ".clone()"),
+                _ => (None, String::new(), ""),
+            };
+            if let Some(param_type_override) = param_type_override {
+                param_type = param_type_override.to_string();
             }
+            let name = nameutil::mangle_keywords(nameutil::signal_to_snake(&property.name));
+
+            let version_condition_string = version_condition_string(
+                env,
+                Some(super_tid.ns_id),
+                property.version,
+                commented,
+                1,
+            );
+            let deprecated_string = cfg_deprecated_string(
+                env,
+                Some(*super_tid),
+                property.deprecated_version,
+                commented,
+                1,
+            );
+            let version_prefix = version_condition_string
+                .map(|version| format!("{}\n", version))
+                .unwrap_or_default();
+
+            let deprecation_prefix = deprecated_string
+                .map(|version| format!("{}\n", version))
+                .unwrap_or_default();
+
+            let proto = format!(
+                "{comment_prefix}{version_prefix}{deprecation_prefix}    fn {name}{bounds}(self, {name}: {param_type}) -> Self",
+            );
+
+            writeln!(w, "{proto};")?;
+
+            methods.push(format!(
+                "\n{proto} {{
+    {comment_prefix}    self.property(\"{name}\", {name}{conversion})
+    {comment_prefix}}}",
+            ));
         }
     }
     writeln!(
         w,
         "}}
 
-impl {name}Builder {{
-    // rustdoc-stripper-ignore-next
-    /// Create a new [`{name}Builder`].
-    pub fn new() -> Self {{
-        Self::default()
-    }}
+impl<'a, O: {is_a}<{object}> + {is_a}<{name}> + {is_class}> {prefix}BuilderExt for {object_builder}<'a, O> {{
 ",
-        name = analysis.name
+        name = analysis.name,
+        prefix = analysis.builder_trait_prefix(),
+        is_a = use_glib_type(env, "IsA"),
+        object = use_glib_type(env, "Object"),
+        is_class = use_glib_type(env, "object::IsClass"),
     )?;
-
-    writeln!(
-        w,
-        "
-    // rustdoc-stripper-ignore-next
-    /// Build the [`{name}`].
-    #[must_use = \"Building the object from the builder is usually expensive and is not expected to have side effects\"]
-    pub fn build(self) -> {name} {{
-        let mut properties: Vec<(&str, &dyn ToValue)> = vec![];",
-        name = analysis.name
-    )?;
-    for (property, super_tid) in &properties {
-        let name = nameutil::mangle_keywords(nameutil::signal_to_snake(&property.name));
-        version_condition_no_doc(w, env, Some(super_tid.ns_id), property.version, false, 2)?;
-        writeln!(
-            w,
-            "\
-            if let Some(ref {field}) = self.{field} {{
-                properties.push((\"{name}\", {field}));
-            }}",
-            name = property.name,
-            field = name
-        )?;
-    }
-    let glib_crate_name = if env.namespaces.is_glib_crate {
-        "crate"
-    } else {
-        "glib"
-    };
-
-    // The split allows us to not have clippy::let_and_return lint disabled
-    if let Some(code) = analysis.builder_postprocess.as_ref() {
-        writeln!(
-            w,
-            r#"        let ret = {}::Object::new::<{}>(&properties);"#,
-            glib_crate_name, analysis.name,
-        )?;
-        writeln!(w, "        {{\n            {}\n        }}", code)?;
-        writeln!(w, "    ret\n    }}")?;
-    } else {
-        writeln!(
-            w,
-            r#"        {}::Object::new::<{}>(&properties)"#,
-            glib_crate_name, analysis.name,
-        )?;
-        writeln!(w, "\n    }}")?;
-    }
-
     for method in methods {
         writeln!(w, "{}", method)?;
     }
@@ -636,8 +561,9 @@ pub fn generate_reexports(
             builders.push(format!("\t{}", cfg));
         }
         builders.push(format!(
-            "\tpub use super::{}::{}Builder;",
-            module_name, analysis.name
+            "\tpub use super::{}::{}BuilderExt;",
+            module_name,
+            analysis.builder_trait_prefix()
         ));
     }
 }

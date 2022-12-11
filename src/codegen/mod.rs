@@ -82,12 +82,6 @@ pub fn generate_mod_rs(
             writeln!(w, "#[doc(hidden)]")?;
             writeln!(w, "pub mod traits {{")?;
             general::write_vec(w, traits)?;
-            writeln!(w, "}}")?;
-        }
-
-        if !builders.is_empty() {
-            writeln!(w, "#[doc(hidden)]")?;
-            writeln!(w, "pub mod builders {{")?;
             general::write_vec(w, builders)?;
             writeln!(w, "}}")?;
         }
