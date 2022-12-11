@@ -5,6 +5,14 @@
  * method has a different prefix.
  */
 
+use std::{
+    borrow::Borrow,
+    collections::{HashMap, HashSet},
+};
+
+use log::warn;
+
+use super::{namespaces::NsId, special_functions};
 use crate::{
     analysis::{
         self,
@@ -31,13 +39,6 @@ use crate::{
     traits::*,
     version::Version,
 };
-use log::warn;
-use std::{
-    borrow::Borrow,
-    collections::{HashMap, HashSet},
-};
-
-use super::{namespaces::NsId, special_functions};
 
 #[derive(Clone, Debug)]
 pub struct AsyncTrampoline {

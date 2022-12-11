@@ -1,3 +1,7 @@
+use std::slice::Iter;
+
+use log::error;
+
 use crate::{
     analysis::{
         self, conversion_type::ConversionType, function_parameters::CParameter,
@@ -11,8 +15,6 @@ use crate::{
     },
     nameutil,
 };
-use log::error;
-use std::slice::Iter;
 
 #[derive(Default, Clone, Copy, Debug, Eq, PartialEq)]
 pub enum ThrowFunctionReturnStrategy {

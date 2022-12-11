@@ -1,11 +1,13 @@
+use std::{
+    borrow::Cow,
+    cmp::Ordering,
+    collections::{btree_map::BTreeMap, HashSet},
+    ops::{Deref, DerefMut},
+    vec::IntoIter,
+};
+
 use super::namespaces;
 use crate::{library::Library, nameutil::crate_name, version::Version};
-use std::borrow::Cow;
-use std::cmp::Ordering;
-use std::collections::btree_map::BTreeMap;
-use std::collections::HashSet;
-use std::ops::{Deref, DerefMut};
-use std::vec::IntoIter;
 
 fn is_first_char_up(s: &str) -> bool {
     s.chars().next().unwrap().is_uppercase()

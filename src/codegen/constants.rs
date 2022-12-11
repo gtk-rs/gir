@@ -1,3 +1,5 @@
+use std::path::Path;
+
 use crate::{
     analysis::imports::Imports,
     codegen::general::{
@@ -6,7 +8,6 @@ use crate::{
     env::Env,
     file_saver, library,
 };
-use std::path::Path;
 
 pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>) {
     let path = root_path.join("constants.rs");

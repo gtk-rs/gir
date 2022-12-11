@@ -1,3 +1,7 @@
+use std::{borrow::Cow, ops::Deref};
+
+use log::info;
+
 use super::{
     child_properties::ChildProperties, imports::Imports, info_base::InfoBase,
     signatures::Signatures, *,
@@ -9,8 +13,6 @@ use crate::{
     nameutil::*,
     traits::*,
 };
-use log::info;
-use std::{borrow::Cow, ops::Deref};
 
 /// The location of an item within the object
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]

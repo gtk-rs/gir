@@ -1,9 +1,10 @@
-use crate::writer::untabber::Untabber;
 use std::{
     fs::{self, File},
     io::{BufWriter, Result, Write},
     path::Path,
 };
+
+use crate::writer::untabber::Untabber;
 
 pub fn save_to_file<P, F>(path: P, make_backup: bool, mut closure: F)
 where

@@ -1,3 +1,10 @@
+use std::{
+    fs,
+    io::{Result, Write},
+};
+
+use log::info;
+
 use super::{ffi_type::ffi_type, fields, functions, statics};
 use crate::{
     codegen::general::{self, cfg_condition, version_condition},
@@ -7,11 +14,6 @@ use crate::{
     library::*,
     nameutil::*,
     traits::*,
-};
-use log::info;
-use std::{
-    fs,
-    io::{Result, Write},
 };
 
 pub fn generate(env: &Env) {

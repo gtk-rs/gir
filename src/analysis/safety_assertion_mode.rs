@@ -1,5 +1,6 @@
-use crate::{analysis::function_parameters::Parameters, env::Env, library};
 use std::str::FromStr;
+
+use crate::{analysis::function_parameters::Parameters, env::Env, library};
 
 #[derive(Default, Clone, Copy, Debug, Eq, PartialEq)]
 pub enum SafetyAssertionMode {

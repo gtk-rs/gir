@@ -1,3 +1,14 @@
+use std::{
+    borrow::Cow,
+    collections::{BTreeSet, HashSet},
+    io::{Result, Write},
+};
+
+use log::{error, info};
+use once_cell::sync::Lazy;
+use regex::{Captures, Regex};
+use stripper_lib::{write_file_name, write_item_doc, Type as SType, TypeStruct};
+
 use self::format::reformat_doc;
 use crate::{
     analysis::{self, namespaces::MAIN, object::LocationInObject},
@@ -9,15 +20,6 @@ use crate::{
     traits::*,
     version::Version,
 };
-use log::{error, info};
-use once_cell::sync::Lazy;
-use regex::{Captures, Regex};
-use std::{
-    borrow::Cow,
-    collections::{BTreeSet, HashSet},
-    io::{Result, Write},
-};
-use stripper_lib::{write_file_name, write_item_doc, Type as SType, TypeStruct};
 
 mod format;
 mod gi_docgen;

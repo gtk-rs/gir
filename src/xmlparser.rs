@@ -6,6 +6,7 @@ use std::{
     rc::Rc,
     str,
 };
+
 use xml::{
     self,
     attribute::OwnedAttribute,

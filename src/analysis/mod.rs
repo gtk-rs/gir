@@ -1,10 +1,12 @@
+use std::collections::BTreeMap;
+
+use imports::Imports;
+use log::error;
+
 use crate::{
     env::Env,
     library::{self, Type, TypeId},
 };
-use imports::Imports;
-use log::error;
-use std::collections::BTreeMap;
 
 pub mod bounds;
 pub mod c_type;

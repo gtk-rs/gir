@@ -1,5 +1,4 @@
-use std::fmt;
-use std::str::FromStr;
+use std::{fmt, str::FromStr};
 
 #[derive(Default, Debug, Clone, Copy, Eq, PartialEq)]
 pub enum Visibility {

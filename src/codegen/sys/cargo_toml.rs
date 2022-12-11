@@ -1,8 +1,10 @@
+use std::{collections::HashMap, fs::File, io::prelude::*};
+
+use log::info;
+use toml::{self, value::Table, Value};
+
 use super::collect_versions;
 use crate::{config::Config, env::Env, file_saver::save_to_file, nameutil, version::Version};
-use log::info;
-use std::{collections::HashMap, fs::File, io::prelude::*};
-use toml::{self, value::Table, Value};
 
 pub fn generate(env: &Env) -> String {
     info!("Generating sys Cargo.toml for {}", env.config.library_name);

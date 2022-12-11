@@ -1,3 +1,5 @@
+use std::io::{Result, Write};
+
 use super::{function, general, trait_impls};
 use crate::{
     analysis::{self, record_type::RecordType, special_functions::Type},
@@ -5,7 +7,6 @@ use crate::{
     library,
     traits::MaybeRef,
 };
-use std::io::{Result, Write};
 
 pub fn generate(w: &mut dyn Write, env: &Env, analysis: &analysis::record::Info) -> Result<()> {
     let type_ = analysis.type_(&env.library);

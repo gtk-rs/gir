@@ -1,3 +1,5 @@
+use std::cmp;
+
 use crate::{
     analysis::{
         self, conversion_type::ConversionType, namespaces, out_parameters::Mode,
@@ -8,7 +10,6 @@ use crate::{
     nameutil::{is_gstring, mangle_keywords, use_glib_type},
     traits::*,
 };
-use std::cmp;
 
 pub trait ToReturnValue {
     fn to_return_value(

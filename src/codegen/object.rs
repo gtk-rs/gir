@@ -1,3 +1,8 @@
+use std::{
+    collections::{BTreeMap, HashSet},
+    io::{Result, Write},
+};
+
 use super::{
     child_properties, function, general,
     general::{
@@ -16,8 +21,6 @@ use crate::{
     nameutil,
     traits::IntoString,
 };
-use std::collections::{BTreeMap, HashSet};
-use std::io::{Result, Write};
 
 pub fn generate(
     w: &mut dyn Write,

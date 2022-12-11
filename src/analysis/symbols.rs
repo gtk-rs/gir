@@ -1,9 +1,10 @@
+use std::collections::HashMap;
+
 use crate::{
     analysis::namespaces::{self, NsId},
     case::CaseExt,
     library::*,
 };
-use std::collections::HashMap;
 
 #[derive(Clone, Debug, Default)]
 pub struct Symbol {

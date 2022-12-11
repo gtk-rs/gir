@@ -1,3 +1,8 @@
+use std::{
+    io::{prelude::*, Result},
+    path::Path,
+};
+
 use crate::{
     analysis::{namespaces, rust_type::RustType},
     codegen::general,
@@ -6,10 +11,6 @@ use crate::{
     file_saver,
     library::*,
     traits::*,
-};
-use std::{
-    io::{prelude::*, Result},
-    path::Path,
 };
 
 pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>) {

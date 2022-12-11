@@ -1,3 +1,11 @@
+use std::{
+    fmt,
+    io::{Result, Write},
+    result::Result as StdResult,
+};
+
+use log::warn;
+
 use super::{
     function_body_chunk,
     general::{
@@ -16,12 +24,6 @@ use crate::{
     nameutil::use_glib_type,
     version::Version,
     writer::{primitives::tabs, safety_assertion_mode_to_str, ToCode},
-};
-use log::warn;
-use std::{
-    fmt,
-    io::{Result, Write},
-    result::Result as StdResult,
 };
 
 // We follow the rules of the `return_self_not_must_use` clippy lint:
@@ -403,8 +405,9 @@ pub fn body_chunk_futures(
     env: &Env,
     analysis: &analysis::functions::Info,
 ) -> StdResult<String, fmt::Error> {
-    use crate::analysis::ref_mode::RefMode;
     use std::fmt::Write;
+
+    use crate::analysis::ref_mode::RefMode;
 
     let async_future = analysis.async_future.as_ref().unwrap();
 

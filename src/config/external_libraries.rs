@@ -1,7 +1,7 @@
-use super::error::*;
-use crate::nameutil::crate_name;
-use crate::version::Version;
 use std::str::FromStr;
+
+use super::error::*;
+use crate::{nameutil::crate_name, version::Version};
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct ExternalLibrary {

@@ -78,8 +78,9 @@ impl Display for Version {
 
 #[cfg(test)]
 mod tests {
-    use super::Version;
     use std::str::FromStr;
+
+    use super::Version;
 
     #[test]
     fn from_str_works() {

@@ -1,6 +1,6 @@
-use crate::{env, library::*};
-
 use std::sync::Arc;
+
+use crate::{env, library::*};
 
 #[derive(Default, Clone, Debug, Eq, PartialEq)]
 pub enum ConversionType {

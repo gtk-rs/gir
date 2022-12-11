@@ -1,7 +1,7 @@
+use log::info;
+
 use super::{function_parameters::TransformationType, imports::Imports, *};
 use crate::{codegen::Visibility, config::gobjects::GObject, env::Env, nameutil::*, traits::*};
-
-use log::info;
 
 #[derive(Debug, Default)]
 pub struct Info {

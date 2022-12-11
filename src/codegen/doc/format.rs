@@ -1,14 +1,16 @@
 #![allow(clippy::manual_map)]
+use std::fmt::Write;
+
+use log::{info, warn};
+use once_cell::sync::Lazy;
+use regex::{Captures, Regex};
+
 use super::{gi_docgen, LocationInObject};
 use crate::{
     analysis::functions::Info,
     library::{FunctionKind, TypeId},
     nameutil, Env,
 };
-use log::{info, warn};
-use once_cell::sync::Lazy;
-use regex::{Captures, Regex};
-use std::fmt::Write;
 
 const LANGUAGE_SEP_BEGIN: &str = "<!-- language=\"";
 const LANGUAGE_SEP_END: &str = "\" -->";

@@ -1,12 +1,14 @@
+use std::{
+    path::{Path, PathBuf},
+    str::FromStr,
+};
+
+use log::{trace, warn};
+
 use crate::{
     library::*,
     version::Version,
     xmlparser::{Element, XmlParser},
-};
-use log::{trace, warn};
-use std::{
-    path::{Path, PathBuf},
-    str::FromStr,
 };
 
 const EMPTY_CTYPE: &str = "/*EMPTY*/";

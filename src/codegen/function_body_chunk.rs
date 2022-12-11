@@ -1,3 +1,5 @@
+use std::collections::{hash_map::Entry, BTreeMap, HashMap};
+
 use crate::{
     analysis::{
         self,
@@ -19,7 +21,6 @@ use crate::{
     nameutil::{is_gstring, use_gio_type, use_glib_if_needed, use_glib_type},
     traits::*,
 };
-use std::collections::{hash_map::Entry, BTreeMap, HashMap};
 
 #[derive(Clone, Debug)]
 enum Parameter {

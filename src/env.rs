@@ -1,3 +1,5 @@
+use std::cell::RefCell;
+
 use crate::{
     analysis::{self, namespaces::NsId},
     config::{gobjects::GStatus, Config},
@@ -5,7 +7,6 @@ use crate::{
     nameutil::use_glib_type,
     version::Version,
 };
-use std::cell::RefCell;
 
 #[derive(Debug)]
 pub struct Env {

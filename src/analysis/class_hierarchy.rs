@@ -1,8 +1,9 @@
-use crate::library::*;
 use std::{
     collections::{HashMap, HashSet},
     iter,
 };
+
+use crate::library::*;
 
 #[derive(Debug)]
 struct Node {

@@ -1,3 +1,13 @@
+use std::{
+    collections::HashMap,
+    fs,
+    ops::Index,
+    path::{Component, Path, PathBuf},
+    str::FromStr,
+};
+
+use log::warn;
+
 use super::{
     external_libraries::{read_external_libraries, ExternalLibrary},
     gobjects, WorkMode,
@@ -10,14 +20,6 @@ use crate::{
     library::{self, Library},
     nameutil::set_crate_name_overrides,
     version::Version,
-};
-use log::warn;
-use std::{
-    collections::HashMap,
-    fs,
-    ops::Index,
-    path::{Component, Path, PathBuf},
-    str::FromStr,
 };
 
 /// Performs canonicalization by removing `foo/../` and `./` components

@@ -1,6 +1,8 @@
-use crate::{env::Env, file_saver::*, nameutil::*};
-use log::info;
 use std::path::Path;
+
+use log::info;
+
+use crate::{env::Env, file_saver::*, nameutil::*};
 
 pub fn generate(
     env: &Env,

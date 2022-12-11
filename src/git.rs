@@ -1,6 +1,8 @@
-use std::io::Result;
-use std::path::{Path, PathBuf};
-use std::process::{Command, Output};
+use std::{
+    io::Result,
+    path::{Path, PathBuf},
+    process::{Command, Output},
+};
 
 fn git_command(path: impl AsRef<Path>, subcommand: &[&str]) -> Result<Output> {
     let git_path = path
@@ -70,8 +72,7 @@ fn path_command(path: impl AsRef<Path>, subcommand: &[&str]) -> Option<PathBuf> 
 
 #[cfg(unix)]
 fn path_from_output(output: Vec<u8>) -> PathBuf {
-    use std::ffi::OsString;
-    use std::os::unix::prelude::OsStringExt;
+    use std::{ffi::OsString, os::unix::prelude::OsStringExt};
     OsString::from_vec(output).into()
 }
 

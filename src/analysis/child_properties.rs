@@ -1,3 +1,5 @@
+use log::error;
+
 use crate::{
     analysis::{
         bounds::{Bound, Bounds},
@@ -12,7 +14,6 @@ use crate::{
     nameutil,
     traits::*,
 };
-use log::error;
 
 #[derive(Clone, Debug)]
 pub struct ChildProperty {
