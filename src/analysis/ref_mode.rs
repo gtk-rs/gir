@@ -1,3 +1,5 @@
+use std::str::FromStr;
+
 use super::{c_type::is_mut_ptr, record_type::RecordType};
 use crate::{config::gobjects::GObject, env, library};
 
@@ -11,13 +13,28 @@ pub enum RefMode {
     ByRefFake,
 }
 
+impl FromStr for RefMode {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "none" => Ok(Self::None),
+            "ref" => Ok(Self::ByRef),
+            "ref-mut" => Ok(Self::ByRefMut),
+            "ref-immut" => Ok(Self::ByRefImmut),
+            "ref-fake" => Ok(Self::ByRefFake),
+            name => Err(format!("Unknown reference mode '{}'", name)),
+        }
+    }
+}
+
 impl RefMode {
     #[inline]
     pub fn of(
         env: &env::Env,
         tid: library::TypeId,
         direction: library::ParameterDirection,
-    ) -> RefMode {
+    ) -> Self {
         use crate::library::Type::*;
 
         let library = &env.library;
@@ -30,7 +47,7 @@ impl RefMode {
             if direction == library::ParameterDirection::In {
                 return ref_mode;
             } else {
-                return RefMode::None;
+                return Self::None;
             }
         }
 
@@ -43,31 +60,31 @@ impl RefMode {
             | PtrArray(..)
             | CArray(..) => {
                 if direction == library::ParameterDirection::In {
-                    RefMode::ByRef
+                    Self::ByRef
                 } else {
-                    RefMode::None
+                    Self::None
                 }
             }
             Record(record) => {
                 if direction == library::ParameterDirection::In {
                     if let RecordType::Refcounted = RecordType::of(record) {
-                        RefMode::ByRef
+                        Self::ByRef
                     } else {
-                        RefMode::ByRefMut
+                        Self::ByRefMut
                     }
                 } else {
-                    RefMode::None
+                    Self::None
                 }
             }
             Union(..) => {
                 if direction == library::ParameterDirection::In {
-                    RefMode::ByRefMut
+                    Self::ByRefMut
                 } else {
-                    RefMode::None
+                    Self::None
                 }
             }
-            Alias(alias) => RefMode::of(env, alias.typ, direction),
-            _ => RefMode::None,
+            Alias(alias) => Self::of(env, alias.typ, direction),
+            _ => Self::None,
         }
     }
 
@@ -76,26 +93,24 @@ impl RefMode {
         par: &library::Parameter,
         immutable: bool,
         self_in_trait: bool,
-    ) -> RefMode {
-        use self::RefMode::*;
-        let ref_mode = RefMode::of(env, par.typ, par.direction);
+    ) -> Self {
+        let ref_mode = Self::of(env, par.typ, par.direction);
         match ref_mode {
-            ByRefMut if !is_mut_ptr(&par.c_type) => ByRef,
-            ByRefMut if immutable => ByRefImmut,
-            ByRef if self_in_trait && !is_mut_ptr(&par.c_type) => ByRefConst,
+            Self::ByRefMut if !is_mut_ptr(&par.c_type) => Self::ByRef,
+            Self::ByRefMut if immutable => Self::ByRefImmut,
+            Self::ByRef if self_in_trait && !is_mut_ptr(&par.c_type) => Self::ByRefConst,
             ref_mode => ref_mode,
         }
     }
 
     pub fn is_ref(self) -> bool {
-        use self::RefMode::*;
         match self {
-            None => false,
-            ByRef => true,
-            ByRefMut => true,
-            ByRefImmut => true,
-            ByRefConst => true,
-            ByRefFake => true,
+            Self::None => false,
+            Self::ByRef => true,
+            Self::ByRefMut => true,
+            Self::ByRefImmut => true,
+            Self::ByRefConst => true,
+            Self::ByRefFake => true,
         }
     }
 }

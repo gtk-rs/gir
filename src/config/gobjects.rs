@@ -162,19 +162,6 @@ pub fn parse_toml(
     objects
 }
 
-fn ref_mode_from_str(ref_mode: &str) -> Option<ref_mode::RefMode> {
-    use crate::analysis::ref_mode::RefMode::*;
-
-    match ref_mode {
-        "none" => Some(None),
-        "ref" => Some(ByRef),
-        "ref-mut" => Some(ByRefMut),
-        "ref-immut" => Some(ByRefImmut),
-        "ref-fake" => Some(ByRefFake),
-        _ => Option::None,
-    }
-}
-
 pub fn parse_conversion_type(toml: Option<&Value>, object_name: &str) -> Option<ConversionType> {
     use crate::analysis::conversion_type::ConversionType::*;
 
@@ -357,7 +344,7 @@ fn parse_object(
     let ref_mode = toml_object
         .lookup("ref_mode")
         .and_then(Value::as_str)
-        .and_then(ref_mode_from_str);
+        .and_then(|v| v.parse().ok());
     let conversion_type = parse_conversion_type(toml_object.lookup("conversion_type"), &name);
     let child_properties = ChildProperties::parse(toml_object, &name);
     let must_use = toml_object
@@ -426,7 +413,7 @@ fn parse_object(
     let visibility = toml_object
         .lookup("visibility")
         .and_then(Value::as_str)
-        .map(std::str::FromStr::from_str)
+        .map(|v| v.parse())
         .transpose();
     if let Err(ref err) = visibility {
         error!("{}", err);
