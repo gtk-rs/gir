@@ -1,8 +1,9 @@
 use std::str::FromStr;
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Default, Clone, Copy, Debug, Eq, PartialEq)]
 pub enum WorkMode {
-    Normal,          // generate widgets etc.
+    #[default]
+    Normal, // generate widgets etc.
     Sys,             // generate -sys with FFI
     Doc,             // generate documentation file
     DisplayNotBound, // Show not bound types
@@ -15,12 +16,6 @@ impl WorkMode {
 
     pub fn is_generate_rust_files(self) -> bool {
         matches!(self, WorkMode::Normal | WorkMode::Sys)
-    }
-}
-
-impl Default for WorkMode {
-    fn default() -> WorkMode {
-        WorkMode::Normal
     }
 }
 

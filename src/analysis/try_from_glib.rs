@@ -7,8 +7,9 @@ use crate::{
     Env,
 };
 
-#[derive(Clone, Debug)]
+#[derive(Default, Clone, Debug)]
 pub enum TryFromGlib {
+    #[default]
     Default,
     NotImplemented,
     Option,
@@ -20,12 +21,6 @@ pub enum TryFromGlib {
     ResultInfallible {
         ok_type: Arc<str>,
     },
-}
-
-impl Default for TryFromGlib {
-    fn default() -> Self {
-        TryFromGlib::Default
-    }
 }
 
 impl TryFromGlib {

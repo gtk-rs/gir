@@ -1,8 +1,9 @@
 use crate::{analysis::function_parameters::Parameters, env::Env, library};
 use std::str::FromStr;
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Default, Clone, Copy, Debug, Eq, PartialEq)]
 pub enum SafetyAssertionMode {
+    #[default]
     None,
     Skip,
     NotInitialized,
@@ -20,12 +21,6 @@ impl FromStr for SafetyAssertionMode {
             "in-main-thread" => Ok(InMainThread),
             _ => Err(format!("Unknown safety assertion mode '{}'", name)),
         }
-    }
-}
-
-impl Default for SafetyAssertionMode {
-    fn default() -> SafetyAssertionMode {
-        SafetyAssertionMode::None
     }
 }
 

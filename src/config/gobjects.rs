@@ -26,10 +26,11 @@ use std::{
 };
 use toml::Value;
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Default, Clone, Copy, Debug, Eq, PartialEq)]
 pub enum GStatus {
     Manual,
     Generate,
+    #[default]
     Ignore,
 }
 
@@ -42,12 +43,6 @@ impl GStatus {
     }
     pub fn need_generate(self) -> bool {
         self == GStatus::Generate
-    }
-}
-
-impl Default for GStatus {
-    fn default() -> GStatus {
-        GStatus::Ignore
     }
 }
 

@@ -2,7 +2,7 @@ use crate::{env, library::*};
 
 use std::sync::Arc;
 
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Default, Clone, Debug, Eq, PartialEq)]
 pub enum ConversionType {
     /// Coded without conversion.
     Direct,
@@ -21,13 +21,8 @@ pub enum ConversionType {
     Pointer,
     // Same as Pointer, except that use from_glib_borrow instead from_glib_none.
     Borrow,
+    #[default]
     Unknown,
-}
-
-impl Default for ConversionType {
-    fn default() -> Self {
-        ConversionType::Unknown
-    }
 }
 
 impl ConversionType {
