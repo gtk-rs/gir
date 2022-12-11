@@ -1,5 +1,6 @@
-use crate::{config, env::Env, library, nameutil, traits::*, version::Version};
 use std::borrow::Borrow;
+
+use crate::{config, env::Env, library, nameutil, traits::*, version::Version};
 
 #[derive(Debug)]
 pub struct Info {

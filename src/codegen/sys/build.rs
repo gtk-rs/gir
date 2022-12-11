@@ -1,7 +1,9 @@
+use std::io::{Result, Write};
+
+use log::info;
+
 use super::collect_versions;
 use crate::{codegen::general, env::Env, file_saver::save_to_file};
-use log::info;
-use std::io::{Result, Write};
 
 pub fn generate(env: &Env) {
     info!(

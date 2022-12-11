@@ -1,23 +1,25 @@
+use std::{
+    io::{prelude::*, Result},
+    path::Path,
+};
+
 use super::{function, general::allow_deprecated, trait_impls};
 use crate::{
-    analysis::flags::Info,
-    analysis::special_functions::Type,
-    codegen::general::{
-        self, cfg_condition, cfg_condition_doc, cfg_condition_no_doc, cfg_condition_string,
-        cfg_deprecated, derives, doc_alias, version_condition, version_condition_doc,
-        version_condition_no_doc, version_condition_string,
+    analysis::{flags::Info, special_functions::Type},
+    codegen::{
+        general::{
+            self, cfg_condition, cfg_condition_doc, cfg_condition_no_doc, cfg_condition_string,
+            cfg_deprecated, derives, doc_alias, version_condition, version_condition_doc,
+            version_condition_no_doc, version_condition_string,
+        },
+        generate_default_impl,
     },
-    codegen::generate_default_impl,
     config::gobjects::GObject,
     env::Env,
     file_saver,
     library::*,
     nameutil::{bitfield_member_name, use_glib_type},
     traits::*,
-};
-use std::{
-    io::{prelude::*, Result},
-    path::Path,
 };
 
 pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>) {

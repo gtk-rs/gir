@@ -1,3 +1,5 @@
+use log::warn;
+
 use crate::{
     analysis::{
         bounds::{Bounds, PropertyBound},
@@ -14,7 +16,6 @@ use crate::{
     traits::*,
     version::Version,
 };
-use log::warn;
 
 #[derive(Debug)]
 pub struct Property {

@@ -1,6 +1,6 @@
+use std::{path::Path, process::Command};
+
 use log::warn;
-use std::path::Path;
-use std::process::Command;
 
 /// Check if `cargo fmt` available
 pub fn check_fmt() -> bool {

@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 use crate::{
     analysis::{
         bounds::Bounds,
@@ -10,7 +12,6 @@ use crate::{
     library,
     traits::*,
 };
-use std::collections::HashSet;
 
 pub fn analyze(
     env: &Env,

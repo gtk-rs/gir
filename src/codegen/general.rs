@@ -1,3 +1,11 @@
+use std::{
+    collections::BTreeMap,
+    fmt::Display,
+    io::{Result, Write},
+    ops::Index,
+};
+
+use super::Visibility;
 use crate::{
     analysis::{
         self,
@@ -14,14 +22,6 @@ use crate::{
     version::Version,
     writer::primitives::tabs,
 };
-use std::{
-    collections::BTreeMap,
-    fmt::Display,
-    io::{Result, Write},
-    ops::Index,
-};
-
-use super::Visibility;
 
 pub fn start_comments(w: &mut dyn Write, conf: &Config) -> Result<()> {
     if conf.single_version_file.is_some() {

@@ -1,3 +1,5 @@
+use std::{collections::BTreeMap, str::FromStr};
+
 use crate::{
     analysis::{functions::Info as FuncInfo, imports::Imports},
     codegen::Visibility,
@@ -5,7 +7,6 @@ use crate::{
     library::{Type as LibType, TypeId},
     version::Version,
 };
-use std::{collections::BTreeMap, str::FromStr};
 
 #[derive(Clone, Copy, Eq, Debug, Ord, PartialEq, PartialOrd)]
 pub enum Type {

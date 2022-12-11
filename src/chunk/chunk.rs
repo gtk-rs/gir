@@ -1,6 +1,8 @@
 use super::{conversion_from_glib, parameter_ffi_call_out};
-use crate::analysis::safety_assertion_mode::SafetyAssertionMode;
-use crate::analysis::{function_parameters::TransformationType, return_value};
+use crate::analysis::{
+    function_parameters::TransformationType, return_value,
+    safety_assertion_mode::SafetyAssertionMode,
+};
 
 #[allow(clippy::large_enum_variant)]
 #[derive(Clone, Debug)]

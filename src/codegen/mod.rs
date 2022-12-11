@@ -1,10 +1,18 @@
-use crate::config::gobjects::GObject;
-use crate::{config::WorkMode, env::Env, file_saver::*, library::Member, version::Version};
-use std::fmt::Display;
-use std::io::{Result, Write};
-use std::path::Path;
+use std::{
+    fmt::Display,
+    io::{Result, Write},
+    path::Path,
+};
 
 use general::{cfg_condition, version_condition};
+
+use crate::{
+    config::{gobjects::GObject, WorkMode},
+    env::Env,
+    file_saver::*,
+    library::Member,
+    version::Version,
+};
 
 mod alias;
 mod bound;

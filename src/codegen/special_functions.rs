@@ -1,12 +1,11 @@
 use std::io::{Result, Write};
 
+use super::general::version_condition;
 use crate::{
     analysis::{self, special_functions::FunctionType},
     version::Version,
     Env,
 };
-
-use super::general::version_condition;
 
 pub(super) fn generate(
     w: &mut dyn Write,

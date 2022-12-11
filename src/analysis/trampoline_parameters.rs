@@ -1,14 +1,13 @@
+use log::error;
+
 use super::{conversion_type::ConversionType, ref_mode::RefMode, try_from_glib::TryFromGlib};
+pub use crate::config::signals::TransformationType;
 use crate::{
-    analysis::is_gpointer,
-    analysis::rust_type::RustType,
+    analysis::{is_gpointer, rust_type::RustType},
     config::{self, parameter_matchable::ParameterMatchable},
     env::Env,
     library, nameutil,
 };
-use log::error;
-
-pub use crate::config::signals::TransformationType;
 
 #[derive(Clone, Debug)]
 pub struct RustParameter {

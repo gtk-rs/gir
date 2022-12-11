@@ -1,5 +1,6 @@
-use super::TAB;
 use std::io::{Result, Write};
+
+use super::TAB;
 
 pub struct Untabber {
     orig: Box<dyn Write>,

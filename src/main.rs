@@ -1,7 +1,4 @@
-use std::env;
-use std::path::PathBuf;
-use std::process;
-use std::{cell::RefCell, str::FromStr};
+use std::{cell::RefCell, env, path::PathBuf, process, str::FromStr};
 
 use getopts::Options;
 use hprof::Profiler;

@@ -1,6 +1,8 @@
-use crate::case::*;
-use once_cell::sync::Lazy;
 use std::{borrow::Cow, collections::HashMap, path::*};
+
+use once_cell::sync::Lazy;
+
+use crate::case::*;
 
 static mut CRATE_NAME_OVERRIDES: Option<HashMap<String, String>> = None;
 

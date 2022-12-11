@@ -1,5 +1,6 @@
-use crate::{codegen::generate_single_version_file, env::Env, version::Version};
 use std::collections::BTreeMap;
+
+use crate::{codegen::generate_single_version_file, env::Env, version::Version};
 
 mod build;
 mod cargo_toml;

@@ -1,6 +1,8 @@
-use super::error::TomlHelper;
-use bitflags::bitflags;
 use std::str::FromStr;
+
+use bitflags::bitflags;
+
+use super::error::TomlHelper;
 
 bitflags! {
     pub struct PropertyGenerateFlags: u32 {

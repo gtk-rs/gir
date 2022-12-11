@@ -1,3 +1,5 @@
+use std::io::{Result, Write};
+
 use crate::{
     analysis::{
         functions::Info,
@@ -7,7 +9,6 @@ use crate::{
     version::Version,
     Env,
 };
-use std::io::{Result, Write};
 
 pub fn generate(
     w: &mut dyn Write,

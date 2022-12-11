@@ -1,7 +1,8 @@
-use super::{error::TomlHelper, gobjects::GStatus, ident::Ident, parsable::Parse};
-use crate::version::Version;
 use log::error;
 use toml::Value;
+
+use super::{error::TomlHelper, gobjects::GStatus, ident::Ident, parsable::Parse};
+use crate::version::Version;
 
 #[derive(Clone, Debug)]
 pub struct Member {

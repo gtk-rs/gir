@@ -1,3 +1,10 @@
+use std::{
+    fmt::Write as FWrite,
+    io::{Result, Write},
+};
+
+use log::error;
+
 use super::{
     return_value::ToReturnValue, trampoline_from_glib::TrampolineFromGlib,
     trampoline_to_glib::TrampolineToGlib,
@@ -14,9 +21,6 @@ use crate::{
     traits::IntoString,
     writer::primitives::tabs,
 };
-use log::error;
-use std::fmt::Write as FWrite;
-use std::io::{Result, Write};
 
 pub fn generate(
     w: &mut dyn Write,

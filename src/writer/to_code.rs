@@ -1,12 +1,12 @@
-use super::primitives::*;
-use super::safety_assertion_mode_to_str;
+use std::fmt::Write;
+
+use super::{primitives::*, safety_assertion_mode_to_str};
 use crate::{
     chunk::{Chunk, Param, TupleMode},
     codegen::{translate_from_glib::TranslateFromGlib, translate_to_glib::TranslateToGlib},
     env::Env,
     nameutil::use_glib_type,
 };
-use std::fmt::Write;
 
 pub trait ToCode {
     fn to_code(&self, env: &Env) -> Vec<String>;

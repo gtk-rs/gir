@@ -1,3 +1,12 @@
+use std::{
+    fmt::{self, Display, Formatter},
+    str::FromStr,
+};
+
+use once_cell::sync::Lazy;
+use regex::{Captures, Regex};
+
+use super::format::find_method_or_function;
 use crate::{
     analysis::object::LocationInObject,
     codegen::doc::format::{
@@ -8,14 +17,6 @@ use crate::{
     nameutil::mangle_keywords,
     Env,
 };
-use once_cell::sync::Lazy;
-use regex::{Captures, Regex};
-use std::{
-    fmt::{self, Display, Formatter},
-    str::FromStr,
-};
-
-use super::format::find_method_or_function;
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub enum GiDocgenError {

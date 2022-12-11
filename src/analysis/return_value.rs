@@ -1,3 +1,5 @@
+use log::error;
+
 use crate::{
     analysis::{
         self, imports::Imports, namespaces, override_string_type::override_string_type_return,
@@ -7,7 +9,6 @@ use crate::{
     env::Env,
     library::{self, Nullable, TypeId},
 };
-use log::error;
 
 #[derive(Clone, Debug, Default)]
 pub struct Info {

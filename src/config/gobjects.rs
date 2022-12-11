@@ -1,3 +1,12 @@
+use std::{
+    collections::{BTreeMap, HashSet},
+    str::FromStr,
+    sync::Arc,
+};
+
+use log::{error, warn};
+use toml::Value;
+
 use super::{
     child_properties::ChildProperties,
     constants::Constants,
@@ -18,13 +27,6 @@ use crate::{
     library::{self, Library, TypeId, MAIN_NAMESPACE},
     version::Version,
 };
-use log::{error, warn};
-use std::{
-    collections::{BTreeMap, HashSet},
-    str::FromStr,
-    sync::Arc,
-};
-use toml::Value;
 
 #[derive(Default, Clone, Copy, Debug, Eq, PartialEq)]
 pub enum GStatus {
@@ -600,8 +602,7 @@ pub fn resolve_type_ids(objects: &mut GObjects, library: &Library) {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::analysis::conversion_type::ConversionType;
-    use crate::library::Concurrency;
+    use crate::{analysis::conversion_type::ConversionType, library::Concurrency};
 
     fn toml(input: &str) -> ::toml::Value {
         let value = ::toml::from_str(input);

@@ -1,3 +1,7 @@
+use std::collections::HashMap;
+
+use log::{error, info};
+
 use crate::{
     analysis::types::IsIncomplete,
     config::{
@@ -10,8 +14,6 @@ use crate::{
     parser::is_empty_c_type,
     traits::MaybeRefAs,
 };
-use log::{error, info};
-use std::collections::HashMap;
 
 impl Namespace {
     fn unresolved(&self) -> Vec<&str> {

@@ -1,3 +1,8 @@
+use std::{collections::HashSet, str::FromStr};
+
+use log::error;
+use toml::Value;
+
 use super::{
     error::TomlHelper,
     gobjects::GStatus,
@@ -12,9 +17,6 @@ use crate::{
     library::{Infallible, Mandatory, Nullable},
     version::Version,
 };
-use log::error;
-use std::{collections::HashSet, str::FromStr};
-use toml::Value;
 
 #[derive(Clone, Debug)]
 pub struct CallbackParameter {

@@ -1,7 +1,3 @@
-use crate::{
-    analysis::conversion_type::ConversionType, config::gobjects::GStatus, env::Env,
-    nameutil::split_namespace_name, traits::*, version::Version,
-};
 use std::{
     cmp::{Ord, Ordering, PartialOrd},
     collections::{BTreeMap, BTreeSet, HashMap, HashSet},
@@ -9,6 +5,11 @@ use std::{
     iter::Iterator,
     ops::{Deref, DerefMut},
     str::FromStr,
+};
+
+use crate::{
+    analysis::conversion_type::ConversionType, config::gobjects::GStatus, env::Env,
+    nameutil::split_namespace_name, traits::*, version::Version,
 };
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
