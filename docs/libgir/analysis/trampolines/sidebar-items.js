@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":[["analyze",""],["type_error",""]],"struct":[["Trampoline",""]],"type":[["Trampolines",""]]};

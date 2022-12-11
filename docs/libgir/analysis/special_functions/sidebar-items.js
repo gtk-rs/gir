@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":[["FunctionType",""],["Type",""]],"fn":[["analyze_imports",""],["extract",""],["unhide",""]],"struct":[["FunctionInfo",""],["Infos",""],["TraitInfo",""]]};

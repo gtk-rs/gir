@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":[["ffi_type",""],["used_ffi_type",""]]};

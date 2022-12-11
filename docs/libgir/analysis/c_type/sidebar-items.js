@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":[["implements_c_type",""],["is_mut_ptr",""],["rustify_pointers",""]]};

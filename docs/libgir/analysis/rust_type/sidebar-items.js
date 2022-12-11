@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":[["TypeError",""]],"struct":[["RustType","A `RustType` definition and its associated types to be `use`d."],["RustTypeBuilder",""]],"type":[["Result",""]]};
