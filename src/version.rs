@@ -25,9 +25,9 @@ impl Version {
 
     pub fn to_feature(self) -> String {
         match self {
-            Version(major, 0, 0) => format!("v{}", major),
-            Version(major, minor, 0) => format!("v{}_{}", major, minor),
-            Version(major, minor, patch) => format!("v{}_{}_{}", major, minor, patch),
+            Self(major, 0, 0) => format!("v{}", major),
+            Self(major, minor, 0) => format!("v{}_{}", major, minor),
+            Self(major, minor, patch) => format!("v{}_{}_{}", major, minor, patch),
         }
     }
 
@@ -49,21 +49,21 @@ impl FromStr for Version {
 
     /// Parse a `Version` from a string.
     /// Currently always return Ok
-    fn from_str(s: &str) -> Result<Version, String> {
+    fn from_str(s: &str) -> Result<Self, String> {
         if s.contains('.') {
             let mut parts = s
                 .splitn(4, '.')
                 .map(str::parse)
                 .take_while(Result::is_ok)
                 .map(Result::unwrap);
-            Ok(Version(
+            Ok(Self(
                 parts.next().unwrap_or(0),
                 parts.next().unwrap_or(0),
                 parts.next().unwrap_or(0),
             ))
         } else {
             let val = s.parse::<u16>();
-            Ok(Version(val.unwrap_or(0), 0, 0))
+            Ok(Self(val.unwrap_or(0), 0, 0))
         }
     }
 }
@@ -71,9 +71,9 @@ impl FromStr for Version {
 impl Display for Version {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), fmt::Error> {
         match *self {
-            Version(major, 0, 0) => write!(f, "{}", major),
-            Version(major, minor, 0) => write!(f, "{}.{}", major, minor),
-            Version(major, minor, patch) => write!(f, "{}.{}.{}", major, minor, patch),
+            Self(major, 0, 0) => write!(f, "{}", major),
+            Self(major, minor, 0) => write!(f, "{}.{}", major, minor),
+            Self(major, minor, patch) => write!(f, "{}.{}.{}", major, minor, patch),
         }
     }
 }

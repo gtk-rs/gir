@@ -27,7 +27,7 @@ pub enum ConversionType {
 }
 
 impl ConversionType {
-    pub fn of(env: &env::Env, type_id: TypeId) -> ConversionType {
+    pub fn of(env: &env::Env, type_id: TypeId) -> Self {
         use crate::library::{Basic::*, Type::*};
 
         let library = &env.library;
@@ -43,65 +43,65 @@ impl ConversionType {
 
         match library.type_(type_id) {
             Basic(fund) => match fund {
-                Boolean => ConversionType::Scalar,
-                Int8 => ConversionType::Direct,
-                UInt8 => ConversionType::Direct,
-                Int16 => ConversionType::Direct,
-                UInt16 => ConversionType::Direct,
-                Int32 => ConversionType::Direct,
-                UInt32 => ConversionType::Direct,
-                Int64 => ConversionType::Direct,
-                UInt64 => ConversionType::Direct,
-                Char => ConversionType::Scalar,
-                UChar => ConversionType::Scalar,
-                Short => ConversionType::Direct,
-                UShort => ConversionType::Direct,
-                Int => ConversionType::Direct,
-                UInt => ConversionType::Direct,
-                Long => ConversionType::Direct,
-                ULong => ConversionType::Direct,
-                Size => ConversionType::Direct,
-                SSize => ConversionType::Direct,
-                Float => ConversionType::Direct,
-                Double => ConversionType::Direct,
-                UniChar => ConversionType::Scalar,
-                Pointer => ConversionType::Pointer,
-                VarArgs => ConversionType::Unknown,
-                Utf8 => ConversionType::Pointer,
-                Filename => ConversionType::Pointer,
-                OsString => ConversionType::Pointer,
-                Type => ConversionType::Scalar,
-                None => ConversionType::Unknown,
-                IntPtr => ConversionType::Direct,
-                UIntPtr => ConversionType::Direct,
-                Bool => ConversionType::Direct,
-                Unsupported => ConversionType::Unknown,
+                Boolean => Self::Scalar,
+                Int8 => Self::Direct,
+                UInt8 => Self::Direct,
+                Int16 => Self::Direct,
+                UInt16 => Self::Direct,
+                Int32 => Self::Direct,
+                UInt32 => Self::Direct,
+                Int64 => Self::Direct,
+                UInt64 => Self::Direct,
+                Char => Self::Scalar,
+                UChar => Self::Scalar,
+                Short => Self::Direct,
+                UShort => Self::Direct,
+                Int => Self::Direct,
+                UInt => Self::Direct,
+                Long => Self::Direct,
+                ULong => Self::Direct,
+                Size => Self::Direct,
+                SSize => Self::Direct,
+                Float => Self::Direct,
+                Double => Self::Direct,
+                UniChar => Self::Scalar,
+                Pointer => Self::Pointer,
+                VarArgs => Self::Unknown,
+                Utf8 => Self::Pointer,
+                Filename => Self::Pointer,
+                OsString => Self::Pointer,
+                Type => Self::Scalar,
+                None => Self::Unknown,
+                IntPtr => Self::Direct,
+                UIntPtr => Self::Direct,
+                Bool => Self::Direct,
+                Unsupported => Self::Unknown,
             },
-            Alias(alias) if alias.c_identifier == "GQuark" => ConversionType::Scalar,
-            Alias(alias) => ConversionType::of(env, alias.typ),
-            Bitfield(_) => ConversionType::Scalar,
-            Record(_) => ConversionType::Pointer,
-            Union(_) => ConversionType::Pointer,
-            Enumeration(_) => ConversionType::Scalar,
-            Interface(_) => ConversionType::Pointer,
-            Class(_) => ConversionType::Pointer,
-            CArray(_) => ConversionType::Pointer,
-            FixedArray(..) => ConversionType::Pointer,
-            List(_) => ConversionType::Pointer,
-            SList(_) => ConversionType::Pointer,
-            PtrArray(_) => ConversionType::Pointer,
+            Alias(alias) if alias.c_identifier == "GQuark" => Self::Scalar,
+            Alias(alias) => Self::of(env, alias.typ),
+            Bitfield(_) => Self::Scalar,
+            Record(_) => Self::Pointer,
+            Union(_) => Self::Pointer,
+            Enumeration(_) => Self::Scalar,
+            Interface(_) => Self::Pointer,
+            Class(_) => Self::Pointer,
+            CArray(_) => Self::Pointer,
+            FixedArray(..) => Self::Pointer,
+            List(_) => Self::Pointer,
+            SList(_) => Self::Pointer,
+            PtrArray(_) => Self::Pointer,
             Function(super::library::Function { name, .. }) if name == "AsyncReadyCallback" => {
-                ConversionType::Direct
+                Self::Direct
             }
-            Function(_) => ConversionType::Direct,
+            Function(_) => Self::Direct,
             Custom(super::library::Custom {
                 conversion_type, ..
             }) => conversion_type.clone(),
-            _ => ConversionType::Unknown,
+            _ => Self::Unknown,
         }
     }
 
     pub fn can_use_to_generate(&self) -> bool {
-        matches!(self, ConversionType::Option | ConversionType::Result { .. })
+        matches!(self, Self::Option | Self::Result { .. })
     }
 }

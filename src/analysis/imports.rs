@@ -81,8 +81,8 @@ pub struct Imports {
 }
 
 impl Imports {
-    pub fn new(gir: &Library) -> Imports {
-        Imports {
+    pub fn new(gir: &Library) -> Self {
+        Self {
             crate_name: make_crate_name(gir),
             defined: HashSet::new(),
             defaults: ImportConditions::default(),
@@ -90,8 +90,8 @@ impl Imports {
         }
     }
 
-    pub fn with_defined(gir: &Library, name: &str) -> Imports {
-        Imports {
+    pub fn with_defined(gir: &Library, name: &str) -> Self {
+        Self {
             crate_name: make_crate_name(gir),
             defined: std::iter::once(name.to_owned()).collect(),
             defaults: ImportConditions::default(),

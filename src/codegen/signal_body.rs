@@ -9,28 +9,28 @@ pub struct Builder {
 }
 
 impl Builder {
-    pub fn new() -> Builder {
+    pub fn new() -> Self {
         Default::default()
     }
 
-    pub fn signal_name(&mut self, name: &str) -> &mut Builder {
+    pub fn signal_name(&mut self, name: &str) -> &mut Self {
         self.signal_name = name.into();
         self
     }
 
-    pub fn trampoline_name(&mut self, name: &str) -> &mut Builder {
+    pub fn trampoline_name(&mut self, name: &str) -> &mut Self {
         self.trampoline_name = name.into();
         self
     }
 
-    pub fn in_trait(&mut self, value: bool) -> &mut Builder {
+    pub fn in_trait(&mut self, value: bool) -> &mut Self {
         self.in_trait = value;
         self
     }
 
     // https://github.com/rust-lang/rust-clippy/issues/8480
     #[allow(clippy::wrong_self_convention)]
-    pub fn is_detailed(&mut self, value: bool) -> &mut Builder {
+    pub fn is_detailed(&mut self, value: bool) -> &mut Self {
         self.is_detailed = value;
         self
     }

@@ -52,7 +52,7 @@ pub trait IsIncomplete {
 
 impl IsIncomplete for Basic {
     fn is_incomplete(&self, _lib: &Library) -> bool {
-        matches!(*self, Basic::None | Basic::Unsupported | Basic::VarArgs)
+        matches!(*self, Self::None | Self::Unsupported | Self::VarArgs)
     }
 }
 

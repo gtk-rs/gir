@@ -7,8 +7,8 @@ pub struct Untabber {
 }
 
 impl Untabber {
-    pub fn new(orig: Box<dyn Write>) -> Untabber {
-        Untabber { orig }
+    pub fn new(orig: Box<dyn Write>) -> Self {
+        Self { orig }
     }
 }
 

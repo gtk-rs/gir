@@ -6,16 +6,16 @@ use crate::{env::Env, library, version::Version};
 pub struct Signature(Vec<library::TypeId>, library::TypeId, Option<Version>);
 
 impl Signature {
-    pub fn new(func: &library::Function) -> Signature {
+    pub fn new(func: &library::Function) -> Self {
         let params = func.parameters.iter().map(|p| p.typ).collect();
-        Signature(params, func.ret.typ, func.version)
+        Self(params, func.ret.typ, func.version)
     }
 
-    fn from_property(is_get: bool, typ: library::TypeId) -> Signature {
+    fn from_property(is_get: bool, typ: library::TypeId) -> Self {
         if is_get {
-            Signature(vec![Default::default()], typ, None)
+            Self(vec![Default::default()], typ, None)
         } else {
-            Signature(vec![Default::default(), typ], Default::default(), None)
+            Self(vec![Default::default(), typ], Default::default(), None)
         }
     }
 

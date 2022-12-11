@@ -134,7 +134,7 @@ impl Config {
         make_backup: bool,
         show_statistics: bool,
         disable_format: bool,
-    ) -> Result<Config, String>
+    ) -> Result<Self, String>
     where
         S: Into<Option<&'a str>>,
         W: Into<Option<WorkMode>>,
@@ -347,7 +347,7 @@ impl Config {
         let lib_version_overrides = read_lib_version_overrides(&toml)?;
         let feature_dependencies = read_feature_dependencies(&toml)?;
 
-        Ok(Config {
+        Ok(Self {
             work_mode,
             girs_dirs,
             girs_version,

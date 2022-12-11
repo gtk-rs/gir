@@ -114,21 +114,20 @@ pub enum TransformationType {
 
 impl TransformationType {
     pub fn is_to_glib(&self) -> bool {
-        use self::TransformationType::*;
         matches!(
             *self,
-            ToGlibDirect { .. }
-                | ToGlibScalar { .. }
-                | ToGlibPointer { .. }
-                | ToGlibBorrow
-                | ToGlibUnknown { .. }
-                | ToSome(_)
-                | IntoRaw(_)
+            Self::ToGlibDirect { .. }
+                | Self::ToGlibScalar { .. }
+                | Self::ToGlibPointer { .. }
+                | Self::ToGlibBorrow
+                | Self::ToGlibUnknown { .. }
+                | Self::ToSome(_)
+                | Self::IntoRaw(_)
         )
     }
 
     pub fn set_to_glib_extra(&mut self, to_glib_extra_: &str) {
-        if let TransformationType::ToGlibPointer { to_glib_extra, .. } = self {
+        if let Self::ToGlibPointer { to_glib_extra, .. } = self {
             *to_glib_extra = to_glib_extra_.to_owned();
         }
     }
@@ -149,8 +148,8 @@ pub struct Parameters {
 }
 
 impl Parameters {
-    fn new(capacity: usize) -> Parameters {
-        Parameters {
+    fn new(capacity: usize) -> Self {
+        Self {
             rust_parameters: Vec::with_capacity(capacity),
             c_parameters: Vec::with_capacity(capacity),
             transformations: Vec::with_capacity(capacity),

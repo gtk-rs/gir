@@ -28,9 +28,9 @@ impl FromStr for TransformationType {
     type Err = String;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
-            "none" => Ok(TransformationType::None),
-            "borrow" => Ok(TransformationType::Borrow),
-            "treepath" => Ok(TransformationType::TreePath),
+            "none" => Ok(Self::None),
+            "borrow" => Ok(Self::Borrow),
+            "treepath" => Ok(Self::TreePath),
             _ => Err(format!("Wrong transformation \"{}\"", s)),
         }
     }
@@ -45,7 +45,7 @@ pub struct Parameter {
 }
 
 impl Parse for Parameter {
-    fn parse(toml: &Value, object_name: &str) -> Option<Parameter> {
+    fn parse(toml: &Value, object_name: &str) -> Option<Self> {
         let ident = match Ident::parse(toml, object_name, "signal parameter") {
             Some(ident) => ident,
             None => {
@@ -81,7 +81,7 @@ impl Parse for Parameter {
             .and_then(Value::as_str)
             .map(ToOwned::to_owned);
 
-        Some(Parameter {
+        Some(Self {
             ident,
             nullable,
             transformation,
@@ -117,7 +117,7 @@ impl Signal {
         toml: &Value,
         object_name: &str,
         concurrency: library::Concurrency,
-    ) -> Option<Signal> {
+    ) -> Option<Self> {
         let ident = match Ident::parse(toml, object_name, "signal") {
             Some(ident) => ident,
             None => {
@@ -194,7 +194,7 @@ impl Signal {
             .and_then(Value::as_bool)
             .unwrap_or(true);
 
-        Some(Signal {
+        Some(Self {
             ident,
             status,
             inhibit,

@@ -417,19 +417,19 @@ impl FromStr for GiDocgen {
         let item_link = item_link.trim_start_matches('[').trim_end_matches(']');
         if let Some((link_type, link_details)) = item_link.split_once('@') {
             match link_type {
-                "alias" => Ok(GiDocgen::Alias(link_details.to_string())),
+                "alias" => Ok(Self::Alias(link_details.to_string())),
                 "class" => {
                     let (namespace, type_) = namespace_type_from_details(link_details, "class")?;
-                    Ok(GiDocgen::Class { namespace, type_ })
+                    Ok(Self::Class { namespace, type_ })
                 }
                 "const" => {
                     let (namespace, type_) = namespace_type_from_details(link_details, "const")?;
-                    Ok(GiDocgen::Const { namespace, type_ })
+                    Ok(Self::Const { namespace, type_ })
                 }
                 "ctor" => {
                     let (namespace, type_, name) =
                         namespace_type_method_from_details(link_details, "ctor", false)?;
-                    Ok(GiDocgen::Constructor {
+                    Ok(Self::Constructor {
                         namespace,
                         type_: type_
                             .ok_or_else(|| GiDocgenError::BrokenLinkType("ctor".to_string()))?,
@@ -438,20 +438,20 @@ impl FromStr for GiDocgen {
                 }
                 "enum" => {
                     let (namespace, type_) = namespace_type_from_details(link_details, "enum")?;
-                    Ok(GiDocgen::Enum { namespace, type_ })
+                    Ok(Self::Enum { namespace, type_ })
                 }
                 "error" => {
                     let (namespace, type_) = namespace_type_from_details(link_details, "error")?;
-                    Ok(GiDocgen::Error { namespace, type_ })
+                    Ok(Self::Error { namespace, type_ })
                 }
                 "flags" => {
                     let (namespace, type_) = namespace_type_from_details(link_details, "flags")?;
-                    Ok(GiDocgen::Flag { namespace, type_ })
+                    Ok(Self::Flag { namespace, type_ })
                 }
                 "func" => {
                     let (namespace, type_, name) =
                         namespace_type_method_from_details(link_details, "func", true)?;
-                    Ok(GiDocgen::Func {
+                    Ok(Self::Func {
                         namespace,
                         type_,
                         name,
@@ -459,18 +459,18 @@ impl FromStr for GiDocgen {
                 }
                 "iface" => {
                     let (namespace, type_) = namespace_type_from_details(link_details, "iface")?;
-                    Ok(GiDocgen::Interface { namespace, type_ })
+                    Ok(Self::Interface { namespace, type_ })
                 }
                 "callback" => {
                     let (namespace, name) = namespace_type_from_details(link_details, "callback")?;
-                    Ok(GiDocgen::Callback { namespace, name })
+                    Ok(Self::Callback { namespace, name })
                 }
                 "method" => {
                     let (namespace, type_, name) =
                         namespace_type_method_from_details(link_details, "method", false)?;
                     let type_ =
                         type_.ok_or_else(|| GiDocgenError::BrokenLinkType("method".to_string()))?;
-                    Ok(GiDocgen::Method {
+                    Ok(Self::Method {
                         namespace,
                         is_class_method: type_.ends_with("Class"),
                         type_,
@@ -483,7 +483,7 @@ impl FromStr for GiDocgen {
                     if type_details.len() < 2 || type_details[1].is_empty() {
                         Err(GiDocgenError::BrokenLinkType("property".to_string()))
                     } else {
-                        Ok(GiDocgen::Property {
+                        Ok(Self::Property {
                             namespace,
                             type_: type_details[0].to_string(),
                             name: type_details[1].to_string(),
@@ -496,7 +496,7 @@ impl FromStr for GiDocgen {
                     if type_details.len() < 2 || type_details[1].is_empty() {
                         Err(GiDocgenError::BrokenLinkType("signal".to_string()))
                     } else {
-                        Ok(GiDocgen::Signal {
+                        Ok(Self::Signal {
                             namespace,
                             type_: type_details[0].to_string(),
                             name: type_details[1].to_string(),
@@ -505,19 +505,19 @@ impl FromStr for GiDocgen {
                 }
                 "struct" => {
                     let (namespace, type_) = namespace_type_from_details(link_details, "struct")?;
-                    Ok(GiDocgen::Struct { namespace, type_ })
+                    Ok(Self::Struct { namespace, type_ })
                 }
                 "vfunc" => {
                     let (namespace, type_, name) =
                         namespace_type_method_from_details(link_details, "vfunc", false)?;
-                    Ok(GiDocgen::VFunc {
+                    Ok(Self::VFunc {
                         namespace,
                         type_: type_
                             .ok_or_else(|| GiDocgenError::BrokenLinkType("vfunc".to_string()))?,
                         name,
                     })
                 }
-                "id" => Ok(GiDocgen::Id(link_details.to_string())),
+                "id" => Ok(Self::Id(link_details.to_string())),
                 e => Err(GiDocgenError::InvalidLinkType(e.to_string())),
             }
         } else {

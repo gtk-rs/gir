@@ -14,7 +14,7 @@ pub struct Constant {
 }
 
 impl Parse for Constant {
-    fn parse(toml: &Value, object_name: &str) -> Option<Constant> {
+    fn parse(toml: &Value, object_name: &str) -> Option<Self> {
         let ident = match Ident::parse(toml, object_name, "constant") {
             Some(ident) => ident,
             None => {
@@ -69,7 +69,7 @@ impl Parse for Constant {
             .and_then(Value::as_bool)
             .unwrap_or(true);
 
-        Some(Constant {
+        Some(Self {
             ident,
             status,
             version,

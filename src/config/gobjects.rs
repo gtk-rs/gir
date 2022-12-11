@@ -38,13 +38,13 @@ pub enum GStatus {
 
 impl GStatus {
     pub fn ignored(self) -> bool {
-        self == GStatus::Ignore
+        self == Self::Ignore
     }
     pub fn manual(self) -> bool {
-        self == GStatus::Manual
+        self == Self::Manual
     }
     pub fn need_generate(self) -> bool {
-        self == GStatus::Generate
+        self == Self::Generate
     }
 }
 
@@ -52,9 +52,9 @@ impl FromStr for GStatus {
     type Err = String;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
-            "manual" => Ok(GStatus::Manual),
-            "generate" => Ok(GStatus::Generate),
-            "ignore" => Ok(GStatus::Ignore),
+            "manual" => Ok(Self::Manual),
+            "generate" => Ok(Self::Generate),
+            "ignore" => Ok(Self::Ignore),
             e => Err(format!("Wrong object status: \"{}\"", e)),
         }
     }
