@@ -31,9 +31,10 @@ impl FromStr for Transfer {
     }
 }
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Default, Clone, Copy, Debug, Eq, PartialEq)]
 pub enum ParameterDirection {
     None,
+    #[default]
     In,
     Out,
     InOut,
@@ -63,17 +64,12 @@ impl FromStr for ParameterDirection {
     }
 }
 
-impl Default for ParameterDirection {
-    fn default() -> ParameterDirection {
-        ParameterDirection::In
-    }
-}
-
 /// Annotation describing lifetime requirements / guarantees of callback parameters,
 /// that is callback itself and associated user data.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Default, Clone, Copy, Debug, PartialEq, Eq)]
 pub enum ParameterScope {
     /// Parameter is not of callback type.
+    #[default]
     None,
     /// Used only for the duration of the call.
     ///
@@ -96,12 +92,6 @@ impl ParameterScope {
 
     pub fn is_async(self) -> bool {
         matches!(self, ParameterScope::Async)
-    }
-}
-
-impl Default for ParameterScope {
-    fn default() -> Self {
-        ParameterScope::None
     }
 }
 
@@ -177,8 +167,9 @@ impl FromStr for FunctionKind {
     }
 }
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Default, Clone, Copy, Debug, Eq, PartialEq)]
 pub enum Concurrency {
+    #[default]
     None,
     Send,
     SendSync,
@@ -194,12 +185,6 @@ impl FromStr for Concurrency {
             "send+sync" => Ok(SendSync),
             _ => Err(format!("Unknown concurrency kind '{}'", name)),
         }
-    }
-}
-
-impl Default for Concurrency {
-    fn default() -> Concurrency {
-        Concurrency::None
     }
 }
 

@@ -1,8 +1,9 @@
 use std::fmt;
 use std::str::FromStr;
 
-#[derive(Debug, Clone, Copy, Eq, PartialEq)]
+#[derive(Default, Debug, Clone, Copy, Eq, PartialEq)]
 pub enum Visibility {
+    #[default]
     Public,
     Crate,
     Super,
@@ -21,12 +22,6 @@ impl Visibility {
             Self::Crate => "pub(crate)",
             Self::Super => "pub(super)",
         }
-    }
-}
-
-impl Default for Visibility {
-    fn default() -> Self {
-        Self::Public
     }
 }
 

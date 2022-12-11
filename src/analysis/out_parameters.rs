@@ -14,32 +14,22 @@ use crate::{
 use log::error;
 use std::slice::Iter;
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Default, Clone, Copy, Debug, Eq, PartialEq)]
 pub enum ThrowFunctionReturnStrategy {
+    #[default]
     ReturnResult,
     CheckError,
     Void,
 }
 
-impl Default for ThrowFunctionReturnStrategy {
-    fn default() -> Self {
-        Self::ReturnResult
-    }
-}
-
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Default, Clone, Copy, Debug, Eq, PartialEq)]
 pub enum Mode {
+    #[default]
     None,
     Normal,
     Optional,
     Combined,
     Throws(ThrowFunctionReturnStrategy),
-}
-
-impl Default for Mode {
-    fn default() -> Mode {
-        Mode::None
-    }
 }
 
 #[derive(Debug, Default)]
