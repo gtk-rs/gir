@@ -625,7 +625,6 @@ impl_lexical_ord!(
     Custom => name,
 );
 
-#[allow(clippy::large_enum_variant)]
 #[derive(Debug, Eq, PartialEq)]
 pub enum Type {
     Basic(Basic),
@@ -1255,7 +1254,6 @@ impl Library {
         }
     }
 
-    #[allow(unknown_lints)]
     #[allow(clippy::manual_map)]
     pub fn find_type(&self, current_ns_id: u16, name: &str) -> Option<TypeId> {
         let (mut ns, name) = split_namespace_name(name);

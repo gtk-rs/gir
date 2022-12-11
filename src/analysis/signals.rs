@@ -108,7 +108,7 @@ fn analyze_signal(
     }
     let generate_doc = configured_signals.iter().all(|f| f.generate_doc);
 
-    let info = Info {
+    Info {
         connect_name,
         signal_name: signal.name.clone(),
         trampoline,
@@ -118,7 +118,5 @@ fn analyze_signal(
         doc_hidden,
         is_detailed: signal.is_detailed,
         generate_doc,
-    };
-
-    info
+    }
 }

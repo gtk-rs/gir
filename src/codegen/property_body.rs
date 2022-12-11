@@ -14,7 +14,6 @@ pub struct Builder<'a> {
     env: &'a Env,
 }
 
-#[allow(clippy::wrong_self_convention)]
 impl<'a> Builder<'a> {
     pub fn new(env: &'a Env) -> Self {
         Self {

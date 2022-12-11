@@ -107,12 +107,9 @@ impl IsIncomplete for Class {
 }
 
 impl IsIncomplete for Record {
-    #[allow(clippy::if_same_then_else)]
     fn is_incomplete(&self, lib: &Library) -> bool {
-        if self.c_type == "GHookList" {
+        if self.c_type == "GHookList" || self.disguised {
             // Search for GHookList in sys codegen for rationale.
-            false
-        } else if self.disguised {
             false
         } else {
             self.fields.as_slice().is_incomplete(lib)

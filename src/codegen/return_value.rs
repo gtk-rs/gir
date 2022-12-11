@@ -107,7 +107,6 @@ pub fn out_parameter_types(analysis: &analysis::functions::Info) -> Vec<TypeId> 
         let num_outs = std::cmp::max(num_out_args, num_out_sizes);
         match analysis.outs.mode {
             Mode::Normal | Mode::Combined => {
-                #[allow(clippy::needless_collect)]
                 let array_lengths: Vec<_> = analysis
                     .outs
                     .iter()
@@ -212,7 +211,6 @@ pub fn out_parameters_as_return(env: &Env, analysis: &analysis::functions::Info)
     return_str.push_str(" -> ");
     return_str.push_str(prefix);
 
-    #[allow(clippy::needless_collect)]
     let array_lengths: Vec<_> = analysis
         .outs
         .iter()

@@ -1,9 +1,4 @@
-#![allow(clippy::cognitive_complexity)]
-#![allow(clippy::let_and_return)]
 #![allow(clippy::too_many_arguments)]
-#![allow(clippy::write_literal)]
-#![deny(bare_trait_objects)]
-#![deny(elided_lifetimes_in_paths)]
 
 /// Log warning only if type in generated library
 macro_rules! warn_main {
