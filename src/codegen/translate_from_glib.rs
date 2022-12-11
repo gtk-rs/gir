@@ -13,7 +13,7 @@ pub trait TranslateFromGlib {
     fn translate_from_glib_as_function(
         &self,
         env: &Env,
-        array_length: Option<&String>,
+        array_length: Option<&str>,
     ) -> (String, String);
 }
 
@@ -21,7 +21,7 @@ impl TranslateFromGlib for Mode {
     fn translate_from_glib_as_function(
         &self,
         env: &Env,
-        array_length: Option<&String>,
+        array_length: Option<&str>,
     ) -> (String, String) {
         use crate::analysis::conversion_type::ConversionType::*;
         match ConversionType::of(env, self.typ) {
@@ -81,7 +81,7 @@ impl TranslateFromGlib for analysis::return_value::Info {
     fn translate_from_glib_as_function(
         &self,
         env: &Env,
-        array_length: Option<&String>,
+        array_length: Option<&str>,
     ) -> (String, String) {
         match self.parameter {
             Some(ref par) => match self.base_tid {
@@ -147,7 +147,7 @@ impl TranslateFromGlib for analysis::return_value::Info {
     }
 }
 
-fn from_glib_xxx(transfer: library::Transfer, array_length: Option<&String>) -> (String, String) {
+fn from_glib_xxx(transfer: library::Transfer, array_length: Option<&str>) -> (String, String) {
     use crate::library::Transfer;
     let good_print = |name: &str| format!(", {}.assume_init() as _)", name);
     match (transfer, array_length) {

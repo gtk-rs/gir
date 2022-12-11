@@ -56,7 +56,7 @@ impl ToCode for Chunk {
             } => {
                 let call_strings = call.to_code(env);
                 let (prefix, suffix) =
-                    ret.translate_from_glib_as_function(env, array_length_name.as_ref());
+                    ret.translate_from_glib_as_function(env, array_length_name.as_deref());
                 let s = format_block_one_line(&prefix, &suffix, &call_strings, "", "");
                 vec![s]
             }
@@ -104,7 +104,7 @@ impl ToCode for Chunk {
             } => {
                 let value_strings = value.to_code(env);
                 let (prefix, suffix) =
-                    mode.translate_from_glib_as_function(env, array_length_name.as_ref());
+                    mode.translate_from_glib_as_function(env, array_length_name.as_deref());
                 let s = format_block_one_line(&prefix, &suffix, &value_strings, "", "");
                 vec![s]
             }
