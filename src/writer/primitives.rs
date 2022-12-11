@@ -1,7 +1,7 @@
 use super::defines::*;
 
-//TODO: convert to macro with usage
-//format!(indent!(5, "format:{}"), 6)
+// TODO: convert to macro with usage
+// format!(indent!(5, "format:{}"), 6)
 pub fn tabs(num: usize) -> String {
     format!("{:1$}", "", TAB_SIZE * num)
 }
@@ -68,7 +68,7 @@ pub fn format_block_smart_width(
 ) -> Vec<String> {
     let outer_len = prefix.len() + suffix.len() + 2 * outer_separator.len();
     let mut inner_len = inner_separator.len() * (body.len() - 1);
-    //TODO: change to sum()
+    // TODO: change to sum()
     for s in body {
         inner_len += s.len();
     }

@@ -69,9 +69,9 @@ pub fn new(env: &Env, obj: &GObject, imports: &mut Imports) -> Option<Info> {
         None,
     );
 
-    // Gir does not currently mark the first parameter of associated bitfield functions -
-    // that are identical to its bitfield type - as instance parameter since most languages
-    // do not support this.
+    // Gir does not currently mark the first parameter of associated bitfield
+    // functions - that are identical to its bitfield type - as instance
+    // parameter since most languages do not support this.
     for f in &mut functions {
         if f.parameters.c_parameters.is_empty() {
             continue;

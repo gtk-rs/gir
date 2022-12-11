@@ -17,7 +17,7 @@ pub struct InfoBase {
 }
 
 impl InfoBase {
-    ///TODO: return iterator
+    /// TODO: return iterator
     pub fn constructors(&self) -> Vec<&functions::Info> {
         self.functions
             .iter()

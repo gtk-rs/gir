@@ -126,7 +126,7 @@ fn func_parameters(
 }
 
 fn func_parameter(env: &Env, par: &RustParameter, bounds: &Bounds) -> String {
-    //TODO: restore mutable support
+    // TODO: restore mutable support
     let ref_mode = if par.ref_mode == RefMode::ByRefMut {
         RefMode::ByRef
     } else {
@@ -245,7 +245,7 @@ fn trampoline_call_parameters(env: &Env, analysis: &Trampoline, in_trait: bool) 
         };
         let par_str = transformation.trampoline_from_glib(env, need_downcast, *par.nullable);
         parameter_strs.push(par_str);
-        need_downcast = false; //Only downcast first parameter
+        need_downcast = false; // Only downcast first parameter
     }
 
     parameter_strs.join(", ")

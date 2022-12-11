@@ -44,10 +44,10 @@ impl Parameter {
     }
 }
 
-//TODO: remove unused fields
+// TODO: remove unused fields
 #[derive(Clone, Debug)]
 pub struct RustParameter {
-    pub ind_c: usize, //index in `Vec<CParameter>`
+    pub ind_c: usize, // index in `Vec<CParameter>`
     pub name: String,
     pub typ: TypeId,
 }
@@ -66,10 +66,11 @@ pub struct CParameter {
     pub scope: ParameterScope,
     /// Index of the user data parameter associated with the callback.
     pub user_data_index: Option<usize>,
-    /// Index of the destroy notification parameter associated with the callback.
+    /// Index of the destroy notification parameter associated with the
+    /// callback.
     pub destroy_index: Option<usize>,
 
-    //analysis fields
+    // analysis fields
     pub ref_mode: RefMode,
     pub try_from_glib: TryFromGlib,
     pub move_: bool,
@@ -90,7 +91,7 @@ pub enum TransformationType {
         instance_parameter: bool,
         transfer: library::Transfer,
         ref_mode: RefMode,
-        //filled by functions
+        // filled by functions
         to_glib_extra: String,
         explicit_target_type: String,
         pointer_cast: String,
@@ -135,8 +136,8 @@ impl TransformationType {
 
 #[derive(Clone, Debug)]
 pub struct Transformation {
-    pub ind_c: usize,            //index in `Vec<CParameter>`
-    pub ind_rust: Option<usize>, //index in `Vec<RustParameter>`
+    pub ind_c: usize,            // index in `Vec<CParameter>`
+    pub ind_rust: Option<usize>, // index in `Vec<RustParameter>`
     pub transformation_type: TransformationType,
 }
 
@@ -235,7 +236,7 @@ pub fn analyze(
         | ConversionType::Option
         | ConversionType::Result { .. } = conversion
         {
-            //For simple types no reason to have these flags
+            // For simple types no reason to have these flags
             caller_allocates = false;
             transfer = library::Transfer::None;
         }
@@ -487,5 +488,6 @@ fn has_length(env: &Env, typ: TypeId) -> bool {
 }
 
 pub fn async_param_to_remove(name: &str) -> bool {
-    name == "user_data" || name.ends_with("data") // FIXME: use async indexes instead
+    name == "user_data" || name.ends_with("data") // FIXME: use async indexes
+                                                  // instead
 }

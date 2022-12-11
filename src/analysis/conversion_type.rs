@@ -12,7 +12,8 @@ pub enum ConversionType {
     Option,
     /// Type implementing TryFromGlib<Err> where Err is neither GlibNoneError
     /// nor GlibNoneOrInvalidError. Embeds the Error type name.
-    /// Defaults to the object's type for the `Ok` variant if `ok_type` is `None`.
+    /// Defaults to the object's type for the `Ok` variant if `ok_type` is
+    /// `None`.
     Result {
         ok_type: Arc<str>,
         err_type: Arc<str>,

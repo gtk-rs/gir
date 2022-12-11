@@ -138,7 +138,7 @@ impl Default for GObject {
     }
 }
 
-//TODO: ?change to HashMap<String, GStatus>
+// TODO: ?change to HashMap<String, GStatus>
 pub type GObjects = BTreeMap<String, GObject>;
 
 pub fn parse_toml(

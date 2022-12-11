@@ -30,7 +30,8 @@ impl RustType {
         RustTypeBuilder::new(env, type_id).try_build()
     }
 
-    /// Create a `RustTypeBuilder` which allows specifying additional configuration.
+    /// Create a `RustTypeBuilder` which allows specifying additional
+    /// configuration.
     pub fn builder(env: &Env, type_id: library::TypeId) -> RustTypeBuilder<'_> {
         RustTypeBuilder::new(env, type_id)
     }
@@ -266,16 +267,16 @@ impl<'env> RustTypeBuilder<'env> {
                     Int64 => ok("i64"),
                     UInt64 => ok("u64"),
 
-                    Int => ok("i32"),  //maybe dependent on target system
-                    UInt => ok("u32"), //maybe dependent on target system
+                    Int => ok("i32"),  // maybe dependent on target system
+                    UInt => ok("u32"), // maybe dependent on target system
 
-                    Short => ok_and_use("libc::c_short"), //depends of target system
-                    UShort => ok_and_use("libc::c_ushort"), //depends o f target system
-                    Long => ok_and_use("libc::c_long"),   //depends of target system
-                    ULong => ok_and_use("libc::c_ulong"), //depends of target system
+                    Short => ok_and_use("libc::c_short"), // depends of target system
+                    UShort => ok_and_use("libc::c_ushort"), // depends o f target system
+                    Long => ok_and_use("libc::c_long"),   // depends of target system
+                    ULong => ok_and_use("libc::c_ulong"), // depends of target system
 
-                    Size => ok("usize"),  //depends of target system
-                    SSize => ok("isize"), //depends of target system
+                    Size => ok("usize"),  // depends of target system
+                    SSize => ok("isize"), // depends of target system
 
                     Float => ok("f32"),
                     Double => ok("f64"),
@@ -391,8 +392,8 @@ impl<'env> RustTypeBuilder<'env> {
                         Int64 => Some("i64"),
                         UInt64 => Some("u64"),
 
-                        Int => Some("i32"),  //maybe dependent on target system
-                        UInt => Some("u32"), //maybe dependent on target system
+                        Int => Some("i32"),  // maybe dependent on target system
+                        UInt => Some("u32"), // maybe dependent on target system
 
                         Float => Some("f32"),
                         Double => Some("f64"),

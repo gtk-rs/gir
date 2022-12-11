@@ -65,8 +65,8 @@ impl FromStr for ParameterDirection {
     }
 }
 
-/// Annotation describing lifetime requirements / guarantees of callback parameters,
-/// that is callback itself and associated user data.
+/// Annotation describing lifetime requirements / guarantees of callback
+/// parameters, that is callback itself and associated user data.
 #[derive(Default, Clone, Copy, Debug, PartialEq, Eq)]
 pub enum ParameterScope {
     /// Parameter is not of callback type.
@@ -221,8 +221,8 @@ pub enum Basic {
     Type,
     IntPtr,
     UIntPtr,
-    //Same encoding as Filename but can contains any string
-    //Not defined in GLib directly
+    // Same encoding as Filename but can contains any string
+    // Not defined in GLib directly
     OsString,
     Bool,
     Unsupported,
@@ -291,7 +291,7 @@ const BASIC: &[(&str, Basic)] = &[
     ("GType", Basic::Type),
     ("gintptr", Basic::IntPtr),
     ("guintptr", Basic::UIntPtr),
-    //TODO: this is temporary name, change it when type added to GLib
+    // TODO: this is temporary name, change it when type added to GLib
     ("os_string", Basic::OsString),
     ("bool", Basic::Bool),
 ];
@@ -508,7 +508,8 @@ pub struct Parameter {
     pub scope: ParameterScope,
     /// Index of the user data parameter associated with the callback.
     pub closure: Option<usize>,
-    /// Index of the destroy notification parameter associated with the callback.
+    /// Index of the destroy notification parameter associated with the
+    /// callback.
     pub destroy: Option<usize>,
 }
 
@@ -966,7 +967,8 @@ pub struct Namespace {
     pub shared_library: Vec<String>,
     pub identifier_prefixes: Vec<String>,
     pub symbol_prefixes: Vec<String>,
-    /// C headers, relative to include directories provided by pkg-config --cflags.
+    /// C headers, relative to include directories provided by pkg-config
+    /// --cflags.
     pub c_includes: Vec<String>,
 }
 
@@ -1044,7 +1046,7 @@ impl Library {
         }
         assert_eq!(MAIN_NAMESPACE, library.add_namespace(main_namespace_name));
 
-        //For string_type override
+        // For string_type override
         Type::c_array(&mut library, TypeId::tid_utf8(), None, None);
         Type::c_array(&mut library, TypeId::tid_filename(), None, None);
         Type::c_array(&mut library, TypeId::tid_os_string(), None, None);

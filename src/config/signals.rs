@@ -19,9 +19,9 @@ use crate::{
 #[derive(Clone, Copy, Debug)]
 pub enum TransformationType {
     None,
-    Borrow, //replace from_glib_none to from_glib_borrow
-    //TODO: configure
-    TreePath, //convert string to TreePath
+    Borrow, // replace from_glib_none to from_glib_borrow
+    // TODO: configure
+    TreePath, // convert string to TreePath
 }
 
 impl FromStr for TransformationType {

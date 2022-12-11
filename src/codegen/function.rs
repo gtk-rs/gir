@@ -28,8 +28,8 @@ use crate::{
 
 // We follow the rules of the `return_self_not_must_use` clippy lint:
 //
-// If `Self` is returned (so `-> Self`) in a method (whatever the form of the `self`), then
-// the `#[must_use]` attribute must be added.
+// If `Self` is returned (so `-> Self`) in a method (whatever the form of the
+// `self`), then the `#[must_use]` attribute must be added.
 pub fn get_must_use_if_needed(
     parent_type_id: Option<TypeId>,
     analysis: &analysis::functions::Info,
@@ -37,15 +37,16 @@ pub fn get_must_use_if_needed(
     only_declaration: bool,
     comment_prefix: &str,
 ) -> Option<String> {
-    // If there is no parent, it means it's not a (trait) method so we're not interested.
+    // If there is no parent, it means it's not a (trait) method so we're not
+    // interested.
     if let Some(parent_type_id) = parent_type_id {
         // Check it's a trait declaration or a method declaration (outside of a trait
         // implementation).
         if analysis.kind == library::FunctionKind::Method && (!in_trait || only_declaration) {
             // We now get the list of the returned types.
             let outs = out_parameter_types(analysis);
-            // If there is only one type returned, we check if it's the same type as `self` (stored
-            // in `parent_type_id`).
+            // If there is only one type returned, we check if it's the same type as `self`
+            // (stored in `parent_type_id`).
             if [parent_type_id] == *outs.as_slice() {
                 return Some(format!("{}#[must_use]\n", comment_prefix));
             }

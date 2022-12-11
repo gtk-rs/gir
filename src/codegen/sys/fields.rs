@@ -45,7 +45,8 @@ impl Fields {
 }
 
 impl FieldInfo {
-    /// Generates a string that accesses the field in the context of &self receiver.
+    /// Generates a string that accesses the field in the context of &self
+    /// receiver.
     pub fn access_str(&self) -> String {
         let mut s = format!("&self.{}", self.name);
         if self.unsafe_access {

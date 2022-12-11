@@ -26,7 +26,8 @@ pub struct XmlParser<'a> {
     peek_event: Option<Result<XmlEvent, String>>,
     /// Position on peek event if any.
     peek_position: TextPosition,
-    /// Used to emits errors. Rc so that it can be cheaply shared with Element type.
+    /// Used to emits errors. Rc so that it can be cheaply shared with Element
+    /// type.
     error_emitter: Rc<ErrorEmitter>,
 }
 

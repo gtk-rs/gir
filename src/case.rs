@@ -3,16 +3,18 @@ pub trait CaseExt {
 
     /// Changes string to snake_case.
     ///
-    /// Inserts underscores in-between lowercase and uppercase characters when they appear in that
-    /// order and in-between second last and last uppercase character when going from sequence of
-    /// three or more uppercase characters to lowercase.
+    /// Inserts underscores in-between lowercase and uppercase characters when
+    /// they appear in that order and in-between second last and last
+    /// uppercase character when going from sequence of three or more
+    /// uppercase characters to lowercase.
     ///
     /// Changes the whole string to lowercase.
     fn to_snake(&self) -> Self::Owned;
 
     /// Changes string to CamelCase.
     ///
-    /// Uppercases each character that follows an underscore or is at the beginning of the string.
+    /// Uppercases each character that follows an underscore or is at the
+    /// beginning of the string.
     ///
     /// Removes all underscores.
     fn to_camel(&self) -> Self::Owned;

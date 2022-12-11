@@ -170,7 +170,8 @@ pub fn extract(functions: &mut [FuncInfo], parent_type: &LibType, obj: &GObject)
                 func.name.as_str(),
                 "to_string" | "to_str" | "name" | "get_name"
             ) {
-                // FUTURE: Decide which function gets precedence if multiple Display prospects exist.
+                // FUTURE: Decide which function gets precedence if multiple Display prospects
+                // exist.
                 specials.traits.insert(
                     Type::Display,
                     TraitInfo {
