@@ -141,28 +141,28 @@ fn fill_in(root: &mut Table, env: &Env) {
         let meta = upsert_table(meta, "system-deps");
 
         let ns = env.namespaces.main();
-        let lib_name = ns.package_names.first().unwrap();
+        if let Some(lib_name) = ns.package_names.first() {
+            let meta = upsert_table(meta, nameutil::lib_name_to_toml(lib_name));
+            // Allow both the name and version of a system dep to be overridden by hand
+            meta.entry("name")
+                .or_insert_with(|| Value::String(lib_name.clone()));
+            meta.entry("version")
+                .or_insert_with(|| Value::String(env.config.min_cfg_version.to_string()));
 
-        let meta = upsert_table(meta, nameutil::lib_name_to_toml(lib_name));
-        // Allow both the name and version of a system dep to be overridden by hand
-        meta.entry("name")
-            .or_insert_with(|| Value::String(lib_name.clone()));
-        meta.entry("version")
-            .or_insert_with(|| Value::String(env.config.min_cfg_version.to_string()));
+            // Old version API
+            unset(meta, "feature-versions");
 
-        // Old version API
-        unset(meta, "feature-versions");
-
-        collect_versions(env)
-            .iter()
-            .filter(|(&v, _)| v > env.config.min_cfg_version)
-            .for_each(|(v, lib_version)| {
-                let version_section = upsert_table(meta, &v.to_feature());
-                // Allow system-deps version for this feature level to be overridden by hand
-                version_section
-                    .entry("version")
-                    .or_insert_with(|| Value::String(lib_version.to_string()));
-            });
+            collect_versions(env)
+                .iter()
+                .filter(|(&v, _)| v > env.config.min_cfg_version)
+                .for_each(|(v, lib_version)| {
+                    let version_section = upsert_table(meta, &v.to_feature());
+                    // Allow system-deps version for this feature level to be overridden by hand
+                    version_section
+                        .entry("version")
+                        .or_insert_with(|| Value::String(lib_version.to_string()));
+                });
+        }
     }
 
     {

@@ -1,6 +1,6 @@
 use std::{
     fs,
-    io::{Result, Write},
+    io::{Error, ErrorKind, Result, Write},
 };
 
 use log::info;
@@ -73,17 +73,33 @@ fn generate_lib(w: &mut dyn Write, env: &Env) -> Result<()> {
     generate_classes_structs(w, env, &classes)?;
     generate_interfaces_structs(w, env, &interfaces)?;
 
-    write_link_attr(w, &env.namespaces.main().shared_libs)?;
-    writeln!(w, "extern \"C\" {{")?;
-    functions::generate_enums_funcs(w, env, &enums)?;
-    functions::generate_bitfields_funcs(w, env, &bitfields)?;
-    functions::generate_unions_funcs(w, env, &unions)?;
-    functions::generate_records_funcs(w, env, &records)?;
-    functions::generate_classes_funcs(w, env, &classes)?;
-    functions::generate_interfaces_funcs(w, env, &interfaces)?;
-    functions::generate_other_funcs(w, env, &ns.functions)?;
+    if env.namespaces.main().shared_libs.is_empty()
+        && !(records.iter().all(|x| x.functions.is_empty())
+            && classes.iter().all(|x| x.functions.is_empty())
+            && interfaces.iter().all(|x| x.functions.is_empty())
+            && bitfields.iter().all(|x| x.functions.is_empty())
+            && enums.iter().all(|x| x.functions.is_empty())
+            && unions.iter().all(|x| x.functions.is_empty()))
+    {
+        return Err(Error::new(
+            ErrorKind::Other,
+            "No shared library found, but functions were found",
+        ));
+    }
 
-    writeln!(w, "\n}}")?;
+    if !env.namespaces.main().shared_libs.is_empty() {
+        write_link_attr(w, &env.namespaces.main().shared_libs)?;
+        writeln!(w, "extern \"C\" {{")?;
+        functions::generate_enums_funcs(w, env, &enums)?;
+        functions::generate_bitfields_funcs(w, env, &bitfields)?;
+        functions::generate_unions_funcs(w, env, &unions)?;
+        functions::generate_records_funcs(w, env, &records)?;
+        functions::generate_classes_funcs(w, env, &classes)?;
+        functions::generate_interfaces_funcs(w, env, &interfaces)?;
+        functions::generate_other_funcs(w, env, &ns.functions)?;
+
+        writeln!(w, "\n}}")?;
+    }
 
     Ok(())
 }
