@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/codegen/sys/lib_.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>lib_.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../../../normalize.css"><link rel="stylesheet" href="../../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../../../ayu.css" disabled><link rel="stylesheet" href="../../../../dark.css" disabled><link rel="stylesheet" href="../../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../../storage.js"></script><script defer src="../../../../source-script.js"></script><script defer src="../../../../source-files.js"></script><script defer src="../../../../main.js"></script><noscript><link rel="stylesheet" href="../../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../../libgir/index.html"><div class="logo-container"><img class="rust-logo" src="../../../../rust-logo.svg" alt="logo"></div></a><h2 class="location"></h2></nav><nav class="sidebar"><a class="sidebar-logo" href="../../../../libgir/index.html"><div class="logo-container"><img class="rust-logo" src="../../../../rust-logo.svg" alt="logo"></div></a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../../../libgir/index.html"><img class="rust-logo" src="../../../../rust-logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><button type="button">?</button></div><div id="settings-menu" tabindex="-1"><a href="../../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../../wheel.svg"></a></div></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/codegen/sys/lib_.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>lib_.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../../../normalize.css"><link rel="stylesheet" href="../../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../../../ayu.css" disabled><link rel="stylesheet" href="../../../../dark.css" disabled><link rel="stylesheet" href="../../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../../storage.js"></script><script defer src="../../../../source-script.js"></script><script defer src="../../../../source-files.js"></script><script defer src="../../../../main.js"></script><noscript><link rel="stylesheet" href="../../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><div class="width-limiter"><nav class="sub"><a class="sub-logo-container" href="../../../../libgir/index.html"><img class="rust-logo" src="../../../../rust-logo.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../../wheel.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -536,9 +536,25 @@
 <span id="536">536</span>
 <span id="537">537</span>
 <span id="538">538</span>
+<span id="539">539</span>
+<span id="540">540</span>
+<span id="541">541</span>
+<span id="542">542</span>
+<span id="543">543</span>
+<span id="544">544</span>
+<span id="545">545</span>
+<span id="546">546</span>
+<span id="547">547</span>
+<span id="548">548</span>
+<span id="549">549</span>
+<span id="550">550</span>
+<span id="551">551</span>
+<span id="552">552</span>
+<span id="553">553</span>
+<span id="554">554</span>
 </pre><pre class="rust"><code><span class="kw">use </span>std::{
     fs,
-    io::{<span class="prelude-ty">Result</span>, Write},
+    io::{Error, ErrorKind, <span class="prelude-ty">Result</span>, Write},
 };
 
 <span class="kw">use </span>log::info;
@@ -611,17 +627,33 @@
     generate_classes_structs(w, env, <span class="kw-2">&amp;</span>classes)<span class="question-mark">?</span>;
     generate_interfaces_structs(w, env, <span class="kw-2">&amp;</span>interfaces)<span class="question-mark">?</span>;
 
-    write_link_attr(w, <span class="kw-2">&amp;</span>env.namespaces.main().shared_libs)<span class="question-mark">?</span>;
-    <span class="macro">writeln!</span>(w, <span class="string">&quot;extern \&quot;C\&quot; {{&quot;</span>)<span class="question-mark">?</span>;
-    functions::generate_enums_funcs(w, env, <span class="kw-2">&amp;</span>enums)<span class="question-mark">?</span>;
-    functions::generate_bitfields_funcs(w, env, <span class="kw-2">&amp;</span>bitfields)<span class="question-mark">?</span>;
-    functions::generate_unions_funcs(w, env, <span class="kw-2">&amp;</span>unions)<span class="question-mark">?</span>;
-    functions::generate_records_funcs(w, env, <span class="kw-2">&amp;</span>records)<span class="question-mark">?</span>;
-    functions::generate_classes_funcs(w, env, <span class="kw-2">&amp;</span>classes)<span class="question-mark">?</span>;
-    functions::generate_interfaces_funcs(w, env, <span class="kw-2">&amp;</span>interfaces)<span class="question-mark">?</span>;
-    functions::generate_other_funcs(w, env, <span class="kw-2">&amp;</span>ns.functions)<span class="question-mark">?</span>;
+    <span class="kw">if </span>env.namespaces.main().shared_libs.is_empty()
+        &amp;&amp; !(records.iter().all(|x| x.functions.is_empty())
+            &amp;&amp; classes.iter().all(|x| x.functions.is_empty())
+            &amp;&amp; interfaces.iter().all(|x| x.functions.is_empty())
+            &amp;&amp; bitfields.iter().all(|x| x.functions.is_empty())
+            &amp;&amp; enums.iter().all(|x| x.functions.is_empty())
+            &amp;&amp; unions.iter().all(|x| x.functions.is_empty()))
+    {
+        <span class="kw">return </span><span class="prelude-val">Err</span>(Error::new(
+            ErrorKind::Other,
+            <span class="string">&quot;No shared library found, but functions were found&quot;</span>,
+        ));
+    }
 
-    <span class="macro">writeln!</span>(w, <span class="string">&quot;\n}}&quot;</span>)<span class="question-mark">?</span>;
+    <span class="kw">if </span>!env.namespaces.main().shared_libs.is_empty() {
+        write_link_attr(w, <span class="kw-2">&amp;</span>env.namespaces.main().shared_libs)<span class="question-mark">?</span>;
+        <span class="macro">writeln!</span>(w, <span class="string">&quot;extern \&quot;C\&quot; {{&quot;</span>)<span class="question-mark">?</span>;
+        functions::generate_enums_funcs(w, env, <span class="kw-2">&amp;</span>enums)<span class="question-mark">?</span>;
+        functions::generate_bitfields_funcs(w, env, <span class="kw-2">&amp;</span>bitfields)<span class="question-mark">?</span>;
+        functions::generate_unions_funcs(w, env, <span class="kw-2">&amp;</span>unions)<span class="question-mark">?</span>;
+        functions::generate_records_funcs(w, env, <span class="kw-2">&amp;</span>records)<span class="question-mark">?</span>;
+        functions::generate_classes_funcs(w, env, <span class="kw-2">&amp;</span>classes)<span class="question-mark">?</span>;
+        functions::generate_interfaces_funcs(w, env, <span class="kw-2">&amp;</span>interfaces)<span class="question-mark">?</span>;
+        functions::generate_other_funcs(w, env, <span class="kw-2">&amp;</span>ns.functions)<span class="question-mark">?</span>;
+
+        <span class="macro">writeln!</span>(w, <span class="string">&quot;\n}}&quot;</span>)<span class="question-mark">?</span>;
+    }
 
     <span class="prelude-val">Ok</span>(())
 }
@@ -1075,4 +1107,4 @@ impl ::std::fmt::Debug for GHookList {
     <span class="macro">writeln!</span>(w)
 }
 </code></pre></div>
-</section></div></main><div id="rustdoc-vars" data-root-path="../../../../" data-current-crate="libgir" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0 (897e37553 2022-11-02)" ></div></body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../../../" data-current-crate="libgir" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.66.0 (69f9c33d7 2022-12-12)" ></div></body></html>
