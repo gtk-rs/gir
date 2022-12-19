@@ -357,25 +357,16 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
         self.into_glib()
     }}
 
+    #[allow(clippy::match_single_binding)]
     fn from(code: i32) -> Option<Self> {{
-        {assert}match code {{",
+        {assert}match unsafe {{ from_glib(code) }} {{",
             assert = assert
         )?;
 
-        for member in &members {
-            version_condition_no_doc(w, env, None, member.version, false, 3)?;
-            cfg_condition_no_doc(w, member.cfg_condition.as_ref(), false, 3)?;
-            writeln!(
-                w,
-                "\t\t\t{}::{} => Some(Self::{}),",
-                sys_crate_name, member.c_name, member.name
-            )?;
-        }
         if has_failed_member {
-            writeln!(w, "\t\t\t_ => Some(Self::Failed),")?;
-        } else {
-            writeln!(w, "\t\t\tvalue => Some(Self::__Unknown(value)),")?;
+            writeln!(w, "\t\t\tSelf::__Unknown(_) => Some(Self::Failed),")?;
         }
+        writeln!(w, "\t\t\tvalue => Some(value),")?;
 
         writeln!(
             w,
