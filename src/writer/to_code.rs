@@ -120,7 +120,7 @@ impl ToCode for Chunk {
             }
             AssertErrorSanity => {
                 let assert = format!(
-                    "assert_eq!(is_ok == {}, !error.is_null());",
+                    "debug_assert_eq!(is_ok == {}, !error.is_null());",
                     use_glib_type(env, "ffi::GFALSE")
                 );
                 vec![assert]
