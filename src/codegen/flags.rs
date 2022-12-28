@@ -224,6 +224,7 @@ fn generate_flags(
 impl IntoGlib for {name} {{
     type GlibType = {sys_crate_name}::{ffi_name};
 
+    #[inline]
     fn into_glib(self) -> {sys_crate_name}::{ffi_name} {{
         self.bits()
     }}
@@ -247,6 +248,7 @@ impl IntoGlib for {name} {{
         w,
         "#[doc(hidden)]
 impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
+    #[inline]
     unsafe fn from_glib(value: {sys_crate_name}::{ffi_name}) -> Self {{
         {assert}Self::from_bits_truncate(value)
     }}
@@ -271,6 +273,7 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
         writeln!(
             w,
             "impl StaticType for {name} {{
+    #[inline]
     fn static_type() -> Type {{
         unsafe {{ from_glib({sys_crate_name}::{get_type}()) }}
     }}
@@ -302,6 +305,7 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
             "unsafe impl<'a> FromValue<'a> for {name} {{
     type Checker = {genericwrongvaluetypechecker}<Self>;
 
+    #[inline]
     unsafe fn from_value(value: &'a {gvalue}) -> Self {{
         {assert}from_glib({glib}(value.to_glib_none().0))
     }}
@@ -320,6 +324,7 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
         writeln!(
             w,
             "impl ToValue for {name} {{
+    #[inline]
     fn to_value(&self) -> {gvalue} {{
         let mut value = {gvalue}::for_value_type::<Self>();
         unsafe {{
@@ -328,6 +333,7 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
         value
     }}
 
+    #[inline]
     fn value_type(&self) -> {gtype} {{
         Self::static_type()
     }}

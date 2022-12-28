@@ -236,6 +236,13 @@ fn generate_enum(
         )?;
     }
 
+    // Only inline from_glib / into_glib implementations if there are not many enums members
+    let maybe_inline = if members.len() <= 12 {
+        "#[inline]\n"
+    } else {
+        ""
+    };
+
     // Generate IntoGlib trait implementation.
     version_condition(w, env, None, enum_.version, false, 0)?;
     cfg_condition_no_doc(w, config.cfg_condition.as_ref(), false, 0)?;
@@ -246,11 +253,12 @@ fn generate_enum(
 impl IntoGlib for {name} {{
     type GlibType = {sys_crate_name}::{ffi_name};
 
-    fn into_glib(self) -> {sys_crate_name}::{ffi_name} {{
+    {maybe_inline}fn into_glib(self) -> {sys_crate_name}::{ffi_name} {{
         match self {{",
         sys_crate_name = sys_crate_name,
         name = enum_.name,
-        ffi_name = enum_.c_type
+        ffi_name = enum_.c_type,
+        maybe_inline = maybe_inline
     )?;
     for member in &members {
         version_condition_no_doc(w, env, None, member.version, false, 3)?;
@@ -285,12 +293,13 @@ impl IntoGlib for {name} {{
         w,
         "#[doc(hidden)]
 impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
-    unsafe fn from_glib(value: {sys_crate_name}::{ffi_name}) -> Self {{
+    {maybe_inline}unsafe fn from_glib(value: {sys_crate_name}::{ffi_name}) -> Self {{
         {assert}match value {{",
         sys_crate_name = sys_crate_name,
         name = enum_.name,
         ffi_name = enum_.c_type,
-        assert = assert
+        assert = assert,
+        maybe_inline = maybe_inline
     )?;
     for member in &members {
         version_condition_no_doc(w, env, None, member.version, false, 3)?;
@@ -321,6 +330,7 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
         writeln!(
             w,
             "impl ErrorDomain for {name} {{
+    #[inline]
     fn domain() -> Quark {{
         {assert}",
             name = enum_.name,
@@ -353,29 +363,22 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
             w,
             "    }}
 
+    #[inline]
     fn code(self) -> i32 {{
         self.into_glib()
     }}
 
+    #[inline]
+    #[allow(clippy::match_single_binding)]
     fn from(code: i32) -> Option<Self> {{
-        {assert}match code {{",
+        {assert}match unsafe {{ from_glib(code) }} {{",
             assert = assert
         )?;
 
-        for member in &members {
-            version_condition_no_doc(w, env, None, member.version, false, 3)?;
-            cfg_condition_no_doc(w, member.cfg_condition.as_ref(), false, 3)?;
-            writeln!(
-                w,
-                "\t\t\t{}::{} => Some(Self::{}),",
-                sys_crate_name, member.c_name, member.name
-            )?;
-        }
         if has_failed_member {
-            writeln!(w, "\t\t\t_ => Some(Self::Failed),")?;
-        } else {
-            writeln!(w, "\t\t\tvalue => Some(Self::__Unknown(value)),")?;
+            writeln!(w, "\t\t\tSelf::__Unknown(_) => Some(Self::Failed),")?;
         }
+        writeln!(w, "\t\t\tvalue => Some(value),")?;
 
         writeln!(
             w,
@@ -401,6 +404,7 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
         writeln!(
             w,
             "impl StaticType for {name} {{
+    #[inline]
     fn static_type() -> Type {{
         unsafe {{ from_glib({sys_crate_name}::{get_type}()) }}
     }}
@@ -432,6 +436,7 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
             "unsafe impl<'a> FromValue<'a> for {name} {{
     type Checker = {genericwrongvaluetypechecker}<Self>;
 
+    #[inline]
     unsafe fn from_value(value: &'a {gvalue}) -> Self {{
         {assert}from_glib({glib}(value.to_glib_none().0))
     }}
@@ -450,6 +455,7 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
         writeln!(
             w,
             "impl ToValue for {name} {{
+    #[inline]
     fn to_value(&self) -> {gvalue} {{
         let mut value = {gvalue}::for_value_type::<Self>();
         unsafe {{
@@ -458,6 +464,7 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
         value
     }}
 
+    #[inline]
     fn value_type(&self) -> {gtype} {{
         Self::static_type()
     }}
