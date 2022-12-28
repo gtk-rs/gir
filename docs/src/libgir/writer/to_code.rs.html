@@ -348,7 +348,7 @@
             }
             AssertErrorSanity =&gt; {
                 <span class="kw">let </span>assert = <span class="macro">format!</span>(
-                    <span class="string">&quot;assert_eq!(is_ok == {}, !error.is_null());&quot;</span>,
+                    <span class="string">&quot;debug_assert_eq!(is_ok == {}, !error.is_null());&quot;</span>,
                     use_glib_type(env, <span class="string">&quot;ffi::GFALSE&quot;</span>)
                 );
                 <span class="macro">vec!</span>[assert]
