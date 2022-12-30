@@ -342,7 +342,7 @@ fn create_object_doc(w: &mut dyn Write, env: &Env, info: &analysis::object::Info
     })?;
 
     if has_builder {
-        let builder_ty = TypeStruct::new(SType::Impl, &format!("{}Builder", info.name));
+        let builder_ty = TypeStruct::new(SType::Trait, &format!("{}BuilderExt", info.name));
 
         let mut builder_properties: Vec<_> = properties.iter().collect();
         for parent_info in &info.supertypes {

@@ -88,7 +88,6 @@ pub struct GObject {
     pub manual_traits: Vec<String>,
     pub align: Option<u32>,
     pub generate_builder: bool,
-    pub builder_postprocess: Option<String>,
     pub boxed_inline: bool,
     pub init_function_expression: Option<String>,
     pub copy_into_function_expression: Option<String>,
@@ -126,7 +125,6 @@ impl Default for GObject {
             manual_traits: Vec::default(),
             align: None,
             generate_builder: false,
-            builder_postprocess: None,
             boxed_inline: false,
             init_function_expression: None,
             copy_into_function_expression: None,
@@ -267,7 +265,6 @@ fn parse_object(
             "manual_traits",
             "align",
             "generate_builder",
-            "builder_postprocess",
             "boxed_inline",
             "init_function_expression",
             "copy_into_function_expression",
@@ -389,10 +386,6 @@ fn parse_object(
         .and_then(Value::as_bool)
         .unwrap_or(false);
 
-    let builder_postprocess = toml_object
-        .lookup("builder_postprocess")
-        .and_then(Value::as_str)
-        .map(String::from);
     let init_function_expression = toml_object
         .lookup("init_function_expression")
         .and_then(Value::as_str)
@@ -495,7 +488,6 @@ fn parse_object(
         manual_traits,
         align,
         generate_builder,
-        builder_postprocess,
         boxed_inline,
         init_function_expression,
         copy_into_function_expression,
@@ -569,18 +561,6 @@ pub fn resolve_type_ids(objects: &mut GObjects, library: &Library) {
         let type_id = library.find_type(0, name);
         if type_id.is_none() && name != &global_functions_name && object.status != GStatus::Ignore {
             warn!("Configured object `{}` missing from the library", name);
-        } else if object.generate_builder {
-            if let Some(type_id) = type_id {
-                if library.type_(type_id).is_abstract() {
-                    warn!(
-                        "Cannot generate builder for `{}` because it's a base class",
-                        name
-                    );
-                    // We set this to `false` to avoid having the "not_bound" mode saying that this
-                    // builder should be generated.
-                    object.generate_builder = false;
-                }
-            }
         }
         object.type_id = type_id;
     }

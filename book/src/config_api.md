@@ -34,8 +34,8 @@ trust_return_value_nullability = false
 # Disable running `cargo fmt` on generated files
 # (defaults to false)
 disable_format = true
-# Always generate a Builder if possible. This is mostly a convenient setter as most of the
-# time you might want the Builder to be generated. Ignoring none-desired ones can still be done with per object `generate_builder` configuration.
+# Always generate a BuilderExt trait if possible. This is mostly a convenient setter as most of the
+# time you might want the BuilderExt to be generated. Ignoring none-desired ones can still be done with per object `generate_builder` configuration.
 # (defaults to false)
 generate_builder = true
 ```
@@ -49,7 +49,7 @@ manual = ["Gtk.Button"]
 
 So in here, both `GtkWidget` and `GtkWindow` will be fully generated and functions/methods using `GtkButton` will be uncommented. To generate code for all global functions, add `Gtk.*` to the `generate` array.
 
-To also generate a `Builder` struct for a widget, it needs to be set with the `generate_builder` flag in object configuration:
+To also generate a `BuilderExt` trait for a widget, it needs to be set with the `generate_builder` flag in object configuration:
 
 ```toml
 [[object]]
@@ -58,9 +58,9 @@ status = "generate"
 generate_builder = true
 ```
 
-> If the object doesn't already have a `Default` implementation through a constructor method without arguments, generating a `Builder` struct will add a `Default` implementation for the object.
+> If the object doesn't already have a `Default` implementation through a constructor method without arguments, generating a `BuilderExt` trait will add a `Default` implementation for the object.
 
-If you want to remove warning messages about the not bound `Builders` during the generation you don't want to be generated, you can ignore them with the `generate_builder` flag in object configuration:
+If you want to remove warning messages about the not bound `BuilderExt`s during the generation you don't want to be generated, you can ignore them with the `generate_builder` flag in object configuration:
 
 ```toml
 [[object]]
@@ -68,20 +68,6 @@ name = "Gtk.TreeView"
 status = "generate"
 generate_builder = false
 ```
-
-If there is some work which has to be done post-construction before the builder's
-`build` method returns, you can set the `builder_postprocess` value in the object configuration:
-
-```toml
-[[object]]
-name = "Gtk.Application"
-status = "generate"
-generate_builder = true
-builder_postprocess = "Application::register_startup_hook(&ret);"
-```
-
-For the duration of the code in `builder_postprocess` the binding `ret` will be the
-value to be returned from the `build` method.
 
 Sometimes Gir understands the object definition incorrectly or the `.gir` file contains an incomplete or wrong definition, to fix it, you can use the full object configuration:
 
@@ -110,7 +96,7 @@ version = "3.12"
 cfg_condition = "mycond"
 # if you want to override default option Ex. for write your own Display implementation
 generate_display_trait = false
-# if you want to generate builder with name SomeClassBuilder
+# if you want to generate builder trait with name SomeClassBuilderExt
 generate_builder = true
 # trust return value nullability annotations for this specific type.
 # See above for details and use with care

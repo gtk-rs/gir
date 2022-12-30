@@ -25,39 +25,10 @@ pub fn analyze(
     }
 
     let mut names = HashSet::<String>::new();
-    let mut builder_properties = vec![(
+    let builder_properties = vec![(
         analyze_properties(env, type_tid, props, obj, imports, &mut names),
         type_tid,
     )];
-
-    for &super_tid in env.class_hierarchy.supertypes(type_tid) {
-        let type_ = env.type_(super_tid);
-
-        let super_properties = match type_ {
-            library::Type::Class(class) => &class.properties,
-            library::Type::Interface(iface) => &iface.properties,
-            _ => continue,
-        };
-        let super_obj =
-            if let Some(super_obj) = env.config.objects.get(&super_tid.full_name(&env.library)) {
-                super_obj
-            } else {
-                continue;
-            };
-
-        let new_builder_properties = (
-            analyze_properties(
-                env,
-                super_tid,
-                super_properties,
-                super_obj,
-                imports,
-                &mut names,
-            ),
-            super_tid,
-        );
-        builder_properties.push(new_builder_properties);
-    }
 
     builder_properties
 }
