@@ -39,15 +39,13 @@ pub(super) fn generate_static_to_str(
     writeln!(
         w,
         "\
-\t{visibility} fn {rust_fn_name}<'a>(self) -> &'a str {{
+\t{visibility} fn {rust_fn_name}<'a>(self) -> &'a GStr {{
 \t\tunsafe {{
-\t\t\tCStr::from_ptr(
+\t\t\tGStr::from_ptr(
 \t\t\t\t{ns}::{glib_fn_name}(self.into_glib())
 \t\t\t\t\t.as_ref()
 \t\t\t\t\t.expect(\"{glib_fn_name} returned NULL\"),
 \t\t\t)
-\t\t\t.to_str()
-\t\t\t.expect(\"{glib_fn_name} returned an invalid string\")
 \t\t}}
 \t}}",
         visibility = function.visibility,
