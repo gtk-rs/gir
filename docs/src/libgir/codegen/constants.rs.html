@@ -58,7 +58,6 @@
 <span id="58">58</span>
 <span id="59">59</span>
 <span id="60">60</span>
-<span id="61">61</span>
 </pre><pre class="rust"><code><span class="kw">use </span>std::path::Path;
 
 <span class="kw">use crate</span>::{
@@ -79,7 +78,7 @@
     }
 
     <span class="kw">let </span>sys_crate_name = env.main_sys_crate_name();
-    imports.add(<span class="string">&quot;std::ffi::CStr&quot;</span>);
+    imports.add(<span class="string">&quot;glib::GStr&quot;</span>);
 
     file_saver::save_to_file(path, env.config.make_backup, |w| {
         general::start_comments(w, <span class="kw-2">&amp;</span>env.config)<span class="question-mark">?</span>;
@@ -97,8 +96,7 @@
                 doc_alias(w, <span class="kw-2">&amp;</span>constant.glib_name, <span class="string">&quot;&quot;</span>, <span class="number">0</span>)<span class="question-mark">?</span>;
                 <span class="macro">writeln!</span>(
                     w,
-                    <span class="string">&quot;pub static {name}: once_cell::sync::Lazy&lt;&amp;&#39;static str&gt; = once_cell::sync::Lazy::new(|| \
-                     unsafe{{CStr::from_ptr({sys_crate_name}::{c_id}).to_str().unwrap()}});&quot;</span>,
+                    <span class="string">&quot;pub static {name}: &amp;GStr = unsafe{{GStr::from_utf8_with_nul_unchecked({sys_crate_name}::{c_id})}};&quot;</span>,
                     sys_crate_name = sys_crate_name,
                     name = constant.name,
                     c_id = constant.glib_name

@@ -549,9 +549,6 @@
 <span id="549">549</span>
 <span id="550">550</span>
 <span id="551">551</span>
-<span id="552">552</span>
-<span id="553">553</span>
-<span id="554">554</span>
 </pre><pre class="rust"><code><span class="kw">use </span>std::{
     fs,
     io::{Error, ErrorKind, <span class="prelude-ty">Result</span>, Write},
@@ -799,11 +796,8 @@
         };
         <span class="kw">let </span><span class="kw-2">mut </span>value = constant.value.clone();
         <span class="kw">if </span>type_ == <span class="string">&quot;*mut c_char&quot; </span>{
-            type_ = <span class="string">&quot;*const c_char&quot;</span>.into();
-            value = <span class="macro">format!</span>(
-                <span class="string">&quot;b\&quot;{}\\0\&quot; as *const u8 as *const c_char&quot;</span>,
-                general::escape_string(<span class="kw-2">&amp;</span>value)
-            );
+            type_ = <span class="string">&quot;&amp;[u8]&quot;</span>.into();
+            value = <span class="macro">format!</span>(<span class="string">&quot;b\&quot;{}\\0\&quot;&quot;</span>, general::escape_string(<span class="kw-2">&amp;</span>value));
         } <span class="kw">else if </span>type_ == <span class="string">&quot;gboolean&quot; </span>{
             value = <span class="kw">if </span>value == <span class="string">&quot;true&quot; </span>{
                 use_glib_if_needed(env, <span class="string">&quot;GTRUE&quot;</span>)
