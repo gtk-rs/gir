@@ -149,7 +149,7 @@ pub fn extract(functions: &mut [FuncInfo], parent_type: &LibType, obj: &GObject)
             let returns_static_ref = return_transfer_none
                 && matches!(parent_type, LibType::Enumeration(_) | LibType::Bitfield(_))
                 // We cannot mandate returned lifetime if this is not generated.
-                // (And this prevents an unused std::ffi::CStr from being emitted below)
+                // (And this prevents an unused glib::GStr from being emitted below)
                 && func.status.need_generate();
 
             if returns_static_ref {
@@ -263,7 +263,7 @@ pub fn analyze_imports(specials: &Infos, imports: &mut Imports) {
     for info in specials.functions().values() {
         match info.type_ {
             FunctionType::StaticStringify => {
-                imports.add_with_version("std::ffi::CStr", info.version);
+                imports.add_with_version("glib::GStr", info.version);
             }
         }
     }
