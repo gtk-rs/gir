@@ -18,7 +18,7 @@ pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>) {
     }
 
     let sys_crate_name = env.main_sys_crate_name();
-    imports.add("std::ffi::CStr");
+    imports.add("glib::GStr");
 
     file_saver::save_to_file(path, env.config.make_backup, |w| {
         general::start_comments(w, &env.config)?;
@@ -36,8 +36,7 @@ pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>) {
                 doc_alias(w, &constant.glib_name, "", 0)?;
                 writeln!(
                     w,
-                    "pub static {name}: once_cell::sync::Lazy<&'static str> = once_cell::sync::Lazy::new(|| \
-                     unsafe{{CStr::from_ptr({sys_crate_name}::{c_id}).to_str().unwrap()}});",
+                    "pub static {name}: &GStr = unsafe{{GStr::from_utf8_with_nul_unchecked({sys_crate_name}::{c_id})}};",
                     sys_crate_name = sys_crate_name,
                     name = constant.name,
                     c_id = constant.glib_name

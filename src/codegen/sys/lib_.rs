@@ -245,11 +245,8 @@ fn generate_constants(w: &mut dyn Write, env: &Env, constants: &[Constant]) -> R
         };
         let mut value = constant.value.clone();
         if type_ == "*mut c_char" {
-            type_ = "*const c_char".into();
-            value = format!(
-                "b\"{}\\0\" as *const u8 as *const c_char",
-                general::escape_string(&value)
-            );
+            type_ = "&[u8]".into();
+            value = format!("b\"{}\\0\"", general::escape_string(&value));
         } else if type_ == "gboolean" {
             value = if value == "true" {
                 use_glib_if_needed(env, "GTRUE")
