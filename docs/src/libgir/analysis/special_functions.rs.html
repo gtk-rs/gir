@@ -419,7 +419,7 @@
             </span><span class="kw">let </span>returns_static_ref = return_transfer_none
                 &amp;&amp; <span class="macro">matches!</span>(parent_type, LibType::Enumeration(<span class="kw">_</span>) | LibType::Bitfield(<span class="kw">_</span>))
                 <span class="comment">// We cannot mandate returned lifetime if this is not generated.
-                // (And this prevents an unused std::ffi::CStr from being emitted below)
+                // (And this prevents an unused glib::GStr from being emitted below)
                 </span>&amp;&amp; func.status.need_generate();
 
             <span class="kw">if </span>returns_static_ref {
@@ -533,7 +533,7 @@
     <span class="kw">for </span>info <span class="kw">in </span>specials.functions().values() {
         <span class="kw">match </span>info.type_ {
             FunctionType::StaticStringify =&gt; {
-                imports.add_with_version(<span class="string">&quot;std::ffi::CStr&quot;</span>, info.version);
+                imports.add_with_version(<span class="string">&quot;glib::GStr&quot;</span>, info.version);
             }
         }
     }

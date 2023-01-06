@@ -56,8 +56,6 @@
 <span id="56">56</span>
 <span id="57">57</span>
 <span id="58">58</span>
-<span id="59">59</span>
-<span id="60">60</span>
 </pre><pre class="rust"><code><span class="kw">use </span>std::io::{<span class="prelude-ty">Result</span>, Write};
 
 <span class="kw">use </span><span class="kw">super</span>::general::version_condition;
@@ -99,15 +97,13 @@
     <span class="macro">writeln!</span>(
         w,
         <span class="string">&quot;\
-\t{visibility} fn {rust_fn_name}&lt;&#39;a&gt;(self) -&gt; &amp;&#39;a str {{
+\t{visibility} fn {rust_fn_name}&lt;&#39;a&gt;(self) -&gt; &amp;&#39;a GStr {{
 \t\tunsafe {{
-\t\t\tCStr::from_ptr(
+\t\t\tGStr::from_ptr(
 \t\t\t\t{ns}::{glib_fn_name}(self.into_glib())
 \t\t\t\t\t.as_ref()
 \t\t\t\t\t.expect(\&quot;{glib_fn_name} returned NULL\&quot;),
 \t\t\t)
-\t\t\t.to_str()
-\t\t\t.expect(\&quot;{glib_fn_name} returned an invalid string\&quot;)
 \t\t}}
 \t}}&quot;</span>,
         visibility = function.visibility,
