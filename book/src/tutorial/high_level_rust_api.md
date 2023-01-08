@@ -1,17 +1,26 @@
 # Generating the Rust API
-In the previous step we successfully created the unsafe bindings of the -sys crate. We are now in the directory of the safe wrapper crate (`gir-tutorial/pango`).
+In the previous step we successfully created the unsafe bindings of the -sys crate.
+We are now in the directory of the safe wrapper crate (`gir-tutorial/pango`).
 
 ## The Cargo.toml file
-The Cargo.toml file will not be replaced when you run gir. So it is our responsibility to make sure the information in it is correct. Open the Cargo.toml file and have a look at it. Make sure everything under `[package]` is to your liking.
+The Cargo.toml file will not be replaced when you run gir.
+So it is our responsibility to make sure the information in it is correct.
+Open the Cargo.toml file and have a look at it.
+Make sure everything under `[package]` is to your liking.
 
 Add the following lines to the file:
 ```toml
 [package.metadata.docs.rs]
 features = ["dox"]
 ```
-This automatically activates the `dox` feature if you chose to publish the bindings and docs.rs tries to build the documentation. The `dox` feature skips linking the C libraries and allows docs.rs to build the documentation without having the underlying libraries installed. Even if you don't plan to publish it, this line is not going to hurt.
+This automatically activates the `dox` feature if you chose to publish the bindings and docs.rs tries to build the documentation.
+The `dox` feature skips linking the C libraries and allows docs.rs to build the documentation without having the underlying libraries installed.
+Even if you don't plan to publish it, this line is not going to hurt.
 
-We also need to add `libc`, `bitflags`, `glib` and `glib-sys` and all other dependencies we used in the sys crate as dependencies. Because we are creating a wrapper for the sys crate, which we generated in the previous chapter, we also need to add the sys crate to the list of dependencies. In the automatically generated code, the sys crate is always called `ffi`, so we need to rename the sys crate in our `Cargo.toml`. For our example, this results in the following dependencies:
+We also need to add `libc`, `bitflags`, `glib` and `glib-sys` and all other dependencies we used in the sys crate as dependencies.
+Because we are creating a wrapper for the sys crate, which we generated in the previous chapter, we also need to add the sys crate to the list of dependencies.
+In the automatically generated code, the sys crate is always called `ffi`, so we need to rename the sys crate in our `Cargo.toml`.
+For our example, this results in the following dependencies:
 ```toml
 [dependencies]
 libc = "0.2"
@@ -30,7 +39,10 @@ package = "gobject-sys"
 git = "https://github.com/gtk-rs/gtk-rs-core"
 ```
 
-In order to make the features of the sys crate available for users of your safe wrapper, you need to add features. Copy the `[features]` part of the Cargo.toml of your sys crate and paste it into the Cargo.toml of the normal crate. The features are supposed to activate the corresponding features of the sys crate, so you need to make some changes. If for example you have the following sys features:
+In order to make the features of the sys crate available for users of your safe wrapper, you need to add features.
+Copy the `[features]` part of the Cargo.toml of your sys crate and paste it into the Cargo.toml of the normal crate.
+The features are supposed to activate the corresponding features of the sys crate, so you need to make some changes.
+If for example you have the following sys features:
 
 ```toml
 [features]
@@ -97,7 +109,10 @@ dox = ["glib/dox", "gobject/dox", "ffi/dox"]
 ```
 
 ## The lib.rs file
-The lib.rs file will not be replaced when you run gir. All the code that gir will generate for us is going to be in src/auto. We need to include all `auto` files in our library. To do so, let's update the `src/lib.rs` file as follows:
+The lib.rs file will not be replaced when you run gir.
+All the code that gir will generate for us is going to be in src/auto.
+We need to include all `auto` files in our library.
+To do so, let's update the `src/lib.rs` file as follows:
 
 ```rust
 #![cfg_attr(feature = "dox", feature(doc_cfg))]
@@ -108,7 +123,8 @@ mod auto;
 
 
 ## The Gir.toml file
-As you certainly guessed, we have to fill our `Gir.toml` file for the normal crate as well. Let's write it:
+As you certainly guessed, we have to fill our `Gir.toml` file for the normal crate as well.
+Let's write it:
 
 ```toml
 [options]
@@ -127,13 +143,17 @@ generate = []
 manual = []
 ```
 
-Many of these options look familiar from the last chapter but there are also a few new things in here. Let's take a look at them:
+Many of these options look familiar from the last chapter but there are also a few new things in here.
+Let's take a look at them:
 
 * `work_mode` value is now set to `normal`, it means it'll generate the high-level Rust api instead of the sys-level.
 * `generate_safety_asserts` is used to generates checks to ensure that, or any other kind of initialization needed before being able to use the library.
 * `deprecate_by_min_version` is used to generate a [Rust "#[deprecated]"](https://doc.rust-lang.org/edition-guide/rust-2018/the-compiler/an-attribute-for-deprecation.html) attribute based on the deprecation information provided by the `.gir` file.
-* `generate = []`: this line currently does nothing. We say to [gir] to generate nothing. We'll fill it later on.
-* `manual = []`: this line currently does nothing. We can let [gir] know about objects which it does not have to generate code for.
+* `generate = []`: this line currently does nothing.
+We say to [gir] to generate nothing.
+We'll fill it later on.
+* `manual = []`: this line currently does nothing.
+We can let [gir] know about objects which it does not have to generate code for.
 
 Let's make a first generation of our high-level Rust API!
 
@@ -141,9 +161,13 @@ Let's make a first generation of our high-level Rust API!
 gir -o .
 ```
 
-If you take a look at which files and folders were created, you'll see a new "auto" folder inside "src". This folder contains all the generated code. It doesn't contain anything though. Which makes sense since we're generating nothing.
+If you take a look at which files and folders were created, you'll see a new "auto" folder inside "src".
+This folder contains all the generated code.
+It doesn't contain anything though.
+Which makes sense since we're generating nothing.
 
-Now it's time to introduce you to a whole new [gir] mode: `not_bound`. Let's give it a try:
+Now it's time to introduce you to a whole new [gir] mode: `not_bound`.
+Let's give it a try:
 
 ```console
 > gir -o . -m not_bound
@@ -278,14 +302,18 @@ Now it's time to introduce you to a whole new [gir] mode: `not_bound`. Let's giv
 [NOT GENERATED FUNCTION] Pango.unichar_direction because of Pango.Direction
 ```
 
-We now have the list of all the not-yet generated items. Quite convenient! There can be different kinds of not generated items:
+We now have the list of all the not-yet generated items.
+Quite convenient.
+There can be different kinds of not generated items:
 
 * `[NOT GENERATED]`:
 Objects marked with `[NOT GENERATED]` are objects that we can generate, but we did not (yet) add to the `generate` array.
 * `[NOT GENERATED PARENT]`:
-These objects live in a dependency of the current library. These are the objects we will add to the `manual` array in the following steps.
+These objects live in a dependency of the current library.
+These are the objects we will add to the `manual` array in the following steps.
 * `[NOT GENERATED FUNCTION]`:
-These are global functions that were not generated. To fix it, we just add `"NameOfYourLibrary.*"` to the `generate` array in the Git.toml and add the following line to your src/lib.rs file:
+These are global functions that were not generated.
+To fix it, we just add `"NameOfYourLibrary.*"` to the `generate` array in the Git.toml and add the following line to your src/lib.rs file:
 ```rust
 pub use auto::functions::*;
 ```
@@ -298,12 +326,15 @@ In order to generate the code for the safe wrapper, we follow these steps until 
 - Add it to the `generate` array in the Gir.toml file
 - Run `gir -o .` to generate the code
 - Open the generated files under src/auto and have a look at them
-- Search for `/*Ignored*/`. If the type name following `/*Ignored*/` is prepended by `[crate_name]::` (e.g `Ignored*/&glib::MarkupParseContext`),
-    - then we add it to the `manual` array. By doing so we tell [gir] that those types have been generated somewhere else and that they can be used just like the other types.
+- Search for `/*Ignored*/`.
+If the type name following `/*Ignored*/` is prepended by `[crate_name]::` (e.g `Ignored*/&glib::MarkupParseContext`),
+    - then we add it to the `manual` array.
+      By doing so we tell [gir] that those types have been generated somewhere else and that they can be used just like the other types.
     - Otherwise, the type comes from the current crate and we just put it into the `generate` list of the `Gir.toml` file.
 - Start with the first step again
     
-The names of the objects are not the same as the crates names. You have to use the names of the corresponding gir files.
+The names of the objects are not the same as the crates names.
+You have to use the names of the corresponding gir files.
 
 Okay, lets go through that process for a few objects of our example.
 
@@ -311,7 +342,8 @@ Okay, lets go through that process for a few objects of our example.
 
 Again, if you do it on another library and it fails and you can't figure out why, don't hesitate to [contact us](https://gtk-rs.org/contact)!
 
-At this point, you should have almost everything you need. Let's have a look at errors that can happen in this process.
+At this point, you should have almost everything you need.
+Let's have a look at errors that can happen in this process.
 
 
 [gir]: https://github.com/gtk-rs/gir

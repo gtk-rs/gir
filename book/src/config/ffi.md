@@ -1,14 +1,19 @@
 # FFI Options
 
-In FFI (`-m sys`) mode, `gir` generates as much as it can. So in this mode, the TOML file is mostly used to ignore some objects. To do so, you need to add its fullname to an `ignore` array. Example:
+In FFI (`-m sys`) mode, `gir` generates as much as it can.
+So in this mode, the TOML file is mostly used to ignore some objects.
+To do so, you need to add its fullname to an `ignore` array.
+Example:
 
 ```toml
 ignore = ["Gtk.Widget", "Gtk.Window"]
 ```
 
-And that's all! Neither `GtkWidget` nor `GtkWindow` (alongside with their functions) will be generated.
+And that's all.
+Neither `GtkWidget` nor `GtkWindow` (alongside with their functions) will be generated.
 
-You also need to add any needed external libraries in the "external_libraries" parameter. Example:
+You also need to add any needed external libraries in the "external_libraries" parameter.
+Example:
 
 ```toml
 [options]
@@ -66,12 +71,16 @@ cfg_condition = "feature = \"egl\""
 
 ## Generation in FFI mode
 
-When you're ready, let's generate the FFI part. In the command we'll execute, `../gir-files` is where the directory with your `.gir` files is. (But again, you can just clone the [gir-files repository](https://github.com/gtk-rs/gir-files) and add your file(s) in it). Then let's run the command:
+When you're ready, let's generate the FFI part.
+In the command we'll execute, `../gir-files` is where the directory with your `.gir` files is.
+(But again, you can just clone the [gir-files repository](https://github.com/gtk-rs/gir-files) and add your file(s) in it).
+Then let's run the command:
 
 ```sh
 cargo run --release -- -c YourSysGirFile.toml -d ../gir-files -m sys -o the-output-directory-sys
 ```
 
-The generated files will be placed in `the-output-directory-sys`. Just take care about the dependencies and the crate's name generated in the `Cargo.toml` file (update them if they don't work as expected).
+The generated files will be placed in `the-output-directory-sys`.
+Just take care about the dependencies and the crate's name generated in the `Cargo.toml` file (update them if they don't work as expected).
 
 You now have the sys part of your binding!
