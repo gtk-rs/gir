@@ -2,10 +2,10 @@
 In order to install gir and nicely structure the project, there are a few things to set up.
 
 ## Set up the project folder
-In order to keep the project folder nicely organized, lets create a folder where we will work in and initialize the repo.
+In order to keep the project folder nicely organized, let's create a folder where we will work in and initialize the repo.
 We will create two library crates.
 pango will contain the safe wrapper crate and because it is a wrapper for the unsafe bindings, we create the pango-sys crate within the pango crate.
-If no Cargo.toml file is present in the sys create, a new one will be generated, so lets be safe and delete the automatically created file before we begin.
+If no Cargo.toml file is present in the sys create, a new one will be generated, so let's be safe and delete the automatically created file before we begin.
 The following commands will set up the project folder as described.
 
 ```sh

@@ -336,7 +336,7 @@ If the type name following `/*Ignored*/` is prepended by `[crate_name]::` (e.g `
 The names of the objects are not the same as the crates names.
 You have to use the names of the corresponding gir files.
 
-Okay, lets go through that process for a few objects of our example.
+Okay, let's go through that process for a few objects of our example.
 
 🚧 TODO: Add remaining steps of the pango example 🚧
 

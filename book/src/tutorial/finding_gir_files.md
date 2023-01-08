@@ -19,7 +19,7 @@ In most cases it will be enough to follow the next two steps of the tutorial to 
 If your library depends on GTK libraries, the recommended way to get the `.gir` files for them is to add the [gir-files repo](https://github.com/gtk-rs/gir-files) as a submodule as well.
 It's the recommended way, because some of the `.gir` files included in the libraries are invalid (missing or invalid annotations for example).
 These errors are already fixed in the gir files from the repo.
-Otherwise you could use the above mentioned methods to find the files and run the [script](https://github.com/gtk-rs/gir-files/blob/master/fix.sh) to fix the `.gir` files available in the gir-files repository (and only them!).
+Otherwise you could use the above-mentioned methods to find the files and run the [script](https://github.com/gtk-rs/gir-files/blob/master/fix.sh) to fix the `.gir` files available in the gir-files repository (and only them!).
 You can run it like this (at the same level of the `.gir` files you want to patch):
 
 ```sh
@@ -27,7 +27,7 @@ sh fix.sh
 ```
 
 ## GStreamer dependencies
-For GStreamer related dependencies, follow the above mentioned steps but add this [repo](https://gitlab.freedesktop.org/gstreamer/gir-files-rs) instead.
+For GStreamer related dependencies, follow the above-mentioned steps but add this [repo](https://gitlab.freedesktop.org/gstreamer/gir-files-rs) instead.
 
 ## Other dependencies
 If you have other dependencies, you have to find the files yourself.

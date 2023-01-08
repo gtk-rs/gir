@@ -1,6 +1,6 @@
 # Introduction
-[gir] is a tool to automatically generate FFI bindings and a safe wrapper for a library written in C.
-All you need to be able to use it, is a `.gir` file containing the [GObject introspection](https://gi.readthedocs.io/en/latest/) data for the library you want to create the bindings for, as well as the `.gir` files for all its dependencies.
+[gir] is a tool to automatically generate safe wrappers for a C library with [GObject introspection](https://gi.readthedocs.io/en/latest/) information.
+In order to use it you need the `.gir` file containing the introspection data for the library you want to create the bindings for, as well as the `.gir` files for all its dependencies.
 Have a look at the tutorial if you don't know how to [find the .gir files](tutorial/finding_gir_files.md).
 If your library does not provide a `.gir` file, unfortunately you cannot use [gir], but maybe you can try [rust-bindgen](https://github.com/rust-lang/rust-bindgen).
 
@@ -32,10 +32,10 @@ Use the operating mode `doc` to do so.
 
 
 ## Regenerating the bindings and wrapper
-In order to generate the bindings and the wrapper for the first time, the above mentioned steps should be followed.
+In order to generate the bindings and the wrapper for the first time, the above-mentioned steps should be followed.
 When you want to regenerate the crates because e.g.
 the library was updated, you can simplify the process by running the helper script `./generator.py`.
-The script detects `Gir.toml` configurations in the current directory and sub-directories (or the paths passed on the command-line) and generates "normal" or "sys" crates for it.
+The script detects `Gir.toml` configurations in the current directory and subdirectories (or the paths passed on the command-line) and generates "normal" or "sys" crates for it.
 Alternatively `--embed-docs` can be passed to prepare source-code for a documentation built by moving all documentation into it.
 For a complete overview of available options, pass `--help`.
 

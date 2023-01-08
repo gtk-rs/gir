@@ -38,7 +38,7 @@ You can find out the values for `library` and `version` by looking at the name o
 In our case it is called Pango-1.0.gir.
 This tells us that the `library` is Pango and the `version` is 1.0.
 If you don't know what value to use for `min_cfg_version`, use the same as you use for `version`.
-If not all `.gir` files that are needed reside in `../../gir-files/`, you can add the path to the other files by changing `girs_directories`.
+If not all needed `.gir` files reside in `../../gir-files/`, you can add the path to the other files by changing `girs_directories`.
 If for example you also have `.gir` files in the root of your project folder, change it to `girs_directories = ["../../gir-files/", "../.."]`.
 Because we are generating the unsafe bindings, we use the `sys` work mode.
 
