@@ -2,7 +2,7 @@ use std::{collections::vec_deque::VecDeque, slice::Iter};
 
 use crate::{
     analysis::{
-        function_parameters::{async_param_to_remove, CParameter},
+        function_parameters::CParameter,
         functions::{find_function, find_index_to_ignore, finish_function_name},
         imports::Imports,
         out_parameters::use_function_return_for_result,
@@ -89,7 +89,7 @@ impl Bounds {
         let type_name = RustType::builder(env, par.typ)
             .ref_mode(RefMode::ByRefFake)
             .try_build();
-        if (r#async && async_param_to_remove(&par.name)) || type_name.is_err() {
+        if type_name.is_err() {
             return (None, None);
         }
         let mut type_string = type_name.into_string();

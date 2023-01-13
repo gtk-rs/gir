@@ -92,6 +92,10 @@ impl ParameterScope {
     pub fn is_async(self) -> bool {
         matches!(self, Self::Async)
     }
+
+    pub fn is_none(self) -> bool {
+        matches!(self, Self::None)
+    }
 }
 
 impl FromStr for ParameterScope {

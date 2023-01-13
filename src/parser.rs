@@ -539,7 +539,7 @@ impl Library {
                 if typ.is_some() {
                     return Err(parser.fail("Too many <type> elements"));
                 }
-                self.read_function(parser, ns_id, elem.name(), elem)
+                self.read_function(parser, ns_id, elem.name(), elem, true)
                     .map(|f| {
                         typ = Some((Type::function(self, f), None, None));
                     })
@@ -570,7 +570,7 @@ impl Library {
         ns_id: u16,
         elem: &Element,
     ) -> Result<(), String> {
-        self.read_function_if_not_moved(parser, ns_id, elem.name(), elem)?
+        self.read_function_if_not_moved(parser, ns_id, elem.name(), elem, true)?
             .map(|func| {
                 let name = func.name.clone();
                 self.add_type(ns_id, &name, Type::Function(func))
@@ -749,7 +749,7 @@ impl Library {
         ns_id: u16,
         elem: &Element,
     ) -> Result<(), String> {
-        self.read_function_if_not_moved(parser, ns_id, "global", elem)
+        self.read_function_if_not_moved(parser, ns_id, "global", elem, false)
             .map(|func| {
                 if let Some(func) = func {
                     self.add_function(ns_id, func);
@@ -918,6 +918,7 @@ impl Library {
         ns_id: u16,
         kind_str: &str,
         elem: &Element,
+        is_callback: bool,
     ) -> Result<Function, String> {
         let fn_name = elem.attr_required("name")?;
         let c_identifier = elem.attr("identifier").or_else(|| elem.attr("type"));
@@ -952,6 +953,11 @@ impl Library {
             "attribute" => parser.ignore_element(),
             _ => Err(parser.unexpected_element(elem)),
         })?;
+        // The last argument of a callback is ALWAYS user data, so it has to be marked as such
+        // in case it's missing.
+        if is_callback && params.last().map(|x| x.closure.is_none()).unwrap_or(false) {
+            params.last_mut().unwrap().closure = Some(2000);
+        }
 
         let throws = elem.attr_bool("throws", false);
         if throws {
@@ -1000,7 +1006,7 @@ impl Library {
         elem: &Element,
         fns: &mut Vec<Function>,
     ) -> Result<(), String> {
-        if let Some(f) = self.read_function_if_not_moved(parser, ns_id, elem.name(), elem)? {
+        if let Some(f) = self.read_function_if_not_moved(parser, ns_id, elem.name(), elem, false)? {
             fns.push(f);
         }
         Ok(())
@@ -1012,11 +1018,12 @@ impl Library {
         ns_id: u16,
         kind_str: &str,
         elem: &Element,
+        is_callback: bool,
     ) -> Result<Option<Function>, String> {
         if elem.attr("moved-to").is_some() {
             return parser.ignore_element().map(|_| None);
         }
-        self.read_function(parser, ns_id, kind_str, elem)
+        self.read_function(parser, ns_id, kind_str, elem, is_callback)
             .and_then(|f| {
                 if f.c_identifier.is_none() {
                     return Err(parser.fail_with_position(
