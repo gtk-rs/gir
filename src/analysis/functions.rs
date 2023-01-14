@@ -717,10 +717,25 @@ fn analyze_function(
 
     if status.need_generate() {
         if !has_callback_parameter {
+            let mut to_remove = Vec::new();
+            let mut correction_instance = 0;
+            for par in parameters.c_parameters.iter() {
+                if par.scope.is_none() {
+                    continue;
+                }
+                if let Some(index) = par.user_data_index {
+                    to_remove.push(index);
+                }
+                if let Some(index) = par.destroy_index {
+                    to_remove.push(index);
+                }
+            }
             for (pos, par) in parameters.c_parameters.iter().enumerate() {
-                // FIXME: It'd be better if we assumed that user data wasn't gpointer all the
-                // time so        we could handle it more generically.
-                if r#async && is_gpointer(&par.c_type) {
+                if par.instance_parameter {
+                    correction_instance = 1;
+                }
+
+                if r#async && to_remove.contains(&(pos - correction_instance)) {
                     continue;
                 }
                 assert!(
@@ -1134,8 +1149,9 @@ fn analyze_callback(
             *commented = true;
             warn_main!(
                 type_tid,
-                "Closure type `{}` doesn't provide user data",
-                par.c_type
+                "Closure type `{}` doesn't provide user data for function {}",
+                par.c_type,
+                func_name,
             );
             return None;
         }

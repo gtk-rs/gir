@@ -198,12 +198,30 @@ pub fn analyze(
         .filter_map(|p| p.array_length.map(|pos| (pos, p)))
         .collect();
 
+    let mut to_remove = Vec::new();
+    let mut correction_instance = 0;
+
+    for par in function_parameters.iter() {
+        if par.scope.is_none() {
+            continue;
+        }
+        if let Some(index) = par.closure {
+            to_remove.push(index);
+        }
+        if let Some(index) = par.destroy {
+            to_remove.push(index);
+        }
+    }
+
     for (pos, par) in function_parameters.iter().enumerate() {
         let name = if par.instance_parameter {
             par.name.clone()
         } else {
             nameutil::mangle_keywords(&*par.name).into_owned()
         };
+        if par.instance_parameter {
+            correction_instance = 1;
+        }
 
         let configured_parameters = configured_functions.matched_parameters(&name);
 
@@ -222,7 +240,7 @@ pub fn analyze(
             }
         };
 
-        if async_func && async_param_to_remove(&par.name) {
+        if async_func && to_remove.contains(&(pos - correction_instance)) {
             add_rust_parameter = false;
         }
         let mut transfer = par.transfer;
@@ -483,9 +501,4 @@ fn has_length(env: &Env, typ: TypeId) -> bool {
         Type::Alias(alias) => has_length(env, alias.typ),
         _ => false,
     }
-}
-
-pub fn async_param_to_remove(name: &str) -> bool {
-    name == "user_data" || name.ends_with("data") // FIXME: use async indexes
-                                                  // instead
 }
