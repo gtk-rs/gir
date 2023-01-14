@@ -321,6 +321,53 @@ fn create_object_doc(w: &mut dyn Write, env: &Env, info: &analysis::object::Info
             )?;
         }
 
+        if !properties.is_empty() {
+            writeln!(w, "\n## Properties")?;
+            document_type_properties(env, w, info, properties, None)?;
+
+            for parent_info in &info.supertypes {
+                match env.library.type_(parent_info.type_id) {
+                    Type::Class(cl) => {
+                        if !cl.properties.is_empty() {
+                            document_type_properties(env, w, info, &cl.properties, Some(&cl.name))?;
+                        }
+                    }
+                    Type::Interface(iface) => {
+                        if !iface.properties.is_empty() {
+                            document_type_properties(
+                                env,
+                                w,
+                                info,
+                                &iface.properties,
+                                Some(&iface.name),
+                            )?;
+                        }
+                    }
+                    _ => (),
+                }
+            }
+        }
+        if !signals.is_empty() {
+            writeln!(w, "\n## Signals")?;
+            document_type_signals(env, w, info, signals, None)?;
+
+            for parent_info in &info.supertypes {
+                match env.library.type_(parent_info.type_id) {
+                    Type::Class(cl) => {
+                        if !cl.signals.is_empty() {
+                            document_type_signals(env, w, info, &cl.signals, Some(&cl.name))?;
+                        }
+                    }
+                    Type::Interface(iface) => {
+                        if !iface.signals.is_empty() {
+                            document_type_signals(env, w, info, &iface.signals, Some(&iface.name))?;
+                        }
+                    }
+                    _ => (),
+                }
+            }
+        }
+
         let impl_self = if has_trait { Some(info.type_id) } else { None };
         let mut implements = impl_self
             .iter()
@@ -343,7 +390,6 @@ fn create_object_doc(w: &mut dyn Write, env: &Env, info: &analysis::object::Info
 
     if has_builder {
         let builder_ty = TypeStruct::new(SType::Impl, &format!("{}Builder", info.name));
-
         let mut builder_properties: Vec<_> = properties.iter().collect();
         for parent_info in &info.supertypes {
             match env.library.type_(parent_info.type_id) {
@@ -1000,4 +1046,90 @@ pub fn get_type_manual_traits_for_implements(
         .flatten()
         .map(|name| format!("[`{0}`][trait@crate::prelude::{0}]", name))
         .collect()
+}
+
+pub fn document_type_properties(
+    env: &Env,
+    w: &mut dyn Write,
+    info: &analysis::object::Info,
+    properties: &[Property],
+    subtype: Option<&str>,
+) -> Result<()> {
+    if let Some(subtype_name) = subtype {
+        writeln!(w, "<details><summary><h4>{}</h4></summary>", subtype_name)?;
+    }
+    for property in properties {
+        let mut details = Vec::new();
+        if property.readable {
+            details.push("Readable");
+        }
+        if property.writable {
+            details.push("Writeable");
+        }
+        if property.construct {
+            details.push("Construct");
+        }
+        if property.construct_only {
+            details.push("Construct Only");
+        }
+        if let Some(doc) = &property.doc {
+            writeln!(
+                w,
+                "\n\n#### `{}`\n {}\n\n{}",
+                property.name,
+                reformat_doc(
+                    &fix_param_names(doc, &None),
+                    env,
+                    Some((&info.type_id, None))
+                ),
+                details.join(" | "),
+            )?;
+        } else {
+            writeln!(w, "\n\n#### `{}`\n {}", property.name, details.join(" | "),)?;
+        }
+    }
+    if subtype.is_some() {
+        writeln!(w, "</details>")?;
+    }
+    Ok(())
+}
+
+pub fn document_type_signals(
+    env: &Env,
+    w: &mut dyn Write,
+    info: &analysis::object::Info,
+    signals: &[Signal],
+    subtype: Option<&str>,
+) -> Result<()> {
+    if let Some(subtype_name) = subtype {
+        writeln!(w, "<details><summary><h4>{}</h4></summary>", subtype_name)?;
+    }
+    for signal in signals {
+        let mut details = Vec::new();
+        if signal.is_action {
+            details.push("Action");
+        }
+        if signal.is_detailed {
+            details.push("Detailed");
+        }
+        if let Some(doc) = &signal.doc {
+            writeln!(
+                w,
+                "\n\n#### `{}`\n {}\n\n{}",
+                signal.name,
+                reformat_doc(
+                    &fix_param_names(doc, &None),
+                    env,
+                    Some((&info.type_id, None))
+                ),
+                details.join(" | "),
+            )?;
+        } else {
+            writeln!(w, "\n\n#### `{}`\n {}", signal.name, details.join(" | "),)?;
+        }
+    }
+    if subtype.is_some() {
+        writeln!(w, "</details>")?;
+    }
+    Ok(())
 }
