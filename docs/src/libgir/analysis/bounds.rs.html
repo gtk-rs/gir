@@ -460,7 +460,7 @@
 
 <span class="kw">use crate</span>::{
     analysis::{
-        function_parameters::{async_param_to_remove, CParameter},
+        function_parameters::CParameter,
         functions::{find_function, find_index_to_ignore, finish_function_name},
         imports::Imports,
         out_parameters::use_function_return_for_result,
@@ -547,7 +547,7 @@
         <span class="kw">let </span>type_name = RustType::builder(env, par.typ)
             .ref_mode(RefMode::ByRefFake)
             .try_build();
-        <span class="kw">if </span>(r#async &amp;&amp; async_param_to_remove(<span class="kw-2">&amp;</span>par.name)) || type_name.is_err() {
+        <span class="kw">if </span>type_name.is_err() {
             <span class="kw">return </span>(<span class="prelude-val">None</span>, <span class="prelude-val">None</span>);
         }
         <span class="kw">let </span><span class="kw-2">mut </span>type_string = type_name.into_string();

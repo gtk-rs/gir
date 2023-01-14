@@ -1402,6 +1402,13 @@
 <span id="1402">1402</span>
 <span id="1403">1403</span>
 <span id="1404">1404</span>
+<span id="1405">1405</span>
+<span id="1406">1406</span>
+<span id="1407">1407</span>
+<span id="1408">1408</span>
+<span id="1409">1409</span>
+<span id="1410">1410</span>
+<span id="1411">1411</span>
 </pre><pre class="rust"><code><span class="kw">use </span>std::{
     path::{Path, PathBuf},
     str::FromStr,
@@ -1943,7 +1950,7 @@
                 <span class="kw">if </span>typ.is_some() {
                     <span class="kw">return </span><span class="prelude-val">Err</span>(parser.fail(<span class="string">&quot;Too many &lt;type&gt; elements&quot;</span>));
                 }
-                <span class="self">self</span>.read_function(parser, ns_id, elem.name(), elem)
+                <span class="self">self</span>.read_function(parser, ns_id, elem.name(), elem, <span class="bool-val">true</span>)
                     .map(|f| {
                         typ = <span class="prelude-val">Some</span>((Type::function(<span class="self">self</span>, f), <span class="prelude-val">None</span>, <span class="prelude-val">None</span>));
                     })
@@ -1974,7 +1981,7 @@
         ns_id: u16,
         elem: <span class="kw-2">&amp;</span>Element,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;(), String&gt; {
-        <span class="self">self</span>.read_function_if_not_moved(parser, ns_id, elem.name(), elem)<span class="question-mark">?
+        <span class="self">self</span>.read_function_if_not_moved(parser, ns_id, elem.name(), elem, <span class="bool-val">true</span>)<span class="question-mark">?
             </span>.map(|func| {
                 <span class="kw">let </span>name = func.name.clone();
                 <span class="self">self</span>.add_type(ns_id, <span class="kw-2">&amp;</span>name, Type::Function(func))
@@ -2153,7 +2160,7 @@
         ns_id: u16,
         elem: <span class="kw-2">&amp;</span>Element,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;(), String&gt; {
-        <span class="self">self</span>.read_function_if_not_moved(parser, ns_id, <span class="string">&quot;global&quot;</span>, elem)
+        <span class="self">self</span>.read_function_if_not_moved(parser, ns_id, <span class="string">&quot;global&quot;</span>, elem, <span class="bool-val">false</span>)
             .map(|func| {
                 <span class="kw">if let </span><span class="prelude-val">Some</span>(func) = func {
                     <span class="self">self</span>.add_function(ns_id, func);
@@ -2322,6 +2329,7 @@
         ns_id: u16,
         kind_str: <span class="kw-2">&amp;</span>str,
         elem: <span class="kw-2">&amp;</span>Element,
+        is_callback: bool,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;Function, String&gt; {
         <span class="kw">let </span>fn_name = elem.attr_required(<span class="string">&quot;name&quot;</span>)<span class="question-mark">?</span>;
         <span class="kw">let </span>c_identifier = elem.attr(<span class="string">&quot;identifier&quot;</span>).or_else(|| elem.attr(<span class="string">&quot;type&quot;</span>));
@@ -2356,6 +2364,11 @@
             <span class="string">&quot;attribute&quot; </span>=&gt; parser.ignore_element(),
             <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(parser.unexpected_element(elem)),
         })<span class="question-mark">?</span>;
+        <span class="comment">// The last argument of a callback is ALWAYS user data, so it has to be marked as such
+        // in case it&#39;s missing.
+        </span><span class="kw">if </span>is_callback &amp;&amp; params.last().map(|x| x.closure.is_none()).unwrap_or(<span class="bool-val">false</span>) {
+            params.last_mut().unwrap().closure = <span class="prelude-val">Some</span>(<span class="number">2000</span>);
+        }
 
         <span class="kw">let </span>throws = elem.attr_bool(<span class="string">&quot;throws&quot;</span>, <span class="bool-val">false</span>);
         <span class="kw">if </span>throws {
@@ -2404,7 +2417,7 @@
         elem: <span class="kw-2">&amp;</span>Element,
         fns: <span class="kw-2">&amp;mut </span>Vec&lt;Function&gt;,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;(), String&gt; {
-        <span class="kw">if let </span><span class="prelude-val">Some</span>(f) = <span class="self">self</span>.read_function_if_not_moved(parser, ns_id, elem.name(), elem)<span class="question-mark">? </span>{
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(f) = <span class="self">self</span>.read_function_if_not_moved(parser, ns_id, elem.name(), elem, <span class="bool-val">false</span>)<span class="question-mark">? </span>{
             fns.push(f);
         }
         <span class="prelude-val">Ok</span>(())
@@ -2416,11 +2429,12 @@
         ns_id: u16,
         kind_str: <span class="kw-2">&amp;</span>str,
         elem: <span class="kw-2">&amp;</span>Element,
+        is_callback: bool,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;Function&gt;, String&gt; {
         <span class="kw">if </span>elem.attr(<span class="string">&quot;moved-to&quot;</span>).is_some() {
             <span class="kw">return </span>parser.ignore_element().map(|<span class="kw">_</span>| <span class="prelude-val">None</span>);
         }
-        <span class="self">self</span>.read_function(parser, ns_id, kind_str, elem)
+        <span class="self">self</span>.read_function(parser, ns_id, kind_str, elem, is_callback)
             .and_then(|f| {
                 <span class="kw">if </span>f.c_identifier.is_none() {
                     <span class="kw">return </span><span class="prelude-val">Err</span>(parser.fail_with_position(

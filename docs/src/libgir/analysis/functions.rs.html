@@ -1312,6 +1312,22 @@
 <span id="1312">1312</span>
 <span id="1313">1313</span>
 <span id="1314">1314</span>
+<span id="1315">1315</span>
+<span id="1316">1316</span>
+<span id="1317">1317</span>
+<span id="1318">1318</span>
+<span id="1319">1319</span>
+<span id="1320">1320</span>
+<span id="1321">1321</span>
+<span id="1322">1322</span>
+<span id="1323">1323</span>
+<span id="1324">1324</span>
+<span id="1325">1325</span>
+<span id="1326">1326</span>
+<span id="1327">1327</span>
+<span id="1328">1328</span>
+<span id="1329">1329</span>
+<span id="1330">1330</span>
 </pre><pre class="rust"><code><span class="comment">// TODO: better heuristic (https://bugzilla.gnome.org/show_bug.cgi?id=623635#c5)
 // TODO: ProgressCallback types (not specific to async).
 // TODO: add annotation for methods like g_file_replace_contents_bytes_async
@@ -2031,10 +2047,25 @@
 
     <span class="kw">if </span>status.need_generate() {
         <span class="kw">if </span>!has_callback_parameter {
+            <span class="kw">let </span><span class="kw-2">mut </span>to_remove = Vec::new();
+            <span class="kw">let </span><span class="kw-2">mut </span>correction_instance = <span class="number">0</span>;
+            <span class="kw">for </span>par <span class="kw">in </span>parameters.c_parameters.iter() {
+                <span class="kw">if </span>par.scope.is_none() {
+                    <span class="kw">continue</span>;
+                }
+                <span class="kw">if let </span><span class="prelude-val">Some</span>(index) = par.user_data_index {
+                    to_remove.push(index);
+                }
+                <span class="kw">if let </span><span class="prelude-val">Some</span>(index) = par.destroy_index {
+                    to_remove.push(index);
+                }
+            }
             <span class="kw">for </span>(pos, par) <span class="kw">in </span>parameters.c_parameters.iter().enumerate() {
-                <span class="comment">// FIXME: It&#39;d be better if we assumed that user data wasn&#39;t gpointer all the
-                // time so        we could handle it more generically.
-                </span><span class="kw">if </span>r#async &amp;&amp; is_gpointer(<span class="kw-2">&amp;</span>par.c_type) {
+                <span class="kw">if </span>par.instance_parameter {
+                    correction_instance = <span class="number">1</span>;
+                }
+
+                <span class="kw">if </span>r#async &amp;&amp; to_remove.contains(<span class="kw-2">&amp;</span>(pos - correction_instance)) {
                     <span class="kw">continue</span>;
                 }
                 <span class="macro">assert!</span>(
@@ -2448,8 +2479,9 @@
             <span class="kw-2">*</span>commented = <span class="bool-val">true</span>;
             <span class="macro">warn_main!</span>(
                 type_tid,
-                <span class="string">&quot;Closure type `{}` doesn&#39;t provide user data&quot;</span>,
-                par.c_type
+                <span class="string">&quot;Closure type `{}` doesn&#39;t provide user data for function {}&quot;</span>,
+                par.c_type,
+                func_name,
             );
             <span class="kw">return </span><span class="prelude-val">None</span>;
         }
