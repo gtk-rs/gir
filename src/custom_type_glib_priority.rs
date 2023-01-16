@@ -41,13 +41,15 @@ struct ReplaceToPriority {
 
 impl FunctionsMutVisitor for ReplaceToPriority {
     fn visit_function_mut(&mut self, func: &mut Function) -> bool {
-        if !func.name.ends_with("_async") {
-            return true;
-        }
         for par in &mut func.parameters {
             if par.typ == self.tid_int && par.name.ends_with("priority") {
                 par.typ = self.tid_priority;
             }
+        }
+        if func.ret.typ == self.tid_int
+            && (func.ret.name.ends_with("priority") || func.name.ends_with("priority"))
+        {
+            func.ret.typ = self.tid_priority;
         }
         true
     }
