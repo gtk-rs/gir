@@ -643,6 +643,18 @@
 <span id="643">643</span>
 <span id="644">644</span>
 <span id="645">645</span>
+<span id="646">646</span>
+<span id="647">647</span>
+<span id="648">648</span>
+<span id="649">649</span>
+<span id="650">650</span>
+<span id="651">651</span>
+<span id="652">652</span>
+<span id="653">653</span>
+<span id="654">654</span>
+<span id="655">655</span>
+<span id="656">656</span>
+<span id="657">657</span>
 </pre><pre class="rust"><code><span class="kw">use </span>std::{
     collections::{BTreeMap, HashSet},
     io::{<span class="prelude-ty">Result</span>, Write},
@@ -987,6 +999,12 @@
 
 <span class="comment">// TODO: instead create a Vec&lt;&gt; inside the Builder instead of Options.
 </span><span class="kw">fn </span>generate_builder(w: <span class="kw-2">&amp;mut </span><span class="kw">dyn </span>Write, env: <span class="kw-2">&amp;</span>Env, analysis: <span class="kw-2">&amp;</span>analysis::object::Info) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+    <span class="kw">let </span>glib_crate_name = <span class="kw">if </span>env.namespaces.is_glib_crate {
+        <span class="string">&quot;crate&quot;
+    </span>} <span class="kw">else </span>{
+        <span class="string">&quot;glib&quot;
+    </span>};
+
     <span class="kw">let </span><span class="kw-2">mut </span>methods = <span class="macro">vec!</span>[];
     <span class="kw">let </span><span class="kw-2">mut </span>properties = <span class="macro">vec!</span>[];
     <span class="macro">writeln!</span>(w, <span class="string">&quot;#[derive(Clone, Default)]&quot;</span>)<span class="question-mark">?</span>;
@@ -1005,11 +1023,11 @@
             <span class="kw">match </span>RustType::try_new(env, property.typ) {
                 <span class="prelude-val">Ok</span>(type_string) =&gt; {
                     <span class="kw">let </span>type_string = <span class="kw">match </span>type_string.as_str() {
-                        s <span class="kw">if </span>nameutil::is_gstring(s) =&gt; <span class="string">&quot;String&quot;</span>,
+                        s <span class="kw">if </span>nameutil::is_gstring(s) =&gt; <span class="macro">format!</span>(<span class="string">&quot;{}::GString&quot;</span>, glib_crate_name),
                         <span class="string">&quot;Vec&lt;GString&gt;&quot; </span>| <span class="string">&quot;Vec&lt;glib::GString&gt;&quot; </span>| <span class="string">&quot;Vec&lt;crate::GString&gt;&quot; </span>=&gt; {
-                            <span class="string">&quot;Vec&lt;String&gt;&quot;
-                        </span>}
-                        typ =&gt; typ,
+                            <span class="macro">format!</span>(<span class="string">&quot;{}::StrV&quot;</span>, glib_crate_name)
+                        }
+                        typ =&gt; String::from(typ),
                     };
                     <span class="kw">let </span>direction = <span class="kw">if </span>property.is_get {
                         library::ParameterDirection::In
@@ -1022,8 +1040,16 @@
                         .try_build()
                         .into_string();
                     <span class="kw">let </span>(param_type_override, bounds, conversion) = <span class="kw">match </span>param_type.as_str() {
-                        <span class="string">&quot;&amp;str&quot; </span>=&gt; (<span class="prelude-val">None</span>, String::new(), <span class="string">&quot;.to_string()&quot;</span>),
-                        <span class="string">&quot;&amp;[&amp;str]&quot; </span>=&gt; (<span class="prelude-val">Some</span>(<span class="string">&quot;Vec&lt;String&gt;&quot;</span>.to_string()), String::new(), <span class="string">&quot;&quot;</span>),
+                        <span class="string">&quot;&amp;str&quot; </span>=&gt; (
+                            <span class="prelude-val">Some</span>(<span class="macro">format!</span>(<span class="string">&quot;impl Into&lt;{}::GString&gt;&quot;</span>, glib_crate_name)),
+                            String::new(),
+                            <span class="string">&quot;.into()&quot;</span>,
+                        ),
+                        <span class="string">&quot;&amp;[&amp;str]&quot; </span>=&gt; (
+                            <span class="prelude-val">Some</span>(<span class="macro">format!</span>(<span class="string">&quot;impl Into&lt;{}::StrV&gt;&quot;</span>, glib_crate_name)),
+                            String::from(<span class="string">&quot;&quot;</span>),
+                            <span class="string">&quot;.into()&quot;</span>,
+                        ),
                         <span class="kw">_ if </span>!property.bounds.is_empty() =&gt; {
                             <span class="kw">let </span>(bounds, <span class="kw">_</span>) = function::bounds(<span class="kw-2">&amp;</span>property.bounds, <span class="kw-2">&amp;</span>[], <span class="bool-val">false</span>, <span class="bool-val">false</span>);
                             <span class="kw">let </span>param_bound = property.bounds.get_parameter_bound(<span class="kw-2">&amp;</span>property.name);
@@ -1116,8 +1142,9 @@ impl {name}Builder {{
     /// Build the [`{name}`].
     #[must_use = \&quot;Building the object from the builder is usually expensive and is not expected to have side effects\&quot;]
     pub fn build(self) -&gt; {name} {{
-        let mut properties: Vec&lt;(&amp;str, &amp;dyn ToValue)&gt; = vec![];&quot;</span>,
-        name = analysis.name
+        let mut properties: smallvec::SmallVec&lt;[(&amp;str, {glib_name}::Value); 16]&gt; = smallvec::SmallVec::new();&quot;</span>,
+        name = analysis.name,
+        glib_name = glib_crate_name,
     )<span class="question-mark">?</span>;
     <span class="kw">for </span>(property, super_tid) <span class="kw">in </span><span class="kw-2">&amp;</span>properties {
         <span class="kw">let </span>name = nameutil::mangle_keywords(nameutil::signal_to_snake(<span class="kw-2">&amp;</span>property.name));
@@ -1125,33 +1152,30 @@ impl {name}Builder {{
         <span class="macro">writeln!</span>(
             w,
             <span class="string">&quot;\
-            if let Some(ref {field}) = self.{field} {{
-                properties.push((\&quot;{name}\&quot;, {field}));
+            if let Some({field}) = self.{field} {{
+                properties.push((\&quot;{name}\&quot;, {field}.into()));
             }}&quot;</span>,
             name = property.name,
             field = name
         )<span class="question-mark">?</span>;
     }
-    <span class="kw">let </span>glib_crate_name = <span class="kw">if </span>env.namespaces.is_glib_crate {
-        <span class="string">&quot;crate&quot;
-    </span>} <span class="kw">else </span>{
-        <span class="string">&quot;glib&quot;
-    </span>};
 
     <span class="comment">// The split allows us to not have clippy::let_and_return lint disabled
     </span><span class="kw">if let </span><span class="prelude-val">Some</span>(code) = analysis.builder_postprocess.as_ref() {
         <span class="macro">writeln!</span>(
             w,
-            <span class="string">r#&quot;        let ret = {}::Object::new::&lt;{}&gt;(&amp;properties);&quot;#</span>,
-            glib_crate_name, analysis.name,
+            <span class="string">r#&quot;        let ret = unsafe {{ {glib_name}::Object::with_mut_values({name}::static_type(), &amp;mut properties).unsafe_cast::&lt;{name}&gt;() }};&quot;#</span>,
+            glib_name = glib_crate_name,
+            name = analysis.name,
         )<span class="question-mark">?</span>;
         <span class="macro">writeln!</span>(w, <span class="string">&quot;        {{\n            {}\n        }}&quot;</span>, code)<span class="question-mark">?</span>;
         <span class="macro">writeln!</span>(w, <span class="string">&quot;    ret\n    }}&quot;</span>)<span class="question-mark">?</span>;
     } <span class="kw">else </span>{
         <span class="macro">writeln!</span>(
             w,
-            <span class="string">r#&quot;        {}::Object::new::&lt;{}&gt;(&amp;properties)&quot;#</span>,
-            glib_crate_name, analysis.name,
+            <span class="string">r#&quot;        unsafe {{ {glib_name}::Object::with_mut_values({name}::static_type(), &amp;mut properties).unsafe_cast::&lt;{name}&gt;() }}&quot;#</span>,
+            glib_name = glib_crate_name,
+            name = analysis.name,
         )<span class="question-mark">?</span>;
         <span class="macro">writeln!</span>(w, <span class="string">&quot;\n    }}&quot;</span>)<span class="question-mark">?</span>;
     }
