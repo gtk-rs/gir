@@ -366,11 +366,11 @@ fn generate_builder(w: &mut dyn Write, env: &Env, analysis: &analysis::object::I
             match RustType::try_new(env, property.typ) {
                 Ok(type_string) => {
                     let type_string = match type_string.as_str() {
-                        s if nameutil::is_gstring(s) => "String",
+                        s if nameutil::is_gstring(s) => format!("{}::GString", glib_crate_name),
                         "Vec<GString>" | "Vec<glib::GString>" | "Vec<crate::GString>" => {
-                            "Vec<String>"
+                            format!("{}::StrV", glib_crate_name)
                         }
-                        typ => typ,
+                        typ => String::from(typ),
                     };
                     let direction = if property.is_get {
                         library::ParameterDirection::In
@@ -383,8 +383,16 @@ fn generate_builder(w: &mut dyn Write, env: &Env, analysis: &analysis::object::I
                         .try_build()
                         .into_string();
                     let (param_type_override, bounds, conversion) = match param_type.as_str() {
-                        "&str" => (None, String::new(), ".to_string()"),
-                        "&[&str]" => (Some("Vec<String>".to_string()), String::new(), ""),
+                        "&str" => (
+                            Some(format!("impl Into<{}::GString>", glib_crate_name)),
+                            String::new(),
+                            ".into()",
+                        ),
+                        "&[&str]" => (
+                            Some(format!("impl Into<{}::StrV>", glib_crate_name)),
+                            String::from(""),
+                            ".into()",
+                        ),
                         _ if !property.bounds.is_empty() => {
                             let (bounds, _) = function::bounds(&property.bounds, &[], false, false);
                             let param_bound = property.bounds.get_parameter_bound(&property.name);
