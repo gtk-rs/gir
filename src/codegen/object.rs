@@ -342,6 +342,12 @@ pub fn generate(
 
 // TODO: instead create a Vec<> inside the Builder instead of Options.
 fn generate_builder(w: &mut dyn Write, env: &Env, analysis: &analysis::object::Info) -> Result<()> {
+    let glib_crate_name = if env.namespaces.is_glib_crate {
+        "crate"
+    } else {
+        "glib"
+    };
+
     let mut methods = vec![];
     let mut properties = vec![];
     writeln!(w, "#[derive(Clone, Default)]")?;
@@ -360,11 +366,11 @@ fn generate_builder(w: &mut dyn Write, env: &Env, analysis: &analysis::object::I
             match RustType::try_new(env, property.typ) {
                 Ok(type_string) => {
                     let type_string = match type_string.as_str() {
-                        s if nameutil::is_gstring(s) => "String",
+                        s if nameutil::is_gstring(s) => format!("{}::GString", glib_crate_name),
                         "Vec<GString>" | "Vec<glib::GString>" | "Vec<crate::GString>" => {
-                            "Vec<String>"
+                            format!("{}::StrV", glib_crate_name)
                         }
-                        typ => typ,
+                        typ => String::from(typ),
                     };
                     let direction = if property.is_get {
                         library::ParameterDirection::In
@@ -377,8 +383,16 @@ fn generate_builder(w: &mut dyn Write, env: &Env, analysis: &analysis::object::I
                         .try_build()
                         .into_string();
                     let (param_type_override, bounds, conversion) = match param_type.as_str() {
-                        "&str" => (None, String::new(), ".to_string()"),
-                        "&[&str]" => (Some("Vec<String>".to_string()), String::new(), ""),
+                        "&str" => (
+                            Some(format!("impl Into<{}::GString>", glib_crate_name)),
+                            String::new(),
+                            ".into()",
+                        ),
+                        "&[&str]" => (
+                            Some(format!("impl Into<{}::StrV>", glib_crate_name)),
+                            String::from(""),
+                            ".into()",
+                        ),
                         _ if !property.bounds.is_empty() => {
                             let (bounds, _) = function::bounds(&property.bounds, &[], false, false);
                             let param_bound = property.bounds.get_parameter_bound(&property.name);
@@ -471,8 +485,9 @@ impl {name}Builder {{
     /// Build the [`{name}`].
     #[must_use = \"Building the object from the builder is usually expensive and is not expected to have side effects\"]
     pub fn build(self) -> {name} {{
-        let mut properties: Vec<(&str, &dyn ToValue)> = vec![];",
-        name = analysis.name
+        let mut properties: smallvec::SmallVec<[(&str, {glib_name}::Value); 16]> = smallvec::SmallVec::new();",
+        name = analysis.name,
+        glib_name = glib_crate_name,
     )?;
     for (property, super_tid) in &properties {
         let name = nameutil::mangle_keywords(nameutil::signal_to_snake(&property.name));
@@ -480,33 +495,30 @@ impl {name}Builder {{
         writeln!(
             w,
             "\
-            if let Some(ref {field}) = self.{field} {{
-                properties.push((\"{name}\", {field}));
+            if let Some({field}) = self.{field} {{
+                properties.push((\"{name}\", {field}.into()));
             }}",
             name = property.name,
             field = name
         )?;
     }
-    let glib_crate_name = if env.namespaces.is_glib_crate {
-        "crate"
-    } else {
-        "glib"
-    };
 
     // The split allows us to not have clippy::let_and_return lint disabled
     if let Some(code) = analysis.builder_postprocess.as_ref() {
         writeln!(
             w,
-            r#"        let ret = {}::Object::new::<{}>(&properties);"#,
-            glib_crate_name, analysis.name,
+            r#"        let ret = unsafe {{ {glib_name}::Object::with_mut_values({name}::static_type(), &mut properties).unsafe_cast::<{name}>() }};"#,
+            glib_name = glib_crate_name,
+            name = analysis.name,
         )?;
         writeln!(w, "        {{\n            {}\n        }}", code)?;
         writeln!(w, "    ret\n    }}")?;
     } else {
         writeln!(
             w,
-            r#"        {}::Object::new::<{}>(&properties)"#,
-            glib_crate_name, analysis.name,
+            r#"        unsafe {{ {glib_name}::Object::with_mut_values({name}::static_type(), &mut properties).unsafe_cast::<{name}>() }}"#,
+            glib_name = glib_crate_name,
+            name = analysis.name,
         )?;
         writeln!(w, "\n    }}")?;
     }
