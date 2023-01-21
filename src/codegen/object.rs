@@ -342,6 +342,12 @@ pub fn generate(
 
 // TODO: instead create a Vec<> inside the Builder instead of Options.
 fn generate_builder(w: &mut dyn Write, env: &Env, analysis: &analysis::object::Info) -> Result<()> {
+    let glib_crate_name = if env.namespaces.is_glib_crate {
+        "crate"
+    } else {
+        "glib"
+    };
+
     let mut methods = vec![];
     let mut properties = vec![];
     writeln!(w, "#[derive(Clone, Default)]")?;
@@ -471,8 +477,9 @@ impl {name}Builder {{
     /// Build the [`{name}`].
     #[must_use = \"Building the object from the builder is usually expensive and is not expected to have side effects\"]
     pub fn build(self) -> {name} {{
-        let mut properties: Vec<(&str, &dyn ToValue)> = vec![];",
-        name = analysis.name
+        let mut properties: Vec<(&str, {glib_name}::Value)> = vec![];",
+        name = analysis.name,
+        glib_name = glib_crate_name,
     )?;
     for (property, super_tid) in &properties {
         let name = nameutil::mangle_keywords(nameutil::signal_to_snake(&property.name));
@@ -480,33 +487,30 @@ impl {name}Builder {{
         writeln!(
             w,
             "\
-            if let Some(ref {field}) = self.{field} {{
-                properties.push((\"{name}\", {field}));
+            if let Some({field}) = self.{field} {{
+                properties.push((\"{name}\", {field}.into()));
             }}",
             name = property.name,
             field = name
         )?;
     }
-    let glib_crate_name = if env.namespaces.is_glib_crate {
-        "crate"
-    } else {
-        "glib"
-    };
 
     // The split allows us to not have clippy::let_and_return lint disabled
     if let Some(code) = analysis.builder_postprocess.as_ref() {
         writeln!(
             w,
-            r#"        let ret = {}::Object::new::<{}>(&properties);"#,
-            glib_crate_name, analysis.name,
+            r#"        let ret = unsafe {{ {glib_name}::Object::with_mut_values({name}::static_type(), &mut properties).unsafe_cast::<{name}>() }};"#,
+            glib_name = glib_crate_name,
+            name = analysis.name,
         )?;
         writeln!(w, "        {{\n            {}\n        }}", code)?;
         writeln!(w, "    ret\n    }}")?;
     } else {
         writeln!(
             w,
-            r#"        {}::Object::new::<{}>(&properties)"#,
-            glib_crate_name, analysis.name,
+            r#"        unsafe {{ {glib_name}::Object::with_mut_values({name}::static_type(), &mut properties).unsafe_cast::<{name}>() }}"#,
+            glib_name = glib_crate_name,
+            name = analysis.name,
         )?;
         writeln!(w, "\n    }}")?;
     }
