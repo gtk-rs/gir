@@ -485,7 +485,7 @@ impl {name}Builder {{
     /// Build the [`{name}`].
     #[must_use = \"Building the object from the builder is usually expensive and is not expected to have side effects\"]
     pub fn build(self) -> {name} {{
-        let mut properties: Vec<(&str, {glib_name}::Value)> = vec![];",
+        let mut properties: smallvec::SmallVec<[(&str, {glib_name}::Value); 16]> = smallvec::SmallVec::new();",
         name = analysis.name,
         glib_name = glib_crate_name,
     )?;
