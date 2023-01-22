@@ -588,73 +588,6 @@
 <span id="588">588</span>
 <span id="589">589</span>
 <span id="590">590</span>
-<span id="591">591</span>
-<span id="592">592</span>
-<span id="593">593</span>
-<span id="594">594</span>
-<span id="595">595</span>
-<span id="596">596</span>
-<span id="597">597</span>
-<span id="598">598</span>
-<span id="599">599</span>
-<span id="600">600</span>
-<span id="601">601</span>
-<span id="602">602</span>
-<span id="603">603</span>
-<span id="604">604</span>
-<span id="605">605</span>
-<span id="606">606</span>
-<span id="607">607</span>
-<span id="608">608</span>
-<span id="609">609</span>
-<span id="610">610</span>
-<span id="611">611</span>
-<span id="612">612</span>
-<span id="613">613</span>
-<span id="614">614</span>
-<span id="615">615</span>
-<span id="616">616</span>
-<span id="617">617</span>
-<span id="618">618</span>
-<span id="619">619</span>
-<span id="620">620</span>
-<span id="621">621</span>
-<span id="622">622</span>
-<span id="623">623</span>
-<span id="624">624</span>
-<span id="625">625</span>
-<span id="626">626</span>
-<span id="627">627</span>
-<span id="628">628</span>
-<span id="629">629</span>
-<span id="630">630</span>
-<span id="631">631</span>
-<span id="632">632</span>
-<span id="633">633</span>
-<span id="634">634</span>
-<span id="635">635</span>
-<span id="636">636</span>
-<span id="637">637</span>
-<span id="638">638</span>
-<span id="639">639</span>
-<span id="640">640</span>
-<span id="641">641</span>
-<span id="642">642</span>
-<span id="643">643</span>
-<span id="644">644</span>
-<span id="645">645</span>
-<span id="646">646</span>
-<span id="647">647</span>
-<span id="648">648</span>
-<span id="649">649</span>
-<span id="650">650</span>
-<span id="651">651</span>
-<span id="652">652</span>
-<span id="653">653</span>
-<span id="654">654</span>
-<span id="655">655</span>
-<span id="656">656</span>
-<span id="657">657</span>
 </pre><pre class="rust"><code><span class="kw">use </span>std::{
     collections::{BTreeMap, HashSet},
     io::{<span class="prelude-ty">Result</span>, Write},
@@ -874,7 +807,7 @@
             ///
             /// This method returns an instance of [`{builder_name}`](crate::builders::{builder_name}) which can be used to create [`{name}`] objects.
             pub fn builder() -&gt; {builder_name} {{
-                {builder_name}::default()
+                {builder_name}::new()
             }}
         &quot;</span>,
                 name = analysis.name,
@@ -997,17 +930,13 @@
     <span class="prelude-val">Ok</span>(())
 }
 
-<span class="comment">// TODO: instead create a Vec&lt;&gt; inside the Builder instead of Options.
-</span><span class="kw">fn </span>generate_builder(w: <span class="kw-2">&amp;mut </span><span class="kw">dyn </span>Write, env: <span class="kw-2">&amp;</span>Env, analysis: <span class="kw-2">&amp;</span>analysis::object::Info) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+<span class="kw">fn </span>generate_builder(w: <span class="kw-2">&amp;mut </span><span class="kw">dyn </span>Write, env: <span class="kw-2">&amp;</span>Env, analysis: <span class="kw-2">&amp;</span>analysis::object::Info) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
     <span class="kw">let </span>glib_crate_name = <span class="kw">if </span>env.namespaces.is_glib_crate {
         <span class="string">&quot;crate&quot;
     </span>} <span class="kw">else </span>{
         <span class="string">&quot;glib&quot;
     </span>};
 
-    <span class="kw">let </span><span class="kw-2">mut </span>methods = <span class="macro">vec!</span>[];
-    <span class="kw">let </span><span class="kw-2">mut </span>properties = <span class="macro">vec!</span>[];
-    <span class="macro">writeln!</span>(w, <span class="string">&quot;#[derive(Clone, Default)]&quot;</span>)<span class="question-mark">?</span>;
     <span class="macro">writeln!</span>(
         w,
         <span class="string">&quot;// rustdoc-stripper-ignore-next
@@ -1017,123 +946,90 @@
         analysis.name,
     )<span class="question-mark">?</span>;
     <span class="macro">writeln!</span>(w, <span class="string">&quot;#[must_use = \&quot;The builder must be built to be used\&quot;]&quot;</span>)<span class="question-mark">?</span>;
-    <span class="macro">writeln!</span>(w, <span class="string">&quot;pub struct {}Builder {{&quot;</span>, analysis.name)<span class="question-mark">?</span>;
-    <span class="kw">for </span>(builder_props, super_tid) <span class="kw">in </span><span class="kw-2">&amp;</span>analysis.builder_properties {
-        <span class="kw">for </span>property <span class="kw">in </span>builder_props {
-            <span class="kw">match </span>RustType::try_new(env, property.typ) {
-                <span class="prelude-val">Ok</span>(type_string) =&gt; {
-                    <span class="kw">let </span>type_string = <span class="kw">match </span>type_string.as_str() {
-                        s <span class="kw">if </span>nameutil::is_gstring(s) =&gt; <span class="macro">format!</span>(<span class="string">&quot;{}::GString&quot;</span>, glib_crate_name),
-                        <span class="string">&quot;Vec&lt;GString&gt;&quot; </span>| <span class="string">&quot;Vec&lt;glib::GString&gt;&quot; </span>| <span class="string">&quot;Vec&lt;crate::GString&gt;&quot; </span>=&gt; {
-                            <span class="macro">format!</span>(<span class="string">&quot;{}::StrV&quot;</span>, glib_crate_name)
-                        }
-                        typ =&gt; String::from(typ),
-                    };
-                    <span class="kw">let </span>direction = <span class="kw">if </span>property.is_get {
-                        library::ParameterDirection::In
-                    } <span class="kw">else </span>{
-                        library::ParameterDirection::Out
-                    };
-                    <span class="kw">let </span><span class="kw-2">mut </span>param_type = RustType::builder(env, property.typ)
-                        .direction(direction)
-                        .ref_mode(property.set_in_ref_mode)
-                        .try_build()
-                        .into_string();
-                    <span class="kw">let </span>(param_type_override, bounds, conversion) = <span class="kw">match </span>param_type.as_str() {
-                        <span class="string">&quot;&amp;str&quot; </span>=&gt; (
-                            <span class="prelude-val">Some</span>(<span class="macro">format!</span>(<span class="string">&quot;impl Into&lt;{}::GString&gt;&quot;</span>, glib_crate_name)),
-                            String::new(),
-                            <span class="string">&quot;.into()&quot;</span>,
-                        ),
-                        <span class="string">&quot;&amp;[&amp;str]&quot; </span>=&gt; (
-                            <span class="prelude-val">Some</span>(<span class="macro">format!</span>(<span class="string">&quot;impl Into&lt;{}::StrV&gt;&quot;</span>, glib_crate_name)),
-                            String::from(<span class="string">&quot;&quot;</span>),
-                            <span class="string">&quot;.into()&quot;</span>,
-                        ),
-                        <span class="kw">_ if </span>!property.bounds.is_empty() =&gt; {
-                            <span class="kw">let </span>(bounds, <span class="kw">_</span>) = function::bounds(<span class="kw-2">&amp;</span>property.bounds, <span class="kw-2">&amp;</span>[], <span class="bool-val">false</span>, <span class="bool-val">false</span>);
-                            <span class="kw">let </span>param_bound = property.bounds.get_parameter_bound(<span class="kw-2">&amp;</span>property.name);
-                            <span class="kw">let </span>alias = param_bound.map(|bound| {
-                                bound.full_type_parameter_reference(
-                                    RefMode::ByRef,
-                                    Nullable(<span class="bool-val">false</span>),
-                                    <span class="bool-val">false</span>,
-                                )
-                            });
-                            <span class="kw">let </span>conversion = param_bound.and_then(|bound| <span class="kw">match </span>bound.bound_type {
-                                BoundType::AsRef(<span class="kw">_</span>) =&gt; <span class="prelude-val">Some</span>(<span class="string">&quot;.as_ref().clone()&quot;</span>),
-                                <span class="kw">_ </span>=&gt; <span class="prelude-val">None</span>,
-                            });
-                            (alias, bounds, conversion.unwrap_or(<span class="string">&quot;.clone().upcast()&quot;</span>))
-                        }
-                        typ <span class="kw">if </span>typ.starts_with(<span class="string">&#39;&amp;&#39;</span>) =&gt; (<span class="prelude-val">None</span>, String::new(), <span class="string">&quot;.clone()&quot;</span>),
-                        <span class="kw">_ </span>=&gt; (<span class="prelude-val">None</span>, String::new(), <span class="string">&quot;&quot;</span>),
-                    };
-                    <span class="kw">if let </span><span class="prelude-val">Some</span>(param_type_override) = param_type_override {
-                        param_type = param_type_override.to_string();
-                    }
-                    <span class="kw">let </span>name = nameutil::mangle_keywords(nameutil::signal_to_snake(<span class="kw-2">&amp;</span>property.name));
-
-                    <span class="kw">let </span>version_condition_string = version_condition_string(
-                        env,
-                        <span class="prelude-val">Some</span>(super_tid.ns_id),
-                        property.version,
-                        <span class="bool-val">false</span>,
-                        <span class="number">1</span>,
-                    );
-                    <span class="kw">let </span>deprecated_string = cfg_deprecated_string(
-                        env,
-                        <span class="prelude-val">Some</span>(<span class="kw-2">*</span>super_tid),
-                        property.deprecated_version,
-                        <span class="bool-val">false</span>,
-                        <span class="number">1</span>,
-                    );
-                    <span class="kw">if let </span><span class="prelude-val">Some</span>(<span class="kw-2">ref </span>version_condition_string) = version_condition_string {
-                        <span class="macro">writeln!</span>(w, <span class="string">&quot;{}&quot;</span>, version_condition_string)<span class="question-mark">?</span>;
-                    }
-                    <span class="kw">if let </span><span class="prelude-val">Some</span>(<span class="kw-2">ref </span>deprecated_string) = deprecated_string {
-                        <span class="macro">writeln!</span>(w, <span class="string">&quot;{}&quot;</span>, deprecated_string)<span class="question-mark">?</span>;
-                    }
-                    <span class="macro">writeln!</span>(w, <span class="string">&quot;    {}: Option&lt;{}&gt;,&quot;</span>, name, type_string)<span class="question-mark">?</span>;
-                    <span class="kw">let </span>version_prefix = version_condition_string
-                        .map(|version| <span class="macro">format!</span>(<span class="string">&quot;{}\n&quot;</span>, version))
-                        .unwrap_or_default();
-
-                    <span class="kw">let </span>deprecation_prefix = deprecated_string
-                        .map(|version| <span class="macro">format!</span>(<span class="string">&quot;{}\n&quot;</span>, version))
-                        .unwrap_or_default();
-
-                    methods.push(<span class="macro">format!</span>(
-                    <span class="string">&quot;\n{version_prefix}{deprecation_prefix}    pub fn {name}{bounds}(mut self, {name}: {param_type}) -&gt; Self {{
-        self.{name} = Some({name}{conversion});
-        self
-    }}&quot;</span>,
-                    version_prefix = version_prefix,
-                    deprecation_prefix = deprecation_prefix,
-                    param_type = param_type,
-                    name = name,
-                    conversion = conversion,
-                    bounds = bounds
-                ));
-                    properties.push((property, super_tid));
-                }
-                <span class="prelude-val">Err</span>(<span class="kw">_</span>) =&gt; <span class="macro">writeln!</span>(w, <span class="string">&quot;    //{}: /*Unknown type*/,&quot;</span>, property.name)<span class="question-mark">?</span>,
-            }
-        }
-    }
     <span class="macro">writeln!</span>(
         w,
-        <span class="string">&quot;}}
+        <span class="string">&quot;pub struct {name}Builder {{
+            builder: {glib_name}::object::ObjectBuilder&lt;&#39;static, {name}&gt;,
+        }}
 
-impl {name}Builder {{
-    // rustdoc-stripper-ignore-next
-    /// Create a new [`{name}Builder`].
-    pub fn new() -&gt; Self {{
-        Self::default()
-    }}
-&quot;</span>,
-        name = analysis.name
+        impl {name}Builder {{
+        fn new() -&gt; Self {{
+            Self {{ builder: {glib_name}::object::Object::builder() }}
+        }}&quot;</span>,
+        name = analysis.name,
+        glib_name = glib_crate_name,
     )<span class="question-mark">?</span>;
+    <span class="kw">for </span>(builder_props, super_tid) <span class="kw">in </span><span class="kw-2">&amp;</span>analysis.builder_properties {
+        <span class="kw">for </span>property <span class="kw">in </span>builder_props {
+            <span class="kw">let </span>direction = <span class="kw">if </span>property.is_get {
+                library::ParameterDirection::In
+            } <span class="kw">else </span>{
+                library::ParameterDirection::Out
+            };
+            <span class="kw">let </span><span class="kw-2">mut </span>param_type = RustType::builder(env, property.typ)
+                .direction(direction)
+                .ref_mode(property.set_in_ref_mode)
+                .try_build()
+                .into_string();
+            <span class="kw">let </span>(param_type_override, bounds, conversion) = <span class="kw">match </span>param_type.as_str() {
+                <span class="string">&quot;&amp;str&quot; </span>=&gt; (
+                    <span class="prelude-val">Some</span>(<span class="macro">format!</span>(<span class="string">&quot;impl Into&lt;{}::GString&gt;&quot;</span>, glib_crate_name)),
+                    String::new(),
+                    <span class="string">&quot;.into()&quot;</span>,
+                ),
+                <span class="string">&quot;&amp;[&amp;str]&quot; </span>=&gt; (
+                    <span class="prelude-val">Some</span>(<span class="macro">format!</span>(<span class="string">&quot;impl Into&lt;{}::StrV&gt;&quot;</span>, glib_crate_name)),
+                    String::from(<span class="string">&quot;&quot;</span>),
+                    <span class="string">&quot;.into()&quot;</span>,
+                ),
+                <span class="kw">_ if </span>!property.bounds.is_empty() =&gt; {
+                    <span class="kw">let </span>(bounds, <span class="kw">_</span>) = function::bounds(<span class="kw-2">&amp;</span>property.bounds, <span class="kw-2">&amp;</span>[], <span class="bool-val">false</span>, <span class="bool-val">false</span>);
+                    <span class="kw">let </span>param_bound = property.bounds.get_parameter_bound(<span class="kw-2">&amp;</span>property.name);
+                    <span class="kw">let </span>alias = param_bound.map(|bound| {
+                        bound.full_type_parameter_reference(RefMode::ByRef, Nullable(<span class="bool-val">false</span>), <span class="bool-val">false</span>)
+                    });
+                    <span class="kw">let </span>conversion = param_bound.and_then(|bound| <span class="kw">match </span>bound.bound_type {
+                        BoundType::AsRef(<span class="kw">_</span>) =&gt; <span class="prelude-val">Some</span>(<span class="string">&quot;.as_ref().clone()&quot;</span>),
+                        <span class="kw">_ </span>=&gt; <span class="prelude-val">None</span>,
+                    });
+                    (alias, bounds, conversion.unwrap_or(<span class="string">&quot;.clone().upcast()&quot;</span>))
+                }
+                typ <span class="kw">if </span>typ.starts_with(<span class="string">&#39;&amp;&#39;</span>) =&gt; (<span class="prelude-val">None</span>, String::new(), <span class="string">&quot;.clone()&quot;</span>),
+                <span class="kw">_ </span>=&gt; (<span class="prelude-val">None</span>, String::new(), <span class="string">&quot;&quot;</span>),
+            };
+            <span class="kw">if let </span><span class="prelude-val">Some</span>(param_type_override) = param_type_override {
+                param_type = param_type_override.to_string();
+            }
+            <span class="kw">let </span>name = nameutil::mangle_keywords(nameutil::signal_to_snake(<span class="kw-2">&amp;</span>property.name));
+
+            <span class="kw">let </span>version_condition_string =
+                version_condition_string(env, <span class="prelude-val">Some</span>(super_tid.ns_id), property.version, <span class="bool-val">false</span>, <span class="number">1</span>);
+            <span class="kw">let </span>deprecated_string =
+                cfg_deprecated_string(env, <span class="prelude-val">Some</span>(<span class="kw-2">*</span>super_tid), property.deprecated_version, <span class="bool-val">false</span>, <span class="number">1</span>);
+            <span class="kw">let </span>version_prefix = version_condition_string
+                .map(|version| <span class="macro">format!</span>(<span class="string">&quot;{}\n&quot;</span>, version))
+                .unwrap_or_default();
+
+            <span class="kw">let </span>deprecation_prefix = deprecated_string
+                .map(|version| <span class="macro">format!</span>(<span class="string">&quot;{}\n&quot;</span>, version))
+                .unwrap_or_default();
+
+            <span class="macro">writeln!</span>(
+                        w,
+                        <span class="string">&quot;
+                        {version_prefix}{deprecation_prefix}    pub fn {name}{bounds}(self, {name}: {param_type}) -&gt; Self {{
+                            Self {{ builder: self.builder.property(\&quot;{property_name}\&quot;, {name}{conversion}), }}
+                        }}&quot;</span>,
+                        version_prefix = version_prefix,
+                        deprecation_prefix = deprecation_prefix,
+                        param_type = param_type,
+                        name = name,
+                        property_name = property.name,
+                        conversion = conversion,
+                        bounds = bounds
+                    )<span class="question-mark">?</span>;
+        }
+    }
 
     <span class="macro">writeln!</span>(
         w,
@@ -1141,47 +1037,17 @@ impl {name}Builder {{
     // rustdoc-stripper-ignore-next
     /// Build the [`{name}`].
     #[must_use = \&quot;Building the object from the builder is usually expensive and is not expected to have side effects\&quot;]
-    pub fn build(self) -&gt; {name} {{
-        let mut properties: smallvec::SmallVec&lt;[(&amp;str, {glib_name}::Value); 16]&gt; = smallvec::SmallVec::new();&quot;</span>,
+    pub fn build(self) -&gt; {name} {{&quot;</span>,
         name = analysis.name,
-        glib_name = glib_crate_name,
     )<span class="question-mark">?</span>;
-    <span class="kw">for </span>(property, super_tid) <span class="kw">in </span><span class="kw-2">&amp;</span>properties {
-        <span class="kw">let </span>name = nameutil::mangle_keywords(nameutil::signal_to_snake(<span class="kw-2">&amp;</span>property.name));
-        version_condition_no_doc(w, env, <span class="prelude-val">Some</span>(super_tid.ns_id), property.version, <span class="bool-val">false</span>, <span class="number">2</span>)<span class="question-mark">?</span>;
-        <span class="macro">writeln!</span>(
-            w,
-            <span class="string">&quot;\
-            if let Some({field}) = self.{field} {{
-                properties.push((\&quot;{name}\&quot;, {field}.into()));
-            }}&quot;</span>,
-            name = property.name,
-            field = name
-        )<span class="question-mark">?</span>;
-    }
 
     <span class="comment">// The split allows us to not have clippy::let_and_return lint disabled
     </span><span class="kw">if let </span><span class="prelude-val">Some</span>(code) = analysis.builder_postprocess.as_ref() {
-        <span class="macro">writeln!</span>(
-            w,
-            <span class="string">r#&quot;        let ret = unsafe {{ {glib_name}::Object::with_mut_values({name}::static_type(), &amp;mut properties).unsafe_cast::&lt;{name}&gt;() }};&quot;#</span>,
-            glib_name = glib_crate_name,
-            name = analysis.name,
-        )<span class="question-mark">?</span>;
+        <span class="macro">writeln!</span>(w, <span class="string">&quot;    let ret = self.builder.build();&quot;</span>)<span class="question-mark">?</span>;
         <span class="macro">writeln!</span>(w, <span class="string">&quot;        {{\n            {}\n        }}&quot;</span>, code)<span class="question-mark">?</span>;
         <span class="macro">writeln!</span>(w, <span class="string">&quot;    ret\n    }}&quot;</span>)<span class="question-mark">?</span>;
     } <span class="kw">else </span>{
-        <span class="macro">writeln!</span>(
-            w,
-            <span class="string">r#&quot;        unsafe {{ {glib_name}::Object::with_mut_values({name}::static_type(), &amp;mut properties).unsafe_cast::&lt;{name}&gt;() }}&quot;#</span>,
-            glib_name = glib_crate_name,
-            name = analysis.name,
-        )<span class="question-mark">?</span>;
-        <span class="macro">writeln!</span>(w, <span class="string">&quot;\n    }}&quot;</span>)<span class="question-mark">?</span>;
-    }
-
-    <span class="kw">for </span>method <span class="kw">in </span>methods {
-        <span class="macro">writeln!</span>(w, <span class="string">&quot;{}&quot;</span>, method)<span class="question-mark">?</span>;
+        <span class="macro">writeln!</span>(w, <span class="string">&quot;    self.builder.build() }}&quot;</span>)<span class="question-mark">?</span>;
     }
     <span class="macro">writeln!</span>(w, <span class="string">&quot;}}&quot;</span>)
 }
