@@ -36,9 +36,7 @@ fn generate_prop_func(
 ) -> Result<()> {
     let pub_prefix = if in_trait { "" } else { "pub " };
     let decl_suffix = if only_declaration { ";" } else { " {" };
-    let type_string = RustType::try_new(env, prop.typ);
-    let commented = type_string.is_err();
-
+    let commented = RustType::try_new(env, prop.typ).is_err();
     let comment_prefix = if commented { "//" } else { "" };
 
     writeln!(w)?;

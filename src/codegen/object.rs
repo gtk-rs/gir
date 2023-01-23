@@ -376,11 +376,12 @@ fn generate_builder(w: &mut dyn Write, env: &Env, analysis: &analysis::object::I
             } else {
                 library::ParameterDirection::Out
             };
-            let mut param_type = RustType::builder(env, property.typ)
+            let param_type = RustType::builder(env, property.typ)
                 .direction(direction)
                 .ref_mode(property.set_in_ref_mode)
-                .try_build()
-                .into_string();
+                .try_build();
+            let comment_prefix = if param_type.is_err() { "//" } else { "" };
+            let mut param_type = param_type.into_string();
             let (param_type_override, bounds, conversion) = match param_type.as_str() {
                 "&str" => (
                     Some(format!("impl Into<{}::GString>", glib_crate_name)),
@@ -417,27 +418,21 @@ fn generate_builder(w: &mut dyn Write, env: &Env, analysis: &analysis::object::I
             let deprecated_string =
                 cfg_deprecated_string(env, Some(*super_tid), property.deprecated_version, false, 1);
             let version_prefix = version_condition_string
-                .map(|version| format!("{}\n", version))
+                .map(|version| format!("{}{}\n", comment_prefix, version))
                 .unwrap_or_default();
 
             let deprecation_prefix = deprecated_string
-                .map(|version| format!("{}\n", version))
+                .map(|version| format!("{}{}\n", comment_prefix, version))
                 .unwrap_or_default();
 
             writeln!(
-                        w,
-                        "
-                        {version_prefix}{deprecation_prefix}    pub fn {name}{bounds}(self, {name}: {param_type}) -> Self {{
-                            Self {{ builder: self.builder.property(\"{property_name}\", {name}{conversion}), }}
-                        }}",
-                        version_prefix = version_prefix,
-                        deprecation_prefix = deprecation_prefix,
-                        param_type = param_type,
-                        name = name,
-                        property_name = property.name,
-                        conversion = conversion,
-                        bounds = bounds
-                    )?;
+                w,
+                "
+                        {version_prefix}{deprecation_prefix}    {comment_prefix}pub fn {name}{bounds}(self, {name}: {param_type}) -> Self {{
+                        {comment_prefix}    Self {{ builder: self.builder.property(\"{property_name}\", {name}{conversion}), }}
+                        {comment_prefix}}}",
+                property_name = property.name,
+            )?;
         }
     }
 

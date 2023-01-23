@@ -80,21 +80,18 @@ pub fn generate(
         }
     }
 
-    let mut commented = false;
-    let mut comment_prefix = "";
+    if analysis.hidden {
+        return Ok(());
+    }
+
+    let commented = analysis.commented;
+    let comment_prefix = if commented { "//" } else { "" };
     let pub_prefix = if in_trait {
         String::new()
     } else {
         format!("{} ", analysis.visibility)
     };
 
-    if analysis.commented {
-        commented = true;
-        comment_prefix = "//";
-    }
-    if analysis.hidden {
-        return Ok(());
-    }
     let unsafe_ = if analysis.unsafe_ { "unsafe " } else { "" };
     let declaration = declaration(env, analysis);
     let suffix = if only_declaration { ";" } else { " {" };
