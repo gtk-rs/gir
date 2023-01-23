@@ -504,9 +504,6 @@
 <span id="504">504</span>
 <span id="505">505</span>
 <span id="506">506</span>
-<span id="507">507</span>
-<span id="508">508</span>
-<span id="509">509</span>
 </pre><pre class="rust"><code><span class="kw">use </span>std::{
     fmt,
     io::{<span class="prelude-ty">Result</span>, Write},
@@ -589,21 +586,18 @@
         }
     }
 
-    <span class="kw">let </span><span class="kw-2">mut </span>commented = <span class="bool-val">false</span>;
-    <span class="kw">let </span><span class="kw-2">mut </span>comment_prefix = <span class="string">&quot;&quot;</span>;
+    <span class="kw">if </span>analysis.hidden {
+        <span class="kw">return </span><span class="prelude-val">Ok</span>(());
+    }
+
+    <span class="kw">let </span>commented = analysis.commented;
+    <span class="kw">let </span>comment_prefix = <span class="kw">if </span>commented { <span class="string">&quot;//&quot; </span>} <span class="kw">else </span>{ <span class="string">&quot;&quot; </span>};
     <span class="kw">let </span>pub_prefix = <span class="kw">if </span>in_trait {
         String::new()
     } <span class="kw">else </span>{
         <span class="macro">format!</span>(<span class="string">&quot;{} &quot;</span>, analysis.visibility)
     };
 
-    <span class="kw">if </span>analysis.commented {
-        commented = <span class="bool-val">true</span>;
-        comment_prefix = <span class="string">&quot;//&quot;</span>;
-    }
-    <span class="kw">if </span>analysis.hidden {
-        <span class="kw">return </span><span class="prelude-val">Ok</span>(());
-    }
     <span class="kw">let </span>unsafe_ = <span class="kw">if </span>analysis.unsafe_ { <span class="string">&quot;unsafe &quot; </span>} <span class="kw">else </span>{ <span class="string">&quot;&quot; </span>};
     <span class="kw">let </span>declaration = declaration(env, analysis);
     <span class="kw">let </span>suffix = <span class="kw">if </span>only_declaration { <span class="string">&quot;;&quot; </span>} <span class="kw">else </span>{ <span class="string">&quot; {&quot; </span>};

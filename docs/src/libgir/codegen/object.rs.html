@@ -583,11 +583,6 @@
 <span id="583">583</span>
 <span id="584">584</span>
 <span id="585">585</span>
-<span id="586">586</span>
-<span id="587">587</span>
-<span id="588">588</span>
-<span id="589">589</span>
-<span id="590">590</span>
 </pre><pre class="rust"><code><span class="kw">use </span>std::{
     collections::{BTreeMap, HashSet},
     io::{<span class="prelude-ty">Result</span>, Write},
@@ -966,11 +961,12 @@
             } <span class="kw">else </span>{
                 library::ParameterDirection::Out
             };
-            <span class="kw">let </span><span class="kw-2">mut </span>param_type = RustType::builder(env, property.typ)
+            <span class="kw">let </span>param_type = RustType::builder(env, property.typ)
                 .direction(direction)
                 .ref_mode(property.set_in_ref_mode)
-                .try_build()
-                .into_string();
+                .try_build();
+            <span class="kw">let </span>comment_prefix = <span class="kw">if </span>param_type.is_err() { <span class="string">&quot;//&quot; </span>} <span class="kw">else </span>{ <span class="string">&quot;&quot; </span>};
+            <span class="kw">let </span><span class="kw-2">mut </span>param_type = param_type.into_string();
             <span class="kw">let </span>(param_type_override, bounds, conversion) = <span class="kw">match </span>param_type.as_str() {
                 <span class="string">&quot;&amp;str&quot; </span>=&gt; (
                     <span class="prelude-val">Some</span>(<span class="macro">format!</span>(<span class="string">&quot;impl Into&lt;{}::GString&gt;&quot;</span>, glib_crate_name)),
@@ -1007,27 +1003,21 @@
             <span class="kw">let </span>deprecated_string =
                 cfg_deprecated_string(env, <span class="prelude-val">Some</span>(<span class="kw-2">*</span>super_tid), property.deprecated_version, <span class="bool-val">false</span>, <span class="number">1</span>);
             <span class="kw">let </span>version_prefix = version_condition_string
-                .map(|version| <span class="macro">format!</span>(<span class="string">&quot;{}\n&quot;</span>, version))
+                .map(|version| <span class="macro">format!</span>(<span class="string">&quot;{}{}\n&quot;</span>, comment_prefix, version))
                 .unwrap_or_default();
 
             <span class="kw">let </span>deprecation_prefix = deprecated_string
-                .map(|version| <span class="macro">format!</span>(<span class="string">&quot;{}\n&quot;</span>, version))
+                .map(|version| <span class="macro">format!</span>(<span class="string">&quot;{}{}\n&quot;</span>, comment_prefix, version))
                 .unwrap_or_default();
 
             <span class="macro">writeln!</span>(
-                        w,
-                        <span class="string">&quot;
-                        {version_prefix}{deprecation_prefix}    pub fn {name}{bounds}(self, {name}: {param_type}) -&gt; Self {{
-                            Self {{ builder: self.builder.property(\&quot;{property_name}\&quot;, {name}{conversion}), }}
-                        }}&quot;</span>,
-                        version_prefix = version_prefix,
-                        deprecation_prefix = deprecation_prefix,
-                        param_type = param_type,
-                        name = name,
-                        property_name = property.name,
-                        conversion = conversion,
-                        bounds = bounds
-                    )<span class="question-mark">?</span>;
+                w,
+                <span class="string">&quot;
+                        {version_prefix}{deprecation_prefix}    {comment_prefix}pub fn {name}{bounds}(self, {name}: {param_type}) -&gt; Self {{
+                        {comment_prefix}    Self {{ builder: self.builder.property(\&quot;{property_name}\&quot;, {name}{conversion}), }}
+                        {comment_prefix}}}&quot;</span>,
+                property_name = property.name,
+            )<span class="question-mark">?</span>;
         }
     }
 

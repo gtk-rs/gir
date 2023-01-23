@@ -136,8 +136,6 @@
 <span id="136">136</span>
 <span id="137">137</span>
 <span id="138">138</span>
-<span id="139">139</span>
-<span id="140">140</span>
 </pre><pre class="rust"><code><span class="kw">use </span>std::io::{<span class="prelude-ty">Result</span>, Write};
 
 <span class="kw">use super</span>::{
@@ -176,9 +174,7 @@
 ) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
     <span class="kw">let </span>pub_prefix = <span class="kw">if </span>in_trait { <span class="string">&quot;&quot; </span>} <span class="kw">else </span>{ <span class="string">&quot;pub &quot; </span>};
     <span class="kw">let </span>decl_suffix = <span class="kw">if </span>only_declaration { <span class="string">&quot;;&quot; </span>} <span class="kw">else </span>{ <span class="string">&quot; {&quot; </span>};
-    <span class="kw">let </span>type_string = RustType::try_new(env, prop.typ);
-    <span class="kw">let </span>commented = type_string.is_err();
-
+    <span class="kw">let </span>commented = RustType::try_new(env, prop.typ).is_err();
     <span class="kw">let </span>comment_prefix = <span class="kw">if </span>commented { <span class="string">&quot;//&quot; </span>} <span class="kw">else </span>{ <span class="string">&quot;&quot; </span>};
 
     <span class="macro">writeln!</span>(w)<span class="question-mark">?</span>;
