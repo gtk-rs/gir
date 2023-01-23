@@ -136,7 +136,11 @@ fn generate_enum(
         writeln!(w, "#[derive(Debug, Eq, PartialEq, Ord, PartialOrd, Hash)]")?;
     }
     writeln!(w, "#[derive(Clone, Copy)]")?;
-    writeln!(w, "#[non_exhaustive]")?;
+    if config.exhaustive {
+        writeln!(w, "#[repr(i32)]")?;
+    } else {
+        writeln!(w, "#[non_exhaustive]")?;
+    }
     doc_alias(w, &enum_.c_type, "", 0)?;
 
     writeln!(w, "{} enum {} {{", analysis.visibility, enum_.name)?;
@@ -155,15 +159,27 @@ fn generate_enum(
         if member.c_name != member.name {
             doc_alias(w, &member.c_name, "", 1)?;
         }
-        writeln!(w, "\t{},", member.name)?;
+        if config.exhaustive {
+            writeln!(
+                w,
+                "\t{} = {}::{},",
+                member.name, sys_crate_name, member.c_name
+            )?;
+        } else {
+            writeln!(w, "\t{},", member.name)?;
+        }
     }
-    writeln!(
-        w,
-        "\
+
+    if !config.exhaustive {
+        writeln!(
+            w,
+            "\
     #[doc(hidden)]
-    __Unknown(i32),
-}}"
-    )?;
+    __Unknown(i32),",
+        )?;
+    }
+
+    writeln!(w, "}}")?;
 
     let any_deprecated_version = enum_
         .deprecated_version
@@ -227,17 +243,20 @@ fn generate_enum(
             cfg_condition_no_doc(w, member.cfg_condition.as_ref(), false, 3)?;
             writeln!(w, "\t\t\tSelf::{0} => \"{0}\",", member.name)?;
         }
-        writeln!(
-            w,
-            "\t\t\t_ => \"Unknown\",\n\
-             \t\t}})\n\
-             \t}}\n\
-             }}\n"
-        )?;
+
+        if !config.exhaustive {
+            writeln!(
+                w,
+                "\t\t\t_ => \"Unknown\",\n\
+                 \t\t}})\n\
+                 \t}}\n\
+                 }}\n"
+            )?;
+        }
     }
 
     // Only inline from_glib / into_glib implementations if there are not many enums members
-    let maybe_inline = if members.len() <= 12 {
+    let maybe_inline = if members.len() <= 12 || config.exhaustive {
         "#[inline]\n"
     } else {
         ""
@@ -253,27 +272,42 @@ fn generate_enum(
 impl IntoGlib for {name} {{
     type GlibType = {sys_crate_name}::{ffi_name};
 
-    {maybe_inline}fn into_glib(self) -> {sys_crate_name}::{ffi_name} {{
-        match self {{",
+    {maybe_inline}fn into_glib(self) -> {sys_crate_name}::{ffi_name} {{",
         sys_crate_name = sys_crate_name,
         name = enum_.name,
         ffi_name = enum_.c_type,
         maybe_inline = maybe_inline
     )?;
-    for member in &members {
-        version_condition_no_doc(w, env, None, member.version, false, 3)?;
-        cfg_condition_no_doc(w, member.cfg_condition.as_ref(), false, 3)?;
+
+    if config.exhaustive {
         writeln!(
             w,
-            "\t\t\tSelf::{} => {}::{},",
-            member.name, sys_crate_name, member.c_name
+            "self as {sys_crate_name}::{ffi_name}",
+            sys_crate_name = sys_crate_name,
+            ffi_name = enum_.c_type,
+        )?;
+    } else {
+        writeln!(w, "match self {{",)?;
+        for member in &members {
+            version_condition_no_doc(w, env, None, member.version, false, 3)?;
+            cfg_condition_no_doc(w, member.cfg_condition.as_ref(), false, 3)?;
+            writeln!(
+                w,
+                "\t\t\tSelf::{} => {}::{},",
+                member.name, sys_crate_name, member.c_name
+            )?;
+        }
+        writeln!(w, "\t\t\tSelf::__Unknown(value) => value,")?;
+        writeln!(
+            w,
+            "\
+        }}"
         )?;
     }
-    writeln!(w, "\t\t\tSelf::__Unknown(value) => value,")?;
+
     writeln!(
         w,
         "\
-        }}
     }}
 }}
 "
@@ -294,27 +328,43 @@ impl IntoGlib for {name} {{
         "#[doc(hidden)]
 impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
     {maybe_inline}unsafe fn from_glib(value: {sys_crate_name}::{ffi_name}) -> Self {{
-        {assert}match value {{",
+        {assert}",
         sys_crate_name = sys_crate_name,
         name = enum_.name,
         ffi_name = enum_.c_type,
         assert = assert,
         maybe_inline = maybe_inline
     )?;
-    for member in &members {
-        version_condition_no_doc(w, env, None, member.version, false, 3)?;
-        cfg_condition_no_doc(w, member.cfg_condition.as_ref(), false, 3)?;
+    if config.exhaustive {
+        let all_members = members
+            .iter()
+            .map(|m| format!("{}::{}", sys_crate_name, m.c_name))
+            .collect::<Vec<_>>()
+            .join(", ");
+        writeln!(w, "debug_assert!([{}].contains(&value));", all_members)?;
+        writeln!(w, "std::mem::transmute(value)",)?;
+    } else {
+        writeln!(w, "match value {{")?;
+        for member in &members {
+            version_condition_no_doc(w, env, None, member.version, false, 3)?;
+            cfg_condition_no_doc(w, member.cfg_condition.as_ref(), false, 3)?;
+            writeln!(
+                w,
+                "\t\t\t{}::{} => Self::{},",
+                sys_crate_name, member.c_name, member.name
+            )?;
+        }
+        writeln!(w, "\t\t\tvalue => Self::__Unknown(value),")?;
         writeln!(
             w,
-            "\t\t\t{}::{} => Self::{},",
-            sys_crate_name, member.c_name, member.name
+            "\
+        }}"
         )?;
     }
-    writeln!(w, "\t\t\tvalue => Self::__Unknown(value),")?;
+
     writeln!(
         w,
         "\
-        }}
     }}
 }}
 "
@@ -375,7 +425,7 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
             assert = assert
         )?;
 
-        if has_failed_member {
+        if has_failed_member && !config.exhaustive {
             writeln!(w, "\t\t\tSelf::__Unknown(_) => Some(Self::Failed),")?;
         }
         writeln!(w, "\t\t\tvalue => Some(value),")?;
