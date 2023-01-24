@@ -335,7 +335,11 @@ final_type = true
 # note that fundamental types don't make use of IsA/Cast traits and you should
 # implement something similar manually
 # gir is only capable for generating the type definitions along with their functions
-fundamental_type = false 
+fundamental_type = false
+# mark the enum as exhaustive. This must only be done if it is impossible for
+# the C library to add new variants to the enum at a later time but allows
+# for more optimal code to be generated.
+exhaustive = false
 # allow rename result file
 module_name = &quot;soome_class&quot;
 # override starting version
