@@ -766,6 +766,14 @@
 <span id="766">766</span>
 <span id="767">767</span>
 <span id="768">768</span>
+<span id="769">769</span>
+<span id="770">770</span>
+<span id="771">771</span>
+<span id="772">772</span>
+<span id="773">773</span>
+<span id="774">774</span>
+<span id="775">775</span>
+<span id="776">776</span>
 </pre><pre class="rust"><code><span class="kw">use </span>std::{
     collections::{BTreeMap, HashSet},
     str::FromStr,
@@ -845,6 +853,7 @@
     <span class="kw">pub </span>type_id: <span class="prelude-ty">Option</span>&lt;TypeId&gt;,
     <span class="kw">pub </span>final_type: <span class="prelude-ty">Option</span>&lt;bool&gt;,
     <span class="kw">pub </span>fundamental_type: <span class="prelude-ty">Option</span>&lt;bool&gt;,
+    <span class="kw">pub </span>exhaustive: bool,
     <span class="kw">pub </span>trait_name: <span class="prelude-ty">Option</span>&lt;String&gt;,
     <span class="kw">pub </span>child_properties: <span class="prelude-ty">Option</span>&lt;ChildProperties&gt;,
     <span class="kw">pub </span>concurrency: library::Concurrency,
@@ -883,6 +892,7 @@
             type_id: <span class="prelude-val">None</span>,
             final_type: <span class="prelude-val">None</span>,
             fundamental_type: <span class="prelude-val">None</span>,
+            exhaustive: <span class="bool-val">false</span>,
             trait_name: <span class="prelude-val">None</span>,
             child_properties: <span class="prelude-val">None</span>,
             concurrency: Default::default(),
@@ -1026,6 +1036,7 @@
             <span class="string">&quot;child_type&quot;</span>,
             <span class="string">&quot;final_type&quot;</span>,
             <span class="string">&quot;fundamental_type&quot;</span>,
+            <span class="string">&quot;exhaustive&quot;</span>,
             <span class="string">&quot;trait&quot;</span>,
             <span class="string">&quot;trait_name&quot;</span>,
             <span class="string">&quot;cfg_condition&quot;</span>,
@@ -1100,6 +1111,10 @@
     <span class="kw">let </span>fundamental_type = toml_object
         .lookup(<span class="string">&quot;fundamental_type&quot;</span>)
         .and_then(Value::as_bool);
+    <span class="kw">let </span>exhaustive = toml_object
+        .lookup(<span class="string">&quot;exhaustive&quot;</span>)
+        .and_then(Value::as_bool)
+        .unwrap_or(<span class="bool-val">false</span>);
     <span class="kw">let </span>trait_name = toml_object
         .lookup(<span class="string">&quot;trait_name&quot;</span>)
         .and_then(Value::as_str)
@@ -1252,6 +1267,7 @@
         type_id: <span class="prelude-val">None</span>,
         final_type,
         fundamental_type,
+        exhaustive,
         trait_name,
         child_properties,
         concurrency,

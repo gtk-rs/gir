@@ -515,6 +515,56 @@
 <span id="515">515</span>
 <span id="516">516</span>
 <span id="517">517</span>
+<span id="518">518</span>
+<span id="519">519</span>
+<span id="520">520</span>
+<span id="521">521</span>
+<span id="522">522</span>
+<span id="523">523</span>
+<span id="524">524</span>
+<span id="525">525</span>
+<span id="526">526</span>
+<span id="527">527</span>
+<span id="528">528</span>
+<span id="529">529</span>
+<span id="530">530</span>
+<span id="531">531</span>
+<span id="532">532</span>
+<span id="533">533</span>
+<span id="534">534</span>
+<span id="535">535</span>
+<span id="536">536</span>
+<span id="537">537</span>
+<span id="538">538</span>
+<span id="539">539</span>
+<span id="540">540</span>
+<span id="541">541</span>
+<span id="542">542</span>
+<span id="543">543</span>
+<span id="544">544</span>
+<span id="545">545</span>
+<span id="546">546</span>
+<span id="547">547</span>
+<span id="548">548</span>
+<span id="549">549</span>
+<span id="550">550</span>
+<span id="551">551</span>
+<span id="552">552</span>
+<span id="553">553</span>
+<span id="554">554</span>
+<span id="555">555</span>
+<span id="556">556</span>
+<span id="557">557</span>
+<span id="558">558</span>
+<span id="559">559</span>
+<span id="560">560</span>
+<span id="561">561</span>
+<span id="562">562</span>
+<span id="563">563</span>
+<span id="564">564</span>
+<span id="565">565</span>
+<span id="566">566</span>
+<span id="567">567</span>
 </pre><pre class="rust"><code><span class="kw">use </span>std::{
     collections::HashSet,
     io::{prelude::<span class="kw-2">*</span>, <span class="prelude-ty">Result</span>},
@@ -653,7 +703,11 @@
         <span class="macro">writeln!</span>(w, <span class="string">&quot;#[derive(Debug, Eq, PartialEq, Ord, PartialOrd, Hash)]&quot;</span>)<span class="question-mark">?</span>;
     }
     <span class="macro">writeln!</span>(w, <span class="string">&quot;#[derive(Clone, Copy)]&quot;</span>)<span class="question-mark">?</span>;
-    <span class="macro">writeln!</span>(w, <span class="string">&quot;#[non_exhaustive]&quot;</span>)<span class="question-mark">?</span>;
+    <span class="kw">if </span>config.exhaustive {
+        <span class="macro">writeln!</span>(w, <span class="string">&quot;#[repr(i32)]&quot;</span>)<span class="question-mark">?</span>;
+    } <span class="kw">else </span>{
+        <span class="macro">writeln!</span>(w, <span class="string">&quot;#[non_exhaustive]&quot;</span>)<span class="question-mark">?</span>;
+    }
     doc_alias(w, <span class="kw-2">&amp;</span>enum_.c_type, <span class="string">&quot;&quot;</span>, <span class="number">0</span>)<span class="question-mark">?</span>;
 
     <span class="macro">writeln!</span>(w, <span class="string">&quot;{} enum {} {{&quot;</span>, analysis.visibility, enum_.name)<span class="question-mark">?</span>;
@@ -672,15 +726,27 @@
         </span><span class="kw">if </span>member.c_name != member.name {
             doc_alias(w, <span class="kw-2">&amp;</span>member.c_name, <span class="string">&quot;&quot;</span>, <span class="number">1</span>)<span class="question-mark">?</span>;
         }
-        <span class="macro">writeln!</span>(w, <span class="string">&quot;\t{},&quot;</span>, member.name)<span class="question-mark">?</span>;
+        <span class="kw">if </span>config.exhaustive {
+            <span class="macro">writeln!</span>(
+                w,
+                <span class="string">&quot;\t{} = {}::{},&quot;</span>,
+                member.name, sys_crate_name, member.c_name
+            )<span class="question-mark">?</span>;
+        } <span class="kw">else </span>{
+            <span class="macro">writeln!</span>(w, <span class="string">&quot;\t{},&quot;</span>, member.name)<span class="question-mark">?</span>;
+        }
     }
-    <span class="macro">writeln!</span>(
-        w,
-        <span class="string">&quot;\
+
+    <span class="kw">if </span>!config.exhaustive {
+        <span class="macro">writeln!</span>(
+            w,
+            <span class="string">&quot;\
     #[doc(hidden)]
-    __Unknown(i32),
-}}&quot;
-    </span>)<span class="question-mark">?</span>;
+    __Unknown(i32),&quot;</span>,
+        )<span class="question-mark">?</span>;
+    }
+
+    <span class="macro">writeln!</span>(w, <span class="string">&quot;}}&quot;</span>)<span class="question-mark">?</span>;
 
     <span class="kw">let </span>any_deprecated_version = enum_
         .deprecated_version
@@ -744,17 +810,20 @@
             cfg_condition_no_doc(w, member.cfg_condition.as_ref(), <span class="bool-val">false</span>, <span class="number">3</span>)<span class="question-mark">?</span>;
             <span class="macro">writeln!</span>(w, <span class="string">&quot;\t\t\tSelf::{0} =&gt; \&quot;{0}\&quot;,&quot;</span>, member.name)<span class="question-mark">?</span>;
         }
-        <span class="macro">writeln!</span>(
-            w,
-            <span class="string">&quot;\t\t\t_ =&gt; \&quot;Unknown\&quot;,\n\
-             \t\t}})\n\
-             \t}}\n\
-             }}\n&quot;
-        </span>)<span class="question-mark">?</span>;
+
+        <span class="kw">if </span>!config.exhaustive {
+            <span class="macro">writeln!</span>(
+                w,
+                <span class="string">&quot;\t\t\t_ =&gt; \&quot;Unknown\&quot;,\n\
+                 \t\t}})\n\
+                 \t}}\n\
+                 }}\n&quot;
+            </span>)<span class="question-mark">?</span>;
+        }
     }
 
     <span class="comment">// Only inline from_glib / into_glib implementations if there are not many enums members
-    </span><span class="kw">let </span>maybe_inline = <span class="kw">if </span>members.len() &lt;= <span class="number">12 </span>{
+    </span><span class="kw">let </span>maybe_inline = <span class="kw">if </span>members.len() &lt;= <span class="number">12 </span>|| config.exhaustive {
         <span class="string">&quot;#[inline]\n&quot;
     </span>} <span class="kw">else </span>{
         <span class="string">&quot;&quot;
@@ -770,27 +839,42 @@
 impl IntoGlib for {name} {{
     type GlibType = {sys_crate_name}::{ffi_name};
 
-    {maybe_inline}fn into_glib(self) -&gt; {sys_crate_name}::{ffi_name} {{
-        match self {{&quot;</span>,
+    {maybe_inline}fn into_glib(self) -&gt; {sys_crate_name}::{ffi_name} {{&quot;</span>,
         sys_crate_name = sys_crate_name,
         name = enum_.name,
         ffi_name = enum_.c_type,
         maybe_inline = maybe_inline
     )<span class="question-mark">?</span>;
-    <span class="kw">for </span>member <span class="kw">in </span><span class="kw-2">&amp;</span>members {
-        version_condition_no_doc(w, env, <span class="prelude-val">None</span>, member.version, <span class="bool-val">false</span>, <span class="number">3</span>)<span class="question-mark">?</span>;
-        cfg_condition_no_doc(w, member.cfg_condition.as_ref(), <span class="bool-val">false</span>, <span class="number">3</span>)<span class="question-mark">?</span>;
+
+    <span class="kw">if </span>config.exhaustive {
         <span class="macro">writeln!</span>(
             w,
-            <span class="string">&quot;\t\t\tSelf::{} =&gt; {}::{},&quot;</span>,
-            member.name, sys_crate_name, member.c_name
+            <span class="string">&quot;self as {sys_crate_name}::{ffi_name}&quot;</span>,
+            sys_crate_name = sys_crate_name,
+            ffi_name = enum_.c_type,
         )<span class="question-mark">?</span>;
+    } <span class="kw">else </span>{
+        <span class="macro">writeln!</span>(w, <span class="string">&quot;match self {{&quot;</span>,)<span class="question-mark">?</span>;
+        <span class="kw">for </span>member <span class="kw">in </span><span class="kw-2">&amp;</span>members {
+            version_condition_no_doc(w, env, <span class="prelude-val">None</span>, member.version, <span class="bool-val">false</span>, <span class="number">3</span>)<span class="question-mark">?</span>;
+            cfg_condition_no_doc(w, member.cfg_condition.as_ref(), <span class="bool-val">false</span>, <span class="number">3</span>)<span class="question-mark">?</span>;
+            <span class="macro">writeln!</span>(
+                w,
+                <span class="string">&quot;\t\t\tSelf::{} =&gt; {}::{},&quot;</span>,
+                member.name, sys_crate_name, member.c_name
+            )<span class="question-mark">?</span>;
+        }
+        <span class="macro">writeln!</span>(w, <span class="string">&quot;\t\t\tSelf::__Unknown(value) =&gt; value,&quot;</span>)<span class="question-mark">?</span>;
+        <span class="macro">writeln!</span>(
+            w,
+            <span class="string">&quot;\
+        }}&quot;
+        </span>)<span class="question-mark">?</span>;
     }
-    <span class="macro">writeln!</span>(w, <span class="string">&quot;\t\t\tSelf::__Unknown(value) =&gt; value,&quot;</span>)<span class="question-mark">?</span>;
+
     <span class="macro">writeln!</span>(
         w,
         <span class="string">&quot;\
-        }}
     }}
 }}
 &quot;
@@ -811,27 +895,43 @@ impl IntoGlib for {name} {{
         <span class="string">&quot;#[doc(hidden)]
 impl FromGlib&lt;{sys_crate_name}::{ffi_name}&gt; for {name} {{
     {maybe_inline}unsafe fn from_glib(value: {sys_crate_name}::{ffi_name}) -&gt; Self {{
-        {assert}match value {{&quot;</span>,
+        {assert}&quot;</span>,
         sys_crate_name = sys_crate_name,
         name = enum_.name,
         ffi_name = enum_.c_type,
         assert = assert,
         maybe_inline = maybe_inline
     )<span class="question-mark">?</span>;
-    <span class="kw">for </span>member <span class="kw">in </span><span class="kw-2">&amp;</span>members {
-        version_condition_no_doc(w, env, <span class="prelude-val">None</span>, member.version, <span class="bool-val">false</span>, <span class="number">3</span>)<span class="question-mark">?</span>;
-        cfg_condition_no_doc(w, member.cfg_condition.as_ref(), <span class="bool-val">false</span>, <span class="number">3</span>)<span class="question-mark">?</span>;
+    <span class="kw">if </span>config.exhaustive {
+        <span class="kw">let </span>all_members = members
+            .iter()
+            .map(|m| <span class="macro">format!</span>(<span class="string">&quot;{}::{}&quot;</span>, sys_crate_name, m.c_name))
+            .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;()
+            .join(<span class="string">&quot;, &quot;</span>);
+        <span class="macro">writeln!</span>(w, <span class="string">&quot;debug_assert!([{}].contains(&amp;value));&quot;</span>, all_members)<span class="question-mark">?</span>;
+        <span class="macro">writeln!</span>(w, <span class="string">&quot;std::mem::transmute(value)&quot;</span>,)<span class="question-mark">?</span>;
+    } <span class="kw">else </span>{
+        <span class="macro">writeln!</span>(w, <span class="string">&quot;match value {{&quot;</span>)<span class="question-mark">?</span>;
+        <span class="kw">for </span>member <span class="kw">in </span><span class="kw-2">&amp;</span>members {
+            version_condition_no_doc(w, env, <span class="prelude-val">None</span>, member.version, <span class="bool-val">false</span>, <span class="number">3</span>)<span class="question-mark">?</span>;
+            cfg_condition_no_doc(w, member.cfg_condition.as_ref(), <span class="bool-val">false</span>, <span class="number">3</span>)<span class="question-mark">?</span>;
+            <span class="macro">writeln!</span>(
+                w,
+                <span class="string">&quot;\t\t\t{}::{} =&gt; Self::{},&quot;</span>,
+                sys_crate_name, member.c_name, member.name
+            )<span class="question-mark">?</span>;
+        }
+        <span class="macro">writeln!</span>(w, <span class="string">&quot;\t\t\tvalue =&gt; Self::__Unknown(value),&quot;</span>)<span class="question-mark">?</span>;
         <span class="macro">writeln!</span>(
             w,
-            <span class="string">&quot;\t\t\t{}::{} =&gt; Self::{},&quot;</span>,
-            sys_crate_name, member.c_name, member.name
-        )<span class="question-mark">?</span>;
+            <span class="string">&quot;\
+        }}&quot;
+        </span>)<span class="question-mark">?</span>;
     }
-    <span class="macro">writeln!</span>(w, <span class="string">&quot;\t\t\tvalue =&gt; Self::__Unknown(value),&quot;</span>)<span class="question-mark">?</span>;
+
     <span class="macro">writeln!</span>(
         w,
         <span class="string">&quot;\
-        }}
     }}
 }}
 &quot;
@@ -892,7 +992,7 @@ impl FromGlib&lt;{sys_crate_name}::{ffi_name}&gt; for {name} {{
             assert = assert
         )<span class="question-mark">?</span>;
 
-        <span class="kw">if </span>has_failed_member {
+        <span class="kw">if </span>has_failed_member &amp;&amp; !config.exhaustive {
             <span class="macro">writeln!</span>(w, <span class="string">&quot;\t\t\tSelf::__Unknown(_) =&gt; Some(Self::Failed),&quot;</span>)<span class="question-mark">?</span>;
         }
         <span class="macro">writeln!</span>(w, <span class="string">&quot;\t\t\tvalue =&gt; Some(value),&quot;</span>)<span class="question-mark">?</span>;
