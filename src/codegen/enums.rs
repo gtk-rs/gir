@@ -13,9 +13,9 @@ use crate::{
             cfg_deprecated, derives, doc_alias, version_condition, version_condition_no_doc,
             version_condition_string,
         },
-        generate_default_impl,
+        generate_default_impl, generate_variant_impls,
     },
-    config::gobjects::GObject,
+    config::{config::VariantTraitMode, gobjects::GObject},
     env::Env,
     file_saver,
     library::*,
@@ -390,14 +390,14 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
         )?;
     }
 
+    let configured_functions = config.functions.matched("get_type");
+    let version = std::iter::once(enum_.version)
+        .chain(configured_functions.iter().map(|f| f.version))
+        .max()
+        .flatten();
+
     // Generate StaticType trait implementation.
     if let Some(ref get_type) = enum_.glib_get_type {
-        let configured_functions = config.functions.matched("get_type");
-        let version = std::iter::once(enum_.version)
-            .chain(configured_functions.iter().map(|f| f.version))
-            .max()
-            .flatten();
-
         version_condition(w, env, None, version, false, 0)?;
         cfg_condition_no_doc(w, config.cfg_condition.as_ref(), false, 0)?;
         allow_deprecated(w, enum_.deprecated_version, false, 0)?;
@@ -512,6 +512,48 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
             Some((version, cfg_condition, e_member.name.as_str()))
         },
     )?;
+
+    match config.generate_variant_traits {
+        VariantTraitMode::Repr => generate_variant_impls(
+            w,
+            env,
+            config,
+            &enum_.name,
+            version,
+            enum_.deprecated_version,
+            "i",
+            "match unsafe { FromGlib::from_glib(variant.get::<i32>()?) } {
+            Self::__Unknown(_) => None,
+            value => Some(value),
+        }",
+            "self.into_glib().to_variant()",
+        )?,
+        VariantTraitMode::String => {
+            let enumclass = use_glib_type(env, "EnumClass");
+            generate_variant_impls(
+                w,
+                env,
+                config,
+                &enum_.name,
+                version,
+                enum_.deprecated_version,
+                "s",
+                &format!(
+                    "if !variant.is::<String>() {{
+            return None;
+        }}
+        let enum_class = {enumclass}::new(<Self as StaticType>::static_type()).unwrap();
+        let value = enum_class.value_by_nick(variant.str()?)?.value();
+        Some(unsafe {{ FromGlib::from_glib(value) }})",
+                        ),
+                &format!(
+                    "let enum_class = {enumclass}::new(<Self as StaticType>::static_type()).unwrap();
+        enum_class.value(self.into_glib()).unwrap().nick().to_variant()",
+                        )
+            )?
+        }
+        _ => {}
+    }
 
     Ok(())
 }

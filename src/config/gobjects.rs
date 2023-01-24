@@ -9,6 +9,7 @@ use toml::Value;
 
 use super::{
     child_properties::ChildProperties,
+    config::VariantTraitMode,
     constants::Constants,
     derives::Derives,
     functions::Functions,
@@ -84,6 +85,7 @@ pub struct GObject {
     pub must_use: bool,
     pub conversion_type: Option<ConversionType>,
     pub generate_display_trait: bool,
+    pub generate_variant_traits: VariantTraitMode,
     pub trust_return_value_nullability: bool,
     pub manual_traits: Vec<String>,
     pub align: Option<u32>,
@@ -122,6 +124,7 @@ impl Default for GObject {
             must_use: false,
             conversion_type: None,
             generate_display_trait: true,
+            generate_variant_traits: Default::default(),
             trust_return_value_nullability: false,
             manual_traits: Vec::default(),
             align: None,
@@ -145,6 +148,7 @@ pub fn parse_toml(
     toml_objects: &Value,
     concurrency: library::Concurrency,
     generate_display_trait: bool,
+    generate_variant_traits: VariantTraitMode,
     generate_builder: bool,
     trust_return_value_nullability: bool,
 ) -> GObjects {
@@ -154,6 +158,7 @@ pub fn parse_toml(
             toml_object,
             concurrency,
             generate_display_trait,
+            generate_variant_traits,
             generate_builder,
             trust_return_value_nullability,
         );
@@ -228,6 +233,7 @@ fn parse_object(
     toml_object: &Value,
     concurrency: library::Concurrency,
     default_generate_display_trait: bool,
+    default_generate_variant_traits: VariantTraitMode,
     generate_builder: bool,
     trust_return_value_nullability: bool,
 ) -> GObject {
@@ -263,6 +269,7 @@ fn parse_object(
             "cfg_condition",
             "must_use",
             "generate_display_trait",
+            "generate_variant_traits",
             "trust_return_value_nullability",
             "manual_traits",
             "align",
@@ -355,6 +362,10 @@ fn parse_object(
         .lookup("generate_display_trait")
         .and_then(Value::as_bool)
         .unwrap_or(default_generate_display_trait);
+    let generate_variant_traits = toml_object
+        .lookup("generate_variant_traits")
+        .map(|v| VariantTraitMode::from_str(v.as_str().unwrap()).unwrap())
+        .unwrap_or(default_generate_variant_traits);
     let trust_return_value_nullability = toml_object
         .lookup("trust_return_value_nullability")
         .and_then(Value::as_bool)
@@ -491,6 +502,7 @@ fn parse_object(
         must_use,
         conversion_type,
         generate_display_trait,
+        generate_variant_traits,
         trust_return_value_nullability,
         manual_traits,
         align,
@@ -511,6 +523,7 @@ pub fn parse_status_shorthands(
     toml: &Value,
     concurrency: library::Concurrency,
     generate_display_trait: bool,
+    generate_variant_traits: VariantTraitMode,
     generate_builder: bool,
     trust_return_value_nullability: bool,
 ) {
@@ -522,6 +535,7 @@ pub fn parse_status_shorthands(
             toml,
             concurrency,
             generate_display_trait,
+            generate_variant_traits,
             generate_builder,
             trust_return_value_nullability,
         );
@@ -534,6 +548,7 @@ fn parse_status_shorthand(
     toml: &Value,
     concurrency: library::Concurrency,
     generate_display_trait: bool,
+    generate_variant_traits: VariantTraitMode,
     generate_builder: bool,
     trust_return_value_nullability: bool,
 ) {
@@ -549,6 +564,7 @@ fn parse_status_shorthand(
                             status,
                             concurrency,
                             generate_display_trait,
+                            generate_variant_traits,
                             trust_return_value_nullability,
                             generate_builder,
                             ..Default::default()
@@ -606,7 +622,14 @@ status = "generate"
 "#,
         );
 
-        let object = parse_object(toml, Concurrency::default(), false, false, false);
+        let object = parse_object(
+            toml,
+            Concurrency::default(),
+            false,
+            Default::default(),
+            false,
+            false,
+        );
         assert_eq!(object.conversion_type, None);
     }
 
@@ -620,7 +643,14 @@ conversion_type = "Option"
 "#,
         );
 
-        let object = parse_object(&toml, Concurrency::default(), false, false, false);
+        let object = parse_object(
+            &toml,
+            Concurrency::default(),
+            false,
+            Default::default(),
+            false,
+            false,
+        );
         assert_eq!(object.conversion_type, Some(ConversionType::Option));
     }
 
@@ -635,7 +665,14 @@ status = "generate"
 "#,
         );
 
-        let object = parse_object(toml, Concurrency::default(), false, false, false);
+        let object = parse_object(
+            toml,
+            Concurrency::default(),
+            false,
+            Default::default(),
+            false,
+            false,
+        );
         assert_eq!(object.conversion_type, Some(ConversionType::Option));
     }
 
@@ -650,7 +687,14 @@ status = "generate"
 "#,
         );
 
-        let object = parse_object(toml, Concurrency::default(), false, false, false);
+        let object = parse_object(
+            toml,
+            Concurrency::default(),
+            false,
+            Default::default(),
+            false,
+            false,
+        );
         assert_eq!(
             object.conversion_type,
             Some(ConversionType::Result {
@@ -672,7 +716,14 @@ status = "generate"
 "#,
         );
 
-        let object = parse_object(toml, Concurrency::default(), false, false, false);
+        let object = parse_object(
+            toml,
+            Concurrency::default(),
+            false,
+            Default::default(),
+            false,
+            false,
+        );
         assert_eq!(
             object.conversion_type,
             Some(ConversionType::Result {
@@ -695,7 +746,14 @@ status = "generate"
 "#,
         );
 
-        let object = parse_object(toml, Concurrency::default(), false, false, false);
+        let object = parse_object(
+            toml,
+            Concurrency::default(),
+            false,
+            Default::default(),
+            false,
+            false,
+        );
         assert_eq!(
             object.conversion_type,
             Some(ConversionType::Result {
@@ -723,7 +781,16 @@ status = "generate"
 
         let object = toml
             .lookup("object")
-            .map(|t| parse_toml(t, Concurrency::default(), false, false, false))
+            .map(|t| {
+                parse_toml(
+                    t,
+                    Concurrency::default(),
+                    false,
+                    Default::default(),
+                    false,
+                    false,
+                )
+            })
             .expect("parsing failed");
         assert_eq!(
             object["Test"].constants,
@@ -752,7 +819,14 @@ generate_doc = false
 "#,
         );
 
-        let object = parse_object(r, Concurrency::default(), false, false, false);
+        let object = parse_object(
+            r,
+            Concurrency::default(),
+            false,
+            Default::default(),
+            false,
+            false,
+        );
         assert!(!object.generate_doc);
 
         // Ensure that the default value is "true".
@@ -762,7 +836,14 @@ name = "Test"
 status = "generate"
 "#,
         );
-        let object = parse_object(r, Concurrency::default(), false, false, false);
+        let object = parse_object(
+            r,
+            Concurrency::default(),
+            false,
+            Default::default(),
+            false,
+            false,
+        );
         assert!(object.generate_doc);
     }
 }

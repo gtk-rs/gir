@@ -12,9 +12,9 @@ use crate::{
             cfg_deprecated, derives, doc_alias, version_condition, version_condition_doc,
             version_condition_no_doc, version_condition_string,
         },
-        generate_default_impl,
+        generate_default_impl, generate_variant_impls,
     },
-    config::gobjects::GObject,
+    config::{config::VariantTraitMode, gobjects::GObject},
     env::Env,
     file_saver,
     library::*,
@@ -260,13 +260,13 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
         assert = assert
     )?;
 
-    if let Some(ref get_type) = flags.glib_get_type {
-        let configured_functions = config.functions.matched("get_type");
-        let version = std::iter::once(flags.version)
-            .chain(configured_functions.iter().map(|f| f.version))
-            .max()
-            .flatten();
+    let configured_functions = config.functions.matched("get_type");
+    let version = std::iter::once(flags.version)
+        .chain(configured_functions.iter().map(|f| f.version))
+        .max()
+        .flatten();
 
+    if let Some(ref get_type) = flags.glib_get_type {
         version_condition(w, env, None, version, false, 0)?;
         cfg_condition_no_doc(w, config.cfg_condition.as_ref(), false, 0)?;
         allow_deprecated(w, flags.deprecated_version, false, 0)?;
@@ -361,6 +361,44 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
             assert = assert,
         )?;
         writeln!(w)?;
+    }
+
+    match config.generate_variant_traits {
+        VariantTraitMode::Repr => generate_variant_impls(
+            w,
+            env,
+            config,
+            &flags.name,
+            version,
+            flags.deprecated_version,
+            "u",
+            "Some(Self::from_bits(variant.get::<u32>()?)?)",
+            "self.into_glib().to_variant()",
+        )?,
+        VariantTraitMode::String => {
+            let flagsclass = use_glib_type(env, "FlagsClass");
+            generate_variant_impls(
+                w,
+                env,
+                config,
+                &flags.name,
+                version,
+                flags.deprecated_version,
+                "s",
+                &format!(
+                    "if !variant.is::<String>() {{
+            return None;
+        }}
+        let flags_class = {flagsclass}::new(<Self as StaticType>::static_type()).unwrap();
+        Self::from_bits(flags_class.from_nick_string(variant.str()?).ok()?)",
+                        ),
+                &format!(
+                    "let flags_class = {flagsclass}::new(<Self as StaticType>::static_type()).unwrap();
+        flags_class.to_nick_string(self.into_glib()).to_variant()",
+                        )
+            )?
+        }
+        _ => {}
     }
 
     Ok(())

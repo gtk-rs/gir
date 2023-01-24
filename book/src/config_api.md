@@ -24,6 +24,13 @@ single_version_file = true
 # which do not have an override for `generate_display_trait`
 # (defaults to "true")
 generate_display_trait = true
+# Generation of Variant serialization traits enabled for all enums and flags which do not
+# have an override for `generate_variant_traits`. Generates traits for StaticVariantType,
+# ToVariant, FromVariant, and Into<Variant>. Can be "none" to skip generating traits,
+# "repr" to serialize to INT (for enums) and UINT (for flags), or "string" to serialize to
+# string values.
+# (defaults to "none")
+generate_variant_traits = "repr"
 # Trust the nullability information about return values. If this is disabled
 # then any pointer return type is assumed to be nullable unless there is an
 # explicit override for it.
@@ -110,6 +117,8 @@ version = "3.12"
 cfg_condition = "mycond"
 # if you want to override default option Ex. for write your own Display implementation
 generate_display_trait = false
+# if you want to override default option Ex. for write your own Variant serialization
+generate_variant_traits = "none"
 # if you want to generate builder with name SomeClassBuilder
 generate_builder = true
 # trust return value nullability annotations for this specific type.
