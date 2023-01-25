@@ -427,7 +427,10 @@ fn read_toml<P: AsRef<Path>>(filename: P) -> Result<toml::Value, String> {
     let input = fs::read(&filename)
         .map_err(|e| format!("Failed to read file \"{:?}\": {}", filename.as_ref(), e))?;
 
-    toml::from_slice(&input).map_err(|e| {
+    let input = String::from_utf8(input)
+        .map_err(|e| format!("File is not valid UTF-8 \"{:?}\": {}", filename.as_ref(), e))?;
+
+    toml::from_str(&input).map_err(|e| {
         format!(
             "Invalid toml format in \"{}\": {}",
             filename.as_ref().display(),
