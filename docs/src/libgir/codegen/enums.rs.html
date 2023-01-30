@@ -559,6 +559,27 @@
 <a href="#559" id="559">559</a>
 <a href="#560" id="560">560</a>
 <a href="#561" id="561">561</a>
+<a href="#562" id="562">562</a>
+<a href="#563" id="563">563</a>
+<a href="#564" id="564">564</a>
+<a href="#565" id="565">565</a>
+<a href="#566" id="566">566</a>
+<a href="#567" id="567">567</a>
+<a href="#568" id="568">568</a>
+<a href="#569" id="569">569</a>
+<a href="#570" id="570">570</a>
+<a href="#571" id="571">571</a>
+<a href="#572" id="572">572</a>
+<a href="#573" id="573">573</a>
+<a href="#574" id="574">574</a>
+<a href="#575" id="575">575</a>
+<a href="#576" id="576">576</a>
+<a href="#577" id="577">577</a>
+<a href="#578" id="578">578</a>
+<a href="#579" id="579">579</a>
+<a href="#580" id="580">580</a>
+<a href="#581" id="581">581</a>
+<a href="#582" id="582">582</a>
 </pre><pre class="rust"><code><span class="kw">use </span>std::{
     collections::HashSet,
     io::{prelude::<span class="kw-2">*</span>, <span class="prelude-ty">Result</span>},
@@ -1017,6 +1038,27 @@ impl FromGlib&lt;{sys_crate_name}::{ffi_name}&gt; for {name} {{
             sys_crate_name = sys_crate_name,
             name = enum_.name,
             get_type = get_type
+        )<span class="question-mark">?</span>;
+        <span class="macro">writeln!</span>(w)<span class="question-mark">?</span>;
+
+        version_condition(w, env, <span class="prelude-val">None</span>, version, <span class="bool-val">false</span>, <span class="number">0</span>)<span class="question-mark">?</span>;
+        cfg_condition_no_doc(w, config.cfg_condition.as_ref(), <span class="bool-val">false</span>, <span class="number">0</span>)<span class="question-mark">?</span>;
+        allow_deprecated(w, enum_.deprecated_version, <span class="bool-val">false</span>, <span class="number">0</span>)<span class="question-mark">?</span>;
+        <span class="macro">writeln!</span>(
+            w,
+            <span class="string">&quot;impl {has_param_spec} for {name} {{
+                type ParamSpec = {param_spec_enum};
+                type SetValue = Self;
+                type BuilderFn = fn(&amp;str, Self) -&gt; {param_spec_builder}&lt;Self&gt;;
+    
+                fn param_spec_builder() -&gt; Self::BuilderFn {{
+                    |name, default_value| Self::ParamSpec::builder_with_default(name, default_value)
+                }}
+}}&quot;</span>,
+            name = enum_.name,
+            has_param_spec = use_glib_type(env, <span class="string">&quot;HasParamSpec&quot;</span>),
+            param_spec_enum = use_glib_type(env, <span class="string">&quot;ParamSpecEnum&quot;</span>),
+            param_spec_builder = use_glib_type(env, <span class="string">&quot;ParamSpecEnumBuilder&quot;</span>),
         )<span class="question-mark">?</span>;
         <span class="macro">writeln!</span>(w)<span class="question-mark">?</span>;
 

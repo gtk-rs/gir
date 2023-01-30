@@ -365,6 +365,27 @@
 <a href="#365" id="365">365</a>
 <a href="#366" id="366">366</a>
 <a href="#367" id="367">367</a>
+<a href="#368" id="368">368</a>
+<a href="#369" id="369">369</a>
+<a href="#370" id="370">370</a>
+<a href="#371" id="371">371</a>
+<a href="#372" id="372">372</a>
+<a href="#373" id="373">373</a>
+<a href="#374" id="374">374</a>
+<a href="#375" id="375">375</a>
+<a href="#376" id="376">376</a>
+<a href="#377" id="377">377</a>
+<a href="#378" id="378">378</a>
+<a href="#379" id="379">379</a>
+<a href="#380" id="380">380</a>
+<a href="#381" id="381">381</a>
+<a href="#382" id="382">382</a>
+<a href="#383" id="383">383</a>
+<a href="#384" id="384">384</a>
+<a href="#385" id="385">385</a>
+<a href="#386" id="386">386</a>
+<a href="#387" id="387">387</a>
+<a href="#388" id="388">388</a>
 </pre><pre class="rust"><code><span class="kw">use </span>std::{
     io::{prelude::<span class="kw-2">*</span>, <span class="prelude-ty">Result</span>},
     path::Path,
@@ -648,6 +669,27 @@ impl FromGlib&lt;{sys_crate_name}::{ffi_name}&gt; for {name} {{
             sys_crate_name = sys_crate_name,
             name = flags.name,
             get_type = get_type
+        )<span class="question-mark">?</span>;
+        <span class="macro">writeln!</span>(w)<span class="question-mark">?</span>;
+
+        version_condition(w, env, <span class="prelude-val">None</span>, version, <span class="bool-val">false</span>, <span class="number">0</span>)<span class="question-mark">?</span>;
+        cfg_condition_no_doc(w, config.cfg_condition.as_ref(), <span class="bool-val">false</span>, <span class="number">0</span>)<span class="question-mark">?</span>;
+        allow_deprecated(w, flags.deprecated_version, <span class="bool-val">false</span>, <span class="number">0</span>)<span class="question-mark">?</span>;
+        <span class="macro">writeln!</span>(
+            w,
+            <span class="string">&quot;impl {has_param_spec} for {name} {{
+                type ParamSpec = {param_spec_flags};
+                type SetValue = Self;
+                type BuilderFn = fn(&amp;str) -&gt; {param_spec_builder}&lt;Self&gt;;
+    
+                fn param_spec_builder() -&gt; Self::BuilderFn {{
+                    |name| Self::ParamSpec::builder(name)
+                }}
+}}&quot;</span>,
+            name = flags.name,
+            has_param_spec = use_glib_type(env, <span class="string">&quot;HasParamSpec&quot;</span>),
+            param_spec_flags = use_glib_type(env, <span class="string">&quot;ParamSpecFlags&quot;</span>),
+            param_spec_builder = use_glib_type(env, <span class="string">&quot;ParamSpecFlagsBuilder&quot;</span>),
         )<span class="question-mark">?</span>;
         <span class="macro">writeln!</span>(w)<span class="question-mark">?</span>;
 
