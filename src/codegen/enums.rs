@@ -464,6 +464,27 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
         allow_deprecated(w, enum_.deprecated_version, false, 0)?;
         writeln!(
             w,
+            "impl {has_param_spec} for {name} {{
+                type ParamSpec = {param_spec_enum};
+                type SetValue = Self;
+                type BuilderFn = fn(&str, Self) -> {param_spec_builder}<Self>;
+    
+                fn param_spec_builder() -> Self::BuilderFn {{
+                    |name, default_value| Self::ParamSpec::builder_with_default(name, default_value)
+                }}
+}}",
+            name = enum_.name,
+            has_param_spec = use_glib_type(env, "HasParamSpec"),
+            param_spec_enum = use_glib_type(env, "ParamSpecEnum"),
+            param_spec_builder = use_glib_type(env, "ParamSpecEnumBuilder"),
+        )?;
+        writeln!(w)?;
+
+        version_condition(w, env, None, version, false, 0)?;
+        cfg_condition_no_doc(w, config.cfg_condition.as_ref(), false, 0)?;
+        allow_deprecated(w, enum_.deprecated_version, false, 0)?;
+        writeln!(
+            w,
             "impl {valuetype} for {name} {{
     type Type = Self;
 }}",
