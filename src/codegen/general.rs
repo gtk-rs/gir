@@ -999,7 +999,7 @@ pub fn declare_default_from_new(
                 w,
                 "impl Default for {name} {{
                      fn default() -> Self {{
-                         glib::object::Object::new_default::<Self>()
+                         glib::object::Object::new::<Self>()
                      }}
                  }}"
             )?;
