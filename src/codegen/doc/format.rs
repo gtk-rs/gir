@@ -76,9 +76,9 @@ fn get_language<'a>(entry: &'a str, out: &mut String) -> &'a str {
     if let (_, Some(after)) = try_split(entry, LANGUAGE_SEP_BEGIN) {
         if let (before, Some(after)) = try_split(after, LANGUAGE_SEP_END) {
             if !["text", "rust"].contains(&before) {
-                write!(out, "\n\n**⚠️ The following code is in {} ⚠️**", before).unwrap();
+                write!(out, "\n\n**⚠️ The following code is in {before} ⚠️**").unwrap();
             }
-            write!(out, "\n\n```{}", before).unwrap();
+            write!(out, "\n\n```{before}").unwrap();
             return after;
         }
     }
@@ -114,9 +114,9 @@ fn format(
                 if !["text", "rust", "xml", "css", "json", "html"].contains(&lang)
                     && after.lines().count() > 1
                 {
-                    write!(ret, "**⚠️ The following code is in {0} ⚠️**\n\n", lang).unwrap();
+                    write!(ret, "**⚠️ The following code is in {lang} ⚠️**\n\n").unwrap();
                 }
-                writeln!(ret, "```{}", lang).unwrap();
+                writeln!(ret, "```{lang}").unwrap();
 
                 if let (before, Some(after)) = try_split(after, "```") {
                     ret.push_str(before);
@@ -148,7 +148,7 @@ fn replace_symbols(
             symbol_name => match &caps[1] {
                 // Opt-in only for the %SYMBOLS, @/# causes breakages
                 "%" => find_constant_or_variant_wrapper(symbol_name, env, in_type),
-                s => panic!("Unknown symbol prefix `{}`", s),
+                s => panic!("Unknown symbol prefix `{s}`"),
             },
         });
         let out = GDK_GTK.replace_all(&out, |caps: &Captures<'_>| {
@@ -203,7 +203,7 @@ fn replace_c_types(
                     let method_name = member_path.trim_start_matches('.');
                     find_member(symbol_name, method_name, env, in_type).unwrap_or_else(|| {
                         info!("`#{}` not found as method", symbol_name);
-                        format!("`{}{}`", symbol_name, member_path)
+                        format!("`{symbol_name}{member_path}`")
                     })
                 } else if let Some(type_) = find_type(symbol_name, env) {
                     type_
@@ -217,7 +217,7 @@ fn replace_c_types(
                     constant_or_variant
                 } else {
                     info!("Type `#{}` not found", symbol_name);
-                    format!("`{}`", symbol_name)
+                    format!("`{symbol_name}`")
                 }
             }
             "@" => {
@@ -239,10 +239,10 @@ fn replace_c_types(
                     function
                 } else {
                     // `@` is often used to refer to fields and function parameters.
-                    format!("`{}`", symbol_name)
+                    format!("`{symbol_name}`")
                 }
             }
-            s => panic!("Unknown symbol prefix `{}`", s),
+            s => panic!("Unknown symbol prefix `{s}`"),
         },
     });
     let out = GDK_GTK.replace_all(&out, |caps: &Captures<'_>| {
@@ -261,7 +261,7 @@ fn find_constant_or_variant_wrapper(
 ) -> String {
     find_constant_or_variant(symbol_name, env, in_type).unwrap_or_else(|| {
         info!("Constant or variant `%{}` not found", symbol_name);
-        format!("`{}`", symbol_name)
+        format!("`{symbol_name}`")
     })
 }
 
@@ -526,9 +526,9 @@ pub(crate) fn gen_member_doc_link(
     let is_self = in_type == Some((&type_id, None));
 
     if is_self {
-        format!("[`{m}`][Self::{m}]", m = member_name)
+        format!("[`{member_name}`][Self::{member_name}]")
     } else {
-        format!("[`{s}::{m}`][crate::{s}::{m}]", s = sym, m = member_name)
+        format!("[`{sym}::{member_name}`][crate::{sym}::{member_name}]")
     }
 }
 
@@ -546,15 +546,15 @@ pub(crate) fn gen_property_doc_link(symbol: &str, property: &str) -> String {
 }
 
 pub(crate) fn gen_vfunc_doc_link(symbol: &str, vfunc: &str) -> String {
-    format!("`vfunc::{}::{}`", symbol, vfunc)
+    format!("`vfunc::{symbol}::{vfunc}`")
 }
 
 pub(crate) fn gen_callback_doc_link(callback: &str) -> String {
-    format!("`callback::{}", callback)
+    format!("`callback::{callback}")
 }
 
 pub(crate) fn gen_alias_doc_link(alias: &str) -> String {
-    format!("`alias::{}`", alias)
+    format!("`alias::{alias}`")
 }
 
 pub(crate) fn gen_symbol_doc_link(type_id: TypeId, env: &Env) -> String {

@@ -38,10 +38,7 @@ impl Parse for CallbackParameter {
                 return None;
             }
         };
-        toml.check_unwanted(
-            &["nullable"],
-            &format!("callback parameter {}", object_name),
-        );
+        toml.check_unwanted(&["nullable"], &format!("callback parameter {object_name}"));
 
         let nullable = toml
             .lookup("nullable")
@@ -98,7 +95,7 @@ impl Parse for Parameter {
                 "string_type",
                 "callback_parameter",
             ],
-            &format!("function parameter {}", object_name),
+            &format!("function parameter {object_name}"),
         );
 
         let constant = toml
@@ -332,7 +329,7 @@ impl Parse for Function {
                 "visibility",
                 "generate_doc",
             ],
-            &format!("function {}", object_name),
+            &format!("function {object_name}"),
         );
 
         let status = {

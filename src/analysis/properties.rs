@@ -128,20 +128,20 @@ fn analyze_property(
     let type_string = RustType::try_new(env, prop.typ);
     let name_for_func = nameutil::signal_to_snake(&name);
 
-    let mut get_prop_name = Some(format!("get_property_{}", name_for_func));
+    let mut get_prop_name = Some(format!("get_property_{name_for_func}"));
 
     let bypass_auto_rename = configured_properties.iter().any(|f| f.bypass_auto_rename);
     let (check_get_func_names, mut get_func_name) = if bypass_auto_rename {
         (
-            vec![format!("get_{}", name_for_func)],
+            vec![format!("get_{name_for_func}")],
             get_prop_name.take().expect("defined 10 lines above"),
         )
     } else {
         get_func_name(&name_for_func, prop.typ == library::TypeId::tid_bool())
     };
 
-    let mut set_func_name = format!("set_{}", name_for_func);
-    let mut set_prop_name = Some(format!("set_property_{}", name_for_func));
+    let mut set_func_name = format!("set_{name_for_func}");
+    let mut set_prop_name = Some(format!("set_property_{name_for_func}"));
 
     let mut readable = prop.readable;
     let mut writable = if prop.construct_only {
@@ -299,7 +299,7 @@ fn analyze_property(
         let trampoline = trampolines::analyze(
             env,
             &library::Signal {
-                name: format!("notify::{}", name),
+                name: format!("notify::{name}"),
                 parameters: Vec::new(),
                 ret: library::Parameter {
                     name: String::new(),
@@ -347,8 +347,8 @@ fn analyze_property(
             imports.add("std::boxed::Box as Box_");
 
             Some(signals::Info {
-                connect_name: format!("connect_{}_notify", name_for_func),
-                signal_name: format!("notify::{}", name),
+                connect_name: format!("connect_{name_for_func}_notify"),
+                signal_name: format!("notify::{name}"),
                 trampoline,
                 action_emit_name: None,
                 version: prop_version,
@@ -374,29 +374,28 @@ fn get_func_name(prop_name: &str, is_bool_getter: bool) -> (Vec<String>, String)
         Ok(new_name) => {
             let new_name = new_name.unwrap();
             let mut check_get_func_names = vec![
-                format!("get_{}", prop_name),
+                format!("get_{prop_name}"),
                 prop_name.to_string(),
-                format!("get_{}", new_name),
+                format!("get_{new_name}"),
                 new_name.clone(),
             ];
 
             if is_bool_getter {
-                check_get_func_names.push(format!("is_{}", prop_name));
-                check_get_func_names.push(format!("is_{}", new_name));
+                check_get_func_names.push(format!("is_{prop_name}"));
+                check_get_func_names.push(format!("is_{new_name}"));
             }
             (check_get_func_names, new_name)
         }
         Err(_) => {
-            let mut check_get_func_names =
-                vec![format!("get_{}", prop_name), prop_name.to_string()];
+            let mut check_get_func_names = vec![format!("get_{prop_name}"), prop_name.to_string()];
 
             // Name is reserved
             let get_func_name = if is_bool_getter {
-                let get_func_name = format!("is_{}", prop_name);
+                let get_func_name = format!("is_{prop_name}");
                 check_get_func_names.push(get_func_name.clone());
                 get_func_name
             } else {
-                format!("get_{}", prop_name)
+                format!("get_{prop_name}")
             };
             (check_get_func_names, get_func_name)
         }

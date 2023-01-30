@@ -1044,7 +1044,7 @@ fn analyze_async(
         *trampoline = Some(AsyncTrampoline {
             is_method,
             has_error_parameter: error_parameters.is_some(),
-            name: format!("{}_trampoline", codegen_name),
+            name: format!("{codegen_name}_trampoline"),
             finish_func_name: format!("{}::{}", env.main_sys_crate_name(), finish_func_name),
             callback_type,
             bound_name,

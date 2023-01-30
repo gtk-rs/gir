@@ -236,7 +236,7 @@ pub fn analyze(
             library::ParameterDirection::Return => false,
             library::ParameterDirection::Out => !can_as_return(env, par) && !async_func,
             library::ParameterDirection::None => {
-                panic!("undefined direction for parameter {:?}", par)
+                panic!("undefined direction for parameter {par:?}")
             }
         };
 

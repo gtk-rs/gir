@@ -16,7 +16,7 @@ impl fmt::Display for Ident {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::Name(name) => f.write_str(name),
-            Self::Pattern(regex) => write!(f, "Regex {}", regex),
+            Self::Pattern(regex) => write!(f, "Regex {regex}"),
         }
     }
 }
@@ -36,7 +36,7 @@ impl Eq for Ident {}
 impl Ident {
     pub fn parse(toml: &Value, object_name: &str, what: &str) -> Option<Self> {
         match toml.lookup("pattern").and_then(Value::as_str) {
-            Some(s) => Regex::new(&format!("^{}$", s))
+            Some(s) => Regex::new(&format!("^{s}$"))
                 .map(Box::new)
                 .map(Self::Pattern)
                 .map_err(|e| {

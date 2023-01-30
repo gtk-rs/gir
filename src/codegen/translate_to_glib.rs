@@ -43,13 +43,13 @@ impl TranslateToGlib for TransformationType {
                         pointer_cast
                     )
                 } else {
-                    format!("{}{}{}{}{}", left, name, to_glib_extra, right, pointer_cast)
+                    format!("{left}{name}{to_glib_extra}{right}{pointer_cast}")
                 }
             }
             ToGlibBorrow => "/*Not applicable conversion Borrow*/".to_owned(),
-            ToGlibUnknown { ref name } => format!("/*Unknown conversion*/{}", name),
-            ToSome(ref name) => format!("Some({})", name),
-            IntoRaw(ref name) => format!("Box_::into_raw({}) as *mut _", name),
+            ToGlibUnknown { ref name } => format!("/*Unknown conversion*/{name}"),
+            ToSome(ref name) => format!("Some({name})"),
+            IntoRaw(ref name) => format!("Box_::into_raw({name}) as *mut _"),
             _ => unreachable!("Unexpected transformation type {:?}", self),
         }
     }
@@ -69,12 +69,12 @@ fn to_glib_xxx(
                 RefMode::ByRef => match (move_, explicit_target_type.is_empty()) {
                     (true, true) => (String::new(), ".into_glib_ptr()"),
                     (true, false) => (
-                        format!("ToGlibPtr::<{}>::into_glib_ptr(", explicit_target_type),
+                        format!("ToGlibPtr::<{explicit_target_type}>::into_glib_ptr("),
                         ")",
                     ),
                     (false, true) => (String::new(), ".to_glib_none().0"),
                     (false, false) => (
-                        format!("ToGlibPtr::<{}>::to_glib_none(", explicit_target_type),
+                        format!("ToGlibPtr::<{explicit_target_type}>::to_glib_none("),
                         ").0",
                     ),
                 },

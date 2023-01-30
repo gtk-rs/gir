@@ -384,12 +384,12 @@ fn generate_builder(w: &mut dyn Write, env: &Env, analysis: &analysis::object::I
             let mut param_type = param_type.into_string();
             let (param_type_override, bounds, conversion) = match param_type.as_str() {
                 "&str" => (
-                    Some(format!("impl Into<{}::GString>", glib_crate_name)),
+                    Some(format!("impl Into<{glib_crate_name}::GString>")),
                     String::new(),
                     ".into()",
                 ),
                 "&[&str]" => (
-                    Some(format!("impl Into<{}::StrV>", glib_crate_name)),
+                    Some(format!("impl Into<{glib_crate_name}::StrV>")),
                     String::from(""),
                     ".into()",
                 ),
@@ -418,11 +418,11 @@ fn generate_builder(w: &mut dyn Write, env: &Env, analysis: &analysis::object::I
             let deprecated_string =
                 cfg_deprecated_string(env, Some(*super_tid), property.deprecated_version, false, 1);
             let version_prefix = version_condition_string
-                .map(|version| format!("{}{}\n", comment_prefix, version))
+                .map(|version| format!("{comment_prefix}{version}\n"))
                 .unwrap_or_default();
 
             let deprecation_prefix = deprecated_string
-                .map(|version| format!("{}{}\n", comment_prefix, version))
+                .map(|version| format!("{comment_prefix}{version}\n"))
                 .unwrap_or_default();
 
             writeln!(
@@ -449,7 +449,7 @@ fn generate_builder(w: &mut dyn Write, env: &Env, analysis: &analysis::object::I
     // The split allows us to not have clippy::let_and_return lint disabled
     if let Some(code) = analysis.builder_postprocess.as_ref() {
         writeln!(w, "    let ret = self.builder.build();")?;
-        writeln!(w, "        {{\n            {}\n        }}", code)?;
+        writeln!(w, "        {{\n            {code}\n        }}")?;
         writeln!(w, "    ret\n    }}")?;
     } else {
         writeln!(w, "    self.builder.build() }}")?;
@@ -553,7 +553,7 @@ pub fn generate_reexports(
 
     contents.push(String::new());
     contents.extend_from_slice(&cfgs);
-    contents.push(format!("mod {};", module_name));
+    contents.push(format!("mod {module_name};"));
     contents.extend_from_slice(&cfgs);
 
     contents.push(format!(
@@ -565,7 +565,7 @@ pub fn generate_reexports(
 
     if analysis.need_generate_trait() {
         for cfg in &cfgs {
-            traits.push(format!("\t{}", cfg));
+            traits.push(format!("\t{cfg}"));
         }
         traits.push(format!(
             "\tpub use super::{}::{};",
@@ -575,7 +575,7 @@ pub fn generate_reexports(
 
     if has_builder_properties(&analysis.builder_properties) {
         for cfg in &cfgs {
-            builders.push(format!("\t{}", cfg));
+            builders.push(format!("\t{cfg}"));
         }
         builders.push(format!(
             "\tpub use super::{}::{}Builder;",

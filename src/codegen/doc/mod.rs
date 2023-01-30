@@ -611,7 +611,7 @@ fn create_record_doc(w: &mut dyn Write, env: &Env, info: &analysis::record::Info
                 writeln!(w, "{}", reformat_doc(doc, env, Some((&info.type_id, None))))?;
             }
             if let Some(ver) = info.deprecated_version {
-                writeln!(w, "\n# Deprecated since {}\n", ver)?;
+                writeln!(w, "\n# Deprecated since {ver}\n")?;
             } else if record.doc_deprecated.is_some() {
                 writeln!(w, "\n# Deprecated\n")?;
             }
@@ -660,7 +660,7 @@ fn create_enum_doc(w: &mut dyn Write, env: &Env, enum_: &Enumeration, tid: TypeI
                 writeln!(w, "{}", reformat_doc(doc, env, Some((&tid, None))))?;
             }
             if let Some(ver) = enum_.deprecated_version {
-                writeln!(w, "\n# Deprecated since {}\n", ver)?;
+                writeln!(w, "\n# Deprecated since {ver}\n")?;
             } else if enum_.doc_deprecated.is_some() {
                 writeln!(w, "\n# Deprecated\n")?;
             }
@@ -719,7 +719,7 @@ fn create_bitfield_doc(
             }
         }
         if let Some(ver) = bitfield.deprecated_version {
-            writeln!(w, "\n# Deprecated since {}\n", ver)?;
+            writeln!(w, "\n# Deprecated since {ver}\n")?;
         } else if bitfield.doc_deprecated.is_some() {
             writeln!(w, "\n# Deprecated\n")?;
         }
@@ -821,7 +821,7 @@ where
             )?;
         }
         if let Some(ver) = fn_.deprecated_version() {
-            writeln!(w, "\n# Deprecated since {}\n", ver)?;
+            writeln!(w, "\n# Deprecated since {ver}\n")?;
         } else if fn_.doc_deprecated().is_some() {
             writeln!(w, "\n# Deprecated\n")?;
         }
@@ -985,7 +985,7 @@ fn create_property_doc(
                 )?;
             }
             if let Some(ver) = property.deprecated_version {
-                writeln!(w, "\n# Deprecated since {}\n", ver)?;
+                writeln!(w, "\n# Deprecated since {ver}\n")?;
             } else if property.doc_deprecated.is_some() {
                 writeln!(w, "\n# Deprecated\n")?;
             }
@@ -1013,14 +1013,14 @@ fn get_type_trait_for_implements(env: &Env, tid: TypeId) -> String {
         format!("{}Ext", env.library.type_(tid).get_name())
     };
     if tid.ns_id == MAIN_NAMESPACE {
-        format!("[`{0}`][trait@crate::prelude::{0}]", trait_name)
+        format!("[`{trait_name}`][trait@crate::prelude::{trait_name}]")
     } else if let Some(symbol) = env.symbols.borrow().by_tid(tid) {
         let mut symbol = symbol.clone();
         symbol.make_trait(&trait_name);
         format!("[`trait@{}`]", &symbol.full_rust_name())
     } else {
         error!("Type {} doesn't have crate", tid.full_name(&env.library));
-        format!("`{}`", trait_name)
+        format!("`{trait_name}`")
     }
 }
 
@@ -1044,7 +1044,7 @@ pub fn get_type_manual_traits_for_implements(
     manual_trait_iters
         .into_iter()
         .flatten()
-        .map(|name| format!("[`{0}`][trait@crate::prelude::{0}]", name))
+        .map(|name| format!("[`{name}`][trait@crate::prelude::{name}]"))
         .collect()
 }
 
@@ -1056,7 +1056,7 @@ pub fn document_type_properties(
     subtype: Option<&str>,
 ) -> Result<()> {
     if let Some(subtype_name) = subtype {
-        writeln!(w, "<details><summary><h4>{}</h4></summary>", subtype_name)?;
+        writeln!(w, "<details><summary><h4>{subtype_name}</h4></summary>")?;
     }
     for property in properties {
         let mut details = Vec::new();
@@ -1102,7 +1102,7 @@ pub fn document_type_signals(
     subtype: Option<&str>,
 ) -> Result<()> {
     if let Some(subtype_name) = subtype {
-        writeln!(w, "<details><summary><h4>{}</h4></summary>", subtype_name)?;
+        writeln!(w, "<details><summary><h4>{subtype_name}</h4></summary>")?;
     }
     for signal in signals {
         let mut details = Vec::new();

@@ -41,7 +41,7 @@ impl ToReturnValue for library::Parameter {
             name = "String".to_owned();
         }
         let type_str = match ConversionType::of(env, self.typ) {
-            ConversionType::Unknown => format!("/*Unknown conversion*/{}", name),
+            ConversionType::Unknown => format!("/*Unknown conversion*/{name}"),
             // TODO: records as in gtk_container_get_path_for_child
             _ => name,
         };
@@ -266,7 +266,7 @@ fn out_parameter_as_return(out: &analysis::Parameter, env: &Env) -> String {
         .try_build_param()
         .into_string();
     match ConversionType::of(env, out.lib_par.typ) {
-        ConversionType::Unknown => format!("/*Unknown conversion*/{}", name),
+        ConversionType::Unknown => format!("/*Unknown conversion*/{name}"),
         _ => name,
     }
 }

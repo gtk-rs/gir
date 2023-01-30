@@ -250,7 +250,7 @@ impl Imports {
                 self.add(&used_type[..i]);
             }
         } else {
-            self.add(&format!("crate::{}", used_type));
+            self.add(&format!("crate::{used_type}"));
         }
     }
 
@@ -271,7 +271,7 @@ impl Imports {
                 self.add_with_version(&used_type[..i], version);
             }
         } else {
-            self.add_with_version(&format!("crate::{}", used_type), version);
+            self.add_with_version(&format!("crate::{used_type}"), version);
         }
     }
 
@@ -288,7 +288,7 @@ impl Imports {
         if rest.is_empty() {
             None
         } else if rest.starts_with("::") {
-            Some(Cow::Owned(format!("crate{}", rest)))
+            Some(Cow::Owned(format!("crate{rest}")))
         } else {
             // It was false positive, return the whole name.
             Some(Cow::Borrowed(name))

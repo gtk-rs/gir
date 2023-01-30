@@ -272,7 +272,7 @@ impl Builder {
             {
                 if calls.len() > 1 {
                     chunks.push(Chunk::Let {
-                        name: format!("super_callback{}", pos),
+                        name: format!("super_callback{pos}"),
                         is_mut: false,
                         value: Box::new(Chunk::Custom(if poses.is_empty() {
                             format!(
@@ -308,7 +308,7 @@ impl Builder {
                     });
                 } else if !calls.is_empty() {
                     chunks.push(Chunk::Let {
-                        name: format!("super_callback{}", pos),
+                        name: format!("super_callback{pos}"),
                         is_mut: false,
                         value: Box::new(Chunk::Custom(format!(
                             "{}{}_data",
@@ -461,7 +461,7 @@ impl Builder {
                 body.push(Chunk::Let {
                     name: format!("{}callback", if is_destroy { "_" } else { "" }),
                     is_mut: false,
-                    value: Box::new(Chunk::Custom(format!("Box_::from_raw({} as *mut _)", func))),
+                    value: Box::new(Chunk::Custom(format!("Box_::from_raw({func} as *mut _)"))),
                     type_: Some(Box::new(Chunk::Custom(full_type.1.clone()))),
                 });
             } else {
@@ -491,7 +491,7 @@ impl Builder {
                     body.push(Chunk::Custom(format!(
                         "let callback = callback{}{};",
                         if let Some(pos) = pos {
-                            format!(".{}", pos)
+                            format!(".{pos}")
                         } else {
                             String::new()
                         },
@@ -514,7 +514,7 @@ impl Builder {
                                 ""
                             },
                             if let Some(pos) = pos {
-                                format!(".{}", pos)
+                                format!(".{pos}")
                             } else {
                                 String::new()
                             }
@@ -523,7 +523,7 @@ impl Builder {
                         body.push(Chunk::Custom(format!(
                             "let callback = callback{}",
                             if let Some(pos) = pos {
-                                format!(".{}", pos)
+                                format!(".{pos}")
                             } else {
                                 String::new()
                             }
@@ -548,7 +548,7 @@ impl Builder {
                                 ""
                             },
                             if let Some(pos) = pos {
-                                format!("(*callback).{}", pos)
+                                format!("(*callback).{pos}")
                             } else {
                                 "*callback".to_owned()
                             }
@@ -564,14 +564,14 @@ impl Builder {
                 is_mut: false,
                 value: Box::new(Chunk::Custom(
                     if is_destroy || trampoline.scope.is_async() {
-                        format!("Box_::from_raw({} as *mut _)", func)
+                        format!("Box_::from_raw({func} as *mut _)")
                     } else if trampoline.scope.is_call() {
                         format!(
                             "{} as *const _ as usize as *mut {}",
                             func, trampoline.bound_name
                         )
                     } else {
-                        format!("&*({} as *mut _)", func)
+                        format!("&*({func} as *mut _)")
                     },
                 )),
                 type_: Some(Box::new(Chunk::Custom(
@@ -606,7 +606,7 @@ impl Builder {
                             ""
                         },
                         if let Some(pos) = pos {
-                            format!("(*callback).{}", pos)
+                            format!("(*callback).{pos}")
                         } else {
                             "*callback".to_owned()
                         }
@@ -697,7 +697,7 @@ impl Builder {
         let bounds_str = if bounds_names.is_empty() {
             String::new()
         } else {
-            format!("::<{}>", bounds_names)
+            format!("::<{bounds_names}>")
         };
         if !is_destroy {
             if *trampoline.nullable {
@@ -1057,9 +1057,9 @@ impl Builder {
                 Chunk::FfiCallParameter {
                     transformation_type: TransformationType::ToGlibDirect {
                         name: if all_call {
-                            format!("super_callback{} as *const _ as usize as *mut _", pos)
+                            format!("super_callback{pos} as *const _ as usize as *mut _")
                         } else {
-                            format!("Box_::into_raw(super_callback{}) as *mut _", pos)
+                            format!("Box_::into_raw(super_callback{pos}) as *mut _")
                         },
                     },
                 },
@@ -1422,9 +1422,9 @@ fn add_chunk_for_type(
                 }
             } else if par.transfer == library::Transfer::None && *nullable {
                 if par.conversion_type == ConversionType::Borrow {
-                    type_name = format!(": Borrowed<Option<{}>>", ty_name);
+                    type_name = format!(": Borrowed<Option<{ty_name}>>");
                 } else {
-                    type_name = format!(": Option<{}>", ty_name);
+                    type_name = format!(": Option<{ty_name}>");
                 }
             } else {
                 type_name = String::new();

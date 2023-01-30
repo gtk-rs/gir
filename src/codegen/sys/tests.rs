@@ -203,7 +203,7 @@ fn generate_manual_h(env: &Env, path: &Path, w: &mut dyn Write) -> io::Result<()
 
     let ns = env.library.namespace(MAIN_NAMESPACE);
     for include in &ns.c_includes {
-        writeln!(w, "#include <{}>", include)?;
+        writeln!(w, "#include <{include}>")?;
     }
 
     Ok(())
@@ -299,7 +299,7 @@ fn generate_abi_rs(
     let ns = env.library.namespace(MAIN_NAMESPACE);
     let mut package_names = ns.package_names.join("\", \"");
     if !package_names.is_empty() {
-        package_names = format!("\"{}\"", package_names);
+        package_names = format!("\"{package_names}\"");
     }
 
     info!("Generating file {:?}", path);
@@ -309,7 +309,7 @@ fn generate_abi_rs(
     writeln!(w)?;
 
     if !ctypes.is_empty() {
-        writeln!(w, "use {}::*;", crate_name)?;
+        writeln!(w, "use {crate_name}::*;")?;
         writeln!(w, "use std::mem::{{align_of, size_of}};")?;
     }
 
@@ -321,7 +321,7 @@ fn generate_abi_rs(
     writeln!(w, "use std::str;")?;
     writeln!(w, "use tempfile::Builder;")?;
     writeln!(w)?;
-    writeln!(w, "static PACKAGES: &[&str] = &[{}];", package_names)?;
+    writeln!(w, "static PACKAGES: &[&str] = &[{package_names}];")?;
     writeln!(
         w,
         "{}",

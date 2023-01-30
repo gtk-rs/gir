@@ -28,7 +28,7 @@ impl Bound {
             Some(t) => t.to_string(),
             None => {
                 let trait_bound = self.trait_bound(r#async);
-                let trait_bound = format!("impl {}", trait_bound);
+                let trait_bound = format!("impl {trait_bound}");
 
                 // Combining a ref mode and lifetime requires parentheses for disambiguation
                 match self.bound_type {
@@ -37,7 +37,7 @@ impl Bound {
                         let has_lifetime = r#async || lifetime.is_some();
 
                         if !ref_str.is_empty() && has_lifetime {
-                            format!("({})", trait_bound)
+                            format!("({trait_bound})")
                         } else {
                             trait_bound
                         }
@@ -49,11 +49,11 @@ impl Bound {
 
         match self.bound_type {
             BoundType::IsA(_) if *nullable => {
-                format!("Option<{}{}>", ref_str, trait_bound)
+                format!("Option<{ref_str}{trait_bound}>")
             }
-            BoundType::IsA(_) => format!("{}{}", ref_str, trait_bound),
+            BoundType::IsA(_) => format!("{ref_str}{trait_bound}"),
             BoundType::AsRef(_) if *nullable => {
-                format!("Option<{}>", trait_bound)
+                format!("Option<{trait_bound}>")
             }
             BoundType::NoWrapper | BoundType::AsRef(_) => trait_bound,
         }
@@ -79,10 +79,10 @@ impl Bound {
 
                 let lifetime = r#async
                     .then(|| " + Clone + 'static".to_string())
-                    .or_else(|| lifetime.map(|l| format!(" + '{}", l)))
+                    .or_else(|| lifetime.map(|l| format!(" + '{l}")))
                     .unwrap_or_default();
 
-                format!("{}{}", is_a, lifetime)
+                format!("{is_a}{lifetime}")
             }
             BoundType::AsRef(Some(_ /* lifetime */)) => panic!("AsRef cannot have a lifetime"),
             BoundType::AsRef(None) => format!("AsRef<{}>", self.type_str),

@@ -40,7 +40,7 @@ impl TranslateFromGlib for Mode {
                         "try_from_glib(",
                         ").expect(\"mandatory glib value is None\")",
                     ),
-                    other => panic!("Unexpected {:?} for ConversionType::Option", other),
+                    other => panic!("Unexpected {other:?} for ConversionType::Option"),
                 };
                 (pre.to_string(), post.to_string())
             }
@@ -51,7 +51,7 @@ impl TranslateFromGlib for Mode {
                         "try_from_glib(",
                         ").unwrap_or_else(|err| panic!(\"infallible {}\", err))",
                     ),
-                    other => panic!("Unexpected {:?} for ConversionType::Result", other),
+                    other => panic!("Unexpected {other:?} for ConversionType::Result"),
                 };
                 (pre.to_string(), post.to_string())
             }
@@ -149,7 +149,7 @@ impl TranslateFromGlib for analysis::return_value::Info {
 
 fn from_glib_xxx(transfer: library::Transfer, array_length: Option<&str>) -> (String, String) {
     use crate::library::Transfer;
-    let good_print = |name: &str| format!(", {}.assume_init() as _)", name);
+    let good_print = |name: &str| format!(", {name}.assume_init() as _)");
     match (transfer, array_length) {
         (Transfer::None, None) => ("from_glib_none(".into(), ")".into()),
         (Transfer::Full, None) => ("from_glib_full(".into(), ")".into()),

@@ -135,7 +135,7 @@ fn analyze_property(
             };
             // TODO: bounds_str push?!?!
             bounds_str.push_str("TODO");
-            format!("{}: {}", prop_name, TYPE_PARAMETERS_START)
+            format!("{prop_name}: {TYPE_PARAMETERS_START}")
             // let mut bounds = Bounds::default();
             // bounds.add_parameter("P", &r_type, bound, false);
             // let (s_bounds, _) = function::bounds(&bounds, &[], false);

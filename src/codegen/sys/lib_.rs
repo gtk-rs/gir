@@ -109,11 +109,11 @@ fn include_custom_modules(w: &mut dyn Write, env: &Env) -> Result<()> {
     if !modules.is_empty() {
         writeln!(w)?;
         for module in &modules {
-            writeln!(w, "mod {};", module)?;
+            writeln!(w, "mod {module};")?;
         }
         writeln!(w)?;
         for module in &modules {
-            writeln!(w, "pub use {}::*;", module)?;
+            writeln!(w, "pub use {module}::*;")?;
         }
     }
 
@@ -344,12 +344,11 @@ fn generate_unions(w: &mut dyn Write, env: &Env, unions: &[&Union]) -> Result<()
 fn generate_debug_impl(w: &mut dyn Write, name: &str, impl_content: &str) -> Result<()> {
     writeln!(
         w,
-        "impl ::std::fmt::Debug for {} {{\n\
+        "impl ::std::fmt::Debug for {name} {{\n\
          \tfn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {{\n\
-         \t\t{}\n\
+         \t\t{impl_content}\n\
          \t}}\n\
-         }}\n",
-        name, impl_content
+         }}\n"
     )
 }
 
@@ -376,12 +375,11 @@ fn generate_opaque_type(w: &mut dyn Write, name: &str) -> Result<()> {
     writeln!(
         w,
         r#"#[repr(C)]
-pub struct {} {{
+pub struct {name} {{
     _data: [u8; 0],
     _marker: core::marker::PhantomData<(*mut u8, core::marker::PhantomPinned)>,
 }}
-"#,
-        name
+"#
     )
 }
 
@@ -485,11 +483,11 @@ fn generate_from_fields(
 ) -> Result<()> {
     cfg_condition(w, fields.cfg_condition.as_ref(), false, 0)?;
     if let Some(align) = align {
-        writeln!(w, "#[repr(align({}))]", align)?;
+        writeln!(w, "#[repr(align({align}))]")?;
     }
     let traits = fields.derived_traits().join(", ");
     if !traits.is_empty() {
-        writeln!(w, "#[derive({traits})]", traits = traits)?;
+        writeln!(w, "#[derive({traits})]")?;
     }
     if fields.external {
         // It would be nice to represent those using extern types
@@ -514,7 +512,7 @@ fn generate_from_fields(
         }
         if let Some(ref reason) = fields.truncated {
             writeln!(w, "\t_truncated_record_marker: c_void,")?;
-            writeln!(w, "\t// {}", reason)?;
+            writeln!(w, "\t// {reason}")?;
         }
         writeln!(w, "}}\n")?;
     }

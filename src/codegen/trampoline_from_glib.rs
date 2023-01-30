@@ -24,9 +24,9 @@ impl TrampolineFromGlib for Transformation {
                 let type_name = RustType::try_new(env, self.typ).into_string();
                 if need_type_name {
                     if is_borrow && nullable {
-                        left = format!("Option::<{}>::{}", type_name, left);
+                        left = format!("Option::<{type_name}>::{left}");
                     } else {
-                        left = format!("{}::{}", type_name, left);
+                        left = format!("{type_name}::{left}");
                     }
                 }
 
@@ -38,20 +38,20 @@ impl TrampolineFromGlib for Transformation {
                     );
                 } else if nullable && is_borrow {
                     if is_gstring(&type_name) {
-                        right = format!("{}.as_ref().as_ref().map(|s| s.as_str())", right);
+                        right = format!("{right}.as_ref().as_ref().map(|s| s.as_str())");
                     } else {
-                        right = format!("{}.as_ref().as_ref()", right);
+                        right = format!("{right}.as_ref().as_ref()");
                     }
                 } else if is_gstring(&type_name) {
-                    right = format!("{}.as_ref().map(|s| s.as_str())", right);
+                    right = format!("{right}.as_ref().map(|s| s.as_str())");
                 } else {
-                    right = format!("{}.as_ref()", right);
+                    right = format!("{right}.as_ref()");
                 }
 
                 if need_downcast && is_borrow {
-                    right = format!("{}.unsafe_cast_ref()", right);
+                    right = format!("{right}.unsafe_cast_ref()");
                 } else if need_downcast {
-                    right = format!("{}.unsafe_cast()", right);
+                    right = format!("{right}.unsafe_cast()");
                 }
 
                 format!("{}{}{}", left, self.name, right)

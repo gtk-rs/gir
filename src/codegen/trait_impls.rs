@@ -101,18 +101,9 @@ fn generate_call(func_name: &str, args: &[&str], trait_name: Option<&str>) -> St
     }
 
     if let Some(trait_name) = trait_name {
-        format!(
-            "{trait_name}::{func_name}({args})",
-            trait_name = trait_name,
-            func_name = func_name,
-            args = args_string
-        )
+        format!("{trait_name}::{func_name}({args_string})")
     } else {
-        format!(
-            "self.{func_name}({args})",
-            func_name = func_name,
-            args = args_string
-        )
+        format!("self.{func_name}({args_string})")
     }
 }
 
@@ -136,15 +127,14 @@ fn generate_display(
     let body = if let Mode::Throws(_) = func.outs.mode {
         format!(
             "\
-            if let Ok(val) = {} {{
+            if let Ok(val) = {call} {{
                 f.write_str(val)
             }} else {{
                 Err(fmt::Error)
-            }}",
-            call
+            }}"
         )
     } else {
-        format!("f.write_str(&{})", call)
+        format!("f.write_str(&{call})")
     };
 
     writeln!(
@@ -155,9 +145,7 @@ impl fmt::Display for {type_name} {{
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {{
         {body}
     }}
-}}",
-        type_name = type_name,
-        body = body
+}}"
     )
 }
 
@@ -185,9 +173,7 @@ impl hash::Hash for {type_name} {{
     fn hash<H>(&self, state: &mut H) where H: hash::Hasher {{
         hash::Hash::hash(&{call}, state)
     }}
-}}",
-        type_name = type_name,
-        call = call
+}}"
     )
 }
 
@@ -217,9 +203,7 @@ impl PartialEq for {type_name} {{
     }}
 }}
 
-impl Eq for {type_name} {{}}",
-        type_name = type_name,
-        call = call
+impl Eq for {type_name} {{}}"
     )
 }
 
@@ -249,9 +233,7 @@ impl PartialEq for {type_name} {{
     }}
 }}
 
-impl Eq for {type_name} {{}}",
-        type_name = type_name,
-        call = call
+impl Eq for {type_name} {{}}"
     )
 }
 
@@ -286,8 +268,6 @@ impl Ord for {type_name} {{
     fn cmp(&self, other: &Self) -> cmp::Ordering {{
         {call}.cmp(&0)
     }}
-}}",
-        type_name = type_name,
-        call = call
+}}"
     )
 }

@@ -46,8 +46,7 @@ impl Symbol {
     fn make_in_prelude(&mut self) {
         assert!(
             self.module_name.replace("prelude".to_string()).is_none(),
-            "{:?} already had a module name set!",
-            self
+            "{self:?} already had a module name set!"
         );
     }
 

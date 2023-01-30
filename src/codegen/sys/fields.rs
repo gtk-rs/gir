@@ -50,7 +50,7 @@ impl FieldInfo {
     pub fn access_str(&self) -> String {
         let mut s = format!("&self.{}", self.name);
         if self.unsafe_access {
-            s = format!("unsafe {{ {} }}", s);
+            s = format!("unsafe {{ {s} }}");
         }
         s
     }
@@ -149,7 +149,7 @@ fn field_ffi_type(env: &Env, field: &Field) -> Result {
         ffi_type(env, field.typ, c_type)
     } else if let Some(func) = env.library.type_(field.typ).maybe_ref_as::<Function>() {
         let (failure, signature) = function_signature(env, func, true);
-        let signature = format!("Option<unsafe extern \"C\" fn{}>", signature);
+        let signature = format!("Option<unsafe extern \"C\" fn{signature}>");
         if failure {
             Err(TypeError::Unimplemented(signature))
         } else {

@@ -234,7 +234,7 @@ impl Config {
         };
         if work_mode == WorkMode::Normal && auto_path.exists() {
             std::fs::remove_dir_all(&auto_path)
-                .map_err(|e| format!("remove_dir_all failed: {:?}", e))?;
+                .map_err(|e| format!("remove_dir_all failed: {e:?}"))?;
         }
 
         let doc_target_path: PathBuf = match doc_target_path.into() {

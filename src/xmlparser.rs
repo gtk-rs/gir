@@ -40,9 +40,9 @@ impl ErrorEmitter {
     pub fn emit(&self, message: &str, position: TextPosition) -> String {
         let enriched = match self.path {
             Some(ref path) => format!("{} at line {}: {}", path.display(), position, message),
-            None => format!("{} {}", position, message),
+            None => format!("{position} {message}"),
         };
-        format!("GirXml: {}", enriched)
+        format!("GirXml: {enriched}")
     }
 
     pub fn emit_error(&self, error: &xml::reader::Error) -> String {
@@ -51,9 +51,9 @@ impl ErrorEmitter {
         // prepends the file path.
         let enriched = match self.path {
             Some(ref path) => format!("{}:{}", path.display(), error),
-            None => format!("{}", error),
+            None => format!("{error}"),
         };
-        format!("GirXml: {}", enriched)
+        format!("GirXml: {enriched}")
     }
 }
 
@@ -183,7 +183,7 @@ impl<'a> XmlParser<'a> {
     }
 
     fn unexpected_event(&self, event: &XmlEvent) -> String {
-        let message = format!("Unexpected event {:?}", event);
+        let message = format!("Unexpected event {event:?}");
         self.error_emitter.emit(&message, self.position())
     }
 

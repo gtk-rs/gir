@@ -44,7 +44,7 @@ pub fn start_comments_no_version(w: &mut dyn Write, conf: &Config) -> Result<()>
                     "// from {}{}\n",
                     info.gir_dir.display(),
                     info.get_repository_url()
-                        .map_or_else(String::new, |url| format!(" ({})", url)),
+                        .map_or_else(String::new, |url| format!(" ({url})")),
                 )
             })
             .collect::<String>()
@@ -171,8 +171,7 @@ pub fn define_fundamental_type(
     doc_alias(w, glib_name, "", 1)?;
     writeln!(
         w,
-        "\t{} struct {}(Shared<{}::{}>);",
-        visibility, type_name, sys_crate_name, glib_name
+        "\t{visibility} struct {type_name}(Shared<{sys_crate_name}::{glib_name}>);"
     )?;
     writeln!(w)?;
 
@@ -211,16 +210,8 @@ pub fn define_fundamental_type(
         (ref_fn, unref_fn, ptr, ffi_crate_name)
     };
 
-    writeln!(
-        w,
-        "\t\tref => |ptr| {}::{}({}),",
-        ffi_crate_name, ref_fn, ptr
-    )?;
-    writeln!(
-        w,
-        "\t\tunref => |ptr| {}::{}({}),",
-        ffi_crate_name, unref_fn, ptr
-    )?;
+    writeln!(w, "\t\tref => |ptr| {ffi_crate_name}::{ref_fn}({ptr}),")?;
+    writeln!(w, "\t\tunref => |ptr| {ffi_crate_name}::{unref_fn}({ptr}),")?;
 
     writeln!(w, "\t}}")?;
     writeln!(w, "}}")?;
@@ -237,8 +228,7 @@ pub fn define_fundamental_type(
     writeln!(w, "\tfn static_type() -> {} {{", use_glib_type(env, "Type"))?;
     writeln!(
         w,
-        "\t\t unsafe {{ from_glib({}::{}()) }}",
-        sys_crate_name, glib_func_name
+        "\t\t unsafe {{ from_glib({sys_crate_name}::{glib_func_name}()) }}"
     )?;
     writeln!(w, "\t}}")?;
     writeln!(w, "}}")?;
@@ -259,7 +249,7 @@ pub fn define_object_type(
     let sys_crate_name = env.main_sys_crate_name();
     let class_name = {
         if let Some(s) = glib_class_name {
-            format!(", {}::{}", sys_crate_name, s)
+            format!(", {sys_crate_name}::{s}")
         } else {
             String::new()
         }
@@ -278,8 +268,7 @@ pub fn define_object_type(
     if parents.is_empty() {
         writeln!(
             w,
-            "\t{} struct {}({}<{}::{}{}>);",
-            visibility, type_name, kind_name, sys_crate_name, glib_name, class_name
+            "\t{visibility} struct {type_name}({kind_name}<{sys_crate_name}::{glib_name}{class_name}>);"
         )?;
     } else if is_interface {
         let prerequisites: Vec<String> =
@@ -336,17 +325,12 @@ pub fn define_object_type(
 
         writeln!(
             w,
-            "\t{} struct {}(Object<{}::{}{}>){};",
-            visibility, type_name, sys_crate_name, glib_name, class_name, parents_string,
+            "\t{visibility} struct {type_name}(Object<{sys_crate_name}::{glib_name}{class_name}>){parents_string};",
         )?;
     }
     writeln!(w)?;
     writeln!(w, "\tmatch fn {{")?;
-    writeln!(
-        w,
-        "\t\ttype_ => || {}::{}(),",
-        sys_crate_name, glib_func_name
-    )?;
+    writeln!(w, "\t\ttype_ => || {sys_crate_name}::{glib_func_name}(),")?;
     writeln!(w, "\t}}")?;
     writeln!(w, "}}")?;
 
@@ -393,7 +377,7 @@ fn define_boxed_type_internal(
         "\t\tcopy => |ptr| {}::{}({}),",
         sys_crate_name, copy_fn.glib_name, mut_ov
     )?;
-    writeln!(w, "\t\tfree => |ptr| {}::{}(ptr),", sys_crate_name, free_fn)?;
+    writeln!(w, "\t\tfree => |ptr| {sys_crate_name}::{free_fn}(ptr),")?;
 
     if let (
         Some(init_function_expression),
@@ -404,13 +388,13 @@ fn define_boxed_type_internal(
         copy_into_function_expression,
         clear_function_expression,
     ) {
-        writeln!(w, "\t\tinit => {},", init_function_expression,)?;
-        writeln!(w, "\t\tcopy_into => {},", copy_into_function_expression,)?;
-        writeln!(w, "\t\tclear => {},", clear_function_expression,)?;
+        writeln!(w, "\t\tinit => {init_function_expression},",)?;
+        writeln!(w, "\t\tcopy_into => {copy_into_function_expression},",)?;
+        writeln!(w, "\t\tclear => {clear_function_expression},",)?;
     }
 
     if let Some(get_type_fn) = get_type_fn {
-        writeln!(w, "\t\ttype_ => || {}::{}(),", sys_crate_name, get_type_fn)?;
+        writeln!(w, "\t\ttype_ => || {sys_crate_name}::{get_type_fn}(),")?;
     }
     writeln!(w, "\t}}")?;
     writeln!(w, "}}")?;
@@ -563,12 +547,12 @@ pub fn define_auto_boxed_type(
         copy_into_function_expression,
         clear_function_expression,
     ) {
-        writeln!(w, "\t\tinit => {},", init_function_expression,)?;
-        writeln!(w, "\t\tcopy_into => {},", copy_into_function_expression,)?;
-        writeln!(w, "\t\tclear => {},", clear_function_expression,)?;
+        writeln!(w, "\t\tinit => {init_function_expression},",)?;
+        writeln!(w, "\t\tcopy_into => {copy_into_function_expression},",)?;
+        writeln!(w, "\t\tclear => {clear_function_expression},",)?;
     }
 
-    writeln!(w, "\t\ttype_ => || {}::{}(),", sys_crate_name, get_type_fn)?;
+    writeln!(w, "\t\ttype_ => || {sys_crate_name}::{get_type_fn}(),")?;
     writeln!(w, "\t}}")?;
     writeln!(w, "}}")?;
 
@@ -591,19 +575,14 @@ fn define_shared_type_internal(
     derives(w, derive, 1)?;
     writeln!(
         w,
-        "\t{} struct {}(Shared<{}::{}>);",
-        visibility, type_name, sys_crate_name, glib_name
+        "\t{visibility} struct {type_name}(Shared<{sys_crate_name}::{glib_name}>);"
     )?;
     writeln!(w)?;
     writeln!(w, "\tmatch fn {{")?;
-    writeln!(w, "\t\tref => |ptr| {}::{}(ptr),", sys_crate_name, ref_fn)?;
-    writeln!(
-        w,
-        "\t\tunref => |ptr| {}::{}(ptr),",
-        sys_crate_name, unref_fn
-    )?;
+    writeln!(w, "\t\tref => |ptr| {sys_crate_name}::{ref_fn}(ptr),")?;
+    writeln!(w, "\t\tunref => |ptr| {sys_crate_name}::{unref_fn}(ptr),")?;
     if let Some(get_type_fn) = get_type_fn {
-        writeln!(w, "\t\ttype_ => || {}::{}(),", sys_crate_name, get_type_fn)?;
+        writeln!(w, "\t\ttype_ => || {sys_crate_name}::{get_type_fn}(),")?;
     }
     writeln!(w, "\t}}")?;
     writeln!(w, "}}")?;
@@ -675,7 +654,7 @@ pub fn cfg_deprecated(
     indent: usize,
 ) -> Result<()> {
     if let Some(s) = cfg_deprecated_string(env, type_tid, deprecated, commented, indent) {
-        writeln!(w, "{}", s)?;
+        writeln!(w, "{s}")?;
     }
     Ok(())
 }
@@ -712,7 +691,7 @@ pub fn version_condition(
     indent: usize,
 ) -> Result<()> {
     if let Some(s) = version_condition_string(env, ns_id, version, commented, indent) {
-        writeln!(w, "{}", s)?;
+        writeln!(w, "{s}")?;
     }
     Ok(())
 }
@@ -745,7 +724,7 @@ pub fn version_condition_no_doc(
             commented,
             indent,
         ) {
-            writeln!(w, "{}", s)?;
+            writeln!(w, "{s}")?;
         }
     }
     Ok(())
@@ -760,7 +739,7 @@ pub fn version_condition_doc(
     match version {
         Some(v) if v > env.config.min_cfg_version => {
             if let Some(s) = cfg_condition_string_doc(Some(&v.to_cfg(None)), commented, indent) {
-                writeln!(w, "{}", s)?;
+                writeln!(w, "{s}")?;
             }
         }
         _ => {}
@@ -809,7 +788,7 @@ pub fn not_version_condition(
     if let Some(s) = version.and_then(|v| {
         cfg_condition_string(Some(&format!("not({})", v.to_cfg(None))), commented, indent)
     }) {
-        writeln!(w, "{}", s)?;
+        writeln!(w, "{s}")?;
     }
     Ok(())
 }
@@ -837,7 +816,7 @@ pub fn not_version_condition_no_dox(
             comment,
             v.to_cfg(namespace_name.as_deref())
         );
-        writeln!(w, "{}", s)?;
+        writeln!(w, "{s}")?;
     }
     Ok(())
 }
@@ -849,7 +828,7 @@ pub fn cfg_condition(
     indent: usize,
 ) -> Result<()> {
     if let Some(s) = cfg_condition_string(cfg_condition, commented, indent) {
-        writeln!(w, "{}", s)?;
+        writeln!(w, "{s}")?;
     }
     Ok(())
 }
@@ -861,7 +840,7 @@ pub fn cfg_condition_no_doc(
     indent: usize,
 ) -> Result<()> {
     if let Some(s) = cfg_condition_string_no_doc(cfg_condition, commented, indent) {
-        writeln!(w, "{}", s)?;
+        writeln!(w, "{s}")?;
     }
     Ok(())
 }
@@ -889,7 +868,7 @@ pub fn cfg_condition_doc(
     indent: usize,
 ) -> Result<()> {
     if let Some(s) = cfg_condition_string_doc(cfg_condition, commented, indent) {
-        writeln!(w, "{}", s)?;
+        writeln!(w, "{s}")?;
     }
     Ok(())
 }
@@ -982,7 +961,7 @@ pub fn allow_deprecated(
 
 pub fn write_vec<T: Display>(w: &mut dyn Write, v: &[T]) -> Result<()> {
     for s in v {
-        writeln!(w, "{}", s)?;
+        writeln!(w, "{s}")?;
     }
     Ok(())
 }
@@ -1006,12 +985,11 @@ pub fn declare_default_from_new(
             version_condition(w, env, None, func.version, false, 0)?;
             writeln!(
                 w,
-                "impl Default for {} {{
+                "impl Default for {name} {{
                      fn default() -> Self {{
                          Self::new()
                      }}
-                 }}",
-                name
+                 }}"
             )?;
         } else if has_builder {
             // create an alternative default implementation the uses `glib::object::Object::new()`
@@ -1019,12 +997,11 @@ pub fn declare_default_from_new(
             version_condition(w, env, None, func.version, false, 0)?;
             writeln!(
                 w,
-                "impl Default for {0} {{
+                "impl Default for {name} {{
                      fn default() -> Self {{
                          glib::object::Object::new_default::<Self>()
                      }}
-                 }}",
-                name
+                 }}"
             )?;
         }
     }

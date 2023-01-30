@@ -33,7 +33,7 @@ impl FromStr for Type {
             "ref" | "ref_" => Ok(Self::Ref),
             "unref" => Ok(Self::Unref),
             "hash" => Ok(Self::Hash),
-            _ => Err(format!("Unknown type '{}'", s)),
+            _ => Err(format!("Unknown type '{s}'")),
         }
     }
 }

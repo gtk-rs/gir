@@ -168,7 +168,7 @@ pub fn generate_reexports(
         cfg.push('\n');
     };
     contents.push(String::new());
-    contents.push(format!("{}mod {};", cfg, module_name));
+    contents.push(format!("{cfg}mod {module_name};"));
     contents.push(format!(
         "{}{} use self::{}::{};",
         cfg,

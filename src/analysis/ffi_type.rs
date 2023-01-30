@@ -33,7 +33,7 @@ pub fn ffi_type(env: &Env, tid: TypeId, c_type: &str) -> Result {
                 match env.library.type_(tid) {
                     Type::FixedArray(_, size, _) => {
                         ffi_inner(env, c_tid, c_type).map_any(|rust_type| {
-                            rust_type.alter_type(|typ_| format!("[{}; {}]", typ_, size))
+                            rust_type.alter_type(|typ_| format!("[{typ_}; {size}]"))
                         })
                     }
                     Type::Class(Class {
@@ -44,7 +44,7 @@ pub fn ffi_type(env: &Env, tid: TypeId, c_type: &str) -> Result {
                     }) if is_gpointer(c_type) => {
                         info!("[c:type `gpointer` instead of `*mut {}`, fixing]", expected);
                         ffi_inner(env, tid, expected).map_any(|rust_type| {
-                            rust_type.alter_type(|typ_| format!("*mut {}", typ_))
+                            rust_type.alter_type(|typ_| format!("*mut {typ_}"))
                         })
                     }
                     _ => ffi_inner(env, c_tid, c_type),
@@ -60,7 +60,7 @@ pub fn ffi_type(env: &Env, tid: TypeId, c_type: &str) -> Result {
     } else {
         // ptr not empty
         ffi_inner(env, tid, &inner)
-            .map_any(|rust_type| rust_type.alter_type(|typ_| format!("{} {}", ptr, typ_)))
+            .map_any(|rust_type| rust_type.alter_type(|typ_| format!("{ptr} {typ_}")))
     };
     trace!("ffi_type({:?}, {}) -> {:?}", tid, c_type, res);
     res
@@ -124,7 +124,7 @@ fn ffi_inner(env: &Env, tid: TypeId, inner: &str) -> Result {
         }
         Type::CArray(inner_tid) => ffi_inner(env, inner_tid, inner),
         Type::FixedArray(inner_tid, size, _) => ffi_inner(env, inner_tid, inner)
-            .map_any(|rust_type| rust_type.alter_type(|typ_| format!("[{}; {}]", typ_, size))),
+            .map_any(|rust_type| rust_type.alter_type(|typ_| format!("[{typ_}; {size}]"))),
         Type::Array(..)
         | Type::PtrArray(..)
         | Type::List(..)
@@ -174,7 +174,7 @@ fn fix_name(env: &Env, type_id: TypeId, name: &str) -> Result {
             | Type::PtrArray(..)
             | Type::List(..)
             | Type::SList(..)
-            | Type::HashTable(..) => Ok(use_glib_if_needed(env, &format!("ffi::{}", name)).into()),
+            | Type::HashTable(..) => Ok(use_glib_if_needed(env, &format!("ffi::{name}")).into()),
             _ => Ok(name.into()),
         }
     } else {
@@ -189,7 +189,7 @@ fn fix_name(env: &Env, type_id: TypeId, name: &str) -> Result {
                 env.namespaces[type_id.ns_id].crate_name, sys_crate_name
             )
         };
-        let name_with_prefix = format!("{}::{}", sys_crate_name, name);
+        let name_with_prefix = format!("{sys_crate_name}::{name}");
         if env
             .type_status_sys(&type_id.full_name(&env.library))
             .ignored()

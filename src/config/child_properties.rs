@@ -27,7 +27,7 @@ impl Parse for ChildProperty {
 
         toml.check_unwanted(
             &["name", "type", "doc_hidden", "rename_getter"],
-            &format!("child property {}", object_name),
+            &format!("child property {object_name}"),
         );
 
         let type_name = toml

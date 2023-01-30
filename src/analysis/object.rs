@@ -116,7 +116,7 @@ impl Info {
             LocationInObject::Impl => (self.name.as_str().into(), self.name.as_str().into()),
             LocationInObject::ExtManual => {
                 let trait_name = format!("{}Manual", self.trait_name);
-                (format!("prelude::{}", trait_name).into(), trait_name.into())
+                (format!("prelude::{trait_name}").into(), trait_name.into())
             }
             LocationInObject::Ext => (
                 format!("prelude::{}", self.trait_name).into(),
@@ -181,7 +181,7 @@ pub fn class(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<Info>
         .trait_name
         .as_ref()
         .cloned()
-        .unwrap_or_else(|| format!("{}Ext", name));
+        .unwrap_or_else(|| format!("{name}Ext"));
     let is_fundamental = obj.fundamental_type.unwrap_or(klass.is_fundamental);
 
     let mut signatures = Signatures::with_capacity(klass.functions.len());
@@ -357,7 +357,7 @@ pub fn interface(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<I
         .trait_name
         .as_ref()
         .cloned()
-        .unwrap_or_else(|| format!("{}Ext", name));
+        .unwrap_or_else(|| format!("{name}Ext"));
 
     let mut signatures = Signatures::with_capacity(iface.functions.len());
 

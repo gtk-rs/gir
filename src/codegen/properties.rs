@@ -110,7 +110,7 @@ fn declaration(env: &Env, prop: &Property) -> String {
             .ref_mode(prop.get_out_ref_mode)
             .try_build_param()
             .into_string();
-        format!(" -> {}", ret_type)
+        format!(" -> {ret_type}")
     } else {
         String::new()
     };

@@ -19,7 +19,7 @@ impl FromStr for PropertyGenerateFlags {
             "get" => Ok(Self::GET),
             "set" => Ok(Self::SET),
             "notify" => Ok(Self::NOTIFY),
-            _ => Err(format!("Wrong property generate flag \"{}\"", s)),
+            _ => Err(format!("Wrong property generate flag \"{s}\"")),
         }
     }
 }
@@ -47,7 +47,7 @@ mod tests {
     use super::*;
 
     fn parse(val: &str) -> Result<PropertyGenerateFlags, String> {
-        let input = format!("generate={}", val);
+        let input = format!("generate={val}");
         let table: toml::Value = toml::from_str(&input).unwrap();
         let value = table.lookup("generate").unwrap();
         PropertyGenerateFlags::parse_flags(value, "generate")
