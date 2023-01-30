@@ -18,10 +18,7 @@ impl Parse for Derive {
                 return None;
             }
         };
-        toml.check_unwanted(
-            &["name", "cfg_condition"],
-            &format!("derive {}", object_name),
-        );
+        toml.check_unwanted(&["name", "cfg_condition"], &format!("derive {object_name}"));
 
         let cfg_condition = toml
             .lookup("cfg_condition")

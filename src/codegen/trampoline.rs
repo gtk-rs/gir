@@ -54,11 +54,11 @@ pub fn generate(
         use_glib_if_needed(env, "ffi::gpointer"),
         ret_str,
     )?;
-    writeln!(w, "{}\tlet f: &F = &*(f as *const F);", prepend)?;
+    writeln!(w, "{prepend}\tlet f: &F = &*(f as *const F);")?;
     transformation_vars(w, env, analysis, &prepend)?;
     let call = trampoline_call_func(env, analysis, in_trait);
-    writeln!(w, "{}\t{}", prepend, call)?;
-    writeln!(w, "{}}}", prepend)?;
+    writeln!(w, "{prepend}\t{call}")?;
+    writeln!(w, "{prepend}}}")?;
 
     Ok(())
 }
@@ -87,12 +87,9 @@ pub fn func_string(
             library::Concurrency::None => "",
         };
 
-        format!(
-            "Fn({}){}{} + 'static",
-            param_str, return_str, concurrency_str
-        )
+        format!("Fn({param_str}){return_str}{concurrency_str} + 'static")
     } else {
-        format!("({}){}", param_str, return_str,)
+        format!("({param_str}){return_str}",)
     }
 }
 
@@ -157,7 +154,7 @@ fn func_returns(env: &Env, analysis: &Trampoline) -> String {
             .ret
             .to_return_value(env, &TryFromGlib::default(), true)
     {
-        format!(" -> {}", return_type)
+        format!(" -> {return_type}")
     } else {
         String::new()
     }
@@ -229,7 +226,7 @@ fn trampoline_call_func(env: &Env, analysis: &Trampoline, in_trait: bool) -> Str
     } else {
         analysis.ret.trampoline_to_glib(env)
     };
-    format!("f({}){}", params, ret)
+    format!("f({params}){ret}")
 }
 
 fn trampoline_call_parameters(env: &Env, analysis: &Trampoline, in_trait: bool) -> String {

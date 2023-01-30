@@ -43,7 +43,7 @@ impl Parse for Property {
                 "doc_trait_name",
                 "generate_doc",
             ],
-            &format!("property {}", object_name),
+            &format!("property {object_name}"),
         );
 
         let status = {

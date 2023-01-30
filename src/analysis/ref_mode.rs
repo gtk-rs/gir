@@ -23,7 +23,7 @@ impl FromStr for RefMode {
             "ref-mut" => Ok(Self::ByRefMut),
             "ref-immut" => Ok(Self::ByRefImmut),
             "ref-fake" => Ok(Self::ByRefFake),
-            name => Err(format!("Unknown reference mode '{}'", name)),
+            name => Err(format!("Unknown reference mode '{name}'")),
         }
     }
 }

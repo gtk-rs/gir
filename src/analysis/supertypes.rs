@@ -42,18 +42,18 @@ pub fn analyze(
                     {
                         for import in rust_type.into_used_types() {
                             imports.add_with_version(
-                                &format!("crate::{}", import),
+                                &format!("crate::{import}"),
                                 Some(parent_version),
                             );
                         }
                     } else {
                         for import in rust_type.into_used_types() {
-                            imports.add(&format!("crate::{}", import));
+                            imports.add(&format!("crate::{import}"));
                         }
                     }
                 } else {
                     for import in rust_type.into_used_types() {
-                        imports.add(&format!("crate::{}", import));
+                        imports.add(&format!("crate::{import}"));
                     }
                 }
             }

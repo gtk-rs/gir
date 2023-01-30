@@ -40,7 +40,7 @@ impl Parse for Member {
                 "cfg_condition",
                 "generate_doc",
             ],
-            &format!("member {}", object_name),
+            &format!("member {object_name}"),
         );
 
         let alias = toml

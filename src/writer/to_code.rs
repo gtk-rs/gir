@@ -23,12 +23,12 @@ impl ToCode for Chunk {
                 format_block_smart("unsafe {", "}", &chs.to_code(env), " ", " ")
             }
             Unsafe(ref chs) => format_block("unsafe {", "}", &chs.to_code(env)),
-            FfiCallTODO(ref name) => vec![format!("TODO: call {}()", name)],
+            FfiCallTODO(ref name) => vec![format!("TODO: call {name}()")],
             FfiCall {
                 ref name,
                 ref params,
             } => {
-                let prefix = format!("{}(", name);
+                let prefix = format!("{name}(");
                 // TODO: change to format_block or format_block_smart
                 let s = format_block_one_line(&prefix, ")", &params.to_code(env), "", ", ");
                 vec![s]
@@ -74,13 +74,13 @@ impl ToCode for Chunk {
                     String::new()
                 };
                 let value_strings = value.to_code(env);
-                let prefix = format!("let {}{}{} = ", modif, name, type_string);
+                let prefix = format!("let {modif}{name}{type_string} = ");
                 let s = format_block_one_line(&prefix, ";", &value_strings, "", "");
                 vec![s]
             }
             Uninitialized => vec!["mem::MaybeUninit::uninit()".into()],
             UninitializedNamed { ref name } => {
-                let s = format!("{}::uninitialized()", name);
+                let s = format!("{name}::uninitialized()");
                 vec![s]
             }
             NullPtr => vec!["ptr::null()".into()],
@@ -113,7 +113,7 @@ impl ToCode for Chunk {
                 ref value,
             } => {
                 let value_strings = value.to_code(env);
-                let prefix = format!("if {} {{ Some(", condition);
+                let prefix = format!("if {condition} {{ Some(");
                 let suffix = ") } else { None }";
                 let s = format_block_one_line(&prefix, suffix, &value_strings, "", "");
                 vec![s]
@@ -147,12 +147,10 @@ impl ToCode for Chunk {
                 let mut v: Vec<String> = Vec::with_capacity(6);
                 if is_detailed {
                     v.push(format!(
-                        r#"let detailed_signal_name = detail.map(|name| {{ format!("{0}::{{name}}\0") }});"#,
-                        signal
+                        r#"let detailed_signal_name = detail.map(|name| {{ format!("{signal}::{{name}}\0") }});"#
                     ));
                     v.push(format!(
-                        r#"let signal_name: &[u8] = detailed_signal_name.as_ref().map_or(&b"{0}\0"[..], |n| n.as_bytes());"#,
-                        signal
+                        r#"let signal_name: &[u8] = detailed_signal_name.as_ref().map_or(&b"{signal}\0"[..], |n| n.as_bytes());"#
                     ));
                     v.push(
                         "connect_raw(self.as_ptr() as *mut _, signal_name.as_ptr() as *const _,"
@@ -160,14 +158,12 @@ impl ToCode for Chunk {
                     );
                 } else {
                     v.push(format!(
-                        "connect_raw(self.as_ptr() as *mut _, b\"{}\\0\".as_ptr() as *const _,",
-                        signal
+                        "connect_raw(self.as_ptr() as *mut _, b\"{signal}\\0\".as_ptr() as *const _,"
                     ));
                 }
                 let self_str = if in_trait { "Self, " } else { "" };
                 v.push(format!(
-                    "\tSome(transmute::<_, unsafe extern \"C\" fn()>({}::<{}F> as *const ())), Box_::into_raw(f))",
-                    trampoline, self_str
+                    "\tSome(transmute::<_, unsafe extern \"C\" fn()>({trampoline}::<{self_str}F> as *const ())), Box_::into_raw(f))"
                 ));
                 v
             }
@@ -179,7 +175,7 @@ impl ToCode for Chunk {
                 ref return_value,
                 ref bounds,
             } => {
-                let prefix = format!(r#"unsafe extern "C" fn {}{}("#, name, bounds);
+                let prefix = format!(r#"unsafe extern "C" fn {name}{bounds}("#);
                 let suffix = ")".to_string();
                 let params: Vec<_> = parameters
                     .iter()
@@ -187,7 +183,7 @@ impl ToCode for Chunk {
                     .collect();
                 let mut s = format_block_one_line(&prefix, &suffix, &params, "", ", ");
                 if let Some(return_value) = return_value {
-                    write!(s, " -> {}", return_value).unwrap();
+                    write!(s, " -> {return_value}").unwrap();
                 }
                 s.push_str(" {");
                 let mut code = format_block("", "}", &body.to_code(env));
@@ -197,14 +193,14 @@ impl ToCode for Chunk {
             Cast {
                 ref name,
                 ref type_,
-            } => vec![format!("{} as {}", name, type_)],
+            } => vec![format!("{name} as {type_}")],
             Call {
                 ref func_name,
                 ref arguments,
             } => {
                 let args: Vec<_> = arguments.iter().flat_map(|arg| arg.to_code(env)).collect();
                 let s = format_block_one_line("(", ")", &args, "", ",");
-                vec![format!("{}{};", func_name, s)]
+                vec![format!("{func_name}{s};")]
             }
         }
     }

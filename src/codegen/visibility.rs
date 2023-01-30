@@ -50,10 +50,7 @@ impl FromStr for Visibility {
             "super" => Ok(Self::Super),
             "private" => Ok(Self::Private),
             "crate" => Ok(Self::Crate),
-            e => Err(ParseVisibilityError(format!(
-                "Wrong visibility type '{}'",
-                e
-            ))),
+            e => Err(ParseVisibilityError(format!("Wrong visibility type '{e}'"))),
         }
     }
 }

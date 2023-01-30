@@ -28,10 +28,8 @@ pub enum GiDocgenError {
 impl Display for GiDocgenError {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         match self {
-            Self::InvalidLinkType(e) => f.write_str(&format!("Invalid link type \"{}\"", e)),
-            Self::BrokenLinkType(e) => {
-                f.write_str(&format!("Broken link syntax for type \"{}\"", e))
-            }
+            Self::InvalidLinkType(e) => f.write_str(&format!("Invalid link type \"{e}\"")),
+            Self::BrokenLinkType(e) => f.write_str(&format!("Broken link syntax for type \"{e}\"")),
             Self::InvalidLink => f.write_str("Invalid link syntax"),
         }
     }
@@ -192,7 +190,7 @@ pub enum GiDocgen {
 
 fn ns_type_to_doc(namespace: &Option<String>, type_: &str) -> String {
     if let Some(ns) = namespace {
-        format!("{}::{}", ns, type_)
+        format!("{ns}::{type_}")
     } else {
         type_.to_string()
     }
@@ -333,7 +331,7 @@ impl GiDocgen {
                     },
                 ),
             GiDocgen::Id(c_name) => symbols.by_c_name(c_name).map_or_else(
-                || format!("`{}`", c_name),
+                || format!("`{c_name}`"),
                 |sym| format!("[`{n}`][crate::{n}]", n = sym.full_rust_name()),
             ),
             GiDocgen::Struct { namespace, type_ } => env
@@ -380,7 +378,7 @@ impl GiDocgen {
                 if let Some(ty) = type_ {
                     format!("`{}::{}()`", ns_type_to_doc(namespace, ty), name)
                 } else {
-                    format!("`{}()`", name)
+                    format!("`{name}()`")
                 }
             }),
             GiDocgen::Alias(alias) => gen_alias_doc_link(alias),

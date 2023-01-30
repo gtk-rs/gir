@@ -25,7 +25,7 @@ pub fn repo_hash(path: impl AsRef<Path>) -> Option<String> {
     let hash = hash.trim_end_matches('\n');
 
     if dirty(path) {
-        Some(format!("{}+", hash))
+        Some(format!("{hash}+"))
     } else {
         Some(hash.into())
     }
@@ -104,5 +104,5 @@ pub(crate) fn repo_remote_url(path: impl AsRef<Path>) -> Option<String> {
         .strip_suffix(".path")
         .expect("submodule.<subsection>.path should end with '.path'");
 
-    gitmodules_config(&["--get", &format!("{}.url", subsection)])
+    gitmodules_config(&["--get", &format!("{subsection}.url")])
 }

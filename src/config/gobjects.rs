@@ -55,7 +55,7 @@ impl FromStr for GStatus {
             "manual" => Ok(Self::Manual),
             "generate" => Ok(Self::Generate),
             "ignore" => Ok(Self::Ignore),
-            e => Err(format!("Wrong object status: \"{}\"", e)),
+            e => Err(format!("Wrong object status: \"{e}\"")),
         }
     }
 }
@@ -279,7 +279,7 @@ fn parse_object(
             "default_value",
             "generate_doc",
         ],
-        &format!("object {}", name),
+        &format!("object {name}"),
     );
 
     let status = match toml_object.lookup("status") {
@@ -294,7 +294,7 @@ fn parse_object(
     let mut function_names = HashSet::new();
     for f in &functions {
         if let Ident::Name(name) = &f.ident {
-            assert!(function_names.insert(name), "{} already defined!", name);
+            assert!(function_names.insert(name), "{name} already defined!");
         }
     }
 
@@ -545,7 +545,7 @@ fn parse_status_shorthand(
     generate_builder: bool,
     trust_return_value_nullability: bool,
 ) {
-    let option_name = format!("options.{:?}", status).to_ascii_lowercase();
+    let option_name = format!("options.{status:?}").to_ascii_lowercase();
     if let Some(a) = toml.lookup(&option_name).map(|a| a.as_array().unwrap()) {
         for name in a.iter().map(|s| s.as_str().unwrap()) {
             match objects.get(name) {
@@ -563,7 +563,7 @@ fn parse_status_shorthand(
                         },
                     );
                 }
-                Some(_) => panic!("Bad name in {}: {} already defined", option_name, name),
+                Some(_) => panic!("Bad name in {option_name}: {name} already defined"),
             }
         }
     }

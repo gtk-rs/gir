@@ -62,15 +62,11 @@ impl Library {
                 self.namespace(id)
                     .unresolved()
                     .into_iter()
-                    .map(move |s| format!("{}.{}", name, s))
+                    .map(move |s| format!("{name}.{s}"))
             })
             .collect();
 
-        assert!(
-            list.is_empty(),
-            "Incomplete library, unresolved: {:?}",
-            list
-        );
+        assert!(list.is_empty(), "Incomplete library, unresolved: {list:?}");
     }
 
     fn fill_empty_signals_c_types(&mut self) {
@@ -175,7 +171,7 @@ impl Library {
         let type_ = self.type_(tid);
         type_.get_glib_name().map(|glib_name| {
             if self.is_referenced_type(type_) {
-                format!("{}*", glib_name)
+                format!("{glib_name}*")
             } else {
                 glib_name.to_string()
             }
@@ -257,9 +253,7 @@ impl Library {
                     let type_struct_tid = self.find_type(ns_id as u16, type_struct);
                     assert!(
                         type_struct_tid.is_some(),
-                        "\"{}\" has glib:type-struct=\"{}\" but there is no such record",
-                        name,
-                        type_struct
+                        "\"{name}\" has glib:type-struct=\"{type_struct}\" but there is no such record"
                     );
 
                     let type_struct_type = self.type_(type_struct_tid.unwrap());
@@ -281,14 +275,11 @@ impl Library {
                         }
                     } else {
                         panic!(
-                            "Element with name=\"{}\" should be a record but it isn't",
-                            type_struct
+                            "Element with name=\"{type_struct}\" should be a record but it isn't"
                         );
                     }
                 } else if let Some(c) = c_class_type {
-                    panic!("\"{}\" has no glib:type-struct but there is an element with glib:is-gtype-struct-for=\"{}\"",
-                           name,
-                           c);
+                    panic!("\"{name}\" has no glib:type-struct but there is an element with glib:is-gtype-struct-for=\"{c}\"");
                 }
                 // else both type_struct and c_class_type are None,
                 // and that's fine because they don't reference each
@@ -512,14 +503,14 @@ impl Library {
 
                         let mut function_candidates = vec![domain.clone()];
                         if !domain.ends_with("_quark") {
-                            function_candidates.push(format!("{}_quark", domain));
+                            function_candidates.push(format!("{domain}_quark"));
                         }
                         if !domain.ends_with("_error_quark") {
                             if domain.ends_with("_quark") {
                                 function_candidates
                                     .push(format!("{}_error_quark", &domain[..(domain.len() - 6)]));
                             } else {
-                                function_candidates.push(format!("{}_error_quark", domain));
+                                function_candidates.push(format!("{domain}_error_quark"));
                             }
                         }
                         if let Some(domain) = domain.strip_suffix("_error_quark") {

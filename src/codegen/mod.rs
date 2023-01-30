@@ -157,12 +157,11 @@ pub fn generate_default_impl<
         writeln!(
             w,
             "\n\
-             impl Default for {} {{\n\
+             impl Default for {type_name} {{\n\
              \tfn default() -> Self {{\n\
-             \t\tSelf::{}\n\
+             \t\tSelf::{member_name}\n\
              \t}}\n\
              }}\n",
-            type_name, member_name,
         )
     } else {
         Ok(())

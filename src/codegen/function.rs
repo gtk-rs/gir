@@ -48,7 +48,7 @@ pub fn get_must_use_if_needed(
             // If there is only one type returned, we check if it's the same type as `self`
             // (stored in `parent_type_id`).
             if [parent_type_id] == *outs.as_slice() {
-                return Some(format!("{}#[must_use]\n", comment_prefix));
+                return Some(format!("{comment_prefix}#[must_use]\n"));
             }
         }
     }
@@ -213,7 +213,7 @@ pub fn declaration(env: &Env, analysis: &analysis::functions::Info) -> String {
             .map_or(&TryFromGlib::Default, |par| &par.try_from_glib),
         false,
     ) {
-        format!(" -> {}", return_type)
+        format!(" -> {return_type}")
     } else {
         String::new()
     };
@@ -314,7 +314,7 @@ pub fn bounds(
     let lifetimes = bounds
         .iter_lifetimes()
         .filter(|s| !skip_lifetimes.contains(s))
-        .map(|s| format!("'{}", s))
+        .map(|s| format!("'{s}"))
         .collect::<Vec<_>>();
 
     let bounds = bounds.iter().filter(|bound| {
@@ -454,14 +454,12 @@ pub fn body_chunk_futures(
     if async_future.is_method {
         writeln!(
             body,
-            "Box_::pin({}::new(self, move |obj, cancellable, send| {{",
-            gio_future_name
+            "Box_::pin({gio_future_name}::new(self, move |obj, cancellable, send| {{"
         )?;
     } else {
         writeln!(
             body,
-            "Box_::pin({}::new(&(), move |_obj, cancellable, send| {{",
-            gio_future_name
+            "Box_::pin({gio_future_name}::new(&(), move |_obj, cancellable, send| {{"
         )?;
     }
 

@@ -24,7 +24,7 @@ pub fn ffi_type(env: &Env, tid: library::TypeId, c_type: &str) -> Result {
                     Type::FixedArray(inner_tid, size, ref inner_c_type) => {
                         let inner_c_type = inner_c_type.as_ref().map_or(c_type, String::as_str);
                         ffi_type(env, inner_tid, inner_c_type).map_any(|rust_type| {
-                            rust_type.alter_type(|typ_| format!("[{}; {}]", typ_, size))
+                            rust_type.alter_type(|typ_| format!("[{typ_}; {size}]"))
                         })
                     }
                     Type::Class(Class {
@@ -37,7 +37,7 @@ pub fn ffi_type(env: &Env, tid: library::TypeId, c_type: &str) -> Result {
                     }) if c_type == "gpointer" => {
                         info!("[c:type `gpointer` instead of `*mut {}`, fixing]", expected);
                         ffi_inner(env, tid, expected.clone()).map_any(|rust_type| {
-                            rust_type.alter_type(|typ_| format!("*mut {}", typ_))
+                            rust_type.alter_type(|typ_| format!("*mut {typ_}"))
                         })
                     }
                     _ => ffi_inner(env, c_tid, c_type.into()),
@@ -53,7 +53,7 @@ pub fn ffi_type(env: &Env, tid: library::TypeId, c_type: &str) -> Result {
     } else {
         // ptr not empty
         ffi_inner(env, tid, inner)
-            .map_any(|rust_type| rust_type.alter_type(|typ_| format!("{} {}", ptr, typ_)))
+            .map_any(|rust_type| rust_type.alter_type(|typ_| format!("{ptr} {typ_}")))
     };
     trace!("ffi_type({:?}, {}) -> {:?}", tid, c_type, res);
     res
@@ -136,7 +136,7 @@ fn ffi_inner(env: &Env, tid: library::TypeId, mut inner: String) -> Result {
                 .as_ref()
                 .map_or_else(|| inner.as_str(), String::as_str);
             ffi_type(env, inner_tid, inner_c_type)
-                .map_any(|rust_type| rust_type.alter_type(|typ_| format!("[{}; {}]", typ_, size)))
+                .map_any(|rust_type| rust_type.alter_type(|typ_| format!("[{typ_}; {size}]")))
         }
         Type::Array(..)
         | Type::PtrArray(..)
@@ -148,7 +148,7 @@ fn ffi_inner(env: &Env, tid: library::TypeId, mut inner: String) -> Result {
                 if inner != glib_name {
                     if inner == "gpointer" {
                         fix_name(env, tid, glib_name).map_any(|rust_type| {
-                            rust_type.alter_type(|typ_| format!("*mut {}", typ_))
+                            rust_type.alter_type(|typ_| format!("*mut {typ_}"))
                         })
                     } else if implements_c_type(env, tid, &inner) {
                         info!(
@@ -184,7 +184,7 @@ fn ffi_inner(env: &Env, tid: library::TypeId, mut inner: String) -> Result {
     };
 
     if volatile {
-        res.map(|rust_type| rust_type.alter_type(|typ_| format!("/*volatile*/{}", typ_)))
+        res.map(|rust_type| rust_type.alter_type(|typ_| format!("/*volatile*/{typ_}")))
     } else {
         res
     }

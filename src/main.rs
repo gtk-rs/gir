@@ -7,8 +7,7 @@ use libgir::{self as gir, Config, Library, WorkMode};
 fn print_usage(program: &str, opts: Options) {
     let brief = format!(
         "Usage: {program} [options] [<library> <version>]
-       {program} (-h | --help)",
-        program = program
+       {program} (-h | --help)"
     );
     print!("{}", opts.usage(&brief));
 }
@@ -80,7 +79,7 @@ fn build_config() -> Result<RunKind, String> {
         Some(s) => match WorkMode::from_str(&s) {
             Ok(w) => Some(w),
             Err(e) => {
-                eprintln!("Error (switching to default work mode): {}", e);
+                eprintln!("Error (switching to default work mode): {e}");
                 None
             }
         },
@@ -104,18 +103,17 @@ fn build_config() -> Result<RunKind, String> {
 fn run_check(check_gir_file: &str) -> Result<(), String> {
     let path = PathBuf::from(check_gir_file);
     if !path.is_file() {
-        return Err(format!("`{}`: file not found", check_gir_file));
+        return Err(format!("`{check_gir_file}`: file not found",));
     }
     let lib_name = path
         .file_stem()
-        .ok_or(format!("Failed to get file stem from `{}`", check_gir_file))?;
+        .ok_or(format!("Failed to get file stem from `{check_gir_file}`",))?;
     let lib_name = lib_name
         .to_str()
         .ok_or_else(|| "failed to convert OsStr to str".to_owned())?;
     let mut library = Library::new(lib_name);
     let parent = path.parent().ok_or(format!(
-        "Failed to get parent directory from `{}`",
-        check_gir_file
+        "Failed to get parent directory from `{check_gir_file}`",
     ))?;
 
     library.read_file(&[parent], &mut vec![lib_name.to_owned()])

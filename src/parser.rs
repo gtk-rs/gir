@@ -52,7 +52,7 @@ impl Library {
                 match (elem.attr("name"), elem.attr("version")) {
                     (Some(name), Some(ver)) => {
                         if self.find_namespace(name).is_none() {
-                            let lib = format!("{}-{}", name, ver);
+                            let lib = format!("{name}-{ver}");
                             if libs.iter().any(|x| *x == lib) {
                                 return Err(format!(
                                     "`{}` includes itself (full path:`{}`)!",
@@ -212,12 +212,12 @@ impl Library {
                     let field_name = if let Some(field_name) = elem.attr("name") {
                         field_name.into()
                     } else {
-                        format!("u{}", union_count)
+                        format!("u{union_count}")
                     };
 
                     u = Union {
-                        name: format!("{}_{}", class_name, field_name),
-                        c_type: Some(format!("{}_{}", c_type, field_name)),
+                        name: format!("{class_name}_{field_name}"),
+                        c_type: Some(format!("{c_type}_{field_name}")),
                         ..u
                     };
 
@@ -318,19 +318,19 @@ impl Library {
                     let field_name = if let Some(field_name) = elem.attr("name") {
                         field_name.into()
                     } else {
-                        format!("u{}", union_count)
+                        format!("u{union_count}")
                     };
 
                     u = Union {
                         name: format!(
                             "{}{}_{}",
-                            parent_name_prefix.map_or_else(String::new, |s| { format!("{}_", s) }),
+                            parent_name_prefix.map_or_else(String::new, |s| { format!("{s}_") }),
                             record_name,
                             field_name
                         ),
                         c_type: Some(format!(
                             "{}{}_{}",
-                            parent_ctype_prefix.map_or_else(String::new, |s| { format!("{}_", s) }),
+                            parent_ctype_prefix.map_or_else(String::new, |s| { format!("{s}_") }),
                             c_type,
                             field_name
                         )),
@@ -463,19 +463,19 @@ impl Library {
                 let field_name = if let Some(field_name) = elem.attr("name") {
                     field_name.into()
                 } else {
-                    format!("s{}", struct_count)
+                    format!("s{struct_count}")
                 };
 
                 r = Record {
                     name: format!(
                         "{}{}_{}",
-                        parent_name_prefix.map_or_else(String::new, |s| { format!("{}_", s) }),
+                        parent_name_prefix.map_or_else(String::new, |s| { format!("{s}_") }),
                         union_name,
                         field_name
                     ),
                     c_type: format!(
                         "{}{}_{}",
-                        parent_ctype_prefix.map_or_else(String::new, |s| { format!("{}_", s) }),
+                        parent_ctype_prefix.map_or_else(String::new, |s| { format!("{s}_") }),
                         c_type,
                         field_name
                     ),
@@ -1380,7 +1380,7 @@ impl Library {
                     self.register_version(ns_id, v);
                     Ok(Some(v))
                 }
-                Err(e) => Err(parser.fail(&format!("Invalid `{}` attribute: {}", attr, e))),
+                Err(e) => Err(parser.fail(&format!("Invalid `{attr}` attribute: {e}"))),
             }
         } else {
             Ok(None)
@@ -1405,7 +1405,7 @@ impl Library {
 
 fn make_file_name(dir: &Path, name: &str) -> PathBuf {
     let mut path = dir.to_path_buf();
-    let name = format!("{}.gir", name);
+    let name = format!("{name}.gir");
     path.push(name);
     path
 }

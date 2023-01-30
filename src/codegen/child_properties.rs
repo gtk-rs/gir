@@ -89,7 +89,7 @@ fn declaration(env: &Env, prop: &ChildProperty, is_get: bool) -> String {
     };
     let mut bounds = if let Some(typ) = prop.child_type {
         let child_type = RustType::try_new(env, typ).into_string();
-        format!("T: IsA<{}>", child_type)
+        format!("T: IsA<{child_type}>")
     } else {
         format!("T: IsA<{}>", use_gtk_type(env, "Widget"))
     };
@@ -104,7 +104,7 @@ fn declaration(env: &Env, prop: &ChildProperty, is_get: bool) -> String {
             .ref_mode(prop.get_out_ref_mode)
             .try_build_param()
             .into_string();
-        format!(" -> {}", ret_type)
+        format!(" -> {ret_type}")
     } else {
         String::new()
     };

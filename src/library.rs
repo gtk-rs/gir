@@ -26,7 +26,7 @@ impl FromStr for Transfer {
             "none" => Ok(Self::None),
             "container" => Ok(Self::Container),
             "full" => Ok(Self::Full),
-            _ => Err(format!("Unknown ownership transfer mode '{}'", name)),
+            _ => Err(format!("Unknown ownership transfer mode '{name}'")),
         }
     }
 }
@@ -58,7 +58,7 @@ impl FromStr for ParameterDirection {
             "in" => Ok(Self::In),
             "out" => Ok(Self::Out),
             "inout" => Ok(Self::InOut),
-            _ => Err(format!("Unknown parameter direction '{}'", name)),
+            _ => Err(format!("Unknown parameter direction '{name}'")),
         }
     }
 }
@@ -106,7 +106,7 @@ impl FromStr for ParameterScope {
             "call" => Ok(Self::Call),
             "async" => Ok(Self::Async),
             "notified" => Ok(Self::Notified),
-            _ => Err(format!("Unknown parameter scope type: {}", name)),
+            _ => Err(format!("Unknown parameter scope type: {name}")),
         }
     }
 }
@@ -164,7 +164,7 @@ impl FromStr for FunctionKind {
             "method" => Ok(Self::Method),
             "callback" => Ok(Self::Function),
             "global" => Ok(Self::Global),
-            _ => Err(format!("Unknown function kind '{}'", name)),
+            _ => Err(format!("Unknown function kind '{name}'")),
         }
     }
 }
@@ -184,7 +184,7 @@ impl FromStr for Concurrency {
             "none" => Ok(Self::None),
             "send" => Ok(Self::Send),
             "send+sync" => Ok(Self::SendSync),
-            _ => Err(format!("Unknown concurrency kind '{}'", name)),
+            _ => Err(format!("Unknown concurrency kind '{name}'")),
         }
     }
 }
@@ -677,7 +677,7 @@ impl fmt::Display for Type {
 impl Type {
     pub fn get_name(&self) -> String {
         match self {
-            Self::Basic(basic) => format!("{:?}", basic),
+            Self::Basic(basic) => format!("{basic:?}"),
             Self::Alias(alias) => alias.name.clone(),
             Self::Enumeration(enum_) => enum_.name.clone(),
             Self::Bitfield(bit_field) => bit_field.name.clone(),
@@ -685,17 +685,17 @@ impl Type {
             Self::Union(u) => u.name.clone(),
             Self::Function(func) => func.name.clone(),
             Self::Interface(interface) => interface.name.clone(),
-            Self::Array(type_id) => format!("Array {:?}", type_id),
+            Self::Array(type_id) => format!("Array {type_id:?}"),
             Self::Class(class) => class.name.clone(),
             Self::Custom(custom) => custom.name.clone(),
-            Self::CArray(type_id) => format!("CArray {:?}", type_id),
-            Self::FixedArray(type_id, size, _) => format!("FixedArray {:?}; {}", type_id, size),
-            Self::PtrArray(type_id) => format!("PtrArray {:?}", type_id),
+            Self::CArray(type_id) => format!("CArray {type_id:?}"),
+            Self::FixedArray(type_id, size, _) => format!("FixedArray {type_id:?}; {size}"),
+            Self::PtrArray(type_id) => format!("PtrArray {type_id:?}"),
             Self::HashTable(key_type_id, value_type_id) => {
-                format!("HashTable {:?}/{:?}", key_type_id, value_type_id)
+                format!("HashTable {key_type_id:?}/{value_type_id:?}")
             }
-            Self::List(type_id) => format!("List {:?}", type_id),
-            Self::SList(type_id) => format!("SList {:?}", type_id),
+            Self::List(type_id) => format!("List {type_id:?}"),
+            Self::SList(type_id) => format!("SList {type_id:?}"),
         }
     }
 
@@ -757,14 +757,14 @@ impl Type {
         let name = Self::c_array_internal_name(inner, size, &None);
         library
             .find_type(INTERNAL_NAMESPACE, &name)
-            .unwrap_or_else(|| panic!("No type for '*.{}'", name))
+            .unwrap_or_else(|| panic!("No type for '*.{name}'"))
     }
 
     fn c_array_internal_name(inner: TypeId, size: Option<u16>, c_type: &Option<String>) -> String {
         if let Some(size) = size {
-            format!("[#{:?}; {};{:?}]", inner, size, c_type)
+            format!("[#{inner:?}; {size};{c_type:?}]")
         } else {
-            format!("[#{:?}]", inner)
+            format!("[#{inner:?}]")
         }
     }
 
@@ -772,27 +772,27 @@ impl Type {
         match (name, inner.len()) {
             ("GLib.Array", 1) => {
                 let tid = inner.remove(0);
-                Some((format!("Array(#{:?})", tid), Self::Array(tid)))
+                Some((format!("Array(#{tid:?})"), Self::Array(tid)))
             }
             ("GLib.PtrArray", 1) => {
                 let tid = inner.remove(0);
-                Some((format!("PtrArray(#{:?})", tid), Self::PtrArray(tid)))
+                Some((format!("PtrArray(#{tid:?})"), Self::PtrArray(tid)))
             }
             ("GLib.HashTable", 2) => {
                 let k_tid = inner.remove(0);
                 let v_tid = inner.remove(0);
                 Some((
-                    format!("HashTable(#{:?}, #{:?})", k_tid, v_tid),
+                    format!("HashTable(#{k_tid:?}, #{v_tid:?})"),
                     Self::HashTable(k_tid, v_tid),
                 ))
             }
             ("GLib.List", 1) => {
                 let tid = inner.remove(0);
-                Some((format!("List(#{:?})", tid), Self::List(tid)))
+                Some((format!("List(#{tid:?})"), Self::List(tid)))
             }
             ("GLib.SList", 1) => {
                 let tid = inner.remove(0);
-                Some((format!("SList(#{:?})", tid), Self::SList(tid)))
+                Some((format!("SList(#{tid:?})"), Self::SList(tid)))
             }
             _ => None,
         }
@@ -803,19 +803,19 @@ impl Type {
         let mut param_tids: Vec<TypeId> = func.parameters.iter().map(|p| p.typ).collect();
         param_tids.push(func.ret.typ);
         let typ = Self::Function(func);
-        library.add_type(INTERNAL_NAMESPACE, &format!("fn<#{:?}>", param_tids), typ)
+        library.add_type(INTERNAL_NAMESPACE, &format!("fn<#{param_tids:?}>"), typ)
     }
 
     pub fn union(library: &mut Library, u: Union, ns_id: u16) -> TypeId {
         let field_tids: Vec<TypeId> = u.fields.iter().map(|f| f.typ).collect();
         let typ = Self::Union(u);
-        library.add_type(ns_id, &format!("#{:?}", field_tids), typ)
+        library.add_type(ns_id, &format!("#{field_tids:?}"), typ)
     }
 
     pub fn record(library: &mut Library, r: Record, ns_id: u16) -> TypeId {
         let field_tids: Vec<TypeId> = r.fields.iter().map(|f| f.typ).collect();
         let typ = Self::Record(r);
-        library.add_type(ns_id, &format!("#{:?}", field_tids), typ)
+        library.add_type(ns_id, &format!("#{field_tids:?}"), typ)
     }
 
     pub fn functions(&self) -> &[Function] {
@@ -1066,7 +1066,7 @@ impl Library {
 
         for x in self.namespace(MAIN_NAMESPACE).types.iter().flatten() {
             let name = x.get_name();
-            let full_name = format!("{}.{}", namespace_name, name);
+            let full_name = format!("{namespace_name}.{name}");
             let mut check_methods = true;
 
             if !not_allowed_ending.iter().any(|s| name.ends_with(s))
@@ -1082,9 +1082,9 @@ impl Library {
                 {
                     check_methods = false;
                     if let Some(version) = version {
-                        println!("[NOT GENERATED] {} (deprecated in {})", full_name, version);
+                        println!("[NOT GENERATED] {full_name} (deprecated in {version})");
                     } else {
-                        println!("[NOT GENERATED] {}", full_name);
+                        println!("[NOT GENERATED] {full_name}");
                     }
                 } else if let Type::Class(Class { properties, .. }) = x {
                     if !env
@@ -1096,7 +1096,7 @@ impl Library {
                             .iter()
                             .any(|prop| prop.construct_only || prop.construct || prop.writable)
                     {
-                        println!("[NOT GENERATED BUILDER] {}Builder", full_name);
+                        println!("[NOT GENERATED BUILDER] {full_name}Builder");
                     }
                 }
             }
@@ -1117,18 +1117,17 @@ impl Library {
                     {
                         if let Some(version) = ty.get_deprecated_version() {
                             println!(
-                                "[NOT GENERATED PARENT] {} (deprecated in {})",
-                                full_parent_name, version
+                                "[NOT GENERATED PARENT] {full_parent_name} (deprecated in {version})"
                             );
                         } else {
-                            println!("[NOT GENERATED PARENT] {}", full_parent_name);
+                            println!("[NOT GENERATED PARENT] {full_parent_name}");
                         }
                     }
                 }
                 if check_methods {
                     self.not_bound_functions(
                         env,
-                        &format!("{}::", full_name),
+                        &format!("{full_name}::"),
                         x.functions(),
                         "METHOD",
                     );
@@ -1137,7 +1136,7 @@ impl Library {
         }
         self.not_bound_functions(
             env,
-            &format!("{}.", namespace_name),
+            &format!("{namespace_name}."),
             &self.namespace(MAIN_NAMESPACE).functions,
             "FUNCTION",
         );
@@ -1200,15 +1199,14 @@ impl Library {
             if !errors.is_empty() {
                 let full_name = format!("{}{}", prefix, func.name);
                 let deprecated_version = match version {
-                    Some(dv) => format!(" (deprecated in {})", dv),
+                    Some(dv) => format!(" (deprecated in {dv})"),
                     None => String::new(),
                 };
                 if errors.len() > 1 {
                     let end = errors.pop().unwrap();
                     let begin = errors.join(", ");
                     println!(
-                        "[NOT GENERATED {}] {}{} because of {} and {}",
-                        kind, full_name, deprecated_version, begin, end
+                        "[NOT GENERATED {kind}] {full_name}{deprecated_version} because of {begin} and {end}"
                     );
                 } else {
                     println!(

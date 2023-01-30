@@ -35,7 +35,7 @@ impl ToParameter for CParameter {
                         .try_build_param()
                         .into_string();
                     match ConversionType::of(env, self.typ) {
-                        ConversionType::Unknown => format!("/*Unknown conversion*/{}", type_name),
+                        ConversionType::Unknown => format!("/*Unknown conversion*/{type_name}"),
                         _ => type_name,
                     }
                 }

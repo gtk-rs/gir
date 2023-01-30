@@ -18,6 +18,6 @@ fn main() {
     let ver = git::repo_hash(".").unwrap_or_else(|| "???".into());
 
     File::create("src/gir_version.rs")
-        .and_then(|mut f| writeln!(f, "pub const VERSION: &str = \"{}\";", ver))
+        .and_then(|mut f| writeln!(f, "pub const VERSION: &str = \"{ver}\";",))
         .unwrap();
 }

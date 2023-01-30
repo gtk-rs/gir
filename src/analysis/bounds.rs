@@ -138,9 +138,9 @@ impl Bounds {
                         let error_type = find_error_type(env, function);
                         if let Some(ref error) = error_type {
                             type_string =
-                                format!("FnOnce(Result<{}, {}>) + 'static", parameters, error);
+                                format!("FnOnce(Result<{parameters}, {error}>) + 'static");
                         } else {
-                            type_string = format!("FnOnce({}) + 'static", parameters);
+                            type_string = format!("FnOnce({parameters}) + 'static");
                         }
                         let bound_name = *self.unused.front().unwrap();
                         callback_info = Some(CallbackInfo {

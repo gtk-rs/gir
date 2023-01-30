@@ -203,7 +203,7 @@ fn generate_object_funcs(
             w,
             "    //========================================================================="
         )?;
-        writeln!(w, "    // {}", c_type)?;
+        writeln!(w, "    // {c_type}")?;
         writeln!(
             w,
             "    //========================================================================="
@@ -222,7 +222,7 @@ fn generate_object_funcs(
                 .flatten();
             version_condition(w, env, None, version, false, 1)?;
             generate_cfg_configure(w, &configured_functions, false)?;
-            writeln!(w, "    pub fn {}() -> GType;", glib_get_type)?;
+            writeln!(w, "    pub fn {glib_get_type}() -> GType;")?;
         }
     }
 
@@ -252,7 +252,7 @@ fn generate_object_funcs(
         version_condition(w, env, None, version, commented, 1)?;
         let name = func.c_identifier.as_ref().unwrap();
         generate_cfg_configure(w, &configured_functions, commented)?;
-        writeln!(w, "    {}pub fn {}{};", comment, name, sig)?;
+        writeln!(w, "    {comment}pub fn {name}{sig};")?;
     }
 
     Ok(())

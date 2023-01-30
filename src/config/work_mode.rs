@@ -27,7 +27,7 @@ impl FromStr for WorkMode {
             "sys" => Ok(Self::Sys),
             "doc" => Ok(Self::Doc),
             "not_bound" => Ok(Self::DisplayNotBound),
-            _ => Err(format!("Wrong work mode '{}'", s)),
+            _ => Err(format!("Wrong work mode '{s}'")),
         }
     }
 }

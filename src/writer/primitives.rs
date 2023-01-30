@@ -12,7 +12,7 @@ pub fn format_block(prefix: &str, suffix: &str, body: &[String]) -> Vec<String> 
         v.push(prefix.into());
     }
     for s in body.iter() {
-        let s = format!("{}{}", TAB, s);
+        let s = format!("{TAB}{s}");
         v.push(s);
     }
     if !suffix.is_empty() {
@@ -28,7 +28,7 @@ pub fn format_block_one_line(
     outer_separator: &str,
     inner_separator: &str,
 ) -> String {
-    let mut s = format!("{}{}", prefix, outer_separator);
+    let mut s = format!("{prefix}{outer_separator}");
     let mut first = true;
     for s_ in body {
         if first {
@@ -81,7 +81,7 @@ pub fn format_block_smart_width(
 }
 
 pub fn comment_block(body: &[String]) -> Vec<String> {
-    body.iter().map(|s| format!("//{}", s)).collect()
+    body.iter().map(|s| format!("//{s}")).collect()
 }
 
 #[cfg(test)]
@@ -92,7 +92,7 @@ mod tests {
     fn test_tabs() {
         assert_eq!(tabs(0), "");
         assert_eq!(tabs(1), TAB);
-        assert_eq!(tabs(2), format!("{0}{0}", TAB));
+        assert_eq!(tabs(2), format!("{TAB}{TAB}"));
     }
 
     #[test]

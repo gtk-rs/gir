@@ -117,7 +117,7 @@ impl RustType {
     #[inline]
     fn format_parameter(self, direction: ParameterDirection) -> Self {
         if direction.is_out() {
-            self.alter_type(|type_| format!("&mut {}", type_))
+            self.alter_type(|type_| format!("&mut {type_}"))
         } else {
             self
         }
@@ -127,7 +127,7 @@ impl RustType {
     fn apply_ref_mode(self, ref_mode: RefMode) -> Self {
         match ref_mode.for_rust_type() {
             "" => self,
-            ref_mode => self.alter_type(|typ_| format!("{}{}", ref_mode, typ_)),
+            ref_mode => self.alter_type(|typ_| format!("{ref_mode}{typ_}")),
         }
     }
 }
@@ -162,9 +162,9 @@ impl IntoString for Result {
         use self::TypeError::*;
         match self {
             Ok(s) => s.into_string(),
-            Err(Ignored(s)) => format!("/*Ignored*/{}", s),
-            Err(Mismatch(s)) => format!("/*Metadata mismatch*/{}", s),
-            Err(Unimplemented(s)) => format!("/*Unimplemented*/{}", s),
+            Err(Ignored(s)) => format!("/*Ignored*/{s}"),
+            Err(Mismatch(s)) => format!("/*Metadata mismatch*/{s}"),
+            Err(Unimplemented(s)) => format!("/*Unimplemented*/{s}"),
         }
     }
 }
@@ -307,7 +307,7 @@ impl<'env> RustTypeBuilder<'env> {
                     Char => ok_and_use(&use_glib_type(self.env, "Char")),
                     UChar => ok_and_use(&use_glib_type(self.env, "UChar")),
                     Unsupported => err("Unsupported"),
-                    _ => err(&format!("Basic: {:?}", fund)),
+                    _ => err(&format!("Basic: {fund:?}")),
                 }
             }
             Alias(ref alias) => {
@@ -371,9 +371,9 @@ impl<'env> RustTypeBuilder<'env> {
                     .map_any(|rust_type| {
                         rust_type.alter_type(|typ| {
                             if self.ref_mode.is_ref() {
-                                format!("[{}]", typ)
+                                format!("[{typ}]")
                             } else {
-                                format!("Vec<{}>", typ)
+                                format!("Vec<{typ}>")
                             }
                         })
                     })
@@ -403,9 +403,9 @@ impl<'env> RustTypeBuilder<'env> {
                     if let Some(s) = array_type {
                         skip_option = true;
                         if self.ref_mode.is_ref() {
-                            Ok(format!("[{}]", s).into())
+                            Ok(format!("[{s}]").into())
                         } else {
-                            Ok(format!("Vec<{}>", s).into())
+                            Ok(format!("Vec<{s}>").into())
                         }
                     } else {
                         Err(TypeError::Unimplemented(type_.get_name()))
@@ -437,7 +437,7 @@ impl<'env> RustTypeBuilder<'env> {
                     )
                     .into());
                 } else if full_name == "GLib.DestroyNotify" {
-                    return Ok(format!("Fn(){} + 'static", concurrency).into());
+                    return Ok(format!("Fn(){concurrency} + 'static").into());
                 }
                 let mut params = Vec::with_capacity(f.parameters.len());
                 let mut err = false;
@@ -531,9 +531,9 @@ impl<'env> RustTypeBuilder<'env> {
                 }
                 Ok(if *self.nullable {
                     if self.scope.is_call() {
-                        format!("Option<&mut dyn ({})>", ret)
+                        format!("Option<&mut dyn ({ret})>")
                     } else {
-                        format!("Option<Box_<dyn {} + 'static>>", ret)
+                        format!("Option<Box_<dyn {ret} + 'static>>")
                     }
                 } else {
                     format!(
@@ -560,9 +560,9 @@ impl<'env> RustTypeBuilder<'env> {
                 rust_type = rust_type.map_any(|rust_type| {
                     rust_type
                         .alter_type(|typ_| {
-                            let mut opt = format!("Option<{}>", typ_);
+                            let mut opt = format!("Option<{typ_}>");
                             if self.direction == ParameterDirection::In {
-                                opt = format!("impl Into<{}>", opt);
+                                opt = format!("impl Into<{opt}>");
                             }
 
                             opt
@@ -600,7 +600,7 @@ impl<'env> RustTypeBuilder<'env> {
             match ConversionType::of(self.env, self.type_id) {
                 ConversionType::Pointer | ConversionType::Scalar => {
                     rust_type = rust_type.map_any(|rust_type| {
-                        rust_type.alter_type(|typ_| format!("Option<{}>", typ_))
+                        rust_type.alter_type(|typ_| format!("Option<{typ_}>"))
                     });
                 }
                 _ => (),
@@ -616,8 +616,7 @@ impl<'env> RustTypeBuilder<'env> {
 
         assert!(
             self.direction != ParameterDirection::None,
-            "undefined direction for parameter with type {:?}",
-            type_
+            "undefined direction for parameter with type {type_:?}"
         );
 
         let rust_type = RustType::builder(self.env, self.type_id)

@@ -116,7 +116,7 @@ static KEYWORDS: Lazy<HashMap<&'static str, String>> = Lazy::new(|| {
         "use", "virtual", "where", "while", "yield",
     ]
     .iter()
-    .map(|k| (*k, format!("{}_", k)))
+    .map(|k| (*k, format!("{k}_")))
     .collect()
 });
 

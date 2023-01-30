@@ -35,7 +35,7 @@ impl Parse for Constant {
                 "pattern",
                 "generate_doc",
             ],
-            &format!("function {}", object_name),
+            &format!("function {object_name}"),
         );
 
         let version = toml

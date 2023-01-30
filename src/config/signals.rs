@@ -31,7 +31,7 @@ impl FromStr for TransformationType {
             "none" => Ok(Self::None),
             "borrow" => Ok(Self::Borrow),
             "treepath" => Ok(Self::TreePath),
-            _ => Err(format!("Wrong transformation \"{}\"", s)),
+            _ => Err(format!("Wrong transformation \"{s}\"")),
         }
     }
 }
@@ -58,7 +58,7 @@ impl Parse for Parameter {
         };
         toml.check_unwanted(
             &["nullable", "transformation", "new_name", "name", "pattern"],
-            &format!("parameter {}", object_name),
+            &format!("parameter {object_name}"),
         );
 
         let nullable = toml
@@ -143,7 +143,7 @@ impl Signal {
                 "doc_trait_name",
                 "generate_doc",
             ],
-            &format!("signal {}", object_name),
+            &format!("signal {object_name}"),
         );
 
         let status = {

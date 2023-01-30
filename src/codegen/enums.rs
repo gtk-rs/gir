@@ -341,7 +341,7 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
             .map(|m| format!("{}::{}", sys_crate_name, m.c_name))
             .collect::<Vec<_>>()
             .join(", ");
-        writeln!(w, "debug_assert!([{}].contains(&value));", all_members)?;
+        writeln!(w, "debug_assert!([{all_members}].contains(&value));")?;
         writeln!(w, "std::mem::transmute(value)",)?;
     } else {
         writeln!(w, "match value {{")?;
@@ -400,12 +400,7 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
                 )?;
             }
             ErrorDomain::Function(f) => {
-                writeln!(
-                    w,
-                    "        unsafe {{ from_glib({sys_crate_name}::{get_quark}()) }}",
-                    sys_crate_name = sys_crate_name,
-                    get_quark = f
-                )?;
+                writeln!(w, "        unsafe {{ from_glib({sys_crate_name}::{f}()) }}")?;
             }
         }
 
@@ -421,8 +416,7 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
     #[inline]
     #[allow(clippy::match_single_binding)]
     fn from(code: i32) -> Option<Self> {{
-        {assert}match unsafe {{ from_glib(code) }} {{",
-            assert = assert
+        {assert}match unsafe {{ from_glib(code) }} {{"
         )?;
 
         if has_failed_member && !config.exhaustive {

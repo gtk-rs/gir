@@ -19,7 +19,7 @@ impl FromStr for SafetyAssertionMode {
             "skip" => Ok(Self::Skip),
             "not-initialized" => Ok(Self::NotInitialized),
             "in-main-thread" => Ok(Self::InMainThread),
-            _ => Err(format!("Unknown safety assertion mode '{}'", name)),
+            _ => Err(format!("Unknown safety assertion mode '{name}'")),
         }
     }
 }

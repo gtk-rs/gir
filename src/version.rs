@@ -25,9 +25,9 @@ impl Version {
 
     pub fn to_feature(self) -> String {
         match self {
-            Self(major, 0, 0) => format!("v{}", major),
-            Self(major, minor, 0) => format!("v{}_{}", major, minor),
-            Self(major, minor, patch) => format!("v{}_{}_{}", major, minor, patch),
+            Self(major, 0, 0) => format!("v{major}"),
+            Self(major, minor, 0) => format!("v{major}_{minor}"),
+            Self(major, minor, patch) => format!("v{major}_{minor}_{patch}"),
         }
     }
 
@@ -71,9 +71,9 @@ impl FromStr for Version {
 impl Display for Version {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), fmt::Error> {
         match *self {
-            Self(major, 0, 0) => write!(f, "{}", major),
-            Self(major, minor, 0) => write!(f, "{}.{}", major, minor),
-            Self(major, minor, patch) => write!(f, "{}.{}.{}", major, minor, patch),
+            Self(major, 0, 0) => write!(f, "{major}"),
+            Self(major, minor, 0) => write!(f, "{major}.{minor}"),
+            Self(major, minor, patch) => write!(f, "{major}.{minor}.{patch}"),
         }
     }
 }
