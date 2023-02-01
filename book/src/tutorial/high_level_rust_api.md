@@ -185,10 +185,8 @@ package = "sourceview-sys"
 path = "./sourceview-sys"
 
 [dependencies.glib]
-git = "https://github.com/gtk-rs/glib"
-
-[dependencies.glib-sys]
-git = "https://github.com/gtk-rs/sys" # all gtk-rs sys crates are in the sys repository
+git = "https://github.com/gtk-rs/gtk-rs-core"
+version = "0.17"
 ```
 
 Let's try to rebuild:
