@@ -13,8 +13,8 @@ use super::{
 };
 use crate::{
     analysis::{
-        self, bounds::BoundType, object::has_builder_properties, ref_mode::RefMode,
-        rust_type::RustType, special_functions::Type,
+        self, bounds::BoundType, object::has_builder_properties, record_type::RecordType,
+        ref_mode::RefMode, rust_type::RustType, special_functions::Type,
     },
     env::Env,
     library::{self, Nullable},
@@ -381,8 +381,8 @@ fn generate_builder(w: &mut dyn Write, env: &Env, analysis: &analysis::object::I
                 .ref_mode(property.set_in_ref_mode)
                 .try_build();
             let comment_prefix = if param_type.is_err() { "//" } else { "" };
-            let mut param_type = param_type.into_string();
-            let (param_type_override, bounds, conversion) = match param_type.as_str() {
+            let mut param_type_str = param_type.into_string();
+            let (param_type_override, bounds, conversion) = match param_type_str.as_str() {
                 "&str" => (
                     Some(format!("impl Into<{glib_crate_name}::GString>")),
                     String::new(),
@@ -405,11 +405,30 @@ fn generate_builder(w: &mut dyn Write, env: &Env, analysis: &analysis::object::I
                     });
                     (alias, bounds, conversion.unwrap_or(".clone().upcast()"))
                 }
-                typ if typ.starts_with('&') => (None, String::new(), ".clone()"),
+                typ if typ.starts_with('&') => {
+                    let should_clone =
+                        if let crate::library::Type::Record(record) = env.type_(property.typ) {
+                            match RecordType::of(record) {
+                                RecordType::Boxed => "",
+                                RecordType::AutoBoxed => {
+                                    if !record.has_copy() {
+                                        ""
+                                    } else {
+                                        ".clone()"
+                                    }
+                                }
+                                _ => ".clone()",
+                            }
+                        } else {
+                            ".clone()"
+                        };
+
+                    (None, String::new(), should_clone)
+                }
                 _ => (None, String::new(), ""),
             };
             if let Some(param_type_override) = param_type_override {
-                param_type = param_type_override.to_string();
+                param_type_str = param_type_override.to_string();
             }
             let name = nameutil::mangle_keywords(nameutil::signal_to_snake(&property.name));
 
@@ -428,7 +447,7 @@ fn generate_builder(w: &mut dyn Write, env: &Env, analysis: &analysis::object::I
             writeln!(
                 w,
                 "
-                        {version_prefix}{deprecation_prefix}    {comment_prefix}pub fn {name}{bounds}(self, {name}: {param_type}) -> Self {{
+                        {version_prefix}{deprecation_prefix}    {comment_prefix}pub fn {name}{bounds}(self, {name}: {param_type_str}) -> Self {{
                         {comment_prefix}    Self {{ builder: self.builder.property(\"{property_name}\", {name}{conversion}), }}
                         {comment_prefix}}}",
                 property_name = property.name,
