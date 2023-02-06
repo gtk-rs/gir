@@ -455,7 +455,6 @@ impl Builder {
             .last()
             .map_or_else(|| "Unknown".to_owned(), |p| p.name.clone());
 
-        let mut extra_before_call = "";
         if let Some(full_type) = full_type {
             if is_destroy || trampoline.scope.is_async() {
                 body.push(Chunk::Let {
@@ -501,18 +500,10 @@ impl Builder {
                             ""
                         }
                     )));
-                    if trampoline.ret.c_type != "void" {
-                        extra_before_call = "let res = ";
-                    }
                 } else if !trampoline.scope.is_call() {
                     if *trampoline.nullable {
                         body.push(Chunk::Custom(format!(
-                            "{}if let Some(ref callback) = callback{} {{",
-                            if trampoline.ret.c_type != "void" {
-                                "let res = "
-                            } else {
-                                ""
-                            },
+                            "if let Some(ref callback) = callback{} {{",
                             if let Some(pos) = pos {
                                 format!(".{pos}")
                             } else {
@@ -528,34 +519,21 @@ impl Builder {
                                 String::new()
                             }
                         )));
-                        if trampoline.ret.c_type != "void" {
-                            body.push(Chunk::Custom("let res = ".to_owned()));
+                    }
+                } else if !trampoline.scope.is_async() && *trampoline.nullable {
+                    body.push(Chunk::Custom(format!(
+                        "if let Some(ref {}callback) = {} {{",
+                        if trampoline.scope.is_call() {
+                            "mut "
+                        } else {
+                            ""
+                        },
+                        if let Some(pos) = pos {
+                            format!("(*callback).{pos}")
+                        } else {
+                            "*callback".to_owned()
                         }
-                    }
-                } else {
-                    let add = if trampoline.ret.c_type != "void" {
-                        "let res = "
-                    } else {
-                        ""
-                    };
-                    if !trampoline.scope.is_async() && *trampoline.nullable {
-                        body.push(Chunk::Custom(format!(
-                            "{}if let Some(ref {}callback) = {} {{",
-                            add,
-                            if trampoline.scope.is_call() {
-                                "mut "
-                            } else {
-                                ""
-                            },
-                            if let Some(pos) = pos {
-                                format!("(*callback).{pos}")
-                            } else {
-                                "*callback".to_owned()
-                            }
-                        )));
-                    } else {
-                        body.push(Chunk::Custom(add.to_owned()));
-                    }
+                    )));
                 }
             }
         } else {
@@ -589,17 +567,9 @@ impl Builder {
                     body.push(Chunk::Custom(
                         "let callback = (*callback).expect(\"cannot get closure...\");".to_owned(),
                     ));
-                    if trampoline.ret.c_type != "void" {
-                        extra_before_call = "let res = ";
-                    }
                 } else {
                     body.push(Chunk::Custom(format!(
-                        "{}if let Some(ref {}callback) = {} {{",
-                        if trampoline.ret.c_type != "void" {
-                            "let res = "
-                        } else {
-                            ""
-                        },
+                        "if let Some(ref {}callback) = {} {{",
                         if trampoline.scope.is_call() {
                             "mut "
                         } else {
@@ -612,15 +582,12 @@ impl Builder {
                         }
                     )));
                 }
-            } else if !is_destroy && trampoline.ret.c_type != "void" {
-                extra_before_call = "let res = ";
             }
         }
         if !is_destroy {
             use crate::writer::to_code::ToCode;
             body.push(Chunk::Custom(format!(
-                "{}{}({}){}",
-                extra_before_call,
+                "{}({})",
                 if !*trampoline.nullable {
                     "(*callback)"
                 } else if trampoline.scope.is_async() {
@@ -633,26 +600,18 @@ impl Builder {
                     .flat_map(|arg| arg.to_code(env))
                     .collect::<Vec<_>>()
                     .join(", "),
-                if !extra_before_call.is_empty() || !*trampoline.nullable {
-                    ";"
-                } else {
-                    ""
-                }
             )));
             if !trampoline.scope.is_async() && *trampoline.nullable {
                 body.push(Chunk::Custom("} else {".to_owned()));
                 body.push(Chunk::Custom(
                     "\tpanic!(\"cannot get closure...\")".to_owned(),
                 ));
-                body.push(Chunk::Custom("};".to_owned()));
+                body.push(Chunk::Custom("}".to_owned()));
             }
             if trampoline.ret.c_type != "void" {
                 use crate::codegen::trampoline_to_glib::TrampolineToGlib;
 
-                body.push(Chunk::Custom(format!(
-                    "res{}",
-                    trampoline.ret.trampoline_to_glib(env)
-                )));
+                body.push(Chunk::Custom(trampoline.ret.trampoline_to_glib(env)));
             }
         }
 
