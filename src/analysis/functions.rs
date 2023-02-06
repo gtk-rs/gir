@@ -903,11 +903,13 @@ fn analyze_function(
         }
 
         imports.add_used_types(&used_types);
-        if ret.base_tid.is_some() || parameters.c_parameters.iter().any(|p| p.move_) {
+        if ret.base_tid.is_some() {
             imports.add("glib::prelude::*");
         }
 
-        if func.name.parse::<special_functions::Type>().is_err() {
+        if func.name.parse::<special_functions::Type>().is_err()
+            || parameters.c_parameters.iter().any(|p| p.move_)
+        {
             imports.add("glib::translate::*");
         }
         bounds.update_imports(imports);
@@ -1186,7 +1188,9 @@ fn analyze_callback(
             .direction(ParameterDirection::Return)
             .try_build()
         {
-            if !rust_type.as_str().ends_with("GString") {
+            if !rust_type.as_str().ends_with("GString")
+                && !rust_type.as_str().ends_with("GAsyncResult")
+            {
                 imports_to_add.extend(rust_type.into_used_types());
             }
         }
