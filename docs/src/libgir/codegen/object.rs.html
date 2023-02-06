@@ -583,6 +583,25 @@
 <a href="#583" id="583">583</a>
 <a href="#584" id="584">584</a>
 <a href="#585" id="585">585</a>
+<a href="#586" id="586">586</a>
+<a href="#587" id="587">587</a>
+<a href="#588" id="588">588</a>
+<a href="#589" id="589">589</a>
+<a href="#590" id="590">590</a>
+<a href="#591" id="591">591</a>
+<a href="#592" id="592">592</a>
+<a href="#593" id="593">593</a>
+<a href="#594" id="594">594</a>
+<a href="#595" id="595">595</a>
+<a href="#596" id="596">596</a>
+<a href="#597" id="597">597</a>
+<a href="#598" id="598">598</a>
+<a href="#599" id="599">599</a>
+<a href="#600" id="600">600</a>
+<a href="#601" id="601">601</a>
+<a href="#602" id="602">602</a>
+<a href="#603" id="603">603</a>
+<a href="#604" id="604">604</a>
 </pre><pre class="rust"><code><span class="kw">use </span>std::{
     collections::{BTreeMap, HashSet},
     io::{<span class="prelude-ty">Result</span>, Write},
@@ -598,8 +617,8 @@
 };
 <span class="kw">use crate</span>::{
     analysis::{
-        <span class="self">self</span>, bounds::BoundType, object::has_builder_properties, ref_mode::RefMode,
-        rust_type::RustType, special_functions::Type,
+        <span class="self">self</span>, bounds::BoundType, object::has_builder_properties, record_type::RecordType,
+        ref_mode::RefMode, rust_type::RustType, special_functions::Type,
     },
     env::Env,
     library::{<span class="self">self</span>, Nullable},
@@ -966,8 +985,8 @@
                 .ref_mode(property.set_in_ref_mode)
                 .try_build();
             <span class="kw">let </span>comment_prefix = <span class="kw">if </span>param_type.is_err() { <span class="string">&quot;//&quot; </span>} <span class="kw">else </span>{ <span class="string">&quot;&quot; </span>};
-            <span class="kw">let </span><span class="kw-2">mut </span>param_type = param_type.into_string();
-            <span class="kw">let </span>(param_type_override, bounds, conversion) = <span class="kw">match </span>param_type.as_str() {
+            <span class="kw">let </span><span class="kw-2">mut </span>param_type_str = param_type.into_string();
+            <span class="kw">let </span>(param_type_override, bounds, conversion) = <span class="kw">match </span>param_type_str.as_str() {
                 <span class="string">&quot;&amp;str&quot; </span>=&gt; (
                     <span class="prelude-val">Some</span>(<span class="macro">format!</span>(<span class="string">&quot;impl Into&lt;{glib_crate_name}::GString&gt;&quot;</span>)),
                     String::new(),
@@ -990,11 +1009,30 @@
                     });
                     (alias, bounds, conversion.unwrap_or(<span class="string">&quot;.clone().upcast()&quot;</span>))
                 }
-                typ <span class="kw">if </span>typ.starts_with(<span class="string">&#39;&amp;&#39;</span>) =&gt; (<span class="prelude-val">None</span>, String::new(), <span class="string">&quot;.clone()&quot;</span>),
+                typ <span class="kw">if </span>typ.starts_with(<span class="string">&#39;&amp;&#39;</span>) =&gt; {
+                    <span class="kw">let </span>should_clone =
+                        <span class="kw">if let </span><span class="kw">crate</span>::library::Type::Record(record) = env.type_(property.typ) {
+                            <span class="kw">match </span>RecordType::of(record) {
+                                RecordType::Boxed =&gt; <span class="string">&quot;&quot;</span>,
+                                RecordType::AutoBoxed =&gt; {
+                                    <span class="kw">if </span>!record.has_copy() {
+                                        <span class="string">&quot;&quot;
+                                    </span>} <span class="kw">else </span>{
+                                        <span class="string">&quot;.clone()&quot;
+                                    </span>}
+                                }
+                                <span class="kw">_ </span>=&gt; <span class="string">&quot;.clone()&quot;</span>,
+                            }
+                        } <span class="kw">else </span>{
+                            <span class="string">&quot;.clone()&quot;
+                        </span>};
+
+                    (<span class="prelude-val">None</span>, String::new(), should_clone)
+                }
                 <span class="kw">_ </span>=&gt; (<span class="prelude-val">None</span>, String::new(), <span class="string">&quot;&quot;</span>),
             };
             <span class="kw">if let </span><span class="prelude-val">Some</span>(param_type_override) = param_type_override {
-                param_type = param_type_override.to_string();
+                param_type_str = param_type_override.to_string();
             }
             <span class="kw">let </span>name = nameutil::mangle_keywords(nameutil::signal_to_snake(<span class="kw-2">&amp;</span>property.name));
 
@@ -1013,7 +1051,7 @@
             <span class="macro">writeln!</span>(
                 w,
                 <span class="string">&quot;
-                        {version_prefix}{deprecation_prefix}    {comment_prefix}pub fn {name}{bounds}(self, {name}: {param_type}) -&gt; Self {{
+                        {version_prefix}{deprecation_prefix}    {comment_prefix}pub fn {name}{bounds}(self, {name}: {param_type_str}) -&gt; Self {{
                         {comment_prefix}    Self {{ builder: self.builder.property(\&quot;{property_name}\&quot;, {name}{conversion}), }}
                         {comment_prefix}}}&quot;</span>,
                 property_name = property.name,

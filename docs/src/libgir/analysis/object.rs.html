@@ -430,7 +430,6 @@
 <a href="#430" id="430">430</a>
 <a href="#431" id="431">431</a>
 <a href="#432" id="432">432</a>
-<a href="#433" id="433">433</a>
 </pre><pre class="rust"><code><span class="kw">use </span>std::{borrow::Cow, ops::Deref};
 
 <span class="kw">use </span>log::info;
@@ -598,7 +597,8 @@
         imports.add(<span class="string">&quot;std::fmt&quot;</span>);
     }
 
-    <span class="kw">let </span>supertypes = supertypes::analyze(env, class_tid, version, <span class="kw-2">&amp;mut </span>imports);
+    <span class="kw">let </span>is_fundamental = obj.fundamental_type.unwrap_or(klass.is_fundamental);
+    <span class="kw">let </span>supertypes = supertypes::analyze(env, class_tid, version, <span class="kw-2">&amp;mut </span>imports, is_fundamental);
     <span class="kw">let </span>supertypes_properties = supertypes
         .iter()
         .filter_map(|t| <span class="kw">match </span>env.type_(t.type_id) {
@@ -615,7 +615,6 @@
         .as_ref()
         .cloned()
         .unwrap_or_else(|| <span class="macro">format!</span>(<span class="string">&quot;{name}Ext&quot;</span>));
-    <span class="kw">let </span>is_fundamental = obj.fundamental_type.unwrap_or(klass.is_fundamental);
 
     <span class="kw">let </span><span class="kw-2">mut </span>signatures = Signatures::with_capacity(klass.functions.len());
 
@@ -688,7 +687,6 @@
         &amp;&amp; (has_signals || has_methods || !properties.is_empty() || !child_properties.is_empty());
 
     <span class="kw">if </span>is_fundamental {
-        imports.add(<span class="string">&quot;glib::prelude::*&quot;</span>);
         imports.add(<span class="string">&quot;glib::translate::*&quot;</span>);
     }
 
@@ -775,7 +773,7 @@
         imports.add(<span class="string">&quot;std::fmt&quot;</span>);
     }
 
-    <span class="kw">let </span>supertypes = supertypes::analyze(env, iface_tid, version, <span class="kw-2">&amp;mut </span>imports);
+    <span class="kw">let </span>supertypes = supertypes::analyze(env, iface_tid, version, <span class="kw-2">&amp;mut </span>imports, <span class="bool-val">false</span>);
     <span class="kw">let </span>supertypes_properties = supertypes
         .iter()
         .filter_map(|t| <span class="kw">match </span>env.type_(t.type_id) {

@@ -85,6 +85,7 @@
 <a href="#85" id="85">85</a>
 <a href="#86" id="86">86</a>
 <a href="#87" id="87">87</a>
+<a href="#88" id="88">88</a>
 </pre><pre class="rust"><code><span class="kw">use super</span>::{general::StatusedTypeId, imports::Imports};
 <span class="kw">use crate</span>::{
     analysis::{namespaces, rust_type::RustType},
@@ -98,6 +99,7 @@
     type_id: TypeId,
     version: <span class="prelude-ty">Option</span>&lt;Version&gt;,
     imports: <span class="kw-2">&amp;mut </span>Imports,
+    add_parent_types_import: bool,
 ) -&gt; Vec&lt;StatusedTypeId&gt; {
     <span class="kw">let </span><span class="kw-2">mut </span>parents = Vec::new();
     <span class="kw">let </span>gobject_id = env.library.find_type(<span class="number">0</span>, <span class="string">&quot;GObject.Object&quot;</span>).unwrap();
@@ -116,7 +118,7 @@
             status,
         });
 
-        <span class="kw">if </span>!status.ignored() &amp;&amp; super_tid.ns_id == namespaces::MAIN {
+        <span class="kw">if </span>!status.ignored() &amp;&amp; super_tid.ns_id == namespaces::MAIN &amp;&amp; !add_parent_types_import {
             <span class="kw">if let </span><span class="prelude-val">Ok</span>(rust_type) = RustType::try_new(env, super_tid) {
                 <span class="kw">let </span>full_name = super_tid.full_name(<span class="kw-2">&amp;</span>env.library);
                 <span class="kw">if let </span><span class="prelude-val">Some</span>(parent_version) = env

@@ -1328,6 +1328,10 @@
 <a href="#1328" id="1328">1328</a>
 <a href="#1329" id="1329">1329</a>
 <a href="#1330" id="1330">1330</a>
+<a href="#1331" id="1331">1331</a>
+<a href="#1332" id="1332">1332</a>
+<a href="#1333" id="1333">1333</a>
+<a href="#1334" id="1334">1334</a>
 </pre><pre class="rust"><code><span class="comment">// TODO: better heuristic (https://bugzilla.gnome.org/show_bug.cgi?id=623635#c5)
 // TODO: ProgressCallback types (not specific to async).
 // TODO: add annotation for methods like g_file_replace_contents_bytes_async
@@ -2233,11 +2237,13 @@
         }
 
         imports.add_used_types(<span class="kw-2">&amp;</span>used_types);
-        <span class="kw">if </span>ret.base_tid.is_some() || parameters.c_parameters.iter().any(|p| p.move_) {
+        <span class="kw">if </span>ret.base_tid.is_some() {
             imports.add(<span class="string">&quot;glib::prelude::*&quot;</span>);
         }
 
-        <span class="kw">if </span>func.name.parse::&lt;special_functions::Type&gt;().is_err() {
+        <span class="kw">if </span>func.name.parse::&lt;special_functions::Type&gt;().is_err()
+            || parameters.c_parameters.iter().any(|p| p.move_)
+        {
             imports.add(<span class="string">&quot;glib::translate::*&quot;</span>);
         }
         bounds.update_imports(imports);
@@ -2516,7 +2522,9 @@
             .direction(ParameterDirection::Return)
             .try_build()
         {
-            <span class="kw">if </span>!rust_type.as_str().ends_with(<span class="string">&quot;GString&quot;</span>) {
+            <span class="kw">if </span>!rust_type.as_str().ends_with(<span class="string">&quot;GString&quot;</span>)
+                &amp;&amp; !rust_type.as_str().ends_with(<span class="string">&quot;GAsyncResult&quot;</span>)
+            {
                 imports_to_add.extend(rust_type.into_used_types());
             }
         }
