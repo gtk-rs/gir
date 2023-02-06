@@ -11,6 +11,7 @@ pub fn analyze(
     type_id: TypeId,
     version: Option<Version>,
     imports: &mut Imports,
+    add_parent_types_import: bool,
 ) -> Vec<StatusedTypeId> {
     let mut parents = Vec::new();
     let gobject_id = env.library.find_type(0, "GObject.Object").unwrap();
@@ -29,7 +30,7 @@ pub fn analyze(
             status,
         });
 
-        if !status.ignored() && super_tid.ns_id == namespaces::MAIN {
+        if !status.ignored() && super_tid.ns_id == namespaces::MAIN && !add_parent_types_import {
             if let Ok(rust_type) = RustType::try_new(env, super_tid) {
                 let full_name = super_tid.full_name(&env.library);
                 if let Some(parent_version) = env

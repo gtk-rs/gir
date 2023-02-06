@@ -165,7 +165,8 @@ pub fn class(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<Info>
         imports.add("std::fmt");
     }
 
-    let supertypes = supertypes::analyze(env, class_tid, version, &mut imports);
+    let is_fundamental = obj.fundamental_type.unwrap_or(klass.is_fundamental);
+    let supertypes = supertypes::analyze(env, class_tid, version, &mut imports, is_fundamental);
     let supertypes_properties = supertypes
         .iter()
         .filter_map(|t| match env.type_(t.type_id) {
@@ -182,7 +183,6 @@ pub fn class(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<Info>
         .as_ref()
         .cloned()
         .unwrap_or_else(|| format!("{name}Ext"));
-    let is_fundamental = obj.fundamental_type.unwrap_or(klass.is_fundamental);
 
     let mut signatures = Signatures::with_capacity(klass.functions.len());
 
@@ -255,7 +255,6 @@ pub fn class(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<Info>
         && (has_signals || has_methods || !properties.is_empty() || !child_properties.is_empty());
 
     if is_fundamental {
-        imports.add("glib::prelude::*");
         imports.add("glib::translate::*");
     }
 
@@ -342,7 +341,7 @@ pub fn interface(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<I
         imports.add("std::fmt");
     }
 
-    let supertypes = supertypes::analyze(env, iface_tid, version, &mut imports);
+    let supertypes = supertypes::analyze(env, iface_tid, version, &mut imports, false);
     let supertypes_properties = supertypes
         .iter()
         .filter_map(|t| match env.type_(t.type_id) {
