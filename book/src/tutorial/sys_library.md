@@ -1,81 +1,58 @@
 # Generating the FFI library
-
-First, you'll need to download [gir]:
-
-```sh
-git clone https://github.com/gtk-rs/gir
-cd gir
-cargo install --path . # so we can use gir binary directly
-```
-
-Then the `.gir` files (luckily for you, we have a repository which contains all the ones you need for sourceview!):
+We have installed [gir], set up our repo and have all the `.gir` files we need.
+Now let's work on the unsafe bindings of the -sys crate.
+Let's change into the directory of the sys crate.
 
 ```sh
-git clone https://github.com/gtk-rs/gir-files
+cd pango/pango-sys
 ```
 
-If you look into `gir-files`, you'll see a file named `GtkSource-3.0.gir`. That's the one for sourceview.
-
-Now let's create a new project for our `sourceview` crate:
-
-```sh
-cargo new sourceview --lib
-```
-
-Then let's create a folder inside the newly created `sourceview` folder for the `sys` part:
-
-```sh
-cd sourceview
-cargo new sourceview-sys --lib
-```
-
-To indicate to [gir] what to generate, we'll need a `Gir.toml` file (inside the `sourceview-sys` folder) containing:
+## The Gir.toml file
+The first step is to let [gir] know what to generate.
+This is what the `Gir.toml` file that we created inside the `pango-sys` folder is for.
+This file will not be replaced when we run gir again.
+The file is currently empty so let's add the following to it:
 
 ```toml
 [options]
-library = "GtkSource"
-version = "3.0"
+library = "Pango"
+version = "1.0"
+min_cfg_version = "1.0"
 target_path = "."
-min_cfg_version = "3.0"
+girs_directories = ["../../gir-files/"]
+work_mode = "sys"
+single_version_file = true
 ```
 
-* `library` stands for the library we want to generate.
-* `version` stands for the version of the library to be used.
-* `target_path` stands for the location where the files will be generated.
+* `library` stands for the name of the library we want to generate.
+* `version` stands for the version of the library to be used. 
 * `min_cfg_version` will be the minimum version supported by the generated bindings.
+* `target_path` stands for the location where the files will be generated.
+* `girs_directories` stands for the location of the `.gir` files.
+* `work_mode` stands for the mode gir is using.
+   The options here are `sys` and `normal`.
+* `single_version_file` is a very useful option when you have a lot of generated files (like we'll have).
+   Instead of generating the gir hash commit used for the generation in the header of all generated files, it'll just write it inside one file, removing `git diff` noise **a lot**.
 
-You should now have a folder looking like this:
-
-```text
-sourceview/
-  |
-  |---- Cargo.toml
-  |---- sourceview-sys/
-  |       |
-  |       |---- Cargo.toml
-  |       |---- Gir.toml
-  |       |---- src/
-  |               |
-  |               |---- lib.rs
-  |---- src/
-          |
-          |---- lib.rs
-```
+You can find out the values for `library` and `version` by looking at the name of the .gir file of your library.
+In our case it is called Pango-1.0.gir.
+This tells us that the `library` is Pango and the `version` is 1.0.
+If you don't know what value to use for `min_cfg_version`, use the same as you use for `version`.
+If not all needed `.gir` files reside in `../../gir-files/`, you can add the path to the other files by changing `girs_directories`.
+If for example you also have `.gir` files in the root of your project folder, change it to `girs_directories = ["../../gir-files/", "../.."]`.
+Because we are generating the unsafe bindings, we use the `sys` work mode.
 
 Let's generate the `sys` crate now:
 
 ```sh
-cd sourceview-sys
-# Run gir in "sys" mode (the "-m" option). We give the gir files path (the "-d" option) and output path (the "-o" option).
-gir -m sys -d ../../gir-files/ -o .
+gir -o .
 ```
 
-(In case a failure happens at this point, and you can't figure out what's going on, don't hesitate to reach us so we can give you a hand!)
-
-You should now see new files (and a new folder):
+You should now see new files and a new folder.
 
 * `build.rs`
 * `Cargo.toml`
+* `Gir.toml`
 * `src/lib.rs`
 * `tests/`
 
@@ -85,72 +62,69 @@ Now let's try to build it:
 cargo build
 ```
 
-Surprise! It doesn't build at all and you should see a loooooot of errors. Well, that was expected. We need to add some dependencies (you can find which ones in the `.gir` files) in order to make it work. Let's update our `Gir.toml` file to make it look like this:
+Surprise.
+It doesn't build at all and you should see a lot of errors.
+Well, that was expected.
+We need to add some dependencies in order to make it work.
+Have a look at the errors of the compiler to find out which are missing.
+In our example, the compiler throws the following errors:
+```rust
+use of undeclared crate or module `glib`
+use of undeclared crate or module `gobject`
+```
+The dependencies need to be added to the `external_libraries` part.
+The names of the dependencies are the same as in the .gir files and not what the packages to install the libraries might be called.
+The compiler told us that the `GLib` and the `GObject` dependencies are missing.
+Let's update our `Gir.toml` file to fix it:
 
 ```toml
 [options]
-library = "GtkSource"
-version = "3.0"
+library = "Pango"
+version = "1.0"
+min_cfg_version = "1.0"
 target_path = "."
-min_cfg_version = "3.0"
+girs_directories = ["../../gir-files/"]
+work_mode = "sys"
 
 external_libraries = [
-    "Cairo",
-    "Gdk",
-    "GdkPixbuf",
-    "Gio",
     "GLib",
     "GObject",
-    "Gtk",
 ]
 ```
 
-Now we regenerate it then rebuild it:
-
+ If one of your .gir files changed or you want to use an updated version of gir to generate the code, there is no need to delete the Cargo.toml or the Cargo.lock files before you regenerate the code.
+Because we made some changes to the Gir.toml file, we have to run gir again.
+Changing the content of the external_libraries array means that additional dependencies have to be added.
+gir does this automatically for you, but only if there is no Cargo.toml and no Cargo.lock file present.
+Just remove the `Cargo.*` files and run gir again and the additional dependencies will be added.
+If you made any manual changes to the file, you would have to do these changes again.
+After regenerating the code, we build the crate to see if the errors are gone.
 ```sh
-rm Cargo.* # we remove Cargo files
-gir -m sys -d ../../gir-files/ -o .
+rm Cargo.*
+gir -o .
 cargo build
 ```
-
-Should work just fine!
-
-We can cleanup the command line a bit now. You can actually give the work mode ("-m" option) and the gir files repository through the `Gir.toml` file using "work_mode" and "girs_directories" options:
-
-```toml
-[options]
-library = "GtkSource"
-version = "3.0"
-target_path = "."
-min_cfg_version = "3.0"
-work_mode = "sys"
-girs_directories = ["../../gir-files/"]
-
-external_libraries = [
-    "Cairo",
-    "Gdk",
-    "GdkPixbuf",
-    "Gio",
-    "GLib",
-    "GObject",
-    "Gtk",
-]
-```
-
-Now, if you want to regenerate, just run:
-
-```sh
-gir -o .
-```
-
-Now we have a working `sys` containing all functions and objects definition. Just to be sure everything was correctly generated, we can run some tests (graciously generated by [gir] as well):
-
+When executing the above commands, there should not be any errors and everything should work fine.
+Just to be sure everything was correctly generated, we can run some tests (graciously generated by [gir] as well):
 ```sh
 cargo test
 ```
+Normally, all tests passed.
+If you get an error when running those tests, it's very likely that the `sys` generation is invalid and/or incomplete.
 
-Normally, all tests passed. If you get an error when running those tests, it's very likely that the `sys` generation is invalid and/or incomplete.
+## The Gir.toml file
+This file was automatically generated but it will not be replaced when we run gir again.
+Make sure to look at your Cargo.toml to optionally add more information to it.
+If there are any `[features]`, you should try building and testing with these features activated as well.
+If you'd like, you can also set the default features.
+This can be useful for example if you want to always activate the newest version unless the user of the crate specifies an older version.
 
+For our example, we now have a working `sys` crate containing all functions and objects definition.
+We are done here and can go back to the folder of the wrapper crate:
+```sh
+cd ..
+```
 Time to generate the high-level Rust API!
+
 
 [gir]: https://github.com/gtk-rs/gir
