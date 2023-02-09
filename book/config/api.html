@@ -12,21 +12,21 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="theme-color" content="#ffffff" />
 
-        <link rel="icon" href="favicon.svg">
-        <link rel="shortcut icon" href="favicon.png">
-        <link rel="stylesheet" href="css/variables.css">
-        <link rel="stylesheet" href="css/general.css">
-        <link rel="stylesheet" href="css/chrome.css">
-        <link rel="stylesheet" href="css/print.css" media="print">
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
 
         <!-- Fonts -->
-        <link rel="stylesheet" href="FontAwesome/css/font-awesome.css">
-        <link rel="stylesheet" href="fonts/fonts.css">
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
 
         <!-- Highlight.js Stylesheets -->
-        <link rel="stylesheet" href="highlight.css">
-        <link rel="stylesheet" href="tomorrow-night.css">
-        <link rel="stylesheet" href="ayu-highlight.css">
+        <link rel="stylesheet" href="../highlight.css">
+        <link rel="stylesheet" href="../tomorrow-night.css">
+        <link rel="stylesheet" href="../ayu-highlight.css">
 
         <!-- Custom theme stylesheets -->
 
@@ -34,7 +34,7 @@
     <body>
         <!-- Provide site root to javascript -->
         <script>
-            var path_to_root = "";
+            var path_to_root = "../";
             var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "navy" : "light";
         </script>
 
@@ -80,7 +80,7 @@
 
         <nav id="sidebar" class="sidebar" aria-label="Table of contents">
             <div class="sidebar-scrollbox">
-                <ol class="chapter"><li class="chapter-item expanded "><a href="introduction.html"><strong aria-hidden="true">1.</strong> Introduction</a></li><li class="chapter-item expanded "><a href="config_introduction.html"><strong aria-hidden="true">2.</strong> Configuration</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="config_ffi.html"><strong aria-hidden="true">2.1.</strong> FFI Options</a></li><li class="chapter-item expanded "><a href="config_api.html" class="active"><strong aria-hidden="true">2.2.</strong> API Options</a></li><li class="chapter-item expanded "><a href="config_name_override.html"><strong aria-hidden="true">2.3.</strong> Crate name override</a></li></ol></li><li class="chapter-item expanded "><a href="tutorial/introduction.html"><strong aria-hidden="true">3.</strong> Tutorial</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="tutorial/sys_library.html"><strong aria-hidden="true">3.1.</strong> Generating the FFI library</a></li><li class="chapter-item expanded "><a href="tutorial/high_level_rust_api.html"><strong aria-hidden="true">3.2.</strong> Generating the Rust API</a></li><li class="chapter-item expanded "><a href="tutorial/handling_errors.html"><strong aria-hidden="true">3.3.</strong> Handling generation errors</a></li></ol></li><li class="chapter-item expanded "><a href="generate_docs.html"><strong aria-hidden="true">4.</strong> Generating documentation</a></li></ol>
+                <ol class="chapter"><li class="chapter-item expanded "><a href="../introduction.html"><strong aria-hidden="true">1.</strong> Introduction</a></li><li class="chapter-item expanded "><a href="../tutorial/introduction.html"><strong aria-hidden="true">2.</strong> Tutorial</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../tutorial/preparation.html"><strong aria-hidden="true">2.1.</strong> Preparation</a></li><li class="chapter-item expanded "><a href="../tutorial/finding_gir_files.html"><strong aria-hidden="true">2.2.</strong> Finding .gir files</a></li><li class="chapter-item expanded "><a href="../tutorial/sys_library.html"><strong aria-hidden="true">2.3.</strong> Generating the FFI library</a></li><li class="chapter-item expanded "><a href="../tutorial/high_level_rust_api.html"><strong aria-hidden="true">2.4.</strong> Generating the Rust API</a></li><li class="chapter-item expanded "><a href="../tutorial/handling_errors.html"><strong aria-hidden="true">2.5.</strong> Handling generation errors</a></li><li class="chapter-item expanded "><a href="../tutorial/generate_docs.html"><strong aria-hidden="true">2.6.</strong> Generating documentation</a></li></ol></li><li class="chapter-item expanded "><a href="../config/introduction.html"><strong aria-hidden="true">3.</strong> Configuration files</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../config/ffi.html"><strong aria-hidden="true">3.1.</strong> FFI Options</a></li><li class="chapter-item expanded "><a href="../config/api.html" class="active"><strong aria-hidden="true">3.2.</strong> API Options</a></li><li class="chapter-item expanded "><a href="../config/name_override.html"><strong aria-hidden="true">3.3.</strong> Crate name override</a></li></ol></li></ol>
             </div>
             <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
         </nav>
@@ -112,13 +112,13 @@
                     <h1 class="menu-title">Generate Rust bindings for GIR based libraries</h1>
 
                     <div class="right-buttons">
-                        <a href="print.html" title="Print this book" aria-label="Print this book">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
                             <i id="print-button" class="fa fa-print"></i>
                         </a>
                         <a href="https://github.com/gtk-rs/gir/tree/master/book" title="Git repository" aria-label="Git repository">
                             <i id="git-repository-button" class="fa fa-github"></i>
                         </a>
-                        <a href="https://github.com/gtk-rs/gir/edit/master/book/src/config_api.md" title="Suggest an edit" aria-label="Suggest an edit">
+                        <a href="https://github.com/gtk-rs/gir/edit/master/book/src/config/api.md" title="Suggest an edit" aria-label="Suggest an edit">
                             <i id="git-edit-button" class="fa fa-edit"></i>
                         </a>
 
@@ -148,7 +148,8 @@
                 <div id="content" class="content">
                     <main>
                         <h1 id="api-options"><a class="header" href="#api-options">API Options</a></h1>
-<p>This mode requires you to write another TOML file. <a href="https://github.com/gtk-rs/gtk/blob/master/Gir.toml">gtk/Gir.toml</a> is a good example.</p>
+<p>This mode requires you to write another TOML file.
+<a href="https://github.com/gtk-rs/gtk/blob/master/Gir.toml">gtk/Gir.toml</a> is a good example.</p>
 <pre><code class="language-toml">[options]
 girs_directories = [&quot;gir-files&quot;]
 library = &quot;Gtk&quot;
@@ -185,11 +186,14 @@ disable_format = true
 # (defaults to false)
 generate_builder = true
 </code></pre>
-<p>This mode generates only the specified objects. You can either add the object's fullname to the <code>generate</code> array or add it to the <code>manual</code> array (but in this case, it won't be generated, just used in other functions/methods instead of generating an &quot;ignored&quot; argument). Example:</p>
+<p>This mode generates only the specified objects.
+You can either add the object's fullname to the <code>generate</code> array or add it to the <code>manual</code> array (but in this case, it won't be generated, just used in other functions/methods instead of generating an &quot;ignored&quot; argument).
+Example:</p>
 <pre><code class="language-toml">generate = [&quot;Gtk.Widget&quot;, &quot;Gtk.Window&quot;]
 manual = [&quot;Gtk.Button&quot;]
 </code></pre>
-<p>So in here, both <code>GtkWidget</code> and <code>GtkWindow</code> will be fully generated and functions/methods using <code>GtkButton</code> will be uncommented. To generate code for all global functions, add <code>Gtk.*</code> to the <code>generate</code> array.</p>
+<p>So in here, both <code>GtkWidget</code> and <code>GtkWindow</code> will be fully generated and functions/methods using <code>GtkButton</code> will be uncommented.
+To generate code for all global functions, add <code>Gtk.*</code> to the <code>generate</code> array.</p>
 <p>To also generate a <code>Builder</code> struct for a widget, it needs to be set with the <code>generate_builder</code> flag in object configuration:</p>
 <pre><code class="language-toml">[[object]]
 name = &quot;Gtk.TreeView&quot;
@@ -420,7 +424,8 @@ status = &quot;generate&quot;
     # In case you don't want to generate the documentation for this function.
     generate_doc = false
 </code></pre>
-<p>Which will prevent gir from generating <code>stock_list_ids</code>. If you want to specify
+<p>Which will prevent gir from generating <code>stock_list_ids</code>.
+If you want to specify
 that a function will be manually implemented, you can use:</p>
 <pre><code class="language-toml">[[object]]
 name = &quot;Gtk.Entry&quot;
@@ -447,10 +452,13 @@ status = &quot;generate&quot;
 </code></pre>
 <p>Constants also support <code>version</code> and <code>cfg_condition</code> fields.</p>
 <p>In various cases, GObjects or boxed types can be used from multiple threads
-and have certain concurrency guarantees. This can be configured with the
-<code>concurrency</code> setting at the top-level options or per object. It will
+and have certain concurrency guarantees.
+This can be configured with the
+<code>concurrency</code> setting at the top-level options or per object.
+It will
 automatically implement the <code>Send</code> and <code>Sync</code> traits for the resulting object
-and set appropriate trait bounds for signal callbacks. The default is <code>none</code>,
+and set appropriate trait bounds for signal callbacks.
+The default is <code>none</code>,
 and apart from that <code>send</code> and <code>send+sync</code> are supported.</p>
 <pre><code class="language-toml">[[object]]
 # object's fullname
@@ -463,7 +471,8 @@ concurrency = &quot;send+sync&quot;
 </code></pre>
 <p>Note that <code>send</code> is only valid for types that are either not reference counted
 (i.e. <code>clone()</code> copies the object) or that are read-only (i.e. no API for
-mutating the object exists). <code>send+sync</code> is valid if the type can be sent to
+mutating the object exists).
+<code>send+sync</code> is valid if the type can be sent to
 different threads and all API allows simultaneous calls from different threads
 due to internal locking via e.g. a mutex.</p>
 <pre><code class="language-toml">[[object]]
@@ -477,7 +486,8 @@ detected by GIR is different than what was implemented and conversion to the C
 types are wrong in autogenerated functions that have such objects as argument.
 This can be overridden with the <code>ref_mode</code> configuration.</p>
 <p>Getters are automatically renamed to comply with Rust codying style guidelines.
-However, this can cause name clashes with existing functions. If you want to
+However, this can cause name clashes with existing functions.
+If you want to
 bypass the automatic renaming mechanism, use <code>bypass_auto_rename = true</code>:</p>
 <pre><code class="language-toml">[[object]]
 name = &quot;Gtk.TextBuffer&quot;
@@ -487,7 +497,8 @@ name = &quot;Gtk.TextBuffer&quot;
     # Avoid clash with the `insert` operation.
     bypass_auto_rename = true
 </code></pre>
-<p>Some constructors are not annotated as <code>constructor</code> in the <code>gir</code> files. In
+<p>Some constructors are not annotated as <code>constructor</code> in the <code>gir</code> files.
+In
 order for the naming convention to be applied, you can force a function to be
 considered as a constructor:</p>
 <pre><code class="language-toml">[[object.function]]
@@ -497,10 +508,13 @@ constructor = true
 </code></pre>
 <h2 id="conversion_type-option"><a class="header" href="#conversion_type-option">conversion_type &quot;Option&quot;</a></h2>
 <p>The <code>conversion_type</code> variant <code>Option</code> is available for types <code>T</code> implementing
-<code>glib::TryFromGlib&lt;Error=GlibNoneError&gt;</code>. As a reminder, this allows
+<code>glib::TryFromGlib&lt;Error=GlibNoneError&gt;</code>.
+As a reminder, this allows
 implementing <code>FromGlib</code> for <code>Option&lt;T&gt;</code> and usually goes alongside with <code>ToGlib</code>
-for both <code>T</code> and <code>Option&lt;T&gt;</code>. In this case, <code>Option&lt;T&gt;</code> will be used for return
-values (including ffi output arguments). For in-arguments, except if the
+for both <code>T</code> and <code>Option&lt;T&gt;</code>.
+In this case, <code>Option&lt;T&gt;</code> will be used for return
+values (including ffi output arguments).
+For in-arguments, except if the
 parameter is declared <code>mandatory</code>, <code>impl Into&lt;Option&lt;T&gt;&gt;</code> so that either an
 <code>Option&lt;T&gt;</code> or <code>T</code> can be used.</p>
 <p>Ex. from <code>gstreamer-rs</code>:</p>
@@ -515,7 +529,8 @@ conversion_type = &quot;Option&quot;
 <code>OptionToGlib</code>), which means that its Rust representation can take advantage of
 <code>Option&lt;ClockTime&gt;</code>.</p>
 <p>Additionally, the user can instruct <code>gir</code> to <code>expect</code> <code>Some</code> or <code>Ok</code> results for
-specific arguments or return values. E.g.:</p>
+specific arguments or return values.
+E.g.:</p>
 <pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>[[object]]
@@ -528,12 +543,9 @@ manual_traits = [&quot;ClockExtManual&quot;]
         name = &quot;internal&quot;
         mandatory = true
 <span class="boring">}</span></code></pre></pre>
-<p>In the above example, the user instructs gir to consider the <code>internal</code> argument
-(which also happens to be an out argument) with type gir <code>Gst.ClockTime</code> can be
-represented as a <code>ClockTime</code> without the <code>Option</code>. This argument is actually
-part of a set of output arguments. With the above gir declaration, the generated
-signature is the following (the implementation takes care of <code>expect</code>ing the
-value to be defined):</p>
+<p>In the above example, the user instructs gir to consider the <code>internal</code> argument (which also happens to be an out argument) with type gir <code>Gst.ClockTime</code> can be represented as a <code>ClockTime</code> without the <code>Option</code>.
+This argument is actually part of a set of output arguments.
+With the above gir declaration, the generated signature is the following (the implementation takes care of <code>expect</code>ing the value to be defined):</p>
 <pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>    fn get_calibration(
@@ -558,16 +570,18 @@ value to be defined):</p>
 <h2 id="conversion_type-result"><a class="header" href="#conversion_type-result">conversion_type &quot;Result&quot;</a></h2>
 <p>The <code>conversion_type</code> variant <code>Result</code> is available for types <code>T</code> implementing
 <code>glib::TryFromGlib&lt;Error=Err&gt;</code> where <code>Err</code> is neither <code>GlibNoneError</code> nor
-<code>GlibNoneOrInvalidError</code>. In this case, <code>Result&lt;T, ErrorType&gt;</code> will be used for
+<code>GlibNoneOrInvalidError</code>.
+In this case, <code>Result&lt;T, ErrorType&gt;</code> will be used for
 return values (including <code>ffi</code> output arguments) and the type itself in argument
 position.</p>
 <p>In <code>gstreamer-rs</code>, the C type <code>GstStateChangeReturn</code> can represent both a
-successful or an error return value. In Rust, the <code>Result</code> <code>enum</code> is the
-idiomatic way of returning an error. In <code>gstreamer-rs</code>, bindings to functions
-returning <code>GstStateChangeReturn</code> had to be manually implemented so as to return
-<code>Result&lt;StateChangeSuccess, StateChangeError&gt;</code>. Note that in this case, the type
-implementing <code>TryFromGlib</code> is <code>StateChangeSuccess</code> and not
-<code>GstStateChangeReturn</code>. These functions can be auto-generated using:</p>
+successful or an error return value.
+In Rust, the <code>Result</code> <code>enum</code> is the idiomatic way of returning an error.
+In <code>gstreamer-rs</code>, bindings to functions
+returning <code>GstStateChangeReturn</code> had to be manually implemented so as to return <code>Result&lt;StateChangeSuccess, StateChangeError&gt;</code>.
+Note that in this case, the type implementing <code>TryFromGlib</code> is <code>StateChangeSuccess</code> and not
+<code>GstStateChangeReturn</code>.
+These functions can be auto-generated using:</p>
 <pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>[[object]]
@@ -581,17 +595,14 @@ must_use = true
 <span class="boring">}</span></code></pre></pre>
 <h2 id="boxed-types-vs-boxedinline-types"><a class="header" href="#boxed-types-vs-boxedinline-types">Boxed types vs. BoxedInline types</a></h2>
 <p>For boxed types / records, gir auto-detects <code>copy</code>/<code>free</code> or <code>ref</code>/<code>unref</code>
-function pairs for memory management on records. It falls back to generic
-<code>g_boxed_copy</code>/<code>g_boxed_free</code> if these are not found, based on an existing
-implementation of <code>get_type</code>. Otherwise no record implementation can be
-generated.</p>
+function pairs for memory management on records.
+It falls back to generic <code>g_boxed_copy</code>/<code>g_boxed_free</code> if these are not found, based on an existing implementation of <code>get_type</code>.
+Otherwise no record implementation can be generated.</p>
 <p>This works for the majority of boxed types, which are literally boxed: their
-memory is always allocated on the heap and memory management is left to the C
-library. Some boxed types, however, are special and in C code they are usually
-allocated on the stack or inline inside another struct. As such, their struct
-definition is public and part of the API/ABI. Usually these types are
-relatively small and allocated regularly, which would make heap allocations
-costly.</p>
+memory is always allocated on the heap and memory management is left to the C library.
+Some boxed types, however, are special and in C code they are usually allocated on the stack or inline inside another struct.
+As such, their struct definition is public and part of the API/ABI.
+Usually these types are relatively small and allocated regularly, which would make heap allocations costly.</p>
 <p>These special boxed types are usually allocated by the caller of the C
 functions, and the functions are then only filling in the memory and taking
 values of this type as <code>(out caller-allocates)</code> parameters.</p>
@@ -609,7 +620,8 @@ the configuration for initializing newly allocated memory for them, to copy
 from one value into another one, and to free any resources that might be
 stored in values of that boxed types.</p>
 <p>By default the memory is zero-initialized and copying is done via
-<code>std::ptr::copy()</code>. If the boxed type contains memory that needs to be freed
+<code>std::ptr::copy()</code>.
+If the boxed type contains memory that needs to be freed
 then these functions must be provided.</p>
 <p>The following configuration is equivalent with the one above.</p>
 <pre><code class="language-toml">[[object]]
@@ -621,17 +633,22 @@ copy_into_function_expression = &quot;|dest, src| { std::ptr::copy_nonoverlappin
 clear_function_expression = &quot;|_ptr| ()&quot;
 </code></pre>
 <h2 id="generation-in-api-mode"><a class="header" href="#generation-in-api-mode">Generation in API mode</a></h2>
-<p>To generate the Rust-user API level, The command is very similar to the previous one. It's better to not put this output in the same directory as where the FFI files are. Just run:</p>
+<p>To generate the Rust-user API level, The command is very similar to the previous one.
+It's better to not put this output in the same directory as where the FFI files are.
+Just run:</p>
 <pre><code class="language-sh">cargo run --release -- -c YourGirFile.toml -d ../gir-files -o the-output-directory
 </code></pre>
-<p>Now it should be done. Just go to the output directory (so <code>the-output-directory/auto</code> in our case) and try to build using <code>cargo build</code>. Don't forget to update your dependencies in both projects: nothing much to do in the FFI/sys one but the Rust-user API level will need to have a dependency over the FFI/sys one.</p>
+<p>Now it should be done.
+Just go to the output directory (so <code>the-output-directory/auto</code> in our case) and try to build using <code>cargo build</code>.
+Don't forget to update your dependencies in both projects: nothing much to do in the FFI/sys one but the Rust-user API level will need to have a dependency over the FFI/sys one.</p>
 <p>Now, at your crate entry point (generally <code>lib.rs</code>), add the following to include all generated files:</p>
 <pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>pub use auto::*;
 <span class="boring">}</span></code></pre></pre>
 <h2 id="add-manual-bindings-alongside-generated-code"><a class="header" href="#add-manual-bindings-alongside-generated-code">Add manual bindings alongside generated code</a></h2>
-<p>Unfortunately, <code>gir</code> isn't perfect (yet) and will certainly not be able to generate all the code on its own. So here's what a <code>gir</code> generated folder looks like:</p>
+<p>Unfortunately, <code>gir</code> isn't perfect (yet) and will certainly not be able to generate all the code on its own.
+So here's what a <code>gir</code> generated folder looks like:</p>
 <pre><code class="language-text">- your_folder
 |
 |- Cargo.toml
@@ -642,7 +659,10 @@ clear_function_expression = &quot;|_ptr| ()&quot;
   |
   |- (all files generated by gir)
 </code></pre>
-<p>You can add your manual bindings directly inside the <code>src</code> folder (at the same level as <code>lib.rs</code>). Then don't forget to reexport them. Let's say you added a <code>Color</code> type in a <code>color.rs</code> file. You need to add in <code>lib.rs</code>:</p>
+<p>You can add your manual bindings directly inside the <code>src</code> folder (at the same level as <code>lib.rs</code>).
+Then don't forget to reexport them.
+Let's say you added a <code>Color</code> type in a <code>color.rs</code> file.
+You need to add in <code>lib.rs</code>:</p>
 <pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>// We make the type public for the API users.
@@ -655,11 +675,11 @@ mod color;
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
-                            <a rel="prev" href="config_ffi.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                            <a rel="prev" href="../config/ffi.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                                 <i class="fa fa-angle-left"></i>
                             </a>
 
-                            <a rel="next" href="config_name_override.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                            <a rel="next" href="../config/name_override.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                                 <i class="fa fa-angle-right"></i>
                             </a>
 
@@ -669,11 +689,11 @@ mod color;
             </div>
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
-                    <a rel="prev" href="config_ffi.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                    <a rel="prev" href="../config/ffi.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                         <i class="fa fa-angle-left"></i>
                     </a>
 
-                    <a rel="next" href="config_name_override.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                    <a rel="next" href="../config/name_override.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                         <i class="fa fa-angle-right"></i>
                     </a>
             </nav>
@@ -688,13 +708,13 @@ mod color;
         </script>
 
 
-        <script src="elasticlunr.min.js"></script>
-        <script src="mark.min.js"></script>
-        <script src="searcher.js"></script>
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
 
-        <script src="clipboard.min.js"></script>
-        <script src="highlight.js"></script>
-        <script src="book.js"></script>
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
 
         <!-- Custom JS scripts -->
 

@@ -81,7 +81,7 @@
 
         <nav id="sidebar" class="sidebar" aria-label="Table of contents">
             <div class="sidebar-scrollbox">
-                <ol class="chapter"><li class="chapter-item expanded "><a href="introduction.html"><strong aria-hidden="true">1.</strong> Introduction</a></li><li class="chapter-item expanded "><a href="config_introduction.html"><strong aria-hidden="true">2.</strong> Configuration</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="config_ffi.html"><strong aria-hidden="true">2.1.</strong> FFI Options</a></li><li class="chapter-item expanded "><a href="config_api.html"><strong aria-hidden="true">2.2.</strong> API Options</a></li><li class="chapter-item expanded "><a href="config_name_override.html"><strong aria-hidden="true">2.3.</strong> Crate name override</a></li></ol></li><li class="chapter-item expanded "><a href="tutorial/introduction.html"><strong aria-hidden="true">3.</strong> Tutorial</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="tutorial/sys_library.html"><strong aria-hidden="true">3.1.</strong> Generating the FFI library</a></li><li class="chapter-item expanded "><a href="tutorial/high_level_rust_api.html"><strong aria-hidden="true">3.2.</strong> Generating the Rust API</a></li><li class="chapter-item expanded "><a href="tutorial/handling_errors.html"><strong aria-hidden="true">3.3.</strong> Handling generation errors</a></li></ol></li><li class="chapter-item expanded "><a href="generate_docs.html"><strong aria-hidden="true">4.</strong> Generating documentation</a></li></ol>
+                <ol class="chapter"><li class="chapter-item expanded "><a href="introduction.html"><strong aria-hidden="true">1.</strong> Introduction</a></li><li class="chapter-item expanded "><a href="tutorial/introduction.html"><strong aria-hidden="true">2.</strong> Tutorial</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="tutorial/preparation.html"><strong aria-hidden="true">2.1.</strong> Preparation</a></li><li class="chapter-item expanded "><a href="tutorial/finding_gir_files.html"><strong aria-hidden="true">2.2.</strong> Finding .gir files</a></li><li class="chapter-item expanded "><a href="tutorial/sys_library.html"><strong aria-hidden="true">2.3.</strong> Generating the FFI library</a></li><li class="chapter-item expanded "><a href="tutorial/high_level_rust_api.html"><strong aria-hidden="true">2.4.</strong> Generating the Rust API</a></li><li class="chapter-item expanded "><a href="tutorial/handling_errors.html"><strong aria-hidden="true">2.5.</strong> Handling generation errors</a></li><li class="chapter-item expanded "><a href="tutorial/generate_docs.html"><strong aria-hidden="true">2.6.</strong> Generating documentation</a></li></ol></li><li class="chapter-item expanded "><a href="config/introduction.html"><strong aria-hidden="true">3.</strong> Configuration files</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="config/ffi.html"><strong aria-hidden="true">3.1.</strong> FFI Options</a></li><li class="chapter-item expanded "><a href="config/api.html"><strong aria-hidden="true">3.2.</strong> API Options</a></li><li class="chapter-item expanded "><a href="config/name_override.html"><strong aria-hidden="true">3.3.</strong> Crate name override</a></li></ol></li></ol>
             </div>
             <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
         </nav>
@@ -146,38 +146,771 @@
                 <div id="content" class="content">
                     <main>
                         <h1 id="introduction"><a class="header" href="#introduction">Introduction</a></h1>
-<p>This book aims to provide complete documentation on how to use <a href="https://github.com/gtk-rs/gir">gir</a> to generate bindings for GObject based libraries based on the <a href="https://gi.readthedocs.io/en/latest/">GObject introspection</a> data.</p>
-<p><a href="https://github.com/gtk-rs/gir">gir</a> consists of a library and at the same time a binary you can use to generate the bindings.</p>
-<p><a href="https://github.com/gtk-rs/gir">gir</a> requires both a <code>Gir.toml</code> configuration file and a <code>.gir</code> file containing the GObject introspection data.</p>
+<p><a href="https://github.com/gtk-rs/gir">gir</a> is a tool to automatically generate safe wrappers for a C library with <a href="https://gi.readthedocs.io/en/latest/">GObject introspection</a> information.
+In order to use it you need the <code>.gir</code> file containing the introspection data for the library you want to create the bindings for, as well as the <code>.gir</code> files for all its dependencies.
+Have a look at the tutorial if you don't know how to <a href="tutorial/finding_gir_files.html">find the .gir files</a>.
+If your library does not provide a <code>.gir</code> file, unfortunately you cannot use <a href="https://github.com/gtk-rs/gir">gir</a>, but maybe you can try <a href="https://github.com/rust-lang/rust-bindgen">rust-bindgen</a>.</p>
+<p>This book contains a tutorial on how to use <a href="https://github.com/gtk-rs/gir">gir</a>.
+As an example we will create the bindings for <a href="https://docs.gtk.org/Pango/">Pango</a>.
+In many cases you will be able to follow the same steps with your library.
+If you are already familiar with <a href="https://github.com/gtk-rs/gir">gir</a> and you just want to look up details about the configuration files, feel free to skip ahead to the documentation of the <a href="config/introduction.html">configuration files</a>.</p>
+<h2 id="general-steps"><a class="header" href="#general-steps">General steps</a></h2>
+<p><a href="https://github.com/gtk-rs/gir">gir</a> tries to make it as simple as possible to generate a safe wrapper for your C library.
+The process can be divided into four steps that correspond to the four operating modes gir has.</p>
 <ul>
 <li>
-<p>The <code>*.gir</code> you need will correspond to the project you want to generate bindings for. You can get them from here or directly on ubuntu website (for example: <a href="http://packages.ubuntu.com/zesty/amd64/libgtk-3-dev">http://packages.ubuntu.com/zesty/amd64/libgtk-3-dev</a>).</p>
+<p>Generating unsafe bindings:
+In this step, the low-level FFI bindings are created from the supplied <code>*.gir</code> files.
+These are essentially direct calls into the related C library and are unsafe.
+The resulting crate is typically appended with -sys.
+The operating mode is <code>sys</code>.</p>
 </li>
 <li>
-<p>The <code>*.toml</code> is what is used to pass various settings and options to <a href="https://github.com/gtk-rs/gir">gir</a> for use when generating the bindings - you will need to write one to suit your needs, for an example you can take a look to gtk-rs/sys/gir-gtk.toml.</p>
+<p>Generating a safe wrapper:
+Next, another crate for a layer on top of these unsafe (sys) bindings is created, which makes them safe for use in general Rust.
+The operating mode is <code>normal</code>.</p>
+</li>
+<li>
+<p>Checking for missing types/methods:
+The operating mode <code>not_bound</code> allows you to see the detected types/methods that will not be generated for whatever reasons.</p>
+</li>
+<li>
+<p>Adding documentation:
+After the safe wrapper is created, gir can even generate the documentation for us.
+Use the operating mode <code>doc</code> to do so.</p>
 </li>
 </ul>
-<p>It operates on 4 different modes:</p>
-<ul>
-<li>
-<p><code>sys</code>: is what creates the low-level FFI bindings from the supplied <code>*.gir</code> file - these are essentially direct calls in to the related C library and are typically unsafe. The resulting crate is typically appended with -sys.</p>
-</li>
-<li>
-<p><code>normal</code>: generates another crate for a layer on top of these unsafe (sys) bindings which makes them safe for use in general Rust.</p>
-</li>
-<li>
-<p><code>not_bound</code>: allows you to see the detected types/methods that will not be generated for whatever reasons.</p>
-</li>
-<li>
-<p><code>doc</code>: used for documentation generation</p>
-</li>
-</ul>
-<h2 id="helpers"><a class="header" href="#helpers">Helpers</a></h2>
-<p><a href="https://github.com/gtk-rs/gir">gir</a> includes a wrapper script <code>./generator.py</code> that detects <code>Gir.toml</code> configurations in the current directory (or the path(s) passed on the command-line) and generates &quot;normal&quot; or &quot;sys&quot; crates for it. Alternatively --embed-docs can be passed to prepare source-code for a documentation build by moving all documentation into it. For a complete overview of available options, pass --help.</p>
+<h2 id="regenerating-the-bindings-and-wrapper"><a class="header" href="#regenerating-the-bindings-and-wrapper">Regenerating the bindings and wrapper</a></h2>
+<p>In order to generate the bindings and the wrapper for the first time, the above-mentioned steps should be followed.
+When you want to regenerate the crates because e.g.
+the library was updated, you can simplify the process by running the helper script <code>./generator.py</code>.
+The script detects <code>Gir.toml</code> configurations in the current directory and subdirectories (or the paths passed on the command-line) and generates &quot;normal&quot; or &quot;sys&quot; crates for it.
+Alternatively <code>--embed-docs</code> can be passed to prepare source-code for a documentation built by moving all documentation into it.
+For a complete overview of available options, pass <code>--help</code>.</p>
 <h2 id="gir-format-reference"><a class="header" href="#gir-format-reference">GIR format reference</a></h2>
 <p>It can always be useful to look at the <a href="https://gi.readthedocs.io/en/latest/annotations/giannotations.html">reference</a> or <a href="https://gitlab.gnome.org/GNOME/gobject-introspection/blob/master/docs/gir-1.2.rnc">schema</a>.</p>
+<h2 id="contact-us"><a class="header" href="#contact-us">Contact us</a></h2>
+<p>If you use <a href="https://github.com/gtk-rs/gir">gir</a> on another library and it fails and you can't figure out why, don't hesitate to <a href="https://gtk-rs.org/contact">contact us</a>!</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="tutorial"><a class="header" href="#tutorial">Tutorial</a></h1>
+<p>In this tutorial, we go through the basic steps needed to generate a safe wrapper for a simple C library.
+We start with finding the .gir files needed and end with generating the documentation.
+We also look at a few common errors and how to fix them.
+Because this can be a bit abstract sometimes, we use the creation of the bindings for <a href="https://docs.gtk.org/Pango/">Pango</a> as an example.
+The example continues through all of the chapters of the tutorial.
+If you follow along until the end, you will have generated a safe wrapper including the documentation.
+In case you are stuck at any point or there are other errors and you can't figure out what's going on, don't hesitate to reach us so we can give you a hand!</p>
+<p>Let's dive right into it and let's set up our project folder!</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="preparation"><a class="header" href="#preparation">Preparation</a></h1>
+<p>In order to install gir and nicely structure the project, there are a few things to set up.</p>
+<h2 id="set-up-the-project-folder"><a class="header" href="#set-up-the-project-folder">Set up the project folder</a></h2>
+<p>In order to keep the project folder nicely organized, let's create a folder where we will work in and initialize the repo.
+We will create two library crates.
+pango will contain the safe wrapper crate and because it is a wrapper for the unsafe bindings, we create the pango-sys crate within the pango crate.
+If no Cargo.toml file is present in the sys create, a new one will be generated, so let's be safe and delete the automatically created file before we begin.
+The following commands will set up the project folder as described.</p>
+<pre><code class="language-sh">mkdir gir-tutorial
+cd gir-tutorial/
+git init
+cargo new pango --lib
+cd pango
+cargo new pango-sys --lib
+rm pango-sys/Cargo.toml
+</code></pre>
+<p>We will also create a file called &quot;Gir.toml&quot; in each of the crates.</p>
+<pre><code class="language-sh">touch Gir.toml
+touch pango-sys/Gir.toml
+cd ..
+</code></pre>
+<h2 id="installing-gir"><a class="header" href="#installing-gir">Installing gir</a></h2>
+<p>Of course we also need to download and install <a href="https://github.com/gtk-rs/gir">gir</a>.</p>
+<pre><code class="language-sh">git submodule add https://github.com/gtk-rs/gir
+git config -f .gitmodules submodule.gir.update none
+git submodule set-branch --branch master -- ./gir
+cd gir
+cargo install --path .
+cd ..
+</code></pre>
+<p>By adding it as a submodule, we are able to fetch future updates of the tool and we always exactly know which gir version we used to generate our bindings.
+We also change the setting so that the submodule is not automatically checked out, otherwise anyone using your library from git will have the useless submodule checked out.
+Run <code>git submodule update --checkout</code> if you want to update the submodule.
+Then we set the branch of the submodule to master.</p>
+<p>If there are any updates to gir in the future, we can install them by opening our project folder <code>gir-tutorial</code> and running</p>
+<pre><code class="language-sh">git submodule update --remote
+cd gir
+cargo install --path .
+cd ..
+</code></pre>
+<h2 id="summary"><a class="header" href="#summary">Summary</a></h2>
+<p>You should now have a folder looking like this:</p>
+<pre><code class="language-text">gir
+  |
+  |---- ...
+pango/
+  |
+  |---- Cargo.toml
+  |---- Gir.toml
+  |---- pango-sys/
+  |       |
+  |       |---- Gir.toml
+  |       |---- src/
+  |              |
+  |              |---- lib.rs
+  |---- src/
+          |
+          |---- lib.rs
+.git
+  |
+  |---- ...
+.gitmodules
+</code></pre>
+<p>Now that we installed gir and prepared our project folder, let's get the .gir files.</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="where-can-i-find-those-gir-files"><a class="header" href="#where-can-i-find-those-gir-files">Where can I find those .gir files?</a></h1>
+<p>There are multiple ways you can get the needed <code>.gir</code> files.
+The <code>*.gir</code> you need corresponds to the library you want to generate bindings for.
+If you have the library installed, you can search for the <code>.gir</code> file under <code>/usr/share/gir-1.0/</code>.
+Having the library installed is a good idea so that you can test the generated code.
+Otherwise you should be able to get it from the package that installs the library.
+Ubuntu for example allows you to <a href="https://packages.ubuntu.com/">search</a> for packages and download them via their website.
+You can copy the <code>.gir</code> file of your library to the root of your project folder.
+You don't have to store all <code>.gir</code> files in the same folder.
+You can add multiple paths by changing the <code>girs_directories</code> field in the Gir.toml files.
+More on this in the next chapters.</p>
+<p>Have a look at the .gir file of your library.
+At the beginning of the file, you probably see something similar to <code>&lt;include name=&quot;GObject&quot; version=&quot;2.0&quot;/&gt;</code>.
+&quot;GObject&quot; in this case would be a dependency and you will have to find the .gir file for your dependencies as well.
+In most cases it will be enough to follow the next two steps of the tutorial to get all needed files.</p>
+<h2 id="gtk-dependencies"><a class="header" href="#gtk-dependencies">GTK dependencies</a></h2>
+<p>If your library depends on GTK libraries, the recommended way to get the <code>.gir</code> files for them is to add the <a href="https://github.com/gtk-rs/gir-files">gir-files repo</a> as a submodule as well.
+It's the recommended way, because some of the <code>.gir</code> files included in the libraries are invalid (missing or invalid annotations for example).
+These errors are already fixed in the gir files from the repo.
+Otherwise you could use the above-mentioned methods to find the files and run the <a href="https://github.com/gtk-rs/gir-files/blob/master/fix.sh">script</a> to fix the <code>.gir</code> files available in the gir-files repository (and only them!).
+You can run it like this (at the same level of the <code>.gir</code> files you want to patch):</p>
+<pre><code class="language-sh">sh fix.sh
+</code></pre>
+<h2 id="gstreamer-dependencies"><a class="header" href="#gstreamer-dependencies">GStreamer dependencies</a></h2>
+<p>For GStreamer related dependencies, follow the above-mentioned steps but add this <a href="https://gitlab.freedesktop.org/gstreamer/gir-files-rs">repo</a> instead.</p>
+<h2 id="other-dependencies"><a class="header" href="#other-dependencies">Other dependencies</a></h2>
+<p>If you have other dependencies, you have to find the files yourself.
+They can often be found in the repo containing the source of your dependencies or if you have them installed, you might find them under <code>/usr/share/gir-1.0/</code> again.</p>
+<h2 id="example"><a class="header" href="#example">Example</a></h2>
+<p>We want to generate the wrapper for pango.
+It is related to GTK, so in order to get its .gir files, we use the recommended way.
+While being in the project folder <code>git-tutorial</code>, we add the <a href="https://github.com/gtk-rs/gir-files">gir-files repo</a> as a submodule and set the branch of the submodule to master.</p>
+<pre><code class="language-sh">git submodule add https://github.com/gtk-rs/gir-files
+git config -f .gitmodules submodule.gir-files.update none
+git submodule set-branch --branch master -- ./gir-files
+</code></pre>
+<p>We also change the setting so that the submodule is not automatically checked out, otherwise anyone using your library from git will have the useless submodule checked out.
+Run <code>git submodule update --checkout</code> if you want to update the submodule.
+If you look into <code>gir-files</code>, you'll see a file named <code>Pango-1.0.gir</code>.
+That's the one for pango.
+Because we already added the gir-files repo, we also have all the other .gir files of the dependencies that we need.
+Now we can create the unsafe bindings.</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="generating-the-ffi-library"><a class="header" href="#generating-the-ffi-library">Generating the FFI library</a></h1>
+<p>We have installed <a href="https://github.com/gtk-rs/gir">gir</a>, set up our repo and have all the <code>.gir</code> files we need.
+Now let's work on the unsafe bindings of the -sys crate.
+Let's change into the directory of the sys crate.</p>
+<pre><code class="language-sh">cd pango/pango-sys
+</code></pre>
+<h2 id="the-girtoml-file"><a class="header" href="#the-girtoml-file">The Gir.toml file</a></h2>
+<p>The first step is to let <a href="https://github.com/gtk-rs/gir">gir</a> know what to generate.
+This is what the <code>Gir.toml</code> file that we created inside the <code>pango-sys</code> folder is for.
+This file will not be replaced when we run gir again.
+The file is currently empty so let's add the following to it:</p>
+<pre><code class="language-toml">[options]
+library = &quot;Pango&quot;
+version = &quot;1.0&quot;
+min_cfg_version = &quot;1.0&quot;
+target_path = &quot;.&quot;
+girs_directories = [&quot;../../gir-files/&quot;]
+work_mode = &quot;sys&quot;
+single_version_file = true
+</code></pre>
+<ul>
+<li><code>library</code> stands for the name of the library we want to generate.</li>
+<li><code>version</code> stands for the version of the library to be used. </li>
+<li><code>min_cfg_version</code> will be the minimum version supported by the generated bindings.</li>
+<li><code>target_path</code> stands for the location where the files will be generated.</li>
+<li><code>girs_directories</code> stands for the location of the <code>.gir</code> files.</li>
+<li><code>work_mode</code> stands for the mode gir is using.
+The options here are <code>sys</code> and <code>normal</code>.</li>
+<li><code>single_version_file</code> is a very useful option when you have a lot of generated files (like we'll have).
+Instead of generating the gir hash commit used for the generation in the header of all generated files, it'll just write it inside one file, removing <code>git diff</code> noise <strong>a lot</strong>.</li>
+</ul>
+<p>You can find out the values for <code>library</code> and <code>version</code> by looking at the name of the .gir file of your library.
+In our case it is called Pango-1.0.gir.
+This tells us that the <code>library</code> is Pango and the <code>version</code> is 1.0.
+If you don't know what value to use for <code>min_cfg_version</code>, use the same as you use for <code>version</code>.
+If not all needed <code>.gir</code> files reside in <code>../../gir-files/</code>, you can add the path to the other files by changing <code>girs_directories</code>.
+If for example you also have <code>.gir</code> files in the root of your project folder, change it to <code>girs_directories = [&quot;../../gir-files/&quot;, &quot;../..&quot;]</code>.
+Because we are generating the unsafe bindings, we use the <code>sys</code> work mode.</p>
+<p>Let's generate the <code>sys</code> crate now:</p>
+<pre><code class="language-sh">gir -o .
+</code></pre>
+<p>You should now see new files and a new folder.</p>
+<ul>
+<li><code>build.rs</code></li>
+<li><code>Cargo.toml</code></li>
+<li><code>Gir.toml</code></li>
+<li><code>src/lib.rs</code></li>
+<li><code>tests/</code></li>
+</ul>
+<p>Now let's try to build it:</p>
+<pre><code class="language-sh">cargo build
+</code></pre>
+<p>Surprise.
+It doesn't build at all and you should see a lot of errors.
+Well, that was expected.
+We need to add some dependencies in order to make it work.
+Have a look at the errors of the compiler to find out which are missing.
+In our example, the compiler throws the following errors:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use of undeclared crate or module `glib`
+use of undeclared crate or module `gobject`
+<span class="boring">}</span></code></pre></pre>
+<p>The dependencies need to be added to the <code>external_libraries</code> part.
+The names of the dependencies are the same as in the .gir files and not what the packages to install the libraries might be called.
+The compiler told us that the <code>GLib</code> and the <code>GObject</code> dependencies are missing.
+Let's update our <code>Gir.toml</code> file to fix it:</p>
+<pre><code class="language-toml">[options]
+library = &quot;Pango&quot;
+version = &quot;1.0&quot;
+min_cfg_version = &quot;1.0&quot;
+target_path = &quot;.&quot;
+girs_directories = [&quot;../../gir-files/&quot;]
+work_mode = &quot;sys&quot;
+
+external_libraries = [
+    &quot;GLib&quot;,
+    &quot;GObject&quot;,
+]
+</code></pre>
+<p>If one of your .gir files changed or you want to use an updated version of gir to generate the code, there is no need to delete the Cargo.toml or the Cargo.lock files before you regenerate the code.
+Because we made some changes to the Gir.toml file, we have to run gir again.
+Changing the content of the external_libraries array means that additional dependencies have to be added.
+gir does this automatically for you, but only if there is no Cargo.toml and no Cargo.lock file present.
+Just remove the <code>Cargo.*</code> files and run gir again and the additional dependencies will be added.
+If you made any manual changes to the file, you would have to do these changes again.
+After regenerating the code, we build the crate to see if the errors are gone.</p>
+<pre><code class="language-sh">rm Cargo.*
+gir -o .
+cargo build
+</code></pre>
+<p>When executing the above commands, there should not be any errors and everything should work fine.
+Just to be sure everything was correctly generated, we can run some tests (graciously generated by <a href="https://github.com/gtk-rs/gir">gir</a> as well):</p>
+<pre><code class="language-sh">cargo test
+</code></pre>
+<p>Normally, all tests passed.
+If you get an error when running those tests, it's very likely that the <code>sys</code> generation is invalid and/or incomplete.</p>
+<h2 id="the-girtoml-file-1"><a class="header" href="#the-girtoml-file-1">The Gir.toml file</a></h2>
+<p>This file was automatically generated but it will not be replaced when we run gir again.
+Make sure to look at your Cargo.toml to optionally add more information to it.
+If there are any <code>[features]</code>, you should try building and testing with these features activated as well.
+If you'd like, you can also set the default features.
+This can be useful for example if you want to always activate the newest version unless the user of the crate specifies an older version.</p>
+<p>For our example, we now have a working <code>sys</code> crate containing all functions and objects definition.
+We are done here and can go back to the folder of the wrapper crate:</p>
+<pre><code class="language-sh">cd ..
+</code></pre>
+<p>Time to generate the high-level Rust API!</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="generating-the-rust-api"><a class="header" href="#generating-the-rust-api">Generating the Rust API</a></h1>
+<p>In the previous step we successfully created the unsafe bindings of the -sys crate.
+We are now in the directory of the safe wrapper crate (<code>gir-tutorial/pango</code>).</p>
+<h2 id="the-cargotoml-file"><a class="header" href="#the-cargotoml-file">The Cargo.toml file</a></h2>
+<p>The Cargo.toml file will not be replaced when you run gir.
+So it is our responsibility to make sure the information in it is correct.
+Open the Cargo.toml file and have a look at it.
+Make sure everything under <code>[package]</code> is to your liking.</p>
+<p>Add the following lines to the file:</p>
+<pre><code class="language-toml">[package.metadata.docs.rs]
+features = [&quot;dox&quot;]
+</code></pre>
+<p>This automatically activates the <code>dox</code> feature if you chose to publish the bindings and docs.rs tries to build the documentation.
+The <code>dox</code> feature skips linking the C libraries and allows docs.rs to build the documentation without having the underlying libraries installed.
+Even if you don't plan to publish it, this line is not going to hurt.</p>
+<p>We also need to add <code>libc</code>, <code>bitflags</code>, <code>glib</code> and <code>glib-sys</code> and all other dependencies we used in the sys crate as dependencies.
+Because we are creating a wrapper for the sys crate, which we generated in the previous chapter, we also need to add the sys crate to the list of dependencies.
+In the automatically generated code, the sys crate is always called <code>ffi</code>, so we need to rename the sys crate in our <code>Cargo.toml</code>.
+For our example, this results in the following dependencies:</p>
+<pre><code class="language-toml">[dependencies]
+libc = &quot;0.2&quot;
+bitflags = &quot;1.0&quot;
+
+[dependencies.ffi]
+package = &quot;pango-sys&quot;
+path = &quot;./pango-sys&quot;
+
+[dependencies.glib]
+package = &quot;glib-sys&quot;
+git = &quot;https://github.com/gtk-rs/gtk-rs-core&quot;
+
+[dependencies.gobject]
+package = &quot;gobject-sys&quot;
+git = &quot;https://github.com/gtk-rs/gtk-rs-core&quot;
+</code></pre>
+<p>In order to make the features of the sys crate available for users of your safe wrapper, you need to add features.
+Copy the <code>[features]</code> part of the Cargo.toml of your sys crate and paste it into the Cargo.toml of the normal crate.
+The features are supposed to activate the corresponding features of the sys crate, so you need to make some changes.
+If for example you have the following sys features:</p>
+<pre><code class="language-toml">[features]
+v1_2 = []
+v1_4 = [&quot;v1_2&quot;]
+v1_6 = [&quot;v1_4&quot;]
+v1_8 = [&quot;v1_6&quot;]
+v1_10 = [&quot;v1_8&quot;]
+v1_12 = [&quot;v1_10&quot;]
+v1_14 = [&quot;v1_12&quot;]
+v1_16 = [&quot;v1_14&quot;]
+v1_18 = [&quot;v1_16&quot;]
+v1_20 = [&quot;v1_18&quot;]
+v1_22 = [&quot;v1_20&quot;]
+v1_24 = [&quot;v1_22&quot;]
+v1_26 = [&quot;v1_24&quot;]
+v1_30 = [&quot;v1_26&quot;]
+v1_31 = [&quot;v1_30&quot;]
+v1_32 = [&quot;v1_31&quot;]
+v1_32_4 = [&quot;v1_32&quot;]
+v1_34 = [&quot;v1_32_4&quot;]
+v1_36_7 = [&quot;v1_34&quot;]
+v1_38 = [&quot;v1_36_7&quot;]
+v1_42 = [&quot;v1_38&quot;]
+v1_44 = [&quot;v1_42&quot;]
+v1_46 = [&quot;v1_44&quot;]
+v1_48 = [&quot;v1_46&quot;]
+v1_50 = [&quot;v1_48&quot;]
+v1_52 = [&quot;v1_50&quot;]
+dox = [&quot;glib/dox&quot;, &quot;gobject/dox&quot;]
+</code></pre>
+<p>You need to change the features in the Cargo.toml of your normal crate to</p>
+<pre><code class="language-toml">[features]
+v1_2 = [&quot;ffi/v1_2&quot;]
+v1_4 = [&quot;ffi/v1_4&quot;, &quot;v1_2&quot;]
+v1_6 = [&quot;ffi/v1_6&quot;, &quot;v1_4&quot;]
+v1_8 = [&quot;ffi/v1_8&quot;, &quot;v1_6&quot;]
+v1_10 = [&quot;ffi/v1_10&quot;, &quot;v1_8&quot;]
+v1_12 = [&quot;ffi/v1_12&quot;, &quot;v1_10&quot;]
+v1_14 = [&quot;ffi/v1_14&quot;, &quot;v1_12&quot;]
+v1_16 = [&quot;ffi/v1_16&quot;, &quot;v1_14&quot;]
+v1_18 = [&quot;ffi/v1_18&quot;, &quot;v1_16&quot;]
+v1_20 = [&quot;ffi/v1_20&quot;, &quot;v1_18&quot;]
+v1_22 = [&quot;ffi/v1_22&quot;, &quot;v1_20&quot;]
+v1_24 = [&quot;ffi/v1_24&quot;, &quot;v1_22&quot;]
+v1_26 = [&quot;ffi/v1_26&quot;, &quot;v1_24&quot;]
+v1_30 = [&quot;ffi/v1_30&quot;, &quot;v1_26&quot;]
+v1_31 = [&quot;ffi/v1_31&quot;, &quot;v1_30&quot;]
+v1_32 = [&quot;ffi/v1_32&quot;, &quot;v1_31&quot;]
+v1_32_4 = [&quot;ffi/v1_32_4&quot;, &quot;v1_32&quot;]
+v1_34 = [&quot;ffi/v1_34&quot;, &quot;v1_32_4&quot;]
+v1_36_7 = [&quot;ffi/v1_36_7&quot;, &quot;v1_34&quot;]
+v1_38 = [&quot;ffi/v1_38&quot;, &quot;v1_36_7&quot;]
+v1_42 = [&quot;ffi/v1_42&quot;, &quot;v1_38&quot;]
+v1_44 = [&quot;ffi/v1_44&quot;, &quot;v1_42&quot;]
+v1_46 = [&quot;ffi/v1_46&quot;, &quot;v1_44&quot;]
+v1_48 = [&quot;ffi/v1_48&quot;, &quot;v1_46&quot;]
+v1_50 = [&quot;ffi/v1_50&quot;, &quot;v1_48&quot;]
+v1_52 = [&quot;ffi/v1_52&quot;, &quot;v1_50&quot;]
+dox = [&quot;glib/dox&quot;, &quot;gobject/dox&quot;, &quot;ffi/dox&quot;]
+</code></pre>
+<h2 id="the-librs-file"><a class="header" href="#the-librs-file">The lib.rs file</a></h2>
+<p>The lib.rs file will not be replaced when you run gir.
+All the code that gir will generate for us is going to be in src/auto.
+We need to include all <code>auto</code> files in our library.
+To do so, let's update the <code>src/lib.rs</code> file as follows:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span>#![cfg_attr(feature = &quot;dox&quot;, feature(doc_cfg))]
+
+<span class="boring">fn main() {
+</span>pub use auto::*;
+mod auto;
+<span class="boring">}</span></code></pre></pre>
+<h2 id="the-girtoml-file-2"><a class="header" href="#the-girtoml-file-2">The Gir.toml file</a></h2>
+<p>As you certainly guessed, we have to fill our <code>Gir.toml</code> file for the normal crate as well.
+Let's write it:</p>
+<pre><code class="language-toml">[options]
+library = &quot;Pango&quot;
+version = &quot;1.0&quot;
+min_cfg_version = &quot;1.0&quot;
+target_path = &quot;.&quot;
+girs_directories = [&quot;../gir-files&quot;]
+work_mode = &quot;normal&quot;
+single_version_file = true
+generate_safety_asserts = true
+deprecate_by_min_version = true
+
+generate = []
+
+manual = []
+</code></pre>
+<p>Many of these options look familiar from the last chapter but there are also a few new things in here.
+Let's take a look at them:</p>
+<ul>
+<li><code>work_mode</code> value is now set to <code>normal</code>, it means it'll generate the high-level Rust api instead of the sys-level.</li>
+<li><code>generate_safety_asserts</code> is used to generates checks to ensure that, or any other kind of initialization needed before being able to use the library.</li>
+<li><code>deprecate_by_min_version</code> is used to generate a <a href="https://doc.rust-lang.org/edition-guide/rust-2018/the-compiler/an-attribute-for-deprecation.html">Rust &quot;#[deprecated]&quot;</a> attribute based on the deprecation information provided by the <code>.gir</code> file.</li>
+<li><code>generate = []</code>: this line currently does nothing.
+We say to <a href="https://github.com/gtk-rs/gir">gir</a> to generate nothing.
+We'll fill it later on.</li>
+<li><code>manual = []</code>: this line currently does nothing.
+We can let <a href="https://github.com/gtk-rs/gir">gir</a> know about objects which it does not have to generate code for.</li>
+</ul>
+<p>Let's make a first generation of our high-level Rust API!</p>
+<pre><code class="language-sh">gir -o .
+</code></pre>
+<p>If you take a look at which files and folders were created, you'll see a new &quot;auto&quot; folder inside &quot;src&quot;.
+This folder contains all the generated code.
+It doesn't contain anything though.
+Which makes sense since we're generating nothing.</p>
+<p>Now it's time to introduce you to a whole new <a href="https://github.com/gtk-rs/gir">gir</a> mode: <code>not_bound</code>.
+Let's give it a try:</p>
+<pre><code class="language-console">&gt; gir -o . -m not_bound
+[NOT GENERATED] Pango.Glyph
+[NOT GENERATED] Pango.GlyphUnit
+[NOT GENERATED] Pango.GlyphItem
+[NOT GENERATED] Pango.LayoutRun
+[NOT GENERATED] Pango.Alignment
+[NOT GENERATED] Pango.Font
+[NOT GENERATED] Pango.Language
+[NOT GENERATED] Pango.Analysis
+[NOT GENERATED] Pango.AttrType
+[NOT GENERATED] Pango.Attribute
+[NOT GENERATED] Pango.Color
+[NOT GENERATED] Pango.AttrColor
+[NOT GENERATED] Pango.AttrFloat
+[NOT GENERATED] Pango.FontDescription
+[NOT GENERATED] Pango.AttrFontDesc
+[NOT GENERATED] Pango.AttrFontFeatures
+[NOT GENERATED] Pango.AttrInt
+[NOT GENERATED] Pango.AttrIterator
+[NOT GENERATED] Pango.AttrLanguage
+[NOT GENERATED] Pango.AttrList
+[NOT GENERATED] Pango.Rectangle
+[NOT GENERATED] Pango.AttrShape
+[NOT GENERATED] Pango.AttrSize
+[NOT GENERATED] Pango.AttrString
+[NOT GENERATED] Pango.BaselineShift
+[NOT GENERATED] Pango.BidiType (deprecated in 1.44)
+[NOT GENERATED] Pango.Context
+[NOT GENERATED] Pango.Direction
+[NOT GENERATED] Pango.Gravity
+[NOT GENERATED] Pango.FontMap
+[NOT GENERATED] Pango.GravityHint
+[NOT GENERATED] Pango.Matrix
+[NOT GENERATED] Pango.FontMetrics
+[NOT GENERATED] Pango.FontFamily
+[NOT GENERATED] Pango.Fontset
+[NOT GENERATED] Pango.Coverage
+[NOT GENERATED] Pango.CoverageLevel
+[NOT GENERATED] Pango.EllipsizeMode
+[NOT GENERATED] Pango.FontFace
+[NOT GENERATED] Pango.FontMask
+[NOT GENERATED] Pango.Stretch
+[NOT GENERATED] Pango.Style
+[NOT GENERATED] Pango.Variant
+[NOT GENERATED] Pango.Weight
+[NOT GENERATED] Pango.FontScale
+[NOT GENERATED] Pango.FontsetSimple
+[NOT GENERATED PARENT] Pango.Fontset
+[NOT GENERATED] Pango.GlyphGeometry
+[NOT GENERATED] Pango.GlyphVisAttr
+[NOT GENERATED] Pango.GlyphInfo
+[NOT GENERATED] Pango.Item
+[NOT GENERATED] Pango.GlyphString
+[NOT GENERATED] Pango.LogAttr
+[NOT GENERATED] Pango.GlyphItemIter
+[NOT GENERATED] Pango.Script
+[NOT GENERATED] Pango.Layout
+[NOT GENERATED] Pango.LayoutDeserializeFlags
+[NOT GENERATED] Pango.LayoutIter
+[NOT GENERATED] Pango.LayoutLine
+[NOT GENERATED] Pango.TabArray
+[NOT GENERATED] Pango.WrapMode
+[NOT GENERATED] Pango.LayoutSerializeFlags
+[NOT GENERATED] Pango.LayoutDeserializeError
+[NOT GENERATED] Pango.Overline
+[NOT GENERATED] Pango.RenderPart
+[NOT GENERATED] Pango.Renderer
+[NOT GENERATED] Pango.Underline
+[NOT GENERATED] Pango.ScriptIter
+[NOT GENERATED] Pango.ShapeFlags
+[NOT GENERATED] Pango.ShowFlags
+[NOT GENERATED] Pango.TabAlign
+[NOT GENERATED] Pango.TextTransform
+[NOT GENERATED FUNCTION] Pango.attr_allow_breaks_new because of Pango.Attribute
+[NOT GENERATED FUNCTION] Pango.attr_background_alpha_new because of Pango.Attribute
+[NOT GENERATED FUNCTION] Pango.attr_background_new because of Pango.Attribute
+[NOT GENERATED FUNCTION] Pango.attr_baseline_shift_new because of Pango.Attribute
+[NOT GENERATED FUNCTION] Pango.attr_break because of Pango.AttrList and Pango.LogAttr
+[NOT GENERATED FUNCTION] Pango.attr_fallback_new because of Pango.Attribute
+[NOT GENERATED FUNCTION] Pango.attr_family_new because of Pango.Attribute
+[NOT GENERATED FUNCTION] Pango.attr_font_scale_new because of Pango.FontScale and Pango.Attribute
+[NOT GENERATED FUNCTION] Pango.attr_foreground_alpha_new because of Pango.Attribute
+[NOT GENERATED FUNCTION] Pango.attr_foreground_new because of Pango.Attribute
+[NOT GENERATED FUNCTION] Pango.attr_gravity_hint_new because of Pango.GravityHint and Pango.Attribute
+[NOT GENERATED FUNCTION] Pango.attr_gravity_new because of Pango.Gravity and Pango.Attribute
+[NOT GENERATED FUNCTION] Pango.attr_insert_hyphens_new because of Pango.Attribute
+[NOT GENERATED FUNCTION] Pango.attr_letter_spacing_new because of Pango.Attribute
+[NOT GENERATED FUNCTION] Pango.attr_line_height_new because of Pango.Attribute
+[NOT GENERATED FUNCTION] Pango.attr_line_height_new_absolute because of Pango.Attribute
+[NOT GENERATED FUNCTION] Pango.attr_overline_color_new because of Pango.Attribute
+[NOT GENERATED FUNCTION] Pango.attr_overline_new because of Pango.Overline and Pango.Attribute
+[NOT GENERATED FUNCTION] Pango.attr_rise_new because of Pango.Attribute
+[NOT GENERATED FUNCTION] Pango.attr_scale_new because of Pango.Attribute
+[NOT GENERATED FUNCTION] Pango.attr_sentence_new because of Pango.Attribute
+[NOT GENERATED FUNCTION] Pango.attr_show_new because of Pango.ShowFlags and Pango.Attribute
+[NOT GENERATED FUNCTION] Pango.attr_stretch_new because of Pango.Stretch and Pango.Attribute
+[NOT GENERATED FUNCTION] Pango.attr_strikethrough_color_new because of Pango.Attribute
+[NOT GENERATED FUNCTION] Pango.attr_strikethrough_new because of Pango.Attribute
+[NOT GENERATED FUNCTION] Pango.attr_style_new because of Pango.Style and Pango.Attribute
+[NOT GENERATED FUNCTION] Pango.attr_text_transform_new because of Pango.TextTransform and Pango.Attribute
+[NOT GENERATED FUNCTION] Pango.attr_underline_color_new because of Pango.Attribute
+[NOT GENERATED FUNCTION] Pango.attr_underline_new because of Pango.Underline and Pango.Attribute
+[NOT GENERATED FUNCTION] Pango.attr_variant_new because of Pango.Variant and Pango.Attribute
+[NOT GENERATED FUNCTION] Pango.attr_weight_new because of Pango.Weight and Pango.Attribute
+[NOT GENERATED FUNCTION] Pango.attr_word_new because of Pango.Attribute
+[NOT GENERATED FUNCTION] Pango.break (deprecated in 1.44) because of Pango.Analysis and Pango.LogAttr
+[NOT GENERATED FUNCTION] Pango.default_break because of Pango.Analysis and Pango.LogAttr
+[NOT GENERATED FUNCTION] Pango.extents_to_pixels because of Pango.Rectangle and Pango.Rectangle
+[NOT GENERATED FUNCTION] Pango.find_base_dir because of Pango.Direction
+[NOT GENERATED FUNCTION] Pango.get_log_attrs because of Pango.Language and Pango.LogAttr
+[NOT GENERATED FUNCTION] Pango.itemize because of Pango.Context, Pango.AttrList, Pango.AttrIterator and Pango.Item
+[NOT GENERATED FUNCTION] Pango.itemize_with_base_dir because of Pango.Context, Pango.Direction, Pango.AttrList, Pango.AttrIterator and Pango.Item
+[NOT GENERATED FUNCTION] Pango.log2vis_get_embedding_levels because of Pango.Direction
+[NOT GENERATED FUNCTION] Pango.markup_parser_finish because of GLib.MarkupParseContext, Pango.AttrList and GLib.Error
+[NOT GENERATED FUNCTION] Pango.markup_parser_new because of GLib.MarkupParseContext
+[NOT GENERATED FUNCTION] Pango.parse_markup because of Pango.AttrList and GLib.Error
+[NOT GENERATED FUNCTION] Pango.parse_stretch because of Pango.Stretch
+[NOT GENERATED FUNCTION] Pango.parse_style because of Pango.Style
+[NOT GENERATED FUNCTION] Pango.parse_variant because of Pango.Variant
+[NOT GENERATED FUNCTION] Pango.parse_weight because of Pango.Weight
+[NOT GENERATED FUNCTION] Pango.read_line (deprecated in 1.38) because of GLib.String
+[NOT GENERATED FUNCTION] Pango.reorder_items because of Pango.Item and Pango.Item
+[NOT GENERATED FUNCTION] Pango.scan_string (deprecated in 1.38) because of GLib.String
+[NOT GENERATED FUNCTION] Pango.scan_word (deprecated in 1.38) because of GLib.String
+[NOT GENERATED FUNCTION] Pango.shape because of Pango.Analysis and Pango.GlyphString
+[NOT GENERATED FUNCTION] Pango.shape_full because of Pango.Analysis and Pango.GlyphString
+[NOT GENERATED FUNCTION] Pango.shape_item because of Pango.Item, Pango.LogAttr, Pango.GlyphString and Pango.ShapeFlags
+[NOT GENERATED FUNCTION] Pango.shape_with_flags because of Pango.Analysis, Pango.GlyphString and Pango.ShapeFlags
+[NOT GENERATED FUNCTION] Pango.tailor_break because of Pango.Analysis and Pango.LogAttr
+[NOT GENERATED FUNCTION] Pango.unichar_direction because of Pango.Direction
+</code></pre>
+<p>We now have the list of all the not-yet generated items.
+Quite convenient.
+There can be different kinds of not generated items:</p>
+<ul>
+<li><code>[NOT GENERATED]</code>:
+Objects marked with <code>[NOT GENERATED]</code> are objects that we can generate, but we did not (yet) add to the <code>generate</code> array.</li>
+<li><code>[NOT GENERATED PARENT]</code>:
+These objects live in a dependency of the current library.
+These are the objects we will add to the <code>manual</code> array in the following steps.</li>
+<li><code>[NOT GENERATED FUNCTION]</code>:
+These are global functions that were not generated.
+To fix it, we just add <code>&quot;NameOfYourLibrary.*&quot;</code> to the <code>generate</code> array in the Git.toml and add the following line to your src/lib.rs file:</li>
+</ul>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>pub use auto::functions::*;
+<span class="boring">}</span></code></pre></pre>
+<h2 id="generating-the-code"><a class="header" href="#generating-the-code">Generating the code</a></h2>
+<p>In order to generate the code for the safe wrapper, we follow these steps until all objects have been generated:</p>
+<ul>
+<li>Run <code>gir -o . -m not_bound</code> to see which objects have not been generated yet</li>
+<li>Pick one of the types marked with <code>[NOT GENERATED]</code></li>
+<li>Add it to the <code>generate</code> array in the Gir.toml file</li>
+<li>Run <code>gir -o .</code> to generate the code</li>
+<li>Open the generated files under src/auto and have a look at them</li>
+<li>Search for <code>/*Ignored*/</code>.
+If the type name following <code>/*Ignored*/</code> is prepended by <code>[crate_name]::</code> (e.g <code>Ignored*/&amp;glib::MarkupParseContext</code>),
+<ul>
+<li>then we add it to the <code>manual</code> array.
+By doing so we tell <a href="https://github.com/gtk-rs/gir">gir</a> that those types have been generated somewhere else and that they can be used just like the other types.</li>
+<li>Otherwise, the type comes from the current crate and we just put it into the <code>generate</code> list of the <code>Gir.toml</code> file.</li>
+</ul>
+</li>
+<li>Start with the first step again</li>
+</ul>
+<p>The names of the objects are not the same as the crates names.
+You have to use the names of the corresponding gir files.</p>
+<p>Okay, let's go through that process for a few objects of our example.</p>
+<p>🚧 TODO: Add remaining steps of the pango example 🚧</p>
+<p>Again, if you do it on another library and it fails and you can't figure out why, don't hesitate to <a href="https://gtk-rs.org/contact">contact us</a>!</p>
+<p>At this point, you should have almost everything you need.
+Let's have a look at errors that can happen in this process.</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="handling-generation-errors"><a class="header" href="#handling-generation-errors">Handling generation errors</a></h1>
+<p>Luckily there are only a few errors which can happen with <a href="https://github.com/gtk-rs/gir">gir</a> generation.
+Let's take a look at them.</p>
+<h3 id="cannot-find-macros"><a class="header" href="#cannot-find-macros">Cannot find macros</a></h3>
+<p>Compilation of the generated bindings may fail with errors like the following:</p>
+<pre><code class="language-console">error: cannot find macro `skip_assert_initialized` in this scope
+  --&gt; src/auto/enums.rs:83:9
+   |
+83 |         skip_assert_initialized!();
+   |         ^^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = help: have you added the `#[macro_use]` on the module/import?
+
+error: cannot find macro `assert_initialized_main_thread` in this scope
+  --&gt; src/auto/example.rs:33:9
+   |
+33 |         assert_initialized_main_thread!();
+   |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = help: have you added the `#[macro_use]` on the module/import?
+</code></pre>
+<p>In this case you’ll have to implement them yourself.
+Macros are order-dependent and you <em>must</em> insert this code before declaring modules that use it (e.g. <code>mod auto</code>).
+For example, you can add the following to your <code>lib.rs</code> file:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>/// No-op.
+macro_rules! skip_assert_initialized {
+    () =&gt; {};
+}
+
+/// Asserts that this is the main thread and either `gdk::init` or `gtk::init` has been called.
+macro_rules! assert_initialized_main_thread {
+    () =&gt; {
+        if !::gtk::is_initialized_main_thread() {
+            if ::gtk::is_initialized() {
+                panic!(&quot;GTK may only be used from the main thread.&quot;);
+            } else {
+                panic!(&quot;GTK has not been initialized. Call `gtk::init` first.&quot;);
+            }
+        }
+    };
+}
+<span class="boring">}</span></code></pre></pre>
+<p>One complication here is that the <code>assert_initialized_main_thread!</code> macro depends on the exact library.
+If it's GTK-based then the above macro is likely correct, unless the library has its own initialization function.
+If it has its own initialization function it would need to be handled in addition to GTK's here in the same way.</p>
+<p>For non-GTK-based libraries the following macro would handle the initialization function of that library in the same way, or if there is none it would simply do nothing:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>/// No-op.
+macro_rules! assert_initialized_main_thread {
+    () =&gt; {};
+}
+<span class="boring">}</span></code></pre></pre>
+<h2 id="missing-memory-management-functions"><a class="header" href="#missing-memory-management-functions">Missing memory management functions</a></h2>
+<p>If <a href="https://github.com/gtk-rs/gir">gir</a> generation fails (for whatever reason), it means you'll have to implement the type yourself.
+Just like types from other <code>gtk-rs</code> crates, you'll need to put it into the &quot;manual&quot; list.
+Then you need to put the type into the <code>src</code> folder (or inside a subfolder, you know how Rust works).</p>
+<p>/!\ Don't forget to reexport the type inside your <code>src/lib.rs</code> file.
+For example, let's take a look at the <a href="https://github.com/gtk-rs/gtk3-rs/blob/master/gtk/src/requisition.rs">requisition.rs</a> file from the <code>gtk3</code> crate.</p>
+<p>Since it's a &quot;simple&quot; type (no pointer, therefore no memory management to do), <a href="https://github.com/gtk-rs/gir">gir</a> doesn't know how to generate it.
+You'll need to implement some traits by hand like <code>ToGlibPtr</code> or <code>ToGlibPtrMut</code> (depending on your needs).</p>
+<h2 id="bad-function-generation"><a class="header" href="#bad-function-generation">Bad function generation</a></h2>
+<p>In some cases, the generated code isn't correct (array parameters are often an issue).
+In such cases, it's better to just make the implementation yourself.
+As an example, let's say you want to implement <code>Region::is_empty</code> yourself.
+A few changes have to be made.
+Let's start with <code>Gir.toml</code>:</p>
+<pre><code class="language-toml">generate = [
+    &quot;GtkSource.Language&quot;,
+]
+
+[[object]]
+name = &quot;GtkSource.Region&quot;
+status = &quot;generate&quot;
+    [[object.function]]
+    name = &quot;is_empty&quot;
+    ignore = true
+</code></pre>
+<p>So to sum up what was written above: we removed &quot;GtkSource.Region&quot; from the &quot;generate&quot; list and we created a new entry for it.
+Then we say to <a href="https://github.com/gtk-rs/gir">gir</a> that it should generate (through <code>status = &quot;generate&quot;</code>).
+However, we also tell it that we don't want the &quot;is_empty&quot; function to be generated.</p>
+<p>Now that we've done that, we need to implement it.
+Let's create a <code>src/region.rs</code> file:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use glib::object::IsA;
+use glib::translate::*;
+use Region;
+
+pub trait RegionExtManual: 'static {
+    pub fn is_empty(&amp;self) -&gt; bool;
+}
+
+impl&lt;O: IsA&lt;Region&gt;&gt; RegionExtManual for O {
+    pub fn is_empty(&amp;self) -&gt; bool {
+        // blablabla
+        true
+    }
+}
+<span class="boring">}</span></code></pre></pre>
+<p>You might wonder: &quot;why not just implementing it on the <code>Region</code> type directly?&quot;.
+Because like this, a subclass will also be able to use this trait easily as long as it implements <code>IsA&lt;Region&gt;</code>.
+For instance, in gtk, everything that implements <code>IsA&lt;Widget&gt;</code> (so almost every GTK types) can use those methods.</p>
+<p>As usual, don't forget to reexport the trait.
+A little tip about reexporting manual traits: in <code>gtk3-rs</code>, we create a <code>src/prelude.rs</code> file which reexports all traits (both manual and generated ones), making it simpler for users to use them through <code>use [DEPENDENCY]::prelude::*</code>.
+The <code>src/prelude.rs</code> file looks like this:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>pub use auto::traits::*;
+pub use region::RegionExtManual;
+<span class="boring">}</span></code></pre></pre>
+<p>Then it's reexported as follows from the <code>src/lib.rs</code> file:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>pub mod prelude;
+pub use prelude::*;
+<span class="boring">}</span></code></pre></pre>
+<h2 id="manually-defined-traits-missing-from-the-documentation"><a class="header" href="#manually-defined-traits-missing-from-the-documentation">Manually defined traits missing from the documentation</a></h2>
+<p>If you defined traits manually, you can add them to the &quot;Implements&quot; section in the documentation for classes and interfaces by using the <code>manual_traits = []</code> option in the <code>Gir.toml</code> file.
+Here is an example:</p>
+<pre><code class="language-toml">[[object]]
+name = &quot;Gtk.Assistant&quot;
+status = &quot;generate&quot;
+#add link to trait from current crate
+manual_traits = [&quot;AssistantExtManual&quot;]
+
+[[object]]
+name = &quot;Gtk.Application&quot;
+status = &quot;generate&quot;
+#add link to trait from other crate
+manual_traits = [&quot;gio::ApplicationExtManual&quot;]
+</code></pre>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="generating-documentation"><a class="header" href="#generating-documentation">Generating documentation</a></h1>
+<p>And finally the last feature.
+Just run the following command in the folder of the safe wrapper crate:</p>
+<pre><code class="language-sh">gir -c Gir.toml -d ../gir-files --doc-target-path docs.md -m doc
+</code></pre>
+<ul>
+<li><code>-d ../gir-files</code>: flag to select the folder containing the .gir files.</li>
+<li><code>--doc-target-path docs.md</code>: flag to select the name of the markdown file containing the documentation.</li>
+<li><code>-m doc</code>: flag to select the work mode for generating the documentation.</li>
+</ul>
+<p>It'll generate a markdown file if everything went fine.
+It contains all of the crate's documentation.
+If you want to put it into your crate's source code like &quot;normal&quot; doc comments, run:</p>
+<pre><code class="language-sh">cargo install rustdoc-stripper
+rustdoc-stripper -g -o docs.md
+</code></pre>
+<p>And now your crate should be completely documented as expected!</p>
+<p>Running the above commands again would duplicate the doc comments.
+Make sure to first remove the old ones before running the command again.
+You can do this by running the following commands:</p>
+<pre><code class="language-sh">rustdoc-stripper -s -n
+rustdoc-stripper -g -o docs.md
+</code></pre>
+<p>Try building the documentation and also try it with the various features you might have</p>
+<pre><code class="language-sh">cargo doc
+</code></pre>
+<p>Congratulations, we are done.
+You have successfully created the safe wrapper for a C library!</p>
+<p>You can easily publish your generated bindings and the wrapper to crates.io to allow others to use it.
+Publishing crates is easy but keep in mind that they need to be maintained as well.
+We set up the project folder in a way that easily allows sharing the code.
+All that is needed is to add some information to your Cargo.toml.
+Gir will not override them when you re-generate bindings.
+Easy, right.
+If this is your first time publishing a crate, you can find a detailed guide <a href="https://doc.rust-lang.org/cargo/reference/publishing.html">here</a>.</p>
+<p>Before you publish the crate, please ensure docs.rs will activate the dox feature and the dox feature of the safe wrapper crate also activates the feature of its dependencies and the unsafe FFI bindings you created.
+Feel free to go back to the chapter about the <a href="tutorial/high_level_rust_api.html#the-cargotoml-file">Cargo.toml file of the safe wrapper</a> to read more about it.
+If you skip this step, your crate and all crates depending on it will not have documentation available on docs.rs.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="configuration"><a class="header" href="#configuration">Configuration</a></h1>
-<p>GIR uses two configurations files, one for generating the FFI part of the bindings and the other file for the Rust API. The configuration files must be named <code>Gir.toml</code></p>
+<p>GIR uses two configurations files, one for generating the FFI part of the bindings and the other file for the Rust API.
+The configuration files must be named <code>Gir.toml</code></p>
 <ul>
 <li>
 <p>The FFI configuration allows things such as ignoring objects, overriding the minimum required version for a specific type or renaming the generated crate name.</p>
@@ -187,11 +920,16 @@
 </li>
 </ul>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="ffi-options"><a class="header" href="#ffi-options">FFI Options</a></h1>
-<p>In FFI (<code>-m sys</code>) mode, <code>gir</code> generates as much as it can. So in this mode, the TOML file is mostly used to ignore some objects. To do so, you need to add its fullname to an <code>ignore</code> array. Example:</p>
+<p>In FFI (<code>-m sys</code>) mode, <code>gir</code> generates as much as it can.
+So in this mode, the TOML file is mostly used to ignore some objects.
+To do so, you need to add its fullname to an <code>ignore</code> array.
+Example:</p>
 <pre><code class="language-toml">ignore = [&quot;Gtk.Widget&quot;, &quot;Gtk.Window&quot;]
 </code></pre>
-<p>And that's all! Neither <code>GtkWidget</code> nor <code>GtkWindow</code> (alongside with their functions) will be generated.</p>
-<p>You also need to add any needed external libraries in the &quot;external_libraries&quot; parameter. Example:</p>
+<p>And that's all.
+Neither <code>GtkWidget</code> nor <code>GtkWindow</code> (alongside with their functions) will be generated.</p>
+<p>You also need to add any needed external libraries in the &quot;external_libraries&quot; parameter.
+Example:</p>
 <pre><code class="language-toml">[options]
 external_libraries = [
    &quot;GLib&quot;,
@@ -229,13 +967,6 @@ dependencies = [
   &quot;glib-sys/v3_16&quot;
 ]
 </code></pre>
-<p>You can mark some functions that has suffix <code>_utf8</code> on Windows:</p>
-<pre><code class="language-toml">[[object]]
-name = &quot;GdkPixbuf.PixbufAnimation&quot;
-status = &quot;generate&quot;
-    [[object.function]]
-    name = &quot;new_from_file&quot;
-</code></pre>
 <p>Also, you can add rust cfg conditions on objects, functions and constants, for example, when flagging for conditional compilation:</p>
 <pre><code class="language-toml">[[object]]
 name = &quot;GstGL.GLDisplayEGL&quot;
@@ -246,13 +977,18 @@ cfg_condition = &quot;feature = \&quot;egl\&quot;&quot;
     cfg_condition = &quot;feature = \&quot;egl\&quot;&quot;
 </code></pre>
 <h2 id="generation-in-ffi-mode"><a class="header" href="#generation-in-ffi-mode">Generation in FFI mode</a></h2>
-<p>When you're ready, let's generate the FFI part. In the command we'll execute, <code>../gir-files</code> is where the directory with your <code>.gir</code> files is. (But again, you can just clone the <a href="https://github.com/gtk-rs/gir-files">gir-files repository</a> and add your file(s) in it). Then let's run the command:</p>
+<p>When you're ready, let's generate the FFI part.
+In the command we'll execute, <code>../gir-files</code> is where the directory with your <code>.gir</code> files is.
+(But again, you can just clone the <a href="https://github.com/gtk-rs/gir-files">gir-files repository</a> and add your file(s) in it).
+Then let's run the command:</p>
 <pre><code class="language-sh">cargo run --release -- -c YourSysGirFile.toml -d ../gir-files -m sys -o the-output-directory-sys
 </code></pre>
-<p>The generated files will be placed in <code>the-output-directory-sys</code>. Just take care about the dependencies and the crate's name generated in the <code>Cargo.toml</code> file (update them if they don't work as expected).</p>
+<p>The generated files will be placed in <code>the-output-directory-sys</code>.
+Just take care about the dependencies and the crate's name generated in the <code>Cargo.toml</code> file (update them if they don't work as expected).</p>
 <p>You now have the sys part of your binding!</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="api-options"><a class="header" href="#api-options">API Options</a></h1>
-<p>This mode requires you to write another TOML file. <a href="https://github.com/gtk-rs/gtk/blob/master/Gir.toml">gtk/Gir.toml</a> is a good example.</p>
+<p>This mode requires you to write another TOML file.
+<a href="https://github.com/gtk-rs/gtk/blob/master/Gir.toml">gtk/Gir.toml</a> is a good example.</p>
 <pre><code class="language-toml">[options]
 girs_directories = [&quot;gir-files&quot;]
 library = &quot;Gtk&quot;
@@ -289,11 +1025,14 @@ disable_format = true
 # (defaults to false)
 generate_builder = true
 </code></pre>
-<p>This mode generates only the specified objects. You can either add the object's fullname to the <code>generate</code> array or add it to the <code>manual</code> array (but in this case, it won't be generated, just used in other functions/methods instead of generating an &quot;ignored&quot; argument). Example:</p>
+<p>This mode generates only the specified objects.
+You can either add the object's fullname to the <code>generate</code> array or add it to the <code>manual</code> array (but in this case, it won't be generated, just used in other functions/methods instead of generating an &quot;ignored&quot; argument).
+Example:</p>
 <pre><code class="language-toml">generate = [&quot;Gtk.Widget&quot;, &quot;Gtk.Window&quot;]
 manual = [&quot;Gtk.Button&quot;]
 </code></pre>
-<p>So in here, both <code>GtkWidget</code> and <code>GtkWindow</code> will be fully generated and functions/methods using <code>GtkButton</code> will be uncommented. To generate code for all global functions, add <code>Gtk.*</code> to the <code>generate</code> array.</p>
+<p>So in here, both <code>GtkWidget</code> and <code>GtkWindow</code> will be fully generated and functions/methods using <code>GtkButton</code> will be uncommented.
+To generate code for all global functions, add <code>Gtk.*</code> to the <code>generate</code> array.</p>
 <p>To also generate a <code>Builder</code> struct for a widget, it needs to be set with the <code>generate_builder</code> flag in object configuration:</p>
 <pre><code class="language-toml">[[object]]
 name = &quot;Gtk.TreeView&quot;
@@ -524,7 +1263,8 @@ status = &quot;generate&quot;
     # In case you don't want to generate the documentation for this function.
     generate_doc = false
 </code></pre>
-<p>Which will prevent gir from generating <code>stock_list_ids</code>. If you want to specify
+<p>Which will prevent gir from generating <code>stock_list_ids</code>.
+If you want to specify
 that a function will be manually implemented, you can use:</p>
 <pre><code class="language-toml">[[object]]
 name = &quot;Gtk.Entry&quot;
@@ -551,10 +1291,13 @@ status = &quot;generate&quot;
 </code></pre>
 <p>Constants also support <code>version</code> and <code>cfg_condition</code> fields.</p>
 <p>In various cases, GObjects or boxed types can be used from multiple threads
-and have certain concurrency guarantees. This can be configured with the
-<code>concurrency</code> setting at the top-level options or per object. It will
+and have certain concurrency guarantees.
+This can be configured with the
+<code>concurrency</code> setting at the top-level options or per object.
+It will
 automatically implement the <code>Send</code> and <code>Sync</code> traits for the resulting object
-and set appropriate trait bounds for signal callbacks. The default is <code>none</code>,
+and set appropriate trait bounds for signal callbacks.
+The default is <code>none</code>,
 and apart from that <code>send</code> and <code>send+sync</code> are supported.</p>
 <pre><code class="language-toml">[[object]]
 # object's fullname
@@ -567,7 +1310,8 @@ concurrency = &quot;send+sync&quot;
 </code></pre>
 <p>Note that <code>send</code> is only valid for types that are either not reference counted
 (i.e. <code>clone()</code> copies the object) or that are read-only (i.e. no API for
-mutating the object exists). <code>send+sync</code> is valid if the type can be sent to
+mutating the object exists).
+<code>send+sync</code> is valid if the type can be sent to
 different threads and all API allows simultaneous calls from different threads
 due to internal locking via e.g. a mutex.</p>
 <pre><code class="language-toml">[[object]]
@@ -581,7 +1325,8 @@ detected by GIR is different than what was implemented and conversion to the C
 types are wrong in autogenerated functions that have such objects as argument.
 This can be overridden with the <code>ref_mode</code> configuration.</p>
 <p>Getters are automatically renamed to comply with Rust codying style guidelines.
-However, this can cause name clashes with existing functions. If you want to
+However, this can cause name clashes with existing functions.
+If you want to
 bypass the automatic renaming mechanism, use <code>bypass_auto_rename = true</code>:</p>
 <pre><code class="language-toml">[[object]]
 name = &quot;Gtk.TextBuffer&quot;
@@ -591,7 +1336,8 @@ name = &quot;Gtk.TextBuffer&quot;
     # Avoid clash with the `insert` operation.
     bypass_auto_rename = true
 </code></pre>
-<p>Some constructors are not annotated as <code>constructor</code> in the <code>gir</code> files. In
+<p>Some constructors are not annotated as <code>constructor</code> in the <code>gir</code> files.
+In
 order for the naming convention to be applied, you can force a function to be
 considered as a constructor:</p>
 <pre><code class="language-toml">[[object.function]]
@@ -601,10 +1347,13 @@ constructor = true
 </code></pre>
 <h2 id="conversion_type-option"><a class="header" href="#conversion_type-option">conversion_type &quot;Option&quot;</a></h2>
 <p>The <code>conversion_type</code> variant <code>Option</code> is available for types <code>T</code> implementing
-<code>glib::TryFromGlib&lt;Error=GlibNoneError&gt;</code>. As a reminder, this allows
+<code>glib::TryFromGlib&lt;Error=GlibNoneError&gt;</code>.
+As a reminder, this allows
 implementing <code>FromGlib</code> for <code>Option&lt;T&gt;</code> and usually goes alongside with <code>ToGlib</code>
-for both <code>T</code> and <code>Option&lt;T&gt;</code>. In this case, <code>Option&lt;T&gt;</code> will be used for return
-values (including ffi output arguments). For in-arguments, except if the
+for both <code>T</code> and <code>Option&lt;T&gt;</code>.
+In this case, <code>Option&lt;T&gt;</code> will be used for return
+values (including ffi output arguments).
+For in-arguments, except if the
 parameter is declared <code>mandatory</code>, <code>impl Into&lt;Option&lt;T&gt;&gt;</code> so that either an
 <code>Option&lt;T&gt;</code> or <code>T</code> can be used.</p>
 <p>Ex. from <code>gstreamer-rs</code>:</p>
@@ -619,7 +1368,8 @@ conversion_type = &quot;Option&quot;
 <code>OptionToGlib</code>), which means that its Rust representation can take advantage of
 <code>Option&lt;ClockTime&gt;</code>.</p>
 <p>Additionally, the user can instruct <code>gir</code> to <code>expect</code> <code>Some</code> or <code>Ok</code> results for
-specific arguments or return values. E.g.:</p>
+specific arguments or return values.
+E.g.:</p>
 <pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>[[object]]
@@ -632,12 +1382,9 @@ manual_traits = [&quot;ClockExtManual&quot;]
         name = &quot;internal&quot;
         mandatory = true
 <span class="boring">}</span></code></pre></pre>
-<p>In the above example, the user instructs gir to consider the <code>internal</code> argument
-(which also happens to be an out argument) with type gir <code>Gst.ClockTime</code> can be
-represented as a <code>ClockTime</code> without the <code>Option</code>. This argument is actually
-part of a set of output arguments. With the above gir declaration, the generated
-signature is the following (the implementation takes care of <code>expect</code>ing the
-value to be defined):</p>
+<p>In the above example, the user instructs gir to consider the <code>internal</code> argument (which also happens to be an out argument) with type gir <code>Gst.ClockTime</code> can be represented as a <code>ClockTime</code> without the <code>Option</code>.
+This argument is actually part of a set of output arguments.
+With the above gir declaration, the generated signature is the following (the implementation takes care of <code>expect</code>ing the value to be defined):</p>
 <pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>    fn get_calibration(
@@ -662,16 +1409,18 @@ value to be defined):</p>
 <h2 id="conversion_type-result"><a class="header" href="#conversion_type-result">conversion_type &quot;Result&quot;</a></h2>
 <p>The <code>conversion_type</code> variant <code>Result</code> is available for types <code>T</code> implementing
 <code>glib::TryFromGlib&lt;Error=Err&gt;</code> where <code>Err</code> is neither <code>GlibNoneError</code> nor
-<code>GlibNoneOrInvalidError</code>. In this case, <code>Result&lt;T, ErrorType&gt;</code> will be used for
+<code>GlibNoneOrInvalidError</code>.
+In this case, <code>Result&lt;T, ErrorType&gt;</code> will be used for
 return values (including <code>ffi</code> output arguments) and the type itself in argument
 position.</p>
 <p>In <code>gstreamer-rs</code>, the C type <code>GstStateChangeReturn</code> can represent both a
-successful or an error return value. In Rust, the <code>Result</code> <code>enum</code> is the
-idiomatic way of returning an error. In <code>gstreamer-rs</code>, bindings to functions
-returning <code>GstStateChangeReturn</code> had to be manually implemented so as to return
-<code>Result&lt;StateChangeSuccess, StateChangeError&gt;</code>. Note that in this case, the type
-implementing <code>TryFromGlib</code> is <code>StateChangeSuccess</code> and not
-<code>GstStateChangeReturn</code>. These functions can be auto-generated using:</p>
+successful or an error return value.
+In Rust, the <code>Result</code> <code>enum</code> is the idiomatic way of returning an error.
+In <code>gstreamer-rs</code>, bindings to functions
+returning <code>GstStateChangeReturn</code> had to be manually implemented so as to return <code>Result&lt;StateChangeSuccess, StateChangeError&gt;</code>.
+Note that in this case, the type implementing <code>TryFromGlib</code> is <code>StateChangeSuccess</code> and not
+<code>GstStateChangeReturn</code>.
+These functions can be auto-generated using:</p>
 <pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>[[object]]
@@ -685,17 +1434,14 @@ must_use = true
 <span class="boring">}</span></code></pre></pre>
 <h2 id="boxed-types-vs-boxedinline-types"><a class="header" href="#boxed-types-vs-boxedinline-types">Boxed types vs. BoxedInline types</a></h2>
 <p>For boxed types / records, gir auto-detects <code>copy</code>/<code>free</code> or <code>ref</code>/<code>unref</code>
-function pairs for memory management on records. It falls back to generic
-<code>g_boxed_copy</code>/<code>g_boxed_free</code> if these are not found, based on an existing
-implementation of <code>get_type</code>. Otherwise no record implementation can be
-generated.</p>
+function pairs for memory management on records.
+It falls back to generic <code>g_boxed_copy</code>/<code>g_boxed_free</code> if these are not found, based on an existing implementation of <code>get_type</code>.
+Otherwise no record implementation can be generated.</p>
 <p>This works for the majority of boxed types, which are literally boxed: their
-memory is always allocated on the heap and memory management is left to the C
-library. Some boxed types, however, are special and in C code they are usually
-allocated on the stack or inline inside another struct. As such, their struct
-definition is public and part of the API/ABI. Usually these types are
-relatively small and allocated regularly, which would make heap allocations
-costly.</p>
+memory is always allocated on the heap and memory management is left to the C library.
+Some boxed types, however, are special and in C code they are usually allocated on the stack or inline inside another struct.
+As such, their struct definition is public and part of the API/ABI.
+Usually these types are relatively small and allocated regularly, which would make heap allocations costly.</p>
 <p>These special boxed types are usually allocated by the caller of the C
 functions, and the functions are then only filling in the memory and taking
 values of this type as <code>(out caller-allocates)</code> parameters.</p>
@@ -713,7 +1459,8 @@ the configuration for initializing newly allocated memory for them, to copy
 from one value into another one, and to free any resources that might be
 stored in values of that boxed types.</p>
 <p>By default the memory is zero-initialized and copying is done via
-<code>std::ptr::copy()</code>. If the boxed type contains memory that needs to be freed
+<code>std::ptr::copy()</code>.
+If the boxed type contains memory that needs to be freed
 then these functions must be provided.</p>
 <p>The following configuration is equivalent with the one above.</p>
 <pre><code class="language-toml">[[object]]
@@ -725,17 +1472,22 @@ copy_into_function_expression = &quot;|dest, src| { std::ptr::copy_nonoverlappin
 clear_function_expression = &quot;|_ptr| ()&quot;
 </code></pre>
 <h2 id="generation-in-api-mode"><a class="header" href="#generation-in-api-mode">Generation in API mode</a></h2>
-<p>To generate the Rust-user API level, The command is very similar to the previous one. It's better to not put this output in the same directory as where the FFI files are. Just run:</p>
+<p>To generate the Rust-user API level, The command is very similar to the previous one.
+It's better to not put this output in the same directory as where the FFI files are.
+Just run:</p>
 <pre><code class="language-sh">cargo run --release -- -c YourGirFile.toml -d ../gir-files -o the-output-directory
 </code></pre>
-<p>Now it should be done. Just go to the output directory (so <code>the-output-directory/auto</code> in our case) and try to build using <code>cargo build</code>. Don't forget to update your dependencies in both projects: nothing much to do in the FFI/sys one but the Rust-user API level will need to have a dependency over the FFI/sys one.</p>
+<p>Now it should be done.
+Just go to the output directory (so <code>the-output-directory/auto</code> in our case) and try to build using <code>cargo build</code>.
+Don't forget to update your dependencies in both projects: nothing much to do in the FFI/sys one but the Rust-user API level will need to have a dependency over the FFI/sys one.</p>
 <p>Now, at your crate entry point (generally <code>lib.rs</code>), add the following to include all generated files:</p>
 <pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>pub use auto::*;
 <span class="boring">}</span></code></pre></pre>
 <h2 id="add-manual-bindings-alongside-generated-code"><a class="header" href="#add-manual-bindings-alongside-generated-code">Add manual bindings alongside generated code</a></h2>
-<p>Unfortunately, <code>gir</code> isn't perfect (yet) and will certainly not be able to generate all the code on its own. So here's what a <code>gir</code> generated folder looks like:</p>
+<p>Unfortunately, <code>gir</code> isn't perfect (yet) and will certainly not be able to generate all the code on its own.
+So here's what a <code>gir</code> generated folder looks like:</p>
 <pre><code class="language-text">- your_folder
 |
 |- Cargo.toml
@@ -746,7 +1498,10 @@ clear_function_expression = &quot;|_ptr| ()&quot;
   |
   |- (all files generated by gir)
 </code></pre>
-<p>You can add your manual bindings directly inside the <code>src</code> folder (at the same level as <code>lib.rs</code>). Then don't forget to reexport them. Let's say you added a <code>Color</code> type in a <code>color.rs</code> file. You need to add in <code>lib.rs</code>:</p>
+<p>You can add your manual bindings directly inside the <code>src</code> folder (at the same level as <code>lib.rs</code>).
+Then don't forget to reexport them.
+Let's say you added a <code>Color</code> type in a <code>color.rs</code> file.
+You need to add in <code>lib.rs</code>:</p>
 <pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>// We make the type public for the API users.
@@ -755,469 +1510,12 @@ pub use color::Color;
 mod color;
 <span class="boring">}</span></code></pre></pre>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="crate-name-overrides"><a class="header" href="#crate-name-overrides">Crate name overrides</a></h1>
-<p><code>gir</code> uses simple rule to convert a namespace to a crate name and it sometimes goes wrong. For example, &quot;WebKit2WebExtension&quot; namespace will be converted to &quot;web_kit2_web_extension&quot;, which looks bad.</p>
+<p><code>gir</code> uses simple rule to convert a namespace to a crate name and it sometimes goes wrong.
+For example, &quot;WebKit2WebExtension&quot; namespace will be converted to &quot;web_kit2_web_extension&quot;, which looks bad.</p>
 <p>To fix it, the <code>crate_name_overrides</code> option can be used.</p>
 <p>It also replaces FFI crates' name.</p>
 <pre><code class="language-toml">[crate_name_overrides]
 &quot;web_kit2_web_extension&quot; = &quot;webkit2_webextension&quot;
-</code></pre>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="tutorial"><a class="header" href="#tutorial">Tutorial</a></h1>
-<p>Let's see how to generate Rust bindings of a GNOME library using the <a href="https://github.com/gtk-rs/gir">gir</a> crate.</p>
-<p>Note that the <code>.gir</code> files often happens that they are invalid (missing or invalid annotations for example). We have a small script to fix the <code>.gir</code> files we're using (and only them!) available in the <a href="https://github.com/gtk-rs/gir-files/blob/master/fix.sh">gir-files repository</a>. You can run it like this (at the same level of the <code>.gir</code> files you want to patch):</p>
-<pre><code class="language-sh">sh fix.sh
-</code></pre>
-<p>All <code>gtk-rs</code> generated crates come in two parts: the <code>sys</code> part which contains all the C functions and types definitions (direct mapping, everything is unsafe) and the &quot;high-level&quot; part which contains the nice, completely safe and idiomatic Rust API on top of the <code>sys</code> part.</p>
-<p>As an example, we'll generate the <code>sourceview</code> library bindings. So first, let's generate the <code>sys</code> part!</p>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="generating-the-ffi-library"><a class="header" href="#generating-the-ffi-library">Generating the FFI library</a></h1>
-<p>First, you'll need to download <a href="https://github.com/gtk-rs/gir">gir</a>:</p>
-<pre><code class="language-sh">git clone https://github.com/gtk-rs/gir
-cd gir
-cargo install --path . # so we can use gir binary directly
-</code></pre>
-<p>Then the <code>.gir</code> files (luckily for you, we have a repository which contains all the ones you need for sourceview!):</p>
-<pre><code class="language-sh">git clone https://github.com/gtk-rs/gir-files
-</code></pre>
-<p>If you look into <code>gir-files</code>, you'll see a file named <code>GtkSource-3.0.gir</code>. That's the one for sourceview.</p>
-<p>Now let's create a new project for our <code>sourceview</code> crate:</p>
-<pre><code class="language-sh">cargo new sourceview --lib
-</code></pre>
-<p>Then let's create a folder inside the newly created <code>sourceview</code> folder for the <code>sys</code> part:</p>
-<pre><code class="language-sh">cd sourceview
-cargo new sourceview-sys --lib
-</code></pre>
-<p>To indicate to <a href="https://github.com/gtk-rs/gir">gir</a> what to generate, we'll need a <code>Gir.toml</code> file (inside the <code>sourceview-sys</code> folder) containing:</p>
-<pre><code class="language-toml">[options]
-library = &quot;GtkSource&quot;
-version = &quot;3.0&quot;
-target_path = &quot;.&quot;
-min_cfg_version = &quot;3.0&quot;
-</code></pre>
-<ul>
-<li><code>library</code> stands for the library we want to generate.</li>
-<li><code>version</code> stands for the version of the library to be used.</li>
-<li><code>target_path</code> stands for the location where the files will be generated.</li>
-<li><code>min_cfg_version</code> will be the minimum version supported by the generated bindings.</li>
-</ul>
-<p>You should now have a folder looking like this:</p>
-<pre><code class="language-text">sourceview/
-  |
-  |---- Cargo.toml
-  |---- sourceview-sys/
-  |       |
-  |       |---- Cargo.toml
-  |       |---- Gir.toml
-  |       |---- src/
-  |               |
-  |               |---- lib.rs
-  |---- src/
-          |
-          |---- lib.rs
-</code></pre>
-<p>Let's generate the <code>sys</code> crate now:</p>
-<pre><code class="language-sh">cd sourceview-sys
-# Run gir in &quot;sys&quot; mode (the &quot;-m&quot; option). We give the gir files path (the &quot;-d&quot; option) and output path (the &quot;-o&quot; option).
-gir -m sys -d ../../gir-files/ -o .
-</code></pre>
-<p>(In case a failure happens at this point, and you can't figure out what's going on, don't hesitate to reach us so we can give you a hand!)</p>
-<p>You should now see new files (and a new folder):</p>
-<ul>
-<li><code>build.rs</code></li>
-<li><code>Cargo.toml</code></li>
-<li><code>src/lib.rs</code></li>
-<li><code>tests/</code></li>
-</ul>
-<p>Now let's try to build it:</p>
-<pre><code class="language-sh">cargo build
-</code></pre>
-<p>Surprise! It doesn't build at all and you should see a loooooot of errors. Well, that was expected. We need to add some dependencies (you can find which ones in the <code>.gir</code> files) in order to make it work. Let's update our <code>Gir.toml</code> file to make it look like this:</p>
-<pre><code class="language-toml">[options]
-library = &quot;GtkSource&quot;
-version = &quot;3.0&quot;
-target_path = &quot;.&quot;
-min_cfg_version = &quot;3.0&quot;
-
-external_libraries = [
-    &quot;Cairo&quot;,
-    &quot;Gdk&quot;,
-    &quot;GdkPixbuf&quot;,
-    &quot;Gio&quot;,
-    &quot;GLib&quot;,
-    &quot;GObject&quot;,
-    &quot;Gtk&quot;,
-]
-</code></pre>
-<p>Now we regenerate it then rebuild it:</p>
-<pre><code class="language-sh">rm Cargo.* # we remove Cargo files
-gir -m sys -d ../../gir-files/ -o .
-cargo build
-</code></pre>
-<p>Should work just fine!</p>
-<p>We can cleanup the command line a bit now. You can actually give the work mode (&quot;-m&quot; option) and the gir files repository through the <code>Gir.toml</code> file using &quot;work_mode&quot; and &quot;girs_directories&quot; options:</p>
-<pre><code class="language-toml">[options]
-library = &quot;GtkSource&quot;
-version = &quot;3.0&quot;
-target_path = &quot;.&quot;
-min_cfg_version = &quot;3.0&quot;
-work_mode = &quot;sys&quot;
-girs_directories = [&quot;../../gir-files/&quot;]
-
-external_libraries = [
-    &quot;Cairo&quot;,
-    &quot;Gdk&quot;,
-    &quot;GdkPixbuf&quot;,
-    &quot;Gio&quot;,
-    &quot;GLib&quot;,
-    &quot;GObject&quot;,
-    &quot;Gtk&quot;,
-]
-</code></pre>
-<p>Now, if you want to regenerate, just run:</p>
-<pre><code class="language-sh">gir -o .
-</code></pre>
-<p>Now we have a working <code>sys</code> containing all functions and objects definition. Just to be sure everything was correctly generated, we can run some tests (graciously generated by <a href="https://github.com/gtk-rs/gir">gir</a> as well):</p>
-<pre><code class="language-sh">cargo test
-</code></pre>
-<p>Normally, all tests passed. If you get an error when running those tests, it's very likely that the <code>sys</code> generation is invalid and/or incomplete.</p>
-<p>Time to generate the high-level Rust API!</p>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="generating-the-rust-api"><a class="header" href="#generating-the-rust-api">Generating the Rust API</a></h1>
-<p>Time to go back to the &quot;global&quot; sourceview folder:</p>
-<pre><code class="language-sh">cd ..
-</code></pre>
-<p>As you certainly guessed, we'll need a new <code>Gir.toml</code> file. Let's write it:</p>
-<pre><code class="language-toml">[options]
-girs_directories = [&quot;../gir-files&quot;]
-library = &quot;GtkSource&quot;
-version = &quot;3.0&quot;
-min_cfg_version = &quot;3.0&quot;
-target_path = &quot;.&quot;
-work_mode = &quot;normal&quot;
-generate_safety_asserts = true
-deprecate_by_min_version = true
-single_version_file = true
-
-generate = []
-</code></pre>
-<p>A few new things in here. Let's take a look at them:</p>
-<ul>
-<li><code>work_mode</code> value is now set to <code>normal</code>, it means it'll generate the high-level Rust api instead of the sys-level.</li>
-<li><code>generate_safety_asserts</code> is used to generates checks to ensure that, or any other kind of initialization needed before being able to use the library.</li>
-<li><code>deprecate_by_min_version</code> is used to generate a <a href="https://doc.rust-lang.org/edition-guide/rust-2018/the-compiler/an-attribute-for-deprecation.html">Rust &quot;#[deprecated]&quot;</a> attribute based on the deprecation information provided by the <code>.gir</code> file.</li>
-<li><code>single_version_file</code> is a very useful option when you have a lot of generated files (like we'll have). Instead of generating the gir hash commit used for the generation in the header of all generated files, it'll just write it inside one file, removing <code>git diff</code> noise <strong>a lot</strong>.</li>
-<li><code>generate = []</code>: this line currently does nothing. We say to <a href="https://github.com/gtk-rs/gir">gir</a> to generate nothing. We'll fulfill it later on.</li>
-</ul>
-<p>Let's make a first generation of our high-level Rust API!</p>
-<pre><code class="language-sh">gir -o .
-</code></pre>
-<p>Now if you take a look around, you'll see a new &quot;auto&quot; folder inside &quot;src&quot;. Doesn't contain much though. Which makes sense since we're generating nothing. Time to introduce you to a whole new <a href="https://github.com/gtk-rs/gir">gir</a> mode: <code>not_bound</code>. Let's give it a try:</p>
-<pre><code class="language-console">&gt; gir -o . -m not_bound
-[NOT GENERATED] GtkSource.Buffer
-[NOT GENERATED PARENT] Gtk.TextBuffer
-[NOT GENERATED] GtkSource.Language
-[NOT GENERATED] GtkSource.Mark
-[NOT GENERATED PARENT] Gtk.TextMark
-[NOT GENERATED] GtkSource.StyleScheme
-[NOT GENERATED] GtkSource.UndoManager
-[NOT GENERATED] GtkSource.SortFlags
-[NOT GENERATED] GtkSource.Completion
-[NOT GENERATED PARENT] Gtk.Buildable
-[NOT GENERATED] GtkSource.CompletionProvider
-[NOT GENERATED] GtkSource.CompletionContext
-[NOT GENERATED PARENT] GObject.InitiallyUnowned
-[NOT GENERATED] GtkSource.CompletionInfo
-[NOT GENERATED PARENT] Gtk.Window
-[NOT GENERATED PARENT] Gtk.Bin
-[NOT GENERATED PARENT] Gtk.Container
-[NOT GENERATED PARENT] Gtk.Widget
-[NOT GENERATED PARENT] Atk.ImplementorIface
-[NOT GENERATED] GtkSource.View
-[NOT GENERATED PARENT] Gtk.TextView
-[NOT GENERATED PARENT] Gtk.Scrollable
-[NOT GENERATED] GtkSource.CompletionActivation
-[NOT GENERATED] GtkSource.CompletionProposal
-[NOT GENERATED] GtkSource.CompletionError
-[NOT GENERATED] GtkSource.CompletionItem
-[NOT GENERATED PARENT] GtkSource.CompletionProposal
-[NOT GENERATED] GtkSource.CompletionWords
-[NOT GENERATED PARENT] GtkSource.CompletionProvider
-[NOT GENERATED] GtkSource.DrawSpacesFlags (deprecated in 3.24)
-[NOT GENERATED] GtkSource.Encoding
-[NOT GENERATED] GtkSource.File
-[NOT GENERATED] GtkSource.MountOperationFactory
-[NOT GENERATED] GtkSource.FileLoader
-[NOT GENERATED] GtkSource.FileLoaderError
-[NOT GENERATED] GtkSource.FileSaver
-[NOT GENERATED] GtkSource.FileSaverFlags
-[NOT GENERATED] GtkSource.FileSaverError
-[NOT GENERATED] GtkSource.Gutter
-[NOT GENERATED] GtkSource.GutterRenderer
-[NOT GENERATED] GtkSource.GutterRendererState
-[NOT GENERATED] GtkSource.GutterRendererAlignmentMode
-[NOT GENERATED] GtkSource.GutterRendererPixbuf
-[NOT GENERATED PARENT] GtkSource.GutterRenderer
-[NOT GENERATED] GtkSource.GutterRendererText
-[NOT GENERATED] GtkSource.LanguageManager
-[NOT GENERATED] GtkSource.Map
-[NOT GENERATED PARENT] GtkSource.View
-[NOT GENERATED] GtkSource.MarkAttributes
-[NOT GENERATED] GtkSource.PrintCompositor
-[NOT GENERATED] GtkSource.Region
-[NOT GENERATED] GtkSource.RegionIter
-[NOT GENERATED] GtkSource.SearchContext
-[NOT GENERATED] GtkSource.SearchSettings
-[NOT GENERATED] GtkSource.Style
-[NOT GENERATED] GtkSource.SpaceDrawer
-[NOT GENERATED] GtkSource.SpaceTypeFlags
-[NOT GENERATED] GtkSource.SpaceLocationFlags
-[NOT GENERATED] GtkSource.StyleSchemeChooser
-[NOT GENERATED] GtkSource.StyleSchemeChooserButton
-[NOT GENERATED PARENT] Gtk.Button
-[NOT GENERATED PARENT] Gtk.Actionable
-[NOT GENERATED PARENT] Gtk.Activatable
-[NOT GENERATED PARENT] GtkSource.StyleSchemeChooser
-[NOT GENERATED] GtkSource.StyleSchemeChooserInterface
-[NOT GENERATED] GtkSource.StyleSchemeChooserWidget
-[NOT GENERATED] GtkSource.StyleSchemeManager
-[NOT GENERATED] GtkSource.Tag
-[NOT GENERATED PARENT] Gtk.TextTag
-[NOT GENERATED] GtkSource.ViewGutterPosition
-</code></pre>
-<p>We now have the list of all the non-yet generated items. Quite convenient! You can also see that we have two kinds of not generated items:</p>
-<ul>
-<li><code>[NOT GENERATED]</code></li>
-<li><code>[NOT GENERATED PARENT]</code></li>
-</ul>
-<p><code>[NOT GENERATED PARENT]</code> means that this object lives in a dependency of the current library. We'll come back on how to add them a bit later.</p>
-<p>Let's start by generating one type. Let's update the &quot;generate&quot; array as follows:</p>
-<pre><code class="language-toml">generate = [
-    &quot;GtkSource.Language&quot;,
-]
-</code></pre>
-<p>Another <code>gir</code> run:</p>
-<pre><code class="language-sh">gir -o .
-</code></pre>
-<p>(Again, if you do it on another library and it fails and you can't figure out why, don't hesitate to reach us!)</p>
-<p>We now have a <code>src/auto/language.rs</code> file. We need to include all <code>auto</code> files in our library. To do so, let's update the <code>src/lib.rs</code> file as follows:</p>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>pub use auto::*;
-
-mod auto;
-<span class="boring">}</span></code></pre></pre>
-<p>Let's compile:</p>
-<pre><code class="language-sh">cargo build
-</code></pre>
-<p>It completely failed with a lot of errors. Yeay!</p>
-<p>You guessed it, we need to add a few dependencies to make it work. A lot of those errors were about the fact that the <code>Language</code> type didn't exist. Which is weird since we generated it, right? Well, if you take a look at the <code>src/auto/language.rs</code> file, you'll see this at the top:</p>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>glib_wrapper! {
-    pub struct Language(Object&lt;ffi::GtkSourceLanguage, ffi::GtkSourceLanguageClass, LanguageClass&gt;);
-
-    match fn {
-        get_type =&gt; || gtk_source_sys::gtk_source_language_get_type(),
-    }
-}
-<span class="boring">}</span></code></pre></pre>
-<p>This macro comes from the <code>glib</code> crate. We didn't import it, therefore the Rust compiler can't find it. We'll also need its <code>sys</code> part (the case of <code>glib</code> is a bit special).</p>
-<p>A second issue is that we didn't import the <code>sourceview-sys</code> crate we generated. Gir produces code expecting this crate to be imported as &quot;ffi&quot; (which you can see in the definition of <code>Language</code> above), so we need to rename it in the <code>Cargo.toml</code> file, too.</p>
-<p>Alongside those two (three if we count <code>glib-sys</code>!), we'll need both <code>libc</code> and <code>bitflags</code>. Let's fix all of those issues at once! For that, we need to update the <code>Cargo.toml</code>:</p>
-<pre><code class="language-toml">[package]
-name = &quot;sourceview&quot;
-version = &quot;0.1.0&quot;
-authors = [&quot;Guillaume Gomez &lt;guillaume1.gomez@gmail.com&gt;&quot;]
-
-[dependencies]
-libc = &quot;0.2&quot;
-bitflags = &quot;1.0&quot;
-
-[dependencies.ffi]
-package = &quot;sourceview-sys&quot;
-path = &quot;./sourceview-sys&quot;
-
-[dependencies.glib]
-git = &quot;https://github.com/gtk-rs/glib&quot;
-
-[dependencies.glib-sys]
-git = &quot;https://github.com/gtk-rs/sys&quot; # all gtk-rs sys crates are in the sys repository
-</code></pre>
-<p>Let's try to rebuild:</p>
-<pre><code class="language-sh">cargo build
-</code></pre>
-<p>It worked! We have generated the <code>Language</code> item! I'll let you take a look at the <code>src/auto/language.rs</code> file, then we can continue.</p>
-<p>Again, if you encounter any issue at this stage (if the generated code is invalid for example), don't hesitate to reach us so we can give you a hand!</p>
-<p>We'll now generate the <code>GtkSource.Region</code> type. Why this one? Well, I don't want to spoil the surprise so just wait for a bit!</p>
-<p>First, we need to add it into the types to generate into our <code>Gir.toml</code> file:</p>
-<pre><code class="language-toml">generate = [
-    &quot;GtkSource.Language&quot;,
-    &quot;GtkSource.Region&quot;,
-]
-</code></pre>
-<p>We regenerate:</p>
-<pre><code class="language-sh">gir -o .
-</code></pre>
-<p>We rebuild:</p>
-<pre><code class="language-sh">cargo build
-</code></pre>
-<p>Everything works, yeay! Now if we take a look at our newly generated <code>src/auto/region.rs</code>, we'll see code like this:</p>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>//#[cfg(any(feature = &quot;v3_22&quot;, feature = &quot;dox&quot;))]
-//fn add_subregion(&amp;self, _start: /*Ignored*/&amp;gtk::TextIter, _end: /*Ignored*/&amp;gtk::TextIter);
-
-//#[cfg(any(feature = &quot;v3_22&quot;, feature = &quot;dox&quot;))]
-//fn get_buffer(&amp;self) -&gt; /*Ignored*/Option&lt;gtk::TextBuffer&gt;;
-<span class="boring">}</span></code></pre></pre>
-<p>Some functions are commented. Why so? The reason is simple: we need to tell to <code>gir</code> that those types have been generated and that it can generate code using them. We can do it by adding the type into the &quot;manual&quot; list. To put it simply, when <a href="https://github.com/gtk-rs/gir">gir</a> sees an item into this &quot;manual&quot; list, it means to it &quot;this type has been generated somewhere else, you can use it just like the others&quot;.</p>
-<p>Let's update our <code>Gir.toml</code> file once again:</p>
-<pre><code class="language-toml">generate = [
-    &quot;GtkSource.Language&quot;,
-    &quot;GtkSource.Region&quot;,
-]
-
-manual = [
-    &quot;Gtk.TextIter&quot;,
-    &quot;Gtk.TextBuffer&quot;,
-]
-</code></pre>
-<p>We'll also need to import the <code>gtk</code> crate. Let's add it into our <code>Cargo.toml</code> file:</p>
-<pre><code class="language-toml">[dependencies.gtk]
-git = &quot;https://github.com/gtk-rs/gtk&quot;
-</code></pre>
-<p>We regenerate and rebuild:</p>
-<pre><code class="language-sh">gir -o .
-cargo build
-</code></pre>
-<p>Everything is working, yeay! If you take another look at <code>src/auto/region.rs</code>, you'll see a lot less commented functions. Amongst the remaining ones, you'll see this one:</p>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>//#[cfg(any(feature = &quot;v3_22&quot;, feature = &quot;dox&quot;))]
-//fn get_start_region_iter(&amp;self, iter: /*Ignored*/RegionIter);
-<span class="boring">}</span></code></pre></pre>
-<p>If a type name isn't prepend by <code>[crate_name]::</code>, then it means it comes from the current crate. To add it, just put it into the &quot;generate&quot; list of <code>Gir.toml</code>.</p>
-<p>At this point, you should have almost everything you need. There is just one last case we need to talk about.</p>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="handling-generation-errors"><a class="header" href="#handling-generation-errors">Handling generation errors</a></h1>
-<p>There are a few kinds of errors (not much luckily) which can happen with <a href="https://github.com/gtk-rs/gir">gir</a> generation. Let's take a look at them.</p>
-<h3 id="cannot-find-macros"><a class="header" href="#cannot-find-macros">Cannot find macros</a></h3>
-<p>Compilation of the generated bindings may fail with errors like the following:</p>
-<pre><code>error: cannot find macro `skip_assert_initialized` in this scope
-  --&gt; src/auto/enums.rs:83:9
-   |
-83 |         skip_assert_initialized!();
-   |         ^^^^^^^^^^^^^^^^^^^^^^^
-   |
-   = help: have you added the `#[macro_use]` on the module/import?
-
-error: cannot find macro `assert_initialized_main_thread` in this scope
-  --&gt; src/auto/example.rs:33:9
-   |
-33 |         assert_initialized_main_thread!();
-   |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-   |
-   = help: have you added the `#[macro_use]` on the module/import?
-</code></pre>
-<p>In this case you’ll have to implement them yourself. For example, you can add the following to your <code>lib.rs</code> file:</p>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>/// No-op.
-macro_rules! skip_assert_initialized {
-    () =&gt; {};
-}
-
-/// Asserts that this is the main thread and either `gdk::init` or `gtk::init` has been called.
-macro_rules! assert_initialized_main_thread {
-    () =&gt; {
-        if !::gtk::is_initialized_main_thread() {
-            if ::gtk::is_initialized() {
-                panic!(&quot;GTK may only be used from the main thread.&quot;);
-            } else {
-                panic!(&quot;GTK has not been initialized. Call `gtk::init` first.&quot;);
-            }
-        }
-    };
-}
-<span class="boring">}</span></code></pre></pre>
-<p>Note: macros are order-dependent and you <em>must</em> insert this code before declaring modules that use it (e.g. <code>mod auto</code>).</p>
-<p>One complication here is that the <code>assert_initialized_main_thread!</code> macro depends on the exact library. If it's GTK-based then the above macro is likely correct, unless the library has its own initialization function. If it has its own initialization function it would need to be handled in addition to GTK's here in the same way.</p>
-<p>For non-GTK-based libraries this macro would handle the initialization function of that library in the same way, or if there is none would simply do nothing:</p>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>/// No-op.
-macro_rules! assert_initialized_main_thread {
-    () =&gt; {};
-}
-<span class="boring">}</span></code></pre></pre>
-<h2 id="missing-memory-management-functions"><a class="header" href="#missing-memory-management-functions">Missing memory management functions</a></h2>
-<p>If <a href="https://github.com/gtk-rs/gir">gir</a> generation fails (for whatever reason), it means you'll have to implement the type yourself. Just like types from other <code>gtk-rs</code> crates, you'll need to put it into the &quot;manual&quot; list. Then you need to put the type into the <code>src</code> folder (or inside a subfolder, you know how Rust works).</p>
-<p>/!\ Don't forget to reexport the type inside your <code>src/lib.rs</code> file! For example, let's take a look at the <a href="https://github.com/gtk-rs/gtk/blob/master/src/requisition.rs">requisition.rs</a> file from the <code>gtk</code> crate.</p>
-<p>Since it's a &quot;simple&quot; type (no pointer, therefore no memory management to do), <a href="https://github.com/gtk-rs/gir">gir</a> doesn't know how to generate it. You'll need to implement some traits by hand like <code>ToGlibPtr</code> or <code>ToGlibPtrMut</code> (depending on your needs).</p>
-<h2 id="bad-function-generation"><a class="header" href="#bad-function-generation">Bad function generation</a></h2>
-<p>In some cases, the generated code isn't correct (array parameters are often an issue). In such cases, it's better to just make the implementation yourself. As an example, let's say you want to implement <code>Region::is_empty</code> yourself. A few changes have to be made. Let's start with <code>Gir.toml</code>:</p>
-<pre><code class="language-toml">generate = [
-    &quot;GtkSource.Language&quot;,
-]
-
-[[object]]
-name = &quot;GtkSource.Region&quot;
-status = &quot;generate&quot;
-    [[object.function]]
-    name = &quot;is_empty&quot;
-    ignore = true
-</code></pre>
-<p>So to sum up what I wrote above: we removed &quot;GtkSource.Region&quot; from the &quot;generate&quot; list and we created a new entry for it. Then we say to <a href="https://github.com/gtk-rs/gir">gir</a> that it should generate (through <code>status = &quot;generate&quot;</code>). However, we also tell it that we don't want the &quot;is_empty&quot; to be generated.</p>
-<p>Now that we've done that, we need to reimplement it. Let's create a <code>src/region.rs</code> file:</p>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>use glib::object::IsA;
-use glib::translate::*;
-use Region;
-
-pub trait RegionExtManual: 'static {
-    pub fn is_empty(&amp;self) -&gt; bool;
-}
-
-impl&lt;O: IsA&lt;Region&gt;&gt; RegionExtManual for O {
-    pub fn is_empty(&amp;self) -&gt; bool {
-        // blablabla
-        true
-    }
-}
-<span class="boring">}</span></code></pre></pre>
-<p>You might wonder: &quot;why not just implementing it on the <code>Region</code> type directly?&quot;. Because like this, a subclass will also be able to use this trait easily as long as it implements <code>IsA&lt;Region&gt;</code>. For instance, in gtk, everything that implements <code>IsA&lt;Widget&gt;</code> (so almost every GTK types) can use those methods.</p>
-<p>As usual, don't forget to reexport the trait. A little tip about reexporting manual traits: in <code>gtk-rs</code>, we create a <code>src/prelude.rs</code> file which reexports all traits (both manual and generated ones), making it simpler for users to use them through <code>use [DEPENDENCY]::prelude::*</code>. It looks like this:</p>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>pub use auto::traits::*;
-
-pub use region::RegionExtManual;
-<span class="boring">}</span></code></pre></pre>
-<p>Then it's reexported as follows from the <code>src/lib.rs</code> file:</p>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>pub mod prelude;
-
-pub use prelude::*;
-<span class="boring">}</span></code></pre></pre>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="generating-documentation"><a class="header" href="#generating-documentation">Generating documentation</a></h1>
-<p>And finally the last feature! Just run the following command (note the <code>-m doc</code> at the end):</p>
-<pre><code class="language-sh">cargo run --release -- -c YourGirFile.toml -d ../gir-files --doc-target-path the-output-file-name -m doc
-</code></pre>
-<p>It'll generate a markdown file if everything went fine. That's where all this crate's documentation is. If you want to put it back into your crate's source code like &quot;normal&quot; doc comments, run:</p>
-<pre><code class="language-sh">cargo install rustdoc-stripper
-rustdoc-stripper -g -o docs.md
-</code></pre>
-<p>And now your crate should be completely documented as expected!</p>
-<p>If you defining traits manually you can add them to &quot;Implements&quot; section for classes and interfaces:</p>
-<pre><code class="language-toml">[[object]]
-name = &quot;Gtk.Assistant&quot;
-status = &quot;generate&quot;
-#add link to trait from current crate
-manual_traits = [&quot;AssistantExtManual&quot;]
-
-[[object]]
-name = &quot;Gtk.Application&quot;
-status = &quot;generate&quot;
-#add link to trait from other crate
-manual_traits = [&quot;gio::ApplicationExtManual&quot;]
 </code></pre>
 
                     </main>

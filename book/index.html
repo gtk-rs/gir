@@ -80,7 +80,7 @@
 
         <nav id="sidebar" class="sidebar" aria-label="Table of contents">
             <div class="sidebar-scrollbox">
-                <ol class="chapter"><li class="chapter-item expanded "><a href="introduction.html" class="active"><strong aria-hidden="true">1.</strong> Introduction</a></li><li class="chapter-item expanded "><a href="config_introduction.html"><strong aria-hidden="true">2.</strong> Configuration</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="config_ffi.html"><strong aria-hidden="true">2.1.</strong> FFI Options</a></li><li class="chapter-item expanded "><a href="config_api.html"><strong aria-hidden="true">2.2.</strong> API Options</a></li><li class="chapter-item expanded "><a href="config_name_override.html"><strong aria-hidden="true">2.3.</strong> Crate name override</a></li></ol></li><li class="chapter-item expanded "><a href="tutorial/introduction.html"><strong aria-hidden="true">3.</strong> Tutorial</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="tutorial/sys_library.html"><strong aria-hidden="true">3.1.</strong> Generating the FFI library</a></li><li class="chapter-item expanded "><a href="tutorial/high_level_rust_api.html"><strong aria-hidden="true">3.2.</strong> Generating the Rust API</a></li><li class="chapter-item expanded "><a href="tutorial/handling_errors.html"><strong aria-hidden="true">3.3.</strong> Handling generation errors</a></li></ol></li><li class="chapter-item expanded "><a href="generate_docs.html"><strong aria-hidden="true">4.</strong> Generating documentation</a></li></ol>
+                <ol class="chapter"><li class="chapter-item expanded "><a href="introduction.html" class="active"><strong aria-hidden="true">1.</strong> Introduction</a></li><li class="chapter-item expanded "><a href="tutorial/introduction.html"><strong aria-hidden="true">2.</strong> Tutorial</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="tutorial/preparation.html"><strong aria-hidden="true">2.1.</strong> Preparation</a></li><li class="chapter-item expanded "><a href="tutorial/finding_gir_files.html"><strong aria-hidden="true">2.2.</strong> Finding .gir files</a></li><li class="chapter-item expanded "><a href="tutorial/sys_library.html"><strong aria-hidden="true">2.3.</strong> Generating the FFI library</a></li><li class="chapter-item expanded "><a href="tutorial/high_level_rust_api.html"><strong aria-hidden="true">2.4.</strong> Generating the Rust API</a></li><li class="chapter-item expanded "><a href="tutorial/handling_errors.html"><strong aria-hidden="true">2.5.</strong> Handling generation errors</a></li><li class="chapter-item expanded "><a href="tutorial/generate_docs.html"><strong aria-hidden="true">2.6.</strong> Generating documentation</a></li></ol></li><li class="chapter-item expanded "><a href="config/introduction.html"><strong aria-hidden="true">3.</strong> Configuration files</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="config/ffi.html"><strong aria-hidden="true">3.1.</strong> FFI Options</a></li><li class="chapter-item expanded "><a href="config/api.html"><strong aria-hidden="true">3.2.</strong> API Options</a></li><li class="chapter-item expanded "><a href="config/name_override.html"><strong aria-hidden="true">3.3.</strong> Crate name override</a></li></ol></li></ol>
             </div>
             <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
         </nav>
@@ -148,43 +148,58 @@
                 <div id="content" class="content">
                     <main>
                         <h1 id="introduction"><a class="header" href="#introduction">Introduction</a></h1>
-<p>This book aims to provide complete documentation on how to use <a href="https://github.com/gtk-rs/gir">gir</a> to generate bindings for GObject based libraries based on the <a href="https://gi.readthedocs.io/en/latest/">GObject introspection</a> data.</p>
-<p><a href="https://github.com/gtk-rs/gir">gir</a> consists of a library and at the same time a binary you can use to generate the bindings.</p>
-<p><a href="https://github.com/gtk-rs/gir">gir</a> requires both a <code>Gir.toml</code> configuration file and a <code>.gir</code> file containing the GObject introspection data.</p>
+<p><a href="https://github.com/gtk-rs/gir">gir</a> is a tool to automatically generate safe wrappers for a C library with <a href="https://gi.readthedocs.io/en/latest/">GObject introspection</a> information.
+In order to use it you need the <code>.gir</code> file containing the introspection data for the library you want to create the bindings for, as well as the <code>.gir</code> files for all its dependencies.
+Have a look at the tutorial if you don't know how to <a href="tutorial/finding_gir_files.html">find the .gir files</a>.
+If your library does not provide a <code>.gir</code> file, unfortunately you cannot use <a href="https://github.com/gtk-rs/gir">gir</a>, but maybe you can try <a href="https://github.com/rust-lang/rust-bindgen">rust-bindgen</a>.</p>
+<p>This book contains a tutorial on how to use <a href="https://github.com/gtk-rs/gir">gir</a>.
+As an example we will create the bindings for <a href="https://docs.gtk.org/Pango/">Pango</a>.
+In many cases you will be able to follow the same steps with your library.
+If you are already familiar with <a href="https://github.com/gtk-rs/gir">gir</a> and you just want to look up details about the configuration files, feel free to skip ahead to the documentation of the <a href="config/introduction.html">configuration files</a>.</p>
+<h2 id="general-steps"><a class="header" href="#general-steps">General steps</a></h2>
+<p><a href="https://github.com/gtk-rs/gir">gir</a> tries to make it as simple as possible to generate a safe wrapper for your C library.
+The process can be divided into four steps that correspond to the four operating modes gir has.</p>
 <ul>
 <li>
-<p>The <code>*.gir</code> you need will correspond to the project you want to generate bindings for. You can get them from here or directly on ubuntu website (for example: <a href="http://packages.ubuntu.com/zesty/amd64/libgtk-3-dev">http://packages.ubuntu.com/zesty/amd64/libgtk-3-dev</a>).</p>
+<p>Generating unsafe bindings:
+In this step, the low-level FFI bindings are created from the supplied <code>*.gir</code> files.
+These are essentially direct calls into the related C library and are unsafe.
+The resulting crate is typically appended with -sys.
+The operating mode is <code>sys</code>.</p>
 </li>
 <li>
-<p>The <code>*.toml</code> is what is used to pass various settings and options to <a href="https://github.com/gtk-rs/gir">gir</a> for use when generating the bindings - you will need to write one to suit your needs, for an example you can take a look to gtk-rs/sys/gir-gtk.toml.</p>
+<p>Generating a safe wrapper:
+Next, another crate for a layer on top of these unsafe (sys) bindings is created, which makes them safe for use in general Rust.
+The operating mode is <code>normal</code>.</p>
+</li>
+<li>
+<p>Checking for missing types/methods:
+The operating mode <code>not_bound</code> allows you to see the detected types/methods that will not be generated for whatever reasons.</p>
+</li>
+<li>
+<p>Adding documentation:
+After the safe wrapper is created, gir can even generate the documentation for us.
+Use the operating mode <code>doc</code> to do so.</p>
 </li>
 </ul>
-<p>It operates on 4 different modes:</p>
-<ul>
-<li>
-<p><code>sys</code>: is what creates the low-level FFI bindings from the supplied <code>*.gir</code> file - these are essentially direct calls in to the related C library and are typically unsafe. The resulting crate is typically appended with -sys.</p>
-</li>
-<li>
-<p><code>normal</code>: generates another crate for a layer on top of these unsafe (sys) bindings which makes them safe for use in general Rust.</p>
-</li>
-<li>
-<p><code>not_bound</code>: allows you to see the detected types/methods that will not be generated for whatever reasons.</p>
-</li>
-<li>
-<p><code>doc</code>: used for documentation generation</p>
-</li>
-</ul>
-<h2 id="helpers"><a class="header" href="#helpers">Helpers</a></h2>
-<p><a href="https://github.com/gtk-rs/gir">gir</a> includes a wrapper script <code>./generator.py</code> that detects <code>Gir.toml</code> configurations in the current directory (or the path(s) passed on the command-line) and generates &quot;normal&quot; or &quot;sys&quot; crates for it. Alternatively --embed-docs can be passed to prepare source-code for a documentation build by moving all documentation into it. For a complete overview of available options, pass --help.</p>
+<h2 id="regenerating-the-bindings-and-wrapper"><a class="header" href="#regenerating-the-bindings-and-wrapper">Regenerating the bindings and wrapper</a></h2>
+<p>In order to generate the bindings and the wrapper for the first time, the above-mentioned steps should be followed.
+When you want to regenerate the crates because e.g.
+the library was updated, you can simplify the process by running the helper script <code>./generator.py</code>.
+The script detects <code>Gir.toml</code> configurations in the current directory and subdirectories (or the paths passed on the command-line) and generates &quot;normal&quot; or &quot;sys&quot; crates for it.
+Alternatively <code>--embed-docs</code> can be passed to prepare source-code for a documentation built by moving all documentation into it.
+For a complete overview of available options, pass <code>--help</code>.</p>
 <h2 id="gir-format-reference"><a class="header" href="#gir-format-reference">GIR format reference</a></h2>
 <p>It can always be useful to look at the <a href="https://gi.readthedocs.io/en/latest/annotations/giannotations.html">reference</a> or <a href="https://gitlab.gnome.org/GNOME/gobject-introspection/blob/master/docs/gir-1.2.rnc">schema</a>.</p>
+<h2 id="contact-us"><a class="header" href="#contact-us">Contact us</a></h2>
+<p>If you use <a href="https://github.com/gtk-rs/gir">gir</a> on another library and it fails and you can't figure out why, don't hesitate to <a href="https://gtk-rs.org/contact">contact us</a>!</p>
 
                     </main>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
 
-                            <a rel="next" href="config_introduction.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                            <a rel="next" href="tutorial/introduction.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                                 <i class="fa fa-angle-right"></i>
                             </a>
 
@@ -195,7 +210,7 @@
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
 
-                    <a rel="next" href="config_introduction.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                    <a rel="next" href="tutorial/introduction.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                         <i class="fa fa-angle-right"></i>
                     </a>
             </nav>

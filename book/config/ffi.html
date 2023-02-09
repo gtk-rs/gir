@@ -3,7 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>Generating documentation - Generate Rust bindings for GIR based libraries</title>
+        <title>FFI Options - Generate Rust bindings for GIR based libraries</title>
 
 
         <!-- Custom HTML head -->
@@ -12,21 +12,21 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="theme-color" content="#ffffff" />
 
-        <link rel="icon" href="favicon.svg">
-        <link rel="shortcut icon" href="favicon.png">
-        <link rel="stylesheet" href="css/variables.css">
-        <link rel="stylesheet" href="css/general.css">
-        <link rel="stylesheet" href="css/chrome.css">
-        <link rel="stylesheet" href="css/print.css" media="print">
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
 
         <!-- Fonts -->
-        <link rel="stylesheet" href="FontAwesome/css/font-awesome.css">
-        <link rel="stylesheet" href="fonts/fonts.css">
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
 
         <!-- Highlight.js Stylesheets -->
-        <link rel="stylesheet" href="highlight.css">
-        <link rel="stylesheet" href="tomorrow-night.css">
-        <link rel="stylesheet" href="ayu-highlight.css">
+        <link rel="stylesheet" href="../highlight.css">
+        <link rel="stylesheet" href="../tomorrow-night.css">
+        <link rel="stylesheet" href="../ayu-highlight.css">
 
         <!-- Custom theme stylesheets -->
 
@@ -34,7 +34,7 @@
     <body>
         <!-- Provide site root to javascript -->
         <script>
-            var path_to_root = "";
+            var path_to_root = "../";
             var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "navy" : "light";
         </script>
 
@@ -80,7 +80,7 @@
 
         <nav id="sidebar" class="sidebar" aria-label="Table of contents">
             <div class="sidebar-scrollbox">
-                <ol class="chapter"><li class="chapter-item expanded "><a href="introduction.html"><strong aria-hidden="true">1.</strong> Introduction</a></li><li class="chapter-item expanded "><a href="config_introduction.html"><strong aria-hidden="true">2.</strong> Configuration</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="config_ffi.html"><strong aria-hidden="true">2.1.</strong> FFI Options</a></li><li class="chapter-item expanded "><a href="config_api.html"><strong aria-hidden="true">2.2.</strong> API Options</a></li><li class="chapter-item expanded "><a href="config_name_override.html"><strong aria-hidden="true">2.3.</strong> Crate name override</a></li></ol></li><li class="chapter-item expanded "><a href="tutorial/introduction.html"><strong aria-hidden="true">3.</strong> Tutorial</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="tutorial/sys_library.html"><strong aria-hidden="true">3.1.</strong> Generating the FFI library</a></li><li class="chapter-item expanded "><a href="tutorial/high_level_rust_api.html"><strong aria-hidden="true">3.2.</strong> Generating the Rust API</a></li><li class="chapter-item expanded "><a href="tutorial/handling_errors.html"><strong aria-hidden="true">3.3.</strong> Handling generation errors</a></li></ol></li><li class="chapter-item expanded "><a href="generate_docs.html" class="active"><strong aria-hidden="true">4.</strong> Generating documentation</a></li></ol>
+                <ol class="chapter"><li class="chapter-item expanded "><a href="../introduction.html"><strong aria-hidden="true">1.</strong> Introduction</a></li><li class="chapter-item expanded "><a href="../tutorial/introduction.html"><strong aria-hidden="true">2.</strong> Tutorial</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../tutorial/preparation.html"><strong aria-hidden="true">2.1.</strong> Preparation</a></li><li class="chapter-item expanded "><a href="../tutorial/finding_gir_files.html"><strong aria-hidden="true">2.2.</strong> Finding .gir files</a></li><li class="chapter-item expanded "><a href="../tutorial/sys_library.html"><strong aria-hidden="true">2.3.</strong> Generating the FFI library</a></li><li class="chapter-item expanded "><a href="../tutorial/high_level_rust_api.html"><strong aria-hidden="true">2.4.</strong> Generating the Rust API</a></li><li class="chapter-item expanded "><a href="../tutorial/handling_errors.html"><strong aria-hidden="true">2.5.</strong> Handling generation errors</a></li><li class="chapter-item expanded "><a href="../tutorial/generate_docs.html"><strong aria-hidden="true">2.6.</strong> Generating documentation</a></li></ol></li><li class="chapter-item expanded "><a href="../config/introduction.html"><strong aria-hidden="true">3.</strong> Configuration files</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../config/ffi.html" class="active"><strong aria-hidden="true">3.1.</strong> FFI Options</a></li><li class="chapter-item expanded "><a href="../config/api.html"><strong aria-hidden="true">3.2.</strong> API Options</a></li><li class="chapter-item expanded "><a href="../config/name_override.html"><strong aria-hidden="true">3.3.</strong> Crate name override</a></li></ol></li></ol>
             </div>
             <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
         </nav>
@@ -112,13 +112,13 @@
                     <h1 class="menu-title">Generate Rust bindings for GIR based libraries</h1>
 
                     <div class="right-buttons">
-                        <a href="print.html" title="Print this book" aria-label="Print this book">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
                             <i id="print-button" class="fa fa-print"></i>
                         </a>
                         <a href="https://github.com/gtk-rs/gir/tree/master/book" title="Git repository" aria-label="Git repository">
                             <i id="git-repository-button" class="fa fa-github"></i>
                         </a>
-                        <a href="https://github.com/gtk-rs/gir/edit/master/book/src/generate_docs.md" title="Suggest an edit" aria-label="Suggest an edit">
+                        <a href="https://github.com/gtk-rs/gir/edit/master/book/src/config/ffi.md" title="Suggest an edit" aria-label="Suggest an edit">
                             <i id="git-edit-button" class="fa fa-edit"></i>
                         </a>
 
@@ -147,37 +147,85 @@
 
                 <div id="content" class="content">
                     <main>
-                        <h1 id="generating-documentation"><a class="header" href="#generating-documentation">Generating documentation</a></h1>
-<p>And finally the last feature! Just run the following command (note the <code>-m doc</code> at the end):</p>
-<pre><code class="language-sh">cargo run --release -- -c YourGirFile.toml -d ../gir-files --doc-target-path the-output-file-name -m doc
+                        <h1 id="ffi-options"><a class="header" href="#ffi-options">FFI Options</a></h1>
+<p>In FFI (<code>-m sys</code>) mode, <code>gir</code> generates as much as it can.
+So in this mode, the TOML file is mostly used to ignore some objects.
+To do so, you need to add its fullname to an <code>ignore</code> array.
+Example:</p>
+<pre><code class="language-toml">ignore = [&quot;Gtk.Widget&quot;, &quot;Gtk.Window&quot;]
 </code></pre>
-<p>It'll generate a markdown file if everything went fine. That's where all this crate's documentation is. If you want to put it back into your crate's source code like &quot;normal&quot; doc comments, run:</p>
-<pre><code class="language-sh">cargo install rustdoc-stripper
-rustdoc-stripper -g -o docs.md
+<p>And that's all.
+Neither <code>GtkWidget</code> nor <code>GtkWindow</code> (alongside with their functions) will be generated.</p>
+<p>You also need to add any needed external libraries in the &quot;external_libraries&quot; parameter.
+Example:</p>
+<pre><code class="language-toml">[options]
+external_libraries = [
+   &quot;GLib&quot;,
+   &quot;GObject&quot;,
+]
 </code></pre>
-<p>And now your crate should be completely documented as expected!</p>
-<p>If you defining traits manually you can add them to &quot;Implements&quot; section for classes and interfaces:</p>
+<p>You can specify a few other options:</p>
+<pre><code class="language-toml">[options]
+girs_directories = [&quot;../gir-files&quot;]
+library = &quot;GtkSource&quot;
+version = &quot;3.0&quot;
+min_cfg_version = &quot;3.0&quot;
+target_path = &quot;.&quot;
+# Path where lib.rs generated (defaults to &lt;target_path&gt;/src)
+# auto_path = &quot;src&quot;
+work_mode = &quot;sys&quot;
+# If true then build.rs will be split into 2 parts:
+# always generated build_version.rs,
+# and build.rs that generated only if not exists.
+# Defaults to false
+split_build_rs = false
+# Adds extra versions to features
+extra_versions = [
+   &quot;3.15&quot;,
+   &quot;3.17&quot;,
+]
+# Change library version for version
+[[lib_version_overrides]]
+version = &quot;3.16&quot;
+lib_version = &quot;3.16.1&quot;
+# Add extra dependencies to feature
+[[feature_dependencies]]
+version = &quot;3.16&quot;
+dependencies = [
+  &quot;glib-sys/v3_16&quot;
+]
+</code></pre>
+<p>Also, you can add rust cfg conditions on objects, functions and constants, for example, when flagging for conditional compilation:</p>
 <pre><code class="language-toml">[[object]]
-name = &quot;Gtk.Assistant&quot;
+name = &quot;GstGL.GLDisplayEGL&quot;
 status = &quot;generate&quot;
-#add link to trait from current crate
-manual_traits = [&quot;AssistantExtManual&quot;]
-
-[[object]]
-name = &quot;Gtk.Application&quot;
-status = &quot;generate&quot;
-#add link to trait from other crate
-manual_traits = [&quot;gio::ApplicationExtManual&quot;]
+cfg_condition = &quot;feature = \&quot;egl\&quot;&quot;
+    [[object.function]]
+    pattern = &quot;.*&quot;
+    cfg_condition = &quot;feature = \&quot;egl\&quot;&quot;
 </code></pre>
+<h2 id="generation-in-ffi-mode"><a class="header" href="#generation-in-ffi-mode">Generation in FFI mode</a></h2>
+<p>When you're ready, let's generate the FFI part.
+In the command we'll execute, <code>../gir-files</code> is where the directory with your <code>.gir</code> files is.
+(But again, you can just clone the <a href="https://github.com/gtk-rs/gir-files">gir-files repository</a> and add your file(s) in it).
+Then let's run the command:</p>
+<pre><code class="language-sh">cargo run --release -- -c YourSysGirFile.toml -d ../gir-files -m sys -o the-output-directory-sys
+</code></pre>
+<p>The generated files will be placed in <code>the-output-directory-sys</code>.
+Just take care about the dependencies and the crate's name generated in the <code>Cargo.toml</code> file (update them if they don't work as expected).</p>
+<p>You now have the sys part of your binding!</p>
 
                     </main>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
-                            <a rel="prev" href="tutorial/handling_errors.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                            <a rel="prev" href="../config/introduction.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                                 <i class="fa fa-angle-left"></i>
                             </a>
 
+                            <a rel="next" href="../config/api.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
 
                         <div style="clear: both"></div>
                     </nav>
@@ -185,10 +233,13 @@ manual_traits = [&quot;gio::ApplicationExtManual&quot;]
             </div>
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
-                    <a rel="prev" href="tutorial/handling_errors.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                    <a rel="prev" href="../config/introduction.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                         <i class="fa fa-angle-left"></i>
                     </a>
 
+                    <a rel="next" href="../config/api.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
             </nav>
 
         </div>
@@ -201,13 +252,13 @@ manual_traits = [&quot;gio::ApplicationExtManual&quot;]
         </script>
 
 
-        <script src="elasticlunr.min.js"></script>
-        <script src="mark.min.js"></script>
-        <script src="searcher.js"></script>
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
 
-        <script src="clipboard.min.js"></script>
-        <script src="highlight.js"></script>
-        <script src="book.js"></script>
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
 
         <!-- Custom JS scripts -->
 
