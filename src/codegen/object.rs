@@ -274,14 +274,7 @@ pub fn generate(
         }
 
         writeln!(w, "}}")?;
-
-        general::declare_default_from_new(
-            w,
-            env,
-            &analysis.name,
-            &analysis.functions,
-            has_builder_properties(&analysis.builder_properties),
-        )?;
+        generate_default(w, env, analysis)?;
     }
 
     trait_impls::generate(
@@ -338,6 +331,27 @@ pub fn generate(
     }
 
     Ok(())
+}
+
+fn generate_default(w: &mut dyn Write, env: &Env, analysis: &analysis::object::Info) -> Result<()> {
+    let name = &analysis.name;
+    if let Some(func) = analysis.default_constructor() {
+        general::declare_default(w, env, name, func)
+    } else if has_builder_properties(&analysis.builder_properties) {
+        // create an alternative default implementation the uses `glib::object::Object::new()`
+        writeln!(w)?;
+        version_condition(w, env, None, analysis.version, false, 0)?;
+        writeln!(
+            w,
+            "impl Default for {name} {{
+                 fn default() -> Self {{
+                     glib::object::Object::new::<Self>()
+                 }}
+             }}"
+        )
+    } else {
+        Ok(())
+    }
 }
 
 fn generate_builder(w: &mut dyn Write, env: &Env, analysis: &analysis::object::Info) -> Result<()> {

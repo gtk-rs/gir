@@ -1,5 +1,5 @@
 use super::{imports::Imports, *};
-use crate::{codegen::Visibility, library, version::Version};
+use crate::{codegen::Visibility, config::gobjects::GStatus, library, version::Version};
 
 #[derive(Debug, Default)]
 pub struct InfoBase {
@@ -37,5 +37,19 @@ impl InfoBase {
             .iter()
             .filter(|f| f.status.need_generate() && f.kind == library::FunctionKind::Function)
             .collect()
+    }
+
+    pub fn default_constructor(&self) -> Option<&functions::Info> {
+        self.functions.iter().find(|f| {
+            !f.hidden
+                && f.status.need_generate()
+                && f.kind == library::FunctionKind::Constructor
+                && f.status == GStatus::Generate
+                // For now we only look for new() with no params
+                && f.name == "new"
+                && f.parameters.rust_parameters.is_empty()
+                // Cannot generate Default implementation for Option<>
+                && f.ret.parameter.as_ref().map_or(false, |x| !*x.lib_par.nullable)
+        })
     }
 }

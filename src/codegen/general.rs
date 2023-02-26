@@ -966,47 +966,23 @@ pub fn write_vec<T: Display>(w: &mut dyn Write, v: &[T]) -> Result<()> {
     Ok(())
 }
 
-pub fn declare_default_from_new(
+pub fn declare_default(
     w: &mut dyn Write,
     env: &Env,
     name: &str,
-    functions: &[analysis::functions::Info],
-    has_builder: bool,
+    func: &analysis::functions::Info,
 ) -> Result<()> {
-    if let Some(func) = functions.iter().find(|f| {
-        !f.hidden
-            && f.status.need_generate()
-            && f.name == "new"
-            // Cannot generate Default implementation for Option<>
-            && f.ret.parameter.as_ref().map_or(false, |x| !*x.lib_par.nullable)
-    }) {
-        if func.parameters.rust_parameters.is_empty() {
-            writeln!(w)?;
-            version_condition(w, env, None, func.version, false, 0)?;
-            writeln!(
-                w,
-                "impl Default for {name} {{
-                     fn default() -> Self {{
-                         Self::new()
-                     }}
-                 }}"
-            )?;
-        } else if has_builder {
-            // create an alternative default implementation the uses `glib::object::Object::new()`
-            writeln!(w)?;
-            version_condition(w, env, None, func.version, false, 0)?;
-            writeln!(
-                w,
-                "impl Default for {name} {{
-                     fn default() -> Self {{
-                         glib::object::Object::new::<Self>()
-                     }}
-                 }}"
-            )?;
-        }
-    }
-
-    Ok(())
+    writeln!(w)?;
+    version_condition(w, env, None, func.version, false, 0)?;
+    writeln!(
+        w,
+        "impl Default for {name} {{
+             fn default() -> Self {{
+                 Self::{}()
+             }}
+         }}",
+        &func.name
+    )
 }
 
 /// Escapes string in format suitable for placing inside double quotes.
