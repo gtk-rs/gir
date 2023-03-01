@@ -31,6 +31,7 @@ impl ToReturnValue for library::Parameter {
             .direction(self.direction)
             .nullable(self.nullable)
             .scope(self.scope)
+            .c_type(self.c_type.clone())
             .try_from_glib(try_from_glib)
             .try_build_param()
             .into_string();
@@ -261,6 +262,7 @@ fn out_parameter_as_return(out: &analysis::Parameter, env: &Env) -> String {
     let name = RustType::builder(env, out.lib_par.typ)
         .direction(ParameterDirection::Return)
         .nullable(out.lib_par.nullable)
+        .c_type(out.lib_par.c_type.clone())
         .scope(out.lib_par.scope)
         .try_from_glib(&out.try_from_glib)
         .try_build_param()
