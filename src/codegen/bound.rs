@@ -52,7 +52,7 @@ impl Bound {
                 format!("Option<{ref_str}{trait_bound}>")
             }
             BoundType::IsA(_) => format!("{ref_str}{trait_bound}"),
-            BoundType::AsRef(_) | BoundType::Custom(_) if *nullable => {
+            BoundType::AsRef(_) | BoundType::Custom(_) | BoundType::Into if *nullable => {
                 format!("Option<{trait_bound}>")
             }
             BoundType::NoWrapper | BoundType::AsRef(_) | BoundType::Custom(_) | BoundType::Into => {
@@ -81,7 +81,7 @@ impl Bound {
                 let is_a = format!("IsA<{}>", self.type_str);
 
                 let lifetime = r#async
-                    .then(|| " + Clone + 'static".to_string())
+                    .then(|| " + 'static".to_string())
                     .or_else(|| lifetime.map(|l| format!(" + '{l}")))
                     .unwrap_or_default();
 

@@ -86,11 +86,12 @@ impl Bounds {
         func: &Function,
         par: &CParameter,
         r#async: bool,
+        future: bool,
         concurrency: Concurrency,
         configured_functions: &[&config::functions::Function],
     ) -> (Option<String>, Option<CallbackInfo>) {
         let type_name = RustType::builder(env, par.typ)
-            .ref_mode(if par.move_ {
+            .ref_mode(if par.move_ || future {
                 RefMode::None
             } else {
                 RefMode::ByRefFake
@@ -104,7 +105,7 @@ impl Bounds {
         let mut ret = None;
         let mut need_is_into_check = false;
 
-        let ref_mode = if par.move_ {
+        let ref_mode = if par.move_ || future {
             RefMode::None
         } else {
             par.ref_mode

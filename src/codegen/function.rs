@@ -263,7 +263,7 @@ pub fn declaration_futures(env: &Env, analysis: &analysis::functions::Info) -> S
 
         if c_par.name == "callback" || c_par.name == "cancellable" {
             skipped += 1;
-            if let Some(alias) = analysis
+            if let Some(alias) = async_future
                 .bounds
                 .get_parameter_bound(&c_par.name)
                 .and_then(|bound| bound.type_parameter_reference())
@@ -277,11 +277,11 @@ pub fn declaration_futures(env: &Env, analysis: &analysis::functions::Info) -> S
             param_str.push_str(", ");
         }
 
-        let s = c_par.to_parameter(env, &analysis.bounds, true);
+        let s = c_par.to_parameter(env, &async_future.bounds, true);
         param_str.push_str(&s);
     }
 
-    let (bounds, _) = bounds(&analysis.bounds, skipped_bounds.as_ref(), true, false);
+    let (bounds, _) = bounds(&async_future.bounds, skipped_bounds.as_ref(), true, false);
 
     format!(
         "fn {}{}({}){}",
@@ -436,32 +436,13 @@ pub fn body_chunk_futures(
 
         let type_ = env.type_(par.typ);
         let is_str = matches!(*type_, library::Type::Basic(library::Basic::Utf8));
-        let ref_mode = if c_par.move_ {
-            RefMode::None
-        } else {
-            c_par.ref_mode
-        };
 
-        if is_str && ref_mode.is_ref() {
+        if is_str {
             if *c_par.nullable {
-                writeln!(
-                    body,
-                    "let {name} = {}::run_with_gstr({name}, |s| s.map({}::from));",
-                    use_glib_type(env, "IntoOptionalGStr"),
-                    use_glib_type(env, "GString"),
-                )?;
+                writeln!(body, "let {name} = {name}.map(|s| s.into());",)?;
             } else {
-                writeln!(
-                    body,
-                    "let {name} = {}::run_with_gstr({name}, |s| {}::from(s));",
-                    use_glib_type(env, "IntoGStr"),
-                    use_glib_type(env, "GString"),
-                )?;
+                writeln!(body, "let {name} = {name}.into();",)?;
             }
-        } else if *c_par.nullable {
-            writeln!(body, "let {name} = {name}.map(ToOwned::to_owned);",)?;
-        } else if ref_mode.is_ref() {
-            writeln!(body, "let {name} = {name}.clone();")?;
         }
     }
 
