@@ -1,3 +1,5 @@
+use std::fmt::Write;
+
 use log::error;
 
 use crate::{
@@ -120,22 +122,30 @@ fn analyze_property(
 
         let mut bounds_str = String::new();
         let dir = ParameterDirection::In;
-        let set_params = if let Some(bound) = Bounds::type_for(env, typ) {
+        let set_params = if let Some(bound) = Bounds::type_for(env, typ, RefMode::None) {
             let r_type = RustType::builder(env, typ)
-                .ref_mode(RefMode::ByRefFake)
+                .ref_mode(RefMode::None)
                 .try_build()
                 .into_string();
 
-            let _bound = Bound {
+            let bound = Bound {
                 bound_type: bound,
                 parameter_name: TYPE_PARAMETERS_START.to_string(),
                 alias: Some(TYPE_PARAMETERS_START.to_owned()),
                 type_str: r_type,
                 callback_modified: false,
             };
-            // TODO: bounds_str push?!?!
-            bounds_str.push_str("TODO");
-            format!("{prop_name}: {TYPE_PARAMETERS_START}")
+            write!(
+                bounds_str,
+                "{TYPE_PARAMETERS_START}: {}",
+                bound.trait_bound(false)
+            )
+            .unwrap();
+            if *nullable {
+                format!("{prop_name}: Option<{TYPE_PARAMETERS_START}>")
+            } else {
+                format!("{prop_name}: {TYPE_PARAMETERS_START}")
+            }
             // let mut bounds = Bounds::default();
             // bounds.add_parameter("P", &r_type, bound, false);
             // let (s_bounds, _) = function::bounds(&bounds, &[], false);

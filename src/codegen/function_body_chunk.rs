@@ -9,6 +9,7 @@ use crate::{
         },
         functions::{find_index_to_ignore, AsyncTrampoline},
         out_parameters::{Mode, ThrowFunctionReturnStrategy},
+        ref_mode::RefMode,
         return_value,
         rust_type::RustType,
         safety_assertion_mode::SafetyAssertionMode,
@@ -332,7 +333,8 @@ impl Builder {
         } else {
             Chunk::Unsafe(body)
         });
-        Chunk::BlockHalf(chunks)
+        let chunk = self.generate_run_withs(env, Chunk::Chunks(chunks));
+        Chunk::BlockHalf(vec![chunk])
     }
 
     fn remove_extra_assume_init(
@@ -977,6 +979,41 @@ impl Builder {
             name: self.glib_name.clone(),
             params,
         }
+    }
+    fn generate_run_withs(&self, env: &Env, mut call: Chunk) -> Chunk {
+        for trans in self.transformations.iter().rev() {
+            if !trans.transformation_type.is_to_glib() {
+                continue;
+            }
+            let par = &self.parameters[trans.ind_c];
+            if let In = par {
+                if let TransformationType::ToGlibPointer {
+                    name,
+                    typ,
+                    nullable,
+                    ref_mode,
+                    move_,
+                    ..
+                } = &trans.transformation_type
+                {
+                    let ref_mode = if *move_ { RefMode::None } else { *ref_mode };
+                    if matches!(env.type_(*typ), library::Type::Basic(library::Basic::Utf8))
+                        && ref_mode.is_ref()
+                    {
+                        call = Chunk::RunWith {
+                            name: name.clone(),
+                            func: if *nullable {
+                                use_glib_type(env, "IntoOptionalGStr::run_with_gstr")
+                            } else {
+                                use_glib_type(env, "IntoGStr::run_with_gstr")
+                            },
+                            body: Box::new(call),
+                        };
+                    }
+                }
+            }
+        }
+        call
     }
     fn generate_call_conversion(
         &self,

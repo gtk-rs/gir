@@ -127,6 +127,7 @@ fn body(env: &Env, prop: &ChildProperty, in_trait: bool, is_get: bool) -> Chunk 
         .name(&prop.name)
         .in_trait(in_trait)
         .var_name(&prop.prop_name)
+        .type_id(prop.typ)
         .is_get(is_get);
 
     if let Ok(type_) = RustType::try_new(env, prop.typ) {

@@ -13,16 +13,19 @@ use crate::{
     consts::TYPE_PARAMETERS_START,
     env::Env,
     library::{Basic, Class, Concurrency, Function, ParameterDirection, Type, TypeId},
+    nameutil::use_glib_type,
     traits::IntoString,
 };
 
 #[derive(Clone, Eq, Debug, PartialEq)]
 pub enum BoundType {
     NoWrapper,
+    Custom(String),
     // lifetime
     IsA(Option<char>),
     // lifetime <- shouldn't be used but just in case...
     AsRef(Option<char>),
+    Into,
 }
 
 impl BoundType {
@@ -87,7 +90,11 @@ impl Bounds {
         configured_functions: &[&config::functions::Function],
     ) -> (Option<String>, Option<CallbackInfo>) {
         let type_name = RustType::builder(env, par.typ)
-            .ref_mode(RefMode::ByRefFake)
+            .ref_mode(if par.move_ {
+                RefMode::None
+            } else {
+                RefMode::ByRefFake
+            })
             .try_build();
         if type_name.is_err() {
             return (None, None);
@@ -97,8 +104,13 @@ impl Bounds {
         let mut ret = None;
         let mut need_is_into_check = false;
 
+        let ref_mode = if par.move_ {
+            RefMode::None
+        } else {
+            par.ref_mode
+        };
         if !par.instance_parameter && par.direction != ParameterDirection::Out {
-            if let Some(bound_type) = Bounds::type_for(env, par.typ) {
+            if let Some(bound_type) = Bounds::type_for(env, par.typ, ref_mode) {
                 ret = Some(Bounds::get_to_glib_extra(
                     &bound_type,
                     *par.nullable,
@@ -188,7 +200,7 @@ impl Bounds {
                 }
             }
         } else if par.instance_parameter {
-            if let Some(bound_type) = Bounds::type_for(env, par.typ) {
+            if let Some(bound_type) = Bounds::type_for(env, par.typ, ref_mode) {
                 ret = Some(Bounds::get_to_glib_extra(
                     &bound_type,
                     *par.nullable,
@@ -201,10 +213,17 @@ impl Bounds {
         (ret, callback_info)
     }
 
-    pub fn type_for(env: &Env, type_id: TypeId) -> Option<BoundType> {
+    pub fn type_for(env: &Env, type_id: TypeId, ref_mode: RefMode) -> Option<BoundType> {
         use self::BoundType::*;
         match env.library.type_(type_id) {
             Type::Basic(Basic::Filename | Basic::OsString) => Some(AsRef(None)),
+            Type::Basic(Basic::Utf8) => {
+                if ref_mode.is_ref() {
+                    Some(Custom(use_glib_type(env, "IntoGStr")))
+                } else {
+                    Some(Into)
+                }
+            }
             Type::Class(Class {
                 is_fundamental: true,
                 ..
@@ -238,6 +257,8 @@ impl Bounds {
             IsA(_) if nullable && !instance_parameter => ".map(|p| p.as_ref())".to_owned(),
             IsA(_) if move_ => ".upcast()".to_owned(),
             IsA(_) => ".as_ref()".to_owned(),
+            Into if nullable => ".map(|p| p.into())".to_owned(),
+            Into => ".into()".to_owned(),
             _ => String::new(),
         }
     }
@@ -276,7 +297,7 @@ impl Bounds {
         use self::BoundType::*;
         for used in &self.used {
             match used.bound_type {
-                NoWrapper => (),
+                NoWrapper | Custom(_) | Into => (),
                 IsA(_) => imports.add("glib::prelude::*"),
                 AsRef(_) => imports.add_used_type(&used.type_str),
             }

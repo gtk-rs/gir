@@ -52,10 +52,12 @@ impl Bound {
                 format!("Option<{ref_str}{trait_bound}>")
             }
             BoundType::IsA(_) => format!("{ref_str}{trait_bound}"),
-            BoundType::AsRef(_) if *nullable => {
+            BoundType::AsRef(_) | BoundType::Custom(_) if *nullable => {
                 format!("Option<{trait_bound}>")
             }
-            BoundType::NoWrapper | BoundType::AsRef(_) => trait_bound,
+            BoundType::NoWrapper | BoundType::AsRef(_) | BoundType::Custom(_) | BoundType::Into => {
+                trait_bound
+            }
         }
     }
 
@@ -68,9 +70,10 @@ impl Bound {
 
     /// Returns the trait bound, usually of the form `SomeTrait`
     /// or `IsA<Foo>`.
-    pub(super) fn trait_bound(&self, r#async: bool) -> String {
-        match self.bound_type {
+    pub fn trait_bound(&self, r#async: bool) -> String {
+        match &self.bound_type {
             BoundType::NoWrapper => self.type_str.clone(),
+            BoundType::Custom(bound) => bound.clone(),
             BoundType::IsA(lifetime) => {
                 if r#async {
                     assert!(lifetime.is_none(), "Async overwrites lifetime");
@@ -86,6 +89,7 @@ impl Bound {
             }
             BoundType::AsRef(Some(_ /* lifetime */)) => panic!("AsRef cannot have a lifetime"),
             BoundType::AsRef(None) => format!("AsRef<{}>", self.type_str),
+            BoundType::Into => format!("Into<{}>", self.type_str),
         }
     }
 }

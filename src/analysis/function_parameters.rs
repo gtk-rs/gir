@@ -89,6 +89,7 @@ pub enum TransformationType {
     ToGlibPointer {
         name: String,
         instance_parameter: bool,
+        typ: library::TypeId,
         transfer: library::Transfer,
         ref_mode: RefMode,
         // filled by functions
@@ -269,6 +270,7 @@ pub fn analyze(
                     transfer == Transfer::Full && par.direction.is_in()
                 }
             });
+
         let mut array_par = configured_parameters.iter().find_map(|cp| {
             cp.length_of
                 .as_ref()
@@ -282,7 +284,12 @@ pub fn analyze(
         }
         if let Some(array_par) = array_par {
             let mut array_name = nameutil::mangle_keywords(&array_par.name);
-            if let Some(bound_type) = Bounds::type_for(env, array_par.typ) {
+            let ref_mode = if array_par.transfer == Transfer::Full {
+                RefMode::None
+            } else {
+                RefMode::of(env, array_par.typ, array_par.direction)
+            };
+            if let Some(bound_type) = Bounds::type_for(env, array_par.typ, ref_mode) {
                 array_name = (array_name.into_owned()
                     + &Bounds::get_to_glib_extra(
                         &bound_type,
@@ -389,6 +396,7 @@ pub fn analyze(
             ConversionType::Pointer => TransformationType::ToGlibPointer {
                 name,
                 instance_parameter: par.instance_parameter,
+                typ,
                 transfer,
                 ref_mode,
                 to_glib_extra: Default::default(),

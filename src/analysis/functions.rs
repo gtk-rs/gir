@@ -257,6 +257,7 @@ fn fixup_gpointer_parameter(
         transformation_type: TransformationType::ToGlibPointer {
             name: parameters.rust_parameters[idx].name.clone(),
             instance_parameter,
+            typ: parameters.rust_parameters[idx].typ,
             transfer: Transfer::None,
             ref_mode: RefMode::ByRef,
             to_glib_extra: Default::default(),

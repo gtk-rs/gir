@@ -29,6 +29,11 @@ pub enum Chunk {
         array_length_name: Option<String>,
         call: Box<Chunk>,
     },
+    RunWith {
+        name: String,
+        func: String,
+        body: Box<Chunk>,
+    },
     Let {
         name: String,
         is_mut: bool,

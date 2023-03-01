@@ -60,6 +60,19 @@ impl ToCode for Chunk {
                 let s = format_block_one_line(&prefix, &suffix, &call_strings, "", "");
                 vec![s]
             }
+            RunWith {
+                ref name,
+                ref func,
+                ref body,
+            } => {
+                let mut body = body.to_code(env);
+                for line in &mut body {
+                    line.insert(0, '\t');
+                }
+                body.insert(0, format!("{func}({name}, |{name}| {{"));
+                body.push("})".into());
+                body
+            }
             Let {
                 ref name,
                 is_mut,
