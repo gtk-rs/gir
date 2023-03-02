@@ -90,6 +90,9 @@ impl Bounds {
         concurrency: Concurrency,
         configured_functions: &[&config::functions::Function],
     ) -> (Option<String>, Option<CallbackInfo>) {
+        if par.has_length && par.is_gstr(env) {
+            return (None, None);
+        }
         let type_name = RustType::builder(env, par.typ)
             .ref_mode(if par.move_ || future {
                 RefMode::None
