@@ -111,20 +111,28 @@ pub enum TransformationType {
     },
     IntoRaw(String),
     ToSome(String),
+    AsPtr(String),
+    RunWith {
+        name: String,
+        func: String,
+        inner: Box<TransformationType>,
+    },
 }
 
 impl TransformationType {
     pub fn is_to_glib(&self) -> bool {
-        matches!(
-            *self,
+        match self {
             Self::ToGlibDirect { .. }
-                | Self::ToGlibScalar { .. }
-                | Self::ToGlibPointer { .. }
-                | Self::ToGlibBorrow
-                | Self::ToGlibUnknown { .. }
-                | Self::ToSome(_)
-                | Self::IntoRaw(_)
-        )
+            | Self::ToGlibScalar { .. }
+            | Self::ToGlibPointer { .. }
+            | Self::ToGlibBorrow
+            | Self::ToGlibUnknown { .. }
+            | Self::ToSome(_)
+            | Self::IntoRaw(_)
+            | Self::AsPtr(_) => true,
+            Self::RunWith { inner, .. } => inner.is_to_glib(),
+            _ => false,
+        }
     }
 
     pub fn set_to_glib_extra(&mut self, to_glib_extra_: &str) {
@@ -289,7 +297,9 @@ pub fn analyze(
             } else {
                 RefMode::of(env, array_par.typ, array_par.direction)
             };
-            if let Some(bound_type) = Bounds::type_for(env, array_par.typ, ref_mode) {
+            if let Some(bound_type) =
+                Bounds::type_for(env, array_par.typ, ref_mode, &array_par.c_type)
+            {
                 array_name = (array_name.into_owned()
                     + &Bounds::get_to_glib_extra(
                         &bound_type,
@@ -442,6 +452,35 @@ pub fn analyze(
         if let Some(transformation_type) = transformation_type {
             transformation.transformation_type = transformation_type;
         }
+
+        let c_par = parameters.c_parameters.last().unwrap();
+        match env.type_(typ) {
+            library::Type::Basic(library::Basic::Utf8) if ref_mode.is_ref() => {
+                transformation.transformation_type = TransformationType::RunWith {
+                    name: c_par.name.clone(),
+                    func: if *c_par.nullable {
+                        nameutil::use_glib_type(env, "IntoOptionalGStr::run_with_gstr")
+                    } else {
+                        nameutil::use_glib_type(env, "IntoGStr::run_with_gstr")
+                    },
+                    inner: Box::new(transformation.transformation_type),
+                };
+            }
+            library::Type::CArray(inner)
+                if matches!(
+                    env.type_(*inner),
+                    library::Type::Basic(library::Basic::Utf8)
+                ) && !matches!(c_par.c_type.as_str(), "char**" | "gchar**") =>
+            {
+                transformation.transformation_type = TransformationType::RunWith {
+                    name: c_par.name.clone(),
+                    func: nameutil::use_glib_type(env, "IntoStrV::run_with_strv"),
+                    inner: Box::new(TransformationType::AsPtr(c_par.name.clone())),
+                };
+            }
+            _ => {}
+        }
+
         parameters.transformations.push(transformation);
     }
 

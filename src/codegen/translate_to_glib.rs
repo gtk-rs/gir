@@ -50,6 +50,8 @@ impl TranslateToGlib for TransformationType {
             ToGlibUnknown { ref name } => format!("/*Unknown conversion*/{name}"),
             ToSome(ref name) => format!("Some({name})"),
             IntoRaw(ref name) => format!("Box_::into_raw({name}) as *mut _"),
+            AsPtr(ref name) => format!("{name}.as_ptr() as *mut _"),
+            RunWith { ref inner, .. } => inner.translate_to_glib(),
             _ => unreachable!("Unexpected transformation type {:?}", self),
         }
     }

@@ -111,7 +111,7 @@ impl Bounds {
             par.ref_mode
         };
         if !par.instance_parameter && par.direction != ParameterDirection::Out {
-            if let Some(bound_type) = Bounds::type_for(env, par.typ, ref_mode) {
+            if let Some(bound_type) = Bounds::type_for(env, par.typ, ref_mode, &par.c_type) {
                 ret = Some(Bounds::get_to_glib_extra(
                     &bound_type,
                     *par.nullable,
@@ -201,7 +201,7 @@ impl Bounds {
                 }
             }
         } else if par.instance_parameter {
-            if let Some(bound_type) = Bounds::type_for(env, par.typ, ref_mode) {
+            if let Some(bound_type) = Bounds::type_for(env, par.typ, ref_mode, &par.c_type) {
                 ret = Some(Bounds::get_to_glib_extra(
                     &bound_type,
                     *par.nullable,
@@ -214,7 +214,12 @@ impl Bounds {
         (ret, callback_info)
     }
 
-    pub fn type_for(env: &Env, type_id: TypeId, ref_mode: RefMode) -> Option<BoundType> {
+    pub fn type_for(
+        env: &Env,
+        type_id: TypeId,
+        ref_mode: RefMode,
+        c_type: &str,
+    ) -> Option<BoundType> {
         use self::BoundType::*;
         match env.library.type_(type_id) {
             Type::Basic(Basic::Filename | Basic::OsString) => Some(AsRef(None)),
@@ -224,6 +229,12 @@ impl Bounds {
                 } else {
                     Some(Into)
                 }
+            }
+            Type::CArray(inner)
+                if matches!(env.type_(*inner), Type::Basic(Basic::Utf8))
+                    && !matches!(c_type, "char**" | "gchar**") =>
+            {
+                Some(Custom(use_glib_type(env, "IntoStrV")))
             }
             Type::Class(Class {
                 is_fundamental: true,
