@@ -460,7 +460,7 @@ fn detect_length<'a>(
     par: &library::Parameter,
     parameters: &'a [library::Parameter],
 ) -> Option<&'a library::Parameter> {
-    if !is_length(par) {
+    if !is_length(par) || pos == 0 {
         return None;
     }
 
