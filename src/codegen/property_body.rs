@@ -126,7 +126,7 @@ impl<'a> Builder<'a> {
             };
 
             vec![Chunk::Custom(format!(
-                "{}::set_property({},\"{}\", &{})",
+                "{}::set_property({},\"{}\", {})",
                 use_glib_type(self.env, "ObjectExt"),
                 self_,
                 self.name,
