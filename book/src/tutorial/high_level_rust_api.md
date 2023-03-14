@@ -24,7 +24,7 @@ For our example, this results in the following dependencies:
 ```toml
 [dependencies]
 libc = "0.2"
-bitflags = "1.0"
+bitflags = "2.0"
 
 [dependencies.ffi]
 package = "pango-sys"
