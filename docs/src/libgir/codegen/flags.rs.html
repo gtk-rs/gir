@@ -386,6 +386,7 @@
 <a href="#386" id="386">386</a>
 <a href="#387" id="387">387</a>
 <a href="#388" id="388">388</a>
+<a href="#389" id="389">389</a>
 </pre><pre class="rust"><code><span class="kw">use </span>std::{
     io::{prelude::<span class="kw-2">*</span>, <span class="prelude-ty">Result</span>},
     path::Path,
@@ -484,6 +485,7 @@
     <span class="kw">if let </span><span class="prelude-val">Some</span>(<span class="kw-2">ref </span>d) = config.derives {
         derives(w, d, <span class="number">1</span>)<span class="question-mark">?</span>;
     }
+    <span class="macro">writeln!</span>(w, <span class="string">&quot;    #[derive(Clone, Copy, Debug, PartialEq, Eq)]&quot;</span>)<span class="question-mark">?</span>;
 
     doc_alias(w, <span class="kw-2">&amp;</span>flags.c_type, <span class="string">&quot;&quot;</span>, <span class="number">1</span>)<span class="question-mark">?</span>;
     <span class="macro">writeln!</span>(

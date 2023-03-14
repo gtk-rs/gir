@@ -83,6 +83,7 @@
 <a href="#83" id="83">83</a>
 <a href="#84" id="84">84</a>
 <a href="#85" id="85">85</a>
+<a href="#86" id="86">86</a>
 </pre><pre class="rust"><code><span class="kw">use </span>std::str::FromStr;
 
 <span class="kw">use </span>bitflags::bitflags;
@@ -90,7 +91,8 @@
 <span class="kw">use </span><span class="kw">super</span>::error::TomlHelper;
 
 <span class="macro">bitflags! </span>{
-    <span class="kw">pub struct </span>PropertyGenerateFlags: u32 {
+    <span class="attr">#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+    </span><span class="kw">pub struct </span>PropertyGenerateFlags: u32 {
         <span class="kw">const </span>GET = <span class="number">1</span>;
         <span class="kw">const </span>SET = <span class="number">2</span>;
         <span class="kw">const </span>NOTIFY = <span class="number">4</span>;
