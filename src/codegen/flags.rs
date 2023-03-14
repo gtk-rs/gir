@@ -96,7 +96,6 @@ fn generate_flags(
     if let Some(ref d) = config.derives {
         derives(w, d, 1)?;
     }
-    writeln!(w, "    #[derive(Clone, Copy, Debug, PartialEq, Eq)]")?;
 
     doc_alias(w, &flags.c_type, "", 1)?;
     writeln!(
