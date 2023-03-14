@@ -5,6 +5,7 @@ use bitflags::bitflags;
 use super::error::TomlHelper;
 
 bitflags! {
+    #[derive(Clone, Copy, Debug, PartialEq, Eq)]
     pub struct PropertyGenerateFlags: u32 {
         const GET = 1;
         const SET = 2;
