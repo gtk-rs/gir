@@ -173,6 +173,12 @@ fn generate_aliases(w: &mut dyn Write, env: &Env, items: &[&Alias]) -> Result<()
             Ok(x) => ("", x.into_string()),
             x @ Err(..) => ("//", x.into_string()),
         };
+        let cfg_condition_ = env
+            .config
+            .objects
+            .get(&full_name)
+            .and_then(|obj| obj.cfg_condition.as_ref());
+        cfg_condition(w, cfg_condition_, false, 0)?;
         writeln!(w, "{}pub type {} = {};", comment, item.c_identifier, c_type)?;
     }
     if !items.is_empty() {
@@ -291,6 +297,12 @@ fn generate_enums(w: &mut dyn Write, env: &Env, items: &[&Enumeration]) -> Resul
         if let Some(false) = config.map(|c| c.status.need_generate()) {
             continue;
         }
+        let cfg_condition_ = env
+            .config
+            .objects
+            .get(&full_name)
+            .and_then(|obj| obj.cfg_condition.as_ref());
+        cfg_condition(w, cfg_condition_, false, 0)?;
         writeln!(w, "pub type {} = c_int;", item.c_type)?;
         for member in &item.members {
             let member_config = config
@@ -306,6 +318,7 @@ fn generate_enums(w: &mut dyn Write, env: &Env, items: &[&Enumeration]) -> Resul
                 continue;
             }
 
+            cfg_condition(w, cfg_condition_, false, 0)?;
             version_condition(w, env, None, version, false, 0)?;
             writeln!(
                 w,
@@ -396,7 +409,14 @@ fn generate_interfaces_structs(
         if !env.type_status_sys(&full_name).need_generate() {
             continue;
         }
+        let cfg_condition_ = env
+            .config
+            .objects
+            .get(&full_name)
+            .and_then(|obj| obj.cfg_condition.as_ref());
+        cfg_condition(w, cfg_condition_, false, 0)?;
         generate_opaque_type(w, &interface.c_type)?;
+        cfg_condition(w, cfg_condition_, false, 0)?;
         generate_debug_impl(
             w,
             &interface.c_type,
@@ -434,7 +454,7 @@ fn generate_records(w: &mut dyn Write, env: &Env, records: &[&Record]) -> Result
             //    Hopefully someone will profit from all this.
             generate_ghooklist(w)?;
         } else if record.disguised {
-            generate_disguised(w, record)?;
+            generate_disguised(w, env, record)?;
         } else {
             let align = config.and_then(|c| c.align);
             let fields = fields::from_record(env, record);
@@ -470,8 +490,16 @@ impl ::std::fmt::Debug for GHookList {
     )
 }
 
-fn generate_disguised(w: &mut dyn Write, record: &Record) -> Result<()> {
+fn generate_disguised(w: &mut dyn Write, env: &Env, record: &Record) -> Result<()> {
+    let full_name = format!("{}.{}", env.namespaces.main().name, record.name);
+    let cfg_condition_ = env
+        .config
+        .objects
+        .get(&full_name)
+        .and_then(|obj| obj.cfg_condition.as_ref());
+    cfg_condition(w, cfg_condition_, false, 0)?;
     generate_opaque_type(w, &format!("_{}", record.c_type))?;
+    cfg_condition(w, cfg_condition_, false, 0)?;
     writeln!(w, "pub type {name} = *mut _{name};", name = record.c_type)?;
     writeln!(w)
 }
