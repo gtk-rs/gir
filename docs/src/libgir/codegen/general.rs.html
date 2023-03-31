@@ -1033,6 +1033,43 @@
 <a href="#1033" id="1033">1033</a>
 <a href="#1034" id="1034">1034</a>
 <a href="#1035" id="1035">1035</a>
+<a href="#1036" id="1036">1036</a>
+<a href="#1037" id="1037">1037</a>
+<a href="#1038" id="1038">1038</a>
+<a href="#1039" id="1039">1039</a>
+<a href="#1040" id="1040">1040</a>
+<a href="#1041" id="1041">1041</a>
+<a href="#1042" id="1042">1042</a>
+<a href="#1043" id="1043">1043</a>
+<a href="#1044" id="1044">1044</a>
+<a href="#1045" id="1045">1045</a>
+<a href="#1046" id="1046">1046</a>
+<a href="#1047" id="1047">1047</a>
+<a href="#1048" id="1048">1048</a>
+<a href="#1049" id="1049">1049</a>
+<a href="#1050" id="1050">1050</a>
+<a href="#1051" id="1051">1051</a>
+<a href="#1052" id="1052">1052</a>
+<a href="#1053" id="1053">1053</a>
+<a href="#1054" id="1054">1054</a>
+<a href="#1055" id="1055">1055</a>
+<a href="#1056" id="1056">1056</a>
+<a href="#1057" id="1057">1057</a>
+<a href="#1058" id="1058">1058</a>
+<a href="#1059" id="1059">1059</a>
+<a href="#1060" id="1060">1060</a>
+<a href="#1061" id="1061">1061</a>
+<a href="#1062" id="1062">1062</a>
+<a href="#1063" id="1063">1063</a>
+<a href="#1064" id="1064">1064</a>
+<a href="#1065" id="1065">1065</a>
+<a href="#1066" id="1066">1066</a>
+<a href="#1067" id="1067">1067</a>
+<a href="#1068" id="1068">1068</a>
+<a href="#1069" id="1069">1069</a>
+<a href="#1070" id="1070">1070</a>
+<a href="#1071" id="1071">1071</a>
+<a href="#1072" id="1072">1072</a>
 </pre><pre class="rust"><code><span class="kw">use </span>std::{
     collections::BTreeMap,
     fmt::Display,
@@ -1204,6 +1241,13 @@
     <span class="kw">let </span>sys_crate_name = env.main_sys_crate_name();
     <span class="macro">writeln!</span>(w, <span class="string">&quot;{} {{&quot;</span>, use_glib_type(env, <span class="string">&quot;wrapper!&quot;</span>))<span class="question-mark">?</span>;
     doc_alias(w, glib_name, <span class="string">&quot;&quot;</span>, <span class="number">1</span>)<span class="question-mark">?</span>;
+    external_doc_link(
+        w,
+        env.config.external_docs_url.as_deref(),
+        type_name,
+        <span class="kw-2">&amp;</span>visibility,
+        <span class="number">1</span>,
+    )<span class="question-mark">?</span>;
     <span class="macro">writeln!</span>(
         w,
         <span class="string">&quot;\t{visibility} struct {type_name}(Shared&lt;{sys_crate_name}::{glib_name}&gt;);&quot;
@@ -1300,6 +1344,13 @@
 
     <span class="macro">writeln!</span>(w, <span class="string">&quot;{} {{&quot;</span>, use_glib_type(env, <span class="string">&quot;wrapper!&quot;</span>))<span class="question-mark">?</span>;
     doc_alias(w, glib_name, <span class="string">&quot;&quot;</span>, <span class="number">1</span>)<span class="question-mark">?</span>;
+    external_doc_link(
+        w,
+        env.config.external_docs_url.as_deref(),
+        type_name,
+        <span class="kw-2">&amp;</span>visibility,
+        <span class="number">1</span>,
+    )<span class="question-mark">?</span>;
     <span class="kw">if </span>parents.is_empty() {
         <span class="macro">writeln!</span>(
             w,
@@ -1963,6 +2014,29 @@
     )
 }
 
+<span class="kw">pub fn </span>external_doc_link(
+    w: <span class="kw-2">&amp;mut </span><span class="kw">dyn </span>Write,
+    external_url: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>str&gt;,
+    name: <span class="kw-2">&amp;</span>str,
+    visibility: <span class="kw-2">&amp;</span>Visibility,
+    indent: usize,
+) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+    <span class="comment">// Don&#39;t generate the external doc link on non-public types.
+    </span><span class="kw">if </span>!visibility.is_public() {
+        <span class="prelude-val">Ok</span>(())
+    } <span class="kw">else if let </span><span class="prelude-val">Some</span>(external_url) = external_url {
+        <span class="macro">writeln!</span>(
+            w,
+            <span class="string">&quot;{}/// This documentation is incomplete due to license restrictions and limitations on docs.rs. Please have a look at [our official docs]({}/index.html?search={}) for more information.&quot;</span>,
+            tabs(indent),
+            external_url.trim_end_matches(<span class="string">&#39;/&#39;</span>),
+            name
+        )
+    } <span class="kw">else </span>{
+        <span class="prelude-val">Ok</span>(())
+    }
+}
+
 <span class="kw">pub fn </span>doc_hidden(
     w: <span class="kw-2">&amp;mut </span><span class="kw">dyn </span>Write,
     doc_hidden: bool,
@@ -2069,4 +2143,4 @@
     }
 }
 </code></pre></div>
-</section></main><div id="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="libgir" data-themes="" data-resource-suffix="" data-rustdoc-version="1.68.0 (2c8cc3432 2023-03-06)" data-search-js="search-98d53477a794af0b.js" data-settings-js="settings-c3c521c753752a1a.js" data-settings-css="settings-08ddfdda51b8ee2e.css" ></div></body></html>
+</section></main><div id="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="libgir" data-themes="" data-resource-suffix="" data-rustdoc-version="1.68.2 (9eb3afe9e 2023-03-27)" data-search-js="search-98d53477a794af0b.js" data-settings-js="settings-c3c521c753752a1a.js" data-settings-css="settings-08ddfdda51b8ee2e.css" ></div></body></html>
