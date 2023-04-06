@@ -124,14 +124,10 @@ pub fn uses(
         if !scope.is_none() {
             let scope = scope.as_ref().unwrap();
             if !scope.constraints.is_empty() {
+                writeln!(w, "#[cfg(any({}, docsrs))]", scope.constraints.join(", "))?;
                 writeln!(
                     w,
-                    "#[cfg(any({},feature = \"dox\"))]",
-                    scope.constraints.join(", ")
-                )?;
-                writeln!(
-                    w,
-                    "#[cfg_attr(feature = \"dox\", doc(cfg({})))]",
+                    "#[cfg_attr(docsrs, doc(cfg({})))]",
                     scope.constraints.join(", ")
                 )?;
             }
@@ -453,7 +449,7 @@ pub fn define_boxed_type(
             )?;
 
             writeln!(w)?;
-            not_version_condition_no_dox(w, env, None, get_type_version, false, 0)?;
+            not_version_condition_no_docsrs(w, env, None, get_type_version, false, 0)?;
             define_boxed_type_internal(
                 w,
                 env,
@@ -633,7 +629,7 @@ pub fn define_shared_type(
             )?;
 
             writeln!(w)?;
-            not_version_condition_no_dox(w, env, None, get_type_version, false, 0)?;
+            not_version_condition_no_docsrs(w, env, None, get_type_version, false, 0)?;
             define_shared_type_internal(
                 w, env, type_name, glib_name, ref_fn, unref_fn, None, derive, visibility,
             )?;
@@ -807,7 +803,7 @@ pub fn not_version_condition(
     Ok(())
 }
 
-pub fn not_version_condition_no_dox(
+pub fn not_version_condition_no_docsrs(
     w: &mut dyn Write,
     env: &Env,
     ns_id: Option<u16>,
@@ -825,7 +821,7 @@ pub fn not_version_condition_no_dox(
             }
         });
         let s = format!(
-            "{}{}#[cfg(not(any({}, feature = \"dox\")))]",
+            "{}{}#[cfg(not(any({}, docsrs)))]",
             tabs(indent),
             comment,
             v.to_cfg(namespace_name.as_deref())
@@ -866,12 +862,7 @@ pub fn cfg_condition_string_no_doc(
 ) -> Option<String> {
     cfg_condition.map(|cfg| {
         let comment = if commented { "//" } else { "" };
-        format!(
-            "{0}{1}#[cfg(any({2}, feature = \"dox\"))]",
-            tabs(indent),
-            comment,
-            cfg,
-        )
+        format!("{0}{1}#[cfg(any({2}, docsrs))]", tabs(indent), comment, cfg,)
     })
 }
 
@@ -895,7 +886,7 @@ pub fn cfg_condition_string_doc(
     cfg_condition.map(|cfg| {
         let comment = if commented { "//" } else { "" };
         format!(
-            "{0}{1}#[cfg_attr(feature = \"dox\", doc(cfg({2})))]",
+            "{0}{1}#[cfg_attr(docsrs, doc(cfg({2})))]",
             tabs(indent),
             comment,
             cfg,

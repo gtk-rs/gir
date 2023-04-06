@@ -6,7 +6,7 @@ use std::{
 use super::{
     child_properties, function, general,
     general::{
-        cfg_deprecated_string, not_version_condition_no_dox, version_condition,
+        cfg_deprecated_string, not_version_condition_no_docsrs, version_condition,
         version_condition_no_doc, version_condition_string,
     },
     properties, signal, trait_impls,
@@ -128,7 +128,14 @@ pub fn generate(
 
                 writeln!(w)?;
                 if previous_version.is_some() {
-                    not_version_condition_no_dox(w, env, Some(*ns_id), previous_version, false, 0)?;
+                    not_version_condition_no_docsrs(
+                        w,
+                        env,
+                        Some(*ns_id),
+                        previous_version,
+                        false,
+                        0,
+                    )?;
                     version_condition_no_doc(w, env, Some(*ns_id), version, false, 0)?;
                 } else {
                     version_condition(w, env, Some(*ns_id), version, false, 0)?;
@@ -162,7 +169,7 @@ pub fn generate(
             .cloned()
             .collect::<Vec<_>>();
         writeln!(w)?;
-        not_version_condition_no_dox(w, env, previous_ns_id, previous_version, false, 0)?;
+        not_version_condition_no_docsrs(w, env, previous_ns_id, previous_version, false, 0)?;
         general::define_object_type(
             w,
             env,

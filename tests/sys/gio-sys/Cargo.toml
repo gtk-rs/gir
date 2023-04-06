@@ -15,7 +15,6 @@ package = "gobject-sys"
 path = "../gobject-sys"
 
 [features]
-dox = []
 v2_34 = []
 v2_36 = ["v2_34"]
 v2_38 = ["v2_36"]
@@ -97,7 +96,7 @@ version = "2.64"
 [package.metadata.system-deps.gio_2_0.v2_66]
 version = "2.66"
 [package.metadata.docs.rs]
-features = ["dox"]
+rustdoc-args = ["--cfg", "docsrs"]
 
 [dev-dependencies]
 shell-words = "1.0.0"

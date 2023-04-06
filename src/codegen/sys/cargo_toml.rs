@@ -172,8 +172,7 @@ fn fill_in(root: &mut Table, env: &Env) {
         let docs_rs_metadata = upsert_table(docs_rs_metadata, "metadata");
         let docs_rs_metadata = upsert_table(docs_rs_metadata, "docs");
         let docs_rs_metadata = upsert_table(docs_rs_metadata, "rs");
-        let mut docs_rs_features = env.config.docs_rs_features.clone();
-        docs_rs_features.push("dox".to_owned());
+        let docs_rs_features = env.config.docs_rs_features.clone();
         docs_rs_metadata.insert(
             "features".to_string(),
             Value::Array(
@@ -183,15 +182,6 @@ fn fill_in(root: &mut Table, env: &Env) {
                     .collect::<Vec<_>>(),
             ),
         );
-    }
-
-    {
-        let features = upsert_table(root, "features");
-        let mut dox_features = Vec::new();
-        for ext_lib in &env.config.external_libraries {
-            dox_features.push(Value::String(format!("{}/dox", ext_lib.lib_name)));
-        }
-        features.insert("dox".to_string(), Value::Array(dox_features));
     }
 }
 

@@ -39,7 +39,7 @@ fn generate_build_script(w: &mut dyn Write, env: &Env, split_build_rs: bool) -> 
     writeln!(
         w,
         "{}",
-        r##"#[cfg(not(feature = "dox"))]
+        r##"#[cfg(not(docsrs))]
 use std::process;"##
     )?;
 
@@ -52,10 +52,10 @@ use std::process;"##
         w,
         "{}",
         r##"
-#[cfg(feature = "dox")]
+#[cfg(docsrs)]
 fn main() {} // prevent linking libraries to avoid documentation failure
 
-#[cfg(not(feature = "dox"))]
+#[cfg(not(docsrs))]
 fn main() {
     if let Err(s) = system_deps::Config::new().probe() {
         println!("cargo:warning={s}");
