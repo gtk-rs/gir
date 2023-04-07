@@ -14,7 +14,7 @@ Add the following lines to the file:
 rustdoc-args = ["--cfg", "docsrs"]
 ```
 This automatically activates the `docsrs` attribute if you chose to publish the bindings and docs.rs tries to build the documentation.
-With lhe `docsrs` attribute, the crate skips linking the C libraries and allows docs.rs to build the documentation without having the underlying libraries installed.
+With the `docsrs` attribute, the crate skips linking the C libraries and allows docs.rs to build the documentation without having the underlying libraries installed.
 Even if you don't plan to publish it, this line is not going to hurt.
 
 We also need to add `libc`, `bitflags`, `glib` and `glib-sys` and all other dependencies we used in the sys crate as dependencies.
