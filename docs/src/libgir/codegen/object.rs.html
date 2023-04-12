@@ -602,6 +602,13 @@
 <a href="#602" id="602">602</a>
 <a href="#603" id="603">603</a>
 <a href="#604" id="604">604</a>
+<a href="#605" id="605">605</a>
+<a href="#606" id="606">606</a>
+<a href="#607" id="607">607</a>
+<a href="#608" id="608">608</a>
+<a href="#609" id="609">609</a>
+<a href="#610" id="610">610</a>
+<a href="#611" id="611">611</a>
 </pre><pre class="rust"><code><span class="kw">use </span>std::{
     collections::{BTreeMap, HashSet},
     io::{<span class="prelude-ty">Result</span>, Write},
@@ -610,7 +617,7 @@
 <span class="kw">use super</span>::{
     child_properties, function, general,
     general::{
-        cfg_deprecated_string, not_version_condition_no_dox, version_condition,
+        cfg_deprecated_string, not_version_condition_no_docsrs, version_condition,
         version_condition_no_doc, version_condition_string,
     },
     properties, signal, trait_impls,
@@ -732,7 +739,14 @@
 
                 <span class="macro">writeln!</span>(w)<span class="question-mark">?</span>;
                 <span class="kw">if </span>previous_version.is_some() {
-                    not_version_condition_no_dox(w, env, <span class="prelude-val">Some</span>(<span class="kw-2">*</span>ns_id), previous_version, <span class="bool-val">false</span>, <span class="number">0</span>)<span class="question-mark">?</span>;
+                    not_version_condition_no_docsrs(
+                        w,
+                        env,
+                        <span class="prelude-val">Some</span>(<span class="kw-2">*</span>ns_id),
+                        previous_version,
+                        <span class="bool-val">false</span>,
+                        <span class="number">0</span>,
+                    )<span class="question-mark">?</span>;
                     version_condition_no_doc(w, env, <span class="prelude-val">Some</span>(<span class="kw-2">*</span>ns_id), version, <span class="bool-val">false</span>, <span class="number">0</span>)<span class="question-mark">?</span>;
                 } <span class="kw">else </span>{
                     version_condition(w, env, <span class="prelude-val">Some</span>(<span class="kw-2">*</span>ns_id), version, <span class="bool-val">false</span>, <span class="number">0</span>)<span class="question-mark">?</span>;
@@ -766,7 +780,7 @@
             .cloned()
             .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
         <span class="macro">writeln!</span>(w)<span class="question-mark">?</span>;
-        not_version_condition_no_dox(w, env, previous_ns_id, previous_version, <span class="bool-val">false</span>, <span class="number">0</span>)<span class="question-mark">?</span>;
+        not_version_condition_no_docsrs(w, env, previous_ns_id, previous_version, <span class="bool-val">false</span>, <span class="number">0</span>)<span class="question-mark">?</span>;
         general::define_object_type(
             w,
             env,

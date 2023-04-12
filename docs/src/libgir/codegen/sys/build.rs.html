@@ -129,7 +129,7 @@
     <span class="macro">writeln!</span>(
         w,
         <span class="string">&quot;{}&quot;</span>,
-        <span class="string">r##&quot;#[cfg(not(feature = &quot;dox&quot;))]
+        <span class="string">r##&quot;#[cfg(not(docsrs))]
 use std::process;&quot;##
     </span>)<span class="question-mark">?</span>;
 
@@ -142,10 +142,10 @@ use std::process;&quot;##
         w,
         <span class="string">&quot;{}&quot;</span>,
         <span class="string">r##&quot;
-#[cfg(feature = &quot;dox&quot;)]
+#[cfg(docsrs)]
 fn main() {} // prevent linking libraries to avoid documentation failure
 
-#[cfg(not(feature = &quot;dox&quot;))]
+#[cfg(not(docsrs))]
 fn main() {
     if let Err(s) = system_deps::Config::new().probe() {
         println!(&quot;cargo:warning={s}&quot;);

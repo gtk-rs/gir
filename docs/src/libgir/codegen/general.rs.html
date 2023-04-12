@@ -1061,15 +1061,6 @@
 <a href="#1061" id="1061">1061</a>
 <a href="#1062" id="1062">1062</a>
 <a href="#1063" id="1063">1063</a>
-<a href="#1064" id="1064">1064</a>
-<a href="#1065" id="1065">1065</a>
-<a href="#1066" id="1066">1066</a>
-<a href="#1067" id="1067">1067</a>
-<a href="#1068" id="1068">1068</a>
-<a href="#1069" id="1069">1069</a>
-<a href="#1070" id="1070">1070</a>
-<a href="#1071" id="1071">1071</a>
-<a href="#1072" id="1072">1072</a>
 </pre><pre class="rust"><code><span class="kw">use </span>std::{
     collections::BTreeMap,
     fmt::Display,
@@ -1196,14 +1187,10 @@
         <span class="kw">if </span>!scope.is_none() {
             <span class="kw">let </span>scope = scope.as_ref().unwrap();
             <span class="kw">if </span>!scope.constraints.is_empty() {
+                <span class="macro">writeln!</span>(w, <span class="string">&quot;#[cfg(any({}, docsrs))]&quot;</span>, scope.constraints.join(<span class="string">&quot;, &quot;</span>))<span class="question-mark">?</span>;
                 <span class="macro">writeln!</span>(
                     w,
-                    <span class="string">&quot;#[cfg(any({},feature = \&quot;dox\&quot;))]&quot;</span>,
-                    scope.constraints.join(<span class="string">&quot;, &quot;</span>)
-                )<span class="question-mark">?</span>;
-                <span class="macro">writeln!</span>(
-                    w,
-                    <span class="string">&quot;#[cfg_attr(feature = \&quot;dox\&quot;, doc(cfg({})))]&quot;</span>,
+                    <span class="string">&quot;#[cfg_attr(docsrs, doc(cfg({})))]&quot;</span>,
                     scope.constraints.join(<span class="string">&quot;, &quot;</span>)
                 )<span class="question-mark">?</span>;
             }
@@ -1525,7 +1512,7 @@
             )<span class="question-mark">?</span>;
 
             <span class="macro">writeln!</span>(w)<span class="question-mark">?</span>;
-            not_version_condition_no_dox(w, env, <span class="prelude-val">None</span>, get_type_version, <span class="bool-val">false</span>, <span class="number">0</span>)<span class="question-mark">?</span>;
+            not_version_condition_no_docsrs(w, env, <span class="prelude-val">None</span>, get_type_version, <span class="bool-val">false</span>, <span class="number">0</span>)<span class="question-mark">?</span>;
             define_boxed_type_internal(
                 w,
                 env,
@@ -1705,7 +1692,7 @@
             )<span class="question-mark">?</span>;
 
             <span class="macro">writeln!</span>(w)<span class="question-mark">?</span>;
-            not_version_condition_no_dox(w, env, <span class="prelude-val">None</span>, get_type_version, <span class="bool-val">false</span>, <span class="number">0</span>)<span class="question-mark">?</span>;
+            not_version_condition_no_docsrs(w, env, <span class="prelude-val">None</span>, get_type_version, <span class="bool-val">false</span>, <span class="number">0</span>)<span class="question-mark">?</span>;
             define_shared_type_internal(
                 w, env, type_name, glib_name, ref_fn, unref_fn, <span class="prelude-val">None</span>, derive, visibility,
             )<span class="question-mark">?</span>;
@@ -1879,7 +1866,7 @@
     <span class="prelude-val">Ok</span>(())
 }
 
-<span class="kw">pub fn </span>not_version_condition_no_dox(
+<span class="kw">pub fn </span>not_version_condition_no_docsrs(
     w: <span class="kw-2">&amp;mut </span><span class="kw">dyn </span>Write,
     env: <span class="kw-2">&amp;</span>Env,
     ns_id: <span class="prelude-ty">Option</span>&lt;u16&gt;,
@@ -1897,7 +1884,7 @@
             }
         });
         <span class="kw">let </span>s = <span class="macro">format!</span>(
-            <span class="string">&quot;{}{}#[cfg(not(any({}, feature = \&quot;dox\&quot;)))]&quot;</span>,
+            <span class="string">&quot;{}{}#[cfg(not(any({}, docsrs)))]&quot;</span>,
             tabs(indent),
             comment,
             v.to_cfg(namespace_name.as_deref())
@@ -1938,12 +1925,7 @@
 ) -&gt; <span class="prelude-ty">Option</span>&lt;String&gt; {
     cfg_condition.map(|cfg| {
         <span class="kw">let </span>comment = <span class="kw">if </span>commented { <span class="string">&quot;//&quot; </span>} <span class="kw">else </span>{ <span class="string">&quot;&quot; </span>};
-        <span class="macro">format!</span>(
-            <span class="string">&quot;{0}{1}#[cfg(any({2}, feature = \&quot;dox\&quot;))]&quot;</span>,
-            tabs(indent),
-            comment,
-            cfg,
-        )
+        <span class="macro">format!</span>(<span class="string">&quot;{0}{1}#[cfg(any({2}, docsrs))]&quot;</span>, tabs(indent), comment, cfg,)
     })
 }
 
@@ -1967,7 +1949,7 @@
     cfg_condition.map(|cfg| {
         <span class="kw">let </span>comment = <span class="kw">if </span>commented { <span class="string">&quot;//&quot; </span>} <span class="kw">else </span>{ <span class="string">&quot;&quot; </span>};
         <span class="macro">format!</span>(
-            <span class="string">&quot;{0}{1}#[cfg_attr(feature = \&quot;dox\&quot;, doc(cfg({2})))]&quot;</span>,
+            <span class="string">&quot;{0}{1}#[cfg_attr(docsrs, doc(cfg({2})))]&quot;</span>,
             tabs(indent),
             comment,
             cfg,
