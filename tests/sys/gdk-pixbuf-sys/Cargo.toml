@@ -19,7 +19,6 @@ package = "gobject-sys"
 path = "../gobject-sys"
 
 [features]
-dox = []
 v2_28 = []
 v2_30 = ["v2_28"]
 v2_32 = ["v2_30"]
@@ -57,7 +56,7 @@ version = "2.36.8"
 [package.metadata.system-deps.gdk_pixbuf_2_0.v2_40]
 version = "2.40"
 [package.metadata.docs.rs]
-features = ["dox"]
+rustdoc-args = ["--cfg", "docsrs"]
 
 [dev-dependencies]
 shell-words = "1.0.0"

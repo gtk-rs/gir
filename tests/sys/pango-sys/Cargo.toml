@@ -15,7 +15,6 @@ package = "gobject-sys"
 path = "../gobject-sys"
 
 [features]
-dox = []
 v1_31 = []
 v1_32 = ["v1_31"]
 v1_32_4 = ["v1_32"]
@@ -65,7 +64,7 @@ version = "1.44"
 [package.metadata.system-deps.pango.v1_46]
 version = "1.46"
 [package.metadata.docs.rs]
-features = ["dox"]
+rustdoc-args = ["--cfg", "docsrs"]
 
 [dev-dependencies]
 shell-words = "1.0.0"

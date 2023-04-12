@@ -30,10 +30,22 @@ rustdoc-stripper -s -n
 rustdoc-stripper -g -o docs.md
 ```
 
-Try building the documentation and also try it with the various features you might have
+Try building the documentation and also try it with the various features you might have:
 
 ```sh
 cargo doc
+```
+
+For building the docs on systems without the required dependencies installed (for example docs.rs or CI jobs), you can use the `docsrs` attribute.
+This will disable the linking of the underlying C libraries and won't throw an error if those libraries are not available.
+
+On top of that, the `docsrs` attribute will enable the [doc_cfg feature](https://doc.rust-lang.org/beta/unstable-book/language-features/doc-cfg.html) which is only available in the nightly compiler toolchain at the time of writing.
+This is mostly useful for clarifying feature requirements through the docs.
+
+To build the docs with the `docsrs` attribute, you can use the following command:
+
+```sh
+RUSTDOCFLAGS='--cfg docsrs' cargo +nightly doc
 ```
 
 Congratulations, we are done.
@@ -47,6 +59,6 @@ Gir will not override them when you re-generate bindings.
 Easy, right.
 If this is your first time publishing a crate, you can find a detailed guide [here](https://doc.rust-lang.org/cargo/reference/publishing.html).
 
-Before you publish the crate, please ensure docs.rs will activate the dox feature and the dox feature of the safe wrapper crate also activates the feature of its dependencies and the unsafe FFI bindings you created.
+Before you publish the crate, please ensure docs.rs will activate the `docsrs` attribute.
 Feel free to go back to the chapter about the [Cargo.toml file of the safe wrapper](high_level_rust_api.md#the-cargotoml-file) to read more about it.
 If you skip this step, your crate and all crates depending on it will not have documentation available on docs.rs.

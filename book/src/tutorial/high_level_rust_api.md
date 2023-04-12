@@ -11,10 +11,10 @@ Make sure everything under `[package]` is to your liking.
 Add the following lines to the file:
 ```toml
 [package.metadata.docs.rs]
-features = ["dox"]
+rustdoc-args = ["--cfg", "docsrs"]
 ```
-This automatically activates the `dox` feature if you chose to publish the bindings and docs.rs tries to build the documentation.
-The `dox` feature skips linking the C libraries and allows docs.rs to build the documentation without having the underlying libraries installed.
+This automatically activates the `docsrs` attribute if you chose to publish the bindings and docs.rs tries to build the documentation.
+With the `docsrs` attribute, the crate skips linking the C libraries and allows docs.rs to build the documentation without having the underlying libraries installed.
 Even if you don't plan to publish it, this line is not going to hurt.
 
 We also need to add `libc`, `bitflags`, `glib` and `glib-sys` and all other dependencies we used in the sys crate as dependencies.
@@ -72,7 +72,6 @@ v1_46 = ["v1_44"]
 v1_48 = ["v1_46"]
 v1_50 = ["v1_48"]
 v1_52 = ["v1_50"]
-dox = ["glib/dox", "gobject/dox"]
 ```
 
 You need to change the features in the Cargo.toml of your normal crate to
@@ -105,7 +104,6 @@ v1_46 = ["ffi/v1_46", "v1_44"]
 v1_48 = ["ffi/v1_48", "v1_46"]
 v1_50 = ["ffi/v1_50", "v1_48"]
 v1_52 = ["ffi/v1_52", "v1_50"]
-dox = ["glib/dox", "gobject/dox", "ffi/dox"]
 ```
 
 ## The lib.rs file
@@ -115,7 +113,7 @@ We need to include all `auto` files in our library.
 To do so, let's update the `src/lib.rs` file as follows:
 
 ```rust
-#![cfg_attr(feature = "dox", feature(doc_cfg))]
+#![cfg_attr(docsrs, feature(doc_cfg))]
 
 pub use auto::*;
 mod auto;
