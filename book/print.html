@@ -427,10 +427,10 @@ Open the Cargo.toml file and have a look at it.
 Make sure everything under <code>[package]</code> is to your liking.</p>
 <p>Add the following lines to the file:</p>
 <pre><code class="language-toml">[package.metadata.docs.rs]
-features = [&quot;dox&quot;]
+rustdoc-args = [&quot;--cfg&quot;, &quot;docsrs&quot;]
 </code></pre>
-<p>This automatically activates the <code>dox</code> feature if you chose to publish the bindings and docs.rs tries to build the documentation.
-The <code>dox</code> feature skips linking the C libraries and allows docs.rs to build the documentation without having the underlying libraries installed.
+<p>This automatically activates the <code>docsrs</code> attribute if you chose to publish the bindings and docs.rs tries to build the documentation.
+With the <code>docsrs</code> attribute, the crate skips linking the C libraries and allows docs.rs to build the documentation without having the underlying libraries installed.
 Even if you don't plan to publish it, this line is not going to hurt.</p>
 <p>We also need to add <code>libc</code>, <code>bitflags</code>, <code>glib</code> and <code>glib-sys</code> and all other dependencies we used in the sys crate as dependencies.
 Because we are creating a wrapper for the sys crate, which we generated in the previous chapter, we also need to add the sys crate to the list of dependencies.
@@ -483,7 +483,6 @@ v1_46 = [&quot;v1_44&quot;]
 v1_48 = [&quot;v1_46&quot;]
 v1_50 = [&quot;v1_48&quot;]
 v1_52 = [&quot;v1_50&quot;]
-dox = [&quot;glib/dox&quot;, &quot;gobject/dox&quot;]
 </code></pre>
 <p>You need to change the features in the Cargo.toml of your normal crate to</p>
 <pre><code class="language-toml">[features]
@@ -513,7 +512,6 @@ v1_46 = [&quot;ffi/v1_46&quot;, &quot;v1_44&quot;]
 v1_48 = [&quot;ffi/v1_48&quot;, &quot;v1_46&quot;]
 v1_50 = [&quot;ffi/v1_50&quot;, &quot;v1_48&quot;]
 v1_52 = [&quot;ffi/v1_52&quot;, &quot;v1_50&quot;]
-dox = [&quot;glib/dox&quot;, &quot;gobject/dox&quot;, &quot;ffi/dox&quot;]
 </code></pre>
 <h2 id="the-librs-file"><a class="header" href="#the-librs-file">The lib.rs file</a></h2>
 <p>The lib.rs file will not be replaced when you run gir.
@@ -521,7 +519,7 @@ All the code that gir will generate for us is going to be in src/auto.
 We need to include all <code>auto</code> files in our library.
 To do so, let's update the <code>src/lib.rs</code> file as follows:</p>
 <pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span>#![cfg_attr(feature = &quot;dox&quot;, feature(doc_cfg))]
+</span>#![cfg_attr(docsrs, feature(doc_cfg))]
 
 <span class="boring">fn main() {
 </span>pub use auto::*;
@@ -896,8 +894,15 @@ You can do this by running the following commands:</p>
 <pre><code class="language-sh">rustdoc-stripper -s -n
 rustdoc-stripper -g -o docs.md
 </code></pre>
-<p>Try building the documentation and also try it with the various features you might have</p>
+<p>Try building the documentation and also try it with the various features you might have:</p>
 <pre><code class="language-sh">cargo doc
+</code></pre>
+<p>For building the docs on systems without the required dependencies installed (for example docs.rs or CI jobs), you can use the <code>docsrs</code> attribute.
+This will disable the linking of the underlying C libraries and won't throw an error if those libraries are not available.</p>
+<p>On top of that, the <code>docsrs</code> attribute will enable the <a href="https://doc.rust-lang.org/beta/unstable-book/language-features/doc-cfg.html">doc_cfg feature</a> which is only available in the nightly compiler toolchain at the time of writing.
+This is mostly useful for clarifying feature requirements through the docs.</p>
+<p>To build the docs with the <code>docsrs</code> attribute, you can use the following command:</p>
+<pre><code class="language-sh">RUSTDOCFLAGS='--cfg docsrs' cargo +nightly doc
 </code></pre>
 <p>Congratulations, we are done.
 You have successfully created the safe wrapper for a C library!</p>
@@ -908,7 +913,7 @@ All that is needed is to add some information to your Cargo.toml.
 Gir will not override them when you re-generate bindings.
 Easy, right.
 If this is your first time publishing a crate, you can find a detailed guide <a href="https://doc.rust-lang.org/cargo/reference/publishing.html">here</a>.</p>
-<p>Before you publish the crate, please ensure docs.rs will activate the dox feature and the dox feature of the safe wrapper crate also activates the feature of its dependencies and the unsafe FFI bindings you created.
+<p>Before you publish the crate, please ensure docs.rs will activate the <code>docsrs</code> attribute.
 Feel free to go back to the chapter about the <a href="tutorial/high_level_rust_api.html#the-cargotoml-file">Cargo.toml file of the safe wrapper</a> to read more about it.
 If you skip this step, your crate and all crates depending on it will not have documentation available on docs.rs.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="configuration"><a class="header" href="#configuration">Configuration</a></h1>
