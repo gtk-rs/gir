@@ -83,7 +83,9 @@ version = "3.22"
 
 [package.metadata.system-deps.gdk_3_0.v3_24]
 version = "3.24"
+
 [package.metadata.docs.rs]
+all-features = true
 rustdoc-args = ["--cfg", "docsrs"]
 
 [dev-dependencies]

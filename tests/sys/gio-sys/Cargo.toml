@@ -95,7 +95,9 @@ version = "2.64"
 
 [package.metadata.system-deps.gio_2_0.v2_66]
 version = "2.66"
+
 [package.metadata.docs.rs]
+all-features = true
 rustdoc-args = ["--cfg", "docsrs"]
 
 [dev-dependencies]

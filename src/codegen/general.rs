@@ -124,7 +124,7 @@ pub fn uses(
         if !scope.is_none() {
             let scope = scope.as_ref().unwrap();
             if !scope.constraints.is_empty() {
-                writeln!(w, "#[cfg(any({}, docsrs))]", scope.constraints.join(", "))?;
+                writeln!(w, "#[cfg(any({}))]", scope.constraints.join(", "))?;
                 writeln!(
                     w,
                     "#[cfg_attr(docsrs, doc(cfg({})))]",
@@ -862,7 +862,7 @@ pub fn cfg_condition_string_no_doc(
 ) -> Option<String> {
     cfg_condition.map(|cfg| {
         let comment = if commented { "//" } else { "" };
-        format!("{0}{1}#[cfg(any({2}, docsrs))]", tabs(indent), comment, cfg,)
+        format!("{0}{1}#[cfg(any({2}))]", tabs(indent), comment, cfg)
     })
 }
 
