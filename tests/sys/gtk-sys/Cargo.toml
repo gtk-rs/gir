@@ -119,7 +119,9 @@ version = "3.24.8"
 
 [package.metadata.system-deps."gtk+_3_0".v3_24_9]
 version = "3.24.9"
+
 [package.metadata.docs.rs]
+all-features = true
 rustdoc-args = ["--cfg", "docsrs"]
 
 [dev-dependencies]

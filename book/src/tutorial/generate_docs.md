@@ -45,7 +45,7 @@ This is mostly useful for clarifying feature requirements through the docs.
 To build the docs with the `docsrs` attribute, you can use the following command:
 
 ```sh
-RUSTDOCFLAGS='--cfg docsrs' cargo +nightly doc
+RUSTDOCFLAGS='--cfg docsrs' cargo +nightly doc --all-features
 ```
 
 Congratulations, we are done.

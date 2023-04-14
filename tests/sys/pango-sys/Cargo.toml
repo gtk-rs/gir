@@ -63,7 +63,9 @@ version = "1.44"
 
 [package.metadata.system-deps.pango.v1_46]
 version = "1.46"
+
 [package.metadata.docs.rs]
+all-features = true
 rustdoc-args = ["--cfg", "docsrs"]
 
 [dev-dependencies]
