@@ -1884,7 +1884,7 @@
             }
         });
         <span class="kw">let </span>s = <span class="macro">format!</span>(
-            <span class="string">&quot;{}{}#[cfg(not(any({}, docsrs)))]&quot;</span>,
+            <span class="string">&quot;{}{}#[cfg(not(any({})))]&quot;</span>,
             tabs(indent),
             comment,
             v.to_cfg(namespace_name.as_deref())
