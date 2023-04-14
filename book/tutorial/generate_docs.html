@@ -181,7 +181,7 @@ This will disable the linking of the underlying C libraries and won't throw an e
 <p>On top of that, the <code>docsrs</code> attribute will enable the <a href="https://doc.rust-lang.org/beta/unstable-book/language-features/doc-cfg.html">doc_cfg feature</a> which is only available in the nightly compiler toolchain at the time of writing.
 This is mostly useful for clarifying feature requirements through the docs.</p>
 <p>To build the docs with the <code>docsrs</code> attribute, you can use the following command:</p>
-<pre><code class="language-sh">RUSTDOCFLAGS='--cfg docsrs' cargo +nightly doc
+<pre><code class="language-sh">RUSTDOCFLAGS='--cfg docsrs' cargo +nightly doc --all-features
 </code></pre>
 <p>Congratulations, we are done.
 You have successfully created the safe wrapper for a C library!</p>
