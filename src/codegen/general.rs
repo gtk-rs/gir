@@ -862,7 +862,7 @@ pub fn cfg_condition_string_no_doc(
 ) -> Option<String> {
     cfg_condition.map(|cfg| {
         let comment = if commented { "//" } else { "" };
-        format!("{0}{1}#[cfg(any({2}))]", tabs(indent), comment, cfg)
+        format!("{0}{1}#[cfg({2})]", tabs(indent), comment, cfg)
     })
 }
 
