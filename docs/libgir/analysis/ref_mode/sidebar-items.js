@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":[["RefMode",""]]};
+window.SIDEBAR_ITEMS = {"enum":["RefMode"]};

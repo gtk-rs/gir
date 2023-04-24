@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":[["check_fmt","Check if `cargo fmt` available"],["format","Run `cargo fmt` on path"]]};
+window.SIDEBAR_ITEMS = {"fn":["check_fmt","format"]};

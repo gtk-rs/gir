@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":[["ConversionType",""]]};
+window.SIDEBAR_ITEMS = {"enum":["ConversionType"]};

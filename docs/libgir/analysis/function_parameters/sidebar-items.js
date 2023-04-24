@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":[["TransformationType",""]],"fn":[["analyze",""]],"struct":[["CParameter",""],["Parameter",""],["Parameters",""],["RustParameter",""],["Transformation",""]]};
+window.SIDEBAR_ITEMS = {"enum":["TransformationType"],"fn":["analyze"],"struct":["CParameter","Parameter","Parameters","RustParameter","Transformation"]};

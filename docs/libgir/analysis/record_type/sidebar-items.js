@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":[["RecordType",""]]};
+window.SIDEBAR_ITEMS = {"enum":["RecordType"]};

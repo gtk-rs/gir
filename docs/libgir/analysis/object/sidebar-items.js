@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":[["LocationInObject","The location of an item within the object"]],"fn":[["class",""],["has_builder_properties",""],["interface",""]],"struct":[["Info",""]]};
+window.SIDEBAR_ITEMS = {"enum":["LocationInObject"],"fn":["class","has_builder_properties","interface"],"struct":["Info"]};

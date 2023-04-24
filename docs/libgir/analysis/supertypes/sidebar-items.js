@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":[["analyze",""],["dependencies",""]]};
+window.SIDEBAR_ITEMS = {"fn":["analyze","dependencies"]};

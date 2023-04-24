@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":[["analyze",""]],"struct":[["ChildProperty",""]],"type":[["ChildProperties",""]]};
+window.SIDEBAR_ITEMS = {"fn":["analyze"],"struct":["ChildProperty"],"type":["ChildProperties"]};

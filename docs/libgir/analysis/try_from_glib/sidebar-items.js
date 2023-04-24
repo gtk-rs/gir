@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":[["TryFromGlib",""]]};
+window.SIDEBAR_ITEMS = {"enum":["TryFromGlib"]};

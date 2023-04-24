@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":[["analyze",""],["find_function",""],["find_index_to_ignore",""],["finish_function_name","Given async function name tries to guess the name of finish function."],["is_carray_with_direct_elements",""]],"struct":[["AsyncFuture",""],["AsyncTrampoline",""],["Info",""]]};
+window.SIDEBAR_ITEMS = {"fn":["analyze","find_function","find_index_to_ignore","finish_function_name","is_carray_with_direct_elements"],"struct":["AsyncFuture","AsyncTrampoline","Info"]};

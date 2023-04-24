@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":[["SafetyAssertionMode",""]]};
+window.SIDEBAR_ITEMS = {"enum":["SafetyAssertionMode"]};
