@@ -29,21 +29,17 @@ pub fn generate(
     let suffix = if only_declaration { ";" } else { " {" };
 
     writeln!(w)?;
-    if !in_trait || only_declaration {
-        cfg_deprecated(w, env, None, analysis.deprecated_version, commented, indent)?;
-    }
+    cfg_deprecated(w, env, None, analysis.deprecated_version, commented, indent)?;
     version_condition(w, env, None, analysis.version, commented, indent)?;
     doc_hidden(w, analysis.doc_hidden, comment_prefix, indent)?;
     // Strip the "prefix" from "prefix::prop-name", if any.
     // Ex.: "notify::is-locked".
-    if !in_trait || only_declaration {
-        doc_alias(
-            w,
-            analysis.signal_name.splitn(2, "::").last().unwrap(),
-            comment_prefix,
-            indent,
-        )?;
-    }
+    doc_alias(
+        w,
+        analysis.signal_name.splitn(2, "::").last().unwrap(),
+        comment_prefix,
+        indent,
+    )?;
     writeln!(
         w,
         "{}{}{}{}{}",

@@ -46,20 +46,18 @@ fn generate_func(
 
     doc_hidden(w, prop.doc_hidden, comment_prefix, indent)?;
     let decl = declaration(env, prop, is_get);
-    if !in_trait || only_declaration {
-        let add_doc_alias = if is_get {
-            prop.name != prop.getter_name && prop.name != prop.prop_name
-        } else {
-            prop.name != prop.prop_name
-        };
-        if add_doc_alias {
-            doc_alias(
-                w,
-                &format!("{}.{}", &prop.child_name, &prop.name),
-                comment_prefix,
-                indent,
-            )?;
-        }
+    let add_doc_alias = if is_get {
+        prop.name != prop.getter_name && prop.name != prop.prop_name
+    } else {
+        prop.name != prop.prop_name
+    };
+    if add_doc_alias {
+        doc_alias(
+            w,
+            &format!("{}.{}", &prop.child_name, &prop.name),
+            comment_prefix,
+            indent,
+        )?;
     }
     writeln!(
         w,
