@@ -585,30 +585,6 @@
 <a href="#585" id="585">585</a>
 <a href="#586" id="586">586</a>
 <a href="#587" id="587">587</a>
-<a href="#588" id="588">588</a>
-<a href="#589" id="589">589</a>
-<a href="#590" id="590">590</a>
-<a href="#591" id="591">591</a>
-<a href="#592" id="592">592</a>
-<a href="#593" id="593">593</a>
-<a href="#594" id="594">594</a>
-<a href="#595" id="595">595</a>
-<a href="#596" id="596">596</a>
-<a href="#597" id="597">597</a>
-<a href="#598" id="598">598</a>
-<a href="#599" id="599">599</a>
-<a href="#600" id="600">600</a>
-<a href="#601" id="601">601</a>
-<a href="#602" id="602">602</a>
-<a href="#603" id="603">603</a>
-<a href="#604" id="604">604</a>
-<a href="#605" id="605">605</a>
-<a href="#606" id="606">606</a>
-<a href="#607" id="607">607</a>
-<a href="#608" id="608">608</a>
-<a href="#609" id="609">609</a>
-<a href="#610" id="610">610</a>
-<a href="#611" id="611">611</a>
 </pre><pre class="rust"><code><span class="kw">use </span>std::{
     collections::{BTreeMap, HashSet},
     io::{<span class="prelude-ty">Result</span>, Write},
@@ -1095,41 +1071,10 @@
 }
 
 <span class="kw">fn </span>generate_trait(w: <span class="kw-2">&amp;mut </span><span class="kw">dyn </span>Write, env: <span class="kw-2">&amp;</span>Env, analysis: <span class="kw-2">&amp;</span>analysis::object::Info) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
-    <span class="macro">write!</span>(w, <span class="string">&quot;pub trait {}: &#39;static {{&quot;</span>, analysis.trait_name)<span class="question-mark">?</span>;
-
-    <span class="kw">for </span>func_analysis <span class="kw">in </span><span class="kw-2">&amp;</span>analysis.methods() {
-        function::generate(
-            w,
-            env,
-            <span class="prelude-val">Some</span>(analysis.type_id),
-            func_analysis,
-            <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>analysis.specials),
-            analysis.version,
-            <span class="bool-val">true</span>,
-            <span class="bool-val">true</span>,
-            <span class="number">1</span>,
-        )<span class="question-mark">?</span>;
-    }
-    <span class="kw">for </span>property <span class="kw">in </span><span class="kw-2">&amp;</span>analysis.properties {
-        properties::generate(w, env, property, <span class="bool-val">true</span>, <span class="bool-val">true</span>, <span class="number">1</span>)<span class="question-mark">?</span>;
-    }
-    <span class="kw">for </span>child_property <span class="kw">in </span><span class="kw-2">&amp;</span>analysis.child_properties {
-        child_properties::generate(w, env, child_property, <span class="bool-val">true</span>, <span class="bool-val">true</span>, <span class="number">1</span>)<span class="question-mark">?</span>;
-    }
-    <span class="kw">for </span>signal_analysis <span class="kw">in </span>analysis
-        .signals
-        .iter()
-        .chain(analysis.notify_signals.iter())
-    {
-        signal::generate(w, env, signal_analysis, <span class="bool-val">true</span>, <span class="bool-val">true</span>, <span class="number">1</span>)<span class="question-mark">?</span>;
-    }
-    <span class="macro">writeln!</span>(w, <span class="string">&quot;}}&quot;</span>)<span class="question-mark">?</span>;
-
-    <span class="macro">writeln!</span>(w)<span class="question-mark">?</span>;
     <span class="macro">write!</span>(
         w,
-        <span class="string">&quot;impl&lt;O: IsA&lt;{}&gt;&gt; {} for O {{&quot;</span>,
-        analysis.name, analysis.trait_name,
+        <span class="string">&quot;pub trait {}: IsA&lt;{}&gt; + &#39;static {{&quot;</span>,
+        analysis.trait_name, analysis.name
     )<span class="question-mark">?</span>;
 
     <span class="kw">for </span>func_analysis <span class="kw">in </span><span class="kw-2">&amp;</span>analysis.methods() {
@@ -1159,6 +1104,13 @@
         signal::generate(w, env, signal_analysis, <span class="bool-val">true</span>, <span class="bool-val">false</span>, <span class="number">1</span>)<span class="question-mark">?</span>;
     }
     <span class="macro">writeln!</span>(w, <span class="string">&quot;}}&quot;</span>)<span class="question-mark">?</span>;
+
+    <span class="macro">writeln!</span>(w)<span class="question-mark">?</span>;
+    <span class="macro">writeln!</span>(
+        w,
+        <span class="string">&quot;impl&lt;O: IsA&lt;{}&gt;&gt; {} for O {{}}&quot;</span>,
+        analysis.name, analysis.trait_name,
+    )<span class="question-mark">?</span>;
 
     <span class="prelude-val">Ok</span>(())
 }
