@@ -484,41 +484,10 @@ fn generate_builder(w: &mut dyn Write, env: &Env, analysis: &analysis::object::I
 }
 
 fn generate_trait(w: &mut dyn Write, env: &Env, analysis: &analysis::object::Info) -> Result<()> {
-    write!(w, "pub trait {}: 'static {{", analysis.trait_name)?;
-
-    for func_analysis in &analysis.methods() {
-        function::generate(
-            w,
-            env,
-            Some(analysis.type_id),
-            func_analysis,
-            Some(&analysis.specials),
-            analysis.version,
-            true,
-            true,
-            1,
-        )?;
-    }
-    for property in &analysis.properties {
-        properties::generate(w, env, property, true, true, 1)?;
-    }
-    for child_property in &analysis.child_properties {
-        child_properties::generate(w, env, child_property, true, true, 1)?;
-    }
-    for signal_analysis in analysis
-        .signals
-        .iter()
-        .chain(analysis.notify_signals.iter())
-    {
-        signal::generate(w, env, signal_analysis, true, true, 1)?;
-    }
-    writeln!(w, "}}")?;
-
-    writeln!(w)?;
     write!(
         w,
-        "impl<O: IsA<{}>> {} for O {{",
-        analysis.name, analysis.trait_name,
+        "pub trait {}: IsA<{}> + 'static {{",
+        analysis.trait_name, analysis.name
     )?;
 
     for func_analysis in &analysis.methods() {
@@ -548,6 +517,13 @@ fn generate_trait(w: &mut dyn Write, env: &Env, analysis: &analysis::object::Inf
         signal::generate(w, env, signal_analysis, true, false, 1)?;
     }
     writeln!(w, "}}")?;
+
+    writeln!(w)?;
+    writeln!(
+        w,
+        "impl<O: IsA<{}>> {} for O {{}}",
+        analysis.name, analysis.trait_name,
+    )?;
 
     Ok(())
 }
