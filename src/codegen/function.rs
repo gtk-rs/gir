@@ -33,8 +33,6 @@ use crate::{
 pub fn get_must_use_if_needed(
     parent_type_id: Option<TypeId>,
     analysis: &analysis::functions::Info,
-    in_trait: bool,
-    only_declaration: bool,
     comment_prefix: &str,
 ) -> Option<String> {
     // If there is no parent, it means it's not a (trait) method so we're not
@@ -42,7 +40,7 @@ pub fn get_must_use_if_needed(
     if let Some(parent_type_id) = parent_type_id {
         // Check it's a trait declaration or a method declaration (outside of a trait
         // implementation).
-        if analysis.kind == library::FunctionKind::Method && (!in_trait || only_declaration) {
+        if analysis.kind == library::FunctionKind::Method {
             // We now get the list of the returned types.
             let outs = out_parameter_types(analysis);
             // If there is only one type returned, we check if it's the same type as `self`
@@ -97,20 +95,16 @@ pub fn generate(
     let suffix = if only_declaration { ";" } else { " {" };
 
     writeln!(w)?;
-    if !in_trait || only_declaration {
-        cfg_deprecated(w, env, None, analysis.deprecated_version, commented, indent)?;
-    }
+    cfg_deprecated(w, env, None, analysis.deprecated_version, commented, indent)?;
     cfg_condition(w, analysis.cfg_condition.as_ref(), commented, indent)?;
     let version = Version::if_stricter_than(analysis.version, scope_version);
     version_condition(w, env, None, version, commented, indent)?;
     not_version_condition(w, analysis.not_version, commented, indent)?;
     doc_hidden(w, analysis.doc_hidden, comment_prefix, indent)?;
     allow_deprecated(w, analysis.deprecated_version, commented, indent)?;
-    if !in_trait || only_declaration {
-        doc_alias(w, &analysis.glib_name, comment_prefix, indent)?;
-        if analysis.codegen_name() != analysis.func_name {
-            doc_alias(w, &analysis.func_name, comment_prefix, indent)?;
-        }
+    doc_alias(w, &analysis.glib_name, comment_prefix, indent)?;
+    if analysis.codegen_name() != analysis.func_name {
+        doc_alias(w, &analysis.func_name, comment_prefix, indent)?;
     }
     // Don't add a guard for public or copy/equal functions
     let dead_code_cfg = if !analysis.visibility.is_public() && !analysis.is_special() {
@@ -134,14 +128,7 @@ pub fn generate(
         "{}{}{}{}{}{}{}{}{}",
         allow_should_implement_trait,
         dead_code_cfg,
-        get_must_use_if_needed(
-            parent_type_id,
-            analysis,
-            in_trait,
-            only_declaration,
-            comment_prefix
-        )
-        .unwrap_or_default(),
+        get_must_use_if_needed(parent_type_id, analysis, comment_prefix).unwrap_or_default(),
         tabs(indent),
         comment_prefix,
         pub_prefix,
@@ -162,9 +149,7 @@ pub fn generate(
         let suffix = if only_declaration { ";" } else { " {" };
 
         writeln!(w)?;
-        if !in_trait || only_declaration {
-            cfg_deprecated(w, env, None, analysis.deprecated_version, commented, indent)?;
-        }
+        cfg_deprecated(w, env, None, analysis.deprecated_version, commented, indent)?;
 
         writeln!(w, "{}{}", tabs(indent), comment_prefix)?;
         cfg_condition(w, analysis.cfg_condition.as_ref(), commented, indent)?;
