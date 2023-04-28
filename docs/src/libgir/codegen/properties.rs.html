@@ -132,10 +132,6 @@
 <a href="#132" id="132">132</a>
 <a href="#133" id="133">133</a>
 <a href="#134" id="134">134</a>
-<a href="#135" id="135">135</a>
-<a href="#136" id="136">136</a>
-<a href="#137" id="137">137</a>
-<a href="#138" id="138">138</a>
 </pre><pre class="rust"><code><span class="kw">use </span>std::io::{<span class="prelude-ty">Result</span>, Write};
 
 <span class="kw">use super</span>::{
@@ -180,26 +176,22 @@
     <span class="macro">writeln!</span>(w)<span class="question-mark">?</span>;
 
     <span class="kw">let </span>decl = declaration(env, prop);
-    <span class="kw">if </span>!in_trait || only_declaration {
-        cfg_deprecated(
-            w,
-            env,
-            <span class="prelude-val">Some</span>(prop.typ),
-            prop.deprecated_version,
-            commented,
-            indent,
-        )<span class="question-mark">?</span>;
-    }
+    cfg_deprecated(
+        w,
+        env,
+        <span class="prelude-val">Some</span>(prop.typ),
+        prop.deprecated_version,
+        commented,
+        indent,
+    )<span class="question-mark">?</span>;
     version_condition(w, env, <span class="prelude-val">None</span>, prop.version, commented, indent)<span class="question-mark">?</span>;
-    <span class="kw">if </span>!in_trait || only_declaration {
-        <span class="kw">let </span>add_doc_alias = <span class="kw">if let </span><span class="prelude-val">Some</span>(func_name_alias) = prop.func_name_alias.as_ref() {
-            <span class="kw-2">&amp;</span>prop.name != func_name_alias &amp;&amp; prop.name != prop.var_name
-        } <span class="kw">else </span>{
-            prop.name != prop.var_name
-        };
-        <span class="kw">if </span>add_doc_alias {
-            doc_alias(w, <span class="kw-2">&amp;</span>prop.name, comment_prefix, indent)<span class="question-mark">?</span>;
-        }
+    <span class="kw">let </span>add_doc_alias = <span class="kw">if let </span><span class="prelude-val">Some</span>(func_name_alias) = prop.func_name_alias.as_ref() {
+        <span class="kw-2">&amp;</span>prop.name != func_name_alias &amp;&amp; prop.name != prop.var_name
+    } <span class="kw">else </span>{
+        prop.name != prop.var_name
+    };
+    <span class="kw">if </span>add_doc_alias {
+        doc_alias(w, <span class="kw-2">&amp;</span>prop.name, comment_prefix, indent)<span class="question-mark">?</span>;
     }
     <span class="macro">writeln!</span>(
         w,

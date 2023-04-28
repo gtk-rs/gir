@@ -135,8 +135,6 @@
 <a href="#135" id="135">135</a>
 <a href="#136" id="136">136</a>
 <a href="#137" id="137">137</a>
-<a href="#138" id="138">138</a>
-<a href="#139" id="139">139</a>
 </pre><pre class="rust"><code><span class="kw">use </span>std::io::{<span class="prelude-ty">Result</span>, Write};
 
 <span class="kw">use super</span>::{
@@ -185,20 +183,18 @@
 
     doc_hidden(w, prop.doc_hidden, comment_prefix, indent)<span class="question-mark">?</span>;
     <span class="kw">let </span>decl = declaration(env, prop, is_get);
-    <span class="kw">if </span>!in_trait || only_declaration {
-        <span class="kw">let </span>add_doc_alias = <span class="kw">if </span>is_get {
-            prop.name != prop.getter_name &amp;&amp; prop.name != prop.prop_name
-        } <span class="kw">else </span>{
-            prop.name != prop.prop_name
-        };
-        <span class="kw">if </span>add_doc_alias {
-            doc_alias(
-                w,
-                <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;{}.{}&quot;</span>, <span class="kw-2">&amp;</span>prop.child_name, <span class="kw-2">&amp;</span>prop.name),
-                comment_prefix,
-                indent,
-            )<span class="question-mark">?</span>;
-        }
+    <span class="kw">let </span>add_doc_alias = <span class="kw">if </span>is_get {
+        prop.name != prop.getter_name &amp;&amp; prop.name != prop.prop_name
+    } <span class="kw">else </span>{
+        prop.name != prop.prop_name
+    };
+    <span class="kw">if </span>add_doc_alias {
+        doc_alias(
+            w,
+            <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;{}.{}&quot;</span>, <span class="kw-2">&amp;</span>prop.child_name, <span class="kw-2">&amp;</span>prop.name),
+            comment_prefix,
+            indent,
+        )<span class="question-mark">?</span>;
     }
     <span class="macro">writeln!</span>(
         w,
