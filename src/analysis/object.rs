@@ -19,6 +19,7 @@ use crate::{
 pub enum LocationInObject {
     Impl,
     VirtualExt,
+    ClassExt,
     Ext,
     ExtManual,
     Builder,
@@ -92,7 +93,9 @@ impl Info {
 
     /// Returns the location of the function within this object
     pub fn function_location(&self, fn_info: &functions::Info) -> LocationInObject {
-        if fn_info.kind == FunctionKind::VirtualMethod {
+        if fn_info.kind == FunctionKind::ClassMethod {
+            LocationInObject::ClassExt
+        } else if fn_info.kind == FunctionKind::VirtualMethod {
             // TODO: Fix location here once we can auto generate virtual methods
             LocationInObject::VirtualExt
         } else if self.final_type
@@ -135,6 +138,10 @@ impl Info {
                     trait_name.into(),
                 )
             }
+            LocationInObject::ClassExt => (
+                format!("subclass::prelude::{}", self.trait_name).into(),
+                self.trait_name.as_str().into(),
+            ),
             LocationInObject::Builder => {
                 panic!("C documentation is not expected to link to builders (a Rust concept)!")
             }

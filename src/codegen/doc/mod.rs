@@ -652,12 +652,11 @@ fn create_object_doc(w: &mut dyn Write, env: &Env, info: &analysis::object::Info
 fn create_record_doc(w: &mut dyn Write, env: &Env, info: &analysis::record::Info) -> Result<()> {
     let record: &Record = env.library.type_(info.type_id).to_ref_as();
     let ty = record.to_stripper_type();
-    let generate_doc = env
-        .config
-        .objects
-        .get(&info.type_id.full_name(&env.library))
-        .map_or(true, |r| r.generate_doc);
-
+    let object = env.config.objects.get(&info.full_name);
+    let trait_name = object
+        .and_then(|o| o.trait_name.clone())
+        .unwrap_or_else(|| format!("{}SubclassExt", info.name));
+    let generate_doc = object.map_or(true, |r| r.generate_doc);
     if generate_doc {
         write_item_doc(w, &ty, |w| {
             if let Some(ref doc) = record.doc {
@@ -675,11 +674,17 @@ fn create_record_doc(w: &mut dyn Write, env: &Env, info: &analysis::record::Info
         })?;
     }
 
-    let ty = TypeStruct {
-        ty: SType::Impl,
-        ..ty
-    };
     for function in &record.functions {
+        let function_ty = if function.kind == FunctionKind::ClassMethod {
+            TypeStruct::new(SType::Trait, &trait_name)
+        } else {
+            TypeStruct {
+                ty: SType::Impl,
+                parent: ty.parent.clone(),
+                name: ty.name.clone(),
+                args: ty.args.clone(),
+            }
+        };
         if let Some(c_identifier) = &function.c_identifier {
             let f_info = info.functions.iter().find(|f| &f.glib_name == c_identifier);
             let should_be_documented = f_info.map_or(false, |f| f.should_docs_be_generated(env));
@@ -692,7 +697,7 @@ fn create_record_doc(w: &mut dyn Write, env: &Env, info: &analysis::record::Info
                 w,
                 env,
                 function,
-                Some(Box::new(ty.clone())),
+                Some(Box::new(function_ty)),
                 fn_new_name,
                 &HashSet::new(),
                 Some((&info.type_id, None)),

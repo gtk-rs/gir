@@ -298,6 +298,8 @@ impl Library {
             parser.ignore_element()?;
             return Ok(None);
         }
+        let is_class_record = record_name.ends_with("Class");
+
         let c_type = elem.attr_required("type")?;
         let symbol_prefix = elem.attr("symbol-prefix").map(ToOwned::to_owned);
         let get_type = elem.attr("get-type").map(ToOwned::to_owned);
@@ -388,9 +390,18 @@ impl Library {
             name: record_name.into(),
             c_type: c_type.into(),
             glib_get_type: get_type,
+            functions: if is_class_record && gtype_struct_for.is_some() {
+                fns.into_iter()
+                    .map(|mut f| {
+                        f.kind = FunctionKind::ClassMethod;
+                        f
+                    })
+                    .collect::<Vec<_>>()
+            } else {
+                fns
+            },
             gtype_struct_for: gtype_struct_for.map(|s| s.into()),
             fields,
-            functions: fns,
             version,
             deprecated_version,
             doc,
