@@ -96,6 +96,24 @@ impl Analysis {
             })
     }
 
+    pub fn find_object_by_virtual_method<
+        F: Fn(&functions::Info) -> bool + Copy,
+        G: Fn(&object::Info) -> bool + Copy,
+    >(
+        &self,
+        env: &Env,
+        search_obj: G,
+        search_fn: F,
+    ) -> Option<(&object::Info, &functions::Info)> {
+        self.objects
+            .values()
+            .filter(|o| search_obj(o))
+            .find_map(|obj_info| {
+                find_function(env, obj_info.virtual_methods.iter(), search_fn)
+                    .map(|fn_info| (obj_info, fn_info))
+            })
+    }
+
     pub fn find_object_by_function<
         F: Fn(&functions::Info) -> bool + Copy,
         G: Fn(&object::Info) -> bool + Copy,
