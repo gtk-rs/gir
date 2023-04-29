@@ -388,7 +388,6 @@ fn find_method_or_function_by_ctype(
     in_type: Option<(&TypeId, Option<LocationInObject>)>,
 ) -> Option<String> {
     find_method_or_function(
-        name,
         env,
         in_type,
         |f| f.glib_name == name,
@@ -411,7 +410,6 @@ fn find_method_or_function_by_ctype(
 /// - [`gi_docgen::find_method_or_function_by_name()`] where the object/records
 ///   are looked by their name
 pub(crate) fn find_method_or_function(
-    name: &str,
     env: &Env,
     in_type: Option<(&TypeId, Option<LocationInObject>)>,
     search_fn: impl Fn(&crate::analysis::functions::Info) -> bool + Copy,
@@ -422,12 +420,22 @@ pub(crate) fn find_method_or_function(
     is_class_method: bool,
 ) -> Option<String> {
     if is_class_method {
-        info!("Class methods are not supported yet `{}`", name);
-        return None;
-    }
-
+        if let Some((obj_info, fn_info)) = env
+            .analysis
+            .find_object_by_virtual_method(env, search_obj, search_fn)
+        {
+            Some(gen_object_fn_doc_link(
+                obj_info,
+                fn_info,
+                env,
+                in_type,
+                &obj_info.name,
+            ))
+        } else {
+            None
+        }
     // if we can find the function in an object
-    if let Some((obj_info, fn_info)) = env
+    } else if let Some((obj_info, fn_info)) = env
         .analysis
         .find_object_by_function(env, search_obj, search_fn)
     {
@@ -501,7 +509,14 @@ pub(crate) fn gen_object_fn_doc_link(
     let sym = symbols.by_tid(obj_info.type_id).unwrap();
     let is_self = in_type == Some((&obj_info.type_id, Some(obj_info.function_location(fn_info))));
 
-    if fn_info.kind == FunctionKind::Method {
+    if fn_info.kind == FunctionKind::VirtualMethod {
+        let (type_name, visible_type_name) = obj_info.generate_doc_link_info(fn_info);
+        fn_info.doc_link(
+            Some(&sym.full_rust_name().replace(visible_name, &type_name)),
+            Some(&visible_type_name),
+            false,
+        )
+    } else if fn_info.kind == FunctionKind::Method {
         let (type_name, visible_type_name) = obj_info.generate_doc_link_info(fn_info);
 
         fn_info.doc_link(

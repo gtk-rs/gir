@@ -196,6 +196,34 @@ fn ns_type_to_doc(namespace: &Option<String>, type_: &str) -> String {
     }
 }
 
+fn find_virtual_method_by_name(
+    type_: Option<&str>,
+    namespace: Option<&str>,
+    name: &str,
+    env: &Env,
+    in_type: Option<(&TypeId, Option<LocationInObject>)>,
+) -> Option<String> {
+    find_method_or_function(
+        env,
+        in_type,
+        |f| {
+            f.name == mangle_keywords(name)
+                && namespace.as_ref().map_or(f.ns_id == MAIN_NAMESPACE, |n| {
+                    &env.library.namespaces[f.ns_id as usize].name == n
+                })
+        },
+        |o| {
+            type_.map_or(true, |t| {
+                o.name == t && is_same_namespace(env, namespace, o.type_id)
+            })
+        },
+        |_| false,
+        |_| false,
+        |_| false,
+        true,
+    )
+}
+
 fn find_method_or_function_by_name(
     type_: Option<&str>,
     namespace: Option<&str>,
@@ -205,7 +233,6 @@ fn find_method_or_function_by_name(
     is_class_method: bool,
 ) -> Option<String> {
     find_method_or_function(
-        name,
         env,
         in_type,
         |f| {
@@ -403,7 +430,8 @@ impl GiDocgen {
                 namespace,
                 type_,
                 name,
-            } => gen_vfunc_doc_link(&ns_type_to_doc(namespace, type_), name),
+            } => find_virtual_method_by_name(Some(type_), namespace.as_deref(), name, env, in_type)
+                .unwrap_or_else(|| gen_vfunc_doc_link(&ns_type_to_doc(namespace, type_), name)),
         }
     }
 }
