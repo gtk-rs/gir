@@ -16,6 +16,7 @@ use super::{
     members::Members,
     properties::Properties,
     signals::{Signal, Signals},
+    virtual_methods::VirtualMethods,
 };
 use crate::{
     analysis::{conversion_type::ConversionType, ref_mode},
@@ -65,6 +66,7 @@ impl FromStr for GStatus {
 pub struct GObject {
     pub name: String,
     pub functions: Functions,
+    pub virtual_methods: VirtualMethods,
     pub constants: Constants,
     pub signals: Signals,
     pub members: Members,
@@ -104,6 +106,7 @@ impl Default for GObject {
         GObject {
             name: "Default".into(),
             functions: Functions::new(),
+            virtual_methods: VirtualMethods::new(),
             constants: Constants::new(),
             signals: Signals::new(),
             members: Members::new(),
@@ -297,6 +300,16 @@ fn parse_object(
             assert!(function_names.insert(name), "{name} already defined!");
         }
     }
+    let virtual_methods = VirtualMethods::parse(toml_object.lookup("virtual_method"), &name);
+    let mut virtual_methods_names = HashSet::new();
+    for f in &virtual_methods {
+        if let Ident::Name(name) = &f.ident {
+            assert!(
+                virtual_methods_names.insert(name),
+                "{name} already defined!"
+            );
+        }
+    }
 
     let signals = {
         let mut v = Vec::new();
@@ -479,6 +492,7 @@ fn parse_object(
     GObject {
         name,
         functions,
+        virtual_methods,
         constants,
         signals,
         members,

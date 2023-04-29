@@ -16,6 +16,7 @@ pub mod properties;
 pub mod property_generate_flags;
 pub mod signals;
 pub mod string_type;
+pub mod virtual_methods;
 pub mod work_mode;
 
 pub use self::{
