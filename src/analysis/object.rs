@@ -37,6 +37,7 @@ pub struct Info {
     pub trait_name: String,
     pub has_constructors: bool,
     pub has_functions: bool,
+    pub virtual_methods: Vec<functions::Info>,
     pub signals: Vec<signals::Info>,
     pub notify_signals: Vec<signals::Info>,
     pub properties: Vec<properties::Property>,
@@ -186,6 +187,18 @@ pub fn class(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<Info>
 
     let mut signatures = Signatures::with_capacity(klass.functions.len());
 
+    let virtual_methods = functions::analyze(
+        env,
+        &klass.virtual_methods,
+        Some(class_tid),
+        true,
+        false,
+        obj,
+        &mut imports,
+        None,
+        Some(deps),
+    );
+
     let mut functions = functions::analyze(
         env,
         &klass.functions,
@@ -306,6 +319,7 @@ pub fn class(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<Info>
         trait_name,
         has_constructors,
         has_functions,
+        virtual_methods,
         signals,
         notify_signals,
         properties,
