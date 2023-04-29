@@ -153,6 +153,7 @@ pub enum FunctionKind {
     Function,
     Method,
     Global,
+    ClassMethod,
     VirtualMethod,
 }
 
