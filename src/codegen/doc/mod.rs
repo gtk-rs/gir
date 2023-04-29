@@ -254,6 +254,7 @@ fn create_object_doc(w: &mut dyn Write, env: &Env, info: &analysis::object::Info
     let doc;
     let doc_deprecated;
     let functions: &[Function];
+    let virtual_methods: &[Function];
     let signals: &[Signal];
     let properties: &[Property];
     let is_abstract;
@@ -270,6 +271,7 @@ fn create_object_doc(w: &mut dyn Write, env: &Env, info: &analysis::object::Info
             doc = cl.doc.as_ref();
             doc_deprecated = cl.doc_deprecated.as_ref();
             functions = &cl.functions;
+            virtual_methods = &cl.virtual_methods;
             signals = &cl.signals;
             properties = &cl.properties;
             is_abstract = env.library.type_(info.type_id).is_abstract();
@@ -279,6 +281,7 @@ fn create_object_doc(w: &mut dyn Write, env: &Env, info: &analysis::object::Info
             doc = iface.doc.as_ref();
             doc_deprecated = iface.doc_deprecated.as_ref();
             functions = &iface.functions;
+            virtual_methods = &iface.virtual_methods;
             signals = &iface.signals;
             properties = &iface.properties;
             is_abstract = false;
@@ -555,6 +558,56 @@ fn create_object_doc(w: &mut dyn Write, env: &Env, info: &analysis::object::Info
             configured_signals.iter().all(|s| s.generate_doc),
         )?;
     }
+
+    for function in virtual_methods {
+        let configured_virtual_methods = obj.virtual_methods.matched(&function.name);
+        let (ty, object_location) = if let Some(trait_name) = configured_virtual_methods
+            .iter()
+            .find_map(|f| f.doc_trait_name.as_ref())
+        {
+            (
+                TypeStruct::new(SType::Trait, trait_name),
+                // Because we cannot sensibly deduce where the docs end up,
+                // assume they're outside the docs so that no `Self::` links
+                // are generated.  It is currently quite uncommon to specify
+                // the `{}Manual` trait, which would be ObjectLocation::ExtManual.
+                None,
+            )
+        } else {
+            (
+                TypeStruct::new(SType::Trait, &format!("{}Impl", info.name)),
+                Some(LocationInObject::VirtualExt),
+            )
+        };
+
+        if let Some(c_identifier) = &function.c_identifier {
+            let f_info: Option<&analysis::functions::Info> = info
+                .virtual_methods
+                .iter()
+                .find(|f| &f.glib_name == c_identifier);
+            let should_be_documented = f_info.map_or(false, |f| f.should_docs_be_generated(env));
+            if !should_be_documented {
+                continue;
+            }
+
+            // Retrieve the new_name computed during analysis, if any
+            let fn_new_name = f_info.and_then(|analysed_f| analysed_f.new_name.clone());
+            let doc_ignored_parameters = f_info
+                .map(|analyzed_f| analyzed_f.doc_ignore_parameters.clone())
+                .unwrap_or_default();
+            create_fn_doc(
+                w,
+                env,
+                function,
+                Some(Box::new(ty)),
+                fn_new_name,
+                &doc_ignored_parameters,
+                Some((&info.type_id, object_location)),
+                f_info.map_or(true, |f| f.generate_doc),
+            )?;
+        }
+    }
+
     for property in properties {
         let getter_name = info
             .properties
