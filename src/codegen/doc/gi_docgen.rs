@@ -110,7 +110,7 @@ pub(crate) fn replace_c_types(
                 caps[0].to_string()
             }
         })
-        .to_string()
+        .into_owned()
 }
 
 /// A representation of the various ways to link items using GI-docgen

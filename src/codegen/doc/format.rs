@@ -151,16 +151,20 @@ fn replace_symbols(
                 s => panic!("Unknown symbol prefix `{s}`"),
             },
         });
+        let out = ARG_SIGIL.replace_all(&out, |caps: &Captures<'_>| {
+            format!("{}`{}`", &caps[1], &caps[2])
+        });
         let out = GDK_GTK.replace_all(&out, |caps: &Captures<'_>| {
             find_type(&caps[2], env).unwrap_or_else(|| format!("`{}`", &caps[2]))
         });
 
-        out.to_string()
+        out.into_owned()
     } else {
         replace_c_types(input, env, in_type)
     }
 }
 
+static ARG_SIGIL: Lazy<Regex> = Lazy::new(|| Regex::new(r"(^|\W)@([A-Za-z0-9_]+)\b").unwrap());
 static SYMBOL: Lazy<Regex> = Lazy::new(|| Regex::new(r"([@#%])(\w+\b)([:.]+[\w-]+\b)?").unwrap());
 static GI_DOCGEN_SYMBOL: Lazy<Regex> =
     Lazy::new(|| Regex::new(r"([%])(\w+\b)([:.]+[\w-]+\b)?").unwrap());
