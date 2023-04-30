@@ -204,6 +204,31 @@ generate_doc = false
             [[object.function.parameter.callback_parameter]]
             name = "name_of_the_callback_parameter"
             nullable = true
+    # virtual methods support the same configuration for parameters and return types as functions
+    # note that they are not used for code generation yet.
+    [[object.virtual_method]]
+    # filter virtual method from object
+    name = "set_website_label"
+    # alternative way to apply override for many functions. Will be used with '^' and '$' on both sides
+    # can be used instead of `name` almost anywhere
+    # pattern = "[gs]et_value"
+    # don't generate function
+    ignore = true
+    # override starting version
+    version = "3.12"
+    # prefixed function with #[cfg(mycond)]
+    cfg_condition = "mycond"
+    # prefixed function with #[doc(hidden)]
+    doc_hidden = true
+    # define a list of function parameters to be ignored when the documentation is generated
+    doc_ignore_parameters = ["some_user_data_param"]
+    # write function docs to trait other than default "xxxExt",
+    # also works in [object.signal] and [object.property]
+    doc_trait_name = "SocketListenerExtManual"
+    # to rename the generated function
+    rename = "something_else"
+    # In case you don't want to generate the documentation for this method.
+    generate_doc = false
     [[object.signal]]
     name = "activate-link"
     # replace trampoline bool return type with `Inhibit`
