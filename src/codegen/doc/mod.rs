@@ -655,7 +655,7 @@ fn create_record_doc(w: &mut dyn Write, env: &Env, info: &analysis::record::Info
     let object = env.config.objects.get(&info.full_name);
     let trait_name = object
         .and_then(|o| o.trait_name.clone())
-        .unwrap_or_else(|| format!("{}SubclassExt", info.name));
+        .unwrap_or_else(|| format!("{}Ext", info.name));
     let generate_doc = object.map_or(true, |r| r.generate_doc);
     if generate_doc {
         write_item_doc(w, &ty, |w| {
