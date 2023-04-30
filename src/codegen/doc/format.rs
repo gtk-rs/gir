@@ -396,6 +396,7 @@ fn find_method_or_function_by_ctype(
         |r| c_type.map_or(true, |t| r.type_(&env.library).c_type == t),
         |r| c_type.map_or(true, |t| r.type_(&env.library).c_type == t),
         c_type.map_or(false, |t| t.ends_with("Class")),
+        false,
     )
 }
 
@@ -418,8 +419,9 @@ pub(crate) fn find_method_or_function(
     search_enum: impl Fn(&crate::analysis::enums::Info) -> bool + Copy,
     search_flag: impl Fn(&crate::analysis::flags::Info) -> bool + Copy,
     is_class_method: bool,
+    is_virtual_method: bool,
 ) -> Option<String> {
-    if is_class_method {
+    if is_virtual_method {
         if let Some((obj_info, fn_info)) = env
             .analysis
             .find_object_by_virtual_method(env, search_obj, search_fn)
@@ -431,6 +433,21 @@ pub(crate) fn find_method_or_function(
                 in_type,
                 &obj_info.name,
             ))
+        } else {
+            None
+        }
+    } else if is_class_method {
+        if let Some((record_info, fn_info)) =
+            env.analysis
+                .find_record_by_function(env, search_record, search_fn)
+        {
+            let object = env.config.objects.get(&record_info.full_name);
+            let visible_parent = object
+                .and_then(|o| o.trait_name.clone())
+                .unwrap_or_else(|| format!("{}Ext", record_info.name));
+            let parent = format!("subclass::prelude::{}", visible_parent);
+            let is_self = in_type == Some((&record_info.type_id, None));
+            Some(fn_info.doc_link(Some(&parent), Some(&visible_parent), is_self))
         } else {
             None
         }
@@ -509,7 +526,7 @@ pub(crate) fn gen_object_fn_doc_link(
     let sym = symbols.by_tid(obj_info.type_id).unwrap();
     let is_self = in_type == Some((&obj_info.type_id, Some(obj_info.function_location(fn_info))));
 
-    if fn_info.kind == FunctionKind::VirtualMethod {
+    if fn_info.kind == FunctionKind::VirtualMethod || fn_info.kind == FunctionKind::ClassMethod {
         let (type_name, visible_type_name) = obj_info.generate_doc_link_info(fn_info);
         fn_info.doc_link(
             Some(&sym.full_rust_name().replace(visible_name, &type_name)),

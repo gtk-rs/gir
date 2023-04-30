@@ -220,6 +220,7 @@ fn find_virtual_method_by_name(
         |_| false,
         |_| false,
         |_| false,
+        false,
         true,
     )
 }
@@ -262,6 +263,7 @@ fn find_method_or_function_by_name(
             })
         },
         is_class_method,
+        false,
     )
 }
 
