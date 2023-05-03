@@ -567,6 +567,38 @@
 <a href="#567" id="567">567</a>
 <a href="#568" id="568">568</a>
 <a href="#569" id="569">569</a>
+<a href="#570" id="570">570</a>
+<a href="#571" id="571">571</a>
+<a href="#572" id="572">572</a>
+<a href="#573" id="573">573</a>
+<a href="#574" id="574">574</a>
+<a href="#575" id="575">575</a>
+<a href="#576" id="576">576</a>
+<a href="#577" id="577">577</a>
+<a href="#578" id="578">578</a>
+<a href="#579" id="579">579</a>
+<a href="#580" id="580">580</a>
+<a href="#581" id="581">581</a>
+<a href="#582" id="582">582</a>
+<a href="#583" id="583">583</a>
+<a href="#584" id="584">584</a>
+<a href="#585" id="585">585</a>
+<a href="#586" id="586">586</a>
+<a href="#587" id="587">587</a>
+<a href="#588" id="588">588</a>
+<a href="#589" id="589">589</a>
+<a href="#590" id="590">590</a>
+<a href="#591" id="591">591</a>
+<a href="#592" id="592">592</a>
+<a href="#593" id="593">593</a>
+<a href="#594" id="594">594</a>
+<a href="#595" id="595">595</a>
+<a href="#596" id="596">596</a>
+<a href="#597" id="597">597</a>
+<a href="#598" id="598">598</a>
+<a href="#599" id="599">599</a>
+<a href="#600" id="600">600</a>
+<a href="#601" id="601">601</a>
 </pre><pre class="rust"><code><span class="attr">#![allow(clippy::manual_map)]
 </span><span class="kw">use </span>std::fmt::Write;
 
@@ -957,7 +989,6 @@
     in_type: <span class="prelude-ty">Option</span>&lt;(<span class="kw-2">&amp;</span>TypeId, <span class="prelude-ty">Option</span>&lt;LocationInObject&gt;)&gt;,
 ) -&gt; <span class="prelude-ty">Option</span>&lt;String&gt; {
     find_method_or_function(
-        name,
         env,
         in_type,
         |f| f.glib_name == name,
@@ -966,6 +997,7 @@
         |r| c_type.map_or(<span class="bool-val">true</span>, |t| r.type_(<span class="kw-2">&amp;</span>env.library).c_type == t),
         |r| c_type.map_or(<span class="bool-val">true</span>, |t| r.type_(<span class="kw-2">&amp;</span>env.library).c_type == t),
         c_type.map_or(<span class="bool-val">false</span>, |t| t.ends_with(<span class="string">&quot;Class&quot;</span>)),
+        <span class="bool-val">false</span>,
     )
 }
 
@@ -980,7 +1012,6 @@
 /// - [`gi_docgen::find_method_or_function_by_name()`] where the object/records
 ///   are looked by their name
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>find_method_or_function(
-    name: <span class="kw-2">&amp;</span>str,
     env: <span class="kw-2">&amp;</span>Env,
     in_type: <span class="prelude-ty">Option</span>&lt;(<span class="kw-2">&amp;</span>TypeId, <span class="prelude-ty">Option</span>&lt;LocationInObject&gt;)&gt;,
     search_fn: <span class="kw">impl </span>Fn(<span class="kw-2">&amp;</span><span class="kw">crate</span>::analysis::functions::Info) -&gt; bool + Copy,
@@ -989,14 +1020,40 @@
     search_enum: <span class="kw">impl </span>Fn(<span class="kw-2">&amp;</span><span class="kw">crate</span>::analysis::enums::Info) -&gt; bool + Copy,
     search_flag: <span class="kw">impl </span>Fn(<span class="kw-2">&amp;</span><span class="kw">crate</span>::analysis::flags::Info) -&gt; bool + Copy,
     is_class_method: bool,
+    is_virtual_method: bool,
 ) -&gt; <span class="prelude-ty">Option</span>&lt;String&gt; {
-    <span class="kw">if </span>is_class_method {
-        <span class="macro">info!</span>(<span class="string">&quot;Class methods are not supported yet `{}`&quot;</span>, name);
-        <span class="kw">return </span><span class="prelude-val">None</span>;
-    }
-
+    <span class="kw">if </span>is_virtual_method {
+        <span class="kw">if let </span><span class="prelude-val">Some</span>((obj_info, fn_info)) = env
+            .analysis
+            .find_object_by_virtual_method(env, search_obj, search_fn)
+        {
+            <span class="prelude-val">Some</span>(gen_object_fn_doc_link(
+                obj_info,
+                fn_info,
+                env,
+                in_type,
+                <span class="kw-2">&amp;</span>obj_info.name,
+            ))
+        } <span class="kw">else </span>{
+            <span class="prelude-val">None
+        </span>}
+    } <span class="kw">else if </span>is_class_method {
+        <span class="kw">if let </span><span class="prelude-val">Some</span>((record_info, fn_info)) =
+            env.analysis
+                .find_record_by_function(env, search_record, search_fn)
+        {
+            <span class="kw">let </span>object = env.config.objects.get(<span class="kw-2">&amp;</span>record_info.full_name);
+            <span class="kw">let </span>visible_parent = object
+                .and_then(|o| o.trait_name.clone())
+                .unwrap_or_else(|| <span class="macro">format!</span>(<span class="string">&quot;{}Ext&quot;</span>, record_info.name));
+            <span class="kw">let </span>parent = <span class="macro">format!</span>(<span class="string">&quot;subclass::prelude::{}&quot;</span>, visible_parent);
+            <span class="kw">let </span>is_self = in_type == <span class="prelude-val">Some</span>((<span class="kw-2">&amp;</span>record_info.type_id, <span class="prelude-val">None</span>));
+            <span class="prelude-val">Some</span>(fn_info.doc_link(<span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>parent), <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>visible_parent), is_self))
+        } <span class="kw">else </span>{
+            <span class="prelude-val">None
+        </span>}
     <span class="comment">// if we can find the function in an object
-    </span><span class="kw">if let </span><span class="prelude-val">Some</span>((obj_info, fn_info)) = env
+    </span>} <span class="kw">else if let </span><span class="prelude-val">Some</span>((obj_info, fn_info)) = env
         .analysis
         .find_object_by_function(env, search_obj, search_fn)
     {
@@ -1070,7 +1127,14 @@
     <span class="kw">let </span>sym = symbols.by_tid(obj_info.type_id).unwrap();
     <span class="kw">let </span>is_self = in_type == <span class="prelude-val">Some</span>((<span class="kw-2">&amp;</span>obj_info.type_id, <span class="prelude-val">Some</span>(obj_info.function_location(fn_info))));
 
-    <span class="kw">if </span>fn_info.kind == FunctionKind::Method {
+    <span class="kw">if </span>fn_info.kind == FunctionKind::VirtualMethod || fn_info.kind == FunctionKind::ClassMethod {
+        <span class="kw">let </span>(type_name, visible_type_name) = obj_info.generate_doc_link_info(fn_info);
+        fn_info.doc_link(
+            <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>sym.full_rust_name().replace(visible_name, <span class="kw-2">&amp;</span>type_name)),
+            <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>visible_type_name),
+            <span class="bool-val">false</span>,
+        )
+    } <span class="kw">else if </span>fn_info.kind == FunctionKind::Method {
         <span class="kw">let </span>(type_name, visible_type_name) = obj_info.generate_doc_link_info(fn_info);
 
         fn_info.doc_link(

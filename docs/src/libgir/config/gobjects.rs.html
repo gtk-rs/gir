@@ -774,6 +774,20 @@
 <a href="#774" id="774">774</a>
 <a href="#775" id="775">775</a>
 <a href="#776" id="776">776</a>
+<a href="#777" id="777">777</a>
+<a href="#778" id="778">778</a>
+<a href="#779" id="779">779</a>
+<a href="#780" id="780">780</a>
+<a href="#781" id="781">781</a>
+<a href="#782" id="782">782</a>
+<a href="#783" id="783">783</a>
+<a href="#784" id="784">784</a>
+<a href="#785" id="785">785</a>
+<a href="#786" id="786">786</a>
+<a href="#787" id="787">787</a>
+<a href="#788" id="788">788</a>
+<a href="#789" id="789">789</a>
+<a href="#790" id="790">790</a>
 </pre><pre class="rust"><code><span class="kw">use </span>std::{
     collections::{BTreeMap, HashSet},
     str::FromStr,
@@ -792,6 +806,7 @@
     members::Members,
     properties::Properties,
     signals::{Signal, Signals},
+    virtual_methods::VirtualMethods,
 };
 <span class="kw">use crate</span>::{
     analysis::{conversion_type::ConversionType, ref_mode},
@@ -841,6 +856,7 @@
 </span><span class="kw">pub struct </span>GObject {
     <span class="kw">pub </span>name: String,
     <span class="kw">pub </span>functions: Functions,
+    <span class="kw">pub </span>virtual_methods: VirtualMethods,
     <span class="kw">pub </span>constants: Constants,
     <span class="kw">pub </span>signals: Signals,
     <span class="kw">pub </span>members: Members,
@@ -880,6 +896,7 @@
         GObject {
             name: <span class="string">&quot;Default&quot;</span>.into(),
             functions: Functions::new(),
+            virtual_methods: VirtualMethods::new(),
             constants: Constants::new(),
             signals: Signals::new(),
             members: Members::new(),
@@ -1073,6 +1090,16 @@
             <span class="macro">assert!</span>(function_names.insert(name), <span class="string">&quot;{name} already defined!&quot;</span>);
         }
     }
+    <span class="kw">let </span>virtual_methods = VirtualMethods::parse(toml_object.lookup(<span class="string">&quot;virtual_method&quot;</span>), <span class="kw-2">&amp;</span>name);
+    <span class="kw">let </span><span class="kw-2">mut </span>virtual_methods_names = HashSet::new();
+    <span class="kw">for </span>f <span class="kw">in </span><span class="kw-2">&amp;</span>virtual_methods {
+        <span class="kw">if let </span>Ident::Name(name) = <span class="kw-2">&amp;</span>f.ident {
+            <span class="macro">assert!</span>(
+                virtual_methods_names.insert(name),
+                <span class="string">&quot;{name} already defined!&quot;
+            </span>);
+        }
+    }
 
     <span class="kw">let </span>signals = {
         <span class="kw">let </span><span class="kw-2">mut </span>v = Vec::new();
@@ -1255,6 +1282,7 @@
     GObject {
         name,
         functions,
+        virtual_methods,
         constants,
         signals,
         members,

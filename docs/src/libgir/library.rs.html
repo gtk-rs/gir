@@ -1373,6 +1373,10 @@
 <a href="#1373" id="1373">1373</a>
 <a href="#1374" id="1374">1374</a>
 <a href="#1375" id="1375">1375</a>
+<a href="#1376" id="1376">1376</a>
+<a href="#1377" id="1377">1377</a>
+<a href="#1378" id="1378">1378</a>
+<a href="#1379" id="1379">1379</a>
 </pre><pre class="rust"><code><span class="kw">use </span>std::{
     cmp::{Ord, Ordering, PartialOrd},
     collections::{BTreeMap, BTreeSet, HashMap, HashSet},
@@ -1528,6 +1532,8 @@
     Function,
     Method,
     Global,
+    ClassMethod,
+    VirtualMethod,
 }
 
 <span class="kw">impl </span>FromStr <span class="kw">for </span>FunctionKind {
@@ -1924,6 +1930,7 @@
     <span class="kw">pub </span>c_class_type: <span class="prelude-ty">Option</span>&lt;String&gt;,
     <span class="kw">pub </span>glib_get_type: String,
     <span class="kw">pub </span>functions: Vec&lt;Function&gt;,
+    <span class="kw">pub </span>virtual_methods: Vec&lt;Function&gt;,
     <span class="kw">pub </span>signals: Vec&lt;Signal&gt;,
     <span class="kw">pub </span>properties: Vec&lt;Property&gt;,
     <span class="kw">pub </span>prerequisites: Vec&lt;TypeId&gt;,
@@ -1943,6 +1950,7 @@
     <span class="kw">pub </span>glib_get_type: String,
     <span class="kw">pub </span>fields: Vec&lt;Field&gt;,
     <span class="kw">pub </span>functions: Vec&lt;Function&gt;,
+    <span class="kw">pub </span>virtual_methods: Vec&lt;Function&gt;,
     <span class="kw">pub </span>signals: Vec&lt;Signal&gt;,
     <span class="kw">pub </span>properties: Vec&lt;Property&gt;,
     <span class="kw">pub </span>parent: <span class="prelude-ty">Option</span>&lt;TypeId&gt;,
