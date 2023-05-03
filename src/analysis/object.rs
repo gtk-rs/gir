@@ -211,6 +211,8 @@ pub fn class(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<Info>
 
     let mut signatures = Signatures::with_capacity(klass.functions.len());
 
+    // As we don't generate virtual methods yet, we don't pass imports here
+    // it would need to be fixed once work in generating virtual methods is done
     let virtual_methods = functions::analyze(
         env,
         &klass.virtual_methods,
@@ -218,7 +220,7 @@ pub fn class(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<Info>
         true,
         false,
         obj,
-        &mut imports,
+        &mut Imports::default(),
         None,
         Some(deps),
     );
