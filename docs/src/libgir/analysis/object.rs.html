@@ -468,6 +468,8 @@
 <a href="#468" id="468">468</a>
 <a href="#469" id="469">469</a>
 <a href="#470" id="470">470</a>
+<a href="#471" id="471">471</a>
+<a href="#472" id="472">472</a>
 </pre><pre class="rust"><code><span class="kw">use </span>std::{borrow::Cow, ops::Deref};
 
 <span class="kw">use </span>log::info;
@@ -681,14 +683,16 @@
 
     <span class="kw">let </span><span class="kw-2">mut </span>signatures = Signatures::with_capacity(klass.functions.len());
 
-    <span class="kw">let </span>virtual_methods = functions::analyze(
+    <span class="comment">// As we don&#39;t generate virtual methods yet, we don&#39;t pass imports here
+    // it would need to be fixed once work in generating virtual methods is done
+    </span><span class="kw">let </span>virtual_methods = functions::analyze(
         env,
         <span class="kw-2">&amp;</span>klass.virtual_methods,
         <span class="prelude-val">Some</span>(class_tid),
         <span class="bool-val">true</span>,
         <span class="bool-val">false</span>,
         obj,
-        <span class="kw-2">&amp;mut </span>imports,
+        <span class="kw-2">&amp;mut </span>Imports::default(),
         <span class="prelude-val">None</span>,
         <span class="prelude-val">Some</span>(deps),
     );
