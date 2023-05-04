@@ -161,6 +161,9 @@ Make sure everything under <code>[package]</code> is to your liking.</p>
 <p>Add the following lines to the file:</p>
 <pre><code class="language-toml">[package.metadata.docs.rs]
 all-features = true
+# For build.rs scripts
+rustc-args = [&quot;--cfg&quot;, &quot;docsrs&quot;]
+# For rustdoc
 rustdoc-args = [&quot;--cfg&quot;, &quot;docsrs&quot;]
 </code></pre>
 <p>This automatically activates the <code>docsrs</code> attribute if you chose to publish the bindings and docs.rs tries to build the documentation.
