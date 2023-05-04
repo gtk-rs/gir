@@ -12,6 +12,9 @@ Add the following lines to the file:
 ```toml
 [package.metadata.docs.rs]
 all-features = true
+# For build.rs scripts
+rustc-args = ["--cfg", "docsrs"]
+# For rustdoc
 rustdoc-args = ["--cfg", "docsrs"]
 ```
 This automatically activates the `docsrs` attribute if you chose to publish the bindings and docs.rs tries to build the documentation.
