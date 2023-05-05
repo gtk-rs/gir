@@ -1498,6 +1498,7 @@
 <a href="#1498" id="1498">1498</a>
 <a href="#1499" id="1499">1499</a>
 <a href="#1500" id="1500">1500</a>
+<a href="#1501" id="1501">1501</a>
 </pre><pre class="rust"><code><span class="kw">use </span>std::{
     path::{Path, PathBuf},
     str::FromStr,
@@ -2054,6 +2055,7 @@
                 <span class="self">self</span>.read_parameter(parser, ns_id, elem, <span class="bool-val">true</span>, <span class="bool-val">false</span>)
                     .map(|p| ret = <span class="prelude-val">Some</span>(p))
             }
+            <span class="string">&quot;source-position&quot; </span>=&gt; parser.ignore_element(),
             <span class="string">&quot;doc&quot; </span>=&gt; parser.text().map(|t| doc = <span class="prelude-val">Some</span>(t)),
             <span class="string">&quot;doc-deprecated&quot; </span>=&gt; parser.text().map(|t| doc_deprecated = <span class="prelude-val">Some</span>(t)),
             <span class="string">&quot;attribute&quot; </span>=&gt; parser.ignore_element(),
