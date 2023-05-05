@@ -486,7 +486,12 @@ fn generate_builder(w: &mut dyn Write, env: &Env, analysis: &analysis::object::I
 fn generate_trait(w: &mut dyn Write, env: &Env, analysis: &analysis::object::Info) -> Result<()> {
     write!(
         w,
-        "pub trait {}: IsA<{}> + 'static {{",
+        "mod sealed {{
+    pub trait Sealed {{}}
+    impl<T: super::IsA<super::{1}>> Sealed for T {{}}
+}}
+
+pub trait {}: IsA<{}> + sealed::Sealed + 'static {{",
         analysis.trait_name, analysis.name
     )?;
 
