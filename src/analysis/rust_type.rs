@@ -191,6 +191,7 @@ pub struct RustTypeBuilder<'env> {
     concurrency: library::Concurrency,
     try_from_glib: TryFromGlib,
     callback_parameters_config: CallbackParameters,
+    c_type: String,
 }
 
 impl<'env> RustTypeBuilder<'env> {
@@ -205,6 +206,7 @@ impl<'env> RustTypeBuilder<'env> {
             concurrency: library::Concurrency::None,
             try_from_glib: TryFromGlib::default(),
             callback_parameters_config: Vec::new(),
+            c_type: String::default(),
         }
     }
 
@@ -235,6 +237,11 @@ impl<'env> RustTypeBuilder<'env> {
 
     pub fn try_from_glib(mut self, try_from_glib: &TryFromGlib) -> Self {
         self.try_from_glib = try_from_glib.clone();
+        self
+    }
+
+    pub fn c_type(mut self, c_type: String) -> Self {
+        self.c_type = c_type;
         self
     }
 
@@ -348,7 +355,8 @@ impl<'env> RustTypeBuilder<'env> {
                 if ConversionType::of(self.env, inner_tid) == ConversionType::Pointer =>
             {
                 skip_option = true;
-                let inner_ref_mode = match self.env.type_(inner_tid) {
+                let inner_type = self.env.type_(inner_tid);
+                let inner_ref_mode = match inner_type {
                     Class(..) | Interface(..) => RefMode::None,
                     Record(record) => match RecordType::of(record) {
                         RecordType::Boxed => RefMode::None,
@@ -373,7 +381,59 @@ impl<'env> RustTypeBuilder<'env> {
                             if self.ref_mode.is_ref() {
                                 format!("[{typ}]")
                             } else {
-                                format!("Vec<{typ}>")
+                                let is_obj = matches!(inner_type, Class(_) | Interface(_));
+                                let is_ptr = is_obj
+                                    || matches!(inner_type, Basic(Pointer))
+                                    || (matches!(inner_type, Record(_))
+                                        && self
+                                            .env
+                                            .config
+                                            .objects
+                                            .get(&inner_tid.full_name(&self.env.library))
+                                            .map(|o| !o.boxed_inline)
+                                            .unwrap_or(false));
+                                let is_string = matches!(inner_type, Basic(Utf8));
+                                match *type_ {
+                                    CArray(_) if is_ptr => {
+                                        format!("{}<{typ}>", use_glib_type(self.env, "PtrSlice"))
+                                    }
+                                    CArray(_)
+                                        if is_string
+                                            && matches!(
+                                                self.c_type.as_str(),
+                                                "char**" | "gchar**"
+                                            ) =>
+                                    {
+                                        use_glib_type(self.env, "StrV")
+                                    }
+                                    CArray(_)
+                                        if !matches!(
+                                            inner_type,
+                                            Basic(Utf8 | Filename | OsString | Boolean)
+                                        ) =>
+                                    {
+                                        format!("{}<{typ}>", use_glib_type(self.env, "Slice"))
+                                    }
+                                    List(_) if is_ptr => {
+                                        format!("{}<{typ}>", use_glib_type(self.env, "List"))
+                                    }
+                                    List(_) if is_string => format!(
+                                        "{}<{}>",
+                                        use_glib_type(self.env, "List"),
+                                        use_glib_type(self.env, "GStringPtr")
+                                    ),
+                                    SList(_) if is_ptr => {
+                                        format!("{}<{typ}>", use_glib_type(self.env, "SList"))
+                                    }
+                                    SList(_) if is_string => format!(
+                                        "{}<{}>",
+                                        use_glib_type(self.env, "SList"),
+                                        use_glib_type(self.env, "GStringPtr")
+                                    ),
+                                    /* TODO: Handle Array and PtrArray when they gain type
+                                     * parameters */
+                                    _ => format!("Vec<{typ}>"),
+                                }
                             }
                         })
                     })
@@ -623,6 +683,7 @@ impl<'env> RustTypeBuilder<'env> {
             .direction(self.direction)
             .nullable(self.nullable)
             .ref_mode(self.ref_mode)
+            .c_type(self.c_type)
             .scope(self.scope)
             .try_from_glib(&self.try_from_glib)
             .try_build();

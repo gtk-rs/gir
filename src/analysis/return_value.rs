@@ -122,6 +122,7 @@ pub fn analyze(
         let par = analysis::Parameter::from_return_value(env, lib_par, configured_functions);
         if let Ok(rust_type) = RustType::builder(env, typ)
             .direction(par.lib_par.direction)
+            .c_type(par.lib_par.c_type.clone())
             .try_from_glib(&par.try_from_glib)
             .try_build()
         {
@@ -130,6 +131,7 @@ pub fn analyze(
 
         commented = RustType::builder(env, typ)
             .direction(func.ret.direction)
+            .c_type(par.lib_par.c_type.clone())
             .try_from_glib(&par.try_from_glib)
             .try_build_param()
             .is_err();

@@ -29,6 +29,7 @@ impl ToParameter for CParameter {
                     let type_name = RustType::builder(env, self.typ)
                         .direction(self.direction)
                         .nullable(self.nullable)
+                        .c_type(self.c_type.clone())
                         .ref_mode(ref_mode)
                         .scope(self.scope)
                         .try_from_glib(&self.try_from_glib)

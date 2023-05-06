@@ -88,6 +88,7 @@ impl TranslateFromGlib for analysis::return_value::Info {
                 Some(tid) => {
                     let rust_type = RustType::builder(env, tid)
                         .direction(par.lib_par.direction)
+                        .c_type(par.lib_par.c_type.clone())
                         .try_from_glib(&par.try_from_glib)
                         .try_build();
                     let from_glib_xxx = from_glib_xxx(par.lib_par.transfer, None);
