@@ -1,8 +1,4 @@
-use crate::{
-    chunk::Chunk,
-    env::Env,
-    nameutil::{use_glib_type, use_gtk_type},
-};
+use crate::{chunk::Chunk, env::Env, nameutil::use_gtk_type};
 
 pub struct Builder<'a> {
     name: String,
@@ -95,10 +91,8 @@ impl<'a> Builder<'a> {
             };
 
             vec![Chunk::Custom(format!(
-                "{}::property({}, \"{}\")",
-                use_glib_type(self.env, "ObjectExt"),
-                self_,
-                self.name
+                "ObjectExt::property({}, \"{}\")",
+                self_, self.name
             ))]
         }
     }
@@ -126,11 +120,8 @@ impl<'a> Builder<'a> {
             };
 
             vec![Chunk::Custom(format!(
-                "{}::set_property({},\"{}\", {})",
-                use_glib_type(self.env, "ObjectExt"),
-                self_,
-                self.name,
-                self.var_name
+                "ObjectExt::set_property({},\"{}\", {})",
+                self_, self.name, self.var_name
             ))]
         }
     }
