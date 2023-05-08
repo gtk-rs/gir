@@ -45,16 +45,12 @@ pub fn new(env: &Env, obj: &GObject, imports: &mut Imports) -> Option<Info> {
 
         let has_get_quark = enumeration.error_domain.is_some();
         if has_get_quark {
-            imports.add("glib::Quark");
-            imports.add("glib::error::ErrorDomain");
+            imports.add("glib::prelude::*");
         }
 
         let has_get_type = enumeration.glib_get_type.is_some();
         if has_get_type {
-            imports.add("glib::Type");
-            imports.add("glib::StaticType");
-            imports.add("glib::value::FromValue");
-            imports.add("glib::value::ToValue");
+            imports.add("glib::prelude::*");
         }
 
         if obj.generate_display_trait {

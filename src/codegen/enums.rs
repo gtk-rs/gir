@@ -381,9 +381,10 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
             w,
             "impl ErrorDomain for {name} {{
     #[inline]
-    fn domain() -> Quark {{
+    fn domain() -> {glib_quark} {{
         {assert}",
             name = enum_.name,
+            glib_quark = use_glib_type(env, "Quark"),
             assert = assert
         )?;
 
@@ -449,13 +450,14 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
             w,
             "impl StaticType for {name} {{
     #[inline]
-    fn static_type() -> Type {{
+    fn static_type() -> {glib_type} {{
         unsafe {{ from_glib({sys_crate_name}::{get_type}()) }}
     }}
 }}",
             sys_crate_name = sys_crate_name,
             name = enum_.name,
-            get_type = get_type
+            get_type = get_type,
+            glib_type = use_glib_type(env, "Type")
         )?;
         writeln!(w)?;
 
@@ -498,7 +500,7 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
         allow_deprecated(w, enum_.deprecated_version, false, 0)?;
         writeln!(
             w,
-            "unsafe impl<'a> FromValue<'a> for {name} {{
+            "unsafe impl<'a> {from_value_type}<'a> for {name} {{
     type Checker = {genericwrongvaluetypechecker}<Self>;
 
     #[inline]
@@ -511,6 +513,7 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
             gvalue = use_glib_type(env, "Value"),
             genericwrongvaluetypechecker = use_glib_type(env, "value::GenericValueTypeChecker"),
             assert = assert,
+            from_value_type = use_glib_type(env, "value::FromValue"),
         )?;
         writeln!(w)?;
 
