@@ -46,10 +46,7 @@ pub fn new(env: &Env, obj: &GObject, imports: &mut Imports) -> Option<Info> {
 
         let has_get_type = flags.glib_get_type.is_some();
         if has_get_type {
-            imports.add("glib::Type");
-            imports.add("glib::StaticType");
-            imports.add("glib::value::FromValue");
-            imports.add("glib::value::ToValue");
+            imports.add("glib::prelude::*");
         }
 
         if obj.generate_display_trait {
