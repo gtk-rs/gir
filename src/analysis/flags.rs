@@ -42,7 +42,7 @@ pub fn new(env: &Env, obj: &GObject, imports: &mut Imports) -> Option<Info> {
 
         let imports = &mut imports.with_defaults(flags.version, &None);
         imports.add("glib::translate::*");
-        imports.add("bitflags::bitflags");
+        imports.add("glib::bitflags::bitflags");
 
         let has_get_type = flags.glib_get_type.is_some();
         if has_get_type {
