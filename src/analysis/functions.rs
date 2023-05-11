@@ -735,7 +735,10 @@ fn analyze_function(
                     correction_instance = 1;
                 }
 
-                if r#async && to_remove.contains(&(pos - correction_instance)) {
+                if r#async
+                    && pos >= correction_instance
+                    && to_remove.contains(&(pos - correction_instance))
+                {
                     continue;
                 }
                 assert!(
