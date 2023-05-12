@@ -1332,6 +1332,9 @@
 <a href="#1332" id="1332">1332</a>
 <a href="#1333" id="1333">1333</a>
 <a href="#1334" id="1334">1334</a>
+<a href="#1335" id="1335">1335</a>
+<a href="#1336" id="1336">1336</a>
+<a href="#1337" id="1337">1337</a>
 </pre><pre class="rust"><code><span class="comment">// TODO: better heuristic (https://bugzilla.gnome.org/show_bug.cgi?id=623635#c5)
 // TODO: ProgressCallback types (not specific to async).
 // TODO: add annotation for methods like g_file_replace_contents_bytes_async
@@ -2069,7 +2072,10 @@
                     correction_instance = <span class="number">1</span>;
                 }
 
-                <span class="kw">if </span>r#async &amp;&amp; to_remove.contains(<span class="kw-2">&amp;</span>(pos - correction_instance)) {
+                <span class="kw">if </span>r#async
+                    &amp;&amp; pos &gt;= correction_instance
+                    &amp;&amp; to_remove.contains(<span class="kw-2">&amp;</span>(pos - correction_instance))
+                {
                     <span class="kw">continue</span>;
                 }
                 <span class="macro">assert!</span>(
