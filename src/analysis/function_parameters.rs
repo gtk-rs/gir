@@ -240,7 +240,10 @@ pub fn analyze(
             }
         };
 
-        if async_func && to_remove.contains(&(pos - correction_instance)) {
+        if async_func
+            && pos >= correction_instance
+            && to_remove.contains(&(pos - correction_instance))
+        {
             add_rust_parameter = false;
         }
         let mut transfer = par.transfer;
