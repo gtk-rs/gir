@@ -585,6 +585,11 @@
 <a href="#585" id="585">585</a>
 <a href="#586" id="586">586</a>
 <a href="#587" id="587">587</a>
+<a href="#588" id="588">588</a>
+<a href="#589" id="589">589</a>
+<a href="#590" id="590">590</a>
+<a href="#591" id="591">591</a>
+<a href="#592" id="592">592</a>
 </pre><pre class="rust"><code><span class="kw">use </span>std::{
     collections::{BTreeMap, HashSet},
     io::{<span class="prelude-ty">Result</span>, Write},
@@ -1073,7 +1078,12 @@
 <span class="kw">fn </span>generate_trait(w: <span class="kw-2">&amp;mut </span><span class="kw">dyn </span>Write, env: <span class="kw-2">&amp;</span>Env, analysis: <span class="kw-2">&amp;</span>analysis::object::Info) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
     <span class="macro">write!</span>(
         w,
-        <span class="string">&quot;pub trait {}: IsA&lt;{}&gt; + &#39;static {{&quot;</span>,
+        <span class="string">&quot;mod sealed {{
+    pub trait Sealed {{}}
+    impl&lt;T: super::IsA&lt;super::{1}&gt;&gt; Sealed for T {{}}
+}}
+
+pub trait {}: IsA&lt;{}&gt; + sealed::Sealed + &#39;static {{&quot;</span>,
         analysis.trait_name, analysis.name
     )<span class="question-mark">?</span>;
 
