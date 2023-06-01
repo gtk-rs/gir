@@ -332,7 +332,8 @@ impl Builder {
         } else {
             Chunk::Unsafe(body)
         });
-        Chunk::BlockHalf(chunks)
+        let chunk = self.generate_run_withs(Chunk::Chunks(chunks));
+        Chunk::BlockHalf(vec![chunk])
     }
 
     fn remove_extra_assume_init(
@@ -977,6 +978,21 @@ impl Builder {
             name: self.glib_name.clone(),
             params,
         }
+    }
+    fn generate_run_withs(&self, mut call: Chunk) -> Chunk {
+        for trans in self.transformations.iter().rev() {
+            let par = &self.parameters[trans.ind_c];
+            if let In = par {
+                if let TransformationType::RunWith { name, func, .. } = &trans.transformation_type {
+                    call = Chunk::RunWith {
+                        name: name.clone(),
+                        func: func.clone(),
+                        body: Box::new(call),
+                    };
+                }
+            }
+        }
+        call
     }
     fn generate_call_conversion(
         &self,

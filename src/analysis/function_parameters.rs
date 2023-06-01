@@ -63,6 +63,7 @@ pub struct CParameter {
     pub transfer: library::Transfer,
     pub caller_allocates: bool,
     pub is_error: bool,
+    pub has_length: bool,
     pub scope: ParameterScope,
     /// Index of the user data parameter associated with the callback.
     pub user_data_index: Option<usize>,
@@ -74,6 +75,25 @@ pub struct CParameter {
     pub ref_mode: RefMode,
     pub try_from_glib: TryFromGlib,
     pub move_: bool,
+}
+
+impl CParameter {
+    pub fn is_gstr(&self, env: &Env) -> bool {
+        matches!(
+            env.type_(self.typ),
+            library::Type::Basic(library::Basic::Utf8)
+        ) && self.ref_mode.is_ref()
+    }
+    pub fn is_strv(&self, env: &Env) -> bool {
+        if let library::Type::CArray(inner) = env.type_(self.typ) {
+            matches!(
+                env.type_(*inner),
+                library::Type::Basic(library::Basic::Utf8)
+            ) && !matches!(self.c_type.as_str(), "char**" | "gchar**")
+        } else {
+            false
+        }
+    }
 }
 
 #[derive(Clone, Debug)]
@@ -89,6 +109,7 @@ pub enum TransformationType {
     ToGlibPointer {
         name: String,
         instance_parameter: bool,
+        typ: library::TypeId,
         transfer: library::Transfer,
         ref_mode: RefMode,
         // filled by functions
@@ -110,20 +131,28 @@ pub enum TransformationType {
     },
     IntoRaw(String),
     ToSome(String),
+    AsPtr(String),
+    RunWith {
+        name: String,
+        func: String,
+        inner: Box<TransformationType>,
+    },
 }
 
 impl TransformationType {
     pub fn is_to_glib(&self) -> bool {
-        matches!(
-            *self,
+        match self {
             Self::ToGlibDirect { .. }
-                | Self::ToGlibScalar { .. }
-                | Self::ToGlibPointer { .. }
-                | Self::ToGlibBorrow
-                | Self::ToGlibUnknown { .. }
-                | Self::ToSome(_)
-                | Self::IntoRaw(_)
-        )
+            | Self::ToGlibScalar { .. }
+            | Self::ToGlibPointer { .. }
+            | Self::ToGlibBorrow
+            | Self::ToGlibUnknown { .. }
+            | Self::ToSome(_)
+            | Self::IntoRaw(_)
+            | Self::AsPtr(_) => true,
+            Self::RunWith { inner, .. } => inner.is_to_glib(),
+            _ => false,
+        }
     }
 
     pub fn set_to_glib_extra(&mut self, to_glib_extra_: &str) {
@@ -272,6 +301,7 @@ pub fn analyze(
                     transfer == Transfer::Full && par.direction.is_in()
                 }
             });
+
         let mut array_par = configured_parameters.iter().find_map(|cp| {
             cp.length_of
                 .as_ref()
@@ -281,11 +311,18 @@ pub fn analyze(
             array_par = array_lengths.get(&(pos as u32)).copied();
         }
         if array_par.is_none() && !disable_length_detect {
-            array_par = detect_length(env, pos, par, function_parameters);
+            array_par = detect_array(env, pos, par, function_parameters);
         }
         if let Some(array_par) = array_par {
             let mut array_name = nameutil::mangle_keywords(&array_par.name);
-            if let Some(bound_type) = Bounds::type_for(env, array_par.typ) {
+            let ref_mode = if array_par.transfer == Transfer::Full {
+                RefMode::None
+            } else {
+                RefMode::of(env, array_par.typ, array_par.direction)
+            };
+            if let Some(bound_type) =
+                Bounds::type_for(env, array_par.typ, ref_mode, &array_par.c_type)
+            {
                 array_name = (array_name.into_owned()
                     + &Bounds::get_to_glib_extra(
                         &bound_type,
@@ -305,6 +342,9 @@ pub fn analyze(
             };
             parameters.transformations.push(transformation);
         }
+        let has_length = par.array_length.is_some()
+            || (!disable_length_detect
+                && detect_length(env, pos, par, function_parameters).is_some());
 
         let immutable = configured_parameters.iter().any(|p| p.constant);
         let ref_mode =
@@ -326,6 +366,7 @@ pub fn analyze(
             nullable,
             ref_mode,
             is_error: par.is_error,
+            has_length,
             scope: par.scope,
             user_data_index: par.closure,
             destroy_index: par.destroy,
@@ -392,6 +433,7 @@ pub fn analyze(
             ConversionType::Pointer => TransformationType::ToGlibPointer {
                 name,
                 instance_parameter: par.instance_parameter,
+                typ,
                 transfer,
                 ref_mode,
                 to_glib_extra: Default::default(),
@@ -437,6 +479,26 @@ pub fn analyze(
         if let Some(transformation_type) = transformation_type {
             transformation.transformation_type = transformation_type;
         }
+
+        let c_par = parameters.c_parameters.last().unwrap();
+        if c_par.is_gstr(env) && !has_length {
+            transformation.transformation_type = TransformationType::RunWith {
+                name: c_par.name.clone(),
+                func: if *c_par.nullable {
+                    nameutil::use_glib_type(env, "IntoOptionalGStr::run_with_gstr")
+                } else {
+                    nameutil::use_glib_type(env, "IntoGStr::run_with_gstr")
+                },
+                inner: Box::new(transformation.transformation_type),
+            };
+        } else if c_par.is_strv(env) {
+            transformation.transformation_type = TransformationType::RunWith {
+                name: c_par.name.clone(),
+                func: nameutil::use_glib_type(env, "IntoStrV::run_with_strv"),
+                inner: Box::new(TransformationType::AsPtr(c_par.name.clone())),
+            };
+        }
+
         parameters.transformations.push(transformation);
     }
 
@@ -463,30 +525,33 @@ fn detect_length<'a>(
     par: &library::Parameter,
     parameters: &'a [library::Parameter],
 ) -> Option<&'a library::Parameter> {
-    if !is_length(par) || pos == 0 {
+    if !has_length(env, par.typ) {
         return None;
     }
 
-    parameters.get(pos - 1).and_then(|p| {
-        if has_length(env, p.typ) {
-            Some(p)
-        } else {
-            None
-        }
-    })
+    parameters
+        .get(pos + 1)
+        .and_then(|p| is_length(p).then_some(p))
+}
+
+fn detect_array<'a>(
+    env: &Env,
+    pos: usize,
+    par: &library::Parameter,
+    parameters: &'a [library::Parameter],
+) -> Option<&'a library::Parameter> {
+    if pos == 0 || !is_length(par) {
+        return None;
+    }
+
+    parameters
+        .get(pos - 1)
+        .and_then(|p| has_length(env, p.typ).then_some(p))
 }
 
 fn is_length(par: &library::Parameter) -> bool {
-    if par.direction != library::ParameterDirection::In {
-        return false;
-    }
-
-    let len = par.name.len();
-    if len >= 3 && &par.name[len - 3..len] == "len" {
-        return true;
-    }
-
-    par.name.contains("length")
+    par.direction == library::ParameterDirection::In
+        && (par.name.ends_with("len") || par.name.contains("length"))
 }
 
 fn has_length(env: &Env, typ: TypeId) -> bool {

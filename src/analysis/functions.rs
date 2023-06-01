@@ -57,6 +57,7 @@ pub struct AsyncFuture {
     pub success_parameters: String,
     pub error_parameters: Option<String>,
     pub assertion: SafetyAssertionMode,
+    pub bounds: Bounds,
 }
 
 #[derive(Debug)]
@@ -257,6 +258,7 @@ fn fixup_gpointer_parameter(
         transformation_type: TransformationType::ToGlibPointer {
             name: parameters.rust_parameters[idx].name.clone(),
             instance_parameter,
+            typ: parameters.rust_parameters[idx].typ,
             transfer: Transfer::None,
             ref_mode: RefMode::ByRef,
             to_glib_extra: Default::default(),
@@ -378,6 +380,7 @@ fn analyze_callbacks(
                     env,
                     func,
                     par,
+                    false,
                     false,
                     concurrency,
                     configured_functions,
@@ -760,6 +763,7 @@ fn analyze_function(
                     func,
                     par,
                     r#async,
+                    false,
                     library::Concurrency::None,
                     configured_functions,
                 );
@@ -1058,6 +1062,19 @@ fn analyze_async(
         });
 
         if !no_future {
+            let mut bounds: Bounds = Default::default();
+            // force the bounds on async functions to be for owned types
+            for par in parameters.c_parameters.iter() {
+                bounds.add_for_parameter(
+                    env,
+                    func,
+                    par,
+                    true,
+                    true,
+                    library::Concurrency::None,
+                    configured_functions,
+                );
+            }
             *async_future = Some(AsyncFuture {
                 is_method,
                 name: format!("{}_future", codegen_name.trim_end_matches("_async")),
@@ -1069,6 +1086,7 @@ fn analyze_async(
                     // need to do it twice.
                     _ => SafetyAssertionMode::Skip,
                 },
+                bounds,
             });
         }
         true

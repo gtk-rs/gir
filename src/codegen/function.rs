@@ -17,7 +17,7 @@ use super::{
     special_functions,
 };
 use crate::{
-    analysis::{self, bounds::Bounds, try_from_glib::TryFromGlib},
+    analysis::{self, bounds::Bounds, ref_mode::RefMode, try_from_glib::TryFromGlib},
     chunk::{ffi_function_todo, Chunk},
     env::Env,
     library::{self, TypeId},
@@ -248,7 +248,7 @@ pub fn declaration_futures(env: &Env, analysis: &analysis::functions::Info) -> S
 
         if c_par.name == "callback" || c_par.name == "cancellable" {
             skipped += 1;
-            if let Some(alias) = analysis
+            if let Some(alias) = async_future
                 .bounds
                 .get_parameter_bound(&c_par.name)
                 .and_then(|bound| bound.type_parameter_reference())
@@ -262,11 +262,11 @@ pub fn declaration_futures(env: &Env, analysis: &analysis::functions::Info) -> S
             param_str.push_str(", ");
         }
 
-        let s = c_par.to_parameter(env, &analysis.bounds, true);
+        let s = c_par.to_parameter(env, &async_future.bounds, true);
         param_str.push_str(&s);
     }
 
-    let (bounds, _) = bounds(&analysis.bounds, skipped_bounds.as_ref(), true, false);
+    let (bounds, _) = bounds(&async_future.bounds, skipped_bounds.as_ref(), true, false);
 
     format!(
         "fn {}{}({}){}",
@@ -390,8 +390,6 @@ pub fn body_chunk_futures(
 ) -> StdResult<String, fmt::Error> {
     use std::fmt::Write;
 
-    use crate::analysis::ref_mode::RefMode;
-
     let async_future = analysis.async_future.as_ref().unwrap();
 
     let mut body = String::new();
@@ -414,7 +412,8 @@ pub fn body_chunk_futures(
 
     // Skip the instance parameter
     for par in analysis.parameters.rust_parameters.iter().skip(skip) {
-        if par.name == "cancellable" || par.name == "callback" {
+        let name = &par.name;
+        if name == "cancellable" || name == "callback" {
             continue;
         }
 
@@ -423,16 +422,12 @@ pub fn body_chunk_futures(
         let type_ = env.type_(par.typ);
         let is_str = matches!(*type_, library::Type::Basic(library::Basic::Utf8));
 
-        if *c_par.nullable {
-            writeln!(
-                body,
-                "let {} = {}.map(ToOwned::to_owned);",
-                par.name, par.name
-            )?;
-        } else if is_str {
-            writeln!(body, "let {} = String::from({});", par.name, par.name)?;
-        } else if c_par.ref_mode != RefMode::None {
-            writeln!(body, "let {} = {}.clone();", par.name, par.name)?;
+        if is_str {
+            if *c_par.nullable {
+                writeln!(body, "let {name} = {name}.map(|s| s.into());",)?;
+            } else {
+                writeln!(body, "let {name} = {name}.into();",)?;
+            }
         }
     }
 
@@ -464,14 +459,21 @@ pub fn body_chunk_futures(
             continue;
         } else {
             let c_par = &analysis.parameters.c_parameters[par.ind_c];
+            let type_ = env.type_(par.typ);
+            let is_str = matches!(*type_, library::Type::Basic(library::Basic::Utf8));
+            let ref_mode = if c_par.move_ {
+                RefMode::None
+            } else {
+                c_par.ref_mode
+            };
 
-            if *c_par.nullable {
+            if !is_str && *c_par.nullable {
                 writeln!(
                     body,
                     "\t\t{}.as_ref().map(::std::borrow::Borrow::borrow),",
                     par.name
                 )?;
-            } else if c_par.ref_mode != RefMode::None {
+            } else if !is_str && ref_mode.is_ref() {
                 writeln!(body, "\t\t&{},", par.name)?;
             } else {
                 writeln!(body, "\t\t{},", par.name)?;

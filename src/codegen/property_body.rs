@@ -1,6 +1,7 @@
 use crate::{
     chunk::Chunk,
     env::Env,
+    library,
     nameutil::{use_glib_type, use_gtk_type},
 };
 
@@ -11,6 +12,7 @@ pub struct Builder<'a> {
     is_get: bool,
     is_child_property: bool,
     type_: String,
+    type_id: library::TypeId,
     env: &'a Env,
 }
 
@@ -24,6 +26,7 @@ impl<'a> Builder<'a> {
             is_get: Default::default(),
             is_child_property: Default::default(),
             type_: Default::default(),
+            type_id: Default::default(),
         }
     }
 
@@ -36,6 +39,7 @@ impl<'a> Builder<'a> {
             var_name: Default::default(),
             is_get: Default::default(),
             type_: Default::default(),
+            type_id: Default::default(),
         }
     }
 
@@ -61,6 +65,11 @@ impl<'a> Builder<'a> {
 
     pub fn type_(&mut self, type_: &str) -> &mut Self {
         self.type_ = type_.into();
+        self
+    }
+
+    pub fn type_id(&mut self, type_id: library::TypeId) -> &mut Self {
+        self.type_id = type_id;
         self
     }
 
@@ -105,10 +114,20 @@ impl<'a> Builder<'a> {
 
     fn chunks_for_set(&self) -> Vec<Chunk> {
         if self.is_child_property {
+            let is_str = matches!(
+                self.env.type_(self.type_id),
+                library::Type::Basic(library::Basic::Utf8)
+            );
             let self_ = if self.in_trait {
                 "self.as_ref()"
             } else {
                 "self"
+            };
+            let var_name = if is_str {
+                // string properties are always nullable
+                format!("{}.map(|p| p.into())", self.var_name)
+            } else {
+                self.var_name.clone()
             };
 
             vec![Chunk::Custom(format!(
@@ -116,7 +135,7 @@ impl<'a> Builder<'a> {
                 use_gtk_type(self.env, "prelude::ContainerExtManual"),
                 self_,
                 self.name,
-                self.var_name
+                var_name
             ))]
         } else {
             let self_ = if self.in_trait {

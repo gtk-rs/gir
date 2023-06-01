@@ -13,7 +13,7 @@ pub trait ToParameter {
 
 impl ToParameter for CParameter {
     fn to_parameter(&self, env: &Env, bounds: &Bounds, r#async: bool) -> String {
-        let ref_mode = if self.move_ {
+        let ref_mode = if self.move_ || (r#async && !self.instance_parameter) {
             RefMode::None
         } else {
             self.ref_mode

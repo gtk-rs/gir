@@ -124,7 +124,12 @@ fn analyze_property(
     let (get_out_ref_mode, set_in_ref_mode, nullable) = get_property_ref_modes(env, prop);
 
     let mut bounds = Bounds::default();
-    if let Some(bound) = Bounds::type_for(env, prop.typ) {
+    if let Some(bound) = Bounds::type_for(
+        env,
+        prop.typ,
+        super::ref_mode::RefMode::None,
+        prop.c_type.as_deref().unwrap_or_default(),
+    ) {
         imports.add("glib::prelude::*");
         bounds.add_parameter(&prop.name, &rust_type_res.into_string(), bound, false);
     }
