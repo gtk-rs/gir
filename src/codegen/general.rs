@@ -124,7 +124,11 @@ pub fn uses(
         if !scope.is_none() {
             let scope = scope.as_ref().unwrap();
             if !scope.constraints.is_empty() {
-                writeln!(w, "#[cfg(any({}))]", scope.constraints.join(", "))?;
+                if scope.constraints.len() == 1 {
+                    writeln!(w, "#[cfg({})]", scope.constraints[0])?;
+                } else {
+                    writeln!(w, "#[cfg(any({}))]", scope.constraints.join(", "))?;
+                }
                 writeln!(
                     w,
                     "#[cfg_attr(docsrs, doc(cfg({})))]",
