@@ -1061,6 +1061,10 @@
 <a href="#1061" id="1061">1061</a>
 <a href="#1062" id="1062">1062</a>
 <a href="#1063" id="1063">1063</a>
+<a href="#1064" id="1064">1064</a>
+<a href="#1065" id="1065">1065</a>
+<a href="#1066" id="1066">1066</a>
+<a href="#1067" id="1067">1067</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::{
     collections::BTreeMap,
     fmt::Display,
@@ -1187,7 +1191,11 @@
         <span class="kw">if </span>!scope.is_none() {
             <span class="kw">let </span>scope = scope.as_ref().unwrap();
             <span class="kw">if </span>!scope.constraints.is_empty() {
-                <span class="macro">writeln!</span>(w, <span class="string">&quot;#[cfg(any({}))]&quot;</span>, scope.constraints.join(<span class="string">&quot;, &quot;</span>))<span class="question-mark">?</span>;
+                <span class="kw">if </span>scope.constraints.len() == <span class="number">1 </span>{
+                    <span class="macro">writeln!</span>(w, <span class="string">&quot;#[cfg({})]&quot;</span>, scope.constraints[<span class="number">0</span>])<span class="question-mark">?</span>;
+                } <span class="kw">else </span>{
+                    <span class="macro">writeln!</span>(w, <span class="string">&quot;#[cfg(any({}))]&quot;</span>, scope.constraints.join(<span class="string">&quot;, &quot;</span>))<span class="question-mark">?</span>;
+                }
                 <span class="macro">writeln!</span>(
                     w,
                     <span class="string">&quot;#[cfg_attr(docsrs, doc(cfg({})))]&quot;</span>,
