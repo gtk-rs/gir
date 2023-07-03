@@ -848,7 +848,7 @@
     <span class="macro">info!</span>(<span class="string">&quot;Generating file {:?}&quot;</span>, path);
     general::start_comments(w, <span class="kw-2">&amp;</span>env.config)<span class="question-mark">?</span>;
     <span class="macro">writeln!</span>(w)<span class="question-mark">?</span>;
-    <span class="macro">writeln!</span>(w, <span class="string">&quot;#![cfg(target_os = \&quot;linux\&quot;)]&quot;</span>)<span class="question-mark">?</span>;
+    <span class="macro">writeln!</span>(w, <span class="string">&quot;#![cfg(unix)]&quot;</span>)<span class="question-mark">?</span>;
     <span class="macro">writeln!</span>(w)<span class="question-mark">?</span>;
 
     <span class="kw">if </span>!ctypes.is_empty() {
