@@ -305,7 +305,7 @@ fn generate_abi_rs(
     info!("Generating file {:?}", path);
     general::start_comments(w, &env.config)?;
     writeln!(w)?;
-    writeln!(w, "#![cfg(target_os = \"linux\")]")?;
+    writeln!(w, "#![cfg(unix)]")?;
     writeln!(w)?;
 
     if !ctypes.is_empty() {
