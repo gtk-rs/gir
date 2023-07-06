@@ -379,11 +379,12 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
         allow_deprecated(w, any_deprecated_version, false, 0)?;
         writeln!(
             w,
-            "impl ErrorDomain for {name} {{
+            "impl {glib_error_domain} for {name} {{
     #[inline]
     fn domain() -> {glib_quark} {{
         {assert}",
             name = enum_.name,
+            glib_error_domain = use_glib_type(env, "ErrorDomain"),
             glib_quark = use_glib_type(env, "Quark"),
             assert = assert
         )?;
