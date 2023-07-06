@@ -266,7 +266,7 @@
     consts::TYPE_PARAMETERS_START,
     env::Env,
     library,
-    nameutil::{use_glib_if_needed, use_gtk_type},
+    nameutil::{use_glib_if_needed, use_glib_type, use_gtk_type},
     traits::IntoString,
     writer::primitives::tabs,
 };
@@ -397,7 +397,7 @@
     <span class="kw">if </span>analysis.ret.typ == Default::default() {
         String::new()
     } <span class="kw">else if </span>analysis.inhibit {
-        <span class="string">&quot; -&gt; glib::signal::Inhibit&quot;</span>.into()
+        <span class="macro">format!</span>(<span class="string">&quot; -&gt; {inhibit}&quot;</span>, inhibit = use_glib_type(env, <span class="string">&quot;ControlFlow&quot;</span>))
     } <span class="kw">else if let </span><span class="prelude-val">Some</span>(return_type) =
         analysis
             .ret
