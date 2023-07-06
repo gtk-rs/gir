@@ -583,6 +583,7 @@
 <a href="#583" id="583">583</a>
 <a href="#584" id="584">584</a>
 <a href="#585" id="585">585</a>
+<a href="#586" id="586">586</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::{
     collections::HashSet,
     io::{prelude::<span class="kw-2">*</span>, <span class="prelude-ty">Result</span>},
@@ -964,11 +965,12 @@ impl FromGlib&lt;{sys_crate_name}::{ffi_name}&gt; for {name} {{
         allow_deprecated(w, any_deprecated_version, <span class="bool-val">false</span>, <span class="number">0</span>)<span class="question-mark">?</span>;
         <span class="macro">writeln!</span>(
             w,
-            <span class="string">&quot;impl ErrorDomain for {name} {{
+            <span class="string">&quot;impl {glib_error_domain} for {name} {{
     #[inline]
     fn domain() -&gt; {glib_quark} {{
         {assert}&quot;</span>,
             name = enum_.name,
+            glib_error_domain = use_glib_type(env, <span class="string">&quot;ErrorDomain&quot;</span>),
             glib_quark = use_glib_type(env, <span class="string">&quot;Quark&quot;</span>),
             assert = assert
         )<span class="question-mark">?</span>;
