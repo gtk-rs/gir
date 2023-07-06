@@ -384,7 +384,7 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
     fn domain() -> {glib_quark} {{
         {assert}",
             name = enum_.name,
-            glib_error_domain = use_glib_type(env, "ErrorDomain"),
+            glib_error_domain = use_glib_type(env, "error::ErrorDomain"),
             glib_quark = use_glib_type(env, "Quark"),
             assert = assert
         )?;
