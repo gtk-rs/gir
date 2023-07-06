@@ -17,7 +17,7 @@ use crate::{
     consts::TYPE_PARAMETERS_START,
     env::Env,
     library,
-    nameutil::{use_glib_if_needed, use_gtk_type},
+    nameutil::{use_glib_if_needed, use_glib_type, use_gtk_type},
     traits::IntoString,
     writer::primitives::tabs,
 };
@@ -148,7 +148,7 @@ fn func_returns(env: &Env, analysis: &Trampoline) -> String {
     if analysis.ret.typ == Default::default() {
         String::new()
     } else if analysis.inhibit {
-        " -> glib::signal::Inhibit".into()
+        format!(" -> {inhibit}", inhibit = use_glib_type(env, "ControlFlow"))
     } else if let Some(return_type) =
         analysis
             .ret
