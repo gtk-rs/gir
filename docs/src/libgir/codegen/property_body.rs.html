@@ -126,20 +126,7 @@
 <a href="#126" id="126">126</a>
 <a href="#127" id="127">127</a>
 <a href="#128" id="128">128</a>
-<a href="#129" id="129">129</a>
-<a href="#130" id="130">130</a>
-<a href="#131" id="131">131</a>
-<a href="#132" id="132">132</a>
-<a href="#133" id="133">133</a>
-<a href="#134" id="134">134</a>
-<a href="#135" id="135">135</a>
-<a href="#136" id="136">136</a>
-<a href="#137" id="137">137</a>
-</pre></div><pre class="rust"><code><span class="kw">use crate</span>::{
-    chunk::Chunk,
-    env::Env,
-    nameutil::{use_glib_type, use_gtk_type},
-};
+</pre></div><pre class="rust"><code><span class="kw">use crate</span>::{chunk::Chunk, env::Env, nameutil::use_gtk_type};
 
 <span class="kw">pub struct </span>Builder&lt;<span class="lifetime">&#39;a</span>&gt; {
     name: String,
@@ -232,10 +219,8 @@
             </span>};
 
             <span class="macro">vec!</span>[Chunk::Custom(<span class="macro">format!</span>(
-                <span class="string">&quot;{}::property({}, \&quot;{}\&quot;)&quot;</span>,
-                use_glib_type(<span class="self">self</span>.env, <span class="string">&quot;ObjectExt&quot;</span>),
-                self_,
-                <span class="self">self</span>.name
+                <span class="string">&quot;ObjectExt::property({}, \&quot;{}\&quot;)&quot;</span>,
+                self_, <span class="self">self</span>.name
             ))]
         }
     }
@@ -263,11 +248,8 @@
             </span>};
 
             <span class="macro">vec!</span>[Chunk::Custom(<span class="macro">format!</span>(
-                <span class="string">&quot;{}::set_property({},\&quot;{}\&quot;, {})&quot;</span>,
-                use_glib_type(<span class="self">self</span>.env, <span class="string">&quot;ObjectExt&quot;</span>),
-                self_,
-                <span class="self">self</span>.name,
-                <span class="self">self</span>.var_name
+                <span class="string">&quot;ObjectExt::set_property({},\&quot;{}\&quot;, {})&quot;</span>,
+                self_, <span class="self">self</span>.name, <span class="self">self</span>.var_name
             ))]
         }
     }

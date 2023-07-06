@@ -114,9 +114,6 @@
 <a href="#114" id="114">114</a>
 <a href="#115" id="115">115</a>
 <a href="#116" id="116">116</a>
-<a href="#117" id="117">117</a>
-<a href="#118" id="118">118</a>
-<a href="#119" id="119">119</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>log::info;
 
 <span class="kw">use super</span>::{function_parameters::TransformationType, imports::Imports, <span class="kw-2">*</span>};
@@ -161,14 +158,11 @@
 
         <span class="kw">let </span>imports = <span class="kw-2">&amp;mut </span>imports.with_defaults(flags.version, <span class="kw-2">&amp;</span><span class="prelude-val">None</span>);
         imports.add(<span class="string">&quot;glib::translate::*&quot;</span>);
-        imports.add(<span class="string">&quot;bitflags::bitflags&quot;</span>);
+        imports.add(<span class="string">&quot;glib::bitflags::bitflags&quot;</span>);
 
         <span class="kw">let </span>has_get_type = flags.glib_get_type.is_some();
         <span class="kw">if </span>has_get_type {
-            imports.add(<span class="string">&quot;glib::Type&quot;</span>);
-            imports.add(<span class="string">&quot;glib::StaticType&quot;</span>);
-            imports.add(<span class="string">&quot;glib::value::FromValue&quot;</span>);
-            imports.add(<span class="string">&quot;glib::value::ToValue&quot;</span>);
+            imports.add(<span class="string">&quot;glib::prelude::*&quot;</span>);
         }
 
         <span class="kw">if </span>obj.generate_display_trait {

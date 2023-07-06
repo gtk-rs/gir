@@ -386,6 +386,8 @@
 <a href="#386" id="386">386</a>
 <a href="#387" id="387">387</a>
 <a href="#388" id="388">388</a>
+<a href="#389" id="389">389</a>
+<a href="#390" id="390">390</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::{
     io::{prelude::<span class="kw-2">*</span>, <span class="prelude-ty">Result</span>},
     path::Path,
@@ -662,13 +664,14 @@ impl FromGlib&lt;{sys_crate_name}::{ffi_name}&gt; for {name} {{
             w,
             <span class="string">&quot;impl StaticType for {name} {{
     #[inline]
-    fn static_type() -&gt; Type {{
+    fn static_type() -&gt; {glib_type} {{
         unsafe {{ from_glib({sys_crate_name}::{get_type}()) }}
     }}
 }}&quot;</span>,
             sys_crate_name = sys_crate_name,
             name = flags.name,
-            get_type = get_type
+            get_type = get_type,
+            glib_type = use_glib_type(env, <span class="string">&quot;Type&quot;</span>)
         )<span class="question-mark">?</span>;
         <span class="macro">writeln!</span>(w)<span class="question-mark">?</span>;
 
@@ -711,7 +714,7 @@ impl FromGlib&lt;{sys_crate_name}::{ffi_name}&gt; for {name} {{
         allow_deprecated(w, flags.deprecated_version, <span class="bool-val">false</span>, <span class="number">0</span>)<span class="question-mark">?</span>;
         <span class="macro">writeln!</span>(
             w,
-            <span class="string">&quot;unsafe impl&lt;&#39;a&gt; FromValue&lt;&#39;a&gt; for {name} {{
+            <span class="string">&quot;unsafe impl&lt;&#39;a&gt; {from_value_type}&lt;&#39;a&gt; for {name} {{
     type Checker = {genericwrongvaluetypechecker}&lt;Self&gt;;
 
     #[inline]
@@ -724,6 +727,7 @@ impl FromGlib&lt;{sys_crate_name}::{ffi_name}&gt; for {name} {{
             gvalue = use_glib_type(env, <span class="string">&quot;Value&quot;</span>),
             genericwrongvaluetypechecker = use_glib_type(env, <span class="string">&quot;value::GenericValueTypeChecker&quot;</span>),
             assert = assert,
+            from_value_type = use_glib_type(env, <span class="string">&quot;value::FromValue&quot;</span>),
         )<span class="question-mark">?</span>;
         <span class="macro">writeln!</span>(w)<span class="question-mark">?</span>;
 
