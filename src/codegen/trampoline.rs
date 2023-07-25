@@ -148,7 +148,7 @@ fn func_returns(env: &Env, analysis: &Trampoline) -> String {
     if analysis.ret.typ == Default::default() {
         String::new()
     } else if analysis.inhibit {
-        format!(" -> {inhibit}", inhibit = use_glib_type(env, "ControlFlow"))
+        format!(" -> {inhibit}", inhibit = use_glib_type(env, "Propagation"))
     } else if let Some(return_type) =
         analysis
             .ret
