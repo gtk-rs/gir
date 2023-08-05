@@ -114,7 +114,6 @@ pub struct Config {
     pub single_version_file: Option<PathBuf>,
     pub generate_display_trait: bool,
     pub trust_return_value_nullability: bool,
-    pub docs_rs_features: Vec<String>,
     pub disable_format: bool,
     pub split_build_rs: bool,
     pub extra_versions: Vec<Version>,
@@ -265,17 +264,6 @@ impl Config {
                 None => false,
             };
 
-        let mut docs_rs_features = Vec::new();
-        for v in match toml.lookup("options.docs_rs_features") {
-            Some(v) => v.as_result_vec("options.docs_rs_features")?.as_slice(),
-            None => &[],
-        } {
-            docs_rs_features.push(v.as_str().map(|s| s.to_owned()).ok_or(format!(
-                "Invalid `docs_rs_features` value element, expected a string, found {}",
-                v.type_str()
-            ))?);
-        }
-
         // options.concurrency is the default of all objects if nothing
         // else is configured
         let mut objects = toml
@@ -373,7 +361,6 @@ impl Config {
             single_version_file,
             generate_display_trait,
             trust_return_value_nullability,
-            docs_rs_features,
             disable_format,
             split_build_rs,
             extra_versions,
