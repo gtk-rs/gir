@@ -172,7 +172,8 @@ fn fill_in(root: &mut Table, env: &Env) {
         let docs_rs_metadata = upsert_table(docs_rs_metadata, "metadata");
         let docs_rs_metadata = upsert_table(docs_rs_metadata, "docs");
         let docs_rs_metadata = upsert_table(docs_rs_metadata, "rs");
-        let docs_rs_features = env.config.docs_rs_features.clone();
+
+        let docs_rs_features: Vec<String> = vec![];
         docs_rs_metadata.insert(
             "features".to_string(),
             Value::Array(
