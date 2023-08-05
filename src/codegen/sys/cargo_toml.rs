@@ -188,16 +188,10 @@ fn fill_in(root: &mut Table, env: &Env) {
             ])
         });
 
-        let docs_rs_features: Vec<String> = vec![];
-        docs_rs_metadata.insert(
-            "features".to_string(),
-            Value::Array(
-                docs_rs_features
-                    .into_iter()
-                    .map(Value::String)
-                    .collect::<Vec<_>>(),
-            ),
-        );
+        // Generate docs for all features unless a list of features to be activated on docs.rs was specified
+        if let toml::map::Entry::Vacant(_) = docs_rs_metadata.entry("features") {
+            set_string(docs_rs_metadata, "all-features", "true");
+        }
     }
 }
 
