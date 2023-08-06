@@ -190,7 +190,7 @@ fn fill_in(root: &mut Table, env: &Env) {
 
         // Generate docs for all features unless a list of features to be activated on docs.rs was specified
         if let toml::map::Entry::Vacant(_) = docs_rs_metadata.entry("features") {
-            set_string(docs_rs_metadata, "all-features", "true");
+            docs_rs_metadata.insert("all-features".to_string(), Value::Boolean(true));
         }
     }
 }
