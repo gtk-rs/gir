@@ -128,6 +128,8 @@ visibility = "pub" # or 'crate' / 'private' / 'super'
 # The default value to used for the `Default` implementation. It only
 # works for flags and enums. You have to pass the "GIR" member name.
 default_value = "fill"
+# Change the name of the generated trait to e.g avoid naming conflicts
+trait_name = "TraitnameExt" 
 # In case you don't want to generate the documentation for this type.
 generate_doc = false
     # define overrides for function
