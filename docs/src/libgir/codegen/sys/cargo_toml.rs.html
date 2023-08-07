@@ -436,7 +436,7 @@
 
         <span class="comment">// Generate docs for all features unless a list of features to be activated on docs.rs was specified
         </span><span class="kw">if let </span>toml::map::Entry::Vacant(<span class="kw">_</span>) = docs_rs_metadata.entry(<span class="string">&quot;features&quot;</span>) {
-            set_string(docs_rs_metadata, <span class="string">&quot;all-features&quot;</span>, <span class="string">&quot;true&quot;</span>);
+            docs_rs_metadata.insert(<span class="string">&quot;all-features&quot;</span>.to_string(), Value::Boolean(<span class="bool-val">true</span>));
         }
     }
 }
