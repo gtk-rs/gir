@@ -102,6 +102,16 @@ fn fill_in(root: &mut Table, env: &Env) {
         let package = upsert_table(root, "package");
         set_string(package, "build", "build.rs");
         // set_string(package, "version", "0.2.0");
+
+        if let toml::map::Entry::Vacant(_) = package.entry("include") {
+            package.entry("exclude").or_insert_with(|| {
+                Value::Array(vec![
+                    Value::String("tests".to_string()),
+                    Value::String("Gir.toml".to_string()),
+                    Value::String("versions.txt".to_string()),
+                ])
+            });
+        }
     }
 
     {
