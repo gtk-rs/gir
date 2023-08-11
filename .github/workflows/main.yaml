@@ -34,17 +34,17 @@ jobs:
           components: rustfmt, clippy
         id: toolchain
       - name: Cache cargo registry
-        uses: actions/cache@v1
+        uses: actions/cache@v3
         with:
           path: ~/.cargo/registry
           key: checks-${{ runner.os }}-cargo-registry-trimmed
       - name: Cache cargo git trees
-        uses: actions/cache@v1
+        uses: actions/cache@v3
         with:
           path: ~/.cargo/git
           key: checks-${{ runner.os }}-cargo-gits-trimmed
       - name: Cache cargo build
-        uses: actions/cache@v1
+        uses: actions/cache@v3
         with:
           path: target
           key: checks-${{ runner.os }}-cargo-target-dir-${{ steps.toolchain.outputs.rustc_hash }}
@@ -108,17 +108,17 @@ jobs:
           echo "::set-env name=LIBGIT2_SYS_USE_PKG_CONFIG::1"
         if: matrix.os == 'windows-latest'
       - name: Cache cargo registry
-        uses: actions/cache@v1
+        uses: actions/cache@v3
         with:
           path: ~/.cargo/registry
           key: build-${{ runner.os }}-cargo-registry-trimmed
       - name: Cache cargo git trees
-        uses: actions/cache@v1
+        uses: actions/cache@v3
         with:
           path: ~/.cargo/git
           key: build-${{ runner.os }}-cargo-gits-trimmed
       - name: Cache cargo build
-        uses: actions/cache@v1
+        uses: actions/cache@v3
         with:
           path: target
           key: build-${{ runner.os }}-cargo-target-dir-${{ steps.toolchain.outputs.rustc_hash }}
