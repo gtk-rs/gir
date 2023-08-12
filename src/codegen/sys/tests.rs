@@ -346,13 +346,22 @@ impl Compiler {
     }
 
     pub fn compile(&self, src: &Path, out: &Path) -> Result<(), Box<dyn Error>> {
+        use std::str::fom_utf8;
+
         let mut cmd = self.to_command();
         cmd.arg(src);
         cmd.arg("-o");
         cmd.arg(out);
-        let status = cmd.spawn()?.wait()?;
-        if !status.success() {
-            return Err(format!("compilation command {cmd:?} failed, {status}").into());
+        let output = cmd.output()?;
+        if !output.status.success() {
+            let status = output.status;
+            let stdout = from_utf8(&output.stdout).unwrap_or("");
+            let stderr = from_utf8(&output.stderr).unwrap_or("");
+            let error = format!(
+                "compilation command {cmd:?} failed, {status}\nstdout: {stdout}\nstderr: {stderr}"
+            );
+            println!("{error}");
+            return Err(error.into());
         }
         Ok(())
     }
