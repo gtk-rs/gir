@@ -384,7 +384,7 @@ fn pkg_config_cflags(packages: &[&str]) -> Result<Vec<String>, Box<dyn Error>> {
     cmd.stderr(Stdio::inherit());
     let out = cmd.output()?;
     if !out.status.success() {
-        let (status, stdout) = (out.status, str::from_utf8(&out.stdout)?);
+        let (status, stdout) = (out.status, String::from_utf8_lossy(&out.stdout));
         return Err(format!("command {cmd:?} failed, {status:?}\nstdout: {stdout}").into());
     }
     let stdout = str::from_utf8(&out.stdout)?;
@@ -508,7 +508,7 @@ fn get_c_output(name: &str) -> Result<String, Box<dyn Error>> {
     cmd.stderr(Stdio::inherit());
     let out = cmd.output()?;
     if !out.status.success() {
-        let (status, stdout) = (out.status, str::from_utf8(&out.stdout)?);
+        let (status, stdout) = (out.status, String::from_utf8_lossy(&out.stdout));
         return Err(format!("command {cmd:?} failed, {status:?}\nstdout: {stdout}").into());
     }
 
