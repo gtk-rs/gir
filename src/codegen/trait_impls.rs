@@ -140,9 +140,9 @@ fn generate_display(
     writeln!(
         w,
         "\
-impl fmt::Display for {type_name} {{
+impl std::fmt::Display for {type_name} {{
     #[inline]
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {{
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {{
         {body}
     }}
 }}"
@@ -168,10 +168,10 @@ fn generate_hash(
     writeln!(
         w,
         "\
-impl hash::Hash for {type_name} {{
+impl std::hash::Hash for {type_name} {{
     #[inline]
-    fn hash<H>(&self, state: &mut H) where H: hash::Hasher {{
-        hash::Hash::hash(&{call}, state)
+    fn hash<H>(&self, state: &mut H) where H: std::hash::Hasher {{
+        std::hash::Hash::hash(&{call}, state)
     }}
 }}"
     )
@@ -258,14 +258,14 @@ fn generate_ord(
         "\
 impl PartialOrd for {type_name} {{
     #[inline]
-    fn partial_cmp(&self, other: &Self) -> Option<cmp::Ordering> {{
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {{
         {call}.partial_cmp(&0)
     }}
 }}
 
 impl Ord for {type_name} {{
     #[inline]
-    fn cmp(&self, other: &Self) -> cmp::Ordering {{
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {{
         {call}.cmp(&0)
     }}
 }}"
