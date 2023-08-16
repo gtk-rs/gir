@@ -103,7 +103,6 @@ fn analyze_signal(
         imports.add_used_types(&used_types);
         imports.add("glib::prelude::*");
         imports.add("glib::signal::{connect_raw, SignalHandlerId}");
-        imports.add("std::mem::transmute");
         imports.add("std::boxed::Box as Box_");
     }
     let generate_doc = configured_signals.iter().all(|f| f.generate_doc);
