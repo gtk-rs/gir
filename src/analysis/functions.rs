@@ -849,24 +849,9 @@ fn analyze_function(
             func.c_identifier.as_ref().unwrap_or(&func.name)
         );
         commented = true;
-    } else if status.need_generate() && !commented {
-        if !outs.is_empty() {
-            out_parameters::analyze_imports(env, &func.parameters, imports);
-        }
-        if let Some(AsyncTrampoline {
-            ref output_params, ..
-        }) = trampoline
-        {
-            out_parameters::analyze_imports(
-                env,
-                output_params.iter().map(|out| &out.lib_par),
-                imports,
-            );
-        }
     }
 
     if r#async && status.need_generate() && !commented {
-        imports.add("std::ptr");
         imports.add("std::boxed::Box as Box_");
         imports.add("std::pin::Pin");
 
