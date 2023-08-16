@@ -5,8 +5,7 @@ use log::error;
 use crate::{
     analysis::{
         self, conversion_type::ConversionType, function_parameters::CParameter,
-        functions::is_carray_with_direct_elements, imports::Imports, return_value,
-        rust_type::RustType,
+        functions::is_carray_with_direct_elements, return_value, rust_type::RustType,
     },
     config::{self, parameter_matchable::ParameterMatchable},
     env::Env,
@@ -124,36 +123,6 @@ pub fn analyze(
     }
 
     (info, unsupported_outs)
-}
-
-pub fn analyze_imports<'a>(
-    env: &Env,
-    parameters: impl IntoIterator<Item = &'a library::Parameter>,
-    imports: &mut Imports,
-) {
-    for par in parameters {
-        if par.direction == ParameterDirection::Out {
-            analyze_type_imports(env, par.typ, par.caller_allocates, imports);
-        }
-    }
-}
-
-fn analyze_type_imports(env: &Env, typ: TypeId, caller_allocates: bool, imports: &mut Imports) {
-    match env.library.type_(typ) {
-        Type::Alias(alias) => analyze_type_imports(env, alias.typ, caller_allocates, imports),
-        Type::Bitfield(..) | Type::Enumeration(..) => imports.add("std::mem"),
-        Type::Basic(fund) if !matches!(fund, Basic::Utf8 | Basic::OsString | Basic::Filename) => {
-            imports.add("std::mem");
-        }
-        _ if !caller_allocates => match ConversionType::of(env, typ) {
-            ConversionType::Direct
-            | ConversionType::Scalar
-            | ConversionType::Option
-            | ConversionType::Result { .. } => (),
-            _ => imports.add("std::ptr"),
-        },
-        _ => (),
-    }
 }
 
 pub fn can_as_return(env: &Env, par: &library::Parameter) -> bool {

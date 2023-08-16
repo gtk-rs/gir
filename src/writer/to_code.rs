@@ -78,13 +78,13 @@ impl ToCode for Chunk {
                 let s = format_block_one_line(&prefix, ";", &value_strings, "", "");
                 vec![s]
             }
-            Uninitialized => vec!["mem::MaybeUninit::uninit()".into()],
+            Uninitialized => vec!["std::mem::MaybeUninit::uninit()".into()],
             UninitializedNamed { ref name } => {
                 let s = format!("{name}::uninitialized()");
                 vec![s]
             }
-            NullPtr => vec!["ptr::null()".into()],
-            NullMutPtr => vec!["ptr::null_mut()".into()],
+            NullPtr => vec!["std::ptr::null()".into()],
+            NullMutPtr => vec!["std::ptr::null_mut()".into()],
             Custom(ref string) => vec![string.clone()],
             Tuple(ref chs, ref mode) => {
                 #[allow(deprecated)]
