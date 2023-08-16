@@ -343,7 +343,6 @@ fn analyze_property(
                 imports.add("glib::prelude::*");
             }
             imports.add("glib::signal::{connect_raw, SignalHandlerId}");
-            imports.add("std::mem::transmute");
             imports.add("std::boxed::Box as Box_");
 
             Some(signals::Info {
