@@ -541,6 +541,10 @@
 <a href="#541" id="541">541</a>
 <a href="#542" id="542">542</a>
 <a href="#543" id="543">543</a>
+<a href="#544" id="544">544</a>
+<a href="#545" id="545">545</a>
+<a href="#546" id="546">546</a>
+<a href="#547" id="547">547</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::{
     io::{<span class="self">self</span>, prelude::<span class="kw-2">*</span>},
     path::Path,
@@ -860,7 +864,7 @@
     <span class="macro">writeln!</span>(w, <span class="string">&quot;use std::error::Error;&quot;</span>)<span class="question-mark">?</span>;
     <span class="macro">writeln!</span>(w, <span class="string">&quot;use std::ffi::OsString;&quot;</span>)<span class="question-mark">?</span>;
     <span class="macro">writeln!</span>(w, <span class="string">&quot;use std::path::Path;&quot;</span>)<span class="question-mark">?</span>;
-    <span class="macro">writeln!</span>(w, <span class="string">&quot;use std::process::Command;&quot;</span>)<span class="question-mark">?</span>;
+    <span class="macro">writeln!</span>(w, <span class="string">&quot;use std::process::{{Command, Stdio}};&quot;</span>)<span class="question-mark">?</span>;
     <span class="macro">writeln!</span>(w, <span class="string">&quot;use std::str;&quot;</span>)<span class="question-mark">?</span>;
     <span class="macro">writeln!</span>(w, <span class="string">&quot;use tempfile::Builder;&quot;</span>)<span class="question-mark">?</span>;
     <span class="macro">writeln!</span>(w)<span class="question-mark">?</span>;
@@ -924,9 +928,11 @@ fn pkg_config_cflags(packages: &amp;[&amp;str]) -&gt; Result&lt;Vec&lt;String&gt
     let mut cmd = Command::new(pkg_config);
     cmd.arg(&quot;--cflags&quot;);
     cmd.args(packages);
+    cmd.stderr(Stdio::inherit());
     let out = cmd.output()?;
     if !out.status.success() {
-        return Err(format!(&quot;command {cmd:?} returned {}&quot;, out.status).into());
+        let (status, stdout) = (out.status, String::from_utf8_lossy(&amp;out.stdout));
+        return Err(format!(&quot;command {cmd:?} failed, {status:?}\nstdout: {stdout}&quot;).into());
     }
     let stdout = str::from_utf8(&amp;out.stdout)?;
     Ok(shell_words::split(stdout.trim())?)
@@ -1045,13 +1051,15 @@ fn get_c_output(name: &amp;str) -&gt; Result&lt;String, Box&lt;dyn Error&gt;&gt;
     let cc = Compiler::new().expect(&quot;configured compiler&quot;);
     cc.compile(&amp;c_file, &amp;exe)?;
 
-    let mut abi_cmd = Command::new(exe);
-    let output = abi_cmd.output()?;
-    if !output.status.success() {
-        return Err(format!(&quot;command {abi_cmd:?} failed, {output:?}&quot;).into());
+    let mut cmd = Command::new(exe);
+    cmd.stderr(Stdio::inherit());
+    let out = cmd.output()?;
+    if !out.status.success() {
+        let (status, stdout) = (out.status, String::from_utf8_lossy(&amp;out.stdout));
+        return Err(format!(&quot;command {cmd:?} failed, {status:?}\nstdout: {stdout}&quot;).into());
     }
 
-    Ok(String::from_utf8(output.stdout)?)
+    Ok(String::from_utf8(out.stdout)?)
 }
 
 const RUST_LAYOUTS: &amp;[(&amp;str, Layout)] = &amp;[&quot;####
