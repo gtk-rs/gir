@@ -5,7 +5,7 @@ use std::{
 
 use super::{function, general::allow_deprecated, trait_impls};
 use crate::{
-    analysis::{flags::Info, special_functions::Type},
+    analysis::flags::Info,
     codegen::{
         general::{
             self, cfg_condition, cfg_condition_doc, cfg_condition_no_doc, cfg_condition_string,
@@ -180,21 +180,6 @@ fn generate_flags(
 
     writeln!(w)?;
 
-    if config.generate_display_trait && !analysis.specials.has_trait(Type::Display) {
-        // Generate Display trait implementation.
-        version_condition(w, env, None, flags.version, false, 0)?;
-        cfg_condition_no_doc(w, config.cfg_condition.as_ref(), false, 0)?;
-        allow_deprecated(w, flags.deprecated_version, false, 0)?;
-        writeln!(
-            w,
-            "impl fmt::Display for {0} {{\n\
-            \tfn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {{\n\
-            \t\t<Self as fmt::Debug>::fmt(self, f)\n\
-            \t}}\n\
-            }}\n",
-            flags.name
-        )?;
-    }
     generate_default_impl(
         w,
         env,
