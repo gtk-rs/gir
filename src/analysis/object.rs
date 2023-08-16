@@ -186,9 +186,6 @@ pub fn class(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<Info>
     let deprecated_version = klass.deprecated_version;
 
     let mut imports = Imports::with_defined(&env.library, &name);
-    if obj.generate_display_trait {
-        imports.add("std::fmt");
-    }
 
     let is_fundamental = obj.fundamental_type.unwrap_or(klass.is_fundamental);
     let supertypes = supertypes::analyze(env, class_tid, version, &mut imports, is_fundamental);
@@ -377,9 +374,6 @@ pub fn interface(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<I
 
     let mut imports = Imports::with_defined(&env.library, &name);
     imports.add("glib::prelude::*");
-    if obj.generate_display_trait {
-        imports.add("std::fmt");
-    }
 
     let supertypes = supertypes::analyze(env, iface_tid, version, &mut imports, false);
     let supertypes_properties = supertypes

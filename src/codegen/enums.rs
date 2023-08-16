@@ -6,7 +6,7 @@ use std::{
 
 use super::{function, trait_impls};
 use crate::{
-    analysis::{enums::Info, special_functions::Type},
+    analysis::enums::Info,
     codegen::{
         general::{
             self, allow_deprecated, cfg_condition, cfg_condition_no_doc, cfg_condition_string,
@@ -225,35 +225,6 @@ fn generate_enum(
     )?;
 
     writeln!(w)?;
-
-    if config.generate_display_trait && !analysis.specials.has_trait(Type::Display) {
-        // Generate Display trait implementation.
-        version_condition(w, env, None, enum_.version, false, 0)?;
-        cfg_condition_no_doc(w, config.cfg_condition.as_ref(), false, 0)?;
-        allow_deprecated(w, any_deprecated_version, false, 0)?;
-        writeln!(
-            w,
-            "impl fmt::Display for {0} {{\n\
-             \tfn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {{\n\
-             \t\twrite!(f, \"{0}::{{}}\", match *self {{",
-            enum_.name
-        )?;
-        for member in &members {
-            version_condition_no_doc(w, env, None, member.version, false, 3)?;
-            cfg_condition_no_doc(w, member.cfg_condition.as_ref(), false, 3)?;
-            writeln!(w, "\t\t\tSelf::{0} => \"{0}\",", member.name)?;
-        }
-
-        if !config.exhaustive {
-            writeln!(
-                w,
-                "\t\t\t_ => \"Unknown\",\n\
-                 \t\t}})\n\
-                 \t}}\n\
-                 }}\n"
-            )?;
-        }
-    }
 
     // Only inline from_glib / into_glib implementations if there are not many enums members
     let maybe_inline = if members.len() <= 12 || config.exhaustive {

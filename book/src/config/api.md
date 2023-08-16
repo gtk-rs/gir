@@ -21,10 +21,6 @@ deprecate_by_min_version = true
 # can also take path to the directory for saving "versions.txt" or filename with extension.
 # Relative to target_path
 single_version_file = true
-# Generation of Display trait enabled for all enums, classes, etc.,
-# which do not have an override for `generate_display_trait`
-# (defaults to "true")
-generate_display_trait = true
 # Trust the nullability information about return values. If this is disabled
 # then any pointer return type is assumed to be nullable unless there is an
 # explicit override for it.
@@ -116,8 +112,6 @@ module_name = "soome_class"
 version = "3.12"
 # prefixed object in mod.rs with #[cfg(mycond)]
 cfg_condition = "mycond"
-# if you want to override default option Ex. for write your own Display implementation
-generate_display_trait = false
 # if you want to generate builder with name SomeClassBuilder
 generate_builder = true
 # trust return value nullability annotations for this specific type.

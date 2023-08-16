@@ -112,7 +112,6 @@ pub struct Config {
     pub show_statistics: bool,
     pub concurrency: library::Concurrency,
     pub single_version_file: Option<PathBuf>,
-    pub generate_display_trait: bool,
     pub trust_return_value_nullability: bool,
     pub disable_format: bool,
     pub split_build_rs: bool,
@@ -253,11 +252,6 @@ impl Config {
             None => Default::default(),
         };
 
-        let generate_display_trait = match toml.lookup("options.generate_display_trait") {
-            Some(v) => v.as_result_bool("options.generate_display_trait")?,
-            None => true,
-        };
-
         let trust_return_value_nullability =
             match toml.lookup("options.trust_return_value_nullability") {
                 Some(v) => v.as_result_bool("options.trust_return_value_nullability")?,
@@ -272,7 +266,6 @@ impl Config {
                 gobjects::parse_toml(
                     t,
                     concurrency,
-                    generate_display_trait,
                     generate_builder,
                     trust_return_value_nullability,
                 )
@@ -282,7 +275,6 @@ impl Config {
             &mut objects,
             &toml,
             concurrency,
-            generate_display_trait,
             generate_builder,
             trust_return_value_nullability,
         );
@@ -359,7 +351,6 @@ impl Config {
             show_statistics,
             concurrency,
             single_version_file,
-            generate_display_trait,
             trust_return_value_nullability,
             disable_format,
             split_build_rs,

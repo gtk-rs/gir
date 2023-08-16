@@ -86,7 +86,6 @@ pub struct GObject {
     pub ref_mode: Option<ref_mode::RefMode>,
     pub must_use: bool,
     pub conversion_type: Option<ConversionType>,
-    pub generate_display_trait: bool,
     pub trust_return_value_nullability: bool,
     pub manual_traits: Vec<String>,
     pub align: Option<u32>,
@@ -126,7 +125,6 @@ impl Default for GObject {
             ref_mode: None,
             must_use: false,
             conversion_type: None,
-            generate_display_trait: true,
             trust_return_value_nullability: false,
             manual_traits: Vec::default(),
             align: None,
@@ -149,7 +147,6 @@ pub type GObjects = BTreeMap<String, GObject>;
 pub fn parse_toml(
     toml_objects: &Value,
     concurrency: library::Concurrency,
-    generate_display_trait: bool,
     generate_builder: bool,
     trust_return_value_nullability: bool,
 ) -> GObjects {
@@ -158,7 +155,6 @@ pub fn parse_toml(
         let gobject = parse_object(
             toml_object,
             concurrency,
-            generate_display_trait,
             generate_builder,
             trust_return_value_nullability,
         );
@@ -232,7 +228,6 @@ pub fn parse_conversion_type(toml: Option<&Value>, object_name: &str) -> Option<
 fn parse_object(
     toml_object: &Value,
     concurrency: library::Concurrency,
-    default_generate_display_trait: bool,
     generate_builder: bool,
     trust_return_value_nullability: bool,
 ) -> GObject {
@@ -268,7 +263,6 @@ fn parse_object(
             "trait_name",
             "cfg_condition",
             "must_use",
-            "generate_display_trait",
             "trust_return_value_nullability",
             "manual_traits",
             "align",
@@ -371,10 +365,6 @@ fn parse_object(
         .lookup("must_use")
         .and_then(Value::as_bool)
         .unwrap_or(false);
-    let generate_display_trait = toml_object
-        .lookup("generate_display_trait")
-        .and_then(Value::as_bool)
-        .unwrap_or(default_generate_display_trait);
     let trust_return_value_nullability = toml_object
         .lookup("trust_return_value_nullability")
         .and_then(Value::as_bool)
@@ -512,7 +502,6 @@ fn parse_object(
         ref_mode,
         must_use,
         conversion_type,
-        generate_display_trait,
         trust_return_value_nullability,
         manual_traits,
         align,
@@ -532,7 +521,6 @@ pub fn parse_status_shorthands(
     objects: &mut GObjects,
     toml: &Value,
     concurrency: library::Concurrency,
-    generate_display_trait: bool,
     generate_builder: bool,
     trust_return_value_nullability: bool,
 ) {
@@ -543,7 +531,6 @@ pub fn parse_status_shorthands(
             status,
             toml,
             concurrency,
-            generate_display_trait,
             generate_builder,
             trust_return_value_nullability,
         );
@@ -555,7 +542,6 @@ fn parse_status_shorthand(
     status: GStatus,
     toml: &Value,
     concurrency: library::Concurrency,
-    generate_display_trait: bool,
     generate_builder: bool,
     trust_return_value_nullability: bool,
 ) {
@@ -570,7 +556,6 @@ fn parse_status_shorthand(
                             name: name.into(),
                             status,
                             concurrency,
-                            generate_display_trait,
                             trust_return_value_nullability,
                             generate_builder,
                             ..Default::default()
@@ -628,7 +613,7 @@ status = "generate"
 "#,
         );
 
-        let object = parse_object(toml, Concurrency::default(), false, false, false);
+        let object = parse_object(toml, Concurrency::default(), false, false);
         assert_eq!(object.conversion_type, None);
     }
 
@@ -642,7 +627,7 @@ conversion_type = "Option"
 "#,
         );
 
-        let object = parse_object(&toml, Concurrency::default(), false, false, false);
+        let object = parse_object(&toml, Concurrency::default(), false, false);
         assert_eq!(object.conversion_type, Some(ConversionType::Option));
     }
 
@@ -657,7 +642,7 @@ status = "generate"
 "#,
         );
 
-        let object = parse_object(toml, Concurrency::default(), false, false, false);
+        let object = parse_object(toml, Concurrency::default(), false, false);
         assert_eq!(object.conversion_type, Some(ConversionType::Option));
     }
 
@@ -672,7 +657,7 @@ status = "generate"
 "#,
         );
 
-        let object = parse_object(toml, Concurrency::default(), false, false, false);
+        let object = parse_object(toml, Concurrency::default(), false, false);
         assert_eq!(
             object.conversion_type,
             Some(ConversionType::Result {
@@ -694,7 +679,7 @@ status = "generate"
 "#,
         );
 
-        let object = parse_object(toml, Concurrency::default(), false, false, false);
+        let object = parse_object(toml, Concurrency::default(), false, false);
         assert_eq!(
             object.conversion_type,
             Some(ConversionType::Result {
@@ -717,7 +702,7 @@ status = "generate"
 "#,
         );
 
-        let object = parse_object(toml, Concurrency::default(), false, false, false);
+        let object = parse_object(toml, Concurrency::default(), false, false);
         assert_eq!(
             object.conversion_type,
             Some(ConversionType::Result {
@@ -745,7 +730,7 @@ status = "generate"
 
         let object = toml
             .lookup("object")
-            .map(|t| parse_toml(t, Concurrency::default(), false, false, false))
+            .map(|t| parse_toml(t, Concurrency::default(), false, false))
             .expect("parsing failed");
         assert_eq!(
             object["Test"].constants,
@@ -774,7 +759,7 @@ generate_doc = false
 "#,
         );
 
-        let object = parse_object(r, Concurrency::default(), false, false, false);
+        let object = parse_object(r, Concurrency::default(), false, false);
         assert!(!object.generate_doc);
 
         // Ensure that the default value is "true".
@@ -784,7 +769,7 @@ name = "Test"
 status = "generate"
 "#,
         );
-        let object = parse_object(r, Concurrency::default(), false, false, false);
+        let object = parse_object(r, Concurrency::default(), false, false);
         assert!(object.generate_doc);
     }
 }

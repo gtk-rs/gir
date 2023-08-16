@@ -52,10 +52,6 @@ pub fn new(env: &Env, obj: &GObject, imports: &mut Imports) -> Option<Info> {
         if has_get_type {
             imports.add("glib::prelude::*");
         }
-
-        if obj.generate_display_trait {
-            imports.add("std::fmt");
-        }
     }
 
     let mut functions = functions::analyze(

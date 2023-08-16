@@ -14,7 +14,7 @@ use super::{
 use crate::{
     analysis::{
         self, bounds::BoundType, object::has_builder_properties, record_type::RecordType,
-        ref_mode::RefMode, rust_type::RustType, special_functions::Type,
+        ref_mode::RefMode, rust_type::RustType,
     },
     env::Env,
     library::{self, Nullable},
@@ -22,12 +22,7 @@ use crate::{
     traits::IntoString,
 };
 
-pub fn generate(
-    w: &mut dyn Write,
-    env: &Env,
-    analysis: &analysis::object::Info,
-    generate_display_trait: bool,
-) -> Result<()> {
+pub fn generate(w: &mut dyn Write, env: &Env, analysis: &analysis::object::Info) -> Result<()> {
     general::start_comments(w, &env.config)?;
     if analysis
         .functions
@@ -330,20 +325,6 @@ pub fn generate(
         writeln!(w)?;
         generate_trait(w, env, analysis)?;
     }
-
-    if generate_display_trait && !analysis.specials.has_trait(Type::Display) {
-        writeln!(w, "\nimpl fmt::Display for {} {{", analysis.name,)?;
-        // Generate Display trait implementation.
-        writeln!(
-            w,
-            "\tfn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {{\n\
-             \t\tf.write_str(\"{}\")\n\
-             \t}}\n\
-             }}",
-            analysis.name
-        )?;
-    }
-
     Ok(())
 }
 
