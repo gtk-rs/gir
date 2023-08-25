@@ -297,7 +297,7 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
                 type BuilderFn = fn(&str) -> {param_spec_builder}<Self>;
     
                 fn param_spec_builder() -> Self::BuilderFn {{
-                    |name| Self::ParamSpec::builder(name)
+                    Self::ParamSpec::builder
                 }}
 }}",
             name = flags.name,
