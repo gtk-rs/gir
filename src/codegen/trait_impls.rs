@@ -259,7 +259,7 @@ fn generate_ord(
 impl PartialOrd for {type_name} {{
     #[inline]
     fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {{
-        {call}.partial_cmp(&0)
+        Some(self.cmp(other))
     }}
 }}
 
