@@ -444,7 +444,7 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
                 type BuilderFn = fn(&str, Self) -> {param_spec_builder}<Self>;
     
                 fn param_spec_builder() -> Self::BuilderFn {{
-                    |name, default_value| Self::ParamSpec::builder_with_default(name, default_value)
+                    Self::ParamSpec::builder_with_default
                 }}
 }}",
             name = enum_.name,
