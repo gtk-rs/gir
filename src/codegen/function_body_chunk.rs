@@ -685,7 +685,7 @@ impl Builder {
         trampoline: &AsyncTrampoline,
     ) {
         chunks.push(Chunk::Custom(String::from(
-            r###"
+            r#"
                 let main_context = glib::MainContext::ref_thread_default();
                 let is_main_context_owner = main_context.is_owner();
                 let has_acquired_main_context = (!is_main_context_owner)
@@ -695,7 +695,7 @@ impl Builder {
                     is_main_context_owner || has_acquired_main_context.is_some(),
                     "Async operations only allowed if the thread is owning the MainContext"
                 );
-        "###,
+        "#,
         )));
 
         chunks.push(Chunk::Let {
