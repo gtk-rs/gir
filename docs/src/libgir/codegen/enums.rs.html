@@ -555,6 +555,11 @@
 <a href="#555" id="555">555</a>
 <a href="#556" id="556">556</a>
 <a href="#557" id="557">557</a>
+<a href="#558" id="558">558</a>
+<a href="#559" id="559">559</a>
+<a href="#560" id="560">560</a>
+<a href="#561" id="561">561</a>
+<a href="#562" id="562">562</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::{
     collections::HashSet,
     io::{prelude::<span class="kw-2">*</span>, <span class="prelude-ty">Result</span>},
@@ -978,13 +983,18 @@ impl FromGlib&lt;{sys_crate_name}::{ffi_name}&gt; for {name} {{
         <span class="macro">writeln!</span>(
             w,
             <span class="string">&quot;impl StaticType for {name} {{
-    #[inline]
-    fn static_type() -&gt; {glib_type} {{
-        unsafe {{ from_glib({sys_crate_name}::{get_type}()) }}
-    }}
-}}&quot;</span>,
-            sys_crate_name = sys_crate_name,
+                #[inline]&quot;</span>,
             name = enum_.name,
+        )<span class="question-mark">?</span>;
+        doc_alias(w, get_type, <span class="string">&quot;&quot;</span>, <span class="number">1</span>)<span class="question-mark">?</span>;
+        <span class="macro">writeln!</span>(
+            w,
+            <span class="string">&quot;
+                fn static_type() -&gt; {glib_type} {{
+                    unsafe {{ from_glib({sys_crate_name}::{get_type}()) }}
+                }}
+            }}&quot;</span>,
+            sys_crate_name = sys_crate_name,
             get_type = get_type,
             glib_type = use_glib_type(env, <span class="string">&quot;Type&quot;</span>)
         )<span class="question-mark">?</span>;
