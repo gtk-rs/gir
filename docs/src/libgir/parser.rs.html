@@ -2980,7 +2980,7 @@
 
     <span class="kw">fn </span>read_object_c_type&lt;<span class="lifetime">&#39;a</span>&gt;(
         <span class="kw-2">&amp;mut </span><span class="self">self</span>,
-        parser: <span class="kw-2">&amp;mut </span>XmlParser&lt;<span class="lifetime">&#39;_</span>&gt;,
+        parser: <span class="kw-2">&amp;</span>XmlParser&lt;<span class="lifetime">&#39;_</span>&gt;,
         elem: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>Element,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>str, String&gt; {
         elem.attr(<span class="string">&quot;type&quot;</span>)

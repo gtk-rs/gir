@@ -2084,7 +2084,7 @@
         trampoline: <span class="kw-2">&amp;</span>AsyncTrampoline,
     ) {
         chunks.push(Chunk::Custom(String::from(
-            <span class="string">r###&quot;
+            <span class="string">r#&quot;
                 let main_context = glib::MainContext::ref_thread_default();
                 let is_main_context_owner = main_context.is_owner();
                 let has_acquired_main_context = (!is_main_context_owner)
@@ -2094,7 +2094,7 @@
                     is_main_context_owner || has_acquired_main_context.is_some(),
                     &quot;Async operations only allowed if the thread is owning the MainContext&quot;
                 );
-        &quot;###</span>,
+        &quot;#</span>,
         )));
 
         chunks.push(Chunk::Let {

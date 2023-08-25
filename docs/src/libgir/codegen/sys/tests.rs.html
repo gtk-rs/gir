@@ -799,7 +799,7 @@
     <span class="macro">writeln!</span>(
         w,
         <span class="string">&quot;{}&quot;</span>,
-        <span class="string">r####&quot;
+        <span class="string">r#&quot;
 #define PRINT_CONSTANT(CONSTANT_NAME) \
     printf(&quot;%s;&quot;, #CONSTANT_NAME); \
     printf(_Generic((CONSTANT_NAME), \
@@ -821,7 +821,7 @@
                     long double: &quot;%ld&quot;), \
            CONSTANT_NAME); \
     printf(&quot;\n&quot;);
-&quot;####
+&quot;#
     </span>)<span class="question-mark">?</span>;
 
     <span class="macro">writeln!</span>(w, <span class="string">&quot;{}&quot;</span>, <span class="string">r&quot;int main() {&quot;</span>)<span class="question-mark">?</span>;
@@ -872,7 +872,7 @@
     <span class="macro">writeln!</span>(
         w,
         <span class="string">&quot;{}&quot;</span>,
-        <span class="string">r####&quot;
+        <span class="string">r#&quot;
 #[derive(Clone, Debug)]
 struct Compiler {
     pub args: Vec&lt;String&gt;,
@@ -1062,7 +1062,7 @@ fn get_c_output(name: &amp;str) -&gt; Result&lt;String, Box&lt;dyn Error&gt;&gt;
     Ok(String::from_utf8(out.stdout)?)
 }
 
-const RUST_LAYOUTS: &amp;[(&amp;str, Layout)] = &amp;[&quot;####
+const RUST_LAYOUTS: &amp;[(&amp;str, Layout)] = &amp;[&quot;#
     </span>)<span class="question-mark">?</span>;
     <span class="kw">for </span>ctype <span class="kw">in </span>ctypes {
         general::cfg_condition(w, ctype.cfg_condition.as_ref(), <span class="bool-val">false</span>, <span class="number">1</span>)<span class="question-mark">?</span>;
@@ -1072,9 +1072,9 @@ const RUST_LAYOUTS: &amp;[(&amp;str, Layout)] = &amp;[&quot;####
     <span class="macro">writeln!</span>(
         w,
         <span class="string">&quot;{}&quot;</span>,
-        <span class="string">r##&quot;];
+        <span class="string">r#&quot;];
 
-const RUST_CONSTANTS: &amp;[(&amp;str, &amp;str)] = &amp;[&quot;##
+const RUST_CONSTANTS: &amp;[(&amp;str, &amp;str)] = &amp;[&quot;#
     </span>)<span class="question-mark">?</span>;
     <span class="kw">for </span>cconst <span class="kw">in </span>cconsts {
         <span class="macro">writeln!</span>(
@@ -1087,9 +1087,9 @@ const RUST_CONSTANTS: &amp;[(&amp;str, &amp;str)] = &amp;[&quot;##
     <span class="macro">writeln!</span>(
         w,
         <span class="string">&quot;{}&quot;</span>,
-        <span class="string">r##&quot;];
+        <span class="string">r#&quot;];
 
-&quot;##
+&quot;#
     </span>)
 }
 </code></pre></div></section></main></body></html>

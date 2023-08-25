@@ -129,8 +129,8 @@
     <span class="macro">writeln!</span>(
         w,
         <span class="string">&quot;{}&quot;</span>,
-        <span class="string">r##&quot;#[cfg(not(docsrs))]
-use std::process;&quot;##
+        <span class="string">r#&quot;#[cfg(not(docsrs))]
+use std::process;&quot;#
     </span>)<span class="question-mark">?</span>;
 
     <span class="kw">if </span>split_build_rs {
@@ -141,7 +141,7 @@ use std::process;&quot;##
     <span class="macro">write!</span>(
         w,
         <span class="string">&quot;{}&quot;</span>,
-        <span class="string">r##&quot;
+        <span class="string">r#&quot;
 #[cfg(docsrs)]
 fn main() {} // prevent linking libraries to avoid documentation failure
 
@@ -152,7 +152,7 @@ fn main() {
         process::exit(1);
     }
 }
-&quot;##
+&quot;#
     </span>)
 }
 
