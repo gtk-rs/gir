@@ -456,8 +456,7 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
         doc_alias(w, get_type, "", 1)?;
         writeln!(
             w,
-            "
-                fn static_type() -> {glib_type} {{
+            "   fn static_type() -> {glib_type} {{
                     unsafe {{ from_glib({sys_crate_name}::{get_type}()) }}
                 }}
             }}",
