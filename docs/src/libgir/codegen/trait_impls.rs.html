@@ -532,7 +532,7 @@ impl Eq for {type_name} {{}}&quot;
 impl PartialOrd for {type_name} {{
     #[inline]
     fn partial_cmp(&amp;self, other: &amp;Self) -&gt; Option&lt;std::cmp::Ordering&gt; {{
-        {call}.partial_cmp(&amp;0)
+        Some(self.cmp(other))
     }}
 }}
 
