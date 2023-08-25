@@ -1479,7 +1479,7 @@ impl Library {
 
     fn read_object_c_type<'a>(
         &mut self,
-        parser: &mut XmlParser<'_>,
+        parser: &XmlParser<'_>,
         elem: &'a Element,
     ) -> Result<&'a str, String> {
         elem.attr("type")
