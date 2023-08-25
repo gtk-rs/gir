@@ -609,7 +609,7 @@ macro_rules! impl_lexical_ord {
 
         impl PartialOrd for $name {
             fn partial_cmp(&self, other: &$name) -> Option<Ordering> {
-                self.$field.partial_cmp(&other.$field)
+                Some(self.cmp(other))
             }
         }
 
