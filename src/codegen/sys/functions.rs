@@ -121,9 +121,8 @@ pub fn generate_unions_funcs(
 ) -> Result<()> {
     let intern_str = INTERN.to_string();
     for union in unions {
-        let c_type = match union.c_type {
-            Some(ref x) => x,
-            None => return Ok(()),
+        let Some(ref c_type) = union.c_type else {
+            return Ok(());
         };
         let name = format!("{}.{}", env.config.library_name, union.name);
         let obj = env.config.objects.get(&name).unwrap_or(&DEFAULT_OBJ);

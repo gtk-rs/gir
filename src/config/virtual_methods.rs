@@ -31,15 +31,12 @@ pub struct VirtualMethod {
 
 impl Parse for VirtualMethod {
     fn parse(toml: &Value, object_name: &str) -> Option<Self> {
-        let ident = match Ident::parse(toml, object_name, "virtual_method") {
-            Some(ident) => ident,
-            None => {
-                error!(
-                    "No 'name' or 'pattern' given for virtual_method for object {}",
-                    object_name
-                );
-                return None;
-            }
+        let Some(ident) = Ident::parse(toml, object_name, "virtual_method") else {
+            error!(
+                "No 'name' or 'pattern' given for virtual_method for object {}",
+                object_name
+            );
+            return None;
         };
         toml.check_unwanted(
             &[

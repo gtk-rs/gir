@@ -20,15 +20,12 @@ pub struct Property {
 
 impl Parse for Property {
     fn parse(toml: &Value, object_name: &str) -> Option<Self> {
-        let ident = match Ident::parse(toml, object_name, "property") {
-            Some(ident) => ident,
-            None => {
-                error!(
-                    "No 'name' or 'pattern' given for property for object {}",
-                    object_name
-                );
-                return None;
-            }
+        let Some(ident) = Ident::parse(toml, object_name, "property") else {
+            error!(
+                "No 'name' or 'pattern' given for property for object {}",
+                object_name
+            );
+            return None;
         };
 
         toml.check_unwanted(

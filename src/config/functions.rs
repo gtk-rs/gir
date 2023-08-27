@@ -28,15 +28,12 @@ pub type CallbackParameters = Vec<CallbackParameter>;
 
 impl Parse for CallbackParameter {
     fn parse(toml: &Value, object_name: &str) -> Option<Self> {
-        let ident = match Ident::parse(toml, object_name, "callback parameter") {
-            Some(ident) => ident,
-            None => {
-                error!(
-                    "No 'name' or 'pattern' given for parameter for object {}",
-                    object_name
-                );
-                return None;
-            }
+        let Some(ident) = Ident::parse(toml, object_name, "callback parameter") else {
+            error!(
+                "No 'name' or 'pattern' given for parameter for object {}",
+                object_name
+            );
+            return None;
         };
         toml.check_unwanted(&["nullable"], &format!("callback parameter {object_name}"));
 
@@ -72,15 +69,12 @@ pub struct Parameter {
 
 impl Parse for Parameter {
     fn parse(toml: &Value, object_name: &str) -> Option<Self> {
-        let ident = match Ident::parse(toml, object_name, "function parameter") {
-            Some(ident) => ident,
-            None => {
-                error!(
-                    "No 'name' or 'pattern' given for parameter for object {}",
-                    object_name
-                );
-                return None;
-            }
+        let Some(ident) = Ident::parse(toml, object_name, "function parameter") else {
+            error!(
+                "No 'name' or 'pattern' given for parameter for object {}",
+                object_name
+            );
+            return None;
         };
         toml.check_unwanted(
             &[
@@ -295,15 +289,12 @@ pub struct Function {
 
 impl Parse for Function {
     fn parse(toml: &Value, object_name: &str) -> Option<Self> {
-        let ident = match Ident::parse(toml, object_name, "function") {
-            Some(ident) => ident,
-            None => {
-                error!(
-                    "No 'name' or 'pattern' given for function for object {}",
-                    object_name
-                );
-                return None;
-            }
+        let Some(ident) = Ident::parse(toml, object_name, "function") else {
+            error!(
+                "No 'name' or 'pattern' given for function for object {}",
+                object_name
+            );
+            return None;
         };
         toml.check_unwanted(
             &[

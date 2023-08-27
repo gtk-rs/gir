@@ -46,15 +46,12 @@ pub struct Parameter {
 
 impl Parse for Parameter {
     fn parse(toml: &Value, object_name: &str) -> Option<Self> {
-        let ident = match Ident::parse(toml, object_name, "signal parameter") {
-            Some(ident) => ident,
-            None => {
-                error!(
-                    "No 'name' or 'pattern' given for parameter for object {}",
-                    object_name
-                );
-                return None;
-            }
+        let Some(ident) = Ident::parse(toml, object_name, "signal parameter") else {
+            error!(
+                "No 'name' or 'pattern' given for parameter for object {}",
+                object_name
+            );
+            return None;
         };
         toml.check_unwanted(
             &["nullable", "transformation", "new_name", "name", "pattern"],
@@ -118,15 +115,12 @@ impl Signal {
         object_name: &str,
         concurrency: library::Concurrency,
     ) -> Option<Self> {
-        let ident = match Ident::parse(toml, object_name, "signal") {
-            Some(ident) => ident,
-            None => {
-                error!(
-                    "No 'name' or 'pattern' given for signal for object {}",
-                    object_name
-                );
-                return None;
-            }
+        let Some(ident) = Ident::parse(toml, object_name, "signal") else {
+            error!(
+                "No 'name' or 'pattern' given for signal for object {}",
+                object_name
+            );
+            return None;
         };
         toml.check_unwanted(
             &[

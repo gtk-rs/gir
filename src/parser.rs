@@ -26,9 +26,8 @@ impl Library {
         for dir in dirs {
             let dir: &Path = dir.as_ref();
             let file_name = make_file_name(dir, &libs[libs.len() - 1]);
-            let mut parser = match XmlParser::from_path(&file_name) {
-                Ok(p) => p,
-                _ => continue,
+            let Ok(mut parser) = XmlParser::from_path(&file_name) else {
+                continue;
             };
             return parser.document(|p, _| {
                 p.element_with_name("repository", |sub_parser, _elem| {

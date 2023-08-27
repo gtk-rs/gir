@@ -11,9 +11,8 @@ use crate::{
 pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>) {
     info!("Generate global functions");
 
-    let functions = match env.analysis.global_functions {
-        Some(ref functions) => functions,
-        None => return,
+    let Some(ref functions) = env.analysis.global_functions else {
+        return;
     };
     // Don't generate anything if we have no functions
     if functions.functions.is_empty() {

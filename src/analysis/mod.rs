@@ -175,9 +175,8 @@ pub fn run(env: &mut Env) {
         if obj.status.ignored() {
             continue;
         }
-        let tid = match env.library.find_type(0, &obj.name) {
-            Some(x) => x,
-            None => continue,
+        let Some(tid) = env.library.find_type(0, &obj.name) else {
+            continue;
         };
         let deps = supertypes::dependencies(env, tid);
         to_analyze.push((tid, deps));
@@ -224,9 +223,8 @@ fn analyze_enums(env: &mut Env) {
         if obj.status.ignored() {
             continue;
         }
-        let tid = match env.library.find_type(0, &obj.name) {
-            Some(x) => x,
-            None => continue,
+        let Some(tid) = env.library.find_type(0, &obj.name) else {
+            continue;
         };
 
         if let Type::Enumeration(_) = env.library.type_(tid) {
@@ -246,9 +244,8 @@ fn analyze_flags(env: &mut Env) {
         if obj.status.ignored() {
             continue;
         }
-        let tid = match env.library.find_type(0, &obj.name) {
-            Some(x) => x,
-            None => continue,
+        let Some(tid) = env.library.find_type(0, &obj.name) else {
+            continue;
         };
 
         if let Type::Bitfield(_) = env.library.type_(tid) {
@@ -325,9 +322,8 @@ fn analyze_constants(env: &mut Env) {
 
 fn analyze(env: &mut Env, tid: TypeId, deps: &[TypeId]) {
     let full_name = tid.full_name(&env.library);
-    let obj = match env.config.objects.get(&*full_name) {
-        Some(obj) => obj,
-        None => return,
+    let Some(obj) = env.config.objects.get(&*full_name) else {
+        return;
     };
     match env.library.type_(tid) {
         Type::Class(_) => {

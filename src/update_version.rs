@@ -85,9 +85,8 @@ fn fix_versions_by_config(library: &mut Library, cfg: &Config) {
         }
         let version = obj.version;
 
-        let tid = match library.find_type(0, &obj.name) {
-            Some(x) => x,
-            None => continue,
+        let Some(tid) = library.find_type(0, &obj.name) else {
+            continue;
         };
         match library.type_mut(tid) {
             Class(class) => class.version = version,
