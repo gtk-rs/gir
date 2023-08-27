@@ -128,7 +128,7 @@ A little tip about reexporting manual traits: in `gtk3-rs`, we create a `src/pre
 The `src/prelude.rs` file looks like this:
 
 ```rust
-pub use auto::traits::*;
+pub use crate::auto::traits::*;
 pub use region::RegionExtManual;
 ```
 
