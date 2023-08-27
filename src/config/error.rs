@@ -16,10 +16,7 @@ where
 impl TomlHelper for toml::Value {
     fn check_unwanted(&self, options: &[&str], err_msg: &str) {
         let mut ret = Vec::new();
-        let table = match self.as_table() {
-            Some(table) => table,
-            None => return,
-        };
+        let Some(table) = self.as_table() else { return };
         for (key, _) in table.iter() {
             if !options.contains(&key.as_str()) {
                 ret.push(key.clone());

@@ -15,15 +15,12 @@ pub struct Constant {
 
 impl Parse for Constant {
     fn parse(toml: &Value, object_name: &str) -> Option<Self> {
-        let ident = match Ident::parse(toml, object_name, "constant") {
-            Some(ident) => ident,
-            None => {
-                error!(
-                    "No 'name' or 'pattern' given for constant for object {}",
-                    object_name
-                );
-                return None;
-            }
+        let Some(ident) = Ident::parse(toml, object_name, "constant") else {
+            error!(
+                "No 'name' or 'pattern' given for constant for object {}",
+                object_name
+            );
+            return None;
         };
         toml.check_unwanted(
             &[

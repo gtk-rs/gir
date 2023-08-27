@@ -317,7 +317,9 @@ These are the objects we will add to the `manual` array in the following steps.
 These are global functions that were not generated.
 To fix it, we just add `"NameOfYourLibrary.*"` to the `generate` array in the Git.toml and add the following line to your src/lib.rs file:
 ```rust
-pub use auto::functions::*;
+pub mod functions {
+  pub use super::auto::functions::*;
+}
 ```
 
 ## Generating the code

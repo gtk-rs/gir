@@ -124,9 +124,8 @@ fn find_modules(env: &Env) -> Result<Vec<String>> {
     let mut vec = Vec::<String>::new();
     for entry in fs::read_dir(&env.config.auto_path)? {
         let path = entry?.path();
-        let ext = match path.extension() {
-            Some(ext) => ext,
-            None => continue,
+        let Some(ext) = path.extension() else {
+            continue;
         };
         if ext != "rs" {
             continue;
