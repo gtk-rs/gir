@@ -1498,7 +1498,6 @@
 <a href="#1498" id="1498">1498</a>
 <a href="#1499" id="1499">1499</a>
 <a href="#1500" id="1500">1500</a>
-<a href="#1501" id="1501">1501</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::{
     path::{Path, PathBuf},
     str::FromStr,
@@ -1527,9 +1526,8 @@
         <span class="kw">for </span>dir <span class="kw">in </span>dirs {
             <span class="kw">let </span>dir: <span class="kw-2">&amp;</span>Path = dir.as_ref();
             <span class="kw">let </span>file_name = make_file_name(dir, <span class="kw-2">&amp;</span>libs[libs.len() - <span class="number">1</span>]);
-            <span class="kw">let </span><span class="kw-2">mut </span>parser = <span class="kw">match </span>XmlParser::from_path(<span class="kw-2">&amp;</span>file_name) {
-                <span class="prelude-val">Ok</span>(p) =&gt; p,
-                <span class="kw">_ </span>=&gt; <span class="kw">continue</span>,
+            <span class="kw">let </span><span class="prelude-val">Ok</span>(<span class="kw-2">mut </span>parser) = XmlParser::from_path(<span class="kw-2">&amp;</span>file_name) <span class="kw">else </span>{
+                <span class="kw">continue</span>;
             };
             <span class="kw">return </span>parser.document(|p, <span class="kw">_</span>| {
                 p.element_with_name(<span class="string">&quot;repository&quot;</span>, |sub_parser, _elem| {

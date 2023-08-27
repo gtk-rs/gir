@@ -327,7 +327,6 @@
 <a href="#327" id="327">327</a>
 <a href="#328" id="328">328</a>
 <a href="#329" id="329">329</a>
-<a href="#330" id="330">330</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::io::{<span class="prelude-ty">Result</span>, Write};
 
 <span class="kw">use </span>once_cell::sync::Lazy;
@@ -451,9 +450,8 @@
 ) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
     <span class="kw">let </span>intern_str = INTERN.to_string();
     <span class="kw">for union in </span>unions {
-        <span class="kw">let </span>c_type = <span class="kw">match </span>union.c_type {
-            <span class="prelude-val">Some</span>(<span class="kw-2">ref </span>x) =&gt; x,
-            <span class="prelude-val">None </span>=&gt; <span class="kw">return </span><span class="prelude-val">Ok</span>(()),
+        <span class="kw">let </span><span class="prelude-val">Some</span>(<span class="kw-2">ref </span>c_type) = union.c_type <span class="kw">else </span>{
+            <span class="kw">return </span><span class="prelude-val">Ok</span>(());
         };
         <span class="kw">let </span>name = <span class="macro">format!</span>(<span class="string">&quot;{}.{}&quot;</span>, env.config.library_name, union.name);
         <span class="kw">let </span>obj = env.config.objects.get(<span class="kw-2">&amp;</span>name).unwrap_or(<span class="kw-2">&amp;</span>DEFAULT_OBJ);

@@ -75,9 +75,6 @@
 <a href="#75" id="75">75</a>
 <a href="#76" id="76">76</a>
 <a href="#77" id="77">77</a>
-<a href="#78" id="78">78</a>
-<a href="#79" id="79">79</a>
-<a href="#80" id="80">80</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>log::error;
 
 <span class="kw">pub trait </span>TomlHelper
@@ -96,10 +93,7 @@
 <span class="kw">impl </span>TomlHelper <span class="kw">for </span>toml::Value {
     <span class="kw">fn </span>check_unwanted(<span class="kw-2">&amp;</span><span class="self">self</span>, options: <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span>str], err_msg: <span class="kw-2">&amp;</span>str) {
         <span class="kw">let </span><span class="kw-2">mut </span>ret = Vec::new();
-        <span class="kw">let </span>table = <span class="kw">match </span><span class="self">self</span>.as_table() {
-            <span class="prelude-val">Some</span>(table) =&gt; table,
-            <span class="prelude-val">None </span>=&gt; <span class="kw">return</span>,
-        };
+        <span class="kw">let </span><span class="prelude-val">Some</span>(table) = <span class="self">self</span>.as_table() <span class="kw">else </span>{ <span class="kw">return </span>};
         <span class="kw">for </span>(key, <span class="kw">_</span>) <span class="kw">in </span>table.iter() {
             <span class="kw">if </span>!options.contains(<span class="kw-2">&amp;</span>key.as_str()) {
                 ret.push(key.clone());
