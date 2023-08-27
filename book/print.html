@@ -736,7 +736,9 @@ To fix it, we just add <code>&quot;NameOfYourLibrary.*&quot;</code> to the <code
 </ul>
 <pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
-</span>pub use auto::functions::*;
+</span>pub mod functions {
+  pub use super::auto::functions::*;
+}
 <span class="boring">}</span></code></pre></pre>
 <h2 id="generating-the-code"><a class="header" href="#generating-the-code">Generating the code</a></h2>
 <p>In order to generate the code for the safe wrapper, we follow these steps until all objects have been generated:</p>
@@ -873,7 +875,7 @@ A little tip about reexporting manual traits: in <code>gtk3-rs</code>, we create
 The <code>src/prelude.rs</code> file looks like this:</p>
 <pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
-</span>pub use auto::traits::*;
+</span>pub use crate::auto::traits::*;
 pub use region::RegionExtManual;
 <span class="boring">}</span></code></pre></pre>
 <p>Then it's reexported as follows from the <code>src/lib.rs</code> file:</p>

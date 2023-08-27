@@ -282,7 +282,7 @@ A little tip about reexporting manual traits: in <code>gtk3-rs</code>, we create
 The <code>src/prelude.rs</code> file looks like this:</p>
 <pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
-</span>pub use auto::traits::*;
+</span>pub use crate::auto::traits::*;
 pub use region::RegionExtManual;
 <span class="boring">}</span></code></pre></pre>
 <p>Then it's reexported as follows from the <code>src/lib.rs</code> file:</p>
