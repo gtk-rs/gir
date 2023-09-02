@@ -307,7 +307,7 @@ name = "Gst.Format"
 status = "generate"
     [[object.derive]]
     name = "Serialize, Deserialize"
-    cfg_condition = "feature = \"ser_de\""
+    cfg_condition = "feature = \"serde\""
 ```
 
 For global functions, the members can be configured by configuring the `Gtk.*` object:

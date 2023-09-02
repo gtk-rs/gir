@@ -37,7 +37,7 @@ fn apply(env: &Env, type_id: TypeId, string_type: Option<config::StringType>) ->
     };
     match *env.library.type_(type_id) {
         Type::Basic(Basic::Filename | Basic::OsString | Basic::Utf8) => replace,
-        Type::CArray(inner_tid) if can_overriden_basic(env, inner_tid) => {
+        Type::CArray(inner_tid) if can_overridden_basic(env, inner_tid) => {
             Type::find_c_array(&env.library, replace, None)
         }
         _ => {
@@ -50,7 +50,7 @@ fn apply(env: &Env, type_id: TypeId, string_type: Option<config::StringType>) ->
     }
 }
 
-fn can_overriden_basic(env: &Env, type_id: TypeId) -> bool {
+fn can_overridden_basic(env: &Env, type_id: TypeId) -> bool {
     matches!(
         *env.library.type_(type_id),
         Type::Basic(Basic::Filename | Basic::OsString | Basic::Utf8)
