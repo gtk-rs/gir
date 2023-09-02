@@ -445,7 +445,7 @@ fn analyze_callbacks(
                     rust_type,
                     None,
                 ) {
-                    // We just assume that for API "cleaness", the destroy callback will always
+                    // We just assume that for API "cleanness", the destroy callback will always
                     // be |-> *after* <-| the initial callback.
                     if let Some(user_data_index) = cross_user_data_check.get(&pos) {
                         callback.user_data_index = *user_data_index;

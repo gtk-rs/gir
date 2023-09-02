@@ -52,7 +52,7 @@ pub fn file_name_sys(name: &str) -> String {
     path.to_str().unwrap().into()
 }
 
-/// Crate name with undescores for `use` statement
+/// Crate name with underscores for `use` statement
 pub fn crate_name(name: &str) -> String {
     let name = name.replace('-', "_").to_snake();
     let crate_name = if let Some(name_without_prefix) = name.strip_prefix("g_") {

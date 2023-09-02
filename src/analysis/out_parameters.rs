@@ -172,7 +172,7 @@ pub fn use_function_return_for_result(
     func_name: &str,
     configured_functions: &[&config::functions::Function],
 ) -> bool {
-    // Configuration takes precendence over everything.
+    // Configuration takes precedence over everything.
     let use_return_for_result = configured_functions
         .iter()
         .find_map(|f| f.ret.use_return_for_result.as_ref());

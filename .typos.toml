@@ -1,0 +1,8 @@
+[files]
+extend-exclude = ["*.svg"]
+
+[default.extend-words]
+# Ignore false-positives
+gir = "gir"
+inout = "inout"
+serde = "serde"
