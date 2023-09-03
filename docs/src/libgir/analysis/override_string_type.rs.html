@@ -95,7 +95,7 @@
     };
     <span class="kw">match </span><span class="kw-2">*</span>env.library.type_(type_id) {
         Type::Basic(Basic::Filename | Basic::OsString | Basic::Utf8) =&gt; replace,
-        Type::CArray(inner_tid) <span class="kw">if </span>can_overriden_basic(env, inner_tid) =&gt; {
+        Type::CArray(inner_tid) <span class="kw">if </span>can_overridden_basic(env, inner_tid) =&gt; {
             Type::find_c_array(<span class="kw-2">&amp;</span>env.library, replace, <span class="prelude-val">None</span>)
         }
         <span class="kw">_ </span>=&gt; {
@@ -108,7 +108,7 @@
     }
 }
 
-<span class="kw">fn </span>can_overriden_basic(env: <span class="kw-2">&amp;</span>Env, type_id: TypeId) -&gt; bool {
+<span class="kw">fn </span>can_overridden_basic(env: <span class="kw-2">&amp;</span>Env, type_id: TypeId) -&gt; bool {
     <span class="macro">matches!</span>(
         <span class="kw-2">*</span>env.library.type_(type_id),
         Type::Basic(Basic::Filename | Basic::OsString | Basic::Utf8)

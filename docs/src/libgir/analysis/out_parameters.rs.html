@@ -367,7 +367,7 @@
     func_name: <span class="kw-2">&amp;</span>str,
     configured_functions: <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span>config::functions::Function],
 ) -&gt; bool {
-    <span class="comment">// Configuration takes precendence over everything.
+    <span class="comment">// Configuration takes precedence over everything.
     </span><span class="kw">let </span>use_return_for_result = configured_functions
         .iter()
         .find_map(|f| f.ret.use_return_for_result.as_ref());
