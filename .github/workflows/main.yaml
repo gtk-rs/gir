@@ -24,7 +24,7 @@ jobs:
 
     steps:
       - name: Acquire source code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Acquire Rust toolchain
         uses: actions-rs/toolchain@v1
         with:
@@ -90,7 +90,7 @@ jobs:
 
     steps:
       - name: Acquire source code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Acquire Rust toolchain
         uses: actions-rs/toolchain@v1
         with:
@@ -134,7 +134,7 @@ jobs:
         run: pacman --noconfirm -S mingw-w64-${{ matrix.arch }}-gtk3 mingw-w64-${{ matrix.arch }}-libgit2
         if: matrix.os == 'windows-latest'
       - name: "Acquire gir-files"
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: gtk-rs/gir-files
           ref: master
@@ -157,7 +157,7 @@ jobs:
           cargo build && cargo build --features v3_20
         if: matrix.os == 'windows-latest'
       - name: "Acquire gtk3-rs"
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: gtk-rs/gtk3-rs
           ref: master
@@ -171,7 +171,7 @@ jobs:
         run: cd gtk3-rs && python3 generator.py --no-fmt --gir-path ../target/release/gir --gir-files-directories ../tests/gir-files/ && rm ../Cargo.* && cargo build
         if: matrix.os == 'ubuntu-20.04'
       - name: "Acquire gtk-rs-core"
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: gtk-rs/gtk-rs-core
           ref: master
