@@ -1791,7 +1791,7 @@
         parent_name_prefix: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>str&gt;,
         parent_ctype_prefix: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>str&gt;,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;Type&gt;, String&gt; {
-        <span class="kw">let </span>record_name = elem.attr_required(<span class="string">&quot;name&quot;</span>)<span class="question-mark">?</span>;
+        <span class="kw">let </span>record_name = elem.attr(<span class="string">&quot;name&quot;</span>).unwrap_or_default();
         <span class="comment">// Records starting with `_` are intended to be private and should not be bound
         </span><span class="kw">if </span>record_name.starts_with(<span class="string">&#39;_&#39;</span>) {
             parser.ignore_element()<span class="question-mark">?</span>;
@@ -1799,7 +1799,7 @@
         }
         <span class="kw">let </span>is_class_record = record_name.ends_with(<span class="string">&quot;Class&quot;</span>);
 
-        <span class="kw">let </span>c_type = elem.attr_required(<span class="string">&quot;type&quot;</span>)<span class="question-mark">?</span>;
+        <span class="kw">let </span>c_type = elem.attr(<span class="string">&quot;type&quot;</span>).unwrap_or_default();
         <span class="kw">let </span>symbol_prefix = elem.attr(<span class="string">&quot;symbol-prefix&quot;</span>).map(ToOwned::to_owned);
         <span class="kw">let </span>get_type = elem.attr(<span class="string">&quot;get-type&quot;</span>).map(ToOwned::to_owned);
         <span class="kw">let </span>gtype_struct_for = elem.attr(<span class="string">&quot;is-gtype-struct-for&quot;</span>);
