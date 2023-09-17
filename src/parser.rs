@@ -292,7 +292,7 @@ impl Library {
         parent_name_prefix: Option<&str>,
         parent_ctype_prefix: Option<&str>,
     ) -> Result<Option<Type>, String> {
-        let record_name = elem.attr_required("name")?;
+        let record_name = elem.attr("name").unwrap_or_default();
         // Records starting with `_` are intended to be private and should not be bound
         if record_name.starts_with('_') {
             parser.ignore_element()?;
@@ -300,7 +300,7 @@ impl Library {
         }
         let is_class_record = record_name.ends_with("Class");
 
-        let c_type = elem.attr_required("type")?;
+        let c_type = elem.attr("type").unwrap_or_default();
         let symbol_prefix = elem.attr("symbol-prefix").map(ToOwned::to_owned);
         let get_type = elem.attr("get-type").map(ToOwned::to_owned);
         let gtype_struct_for = elem.attr("is-gtype-struct-for");
