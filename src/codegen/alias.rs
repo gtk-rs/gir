@@ -5,7 +5,7 @@ use std::{
 
 use crate::{
     analysis::{namespaces, rust_type::RustType},
-    codegen::general,
+    codegen::general::{doc_alias, start_comments},
     config::gobjects::GObject,
     env::Env,
     file_saver,
@@ -36,7 +36,7 @@ pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>) {
 
     let path = root_path.join("alias.rs");
     file_saver::save_to_file(path, env.config.make_backup, |w| {
-        general::start_comments(w, &env.config)?;
+        start_comments(w, &env.config)?;
         writeln!(w)?;
         writeln!(w, "#[allow(unused_imports)]")?;
         writeln!(w, "use crate::auto::*;")?;
@@ -56,6 +56,7 @@ pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>) {
 
 fn generate_alias(env: &Env, w: &mut dyn Write, alias: &Alias, _: &GObject) -> Result<()> {
     let typ = RustType::try_new(env, alias.typ).into_string();
+    doc_alias(w, &alias.c_identifier, "", 0)?;
     writeln!(w, "pub type {} = {};", alias.name, typ)?;
 
     Ok(())
