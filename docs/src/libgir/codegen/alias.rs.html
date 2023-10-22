@@ -60,6 +60,7 @@
 <a href="#60" id="60">60</a>
 <a href="#61" id="61">61</a>
 <a href="#62" id="62">62</a>
+<a href="#63" id="63">63</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::{
     io::{prelude::<span class="kw-2">*</span>, <span class="prelude-ty">Result</span>},
     path::Path,
@@ -67,7 +68,7 @@
 
 <span class="kw">use crate</span>::{
     analysis::{namespaces, rust_type::RustType},
-    codegen::general,
+    codegen::general::{doc_alias, start_comments},
     config::gobjects::GObject,
     env::Env,
     file_saver,
@@ -98,7 +99,7 @@
 
     <span class="kw">let </span>path = root_path.join(<span class="string">&quot;alias.rs&quot;</span>);
     file_saver::save_to_file(path, env.config.make_backup, |w| {
-        general::start_comments(w, <span class="kw-2">&amp;</span>env.config)<span class="question-mark">?</span>;
+        start_comments(w, <span class="kw-2">&amp;</span>env.config)<span class="question-mark">?</span>;
         <span class="macro">writeln!</span>(w)<span class="question-mark">?</span>;
         <span class="macro">writeln!</span>(w, <span class="string">&quot;#[allow(unused_imports)]&quot;</span>)<span class="question-mark">?</span>;
         <span class="macro">writeln!</span>(w, <span class="string">&quot;use crate::auto::*;&quot;</span>)<span class="question-mark">?</span>;
@@ -118,6 +119,7 @@
 
 <span class="kw">fn </span>generate_alias(env: <span class="kw-2">&amp;</span>Env, w: <span class="kw-2">&amp;mut </span><span class="kw">dyn </span>Write, alias: <span class="kw-2">&amp;</span>Alias, <span class="kw">_</span>: <span class="kw-2">&amp;</span>GObject) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
     <span class="kw">let </span>typ = RustType::try_new(env, alias.typ).into_string();
+    doc_alias(w, <span class="kw-2">&amp;</span>alias.c_identifier, <span class="string">&quot;&quot;</span>, <span class="number">0</span>)<span class="question-mark">?</span>;
     <span class="macro">writeln!</span>(w, <span class="string">&quot;pub type {} = {};&quot;</span>, alias.name, typ)<span class="question-mark">?</span>;
 
     <span class="prelude-val">Ok</span>(())
