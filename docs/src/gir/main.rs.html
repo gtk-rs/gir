@@ -305,7 +305,7 @@
         matches.opt_str(<span class="string">&quot;c&quot;</span>).as_str_ref(),
         work_mode,
         <span class="kw-2">&amp;</span>matches.opt_strs(<span class="string">&quot;d&quot;</span>),
-        matches.free.get(<span class="number">0</span>).as_str_ref(),
+        matches.free.first().as_str_ref(),
         matches.free.get(<span class="number">1</span>).as_str_ref(),
         matches.opt_str(<span class="string">&quot;o&quot;</span>).as_str_ref(),
         matches.opt_str(<span class="string">&quot;doc-target-path&quot;</span>).as_str_ref(),
