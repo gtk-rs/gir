@@ -89,7 +89,7 @@ fn build_config() -> Result<RunKind, String> {
         matches.opt_str("c").as_str_ref(),
         work_mode,
         &matches.opt_strs("d"),
-        matches.free.get(0).as_str_ref(),
+        matches.free.first().as_str_ref(),
         matches.free.get(1).as_str_ref(),
         matches.opt_str("o").as_str_ref(),
         matches.opt_str("doc-target-path").as_str_ref(),
