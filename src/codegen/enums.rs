@@ -450,13 +450,17 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
         writeln!(
             w,
             "impl StaticType for {name} {{
-    #[inline]
-    fn static_type() -> {glib_type} {{
-        unsafe {{ from_glib({sys_crate_name}::{get_type}()) }}
-    }}
-}}",
-            sys_crate_name = sys_crate_name,
+                #[inline]",
             name = enum_.name,
+        )?;
+        doc_alias(w, get_type, "", 1)?;
+        writeln!(
+            w,
+            "   fn static_type() -> {glib_type} {{
+                    unsafe {{ from_glib({sys_crate_name}::{get_type}()) }}
+                }}
+            }}",
+            sys_crate_name = sys_crate_name,
             get_type = get_type,
             glib_type = use_glib_type(env, "Type")
         )?;
@@ -473,7 +477,7 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
                 type BuilderFn = fn(&str, Self) -> {param_spec_builder}<Self>;
     
                 fn param_spec_builder() -> Self::BuilderFn {{
-                    |name, default_value| Self::ParamSpec::builder_with_default(name, default_value)
+                    Self::ParamSpec::builder_with_default
                 }}
 }}",
             name = enum_.name,

@@ -252,7 +252,7 @@ fn generate_constant_c(
     writeln!(
         w,
         "{}",
-        r####"
+        r#"
 #define PRINT_CONSTANT(CONSTANT_NAME) \
     printf("%s;", #CONSTANT_NAME); \
     printf(_Generic((CONSTANT_NAME), \
@@ -274,7 +274,7 @@ fn generate_constant_c(
                     long double: "%ld"), \
            CONSTANT_NAME); \
     printf("\n");
-"####
+"#
     )?;
 
     writeln!(w, "{}", r"int main() {")?;
@@ -325,7 +325,7 @@ fn generate_abi_rs(
     writeln!(
         w,
         "{}",
-        r####"
+        r#"
 #[derive(Clone, Debug)]
 struct Compiler {
     pub args: Vec<String>,
@@ -511,7 +511,7 @@ fn get_c_output(name: &str) -> Result<String, Box<dyn Error>> {
     Ok(String::from_utf8(output.stdout)?)
 }
 
-const RUST_LAYOUTS: &[(&str, Layout)] = &["####
+const RUST_LAYOUTS: &[(&str, Layout)] = &["#
     )?;
     for ctype in ctypes {
         general::cfg_condition(w, ctype.cfg_condition.as_ref(), false, 1)?;
@@ -521,9 +521,9 @@ const RUST_LAYOUTS: &[(&str, Layout)] = &["####
     writeln!(
         w,
         "{}",
-        r##"];
+        r#"];
 
-const RUST_CONSTANTS: &[(&str, &str)] = &["##
+const RUST_CONSTANTS: &[(&str, &str)] = &["#
     )?;
     for cconst in cconsts {
         writeln!(
@@ -536,8 +536,8 @@ const RUST_CONSTANTS: &[(&str, &str)] = &["##
     writeln!(
         w,
         "{}",
-        r##"];
+        r#"];
 
-"##
+"#
     )
 }

@@ -349,7 +349,7 @@ fn analyze(env: &mut Env, tid: TypeId, deps: &[TypeId]) {
     }
 }
 
-fn is_all_deps_analyzed(env: &mut Env, deps: &[TypeId]) -> bool {
+fn is_all_deps_analyzed(env: &Env, deps: &[TypeId]) -> bool {
     for tid in deps {
         let full_name = tid.full_name(&env.library);
         if !env.analysis.objects.contains_key(&full_name) {

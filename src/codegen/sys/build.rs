@@ -39,8 +39,8 @@ fn generate_build_script(w: &mut dyn Write, env: &Env, split_build_rs: bool) -> 
     writeln!(
         w,
         "{}",
-        r##"#[cfg(not(docsrs))]
-use std::process;"##
+        r#"#[cfg(not(docsrs))]
+use std::process;"#
     )?;
 
     if split_build_rs {
@@ -51,7 +51,7 @@ use std::process;"##
     write!(
         w,
         "{}",
-        r##"
+        r#"
 #[cfg(docsrs)]
 fn main() {} // prevent linking libraries to avoid documentation failure
 
@@ -62,7 +62,7 @@ fn main() {
         process::exit(1);
     }
 }
-"##
+"#
     )
 }
 
