@@ -68,7 +68,17 @@ impl RustType {
                 type_name.as_str()
             );
 
-            if env.type_status(&type_id.full_name(&env.library)).ignored() {
+            // if env.namespaces[type_id.ns_id].higher_crate_name == "vulkan" {
+            //     dbg!(&type_name);
+            //     dbg!(&type_id.full_name(&env.library));
+            //     // dbg!(&env.config.objects);
+            //     // panic!();
+            // }
+            if env.type_status(&type_id.full_name(&env.library)).ignored()
+                // TODO
+            && env.namespaces[type_id.ns_id].higher_crate_name != "vulkan"
+            {
+                // dbg!(&type_name);
                 return Err(TypeError::Ignored(type_name));
             }
         }
