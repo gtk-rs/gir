@@ -53,7 +53,8 @@ impl Library {
             for ns_type in ns.types.iter_mut().flatten() {
                 if let Type::Record(incomplete_record) = ns_type {
                     *ns_type = Type::Custom(Custom {
-                        name: format!("ash::vk::{}", incomplete_record.name),
+                        // name: format!("ash::vk::{}", incomplete_record.name),
+                        name: incomplete_record.name.clone(),
                         conversion_type: ConversionType::Direct,
                     });
                 }
