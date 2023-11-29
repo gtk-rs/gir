@@ -542,25 +542,14 @@ impl Builder {
                 is_mut: false,
                 value: Box::new(Chunk::Custom(
                     if is_destroy || trampoline.scope.is_async() {
-                        format!("Box_::from_raw({func} as *mut _)")
+                        format!("Box_::from_raw({} as *mut {})", func, trampoline.bound_name)
                     } else if trampoline.scope.is_call() {
-                        format!(
-                            "{} as *const _ as usize as *mut {}",
-                            func, trampoline.bound_name
-                        )
+                        format!("{} as *mut {}", func, trampoline.bound_name)
                     } else {
-                        format!("&*({func} as *mut _)")
+                        format!("&*({} as *mut {})", func, trampoline.bound_name)
                     },
                 )),
-                type_: Some(Box::new(Chunk::Custom(
-                    if is_destroy || trampoline.scope.is_async() {
-                        format!("Box_<{}>", trampoline.bound_name)
-                    } else if trampoline.scope.is_call() {
-                        format!("*mut {}", trampoline.bound_name)
-                    } else {
-                        format!("&{}", trampoline.bound_name)
-                    },
-                ))),
+                type_: None,
             });
             if !is_destroy && *trampoline.nullable {
                 if trampoline.scope.is_async() {
@@ -1016,7 +1005,7 @@ impl Builder {
                 Chunk::FfiCallParameter {
                     transformation_type: TransformationType::ToGlibDirect {
                         name: if all_call {
-                            format!("super_callback{pos} as *const _ as usize as *mut _")
+                            format!("super_callback{pos} as *const _ as *mut _")
                         } else {
                             format!("Box_::into_raw(super_callback{pos}) as *mut _")
                         },
