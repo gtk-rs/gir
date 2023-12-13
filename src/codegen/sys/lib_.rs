@@ -452,7 +452,7 @@ fn generate_records(w: &mut dyn Write, env: &Env, records: &[&Record]) -> Result
             // 5. Thus, we use custom generated GHookList.
             //    Hopefully someone will profit from all this.
             generate_ghooklist(w)?;
-        } else if record.disguised {
+        } else if record.disguised || record.pointer {
             generate_disguised(w, env, record)?;
         } else {
             let align = config.and_then(|c| c.align);
@@ -499,7 +499,11 @@ fn generate_disguised(w: &mut dyn Write, env: &Env, record: &Record) -> Result<(
     cfg_condition(w, cfg_condition_, false, 0)?;
     generate_opaque_type(w, &format!("_{}", record.c_type))?;
     cfg_condition(w, cfg_condition_, false, 0)?;
-    writeln!(w, "pub type {name} = *mut _{name};", name = record.c_type)?;
+    if record.pointer {
+        writeln!(w, "pub type {name} = *mut _{name};", name = record.c_type)?;
+    } else {
+        writeln!(w, "pub type {name} = _{name};", name = record.c_type)?;
+    }
     writeln!(w)
 }
 
