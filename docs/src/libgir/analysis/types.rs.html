@@ -360,7 +360,7 @@
 
 <span class="kw">impl </span>IsIncomplete <span class="kw">for </span>Record {
     <span class="kw">fn </span>is_incomplete(<span class="kw-2">&amp;</span><span class="self">self</span>, lib: <span class="kw-2">&amp;</span>Library) -&gt; bool {
-        <span class="kw">if </span><span class="self">self</span>.c_type == <span class="string">&quot;GHookList&quot; </span>|| <span class="self">self</span>.disguised {
+        <span class="kw">if </span><span class="self">self</span>.c_type == <span class="string">&quot;GHookList&quot; </span>|| <span class="self">self</span>.disguised || <span class="self">self</span>.pointer {
             <span class="comment">// Search for GHookList in sys codegen for rationale.
             </span><span class="bool-val">false
         </span>} <span class="kw">else </span>{

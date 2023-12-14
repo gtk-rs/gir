@@ -1498,6 +1498,8 @@
 <a href="#1498" id="1498">1498</a>
 <a href="#1499" id="1499">1499</a>
 <a href="#1500" id="1500">1500</a>
+<a href="#1501" id="1501">1501</a>
+<a href="#1502" id="1502">1502</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::{
     path::{Path, PathBuf},
     str::FromStr,
@@ -1805,6 +1807,7 @@
         <span class="kw">let </span>gtype_struct_for = elem.attr(<span class="string">&quot;is-gtype-struct-for&quot;</span>);
         <span class="kw">let </span>version = <span class="self">self</span>.read_version(parser, ns_id, elem)<span class="question-mark">?</span>;
         <span class="kw">let </span>deprecated_version = <span class="self">self</span>.read_deprecated_version(parser, ns_id, elem)<span class="question-mark">?</span>;
+        <span class="kw">let </span>pointer = elem.attr_bool(<span class="string">&quot;pointer&quot;</span>, <span class="bool-val">false</span>);
         <span class="kw">let </span>disguised = elem.attr_bool(<span class="string">&quot;disguised&quot;</span>, <span class="bool-val">false</span>);
 
         <span class="kw">let </span><span class="kw-2">mut </span>fields = Vec::new();
@@ -1906,6 +1909,7 @@
             doc,
             doc_deprecated,
             disguised,
+            pointer,
             symbol_prefix,
         });
 

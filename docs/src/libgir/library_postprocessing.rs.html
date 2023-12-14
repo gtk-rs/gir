@@ -1112,7 +1112,7 @@
                             <span class="self">self</span>.find_type(ns_id <span class="kw">as </span>u16, klass.type_struct.as_ref().unwrap())
                         {
                             <span class="kw">if let </span>Type::Record(record) = <span class="self">self</span>.type_(class_record_tid) {
-                                !record.disguised
+                                !record.disguised &amp;&amp; !record.pointer
                             } <span class="kw">else </span>{
                                 <span class="macro">unreachable!</span>(<span class="string">&quot;Type {} with non-record class&quot;</span>, full_name);
                             }

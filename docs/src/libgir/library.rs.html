@@ -1377,6 +1377,9 @@
 <a href="#1377" id="1377">1377</a>
 <a href="#1378" id="1378">1378</a>
 <a href="#1379" id="1379">1379</a>
+<a href="#1380" id="1380">1380</a>
+<a href="#1381" id="1381">1381</a>
+<a href="#1382" id="1382">1382</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::{
     cmp::{Ord, Ordering, PartialOrd},
     collections::{BTreeMap, BTreeSet, HashMap, HashSet},
@@ -1806,8 +1809,11 @@
     <span class="kw">pub </span>deprecated_version: <span class="prelude-ty">Option</span>&lt;Version&gt;,
     <span class="kw">pub </span>doc: <span class="prelude-ty">Option</span>&lt;String&gt;,
     <span class="kw">pub </span>doc_deprecated: <span class="prelude-ty">Option</span>&lt;String&gt;,
-    <span class="doccomment">/// A &#39;disguised&#39; record is one where the c:type is a typedef that
+    <span class="doccomment">/// A &#39;pointer&#39; record is one where the c:type is a typedef that
     /// doesn&#39;t look like a pointer, but is internally: typedef struct _X *X;
+    </span><span class="kw">pub </span>pointer: bool,
+    <span class="doccomment">/// A &#39;disguised&#39; record is one where the c:type is a typedef to
+    /// a struct whose content and size are unknown, it is :typedef struct _X X;
     </span><span class="kw">pub </span>disguised: bool,
 }
 

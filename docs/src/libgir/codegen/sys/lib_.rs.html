@@ -574,6 +574,10 @@
 <a href="#574" id="574">574</a>
 <a href="#575" id="575">575</a>
 <a href="#576" id="576">576</a>
+<a href="#577" id="577">577</a>
+<a href="#578" id="578">578</a>
+<a href="#579" id="579">579</a>
+<a href="#580" id="580">580</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::{
     fs,
     io::{Error, ErrorKind, <span class="prelude-ty">Result</span>, Write},
@@ -1028,7 +1032,7 @@ pub struct {name} {{
             // 5. Thus, we use custom generated GHookList.
             //    Hopefully someone will profit from all this.
             </span>generate_ghooklist(w)<span class="question-mark">?</span>;
-        } <span class="kw">else if </span>record.disguised {
+        } <span class="kw">else if </span>record.disguised || record.pointer {
             generate_disguised(w, env, record)<span class="question-mark">?</span>;
         } <span class="kw">else </span>{
             <span class="kw">let </span>align = config.and_then(|c| c.align);
@@ -1075,7 +1079,11 @@ impl ::std::fmt::Debug for GHookList {
     cfg_condition(w, cfg_condition_, <span class="bool-val">false</span>, <span class="number">0</span>)<span class="question-mark">?</span>;
     generate_opaque_type(w, <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;_{}&quot;</span>, record.c_type))<span class="question-mark">?</span>;
     cfg_condition(w, cfg_condition_, <span class="bool-val">false</span>, <span class="number">0</span>)<span class="question-mark">?</span>;
-    <span class="macro">writeln!</span>(w, <span class="string">&quot;pub type {name} = *mut _{name};&quot;</span>, name = record.c_type)<span class="question-mark">?</span>;
+    <span class="kw">if </span>record.pointer {
+        <span class="macro">writeln!</span>(w, <span class="string">&quot;pub type {name} = *mut _{name};&quot;</span>, name = record.c_type)<span class="question-mark">?</span>;
+    } <span class="kw">else </span>{
+        <span class="macro">writeln!</span>(w, <span class="string">&quot;pub type {name} = _{name};&quot;</span>, name = record.c_type)<span class="question-mark">?</span>;
+    }
     <span class="macro">writeln!</span>(w)
 }
 
