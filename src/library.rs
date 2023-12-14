@@ -427,8 +427,11 @@ pub struct Record {
     pub deprecated_version: Option<Version>,
     pub doc: Option<String>,
     pub doc_deprecated: Option<String>,
-    /// A 'disguised' record is one where the c:type is a typedef that
+    /// A 'pointer' record is one where the c:type is a typedef that
     /// doesn't look like a pointer, but is internally: typedef struct _X *X;
+    pub pointer: bool,
+    /// A 'disguised' record is one where the c:type is a typedef to
+    /// a struct whose content and size are unknown, it is :typedef struct _X X;
     pub disguised: bool,
 }
 

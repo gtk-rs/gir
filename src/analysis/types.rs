@@ -108,7 +108,7 @@ impl IsIncomplete for Class {
 
 impl IsIncomplete for Record {
     fn is_incomplete(&self, lib: &Library) -> bool {
-        if self.c_type == "GHookList" || self.disguised {
+        if self.c_type == "GHookList" || self.disguised || self.pointer {
             // Search for GHookList in sys codegen for rationale.
             false
         } else {

@@ -460,7 +460,7 @@ impl Library {
                             self.find_type(ns_id as u16, klass.type_struct.as_ref().unwrap())
                         {
                             if let Type::Record(record) = self.type_(class_record_tid) {
-                                !record.disguised
+                                !record.disguised && !record.pointer
                             } else {
                                 unreachable!("Type {} with non-record class", full_name);
                             }

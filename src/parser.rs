@@ -305,6 +305,7 @@ impl Library {
         let gtype_struct_for = elem.attr("is-gtype-struct-for");
         let version = self.read_version(parser, ns_id, elem)?;
         let deprecated_version = self.read_deprecated_version(parser, ns_id, elem)?;
+        let pointer = elem.attr_bool("pointer", false);
         let disguised = elem.attr_bool("disguised", false);
 
         let mut fields = Vec::new();
@@ -406,6 +407,7 @@ impl Library {
             doc,
             doc_deprecated,
             disguised,
+            pointer,
             symbol_prefix,
         });
 
