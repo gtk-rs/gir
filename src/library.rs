@@ -82,9 +82,15 @@ pub enum ParameterScope {
     ///
     /// Can be invoked multiple times.
     Notified,
+    /// Forever scope
+    Forever,
 }
 
 impl ParameterScope {
+    pub fn is_forever(self) -> bool {
+        matches!(self, Self::Forever)
+    }
+
     pub fn is_call(self) -> bool {
         matches!(self, Self::Call)
     }
@@ -106,6 +112,7 @@ impl FromStr for ParameterScope {
             "call" => Ok(Self::Call),
             "async" => Ok(Self::Async),
             "notified" => Ok(Self::Notified),
+            "forever" => Ok(Self::Forever),
             _ => Err(format!("Unknown parameter scope type: {name}")),
         }
     }
