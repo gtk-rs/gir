@@ -3,10 +3,7 @@ pub mod primitives;
 pub mod to_code; // TODO:remove pub
 pub mod untabber;
 
-pub use self::{
-    defines::{MAX_TEXT_WIDTH, TAB, TAB_SIZE},
-    to_code::ToCode,
-};
+pub use self::{defines::TAB, to_code::ToCode};
 use crate::analysis::safety_assertion_mode::SafetyAssertionMode;
 
 pub fn safety_assertion_mode_to_str(s: SafetyAssertionMode) -> &'static str {
