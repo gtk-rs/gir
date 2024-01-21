@@ -1,6 +1,4 @@
-use std::{borrow::Cow, collections::HashMap, path::*};
-
-use once_cell::sync::Lazy;
+use std::{borrow::Cow, collections::HashMap, path::*, sync::OnceLock};
 
 use crate::case::*;
 
@@ -93,32 +91,35 @@ pub fn bitfield_member_name(name: &str) -> String {
 }
 
 pub fn needs_mangling(name: &str) -> bool {
-    KEYWORDS.contains_key(name)
+    keywords().contains_key(name)
 }
 
 // If the mangling happened, guaranteed to return Owned.
 pub fn mangle_keywords<'a, S: Into<Cow<'a, str>>>(name: S) -> Cow<'a, str> {
     let name = name.into();
-    if let Some(s) = KEYWORDS.get(&*name) {
+    if let Some(s) = keywords().get(&*name) {
         s.clone().into()
     } else {
         name
     }
 }
 
-static KEYWORDS: Lazy<HashMap<&'static str, String>> = Lazy::new(|| {
-    [
-        "abstract", "alignof", "as", "async", "await", "become", "box", "break", "const",
-        "continue", "crate", "do", "dyn", "else", "enum", "extern", "false", "final", "fn", "for",
-        "if", "impl", "in", "let", "loop", "macro", "match", "mod", "move", "mut", "offsetof",
-        "override", "priv", "proc", "pub", "pure", "ref", "return", "Self", "self", "sizeof",
-        "static", "struct", "super", "trait", "true", "try", "type", "typeof", "unsafe", "unsized",
-        "use", "virtual", "where", "while", "yield",
-    ]
-    .iter()
-    .map(|k| (*k, format!("{k}_")))
-    .collect()
-});
+fn keywords() -> &'static HashMap<&'static str, String> {
+    static KEYWORDS: OnceLock<HashMap<&'static str, String>> = OnceLock::new();
+    KEYWORDS.get_or_init(|| {
+        [
+            "abstract", "alignof", "as", "async", "await", "become", "box", "break", "const",
+            "continue", "crate", "do", "dyn", "else", "enum", "extern", "false", "final", "fn",
+            "for", "if", "impl", "in", "let", "loop", "macro", "match", "mod", "move", "mut",
+            "offsetof", "override", "priv", "proc", "pub", "pure", "ref", "return", "Self", "self",
+            "sizeof", "static", "struct", "super", "trait", "true", "try", "type", "typeof",
+            "unsafe", "unsized", "use", "virtual", "where", "while", "yield",
+        ]
+        .iter()
+        .map(|k| (*k, format!("{k}_")))
+        .collect()
+    })
+}
 
 pub fn signal_to_snake(signal: &str) -> String {
     signal.replace("::", "_").replace('-', "_")

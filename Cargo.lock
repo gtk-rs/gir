@@ -76,7 +76,6 @@ dependencies = [
  "getopts",
  "hprof",
  "log 0.4.20",
- "once_cell",
  "regex",
  "rustdoc-stripper",
  "toml",
