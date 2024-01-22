@@ -35,6 +35,7 @@ use crate::{
     },
     nameutil,
     traits::*,
+    update_cfgs,
     version::Version,
 };
 
@@ -651,6 +652,9 @@ fn analyze_function(
     let cfg_condition = configured_functions
         .iter()
         .find_map(|f| f.cfg_condition.clone());
+    let ns = env.library.namespace(ns_id);
+    let cfg_condition =
+        update_cfgs::get_cfg_condition(&func.name, &cfg_condition, &ns.symbol_prefixes);
     let doc_hidden = configured_functions.iter().any(|f| f.doc_hidden);
     let doc_trait_name = configured_functions
         .iter()

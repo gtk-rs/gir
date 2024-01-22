@@ -10,6 +10,7 @@ use crate::{
     env::Env,
     library, nameutil,
     traits::*,
+    update_cfgs,
 };
 
 // used as glib:get-type in GLib-2.0.gir
@@ -180,13 +181,19 @@ pub fn generate_other_funcs(
 
 fn generate_cfg_configure(
     w: &mut dyn Write,
+    env: &Env,
+    function_name: &str,
     configured_functions: &[&Function],
     commented: bool,
 ) -> Result<()> {
+    let ns = env.namespaces.main();
     let cfg_condition_ = configured_functions
         .iter()
-        .find_map(|f| f.cfg_condition.as_ref());
-    cfg_condition(w, cfg_condition_, commented, 1)?;
+        .find_map(|f| {
+            update_cfgs::get_cfg_condition(function_name, &f.cfg_condition, &ns.symbol_prefixes)
+        })
+        .or_else(|| update_cfgs::get_cfg_condition(function_name, &None, &ns.symbol_prefixes));
+    cfg_condition(w, cfg_condition_.as_ref(), commented, 1)?;
     Ok(())
 }
 
@@ -224,7 +231,7 @@ fn generate_object_funcs(
                 .max()
                 .flatten();
             version_condition(w, env, None, version, false, 1)?;
-            generate_cfg_configure(w, &configured_functions, false)?;
+            generate_cfg_configure(w, env, glib_get_type, &configured_functions, false)?;
             writeln!(w, "    pub fn {glib_get_type}() -> GType;")?;
         }
     }
@@ -254,7 +261,7 @@ fn generate_object_funcs(
 
         version_condition(w, env, None, version, commented, 1)?;
         let name = func.c_identifier.as_ref().unwrap();
-        generate_cfg_configure(w, &configured_functions, commented)?;
+        generate_cfg_configure(w, env, name, &configured_functions, commented)?;
         writeln!(w, "    {comment}pub fn {name}{sig};")?;
     }
 

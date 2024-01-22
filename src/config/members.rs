@@ -52,10 +52,7 @@ impl Parse for Member {
             .lookup("deprecated_version")
             .and_then(Value::as_str)
             .and_then(|s| s.parse().ok());
-        let cfg_condition = toml
-            .lookup("cfg_condition")
-            .and_then(Value::as_str)
-            .map(ToOwned::to_owned);
+        let cfg_condition = super::get_cfg_condition(toml, object_name);
 
         let status = {
             if toml

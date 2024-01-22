@@ -1,6 +1,6 @@
 use std::borrow::Borrow;
 
-use crate::{config, env::Env, library, nameutil, traits::*, version::Version};
+use crate::{config, env::Env, library, nameutil, traits::*, update_cfgs, version::Version};
 
 #[derive(Debug)]
 pub struct Info {
@@ -49,6 +49,7 @@ pub fn analyze<F: Borrow<library::Constant>>(
         let cfg_condition = configured_constants
             .iter()
             .find_map(|c| c.cfg_condition.clone());
+        let cfg_condition = update_cfgs::get_constant_cfg_condition(&constant.name, &cfg_condition);
 
         let name = nameutil::mangle_keywords(&*constant.name).into_owned();
 
