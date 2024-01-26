@@ -48,11 +48,6 @@ jobs:
         with:
           path: target
           key: checks-${{ runner.os }}-cargo-target-dir-${{ steps.toolchain.outputs.rustc_hash }}
-      - name: Install packages from apt
-        run: |
-          sudo apt update
-          sudo apt install libgtk-3-dev libssh2-1-dev libglib2.0-dev libgraphene-1.0-dev libcairo-gobject2 libcairo2-dev
-        if: matrix.os == 'ubuntu-20.04'
       - name: "Run clippy"
         uses: actions-rs/cargo@v1
         with:
@@ -125,13 +120,13 @@ jobs:
       - name: Install packages from apt
         run: |
           sudo apt update
-          sudo apt install libgtk-3-dev libssh2-1-dev libglib2.0-dev libgraphene-1.0-dev libcairo-gobject2 libcairo2-dev
-        if: matrix.os == 'ubuntu-20.04'
+          sudo apt install libgtk-4-dev libssh2-1-dev libglib2.0-dev libgraphene-1.0-dev libcairo-gobject2 libcairo2-dev
+        if: matrix.os == 'ubuntu-latest'
       - name: Install toolchain packages with pacman
         run: pacman --noconfirm -S base-devel mingw-w64-${{ matrix.arch }}-toolchain
         if: matrix.os == 'windows-latest'
       - name: Install library devel packages with pacman
-        run: pacman --noconfirm -S mingw-w64-${{ matrix.arch }}-gtk3 mingw-w64-${{ matrix.arch }}-libgit2
+        run: pacman --noconfirm -S mingw-w64-${{ matrix.arch }}-libgit2
         if: matrix.os == 'windows-latest'
       - name: "Acquire gir-files"
         uses: actions/checkout@v4
@@ -151,24 +146,19 @@ jobs:
           args: --release
       - name: "Test (tests/sys)"
         run: tests/sys/test.sh
-      - name: "sys_build (Windows)"
-        run: |
-          cd tests/sys/sys_build
-          cargo build && cargo build --features v3_20
-        if: matrix.os == 'windows-latest'
-      - name: "Acquire gtk3-rs"
+      - name: "Acquire gtk4-rs"
         uses: actions/checkout@v4
         with:
-          repository: gtk-rs/gtk3-rs
+          repository: gtk-rs/gtk4-rs
           ref: master
-          path: gtk3-rs
+          path: gtk4-rs
         if: matrix.os == 'ubuntu-20.04'
-      - name: "Symlink `gir` in gtk3-rs"
+      - name: "Symlink `gir` in gtk4-rs"
         run: |
-          rmdir gtk3-rs/gir
-          ln -sf .. gtk3-rs/gir
-      - name: "Attempt to rebuild gtk3-rs gir"
-        run: cd gtk3-rs && python3 generator.py --no-fmt --gir-path ../target/release/gir --gir-files-directories ../tests/gir-files/ && rm ../Cargo.* && cargo build
+          rmdir gtk4-rs/gir
+          ln -sf .. gtk4-rs/gir
+      - name: "Attempt to rebuild gtk4-rs gir"
+        run: cd gtk4-rs && python3 generator.py --no-fmt --gir-path ../target/release/gir --gir-files-directories ../tests/gir-files/ && rm ../Cargo.* && cargo build
         if: matrix.os == 'ubuntu-20.04'
       - name: "Acquire gtk-rs-core"
         uses: actions/checkout@v4
