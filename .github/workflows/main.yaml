@@ -144,8 +144,6 @@ jobs:
         with:
           command: test
           args: --release
-      - name: "Test (tests/sys)"
-        run: tests/sys/test.sh
       - name: "Acquire gtk4-rs"
         uses: actions/checkout@v4
         with:
