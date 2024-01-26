@@ -15,7 +15,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-20.04]
+        os: [ubuntu-latest]
         toolchain: [stable]
 
     defaults:
@@ -53,13 +53,13 @@ jobs:
         with:
           command: clippy
           args: --release --tests -- -D warnings
-        if: matrix.os == 'ubuntu-20.04'
+        if: matrix.os == 'ubuntu-latest'
       - name: "Run formatting check"
         uses: actions-rs/cargo@v1
         with:
           command: fmt
           args: -- --check
-        if: matrix.os == 'ubuntu-20.04'
+        if: matrix.os == 'ubuntu-latest'
 
   build:
     name: "Build/Test"
@@ -67,7 +67,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-20.04]
+        os: [ubuntu-latest]
         toolchain: [nightly, stable]
         # include:
         #   - os: windows-latest
@@ -152,25 +152,25 @@ jobs:
           repository: gtk-rs/gtk4-rs
           ref: master
           path: gtk4-rs
-        if: matrix.os == 'ubuntu-20.04'
+        if: matrix.os == 'ubuntu-latest'
       - name: "Symlink `gir` in gtk4-rs"
         run: |
           rmdir gtk4-rs/gir
           ln -sf .. gtk4-rs/gir
       - name: "Attempt to rebuild gtk4-rs gir"
         run: cd gtk4-rs && python3 generator.py --no-fmt --gir-path ../target/release/gir --gir-files-directories ../tests/gir-files/ && rm ../Cargo.* && cargo build
-        if: matrix.os == 'ubuntu-20.04'
+        if: matrix.os == 'ubuntu-latest'
       - name: "Acquire gtk-rs-core"
         uses: actions/checkout@v4
         with:
           repository: gtk-rs/gtk-rs-core
           ref: master
           path: gtk-rs-core
-        if: matrix.os == 'ubuntu-20.04'
+        if: matrix.os == 'ubuntu-latest'
       - name: "Symlink `gir` in gtk-rs-core"
         run: |
           rmdir gtk-rs-core/gir
           ln -sf .. gtk-rs-core/gir
       - name: "Rebuild gio"
         run: cd gtk-rs-core/gio && cargo test
-        if: matrix.os == 'ubuntu-20.04'
+        if: matrix.os == 'ubuntu-latest'
