@@ -1,6 +1,7 @@
-use std::io::{Result, Write};
-
-use once_cell::sync::Lazy;
+use std::{
+    io::{Result, Write},
+    sync::OnceLock,
+};
 
 use super::ffi_type::*;
 use crate::{
@@ -14,7 +15,10 @@ use crate::{
 // used as glib:get-type in GLib-2.0.gir
 const INTERN: &str = "intern";
 
-static DEFAULT_OBJ: Lazy<GObject> = Lazy::new(Default::default);
+fn default_obj() -> &'static GObject {
+    static OBJ: OnceLock<GObject> = OnceLock::new();
+    OBJ.get_or_init(Default::default)
+}
 
 pub fn generate_records_funcs(
     w: &mut dyn Write,
@@ -24,7 +28,7 @@ pub fn generate_records_funcs(
     let intern_str = INTERN.to_string();
     for record in records {
         let name = format!("{}.{}", env.config.library_name, record.name);
-        let obj = env.config.objects.get(&name).unwrap_or(&DEFAULT_OBJ);
+        let obj = env.config.objects.get(&name).unwrap_or(default_obj());
         let version = obj.version.or(record.version);
         let glib_get_type = record.glib_get_type.as_ref().unwrap_or(&intern_str);
         generate_object_funcs(
@@ -48,7 +52,7 @@ pub fn generate_classes_funcs(
 ) -> Result<()> {
     for klass in classes {
         let name = format!("{}.{}", env.config.library_name, klass.name);
-        let obj = env.config.objects.get(&name).unwrap_or(&DEFAULT_OBJ);
+        let obj = env.config.objects.get(&name).unwrap_or(default_obj());
         let version = obj.version.or(klass.version);
         generate_object_funcs(
             w,
@@ -72,7 +76,7 @@ pub fn generate_bitfields_funcs(
     let intern_str = INTERN.to_string();
     for bitfield in bitfields {
         let name = format!("{}.{}", env.config.library_name, bitfield.name);
-        let obj = env.config.objects.get(&name).unwrap_or(&DEFAULT_OBJ);
+        let obj = env.config.objects.get(&name).unwrap_or(default_obj());
         let version = obj.version.or(bitfield.version);
         let glib_get_type = bitfield.glib_get_type.as_ref().unwrap_or(&intern_str);
         generate_object_funcs(
@@ -97,7 +101,7 @@ pub fn generate_enums_funcs(
     let intern_str = INTERN.to_string();
     for en in enums {
         let name = format!("{}.{}", env.config.library_name, en.name);
-        let obj = env.config.objects.get(&name).unwrap_or(&DEFAULT_OBJ);
+        let obj = env.config.objects.get(&name).unwrap_or(default_obj());
         let version = obj.version.or(en.version);
         let glib_get_type = en.glib_get_type.as_ref().unwrap_or(&intern_str);
         generate_object_funcs(
@@ -125,7 +129,7 @@ pub fn generate_unions_funcs(
             return Ok(());
         };
         let name = format!("{}.{}", env.config.library_name, union.name);
-        let obj = env.config.objects.get(&name).unwrap_or(&DEFAULT_OBJ);
+        let obj = env.config.objects.get(&name).unwrap_or(default_obj());
         let glib_get_type = union.glib_get_type.as_ref().unwrap_or(&intern_str);
         generate_object_funcs(
             w,
@@ -148,7 +152,7 @@ pub fn generate_interfaces_funcs(
 ) -> Result<()> {
     for interface in interfaces {
         let name = format!("{}.{}", env.config.library_name, interface.name);
-        let obj = env.config.objects.get(&name).unwrap_or(&DEFAULT_OBJ);
+        let obj = env.config.objects.get(&name).unwrap_or(default_obj());
         let version = obj.version.or(interface.version);
         generate_object_funcs(
             w,
@@ -170,7 +174,7 @@ pub fn generate_other_funcs(
     functions: &[library::Function],
 ) -> Result<()> {
     let name = format!("{}.*", env.config.library_name);
-    let obj = env.config.objects.get(&name).unwrap_or(&DEFAULT_OBJ);
+    let obj = env.config.objects.get(&name).unwrap_or(default_obj());
     generate_object_funcs(w, env, obj, None, "Other functions", INTERN, functions)
 }
 

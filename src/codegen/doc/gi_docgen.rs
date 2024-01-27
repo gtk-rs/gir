@@ -1,9 +1,9 @@
 use std::{
     fmt::{self, Display, Formatter},
     str::FromStr,
+    sync::OnceLock,
 };
 
-use once_cell::sync::Lazy;
 use regex::{Captures, Regex};
 
 use super::format::find_method_or_function;
@@ -92,16 +92,19 @@ fn namespace_type_method_from_details(
     }
 }
 
-static GI_DOCGEN_SYMBOLS: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r"\[(callback|id|alias|class|const|ctor|enum|error|flags|func|iface|method|property|signal|struct|vfunc)[@](\w+\b)([:.]+[\w-]+\b)?([:.]+[\w-]+\b)?\]?").unwrap()
-});
+fn gi_docgen_symbols() -> &'static Regex {
+    static REGEX: OnceLock<Regex> = OnceLock::new();
+    REGEX.get_or_init(|| {
+        Regex::new(r"\[(callback|id|alias|class|const|ctor|enum|error|flags|func|iface|method|property|signal|struct|vfunc)[@](\w+\b)([:.]+[\w-]+\b)?([:.]+[\w-]+\b)?\]?").unwrap()
+    })
+}
 
 pub(crate) fn replace_c_types(
     entry: &str,
     env: &Env,
     in_type: Option<(&TypeId, Option<LocationInObject>)>,
 ) -> String {
-    GI_DOCGEN_SYMBOLS
+    gi_docgen_symbols()
         .replace_all(entry, |caps: &Captures<'_>| {
             if let Ok(gi_type) = GiDocgen::from_str(&caps[0]) {
                 gi_type.rust_link(env, in_type)

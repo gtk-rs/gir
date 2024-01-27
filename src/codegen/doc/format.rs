@@ -1,8 +1,7 @@
 #![allow(clippy::manual_map)]
-use std::fmt::Write;
+use std::{fmt::Write, sync::OnceLock};
 
 use log::{info, warn};
-use once_cell::sync::Lazy;
 use regex::{Captures, Regex};
 
 use super::{gi_docgen, LocationInObject};
@@ -141,7 +140,7 @@ fn replace_symbols(
 ) -> String {
     if env.config.use_gi_docgen {
         let out = gi_docgen::replace_c_types(input, env, in_type);
-        let out = GI_DOCGEN_SYMBOL.replace_all(&out, |caps: &Captures<'_>| match &caps[2] {
+        let out = gi_docgen_symbol().replace_all(&out, |caps: &Captures<'_>| match &caps[2] {
             "TRUE" => "[`true`]".to_string(),
             "FALSE" => "[`false`]".to_string(),
             "NULL" => "[`None`]".to_string(),
@@ -151,7 +150,7 @@ fn replace_symbols(
                 s => panic!("Unknown symbol prefix `{s}`"),
             },
         });
-        let out = GDK_GTK.replace_all(&out, |caps: &Captures<'_>| {
+        let out = gdk_gtk().replace_all(&out, |caps: &Captures<'_>| {
             find_type(&caps[2], env).unwrap_or_else(|| format!("`{}`", &caps[2]))
         });
 
@@ -161,28 +160,49 @@ fn replace_symbols(
     }
 }
 
-static SYMBOL: Lazy<Regex> = Lazy::new(|| Regex::new(r"([@#%])(\w+\b)([:.]+[\w-]+\b)?").unwrap());
-static GI_DOCGEN_SYMBOL: Lazy<Regex> =
-    Lazy::new(|| Regex::new(r"([%])(\w+\b)([:.]+[\w-]+\b)?").unwrap());
-static FUNCTION: Lazy<Regex> =
-    Lazy::new(|| Regex::new(r"([@#%])?(\w+\b[:.]+)?(\b[a-z0-9_]+)\(\)").unwrap());
-// **note**
-// The optional . at the end is to make the regex more relaxed for some weird
-// broken cases on gtk3's docs it doesn't hurt other docs so please don't drop
-// it
-static GDK_GTK: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r"`([^\(:])?((G[dts]k|Pango|cairo_|graphene_|Adw|Hdy|GtkSource)\w+\b)(\.)?`")
-        .unwrap()
-});
-static TAGS: Lazy<Regex> = Lazy::new(|| Regex::new(r"<[\w/-]+>").unwrap());
-static SPACES: Lazy<Regex> = Lazy::new(|| Regex::new(r"[ ]{2,}").unwrap());
+fn symbol() -> &'static Regex {
+    static REGEX: OnceLock<Regex> = OnceLock::new();
+    REGEX.get_or_init(|| Regex::new(r"([@#%])(\w+\b)([:.]+[\w-]+\b)?").unwrap())
+}
+
+fn gi_docgen_symbol() -> &'static Regex {
+    static REGEX: OnceLock<Regex> = OnceLock::new();
+    REGEX.get_or_init(|| Regex::new(r"([%])(\w+\b)([:.]+[\w-]+\b)?").unwrap())
+}
+
+fn function() -> &'static Regex {
+    static REGEX: OnceLock<Regex> = OnceLock::new();
+    REGEX.get_or_init(|| Regex::new(r"([@#%])?(\w+\b[:.]+)?(\b[a-z0-9_]+)\(\)").unwrap())
+}
+
+fn gdk_gtk() -> &'static Regex {
+    // **note**
+    // The optional . at the end is to make the regex more relaxed for some weird
+    // broken cases on gtk3's docs it doesn't hurt other docs so please don't drop
+    // it
+    static REGEX: OnceLock<Regex> = OnceLock::new();
+    REGEX.get_or_init(|| {
+        Regex::new(r"`([^\(:])?((G[dts]k|Pango|cairo_|graphene_|Adw|Hdy|GtkSource)\w+\b)(\.)?`")
+            .unwrap()
+    })
+}
+
+fn tags() -> &'static Regex {
+    static REGEX: OnceLock<Regex> = OnceLock::new();
+    REGEX.get_or_init(|| Regex::new(r"<[\w/-]+>").unwrap())
+}
+
+fn spaces() -> &'static Regex {
+    static REGEX: OnceLock<Regex> = OnceLock::new();
+    REGEX.get_or_init(|| Regex::new(r"[ ]{2,}").unwrap())
+}
 
 fn replace_c_types(
     entry: &str,
     env: &Env,
     in_type: Option<(&TypeId, Option<LocationInObject>)>,
 ) -> String {
-    let out = FUNCTION.replace_all(entry, |caps: &Captures<'_>| {
+    let out = function().replace_all(entry, |caps: &Captures<'_>| {
         let name = &caps[3];
         find_method_or_function_by_ctype(None, name, env, in_type).unwrap_or_else(|| {
             if !IGNORE_C_WARNING_FUNCS.contains(&name) {
@@ -192,7 +212,7 @@ fn replace_c_types(
         })
     });
 
-    let out = SYMBOL.replace_all(&out, |caps: &Captures<'_>| match &caps[2] {
+    let out = symbol().replace_all(&out, |caps: &Captures<'_>| match &caps[2] {
         "TRUE" => "[`true`]".to_string(),
         "FALSE" => "[`false`]".to_string(),
         "NULL" => "[`None`]".to_string(),
@@ -245,11 +265,11 @@ fn replace_c_types(
             s => panic!("Unknown symbol prefix `{s}`"),
         },
     });
-    let out = GDK_GTK.replace_all(&out, |caps: &Captures<'_>| {
+    let out = gdk_gtk().replace_all(&out, |caps: &Captures<'_>| {
         find_type(&caps[2], env).unwrap_or_else(|| format!("`{}`", &caps[2]))
     });
-    let out = TAGS.replace_all(&out, "`$0`");
-    SPACES.replace_all(&out, " ").into_owned()
+    let out = tags().replace_all(&out, "`$0`");
+    spaces().replace_all(&out, " ").into_owned()
 }
 
 /// Wrapper around [`find_constant_or_variant`] that fallbacks to returning

@@ -2,10 +2,10 @@ use std::{
     borrow::Cow,
     collections::{BTreeSet, HashSet},
     io::{Result, Write},
+    sync::OnceLock,
 };
 
 use log::{error, info};
-use once_cell::sync::Lazy;
 use regex::{Captures, Regex};
 use stripper_lib::{write_file_name, write_item_doc, Type as SType, TypeStruct};
 
@@ -819,10 +819,13 @@ fn create_bitfield_doc(
     Ok(())
 }
 
-static PARAM_NAME: Lazy<Regex> = Lazy::new(|| Regex::new(r"@(\w+)\b").unwrap());
+fn param_name() -> &'static Regex {
+    static REGEX: OnceLock<Regex> = OnceLock::new();
+    REGEX.get_or_init(|| Regex::new(r"@(\w+)\b").unwrap())
+}
 
 fn fix_param_names<'a>(doc: &'a str, self_name: &Option<String>) -> Cow<'a, str> {
-    PARAM_NAME.replace_all(doc, |caps: &Captures<'_>| {
+    param_name().replace_all(doc, |caps: &Captures<'_>| {
         if let Some(self_name) = self_name {
             if &caps[1] == self_name {
                 return "@self".into();
