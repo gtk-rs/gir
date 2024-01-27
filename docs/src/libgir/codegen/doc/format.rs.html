@@ -599,11 +599,30 @@
 <a href="#599" id="599">599</a>
 <a href="#600" id="600">600</a>
 <a href="#601" id="601">601</a>
+<a href="#602" id="602">602</a>
+<a href="#603" id="603">603</a>
+<a href="#604" id="604">604</a>
+<a href="#605" id="605">605</a>
+<a href="#606" id="606">606</a>
+<a href="#607" id="607">607</a>
+<a href="#608" id="608">608</a>
+<a href="#609" id="609">609</a>
+<a href="#610" id="610">610</a>
+<a href="#611" id="611">611</a>
+<a href="#612" id="612">612</a>
+<a href="#613" id="613">613</a>
+<a href="#614" id="614">614</a>
+<a href="#615" id="615">615</a>
+<a href="#616" id="616">616</a>
+<a href="#617" id="617">617</a>
+<a href="#618" id="618">618</a>
+<a href="#619" id="619">619</a>
+<a href="#620" id="620">620</a>
+<a href="#621" id="621">621</a>
 </pre></div><pre class="rust"><code><span class="attr">#![allow(clippy::manual_map)]
-</span><span class="kw">use </span>std::fmt::Write;
+</span><span class="kw">use </span>std::{fmt::Write, sync::OnceLock};
 
 <span class="kw">use </span>log::{info, warn};
-<span class="kw">use </span>once_cell::sync::Lazy;
 <span class="kw">use </span>regex::{Captures, Regex};
 
 <span class="kw">use super</span>::{gi_docgen, LocationInObject};
@@ -742,7 +761,7 @@
 ) -&gt; String {
     <span class="kw">if </span>env.config.use_gi_docgen {
         <span class="kw">let </span>out = gi_docgen::replace_c_types(input, env, in_type);
-        <span class="kw">let </span>out = GI_DOCGEN_SYMBOL.replace_all(<span class="kw-2">&amp;</span>out, |caps: <span class="kw-2">&amp;</span>Captures&lt;<span class="lifetime">&#39;_</span>&gt;| <span class="kw">match </span><span class="kw-2">&amp;</span>caps[<span class="number">2</span>] {
+        <span class="kw">let </span>out = gi_docgen_symbol().replace_all(<span class="kw-2">&amp;</span>out, |caps: <span class="kw-2">&amp;</span>Captures&lt;<span class="lifetime">&#39;_</span>&gt;| <span class="kw">match </span><span class="kw-2">&amp;</span>caps[<span class="number">2</span>] {
             <span class="string">&quot;TRUE&quot; </span>=&gt; <span class="string">&quot;[`true`]&quot;</span>.to_string(),
             <span class="string">&quot;FALSE&quot; </span>=&gt; <span class="string">&quot;[`false`]&quot;</span>.to_string(),
             <span class="string">&quot;NULL&quot; </span>=&gt; <span class="string">&quot;[`None`]&quot;</span>.to_string(),
@@ -752,7 +771,7 @@
                 s =&gt; <span class="macro">panic!</span>(<span class="string">&quot;Unknown symbol prefix `{s}`&quot;</span>),
             },
         });
-        <span class="kw">let </span>out = GDK_GTK.replace_all(<span class="kw-2">&amp;</span>out, |caps: <span class="kw-2">&amp;</span>Captures&lt;<span class="lifetime">&#39;_</span>&gt;| {
+        <span class="kw">let </span>out = gdk_gtk().replace_all(<span class="kw-2">&amp;</span>out, |caps: <span class="kw-2">&amp;</span>Captures&lt;<span class="lifetime">&#39;_</span>&gt;| {
             find_type(<span class="kw-2">&amp;</span>caps[<span class="number">2</span>], env).unwrap_or_else(|| <span class="macro">format!</span>(<span class="string">&quot;`{}`&quot;</span>, <span class="kw-2">&amp;</span>caps[<span class="number">2</span>]))
         });
 
@@ -762,28 +781,49 @@
     }
 }
 
-<span class="kw">static </span>SYMBOL: Lazy&lt;Regex&gt; = Lazy::new(|| Regex::new(<span class="string">r&quot;([@#%])(\w+\b)([:.]+[\w-]+\b)?&quot;</span>).unwrap());
-<span class="kw">static </span>GI_DOCGEN_SYMBOL: Lazy&lt;Regex&gt; =
-    Lazy::new(|| Regex::new(<span class="string">r&quot;([%])(\w+\b)([:.]+[\w-]+\b)?&quot;</span>).unwrap());
-<span class="kw">static </span>FUNCTION: Lazy&lt;Regex&gt; =
-    Lazy::new(|| Regex::new(<span class="string">r&quot;([@#%])?(\w+\b[:.]+)?(\b[a-z0-9_]+)\(\)&quot;</span>).unwrap());
-<span class="comment">// **note**
-// The optional . at the end is to make the regex more relaxed for some weird
-// broken cases on gtk3&#39;s docs it doesn&#39;t hurt other docs so please don&#39;t drop
-// it
-</span><span class="kw">static </span>GDK_GTK: Lazy&lt;Regex&gt; = Lazy::new(|| {
-    Regex::new(<span class="string">r&quot;`([^\(:])?((G[dts]k|Pango|cairo_|graphene_|Adw|Hdy|GtkSource)\w+\b)(\.)?`&quot;</span>)
-        .unwrap()
-});
-<span class="kw">static </span>TAGS: Lazy&lt;Regex&gt; = Lazy::new(|| Regex::new(<span class="string">r&quot;&lt;[\w/-]+&gt;&quot;</span>).unwrap());
-<span class="kw">static </span>SPACES: Lazy&lt;Regex&gt; = Lazy::new(|| Regex::new(<span class="string">r&quot;[ ]{2,}&quot;</span>).unwrap());
+<span class="kw">fn </span>symbol() -&gt; <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>Regex {
+    <span class="kw">static </span>REGEX: OnceLock&lt;Regex&gt; = OnceLock::new();
+    REGEX.get_or_init(|| Regex::new(<span class="string">r&quot;([@#%])(\w+\b)([:.]+[\w-]+\b)?&quot;</span>).unwrap())
+}
+
+<span class="kw">fn </span>gi_docgen_symbol() -&gt; <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>Regex {
+    <span class="kw">static </span>REGEX: OnceLock&lt;Regex&gt; = OnceLock::new();
+    REGEX.get_or_init(|| Regex::new(<span class="string">r&quot;([%])(\w+\b)([:.]+[\w-]+\b)?&quot;</span>).unwrap())
+}
+
+<span class="kw">fn </span>function() -&gt; <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>Regex {
+    <span class="kw">static </span>REGEX: OnceLock&lt;Regex&gt; = OnceLock::new();
+    REGEX.get_or_init(|| Regex::new(<span class="string">r&quot;([@#%])?(\w+\b[:.]+)?(\b[a-z0-9_]+)\(\)&quot;</span>).unwrap())
+}
+
+<span class="kw">fn </span>gdk_gtk() -&gt; <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>Regex {
+    <span class="comment">// **note**
+    // The optional . at the end is to make the regex more relaxed for some weird
+    // broken cases on gtk3&#39;s docs it doesn&#39;t hurt other docs so please don&#39;t drop
+    // it
+    </span><span class="kw">static </span>REGEX: OnceLock&lt;Regex&gt; = OnceLock::new();
+    REGEX.get_or_init(|| {
+        Regex::new(<span class="string">r&quot;`([^\(:])?((G[dts]k|Pango|cairo_|graphene_|Adw|Hdy|GtkSource)\w+\b)(\.)?`&quot;</span>)
+            .unwrap()
+    })
+}
+
+<span class="kw">fn </span>tags() -&gt; <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>Regex {
+    <span class="kw">static </span>REGEX: OnceLock&lt;Regex&gt; = OnceLock::new();
+    REGEX.get_or_init(|| Regex::new(<span class="string">r&quot;&lt;[\w/-]+&gt;&quot;</span>).unwrap())
+}
+
+<span class="kw">fn </span>spaces() -&gt; <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>Regex {
+    <span class="kw">static </span>REGEX: OnceLock&lt;Regex&gt; = OnceLock::new();
+    REGEX.get_or_init(|| Regex::new(<span class="string">r&quot;[ ]{2,}&quot;</span>).unwrap())
+}
 
 <span class="kw">fn </span>replace_c_types(
     entry: <span class="kw-2">&amp;</span>str,
     env: <span class="kw-2">&amp;</span>Env,
     in_type: <span class="prelude-ty">Option</span>&lt;(<span class="kw-2">&amp;</span>TypeId, <span class="prelude-ty">Option</span>&lt;LocationInObject&gt;)&gt;,
 ) -&gt; String {
-    <span class="kw">let </span>out = FUNCTION.replace_all(entry, |caps: <span class="kw-2">&amp;</span>Captures&lt;<span class="lifetime">&#39;_</span>&gt;| {
+    <span class="kw">let </span>out = function().replace_all(entry, |caps: <span class="kw-2">&amp;</span>Captures&lt;<span class="lifetime">&#39;_</span>&gt;| {
         <span class="kw">let </span>name = <span class="kw-2">&amp;</span>caps[<span class="number">3</span>];
         find_method_or_function_by_ctype(<span class="prelude-val">None</span>, name, env, in_type).unwrap_or_else(|| {
             <span class="kw">if </span>!IGNORE_C_WARNING_FUNCS.contains(<span class="kw-2">&amp;</span>name) {
@@ -793,7 +833,7 @@
         })
     });
 
-    <span class="kw">let </span>out = SYMBOL.replace_all(<span class="kw-2">&amp;</span>out, |caps: <span class="kw-2">&amp;</span>Captures&lt;<span class="lifetime">&#39;_</span>&gt;| <span class="kw">match </span><span class="kw-2">&amp;</span>caps[<span class="number">2</span>] {
+    <span class="kw">let </span>out = symbol().replace_all(<span class="kw-2">&amp;</span>out, |caps: <span class="kw-2">&amp;</span>Captures&lt;<span class="lifetime">&#39;_</span>&gt;| <span class="kw">match </span><span class="kw-2">&amp;</span>caps[<span class="number">2</span>] {
         <span class="string">&quot;TRUE&quot; </span>=&gt; <span class="string">&quot;[`true`]&quot;</span>.to_string(),
         <span class="string">&quot;FALSE&quot; </span>=&gt; <span class="string">&quot;[`false`]&quot;</span>.to_string(),
         <span class="string">&quot;NULL&quot; </span>=&gt; <span class="string">&quot;[`None`]&quot;</span>.to_string(),
@@ -846,11 +886,11 @@
             s =&gt; <span class="macro">panic!</span>(<span class="string">&quot;Unknown symbol prefix `{s}`&quot;</span>),
         },
     });
-    <span class="kw">let </span>out = GDK_GTK.replace_all(<span class="kw-2">&amp;</span>out, |caps: <span class="kw-2">&amp;</span>Captures&lt;<span class="lifetime">&#39;_</span>&gt;| {
+    <span class="kw">let </span>out = gdk_gtk().replace_all(<span class="kw-2">&amp;</span>out, |caps: <span class="kw-2">&amp;</span>Captures&lt;<span class="lifetime">&#39;_</span>&gt;| {
         find_type(<span class="kw-2">&amp;</span>caps[<span class="number">2</span>], env).unwrap_or_else(|| <span class="macro">format!</span>(<span class="string">&quot;`{}`&quot;</span>, <span class="kw-2">&amp;</span>caps[<span class="number">2</span>]))
     });
-    <span class="kw">let </span>out = TAGS.replace_all(<span class="kw-2">&amp;</span>out, <span class="string">&quot;`$0`&quot;</span>);
-    SPACES.replace_all(<span class="kw-2">&amp;</span>out, <span class="string">&quot; &quot;</span>).into_owned()
+    <span class="kw">let </span>out = tags().replace_all(<span class="kw-2">&amp;</span>out, <span class="string">&quot;`$0`&quot;</span>);
+    spaces().replace_all(<span class="kw-2">&amp;</span>out, <span class="string">&quot; &quot;</span>).into_owned()
 }
 
 <span class="doccomment">/// Wrapper around [`find_constant_or_variant`] that fallbacks to returning

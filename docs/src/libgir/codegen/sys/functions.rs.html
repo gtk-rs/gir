@@ -327,9 +327,14 @@
 <a href="#327" id="327">327</a>
 <a href="#328" id="328">328</a>
 <a href="#329" id="329">329</a>
-</pre></div><pre class="rust"><code><span class="kw">use </span>std::io::{<span class="prelude-ty">Result</span>, Write};
-
-<span class="kw">use </span>once_cell::sync::Lazy;
+<a href="#330" id="330">330</a>
+<a href="#331" id="331">331</a>
+<a href="#332" id="332">332</a>
+<a href="#333" id="333">333</a>
+</pre></div><pre class="rust"><code><span class="kw">use </span>std::{
+    io::{<span class="prelude-ty">Result</span>, Write},
+    sync::OnceLock,
+};
 
 <span class="kw">use </span><span class="kw">super</span>::ffi_type::<span class="kw-2">*</span>;
 <span class="kw">use crate</span>::{
@@ -343,7 +348,10 @@
 <span class="comment">// used as glib:get-type in GLib-2.0.gir
 </span><span class="kw">const </span>INTERN: <span class="kw-2">&amp;</span>str = <span class="string">&quot;intern&quot;</span>;
 
-<span class="kw">static </span>DEFAULT_OBJ: Lazy&lt;GObject&gt; = Lazy::new(Default::default);
+<span class="kw">fn </span>default_obj() -&gt; <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>GObject {
+    <span class="kw">static </span>OBJ: OnceLock&lt;GObject&gt; = OnceLock::new();
+    OBJ.get_or_init(Default::default)
+}
 
 <span class="kw">pub fn </span>generate_records_funcs(
     w: <span class="kw-2">&amp;mut </span><span class="kw">dyn </span>Write,
@@ -353,7 +361,7 @@
     <span class="kw">let </span>intern_str = INTERN.to_string();
     <span class="kw">for </span>record <span class="kw">in </span>records {
         <span class="kw">let </span>name = <span class="macro">format!</span>(<span class="string">&quot;{}.{}&quot;</span>, env.config.library_name, record.name);
-        <span class="kw">let </span>obj = env.config.objects.get(<span class="kw-2">&amp;</span>name).unwrap_or(<span class="kw-2">&amp;</span>DEFAULT_OBJ);
+        <span class="kw">let </span>obj = env.config.objects.get(<span class="kw-2">&amp;</span>name).unwrap_or(default_obj());
         <span class="kw">let </span>version = obj.version.or(record.version);
         <span class="kw">let </span>glib_get_type = record.glib_get_type.as_ref().unwrap_or(<span class="kw-2">&amp;</span>intern_str);
         generate_object_funcs(
@@ -377,7 +385,7 @@
 ) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
     <span class="kw">for </span>klass <span class="kw">in </span>classes {
         <span class="kw">let </span>name = <span class="macro">format!</span>(<span class="string">&quot;{}.{}&quot;</span>, env.config.library_name, klass.name);
-        <span class="kw">let </span>obj = env.config.objects.get(<span class="kw-2">&amp;</span>name).unwrap_or(<span class="kw-2">&amp;</span>DEFAULT_OBJ);
+        <span class="kw">let </span>obj = env.config.objects.get(<span class="kw-2">&amp;</span>name).unwrap_or(default_obj());
         <span class="kw">let </span>version = obj.version.or(klass.version);
         generate_object_funcs(
             w,
@@ -401,7 +409,7 @@
     <span class="kw">let </span>intern_str = INTERN.to_string();
     <span class="kw">for </span>bitfield <span class="kw">in </span>bitfields {
         <span class="kw">let </span>name = <span class="macro">format!</span>(<span class="string">&quot;{}.{}&quot;</span>, env.config.library_name, bitfield.name);
-        <span class="kw">let </span>obj = env.config.objects.get(<span class="kw-2">&amp;</span>name).unwrap_or(<span class="kw-2">&amp;</span>DEFAULT_OBJ);
+        <span class="kw">let </span>obj = env.config.objects.get(<span class="kw-2">&amp;</span>name).unwrap_or(default_obj());
         <span class="kw">let </span>version = obj.version.or(bitfield.version);
         <span class="kw">let </span>glib_get_type = bitfield.glib_get_type.as_ref().unwrap_or(<span class="kw-2">&amp;</span>intern_str);
         generate_object_funcs(
@@ -426,7 +434,7 @@
     <span class="kw">let </span>intern_str = INTERN.to_string();
     <span class="kw">for </span>en <span class="kw">in </span>enums {
         <span class="kw">let </span>name = <span class="macro">format!</span>(<span class="string">&quot;{}.{}&quot;</span>, env.config.library_name, en.name);
-        <span class="kw">let </span>obj = env.config.objects.get(<span class="kw-2">&amp;</span>name).unwrap_or(<span class="kw-2">&amp;</span>DEFAULT_OBJ);
+        <span class="kw">let </span>obj = env.config.objects.get(<span class="kw-2">&amp;</span>name).unwrap_or(default_obj());
         <span class="kw">let </span>version = obj.version.or(en.version);
         <span class="kw">let </span>glib_get_type = en.glib_get_type.as_ref().unwrap_or(<span class="kw-2">&amp;</span>intern_str);
         generate_object_funcs(
@@ -454,7 +462,7 @@
             <span class="kw">return </span><span class="prelude-val">Ok</span>(());
         };
         <span class="kw">let </span>name = <span class="macro">format!</span>(<span class="string">&quot;{}.{}&quot;</span>, env.config.library_name, union.name);
-        <span class="kw">let </span>obj = env.config.objects.get(<span class="kw-2">&amp;</span>name).unwrap_or(<span class="kw-2">&amp;</span>DEFAULT_OBJ);
+        <span class="kw">let </span>obj = env.config.objects.get(<span class="kw-2">&amp;</span>name).unwrap_or(default_obj());
         <span class="kw">let </span>glib_get_type = union.glib_get_type.as_ref().unwrap_or(<span class="kw-2">&amp;</span>intern_str);
         generate_object_funcs(
             w,
@@ -477,7 +485,7 @@
 ) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
     <span class="kw">for </span>interface <span class="kw">in </span>interfaces {
         <span class="kw">let </span>name = <span class="macro">format!</span>(<span class="string">&quot;{}.{}&quot;</span>, env.config.library_name, interface.name);
-        <span class="kw">let </span>obj = env.config.objects.get(<span class="kw-2">&amp;</span>name).unwrap_or(<span class="kw-2">&amp;</span>DEFAULT_OBJ);
+        <span class="kw">let </span>obj = env.config.objects.get(<span class="kw-2">&amp;</span>name).unwrap_or(default_obj());
         <span class="kw">let </span>version = obj.version.or(interface.version);
         generate_object_funcs(
             w,
@@ -499,7 +507,7 @@
     functions: <span class="kw-2">&amp;</span>[library::Function],
 ) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
     <span class="kw">let </span>name = <span class="macro">format!</span>(<span class="string">&quot;{}.*&quot;</span>, env.config.library_name);
-    <span class="kw">let </span>obj = env.config.objects.get(<span class="kw-2">&amp;</span>name).unwrap_or(<span class="kw-2">&amp;</span>DEFAULT_OBJ);
+    <span class="kw">let </span>obj = env.config.objects.get(<span class="kw-2">&amp;</span>name).unwrap_or(default_obj());
     generate_object_funcs(w, env, obj, <span class="prelude-val">None</span>, <span class="string">&quot;Other functions&quot;</span>, INTERN, functions)
 }
 

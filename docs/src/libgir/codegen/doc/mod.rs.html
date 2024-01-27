@@ -1191,14 +1191,17 @@
 <a href="#1191" id="1191">1191</a>
 <a href="#1192" id="1192">1192</a>
 <a href="#1193" id="1193">1193</a>
+<a href="#1194" id="1194">1194</a>
+<a href="#1195" id="1195">1195</a>
+<a href="#1196" id="1196">1196</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::{
     borrow::Cow,
     collections::{BTreeSet, HashSet},
     io::{<span class="prelude-ty">Result</span>, Write},
+    sync::OnceLock,
 };
 
 <span class="kw">use </span>log::{error, info};
-<span class="kw">use </span>once_cell::sync::Lazy;
 <span class="kw">use </span>regex::{Captures, Regex};
 <span class="kw">use </span>stripper_lib::{write_file_name, write_item_doc, Type <span class="kw">as </span>SType, TypeStruct};
 
@@ -2012,10 +2015,13 @@
     <span class="prelude-val">Ok</span>(())
 }
 
-<span class="kw">static </span>PARAM_NAME: Lazy&lt;Regex&gt; = Lazy::new(|| Regex::new(<span class="string">r&quot;@(\w+)\b&quot;</span>).unwrap());
+<span class="kw">fn </span>param_name() -&gt; <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>Regex {
+    <span class="kw">static </span>REGEX: OnceLock&lt;Regex&gt; = OnceLock::new();
+    REGEX.get_or_init(|| Regex::new(<span class="string">r&quot;@(\w+)\b&quot;</span>).unwrap())
+}
 
 <span class="kw">fn </span>fix_param_names&lt;<span class="lifetime">&#39;a</span>&gt;(doc: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>str, self_name: <span class="kw-2">&amp;</span><span class="prelude-ty">Option</span>&lt;String&gt;) -&gt; Cow&lt;<span class="lifetime">&#39;a</span>, str&gt; {
-    PARAM_NAME.replace_all(doc, |caps: <span class="kw-2">&amp;</span>Captures&lt;<span class="lifetime">&#39;_</span>&gt;| {
+    param_name().replace_all(doc, |caps: <span class="kw-2">&amp;</span>Captures&lt;<span class="lifetime">&#39;_</span>&gt;| {
         <span class="kw">if let </span><span class="prelude-val">Some</span>(self_name) = self_name {
             <span class="kw">if </span><span class="kw-2">&amp;</span>caps[<span class="number">1</span>] == self_name {
                 <span class="kw">return </span><span class="string">&quot;@self&quot;</span>.into();

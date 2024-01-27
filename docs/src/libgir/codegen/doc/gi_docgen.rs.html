@@ -829,12 +829,15 @@
 <a href="#829" id="829">829</a>
 <a href="#830" id="830">830</a>
 <a href="#831" id="831">831</a>
+<a href="#832" id="832">832</a>
+<a href="#833" id="833">833</a>
+<a href="#834" id="834">834</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::{
     fmt::{<span class="self">self</span>, Display, Formatter},
     str::FromStr,
+    sync::OnceLock,
 };
 
-<span class="kw">use </span>once_cell::sync::Lazy;
 <span class="kw">use </span>regex::{Captures, Regex};
 
 <span class="kw">use </span><span class="kw">super</span>::format::find_method_or_function;
@@ -923,16 +926,19 @@
     }
 }
 
-<span class="kw">static </span>GI_DOCGEN_SYMBOLS: Lazy&lt;Regex&gt; = Lazy::new(|| {
-    Regex::new(<span class="string">r&quot;\[(callback|id|alias|class|const|ctor|enum|error|flags|func|iface|method|property|signal|struct|vfunc)[@](\w+\b)([:.]+[\w-]+\b)?([:.]+[\w-]+\b)?\]?&quot;</span>).unwrap()
-});
+<span class="kw">fn </span>gi_docgen_symbols() -&gt; <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>Regex {
+    <span class="kw">static </span>REGEX: OnceLock&lt;Regex&gt; = OnceLock::new();
+    REGEX.get_or_init(|| {
+        Regex::new(<span class="string">r&quot;\[(callback|id|alias|class|const|ctor|enum|error|flags|func|iface|method|property|signal|struct|vfunc)[@](\w+\b)([:.]+[\w-]+\b)?([:.]+[\w-]+\b)?\]?&quot;</span>).unwrap()
+    })
+}
 
 <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>replace_c_types(
     entry: <span class="kw-2">&amp;</span>str,
     env: <span class="kw-2">&amp;</span>Env,
     in_type: <span class="prelude-ty">Option</span>&lt;(<span class="kw-2">&amp;</span>TypeId, <span class="prelude-ty">Option</span>&lt;LocationInObject&gt;)&gt;,
 ) -&gt; String {
-    GI_DOCGEN_SYMBOLS
+    gi_docgen_symbols()
         .replace_all(entry, |caps: <span class="kw-2">&amp;</span>Captures&lt;<span class="lifetime">&#39;_</span>&gt;| {
             <span class="kw">if let </span><span class="prelude-val">Ok</span>(gi_type) = GiDocgen::from_str(<span class="kw-2">&amp;</span>caps[<span class="number">0</span>]) {
                 gi_type.rust_link(env, in_type)

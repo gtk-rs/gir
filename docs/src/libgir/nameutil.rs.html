@@ -263,9 +263,8 @@
 <a href="#263" id="263">263</a>
 <a href="#264" id="264">264</a>
 <a href="#265" id="265">265</a>
-</pre></div><pre class="rust"><code><span class="kw">use </span>std::{borrow::Cow, collections::HashMap, path::<span class="kw-2">*</span>};
-
-<span class="kw">use </span>once_cell::sync::Lazy;
+<a href="#266" id="266">266</a>
+</pre></div><pre class="rust"><code><span class="kw">use </span>std::{borrow::Cow, collections::HashMap, path::<span class="kw-2">*</span>, sync::OnceLock};
 
 <span class="kw">use </span><span class="kw">crate</span>::case::<span class="kw-2">*</span>;
 
@@ -358,32 +357,35 @@
 }
 
 <span class="kw">pub fn </span>needs_mangling(name: <span class="kw-2">&amp;</span>str) -&gt; bool {
-    KEYWORDS.contains_key(name)
+    keywords().contains_key(name)
 }
 
 <span class="comment">// If the mangling happened, guaranteed to return Owned.
 </span><span class="kw">pub fn </span>mangle_keywords&lt;<span class="lifetime">&#39;a</span>, S: Into&lt;Cow&lt;<span class="lifetime">&#39;a</span>, str&gt;&gt;&gt;(name: S) -&gt; Cow&lt;<span class="lifetime">&#39;a</span>, str&gt; {
     <span class="kw">let </span>name = name.into();
-    <span class="kw">if let </span><span class="prelude-val">Some</span>(s) = KEYWORDS.get(<span class="kw-2">&amp;*</span>name) {
+    <span class="kw">if let </span><span class="prelude-val">Some</span>(s) = keywords().get(<span class="kw-2">&amp;*</span>name) {
         s.clone().into()
     } <span class="kw">else </span>{
         name
     }
 }
 
-<span class="kw">static </span>KEYWORDS: Lazy&lt;HashMap&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str, String&gt;&gt; = Lazy::new(|| {
-    [
-        <span class="string">&quot;abstract&quot;</span>, <span class="string">&quot;alignof&quot;</span>, <span class="string">&quot;as&quot;</span>, <span class="string">&quot;async&quot;</span>, <span class="string">&quot;await&quot;</span>, <span class="string">&quot;become&quot;</span>, <span class="string">&quot;box&quot;</span>, <span class="string">&quot;break&quot;</span>, <span class="string">&quot;const&quot;</span>,
-        <span class="string">&quot;continue&quot;</span>, <span class="string">&quot;crate&quot;</span>, <span class="string">&quot;do&quot;</span>, <span class="string">&quot;dyn&quot;</span>, <span class="string">&quot;else&quot;</span>, <span class="string">&quot;enum&quot;</span>, <span class="string">&quot;extern&quot;</span>, <span class="string">&quot;false&quot;</span>, <span class="string">&quot;final&quot;</span>, <span class="string">&quot;fn&quot;</span>, <span class="string">&quot;for&quot;</span>,
-        <span class="string">&quot;if&quot;</span>, <span class="string">&quot;impl&quot;</span>, <span class="string">&quot;in&quot;</span>, <span class="string">&quot;let&quot;</span>, <span class="string">&quot;loop&quot;</span>, <span class="string">&quot;macro&quot;</span>, <span class="string">&quot;match&quot;</span>, <span class="string">&quot;mod&quot;</span>, <span class="string">&quot;move&quot;</span>, <span class="string">&quot;mut&quot;</span>, <span class="string">&quot;offsetof&quot;</span>,
-        <span class="string">&quot;override&quot;</span>, <span class="string">&quot;priv&quot;</span>, <span class="string">&quot;proc&quot;</span>, <span class="string">&quot;pub&quot;</span>, <span class="string">&quot;pure&quot;</span>, <span class="string">&quot;ref&quot;</span>, <span class="string">&quot;return&quot;</span>, <span class="string">&quot;Self&quot;</span>, <span class="string">&quot;self&quot;</span>, <span class="string">&quot;sizeof&quot;</span>,
-        <span class="string">&quot;static&quot;</span>, <span class="string">&quot;struct&quot;</span>, <span class="string">&quot;super&quot;</span>, <span class="string">&quot;trait&quot;</span>, <span class="string">&quot;true&quot;</span>, <span class="string">&quot;try&quot;</span>, <span class="string">&quot;type&quot;</span>, <span class="string">&quot;typeof&quot;</span>, <span class="string">&quot;unsafe&quot;</span>, <span class="string">&quot;unsized&quot;</span>,
-        <span class="string">&quot;use&quot;</span>, <span class="string">&quot;virtual&quot;</span>, <span class="string">&quot;where&quot;</span>, <span class="string">&quot;while&quot;</span>, <span class="string">&quot;yield&quot;</span>,
-    ]
-    .iter()
-    .map(|k| (<span class="kw-2">*</span>k, <span class="macro">format!</span>(<span class="string">&quot;{k}_&quot;</span>)))
-    .collect()
-});
+<span class="kw">fn </span>keywords() -&gt; <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>HashMap&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str, String&gt; {
+    <span class="kw">static </span>KEYWORDS: OnceLock&lt;HashMap&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str, String&gt;&gt; = OnceLock::new();
+    KEYWORDS.get_or_init(|| {
+        [
+            <span class="string">&quot;abstract&quot;</span>, <span class="string">&quot;alignof&quot;</span>, <span class="string">&quot;as&quot;</span>, <span class="string">&quot;async&quot;</span>, <span class="string">&quot;await&quot;</span>, <span class="string">&quot;become&quot;</span>, <span class="string">&quot;box&quot;</span>, <span class="string">&quot;break&quot;</span>, <span class="string">&quot;const&quot;</span>,
+            <span class="string">&quot;continue&quot;</span>, <span class="string">&quot;crate&quot;</span>, <span class="string">&quot;do&quot;</span>, <span class="string">&quot;dyn&quot;</span>, <span class="string">&quot;else&quot;</span>, <span class="string">&quot;enum&quot;</span>, <span class="string">&quot;extern&quot;</span>, <span class="string">&quot;false&quot;</span>, <span class="string">&quot;final&quot;</span>, <span class="string">&quot;fn&quot;</span>,
+            <span class="string">&quot;for&quot;</span>, <span class="string">&quot;if&quot;</span>, <span class="string">&quot;impl&quot;</span>, <span class="string">&quot;in&quot;</span>, <span class="string">&quot;let&quot;</span>, <span class="string">&quot;loop&quot;</span>, <span class="string">&quot;macro&quot;</span>, <span class="string">&quot;match&quot;</span>, <span class="string">&quot;mod&quot;</span>, <span class="string">&quot;move&quot;</span>, <span class="string">&quot;mut&quot;</span>,
+            <span class="string">&quot;offsetof&quot;</span>, <span class="string">&quot;override&quot;</span>, <span class="string">&quot;priv&quot;</span>, <span class="string">&quot;proc&quot;</span>, <span class="string">&quot;pub&quot;</span>, <span class="string">&quot;pure&quot;</span>, <span class="string">&quot;ref&quot;</span>, <span class="string">&quot;return&quot;</span>, <span class="string">&quot;Self&quot;</span>, <span class="string">&quot;self&quot;</span>,
+            <span class="string">&quot;sizeof&quot;</span>, <span class="string">&quot;static&quot;</span>, <span class="string">&quot;struct&quot;</span>, <span class="string">&quot;super&quot;</span>, <span class="string">&quot;trait&quot;</span>, <span class="string">&quot;true&quot;</span>, <span class="string">&quot;try&quot;</span>, <span class="string">&quot;type&quot;</span>, <span class="string">&quot;typeof&quot;</span>,
+            <span class="string">&quot;unsafe&quot;</span>, <span class="string">&quot;unsized&quot;</span>, <span class="string">&quot;use&quot;</span>, <span class="string">&quot;virtual&quot;</span>, <span class="string">&quot;where&quot;</span>, <span class="string">&quot;while&quot;</span>, <span class="string">&quot;yield&quot;</span>,
+        ]
+        .iter()
+        .map(|k| (<span class="kw-2">*</span>k, <span class="macro">format!</span>(<span class="string">&quot;{k}_&quot;</span>)))
+        .collect()
+    })
+}
 
 <span class="kw">pub fn </span>signal_to_snake(signal: <span class="kw-2">&amp;</span>str) -&gt; String {
     signal.replace(<span class="string">&quot;::&quot;</span>, <span class="string">&quot;_&quot;</span>).replace(<span class="string">&#39;-&#39;</span>, <span class="string">&quot;_&quot;</span>)
