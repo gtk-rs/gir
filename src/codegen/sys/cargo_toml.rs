@@ -48,7 +48,6 @@ fn fill_empty(root: &mut Table, env: &Env, crate_name: &str) {
 
     let deps = upsert_table(root, "dependencies");
     for ext_lib in &env.config.external_libraries {
-        let dep = upsert_table(deps, &ext_lib.crate_name);
         let ext_package = if ext_lib.crate_name == "cairo" {
             format!("{}-sys-rs", ext_lib.crate_name)
         } else if ext_lib.crate_name == "gdk_pixbuf" {
@@ -92,7 +91,7 @@ fn fill_empty(root: &mut Table, env: &Env, crate_name: &str) {
             | "gstreamer-allocators-sys" => "https://gitlab.freedesktop.org/gstreamer/gstreamer-rs",
             &_ => "ADD GIT REPOSITORY URL HERE",
         };
-        set_string(dep, "package", ext_package);
+        let dep = upsert_table(deps, ext_package);
         set_string(dep, "git", repo_url);
     }
 }

@@ -41,6 +41,7 @@ fn generate_lib(w: &mut dyn Write, env: &Env) -> Result<()> {
     general::start_comments(w, &env.config)?;
     statics::begin(w)?;
 
+    generate_extern_crates(w, env)?;
     include_custom_modules(w, env)?;
     statics::after_extern_crates(w)?;
 
@@ -99,6 +100,21 @@ fn generate_lib(w: &mut dyn Write, env: &Env) -> Result<()> {
         functions::generate_other_funcs(w, env, &ns.functions)?;
 
         writeln!(w, "\n}}")?;
+    }
+
+    Ok(())
+}
+
+fn generate_extern_crates(w: &mut dyn Write, env: &Env) -> Result<()> {
+    for library in &env.config.external_libraries {
+        w.write_all(
+            format!(
+                "use {}_sys as {};\n",
+                library.crate_name.replace('-', "_"),
+                crate_name(&library.namespace)
+            )
+            .as_bytes(),
+        )?;
     }
 
     Ok(())
