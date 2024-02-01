@@ -1075,11 +1075,6 @@
 <a href="#1075" id="1075">1075</a>
 <a href="#1076" id="1076">1076</a>
 <a href="#1077" id="1077">1077</a>
-<a href="#1078" id="1078">1078</a>
-<a href="#1079" id="1079">1079</a>
-<a href="#1080" id="1080">1080</a>
-<a href="#1081" id="1081">1081</a>
-<a href="#1082" id="1082">1082</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::{
     collections::BTreeMap,
     fmt::{Display, Write <span class="kw">as </span>FmtWrite},
@@ -1323,12 +1318,7 @@
     <span class="comment">// We can&#39;t use type_ from glib::wrapper! because that would auto-implement
     // Value traits which are often not the correct types
     </span><span class="macro">writeln!</span>(w, <span class="string">&quot;\n&quot;</span>)<span class="question-mark">?</span>;
-    <span class="macro">writeln!</span>(
-        w,
-        <span class="string">&quot;impl {} for {} {{&quot;</span>,
-        use_glib_type(env, <span class="string">&quot;StaticType&quot;</span>),
-        type_name
-    )<span class="question-mark">?</span>;
+    <span class="macro">writeln!</span>(w, <span class="string">&quot;impl StaticType for {} {{&quot;</span>, type_name)<span class="question-mark">?</span>;
     <span class="macro">writeln!</span>(w, <span class="string">&quot;\tfn static_type() -&gt; {} {{&quot;</span>, use_glib_type(env, <span class="string">&quot;Type&quot;</span>))<span class="question-mark">?</span>;
     <span class="macro">writeln!</span>(
         w,

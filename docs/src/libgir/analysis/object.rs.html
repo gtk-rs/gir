@@ -464,6 +464,7 @@
 <a href="#464" id="464">464</a>
 <a href="#465" id="465">465</a>
 <a href="#466" id="466">466</a>
+<a href="#467" id="467">467</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::{borrow::Cow, ops::Deref};
 
 <span class="kw">use </span>log::info;
@@ -758,6 +759,7 @@
 
     <span class="kw">if </span>is_fundamental {
         imports.add(<span class="string">&quot;glib::translate::*&quot;</span>);
+        imports.add(<span class="string">&quot;glib::prelude::*&quot;</span>);
     }
 
     <span class="kw">if </span>has_builder_properties(<span class="kw-2">&amp;</span>builder_properties) {
