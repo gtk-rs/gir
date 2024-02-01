@@ -241,12 +241,7 @@ pub fn define_fundamental_type(
     // We can't use type_ from glib::wrapper! because that would auto-implement
     // Value traits which are often not the correct types
     writeln!(w, "\n")?;
-    writeln!(
-        w,
-        "impl {} for {} {{",
-        use_glib_type(env, "StaticType"),
-        type_name
-    )?;
+    writeln!(w, "impl StaticType for {} {{", type_name)?;
     writeln!(w, "\tfn static_type() -> {} {{", use_glib_type(env, "Type"))?;
     writeln!(
         w,
