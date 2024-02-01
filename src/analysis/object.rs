@@ -292,6 +292,7 @@ pub fn class(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<Info>
 
     if is_fundamental {
         imports.add("glib::translate::*");
+        imports.add("glib::prelude::*");
     }
 
     if has_builder_properties(&builder_properties) {
