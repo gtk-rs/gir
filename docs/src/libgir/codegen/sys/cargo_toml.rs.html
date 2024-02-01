@@ -243,7 +243,6 @@
 <a href="#243" id="243">243</a>
 <a href="#244" id="244">244</a>
 <a href="#245" id="245">245</a>
-<a href="#246" id="246">246</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::{collections::HashMap, fs::File, io::prelude::<span class="kw-2">*</span>};
 
 <span class="kw">use </span>log::info;
@@ -294,7 +293,6 @@
 
     <span class="kw">let </span>deps = upsert_table(root, <span class="string">&quot;dependencies&quot;</span>);
     <span class="kw">for </span>ext_lib <span class="kw">in </span><span class="kw-2">&amp;</span>env.config.external_libraries {
-        <span class="kw">let </span>dep = upsert_table(deps, <span class="kw-2">&amp;</span>ext_lib.crate_name);
         <span class="kw">let </span>ext_package = <span class="kw">if </span>ext_lib.crate_name == <span class="string">&quot;cairo&quot; </span>{
             <span class="macro">format!</span>(<span class="string">&quot;{}-sys-rs&quot;</span>, ext_lib.crate_name)
         } <span class="kw">else if </span>ext_lib.crate_name == <span class="string">&quot;gdk_pixbuf&quot; </span>{
@@ -338,7 +336,7 @@
             </span>| <span class="string">&quot;gstreamer-allocators-sys&quot; </span>=&gt; <span class="string">&quot;https://gitlab.freedesktop.org/gstreamer/gstreamer-rs&quot;</span>,
             <span class="kw-2">&amp;</span><span class="kw">_ </span>=&gt; <span class="string">&quot;ADD GIT REPOSITORY URL HERE&quot;</span>,
         };
-        set_string(dep, <span class="string">&quot;package&quot;</span>, ext_package);
+        <span class="kw">let </span>dep = upsert_table(deps, ext_package);
         set_string(dep, <span class="string">&quot;git&quot;</span>, repo_url);
     }
 }
