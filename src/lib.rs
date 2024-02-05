@@ -29,6 +29,7 @@ mod library_preprocessing;
 mod nameutil;
 mod parser;
 mod traits;
+pub(crate) mod update_cfgs;
 pub mod update_version;
 mod version;
 mod visitors;

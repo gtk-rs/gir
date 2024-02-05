@@ -330,10 +330,7 @@ fn parse_object(
         .lookup("version")
         .and_then(Value::as_str)
         .and_then(|s| s.parse().ok());
-    let cfg_condition = toml_object
-        .lookup("cfg_condition")
-        .and_then(Value::as_str)
-        .map(ToOwned::to_owned);
+    let cfg_condition = super::get_object_cfg_condition(toml_object, &name);
     let generate_trait = toml_object.lookup("trait").and_then(Value::as_bool);
     let final_type = toml_object
         .lookup("final_type")
