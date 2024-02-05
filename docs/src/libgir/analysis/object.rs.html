@@ -465,6 +465,13 @@
 <a href="#465" id="465">465</a>
 <a href="#466" id="466">466</a>
 <a href="#467" id="467">467</a>
+<a href="#468" id="468">468</a>
+<a href="#469" id="469">469</a>
+<a href="#470" id="470">470</a>
+<a href="#471" id="471">471</a>
+<a href="#472" id="472">472</a>
+<a href="#473" id="473">473</a>
+<a href="#474" id="474">474</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::{borrow::Cow, ops::Deref};
 
 <span class="kw">use </span>log::info;
@@ -479,6 +486,7 @@
     library::{<span class="self">self</span>, FunctionKind},
     nameutil::<span class="kw-2">*</span>,
     traits::<span class="kw-2">*</span>,
+    update_cfgs,
 };
 
 <span class="doccomment">/// The location of an item within the object
@@ -770,6 +778,9 @@
         imports.add(<span class="string">&quot;glib::prelude::*&quot;</span>);
     }
 
+    <span class="kw">let </span>ns = env.library.namespace(class_tid.ns_id);
+    <span class="kw">let </span>cfg_condition =
+        update_cfgs::get_object_cfg_condition(<span class="kw-2">&amp;</span>name, <span class="kw-2">&amp;</span>obj.cfg_condition, <span class="kw-2">&amp;</span>ns.identifier_prefixes);
     <span class="kw">let </span>base = InfoBase {
         full_name,
         type_id: class_tid,
@@ -779,7 +790,7 @@
         imports,
         version,
         deprecated_version,
-        cfg_condition: obj.cfg_condition.clone(),
+        cfg_condition,
         concurrency: obj.concurrency,
         visibility: obj.visibility,
     };
@@ -896,6 +907,9 @@
         deps,
     );
 
+    <span class="kw">let </span>ns = env.library.namespace(iface_tid.ns_id);
+    <span class="kw">let </span>cfg_condition =
+        update_cfgs::get_object_cfg_condition(<span class="kw-2">&amp;</span>name, <span class="kw-2">&amp;</span>obj.cfg_condition, <span class="kw-2">&amp;</span>ns.identifier_prefixes);
     <span class="kw">let </span>base = InfoBase {
         full_name,
         type_id: iface_tid,
@@ -905,7 +919,7 @@
         imports,
         version,
         deprecated_version,
-        cfg_condition: obj.cfg_condition.clone(),
+        cfg_condition,
         concurrency: obj.concurrency,
         visibility: obj.visibility,
     };

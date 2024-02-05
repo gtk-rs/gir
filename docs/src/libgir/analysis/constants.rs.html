@@ -64,9 +64,10 @@
 <a href="#64" id="64">64</a>
 <a href="#65" id="65">65</a>
 <a href="#66" id="66">66</a>
+<a href="#67" id="67">67</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::borrow::Borrow;
 
-<span class="kw">use crate</span>::{config, env::Env, library, nameutil, traits::<span class="kw-2">*</span>, version::Version};
+<span class="kw">use crate</span>::{config, env::Env, library, nameutil, traits::<span class="kw-2">*</span>, update_cfgs, version::Version};
 
 <span class="attr">#[derive(Debug)]
 </span><span class="kw">pub struct </span>Info {
@@ -115,6 +116,7 @@
         <span class="kw">let </span>cfg_condition = configured_constants
             .iter()
             .find_map(|c| c.cfg_condition.clone());
+        <span class="kw">let </span>cfg_condition = update_cfgs::get_constant_cfg_condition(<span class="kw-2">&amp;</span>constant.name, <span class="kw-2">&amp;</span>cfg_condition);
 
         <span class="kw">let </span>name = nameutil::mangle_keywords(<span class="kw-2">&amp;*</span>constant.name).into_owned();
 

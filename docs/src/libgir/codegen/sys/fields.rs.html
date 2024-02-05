@@ -171,12 +171,17 @@
 <a href="#171" id="171">171</a>
 <a href="#172" id="172">172</a>
 <a href="#173" id="173">173</a>
+<a href="#174" id="174">174</a>
+<a href="#175" id="175">175</a>
+<a href="#176" id="176">176</a>
+<a href="#177" id="177">177</a>
 </pre></div><pre class="rust"><code><span class="kw">use crate</span>::{
     analysis::{rust_type::<span class="kw-2">*</span>, types::<span class="kw-2">*</span>},
     codegen::sys::{ffi_type::ffi_type, functions::function_signature},
     env::Env,
     library::<span class="kw-2">*</span>,
     traits::{IntoString, MaybeRefAs},
+    update_cfgs,
 };
 
 <span class="kw">pub struct </span>Fields {
@@ -337,11 +342,14 @@
 }
 
 <span class="kw">fn </span>get_gobject_cfg_condition(env: <span class="kw-2">&amp;</span>Env, name: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Option</span>&lt;String&gt; {
-    <span class="kw">let </span>full_name = <span class="macro">format!</span>(<span class="string">&quot;{}.{}&quot;</span>, env.namespaces.main().name, name);
-    <span class="kw">if let </span><span class="prelude-val">Some</span>(obj) = env.config.objects.get(<span class="kw-2">&amp;</span>full_name) {
-        obj.cfg_condition.clone()
-    } <span class="kw">else </span>{
-        <span class="prelude-val">None
-    </span>}
+    <span class="kw">let </span>ns = env.namespaces.main();
+    <span class="kw">let </span>full_name = <span class="macro">format!</span>(<span class="string">&quot;{}.{}&quot;</span>, ns.name, name);
+    env.config
+        .objects
+        .get(<span class="kw-2">&amp;</span>full_name)
+        .and_then(|obj| {
+            update_cfgs::get_object_cfg_condition(name, <span class="kw-2">&amp;</span>obj.cfg_condition, <span class="kw-2">&amp;</span>ns.identifier_prefixes)
+        })
+        .or_else(|| update_cfgs::get_object_cfg_condition(name, <span class="kw-2">&amp;</span><span class="prelude-val">None</span>, <span class="kw-2">&amp;</span>ns.identifier_prefixes))
 }
 </code></pre></div></section></main></body></html>

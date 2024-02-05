@@ -77,6 +77,8 @@
 <a href="#77" id="77">77</a>
 <a href="#78" id="78">78</a>
 <a href="#79" id="79">79</a>
+<a href="#80" id="80">80</a>
+<a href="#81" id="81">81</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::ops::Index;
 
 <span class="kw">use crate</span>::{library, nameutil, version::Version};
@@ -93,6 +95,7 @@
     <span class="kw">pub </span>higher_crate_name: String,
     <span class="kw">pub </span>package_names: Vec&lt;String&gt;,
     <span class="kw">pub </span>symbol_prefixes: Vec&lt;String&gt;,
+    <span class="kw">pub </span>identifier_prefixes: Vec&lt;String&gt;,
     <span class="kw">pub </span>shared_libs: Vec&lt;String&gt;,
     <span class="kw">pub </span>versions: Vec&lt;Version&gt;,
 }
@@ -137,6 +140,7 @@
             higher_crate_name,
             package_names: ns.package_names.clone(),
             symbol_prefixes: ns.symbol_prefixes.clone(),
+            identifier_prefixes: ns.identifier_prefixes.clone(),
             shared_libs: ns.shared_library.clone(),
             versions: ns.versions.iter().copied().collect(),
         });

@@ -1320,6 +1320,10 @@
 <a href="#1320" id="1320">1320</a>
 <a href="#1321" id="1321">1321</a>
 <a href="#1322" id="1322">1322</a>
+<a href="#1323" id="1323">1323</a>
+<a href="#1324" id="1324">1324</a>
+<a href="#1325" id="1325">1325</a>
+<a href="#1326" id="1326">1326</a>
 </pre></div><pre class="rust"><code><span class="comment">// TODO: better heuristic (https://bugzilla.gnome.org/show_bug.cgi?id=623635#c5)
 // TODO: ProgressCallback types (not specific to async).
 // TODO: add annotation for methods like g_file_replace_contents_bytes_async
@@ -1357,6 +1361,7 @@
     },
     nameutil,
     traits::<span class="kw-2">*</span>,
+    update_cfgs,
     version::Version,
 };
 
@@ -1973,6 +1978,9 @@
     <span class="kw">let </span>cfg_condition = configured_functions
         .iter()
         .find_map(|f| f.cfg_condition.clone());
+    <span class="kw">let </span>ns = env.library.namespace(ns_id);
+    <span class="kw">let </span>cfg_condition =
+        update_cfgs::get_cfg_condition(<span class="kw-2">&amp;</span>func.name, <span class="kw-2">&amp;</span>cfg_condition, <span class="kw-2">&amp;</span>ns.symbol_prefixes);
     <span class="kw">let </span>doc_hidden = configured_functions.iter().any(|f| f.doc_hidden);
     <span class="kw">let </span>doc_trait_name = configured_functions
         .iter()
