@@ -11,6 +11,7 @@ use crate::{
     env::Env,
     file_saver::save_to_file,
     library::{self, Bitfield, Enumeration, Namespace, Type, MAIN_NAMESPACE},
+    update_cfgs,
 };
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
@@ -518,7 +519,13 @@ fn get_c_output(name: &str) -> Result<String, Box<dyn Error>> {
 const RUST_LAYOUTS: &[(&str, Layout)] = &["#
     )?;
     for ctype in ctypes {
-        general::cfg_condition(w, ctype.cfg_condition.as_ref(), false, 1)?;
+        let ns = env.namespaces.main();
+        let cfg_condition = update_cfgs::get_object_cfg_condition(
+            &ctype.name,
+            &ctype.cfg_condition,
+            &ns.identifier_prefixes,
+        );
+        general::cfg_condition(w, cfg_condition.as_ref(), false, 1)?;
         writeln!(w, "    (\"{ctype}\", Layout {{size: size_of::<{ctype}>(), alignment: align_of::<{ctype}>()}}),",
                  ctype=ctype.name)?;
     }
