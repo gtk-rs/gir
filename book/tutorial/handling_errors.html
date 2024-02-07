@@ -215,9 +215,9 @@ macro_rules! assert_initialized_main_thread {
     () =&gt; {
         if !::gtk::is_initialized_main_thread() {
             if ::gtk::is_initialized() {
-                panic!(&quot;GTK may only be used from the main thread.&quot;);
+                panic!("GTK may only be used from the main thread.");
             } else {
-                panic!(&quot;GTK has not been initialized. Call `gtk::init` first.&quot;);
+                panic!("GTK has not been initialized. Call `gtk::init` first.");
             }
         }
     };
@@ -236,11 +236,11 @@ macro_rules! assert_initialized_main_thread {
 <span class="boring">}</span></code></pre></pre>
 <h2 id="missing-memory-management-functions"><a class="header" href="#missing-memory-management-functions">Missing memory management functions</a></h2>
 <p>If <a href="https://github.com/gtk-rs/gir">gir</a> generation fails (for whatever reason), it means you'll have to implement the type yourself.
-Just like types from other <code>gtk-rs</code> crates, you'll need to put it into the &quot;manual&quot; list.
+Just like types from other <code>gtk-rs</code> crates, you'll need to put it into the "manual" list.
 Then you need to put the type into the <code>src</code> folder (or inside a subfolder, you know how Rust works).</p>
 <p>/!\ Don't forget to reexport the type inside your <code>src/lib.rs</code> file.
 For example, let's take a look at the <a href="https://github.com/gtk-rs/gtk3-rs/blob/master/gtk/src/requisition.rs">requisition.rs</a> file from the <code>gtk3</code> crate.</p>
-<p>Since it's a &quot;simple&quot; type (no pointer, therefore no memory management to do), <a href="https://github.com/gtk-rs/gir">gir</a> doesn't know how to generate it.
+<p>Since it's a "simple" type (no pointer, therefore no memory management to do), <a href="https://github.com/gtk-rs/gir">gir</a> doesn't know how to generate it.
 You'll need to implement some traits by hand like <code>ToGlibPtr</code> or <code>ToGlibPtrMut</code> (depending on your needs).</p>
 <h2 id="bad-function-generation"><a class="header" href="#bad-function-generation">Bad function generation</a></h2>
 <p>In some cases, the generated code isn't correct (array parameters are often an issue).
@@ -249,19 +249,19 @@ As an example, let's say you want to implement <code>Region::is_empty</code> you
 A few changes have to be made.
 Let's start with <code>Gir.toml</code>:</p>
 <pre><code class="language-toml">generate = [
-    &quot;GtkSource.Language&quot;,
+    "GtkSource.Language",
 ]
 
 [[object]]
-name = &quot;GtkSource.Region&quot;
-status = &quot;generate&quot;
+name = "GtkSource.Region"
+status = "generate"
     [[object.function]]
-    name = &quot;is_empty&quot;
+    name = "is_empty"
     ignore = true
 </code></pre>
-<p>So to sum up what was written above: we removed &quot;GtkSource.Region&quot; from the &quot;generate&quot; list and we created a new entry for it.
-Then we say to <a href="https://github.com/gtk-rs/gir">gir</a> that it should generate (through <code>status = &quot;generate&quot;</code>).
-However, we also tell it that we don't want the &quot;is_empty&quot; function to be generated.</p>
+<p>So to sum up what was written above: we removed "GtkSource.Region" from the "generate" list and we created a new entry for it.
+Then we say to <a href="https://github.com/gtk-rs/gir">gir</a> that it should generate (through <code>status = "generate"</code>).
+However, we also tell it that we don't want the "is_empty" function to be generated.</p>
 <p>Now that we've done that, we need to implement it.
 Let's create a <code>src/region.rs</code> file:</p>
 <pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
@@ -281,7 +281,7 @@ impl&lt;O: IsA&lt;Region&gt;&gt; RegionExtManual for O {
     }
 }
 <span class="boring">}</span></code></pre></pre>
-<p>You might wonder: &quot;why not just implementing it on the <code>Region</code> type directly?&quot;.
+<p>You might wonder: "why not just implementing it on the <code>Region</code> type directly?".
 Because like this, a subclass will also be able to use this trait easily as long as it implements <code>IsA&lt;Region&gt;</code>.
 For instance, in gtk, everything that implements <code>IsA&lt;Widget&gt;</code> (so almost every GTK types) can use those methods.</p>
 <p>As usual, don't forget to reexport the trait.
@@ -299,19 +299,19 @@ pub use region::RegionExtManual;
 pub use prelude::*;
 <span class="boring">}</span></code></pre></pre>
 <h2 id="manually-defined-traits-missing-from-the-documentation"><a class="header" href="#manually-defined-traits-missing-from-the-documentation">Manually defined traits missing from the documentation</a></h2>
-<p>If you defined traits manually, you can add them to the &quot;Implements&quot; section in the documentation for classes and interfaces by using the <code>manual_traits = []</code> option in the <code>Gir.toml</code> file.
+<p>If you defined traits manually, you can add them to the "Implements" section in the documentation for classes and interfaces by using the <code>manual_traits = []</code> option in the <code>Gir.toml</code> file.
 Here is an example:</p>
 <pre><code class="language-toml">[[object]]
-name = &quot;Gtk.Assistant&quot;
-status = &quot;generate&quot;
+name = "Gtk.Assistant"
+status = "generate"
 #add link to trait from current crate
-manual_traits = [&quot;AssistantExtManual&quot;]
+manual_traits = ["AssistantExtManual"]
 
 [[object]]
-name = &quot;Gtk.Application&quot;
-status = &quot;generate&quot;
+name = "Gtk.Application"
+status = "generate"
 #add link to trait from other crate
-manual_traits = [&quot;gio::ApplicationExtManual&quot;]
+manual_traits = ["gio::ApplicationExtManual"]
 </code></pre>
 
                     </main>

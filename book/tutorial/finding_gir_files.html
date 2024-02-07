@@ -191,8 +191,8 @@ You don't have to store all <code>.gir</code> files in the same folder.
 You can add multiple paths by changing the <code>girs_directories</code> field in the Gir.toml files.
 More on this in the next chapters.</p>
 <p>Have a look at the .gir file of your library.
-At the beginning of the file, you probably see something similar to <code>&lt;include name=&quot;GObject&quot; version=&quot;2.0&quot;/&gt;</code>.
-&quot;GObject&quot; in this case would be a dependency and you will have to find the .gir file for your dependencies as well.
+At the beginning of the file, you probably see something similar to <code>&lt;include name="GObject" version="2.0"/&gt;</code>.
+"GObject" in this case would be a dependency and you will have to find the .gir file for your dependencies as well.
 In most cases it will be enough to follow the next two steps of the tutorial to get all needed files.</p>
 <h2 id="gtk-dependencies"><a class="header" href="#gtk-dependencies">GTK dependencies</a></h2>
 <p>If your library depends on GTK libraries, the recommended way to get the <code>.gir</code> files for them is to add the <a href="https://github.com/gtk-rs/gir-files">gir-files repo</a> as a submodule as well.

@@ -191,9 +191,9 @@ Make sure everything under <code>[package]</code> is to your liking.</p>
 <pre><code class="language-toml">[package.metadata.docs.rs]
 all-features = true
 # For build.rs scripts
-rustc-args = [&quot;--cfg&quot;, &quot;docsrs&quot;]
+rustc-args = ["--cfg", "docsrs"]
 # For rustdoc
-rustdoc-args = [&quot;--cfg&quot;, &quot;docsrs&quot;]
+rustdoc-args = ["--cfg", "docsrs"]
 </code></pre>
 <p>This automatically activates the <code>docsrs</code> attribute if you chose to publish the bindings and docs.rs tries to build the documentation.
 With the <code>docsrs</code> attribute, the crate skips linking the C libraries and allows docs.rs to build the documentation without having the underlying libraries installed.
@@ -203,20 +203,20 @@ Because we are creating a wrapper for the sys crate, which we generated in the p
 In the automatically generated code, the sys crate is always called <code>ffi</code>, so we need to rename the sys crate in our <code>Cargo.toml</code>.
 For our example, this results in the following dependencies:</p>
 <pre><code class="language-toml">[dependencies]
-libc = &quot;0.2&quot;
-bitflags = &quot;2.2&quot;
+libc = "0.2"
+bitflags = "2.2"
 
 [dependencies.ffi]
-package = &quot;pango-sys&quot;
-path = &quot;./pango-sys&quot;
+package = "pango-sys"
+path = "./pango-sys"
 
 [dependencies.glib]
-package = &quot;glib-sys&quot;
-git = &quot;https://github.com/gtk-rs/gtk-rs-core&quot;
+package = "glib-sys"
+git = "https://github.com/gtk-rs/gtk-rs-core"
 
 [dependencies.gobject]
-package = &quot;gobject-sys&quot;
-git = &quot;https://github.com/gtk-rs/gtk-rs-core&quot;
+package = "gobject-sys"
+git = "https://github.com/gtk-rs/gtk-rs-core"
 </code></pre>
 <p>In order to make the features of the sys crate available for users of your safe wrapper, you need to add features.
 Copy the <code>[features]</code> part of the Cargo.toml of your sys crate and paste it into the Cargo.toml of the normal crate.
@@ -224,60 +224,60 @@ The features are supposed to activate the corresponding features of the sys crat
 If for example you have the following sys features:</p>
 <pre><code class="language-toml">[features]
 v1_2 = []
-v1_4 = [&quot;v1_2&quot;]
-v1_6 = [&quot;v1_4&quot;]
-v1_8 = [&quot;v1_6&quot;]
-v1_10 = [&quot;v1_8&quot;]
-v1_12 = [&quot;v1_10&quot;]
-v1_14 = [&quot;v1_12&quot;]
-v1_16 = [&quot;v1_14&quot;]
-v1_18 = [&quot;v1_16&quot;]
-v1_20 = [&quot;v1_18&quot;]
-v1_22 = [&quot;v1_20&quot;]
-v1_24 = [&quot;v1_22&quot;]
-v1_26 = [&quot;v1_24&quot;]
-v1_30 = [&quot;v1_26&quot;]
-v1_31 = [&quot;v1_30&quot;]
-v1_32 = [&quot;v1_31&quot;]
-v1_32_4 = [&quot;v1_32&quot;]
-v1_34 = [&quot;v1_32_4&quot;]
-v1_36_7 = [&quot;v1_34&quot;]
-v1_38 = [&quot;v1_36_7&quot;]
-v1_42 = [&quot;v1_38&quot;]
-v1_44 = [&quot;v1_42&quot;]
-v1_46 = [&quot;v1_44&quot;]
-v1_48 = [&quot;v1_46&quot;]
-v1_50 = [&quot;v1_48&quot;]
-v1_52 = [&quot;v1_50&quot;]
+v1_4 = ["v1_2"]
+v1_6 = ["v1_4"]
+v1_8 = ["v1_6"]
+v1_10 = ["v1_8"]
+v1_12 = ["v1_10"]
+v1_14 = ["v1_12"]
+v1_16 = ["v1_14"]
+v1_18 = ["v1_16"]
+v1_20 = ["v1_18"]
+v1_22 = ["v1_20"]
+v1_24 = ["v1_22"]
+v1_26 = ["v1_24"]
+v1_30 = ["v1_26"]
+v1_31 = ["v1_30"]
+v1_32 = ["v1_31"]
+v1_32_4 = ["v1_32"]
+v1_34 = ["v1_32_4"]
+v1_36_7 = ["v1_34"]
+v1_38 = ["v1_36_7"]
+v1_42 = ["v1_38"]
+v1_44 = ["v1_42"]
+v1_46 = ["v1_44"]
+v1_48 = ["v1_46"]
+v1_50 = ["v1_48"]
+v1_52 = ["v1_50"]
 </code></pre>
 <p>You need to change the features in the Cargo.toml of your normal crate to</p>
 <pre><code class="language-toml">[features]
-v1_2 = [&quot;ffi/v1_2&quot;]
-v1_4 = [&quot;ffi/v1_4&quot;, &quot;v1_2&quot;]
-v1_6 = [&quot;ffi/v1_6&quot;, &quot;v1_4&quot;]
-v1_8 = [&quot;ffi/v1_8&quot;, &quot;v1_6&quot;]
-v1_10 = [&quot;ffi/v1_10&quot;, &quot;v1_8&quot;]
-v1_12 = [&quot;ffi/v1_12&quot;, &quot;v1_10&quot;]
-v1_14 = [&quot;ffi/v1_14&quot;, &quot;v1_12&quot;]
-v1_16 = [&quot;ffi/v1_16&quot;, &quot;v1_14&quot;]
-v1_18 = [&quot;ffi/v1_18&quot;, &quot;v1_16&quot;]
-v1_20 = [&quot;ffi/v1_20&quot;, &quot;v1_18&quot;]
-v1_22 = [&quot;ffi/v1_22&quot;, &quot;v1_20&quot;]
-v1_24 = [&quot;ffi/v1_24&quot;, &quot;v1_22&quot;]
-v1_26 = [&quot;ffi/v1_26&quot;, &quot;v1_24&quot;]
-v1_30 = [&quot;ffi/v1_30&quot;, &quot;v1_26&quot;]
-v1_31 = [&quot;ffi/v1_31&quot;, &quot;v1_30&quot;]
-v1_32 = [&quot;ffi/v1_32&quot;, &quot;v1_31&quot;]
-v1_32_4 = [&quot;ffi/v1_32_4&quot;, &quot;v1_32&quot;]
-v1_34 = [&quot;ffi/v1_34&quot;, &quot;v1_32_4&quot;]
-v1_36_7 = [&quot;ffi/v1_36_7&quot;, &quot;v1_34&quot;]
-v1_38 = [&quot;ffi/v1_38&quot;, &quot;v1_36_7&quot;]
-v1_42 = [&quot;ffi/v1_42&quot;, &quot;v1_38&quot;]
-v1_44 = [&quot;ffi/v1_44&quot;, &quot;v1_42&quot;]
-v1_46 = [&quot;ffi/v1_46&quot;, &quot;v1_44&quot;]
-v1_48 = [&quot;ffi/v1_48&quot;, &quot;v1_46&quot;]
-v1_50 = [&quot;ffi/v1_50&quot;, &quot;v1_48&quot;]
-v1_52 = [&quot;ffi/v1_52&quot;, &quot;v1_50&quot;]
+v1_2 = ["ffi/v1_2"]
+v1_4 = ["ffi/v1_4", "v1_2"]
+v1_6 = ["ffi/v1_6", "v1_4"]
+v1_8 = ["ffi/v1_8", "v1_6"]
+v1_10 = ["ffi/v1_10", "v1_8"]
+v1_12 = ["ffi/v1_12", "v1_10"]
+v1_14 = ["ffi/v1_14", "v1_12"]
+v1_16 = ["ffi/v1_16", "v1_14"]
+v1_18 = ["ffi/v1_18", "v1_16"]
+v1_20 = ["ffi/v1_20", "v1_18"]
+v1_22 = ["ffi/v1_22", "v1_20"]
+v1_24 = ["ffi/v1_24", "v1_22"]
+v1_26 = ["ffi/v1_26", "v1_24"]
+v1_30 = ["ffi/v1_30", "v1_26"]
+v1_31 = ["ffi/v1_31", "v1_30"]
+v1_32 = ["ffi/v1_32", "v1_31"]
+v1_32_4 = ["ffi/v1_32_4", "v1_32"]
+v1_34 = ["ffi/v1_34", "v1_32_4"]
+v1_36_7 = ["ffi/v1_36_7", "v1_34"]
+v1_38 = ["ffi/v1_38", "v1_36_7"]
+v1_42 = ["ffi/v1_42", "v1_38"]
+v1_44 = ["ffi/v1_44", "v1_42"]
+v1_46 = ["ffi/v1_46", "v1_44"]
+v1_48 = ["ffi/v1_48", "v1_46"]
+v1_50 = ["ffi/v1_50", "v1_48"]
+v1_52 = ["ffi/v1_52", "v1_50"]
 </code></pre>
 <h2 id="the-librs-file"><a class="header" href="#the-librs-file">The lib.rs file</a></h2>
 <p>The lib.rs file will not be replaced when you run gir.
@@ -295,12 +295,12 @@ mod auto;
 <p>As you certainly guessed, we have to fill our <code>Gir.toml</code> file for the normal crate as well.
 Let's write it:</p>
 <pre><code class="language-toml">[options]
-library = &quot;Pango&quot;
-version = &quot;1.0&quot;
-min_cfg_version = &quot;1.0&quot;
-target_path = &quot;.&quot;
-girs_directories = [&quot;../gir-files&quot;]
-work_mode = &quot;normal&quot;
+library = "Pango"
+version = "1.0"
+min_cfg_version = "1.0"
+target_path = "."
+girs_directories = ["../gir-files"]
+work_mode = "normal"
 single_version_file = true
 generate_safety_asserts = true
 deprecate_by_min_version = true
@@ -314,7 +314,7 @@ Let's take a look at them:</p>
 <ul>
 <li><code>work_mode</code> value is now set to <code>normal</code>, it means it'll generate the high-level Rust api instead of the sys-level.</li>
 <li><code>generate_safety_asserts</code> is used to generates checks to ensure that, or any other kind of initialization needed before being able to use the library.</li>
-<li><code>deprecate_by_min_version</code> is used to generate a <a href="https://doc.rust-lang.org/edition-guide/rust-2018/the-compiler/an-attribute-for-deprecation.html">Rust &quot;#[deprecated]&quot;</a> attribute based on the deprecation information provided by the <code>.gir</code> file.</li>
+<li><code>deprecate_by_min_version</code> is used to generate a <a href="https://doc.rust-lang.org/edition-guide/rust-2018/the-compiler/an-attribute-for-deprecation.html">Rust "#[deprecated]"</a> attribute based on the deprecation information provided by the <code>.gir</code> file.</li>
 <li><code>generate = []</code>: this line currently does nothing.
 We say to <a href="https://github.com/gtk-rs/gir">gir</a> to generate nothing.
 We'll fill it later on.</li>
@@ -324,7 +324,7 @@ We can let <a href="https://github.com/gtk-rs/gir">gir</a> know about objects wh
 <p>Let's make a first generation of our high-level Rust API!</p>
 <pre><code class="language-sh">gir -o .
 </code></pre>
-<p>If you take a look at which files and folders were created, you'll see a new &quot;auto&quot; folder inside &quot;src&quot;.
+<p>If you take a look at which files and folders were created, you'll see a new "auto" folder inside "src".
 This folder contains all the generated code.
 It doesn't contain anything though.
 Which makes sense since we're generating nothing.</p>
@@ -472,7 +472,7 @@ These objects live in a dependency of the current library.
 These are the objects we will add to the <code>manual</code> array in the following steps.</li>
 <li><code>[NOT GENERATED FUNCTION]</code>:
 These are global functions that were not generated.
-To fix it, we just add <code>&quot;NameOfYourLibrary.*&quot;</code> to the <code>generate</code> array in the Git.toml and add the following line to your src/lib.rs file:</li>
+To fix it, we just add <code>"NameOfYourLibrary.*"</code> to the <code>generate</code> array in the Git.toml and add the following line to your src/lib.rs file:</li>
 </ul>
 <pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {

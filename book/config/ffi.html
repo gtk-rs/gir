@@ -184,28 +184,28 @@
 So in this mode, the TOML file is mostly used to ignore some objects.
 To do so, you need to add its fullname to an <code>ignore</code> array.
 Example:</p>
-<pre><code class="language-toml">ignore = [&quot;Gtk.Widget&quot;, &quot;Gtk.Window&quot;]
+<pre><code class="language-toml">ignore = ["Gtk.Widget", "Gtk.Window"]
 </code></pre>
 <p>And that's all.
 Neither <code>GtkWidget</code> nor <code>GtkWindow</code> (alongside with their functions) will be generated.</p>
-<p>You also need to add any needed external libraries in the &quot;external_libraries&quot; parameter.
+<p>You also need to add any needed external libraries in the "external_libraries" parameter.
 Example:</p>
 <pre><code class="language-toml">[options]
 external_libraries = [
-   &quot;GLib&quot;,
-   &quot;GObject&quot;,
+   "GLib",
+   "GObject",
 ]
 </code></pre>
 <p>You can specify a few other options:</p>
 <pre><code class="language-toml">[options]
-girs_directories = [&quot;../gir-files&quot;]
-library = &quot;GtkSource&quot;
-version = &quot;3.0&quot;
-min_cfg_version = &quot;3.0&quot;
-target_path = &quot;.&quot;
+girs_directories = ["../gir-files"]
+library = "GtkSource"
+version = "3.0"
+min_cfg_version = "3.0"
+target_path = "."
 # Path where lib.rs generated (defaults to &lt;target_path&gt;/src)
-# auto_path = &quot;src&quot;
-work_mode = &quot;sys&quot;
+# auto_path = "src"
+work_mode = "sys"
 # If true then build.rs will be split into 2 parts:
 # always generated build_version.rs,
 # and build.rs that generated only if not exists.
@@ -213,28 +213,28 @@ work_mode = &quot;sys&quot;
 split_build_rs = false
 # Adds extra versions to features
 extra_versions = [
-   &quot;3.15&quot;,
-   &quot;3.17&quot;,
+   "3.15",
+   "3.17",
 ]
 # Change library version for version
 [[lib_version_overrides]]
-version = &quot;3.16&quot;
-lib_version = &quot;3.16.1&quot;
+version = "3.16"
+lib_version = "3.16.1"
 # Add extra dependencies to feature
 [[feature_dependencies]]
-version = &quot;3.16&quot;
+version = "3.16"
 dependencies = [
-  &quot;glib-sys/v3_16&quot;
+  "glib-sys/v3_16"
 ]
 </code></pre>
 <p>Also, you can add rust cfg conditions on objects, functions and constants, for example, when flagging for conditional compilation:</p>
 <pre><code class="language-toml">[[object]]
-name = &quot;GstGL.GLDisplayEGL&quot;
-status = &quot;generate&quot;
-cfg_condition = &quot;feature = \&quot;egl\&quot;&quot;
+name = "GstGL.GLDisplayEGL"
+status = "generate"
+cfg_condition = "feature = \"egl\""
     [[object.function]]
-    pattern = &quot;.*&quot;
-    cfg_condition = &quot;feature = \&quot;egl\&quot;&quot;
+    pattern = ".*"
+    cfg_condition = "feature = \"egl\""
 </code></pre>
 <h2 id="generation-in-ffi-mode"><a class="header" href="#generation-in-ffi-mode">Generation in FFI mode</a></h2>
 <p>When you're ready, let's generate the FFI part.
