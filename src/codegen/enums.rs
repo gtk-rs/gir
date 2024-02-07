@@ -21,6 +21,7 @@ use crate::{
     library::*,
     nameutil::{enum_member_name, use_glib_if_needed, use_glib_type},
     traits::*,
+    update_cfgs,
     version::Version,
 };
 
@@ -49,10 +50,31 @@ pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>) {
 
             let enum_ = enum_analysis.type_(&env.library);
 
+            let ns = env.namespaces.main();
+            let full_name = format!("{}.{}", ns.name, enum_.name);
+            let cfg_condition = env
+                .config
+                .objects
+                .get(&full_name)
+                .and_then(|obj| {
+                    update_cfgs::get_object_cfg_condition(
+                        &obj.name,
+                        &config.cfg_condition,
+                        &ns.identifier_prefixes,
+                    )
+                })
+                .or_else(|| {
+                    update_cfgs::get_object_cfg_condition(
+                        &enum_.name,
+                        &None,
+                        &ns.identifier_prefixes,
+                    )
+                });
+
             if let Some(cfg) = version_condition_string(env, None, enum_.version, false, 0) {
                 mod_rs.push(cfg);
             }
-            if let Some(cfg) = cfg_condition_string(config.cfg_condition.as_ref(), false, 0) {
+            if let Some(cfg) = cfg_condition_string(cfg_condition.as_ref(), false, 0) {
                 mod_rs.push(cfg);
             }
             mod_rs.push(format!(
@@ -65,7 +87,7 @@ pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>) {
                 enum_.name
             ));
 
-            generate_enum(env, w, enum_, config, enum_analysis)?;
+            generate_enum(env, w, enum_, config, enum_analysis, cfg_condition)?;
         }
 
         Ok(())
@@ -78,6 +100,7 @@ fn generate_enum(
     enum_: &Enumeration,
     config: &GObject,
     analysis: &Info,
+    cfg_cond: Option<String>,
 ) -> Result<()> {
     struct Member<'a> {
         name: String,
@@ -125,7 +148,7 @@ fn generate_enum(
         0,
     )?;
     version_condition(w, env, None, enum_.version, false, 0)?;
-    cfg_condition(w, config.cfg_condition.as_ref(), false, 0)?;
+    cfg_condition(w, cfg_cond.as_ref(), false, 0)?;
     if config.must_use {
         writeln!(w, "#[must_use]")?;
     }
@@ -194,7 +217,7 @@ fn generate_enum(
     if !functions.is_empty() {
         writeln!(w)?;
         version_condition(w, env, None, enum_.version, false, 0)?;
-        cfg_condition_no_doc(w, config.cfg_condition.as_ref(), false, 0)?;
+        cfg_condition_no_doc(w, cfg_cond.as_ref(), false, 0)?;
         allow_deprecated(w, enum_.deprecated_version, false, 0)?;
         write!(w, "impl {} {{", analysis.name)?;
         for func_analysis in functions {
@@ -221,7 +244,7 @@ fn generate_enum(
         &analysis.specials,
         None,
         None,
-        config.cfg_condition.as_deref(),
+        cfg_cond.as_deref(),
     )?;
 
     writeln!(w)?;
@@ -235,7 +258,7 @@ fn generate_enum(
 
     // Generate IntoGlib trait implementation.
     version_condition(w, env, None, enum_.version, false, 0)?;
-    cfg_condition_no_doc(w, config.cfg_condition.as_ref(), false, 0)?;
+    cfg_condition_no_doc(w, cfg_cond.as_ref(), false, 0)?;
     allow_deprecated(w, any_deprecated_version, false, 0)?;
     writeln!(
         w,
@@ -292,7 +315,7 @@ impl IntoGlib for {name} {{
 
     // Generate FromGlib trait implementation.
     version_condition(w, env, None, enum_.version, false, 0)?;
-    cfg_condition_no_doc(w, config.cfg_condition.as_ref(), false, 0)?;
+    cfg_condition_no_doc(w, cfg_cond.as_ref(), false, 0)?;
     allow_deprecated(w, any_deprecated_version, false, 0)?;
     writeln!(
         w,
@@ -346,7 +369,7 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
         let has_failed_member = members.iter().any(|m| m.name == "Failed");
 
         version_condition(w, env, None, enum_.version, false, 0)?;
-        cfg_condition_no_doc(w, config.cfg_condition.as_ref(), false, 0)?;
+        cfg_condition_no_doc(w, cfg_cond.as_ref(), false, 0)?;
         allow_deprecated(w, any_deprecated_version, false, 0)?;
         writeln!(
             w,
@@ -417,7 +440,7 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
             .flatten();
 
         version_condition(w, env, None, version, false, 0)?;
-        cfg_condition_no_doc(w, config.cfg_condition.as_ref(), false, 0)?;
+        cfg_condition_no_doc(w, cfg_cond.as_ref(), false, 0)?;
         allow_deprecated(w, enum_.deprecated_version, false, 0)?;
         writeln!(
             w,
@@ -439,7 +462,7 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
         writeln!(w)?;
 
         version_condition(w, env, None, version, false, 0)?;
-        cfg_condition_no_doc(w, config.cfg_condition.as_ref(), false, 0)?;
+        cfg_condition_no_doc(w, cfg_cond.as_ref(), false, 0)?;
         allow_deprecated(w, enum_.deprecated_version, false, 0)?;
         writeln!(
             w,
@@ -460,7 +483,7 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
         writeln!(w)?;
 
         version_condition(w, env, None, version, false, 0)?;
-        cfg_condition_no_doc(w, config.cfg_condition.as_ref(), false, 0)?;
+        cfg_condition_no_doc(w, cfg_cond.as_ref(), false, 0)?;
         allow_deprecated(w, enum_.deprecated_version, false, 0)?;
         writeln!(
             w,
@@ -473,7 +496,7 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
         writeln!(w)?;
 
         version_condition(w, env, None, version, false, 0)?;
-        cfg_condition_no_doc(w, config.cfg_condition.as_ref(), false, 0)?;
+        cfg_condition_no_doc(w, cfg_cond.as_ref(), false, 0)?;
         allow_deprecated(w, enum_.deprecated_version, false, 0)?;
         writeln!(
             w,
@@ -495,7 +518,7 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
         writeln!(w)?;
 
         version_condition(w, env, None, version, false, 0)?;
-        cfg_condition_no_doc(w, config.cfg_condition.as_ref(), false, 0)?;
+        cfg_condition_no_doc(w, cfg_cond.as_ref(), false, 0)?;
         allow_deprecated(w, enum_.deprecated_version, false, 0)?;
         writeln!(
             w,
@@ -522,7 +545,7 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
         writeln!(w)?;
 
         version_condition(w, env, None, version, false, 0)?;
-        cfg_condition_no_doc(w, config.cfg_condition.as_ref(), false, 0)?;
+        cfg_condition_no_doc(w, cfg_cond.as_ref(), false, 0)?;
         allow_deprecated(w, enum_.deprecated_version, false, 0)?;
         writeln!(
             w,
