@@ -14,7 +14,6 @@ use crate::{
     library::*,
     nameutil::*,
     traits::*,
-    update_cfgs,
 };
 
 pub fn generate(env: &Env) {
@@ -165,8 +164,7 @@ fn generate_aliases(w: &mut dyn Write, env: &Env, items: &[&Alias]) -> Result<()
         writeln!(w, "// Aliases")?;
     }
     for item in items {
-        let ns = env.namespaces.main();
-        let full_name = format!("{}.{}", ns.name, item.name);
+        let full_name = format!("{}.{}", env.namespaces.main().name, item.name);
         if !env.type_status_sys(&full_name).need_generate() {
             continue;
         }
@@ -178,17 +176,8 @@ fn generate_aliases(w: &mut dyn Write, env: &Env, items: &[&Alias]) -> Result<()
             .config
             .objects
             .get(&full_name)
-            .and_then(|obj| {
-                update_cfgs::get_object_cfg_condition(
-                    &item.name,
-                    &obj.cfg_condition,
-                    &ns.identifier_prefixes,
-                )
-            })
-            .or_else(|| {
-                update_cfgs::get_object_cfg_condition(&item.name, &None, &ns.identifier_prefixes)
-            });
-        cfg_condition(w, cfg_condition_.as_ref(), false, 0)?;
+            .and_then(|obj| obj.cfg_condition.as_ref());
+        cfg_condition(w, cfg_condition_, false, 0)?;
         writeln!(w, "{}pub type {} = {};", comment, item.c_identifier, c_type)?;
     }
     if !items.is_empty() {
@@ -235,15 +224,13 @@ fn generate_bitfields(w: &mut dyn Write, env: &Env, items: &[&Bitfield]) -> Resu
 
 fn generate_constant_cfg_configure(
     w: &mut dyn Write,
-    constant: &Constant,
     configured_constants: &[&constants::Constant],
     commented: bool,
 ) -> Result<()> {
     let cfg_condition_ = configured_constants
         .iter()
-        .find_map(|f| update_cfgs::get_constant_cfg_condition(&constant.name, &f.cfg_condition))
-        .or_else(|| update_cfgs::get_constant_cfg_condition(&constant.name, &None));
-    cfg_condition(w, cfg_condition_.as_ref(), commented, 1)?;
+        .find_map(|f| f.cfg_condition.as_ref());
+    cfg_condition(w, cfg_condition_, commented, 1)?;
     Ok(())
 }
 
@@ -283,12 +270,7 @@ fn generate_constants(w: &mut dyn Write, env: &Env, constants: &[Constant]) -> R
 
         if let Some(obj) = config {
             let configured_constants = obj.constants.matched(&full_name);
-            generate_constant_cfg_configure(
-                w,
-                constant,
-                &configured_constants,
-                !comment.is_empty(),
-            )?;
+            generate_constant_cfg_configure(w, &configured_constants, !comment.is_empty())?;
         }
 
         writeln!(
@@ -309,8 +291,7 @@ fn generate_enums(w: &mut dyn Write, env: &Env, items: &[&Enumeration]) -> Resul
         writeln!(w, "// Enums")?;
     }
     for item in items {
-        let ns = env.namespaces.main();
-        let full_name = format!("{}.{}", ns.name, item.name);
+        let full_name = format!("{}.{}", env.namespaces.main().name, item.name);
         let config = env.config.objects.get(&full_name);
         if let Some(false) = config.map(|c| c.status.need_generate()) {
             continue;
@@ -319,17 +300,8 @@ fn generate_enums(w: &mut dyn Write, env: &Env, items: &[&Enumeration]) -> Resul
             .config
             .objects
             .get(&full_name)
-            .and_then(|obj| {
-                update_cfgs::get_object_cfg_condition(
-                    &item.name,
-                    &obj.cfg_condition,
-                    &ns.identifier_prefixes,
-                )
-            })
-            .or_else(|| {
-                update_cfgs::get_object_cfg_condition(&item.name, &None, &ns.identifier_prefixes)
-            });
-        cfg_condition(w, cfg_condition_.as_ref(), false, 0)?;
+            .and_then(|obj| obj.cfg_condition.as_ref());
+        cfg_condition(w, cfg_condition_, false, 0)?;
         writeln!(w, "pub type {} = c_int;", item.c_type)?;
         for member in &item.members {
             let member_config = config
@@ -345,7 +317,7 @@ fn generate_enums(w: &mut dyn Write, env: &Env, items: &[&Enumeration]) -> Resul
                 continue;
             }
 
-            cfg_condition(w, cfg_condition_.as_ref(), false, 0)?;
+            cfg_condition(w, cfg_condition_, false, 0)?;
             version_condition(w, env, None, version, false, 0)?;
             writeln!(
                 w,
@@ -432,8 +404,7 @@ fn generate_interfaces_structs(
         writeln!(w, "// Interfaces")?;
     }
     for interface in interfaces {
-        let ns = env.namespaces.main();
-        let full_name = format!("{}.{}", ns.name, interface.name);
+        let full_name = format!("{}.{}", env.namespaces.main().name, interface.name);
         if !env.type_status_sys(&full_name).need_generate() {
             continue;
         }
@@ -441,23 +412,10 @@ fn generate_interfaces_structs(
             .config
             .objects
             .get(&full_name)
-            .and_then(|obj| {
-                update_cfgs::get_object_cfg_condition(
-                    &interface.name,
-                    &obj.cfg_condition,
-                    &ns.identifier_prefixes,
-                )
-            })
-            .or_else(|| {
-                update_cfgs::get_object_cfg_condition(
-                    &interface.name,
-                    &None,
-                    &ns.identifier_prefixes,
-                )
-            });
-        cfg_condition(w, cfg_condition_.as_ref(), false, 0)?;
+            .and_then(|obj| obj.cfg_condition.as_ref());
+        cfg_condition(w, cfg_condition_, false, 0)?;
         generate_opaque_type(w, &interface.c_type)?;
-        cfg_condition(w, cfg_condition_.as_ref(), false, 0)?;
+        cfg_condition(w, cfg_condition_, false, 0)?;
         generate_debug_impl(
             w,
             &interface.c_type,
@@ -532,25 +490,15 @@ impl ::std::fmt::Debug for GHookList {
 }
 
 fn generate_disguised(w: &mut dyn Write, env: &Env, record: &Record) -> Result<()> {
-    let ns = env.namespaces.main();
-    let full_name = format!("{}.{}", ns.name, record.name);
+    let full_name = format!("{}.{}", env.namespaces.main().name, record.name);
     let cfg_condition_ = env
         .config
         .objects
         .get(&full_name)
-        .and_then(|obj| {
-            update_cfgs::get_object_cfg_condition(
-                &record.name,
-                &obj.cfg_condition,
-                &ns.identifier_prefixes,
-            )
-        })
-        .or_else(|| {
-            update_cfgs::get_object_cfg_condition(&record.name, &None, &ns.identifier_prefixes)
-        });
-    cfg_condition(w, cfg_condition_.as_ref(), false, 0)?;
+        .and_then(|obj| obj.cfg_condition.as_ref());
+    cfg_condition(w, cfg_condition_, false, 0)?;
     generate_opaque_type(w, &format!("_{}", record.c_type))?;
-    cfg_condition(w, cfg_condition_.as_ref(), false, 0)?;
+    cfg_condition(w, cfg_condition_, false, 0)?;
     if record.pointer {
         writeln!(w, "pub type {name} = *mut _{name};", name = record.c_type)?;
     } else {

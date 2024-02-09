@@ -14,7 +14,6 @@ pub struct Namespace {
     pub higher_crate_name: String,
     pub package_names: Vec<String>,
     pub symbol_prefixes: Vec<String>,
-    pub identifier_prefixes: Vec<String>,
     pub shared_libs: Vec<String>,
     pub versions: Vec<Version>,
 }
@@ -59,7 +58,6 @@ pub fn run(gir: &library::Library) -> Info {
             higher_crate_name,
             package_names: ns.package_names.clone(),
             symbol_prefixes: ns.symbol_prefixes.clone(),
-            identifier_prefixes: ns.identifier_prefixes.clone(),
             shared_libs: ns.shared_library.clone(),
             versions: ns.versions.iter().copied().collect(),
         });

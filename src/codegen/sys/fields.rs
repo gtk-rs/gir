@@ -4,7 +4,6 @@ use crate::{
     env::Env,
     library::*,
     traits::{IntoString, MaybeRefAs},
-    update_cfgs,
 };
 
 pub struct Fields {
@@ -165,13 +164,10 @@ fn field_ffi_type(env: &Env, field: &Field) -> Result {
 }
 
 fn get_gobject_cfg_condition(env: &Env, name: &str) -> Option<String> {
-    let ns = env.namespaces.main();
-    let full_name = format!("{}.{}", ns.name, name);
-    env.config
-        .objects
-        .get(&full_name)
-        .and_then(|obj| {
-            update_cfgs::get_object_cfg_condition(name, &obj.cfg_condition, &ns.identifier_prefixes)
-        })
-        .or_else(|| update_cfgs::get_object_cfg_condition(name, &None, &ns.identifier_prefixes))
+    let full_name = format!("{}.{}", env.namespaces.main().name, name);
+    if let Some(obj) = env.config.objects.get(&full_name) {
+        obj.cfg_condition.clone()
+    } else {
+        None
+    }
 }
