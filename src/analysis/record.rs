@@ -12,7 +12,6 @@ use crate::{
     library,
     nameutil::*,
     traits::*,
-    update_cfgs,
     version::Version,
 };
 
@@ -196,10 +195,6 @@ pub fn new(env: &Env, obj: &GObject) -> Option<Info> {
         }
     }
 
-    let ns = env.library.namespace(record_tid.ns_id);
-    let cfg_condition =
-        update_cfgs::get_object_cfg_condition(&name, &obj.cfg_condition, &ns.identifier_prefixes);
-
     let base = InfoBase {
         full_name,
         type_id: record_tid,
@@ -209,7 +204,7 @@ pub fn new(env: &Env, obj: &GObject) -> Option<Info> {
         imports,
         version,
         deprecated_version,
-        cfg_condition,
+        cfg_condition: obj.cfg_condition.clone(),
         concurrency: obj.concurrency,
         visibility: obj.visibility,
     };

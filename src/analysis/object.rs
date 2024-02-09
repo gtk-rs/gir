@@ -12,7 +12,6 @@ use crate::{
     library::{self, FunctionKind},
     nameutil::*,
     traits::*,
-    update_cfgs,
 };
 
 /// The location of an item within the object
@@ -304,9 +303,6 @@ pub fn class(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<Info>
         imports.add("glib::prelude::*");
     }
 
-    let ns = env.library.namespace(class_tid.ns_id);
-    let cfg_condition =
-        update_cfgs::get_object_cfg_condition(&name, &obj.cfg_condition, &ns.identifier_prefixes);
     let base = InfoBase {
         full_name,
         type_id: class_tid,
@@ -316,7 +312,7 @@ pub fn class(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<Info>
         imports,
         version,
         deprecated_version,
-        cfg_condition,
+        cfg_condition: obj.cfg_condition.clone(),
         concurrency: obj.concurrency,
         visibility: obj.visibility,
     };
@@ -433,9 +429,6 @@ pub fn interface(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<I
         deps,
     );
 
-    let ns = env.library.namespace(iface_tid.ns_id);
-    let cfg_condition =
-        update_cfgs::get_object_cfg_condition(&name, &obj.cfg_condition, &ns.identifier_prefixes);
     let base = InfoBase {
         full_name,
         type_id: iface_tid,
@@ -445,7 +438,7 @@ pub fn interface(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<I
         imports,
         version,
         deprecated_version,
-        cfg_condition,
+        cfg_condition: obj.cfg_condition.clone(),
         concurrency: obj.concurrency,
         visibility: obj.visibility,
     };

@@ -344,7 +344,10 @@ impl Parse for Function {
             .lookup("version")
             .and_then(Value::as_str)
             .and_then(|s| s.parse().ok());
-        let cfg_condition = super::get_cfg_condition(toml, object_name);
+        let cfg_condition = toml
+            .lookup("cfg_condition")
+            .and_then(Value::as_str)
+            .map(ToOwned::to_owned);
         let parameters = Parameters::parse(toml.lookup("parameter"), object_name);
         let ret = Return::parse(toml.lookup("return"), object_name);
         let doc_hidden = toml
